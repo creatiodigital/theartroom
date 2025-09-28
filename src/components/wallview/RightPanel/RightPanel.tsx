@@ -20,7 +20,12 @@ const RightPanel = () => {
   const isGroupCreated = artworkGroupIds.length > 1
 
   return (
-    <div className={styles.panel}>
+    <div
+      className={styles.panel}
+      data-no-deselect="true"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className={styles.properties}>
         {isGroupCreated && <GroupPanel />}
         {!isGroupCreated && isWizardOpen && (

@@ -3,7 +3,8 @@ import type { RefObject } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { useGroupArtwork } from '@/components/wallview/hooks/useGroupArtwork'
-import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
+import { chooseCurrentArtworkId, removeGroup } from '@/redux/slices/wallViewSlice'
+import { showWizard, hideWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
 
 export type TSelectionBox = {
@@ -25,6 +26,8 @@ export const useSelectBox = (
     (state: RootState) => state.exhibition.allExhibitionArtworkIds,
   )
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
+  const isShiftKeyDown = useSelector((state: RootState) => state.wallView.isShiftKeyDown)
+
   const dispatch = useDispatch()
   const { handleAddArtworkToGroup } = useGroupArtwork()
 
@@ -33,25 +36,19 @@ export const useSelectBox = (
   const startPosition = useRef({ x: 0, y: 0 })
   const dragThreshold = 5
 
-  useEffect(() => {
-    if (!draggingSelectBox) {
-      const timeout = setTimeout(() => {
-        preventClick.current = false
-      }, 100)
-      return () => clearTimeout(timeout)
-    }
-  }, [draggingSelectBox, preventClick])
-
   const handleSelectMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!wallRef.current) return
+      preventClick.current = true
+
       const rect = wallRef.current.getBoundingClientRect()
       const startX = (e.clientX - rect.left) / scaleFactor
       const startY = (e.clientY - rect.top) / scaleFactor
       startPosition.current = { x: startX, y: startY }
       setSelectionBox({ startX, startY, endX: startX, endY: startY })
+      setDraggingSelectBox(false)
     },
-    [wallRef, scaleFactor],
+    [wallRef, scaleFactor, preventClick],
   )
 
   const handleSelectMouseMove = useCallback(
@@ -65,66 +62,96 @@ export const useSelectBox = (
       const deltaY = Math.abs(endY - startPosition.current.y)
 
       if (deltaX > dragThreshold || deltaY > dragThreshold) {
-        preventClick.current = true
-        setDraggingSelectBox(true)
+        if (!draggingSelectBox) setDraggingSelectBox(true)
         setSelectionBox((prev) => (prev ? { ...prev, endX, endY } : prev))
       }
     },
-    [selectionBox, wallRef, scaleFactor, dragThreshold, preventClick],
+    [selectionBox, wallRef, scaleFactor, dragThreshold, draggingSelectBox],
   )
 
-  const handleSelectMouseUp = useCallback(() => {
-    if (!selectionBox || !draggingSelectBox) {
+  const handleSelectMouseUp = useCallback(
+    (e?: MouseEvent) => {
+      if (!selectionBox || !draggingSelectBox) {
+        setSelectionBox(null)
+        setDraggingSelectBox(false)
+        preventClick.current = false
+        return
+      }
+
+      if (e) {
+        e.stopPropagation()
+        e.preventDefault()
+      }
+
+      const { startX, startY, endX, endY } = selectionBox
+      const minX = Math.min(startX, endX)
+      const minY = Math.min(startY, endY)
+      const maxX = Math.max(startX, endX)
+      const maxY = Math.max(startY, endY)
+
+      const filteredArtworks = allExhibitionArtworkIds
+        .map((id) => exhibitionArtworksById[id])
+        .filter((a) => a.wallId === currentWallId)
+
+      const selectedArtworks = filteredArtworks.filter((a) => {
+        const { posX2d: x, posY2d: y, width2d: w, height2d: h } = a
+        return minX < x + w && maxX > x && minY < y + h && maxY > y
+      })
+
+      if (!isShiftKeyDown) {
+        dispatch(chooseCurrentArtworkId(null))
+        dispatch(removeGroup())
+      }
+
+      if (selectedArtworks.length === 1) {
+        const only = selectedArtworks[0]
+        if (only.id) {
+          dispatch(chooseCurrentArtworkId(only.id))
+          handleAddArtworkToGroup(only.id)
+          dispatch(showWizard())
+        }
+      } else if (selectedArtworks.length > 1) {
+        selectedArtworks.forEach((a) => a.id && handleAddArtworkToGroup(a.id))
+        if (!isShiftKeyDown) {
+          dispatch(chooseCurrentArtworkId(null))
+        }
+      } else {
+        if (!isShiftKeyDown) {
+          dispatch(chooseCurrentArtworkId(null))
+          dispatch(removeGroup())
+          dispatch(hideWizard())
+        }
+      }
+
       setSelectionBox(null)
-      return
-    }
-    const { startX, startY, endX, endY } = selectionBox
-    const minX = Math.min(startX, endX)
-    const minY = Math.min(startY, endY)
-    const maxX = Math.max(startX, endX)
-    const maxY = Math.max(startY, endY)
+      setDraggingSelectBox(false)
 
-    const filteredArtworks = allExhibitionArtworkIds
-      .map((id) => exhibitionArtworksById[id])
-      .filter((artwork) => artwork.wallId === currentWallId)
-
-    const selectedArtworks = filteredArtworks.filter((artwork) => {
-      const artX = artwork.posX2d
-      const artY = artwork.posY2d
-      const artWidth = artwork.width2d
-      const artHeight = artwork.height2d
-      return minX < artX + artWidth && maxX > artX && minY < artY + artHeight && maxY > artY
-    })
-
-    if (selectedArtworks.length === 1) {
-      dispatch(chooseCurrentArtworkId(selectedArtworks[0].id ?? null))
-    }
-    selectedArtworks.forEach((artwork) => {
-      if (artwork.id) handleAddArtworkToGroup(artwork.id)
-    })
-
-    setSelectionBox(null)
-    setDraggingSelectBox(false)
-  }, [
-    selectionBox,
-    draggingSelectBox,
-    allExhibitionArtworkIds,
-    exhibitionArtworksById,
-    currentWallId,
-    handleAddArtworkToGroup,
-    dispatch,
-  ])
+      setTimeout(() => {
+        preventClick.current = false
+      }, 0)
+    },
+    [
+      selectionBox,
+      draggingSelectBox,
+      allExhibitionArtworkIds,
+      exhibitionArtworksById,
+      currentWallId,
+      isShiftKeyDown,
+      handleAddArtworkToGroup,
+      dispatch,
+      preventClick,
+    ],
+  )
 
   useEffect(() => {
-    if (draggingSelectBox) {
-      const moveHandler = (event: MouseEvent) => handleSelectMouseMove(event)
-      const upHandler = () => handleSelectMouseUp()
-      document.addEventListener('mousemove', moveHandler)
-      document.addEventListener('mouseup', upHandler)
-      return () => {
-        document.removeEventListener('mousemove', moveHandler)
-        document.removeEventListener('mouseup', upHandler)
-      }
+    if (!draggingSelectBox) return
+    const moveHandler = (event: MouseEvent) => handleSelectMouseMove(event)
+    const upHandler = (event: MouseEvent) => handleSelectMouseUp(event)
+    document.addEventListener('mousemove', moveHandler)
+    document.addEventListener('mouseup', upHandler)
+    return () => {
+      document.removeEventListener('mousemove', moveHandler)
+      document.removeEventListener('mouseup', upHandler)
     }
   }, [draggingSelectBox, handleSelectMouseMove, handleSelectMouseUp])
 
@@ -132,7 +159,8 @@ export const useSelectBox = (
     () => ({
       handleSelectMouseDown,
       handleSelectMouseMove,
-      handleSelectMouseUp,
+      handleSelectMouseUp: (e: React.MouseEvent<HTMLDivElement>) =>
+        handleSelectMouseUp(e.nativeEvent),
       selectionBox,
     }),
     [handleSelectMouseDown, handleSelectMouseMove, handleSelectMouseUp, selectionBox],

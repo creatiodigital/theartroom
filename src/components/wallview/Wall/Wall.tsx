@@ -146,13 +146,39 @@ export const Wall = () => {
 
   const { handleDeselect } = useDeselectArtwork()
 
-  const handleClickOnWall = useCallback(() => {
-    if (preventClick.current) return
-    if (!preventClick.current) {
-      handleRemoveArtworkGroup()
+  useEffect(() => {
+    const onDocumentClick = (e: MouseEvent) => {
+      if (preventClick.current) return
+
+      const target = e.target as Element | null
+      if (target && target.closest('[data-no-deselect="true"]')) {
+        return
+      }
+
+      const wallEl = wallRef.current
+      if (!wallEl) return
+
+      if (!wallEl.contains(target as Node)) {
+        handleRemoveArtworkGroup()
+        handleDeselect()
+      }
     }
-    handleDeselect()
-  }, [preventClick, handleRemoveArtworkGroup, handleDeselect])
+
+    document.addEventListener('click', onDocumentClick)
+    return () => document.removeEventListener('click', onDocumentClick)
+  }, [wallRef, preventClick, handleRemoveArtworkGroup, handleDeselect])
+
+  const handleClickOnWall = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (preventClick.current) {
+        e.stopPropagation()
+        return
+      }
+      handleRemoveArtworkGroup()
+      handleDeselect()
+    },
+    [preventClick, handleRemoveArtworkGroup, handleDeselect],
+  )
 
   useKeyboardEvents(currentArtworkId, hoveredArtworkId === currentArtworkId)
 
@@ -177,7 +203,7 @@ export const Wall = () => {
         className={styles.wall}
         onMouseDown={handleSelectMouseDown}
         onMouseMove={handleSelectMouseMove}
-        onMouseUp={handleSelectMouseUp}
+        onMouseUp={(e) => handleSelectMouseUp(e)}
         onClick={handleClickOnWall}
         onDragOver={handleDragArtworkOverWall}
         onDrop={handleDropArtworkOnWall}

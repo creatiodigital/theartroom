@@ -145,7 +145,12 @@ export const LeftPanel = () => {
   }
 
   return (
-    <div className={styles.panel}>
+    <div
+      className={styles.panel}
+      data-no-deselect="true"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className={styles.section}>
         <div className={styles.subsection}>
           <div className={styles.row}>
