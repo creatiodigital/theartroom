@@ -60,7 +60,7 @@ export const Wall = () => {
   const currentArtwork = exhibitionArtworksById[currentArtworkId ?? '']
 
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
-  const { handleCreateArtworkDrag } = useCreateArtwork(boundingData!, currentWallId)
+  const { handleCreateArtworkDrag } = useCreateArtwork(boundingData!)
 
   const groupArtworkHandlers = useGroupArtwork()
   const { handleRemoveArtworkGroup } = groupArtworkHandlers
