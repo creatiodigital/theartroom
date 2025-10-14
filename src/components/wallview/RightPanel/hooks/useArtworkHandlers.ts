@@ -91,7 +91,6 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const artworkWidth = currentEdited.width2d
     const artworkHeight = currentEdited.height2d
     const artworkY = currentEdited.posY2d
-
     const new3DCoordinate = convert2DTo3D(newX, artworkY, artworkWidth, artworkHeight, boundingData)
 
     dispatch(

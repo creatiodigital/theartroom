@@ -18,7 +18,7 @@ export const CreatePanel = () => {
 
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
-  const { handleCreateArtwork } = useCreateArtwork(boundingData!, currentWallId)
+  const { handleCreateArtwork } = useCreateArtwork(boundingData!)
 
   const handleArtworkDragStart = (e: React.DragEvent, artworkType: string) => {
     e.dataTransfer.setData('artworkType', artworkType)

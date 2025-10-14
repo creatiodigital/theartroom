@@ -15,12 +15,13 @@ import type { RootState } from '@/redux/store'
 import type { TArtworkKind, TArtworkPosition } from '@/types/artwork'
 import type { TDimensions } from '@/types/geometry'
 
-export const useCreateArtwork = (boundingData: TDimensions, currentWallId: string | null) => {
+export const useCreateArtwork = (boundingData: TDimensions) => {
   const dispatch = useDispatch()
   const initialSize = 100
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
+  const currentWallId = useSelector((s: RootState) => s.wallView.currentWallId)
 
   const handleCreateArtwork = useCallback(
     (artworkType: TArtworkKind) => {
@@ -43,16 +44,12 @@ export const useCreateArtwork = (boundingData: TDimensions, currentWallId: strin
       const artworkPosition: TArtworkPosition = {
         id: artworkId,
         artworkId,
-        wallId: currentWallId ?? '',
+        wallId: currentWallId!,
         posX2d,
         posY2d,
         width2d: initialSize,
         height2d: initialSize,
         ...new3DCoordinate,
-        quaternionX: 0,
-        quaternionY: 0,
-        quaternionZ: 0,
-        quaternionW: 1,
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
@@ -93,10 +90,6 @@ export const useCreateArtwork = (boundingData: TDimensions, currentWallId: strin
         width2d: initialSize,
         height2d: initialSize,
         ...new3DCoordinate,
-        quaternionX: 0,
-        quaternionY: 0,
-        quaternionZ: 0,
-        quaternionW: 1,
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))

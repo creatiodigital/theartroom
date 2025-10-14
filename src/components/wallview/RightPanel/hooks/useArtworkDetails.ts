@@ -44,7 +44,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     }
   }
 
-  const { width2d, height3d, posX2d, posY2d } = artworkPosition
+  const { width2d, height2d, posX2d, posY2d } = artworkPosition
   const {
     name,
     artworkTitle,
@@ -72,7 +72,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
 
   return {
     width: Math.round(width2d),
-    height: Math.round(height3d ?? 0),
+    height: Math.round(height2d),
     x: Math.round(posX2d),
     y: Math.round(posY2d),
     name,
