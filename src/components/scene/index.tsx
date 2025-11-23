@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import React, { useRef, Suspense } from 'react'
+import { useRef, Suspense } from 'react'
 import { ACESFilmicToneMapping, Mesh } from 'three'
 
 import { Loader } from '@/components/ui/Loader'

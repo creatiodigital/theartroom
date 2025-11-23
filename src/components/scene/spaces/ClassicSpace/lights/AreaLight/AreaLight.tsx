@@ -1,5 +1,5 @@
 import { useThree } from '@react-three/fiber'
-import React from 'react'
+
 import { useRef, useEffect } from 'react'
 import { RectAreaLight } from 'three'
 import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper'

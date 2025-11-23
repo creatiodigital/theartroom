@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useContext, useMemo, createRef } from 'react'
+import { useContext, useMemo, createRef } from 'react'
 import { useSelector } from 'react-redux'
 import type { Mesh } from 'three'
 

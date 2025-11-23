@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react'
+import { useRef, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'

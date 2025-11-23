@@ -1,5 +1,5 @@
 import c from 'classnames'
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'

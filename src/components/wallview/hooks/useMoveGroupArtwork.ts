@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 

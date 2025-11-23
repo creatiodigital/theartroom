@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { SRGBColorSpace, Mesh, BufferGeometry, MeshStandardMaterial, Texture } from 'three'
 
 interface WallProps {

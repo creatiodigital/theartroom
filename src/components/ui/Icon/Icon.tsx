@@ -78,6 +78,7 @@ export type IconProps = {
 
 const Icon = ({ name, size = 24, color = 'currentColor' }: IconProps) => {
   const SvgIcon = icons[name]
+  console.log('SvgIcon:', SvgIcon)
   return SvgIcon ? <SvgIcon width={size} height={size} fill={color} /> : null
 }
 

@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import { memo } from 'react'
 import type { RefObject } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 

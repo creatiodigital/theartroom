@@ -1,5 +1,5 @@
 import c from 'classnames'
-import React, { useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { FileInput } from '@/components/ui/FileInput'

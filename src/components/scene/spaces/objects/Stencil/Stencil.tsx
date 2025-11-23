@@ -1,5 +1,5 @@
 import { Text } from '@react-three/drei'
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { ComponentRef } from 'react'
 import { DoubleSide } from 'three'
 
