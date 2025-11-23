@@ -1,4 +1,3 @@
-import React from 'react'
 import { Mesh, BufferGeometry, Material } from 'three'
 
 interface LampProps {

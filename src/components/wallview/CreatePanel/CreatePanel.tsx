@@ -1,5 +1,5 @@
 import { useGLTF } from '@react-three/drei'
-import React from 'react'
+
 import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
 

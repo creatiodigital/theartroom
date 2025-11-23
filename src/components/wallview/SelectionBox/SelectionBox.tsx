@@ -1,5 +1,3 @@
-import React from 'react'
-
 import styles from './SelectionBox.module.scss'
 
 export type TSelectionBox = {

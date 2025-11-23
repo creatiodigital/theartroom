@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { SRGBColorSpace, MeshStandardMaterial, Mesh, BufferGeometry, Texture } from 'three'
 
 interface CeilingProps {

@@ -1,5 +1,7 @@
-import c from 'classnames'
 import React from 'react'
+
+import c from 'classnames'
+
 import type { MouseEventHandler } from 'react'
 
 import styles from './Button.module.scss'

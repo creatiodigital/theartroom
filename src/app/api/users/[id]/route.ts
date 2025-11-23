@@ -4,8 +4,6 @@ import type { Prisma } from '@/generated/prisma'
 import { UserType as UserTypeEnum } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 
-type RouteParams = { params: { id: string } }
-
 type Body = {
   name?: string
   lastName?: string
@@ -24,11 +22,14 @@ const toUserType = (val: unknown): UserTypeValue | undefined => {
     : undefined
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
-  const { id } = params
+/* ------------------------ GET ------------------------ */
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
+
     const user = await prisma.user.findUnique({ where: { id } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
     return NextResponse.json(user)
   } catch (error) {
     console.error('[GET /api/users/[id]] error:', error)
@@ -36,9 +37,10 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+/* ------------------------ PUT ------------------------ */
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await context.params
     const body = (await request.json()) as Body
 
     const userTypeEnum = toUserType(body.userType)

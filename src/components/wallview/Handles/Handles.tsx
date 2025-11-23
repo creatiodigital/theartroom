@@ -1,5 +1,3 @@
-import React from 'react'
-
 import { Handle } from '@/components/wallview/Handle'
 import type { ResizeHandler } from '@/types/wallView'
 

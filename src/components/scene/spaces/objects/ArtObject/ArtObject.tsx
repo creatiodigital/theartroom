@@ -1,5 +1,3 @@
-import React from 'react'
-
 import { Display } from '@/components/scene/spaces/objects/Display'
 import { Stencil } from '@/components/scene/spaces/objects/Stencil'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'

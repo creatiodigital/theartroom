@@ -1,5 +1,5 @@
 import c from 'classnames'
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 import { Icon } from '@/components/ui/Icon'
 

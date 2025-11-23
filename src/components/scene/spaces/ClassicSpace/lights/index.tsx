@@ -1,5 +1,3 @@
-import React from 'react'
-
 import { AmbientLight } from './AmbientLight'
 // import { AreaLight } from './AreaLight'
 import { HDRI } from './HDRI'

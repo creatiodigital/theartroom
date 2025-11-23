@@ -1,5 +1,4 @@
 import c from 'classnames'
-import React from 'react'
 
 import { Icon } from '@/components/ui/Icon'
 import type { IconName } from '@/components/ui/Icon'

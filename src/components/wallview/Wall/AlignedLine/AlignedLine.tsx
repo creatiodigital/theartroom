@@ -1,5 +1,3 @@
-import React from 'react'
-
 import styles from './AlignedLine.module.scss'
 
 type LineRect = {
