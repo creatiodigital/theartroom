@@ -1,3 +1,5 @@
+'use client'
+
 import styles from './SelectionBox.module.scss'
 
 export type TSelectionBox = {

@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useRef, type ReactNode } from 'react'
 
 import styles from './Tooltip.module.scss'

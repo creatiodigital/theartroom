@@ -1,3 +1,5 @@
+'use client'
+
 import c from 'classnames'
 
 import type { THandleDirection } from '@/types/wallView'

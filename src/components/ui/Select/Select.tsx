@@ -1,3 +1,5 @@
+'use client'
+
 import c from 'classnames'
 import { useState, useRef, useEffect } from 'react'
 
