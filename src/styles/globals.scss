@@ -1,6 +1,6 @@
-@import 'variables';
-@import 'normalize';
-@import 'mixins';
+@use 'variables';
+@use 'normalize' as *;
+@use 'mixins';
 
 * {
   box-sizing: border-box;

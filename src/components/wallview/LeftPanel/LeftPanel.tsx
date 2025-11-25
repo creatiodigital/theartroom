@@ -1,3 +1,5 @@
+'use client'
+
 import c from 'classnames'
 import { useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'

@@ -1,3 +1,5 @@
+'use client'
+
 import { useRef, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 

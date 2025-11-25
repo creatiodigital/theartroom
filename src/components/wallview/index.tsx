@@ -1,3 +1,5 @@
+'use client'
+
 import { CenterPanel } from '@/components/wallview/CenterPanel'
 import { CreatePanel } from '@/components/wallview/CreatePanel'
 import { LeftPanel } from '@/components/wallview/LeftPanel'

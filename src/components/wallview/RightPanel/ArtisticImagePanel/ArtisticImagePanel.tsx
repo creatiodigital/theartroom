@@ -1,3 +1,5 @@
+'use client'
+
 import { useSelector } from 'react-redux'
 
 import { Checkbox } from '@/components/ui/Checkbox'

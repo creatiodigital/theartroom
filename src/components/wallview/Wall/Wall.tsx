@@ -1,3 +1,5 @@
+'use client'
+
 import { useGLTF } from '@react-three/drei'
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import type { DragEvent } from 'react'

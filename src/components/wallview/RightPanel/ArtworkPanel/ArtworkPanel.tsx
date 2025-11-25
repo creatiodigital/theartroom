@@ -1,3 +1,5 @@
+'use client'
+
 import { useGLTF } from '@react-three/drei'
 
 import { useSelector } from 'react-redux'
