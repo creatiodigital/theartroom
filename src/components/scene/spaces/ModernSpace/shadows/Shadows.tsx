@@ -1,5 +1,4 @@
 import { AccumulativeShadows, RandomizedLight } from '@react-three/drei'
-import React from 'react'
 
 const Shadows = () => {
   return (

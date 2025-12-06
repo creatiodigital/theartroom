@@ -1,4 +1,6 @@
-import React, { forwardRef } from 'react'
+'use client'
+
+import { forwardRef } from 'react'
 import type { CSSProperties, FormEventHandler } from 'react'
 
 import styles from './FileInput.module.scss'

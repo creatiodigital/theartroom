@@ -3,7 +3,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useContext, useEffect, useRef, useState, useCallback, type RefObject } from 'react'
 import { useSelector } from 'react-redux'
-import { Vector3, PerspectiveCamera, Mesh } from 'three'
+import { Vector3, PerspectiveCamera, Mesh, Raycaster } from 'three'
 
 import SceneContext from '@/contexts/SceneContext'
 import type { RootState } from '@/redux/store'
@@ -29,18 +29,18 @@ function detectCollisions(
   glassRefs: RefObject<Mesh | null>[],
   collisionDistance: number,
 ): boolean {
-  for (const refGroup of [wallRefs, windowRefs, glassRefs]) {
-    for (const ref of refGroup) {
-      const mesh = ref.current
-      if (!mesh) continue
+  if (movementVector.lengthSq() === 0) return false
 
-      const distance = mesh.position.distanceTo(camera.position)
-      if (distance < collisionDistance) {
-        return true
-      }
-    }
-  }
-  return false
+  const direction = movementVector.clone().normalize()
+  const raycaster = new Raycaster(camera.position, direction, 0, 3)
+
+  const meshes = [...wallRefs, ...windowRefs, ...glassRefs]
+    .map((ref) => ref.current)
+    .filter(Boolean) as Mesh[]
+
+  const hits = raycaster.intersectObjects(meshes, true)
+
+  return hits.some((hit) => hit.distance <= collisionDistance)
 }
 
 const MainCamera = () => {

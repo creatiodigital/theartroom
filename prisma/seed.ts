@@ -15,8 +15,6 @@ async function main() {
       userType: 'artist',
     },
   })
-
-  console.log('User created:', user)
 }
 
 main()

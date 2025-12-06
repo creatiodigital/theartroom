@@ -1,5 +1,6 @@
+'use client'
+
 import c from 'classnames'
-import React from 'react'
 
 import type { THandleDirection } from '@/types/wallView'
 

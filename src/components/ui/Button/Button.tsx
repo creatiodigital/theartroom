@@ -1,5 +1,9 @@
-import c from 'classnames'
+'use client'
+
 import React from 'react'
+
+import c from 'classnames'
+
 import type { MouseEventHandler } from 'react'
 
 import styles from './Button.module.scss'
@@ -13,7 +17,6 @@ type ButtonProps = {
 
 export const Button = React.memo(
   ({ variant = 'primary', type = 'button', onClick, label }: ButtonProps) => {
-    // console.log('Button', label)
     return (
       <button className={c([styles.button, styles[variant]])} onClick={onClick} type={type}>
         {label}

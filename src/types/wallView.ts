@@ -1,5 +1,3 @@
-import React from 'react'
-
 export type TWall = {
   id: string
   name: string

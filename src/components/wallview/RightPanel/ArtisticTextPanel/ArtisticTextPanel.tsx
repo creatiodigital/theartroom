@@ -1,6 +1,6 @@
-import React from 'react'
-import { useSelector } from 'react-redux'
+'use client'
 
+import { useSelector } from 'react-redux'
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Select } from '@/components/ui/Select'

@@ -3,12 +3,13 @@ import type { NextRequest } from 'next/server'
 
 import prisma from '@/lib/prisma'
 
-type RouteParams = { params: { id: string } }
-
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    // params is now a Promise — must be awaited
+    const { id } = await context.params
+
     await prisma.exhibition.delete({ where: { id } })
+
     return NextResponse.json({ success: true, id })
   } catch (error) {
     console.error('[DELETE /api/exhibitions/[id]] error:', error)

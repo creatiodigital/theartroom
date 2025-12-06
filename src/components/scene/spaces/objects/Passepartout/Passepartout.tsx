@@ -1,4 +1,3 @@
-import React from 'react'
 import { Material } from 'three'
 
 interface PassepartoutProps {

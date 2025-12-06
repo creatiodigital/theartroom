@@ -1,4 +1,6 @@
-import React, { useRef, useMemo } from 'react'
+'use client'
+
+import { useRef, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'

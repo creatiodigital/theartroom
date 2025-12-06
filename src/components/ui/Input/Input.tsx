@@ -1,3 +1,5 @@
+'use client'
+
 import c from 'classnames'
 import type { ChangeEventHandler, FocusEventHandler, KeyboardEventHandler } from 'react'
 
