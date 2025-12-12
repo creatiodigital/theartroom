@@ -42,6 +42,9 @@ export const exhibitionApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
     }),
+    getExhibitionByUrl: builder.query<TExhibition, string>({
+      query: (url) => `exhibitions/by-url/${encodeURIComponent(url)}`,
+    }),
   }),
   overrideExisting: false,
 })
@@ -50,4 +53,5 @@ export const {
   useGetExhibitionsByUserQuery,
   useCreateExhibitionMutation,
   useDeleteExhibitionMutation,
+  useGetExhibitionByUrlQuery,
 } = exhibitionApi

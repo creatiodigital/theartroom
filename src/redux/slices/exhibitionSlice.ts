@@ -42,10 +42,14 @@ const exhibitionSlice = createSlice({
       delete state.exhibitionArtworksById[artworkId]
       state.allExhibitionArtworkIds = state.allExhibitionArtworkIds.filter((id) => id !== artworkId)
     },
+
+    setExhibition: (_state: TExhibition, action: PayloadAction<TExhibition>) => {
+      return action.payload
+    },
   },
 })
 
-export const { createArtworkPosition, updateArtworkPosition, deleteArtworkPosition } =
+export const { createArtworkPosition, updateArtworkPosition, deleteArtworkPosition, setExhibition } =
   exhibitionSlice.actions
 
 export default exhibitionSlice.reducer

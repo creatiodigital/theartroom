@@ -39,7 +39,7 @@ export const Dashboard = () => {
   const hardcodedId = '915a1541-f132-4fd1-a714-e34527485054'
 
   const { data: userData } = useGetUserQuery(hardcodedId)
-  const { data: exhibitionsData } = useGetExhibitionsByUserQuery(hardcodedId)
+  const { data: exhibitionsData, refetch: refetchExhibitions } = useGetExhibitionsByUserQuery(hardcodedId)
 
   const [createExhibition, { isLoading: creating, error }] = useCreateExhibitionMutation()
 
@@ -51,7 +51,7 @@ export const Dashboard = () => {
 
   const handleSelectSpace = useCallback(
     (option: TOption<string>) => {
-      dispatch(selectSpace(option.value as unknown as TSpaceOption))
+      dispatch(selectSpace(option as TSpaceOption))
     },
     [dispatch],
   )
@@ -68,15 +68,16 @@ export const Dashboard = () => {
           visibility,
           userId: userData?.id ?? '',
           userHandler: userData?.handler ?? '',
-          spaceId: 'modern',
+          spaceId: selectedSpace.value,
         }).unwrap()
         dispatch(addExhibition(newEx))
+        refetchExhibitions()
         setIsModalShown(false)
       } catch (err) {
         console.error('Failed to create exhibition', err)
       }
     },
-    [createExhibition, dispatch, userData?.id, userData?.handler],
+    [createExhibition, dispatch, userData?.id, userData?.handler, selectedSpace, refetchExhibitions],
   )
 
   const handleDeleteExhibition = useCallback(
