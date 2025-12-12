@@ -1,8 +1,11 @@
 import { withAccelerate } from '@prisma/extension-accelerate'
 
-import { PrismaClient } from '../generated/prisma'
+import { PrismaClient } from '../generated/prisma/client'
 
-const createClient = () => new PrismaClient().$extends(withAccelerate())
+const createClient = () =>
+  new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL,
+  }).$extends(withAccelerate())
 
 type AcceleratedPrismaClient = ReturnType<typeof createClient>
 
