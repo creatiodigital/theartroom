@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
 
-import { editArtisticText } from '@/redux/slices/artworksSlice'
+import { editArtisticText } from '@/redux/slices/artworkSlice'
 import type { TArtwork } from '@/types/artwork'
 
 export const useArtworkTextHandlers = (currentArtworkId: string) => {

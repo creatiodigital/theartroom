@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Box3 } from 'three'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { editArtwork } from '@/redux/slices/artworksSlice'
+import { editArtwork } from '@/redux/slices/artworkSlice'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'

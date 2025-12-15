@@ -71,18 +71,9 @@ export type TDirection =
   | 'bottom-left'
   | 'bottom-right'
 
-export type THandleDirection =
-  | 'left'
-  | 'right'
-  | 'top'
-  | 'bottom'
-  | 'top-left'
-  | 'top-right'
-  | 'bottom-left'
-  | 'bottom-right'
-
 export type ResizeHandler<E extends Element = HTMLDivElement> = (
   event: React.MouseEvent<E>,
   artworkId: string,
-  direction: THandleDirection,
+  direction: TDirection,
 ) => void
+

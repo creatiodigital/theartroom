@@ -2,12 +2,12 @@
 
 import c from 'classnames'
 
-import type { THandleDirection } from '@/types/wallView'
+import type { TDirection } from '@/types/wallView'
 
 import styles from './Handle.module.scss'
 
 type THandleProps = {
-  direction: THandleDirection
+  direction: TDirection
   onMouseDown: React.MouseEventHandler<HTMLDivElement>
 }
 

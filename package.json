@@ -23,8 +23,6 @@
     "@prisma/extension-accelerate": "^3.0.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
-    "@react-three/postprocessing": "^3.0.4",
-    "@react-three/rapier": "^2.2.0",
     "@reduxjs/toolkit": "^2.3.0",
     "classnames": "^2.5.1",
     "dotenv": "^17.2.3",

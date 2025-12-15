@@ -1,0 +1,20 @@
+// Barrel export for shared 3D objects
+// Import from '@/components/scene/spaces/objects' in space components
+
+export { ArtObject } from './ArtObject'
+export { ArtObjects } from './ArtObjects'
+export { Ceiling } from './Ceiling'
+export { CeilingGlass } from './CeilingGlass'
+export { Display } from './Display'
+export { Floor } from './Floor'
+export { Frame } from './Frame'
+export { Lamp } from './Lamp'
+export { Line } from './Line'
+export { Passepartout } from './Passepartout'
+export { Placeholder } from './Placeholder'
+export { RectLamp } from './RectLamp'
+export { RectLight } from './RectLight'
+export { Reel } from './Reel'
+export { Stencil } from './Stencil'
+export { Wall } from './Wall'
+export { Window } from './Window'

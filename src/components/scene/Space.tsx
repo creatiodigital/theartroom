@@ -8,7 +8,7 @@ import SceneContext from '@/contexts/SceneContext'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
-import { spaceComponents, spaceRefsConfig, type SpaceKey } from './constants'
+import { spaceComponents, getSpaceConfig, type SpaceKey } from './constants'
 
 type SpaceProps = {
   onPlaceholderClick: (wallId: string) => void
@@ -20,30 +20,30 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'classic'
 
   const spaceKey = spaceId as SpaceKey
-  const spaceConfig = spaceRefsConfig[spaceKey] || spaceRefsConfig['classic']
+  const spaceConfig = getSpaceConfig(spaceId)
 
   const wallRefArray = useMemo(
-    () => Array.from({ length: spaceConfig.walls || 0 }, () => createRef<Mesh>()),
-    [spaceConfig.walls],
+    () => Array.from({ length: spaceConfig.refs.walls || 0 }, () => createRef<Mesh>()),
+    [spaceConfig.refs.walls],
   )
 
   const windowRefArray = useMemo(
-    () => Array.from({ length: spaceConfig.windows || 0 }, () => createRef<Mesh>()),
-    [spaceConfig.windows],
+    () => Array.from({ length: spaceConfig.refs.windows || 0 }, () => createRef<Mesh>()),
+    [spaceConfig.refs.windows],
   )
 
   const glassRefArray = useMemo(
-    () => Array.from({ length: spaceConfig.glass || 0 }, () => createRef<Mesh>()),
-    [spaceConfig.glass],
+    () => Array.from({ length: spaceConfig.refs.glass || 0 }, () => createRef<Mesh>()),
+    [spaceConfig.refs.glass],
   )
 
   if (!sceneContext || !spaceId) return null
 
   const { wallRefs, windowRefs, glassRefs } = sceneContext
 
-  if ('walls' in spaceConfig) wallRefs.current = wallRefArray
-  if ('windows' in spaceConfig) windowRefs.current = windowRefArray
-  if ('glass' in spaceConfig) glassRefs.current = glassRefArray
+  if (spaceConfig.refs.walls) wallRefs.current = wallRefArray
+  if (spaceConfig.refs.windows) windowRefs.current = windowRefArray
+  if (spaceConfig.refs.glass) glassRefs.current = glassRefArray
 
   const SpaceComponent = spaceComponents[spaceKey]
   if (!SpaceComponent) return null
@@ -58,3 +58,4 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
     />
   )
 }
+

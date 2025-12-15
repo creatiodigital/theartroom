@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { deleteArtwork } from '@/redux/slices/artworksSlice'
+import { deleteArtwork } from '@/redux/slices/artworkSlice'
 import { deleteArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import { removeGroup, setShiftKeyDown } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'

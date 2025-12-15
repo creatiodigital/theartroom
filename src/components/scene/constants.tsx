@@ -1,20 +1,74 @@
-import ClassicSpace from '@/components/scene/spaces/ClassicSpace/ClassicSpace'
-import ModernSpace from '@/components/scene/spaces/ModernSpace/ModernSpace'
+import dynamic from 'next/dynamic'
 
+import type { SpaceConfig } from './spaces/types'
+
+// =============================================================================
+// Space Registry
+// =============================================================================
+
+/**
+ * Available space keys. Add new spaces here.
+ */
 export type SpaceKey = 'classic' | 'modern'
 
-export type SpaceRefConfig = {
-  walls?: number
-  windows?: number
-  glass?: number
+/**
+ * Configuration for each space including refs, metadata, and assets.
+ * When adding a new space:
+ * 1. Add the key to SpaceKey type
+ * 2. Add config here
+ * 3. Add component to spaceComponents
+ */
+export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
+  classic: {
+    displayName: 'Classic Gallery',
+    gltfPath: '/assets/spaces/classic.glb',
+    thumbnailUrl: '/assets/thumbnails/classic.jpg',
+    refs: {
+      walls: 1,
+      windows: 2,
+      glass: 2,
+    },
+    placeholders: 4,
+  },
+  modern: {
+    displayName: 'Modern Gallery',
+    gltfPath: '/assets/spaces/modern.glb',
+    thumbnailUrl: '/assets/thumbnails/modern.jpg',
+    refs: {
+      walls: 1,
+    },
+    placeholders: 4,
+  },
 }
 
-export const spaceRefsConfig: Record<SpaceKey, SpaceRefConfig> = {
-  classic: { walls: 1, windows: 2, glass: 2 },
-  modern: { walls: 1 },
-}
-
+/**
+ * Lazy-loaded space components for better performance.
+ * Each space is only loaded when needed.
+ */
 export const spaceComponents = {
-  classic: ClassicSpace,
-  modern: ModernSpace,
+  classic: dynamic(() => import('./spaces/ClassicSpace'), { ssr: false }),
+  modern: dynamic(() => import('./spaces/ModernSpace'), { ssr: false }),
 }
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Get space config by key, with fallback to 'classic'.
+ */
+export const getSpaceConfig = (spaceId: string): SpaceConfig => {
+  const key = spaceId as SpaceKey
+  return spaceConfigs[key] || spaceConfigs['classic']
+}
+
+/**
+ * Get all available space options for UI.
+ */
+export const getSpaceOptions = () =>
+  Object.entries(spaceConfigs).map(([key, config]) => ({
+    value: key as SpaceKey,
+    label: config.displayName,
+    thumbnailUrl: config.thumbnailUrl,
+  }))
+

@@ -1,9 +1,9 @@
-export type TFontFamily = 'roboto' | 'lora'
-export type TFontWeight = 'regular' | 'bold'
-export type TTextAlign = 'left' | 'right' | 'center'
-export type TArtworkKind = 'image' | 'text'
+// Re-export shared types from fonts.ts for backward compatibility
+export type { TFontFamily, TFontWeight, TTextAlign, TOption } from '@/types/fonts'
 
-export type TOption<T> = { label: string; value: T }
+import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
+
+export type TArtworkKind = 'image' | 'text'
 
 export type TArtworkPosition = {
   id?: string
@@ -44,11 +44,12 @@ export type TArtwork = {
   passepartoutColor?: string
   passepartoutThickness?: TOption<number>
   textContent?: string
-  fontFamily?: TOption<'roboto' | 'lora'>
+  fontFamily?: TOption<TFontFamily>
   fontSize?: TOption<number>
-  fontWeight?: TOption<'regular' | 'bold'>
+  fontWeight?: TOption<TFontWeight>
   letterSpacing?: TOption<number>
   lineHeight?: TOption<number>
   textColor?: string
   textAlign?: 'left' | 'right' | 'center'
 }
+

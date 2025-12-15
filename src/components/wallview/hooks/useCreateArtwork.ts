@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { v4 as uuidv4 } from 'uuid'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { createArtwork } from '@/redux/slices/artworksSlice'
+import { createArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import {
   chooseCurrentArtworkId,
