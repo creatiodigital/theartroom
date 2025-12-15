@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 
-import { editArtisticText } from '@/redux/slices/artworksSlice'
+import { editArtisticText } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 

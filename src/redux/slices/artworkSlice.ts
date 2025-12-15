@@ -18,7 +18,7 @@ const initialState: TArtworksState = {
   },
 }
 
-const artworksSlice = createSlice({
+const artworkSlice = createSlice({
   name: 'artworks',
   initialState,
   reducers: {
@@ -80,6 +80,6 @@ const artworksSlice = createSlice({
 })
 
 export const { createArtwork, editArtwork, editArtisticImage, editArtisticText, deleteArtwork } =
-  artworksSlice.actions
+  artworkSlice.actions
 
-export default artworksSlice.reducer
+export default artworkSlice.reducer

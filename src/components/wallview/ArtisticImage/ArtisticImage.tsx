@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { FileInput } from '@/components/ui/FileInput'
 import { Icon } from '@/components/ui/Icon'
-import { editArtisticImage } from '@/redux/slices/artworksSlice'
+import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'

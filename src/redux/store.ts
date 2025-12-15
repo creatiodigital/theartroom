@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import artworksReducer from './slices/artworksSlice'
+import artworksReducer from './slices/artworkSlice'
 import { baseApi } from './slices/baseApi'
 import dashboardReducer from './slices/dashboardSlice'
 import exhibitionReducer from './slices/exhibitionSlice'
