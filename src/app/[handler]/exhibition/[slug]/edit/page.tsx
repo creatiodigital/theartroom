@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { EditView } from '@/components/editview'
-import { clearAllSpaces } from '@/hooks/useKTX2GLTF'
+import { useGLTF } from '@react-three/drei'
 import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
@@ -35,7 +35,8 @@ const EditPageWrapper = () => {
       dispatch(resetWizard())
 
       // Clear GLTF cache for all space types
-      clearAllSpaces()
+      useGLTF.clear('/assets/spaces/classic.glb')
+      useGLTF.clear('/assets/spaces/modern.glb')
 
       hasResetRef.current = true
     }

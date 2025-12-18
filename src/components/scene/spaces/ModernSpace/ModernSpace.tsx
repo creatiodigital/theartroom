@@ -1,4 +1,4 @@
-import { useKTX2GLTF } from '@/hooks/useKTX2GLTF'
+import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh, MeshStandardMaterial, BufferGeometry, Texture } from 'three'
@@ -40,7 +40,7 @@ type ModernSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
-  const { nodes, materials } = useKTX2GLTF<GLTFResult>('/assets/spaces/modern.glb')
+  const { nodes, materials } = useGLTF('/assets/spaces/modern.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
