@@ -1,6 +1,6 @@
 'use client'
 
-import { useKTX2GLTF } from '@/hooks/useKTX2GLTF'
+import { useGLTF } from '@react-three/drei'
 
 import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
@@ -17,7 +17,7 @@ export const CreatePanel = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const { nodes } = useKTX2GLTF<{ nodes: Record<string, Mesh> }>(`/assets/spaces/${spaceId || 'classic'}.glb`)
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as { nodes: Record<string, Mesh> }
 
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 

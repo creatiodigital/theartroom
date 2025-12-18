@@ -1,6 +1,6 @@
 'use client'
 
-import { useKTX2GLTF } from '@/hooks/useKTX2GLTF'
+import { useGLTF } from '@react-three/drei'
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import type { DragEvent } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -31,7 +31,7 @@ import styles from './Wall.module.scss'
 export const Wall = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
-  const { nodes } = useKTX2GLTF<{ nodes: Record<string, Mesh> }>(`/assets/spaces/${spaceId || 'classic'}.glb`)
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as { nodes: Record<string, Mesh> }
 
   const allIds = useSelector((state: RootState) => state.artworks.allIds)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
