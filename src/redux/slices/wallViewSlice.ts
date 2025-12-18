@@ -21,6 +21,10 @@ const wallViewSlice = createSlice({
       state.isWallView = false
       state.currentWallId = null
     },
+    resetWallView: () => {
+      // Return fresh initial state to prevent stale data between exhibitions
+      return wallViewFactory()
+    },
     showHuman: (state: TWallView) => {
       state.isHumanVisible = true
     },
@@ -115,6 +119,7 @@ const wallViewSlice = createSlice({
 export const {
   showWallView,
   hideWallView,
+  resetWallView,
   showHuman,
   hideHuman,
   chooseCurrentArtworkId,

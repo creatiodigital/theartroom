@@ -4,3 +4,11 @@
   width: 100vw;
   height: 100vh;
 }
+
+// Position the performance stats panel at bottom-right
+:global(.stats-panel) {
+  top: auto !important;
+  left: auto !important;
+  bottom: 16px !important;
+  right: 16px !important;
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useGLTF } from '@react-three/drei'
+import { useKTX2GLTF } from '@/hooks/useKTX2GLTF'
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import type { DragEvent } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -29,8 +29,9 @@ import { AlignedLine } from './AlignedLine'
 import styles from './Wall.module.scss'
 
 export const Wall = () => {
-  const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
-  const { nodes } = useGLTF(`/assets/spaces/${selectedSpace.value}.glb`)
+  // Use exhibition spaceId to load the correct GLB for this exhibition
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const { nodes } = useKTX2GLTF<{ nodes: Record<string, Mesh> }>(`/assets/spaces/${spaceId || 'classic'}.glb`)
 
   const allIds = useSelector((state: RootState) => state.artworks.allIds)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -104,6 +105,12 @@ export const Wall = () => {
     if (boundingData && wallRef.current) {
       const width = boundingData.width
       const height = boundingData.height
+
+      // Skip if dimensions are invalid (NaN or zero)
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width === 0 || height === 0) {
+        console.warn('Invalid wall dimensions:', { width, height })
+        return
+      }
 
       wallRef.current.style.width = `${width * scaling}px`
       wallRef.current.style.height = `${height * scaling}px`

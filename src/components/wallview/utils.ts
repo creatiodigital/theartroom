@@ -3,8 +3,15 @@ import { Vector3, Quaternion, Mesh, BufferGeometry, Box3 } from 'three'
 import type { TDimensions } from '@/types/geometry'
 
 export const calculateAverageNormal = (placeholder: Mesh<BufferGeometry>): Vector3 => {
-  const normalsArray = placeholder.geometry.attributes.normal.array as Float32Array
   const normal = new Vector3(0, 0, 0)
+
+  // Defensive check for geometry attributes
+  if (!placeholder.geometry?.attributes?.normal?.array) {
+    console.warn('calculateAverageNormal: geometry normal attributes not available')
+    return normal.set(0, 0, 1) // Default to facing +Z
+  }
+
+  const normalsArray = placeholder.geometry.attributes.normal.array as Float32Array
 
   for (let i = 0; i < normalsArray.length; i += 3) {
     normal.x += normalsArray[i]
@@ -19,19 +26,61 @@ export const calculateDimensionsAndBasis = (boundingBox: Box3, normal: Vector3) 
   const u = new Vector3()
   const v = new Vector3()
 
-  if (Math.abs(normal.y) < 1) {
-    u.crossVectors(normal, new Vector3(0, 1, 0)).normalize()
-  } else {
-    u.crossVectors(normal, new Vector3(1, 0, 0)).normalize()
+  // Check if normal is valid (non-zero)
+  const normalLength = normal.length()
+  if (!Number.isFinite(normalLength) || normalLength === 0) {
+    console.warn('calculateDimensionsAndBasis: Invalid normal vector, using default')
+    normal.set(0, 0, 1)
   }
 
-  v.crossVectors(normal, u).normalize()
+  if (Math.abs(normal.y) < 1) {
+    u.crossVectors(normal, new Vector3(0, 1, 0))
+  } else {
+    u.crossVectors(normal, new Vector3(1, 0, 0))
+  }
+
+  // Ensure u is valid before normalizing
+  if (u.length() > 0) {
+    u.normalize()
+  } else {
+    u.set(1, 0, 0)
+  }
+
+  v.crossVectors(normal, u)
+  if (v.length() > 0) {
+    v.normalize()
+  } else {
+    v.set(0, 1, 0)
+  }
 
   const size = new Vector3()
   boundingBox.getSize(size)
 
-  const width = Math.abs(size.dot(u))
-  const height = Math.abs(size.dot(v))
+  // Fallback if size is invalid
+  if (!Number.isFinite(size.x) || !Number.isFinite(size.y) || !Number.isFinite(size.z)) {
+    console.warn('calculateDimensionsAndBasis: Invalid bounding box size')
+    return { width: 0, height: 0, u, v }
+  }
+
+  let width = Math.abs(size.dot(u))
+  let height = Math.abs(size.dot(v))
+
+  // If projection gives zero, use bounding box dimensions directly
+  // (happens when normals aren't available from compressed GLBs)
+  if (width === 0 || height === 0) {
+    // For vertical walls, width is typically X or Z, height is Y
+    const maxHorizontal = Math.max(size.x, size.z)
+    width = width === 0 ? maxHorizontal : width
+    height = height === 0 ? size.y : height
+
+    // Reset basis vectors for direct bounding box usage
+    if (size.x >= size.z) {
+      u.set(1, 0, 0)
+    } else {
+      u.set(0, 0, 1)
+    }
+    v.set(0, 1, 0)
+  }
 
   return { width, height, u, v }
 }

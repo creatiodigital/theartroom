@@ -19,10 +19,15 @@ const wizardSlice = createSlice({
     setArtworkUploadedFalse: (state: TWizard) => {
       state.isArtworkUploaded = false
     },
+
+    resetWizard: () => {
+      // Return fresh initial state to prevent stale data between exhibitions
+      return wizardFactory()
+    },
   },
 })
 
-export const { showWizard, hideWizard, setArtworkUploadedTrue, setArtworkUploadedFalse } =
+export const { showWizard, hideWizard, setArtworkUploadedTrue, setArtworkUploadedFalse, resetWizard } =
   wizardSlice.actions
 
 export default wizardSlice.reducer

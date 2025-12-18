@@ -39,7 +39,8 @@ const Placeholder: React.FC<PlaceholderProps> = ({ i, nodes }) => {
   }, [])
 
   const handleOnPlaceholderClick = (mesh: Mesh) => {
-    dispatch(showWallView(mesh.uuid))
+    // Use mesh.name instead of mesh.uuid for stable identification across page loads
+    dispatch(showWallView(mesh.name))
     dispatch(hideArtworkPanel())
   }
 
