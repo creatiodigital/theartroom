@@ -1,22 +1,45 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { EditView } from '@/components/editview'
+import { clearAllSpaces } from '@/hooks/useKTX2GLTF'
+import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
+import { resetScene } from '@/redux/slices/sceneSlice'
+import { resetWallView } from '@/redux/slices/wallViewSlice'
+import { resetWizard } from '@/redux/slices/wizardSlice'
 import type { AppDispatch } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 
 const EditPageWrapper = () => {
   const params = useParams()
   const dispatch = useDispatch<AppDispatch>()
+  const hasResetRef = useRef(false)
 
   // Extract the full URL from the route: /[handler]/exhibition/[slug]/edit
   // The slug param contains the exhibition URL (which is "handler/slug-title")
   const slug = params.slug as string
+
+  // Reset all exhibition-related state when page loads
+  // This ensures complete isolation between exhibitions
+  useEffect(() => {
+    if (!hasResetRef.current) {
+      // Reset all Redux state
+      dispatch(resetWallView())
+      dispatch(resetScene())
+      dispatch(resetArtworks())
+      dispatch(resetWizard())
+
+      // Clear GLTF cache for all space types
+      clearAllSpaces()
+
+      hasResetRef.current = true
+    }
+  }, [dispatch])
 
   const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(slug, {
     skip: !slug,

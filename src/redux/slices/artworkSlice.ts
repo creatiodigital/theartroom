@@ -76,10 +76,15 @@ const artworkSlice = createSlice({
       delete state.byId[artworkId]
       state.allIds = state.allIds.filter((id) => id !== artworkId)
     },
+
+    resetArtworks: () => {
+      // Return fresh initial state to prevent stale data between exhibitions
+      return initialState
+    },
   },
 })
 
-export const { createArtwork, editArtwork, editArtisticImage, editArtisticText, deleteArtwork } =
+export const { createArtwork, editArtwork, editArtisticImage, editArtisticText, deleteArtwork, resetArtworks } =
   artworkSlice.actions
 
 export default artworkSlice.reducer

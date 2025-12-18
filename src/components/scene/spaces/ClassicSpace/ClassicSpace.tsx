@@ -1,4 +1,4 @@
-import { useGLTF } from '@react-three/drei'
+import { useKTX2GLTF } from '@/hooks/useKTX2GLTF'
 import { useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh, BufferGeometry, MeshStandardMaterial, Texture } from 'three'
@@ -55,7 +55,7 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
   glassRefs,
   ...props
 }) => {
-  const { nodes, materials } = useGLTF('/assets/spaces/classic.glb') as unknown as GLTFResult
+  const { nodes, materials } = useKTX2GLTF<GLTFResult>('/assets/spaces/classic.glb')
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -110,7 +110,5 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
     </group>
   )
 }
-
-useGLTF.preload('/assets/spaces/classic.glb')
 
 export default ClassicSpace
