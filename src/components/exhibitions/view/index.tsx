@@ -1,6 +1,5 @@
 'use client'
 
-import { useParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 
@@ -10,15 +9,16 @@ import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import type { AppDispatch } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 
-const ScenePageWrapper = () => {
-  const params = useParams()
+interface ExhibitionViewPageProps {
+  artistSlug: string
+  exhibitionSlug: string
+}
+
+export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
 
-  // Extract the slug from route params
-  const slug = params.slug as string
-
-  const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(slug, {
-    skip: !slug,
+  const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(exhibitionSlug, {
+    skip: !exhibitionSlug,
   })
 
   useEffect(() => {
@@ -58,6 +58,3 @@ const ScenePageWrapper = () => {
 
   return <Scene />
 }
-
-export default ScenePageWrapper
-

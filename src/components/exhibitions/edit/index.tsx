@@ -1,8 +1,9 @@
 'use client'
 
-import { useParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 import { EditView } from '@/components/editview'
 import { useGLTF } from '@react-three/drei'
@@ -15,14 +16,16 @@ import { resetWizard } from '@/redux/slices/wizardSlice'
 import type { AppDispatch } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 
-const EditPageWrapper = () => {
-  const params = useParams()
-  const dispatch = useDispatch<AppDispatch>()
-  const hasResetRef = useRef(false)
+interface ExhibitionEditPageProps {
+  artistSlug: string
+  exhibitionSlug: string
+}
 
-  // Extract the full URL from the route: /[handler]/exhibition/[slug]/edit
-  // The slug param contains the exhibition URL (which is "handler/slug-title")
-  const slug = params.slug as string
+export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEditPageProps) => {
+  const dispatch = useDispatch<AppDispatch>()
+  const router = useRouter()
+  const { status: sessionStatus } = useSession()
+  const hasResetRef = useRef(false)
 
   // Reset all exhibition-related state when page loads
   // This ensures complete isolation between exhibitions
@@ -42,8 +45,8 @@ const EditPageWrapper = () => {
     }
   }, [dispatch])
 
-  const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(slug, {
-    skip: !slug,
+  const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(exhibitionSlug, {
+    skip: !exhibitionSlug,
   })
 
   useEffect(() => {
@@ -69,6 +72,18 @@ const EditPageWrapper = () => {
     }
   }, [exhibition, dispatch])
 
+  // Redirect to home if not logged in
+  useEffect(() => {
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/')
+    }
+  }, [sessionStatus, router])
+
+  // Show loading while checking session or if unauthenticated (redirect pending)
+  if (sessionStatus === 'loading' || sessionStatus === 'unauthenticated') {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
+  }
+
   if (isLoading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
   }
@@ -83,6 +98,3 @@ const EditPageWrapper = () => {
 
   return <EditView />
 }
-
-export default EditPageWrapper
-
