@@ -141,6 +141,35 @@ export const useMoveArtwork = (
         }
       })
 
+      // Check wall center alignment
+      const wallWidth2d = boundingData.width * 100 // scaling factor
+      const wallHeight2d = boundingData.height * 100
+      const tolerance = 3
+
+      // Vertical center of wall (artwork centered horizontally)
+      const artworkCenterX = snapX + artwork.width2d / 2
+      const wallCenterX = wallWidth2d / 2
+      if (Math.abs(artworkCenterX - wallCenterX) <= tolerance) {
+        snapX = wallCenterX - artwork.width2d / 2
+        alignedPairs.push({
+          from: draggedArtworkId,
+          to: '__wall__',
+          direction: 'center-vertical',
+        })
+      }
+
+      // Horizontal center of wall (artwork centered vertically)
+      const artworkCenterY = snapY + artwork.height2d / 2
+      const wallCenterY = wallHeight2d / 2
+      if (Math.abs(artworkCenterY - wallCenterY) <= tolerance) {
+        snapY = wallCenterY - artwork.height2d / 2
+        alignedPairs.push({
+          from: draggedArtworkId,
+          to: '__wall__',
+          direction: 'center-horizontal',
+        })
+      }
+
       dispatch(setAlignedPairs(alignedPairs))
 
       const artworkPosition = {

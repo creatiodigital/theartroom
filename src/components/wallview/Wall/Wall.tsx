@@ -253,6 +253,36 @@ export const Wall = () => {
         {alignedPairs?.map((pair, index: number) => {
           if (!isDragging) return null
 
+          // Handle wall center alignment specially
+          if (pair.to === '__wall__' && boundingData) {
+            const wallWidth2d = boundingData.width * scaling
+            const wallHeight2d = boundingData.height * scaling
+            
+            if (pair.direction === 'center-vertical') {
+              // Vertical line through wall center
+              return (
+                <AlignedLine
+                  key={index}
+                  start={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
+                  end={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
+                  direction="center-vertical"
+                />
+              )
+            }
+            if (pair.direction === 'center-horizontal') {
+              // Horizontal line through wall center
+              return (
+                <AlignedLine
+                  key={index}
+                  start={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
+                  end={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
+                  direction="center-horizontal"
+                />
+              )
+            }
+            return null
+          }
+
           const from = exhibitionArtworksById[pair.from] || {}
           const to = exhibitionArtworksById[pair.to] || {}
 
