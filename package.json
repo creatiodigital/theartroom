@@ -25,6 +25,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
     "@reduxjs/toolkit": "^2.3.0",
+    "@vercel/blob": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "classnames": "^2.5.1",
     "dotenv": "^17.2.3",
@@ -33,6 +34,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.1.2",
+    "sharp": "^0.34.5",
     "three": "^0.175.0",
     "three-stdlib": "^2.36.0",
     "uuid": "^11.0.3"

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 
@@ -24,16 +25,20 @@ type Artwork = {
   technique: string | null
   dimensions: string | null
   description: string | null
+  imageUrl: string | null
 }
 
 export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -71,6 +76,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         }
 
         setArtwork(data)
+        setImageUrl(data.imageUrl)
         setFormData({
           name: data.name || '',
           artworkType: data.artworkType || 'image',
@@ -123,6 +129,70 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch(`/api/artworks/${artworkId}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to upload image')
+        setUploading(false)
+        return
+      }
+
+      const data = await response.json()
+      setImageUrl(data.url)
+    } catch {
+      setError('Failed to upload image')
+    } finally {
+      setUploading(false)
+      // Clear input so same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveImage = async () => {
+    if (!imageUrl) return
+    
+    if (!confirm('Remove this image?')) return
+
+    setUploading(true)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/artworks/${artworkId}/image`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to remove image')
+        setUploading(false)
+        return
+      }
+
+      setImageUrl(null)
+    } catch {
+      setError('Failed to remove image')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
@@ -147,6 +217,50 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <h1>Edit Artwork</h1>
       </div>
 
+      {/* Image Upload Section */}
+      <div className={styles.imageSection}>
+        <label>Artwork Image (optional)</label>
+        <div className={styles.imagePreview}>
+          {imageUrl ? (
+            <Image 
+              src={imageUrl} 
+              alt="Artwork preview" 
+              width={300} 
+              height={300}
+              style={{ objectFit: 'contain' }}
+            />
+          ) : (
+            <div className={styles.noImage}>No image uploaded</div>
+          )}
+        </div>
+        <div className={styles.imageActions}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleImageUpload}
+            style={{ display: 'none' }}
+          />
+          <Button
+            variant="small"
+            label={uploading ? 'Uploading...' : (imageUrl ? 'Change Image' : 'Upload Image')}
+            onClick={() => fileInputRef.current?.click()}
+            type="button"
+          />
+          {imageUrl && (
+            <Button
+              variant="small"
+              label="Remove"
+              onClick={handleRemoveImage}
+              type="button"
+            />
+          )}
+        </div>
+        <p className={styles.imageHint}>
+          Accepted: JPG, PNG, WebP, GIF (max 10MB). Images are automatically optimized.
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.row}>
           <div className={styles.field}>
@@ -160,15 +274,13 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             />
           </div>
           <div className={styles.field}>
-            <label htmlFor="artworkType">Type</label>
-            <select
-              id="artworkType"
-              value={formData.artworkType}
-              onChange={(e) => handleChange('artworkType', e.target.value)}
-            >
-              <option value="image">Image</option>
-              <option value="text">Text</option>
-            </select>
+            <label>Type</label>
+            <input
+              type="text"
+              value={formData.artworkType === 'image' ? 'Image' : 'Text'}
+              disabled
+              style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+            />
           </div>
         </div>
 

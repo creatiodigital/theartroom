@@ -1,11 +1,18 @@
 import { useCallback, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 
+import { 
+  getAllPendingUploads, 
+  clearAllPendingUploads,
+  isLocalBlobUrl 
+} from '@/lib/pendingUploads'
+import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
 
 export const useSaveExhibition = () => {
   const { data: session } = useSession()
+  const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,9 +41,76 @@ export const useSaveExhibition = () => {
     setError(null)
 
     try {
-      // 1. Prepare artworks data
+      // 1. Upload pending images to Vercel Blob
+      const pendingUploads = getAllPendingUploads()
+      const uploadedUrls = new Map<string, string>()
+
+      for (const [artworkId, file] of pendingUploads) {
+        const formData = new FormData()
+        formData.append('image', file)
+
+        // First save the artwork record (needed for the image API)
+        const artwork = artworksById[artworkId]
+        const artworkPayload = {
+          id: artworkId,
+          name: artwork.name || 'Untitled',
+          artworkType: artwork.artworkType || 'image',
+          title: artwork.artworkTitle || null,
+          author: artwork.author || null,
+          year: artwork.artworkYear || null,
+          technique: null,
+          dimensions: artwork.artworkDimensions || null,
+          description: artwork.description || null,
+          imageUrl: null, // Will be updated after upload
+        }
+
+        // Create/update artwork first
+        await fetch('/api/artworks/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: session.user.id,
+            artworks: [artworkPayload],
+          }),
+        })
+
+        // Upload image
+        const uploadResponse = await fetch(`/api/artworks/${artworkId}/image`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json()
+          uploadedUrls.set(artworkId, uploadData.url)
+          
+          // Update Redux with cloud URL
+          dispatch(editArtisticImage({
+            currentArtworkId: artworkId,
+            property: 'imageUrl',
+            value: uploadData.url,
+          }))
+        } else {
+          console.warn(`Failed to upload image for artwork ${artworkId}`)
+        }
+      }
+
+      // Clear pending uploads after successful upload
+      clearAllPendingUploads()
+
+      // 2. Prepare artworks data (with updated cloud URLs)
       const artworks = allArtworkIds.map((id) => {
         const artwork = artworksById[id]
+        let imageUrl = artwork.imageUrl || null
+        
+        // Use uploaded URL if available, otherwise keep existing cloud URL
+        if (uploadedUrls.has(id)) {
+          imageUrl = uploadedUrls.get(id)!
+        } else if (isLocalBlobUrl(imageUrl || undefined)) {
+          // Don't save local blob URLs
+          imageUrl = null
+        }
+
         return {
           id,
           name: artwork.name || 'Untitled',
@@ -44,14 +118,14 @@ export const useSaveExhibition = () => {
           title: artwork.artworkTitle || null,
           author: artwork.author || null,
           year: artwork.artworkYear || null,
-          technique: null, // Not in current type
+          technique: null,
           dimensions: artwork.artworkDimensions || null,
           description: artwork.description || null,
-          imageUrl: artwork.imageUrl || null,
+          imageUrl,
         }
       })
 
-      // 2. Save artworks
+      // 3. Save artworks
       const artworkResponse = await fetch('/api/artworks/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,9 +140,9 @@ export const useSaveExhibition = () => {
         throw new Error(data.error || 'Failed to save artworks')
       }
 
-      // 3. Prepare positions data
+      // 4. Prepare positions data
       const positions = allArtworkIds
-        .filter((id) => positionsById[id]) // Only artworks with positions
+        .filter((id) => positionsById[id])
         .map((id) => {
           const pos = positionsById[id]
           return {
@@ -88,7 +162,7 @@ export const useSaveExhibition = () => {
           }
         })
 
-      // 4. Save positions
+      // 5. Save positions
       if (positions.length > 0) {
         const positionResponse = await fetch('/api/exhibition-artworks', {
           method: 'POST',
@@ -113,7 +187,7 @@ export const useSaveExhibition = () => {
     } finally {
       setSaving(false)
     }
-  }, [session?.user?.id, exhibitionId, allArtworkIds, artworksById, positionsById])
+  }, [session?.user?.id, exhibitionId, allArtworkIds, artworksById, positionsById, dispatch])
 
   return {
     saveToDatabase,

@@ -150,6 +150,7 @@ export const DashboardPage = () => {
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
             <Button variant="small" label="Artwork Library" onClick={() => router.push('/dashboard/artworks')} />
+            <Button variant="small" label="Edit Profile" onClick={() => router.push('/dashboard/profile')} />
           </div>
           <div className={styles.list}>
             <h3 className={styles.subtitle}>My exhibitions</h3>

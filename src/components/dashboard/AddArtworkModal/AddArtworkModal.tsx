@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 
@@ -24,9 +25,60 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  
+  // Image upload state
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleImageSelect = (file: File) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only JPG, PNG, WebP, or GIF files are allowed!')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image must be under 10MB')
+      return
+    }
+    
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+    setError('')
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleImageSelect(file)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleImageSelect(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  }
+
+  const handleRemoveImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    setImageFile(null)
+    setImagePreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +87,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
     setLoading(true)
 
     try {
+      // 1. Create artwork
       const response = await fetch('/api/artworks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,6 +102,28 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
         setError(data.error || 'Failed to create artwork')
         setLoading(false)
         return
+      }
+
+      const artwork = await response.json()
+
+      // 2. Upload image if selected
+      if (imageFile && formData.artworkType === 'image') {
+        const imageFormData = new FormData()
+        imageFormData.append('image', imageFile)
+
+        const uploadResponse = await fetch(`/api/artworks/${artwork.id}/image`, {
+          method: 'POST',
+          body: imageFormData,
+        })
+
+        if (!uploadResponse.ok) {
+          console.warn('Failed to upload image, but artwork was created')
+        }
+      }
+
+      // Cleanup
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview)
       }
 
       onSuccess()
@@ -87,6 +162,50 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             </select>
           </div>
         </div>
+
+        {/* Image Upload - only shown for image type */}
+        {formData.artworkType === 'image' && (
+          <div className={styles.imageUpload}>
+            <label>Image (optional)</label>
+            <div 
+              className={styles.dropZone}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {imagePreview ? (
+                <div className={styles.previewContainer}>
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    width={150}
+                    height={150}
+                    style={{ objectFit: 'contain' }}
+                  />
+                  <button 
+                    type="button" 
+                    className={styles.removeBtn}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemoveImage()
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <p>Click or drag image here</p>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
+          </div>
+        )}
 
         <div className={styles.field}>
           <label htmlFor="title">Artwork Title</label>

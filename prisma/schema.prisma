@@ -21,18 +21,19 @@ enum UserType {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  name        String
-  lastName    String
-  userType    UserType     @default(general)
-  handler     String       @unique
-  biography   String
-  email       String?      @unique
-  password    String?
-  exhibitions Exhibition[]
-  artworks    Artwork[]
-  accounts    Account[]
-  sessions    Session[]
+  id              String       @id @default(uuid())
+  name            String
+  lastName        String
+  userType        UserType     @default(general)
+  handler         String       @unique
+  biography       String
+  email           String?      @unique
+  password        String?
+  profileImageUrl String?
+  exhibitions     Exhibition[]
+  artworks        Artwork[]
+  accounts        Account[]
+  sessions        Session[]
 }
 
 model Artwork {
@@ -96,6 +97,24 @@ model ExhibitionArtwork {
   quaternionY Float
   quaternionZ Float
   quaternionW Float
+
+  // Display properties (per-exhibition customization)
+  showFrame             Boolean @default(false)
+  frameColor            String  @default("#000000")
+  frameThickness        Float   @default(5)
+  showPassepartout      Boolean @default(false)
+  passepartoutColor     String  @default("#ffffff")
+  passepartoutThickness Float   @default(10)
+
+  // Text artwork properties
+  textContent   String?
+  fontFamily    String  @default("Montserrat")
+  fontSize      Float   @default(16)
+  fontWeight    String  @default("400")
+  letterSpacing Float   @default(0)
+  lineHeight    Float   @default(1.4)
+  textColor     String  @default("#000000")
+  textAlign     String  @default("left")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

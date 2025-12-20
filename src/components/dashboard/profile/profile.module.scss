@@ -23,6 +23,49 @@
   }
 }
 
+.imageSection {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+
+  > label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.imageRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.imagePreview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  overflow: hidden;
+}
+
+.noImage {
+  color: #999;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.imageActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -46,8 +89,7 @@
   }
 
   input,
-  textarea,
-  select {
+  textarea {
     padding: 0.5rem;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -64,8 +106,18 @@
   }
 }
 
+.hint {
+  font-size: 0.75rem;
+  color: #666;
+}
+
 .error {
   color: red;
+  font-size: 0.875rem;
+}
+
+.success {
+  color: green;
   font-size: 0.875rem;
 }
 
@@ -73,52 +125,4 @@
   display: flex;
   gap: 0.5rem;
   margin-top: 1rem;
-}
-
-.imageSection {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: #f9f9f9;
-  border-radius: 8px;
-
-  > label {
-    display: block;
-    font-weight: 500;
-    margin-bottom: 0.75rem;
-  }
-}
-
-.imagePreview {
-  width: 300px;
-  height: 300px;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  overflow: hidden;
-  margin-bottom: 0.75rem;
-
-  img {
-    max-width: 100%;
-    max-height: 100%;
-  }
-}
-
-.noImage {
-  color: #999;
-  font-size: 0.875rem;
-}
-
-.imageActions {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.imageHint {
-  font-size: 0.75rem;
-  color: #666;
-  margin: 0;
 }

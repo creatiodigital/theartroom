@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { del } from '@vercel/blob'
 
 import prisma from '@/lib/prisma'
 
@@ -64,6 +65,26 @@ export async function DELETE(
   try {
     const { id } = await context.params
 
+    // Get artwork first to check for image
+    const artwork = await prisma.artwork.findUnique({
+      where: { id },
+    })
+
+    if (!artwork) {
+      return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+    }
+
+    // Delete associated blob image if exists
+    if (artwork.imageUrl) {
+      try {
+        await del(artwork.imageUrl)
+      } catch (error) {
+        console.warn('Failed to delete blob:', error)
+        // Continue anyway - blob might not exist
+      }
+    }
+
+    // Delete artwork record
     await prisma.artwork.delete({
       where: { id },
     })
@@ -74,3 +95,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete artwork' }, { status: 500 })
   }
 }
+

@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { FileInput } from '@/components/ui/FileInput'
 import { Icon } from '@/components/ui/Icon'
+import { addPendingUpload } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
@@ -23,7 +24,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const dispatch = useDispatch()
   const [isDragOver, setIsDragOver] = useState(false)
-  const allowedTypes = ['image/jpeg', 'image/png']
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
   const {
     showFrame,
@@ -44,7 +45,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     if (file && validateFile(file)) {
       processFile(file)
     } else {
-      alert('Only JPG or PNG files are allowed!')
+      alert('Only JPG, PNG, WebP, or GIF files are allowed!')
     }
   }
 
@@ -69,7 +70,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     if (file && validateFile(file)) {
       processFile(file)
     } else {
-      console.log('Only JPG or PNG files are allowed!')
+      console.log('Only JPG, PNG, WebP, or GIF files are allowed!')
     }
   }
 
@@ -79,6 +80,11 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
 
   const processFile = (file: File) => {
     const fileUrl = URL.createObjectURL(file)
+    
+    // Store the File object for later upload on Save
+    addPendingUpload(artwork.id, file, fileUrl)
+    
+    // Update Redux for instant preview
     dispatch(
       editArtisticImage({
         currentArtworkId: artwork.id,

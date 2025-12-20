@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
@@ -11,6 +12,7 @@ type Artist = {
   lastName: string
   handler: string
   biography: string
+  profileImageUrl: string | null
 }
 
 interface ArtistProfilePageProps {
@@ -72,11 +74,43 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
-        <h1>{artist.name} {artist.lastName}</h1>
-        <p>{artist.biography}</p>
+      <div style={{ padding: '2rem', minHeight: '60vh', maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
+          {artist.profileImageUrl ? (
+            <Image
+              src={artist.profileImageUrl}
+              alt={`${artist.name} ${artist.lastName}`}
+              width={150}
+              height={150}
+              style={{ borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ 
+              width: 150, 
+              height: 150, 
+              borderRadius: '50%', 
+              backgroundColor: '#eee',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '3rem',
+              color: '#999'
+            }}>
+              {artist.name.charAt(0)}{artist.lastName.charAt(0)}
+            </div>
+          )}
+          <div>
+            <h1 style={{ margin: 0 }}>{artist.name} {artist.lastName}</h1>
+            <p style={{ color: '#666', margin: '0.5rem 0 0' }}>@{artist.handler}</p>
+          </div>
+        </div>
+        <div>
+          <h2>About</h2>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{artist.biography || 'No biography yet.'}</p>
+        </div>
       </div>
       <Footer />
     </>
   )
 }
+
