@@ -259,7 +259,7 @@ export const Wall = () => {
             const wallWidth2d = boundingData.width * scaling
             const wallHeight2d = boundingData.height * scaling
             
-            if (pair.direction === 'center-vertical') {
+          if (pair.direction === 'center-vertical') {
               // Vertical line through wall center
               return (
                 <AlignedLine
@@ -267,6 +267,7 @@ export const Wall = () => {
                   start={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
                   end={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
                   direction="center-vertical"
+                  color="#ff4444"
                 />
               )
             }
@@ -278,6 +279,7 @@ export const Wall = () => {
                   start={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
                   end={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
                   direction="center-horizontal"
+                  color="#ff4444"
                 />
               )
             }
