@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (!name || !lastName || !handler || !email) {
       return NextResponse.json(
         { error: 'Name, lastName, handler, and email are required' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -60,15 +60,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(artist, { status: 201 })
   } catch (error: unknown) {
     console.error('[POST /api/artists] error:', error)
-    
+
     // Handle unique constraint errors
     if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
-      return NextResponse.json(
-        { error: 'Handler or email already exists' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Handler or email already exists' }, { status: 409 })
     }
-    
+
     return NextResponse.json({ error: 'Failed to create artist' }, { status: 500 })
   }
 }

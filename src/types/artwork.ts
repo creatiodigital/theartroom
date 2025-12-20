@@ -52,4 +52,3 @@ export type TArtwork = {
   textColor?: string
   textAlign?: 'left' | 'right' | 'center'
 }
-

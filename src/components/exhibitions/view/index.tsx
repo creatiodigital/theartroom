@@ -22,7 +22,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef(false)
 
-  const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(exhibitionSlug, {
+  const {
+    data: exhibition,
+    isLoading,
+    error,
+  } = useGetExhibitionByUrlQuery(exhibitionSlug, {
     skip: !exhibitionSlug,
   })
 
@@ -64,15 +68,33 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   useLoadExhibitionArtworks(exhibition?.id)
 
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Loading...
+      </div>
+    )
   }
 
   if (error) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Error loading exhibition</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Error loading exhibition
+      </div>
+    )
   }
 
   if (!exhibition) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Exhibition not found</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Exhibition not found
+      </div>
+    )
   }
 
   return <Scene />

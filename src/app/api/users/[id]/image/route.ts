@@ -8,10 +8,7 @@ import { processImage, isValidImageType } from '@/lib/imageProcessor'
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB for profile images
 
 // POST - Upload profile image
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
@@ -31,10 +28,7 @@ export async function POST(
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File too large. Maximum size is 5MB.' }, { status: 400 })
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -43,7 +37,7 @@ export async function POST(
     if (!isValidImageType(buffer)) {
       return NextResponse.json(
         { error: 'Invalid file type. Please upload a JPG, PNG, WebP, or GIF image.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -59,15 +53,11 @@ export async function POST(
     }
 
     // Upload to Vercel Blob
-    const blob = await put(
-      `profiles/${id}/avatar.webp`,
-      processedBuffer,
-      {
-        access: 'public',
-        addRandomSuffix: true,
-        contentType: 'image/webp',
-      }
-    )
+    const blob = await put(`profiles/${id}/avatar.webp`, processedBuffer, {
+      access: 'public',
+      addRandomSuffix: true,
+      contentType: 'image/webp',
+    })
 
     // Update user with new image URL
     await prisma.user.update({
@@ -85,7 +75,7 @@ export async function POST(
 // DELETE - Remove profile image
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params

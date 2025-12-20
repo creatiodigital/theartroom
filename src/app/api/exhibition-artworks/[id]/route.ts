@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // DELETE a single exhibition-artwork relationship by its ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params

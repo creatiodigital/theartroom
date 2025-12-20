@@ -75,7 +75,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
 
       // Get session to check user type
       const session = await getSession()
-      
+
       if (session?.user?.userType === 'admin') {
         router.push('/admin/dashboard')
       } else {
@@ -136,11 +136,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <Button
-            variant="small"
-            label={submitting ? 'Signing in...' : 'Sign in'}
-            type="submit"
-          />
+          <Button variant="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>
       </div>
     </div>

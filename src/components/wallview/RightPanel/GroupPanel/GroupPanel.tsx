@@ -23,7 +23,9 @@ const GroupPanel = () => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
 
-  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as { nodes: Record<string, Mesh> }
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+    nodes: Record<string, Mesh>
+  }
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
   const { groupX, groupY } = useGroupDetails()

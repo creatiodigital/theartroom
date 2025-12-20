@@ -76,4 +76,3 @@ export type ResizeHandler<E extends Element = HTMLDivElement> = (
   artworkId: string,
   direction: TDirection,
 ) => void
-

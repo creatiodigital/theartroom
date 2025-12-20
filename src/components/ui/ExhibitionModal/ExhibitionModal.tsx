@@ -61,10 +61,10 @@ export const ExhibitionModal = React.memo(
         setChecking(true)
         try {
           const response = await fetch(
-            `/api/exhibitions/check-url?userId=${userId}&url=${encodeURIComponent(customUrl)}`
+            `/api/exhibitions/check-url?userId=${userId}&url=${encodeURIComponent(customUrl)}`,
           )
           const data = await response.json()
-          
+
           if (!data.available) {
             setUrlError('This URL is already in use. Please choose a different name.')
           } else {
@@ -167,4 +167,3 @@ export const ExhibitionModal = React.memo(
 
 ExhibitionModal.displayName = 'ExhibitionModal'
 export default ExhibitionModal
-

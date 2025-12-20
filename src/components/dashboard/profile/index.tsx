@@ -138,7 +138,7 @@ export const DashboardProfilePage = () => {
       }
 
       const data = await response.json()
-      setUser((prev) => prev ? { ...prev, profileImageUrl: data.url } : prev)
+      setUser((prev) => (prev ? { ...prev, profileImageUrl: data.url } : prev))
       setSuccess('Profile image updated!')
     } catch {
       setError('Failed to upload image')
@@ -168,7 +168,7 @@ export const DashboardProfilePage = () => {
         return
       }
 
-      setUser((prev) => prev ? { ...prev, profileImageUrl: null } : prev)
+      setUser((prev) => (prev ? { ...prev, profileImageUrl: null } : prev))
       setSuccess('Profile image removed!')
     } catch {
       setError('Failed to remove image')
@@ -189,7 +189,9 @@ export const DashboardProfilePage = () => {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
+          <Link href="/dashboard" className={styles.backLink}>
+            ← Back to Dashboard
+          </Link>
           <h1>Edit Profile</h1>
         </div>
         <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
@@ -227,12 +229,7 @@ export const DashboardProfilePage = () => {
               type="button"
             />
             {user?.profileImageUrl && (
-              <Button
-                variant="small"
-                label="Remove"
-                onClick={handleRemoveImage}
-                type="button"
-              />
+              <Button variant="small" label="Remove" onClick={handleRemoveImage} type="button" />
             )}
           </div>
         </div>
@@ -299,11 +296,7 @@ export const DashboardProfilePage = () => {
         {success && <p className={styles.success}>{success}</p>}
 
         <div className={styles.actions}>
-          <Button
-            variant="small"
-            label={saving ? 'Saving...' : 'Save Changes'}
-            type="submit"
-          />
+          <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
         </div>
       </form>
     </div>

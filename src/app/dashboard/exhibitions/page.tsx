@@ -1,4 +1,4 @@
-import { DashboardExhibitionsPage } from "@/components/dashboard/exhibitions"
+import { DashboardExhibitionsPage } from '@/components/dashboard/exhibitions'
 
 const DashboardExhibitions = () => {
   return <DashboardExhibitionsPage />

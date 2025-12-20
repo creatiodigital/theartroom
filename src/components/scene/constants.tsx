@@ -71,4 +71,3 @@ export const getSpaceOptions = () =>
     label: config.displayName,
     thumbnailUrl: config.thumbnailUrl,
   }))
-

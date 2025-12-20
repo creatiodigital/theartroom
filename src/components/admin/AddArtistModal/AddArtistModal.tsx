@@ -26,7 +26,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    
+
     // Auto-generate handler from name and lastName
     if (field === 'name' || field === 'lastName') {
       const newName = field === 'name' ? value : formData.name
@@ -150,11 +150,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
-          <Button
-            variant="small"
-            label={loading ? 'Creating...' : 'Create Artist'}
-            type="submit"
-          />
+          <Button variant="small" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
           <Button variant="small" label="Cancel" onClick={onClose} type="button" />
         </div>
       </form>

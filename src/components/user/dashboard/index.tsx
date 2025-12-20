@@ -39,7 +39,8 @@ export const Dashboard = () => {
   const hardcodedId = '915a1541-f132-4fd1-a714-e34527485054'
 
   const { data: userData } = useGetUserQuery(hardcodedId)
-  const { data: exhibitionsData, refetch: refetchExhibitions } = useGetExhibitionsByUserQuery(hardcodedId)
+  const { data: exhibitionsData, refetch: refetchExhibitions } =
+    useGetExhibitionsByUserQuery(hardcodedId)
 
   const [createExhibition, { isLoading: creating, error }] = useCreateExhibitionMutation()
 
@@ -78,7 +79,14 @@ export const Dashboard = () => {
         console.error('Failed to create exhibition', err)
       }
     },
-    [createExhibition, dispatch, userData?.id, userData?.handler, selectedSpace, refetchExhibitions],
+    [
+      createExhibition,
+      dispatch,
+      userData?.id,
+      userData?.handler,
+      selectedSpace,
+      refetchExhibitions,
+    ],
   )
 
   const handleDeleteExhibition = useCallback(

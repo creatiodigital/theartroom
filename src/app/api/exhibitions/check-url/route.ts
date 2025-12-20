@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
     const url = searchParams.get('url')
 
     if (!userId || !url) {
-      return NextResponse.json(
-        { error: 'userId and url are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'userId and url are required' }, { status: 400 })
     }
 
     // Check if an exhibition with this URL already exists for this user
@@ -34,9 +31,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('[GET /api/exhibitions/check-url] error:', error)
-    return NextResponse.json(
-      { error: 'Failed to check URL availability' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to check URL availability' }, { status: 500 })
   }
 }

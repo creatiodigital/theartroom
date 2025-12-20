@@ -80,10 +80,10 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
 
   const processFile = (file: File) => {
     const fileUrl = URL.createObjectURL(file)
-    
+
     // Store the File object for later upload on Save
     addPendingUpload(artwork.id, file, fileUrl)
-    
+
     // Update Redux for instant preview
     dispatch(
       editArtisticImage({

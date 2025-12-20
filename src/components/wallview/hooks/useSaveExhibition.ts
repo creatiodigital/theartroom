@@ -2,11 +2,7 @@ import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 
-import { 
-  getAllPendingUploads, 
-  clearAllPendingUploads,
-  isLocalBlobUrl 
-} from '@/lib/pendingUploads'
+import { getAllPendingUploads, clearAllPendingUploads, isLocalBlobUrl } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
 
@@ -87,13 +83,15 @@ export const useSaveExhibition = () => {
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json()
           uploadedUrls.set(artworkId, uploadData.url)
-          
+
           // Update Redux with cloud URL
-          dispatch(editArtisticImage({
-            currentArtworkId: artworkId,
-            property: 'imageUrl',
-            value: uploadData.url,
-          }))
+          dispatch(
+            editArtisticImage({
+              currentArtworkId: artworkId,
+              property: 'imageUrl',
+              value: uploadData.url,
+            }),
+          )
         } else {
           console.warn(`Failed to upload image for artwork ${artworkId}`)
         }
@@ -106,9 +104,9 @@ export const useSaveExhibition = () => {
         .map((id) => {
           const artwork = artworksById[id]
           if (!artwork) return null
-          
+
           let imageUrl = artwork.imageUrl || null
-          
+
           // Use uploaded URL if available, otherwise keep existing cloud URL
           if (uploadedUrls.has(id)) {
             imageUrl = uploadedUrls.get(id)!

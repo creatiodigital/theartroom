@@ -70,7 +70,7 @@ export const LeftPanel = () => {
   const handleSaveWallView = async () => {
     // Save to database first
     const success = await saveToDatabase()
-    
+
     if (!success) {
       // Optionally show error - for now just log
       console.error('Failed to save to database')
@@ -168,7 +168,11 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button variant="small" onClick={handleSaveWallView} label={saving ? 'Saving...' : 'Save'} />
+              <Button
+                variant="small"
+                onClick={handleSaveWallView}
+                label={saving ? 'Saving...' : 'Save'}
+              />
             </div>
           </div>
         </div>

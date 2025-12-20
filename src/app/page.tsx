@@ -57,7 +57,13 @@ export default async function Home() {
         {exhibitions.length === 0 ? (
           <p>No current exhibitions at the moment.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '1.5rem',
+            }}
+          >
             {exhibitions.map((exhibition) => (
               <Link
                 key={exhibition.id}
@@ -88,7 +94,13 @@ export default async function Home() {
         {featuredArtists.length === 0 ? (
           <p>No featured artists at the moment.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: '1rem',
+            }}
+          >
             {featuredArtists.map((artist) => (
               <Link
                 key={artist.id}
@@ -117,7 +129,9 @@ export default async function Home() {
                     }}
                   />
                 )}
-                <h4 style={{ margin: 0 }}>{artist.name} {artist.lastName}</h4>
+                <h4 style={{ margin: 0 }}>
+                  {artist.name} {artist.lastName}
+                </h4>
               </Link>
             ))}
           </div>

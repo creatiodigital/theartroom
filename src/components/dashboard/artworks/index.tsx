@@ -112,7 +112,7 @@ export const ArtworkLibraryPage = () => {
     (exhibitionArtworkId: string, artworkName: string, exhibitionTitle: string) => {
       setUnlinkTarget({ exhibitionArtworkId, artworkName, exhibitionTitle })
     },
-    []
+    [],
   )
 
   const handleUnlinkConfirm = useCallback(async () => {
@@ -154,7 +154,9 @@ export const ArtworkLibraryPage = () => {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
+          <Link href="/dashboard" className={styles.backLink}>
+            ← Back to Dashboard
+          </Link>
           <h1>Artwork Library</h1>
         </div>
         <div className={styles.headerActions}>
@@ -242,11 +244,7 @@ export const ArtworkLibraryPage = () => {
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button
-                variant="small"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
+              <Button variant="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
@@ -268,11 +266,7 @@ export const ArtworkLibraryPage = () => {
                 label={unlinking ? 'Removing...' : 'Yes, Remove'}
                 onClick={handleUnlinkConfirm}
               />
-              <Button
-                variant="small"
-                label="Cancel"
-                onClick={() => setUnlinkTarget(null)}
-              />
+              <Button variant="small" label="Cancel" onClick={() => setUnlinkTarget(null)} />
             </div>
           </div>
         </Modal>

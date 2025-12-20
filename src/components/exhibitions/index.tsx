@@ -54,7 +54,13 @@ export const ExhibitionsPage = () => {
           <>
             {/* Current Exhibitions */}
             <section style={{ marginBottom: '3rem' }}>
-              <h2 style={{ marginBottom: '1rem', borderBottom: '2px solid #333', paddingBottom: '0.5rem' }}>
+              <h2
+                style={{
+                  marginBottom: '1rem',
+                  borderBottom: '2px solid #333',
+                  paddingBottom: '0.5rem',
+                }}
+              >
                 Current
               </h2>
               {currentExhibitions.length === 0 ? (
@@ -62,13 +68,19 @@ export const ExhibitionsPage = () => {
               ) : (
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {currentExhibitions.map((exhibition) => (
-                    <li key={exhibition.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee' }}>
+                    <li
+                      key={exhibition.id}
+                      style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee' }}
+                    >
                       <Link
                         href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                         style={{ textDecoration: 'none', color: 'inherit' }}
                       >
                         <strong>{exhibition.mainTitle}</strong>
-                        <span style={{ color: '#666' }}> — {exhibition.user.name} {exhibition.user.lastName}</span>
+                        <span style={{ color: '#666' }}>
+                          {' '}
+                          — {exhibition.user.name} {exhibition.user.lastName}
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -78,7 +90,13 @@ export const ExhibitionsPage = () => {
 
             {/* Past Exhibitions */}
             <section>
-              <h2 style={{ marginBottom: '1rem', borderBottom: '2px solid #333', paddingBottom: '0.5rem' }}>
+              <h2
+                style={{
+                  marginBottom: '1rem',
+                  borderBottom: '2px solid #333',
+                  paddingBottom: '0.5rem',
+                }}
+              >
                 Past
               </h2>
               {pastExhibitions.length === 0 ? (
@@ -86,13 +104,19 @@ export const ExhibitionsPage = () => {
               ) : (
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {pastExhibitions.map((exhibition) => (
-                    <li key={exhibition.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee' }}>
+                    <li
+                      key={exhibition.id}
+                      style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee' }}
+                    >
                       <Link
                         href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                         style={{ textDecoration: 'none', color: 'inherit' }}
                       >
                         <strong>{exhibition.mainTitle}</strong>
-                        <span style={{ color: '#666' }}> — {exhibition.user.name} {exhibition.user.lastName}</span>
+                        <span style={{ color: '#666' }}>
+                          {' '}
+                          — {exhibition.user.name} {exhibition.user.lastName}
+                        </span>
                       </Link>
                     </li>
                   ))}

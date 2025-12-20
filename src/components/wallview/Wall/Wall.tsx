@@ -32,7 +32,9 @@ import styles from './Wall.module.scss'
 export const Wall = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
-  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as { nodes: Record<string, Mesh> }
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+    nodes: Record<string, Mesh>
+  }
 
   const allIds = useSelector((state: RootState) => state.artworks.allIds)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -258,8 +260,8 @@ export const Wall = () => {
           if (pair.to === '__wall__' && boundingData) {
             const wallWidth2d = boundingData.width * scaling
             const wallHeight2d = boundingData.height * scaling
-            
-          if (pair.direction === 'center-vertical') {
+
+            if (pair.direction === 'center-vertical') {
               // Vertical line through wall center
               return (
                 <AlignedLine

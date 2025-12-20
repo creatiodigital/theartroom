@@ -43,9 +43,12 @@ export const DashboardPage = () => {
   const { data: userData } = useGetUserQuery(userId ?? '', {
     skip: !userId,
   })
-  const { data: exhibitionsData, refetch: refetchExhibitions } = useGetExhibitionsByUserQuery(userId ?? '', {
-    skip: !userId,
-  })
+  const { data: exhibitionsData, refetch: refetchExhibitions } = useGetExhibitionsByUserQuery(
+    userId ?? '',
+    {
+      skip: !userId,
+    },
+  )
 
   const [createExhibition, { isLoading: creating, error }] = useCreateExhibitionMutation()
 
@@ -140,18 +143,22 @@ export const DashboardPage = () => {
       <div className={styles.main}>
         <div className={styles.header}>
           <h3>Hello {userData?.name ?? session?.user?.name ?? ''}</h3>
-          <Button
-            variant="small"
-            label="Log out"
-            onClick={() => signOut({ callbackUrl: '/' })}
-          />
+          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
         </div>
 
         <div className={styles.exhibitions}>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
-            <Button variant="small" label="Artwork Library" onClick={() => router.push('/dashboard/artworks')} />
-            <Button variant="small" label="Edit Profile" onClick={() => router.push('/dashboard/profile')} />
+            <Button
+              variant="small"
+              label="Artwork Library"
+              onClick={() => router.push('/dashboard/artworks')}
+            />
+            <Button
+              variant="small"
+              label="Edit Profile"
+              onClick={() => router.push('/dashboard/profile')}
+            />
           </div>
           <div className={styles.list}>
             <h3 className={styles.subtitle}>My exhibitions</h3>
@@ -162,16 +169,8 @@ export const DashboardPage = () => {
                 {exhibitions.map((ex: TExhibition) => (
                   <li key={ex.id} className={styles.exhibitionItem}>
                     {ex.mainTitle}{' '}
-                    <Button
-                      variant="small"
-                      label="View"
-                      onClick={() => handleViewExhibition(ex)}
-                    />
-                    <Button
-                      variant="small"
-                      label="Edit"
-                      onClick={() => handleEditExhibition(ex)}
-                    />
+                    <Button variant="small" label="View" onClick={() => handleViewExhibition(ex)} />
+                    <Button variant="small" label="Edit" onClick={() => handleEditExhibition(ex)} />
                     <Button
                       variant="small"
                       label="Delete"

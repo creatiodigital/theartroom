@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (existing) {
       return NextResponse.json(
         { error: 'An exhibition with this URL already exists' },
-        { status: 409 }
+        { status: 409 },
       )
     }
 
@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
   try {
     // Build where clause
     const where: Prisma.ExhibitionWhereInput = {}
-    
+
     if (userId) where.userId = userId
     if (status) where.status = status
     if (visibility) where.visibility = visibility

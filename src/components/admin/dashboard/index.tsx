@@ -83,7 +83,7 @@ export const DashboardAdmin = () => {
 
   // Loading states
   if (sessionStatus === 'loading' || loading) return <div>Loading...</div>
-  
+
   // Not authorized
   if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
     return <div>Not authorized</div>
@@ -93,7 +93,14 @@ export const DashboardAdmin = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+        }}
+      >
         <h1>All Users</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
@@ -188,10 +195,7 @@ export const DashboardAdmin = () => {
 
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>
-          <AddArtistModal
-            onClose={() => setShowAddModal(false)}
-            onSuccess={handleAddSuccess}
-          />
+          <AddArtistModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} />
         </Modal>
       )}
 
@@ -204,17 +208,20 @@ export const DashboardAdmin = () => {
               <br />
               This action cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                justifyContent: 'center',
+                marginTop: '1.5rem',
+              }}
+            >
               <Button
                 variant="small"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button
-                variant="small"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
+              <Button variant="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>

@@ -68,7 +68,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!exhibitionId || !positions || !Array.isArray(positions)) {
-      return NextResponse.json({ error: 'exhibitionId and positions array are required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'exhibitionId and positions array are required' },
+        { status: 400 },
+      )
     }
 
     // Get current artwork IDs in this exhibition
@@ -76,11 +79,11 @@ export async function POST(request: NextRequest) {
       where: { exhibitionId },
       select: { artworkId: true },
     })
-    const existingArtworkIds = existingPositions.map(p => p.artworkId)
+    const existingArtworkIds = existingPositions.map((p) => p.artworkId)
 
     // Find artworks that were deleted (exist in DB but not in current positions)
-    const currentArtworkIds = positions.map(p => p.artworkId)
-    const deletedArtworkIds = existingArtworkIds.filter(id => !currentArtworkIds.includes(id))
+    const currentArtworkIds = positions.map((p) => p.artworkId)
+    const deletedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
 
     // Delete removed positions
     if (deletedArtworkIds.length > 0) {
@@ -162,17 +165,19 @@ export async function POST(request: NextRequest) {
             textColor: pos.textColor ?? '#000000',
             textAlign: pos.textAlign ?? 'left',
           },
-        })
-      )
+        }),
+      ),
     )
 
-    return NextResponse.json({ 
-      count: results.length, 
-      deleted: deletedArtworkIds.length 
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        count: results.length,
+        deleted: deletedArtworkIds.length,
+      },
+      { status: 201 },
+    )
   } catch (error) {
     console.error('[POST /api/exhibition-artworks] error:', error)
     return NextResponse.json({ error: 'Failed to save positions' }, { status: 500 })
   }
 }
-

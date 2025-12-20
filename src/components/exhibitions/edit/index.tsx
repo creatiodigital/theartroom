@@ -46,7 +46,11 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
     }
   }, [dispatch])
 
-  const { data: exhibition, isLoading, error } = useGetExhibitionByUrlQuery(exhibitionSlug, {
+  const {
+    data: exhibition,
+    isLoading,
+    error,
+  } = useGetExhibitionByUrlQuery(exhibitionSlug, {
     skip: !exhibitionSlug,
   })
 
@@ -88,7 +92,7 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
     if (sessionStatus === 'authenticated' && exhibition) {
       const isOwner = session?.user?.id === exhibition.userId
       const isAdmin = session?.user?.userType === 'admin'
-      
+
       if (!isOwner && !isAdmin) {
         router.push('/dashboard')
       }
@@ -97,27 +101,57 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
 
   // Show loading while checking session or if unauthenticated (redirect pending)
   if (sessionStatus === 'loading' || sessionStatus === 'unauthenticated') {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Loading...
+      </div>
+    )
   }
 
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Loading...
+      </div>
+    )
   }
 
   if (error) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Error loading exhibition</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Error loading exhibition
+      </div>
+    )
   }
 
   if (!exhibition) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Exhibition not found</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Exhibition not found
+      </div>
+    )
   }
 
   // Final ownership check before rendering
   const isOwner = session?.user?.id === exhibition.userId
   const isAdmin = session?.user?.userType === 'admin'
-  
+
   if (!isOwner && !isAdmin) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Not authorized</div>
+    return (
+      <div
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
+        Not authorized
+      </div>
+    )
   }
 
   return <EditView />
