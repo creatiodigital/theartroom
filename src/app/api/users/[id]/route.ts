@@ -11,6 +11,7 @@ type Body = {
   handler?: string
   userType?: string
   email?: string
+  isFeatured?: boolean
 }
 
 type UserTypeValue = (typeof UserTypeEnum)[keyof typeof UserTypeEnum]
@@ -54,6 +55,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.biography !== undefined) data.biography = body.biography
     if (body.handler !== undefined) data.handler = body.handler
     if (body.email !== undefined) data.email = body.email
+    if (body.isFeatured !== undefined) data.isFeatured = body.isFeatured
     if (userTypeEnum !== undefined) data.userType = { set: userTypeEnum }
 
     const updated = await prisma.user.update({ where: { id }, data })

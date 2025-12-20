@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
+import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useUsers } from '@/hooks/useUsers'
@@ -105,6 +106,7 @@ export const DashboardAdmin = () => {
             <th>Handler</th>
             <th>Email</th>
             <th>Type</th>
+            <th>Featured</th>
             <th>Biography</th>
             <th>Actions</th>
           </tr>
@@ -141,6 +143,25 @@ export const DashboardAdmin = () => {
                 />
               </td>
               <td>{user.userType}</td>
+              <td style={{ textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={user.isFeatured ?? false}
+                  onChange={async (e) => {
+                    const newValue = e.target.checked
+                    try {
+                      await fetch(`/api/users/${user.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isFeatured: newValue }),
+                      })
+                      refetch()
+                    } catch (err) {
+                      console.error('Failed to update featured status:', err)
+                    }
+                  }}
+                />
+              </td>
               <td>
                 <input
                   type="text"
@@ -159,6 +180,8 @@ export const DashboardAdmin = () => {
           ))}
         </tbody>
       </table>
+
+      <AdminExhibitions />
 
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>

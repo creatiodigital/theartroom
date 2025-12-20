@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST batch create/update exhibition artworks (positions)
+// POST batch create/update exhibition artworks (positions and display properties)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -49,6 +49,21 @@ export async function POST(request: NextRequest) {
         quaternionY: number
         quaternionZ: number
         quaternionW: number
+        // Display properties (per-exhibition)
+        showFrame?: boolean
+        frameColor?: string
+        frameThickness?: number
+        showPassepartout?: boolean
+        passepartoutColor?: string
+        passepartoutThickness?: number
+        // Text styling (per-exhibition)
+        fontFamily?: string
+        fontSize?: number
+        fontWeight?: string
+        letterSpacing?: number
+        lineHeight?: number
+        textColor?: string
+        textAlign?: string
       }>
     }
 
@@ -77,7 +92,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Upsert remaining positions
+    // Upsert remaining positions with display properties
     const results = await Promise.all(
       positions.map((pos) =>
         prisma.exhibitionArtwork.upsert({
@@ -102,6 +117,21 @@ export async function POST(request: NextRequest) {
             quaternionY: pos.quaternionY,
             quaternionZ: pos.quaternionZ,
             quaternionW: pos.quaternionW,
+            // Display properties
+            showFrame: pos.showFrame ?? false,
+            frameColor: pos.frameColor ?? '#000000',
+            frameThickness: pos.frameThickness ?? 5,
+            showPassepartout: pos.showPassepartout ?? false,
+            passepartoutColor: pos.passepartoutColor ?? '#ffffff',
+            passepartoutThickness: pos.passepartoutThickness ?? 10,
+            // Text display properties
+            fontFamily: pos.fontFamily ?? 'Montserrat',
+            fontSize: pos.fontSize ?? 16,
+            fontWeight: pos.fontWeight ?? '400',
+            letterSpacing: pos.letterSpacing ?? 0,
+            lineHeight: pos.lineHeight ?? 1.4,
+            textColor: pos.textColor ?? '#000000',
+            textAlign: pos.textAlign ?? 'left',
           },
           update: {
             wallId: pos.wallId,
@@ -116,6 +146,21 @@ export async function POST(request: NextRequest) {
             quaternionY: pos.quaternionY,
             quaternionZ: pos.quaternionZ,
             quaternionW: pos.quaternionW,
+            // Display properties
+            showFrame: pos.showFrame ?? false,
+            frameColor: pos.frameColor ?? '#000000',
+            frameThickness: pos.frameThickness ?? 5,
+            showPassepartout: pos.showPassepartout ?? false,
+            passepartoutColor: pos.passepartoutColor ?? '#ffffff',
+            passepartoutThickness: pos.passepartoutThickness ?? 10,
+            // Text display properties
+            fontFamily: pos.fontFamily ?? 'Montserrat',
+            fontSize: pos.fontSize ?? 16,
+            fontWeight: pos.fontWeight ?? '400',
+            letterSpacing: pos.letterSpacing ?? 0,
+            lineHeight: pos.lineHeight ?? 1.4,
+            textColor: pos.textColor ?? '#000000',
+            textAlign: pos.textAlign ?? 'left',
           },
         })
       )
@@ -130,3 +175,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save positions' }, { status: 500 })
   }
 }
+

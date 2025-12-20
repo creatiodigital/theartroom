@@ -122,6 +122,7 @@ export const useSaveExhibition = () => {
           dimensions: artwork.artworkDimensions || null,
           description: artwork.description || null,
           imageUrl,
+          textContent: artwork.textContent || null, // Fixed text content
         }
       })
 
@@ -140,11 +141,12 @@ export const useSaveExhibition = () => {
         throw new Error(data.error || 'Failed to save artworks')
       }
 
-      // 4. Prepare positions data
+      // 4. Prepare positions data (including display properties)
       const positions = allArtworkIds
         .filter((id) => positionsById[id])
         .map((id) => {
           const pos = positionsById[id]
+          const artwork = artworksById[id]
           return {
             artworkId: id,
             wallId: pos.wallId,
@@ -159,6 +161,21 @@ export const useSaveExhibition = () => {
             quaternionY: pos.quaternionY,
             quaternionZ: pos.quaternionZ,
             quaternionW: pos.quaternionW,
+            // Display properties (per-exhibition)
+            showFrame: artwork.showFrame ?? false,
+            frameColor: artwork.frameColor ?? '#000000',
+            frameThickness: artwork.frameThickness?.value ?? 5,
+            showPassepartout: artwork.showPassepartout ?? false,
+            passepartoutColor: artwork.passepartoutColor ?? '#ffffff',
+            passepartoutThickness: artwork.passepartoutThickness?.value ?? 10,
+            // Text styling (per-exhibition)
+            fontFamily: artwork.fontFamily?.value ?? 'Montserrat',
+            fontSize: artwork.fontSize?.value ?? 16,
+            fontWeight: String(artwork.fontWeight?.value ?? '400'),
+            letterSpacing: artwork.letterSpacing?.value ?? 0,
+            lineHeight: artwork.lineHeight?.value ?? 1.4,
+            textColor: artwork.textColor ?? '#000000',
+            textAlign: artwork.textAlign ?? 'left',
           }
         })
 

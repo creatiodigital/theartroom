@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import type { Exhibition } from '@/generated/prisma'
+import type { Exhibition, Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 import { slugify } from '@/utils/slugify'
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         handler,
         url: slug, // 👉 store only the slug
         spaceId,
-        status: 'DRAFT',
+        status: 'current',
       },
     })
 
@@ -43,14 +43,29 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
-  }
+  const status = searchParams.get('status') // 'current' | 'past'
+  const visibility = searchParams.get('visibility') // 'public' | 'hidden'
 
   try {
-    const exhibitions: Exhibition[] = await prisma.exhibition.findMany({
-      where: { userId },
+    // Build where clause
+    const where: Prisma.ExhibitionWhereInput = {}
+    
+    if (userId) where.userId = userId
+    if (status) where.status = status
+    if (visibility) where.visibility = visibility
+
+    const exhibitions = await prisma.exhibition.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            handler: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     })
 

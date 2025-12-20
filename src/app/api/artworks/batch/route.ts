@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
         dimensions?: string
         description?: string
         imageUrl?: string
+        textContent?: string // Fixed text content for text artworks
       }>
     }
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
             dimensions: artwork.dimensions || null,
             description: artwork.description || null,
             imageUrl: artwork.imageUrl || null,
+            textContent: artwork.textContent || null,
           },
           update: {
             name: artwork.name,
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
             dimensions: artwork.dimensions || null,
             description: artwork.description || null,
             imageUrl: artwork.imageUrl || null,
+            textContent: artwork.textContent || null,
           },
         })
       )

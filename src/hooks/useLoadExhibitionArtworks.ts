@@ -20,6 +20,7 @@ type ExhibitionArtworkResponse = {
     dimensions: string | null
     description: string | null
     imageUrl: string | null
+    textContent: string | null // Fixed text content
   }
   wallId: string
   posX2d: number
@@ -33,6 +34,21 @@ type ExhibitionArtworkResponse = {
   quaternionY: number
   quaternionZ: number
   quaternionW: number
+  // Display properties (per-exhibition)
+  showFrame: boolean
+  frameColor: string
+  frameThickness: number
+  showPassepartout: boolean
+  passepartoutColor: string
+  passepartoutThickness: number
+  // Text styling (per-exhibition)
+  fontFamily: string
+  fontSize: number
+  fontWeight: string
+  letterSpacing: number
+  lineHeight: number
+  textColor: string
+  textAlign: string
 }
 
 export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
@@ -63,7 +79,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
 
         // Restore each artwork with full metadata from database
         exhibitionArtworks.forEach((ea) => {
-          // Restore artwork with full data (not just id/type)
+          // Restore artwork with full data including textContent and display properties
           const artwork: TArtwork = {
             id: ea.artworkId,
             name: ea.artwork.name,
@@ -74,6 +90,22 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             artworkDimensions: ea.artwork.dimensions || undefined,
             description: ea.artwork.description || undefined,
             imageUrl: ea.artwork.imageUrl || undefined,
+            textContent: ea.artwork.textContent || undefined, // Fixed content from Artwork
+            // Display properties from ExhibitionArtwork (per-exhibition)
+            showFrame: ea.showFrame,
+            frameColor: ea.frameColor,
+            frameThickness: { label: String(ea.frameThickness), value: ea.frameThickness },
+            showPassepartout: ea.showPassepartout,
+            passepartoutColor: ea.passepartoutColor,
+            passepartoutThickness: { label: String(ea.passepartoutThickness), value: ea.passepartoutThickness },
+            // Text styling from ExhibitionArtwork (per-exhibition)
+            fontFamily: { label: ea.fontFamily, value: ea.fontFamily.toLowerCase() as 'roboto' | 'lora' },
+            fontSize: { label: String(ea.fontSize), value: ea.fontSize },
+            fontWeight: { label: ea.fontWeight, value: ea.fontWeight === '700' ? 'bold' : 'regular' },
+            letterSpacing: { label: String(ea.letterSpacing), value: ea.letterSpacing },
+            lineHeight: { label: String(ea.lineHeight), value: ea.lineHeight },
+            textColor: ea.textColor,
+            textAlign: ea.textAlign as 'left' | 'center' | 'right',
           }
           
           dispatch(restoreArtwork(artwork))

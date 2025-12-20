@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
@@ -15,12 +16,20 @@ type Artist = {
   profileImageUrl: string | null
 }
 
+type Exhibition = {
+  id: string
+  mainTitle: string
+  url: string
+  handler: string
+}
+
 interface ArtistProfilePageProps {
   slug: string
 }
 
 export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
   const [artist, setArtist] = useState<Artist | null>(null)
+  const [exhibitions, setExhibitions] = useState<Exhibition[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,6 +43,13 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         }
         const data = await response.json()
         setArtist(data)
+
+        // Fetch public exhibitions for this artist
+        const exResponse = await fetch(`/api/exhibitions?userId=${data.id}&visibility=public`)
+        if (exResponse.ok) {
+          const exData = await exResponse.json()
+          setExhibitions(exData)
+        }
       } catch (err) {
         console.error('Failed to fetch artist:', err)
         setError('Failed to load artist')
@@ -104,13 +120,41 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             <p style={{ color: '#666', margin: '0.5rem 0 0' }}>@{artist.handler}</p>
           </div>
         </div>
-        <div>
+        
+        <div style={{ marginBottom: '2rem' }}>
           <h2>About</h2>
           <p style={{ whiteSpace: 'pre-wrap' }}>{artist.biography || 'No biography yet.'}</p>
+        </div>
+
+        <div>
+          <h2>Exhibitions</h2>
+          {exhibitions.length === 0 ? (
+            <p style={{ color: '#666' }}>No exhibitions yet.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {exhibitions.map((ex) => (
+                <li key={ex.id} style={{ marginBottom: '0.75rem' }}>
+                  <Link 
+                    href={`/exhibitions/${artist.handler}/${ex.url}`}
+                    style={{ 
+                      color: '#333', 
+                      textDecoration: 'none',
+                      fontSize: '1.1rem',
+                      display: 'inline-block',
+                      padding: '0.5rem 0',
+                      borderBottom: '1px solid #eee',
+                      width: '100%'
+                    }}
+                  >
+                    {ex.mainTitle} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
       <Footer />
     </>
   )
 }
-

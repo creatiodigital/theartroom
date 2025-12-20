@@ -4,6 +4,13 @@ import { editArtisticText } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
+// Default text styling values
+const DEFAULT_FONT_SIZE = 16
+const DEFAULT_LINE_HEIGHT = 1.4
+const DEFAULT_FONT_FAMILY = 'roboto' as const
+const DEFAULT_FONT_WEIGHT = 'regular' as const
+const DEFAULT_LETTER_SPACING = 0
+
 export const useArtisticText = (artworkId: string) => {
   const dispatch = useDispatch()
   const byId = useSelector((state: RootState) => state.artworks.byId)
@@ -15,8 +22,8 @@ export const useArtisticText = (artworkId: string) => {
 
   const {
     textContent,
-    textAlign,
-    textColor,
+    textAlign = 'left',
+    textColor = '#000000',
     fontSize,
     lineHeight,
     fontFamily,
@@ -34,19 +41,15 @@ export const useArtisticText = (artworkId: string) => {
     )
   }
 
-  if (!fontSize || !lineHeight || !fontFamily || !fontWeight || !letterSpacing) {
-    return null
-  }
-
   return {
     textContent,
     textAlign,
     textColor,
-    fontSize: fontSize.value,
-    lineHeight: lineHeight.value,
-    fontFamily: fontFamily.value,
-    fontWeight: fontWeight.value,
-    letterSpacing: letterSpacing.value,
+    fontSize: fontSize?.value ?? DEFAULT_FONT_SIZE,
+    lineHeight: lineHeight?.value ?? DEFAULT_LINE_HEIGHT,
+    fontFamily: fontFamily?.value ?? DEFAULT_FONT_FAMILY,
+    fontWeight: fontWeight?.value ?? DEFAULT_FONT_WEIGHT,
+    letterSpacing: letterSpacing?.value ?? DEFAULT_LETTER_SPACING,
     handleArtisticTextChange,
   }
 }
