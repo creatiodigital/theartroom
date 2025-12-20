@@ -13,11 +13,9 @@ export const useGroupArtwork = () => {
 
   const handleAddArtworkToGroup = useCallback(
     (artworkId: string) => {
-      if (!artworkGroupIds.includes(artworkId)) {
-        dispatch(addArtworkToGroup(artworkId))
-      }
+      dispatch(addArtworkToGroup(artworkId))
     },
-    [artworkGroupIds, dispatch],
+    [dispatch],
   )
 
   const handleCreateArtworkGroup = useCallback(() => {

@@ -89,7 +89,9 @@ const wallViewSlice = createSlice({
       state.isShiftKeyDown = action.payload
     },
     addArtworkToGroup: (state: TWallView, action: PayloadAction<string>) => {
-      state.artworkGroupIds.push(action.payload)
+      if (!state.artworkGroupIds.includes(action.payload)) {
+        state.artworkGroupIds.push(action.payload)
+      }
     },
     removeArtworkFromGroup: (state: TWallView, action: PayloadAction<string>) => {
       state.artworkGroupIds = state.artworkGroupIds.filter((id) => id !== action.payload)
