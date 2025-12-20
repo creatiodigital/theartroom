@@ -24,7 +24,7 @@ interface ExhibitionEditPageProps {
 export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEditPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
-  const { status: sessionStatus } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   const hasResetRef = useRef(false)
 
   // Reset all exhibition-related state when page loads
@@ -79,6 +79,18 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
     }
   }, [sessionStatus, router])
 
+  // Check ownership: user must own the exhibition OR be an admin
+  useEffect(() => {
+    if (sessionStatus === 'authenticated' && exhibition) {
+      const isOwner = session?.user?.id === exhibition.userId
+      const isAdmin = session?.user?.userType === 'admin'
+      
+      if (!isOwner && !isAdmin) {
+        router.push('/dashboard')
+      }
+    }
+  }, [sessionStatus, session, exhibition, router])
+
   // Show loading while checking session or if unauthenticated (redirect pending)
   if (sessionStatus === 'loading' || sessionStatus === 'unauthenticated') {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
@@ -94,6 +106,14 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
 
   if (!exhibition) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Exhibition not found</div>
+  }
+
+  // Final ownership check before rendering
+  const isOwner = session?.user?.id === exhibition.userId
+  const isAdmin = session?.user?.userType === 'admin'
+  
+  if (!isOwner && !isAdmin) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Not authorized</div>
   }
 
   return <EditView />

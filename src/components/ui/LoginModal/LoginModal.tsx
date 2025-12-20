@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
@@ -37,8 +37,16 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
         return
       }
 
+      // Get the updated session to check user type
+      const session = await getSession()
       onClose()
-      router.push('/dashboard')
+      
+      // Redirect based on user type
+      if (session?.user?.userType === 'admin') {
+        router.push('/admin/dashboard')
+      } else {
+        router.push('/dashboard')
+      }
       router.refresh()
     } catch {
       setError('Something went wrong')
