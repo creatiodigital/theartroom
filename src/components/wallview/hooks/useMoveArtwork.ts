@@ -111,10 +111,10 @@ export const useMoveArtwork = (
             snapY = otherArtwork.posY2d + otherArtwork.height2d / 2 - artwork.height2d / 2
           }
 
-          if (draggedArtworkId && otherArtwork?.id) {
+          if (draggedArtworkId && otherArtwork?.artworkId) {
             alignedPairs.push({
               from: draggedArtworkId,
-              to: otherArtwork.id,
+              to: otherArtwork.artworkId,
               direction: alignment.horizontal,
             })
           }
@@ -131,10 +131,10 @@ export const useMoveArtwork = (
             snapX = otherArtwork.posX2d + otherArtwork.width2d / 2 - artwork.width2d / 2
           }
 
-          if (draggedArtworkId && otherArtwork?.id) {
+          if (draggedArtworkId && otherArtwork?.artworkId) {
             alignedPairs.push({
               from: draggedArtworkId,
-              to: otherArtwork.id,
+              to: otherArtwork.artworkId,
               direction: alignment.vertical,
             })
           }
