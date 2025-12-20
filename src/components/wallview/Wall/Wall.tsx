@@ -41,6 +41,7 @@ export const Wall = () => {
   )
 
   const isDragging = useSelector((state: RootState) => state.wallView.isDragging)
+  const isDraggingGroup = useSelector((state: RootState) => state.wallView.isDraggingGroup)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
@@ -251,9 +252,9 @@ export const Wall = () => {
         )}
         {selectionBox && <SelectionBox selectionBox={selectionBox} scaleFactor={scaleFactor} />}
         {alignedPairs?.map((pair, index: number) => {
-          if (!isDragging) return null
+          if (!isDragging && !isDraggingGroup) return null
 
-          // Handle wall center alignment specially
+          // Handle wall center alignment specially (for both single artwork and group)
           if (pair.to === '__wall__' && boundingData) {
             const wallWidth2d = boundingData.width * scaling
             const wallHeight2d = boundingData.height * scaling
