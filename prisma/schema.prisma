@@ -30,8 +30,30 @@ model User {
   email       String?      @unique
   password    String?
   exhibitions Exhibition[]
+  artworks    Artwork[]
   accounts    Account[]
   sessions    Session[]
+}
+
+model Artwork {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  artworkType String  @default("image")
+  title       String?
+  author      String?
+  year        String?
+  technique   String?
+  dimensions  String?
+  description String?
+  imageUrl    String?
+
+  exhibitionArtworks ExhibitionArtwork[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Exhibition {
@@ -48,8 +70,37 @@ model Exhibition {
   endDate      DateTime?
   status       String
   visibility   String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+
+  exhibitionArtworks ExhibitionArtwork[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExhibitionArtwork {
+  id           String     @id @default(uuid())
+  exhibitionId String
+  exhibition   Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  artworkId    String
+  artwork      Artwork    @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  wallId      String
+  posX2d      Float
+  posY2d      Float
+  width2d     Float
+  height2d    Float
+  posX3d      Float
+  posY3d      Float
+  posZ3d      Float
+  quaternionX Float
+  quaternionY Float
+  quaternionZ Float
+  quaternionW Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([exhibitionId, artworkId])
 }
 
 model Account {

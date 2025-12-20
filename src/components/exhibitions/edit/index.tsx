@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 
 import { EditView } from '@/components/editview'
 import { useGLTF } from '@react-three/drei'
+import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
@@ -71,6 +72,9 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
       dispatch(setExhibition(exhibitionData))
     }
   }, [exhibition, dispatch])
+
+  // Load saved artworks from database
+  useLoadExhibitionArtworks(exhibition?.id)
 
   // Redirect to home if not logged in
   useEffect(() => {

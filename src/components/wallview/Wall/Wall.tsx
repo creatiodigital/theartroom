@@ -8,6 +8,7 @@ import { Mesh } from 'three'
 
 import { Artwork } from '@/components/wallview/Artwork'
 import { Group } from '@/components/wallview/Group'
+import { useAddExistingArtwork } from '@/components/wallview/hooks/useAddExistingArtwork'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { useCreateArtwork } from '@/components/wallview/hooks/useCreateArtwork'
 import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwork'
@@ -64,6 +65,7 @@ export const Wall = () => {
 
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
   const { handleCreateArtworkDrag } = useCreateArtwork(boundingData!)
+  const { handleAddExistingArtworkDrag } = useAddExistingArtwork(boundingData)
 
   const groupArtworkHandlers = useGroupArtwork()
   const { handleRemoveArtworkGroup } = groupArtworkHandlers
@@ -83,18 +85,24 @@ export const Wall = () => {
     (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       const artworkType = e.dataTransfer.getData('artworkType')
+      const existingArtworkId = e.dataTransfer.getData('existingArtworkId')
 
-      if (artworkType && wallRef.current && boundingData) {
+      if (wallRef.current && boundingData) {
         const rect = wallRef.current.getBoundingClientRect()
         const x = ((e.clientX - rect.left) / rect.width) * boundingData.width * scaling
         const y = ((e.clientY - rect.top) / rect.height) * boundingData.height * scaling
 
-        if (artworkType === 'image' || artworkType === 'text') {
+        // Handle existing artwork from media library
+        if (existingArtworkId) {
+          handleAddExistingArtworkDrag(existingArtworkId, x, y)
+        }
+        // Handle new artwork creation
+        else if (artworkType === 'image' || artworkType === 'text') {
           handleCreateArtworkDrag(artworkType, x, y)
         }
       }
     },
-    [wallRef, boundingData, scaling, handleCreateArtworkDrag],
+    [wallRef, boundingData, scaling, handleCreateArtworkDrag, handleAddExistingArtworkDrag],
   )
 
   const handleDragArtworkOverWall = useCallback((e: DragEvent<HTMLDivElement>) => {
