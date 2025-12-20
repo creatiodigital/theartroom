@@ -1,0 +1,308 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
+
+import { Button } from '@/components/ui/Button'
+
+import styles from './profile.module.scss'
+
+type User = {
+  id: string
+  name: string
+  lastName: string
+  handler: string
+  biography: string
+  email: string | null
+  profileImageUrl: string | null
+}
+
+export const DashboardProfilePage = () => {
+  const { data: session, status: sessionStatus } = useSession()
+  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const [formData, setFormData] = useState({
+    name: '',
+    lastName: '',
+    handler: '',
+    biography: '',
+    email: '',
+  })
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/')
+    }
+  }, [sessionStatus, router])
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!session?.user?.id) return
+
+      try {
+        const response = await fetch(`/api/users/${session.user.id}`)
+        if (!response.ok) {
+          setError('Failed to load profile')
+          return
+        }
+        const data = await response.json()
+        setUser(data)
+        setFormData({
+          name: data.name || '',
+          lastName: data.lastName || '',
+          handler: data.handler || '',
+          biography: data.biography || '',
+          email: data.email || '',
+        })
+      } catch {
+        setError('Failed to load profile')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (session?.user?.id) {
+      fetchUser()
+    }
+  }, [session?.user?.id])
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    setSuccess('')
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session?.user?.id) return
+
+    setSaving(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await fetch(`/api/users/${session.user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to update profile')
+        setSaving(false)
+        return
+      }
+
+      setSuccess('Profile updated successfully!')
+    } catch {
+      setError('Something went wrong')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !session?.user?.id) return
+
+    setUploading(true)
+    setError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch(`/api/users/${session.user.id}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to upload image')
+        setUploading(false)
+        return
+      }
+
+      const data = await response.json()
+      setUser((prev) => prev ? { ...prev, profileImageUrl: data.url } : prev)
+      setSuccess('Profile image updated!')
+    } catch {
+      setError('Failed to upload image')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveImage = async () => {
+    if (!user?.profileImageUrl || !session?.user?.id) return
+    if (!confirm('Remove profile picture?')) return
+
+    setUploading(true)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/users/${session.user.id}/image`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        setError('Failed to remove image')
+        setUploading(false)
+        return
+      }
+
+      setUser((prev) => prev ? { ...prev, profileImageUrl: null } : prev)
+      setSuccess('Profile image removed!')
+    } catch {
+      setError('Failed to remove image')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  if (sessionStatus === 'loading' || loading) {
+    return (
+      <div className={styles.page}>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
+        <h1>Edit Profile</h1>
+      </div>
+
+      {/* Profile Image Section */}
+      <div className={styles.imageSection}>
+        <label>Profile Picture</label>
+        <div className={styles.imageRow}>
+          <div className={styles.imagePreview}>
+            {user?.profileImageUrl ? (
+              <Image
+                src={user.profileImageUrl}
+                alt="Profile"
+                width={120}
+                height={120}
+                style={{ objectFit: 'cover', borderRadius: '50%' }}
+              />
+            ) : (
+              <div className={styles.noImage}>No photo</div>
+            )}
+          </div>
+          <div className={styles.imageActions}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+            <Button
+              variant="small"
+              label={uploading ? 'Uploading...' : 'Upload Photo'}
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            />
+            {user?.profileImageUrl && (
+              <Button
+                variant="small"
+                label="Remove"
+                onClick={handleRemoveImage}
+                type="button"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.row}>
+          <div className={styles.field}>
+            <label htmlFor="name">First Name *</label>
+            <input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="lastName">Last Name *</label>
+            <input
+              id="lastName"
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => handleChange('lastName', e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="handler">Handler (URL slug) *</label>
+          <input
+            id="handler"
+            type="text"
+            value={formData.handler}
+            onChange={(e) => handleChange('handler', e.target.value)}
+            required
+          />
+          <span className={styles.hint}>This will be part of your public URL</span>
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="biography">Biography</label>
+          <textarea
+            id="biography"
+            value={formData.biography}
+            onChange={(e) => handleChange('biography', e.target.value)}
+            rows={5}
+            placeholder="Tell visitors about yourself..."
+          />
+        </div>
+
+        {error && <p className={styles.error}>{error}</p>}
+        {success && <p className={styles.success}>{success}</p>}
+
+        <div className={styles.actions}>
+          <Button
+            variant="small"
+            label={saving ? 'Saving...' : 'Save Changes'}
+            type="submit"
+          />
+        </div>
+      </form>
+    </div>
+  )
+}

@@ -11,6 +11,7 @@ type Body = {
   handler?: string
   userType?: string
   email?: string
+  isFeatured?: boolean
 }
 
 type UserTypeValue = (typeof UserTypeEnum)[keyof typeof UserTypeEnum]
@@ -54,12 +55,26 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.biography !== undefined) data.biography = body.biography
     if (body.handler !== undefined) data.handler = body.handler
     if (body.email !== undefined) data.email = body.email
+    if (body.isFeatured !== undefined) data.isFeatured = body.isFeatured
     if (userTypeEnum !== undefined) data.userType = { set: userTypeEnum }
 
     const updated = await prisma.user.update({ where: { id }, data })
     return NextResponse.json(updated)
   } catch (error) {
     console.error('[PUT /api/users/[id]] error:', error)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+/* ------------------------ DELETE ------------------------ */
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await context.params
+
+    await prisma.user.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[DELETE /api/users/[id]] error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

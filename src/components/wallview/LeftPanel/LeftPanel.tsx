@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '@/components/ui/Button'
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { Input } from '@/components/ui/Input'
+import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
 import { editArtwork } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
 import { editWallName } from '@/redux/slices/sceneSlice'
@@ -26,6 +27,7 @@ import styles from './LeftPanel.module.scss'
 
 export const LeftPanel = () => {
   const dispatch = useDispatch()
+  const { saveToDatabase, saving } = useSaveExhibition()
 
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const allIds = useSelector((state: RootState) => state.artworks.allIds)
@@ -65,7 +67,16 @@ export const LeftPanel = () => {
   const handleZoomOut = () => dispatch(decreaseScaleFactor())
   const handleResetView = () => dispatch(resetPan())
 
-  const handleSaveWallView = () => {
+  const handleSaveWallView = async () => {
+    // Save to database first
+    const success = await saveToDatabase()
+    
+    if (!success) {
+      // Optionally show error - for now just log
+      console.error('Failed to save to database')
+    }
+
+    // Then hide wall view and show edit mode
     dispatch(hideHuman())
     dispatch(hideWallView())
     dispatch(showEditMode())
@@ -157,7 +168,7 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button variant="small" onClick={handleSaveWallView} label="Save" />
+              <Button variant="small" onClick={handleSaveWallView} label={saving ? 'Saving...' : 'Save'} />
             </div>
           </div>
         </div>

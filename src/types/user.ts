@@ -9,6 +9,8 @@ export type TUser = {
   biography: string
   userType: string
   email: string
+  profileImageUrl?: string
+  isFeatured?: boolean
 }
 
 export type TUserState = TUser & {

@@ -1,0 +1,53 @@
+.modal {
+  h2 {
+    margin: 0 0 1.5rem;
+  }
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  flex: 1;
+
+  label {
+    font-weight: 500;
+    font-size: 0.875rem;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+
+    &:focus {
+      outline: none;
+      border-color: #333;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.error {
+  color: red;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

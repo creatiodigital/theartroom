@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { del } from '@vercel/blob'
+
+import prisma from '@/lib/prisma'
+
+// GET single artwork
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
+
+    const artwork = await prisma.artwork.findUnique({
+      where: { id },
+    })
+
+    if (!artwork) {
+      return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(artwork)
+  } catch (error) {
+    console.error('[GET /api/artworks/[id]] error:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  }
+}
+
+// PUT update artwork
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
+    const body = await request.json()
+
+    const artwork = await prisma.artwork.update({
+      where: { id },
+      data: {
+        name: body.name,
+        artworkType: body.artworkType,
+        title: body.title,
+        author: body.author,
+        year: body.year,
+        technique: body.technique,
+        dimensions: body.dimensions,
+        description: body.description,
+      },
+    })
+
+    return NextResponse.json(artwork)
+  } catch (error) {
+    console.error('[PUT /api/artworks/[id]] error:', error)
+    return NextResponse.json({ error: 'Failed to update artwork' }, { status: 500 })
+  }
+}
+
+// DELETE artwork
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params
+
+    // Get artwork first to check for image
+    const artwork = await prisma.artwork.findUnique({
+      where: { id },
+    })
+
+    if (!artwork) {
+      return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+    }
+
+    // Delete associated blob image if exists
+    if (artwork.imageUrl) {
+      try {
+        await del(artwork.imageUrl)
+      } catch (error) {
+        console.warn('Failed to delete blob:', error)
+        // Continue anyway - blob might not exist
+      }
+    }
+
+    // Delete artwork record
+    await prisma.artwork.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[DELETE /api/artworks/[id]] error:', error)
+    return NextResponse.json({ error: 'Failed to delete artwork' }, { status: 500 })
+  }
+}
+

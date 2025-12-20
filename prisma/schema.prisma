@@ -21,14 +21,42 @@ enum UserType {
 }
 
 model User {
-  id          String       @id @default(uuid())
+  id              String       @id @default(uuid())
+  name            String
+  lastName        String
+  userType        UserType     @default(general)
+  handler         String       @unique
+  biography       String
+  email           String?      @unique
+  password        String?
+  profileImageUrl String?
+  isFeatured      Boolean      @default(false)
+  exhibitions     Exhibition[]
+  artworks        Artwork[]
+  accounts        Account[]
+  sessions        Session[]
+}
+
+model Artwork {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   name        String
-  lastName    String
-  userType    UserType     @default(general)
-  handler     String       @unique
-  biography   String
-  email       String?      @unique
-  exhibitions Exhibition[]
+  artworkType String  @default("image")
+  title       String?
+  author      String?
+  year        String?
+  technique   String?
+  dimensions  String?
+  description String?
+  imageUrl    String?
+  textContent String? // Fixed text content for stencil/text artworks
+
+  exhibitionArtworks ExhibitionArtwork[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Exhibition {
@@ -45,6 +73,78 @@ model Exhibition {
   endDate      DateTime?
   status       String
   visibility   String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+
+  exhibitionArtworks ExhibitionArtwork[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExhibitionArtwork {
+  id           String     @id @default(uuid())
+  exhibitionId String
+  exhibition   Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  artworkId    String
+  artwork      Artwork    @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  wallId      String
+  posX2d      Float
+  posY2d      Float
+  width2d     Float
+  height2d    Float
+  posX3d      Float
+  posY3d      Float
+  posZ3d      Float
+  quaternionX Float
+  quaternionY Float
+  quaternionZ Float
+  quaternionW Float
+
+  // Display properties (per-exhibition customization)
+  showFrame             Boolean @default(false)
+  frameColor            String  @default("#000000")
+  frameThickness        Float   @default(5)
+  showPassepartout      Boolean @default(false)
+  passepartoutColor     String  @default("#ffffff")
+  passepartoutThickness Float   @default(10)
+
+  // Text styling (per-exhibition customization)
+  fontFamily    String @default("Montserrat")
+  fontSize      Float  @default(16)
+  fontWeight    String @default("400")
+  letterSpacing Float  @default(0)
+  lineHeight    Float  @default(1.4)
+  textColor     String @default("#000000")
+  textAlign     String @default("left")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([exhibitionId, artworkId])
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

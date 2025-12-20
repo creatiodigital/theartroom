@@ -36,6 +36,18 @@ const artworkSlice = createSlice({
       state.allIds.push(id)
     },
 
+    // Restore artwork from database with all metadata
+    restoreArtwork: (state, action: PayloadAction<TArtwork>) => {
+      const artwork = action.payload
+      
+      // Don't increment counters for restored artworks
+      if (!state.allIds.includes(artwork.id)) {
+        state.allIds.push(artwork.id)
+      }
+      
+      state.byId[artwork.id] = artwork
+    },
+
     editArtwork: <K extends keyof TArtwork>(
       state: TArtworksState,
       action: PayloadAction<{ currentArtworkId: string; property: K; value: TArtwork[K] }>,
@@ -84,7 +96,7 @@ const artworkSlice = createSlice({
   },
 })
 
-export const { createArtwork, editArtwork, editArtisticImage, editArtisticText, deleteArtwork, resetArtworks } =
+export const { createArtwork, restoreArtwork, editArtwork, editArtisticImage, editArtisticText, deleteArtwork, resetArtworks } =
   artworkSlice.actions
 
 export default artworkSlice.reducer
