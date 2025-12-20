@@ -13,12 +13,18 @@ type ButtonProps = {
   type?: 'submit' | 'button' | 'reset'
   onClick?: MouseEventHandler<HTMLButtonElement>
   label: string
+  disabled?: boolean
 }
 
 export const Button = React.memo(
-  ({ variant = 'primary', type = 'button', onClick, label }: ButtonProps) => {
+  ({ variant = 'primary', type = 'button', onClick, label, disabled }: ButtonProps) => {
     return (
-      <button className={c([styles.button, styles[variant]])} onClick={onClick} type={type}>
+      <button
+        className={c([styles.button, styles[variant], disabled && styles.disabled])}
+        onClick={onClick}
+        type={type}
+        disabled={disabled}
+      >
         {label}
       </button>
     )
@@ -28,3 +34,4 @@ export const Button = React.memo(
 Button.displayName = 'Button'
 
 export default Button
+

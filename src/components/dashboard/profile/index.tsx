@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -188,8 +188,11 @@ export const DashboardProfilePage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
-        <h1>Edit Profile</h1>
+        <div>
+          <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
+          <h1>Edit Profile</h1>
+        </div>
+        <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
       {/* Profile Image Section */}

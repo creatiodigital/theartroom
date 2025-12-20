@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -11,6 +11,17 @@ import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 
 import styles from './artworks.module.scss'
 
+type Exhibition = {
+  id: string
+  mainTitle: string
+}
+
+type ExhibitionArtwork = {
+  id: string
+  exhibitionId: string
+  exhibition: Exhibition
+}
+
 type Artwork = {
   id: string
   name: string
@@ -19,6 +30,7 @@ type Artwork = {
   year: string | null
   technique: string | null
   createdAt: string
+  exhibitionArtworks: ExhibitionArtwork[]
 }
 
 export const ArtworkLibraryPage = () => {
@@ -30,6 +42,12 @@ export const ArtworkLibraryPage = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [unlinkTarget, setUnlinkTarget] = useState<{
+    exhibitionArtworkId: string
+    artworkName: string
+    exhibitionTitle: string
+  } | null>(null)
+  const [unlinking, setUnlinking] = useState(false)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -90,6 +108,36 @@ export const ArtworkLibraryPage = () => {
     }
   }, [deleteTarget, fetchArtworks])
 
+  const handleUnlinkClick = useCallback(
+    (exhibitionArtworkId: string, artworkName: string, exhibitionTitle: string) => {
+      setUnlinkTarget({ exhibitionArtworkId, artworkName, exhibitionTitle })
+    },
+    []
+  )
+
+  const handleUnlinkConfirm = useCallback(async () => {
+    if (!unlinkTarget) return
+
+    setUnlinking(true)
+    try {
+      const response = await fetch(`/api/exhibition-artworks/${unlinkTarget.exhibitionArtworkId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        fetchArtworks()
+        setUnlinkTarget(null)
+      } else {
+        alert('Failed to remove from exhibition')
+      }
+    } catch (error) {
+      console.error('Unlink error:', error)
+      alert('Failed to remove from exhibition')
+    } finally {
+      setUnlinking(false)
+    }
+  }, [unlinkTarget, fetchArtworks])
+
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
@@ -109,7 +157,10 @@ export const ArtworkLibraryPage = () => {
           <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
           <h1>Artwork Library</h1>
         </div>
-        <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
+        <div className={styles.headerActions}>
+          <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
+          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        </div>
       </div>
 
       {artworks.length === 0 ? (
@@ -128,6 +179,26 @@ export const ArtworkLibraryPage = () => {
                   {artwork.year && ` • ${artwork.year}`}
                   {artwork.technique && ` • ${artwork.technique}`}
                 </p>
+                {artwork.exhibitionArtworks.length > 0 && (
+                  <div className={styles.exhibitions}>
+                    <span className={styles.exhibitionsLabel}>In:</span>
+                    {artwork.exhibitionArtworks.map((ea) => (
+                      <span key={ea.id} className={styles.exhibitionTag}>
+                        {ea.exhibition.mainTitle}
+                        <button
+                          type="button"
+                          className={styles.removeBtn}
+                          onClick={() =>
+                            handleUnlinkClick(ea.id, artwork.name, ea.exhibition.mainTitle)
+                          }
+                          title={`Remove from ${ea.exhibition.mainTitle}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className={styles.cardActions}>
                 <Button
@@ -175,6 +246,32 @@ export const ArtworkLibraryPage = () => {
                 variant="small"
                 label="Cancel"
                 onClick={() => setDeleteTarget(null)}
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {unlinkTarget && (
+        <Modal onClose={() => setUnlinkTarget(null)}>
+          <div className={styles.deleteModal}>
+            <h2>Remove from Exhibition?</h2>
+            <p>
+              Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
+              <strong>{unlinkTarget.exhibitionTitle}</strong>?
+              <br />
+              The artwork will remain in your library.
+            </p>
+            <div className={styles.deleteActions}>
+              <Button
+                variant="small"
+                label={unlinking ? 'Removing...' : 'Yes, Remove'}
+                onClick={handleUnlinkConfirm}
+              />
+              <Button
+                variant="small"
+                label="Cancel"
+                onClick={() => setUnlinkTarget(null)}
               />
             </div>
           </div>

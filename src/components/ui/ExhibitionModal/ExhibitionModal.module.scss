@@ -11,6 +11,46 @@
   min-height: 100px;
 }
 
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #333;
+  }
+}
+
+.inputError {
+  border-color: #c00 !important;
+}
+
+.urlPreview {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #666;
+  
+  strong {
+    color: #333;
+  }
+}
+
+.error {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: #c00;
+}
+
+.checking {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+}
+
 .ctas {
   padding: 20px 0 0 0;
   display: flex;

@@ -67,7 +67,7 @@ export const DashboardPage = () => {
   }, [])
 
   const handleCreateExhibition = useCallback(
-    async (mainTitle: string, visibility: string) => {
+    async (mainTitle: string, visibility: string, customUrl: string) => {
       try {
         const newEx = await createExhibition({
           mainTitle,
@@ -75,6 +75,7 @@ export const DashboardPage = () => {
           userId: userId ?? '',
           userHandler: userHandler ?? '',
           spaceId: selectedSpace.value,
+          customUrl,
         }).unwrap()
         dispatch(addExhibition(newEx))
         refetchExhibitions()
@@ -192,6 +193,7 @@ export const DashboardPage = () => {
               selectedSpace={selectedSpace}
               handleSelectSpace={handleSelectSpace}
               spaceOptions={spaceOptions}
+              userId={userId ?? ''}
             />
           </Modal>
         )}

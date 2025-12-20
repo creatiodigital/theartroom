@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -95,7 +95,10 @@ export const DashboardAdmin = () => {
     <div style={{ padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1>All Users</h1>
-        <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        </div>
       </div>
 
       <table border={1} cellPadding="8" style={{ borderCollapse: 'collapse' }}>

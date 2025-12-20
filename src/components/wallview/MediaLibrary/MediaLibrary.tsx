@@ -13,6 +13,13 @@ type Artwork = {
   id: string
   name: string
   artworkType: string
+  imageUrl?: string | null
+  textContent?: string | null
+}
+
+const truncateText = (text: string, maxLength: number) => {
+  if (text.length <= maxLength) return text
+  return text.slice(0, maxLength).trim() + '...'
 }
 
 type MediaLibraryProps = {
@@ -80,12 +87,29 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                 onClick={() => onClickArtwork(artwork)}
                 draggable
                 onDragStart={(e) => handleDragStart(e, artwork)}
+                style={
+                  artwork.artworkType === 'image' && artwork.imageUrl
+                    ? {
+                        backgroundImage: `url(${artwork.imageUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }
+                    : undefined
+                }
               >
-                <Icon 
-                  name={artwork.artworkType === 'image' ? 'picture' : 'text'} 
-                  size={32} 
-                  color="#333"
-                />
+                {/* Show image, text preview, or icon */}
+                {artwork.artworkType === 'image' && artwork.imageUrl ? null : 
+                 artwork.artworkType === 'text' && artwork.textContent ? (
+                  <span className={styles.textPreview}>
+                    {truncateText(artwork.textContent, 50)}
+                  </span>
+                ) : (
+                  <Icon 
+                    name={artwork.artworkType === 'image' ? 'picture' : 'text'} 
+                    size={32} 
+                    color="#333"
+                  />
+                )}
               </div>
               <span className={styles.name}>{artwork.name}</span>
             </div>
@@ -95,3 +119,4 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
     </div>
   )
 }
+

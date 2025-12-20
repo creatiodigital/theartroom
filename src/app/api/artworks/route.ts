@@ -18,6 +18,15 @@ export async function GET(request: NextRequest) {
     const artworks = await prisma.artwork.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        exhibitionArtworks: {
+          include: {
+            exhibition: {
+              select: { id: true, mainTitle: true },
+            },
+          },
+        },
+      },
     })
 
     return NextResponse.json(artworks)
