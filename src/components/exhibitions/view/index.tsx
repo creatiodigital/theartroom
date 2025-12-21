@@ -70,9 +70,40 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   if (isLoading) {
     return (
       <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          gap: '12px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        }}
       >
-        Loading...
+        <div
+          style={{
+            width: '200px',
+            height: '3px',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            borderRadius: '2px',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: '30%',
+              height: '100%',
+              backgroundColor: '#333',
+              animation: 'loading-pulse 1.5s ease-in-out infinite',
+            }}
+          />
+        </div>
+        <style>{`
+          @keyframes loading-pulse {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(300%); }
+          }
+        `}</style>
       </div>
     )
   }
