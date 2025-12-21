@@ -1,10 +1,16 @@
 .header {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--white);
+  padding: var(--space-6) 0;
+}
+
+.headerInner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-4) var(--space-8);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--white);
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+  margin: 0 auto;
+  padding: 0 var(--space-8);
 }
 
 .logo {

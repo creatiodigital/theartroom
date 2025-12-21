@@ -25,7 +25,7 @@
 
 .content {
   flex: 1;
-  max-width: var(--content-max-width);
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
   margin: 0 auto;
   padding: var(--space-8);
   width: 100%;

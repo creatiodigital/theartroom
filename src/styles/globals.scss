@@ -43,7 +43,7 @@ main {
 .page-content {
   flex: 1 0 auto;
   width: 100%;
-  max-width: var(--content-max-width);
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
   margin: 0 auto;
   padding: var(--space-8);
 }
@@ -60,11 +60,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1 {
-  font-size: var(--text-5xl);
+  font-size: var(--text-4xl);
 }
 
 h2 {
-  font-size: var(--text-4xl);
+  font-size: var(--text-3xl);
 }
 
 h3 {

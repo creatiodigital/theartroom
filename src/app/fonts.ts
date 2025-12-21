@@ -1,4 +1,4 @@
-import { Lato, Crimson_Pro, Roboto, Lora } from 'next/font/google'
+import { Lato, EB_Garamond, Roboto, Lora } from 'next/font/google'
 
 // =============================================================================
 // MAIN TYPOGRAPHY - Change these to swap fonts across the entire site
@@ -18,10 +18,10 @@ export const bodyFont = Lato({
 
 /**
  * Heading font - Used for: h1, h2, h3, h4, h5, h6
- * Current: Crimson Pro
- * To change: Replace Crimson_Pro with any Google font
+ * Current: EB Garamond
+ * To change: Replace EB_Garamond with any Google font
  */
-export const headingFont = Crimson_Pro({
+export const headingFont = EB_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-heading',

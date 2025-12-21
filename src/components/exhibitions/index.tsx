@@ -78,12 +78,10 @@ export const ExhibitionsPage = () => {
               )}
             </section>
 
-            {/* Past Exhibitions */}
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Past</h2>
-              {pastExhibitions.length === 0 ? (
-                <p className={styles.empty}>No past exhibitions.</p>
-              ) : (
+            {/* Past Exhibitions - only show if there are any */}
+            {pastExhibitions.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Past</h2>
                 <ul className={styles.list}>
                   {pastExhibitions.map((exhibition) => (
                     <li key={exhibition.id} className={styles.listItem}>
@@ -99,8 +97,8 @@ export const ExhibitionsPage = () => {
                     </li>
                   ))}
                 </ul>
-              )}
-            </section>
+              </section>
+            )}
           </>
         )}
       </div>

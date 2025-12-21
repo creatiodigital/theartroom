@@ -78,12 +78,10 @@ export default async function Home() {
           )}
         </section>
 
-        {/* Featured Artists */}
-        <section>
-          <h2 style={{ marginBottom: 'var(--space-6)' }}>Featured Artists</h2>
-          {featuredArtists.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No featured artists at the moment.</p>
-          ) : (
+        {/* Featured Artists - only show if there are any */}
+        {featuredArtists.length > 0 && (
+          <section>
+            <h2 style={{ marginBottom: 'var(--space-6)' }}>Featured Artists</h2>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {featuredArtists.map((artist) => (
                 <li key={artist.id} style={{ padding: 'var(--space-3) 0' }}>
@@ -102,8 +100,8 @@ export default async function Home() {
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
+        )}
       </div>
 
       <Footer />

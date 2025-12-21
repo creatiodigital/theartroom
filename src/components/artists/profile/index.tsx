@@ -90,7 +90,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
   return (
     <>
       <Header />
-      <div className="page-content" style={{ maxWidth: '800px' }}>
+      <div className="page-content">
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
           {artist.profileImageUrl ? (
             <Image

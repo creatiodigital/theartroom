@@ -2,7 +2,7 @@
   flex: 1;
   padding: var(--space-8);
   min-height: 60vh;
-  max-width: var(--content-max-width);
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
   margin: 0 auto;
   width: 100%;
 }
