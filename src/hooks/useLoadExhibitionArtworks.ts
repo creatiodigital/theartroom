@@ -120,6 +120,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
           dispatch(restoreArtwork(artwork))
 
           // Create position in exhibition slice
+          // Compute width3d/height3d from 2D dimensions (scale factor is ~1/100)
+          // This matches the formula in convert2DTo3D: width3d = width2d / 100
           const position: TArtworkPosition = {
             id: ea.id,
             artworkId: ea.artworkId,
@@ -129,6 +131,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             posY2d: ea.posY2d,
             width2d: ea.width2d,
             height2d: ea.height2d,
+            width3d: ea.width2d / 100,
+            height3d: ea.height2d / 100,
             posX3d: ea.posX3d,
             posY3d: ea.posY3d,
             posZ3d: ea.posZ3d,
