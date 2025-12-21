@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import type { Exhibition } from '@/generated/prisma'
+import type { Exhibition, Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
-import { slugify } from '@/utils/slugify'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,13 +11,31 @@ export async function POST(request: NextRequest) {
       visibility: string
       userId: string
       handler: string
+      url: string
       spaceId: string
     }
 
-    const { mainTitle, visibility, userId, handler, spaceId } = body
+    const { mainTitle, visibility, userId, handler, url, spaceId } = body
 
-    // Generate slug from mainTitle
-    const slug = slugify(mainTitle)
+    // Validate required fields
+    if (!url) {
+      return NextResponse.json({ error: 'URL slug is required' }, { status: 400 })
+    }
+
+    // Check if URL already exists for this user
+    const existing = await prisma.exhibition.findFirst({
+      where: {
+        userId,
+        url,
+      },
+    })
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'An exhibition with this URL already exists' },
+        { status: 409 },
+      )
+    }
 
     const exhibition: Exhibition = await prisma.exhibition.create({
       data: {
@@ -26,15 +43,16 @@ export async function POST(request: NextRequest) {
         visibility,
         userId,
         handler,
-        url: slug, // 👉 store only the slug
+        url,
         spaceId,
-        status: 'DRAFT',
+        status: 'current',
       },
     })
 
     return NextResponse.json(exhibition, { status: 201 })
   } catch (error) {
     console.error('[POST /api/exhibitions] error:', error)
+    console.error('[POST /api/exhibitions] error details:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: 'Failed to create exhibition' }, { status: 500 })
   }
 }
@@ -42,14 +60,29 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
-  }
+  const status = searchParams.get('status') // 'current' | 'past'
+  const visibility = searchParams.get('visibility') // 'public' | 'hidden'
 
   try {
-    const exhibitions: Exhibition[] = await prisma.exhibition.findMany({
-      where: { userId },
+    // Build where clause
+    const where: Prisma.ExhibitionWhereInput = {}
+
+    if (userId) where.userId = userId
+    if (status) where.status = status
+    if (visibility) where.visibility = visibility
+
+    const exhibitions = await prisma.exhibition.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            handler: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     })
 

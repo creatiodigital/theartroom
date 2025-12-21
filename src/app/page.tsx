@@ -1,7 +1,110 @@
+import Link from 'next/link'
+
+import { Header } from '@/components/ui/Header'
+import { Footer } from '@/components/ui/Footer'
+import prisma from '@/lib/prisma'
+
+import styles from './page.module.scss'
+
+type ExhibitionWithUser = {
+  id: string
+  mainTitle: string
+  url: string
+  user: { name: string; lastName: string; handler: string }
+}
+
 export default async function Home() {
+  // Fetch current public exhibitions
+  const exhibitionData = await prisma.exhibition.findMany({
+    where: {
+      status: 'current',
+      visibility: 'public',
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          lastName: true,
+          handler: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 6,
+  })
+  const exhibitions = exhibitionData as unknown as ExhibitionWithUser[]
+
+  // Fetch featured artists
+  const featuredArtists = await prisma.user.findMany({
+    where: {
+      isFeatured: true,
+    },
+    orderBy: { name: 'asc' },
+    take: 6,
+  })
+
   return (
-    <main>
-      <h1>Home page</h1>
+    <main className={styles.home}>
+      <Header />
+      <section className={styles.hero}>
+        <h2>Welcome to Lumen Gallery</h2>
+        <p>Discover and experience virtual art exhibitions</p>
+      </section>
+
+      <div className={styles.content}>
+        {/* Current Exhibitions */}
+        <section style={{ marginBottom: 'var(--space-12)' }}>
+          <h2 style={{ marginBottom: 'var(--space-6)' }}>Exhibitions</h2>
+          {exhibitions.length === 0 ? (
+            <p style={{ color: 'var(--color-text-muted)' }}>No current exhibitions at the moment.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {exhibitions.map((exhibition) => (
+                <li key={exhibition.id} style={{ padding: 'var(--space-3) 0' }}>
+                  <Link
+                    href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 'var(--font-normal)' }}>
+                      {exhibition.mainTitle}
+                    </span>
+                    <span style={{ color: 'var(--color-text-muted)' }}>
+                      {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Featured Artists - only show if there are any */}
+        {featuredArtists.length > 0 && (
+          <section>
+            <h2 style={{ marginBottom: 'var(--space-6)' }}>Featured Artists</h2>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {featuredArtists.map((artist) => (
+                <li key={artist.id} style={{ padding: 'var(--space-3) 0' }}>
+                  <Link
+                    href={`/artists/${artist.handler}`}
+                    style={{
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 'var(--font-normal)',
+                      fontSize: 'var(--text-2xl)',
+                    }}
+                  >
+                    {artist.name} {artist.lastName}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      <Footer />
     </main>
   )
 }

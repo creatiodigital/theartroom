@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { useDispatch } from 'react-redux'
 
-import { editArtisticImage } from '@/redux/slices/artworksSlice'
+import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { setArtworkUploadedTrue } from '@/redux/slices/wizardSlice'
 
 export const useFileUpload = (currentArtworkId: string) => {

@@ -21,6 +21,10 @@ const wallViewSlice = createSlice({
       state.isWallView = false
       state.currentWallId = null
     },
+    resetWallView: () => {
+      // Return fresh initial state to prevent stale data between exhibitions
+      return wallViewFactory()
+    },
     showHuman: (state: TWallView) => {
       state.isHumanVisible = true
     },
@@ -85,7 +89,9 @@ const wallViewSlice = createSlice({
       state.isShiftKeyDown = action.payload
     },
     addArtworkToGroup: (state: TWallView, action: PayloadAction<string>) => {
-      state.artworkGroupIds.push(action.payload)
+      if (!state.artworkGroupIds.includes(action.payload)) {
+        state.artworkGroupIds.push(action.payload)
+      }
     },
     removeArtworkFromGroup: (state: TWallView, action: PayloadAction<string>) => {
       state.artworkGroupIds = state.artworkGroupIds.filter((id) => id !== action.payload)
@@ -115,6 +121,7 @@ const wallViewSlice = createSlice({
 export const {
   showWallView,
   hideWallView,
+  resetWallView,
   showHuman,
   hideHuman,
   chooseCurrentArtworkId,

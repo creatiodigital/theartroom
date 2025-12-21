@@ -105,13 +105,13 @@ export const useSelectBox = (
 
       if (selectedArtworks.length === 1) {
         const only = selectedArtworks[0]
-        if (only.id) {
-          dispatch(chooseCurrentArtworkId(only.id))
-          handleAddArtworkToGroup(only.id)
+        if (only.artworkId) {
+          dispatch(chooseCurrentArtworkId(only.artworkId))
+          handleAddArtworkToGroup(only.artworkId)
           dispatch(showWizard())
         }
       } else if (selectedArtworks.length > 1) {
-        selectedArtworks.forEach((a) => a.id && handleAddArtworkToGroup(a.id))
+        selectedArtworks.forEach((a) => a.artworkId && handleAddArtworkToGroup(a.artworkId))
         if (!isShiftKeyDown) {
           dispatch(chooseCurrentArtworkId(null))
         }
@@ -128,7 +128,7 @@ export const useSelectBox = (
 
       setTimeout(() => {
         preventClick.current = false
-      }, 0)
+      }, 50)
     },
     [
       selectionBox,

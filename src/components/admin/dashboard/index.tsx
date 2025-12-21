@@ -1,16 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useSession, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
+import { AddArtistModal } from '@/components/admin/AddArtistModal'
+import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
+import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
-// import { useUpdateUser } from '@/hooks/useUpdateUser'
 import type { TUser } from '@/types/user'
 
 export const DashboardAdmin = () => {
-  const { users, loading, error } = useUsers()
-  // const { updateUser, statusById} = useUpdateUser()
+  const { data: session, status: sessionStatus } = useSession()
+  const router = useRouter()
+  const { users, loading, error, refetch } = useUsers()
+  const { startImpersonation } = useEffectiveUser()
 
   const [editingUsers, setEditingUsers] = useState<Record<string, TUser>>({})
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  // Redirect non-admins
+  useEffect(() => {
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/')
+    } else if (sessionStatus === 'authenticated' && session?.user?.userType !== 'admin') {
+      router.push('/')
+    }
+  }, [sessionStatus, session, router])
 
   const handleChange = (id: string, field: keyof TUser, value: string) => {
     setEditingUsers((prev) => {
@@ -27,39 +48,100 @@ export const DashboardAdmin = () => {
     })
   }
 
-  // const handleSave = async (id: string) => {
-  //   const user = editingUsers[id]
-  //   if (!user) return
-
-  //   await updateUser(user)
-  // }
-
   const getFieldValue = (user: TUser, field: keyof TUser): string => {
     return (editingUsers[user.id]?.[field] as string) ?? (user[field] as string) ?? ''
   }
 
-  if (loading) return <div>Loading...</div>
+  const handleAddSuccess = useCallback(() => {
+    refetch()
+  }, [refetch])
+
+  const handleDeleteClick = useCallback((userId: string, userName: string) => {
+    setDeleteTarget({ id: userId, name: userName })
+  }, [])
+
+  const handleImpersonate = useCallback(
+    async (user: TUser) => {
+      const fullName = `${user.name} ${user.lastName}`.trim()
+      const success = await startImpersonation({
+        id: user.id,
+        name: fullName,
+        handler: user.handler,
+      })
+      if (success) {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    },
+    [startImpersonation, router],
+  )
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/users/${deleteTarget.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        refetch()
+        setDeleteTarget(null)
+      } else {
+        alert('Failed to delete user')
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Failed to delete user')
+    } finally {
+      setDeleting(false)
+    }
+  }, [deleteTarget, refetch])
+
+  // Loading states
+  if (sessionStatus === 'loading' || loading) return <div>Loading...</div>
+
+  // Not authorized
+  if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
+    return <div>Not authorized</div>
+  }
+
   if (error) return <div>Error: {error}</div>
 
   return (
-    <div>
-      <h1>All Users</h1>
+    <div style={{ padding: '20px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+        }}
+      >
+        <h1>All Users</h1>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        </div>
+      </div>
+
       <table border={1} cellPadding="8" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th>ID</th>
             <th>Name</th>
             <th>Last Name</th>
             <th>Handler</th>
-            <th>Biography</th>
             <th>Email</th>
-            <th>Action</th>
+            <th>Type</th>
+            <th>Featured</th>
+
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
-              <td>{user.id}</td>
               <td>
                 <input
                   type="text"
@@ -83,41 +165,86 @@ export const DashboardAdmin = () => {
               </td>
               <td>
                 <input
-                  type="text"
-                  value={getFieldValue(user, 'biography')}
-                  onChange={(e) => handleChange(user.id, 'biography', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
                   type="email"
                   value={getFieldValue(user, 'email')}
                   onChange={(e) => handleChange(user.id, 'email', e.target.value)}
                 />
               </td>
-              {/* <td>
-                {(() => {
-                  const TRequestStatus = statusById[user.id] ?? 'idle'
+              <td>{user.userType}</td>
+              <td style={{ textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={user.isFeatured ?? false}
+                  onChange={async (e) => {
+                    const newValue = e.target.checked
+                    try {
+                      await fetch(`/api/users/${user.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isFeatured: newValue }),
+                      })
+                      refetch()
+                    } catch (err) {
+                      console.error('Failed to update featured status:', err)
+                    }
+                  }}
+                />
+              </td>
 
-                  return (
-                    <Button
-                      variant="small"
-                      label={
-                        TRequestStatus === 'loading'
-                          ? 'Saving...'
-                          : TRequestStatus === 'success'
-                            ? 'Saved ✓'
-                            : 'Save'
-                      }
-                      onClick={() => handleSave(user.id)}
-                    />
-                  )
-                })()}
-              </td> */}
+              <td style={{ display: 'flex', gap: '0.25rem' }}>
+                {user.userType !== 'admin' && (
+                  <Button
+                    variant="small"
+                    label="Impersonate"
+                    onClick={() => handleImpersonate(user)}
+                  />
+                )}
+                <Button
+                  variant="small"
+                  label="Delete"
+                  onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <AdminExhibitions />
+
+      {showAddModal && (
+        <Modal onClose={() => setShowAddModal(false)}>
+          <AddArtistModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} />
+        </Modal>
+      )}
+
+      {deleteTarget && (
+        <Modal onClose={() => setDeleteTarget(null)}>
+          <div style={{ textAlign: 'center' }}>
+            <h2>Are you sure?</h2>
+            <p style={{ margin: '1rem 0' }}>
+              You are about to delete <strong>{deleteTarget.name}</strong>.
+              <br />
+              This action cannot be undone.
+            </p>
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                justifyContent: 'center',
+                marginTop: '1.5rem',
+              }}
+            >
+              <Button
+                variant="small"
+                label={deleting ? 'Deleting...' : 'Yes, Delete'}
+                onClick={handleDeleteConfirm}
+              />
+              <Button variant="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

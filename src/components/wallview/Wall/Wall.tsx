@@ -8,6 +8,7 @@ import { Mesh } from 'three'
 
 import { Artwork } from '@/components/wallview/Artwork'
 import { Group } from '@/components/wallview/Group'
+import { useAddExistingArtwork } from '@/components/wallview/hooks/useAddExistingArtwork'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { useCreateArtwork } from '@/components/wallview/hooks/useCreateArtwork'
 import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwork'
@@ -29,8 +30,11 @@ import { AlignedLine } from './AlignedLine'
 import styles from './Wall.module.scss'
 
 export const Wall = () => {
-  const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
-  const { nodes } = useGLTF(`/assets/spaces/${selectedSpace.value}.glb`)
+  // Use exhibition spaceId to load the correct GLB for this exhibition
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+    nodes: Record<string, Mesh>
+  }
 
   const allIds = useSelector((state: RootState) => state.artworks.allIds)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -39,6 +43,7 @@ export const Wall = () => {
   )
 
   const isDragging = useSelector((state: RootState) => state.wallView.isDragging)
+  const isDraggingGroup = useSelector((state: RootState) => state.wallView.isDraggingGroup)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
@@ -63,6 +68,7 @@ export const Wall = () => {
 
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
   const { handleCreateArtworkDrag } = useCreateArtwork(boundingData!)
+  const { handleAddExistingArtworkDrag } = useAddExistingArtwork(boundingData)
 
   const groupArtworkHandlers = useGroupArtwork()
   const { handleRemoveArtworkGroup } = groupArtworkHandlers
@@ -82,18 +88,24 @@ export const Wall = () => {
     (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       const artworkType = e.dataTransfer.getData('artworkType')
+      const existingArtworkId = e.dataTransfer.getData('existingArtworkId')
 
-      if (artworkType && wallRef.current && boundingData) {
+      if (wallRef.current && boundingData) {
         const rect = wallRef.current.getBoundingClientRect()
         const x = ((e.clientX - rect.left) / rect.width) * boundingData.width * scaling
         const y = ((e.clientY - rect.top) / rect.height) * boundingData.height * scaling
 
-        if (artworkType === 'image' || artworkType === 'text') {
+        // Handle existing artwork from media library
+        if (existingArtworkId) {
+          handleAddExistingArtworkDrag(existingArtworkId, x, y)
+        }
+        // Handle new artwork creation
+        else if (artworkType === 'image' || artworkType === 'text') {
           handleCreateArtworkDrag(artworkType, x, y)
         }
       }
     },
-    [wallRef, boundingData, scaling, handleCreateArtworkDrag],
+    [wallRef, boundingData, scaling, handleCreateArtworkDrag, handleAddExistingArtworkDrag],
   )
 
   const handleDragArtworkOverWall = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -104,6 +116,12 @@ export const Wall = () => {
     if (boundingData && wallRef.current) {
       const width = boundingData.width
       const height = boundingData.height
+
+      // Skip if dimensions are invalid (NaN or zero)
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width === 0 || height === 0) {
+        console.warn('Invalid wall dimensions:', { width, height })
+        return
+      }
 
       wallRef.current.style.width = `${width * scaling}px`
       wallRef.current.style.height = `${height * scaling}px`
@@ -236,7 +254,39 @@ export const Wall = () => {
         )}
         {selectionBox && <SelectionBox selectionBox={selectionBox} scaleFactor={scaleFactor} />}
         {alignedPairs?.map((pair, index: number) => {
-          if (!isDragging) return null
+          if (!isDragging && !isDraggingGroup) return null
+
+          // Handle wall center alignment specially (for both single artwork and group)
+          if (pair.to === '__wall__' && boundingData) {
+            const wallWidth2d = boundingData.width * scaling
+            const wallHeight2d = boundingData.height * scaling
+
+            if (pair.direction === 'center-vertical') {
+              // Vertical line through wall center
+              return (
+                <AlignedLine
+                  key={index}
+                  start={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
+                  end={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
+                  direction="center-vertical"
+                  color="#ff4444"
+                />
+              )
+            }
+            if (pair.direction === 'center-horizontal') {
+              // Horizontal line through wall center
+              return (
+                <AlignedLine
+                  key={index}
+                  start={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
+                  end={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
+                  direction="center-horizontal"
+                  color="#ff4444"
+                />
+              )
+            }
+            return null
+          }
 
           const from = exhibitionArtworksById[pair.from] || {}
           const to = exhibitionArtworksById[pair.to] || {}

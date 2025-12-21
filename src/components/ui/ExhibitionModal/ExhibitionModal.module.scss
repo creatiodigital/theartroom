@@ -7,12 +7,52 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
   min-height: 100px;
 }
 
+.input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-text);
+  }
+}
+
+.inputError {
+  border-color: var(--color-error-text) !important;
+}
+
+.urlPreview {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+
+  strong {
+    color: var(--color-text);
+  }
+}
+
+.error {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-error-text);
+}
+
+.checking {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 .ctas {
-  padding: 20px 0 0 0;
+  padding: var(--space-5) 0 0 0;
   display: flex;
-  gap: 10px;
+  gap: var(--space-3);
 }

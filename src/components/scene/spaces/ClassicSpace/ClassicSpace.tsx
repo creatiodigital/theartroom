@@ -111,6 +111,4 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
   )
 }
 
-useGLTF.preload('/assets/spaces/classic.glb')
-
 export default ClassicSpace

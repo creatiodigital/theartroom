@@ -81,6 +81,4 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
   )
 }
 
-useGLTF.preload('/assets/spaces/modern.glb')
-
 export default ModernSpace

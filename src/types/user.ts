@@ -1,3 +1,4 @@
+import type { TRequestStatus } from './api'
 import type { TExhibition } from './exhibition'
 
 export type TUser = {
@@ -8,10 +9,12 @@ export type TUser = {
   biography: string
   userType: string
   email: string
+  profileImageUrl?: string
+  isFeatured?: boolean
 }
 
 export type TUserState = TUser & {
-  status: 'idle' | 'loading' | 'succeeded' | 'failed'
+  status: TRequestStatus
   error: string | null
   exhibitionsById: Record<string, TExhibition>
   allExhibitionIds: string[]

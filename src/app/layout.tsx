@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 
-import { cabin, fraunces, roboto, lora } from '@/app/fonts'
+import { bodyFont, headingFont, wallFont1, wallFont2 } from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
+import { AuthProvider } from '@/components/providers/AuthProvider'
+import { ImpersonationBanner } from '@/components/ui/ImpersonationBanner'
 import '@/styles/globals.scss'
 
 type RootLayoutProps = {
@@ -12,13 +14,16 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`${cabin.variable} ${fraunces.variable} ${roboto.variable} ${lora.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${wallFont1.variable} ${wallFont2.variable}`}
     >
       <body>
-        <StoreProvider>
-          <header></header>
-          {children}
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <ImpersonationBanner />
+            <header></header>
+            {children}
+          </StoreProvider>
+        </AuthProvider>
       </body>
     </html>
   )

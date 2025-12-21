@@ -19,10 +19,13 @@ import styles from '../RightPanel.module.scss'
 
 const GroupPanel = () => {
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
-  const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
+  // Use exhibition spaceId to load the correct GLB for this exhibition
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
 
-  const { nodes } = useGLTF(`/assets/spaces/${selectedSpace.value}.glb`)
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+    nodes: Record<string, Mesh>
+  }
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
   const { groupX, groupY } = useGroupDetails()

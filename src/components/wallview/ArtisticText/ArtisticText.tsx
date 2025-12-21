@@ -74,7 +74,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     >
       {!textContent?.trim() && !isEditing ? (
         <div className={styles.empty}>
-          <Icon name="text" size={40} color={isEditing ? '#ffffff' : '#000000'} />
+          <Icon name="text" size={40} color="#000000" />
         </div>
       ) : (
         <div

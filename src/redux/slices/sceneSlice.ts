@@ -33,10 +33,21 @@ const sceneSlice = createSlice({
         wall.name = newName
       }
     },
+
+    resetScene: () => {
+      // Return fresh initial state to prevent stale data between exhibitions
+      return sceneFactory()
+    },
   },
 })
 
-export const { setCurrentArtwork, showPlaceholders, hidePlaceholders, addWall, editWallName } =
-  sceneSlice.actions
+export const {
+  setCurrentArtwork,
+  showPlaceholders,
+  hidePlaceholders,
+  addWall,
+  editWallName,
+  resetScene,
+} = sceneSlice.actions
 
 export default sceneSlice.reducer

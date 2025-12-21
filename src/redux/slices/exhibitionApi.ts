@@ -15,19 +15,12 @@ export const exhibitionApi = baseApi.injectEndpoints({
         userId: string
         userHandler: string
         spaceId?: string
+        customUrl: string
       }
     >({
-      query: ({ mainTitle, visibility, userId, userHandler, spaceId }) => {
-        const slugify = (str: string): string =>
-          str
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/--+/g, '-')
-            .trim()
-
-        const handler = slugify(mainTitle)
-        const url = `${userHandler}/${handler}`
+      query: ({ mainTitle, visibility, userId, userHandler, spaceId, customUrl }) => {
+        const handler = userHandler
+        const url = customUrl
 
         return {
           url: 'exhibitions',
@@ -42,12 +35,16 @@ export const exhibitionApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
     }),
+    getExhibitionByUrl: builder.query<TExhibition, string>({
+      query: (url) => `exhibitions/by-url/${encodeURIComponent(url)}`,
+    }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 })
 
 export const {
   useGetExhibitionsByUserQuery,
   useCreateExhibitionMutation,
   useDeleteExhibitionMutation,
+  useGetExhibitionByUrlQuery,
 } = exhibitionApi

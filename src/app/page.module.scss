@@ -1,0 +1,32 @@
+.home {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-8);
+  text-align: center;
+
+  h2 {
+    font-size: var(--text-5xl);
+    margin-bottom: var(--space-4);
+  }
+
+  p {
+    font-size: var(--text-xl);
+    color: var(--color-text-muted);
+  }
+}
+
+.content {
+  flex: 1;
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+  margin: 0 auto;
+  padding: var(--space-8);
+  width: 100%;
+}

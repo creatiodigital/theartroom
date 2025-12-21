@@ -13,16 +13,17 @@ export const useGroupArtwork = () => {
 
   const handleAddArtworkToGroup = useCallback(
     (artworkId: string) => {
-      if (!artworkGroupIds.includes(artworkId)) {
-        dispatch(addArtworkToGroup(artworkId))
-      }
+      dispatch(addArtworkToGroup(artworkId))
     },
-    [artworkGroupIds, dispatch],
+    [dispatch],
   )
 
   const handleCreateArtworkGroup = useCallback(() => {
     if (artworkGroupIds.length === 0) return
-    const artworkGroupItems = artworkGroupIds.map((id) => exhibitionArtworksById[id])
+    const artworkGroupItems = artworkGroupIds
+      .map((id) => exhibitionArtworksById[id])
+      .filter(Boolean)
+    if (artworkGroupItems.length === 0) return
     const xValues = artworkGroupItems.map((artwork) => artwork.posX2d)
     const xEdgeValues = artworkGroupItems.map((artwork) => artwork.posX2d + artwork.width2d)
     const yValues = artworkGroupItems.map((artwork) => artwork.posY2d)

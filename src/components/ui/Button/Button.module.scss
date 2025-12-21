@@ -1,4 +1,4 @@
-@import '@/styles/mixins';
+@use '@/styles/mixins' as *;
 
 .button {
   cursor: pointer;
@@ -30,4 +30,10 @@
     background: var(--black);
     border: 1px solid var(--black);
   }
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
