@@ -5,7 +5,7 @@
 }
 
 .main {
-  padding: 0 20px;
+  padding: 0 var(--space-5);
   width: 100vw;
   height: 100vh;
 
@@ -18,27 +18,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--grayLight);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .subtitle {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .exhibitions {
-  padding: 20px 0;
-  border-bottom: 1px solid var(--grayLight);
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--color-border);
   min-height: 400px;
 }
 
 .list {
-  padding: 30px 0;
+  padding: var(--space-8) 0;
 }
 
 .error {
-  color: red;
-  margin-top: 1rem;
+  color: var(--color-error-text);
+  margin-top: var(--space-4);
 }
 
 .exhibitionList {
@@ -50,7 +50,7 @@
 .exhibitionItem {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--grayLight);
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
 }

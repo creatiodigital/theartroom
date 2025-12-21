@@ -1,21 +1,21 @@
 .container {
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-white);
 
   &:focus-within {
-    border-color: #333;
+    border-color: var(--color-text);
   }
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
-  background: #fafafa;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
 
   button {
     display: flex;
@@ -25,21 +25,21 @@
     height: 28px;
     padding: 0;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: transparent;
-    color: #666;
-    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
     cursor: pointer;
     transition: all 0.15s ease;
 
     &:hover {
-      background: #e5e5e5;
-      color: #333;
+      background: var(--gray-300);
+      color: var(--color-text);
     }
 
     &.active {
-      background: #333;
-      color: #fff;
+      background: var(--color-text);
+      color: var(--color-white);
     }
   }
 }
@@ -47,22 +47,22 @@
 .divider {
   width: 1px;
   height: 20px;
-  background: #ddd;
-  margin: 0 0.25rem;
+  background: var(--color-border-dark);
+  margin: 0 var(--space-1);
 }
 
 .editor {
   min-height: 150px;
-  padding: 0.75rem;
+  padding: var(--space-3);
   outline: none;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
 
   // Headings
   h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 1rem 0 0.5rem;
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+    margin: var(--space-4) 0 var(--space-2);
 
     &:first-child {
       margin-top: 0;
@@ -70,9 +70,9 @@
   }
 
   h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0.75rem 0 0.5rem;
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    margin: var(--space-3) 0 var(--space-2);
 
     &:first-child {
       margin-top: 0;
@@ -81,7 +81,7 @@
 
   // Paragraphs
   p {
-    margin: 0 0 0.75rem;
+    margin: 0 0 var(--space-3);
 
     &:last-child {
       margin-bottom: 0;
@@ -91,26 +91,26 @@
   // Lists
   ul,
   ol {
-    padding-left: 1.5rem;
-    margin: 0 0 0.75rem;
+    padding-left: var(--space-6);
+    margin: 0 0 var(--space-3);
   }
 
   li {
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-1);
   }
 
   // Blockquote
   blockquote {
-    border-left: 3px solid #ddd;
-    padding-left: 1rem;
-    margin: 0.75rem 0;
-    color: #666;
+    border-left: 3px solid var(--color-border-dark);
+    padding-left: var(--space-4);
+    margin: var(--space-3) 0;
+    color: var(--color-text-muted);
     font-style: italic;
   }
 
   // Bold, italic
   strong {
-    font-weight: 600;
+    font-weight: var(--font-semibold);
   }
 
   em {
@@ -121,7 +121,7 @@
   p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     float: left;
-    color: #999;
+    color: var(--color-text-light);
     pointer-events: none;
     height: 0;
   }

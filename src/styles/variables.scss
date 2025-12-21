@@ -31,12 +31,27 @@
   --color-text: #333333;           // All texts
   --color-text-muted: #757575;     // Small light texts
   --color-text-light: #9e9e9e;
+  --color-white: #ffffff;
   --color-bg: var(--white);
   --color-bg-subtle: var(--gray-100);
+  --color-bg-muted: #f9f9f9;
+  --color-bg-disabled: #f0f0f0;
   --color-border: #EAEAEA;         // Borders and dividers
   --color-border-light: var(--gray-200);
+  --color-border-dark: #ddd;
   --color-accent: #007aff;
   --color-accent-light: #c5e1ff;
+  
+  // Status colors
+  --color-success: #155724;
+  --color-success-bg: #d4edda;
+  --color-error: #721c24;
+  --color-error-bg: #f8d7da;
+  --color-error-text: #c00;
+  --color-warning: #856404;
+  --color-warning-bg: #fff3cd;
+  --color-info: #004085;
+  --color-info-bg: #cce5ff;
 
   /* ===========================================================================
      TYPOGRAPHY - Font Families

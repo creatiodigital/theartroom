@@ -1,40 +1,40 @@
 .loginModal {
   h2 {
-    margin: 0 0 1.5rem;
+    margin: 0 0 var(--space-6);
   }
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 
   label {
-    font-weight: 500;
+    font-weight: var(--font-medium);
   }
 
   input {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border-dark);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-base);
 
     &:focus {
       outline: none;
-      border-color: #333;
+      border-color: var(--color-text);
     }
   }
 }
 
 .error {
-  color: red;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
+  color: var(--color-error-text);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
 }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
 }

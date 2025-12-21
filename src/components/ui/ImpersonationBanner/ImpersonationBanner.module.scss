@@ -5,8 +5,8 @@
   right: 0;
   z-index: 9999;
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #000;
-  padding: 0.75rem 1.5rem;
+  color: var(--color-text);
+  padding: var(--space-3) var(--space-6);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,17 +16,17 @@
 .content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .icon {
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
 }
 
 .text {
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 
   strong {
-    font-weight: 600;
+    font-weight: var(--font-semibold);
   }
 }
