@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './profile.module.scss'
@@ -284,12 +285,10 @@ export const DashboardProfilePage = () => {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="biography">Biography</label>
-          <textarea
-            id="biography"
-            value={formData.biography}
-            onChange={(e) => handleChange('biography', e.target.value)}
-            rows={5}
+          <label>Biography</label>
+          <RichTextEditor
+            content={formData.biography}
+            onChange={(content) => handleChange('biography', content)}
             placeholder="Tell visitors about yourself..."
           />
         </div>

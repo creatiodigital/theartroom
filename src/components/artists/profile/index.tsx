@@ -128,7 +128,14 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
 
         <div style={{ marginBottom: '2rem' }}>
           <h2>About</h2>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{artist.biography || 'No biography yet.'}</p>
+          {artist.biography ? (
+            <div
+              style={{ lineHeight: 1.6 }}
+              dangerouslySetInnerHTML={{ __html: artist.biography }}
+            />
+          ) : (
+            <p style={{ color: '#666' }}>No biography yet.</p>
+          )}
         </div>
 
         <div>
