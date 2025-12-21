@@ -1,0 +1,55 @@
+.page {
+  flex: 1;
+  padding: var(--space-8);
+  min-height: 60vh;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.title {
+  margin-bottom: var(--space-8);
+}
+
+.section {
+  margin-bottom: var(--space-12);
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  padding: var(--space-3) 0;
+}
+
+.exhibitionLink {
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    text-decoration: none;
+    opacity: 0.8;
+  }
+}
+
+.exhibitionTitle {
+  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-weight: var(--font-normal);
+}
+
+.artistName {
+  color: var(--color-text-muted);
+}
+
+.empty {
+  color: var(--color-text-muted);
+}

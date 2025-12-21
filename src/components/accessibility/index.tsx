@@ -7,7 +7,7 @@ export const AccessibilityPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
+      <div className="page-content">
         <h1>Accessibility Policy</h1>
       </div>
       <Footer />

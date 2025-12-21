@@ -65,7 +65,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     return (
       <>
         <Header />
-        <div style={{ padding: '2rem', minHeight: '60vh' }}>
+        <div className="page-content">
           <h1>Artist Profile</h1>
           <p>Loading...</p>
         </div>
@@ -78,7 +78,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     return (
       <>
         <Header />
-        <div style={{ padding: '2rem', minHeight: '60vh' }}>
+        <div className="page-content">
           <h1>Artist Profile</h1>
           <p>{error || 'Artist not found'}</p>
         </div>
@@ -90,7 +90,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="page-content" style={{ maxWidth: '800px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
           {artist.profileImageUrl ? (
             <Image

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { cabin, fraunces, roboto, lora } from '@/app/fonts'
+import { bodyFont, headingFont, wallFont1, wallFont2 } from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImpersonationBanner } from '@/components/ui/ImpersonationBanner'
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`${cabin.variable} ${fraunces.variable} ${roboto.variable} ${lora.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${wallFont1.variable} ${wallFont2.variable}`}
     >
       <body>
         <AuthProvider>
@@ -28,4 +28,3 @@ export default function RootLayout({ children }: RootLayoutProps) {
     </html>
   )
 }
-

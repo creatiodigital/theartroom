@@ -7,7 +7,7 @@ export const TermsPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
+      <div className="page-content">
         <h1>Terms and Conditions</h1>
       </div>
       <Footer />
