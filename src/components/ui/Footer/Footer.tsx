@@ -11,6 +11,7 @@ export const Footer = () => {
       <nav className={styles.links}>
         <Link href="/terms-and-conditions">Terms and Conditions</Link>
         <Link href="/privacy-policy">Privacy Policy</Link>
+        <Link href="/accessibility-policy">Accessibility Policy</Link>
       </nav>
       <span className={styles.copyright}>© 2025 Lumen Gallery</span>
     </footer>

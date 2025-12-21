@@ -9,6 +9,7 @@ import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
 
@@ -16,6 +17,7 @@ export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
   const { users, loading, error, refetch } = useUsers()
+  const { startImpersonation } = useEffectiveUser()
 
   const [editingUsers, setEditingUsers] = useState<Record<string, TUser>>({})
   const [showAddModal, setShowAddModal] = useState(false)
@@ -57,6 +59,22 @@ export const DashboardAdmin = () => {
   const handleDeleteClick = useCallback((userId: string, userName: string) => {
     setDeleteTarget({ id: userId, name: userName })
   }, [])
+
+  const handleImpersonate = useCallback(
+    async (user: TUser) => {
+      const fullName = `${user.name} ${user.lastName}`.trim()
+      const success = await startImpersonation({
+        id: user.id,
+        name: fullName,
+        handler: user.handler,
+      })
+      if (success) {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    },
+    [startImpersonation, router],
+  )
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return
@@ -179,7 +197,14 @@ export const DashboardAdmin = () => {
                   onChange={(e) => handleChange(user.id, 'biography', e.target.value)}
                 />
               </td>
-              <td>
+              <td style={{ display: 'flex', gap: '0.25rem' }}>
+                {user.userType !== 'admin' && (
+                  <Button
+                    variant="small"
+                    label="Impersonate"
+                    onClick={() => handleImpersonate(user)}
+                  />
+                )}
                 <Button
                   variant="small"
                   label="Delete"

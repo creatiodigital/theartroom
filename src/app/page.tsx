@@ -53,7 +53,7 @@ export default async function Home() {
 
       {/* Current Exhibitions */}
       <section style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Current Exhibitions</h2>
+        <h2 style={{ marginBottom: '1.5rem' }}>Exhibitions</h2>
         {exhibitions.length === 0 ? (
           <p>No current exhibitions at the moment.</p>
         ) : (

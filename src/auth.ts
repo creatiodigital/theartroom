@@ -45,12 +45,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
         token.handler = (user as { handler?: string }).handler
         token.userType = (user as { userType?: string }).userType
       }
+
+      // Handle impersonation updates from client
+      if (trigger === 'update' && session) {
+        if (session.impersonating) {
+          token.impersonatingId = session.impersonating.id
+          token.impersonatingName = session.impersonating.name
+          token.impersonatingHandler = session.impersonating.handler
+        } else if (session.impersonating === null) {
+          delete token.impersonatingId
+          delete token.impersonatingName
+          delete token.impersonatingHandler
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -59,6 +73,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.handler = token.handler as string
         session.user.userType = token.userType as string
       }
+
+      // Add impersonation data to session if present
+      if (token.impersonatingId) {
+        session.impersonating = {
+          id: token.impersonatingId as string,
+          name: token.impersonatingName as string,
+          handler: token.impersonatingHandler as string,
+        }
+      }
+
       return session
     },
   },
@@ -69,3 +93,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: 'jwt',
   },
 })
+

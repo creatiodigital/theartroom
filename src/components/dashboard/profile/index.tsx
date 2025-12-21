@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './profile.module.scss'
 
@@ -21,7 +22,8 @@ type User = {
 }
 
 export const DashboardProfilePage = () => {
-  const { data: session, status: sessionStatus } = useSession()
+  const { status: sessionStatus } = useSession()
+  const { effectiveUser } = useEffectiveUser()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -50,10 +52,10 @@ export const DashboardProfilePage = () => {
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
-      if (!session?.user?.id) return
+      if (!effectiveUser?.id) return
 
       try {
-        const response = await fetch(`/api/users/${session.user.id}`)
+        const response = await fetch(`/api/users/${effectiveUser.id}`)
         if (!response.ok) {
           setError('Failed to load profile')
           return
@@ -74,10 +76,10 @@ export const DashboardProfilePage = () => {
       }
     }
 
-    if (session?.user?.id) {
+    if (effectiveUser?.id) {
       fetchUser()
     }
-  }, [session?.user?.id])
+  }, [effectiveUser?.id])
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -86,14 +88,14 @@ export const DashboardProfilePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!session?.user?.id) return
+    if (!effectiveUser?.id) return
 
     setSaving(true)
     setError('')
     setSuccess('')
 
     try {
-      const response = await fetch(`/api/users/${session.user.id}`, {
+      const response = await fetch(`/api/users/${effectiveUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -116,7 +118,7 @@ export const DashboardProfilePage = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !session?.user?.id) return
+    if (!file || !effectiveUser?.id) return
 
     setUploading(true)
     setError('')
@@ -125,7 +127,7 @@ export const DashboardProfilePage = () => {
       const formData = new FormData()
       formData.append('image', file)
 
-      const response = await fetch(`/api/users/${session.user.id}/image`, {
+      const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
         method: 'POST',
         body: formData,
       })
@@ -151,14 +153,14 @@ export const DashboardProfilePage = () => {
   }
 
   const handleRemoveImage = async () => {
-    if (!user?.profileImageUrl || !session?.user?.id) return
+    if (!user?.profileImageUrl || !effectiveUser?.id) return
     if (!confirm('Remove profile picture?')) return
 
     setUploading(true)
     setError('')
 
     try {
-      const response = await fetch(`/api/users/${session.user.id}/image`, {
+      const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
         method: 'DELETE',
       })
 
