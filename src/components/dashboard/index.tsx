@@ -8,6 +8,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
 import {
@@ -29,6 +30,7 @@ export const DashboardPage = () => {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
   const { data: session, status: sessionStatus } = useSession()
+  const { effectiveUser } = useEffectiveUser()
 
   const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
   const exhibitions = useSelector(selectExhibitions)
@@ -36,9 +38,9 @@ export const DashboardPage = () => {
 
   const [isModalShown, setIsModalShown] = useState(false)
 
-  // Use session user ID instead of hardcoded ID
-  const userId = session?.user?.id
-  const userHandler = session?.user?.handler
+  // Use effective user ID (handles impersonation)
+  const userId = effectiveUser?.id
+  const userHandler = effectiveUser?.handler
 
   const { data: userData } = useGetUserQuery(userId ?? '', {
     skip: !userId,

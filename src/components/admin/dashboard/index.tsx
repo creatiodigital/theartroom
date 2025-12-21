@@ -135,7 +135,7 @@ export const DashboardAdmin = () => {
             <th>Email</th>
             <th>Type</th>
             <th>Featured</th>
-            <th>Biography</th>
+
             <th>Actions</th>
           </tr>
         </thead>
@@ -190,13 +190,7 @@ export const DashboardAdmin = () => {
                   }}
                 />
               </td>
-              <td>
-                <input
-                  type="text"
-                  value={getFieldValue(user, 'biography')}
-                  onChange={(e) => handleChange(user.id, 'biography', e.target.value)}
-                />
-              </td>
+
               <td style={{ display: 'flex', gap: '0.25rem' }}>
                 {user.userType !== 'admin' && (
                   <Button
