@@ -1,4 +1,4 @@
-import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
+import type { ReactNode } from 'react'
 
 import styles from './Typography.module.scss'
 
@@ -15,24 +15,25 @@ import styles from './Typography.module.scss'
 
 type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 
-type HeadingProps<T extends HeadingLevel = 'h1'> = {
+type HeadingProps = {
   /** The HTML element to render (semantic level) */
-  as?: T
+  as?: HeadingLevel
   /** Visual size override (defaults to same as `as`) */
   size?: HeadingLevel
   children: ReactNode
   className?: string
-} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'size' | 'children' | 'className'>
+  id?: string
+}
 
-export function Heading<T extends HeadingLevel = 'h1'>({
-  as,
+export function Heading({
+  as = 'h1',
   size,
   children,
   className = '',
   ...props
-}: HeadingProps<T>) {
-  const Component = (as || 'h1') as ElementType
-  const visualSize = size || as || 'h1'
+}: HeadingProps) {
+  const Component = as
+  const visualSize = size || as
   
   return (
     <Component 
@@ -59,9 +60,9 @@ type TextElement = 'p' | 'span' | 'div' | 'label'
 type TextSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 type TextWeight = 'light' | 'normal' | 'medium' | 'bold'
 
-type TextProps<T extends TextElement = 'p'> = {
+type TextProps = {
   /** The HTML element to render */
-  as?: T
+  as?: TextElement
   /** Font size variant */
   size?: TextSize
   /** Font weight */
@@ -70,18 +71,18 @@ type TextProps<T extends TextElement = 'p'> = {
   muted?: boolean
   children: ReactNode
   className?: string
-} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'size' | 'children' | 'className'>
+}
 
-export function Text<T extends TextElement = 'p'>({
-  as,
+export function Text({
+  as = 'p',
   size = 'base',
   weight = 'normal',
   muted = false,
   children,
   className = '',
   ...props
-}: TextProps<T>) {
-  const Component = (as || 'p') as ElementType
+}: TextProps) {
+  const Component = as
   
   const classNames = [
     styles[`text-${size}`],
