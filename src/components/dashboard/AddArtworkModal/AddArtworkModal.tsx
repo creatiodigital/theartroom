@@ -25,7 +25,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
+
   // Image upload state
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -45,7 +45,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
       setError('Image must be under 10MB')
       return
     }
-    
+
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
     setError('')
@@ -167,7 +167,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
         {formData.artworkType === 'image' && (
           <div className={styles.imageUpload}>
             <label>Image (optional)</label>
-            <div 
+            <div
               className={styles.dropZone}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
@@ -182,8 +182,8 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
                     height={150}
                     style={{ objectFit: 'contain' }}
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className={styles.removeBtn}
                     onClick={(e) => {
                       e.stopPropagation()

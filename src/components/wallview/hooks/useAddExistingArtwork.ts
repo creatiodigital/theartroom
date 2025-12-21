@@ -21,14 +21,14 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
   const currentWallId = useSelector((s: RootState) => s.wallView.currentWallId)
-  
+
   // Get artworks already in this exhibition (across all walls)
   const exhibitionArtworkIds = useSelector((state: RootState) => state.artworks.allIds)
 
   // Check if artwork already exists in exhibition
   const isArtworkInExhibition = useCallback(
     (artworkId: string) => exhibitionArtworkIds.includes(artworkId),
-    [exhibitionArtworkIds]
+    [exhibitionArtworkIds],
   )
 
   // Add existing artwork at center
@@ -88,7 +88,15 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
       return true
     },
-    [boundingData, wallWidth, wallHeight, dispatch, currentWallId, initialSize, isArtworkInExhibition]
+    [
+      boundingData,
+      wallWidth,
+      wallHeight,
+      dispatch,
+      currentWallId,
+      initialSize,
+      isArtworkInExhibition,
+    ],
   )
 
   // Add existing artwork at specific position (for drag-drop)
@@ -137,7 +145,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         adjustedY,
         initialSize,
         initialSize,
-        boundingData
+        boundingData,
       )
 
       const artworkPosition: TArtworkPosition = {
@@ -154,7 +162,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
       return true
     },
-    [boundingData, dispatch, currentWallId, initialSize, isArtworkInExhibition]
+    [boundingData, dispatch, currentWallId, initialSize, isArtworkInExhibition],
   )
 
   return {

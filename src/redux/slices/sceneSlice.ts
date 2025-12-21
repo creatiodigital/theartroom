@@ -41,7 +41,13 @@ const sceneSlice = createSlice({
   },
 })
 
-export const { setCurrentArtwork, showPlaceholders, hidePlaceholders, addWall, editWallName, resetScene } =
-  sceneSlice.actions
+export const {
+  setCurrentArtwork,
+  showPlaceholders,
+  hidePlaceholders,
+  addWall,
+  editWallName,
+  resetScene,
+} = sceneSlice.actions
 
 export default sceneSlice.reducer

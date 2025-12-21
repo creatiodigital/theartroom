@@ -13,6 +13,13 @@ type Artwork = {
   id: string
   name: string
   artworkType: string
+  imageUrl?: string | null
+  textContent?: string | null
+}
+
+const truncateText = (text: string, maxLength: number) => {
+  if (text.length <= maxLength) return text
+  return text.slice(0, maxLength).trim() + '...'
 }
 
 type MediaLibraryProps = {
@@ -47,9 +54,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   }, [session?.user?.id])
 
   // Filter out artworks already in this exhibition
-  const availableArtworks = artworks.filter(
-    (artwork) => !exhibitionArtworkIds.includes(artwork.id)
-  )
+  const availableArtworks = artworks.filter((artwork) => !exhibitionArtworkIds.includes(artwork.id))
 
   const handleDragStart = (e: React.DragEvent, artwork: Artwork) => {
     e.dataTransfer.setData('existingArtworkId', artwork.id)
@@ -60,14 +65,16 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
         <h3>Media Library</h3>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
+        <button className={styles.closeButton} onClick={onClose}>
+          ×
+        </button>
       </div>
-      
+
       {loading ? (
         <p className={styles.loading}>Loading...</p>
       ) : availableArtworks.length === 0 ? (
         <p className={styles.empty}>
-          {artworks.length === 0 
+          {artworks.length === 0
             ? 'No artworks in library. Create some first!'
             : 'All artworks are already in this exhibition.'}
         </p>
@@ -80,12 +87,29 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                 onClick={() => onClickArtwork(artwork)}
                 draggable
                 onDragStart={(e) => handleDragStart(e, artwork)}
+                style={
+                  artwork.artworkType === 'image' && artwork.imageUrl
+                    ? {
+                        backgroundImage: `url(${artwork.imageUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }
+                    : undefined
+                }
               >
-                <Icon 
-                  name={artwork.artworkType === 'image' ? 'picture' : 'text'} 
-                  size={32} 
-                  color="#333"
-                />
+                {/* Show image, text preview, or icon */}
+                {artwork.artworkType === 'image' &&
+                artwork.imageUrl ? null : artwork.artworkType === 'text' && artwork.textContent ? (
+                  <span className={styles.textPreview}>
+                    {truncateText(artwork.textContent, 50)}
+                  </span>
+                ) : (
+                  <Icon
+                    name={artwork.artworkType === 'image' ? 'picture' : 'text'}
+                    size={32}
+                    color="#333"
+                  />
+                )}
               </div>
               <span className={styles.name}>{artwork.name}</span>
             </div>

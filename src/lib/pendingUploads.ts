@@ -1,10 +1,10 @@
 /**
  * Temporary storage for pending image uploads.
- * 
+ *
  * When user uploads an image in the 2D wall, we:
  * 1. Create object URL for instant preview
  * 2. Store the File object here for later upload
- * 
+ *
  * On Save button:
  * 1. Upload all pending files to Vercel Blob
  * 2. Update artwork imageUrls with cloud URLs

@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 
+import styles from './exhibitions.module.scss'
+
 type Exhibition = {
   id: string
   mainTitle: string
@@ -45,30 +47,30 @@ export const ExhibitionsPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh', maxWidth: '1000px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '2rem' }}>Exhibitions</h1>
+      <div className={styles.page}>
+        <h1 className={styles.title}>Exhibitions</h1>
 
         {loading ? (
           <p>Loading...</p>
         ) : (
           <>
             {/* Current Exhibitions */}
-            <section style={{ marginBottom: '3rem' }}>
-              <h2 style={{ marginBottom: '1rem', borderBottom: '2px solid #333', paddingBottom: '0.5rem' }}>
-                Current
-              </h2>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Current</h2>
               {currentExhibitions.length === 0 ? (
-                <p style={{ color: '#666' }}>No current exhibitions.</p>
+                <p className={styles.empty}>No current exhibitions.</p>
               ) : (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <ul className={styles.list}>
                   {currentExhibitions.map((exhibition) => (
-                    <li key={exhibition.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee' }}>
+                    <li key={exhibition.id} className={styles.listItem}>
                       <Link
                         href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
+                        className={styles.exhibitionLink}
                       >
-                        <strong>{exhibition.mainTitle}</strong>
-                        <span style={{ color: '#666' }}> — {exhibition.user.name} {exhibition.user.lastName}</span>
+                        <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
+                        <span className={styles.artistName}>
+                          {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -76,29 +78,27 @@ export const ExhibitionsPage = () => {
               )}
             </section>
 
-            {/* Past Exhibitions */}
-            <section>
-              <h2 style={{ marginBottom: '1rem', borderBottom: '2px solid #333', paddingBottom: '0.5rem' }}>
-                Past
-              </h2>
-              {pastExhibitions.length === 0 ? (
-                <p style={{ color: '#666' }}>No past exhibitions.</p>
-              ) : (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {/* Past Exhibitions - only show if there are any */}
+            {pastExhibitions.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Past</h2>
+                <ul className={styles.list}>
                   {pastExhibitions.map((exhibition) => (
-                    <li key={exhibition.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid #eee' }}>
+                    <li key={exhibition.id} className={styles.listItem}>
                       <Link
                         href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
+                        className={styles.exhibitionLink}
                       >
-                        <strong>{exhibition.mainTitle}</strong>
-                        <span style={{ color: '#666' }}> — {exhibition.user.name} {exhibition.user.lastName}</span>
+                        <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
+                        <span className={styles.artistName}>
+                          {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                        </span>
                       </Link>
                     </li>
                   ))}
                 </ul>
-              )}
-            </section>
+              </section>
+            )}
           </>
         )}
       </div>

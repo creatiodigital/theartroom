@@ -1,4 +1,4 @@
-import { ExhibitionViewPage } from "@/components/exhibitions/view"
+import { ExhibitionViewPage } from '@/components/exhibitions/view'
 
 interface ExhibitionViewProps {
   params: Promise<{ artistSlug: string; exhibitionSlug: string }>

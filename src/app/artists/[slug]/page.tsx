@@ -1,4 +1,4 @@
-import { ArtistProfilePage } from "@/components/artists/profile"
+import { ArtistProfilePage } from '@/components/artists/profile'
 
 interface ArtistProfileProps {
   params: Promise<{ slug: string }>

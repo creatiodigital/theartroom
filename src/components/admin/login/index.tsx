@@ -36,7 +36,7 @@ export const AdminLoginPage = () => {
 
       // Get session to verify admin
       const session = await getSession()
-      
+
       if (session?.user?.userType !== 'admin') {
         setError('Access denied. Admin only.')
         setSubmitting(false)
@@ -82,11 +82,7 @@ export const AdminLoginPage = () => {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <Button
-            variant="small"
-            label={submitting ? 'Signing in...' : 'Sign in'}
-            type="submit"
-          />
+          <Button variant="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>
       </div>
     </div>

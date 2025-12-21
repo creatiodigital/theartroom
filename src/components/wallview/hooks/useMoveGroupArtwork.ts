@@ -8,9 +8,11 @@ import {
   editArtworkGroup,
   startDraggingGroup,
   stopDraggingGroup,
+  setAlignedPairs,
 } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
+import type { TAlignmentPair } from '@/types/wallView'
 
 export const useMoveGroupArtwork = (
   wallRef: RefObject<HTMLDivElement | null>,
@@ -52,8 +54,43 @@ export const useMoveGroupArtwork = (
       const scaledMouseX = (event.clientX - rect.left) / scaleFactor
       const scaledMouseY = (event.clientY - rect.top) / scaleFactor
 
-      const x = scaledMouseX - offset.x
-      const y = scaledMouseY - offset.y
+      let x = scaledMouseX - offset.x
+      let y = scaledMouseY - offset.y
+
+      // Check wall center alignment for the group
+      const wallWidth2d = boundingData.width * 100
+      const wallHeight2d = boundingData.height * 100
+      const tolerance = 3
+      const alignedPairs: TAlignmentPair[] = []
+
+      const groupWidth = artworkGroup.groupWidth ?? 0
+      const groupHeight = artworkGroup.groupHeight ?? 0
+
+      // Vertical center (group centered horizontally with wall)
+      const groupCenterX = x + groupWidth / 2
+      const wallCenterX = wallWidth2d / 2
+      if (Math.abs(groupCenterX - wallCenterX) <= tolerance) {
+        x = wallCenterX - groupWidth / 2
+        alignedPairs.push({
+          from: '__group__',
+          to: '__wall__',
+          direction: 'center-vertical',
+        })
+      }
+
+      // Horizontal center (group centered vertically with wall)
+      const groupCenterY = y + groupHeight / 2
+      const wallCenterY = wallHeight2d / 2
+      if (Math.abs(groupCenterY - wallCenterY) <= tolerance) {
+        y = wallCenterY - groupHeight / 2
+        alignedPairs.push({
+          from: '__group__',
+          to: '__wall__',
+          direction: 'center-horizontal',
+        })
+      }
+
+      dispatch(setAlignedPairs(alignedPairs))
 
       const deltaX = x - (artworkGroup.groupX ?? 0)
       const deltaY = y - (artworkGroup.groupY ?? 0)

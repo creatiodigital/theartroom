@@ -3,7 +3,6 @@ import type { NextRequest } from 'next/server'
 
 import type { Exhibition, Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
-import { slugify } from '@/utils/slugify'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,13 +11,31 @@ export async function POST(request: NextRequest) {
       visibility: string
       userId: string
       handler: string
+      url: string
       spaceId: string
     }
 
-    const { mainTitle, visibility, userId, handler, spaceId } = body
+    const { mainTitle, visibility, userId, handler, url, spaceId } = body
 
-    // Generate slug from mainTitle
-    const slug = slugify(mainTitle)
+    // Validate required fields
+    if (!url) {
+      return NextResponse.json({ error: 'URL slug is required' }, { status: 400 })
+    }
+
+    // Check if URL already exists for this user
+    const existing = await prisma.exhibition.findFirst({
+      where: {
+        userId,
+        url,
+      },
+    })
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'An exhibition with this URL already exists' },
+        { status: 409 },
+      )
+    }
 
     const exhibition: Exhibition = await prisma.exhibition.create({
       data: {
@@ -26,7 +43,7 @@ export async function POST(request: NextRequest) {
         visibility,
         userId,
         handler,
-        url: slug, // 👉 store only the slug
+        url,
         spaceId,
         status: 'current',
       },
@@ -49,7 +66,7 @@ export async function GET(request: NextRequest) {
   try {
     // Build where clause
     const where: Prisma.ExhibitionWhereInput = {}
-    
+
     if (userId) where.userId = userId
     if (status) where.status = status
     if (visibility) where.visibility = visibility

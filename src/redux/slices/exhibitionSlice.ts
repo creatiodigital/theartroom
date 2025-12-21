@@ -49,7 +49,11 @@ const exhibitionSlice = createSlice({
   },
 })
 
-export const { createArtworkPosition, updateArtworkPosition, deleteArtworkPosition, setExhibition } =
-  exhibitionSlice.actions
+export const {
+  createArtworkPosition,
+  updateArtworkPosition,
+  deleteArtworkPosition,
+  setExhibition,
+} = exhibitionSlice.actions
 
 export default exhibitionSlice.reducer

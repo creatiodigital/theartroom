@@ -58,4 +58,3 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
     />
   )
 }
-

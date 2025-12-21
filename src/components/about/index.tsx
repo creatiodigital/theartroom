@@ -7,7 +7,7 @@ export const AboutPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
+      <div className="page-content">
         <h1>About</h1>
       </div>
       <Footer />

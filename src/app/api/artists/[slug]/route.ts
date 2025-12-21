@@ -5,10 +5,7 @@ import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ slug: string }> }
-) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await context.params
 

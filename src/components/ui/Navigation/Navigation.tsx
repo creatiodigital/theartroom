@@ -7,8 +7,8 @@ import styles from './Navigation.module.scss'
 const navItems = [
   { label: 'Artists', href: '/artists' },
   { label: 'Exhibitions', href: '/exhibitions' },
-  { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
+  { label: 'About', href: '/about' },
 ]
 
 export const Navigation = () => {

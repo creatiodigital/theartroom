@@ -1,25 +1,41 @@
 .footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--white);
+  padding: var(--space-6) 0;
+  font-size: var(--text-sm);
+}
+
+.footerInner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #eee;
-  background: white;
-  font-size: 0.875rem;
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+  margin: 0 auto;
+  padding: 0 var(--space-8);
 }
 
 .brand {
-  font-weight: 600;
+  font-family: var(--font-body), var(--font-body-fallback);
+  font-size: var(--text-xl);
+  font-weight: var(--font-light);
+  color: var(--color-brand);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .links {
   display: flex;
-  gap: 2rem;
+  gap: var(--space-8);
 
   a {
-    color: inherit;
+    color: var(--color-text);
     text-decoration: none;
-    
+    font-weight: var(--font-light);
+
     &:hover {
       text-decoration: underline;
     }
@@ -27,5 +43,5 @@
 }
 
 .copyright {
-  color: #666;
+  color: var(--color-text-muted);
 }

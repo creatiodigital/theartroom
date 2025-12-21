@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
             imageUrl: artwork.imageUrl || null,
             textContent: artwork.textContent || null,
           },
-        })
-      )
+        }),
+      ),
     )
 
     return NextResponse.json({ count: results.length, artworks: results }, { status: 201 })

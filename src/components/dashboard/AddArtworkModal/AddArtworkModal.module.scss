@@ -1,41 +1,41 @@
 .modal {
   h2 {
-    margin: 0 0 1.5rem;
+    margin: 0 0 var(--space-6);
   }
 }
 
 .row {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1rem;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
   flex: 1;
 
   label {
-    font-weight: 500;
-    font-size: 0.875rem;
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
   }
 
   input,
   textarea,
   select {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border-dark);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-base);
 
     &:focus {
       outline: none;
-      border-color: #333;
+      border-color: var(--color-text);
     }
 
     &::placeholder {
-      color: #999;
+      color: var(--color-text-light);
     }
   }
 
@@ -45,33 +45,33 @@
 }
 
 .error {
-  color: red;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
+  color: var(--color-error-text);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
 }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
 .imageUpload {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 
   > label {
     display: block;
-    font-weight: 500;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-2);
   }
 }
 
 .dropZone {
   width: 100%;
   height: 150px;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
+  border: 2px dashed var(--color-border-dark);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,12 +79,12 @@
   transition: all 0.2s;
 
   &:hover {
-    border-color: #333;
-    background: #f9f9f9;
+    border-color: var(--color-text);
+    background: var(--color-bg-muted);
   }
 
   p {
-    color: #666;
+    color: var(--color-text-muted);
     margin: 0;
   }
 }
@@ -104,15 +104,15 @@
   right: 0;
   width: 24px;
   height: 24px;
-  background: #ff4444;
-  color: white;
+  background: var(--color-error-text);
+  color: var(--color-white);
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--text-base);
   line-height: 1;
 
   &:hover {
-    background: #cc0000;
+    background: var(--color-error);
   }
 }

@@ -39,12 +39,12 @@ const artworkSlice = createSlice({
     // Restore artwork from database with all metadata
     restoreArtwork: (state, action: PayloadAction<TArtwork>) => {
       const artwork = action.payload
-      
+
       // Don't increment counters for restored artworks
       if (!state.allIds.includes(artwork.id)) {
         state.allIds.push(artwork.id)
       }
-      
+
       state.byId[artwork.id] = artwork
     },
 
@@ -96,7 +96,14 @@ const artworkSlice = createSlice({
   },
 })
 
-export const { createArtwork, restoreArtwork, editArtwork, editArtisticImage, editArtisticText, deleteArtwork, resetArtworks } =
-  artworkSlice.actions
+export const {
+  createArtwork,
+  restoreArtwork,
+  editArtwork,
+  editArtisticImage,
+  editArtisticText,
+  deleteArtwork,
+  resetArtworks,
+} = artworkSlice.actions
 
 export default artworkSlice.reducer

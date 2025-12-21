@@ -23,9 +23,10 @@ type AlignedLineProps = {
   start: LineRect
   end: LineRect
   direction: Direction
+  color?: string
 }
 
-const AlignedLine: React.FC<AlignedLineProps> = ({ start, end, direction }) => {
+const AlignedLine: React.FC<AlignedLineProps> = ({ start, end, direction, color }) => {
   const isHorizontal =
     direction === 'horizontal' ||
     direction === 'top' ||
@@ -71,6 +72,7 @@ const AlignedLine: React.FC<AlignedLineProps> = ({ start, end, direction }) => {
     height: isHorizontal ? '1px' : `${lineEnd.y - lineStart.y}px`,
     top: `${lineStart.y}px`,
     left: `${lineStart.x}px`,
+    ...(color && { backgroundColor: color }),
   }
 
   return <div className={styles.line} style={style} />

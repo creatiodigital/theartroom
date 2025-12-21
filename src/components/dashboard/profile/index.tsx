@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './profile.module.scss'
 
@@ -21,7 +23,8 @@ type User = {
 }
 
 export const DashboardProfilePage = () => {
-  const { data: session, status: sessionStatus } = useSession()
+  const { status: sessionStatus } = useSession()
+  const { effectiveUser } = useEffectiveUser()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -50,10 +53,10 @@ export const DashboardProfilePage = () => {
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
-      if (!session?.user?.id) return
+      if (!effectiveUser?.id) return
 
       try {
-        const response = await fetch(`/api/users/${session.user.id}`)
+        const response = await fetch(`/api/users/${effectiveUser.id}`)
         if (!response.ok) {
           setError('Failed to load profile')
           return
@@ -74,10 +77,10 @@ export const DashboardProfilePage = () => {
       }
     }
 
-    if (session?.user?.id) {
+    if (effectiveUser?.id) {
       fetchUser()
     }
-  }, [session?.user?.id])
+  }, [effectiveUser?.id])
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -86,14 +89,14 @@ export const DashboardProfilePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!session?.user?.id) return
+    if (!effectiveUser?.id) return
 
     setSaving(true)
     setError('')
     setSuccess('')
 
     try {
-      const response = await fetch(`/api/users/${session.user.id}`, {
+      const response = await fetch(`/api/users/${effectiveUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -116,7 +119,7 @@ export const DashboardProfilePage = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !session?.user?.id) return
+    if (!file || !effectiveUser?.id) return
 
     setUploading(true)
     setError('')
@@ -125,7 +128,7 @@ export const DashboardProfilePage = () => {
       const formData = new FormData()
       formData.append('image', file)
 
-      const response = await fetch(`/api/users/${session.user.id}/image`, {
+      const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
         method: 'POST',
         body: formData,
       })
@@ -138,7 +141,7 @@ export const DashboardProfilePage = () => {
       }
 
       const data = await response.json()
-      setUser((prev) => prev ? { ...prev, profileImageUrl: data.url } : prev)
+      setUser((prev) => (prev ? { ...prev, profileImageUrl: data.url } : prev))
       setSuccess('Profile image updated!')
     } catch {
       setError('Failed to upload image')
@@ -151,14 +154,14 @@ export const DashboardProfilePage = () => {
   }
 
   const handleRemoveImage = async () => {
-    if (!user?.profileImageUrl || !session?.user?.id) return
+    if (!user?.profileImageUrl || !effectiveUser?.id) return
     if (!confirm('Remove profile picture?')) return
 
     setUploading(true)
     setError('')
 
     try {
-      const response = await fetch(`/api/users/${session.user.id}/image`, {
+      const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
         method: 'DELETE',
       })
 
@@ -168,7 +171,7 @@ export const DashboardProfilePage = () => {
         return
       }
 
-      setUser((prev) => prev ? { ...prev, profileImageUrl: null } : prev)
+      setUser((prev) => (prev ? { ...prev, profileImageUrl: null } : prev))
       setSuccess('Profile image removed!')
     } catch {
       setError('Failed to remove image')
@@ -188,8 +191,13 @@ export const DashboardProfilePage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
-        <h1>Edit Profile</h1>
+        <div>
+          <Link href="/dashboard" className={styles.backLink}>
+            ← Back to Dashboard
+          </Link>
+          <h1>Edit Profile</h1>
+        </div>
+        <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
       {/* Profile Image Section */}
@@ -224,12 +232,7 @@ export const DashboardProfilePage = () => {
               type="button"
             />
             {user?.profileImageUrl && (
-              <Button
-                variant="small"
-                label="Remove"
-                onClick={handleRemoveImage}
-                type="button"
-              />
+              <Button variant="small" label="Remove" onClick={handleRemoveImage} type="button" />
             )}
           </div>
         </div>
@@ -282,12 +285,10 @@ export const DashboardProfilePage = () => {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="biography">Biography</label>
-          <textarea
-            id="biography"
-            value={formData.biography}
-            onChange={(e) => handleChange('biography', e.target.value)}
-            rows={5}
+          <label>Biography</label>
+          <RichTextEditor
+            content={formData.biography}
+            onChange={(content) => handleChange('biography', content)}
             placeholder="Tell visitors about yourself..."
           />
         </div>
@@ -296,11 +297,7 @@ export const DashboardProfilePage = () => {
         {success && <p className={styles.success}>{success}</p>}
 
         <div className={styles.actions}>
-          <Button
-            variant="small"
-            label={saving ? 'Saving...' : 'Save Changes'}
-            type="submit"
-          />
+          <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
         </div>
       </form>
     </div>

@@ -7,7 +7,7 @@ export const PrivacyPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
+      <div className="page-content">
         <h1>Privacy Policy</h1>
       </div>
       <Footer />

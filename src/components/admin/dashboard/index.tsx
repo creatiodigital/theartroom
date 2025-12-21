@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -9,6 +9,7 @@ import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
 
@@ -16,6 +17,7 @@ export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
   const { users, loading, error, refetch } = useUsers()
+  const { startImpersonation } = useEffectiveUser()
 
   const [editingUsers, setEditingUsers] = useState<Record<string, TUser>>({})
   const [showAddModal, setShowAddModal] = useState(false)
@@ -58,6 +60,22 @@ export const DashboardAdmin = () => {
     setDeleteTarget({ id: userId, name: userName })
   }, [])
 
+  const handleImpersonate = useCallback(
+    async (user: TUser) => {
+      const fullName = `${user.name} ${user.lastName}`.trim()
+      const success = await startImpersonation({
+        id: user.id,
+        name: fullName,
+        handler: user.handler,
+      })
+      if (success) {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    },
+    [startImpersonation, router],
+  )
+
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return
 
@@ -83,7 +101,7 @@ export const DashboardAdmin = () => {
 
   // Loading states
   if (sessionStatus === 'loading' || loading) return <div>Loading...</div>
-  
+
   // Not authorized
   if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
     return <div>Not authorized</div>
@@ -93,9 +111,19 @@ export const DashboardAdmin = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+        }}
+      >
         <h1>All Users</h1>
-        <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        </div>
       </div>
 
       <table border={1} cellPadding="8" style={{ borderCollapse: 'collapse' }}>
@@ -107,7 +135,7 @@ export const DashboardAdmin = () => {
             <th>Email</th>
             <th>Type</th>
             <th>Featured</th>
-            <th>Biography</th>
+
             <th>Actions</th>
           </tr>
         </thead>
@@ -162,14 +190,15 @@ export const DashboardAdmin = () => {
                   }}
                 />
               </td>
-              <td>
-                <input
-                  type="text"
-                  value={getFieldValue(user, 'biography')}
-                  onChange={(e) => handleChange(user.id, 'biography', e.target.value)}
-                />
-              </td>
-              <td>
+
+              <td style={{ display: 'flex', gap: '0.25rem' }}>
+                {user.userType !== 'admin' && (
+                  <Button
+                    variant="small"
+                    label="Impersonate"
+                    onClick={() => handleImpersonate(user)}
+                  />
+                )}
                 <Button
                   variant="small"
                   label="Delete"
@@ -185,10 +214,7 @@ export const DashboardAdmin = () => {
 
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>
-          <AddArtistModal
-            onClose={() => setShowAddModal(false)}
-            onSuccess={handleAddSuccess}
-          />
+          <AddArtistModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} />
         </Modal>
       )}
 
@@ -201,17 +227,20 @@ export const DashboardAdmin = () => {
               <br />
               This action cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                justifyContent: 'center',
+                marginTop: '1.5rem',
+              }}
+            >
               <Button
                 variant="small"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button
-                variant="small"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
+              <Button variant="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>

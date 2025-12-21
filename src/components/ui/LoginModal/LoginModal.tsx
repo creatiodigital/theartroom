@@ -40,7 +40,7 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
       // Get the updated session to check user type
       const session = await getSession()
       onClose()
-      
+
       // Redirect based on user type
       if (session?.user?.userType === 'admin') {
         router.push('/admin/dashboard')
@@ -80,11 +80,7 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
         </div>
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.actions}>
-          <Button
-            variant="small"
-            label={loading ? 'Logging in...' : 'Log in'}
-            type="submit"
-          />
+          <Button variant="small" label={loading ? 'Logging in...' : 'Log in'} type="submit" />
           <Button variant="small" label="Cancel" onClick={onClose} type="button" />
         </div>
       </form>

@@ -18,23 +18,17 @@ const nextConfig = {
       // Static 3D assets - cache forever (1 year)
       {
         source: '/assets/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // Draco decoder files - cache forever
       {
         source: '/draco/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // Edit routes - never cache (artists need real-time updates)
       {
         source: '/:handler/exhibition/:slug/edit',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
       },
       // View routes - cache at edge, stale-while-revalidate
       {

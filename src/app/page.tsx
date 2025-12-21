@@ -51,78 +51,58 @@ export default async function Home() {
         <p>Discover and experience virtual art exhibitions</p>
       </section>
 
-      {/* Current Exhibitions */}
-      <section style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Current Exhibitions</h2>
-        {exhibitions.length === 0 ? (
-          <p>No current exhibitions at the moment.</p>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-            {exhibitions.map((exhibition) => (
-              <Link
-                key={exhibition.id}
-                href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                style={{
-                  display: 'block',
-                  padding: '1.5rem',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'box-shadow 0.2s',
-                }}
-              >
-                <h3 style={{ margin: 0 }}>{exhibition.mainTitle}</h3>
-                <p style={{ margin: '0.5rem 0 0', color: '#666' }}>
-                  by {exhibition.user.name} {exhibition.user.lastName}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      <div className={styles.content}>
+        {/* Current Exhibitions */}
+        <section style={{ marginBottom: 'var(--space-12)' }}>
+          <h2 style={{ marginBottom: 'var(--space-6)' }}>Exhibitions</h2>
+          {exhibitions.length === 0 ? (
+            <p style={{ color: 'var(--color-text-muted)' }}>No current exhibitions at the moment.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {exhibitions.map((exhibition) => (
+                <li key={exhibition.id} style={{ padding: 'var(--space-3) 0' }}>
+                  <Link
+                    href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 'var(--font-normal)' }}>
+                      {exhibition.mainTitle}
+                    </span>
+                    <span style={{ color: 'var(--color-text-muted)' }}>
+                      {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-      {/* Featured Artists */}
-      <section style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '1.5rem' }}>Featured Artists</h2>
-        {featuredArtists.length === 0 ? (
-          <p>No featured artists at the moment.</p>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-            {featuredArtists.map((artist) => (
-              <Link
-                key={artist.id}
-                href={`/artists/${artist.handler}`}
-                style={{
-                  display: 'block',
-                  padding: '1rem',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  textAlign: 'center',
-                }}
-              >
-                {artist.profileImageUrl && (
-                  <img
-                    src={artist.profileImageUrl}
-                    alt={`${artist.name} ${artist.lastName}`}
+        {/* Featured Artists - only show if there are any */}
+        {featuredArtists.length > 0 && (
+          <section>
+            <h2 style={{ marginBottom: 'var(--space-6)' }}>Featured Artists</h2>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {featuredArtists.map((artist) => (
+                <li key={artist.id} style={{ padding: 'var(--space-3) 0' }}>
+                  <Link
+                    href={`/artists/${artist.handler}`}
                     style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      margin: '0 auto 0.5rem',
-                      display: 'block',
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 'var(--font-normal)',
+                      fontSize: 'var(--text-2xl)',
                     }}
-                  />
-                )}
-                <h4 style={{ margin: 0 }}>{artist.name} {artist.lastName}</h4>
-              </Link>
-            ))}
-          </div>
+                  >
+                    {artist.name} {artist.lastName}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
-      </section>
+      </div>
 
       <Footer />
     </main>

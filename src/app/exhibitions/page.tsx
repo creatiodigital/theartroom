@@ -1,4 +1,4 @@
-import { ExhibitionsPage } from "@/components/exhibitions"
+import { ExhibitionsPage } from '@/components/exhibitions'
 
 const Exhibitions = () => {
   return <ExhibitionsPage />

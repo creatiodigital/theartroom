@@ -19,4 +19,3 @@ export type TUserState = TUser & {
   exhibitionsById: Record<string, TExhibition>
   allExhibitionIds: string[]
 }
-

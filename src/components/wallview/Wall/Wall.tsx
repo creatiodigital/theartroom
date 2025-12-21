@@ -32,7 +32,9 @@ import styles from './Wall.module.scss'
 export const Wall = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
-  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as { nodes: Record<string, Mesh> }
+  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+    nodes: Record<string, Mesh>
+  }
 
   const allIds = useSelector((state: RootState) => state.artworks.allIds)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -41,6 +43,7 @@ export const Wall = () => {
   )
 
   const isDragging = useSelector((state: RootState) => state.wallView.isDragging)
+  const isDraggingGroup = useSelector((state: RootState) => state.wallView.isDraggingGroup)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
@@ -251,7 +254,39 @@ export const Wall = () => {
         )}
         {selectionBox && <SelectionBox selectionBox={selectionBox} scaleFactor={scaleFactor} />}
         {alignedPairs?.map((pair, index: number) => {
-          if (!isDragging) return null
+          if (!isDragging && !isDraggingGroup) return null
+
+          // Handle wall center alignment specially (for both single artwork and group)
+          if (pair.to === '__wall__' && boundingData) {
+            const wallWidth2d = boundingData.width * scaling
+            const wallHeight2d = boundingData.height * scaling
+
+            if (pair.direction === 'center-vertical') {
+              // Vertical line through wall center
+              return (
+                <AlignedLine
+                  key={index}
+                  start={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
+                  end={{ x: wallWidth2d / 2, y: 0, width: 0, height: wallHeight2d }}
+                  direction="center-vertical"
+                  color="#ff4444"
+                />
+              )
+            }
+            if (pair.direction === 'center-horizontal') {
+              // Horizontal line through wall center
+              return (
+                <AlignedLine
+                  key={index}
+                  start={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
+                  end={{ x: 0, y: wallHeight2d / 2, width: wallWidth2d, height: 0 }}
+                  direction="center-horizontal"
+                  color="#ff4444"
+                />
+              )
+            }
+            return null
+          }
 
           const from = exhibitionArtworksById[pair.from] || {}
           const to = exhibitionArtworksById[pair.to] || {}

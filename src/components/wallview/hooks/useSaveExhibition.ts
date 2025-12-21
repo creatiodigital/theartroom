@@ -2,11 +2,7 @@ import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 
-import { 
-  getAllPendingUploads, 
-  clearAllPendingUploads,
-  isLocalBlobUrl 
-} from '@/lib/pendingUploads'
+import { getAllPendingUploads, clearAllPendingUploads, isLocalBlobUrl } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
 
@@ -51,6 +47,10 @@ export const useSaveExhibition = () => {
 
         // First save the artwork record (needed for the image API)
         const artwork = artworksById[artworkId]
+        if (!artwork) {
+          console.warn(`Artwork ${artworkId} not found in state, skipping upload`)
+          continue
+        }
         const artworkPayload = {
           id: artworkId,
           name: artwork.name || 'Untitled',
@@ -83,13 +83,15 @@ export const useSaveExhibition = () => {
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json()
           uploadedUrls.set(artworkId, uploadData.url)
-          
+
           // Update Redux with cloud URL
-          dispatch(editArtisticImage({
-            currentArtworkId: artworkId,
-            property: 'imageUrl',
-            value: uploadData.url,
-          }))
+          dispatch(
+            editArtisticImage({
+              currentArtworkId: artworkId,
+              property: 'imageUrl',
+              value: uploadData.url,
+            }),
+          )
         } else {
           console.warn(`Failed to upload image for artwork ${artworkId}`)
         }
@@ -98,33 +100,36 @@ export const useSaveExhibition = () => {
       // Clear pending uploads after successful upload
       clearAllPendingUploads()
 
-      // 2. Prepare artworks data (with updated cloud URLs)
-      const artworks = allArtworkIds.map((id) => {
-        const artwork = artworksById[id]
-        let imageUrl = artwork.imageUrl || null
-        
-        // Use uploaded URL if available, otherwise keep existing cloud URL
-        if (uploadedUrls.has(id)) {
-          imageUrl = uploadedUrls.get(id)!
-        } else if (isLocalBlobUrl(imageUrl || undefined)) {
-          // Don't save local blob URLs
-          imageUrl = null
-        }
+      const artworks = allArtworkIds
+        .map((id) => {
+          const artwork = artworksById[id]
+          if (!artwork) return null
 
-        return {
-          id,
-          name: artwork.name || 'Untitled',
-          artworkType: artwork.artworkType || 'image',
-          title: artwork.artworkTitle || null,
-          author: artwork.author || null,
-          year: artwork.artworkYear || null,
-          technique: null,
-          dimensions: artwork.artworkDimensions || null,
-          description: artwork.description || null,
-          imageUrl,
-          textContent: artwork.textContent || null, // Fixed text content
-        }
-      })
+          let imageUrl = artwork.imageUrl || null
+
+          // Use uploaded URL if available, otherwise keep existing cloud URL
+          if (uploadedUrls.has(id)) {
+            imageUrl = uploadedUrls.get(id)!
+          } else if (isLocalBlobUrl(imageUrl || undefined)) {
+            // Don't save local blob URLs
+            imageUrl = null
+          }
+
+          return {
+            id,
+            name: artwork.name || 'Untitled',
+            artworkType: artwork.artworkType || 'image',
+            title: artwork.artworkTitle || null,
+            author: artwork.author || null,
+            year: artwork.artworkYear || null,
+            technique: null,
+            dimensions: artwork.artworkDimensions || null,
+            description: artwork.description || null,
+            imageUrl,
+            textContent: artwork.textContent || null, // Fixed text content
+          }
+        })
+        .filter(Boolean)
 
       // 3. Save artworks
       const artworkResponse = await fetch('/api/artworks/batch', {
@@ -143,7 +148,7 @@ export const useSaveExhibition = () => {
 
       // 4. Prepare positions data (including display properties)
       const positions = allArtworkIds
-        .filter((id) => positionsById[id])
+        .filter((id) => positionsById[id] && artworksById[id])
         .map((id) => {
           const pos = positionsById[id]
           const artwork = artworksById[id]

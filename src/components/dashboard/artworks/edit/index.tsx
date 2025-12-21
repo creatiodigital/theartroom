@@ -68,7 +68,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           return
         }
         const data = await response.json()
-        
+
         // Verify ownership
         if (data.userId !== session?.user?.id && session?.user?.userType !== 'admin') {
           router.push('/dashboard/artworks')
@@ -167,7 +167,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
   const handleRemoveImage = async () => {
     if (!imageUrl) return
-    
+
     if (!confirm('Remove this image?')) return
 
     setUploading(true)
@@ -213,7 +213,9 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/dashboard/artworks" className={styles.backLink}>← Back to Library</Link>
+        <Link href="/dashboard/artworks" className={styles.backLink}>
+          ← Back to Library
+        </Link>
         <h1>Edit Artwork</h1>
       </div>
 
@@ -222,10 +224,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <label>Artwork Image (optional)</label>
         <div className={styles.imagePreview}>
           {imageUrl ? (
-            <Image 
-              src={imageUrl} 
-              alt="Artwork preview" 
-              width={300} 
+            <Image
+              src={imageUrl}
+              alt="Artwork preview"
+              width={300}
               height={300}
               style={{ objectFit: 'contain' }}
             />
@@ -243,17 +245,12 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           />
           <Button
             variant="small"
-            label={uploading ? 'Uploading...' : (imageUrl ? 'Change Image' : 'Upload Image')}
+            label={uploading ? 'Uploading...' : imageUrl ? 'Change Image' : 'Upload Image'}
             onClick={() => fileInputRef.current?.click()}
             type="button"
           />
           {imageUrl && (
-            <Button
-              variant="small"
-              label="Remove"
-              onClick={handleRemoveImage}
-              type="button"
-            />
+            <Button variant="small" label="Remove" onClick={handleRemoveImage} type="button" />
           )}
         </div>
         <p className={styles.imageHint}>
@@ -348,11 +345,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.actions}>
-          <Button
-            variant="small"
-            label={saving ? 'Saving...' : 'Save Changes'}
-            type="submit"
-          />
+          <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
           <Button
             variant="small"
             label="Cancel"

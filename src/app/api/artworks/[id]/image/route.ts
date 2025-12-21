@@ -8,10 +8,7 @@ import { processImage, isValidImageType } from '@/lib/imageProcessor'
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 // POST - Upload image for artwork
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
@@ -34,10 +31,7 @@ export async function POST(
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 10MB.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 })
     }
 
     // Convert to buffer
@@ -48,7 +42,7 @@ export async function POST(
     if (!isValidImageType(buffer)) {
       return NextResponse.json(
         { error: 'Invalid file type. Please upload a JPG, PNG, WebP, or GIF image.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -66,15 +60,11 @@ export async function POST(
     }
 
     // Upload to Vercel Blob
-    const blob = await put(
-      `artworks/${artwork.userId}/${id}.webp`,
-      processedBuffer,
-      {
-        access: 'public',
-        addRandomSuffix: true,
-        contentType: 'image/webp',
-      }
-    )
+    const blob = await put(`artworks/${artwork.userId}/${id}.webp`, processedBuffer, {
+      access: 'public',
+      addRandomSuffix: true,
+      contentType: 'image/webp',
+    })
 
     // Update artwork with new image URL
     await prisma.artwork.update({
@@ -95,7 +85,7 @@ export async function POST(
 // DELETE - Remove image from artwork
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params

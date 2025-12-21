@@ -79,7 +79,7 @@ export const AdminExhibitions = () => {
   return (
     <div style={{ marginTop: '40px' }}>
       <h2 style={{ marginBottom: '20px' }}>Exhibition Management</h2>
-      
+
       <table border={1} cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
@@ -94,31 +94,37 @@ export const AdminExhibitions = () => {
           {exhibitions.map((exhibition) => (
             <tr key={exhibition.id}>
               <td>
-                <Link 
+                <Link
                   href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                   style={{ color: 'blue', textDecoration: 'underline' }}
                 >
                   {exhibition.mainTitle}
                 </Link>
               </td>
-              <td>{exhibition.user.name} {exhibition.user.lastName}</td>
+              <td>
+                {exhibition.user.name} {exhibition.user.lastName}
+              </td>
               <td style={{ textAlign: 'center' }}>
-                <span style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  backgroundColor: exhibition.status === 'current' ? '#d4edda' : '#f8d7da',
-                  color: exhibition.status === 'current' ? '#155724' : '#721c24',
-                }}>
+                <span
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: exhibition.status === 'current' ? '#d4edda' : '#f8d7da',
+                    color: exhibition.status === 'current' ? '#155724' : '#721c24',
+                  }}
+                >
                   {exhibition.status}
                 </span>
               </td>
               <td style={{ textAlign: 'center' }}>
-                <span style={{
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  backgroundColor: exhibition.visibility === 'public' ? '#cce5ff' : '#fff3cd',
-                  color: exhibition.visibility === 'public' ? '#004085' : '#856404',
-                }}>
+                <span
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: exhibition.visibility === 'public' ? '#cce5ff' : '#fff3cd',
+                    color: exhibition.visibility === 'public' ? '#004085' : '#856404',
+                  }}
+                >
                   {exhibition.visibility}
                 </span>
               </td>

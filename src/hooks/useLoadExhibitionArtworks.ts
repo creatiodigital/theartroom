@@ -54,7 +54,7 @@ type ExhibitionArtworkResponse = {
 export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
-  
+
   // Track which exhibition we've loaded to prevent duplicate loads
   // but allow loading different exhibitions
   const loadedExhibitionId = useRef<string | null>(null)
@@ -62,7 +62,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
   useEffect(() => {
     // Skip if no exhibition ID
     if (!exhibitionId) return
-    
+
     // Skip if we already loaded this exact exhibition
     if (loadedExhibitionId.current === exhibitionId) return
 
@@ -97,17 +97,26 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             frameThickness: { label: String(ea.frameThickness), value: ea.frameThickness },
             showPassepartout: ea.showPassepartout,
             passepartoutColor: ea.passepartoutColor,
-            passepartoutThickness: { label: String(ea.passepartoutThickness), value: ea.passepartoutThickness },
+            passepartoutThickness: {
+              label: String(ea.passepartoutThickness),
+              value: ea.passepartoutThickness,
+            },
             // Text styling from ExhibitionArtwork (per-exhibition)
-            fontFamily: { label: ea.fontFamily, value: ea.fontFamily.toLowerCase() as 'roboto' | 'lora' },
+            fontFamily: {
+              label: ea.fontFamily,
+              value: ea.fontFamily.toLowerCase() as 'roboto' | 'lora',
+            },
             fontSize: { label: String(ea.fontSize), value: ea.fontSize },
-            fontWeight: { label: ea.fontWeight, value: ea.fontWeight === '700' ? 'bold' : 'regular' },
+            fontWeight: {
+              label: ea.fontWeight,
+              value: ea.fontWeight === '700' ? 'bold' : 'regular',
+            },
             letterSpacing: { label: String(ea.letterSpacing), value: ea.letterSpacing },
             lineHeight: { label: String(ea.lineHeight), value: ea.lineHeight },
             textColor: ea.textColor,
             textAlign: ea.textAlign as 'left' | 'center' | 'right',
           }
-          
+
           dispatch(restoreArtwork(artwork))
 
           // Create position in exhibition slice

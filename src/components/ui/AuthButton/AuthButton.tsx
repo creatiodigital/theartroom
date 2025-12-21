@@ -24,11 +24,7 @@ export const AuthButton = () => {
         <Link href="/dashboard" className={styles.userName}>
           {session.user.name}
         </Link>
-        <Button
-          variant="small"
-          label="Log out"
-          onClick={() => signOut({ callbackUrl: '/' })}
-        />
+        <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
     )
   }
@@ -36,11 +32,7 @@ export const AuthButton = () => {
   return (
     <>
       <div className={styles.authButton}>
-        <Button
-          variant="small"
-          label="Log in"
-          onClick={() => setShowLoginModal(true)}
-        />
+        <Button variant="small" label="Log in" onClick={() => setShowLoginModal(true)} />
       </div>
       {showLoginModal && (
         <Modal onClose={() => setShowLoginModal(false)}>

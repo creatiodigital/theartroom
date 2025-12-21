@@ -5,10 +5,7 @@ import { del } from '@vercel/blob'
 import prisma from '@/lib/prisma'
 
 // GET single artwork
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
 
@@ -28,10 +25,7 @@ export async function GET(
 }
 
 // PUT update artwork
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
     const body = await request.json()
@@ -58,10 +52,7 @@ export async function PUT(
 }
 
 // DELETE artwork
-export async function DELETE(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
 
@@ -95,4 +86,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete artwork' }, { status: 500 })
   }
 }
-

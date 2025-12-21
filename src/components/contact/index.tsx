@@ -7,7 +7,7 @@ export const ContactPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
+      <div className="page-content">
         <h1>Contact</h1>
       </div>
       <Footer />

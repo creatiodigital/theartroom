@@ -9,6 +9,11 @@ declare module 'next-auth' {
       handler?: string
       userType?: string
     }
+    impersonating?: {
+      id: string
+      name: string
+      handler: string
+    }
   }
 
   interface User {
@@ -22,5 +27,8 @@ declare module 'next-auth/jwt' {
     id?: string
     handler?: string
     userType?: string
+    impersonatingId?: string
+    impersonatingName?: string
+    impersonatingHandler?: string
   }
 }

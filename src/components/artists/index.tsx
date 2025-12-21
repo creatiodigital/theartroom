@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 
+import styles from './artists.module.scss'
+
 type Artist = {
   id: string
   name: string
@@ -38,8 +40,8 @@ export const ArtistsPage = () => {
     return (
       <>
         <Header />
-        <div style={{ padding: '2rem', minHeight: '60vh' }}>
-          <h1>Artists</h1>
+        <div className={styles.page}>
+          <h1 className={styles.title}>Artists</h1>
           <p>Loading...</p>
         </div>
         <Footer />
@@ -50,15 +52,15 @@ export const ArtistsPage = () => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh' }}>
-        <h1>Artists</h1>
+      <div className={styles.page}>
+        <h1 className={styles.title}>Artists</h1>
         {artists.length === 0 ? (
-          <p>No artists found.</p>
+          <p className={styles.empty}>No artists found.</p>
         ) : (
-          <ul>
+          <ul className={styles.list}>
             {artists.map((artist) => (
               <li key={artist.id}>
-                <Link href={`/artists/${artist.handler}`}>
+                <Link href={`/artists/${artist.handler}`} className={styles.artistLink}>
                   {artist.name} {artist.lastName}
                 </Link>
               </li>

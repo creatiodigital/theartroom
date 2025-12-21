@@ -8,6 +8,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
 import {
@@ -29,6 +30,7 @@ export const DashboardPage = () => {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
   const { data: session, status: sessionStatus } = useSession()
+  const { effectiveUser } = useEffectiveUser()
 
   const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
   const exhibitions = useSelector(selectExhibitions)
@@ -36,16 +38,19 @@ export const DashboardPage = () => {
 
   const [isModalShown, setIsModalShown] = useState(false)
 
-  // Use session user ID instead of hardcoded ID
-  const userId = session?.user?.id
-  const userHandler = session?.user?.handler
+  // Use effective user ID (handles impersonation)
+  const userId = effectiveUser?.id
+  const userHandler = effectiveUser?.handler
 
   const { data: userData } = useGetUserQuery(userId ?? '', {
     skip: !userId,
   })
-  const { data: exhibitionsData, refetch: refetchExhibitions } = useGetExhibitionsByUserQuery(userId ?? '', {
-    skip: !userId,
-  })
+  const { data: exhibitionsData, refetch: refetchExhibitions } = useGetExhibitionsByUserQuery(
+    userId ?? '',
+    {
+      skip: !userId,
+    },
+  )
 
   const [createExhibition, { isLoading: creating, error }] = useCreateExhibitionMutation()
 
@@ -67,7 +72,7 @@ export const DashboardPage = () => {
   }, [])
 
   const handleCreateExhibition = useCallback(
-    async (mainTitle: string, visibility: string) => {
+    async (mainTitle: string, visibility: string, customUrl: string) => {
       try {
         const newEx = await createExhibition({
           mainTitle,
@@ -75,6 +80,7 @@ export const DashboardPage = () => {
           userId: userId ?? '',
           userHandler: userHandler ?? '',
           spaceId: selectedSpace.value,
+          customUrl,
         }).unwrap()
         dispatch(addExhibition(newEx))
         refetchExhibitions()
@@ -139,18 +145,22 @@ export const DashboardPage = () => {
       <div className={styles.main}>
         <div className={styles.header}>
           <h3>Hello {userData?.name ?? session?.user?.name ?? ''}</h3>
-          <Button
-            variant="small"
-            label="Log out"
-            onClick={() => signOut({ callbackUrl: '/' })}
-          />
+          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
         </div>
 
         <div className={styles.exhibitions}>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
-            <Button variant="small" label="Artwork Library" onClick={() => router.push('/dashboard/artworks')} />
-            <Button variant="small" label="Edit Profile" onClick={() => router.push('/dashboard/profile')} />
+            <Button
+              variant="small"
+              label="Artwork Library"
+              onClick={() => router.push('/dashboard/artworks')}
+            />
+            <Button
+              variant="small"
+              label="Edit Profile"
+              onClick={() => router.push('/dashboard/profile')}
+            />
           </div>
           <div className={styles.list}>
             <h3 className={styles.subtitle}>My exhibitions</h3>
@@ -161,16 +171,8 @@ export const DashboardPage = () => {
                 {exhibitions.map((ex: TExhibition) => (
                   <li key={ex.id} className={styles.exhibitionItem}>
                     {ex.mainTitle}{' '}
-                    <Button
-                      variant="small"
-                      label="View"
-                      onClick={() => handleViewExhibition(ex)}
-                    />
-                    <Button
-                      variant="small"
-                      label="Edit"
-                      onClick={() => handleEditExhibition(ex)}
-                    />
+                    <Button variant="small" label="View" onClick={() => handleViewExhibition(ex)} />
+                    <Button variant="small" label="Edit" onClick={() => handleEditExhibition(ex)} />
                     <Button
                       variant="small"
                       label="Delete"
@@ -192,6 +194,7 @@ export const DashboardPage = () => {
               selectedSpace={selectedSpace}
               handleSelectSpace={handleSelectSpace}
               spaceOptions={spaceOptions}
+              userId={userId ?? ''}
             />
           </Modal>
         )}

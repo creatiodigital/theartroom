@@ -65,7 +65,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     return (
       <>
         <Header />
-        <div style={{ padding: '2rem', minHeight: '60vh' }}>
+        <div className="page-content">
           <h1>Artist Profile</h1>
           <p>Loading...</p>
         </div>
@@ -78,7 +78,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     return (
       <>
         <Header />
-        <div style={{ padding: '2rem', minHeight: '60vh' }}>
+        <div className="page-content">
           <h1>Artist Profile</h1>
           <p>{error || 'Artist not found'}</p>
         </div>
@@ -90,7 +90,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
   return (
     <>
       <Header />
-      <div style={{ padding: '2rem', minHeight: '60vh', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="page-content">
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
           {artist.profileImageUrl ? (
             <Image
@@ -101,29 +101,41 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
               style={{ borderRadius: '50%', objectFit: 'cover' }}
             />
           ) : (
-            <div style={{ 
-              width: 150, 
-              height: 150, 
-              borderRadius: '50%', 
-              backgroundColor: '#eee',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '3rem',
-              color: '#999'
-            }}>
-              {artist.name.charAt(0)}{artist.lastName.charAt(0)}
+            <div
+              style={{
+                width: 150,
+                height: 150,
+                borderRadius: '50%',
+                backgroundColor: '#eee',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '3rem',
+                color: '#999',
+              }}
+            >
+              {artist.name.charAt(0)}
+              {artist.lastName.charAt(0)}
             </div>
           )}
           <div>
-            <h1 style={{ margin: 0 }}>{artist.name} {artist.lastName}</h1>
+            <h1 style={{ margin: 0 }}>
+              {artist.name} {artist.lastName}
+            </h1>
             <p style={{ color: '#666', margin: '0.5rem 0 0' }}>@{artist.handler}</p>
           </div>
         </div>
-        
+
         <div style={{ marginBottom: '2rem' }}>
           <h2>About</h2>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{artist.biography || 'No biography yet.'}</p>
+          {artist.biography ? (
+            <div
+              style={{ lineHeight: 1.6 }}
+              dangerouslySetInnerHTML={{ __html: artist.biography }}
+            />
+          ) : (
+            <p style={{ color: '#666' }}>No biography yet.</p>
+          )}
         </div>
 
         <div>
@@ -134,16 +146,16 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {exhibitions.map((ex) => (
                 <li key={ex.id} style={{ marginBottom: '0.75rem' }}>
-                  <Link 
+                  <Link
                     href={`/exhibitions/${artist.handler}/${ex.url}`}
-                    style={{ 
-                      color: '#333', 
+                    style={{
+                      color: '#333',
                       textDecoration: 'none',
                       fontSize: '1.1rem',
                       display: 'inline-block',
                       padding: '0.5rem 0',
                       borderBottom: '1px solid #eee',
-                      width: '100%'
+                      width: '100%',
                     }}
                   >
                     {ex.mainTitle} →
