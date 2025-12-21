@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm prisma generate && next build",
+    "build": "pnpm prisma migrate deploy --config ./prisma/prisma.config.ts && pnpm prisma generate --config ./prisma/prisma.config.ts && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
