@@ -41,6 +41,7 @@ type ExhibitionArtworkResponse = {
   showPassepartout: boolean
   passepartoutColor: string
   passepartoutThickness: number
+  showArtworkInformation: boolean
   // Text styling (per-exhibition)
   fontFamily: string
   fontSize: number
@@ -138,6 +139,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
               label: String(ea.passepartoutThickness),
               value: ea.passepartoutThickness,
             },
+            showArtworkInformation: ea.showArtworkInformation,
             // Text styling from ExhibitionArtwork (per-exhibition)
             fontFamily: {
               label: ea.fontFamily,

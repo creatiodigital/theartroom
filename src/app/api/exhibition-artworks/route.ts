@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         showPassepartout?: boolean
         passepartoutColor?: string
         passepartoutThickness?: number
+        showArtworkInformation?: boolean
         // Text styling (per-exhibition)
         fontFamily?: string
         fontSize?: number
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
             passepartoutThickness: pos.passepartoutThickness ?? 10,
+            showArtworkInformation: pos.showArtworkInformation ?? false,
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
             fontSize: pos.fontSize ?? 16,
@@ -156,6 +158,7 @@ export async function POST(request: NextRequest) {
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
             passepartoutThickness: pos.passepartoutThickness ?? 10,
+            showArtworkInformation: pos.showArtworkInformation ?? false,
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
             fontSize: pos.fontSize ?? 16,

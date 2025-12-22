@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { useDispatch } from 'react-redux'
 
+import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { setArtworkUploadedTrue } from '@/redux/slices/wizardSlice'
 
@@ -9,6 +10,14 @@ export const useFileUpload = (currentArtworkId: string) => {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+
+    // Client-side size validation
+    if (file && file.size > MAX_UPLOAD_SIZE) {
+      alert('File too large. Maximum size is 5MB.')
+      event.target.value = '' // Reset input
+      return
+    }
+
     if (file && currentArtworkId) {
       const imageUrl = URL.createObjectURL(file)
       dispatch(editArtisticImage({ currentArtworkId, property: 'imageUrl', value: imageUrl }))
