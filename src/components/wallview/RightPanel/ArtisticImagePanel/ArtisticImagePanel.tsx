@@ -60,7 +60,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Author</span>
                     <Input
-                      value={author!}
+                      value={author || ''}
                       onChange={(e) => handleEditArtwork('author', e.target.value)}
                     />
                   </div>
@@ -69,7 +69,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Title</span>
                     <Input
-                      value={artworkTitle!}
+                      value={artworkTitle || ''}
                       onChange={(e) => handleEditArtwork('artworkTitle', e.target.value)}
                     />
                   </div>
@@ -78,7 +78,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Year</span>
                     <Input
-                      value={artworkYear!}
+                      value={artworkYear || ''}
                       onChange={(e) => handleEditArtwork('artworkYear', e.target.value)}
                     />
                   </div>
@@ -87,7 +87,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Description</span>
                     <Textarea
-                      value={description!}
+                      value={description || ''}
                       onChange={(e) => handleEditArtwork('description', e.target.value)}
                     />
                   </div>
@@ -96,7 +96,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Dimensions</span>
                     <Input
-                      value={artworkDimensions!}
+                      value={artworkDimensions || ''}
                       onChange={(e) => handleEditArtwork('artworkDimensions', e.target.value)}
                     />
                   </div>

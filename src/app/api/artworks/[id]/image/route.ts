@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { put, del } from '@vercel/blob'
 
+import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 import prisma from '@/lib/prisma'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = MAX_UPLOAD_SIZE // 5MB from centralized config
 
 // POST - Upload image for artwork
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

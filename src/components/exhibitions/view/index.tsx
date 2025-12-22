@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { useDispatch } from 'react-redux'
+import { useProgress } from '@react-three/drei'
+import { useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
+import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { Scene } from '@/components/scene'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { resetArtworks } from '@/redux/slices/artworkSlice'
@@ -10,7 +12,7 @@ import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import { hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
-import type { AppDispatch } from '@/redux/store'
+import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 
 interface ExhibitionViewPageProps {
@@ -18,13 +20,72 @@ interface ExhibitionViewPageProps {
   exhibitionSlug: string
 }
 
+// Loading overlay that uses useProgress from drei - works OUTSIDE Canvas!
+const LoadingOverlay = () => {
+  const { active, progress } = useProgress()
+  const [dismissed, setDismissed] = useState(false)
+  
+  // Dismiss overlay when loading is complete
+  useEffect(() => {
+    if (!active && progress >= 100) {
+      // Small delay to ensure first frame has painted
+      const timer = setTimeout(() => setDismissed(true), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [active, progress])
+  
+  if (dismissed) return null
+  
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '12px',
+        backgroundColor: '#ffffff',
+        zIndex: 99999,
+      }}
+    >
+      <div
+        style={{
+          width: '200px',
+          height: '3px',
+          backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            width: `${progress}%`,
+            height: '100%',
+            backgroundColor: '#333',
+            transition: 'width 0.3s ease-out',
+          }}
+        />
+      </div>
+      <span style={{ fontSize: '12px', color: '#666' }}>
+        {active ? `Loading 3D scene... ${Math.round(progress)}%` : 'Almost ready...'}
+      </span>
+    </div>
+  )
+}
+
 export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef(false)
+  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
 
   const {
     data: exhibition,
-    isLoading,
+    isLoading: isApiLoading,
     error,
   } = useGetExhibitionByUrlQuery(exhibitionSlug, {
     skip: !exhibitionSlug,
@@ -64,49 +125,8 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     }
   }, [exhibition, dispatch])
 
-  // Load saved artworks from database
+  // Load saved artworks from database (preloads images)
   useLoadExhibitionArtworks(exhibition?.id)
-
-  if (isLoading) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          gap: '12px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        }}
-      >
-        <div
-          style={{
-            width: '200px',
-            height: '3px',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            borderRadius: '2px',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              width: '30%',
-              height: '100%',
-              backgroundColor: '#333',
-              animation: 'loading-pulse 1.5s ease-in-out infinite',
-            }}
-          />
-        </div>
-        <style>{`
-          @keyframes loading-pulse {
-            0%, 100% { transform: translateX(-100%); }
-            50% { transform: translateX(300%); }
-          }
-        `}</style>
-      </div>
-    )
-  }
 
   if (error) {
     return (
@@ -118,7 +138,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     )
   }
 
-  if (!exhibition) {
+  if (!exhibition && !isApiLoading) {
     return (
       <div
         style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
@@ -128,5 +148,16 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     )
   }
 
-  return <Scene />
+  return (
+    <>
+      {/* Loading overlay - uses useProgress which works OUTSIDE Canvas */}
+      <LoadingOverlay />
+      
+      {/* Scene renders as soon as exhibition data is available */}
+      {exhibition && <Scene />}
+      
+      {/* Artwork info panel - shows when user double-clicks artwork with showArtworkInformation enabled */}
+      {isArtworkPanelOpen && <ArtworkPanel />}
+    </>
+  )
 }
