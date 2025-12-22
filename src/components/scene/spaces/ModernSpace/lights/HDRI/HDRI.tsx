@@ -1,10 +1,13 @@
-import { Environment } from '@react-three/drei'
+import { Environment, useEnvironment } from '@react-three/drei'
 
 const HDRI = () => {
+  // Preload the HDR - this will suspend until loaded
+  const envMap = useEnvironment({ files: '/assets/hdri/soil.hdr' })
+  
   return (
     <Environment
       background={true}
-      files="/assets/hdri/soil.hdr"
+      map={envMap}
       environmentIntensity={0.55}
       backgroundRotation={[0, Math.PI / 1.4, 0]}
     />
