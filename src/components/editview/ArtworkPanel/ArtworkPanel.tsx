@@ -5,7 +5,6 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
-import { getOptimizedImageUrl } from '@/lib/getOptimizedImageUrl'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -27,8 +26,8 @@ const ArtworkPanel = () => {
   const { name, artworkTitle, author, artworkYear, description, artworkDimensions, imageUrl } =
     selectedArtwork || {}
 
-  const thumbnailUrl = imageUrl ? getOptimizedImageUrl(imageUrl, 'thumbnail') : null
-  // Use original URL for lightbox - we want full quality, not optimized
+  // Use original URLs - Next.js image optimization has issues with Vercel Blob URLs in production
+  const thumbnailUrl = imageUrl || null
   const highResUrl = imageUrl || null
 
   return (
