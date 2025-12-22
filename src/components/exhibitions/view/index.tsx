@@ -2,8 +2,9 @@
 
 import { useProgress } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
+import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { Scene } from '@/components/scene'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { resetArtworks } from '@/redux/slices/artworkSlice'
@@ -11,7 +12,7 @@ import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import { hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
-import type { AppDispatch } from '@/redux/store'
+import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 
 interface ExhibitionViewPageProps {
@@ -80,6 +81,7 @@ const LoadingOverlay = () => {
 export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef(false)
+  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
 
   const {
     data: exhibition,
@@ -153,6 +155,9 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       
       {/* Scene renders as soon as exhibition data is available */}
       {exhibition && <Scene />}
+      
+      {/* Artwork info panel - shows when user double-clicks artwork with showArtworkInformation enabled */}
+      {isArtworkPanelOpen && <ArtworkPanel />}
     </>
   )
 }

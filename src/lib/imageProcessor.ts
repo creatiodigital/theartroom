@@ -1,15 +1,17 @@
 import sharp from 'sharp'
 
-const MAX_DIMENSION = 2048
-const WEBP_QUALITY_INITIAL = 75
-const MAX_FILE_SIZE = 600 * 1024 // 600KB target
-const MIN_QUALITY = 50
+import { STORED_IMAGE } from './imageConfig'
+
+const MAX_DIMENSION = STORED_IMAGE.MAX_DIMENSION
+const WEBP_QUALITY_INITIAL = STORED_IMAGE.WEBP_QUALITY
+const MAX_FILE_SIZE = STORED_IMAGE.MAX_FILE_SIZE
+const MIN_QUALITY = STORED_IMAGE.MIN_QUALITY
 
 /**
  * Process an image buffer:
- * - Resize to max 2048px (longest side)
- * - Convert to WebP with adaptive quality to stay under 600KB
- * - Returns compressed buffer
+ * - Resize to max 4096px (longest side) for high-quality source
+ * - Convert to WebP with adaptive quality to stay under 2MB
+ * - Returns processed buffer suitable for Vercel Image Optimization
  */
 export async function processImage(buffer: Buffer): Promise<Buffer> {
   const image = sharp(buffer)

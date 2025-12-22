@@ -101,12 +101,13 @@ model ExhibitionArtwork {
   quaternionW Float
 
   // Display properties (per-exhibition customization)
-  showFrame             Boolean @default(false)
-  frameColor            String  @default("#000000")
-  frameThickness        Float   @default(5)
-  showPassepartout      Boolean @default(false)
-  passepartoutColor     String  @default("#ffffff")
-  passepartoutThickness Float   @default(10)
+  showFrame              Boolean @default(false)
+  frameColor             String  @default("#000000")
+  frameThickness         Float   @default(5)
+  showPassepartout       Boolean @default(false)
+  passepartoutColor      String  @default("#ffffff")
+  passepartoutThickness  Float   @default(10)
+  showArtworkInformation Boolean @default(false)
 
   // Text styling (per-exhibition customization)
   fontFamily    String @default("Montserrat")
