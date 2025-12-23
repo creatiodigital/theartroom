@@ -4,6 +4,9 @@ import type { NextRequest } from 'next/server'
 import type { Exhibition, Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {

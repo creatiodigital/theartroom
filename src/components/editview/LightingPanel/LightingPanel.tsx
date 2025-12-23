@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
@@ -16,7 +17,10 @@ const DEFAULT_INTENSITY = 0.2
 
 const LightingPanel = () => {
   const dispatch = useDispatch()
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
+  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const ambientColor = useSelector(
     (state: RootState) => state.exhibition.ambientLightColor ?? DEFAULT_COLOR
   )
@@ -26,15 +30,42 @@ const LightingPanel = () => {
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setAmbientLightColor(e.target.value))
+    setSaved(false)
   }
 
   const handleIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setAmbientLightIntensity(parseFloat(e.target.value)))
+    setSaved(false)
   }
 
   const handleReset = () => {
     dispatch(setAmbientLightColor(DEFAULT_COLOR))
     dispatch(setAmbientLightIntensity(DEFAULT_INTENSITY))
+    setSaved(false)
+  }
+
+  const handleSave = async () => {
+    if (!exhibitionId) return
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ambientLightColor: ambientColor,
+          ambientLightIntensity: ambientIntensity,
+        }),
+      })
+
+      if (response.ok) {
+        setSaved(true)
+      }
+    } catch (error) {
+      console.error('Failed to save lighting settings:', error)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleClose = () => {
@@ -75,6 +106,12 @@ const LightingPanel = () => {
 
       {/* Actions */}
       <div className={styles.actions}>
+        <Button
+          variant="primary"
+          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
+          onClick={handleSave}
+          disabled={saving}
+        />
         <Button variant="small" label="Reset to Default" onClick={handleReset} />
       </div>
     </SettingsPanel>

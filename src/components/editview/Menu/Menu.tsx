@@ -53,18 +53,22 @@ export const Menu = () => {
     <div className={styles.menu}>
       <ButtonIcon
         icon="close"
+        title="Go to main dashboard"
         onClick={handleClose}
       />
       <ButtonIcon
         icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
+        title="Show/Hide wall placeholders"
         onClick={() => togglePlaceholders()}
       />
       <ButtonIcon
         icon="light"
+        title="Global Light controls"
         onClick={toggleLightingPanel}
       />
       <ButtonIcon
         icon="settings"
+        title="Go to settings page"
         onClick={handleOpenSettings}
       />
     </div>
