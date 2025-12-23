@@ -13,14 +13,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params
 
-    // Get the artwork with user info to get handler for blob path
+    // Get the artwork to verify it exists
     const artwork = await prisma.artwork.findUnique({
       where: { id },
-      include: {
-        user: {
-          select: { handler: true },
-        },
-      },
     })
 
     if (!artwork) {
@@ -65,10 +60,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    // Upload to Vercel Blob - organize by environment and artist handler
+    // Upload to Vercel Blob - organize by environment and user ID (immutable)
     const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const artistHandler = artwork.user?.handler || artwork.userId
-    const blob = await put(`${env}/${artistHandler}/${id}.webp`, processedBuffer, {
+    const blob = await put(`${env}/${artwork.userId}/${id}.webp`, processedBuffer, {
       access: 'public',
       addRandomSuffix: true,
       contentType: 'image/webp',

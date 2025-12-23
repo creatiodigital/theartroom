@@ -6,6 +6,10 @@ import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
 
+// Force dynamic rendering and disable caching for fresh data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 type ExhibitionWithUser = {
   id: string
   mainTitle: string

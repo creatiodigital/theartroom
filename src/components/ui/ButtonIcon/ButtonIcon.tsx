@@ -18,6 +18,7 @@ export const ButtonIcon = ({
   size = 'small',
   color = '#ffffff',
   type = 'button',
+  title,
   onClick,
   draggable = false,
   onDragStart,
@@ -27,6 +28,7 @@ export const ButtonIcon = ({
     <button
       className={c([styles.button, styles[size]])}
       type={type}
+      title={title}
       onClick={onClick}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -38,3 +40,4 @@ export const ButtonIcon = ({
 }
 
 export default ButtonIcon
+

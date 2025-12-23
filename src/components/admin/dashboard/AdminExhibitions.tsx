@@ -5,6 +5,8 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
 
+import styles from './AdminDashboard.module.scss'
+
 type Exhibition = {
   id: string
   mainTitle: string
@@ -77,10 +79,12 @@ export const AdminExhibitions = () => {
   if (loading) return <div>Loading exhibitions...</div>
 
   return (
-    <div style={{ marginTop: '40px' }}>
-      <h2 style={{ marginBottom: '20px' }}>Exhibition Management</h2>
+    <div className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <h2>Exhibition Management</h2>
+      </div>
 
-      <table border={1} cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
+      <table className={styles.table}>
         <thead>
           <tr>
             <th>Exhibition</th>
@@ -96,7 +100,7 @@ export const AdminExhibitions = () => {
               <td>
                 <Link
                   href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                  style={{ color: 'blue', textDecoration: 'underline' }}
+                  className={styles.exhibitionLink}
                 >
                   {exhibition.mainTitle}
                 </Link>
@@ -104,32 +108,18 @@ export const AdminExhibitions = () => {
               <td>
                 {exhibition.user.name} {exhibition.user.lastName}
               </td>
-              <td style={{ textAlign: 'center' }}>
-                <span
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: exhibition.status === 'current' ? '#d4edda' : '#f8d7da',
-                    color: exhibition.status === 'current' ? '#155724' : '#721c24',
-                  }}
-                >
+              <td>
+                <span className={`${styles.statusBadge} ${styles[exhibition.status]}`}>
                   {exhibition.status}
                 </span>
               </td>
-              <td style={{ textAlign: 'center' }}>
-                <span
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: exhibition.visibility === 'public' ? '#cce5ff' : '#fff3cd',
-                    color: exhibition.visibility === 'public' ? '#004085' : '#856404',
-                  }}
-                >
+              <td>
+                <span className={`${styles.statusBadge} ${styles[exhibition.visibility]}`}>
                   {exhibition.visibility}
                 </span>
               </td>
               <td>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className={styles.actions}>
                   <Button
                     variant="small"
                     label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}

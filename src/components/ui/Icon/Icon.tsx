@@ -8,6 +8,7 @@ import Grid from '@/icons/grid.svg'
 import HorizontalCenter from '@/icons/horizontal-center.svg'
 import HorizontalLeft from '@/icons/horizontal-left.svg'
 import HorizontalRight from '@/icons/horizontal-right.svg'
+import Light from '@/icons/light.svg'
 import Loading from '@/icons/loading.svg'
 import Move from '@/icons/move.svg'
 import Painting from '@/icons/painting.svg'
@@ -22,6 +23,7 @@ import PositionRight from '@/icons/position-right.svg'
 import PositionTop from '@/icons/position-top.svg'
 import Preview from '@/icons/preview.svg'
 import Reset from '@/icons/reset.svg'
+import Settings from '@/icons/settings.svg'
 import TextCenter from '@/icons/text-center.svg'
 import TextLeft from '@/icons/text-left.svg'
 import TextRight from '@/icons/text-right.svg'
@@ -43,6 +45,7 @@ const icons = {
   horizontalCenter: HorizontalCenter,
   horizontalRight: HorizontalRight,
   expand: Expand,
+  light: Light,
   loading: Loading,
   move: Move,
   painting: Painting,
@@ -59,6 +62,7 @@ const icons = {
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
   reset: Reset,
+  settings: Settings,
   text: Text,
   textLeft: TextLeft,
   textCenter: TextCenter,

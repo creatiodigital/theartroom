@@ -9,6 +9,16 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
     const exhibition = await prisma.exhibition.findUnique({
       where: { url },
+      include: {
+        user: {
+          select: {
+            name: true,
+            lastName: true,
+            handler: true,
+            biography: true,
+          },
+        },
+      },
     })
 
     if (!exhibition) {

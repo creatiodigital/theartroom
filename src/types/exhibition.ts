@@ -15,4 +15,8 @@ export type TExhibition = {
   allExhibitionArtworkIds: string[]
   status: string
   visibility: string
+  // Lighting customization
+  ambientLightColor?: string
+  ambientLightIntensity?: number
 }
+

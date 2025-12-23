@@ -52,8 +52,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    // Upload to Vercel Blob
-    const blob = await put(`profiles/${id}/avatar.webp`, processedBuffer, {
+    // Upload to Vercel Blob - organize by environment and user ID
+    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
+    const blob = await put(`${env}/profiles/${id}/avatar.webp`, processedBuffer, {
       access: 'public',
       addRandomSuffix: true,
       contentType: 'image/webp',
