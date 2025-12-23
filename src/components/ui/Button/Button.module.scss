@@ -37,3 +37,20 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.link {
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  width: auto;
+
+  &:hover {
+    color: var(--color-text);
+    text-decoration: underline;
+  }
+}

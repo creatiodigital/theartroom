@@ -4,12 +4,20 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 
 import styles from './artworks.module.scss'
+
+// Helper to truncate text
+const truncateText = (text: string | null | undefined, maxLength: number): string => {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.slice(0, maxLength).trim() + '...'
+}
 
 type Exhibition = {
   id: string
@@ -29,6 +37,8 @@ type Artwork = {
   title: string | null
   year: string | null
   technique: string | null
+  imageUrl: string | null
+  textContent: string | null
   createdAt: string
   exhibitionArtworks: ExhibitionArtwork[]
 }
@@ -48,6 +58,33 @@ export const ArtworkLibraryPage = () => {
     exhibitionTitle: string
   } | null>(null)
   const [unlinking, setUnlinking] = useState(false)
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Filter artworks based on selected type and search query
+  const filteredArtworks = artworks.filter((artwork) => {
+    // Type filter
+    if (typeFilter !== 'all' && artwork.artworkType !== typeFilter) {
+      return false
+    }
+    // Search filter (case-insensitive, matches name)
+    if (debouncedSearch) {
+      const searchLower = debouncedSearch.toLowerCase()
+      const nameMatch = artwork.name?.toLowerCase().includes(searchLower)
+      const titleMatch = artwork.title?.toLowerCase().includes(searchLower)
+      return nameMatch || titleMatch
+    }
+    return true
+  })
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -153,30 +190,84 @@ export const ArtworkLibraryPage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <div>
-          <Link href="/dashboard" className={styles.backLink}>
-            ← Back to Dashboard
-          </Link>
-          <h1>Artwork Library</h1>
-        </div>
-        <div className={styles.headerActions}>
-          <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
-          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
-        </div>
+        <Link href="/dashboard" className={styles.backLink}>
+          ← Back to Dashboard
+        </Link>
+        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      {artworks.length === 0 ? (
+      <h1 className={styles.pageTitle}>Artwork Library</h1>
+
+      <div className={styles.sectionActions}>
+        <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
+      </div>
+
+      {/* Filter Tags and Search */}
+      <div className={styles.filterBar}>
+        <div className={styles.filters}>
+          <button
+            type="button"
+            className={`${styles.filterTag} ${typeFilter === 'all' ? styles.active : ''}`}
+            onClick={() => setTypeFilter('all')}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            className={`${styles.filterTag} ${typeFilter === 'image' ? styles.active : ''}`}
+            onClick={() => setTypeFilter('image')}
+          >
+            Image
+          </button>
+          <button
+            type="button"
+            className={`${styles.filterTag} ${typeFilter === 'text' ? styles.active : ''}`}
+            onClick={() => setTypeFilter('text')}
+          >
+            Text
+          </button>
+        </div>
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder="Search by name or title..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {filteredArtworks.length === 0 ? (
         <div className={styles.empty}>
-          <p>No artworks yet. Click "Add Artwork" to create your first one.</p>
+          <p>{artworks.length === 0 ? 'No artworks yet. Click "Add Artwork" to create your first one.' : 'No artworks match this filter.'}</p>
         </div>
       ) : (
         <div className={styles.list}>
-          {artworks.map((artwork) => (
+          {filteredArtworks.map((artwork) => (
             <div key={artwork.id} className={styles.card}>
+              {/* Thumbnail / Text Preview */}
+              <div className={styles.cardThumbnail}>
+                {artwork.artworkType === 'image' && artwork.imageUrl ? (
+                  <Image
+                    src={artwork.imageUrl}
+                    alt={artwork.name}
+                    width={60}
+                    height={60}
+                    className={styles.thumbnail}
+                  />
+                ) : artwork.artworkType === 'text' && artwork.textContent ? (
+                  <div className={styles.textPreview}>
+                    {truncateText(artwork.textContent, 100)}
+                  </div>
+                ) : (
+                  <div className={styles.placeholder}>
+                    {artwork.artworkType === 'image' ? '🖼️' : '📝'}
+                  </div>
+                )}
+              </div>
               <div className={styles.cardInfo}>
                 <h3>{artwork.name}</h3>
                 <p className={styles.meta}>
-                  {artwork.artworkType === 'image' ? '🖼️ Image' : '📝 Text'}
+                  {artwork.artworkType === 'image' ? 'Image' : 'Text'}
                   {artwork.title && ` • ${artwork.title}`}
                   {artwork.year && ` • ${artwork.year}`}
                   {artwork.technique && ` • ${artwork.technique}`}

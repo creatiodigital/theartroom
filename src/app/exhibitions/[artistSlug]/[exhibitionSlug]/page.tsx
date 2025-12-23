@@ -1,12 +1,12 @@
-import { ExhibitionViewPage } from '@/components/exhibitions/view'
+import { ExhibitionProfilePage } from '@/components/exhibitions/profile'
 
-interface ExhibitionViewProps {
+interface ExhibitionProfileProps {
   params: Promise<{ artistSlug: string; exhibitionSlug: string }>
 }
 
-const ExhibitionView = async ({ params }: ExhibitionViewProps) => {
+const ExhibitionProfile = async ({ params }: ExhibitionProfileProps) => {
   const { artistSlug, exhibitionSlug } = await params
-  return <ExhibitionViewPage artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
+  return <ExhibitionProfilePage artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
 }
 
-export default ExhibitionView
+export default ExhibitionProfile

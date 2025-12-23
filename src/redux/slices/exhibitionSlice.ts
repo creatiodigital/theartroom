@@ -46,6 +46,15 @@ const exhibitionSlice = createSlice({
     setExhibition: (_state: TExhibition, action: PayloadAction<TExhibition>) => {
       return action.payload
     },
+
+    // Lighting customization actions
+    setAmbientLightColor: (state: TExhibition, action: PayloadAction<string>) => {
+      state.ambientLightColor = action.payload
+    },
+
+    setAmbientLightIntensity: (state: TExhibition, action: PayloadAction<number>) => {
+      state.ambientLightIntensity = action.payload
+    },
   },
 })
 
@@ -54,6 +63,9 @@ export const {
   updateArtworkPosition,
   deleteArtworkPosition,
   setExhibition,
+  setAmbientLightColor,
+  setAmbientLightIntensity,
 } = exhibitionSlice.actions
 
 export default exhibitionSlice.reducer
+

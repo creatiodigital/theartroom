@@ -191,14 +191,13 @@ export const DashboardProfilePage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <div>
-          <Link href="/dashboard" className={styles.backLink}>
-            ← Back to Dashboard
-          </Link>
-          <h1>Edit Profile</h1>
-        </div>
-        <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        <Link href="/dashboard" className={styles.backLink}>
+          ← Back to Dashboard
+        </Link>
+        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
+
+      <h1 className={styles.title}>Edit Profile</h1>
 
       {/* Profile Image Section */}
       <div className={styles.imageSection}>

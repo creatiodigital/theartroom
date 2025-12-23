@@ -12,6 +12,9 @@ type ExhibitionUpdateBody = {
   bannerUrl?: string
   startDate?: string
   endDate?: string
+  // Lighting customization
+  ambientLightColor?: string
+  ambientLightIntensity?: number
 }
 
 /* ------------------------ GET ------------------------ */
@@ -58,6 +61,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.bannerUrl !== undefined) data.bannerUrl = body.bannerUrl
     if (body.startDate !== undefined) data.startDate = new Date(body.startDate)
     if (body.endDate !== undefined) data.endDate = new Date(body.endDate)
+    // Lighting customization
+    if (body.ambientLightColor !== undefined) data.ambientLightColor = body.ambientLightColor
+    if (body.ambientLightIntensity !== undefined) data.ambientLightIntensity = body.ambientLightIntensity
 
     const updated = await prisma.exhibition.update({
       where: { id },

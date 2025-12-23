@@ -74,6 +74,10 @@ model Exhibition {
   status       String
   visibility   String
 
+  // Lighting customization (space-agnostic)
+  ambientLightColor     String? @default("#e4e8f2")
+  ambientLightIntensity Float?  @default(0.2)
+
   exhibitionArtworks ExhibitionArtwork[]
 
   createdAt DateTime @default(now())
