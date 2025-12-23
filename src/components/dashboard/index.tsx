@@ -145,11 +145,11 @@ export const DashboardPage = () => {
       <div className={styles.main}>
         <div className={styles.header}>
           <h3>Hello {userData?.name ?? session?.user?.name ?? ''}</h3>
-          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+          <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
         </div>
 
         <div className={styles.exhibitions}>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <div className={styles.sectionActions}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
             <Button
               variant="small"
@@ -162,27 +162,33 @@ export const DashboardPage = () => {
               onClick={() => router.push('/dashboard/profile')}
             />
           </div>
-          <div className={styles.list}>
-            <h3 className={styles.subtitle}>My exhibitions</h3>
-            {exhibitions.length === 0 ? (
-              <p>You do not have any exhibitions yet.</p>
-            ) : (
-              <ul className={styles.exhibitionList}>
+
+          <h2 className={styles.sectionTitle}>My Exhibitions</h2>
+
+          {exhibitions.length === 0 ? (
+            <p className={styles.empty}>You do not have any exhibitions yet.</p>
+          ) : (
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Exhibition Name</th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
                 {exhibitions.map((ex: TExhibition) => (
-                  <li key={ex.id} className={styles.exhibitionItem}>
-                    {ex.mainTitle}{' '}
-                    <Button variant="small" label="View" onClick={() => handleViewExhibition(ex)} />
-                    <Button variant="small" label="Edit" onClick={() => handleEditExhibition(ex)} />
-                    <Button
-                      variant="small"
-                      label="Delete"
-                      onClick={() => handleDeleteExhibition(ex.id)}
-                    />
-                  </li>
+                  <tr key={ex.id}>
+                    <td>{ex.mainTitle}</td>
+                    <td><Button variant="small" label="View" onClick={() => handleViewExhibition(ex)} /></td>
+                    <td><Button variant="small" label="Edit" onClick={() => handleEditExhibition(ex)} /></td>
+                    <td><Button variant="small" label="Delete" onClick={() => handleDeleteExhibition(ex.id)} /></td>
+                  </tr>
                 ))}
-              </ul>
-            )}
-          </div>
+              </tbody>
+            </table>
+          )}
         </div>
 
         {isModalShown && (

@@ -1,19 +1,15 @@
 .page {
   padding: var(--space-8);
-  max-width: 600px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-8);
-
-  h1 {
-    margin: var(--space-2) 0 0;
-    font-size: var(--text-3xl);
-  }
+  align-items: center;
+  margin-bottom: var(--space-4);
 }
 
 .backLink {
@@ -24,6 +20,11 @@
   &:hover {
     text-decoration: underline;
   }
+}
+
+.title {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-2xl);
 }
 
 .imageSection {
@@ -128,4 +129,8 @@
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-4);
+
+  button {
+    width: auto;
+  }
 }

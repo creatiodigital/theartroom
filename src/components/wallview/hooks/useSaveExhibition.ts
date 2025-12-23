@@ -28,15 +28,31 @@ export const useSaveExhibition = () => {
       return false
     }
 
-    if (allArtworkIds.length === 0) {
-      // Nothing to save
-      return true
-    }
-
     setSaving(true)
     setError(null)
 
     try {
+      // If no artworks, still need to sync positions to delete removed artworks from DB
+      if (allArtworkIds.length === 0) {
+        // Sync empty positions array to delete all artworks from this exhibition
+        const positionResponse = await fetch('/api/exhibition-artworks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exhibitionId,
+            positions: [],
+          }),
+        })
+
+        if (!positionResponse.ok) {
+          const data = await positionResponse.json()
+          throw new Error(data.error || 'Failed to sync positions')
+        }
+
+        setSaving(false)
+        return true
+      }
+
       // 1. Upload pending images to Vercel Blob
       const pendingUploads = getAllPendingUploads()
       const uploadedUrls = new Map<string, string>()

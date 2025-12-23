@@ -1,0 +1,39 @@
+@use '@/styles/mixins' as *;
+
+.panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 350px;
+  height: 100vh;
+  background-color: var(--bgLight);
+  z-index: 2;
+  padding: 40px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.title {
+  @include largeSerif();
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.content {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cta {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}

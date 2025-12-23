@@ -13,6 +13,8 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
 
+import styles from './AdminDashboard.module.scss'
+
 export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
@@ -100,116 +102,122 @@ export const DashboardAdmin = () => {
   }, [deleteTarget, refetch])
 
   // Loading states
-  if (sessionStatus === 'loading' || loading) return <div>Loading...</div>
+  if (sessionStatus === 'loading' || loading) return <div className={styles.page}>Loading...</div>
 
   // Not authorized
   if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
-    return <div>Not authorized</div>
+    return <div className={styles.page}>Not authorized</div>
   }
 
-  if (error) return <div>Error: {error}</div>
+  if (error) return <div className={styles.page}>Error: {error}</div>
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-        }}
-      >
-        <h1>All Users</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
-          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+    <div className={styles.page}>
+      {/* Header with Logout */}
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h1>Admin Dashboard</h1>
         </div>
+        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <table border={1} cellPadding="8" style={{ borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Last Name</th>
-            <th>Handler</th>
-            <th>Email</th>
-            <th>Type</th>
-            <th>Featured</th>
+      {/* Users Section */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>All Users</h2>
+        <div className={styles.sectionActions}>
+          <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+        </div>
 
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>
-                <input
-                  type="text"
-                  value={getFieldValue(user, 'name')}
-                  onChange={(e) => handleChange(user.id, 'name', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={getFieldValue(user, 'lastName')}
-                  onChange={(e) => handleChange(user.id, 'lastName', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={getFieldValue(user, 'handler')}
-                  onChange={(e) => handleChange(user.id, 'handler', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="email"
-                  value={getFieldValue(user, 'email')}
-                  onChange={(e) => handleChange(user.id, 'email', e.target.value)}
-                />
-              </td>
-              <td>{user.userType}</td>
-              <td style={{ textAlign: 'center' }}>
-                <input
-                  type="checkbox"
-                  checked={user.isFeatured ?? false}
-                  onChange={async (e) => {
-                    const newValue = e.target.checked
-                    try {
-                      await fetch(`/api/users/${user.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ isFeatured: newValue }),
-                      })
-                      refetch()
-                    } catch (err) {
-                      console.error('Failed to update featured status:', err)
-                    }
-                  }}
-                />
-              </td>
-
-              <td style={{ display: 'flex', gap: '0.25rem' }}>
-                {user.userType !== 'admin' && (
-                  <Button
-                    variant="small"
-                    label="Impersonate"
-                    onClick={() => handleImpersonate(user)}
-                  />
-                )}
-                <Button
-                  variant="small"
-                  label="Delete"
-                  onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
-                />
-              </td>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Last Name</th>
+              <th>Handler</th>
+              <th>Email</th>
+              <th>Type</th>
+              <th>Featured</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>
+                  <input
+                    type="text"
+                    className={styles.tableInput}
+                    value={getFieldValue(user, 'name')}
+                    onChange={(e) => handleChange(user.id, 'name', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className={styles.tableInput}
+                    value={getFieldValue(user, 'lastName')}
+                    onChange={(e) => handleChange(user.id, 'lastName', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className={styles.tableInput}
+                    value={getFieldValue(user, 'handler')}
+                    onChange={(e) => handleChange(user.id, 'handler', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="email"
+                    className={styles.tableInput}
+                    value={getFieldValue(user, 'email')}
+                    onChange={(e) => handleChange(user.id, 'email', e.target.value)}
+                  />
+                </td>
+                <td>{user.userType}</td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={user.isFeatured ?? false}
+                    onChange={async (e) => {
+                      const newValue = e.target.checked
+                      try {
+                        await fetch(`/api/users/${user.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ isFeatured: newValue }),
+                        })
+                        refetch()
+                      } catch (err) {
+                        console.error('Failed to update featured status:', err)
+                      }
+                    }}
+                  />
+                </td>
+                <td>
+                  <div className={styles.actions}>
+                    {user.userType !== 'admin' && (
+                      <Button
+                        variant="small"
+                        label="Impersonate"
+                        onClick={() => handleImpersonate(user)}
+                      />
+                    )}
+                    <Button
+                      variant="small"
+                      label="Delete"
+                      onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
+      {/* Exhibitions Section */}
       <AdminExhibitions />
 
       {showAddModal && (
@@ -220,21 +228,14 @@ export const DashboardAdmin = () => {
 
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
-          <div style={{ textAlign: 'center' }}>
+          <div className={styles.deleteModal}>
             <h2>Are you sure?</h2>
-            <p style={{ margin: '1rem 0' }}>
+            <p>
               You are about to delete <strong>{deleteTarget.name}</strong>.
               <br />
               This action cannot be undone.
             </p>
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.5rem',
-                justifyContent: 'center',
-                marginTop: '1.5rem',
-              }}
-            >
+            <div className={styles.deleteActions}>
               <Button
                 variant="small"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}

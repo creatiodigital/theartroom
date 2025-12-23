@@ -1,5 +1,6 @@
 .page {
   padding: var(--space-8);
+  width: 100%;
   max-width: 1000px;
   margin: 0 auto;
 }
@@ -7,13 +8,8 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-8);
-
-  h1 {
-    margin: var(--space-2) 0 0;
-    font-size: var(--text-3xl);
-  }
+  align-items: center;
+  margin-bottom: var(--space-4);
 }
 
 .backLink {
@@ -26,10 +22,70 @@
   }
 }
 
-.headerActions {
+.pageTitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-2xl);
+}
+
+.sectionActions {
+  margin-bottom: var(--space-6);
+
+  button {
+    width: auto;
+  }
+}
+
+.filterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.filters {
   display: flex;
   gap: var(--space-2);
-  align-items: center;
+}
+
+.filterTag {
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-border-dark);
+    color: var(--color-text);
+  }
+
+  &.active {
+    background: var(--color-text);
+    border-color: var(--color-text);
+    color: var(--color-white);
+  }
+}
+
+.searchInput {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  min-width: 200px;
+  transition: all 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-text);
+  }
+
+  &::placeholder {
+    color: var(--color-text-light);
+  }
 }
 
 .empty {
@@ -44,12 +100,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  width: 100%;
 }
 
 .card {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-4);
+  width: 100%;
   padding: var(--space-4) var(--space-6);
   background: var(--color-white);
   border: 1px solid var(--color-border);
@@ -60,7 +119,45 @@
   }
 }
 
+.cardThumbnail {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.textPreview {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  font-size: 7px;
+  line-height: 1.2;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.placeholder {
+  font-size: var(--text-2xl);
+  opacity: 0.5;
+}
+
 .cardInfo {
+  flex: 1;
+  min-width: 0;
+
   h3 {
     margin: 0 0 var(--space-1);
     font-size: var(--text-base);

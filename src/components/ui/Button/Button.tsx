@@ -9,7 +9,7 @@ import type { MouseEventHandler } from 'react'
 import styles from './Button.module.scss'
 
 type ButtonProps = {
-  variant?: 'primary' | 'outline' | 'small'
+  variant?: 'primary' | 'outline' | 'small' | 'link'
   type?: 'submit' | 'button' | 'reset'
   onClick?: MouseEventHandler<HTMLButtonElement>
   label: string

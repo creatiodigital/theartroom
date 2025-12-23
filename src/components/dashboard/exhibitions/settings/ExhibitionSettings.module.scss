@@ -1,0 +1,62 @@
+.page {
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.backLink {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.pageTitle {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+}
+
+.exhibitionName {
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-8);
+}
+
+.placeholder {
+  padding: var(--space-8);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  text-align: center;
+  margin-bottom: var(--space-6);
+
+  p {
+    margin: 0 0 var(--space-2);
+  }
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  button {
+    width: auto;
+  }
+}
+
+.error {
+  color: var(--color-error-text);
+  margin-bottom: var(--space-4);
+}
