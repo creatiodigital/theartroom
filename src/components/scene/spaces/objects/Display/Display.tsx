@@ -1,9 +1,11 @@
-import { Image } from '@react-three/drei'
+import { useMemo } from 'react'
+import { useTexture } from '@react-three/drei'
 import { useDispatch, useSelector } from 'react-redux'
-import { DoubleSide, MeshStandardMaterial } from 'three'
+import { DoubleSide, MeshStandardMaterial, SRGBColorSpace } from 'three'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
+import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
@@ -11,6 +13,30 @@ import type { RuntimeArtwork } from '@/utils/artworkTransform'
 
 type DisplayProps = {
   artwork: RuntimeArtwork
+}
+
+type ArtworkImageProps = {
+  url: string
+  width: number
+  height: number
+}
+
+const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
+  const texture = useTexture(url)
+  texture.colorSpace = SRGBColorSpace
+  
+  return (
+    <mesh castShadow receiveShadow renderOrder={2}>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial 
+        map={texture} 
+        side={DoubleSide} 
+        roughness={1}
+        metalness={0}
+        toneMapped={true}
+      />
+    </mesh>
+  )
 }
 
 const Display = ({ artwork }: DisplayProps) => {
@@ -32,6 +58,10 @@ const Display = ({ artwork }: DisplayProps) => {
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const dispatch = useDispatch()
 
+  // Use the ambient light hook for frame and passepartout colors
+  const frameAmbientColor = useAmbientLightColor(frameColor ?? '#ffffff')
+  const passepartoutAmbientColor = useAmbientLightColor(passepartoutColor ?? '#ffffff')
+
   const handleClick = () => {
     if (!isPlaceholdersShown && showArtworkInformation) {
       dispatch(showArtworkPanel())
@@ -42,16 +72,22 @@ const Display = ({ artwork }: DisplayProps) => {
   const planeWidth = width || 1
   const planeHeight = height || 1
 
-  const frameMaterial = new MeshStandardMaterial({
-    color: frameColor ?? '#ffffff',
-    roughness: 0.3,
-    metalness: 0.1,
-  })
+  // Frame material with ambient light applied
+  const frameMaterial = useMemo(() => {
+    return new MeshStandardMaterial({
+      color: frameAmbientColor,
+      roughness: 0.3,
+      metalness: 0.1,
+    })
+  }, [frameAmbientColor])
 
-  const passepartoutMaterial = new MeshStandardMaterial({
-    color: passepartoutColor ?? '#ffffff',
-    roughness: 1,
-  })
+  // Passepartout material with ambient light applied
+  const passepartoutMaterial = useMemo(() => {
+    return new MeshStandardMaterial({
+      color: passepartoutAmbientColor,
+      roughness: 1,
+    })
+  }, [passepartoutAmbientColor])
 
   const frameT = (showFrame ? frameThickness?.value : 0) || 0
   const passepartoutT = (showPassepartout ? passepartoutThickness?.value : 0) || 0
@@ -74,11 +110,11 @@ const Display = ({ artwork }: DisplayProps) => {
       )}
 
       {imageUrl && (
-        <mesh castShadow receiveShadow renderOrder={2}>
-          <Image url={imageUrl} side={DoubleSide} transparent toneMapped={false}>
-            <planeGeometry args={[innerWidth, innerHeight]} />
-          </Image>
-        </mesh>
+        <ArtworkImage 
+          url={imageUrl} 
+          width={innerWidth} 
+          height={innerHeight} 
+        />
       )}
 
       {showFrame && frameThickness?.value && (
