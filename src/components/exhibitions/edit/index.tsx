@@ -52,6 +52,7 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
     error,
   } = useGetExhibitionByUrlQuery(exhibitionSlug, {
     skip: !exhibitionSlug,
+    refetchOnMountOrArgChange: true,
   })
 
   useEffect(() => {

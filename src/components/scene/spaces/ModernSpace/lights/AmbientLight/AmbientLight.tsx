@@ -6,7 +6,7 @@ import type { RootState } from '@/redux/store'
 
 // Default values
 const DEFAULT_COLOR = '#e4e8f2'
-const DEFAULT_INTENSITY = 0.2
+const DEFAULT_INTENSITY = 1.0
 
 const AmbientLight = () => {
   const ambientColor = useSelector(

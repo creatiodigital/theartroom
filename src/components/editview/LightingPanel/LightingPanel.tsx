@@ -13,7 +13,7 @@ import styles from './LightingPanel.module.scss'
 
 // Default values matching the hardcoded values in AmbientLight components
 const DEFAULT_COLOR = '#e4e8f2'
-const DEFAULT_INTENSITY = 0.2
+const DEFAULT_INTENSITY = 1.0
 
 const LightingPanel = () => {
   const dispatch = useDispatch()
