@@ -85,6 +85,12 @@ const wallViewSlice = createSlice({
     stopDraggingGroup: (state: TWallView) => {
       state.isDraggingGroup = false
     },
+    startResizing: (state: TWallView) => {
+      state.isResizing = true
+    },
+    stopResizing: (state: TWallView) => {
+      state.isResizing = false
+    },
     setShiftKeyDown: (state: TWallView, action: PayloadAction<boolean>) => {
       state.isShiftKeyDown = action.payload
     },
@@ -137,6 +143,8 @@ export const {
   stopDragging,
   startDraggingGroup,
   stopDraggingGroup,
+  startResizing,
+  stopResizing,
   createArtworkGroup,
   editArtworkGroup,
   addArtworkToGroup,
