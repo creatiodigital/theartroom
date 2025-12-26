@@ -9,7 +9,7 @@ interface WallProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
   materials: {
     wallMaterial?: MeshStandardMaterial & {
-      map?: Texture
+      map?: Texture | null
     }
   }
 }

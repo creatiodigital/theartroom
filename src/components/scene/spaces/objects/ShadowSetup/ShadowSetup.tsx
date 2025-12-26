@@ -16,7 +16,7 @@ export const ShadowSetup = () => {
         samples={10}   // Number of samples (more = smoother but slower)
       />
       
-      {/* Directional light for casting shadows from above */}
+      {/* Main directional light for casting shadows from above */}
       <directionalLight
         position={[5, 10, 5]}
         intensity={0.3}
@@ -29,6 +29,13 @@ export const ShadowSetup = () => {
         shadow-camera-top={15}
         shadow-camera-bottom={-15}
         shadow-bias={-0.0001}
+      />
+      
+      {/* Low-angle "raking" light to enhance normal map bump visibility */}
+      <directionalLight
+        position={[10, 2, 0]}
+        intensity={0.4}
+        color="#fff5e6"
       />
     </>
   )

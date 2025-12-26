@@ -65,6 +65,14 @@ export const useResizeArtwork = (
       dispatch(startResizing())
       isResizingRef.current = true
 
+      // Calculate aspect ratio for proportional resize
+      const aspectRatio = initialWidth / initialHeight
+
+      // Check if this is a corner resize (has both horizontal and vertical components)
+      const isCornerResize =
+        (direction.includes('left') || direction.includes('right')) &&
+        (direction.includes('top') || direction.includes('bottom'))
+
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const deltaX = (moveEvent.clientX - startX) / scaleFactor
         const deltaY = (moveEvent.clientY - startY) / scaleFactor
@@ -76,103 +84,142 @@ export const useResizeArtwork = (
 
         const alignedPairs: TAlignmentPair[] = []
 
-        // Handle LEFT edge
-        if (direction.includes('left')) {
-          newWidth = Math.max(20, initialWidth - deltaX)
-          newX = initialX + deltaX
+        // Proportional resize with Shift key (only for corner handles)
+        if (moveEvent.shiftKey && isCornerResize) {
+          // Use the larger delta to determine the resize amount
+          const absDeltaX = Math.abs(deltaX)
+          const absDeltaY = Math.abs(deltaY)
 
-          if (isGridVisible) {
-            newX = Math.round((newX - gridOffsetX) / gridSize) * gridSize + gridOffsetX
-            newWidth = Math.max(20, initialWidth - (newX - initialX))
+          if (absDeltaX > absDeltaY) {
+            // Width is the primary dimension
+            if (direction.includes('left')) {
+              newWidth = Math.max(20, initialWidth - deltaX)
+              newX = initialX + (initialWidth - newWidth)
+            } else {
+              newWidth = Math.max(20, initialWidth + deltaX)
+            }
+            newHeight = Math.max(20, newWidth / aspectRatio)
+            
+            // Adjust Y position for top handles
+            if (direction.includes('top')) {
+              newY = initialY + initialHeight - newHeight
+            }
           } else {
-            // Snap left edge to other artworks' left edges
-            for (const otherArtwork of sameWallArtworks) {
-              if (Math.abs(newX - otherArtwork.posX2d) <= SNAP_TOLERANCE) {
-                newX = otherArtwork.posX2d
-                newWidth = Math.max(20, initialX + initialWidth - newX)
-                alignedPairs.push({
-                  from: artworkId,
-                  to: otherArtwork.artworkId,
-                  direction: 'left',
-                })
-                break
+            // Height is the primary dimension
+            if (direction.includes('top')) {
+              newHeight = Math.max(20, initialHeight - deltaY)
+              newY = initialY + (initialHeight - newHeight)
+            } else {
+              newHeight = Math.max(20, initialHeight + deltaY)
+            }
+            newWidth = Math.max(20, newHeight * aspectRatio)
+            
+            // Adjust X position for left handles
+            if (direction.includes('left')) {
+              newX = initialX + initialWidth - newWidth
+            }
+          }
+        } else {
+          // Original non-proportional resize logic
+
+          // Handle LEFT edge
+          if (direction.includes('left')) {
+            newWidth = Math.max(20, initialWidth - deltaX)
+            newX = initialX + deltaX
+
+            if (isGridVisible) {
+              newX = Math.round((newX - gridOffsetX) / gridSize) * gridSize + gridOffsetX
+              newWidth = Math.max(20, initialWidth - (newX - initialX))
+            } else {
+              // Snap left edge to other artworks' left edges
+              for (const otherArtwork of sameWallArtworks) {
+                if (Math.abs(newX - otherArtwork.posX2d) <= SNAP_TOLERANCE) {
+                  newX = otherArtwork.posX2d
+                  newWidth = Math.max(20, initialX + initialWidth - newX)
+                  alignedPairs.push({
+                    from: artworkId,
+                    to: otherArtwork.artworkId,
+                    direction: 'left',
+                  })
+                  break
+                }
               }
             }
           }
-        }
 
-        // Handle RIGHT edge
-        if (direction.includes('right')) {
-          newWidth = Math.max(20, initialWidth + deltaX)
-          const newRight = newX + newWidth
+          // Handle RIGHT edge
+          if (direction.includes('right')) {
+            newWidth = Math.max(20, initialWidth + deltaX)
+            const newRight = newX + newWidth
 
-          if (isGridVisible) {
-            newWidth =
-              Math.round((newX + newWidth - gridOffsetX) / gridSize) * gridSize - newX + gridOffsetX
-          } else {
-            // Snap right edge to other artworks' right edges
-            for (const otherArtwork of sameWallArtworks) {
-              const otherRight = otherArtwork.posX2d + otherArtwork.width2d
-              if (Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
-                newWidth = Math.max(20, otherRight - newX)
-                alignedPairs.push({
-                  from: artworkId,
-                  to: otherArtwork.artworkId,
-                  direction: 'right',
-                })
-                break
+            if (isGridVisible) {
+              newWidth =
+                Math.round((newX + newWidth - gridOffsetX) / gridSize) * gridSize - newX + gridOffsetX
+            } else {
+              // Snap right edge to other artworks' right edges
+              for (const otherArtwork of sameWallArtworks) {
+                const otherRight = otherArtwork.posX2d + otherArtwork.width2d
+                if (Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
+                  newWidth = Math.max(20, otherRight - newX)
+                  alignedPairs.push({
+                    from: artworkId,
+                    to: otherArtwork.artworkId,
+                    direction: 'right',
+                  })
+                  break
+                }
               }
             }
           }
-        }
 
-        // Handle TOP edge
-        if (direction.includes('top')) {
-          newHeight = Math.max(20, initialHeight - deltaY)
-          newY = initialY + deltaY
+          // Handle TOP edge
+          if (direction.includes('top')) {
+            newHeight = Math.max(20, initialHeight - deltaY)
+            newY = initialY + deltaY
 
-          if (isGridVisible) {
-            newY = Math.round((newY - gridOffsetY) / gridSize) * gridSize + gridOffsetY
-            newHeight = Math.max(20, initialHeight - (newY - initialY))
-          } else {
-            // Snap top edge to other artworks' top edges
-            for (const otherArtwork of sameWallArtworks) {
-              if (Math.abs(newY - otherArtwork.posY2d) <= SNAP_TOLERANCE) {
-                newY = otherArtwork.posY2d
-                newHeight = Math.max(20, initialY + initialHeight - newY)
-                alignedPairs.push({
-                  from: artworkId,
-                  to: otherArtwork.artworkId,
-                  direction: 'top',
-                })
-                break
+            if (isGridVisible) {
+              newY = Math.round((newY - gridOffsetY) / gridSize) * gridSize + gridOffsetY
+              newHeight = Math.max(20, initialHeight - (newY - initialY))
+            } else {
+              // Snap top edge to other artworks' top edges
+              for (const otherArtwork of sameWallArtworks) {
+                if (Math.abs(newY - otherArtwork.posY2d) <= SNAP_TOLERANCE) {
+                  newY = otherArtwork.posY2d
+                  newHeight = Math.max(20, initialY + initialHeight - newY)
+                  alignedPairs.push({
+                    from: artworkId,
+                    to: otherArtwork.artworkId,
+                    direction: 'top',
+                  })
+                  break
+                }
               }
             }
           }
-        }
 
-        // Handle BOTTOM edge
-        if (direction.includes('bottom')) {
-          newHeight = Math.max(20, initialHeight + deltaY)
-          const newBottom = newY + newHeight
+          // Handle BOTTOM edge
+          if (direction.includes('bottom')) {
+            newHeight = Math.max(20, initialHeight + deltaY)
+            const newBottom = newY + newHeight
 
-          if (isGridVisible) {
-            newHeight =
-              Math.round((newY + newHeight - gridOffsetY) / gridSize) * gridSize -
-              newY +
-              gridOffsetY
-          } else {
-            // Snap bottom edge to other artworks' bottom edges
-            for (const otherArtwork of sameWallArtworks) {
-              const otherBottom = otherArtwork.posY2d + otherArtwork.height2d
-              if (Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
-                newHeight = Math.max(20, otherBottom - newY)
-                alignedPairs.push({
-                  from: artworkId,
-                  to: otherArtwork.artworkId,
-                  direction: 'bottom',
-                })
-                break
+            if (isGridVisible) {
+              newHeight =
+                Math.round((newY + newHeight - gridOffsetY) / gridSize) * gridSize -
+                newY +
+                gridOffsetY
+            } else {
+              // Snap bottom edge to other artworks' bottom edges
+              for (const otherArtwork of sameWallArtworks) {
+                const otherBottom = otherArtwork.posY2d + otherArtwork.height2d
+                if (Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
+                  newHeight = Math.max(20, otherBottom - newY)
+                  alignedPairs.push({
+                    from: artworkId,
+                    to: otherArtwork.artworkId,
+                    direction: 'bottom',
+                  })
+                  break
+                }
               }
             }
           }

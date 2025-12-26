@@ -18,6 +18,7 @@ import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
 import { Lights } from './lights'
+import { Effects } from '@/components/scene/spaces/objects/Effects'
 import {
   windowMaterial,
   glassMaterial,
@@ -79,6 +80,7 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
   return (
     <group {...props} dispose={null}>
       <Lights />
+      <Effects />
       <Floor nodes={nodes} materials={materials} />
       <Ceiling nodes={nodes} materials={materials} />
       {wallsArray.map((_, i) => (
