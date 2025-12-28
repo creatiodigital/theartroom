@@ -7,7 +7,7 @@ import type { GLTF } from 'three-stdlib'
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
 import { CeilingGlass } from '@/components/scene/spaces/objects/CeilingGlass'
-import { Floor } from '@/components/scene/spaces/objects/Floor'
+import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 
 import { Reel } from '@/components/scene/spaces/objects/Reel'
@@ -61,9 +61,11 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
       <Lights />
       <Effects />
       {nodes.floor && (
-        <Floor 
-          geometry={nodes.floor.geometry} 
-          material={nodes.floor.material as MeshStandardMaterial} 
+        <ReflectiveFloor 
+          geometry={nodes.floor.geometry}
+          textureRepeat={0.5}
+          reflectionBlur={0.1}
+          reflectionMixStrength={0.6}
         />
       )}
       {nodes.ceiling && (

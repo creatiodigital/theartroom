@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Stats } from '@react-three/drei'
 import { useRef, Suspense } from 'react'
-import { ACESFilmicToneMapping, Mesh } from 'three'
+import { ReinhardToneMapping, Mesh } from 'three'
 
 import { Loader } from '@/components/ui/Loader'
 import SceneContext from '@/contexts/SceneContext'
@@ -50,8 +50,8 @@ export const Scene = () => {
         <Canvas
           shadows
           gl={{
-            toneMapping: ACESFilmicToneMapping,
-            toneMappingExposure: 1,
+            toneMapping: ReinhardToneMapping,
+            toneMappingExposure: 1.0,
           }}
         >
           {showPerfMonitor && (

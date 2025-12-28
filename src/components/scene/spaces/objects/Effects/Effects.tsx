@@ -22,7 +22,7 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
   // ToneMapping only - very lightweight, improves color response
   return (
     <EffectComposer multisampling={0}>
-      <ToneMapping mode={ToneMappingMode.AGX} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   )
 }

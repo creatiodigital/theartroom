@@ -3,39 +3,47 @@ import { SoftShadows } from '@react-three/drei'
 /**
  * Shared shadow configuration for all gallery spaces.
  * Uses PCSS (Percentage Closer Soft Shadows) for realistic soft-edged shadows.
- * 
- * Can be imported into any space's Lights component.
+ * Includes soft RectAreaLight for gallery-style diffused lighting.
  */
 export const ShadowSetup = () => {
   return (
     <>
       {/* SoftShadows enables PCSS for realistic soft shadow edges */}
       <SoftShadows 
-        size={25}      // Size of the light source (larger = softer shadows)
-        focus={0.5}    // Focus of the shadow (lower = softer falloff)
-        samples={10}   // Number of samples (more = smoother but slower)
+        size={25}
+        focus={0.5}
+        samples={10}
       />
       
-      {/* Main directional light for casting shadows from above */}
-      <directionalLight
-        position={[5, 10, 5]}
+      {/* Large rectangular area light for soft, diffused gallery lighting
+          Positioned on ceiling, pointing down - creates even illumination
+          without harsh specular highlights on floors */}
+      <rectAreaLight
+        position={[0, 9.5, 0]}
+        rotation={[-Math.PI / 2, 0, 0]} // Point straight down
+        width={20}
+        height={20}
+        intensity={1}
+        color="#ffffff"
+      />
+      
+      {/* Secondary smaller area light for subtle fill */}
+      <rectAreaLight
+        position={[0, 9.5, 5]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        width={10}
+        height={10}
+        intensity={0.5}
+        color="#f8f4f0" // Slightly warm
+      />
+      
+      {/* Subtle spotlight for floor reflections */}
+      <spotLight
+        position={[0, 9, 0]}
+        angle={Math.PI / 3}
+        penumbra={1}
         intensity={0.3}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-far={50}
-        shadow-camera-left={-15}
-        shadow-camera-right={15}
-        shadow-camera-top={15}
-        shadow-camera-bottom={-15}
-        shadow-bias={-0.0001}
-      />
-      
-      {/* Low-angle "raking" light to enhance normal map bump visibility */}
-      <directionalLight
-        position={[10, 2, 0]}
-        intensity={0.4}
-        color="#fff5e6"
+        color="#ffffff"
       />
     </>
   )

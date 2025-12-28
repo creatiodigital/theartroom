@@ -1,11 +1,14 @@
 import { useGLTF } from '@react-three/drei'
-import { useMemo } from 'react'
-import { Mesh, BufferGeometry, MeshStandardMaterial, Color, DoubleSide } from 'three'
+import { 
+  Mesh, 
+  BufferGeometry, 
+  MeshStandardMaterial, 
+} from 'three'
 import type { GLTF } from 'three-stdlib'
 
-import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
-import { Floor } from '@/components/scene/spaces/objects/Floor'
-import { Wall } from '@/components/scene/spaces/objects/Wall'
+import { PlasterCeiling } from '@/components/scene/spaces/objects/Ceiling/PlasterCeiling'
+import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
+import { PlasterWall } from '@/components/scene/spaces/objects/Wall/PlasterWall'
 import { Lights } from './lights'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
 
@@ -28,47 +31,30 @@ const BaseSpace: React.FC<BaseSpaceProps> = ({
 }) => {
   const { nodes } = useGLTF('/assets/spaces/base.glb?v=12') as unknown as GLTFResult
 
-  // Ensure wall material exists (fallback if not in GLB)
-  const wallMaterial = useMemo(() => {
-    if (nodes.wall0?.material) {
-      return nodes.wall0.material as MeshStandardMaterial
-    }
-    return new MeshStandardMaterial({
-      color: new Color('#f5f5f5'),
-      roughness: 0.9,
-      metalness: 0,
-    })
-  }, [nodes])
-
-  // Ensure ceiling material is double-sided
-  useMemo(() => {
-    if (nodes.ceiling?.material) {
-      (nodes.ceiling.material as MeshStandardMaterial).side = DoubleSide
-    }
-  }, [nodes])
-
   return (
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
       {nodes.floor && (
-        <Floor 
-          geometry={nodes.floor.geometry} 
-          material={nodes.floor.material as MeshStandardMaterial} 
+        <ReflectiveFloor 
+          geometry={nodes.floor.geometry}
+          textureRepeat={0.5}
+          reflectionBlur={0.15}
+          reflectionMixStrength={0.4}
         />
       )}
       {nodes.ceiling && (
-        <Ceiling 
-          geometry={nodes.ceiling.geometry} 
-          material={nodes.ceiling.material as MeshStandardMaterial} 
+        <PlasterCeiling 
+          geometry={nodes.ceiling.geometry}
+          textureRepeat={2}
         />
       )}
       {nodes.wall0 && (
-        <Wall 
+        <PlasterWall 
           i={0} 
           wallRef={wallRefs[0]} 
-          geometry={nodes.wall0.geometry} 
-          material={wallMaterial} 
+          geometry={nodes.wall0.geometry}
+          textureRepeat={2}
         />
       )}
     </group>
