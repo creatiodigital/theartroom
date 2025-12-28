@@ -1,33 +1,20 @@
 import { useGLTF } from '@react-three/drei'
 import { useMemo } from 'react'
-import { Mesh, BufferGeometry, MeshStandardMaterial, Texture, Color, DoubleSide } from 'three'
+import { Mesh, BufferGeometry, MeshStandardMaterial, Color, DoubleSide } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
 import { Floor } from '@/components/scene/spaces/objects/Floor'
 import { Wall } from '@/components/scene/spaces/objects/Wall'
-import { Lights } from '@/components/scene/spaces/ClassicSpace/lights'
+import { Lights } from './lights'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
 
 type GLTFResult = GLTF & {
   nodes: {
-    floor: Mesh & { geometry: BufferGeometry }
-    ceiling: Mesh & { geometry: BufferGeometry }
-    wall0: Mesh & { geometry: BufferGeometry }
+    floor: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    ceiling: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    wall0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
     [key: string]: Mesh
-  }
-  materials: {
-    floorMaterial: MeshStandardMaterial & { 
-      map?: Texture | null
-      normalMap?: Texture | null
-    }
-    ceilingMaterial: MeshStandardMaterial & { 
-      map?: Texture | null
-    }
-    wallMaterial?: MeshStandardMaterial & { 
-      map?: Texture | null
-    }
-    [key: string]: MeshStandardMaterial | undefined
   }
 }
 
@@ -35,63 +22,55 @@ type BaseSpaceProps = React.ComponentProps<'group'> & {
   wallRefs: React.RefObject<Mesh | null>[]
 }
 
-/**
- * Simple base space for testing materials and normal maps.
- * Uses explicit Floor/Ceiling/Wall components like other spaces.
- */
 const BaseSpace: React.FC<BaseSpaceProps> = ({
   wallRefs,
   ...props
 }) => {
-  const { nodes, materials } = useGLTF('/assets/spaces/base.glb?v=5') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/base.glb?v=12') as unknown as GLTFResult
 
-  // Create wall/ceiling materials if missing, make ceiling double-sided
+  // Ensure wall material exists (fallback if not in GLB)
+  const wallMaterial = useMemo(() => {
+    if (nodes.wall0?.material) {
+      return nodes.wall0.material as MeshStandardMaterial
+    }
+    return new MeshStandardMaterial({
+      color: new Color('#f5f5f5'),
+      roughness: 0.9,
+      metalness: 0,
+    })
+  }, [nodes])
+
+  // Ensure ceiling material is double-sided
   useMemo(() => {
-    // Debug logging
-    console.log('=== BaseSpace Debug ===')
-    console.log('All nodes:', Object.keys(nodes))
-    console.log('nodes.floor:', nodes.floor)
-    console.log('nodes.ceiling:', nodes.ceiling)
-    console.log('nodes.wall0:', nodes.wall0)
-    console.log('All materials:', Object.keys(materials))
-    console.log('floorMaterial:', materials.floorMaterial)
-    console.log('floorMaterial.map:', materials.floorMaterial?.map ? '✅' : '❌')
-    console.log('ceilingMaterial:', materials.ceilingMaterial)
-    console.log('wallMaterial:', materials.wallMaterial)
-    
-    if (!materials.wallMaterial) {
-      materials.wallMaterial = new MeshStandardMaterial({
-        color: new Color('#f5f5f5'),
-        roughness: 0.9,
-        metalness: 0,
-      })
+    if (nodes.ceiling?.material) {
+      (nodes.ceiling.material as MeshStandardMaterial).side = DoubleSide
     }
-    
-    // Ensure ceiling is double-sided (so it's visible from below)
-    if (materials.ceilingMaterial) {
-      materials.ceilingMaterial.side = DoubleSide
-    } else {
-      materials.ceilingMaterial = new MeshStandardMaterial({
-        color: new Color('#f5f5f5'),
-        roughness: 0.9,
-        metalness: 0,
-        side: DoubleSide,
-      })
-    }
-  }, [nodes, materials])
+  }, [nodes])
 
   return (
     <group {...props} dispose={null}>
-      {/* Use same lighting as ClassicSpace (includes HDRI environment) */}
       <Lights />
-      
-      {/* Post-processing effects for enhanced visuals */}
       <Effects />
-      
-      {/* Explicit mesh components */}
-      <Floor nodes={nodes} materials={materials} />
-      <Ceiling nodes={nodes} materials={materials} />
-      <Wall i={0} wallRef={wallRefs[0]} nodes={nodes} materials={materials} />
+      {nodes.floor && (
+        <Floor 
+          geometry={nodes.floor.geometry} 
+          material={nodes.floor.material as MeshStandardMaterial} 
+        />
+      )}
+      {nodes.ceiling && (
+        <Ceiling 
+          geometry={nodes.ceiling.geometry} 
+          material={nodes.ceiling.material as MeshStandardMaterial} 
+        />
+      )}
+      {nodes.wall0 && (
+        <Wall 
+          i={0} 
+          wallRef={wallRefs[0]} 
+          geometry={nodes.wall0.geometry} 
+          material={wallMaterial} 
+        />
+      )}
     </group>
   )
 }

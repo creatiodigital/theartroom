@@ -1,36 +1,32 @@
 import { useEffect, useMemo } from 'react'
-import { SRGBColorSpace, Mesh, BufferGeometry, MeshStandardMaterial, Texture, Color } from 'three'
+import { SRGBColorSpace, Mesh, BufferGeometry, MeshStandardMaterial, Color } from 'three'
 
 import { useAmbientLight } from '@/hooks/useAmbientLight'
 
 interface WallProps {
   i: number
   wallRef: React.Ref<Mesh>
-  nodes: Record<string, Mesh & { geometry: BufferGeometry }>
-  materials: {
-    wallMaterial?: MeshStandardMaterial & {
-      map?: Texture | null
-    }
-  }
+  geometry: BufferGeometry
+  material: MeshStandardMaterial
 }
 
-const Wall: React.FC<WallProps> = ({ i, wallRef, nodes, materials }) => {
+const Wall: React.FC<WallProps> = ({ i, wallRef, geometry, material }) => {
   const { ambientColor, scale } = useAmbientLight()
 
   useMemo(() => {
-    if (materials.wallMaterial?.map) {
-      materials.wallMaterial.map.colorSpace = SRGBColorSpace
+    if (material?.map) {
+      material.map.colorSpace = SRGBColorSpace
     }
-  }, [materials])
+  }, [material])
 
   // Apply ambient light as color multiplier
   useEffect(() => {
-    if (materials.wallMaterial) {
+    if (material) {
       const color = new Color(ambientColor)
       color.multiplyScalar(scale)
-      materials.wallMaterial.color = color
+      material.color = color
     }
-  }, [materials, ambientColor, scale])
+  }, [material, ambientColor, scale])
 
   return (
     <mesh
@@ -38,8 +34,8 @@ const Wall: React.FC<WallProps> = ({ i, wallRef, nodes, materials }) => {
       ref={wallRef}
       castShadow
       receiveShadow
-      geometry={nodes[`wall${i}`]?.geometry}
-      material={materials.wallMaterial}
+      geometry={geometry}
+      material={material}
     />
   )
 }

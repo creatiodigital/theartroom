@@ -1,7 +1,7 @@
 import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Mesh, BufferGeometry, MeshStandardMaterial, Texture } from 'three'
+import { Mesh, BufferGeometry, MeshStandardMaterial } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
@@ -30,15 +30,10 @@ import {
 
 type GLTFResult = GLTF & {
   nodes: {
-    floor: Mesh & { geometry: BufferGeometry }
-    ceiling: Mesh & { geometry: BufferGeometry }
+    floor: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    ceiling: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    wall0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
     [key: string]: Mesh
-  }
-  materials: {
-    floorMaterial: MeshStandardMaterial & { map?: Texture }
-    ceilingMaterial: MeshStandardMaterial & { map?: Texture }
-    wallMaterial?: MeshStandardMaterial & { map?: Texture }
-    [key: string]: MeshStandardMaterial | undefined
   }
 }
 
@@ -56,7 +51,7 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
   glassRefs,
   ...props
 }) => {
-  const { nodes, materials } = useGLTF('/assets/spaces/classic.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/classic.glb?v=1') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -81,11 +76,31 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      <Floor nodes={nodes} materials={materials} />
-      <Ceiling nodes={nodes} materials={materials} />
-      {wallsArray.map((_, i) => (
-        <Wall key={i} i={i} wallRef={wallRefs[i]} nodes={nodes} materials={materials} />
-      ))}
+      {nodes.floor && (
+        <Floor 
+          geometry={nodes.floor.geometry} 
+          material={nodes.floor.material as MeshStandardMaterial} 
+        />
+      )}
+      {nodes.ceiling && (
+        <Ceiling 
+          geometry={nodes.ceiling.geometry} 
+          material={nodes.ceiling.material as MeshStandardMaterial} 
+        />
+      )}
+      {wallsArray.map((_, i) => {
+        const wallNode = nodes[`wall${i}`]
+        if (!wallNode) return null
+        return (
+          <Wall 
+            key={i} 
+            i={i} 
+            wallRef={wallRefs[i]} 
+            geometry={wallNode.geometry} 
+            material={wallNode.material as MeshStandardMaterial} 
+          />
+        )
+      })}
       {windowsArray.map((_, i) => (
         <Window
           key={i}

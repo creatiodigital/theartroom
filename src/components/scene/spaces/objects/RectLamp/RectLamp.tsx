@@ -7,10 +7,13 @@ interface RectLampProps {
 }
 
 const RectLamp: React.FC<RectLampProps> = ({ i, nodes, rectLampMaterial }) => {
+  const lampNode = nodes[`rectlamp${i}`]
+  if (!lampNode) return null
+  
   return (
     <mesh
       name={`rectlamp${i}`}
-      geometry={nodes[`rectlamp${i}`].geometry}
+      geometry={lampNode.geometry}
       material={rectLampMaterial}
     />
   )

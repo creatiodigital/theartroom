@@ -118,7 +118,10 @@ export const DashboardAdmin = () => {
         <div className={styles.headerLeft}>
           <h1>Admin Dashboard</h1>
         </div>
-        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        <div className={styles.headerActions}>
+          <Button variant="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
+          <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        </div>
       </div>
 
       {/* Users Section */}

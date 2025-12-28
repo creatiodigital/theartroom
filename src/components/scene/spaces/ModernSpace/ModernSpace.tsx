@@ -1,7 +1,7 @@
 import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Mesh, MeshStandardMaterial, BufferGeometry, Texture } from 'three'
+import { Mesh, MeshStandardMaterial, BufferGeometry, Material } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
@@ -9,7 +9,7 @@ import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
 import { CeilingGlass } from '@/components/scene/spaces/objects/CeilingGlass'
 import { Floor } from '@/components/scene/spaces/objects/Floor'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
-import { RectLamp } from '@/components/scene/spaces/objects/RectLamp'
+
 import { Reel } from '@/components/scene/spaces/objects/Reel'
 import { Wall } from '@/components/scene/spaces/objects/Wall'
 import { addWall } from '@/redux/slices/sceneSlice'
@@ -22,18 +22,14 @@ import { reelMaterial, topMaterial, rectLampMaterial } from './materials'
 
 type GLTFResult = GLTF & {
   nodes: {
-    floor: Mesh & { geometry: BufferGeometry }
-    ceiling: Mesh & { geometry: BufferGeometry }
+    floor: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    ceiling: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
     top: Mesh & { geometry: BufferGeometry }
+    wall0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
     [key: string]: Mesh
   }
-  materials: {
-    floorMaterial: MeshStandardMaterial & { map?: Texture }
-    ceilingMaterial: MeshStandardMaterial & { map?: Texture }
-    wallMaterial?: MeshStandardMaterial & { map?: Texture }
-    [key: string]: MeshStandardMaterial | undefined
-  }
 }
+
 type ModernSpaceProps = React.ComponentProps<'group'> & {
   wallRefs: React.RefObject<Mesh | null>[]
   onPlaceholderClick: (wallId: string) => void
@@ -41,14 +37,14 @@ type ModernSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
-  const { nodes, materials } = useGLTF('/assets/spaces/modern.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/modern.glb?v=2') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
 
   const wallsArray = useMemo(() => Array.from({ length: 1 }), [])
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
-  const rectLampsArray = useMemo(() => Array.from({ length: 1 }), [])
+
   const reelsArray = useMemo(() => Array.from({ length: 1 }), [])
 
   useEffect(() => {
@@ -64,17 +60,46 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      <Floor nodes={nodes} materials={materials} />
-      <Ceiling nodes={nodes} materials={materials} />
-      <CeilingGlass nodes={nodes} topMaterial={topMaterial} />
-      {wallsArray.map((_, i) => (
-        <Wall key={i} i={i} wallRef={wallRefs[i]} nodes={nodes} materials={materials} />
-      ))}
+      {nodes.floor && (
+        <Floor 
+          geometry={nodes.floor.geometry} 
+          material={nodes.floor.material as MeshStandardMaterial} 
+        />
+      )}
+      {nodes.ceiling && (
+        <Ceiling 
+          geometry={nodes.ceiling.geometry} 
+          material={nodes.ceiling.material as MeshStandardMaterial} 
+        />
+      )}
+      {nodes.glass && (
+        <CeilingGlass 
+          geometry={nodes.glass.geometry} 
+          material={(nodes.glass.material as Material) || topMaterial} 
+        />
+      )}
+      {wallsArray.map((_, i) => {
+        const wallNode = nodes[`walls${i}`]
+        if (!wallNode) return null
+        return (
+          <Wall 
+            key={i} 
+            i={i} 
+            wallRef={wallRefs[i]} 
+            geometry={wallNode.geometry} 
+            material={wallNode.material as MeshStandardMaterial} 
+          />
+        )
+      })}
       {isPlaceholdersShown &&
         placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
-      {rectLampsArray.map((_, i) => (
-        <RectLamp key={i} i={i} nodes={nodes} rectLampMaterial={rectLampMaterial} />
-      ))}
+      {nodes.rect1 && (
+        <mesh
+          name="rect1"
+          geometry={nodes.rect1.geometry}
+          material={rectLampMaterial}
+        />
+      )}
       {reelsArray.map((_, i) => (
         <Reel key={i} i={i} nodes={nodes} reelMaterial={reelMaterial} />
       ))}
