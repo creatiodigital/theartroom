@@ -39,8 +39,6 @@ const BaseSpace: React.FC<BaseSpaceProps> = ({
         <ReflectiveFloor 
           geometry={nodes.floor.geometry}
           textureRepeat={0.5}
-          reflectionBlur={0.15}
-          reflectionMixStrength={0.4}
         />
       )}
       {nodes.ceiling && (

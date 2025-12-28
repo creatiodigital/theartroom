@@ -4,7 +4,6 @@ import { BufferGeometry, RepeatWrapping, SRGBColorSpace, Vector2, DoubleSide } f
 interface PlasterCeilingProps {
   geometry: BufferGeometry
   texturePath?: string
-  texturePrefix?: string
   textureRepeat?: number
 }
 
@@ -14,16 +13,15 @@ interface PlasterCeilingProps {
 const PlasterCeiling: React.FC<PlasterCeilingProps> = ({ 
   geometry, 
   texturePath = '/assets/materials/plaster',
-  texturePrefix = 'Poliigon_PlasterPainted_7664',
   textureRepeat = 2,
 }) => {
   // Load PBR textures
   const textures = useTexture({
-    map: `${texturePath}/${texturePrefix}_BaseColor.jpg`,
-    normalMap: `${texturePath}/${texturePrefix}_Normal.png`,
-    roughnessMap: `${texturePath}/${texturePrefix}_Roughness.jpg`,
-    metalnessMap: `${texturePath}/${texturePrefix}_Metallic.jpg`,
-    aoMap: `${texturePath}/${texturePrefix}_AmbientOcclusion.jpg`,
+    map: `${texturePath}/diffuse.jpg`,
+    normalMap: `${texturePath}/normal.png`,
+    roughnessMap: `${texturePath}/roughness.jpg`,
+    metalnessMap: `${texturePath}/metallic.jpg`,
+    aoMap: `${texturePath}/ao.jpg`,
   })
 
   // Configure texture tiling

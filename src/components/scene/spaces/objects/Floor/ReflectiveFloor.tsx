@@ -5,10 +5,7 @@ import { Mesh, BufferGeometry, RepeatWrapping, SRGBColorSpace, Vector2 } from 't
 interface ReflectiveFloorProps {
   geometry: BufferGeometry
   texturePath?: string
-  texturePrefix?: string
   textureRepeat?: number
-  reflectionBlur?: number
-  reflectionMixStrength?: number
 }
 
 /**
@@ -17,17 +14,16 @@ interface ReflectiveFloorProps {
  */
 const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ 
   geometry, 
-  texturePath = '/assets/materials/polished_floor',
-  texturePrefix = 'exquistite-polished-tile',
+  texturePath = '/assets/materials/concrete',
   textureRepeat = 0.5,
 }) => {
   const meshRef = useRef<Mesh>(null)
 
   // Load PBR textures
   const textures = useTexture({
-    map: `${texturePath}/${texturePrefix}_albedo.png`,
-    normalMap: `${texturePath}/${texturePrefix}_normal-ogl.png`,
-    roughnessMap: `${texturePath}/${texturePrefix}_roughness.png`,
+    map: `${texturePath}/diffuse.png`,
+    normalMap: `${texturePath}/normal.png`,
+    roughnessMap: `${texturePath}/roughness.png`,
   })
 
   // Configure texture tiling
@@ -53,7 +49,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
         color="#8a8580"
         roughness={0.3}
         metalness={0.1}
-        envMapIntensity={0.5}
+        envMapIntensity={0}
       />
     </mesh>
   )

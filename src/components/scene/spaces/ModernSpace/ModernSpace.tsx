@@ -64,8 +64,6 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
         <ReflectiveFloor 
           geometry={nodes.floor.geometry}
           textureRepeat={0.5}
-          reflectionBlur={0.1}
-          reflectionMixStrength={0.6}
         />
       )}
       {nodes.ceiling && (
