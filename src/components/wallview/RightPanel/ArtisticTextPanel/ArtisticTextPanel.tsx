@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Select } from '@/components/ui/Select'
+import { H2, H3 } from '@/components/ui/Typography'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkTextHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkTextHandlers'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
@@ -21,9 +22,9 @@ const ArtisticText = () => {
 
   return (
     <div className={styles.section}>
-      <h2 className={styles.title}>Text Styles</h2>
+      <H2 className={styles.title}>Text Styles</H2>
       <div className={styles.subsection}>
-        <h3 className={styles.subtitle}>Alignment</h3>
+        <H3 className={styles.subtitle}>Alignment</H3>
         <div className={styles.row}>
           <div className={styles.item}>
             <ButtonIcon

@@ -5,6 +5,7 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
+import { H1 } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
@@ -54,7 +55,7 @@ export const AdminLoginPage = () => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <h1>Admin Login</h1>
+        <H1>Admin Login</H1>
         <p className={styles.subtitle}>Lumen Gallery Administration</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>

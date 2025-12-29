@@ -8,7 +8,9 @@ import { useEffect } from 'react'
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
 import { Button } from '@/components/ui/Button'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
+import { H1, H2 } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
@@ -102,7 +104,12 @@ export const DashboardAdmin = () => {
   }, [deleteTarget, refetch])
 
   // Loading states
-  if (sessionStatus === 'loading' || loading) return <div className={styles.page}>Loading...</div>
+  if (sessionStatus === 'loading' || loading)
+    return (
+      <div className={styles.page}>
+        <LoadingBar />
+      </div>
+    )
 
   // Not authorized
   if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
@@ -116,14 +123,17 @@ export const DashboardAdmin = () => {
       {/* Header with Logout */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <h1>Admin Dashboard</h1>
+          <H1>Admin Dashboard</H1>
         </div>
-        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        <div className={styles.headerActions}>
+          <Button variant="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
+          <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        </div>
       </div>
 
       {/* Users Section */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>All Users</h2>
+        <H2 className={styles.sectionTitle}>All Users</H2>
         <div className={styles.sectionActions}>
           <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>
@@ -229,7 +239,7 @@ export const DashboardAdmin = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <h2>Are you sure?</h2>
+            <H2>Are you sure?</H2>
             <p>
               You are about to delete <strong>{deleteTarget.name}</strong>.
               <br />

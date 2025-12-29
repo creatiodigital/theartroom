@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
 
 import styles from './ExhibitionSettings.module.scss'
 
@@ -68,7 +70,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
-        <p>Loading...</p>
+        <LoadingBar />
       </div>
     )
   }
@@ -94,7 +96,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         </Link>
       </div>
 
-      <h1 className={styles.pageTitle}>Exhibition Settings</h1>
+      <H1 className={styles.pageTitle}>Exhibition Settings</H1>
       <p className={styles.exhibitionName}>{exhibition.mainTitle}</p>
 
       <div className={styles.placeholder}>

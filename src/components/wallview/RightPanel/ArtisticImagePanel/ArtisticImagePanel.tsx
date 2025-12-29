@@ -7,6 +7,7 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
+import { H2 } from '@/components/ui/Typography'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
@@ -106,7 +107,7 @@ const ArtisticImage = () => {
           )}
 
           <div className={styles.section}>
-            <h2 className={styles.title}>Features</h2>
+            <H2 className={styles.title}>Features</H2>
 
             <div className={styles.subsection}>
               <div className={styles.row}>

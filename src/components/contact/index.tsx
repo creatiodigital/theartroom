@@ -2,13 +2,14 @@
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+import { H1 } from '@/components/ui/Typography'
 
 export const ContactPage = () => {
   return (
     <>
       <Header />
       <div className="page-content">
-        <h1>Contact</h1>
+        <H1>Contact</H1>
       </div>
       <Footer />
     </>

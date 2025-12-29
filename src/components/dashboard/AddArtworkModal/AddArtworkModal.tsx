@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { H2 } from '@/components/ui/Typography'
 
 import styles from './AddArtworkModal.module.scss'
 
@@ -136,7 +137,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
   return (
     <div className={styles.modal}>
-      <h2>Add New Artwork</h2>
+      <H2>Add New Artwork</H2>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>

@@ -26,8 +26,7 @@ export const ImpersonationBanner = () => {
       <div className={styles.content}>
         <span className={styles.icon}>⚠️</span>
         <span className={styles.text}>
-          <strong>{realUser?.name}</strong> impersonating:{' '}
-          <strong>{effectiveUser?.name}</strong>
+          <strong>{realUser?.name}</strong> impersonating: <strong>{effectiveUser?.name}</strong>
         </span>
       </div>
       <Button variant="small" label="Exit Impersonation" onClick={handleExit} />

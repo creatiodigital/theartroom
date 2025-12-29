@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { Button } from '@/components/ui/Button'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
 
 import styles from './ExhibitionProfile.module.scss'
 
@@ -30,7 +32,10 @@ interface ExhibitionProfilePageProps {
   exhibitionSlug: string
 }
 
-export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: ExhibitionProfilePageProps) => {
+export const ExhibitionProfilePage = ({
+  artistSlug,
+  exhibitionSlug,
+}: ExhibitionProfilePageProps) => {
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -59,7 +64,7 @@ export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: Exhibition
       <>
         <Header />
         <div className={styles.page}>
-          <p>Loading...</p>
+          <LoadingBar />
         </div>
         <Footer />
       </>
@@ -91,7 +96,8 @@ export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: Exhibition
 
   const startDate = formatDate(exhibition.startDate)
   const endDate = formatDate(exhibition.endDate)
-  const dateRange = startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
+  const dateRange =
+    startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
 
   return (
     <>
@@ -99,7 +105,7 @@ export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: Exhibition
       <div className={styles.page}>
         <div className={styles.content}>
           {/* Exhibition Title */}
-          <h1 className={styles.title}>{exhibition.mainTitle}</h1>
+          <H1 className={styles.title}>{exhibition.mainTitle}</H1>
 
           {/* Artist Name */}
           <p className={styles.artist}>
@@ -120,8 +126,8 @@ export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: Exhibition
           {/* Description placeholder - to be filled when we add description field */}
           <div className={styles.description}>
             <p>
-              Welcome to this virtual exhibition. Step into the gallery and explore the artworks in an
-              immersive 3D environment.
+              Welcome to this virtual exhibition. Step into the gallery and explore the artworks in
+              an immersive 3D environment.
             </p>
           </div>
 

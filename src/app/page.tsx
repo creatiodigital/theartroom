@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+import { H2 } from '@/components/ui/Typography'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
@@ -39,42 +40,36 @@ export default async function Home() {
   const exhibitions = exhibitionData as unknown as ExhibitionWithUser[]
 
   // Fetch featured artists
-  const featuredArtists = await prisma.user.findMany({
-    where: {
-      isFeatured: true,
-    },
-    orderBy: { name: 'asc' },
-    take: 6,
-  })
+  // const featuredArtists = await prisma.user.findMany({
+  //   where: {
+  //     isFeatured: true,
+  //   },
+  //   orderBy: { name: 'asc' },
+  //   take: 6,
+  // })
 
   return (
     <main className={styles.home}>
       <Header />
-      <section className={styles.hero}>
-        <h2>Welcome to Lumen Gallery</h2>
-        <p>Discover and experience virtual art exhibitions</p>
-      </section>
+      <section className={styles.hero} />
 
       <div className={styles.content}>
-        {/* Current Exhibitions */}
-        <section style={{ marginBottom: 'var(--space-12)' }}>
-          <h2 style={{ marginBottom: 'var(--space-6)' }}>Exhibitions</h2>
+        <section className={styles.exhibitionsSection}>
+          <H2 className={styles.sectionHeading}>Exhibitions</H2>
           {exhibitions.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No current exhibitions at the moment.</p>
+            <p className={styles.emptyText}>No current exhibitions at the moment.</p>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul className={styles.exhibitionList}>
               {exhibitions.map((exhibition) => (
-                <li key={exhibition.id} style={{ padding: 'var(--space-3) 0' }}>
+                <li key={exhibition.id} className={styles.exhibitionItem}>
                   <Link
                     href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                    style={{ textDecoration: 'none', color: 'inherit' }}
+                    className={styles.exhibitionLink}
                   >
-                    <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 'var(--font-normal)' }}>
-                      {exhibition.mainTitle}
+                    <span className={styles.exhibitionAuthor}>
+                      {exhibition.user.name} {exhibition.user.lastName}
                     </span>
-                    <span style={{ color: 'var(--color-text-muted)' }}>
-                      {' '}— {exhibition.user.name} {exhibition.user.lastName}
-                    </span>
+                    <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
                   </Link>
                 </li>
               ))}
@@ -83,9 +78,9 @@ export default async function Home() {
         </section>
 
         {/* Featured Artists - only show if there are any */}
-        {featuredArtists.length > 0 && (
+        {/* {featuredArtists.length > 0 && (
           <section>
-            <h2 style={{ marginBottom: 'var(--space-6)' }}>Featured Artists</h2>
+            <H2 className={styles.sectionHeading}>Featured Artists</H2>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {featuredArtists.map((artist) => (
                 <li key={artist.id} style={{ padding: 'var(--space-3) 0' }}>
@@ -95,7 +90,7 @@ export default async function Home() {
                       textDecoration: 'none',
                       color: 'inherit',
                       fontFamily: 'var(--font-heading)',
-                      fontWeight: 'var(--font-normal)',
+                      fontWeight: 'var(--font-regular)',
                       fontSize: 'var(--text-2xl)',
                     }}
                   >
@@ -105,7 +100,7 @@ export default async function Home() {
               ))}
             </ul>
           </section>
-        )}
+        )} */}
       </div>
 
       <Footer />

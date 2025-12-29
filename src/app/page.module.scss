@@ -11,16 +11,7 @@
   justify-content: center;
   padding: var(--space-16) var(--space-8);
   text-align: center;
-
-  h2 {
-    font-size: var(--text-5xl);
-    margin-bottom: var(--space-4);
-  }
-
-  p {
-    font-size: var(--text-xl);
-    color: var(--color-text-muted);
-  }
+  min-height: 400px;
 }
 
 .content {
@@ -29,4 +20,53 @@
   margin: 0 auto;
   padding: var(--space-8);
   width: 100%;
+}
+
+.exhibitionsSection {
+  margin-bottom: var(--space-12);
+}
+
+.sectionHeading {
+  margin-bottom: var(--space-4);
+  font-family: var(--font-body), var(--font-body-fallback);
+  text-transform: uppercase;
+  font-weight: var(--font-light);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-4);
+}
+
+.emptyText {
+  color: var(--color-text-muted);
+}
+
+.exhibitionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.exhibitionItem {
+  padding: var(--space-3) 0;
+}
+
+.exhibitionLink {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.exhibitionAuthor {
+  font-family: var(--font-heading);
+  font-weight: var(--font-regular);
+  font-size: var(--text-4xl);
+  display: block;
+}
+
+.exhibitionTitle {
+  font-family: var(--font-body);
+  font-weight: var(--font-regular);
+  font-size: var(--text-md);
+  display: block;
 }

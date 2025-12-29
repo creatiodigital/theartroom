@@ -5,6 +5,8 @@ import Link from 'next/link'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H2 } from '@/components/ui/Typography'
 
 import styles from './exhibitions.module.scss'
 
@@ -48,15 +50,13 @@ export const ExhibitionsPage = () => {
     <>
       <Header />
       <div className={styles.page}>
-        <h1 className={styles.title}>Exhibitions</h1>
-
         {loading ? (
-          <p>Loading...</p>
+          <LoadingBar />
         ) : (
           <>
             {/* Current Exhibitions */}
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Current</h2>
+              <H2 className={styles.sectionTitle}>Current</H2>
               {currentExhibitions.length === 0 ? (
                 <p className={styles.empty}>No current exhibitions.</p>
               ) : (
@@ -69,7 +69,8 @@ export const ExhibitionsPage = () => {
                       >
                         <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
                         <span className={styles.artistName}>
-                          {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                          {' '}
+                          — {exhibition.user.name} {exhibition.user.lastName}
                         </span>
                       </Link>
                     </li>
@@ -81,7 +82,7 @@ export const ExhibitionsPage = () => {
             {/* Past Exhibitions - only show if there are any */}
             {pastExhibitions.length > 0 && (
               <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Past</h2>
+                <H2 className={styles.sectionTitle}>Past</H2>
                 <ul className={styles.list}>
                   {pastExhibitions.map((exhibition) => (
                     <li key={exhibition.id} className={styles.listItem}>
@@ -91,7 +92,8 @@ export const ExhibitionsPage = () => {
                       >
                         <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
                         <span className={styles.artistName}>
-                          {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                          {' '}
+                          — {exhibition.user.name} {exhibition.user.lastName}
                         </span>
                       </Link>
                     </li>

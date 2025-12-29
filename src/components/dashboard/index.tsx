@@ -7,7 +7,9 @@ import { useSession, signOut } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
+import { H2, H3 } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
@@ -134,7 +136,7 @@ export const DashboardPage = () => {
     return (
       <div className={styles.dashboard}>
         <div className={styles.main}>
-          <p>Loading...</p>
+          <LoadingBar />
         </div>
       </div>
     )
@@ -144,7 +146,7 @@ export const DashboardPage = () => {
     <div className={styles.dashboard}>
       <div className={styles.main}>
         <div className={styles.header}>
-          <h3>Hello {userData?.name ?? session?.user?.name ?? ''}</h3>
+          <H3>Hello {userData?.name ?? session?.user?.name ?? ''}</H3>
           <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
         </div>
 
@@ -163,7 +165,7 @@ export const DashboardPage = () => {
             />
           </div>
 
-          <h2 className={styles.sectionTitle}>My Exhibitions</h2>
+          <H2 className={styles.sectionTitle}>My Exhibitions</H2>
 
           {exhibitions.length === 0 ? (
             <p className={styles.empty}>You do not have any exhibitions yet.</p>
@@ -181,9 +183,27 @@ export const DashboardPage = () => {
                 {exhibitions.map((ex: TExhibition) => (
                   <tr key={ex.id}>
                     <td>{ex.mainTitle}</td>
-                    <td><Button variant="small" label="View" onClick={() => handleViewExhibition(ex)} /></td>
-                    <td><Button variant="small" label="Edit" onClick={() => handleEditExhibition(ex)} /></td>
-                    <td><Button variant="small" label="Delete" onClick={() => handleDeleteExhibition(ex.id)} /></td>
+                    <td>
+                      <Button
+                        variant="small"
+                        label="View"
+                        onClick={() => handleViewExhibition(ex)}
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        variant="small"
+                        label="Edit"
+                        onClick={() => handleEditExhibition(ex)}
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        variant="small"
+                        label="Delete"
+                        onClick={() => handleDeleteExhibition(ex.id)}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

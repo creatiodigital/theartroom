@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { H2 } from '@/components/ui/Typography'
 
 import styles from './AddArtistModal.module.scss'
 
@@ -68,7 +69,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
   return (
     <div className={styles.modal}>
-      <h2>Add New Artist</h2>
+      <H2>Add New Artist</H2>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>

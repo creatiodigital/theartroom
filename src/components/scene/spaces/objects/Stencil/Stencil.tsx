@@ -23,9 +23,13 @@ const Stencil = ({ artwork }: StencilProps) => {
     lineHeight,
     fontWeight,
     fontFamily,
+    letterSpacing,
   } = artwork
 
   const fontSizeFactor = 0.01
+  // 2D CSS has padding: 10px, so we need to subtract 20px (both sides) from width
+  // In 3D units: 20px / 100 = 0.2
+  const paddingOffset = 0.2
 
   const fontMap = {
     roboto: {
@@ -99,11 +103,14 @@ const Stencil = ({ artwork }: StencilProps) => {
             ref={textRef}
             fontSize={fontSize.value * fontSizeFactor}
             lineHeight={lineHeight?.value ?? 1}
+            letterSpacing={
+              letterSpacing?.value && fontSize?.value ? letterSpacing.value / fontSize.value : 0
+            }
             color={textColor ?? 'black'}
             font={fontUrl}
             anchorX={getAnchorX(textAlign, width ?? 1)}
             anchorY={getAnchorY(height ?? 1)}
-            maxWidth={width ?? 0}
+            maxWidth={(width ?? 0) - paddingOffset}
             textAlign={textAlign ?? 'left'}
             whiteSpace="normal"
             overflowWrap="break-word"

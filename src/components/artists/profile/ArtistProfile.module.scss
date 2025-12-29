@@ -1,0 +1,74 @@
+.page {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #999;
+}
+
+.artistName {
+  margin: 0;
+}
+
+.handler {
+  color: #666;
+  margin: 0.5rem 0 0;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.biography {
+  line-height: 1.6;
+}
+
+.emptyText {
+  color: #666;
+}
+
+.exhibitionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.exhibitionItem {
+  margin-bottom: 0.75rem;
+}
+
+.exhibitionLink {
+  color: #333;
+  text-decoration: none;
+  font-size: 1.1rem;
+  display: inline-block;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  width: 100%;
+}

@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
+import { H3 } from '@/components/ui/Typography'
 import type { TOption } from '@/types/artwork'
 
 import styles from './ExhibitionModal.module.scss'
@@ -99,7 +100,7 @@ export const ExhibitionModal = React.memo(
       <div className={styles.wrapper}>
         <div className={styles.content}>
           <div>
-            <h3>Exhibition Title</h3>
+            <H3>Exhibition Title</H3>
             <input
               type="text"
               value={mainTitle}
@@ -110,7 +111,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <h3>URL Slug</h3>
+            <H3>URL Slug</H3>
             <input
               type="text"
               value={customUrl}
@@ -126,7 +127,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <h3>Visibility</h3>
+            <H3>Visibility</H3>
             <Select<string>
               options={[
                 { value: 'public', label: 'Public' },
@@ -138,7 +139,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <h3>Choose a Space</h3>
+            <H3>Choose a Space</H3>
             <Select<string>
               options={spaceOptions}
               value={selectedSpace?.value}

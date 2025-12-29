@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react'
 import { useSelector } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H3 } from '@/components/ui/Typography'
 import type { RootState } from '@/redux/store'
 
 import styles from './MediaLibrary.module.scss'
@@ -64,14 +66,14 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   return (
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
-        <h3>Media Library</h3>
+        <H3>Media Library</H3>
         <button className={styles.closeButton} onClick={onClose}>
           ×
         </button>
       </div>
 
       {loading ? (
-        <p className={styles.loading}>Loading...</p>
+        <LoadingBar />
       ) : availableArtworks.length === 0 ? (
         <p className={styles.empty}>
           {artworks.length === 0

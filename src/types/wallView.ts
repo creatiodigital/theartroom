@@ -53,6 +53,7 @@ export type TWallView = {
   wallWidth: number | null
   isDragging: boolean
   isDraggingGroup: boolean
+  isResizing: boolean
   isShiftKeyDown: boolean
   artworkGroupIds: string[]
   artworkGroup: TArtworkGroup

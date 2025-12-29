@@ -63,7 +63,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.endDate !== undefined) data.endDate = new Date(body.endDate)
     // Lighting customization
     if (body.ambientLightColor !== undefined) data.ambientLightColor = body.ambientLightColor
-    if (body.ambientLightIntensity !== undefined) data.ambientLightIntensity = body.ambientLightIntensity
+    if (body.ambientLightIntensity !== undefined)
+      data.ambientLightIntensity = body.ambientLightIntensity
 
     const updated = await prisma.exhibition.update({
       where: { id },

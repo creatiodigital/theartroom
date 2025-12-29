@@ -74,7 +74,7 @@ export const CreatePanel = () => {
           <Tooltip label="Add artwork from your library" top={-40}>
             <ButtonIcon
               size="big"
-              icon="grid"
+              icon="gallery"
               onClick={() => setShowMediaLibrary(!showMediaLibrary)}
             />
           </Tooltip>
