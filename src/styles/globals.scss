@@ -16,7 +16,7 @@
 }
 
 html {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   height: 100%;
@@ -24,7 +24,7 @@ html {
 
 body {
   font-family: var(--font-body), var(--font-body-fallback);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   font-weight: var(--font-light);
   line-height: var(--leading-normal);
   color: var(--color-text);
@@ -54,7 +54,7 @@ main {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), var(--font-heading-fallback);
-  font-weight: var(--font-normal);
+  font-weight: var(--font-regular);
   line-height: var(--leading-tight);
   color: var(--color-text);
 }

@@ -2,13 +2,14 @@
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+import { H1 } from '@/components/ui/Typography'
 
 export const PrivacyPage = () => {
   return (
     <>
       <Header />
       <div className="page-content">
-        <h1>Privacy Policy</h1>
+        <H1>Privacy Policy</H1>
       </div>
       <Footer />
     </>

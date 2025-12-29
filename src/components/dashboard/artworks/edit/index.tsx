@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
 
 import styles from './edit.module.scss'
 
@@ -196,7 +198,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
-        <p>Loading...</p>
+        <LoadingBar />
       </div>
     )
   }
@@ -216,7 +218,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <Link href="/dashboard/artworks" className={styles.backLink}>
           ← Back to Library
         </Link>
-        <h1>Edit Artwork</h1>
+        <H1>Edit Artwork</H1>
       </div>
 
       {/* Image Upload Section */}

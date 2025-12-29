@@ -7,6 +7,7 @@ import { Mesh } from 'three'
 
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { NumberInput } from '@/components/ui/NumberInput'
+import { H2, H3 } from '@/components/ui/Typography'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import type { RootState } from '@/redux/store'
 import type { TAlign, TDistributeAlign } from '@/types/wizard'
@@ -60,9 +61,9 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <h2 className={styles.title}>Group</h2>
+        <H2 className={styles.title}>Group</H2>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Position in wall</h3>
+          <H3 className={styles.subtitle}>Position in wall</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
@@ -99,7 +100,7 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Position (meters)</h3>
+          <H3 className={styles.subtitle}>Position (meters)</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -124,9 +125,9 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <h2 className={styles.title}>Elements</h2>
+        <H2 className={styles.title}>Elements</H2>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Align Elements</h3>
+          <H3 className={styles.subtitle}>Align Elements</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
@@ -166,7 +167,7 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Distribution</h3>
+          <H3 className={styles.subtitle}>Distribution</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon

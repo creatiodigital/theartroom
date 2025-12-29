@@ -8,6 +8,8 @@ import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1, H2, H3 } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 
 import styles from './artworks.module.scss'
@@ -178,7 +180,7 @@ export const ArtworkLibraryPage = () => {
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
-        <p>Loading...</p>
+        <LoadingBar />
       </div>
     )
   }
@@ -196,7 +198,7 @@ export const ArtworkLibraryPage = () => {
         <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <h1 className={styles.pageTitle}>Artwork Library</h1>
+      <H1 className={styles.pageTitle}>Artwork Library</H1>
 
       <div className={styles.sectionActions}>
         <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
@@ -265,7 +267,7 @@ export const ArtworkLibraryPage = () => {
                 )}
               </div>
               <div className={styles.cardInfo}>
-                <h3>{artwork.name}</h3>
+                <H3>{artwork.name}</H3>
                 <p className={styles.meta}>
                   {artwork.artworkType === 'image' ? 'Image' : 'Text'}
                   {artwork.title && ` • ${artwork.title}`}
@@ -323,7 +325,7 @@ export const ArtworkLibraryPage = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <h2>Delete Artwork?</h2>
+            <H2>Delete Artwork?</H2>
             <p>
               Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
               <br />
@@ -344,7 +346,7 @@ export const ArtworkLibraryPage = () => {
       {unlinkTarget && (
         <Modal onClose={() => setUnlinkTarget(null)}>
           <div className={styles.deleteModal}>
-            <h2>Remove from Exhibition?</h2>
+            <H2>Remove from Exhibition?</H2>
             <p>
               Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
               <strong>{unlinkTarget.exhibitionTitle}</strong>?

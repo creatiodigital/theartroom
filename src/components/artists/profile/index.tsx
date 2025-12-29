@@ -6,6 +6,10 @@ import Link from 'next/link'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1, H2 } from '@/components/ui/Typography'
+
+import styles from './ArtistProfile.module.scss'
 
 type Artist = {
   id: string
@@ -66,8 +70,8 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <>
         <Header />
         <div className="page-content">
-          <h1>Artist Profile</h1>
-          <p>Loading...</p>
+          <H1>Artist Profile</H1>
+          <LoadingBar />
         </div>
         <Footer />
       </>
@@ -79,7 +83,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <>
         <Header />
         <div className="page-content">
-          <h1>Artist Profile</h1>
+          <H1>Artist Profile</H1>
           <p>{error || 'Artist not found'}</p>
         </div>
         <Footer />
@@ -91,72 +95,52 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     <>
       <Header />
       <div className="page-content">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
+        <div className={styles.header}>
           {artist.profileImageUrl ? (
             <Image
               src={artist.profileImageUrl}
               alt={`${artist.name} ${artist.lastName}`}
               width={150}
               height={150}
-              style={{ borderRadius: '50%', objectFit: 'cover' }}
+              className={styles.avatar}
             />
           ) : (
-            <div
-              style={{
-                width: 150,
-                height: 150,
-                borderRadius: '50%',
-                backgroundColor: '#eee',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '3rem',
-                color: '#999',
-              }}
-            >
+            <div className={styles.avatarPlaceholder}>
               {artist.name.charAt(0)}
               {artist.lastName.charAt(0)}
             </div>
           )}
           <div>
-            <h1 style={{ margin: 0 }}>
+            <H1 className={styles.artistName}>
               {artist.name} {artist.lastName}
-            </h1>
-            <p style={{ color: '#666', margin: '0.5rem 0 0' }}>@{artist.handler}</p>
+            </H1>
+            <p className={styles.handler}>@{artist.handler}</p>
           </div>
         </div>
 
-        <div style={{ marginBottom: '2rem' }}>
-          <h2>About</h2>
+        <div className={styles.section}>
+          <H2>About</H2>
           {artist.biography ? (
             <div
-              style={{ lineHeight: 1.6 }}
+              className={styles.biography}
               dangerouslySetInnerHTML={{ __html: artist.biography }}
             />
           ) : (
-            <p style={{ color: '#666' }}>No biography yet.</p>
+            <p className={styles.emptyText}>No biography yet.</p>
           )}
         </div>
 
         <div>
-          <h2>Exhibitions</h2>
+          <H2>Exhibitions</H2>
           {exhibitions.length === 0 ? (
-            <p style={{ color: '#666' }}>No exhibitions yet.</p>
+            <p className={styles.emptyText}>No exhibitions yet.</p>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul className={styles.exhibitionList}>
               {exhibitions.map((ex) => (
-                <li key={ex.id} style={{ marginBottom: '0.75rem' }}>
+                <li key={ex.id} className={styles.exhibitionItem}>
                   <Link
                     href={`/exhibitions/${artist.handler}/${ex.url}`}
-                    style={{
-                      color: '#333',
-                      textDecoration: 'none',
-                      fontSize: '1.1rem',
-                      display: 'inline-block',
-                      padding: '0.5rem 0',
-                      borderBottom: '1px solid #eee',
-                      width: '100%',
-                    }}
+                    className={styles.exhibitionLink}
                   >
                     {ex.mainTitle} →
                   </Link>

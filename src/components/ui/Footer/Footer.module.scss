@@ -15,12 +15,12 @@
 }
 
 .brand {
-  font-family: var(--font-body), var(--font-body-fallback);
-  font-size: var(--text-xl);
+  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-size: var(--text-lg);
   font-weight: var(--font-light);
   color: var(--color-brand);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 5px;
 
   &:hover {
     text-decoration: none;
@@ -33,11 +33,13 @@
 
   a {
     color: var(--color-text);
+    font-size: var(--text-xs);
     text-decoration: none;
     font-weight: var(--font-light);
+    text-transform: uppercase;
 
     &:hover {
-      text-decoration: underline;
+      text-decoration: none;
     }
   }
 }

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { EditView } from '@/components/editview'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 import { useGLTF } from '@react-three/drei'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { resetArtworks } from '@/redux/slices/artworkSlice'
@@ -105,23 +106,11 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
 
   // Show loading while checking session or if unauthenticated (redirect pending)
   if (sessionStatus === 'loading' || sessionStatus === 'unauthenticated') {
-    return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
-      >
-        Loading...
-      </div>
-    )
+    return <LoadingBar />
   }
 
   if (isLoading) {
-    return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
-      >
-        Loading...
-      </div>
-    )
+    return <LoadingBar />
   }
 
   if (error) {

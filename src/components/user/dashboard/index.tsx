@@ -8,6 +8,7 @@ import { EditView } from '@/components/editview'
 import { Button } from '@/components/ui/Button'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
+import { H3 } from '@/components/ui/Typography'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
 import {
@@ -106,13 +107,13 @@ export const Dashboard = () => {
       {!isEditMode && (
         <div className={styles.main}>
           <div className={styles.header}>
-            <h3>Hello {userData?.name ?? ''}</h3>
+            <H3>Hello {userData?.name ?? ''}</H3>
           </div>
 
           <div className={styles.exhibitions}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
             <div className={styles.list}>
-              <h3 className={styles.subtitle}>My exhibitions</h3>
+              <H3 className={styles.subtitle}>My exhibitions</H3>
               {exhibitions.length === 0 ? (
                 <p>You do not have any exhibitions yet.</p>
               ) : (

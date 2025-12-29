@@ -1,1 +1,1 @@
-export { Heading, Text } from './Typography'
+export { Heading, Text, H1, H2, H3, H4, H5, H6 } from './Typography'

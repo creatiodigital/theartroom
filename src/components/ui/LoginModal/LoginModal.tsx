@@ -5,6 +5,7 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
+import { H2 } from '@/components/ui/Typography'
 
 import styles from './LoginModal.module.scss'
 
@@ -56,7 +57,7 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
 
   return (
     <div className={styles.loginModal}>
-      <h2>Log in</h2>
+      <H2>Log in</H2>
       <form onSubmit={handleSubmit}>
         <div className={styles.field}>
           <label htmlFor="email">Email</label>

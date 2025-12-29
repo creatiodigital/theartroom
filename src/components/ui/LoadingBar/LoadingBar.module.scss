@@ -1,0 +1,29 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: transparent;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  width: 30%;
+  background-color: var(--color-brand);
+  animation: progress 1.2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(200%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
