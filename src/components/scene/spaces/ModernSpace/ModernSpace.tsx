@@ -5,13 +5,13 @@ import { Mesh, MeshStandardMaterial, BufferGeometry, Material } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
-import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
+import { PlasterCeiling } from '@/components/scene/spaces/objects/Ceiling/PlasterCeiling'
 import { CeilingGlass } from '@/components/scene/spaces/objects/CeilingGlass'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 
-import { Reel } from '@/components/scene/spaces/objects/Reel'
-import { Wall } from '@/components/scene/spaces/objects/Wall'
+
+import { PlasterWall } from '@/components/scene/spaces/objects/Wall/PlasterWall'
 import { addWall } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -37,7 +37,7 @@ type ModernSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/modern.glb?v=2') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/modern.glb?v=5') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -45,7 +45,7 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
   const wallsArray = useMemo(() => Array.from({ length: 1 }), [])
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
 
-  const reelsArray = useMemo(() => Array.from({ length: 1 }), [])
+
 
   useEffect(() => {
     placeholdersArray.forEach((_, i) => {
@@ -63,13 +63,13 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
       {nodes.floor && (
         <ReflectiveFloor 
           geometry={nodes.floor.geometry}
-          textureRepeat={0.5}
+          textureRepeat={1}
         />
       )}
       {nodes.ceiling && (
-        <Ceiling 
-          geometry={nodes.ceiling.geometry} 
-          material={nodes.ceiling.material as MeshStandardMaterial} 
+        <PlasterCeiling 
+          geometry={nodes.ceiling.geometry}
+          textureRepeat={4}
         />
       )}
       {nodes.glass && (
@@ -79,15 +79,15 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
         />
       )}
       {wallsArray.map((_, i) => {
-        const wallNode = nodes[`walls${i}`]
+        const wallNode = nodes[`wall${i}`]
         if (!wallNode) return null
         return (
-          <Wall 
+          <PlasterWall 
             key={i} 
             i={i} 
             wallRef={wallRefs[i]} 
-            geometry={wallNode.geometry} 
-            material={wallNode.material as MeshStandardMaterial} 
+            geometry={wallNode.geometry}
+            textureRepeat={4}
           />
         )
       })}
@@ -100,9 +100,15 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
           material={rectLampMaterial}
         />
       )}
-      {reelsArray.map((_, i) => (
-        <Reel key={i} i={i} nodes={nodes} reelMaterial={reelMaterial} />
-      ))}
+      {nodes.reel0 && (
+        <mesh
+          name="reel0"
+          castShadow
+          receiveShadow
+          geometry={nodes.reel0.geometry}
+          material={reelMaterial}
+        />
+      )}
       <ArtObjects />
     </group>
   )

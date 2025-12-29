@@ -5,6 +5,7 @@ interface PlasterCeilingProps {
   geometry: BufferGeometry
   texturePath?: string
   textureRepeat?: number
+  color?: string
 }
 
 /**
@@ -14,6 +15,7 @@ const PlasterCeiling: React.FC<PlasterCeilingProps> = ({
   geometry, 
   texturePath = '/assets/materials/plaster',
   textureRepeat = 2,
+  color = '#ffffff',
 }) => {
   // Load PBR textures
   const textures = useTexture({
@@ -41,7 +43,7 @@ const PlasterCeiling: React.FC<PlasterCeilingProps> = ({
       <meshStandardMaterial
         map={textures.map}
         normalMap={textures.normalMap}
-        normalScale={new Vector2(0.2, 0.2)}
+        normalScale={new Vector2(0.1, 0.1)}
         roughnessMap={textures.roughnessMap}
         roughness={1.0}
         metalnessMap={textures.metalnessMap}
@@ -49,6 +51,7 @@ const PlasterCeiling: React.FC<PlasterCeilingProps> = ({
         aoMap={textures.aoMap}
         aoMapIntensity={0.5}
         envMapIntensity={0}
+        color={color}
         side={DoubleSide}
       />
     </mesh>

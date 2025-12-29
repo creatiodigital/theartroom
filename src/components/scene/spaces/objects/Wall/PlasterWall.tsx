@@ -47,7 +47,7 @@ const PlasterWall: React.FC<PlasterWallProps> = ({
       <meshStandardMaterial
         map={textures.map}
         normalMap={textures.normalMap}
-        normalScale={new Vector2(0.3, 0.3)}
+        normalScale={new Vector2(0.1, 0.1)}
         roughnessMap={textures.roughnessMap}
         roughness={1.0}
         metalnessMap={textures.metalnessMap}

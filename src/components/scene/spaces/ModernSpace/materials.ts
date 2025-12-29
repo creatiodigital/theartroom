@@ -36,7 +36,7 @@ export const topMaterial = new MeshStandardMaterial({
 export const rectLampMaterial = new MeshStandardMaterial({
   color: '#ffffff',
   emissive: '#ffffff',
-  emissiveIntensity: 100,
+  emissiveIntensity: 200,
   side: DoubleSide,
 })
 

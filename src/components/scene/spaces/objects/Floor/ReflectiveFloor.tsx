@@ -44,12 +44,12 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
       <meshStandardMaterial
         map={textures.map}
         normalMap={textures.normalMap}
-        normalScale={new Vector2(0.8, 0.8)}
+        normalScale={new Vector2(0.3, 0.3)}
         roughnessMap={textures.roughnessMap}
         color="#8a8580"
-        roughness={0.3}
+        roughness={0.5}
         metalness={0.1}
-        envMapIntensity={0}
+        envMapIntensity={0.2}
       />
     </mesh>
   )

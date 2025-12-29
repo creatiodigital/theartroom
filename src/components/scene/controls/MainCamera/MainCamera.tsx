@@ -57,7 +57,7 @@ const MainCamera = () => {
   const mouseState: RefObject<MouseState> = useRef(createMouseState())
   const initialPositionSet = useRef(false)
   const rotationVelocity = useRef(0)
-  const fov = useRef(70)
+  const fov = useRef(50)
 
   const dampingFactor = 0.6
   const collisionDistance = 1
