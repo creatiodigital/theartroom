@@ -77,27 +77,27 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
       <Lights />
       <Effects />
       {nodes.floor && (
-        <Floor 
-          geometry={nodes.floor.geometry} 
-          material={nodes.floor.material as MeshStandardMaterial} 
+        <Floor
+          geometry={nodes.floor.geometry}
+          material={nodes.floor.material as MeshStandardMaterial}
         />
       )}
       {nodes.ceiling && (
-        <Ceiling 
-          geometry={nodes.ceiling.geometry} 
-          material={nodes.ceiling.material as MeshStandardMaterial} 
+        <Ceiling
+          geometry={nodes.ceiling.geometry}
+          material={nodes.ceiling.material as MeshStandardMaterial}
         />
       )}
       {wallsArray.map((_, i) => {
         const wallNode = nodes[`wall${i}`]
         if (!wallNode) return null
         return (
-          <Wall 
-            key={i} 
-            i={i} 
-            wallRef={wallRefs[i]} 
-            geometry={wallNode.geometry} 
-            material={wallNode.material as MeshStandardMaterial} 
+          <Wall
+            key={i}
+            i={i}
+            wallRef={wallRefs[i]}
+            geometry={wallNode.geometry}
+            material={wallNode.material as MeshStandardMaterial}
           />
         )
       })}

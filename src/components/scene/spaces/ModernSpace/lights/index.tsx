@@ -18,7 +18,7 @@ export const Lights = () => {
       <AmbientLight />
       <HDRI />
       <ShadowSetup />
-      
+
       {/* RectAreaLights at ceiling fixture positions */}
       {ceilingLightPositions.map((pos, i) => (
         <rectAreaLight

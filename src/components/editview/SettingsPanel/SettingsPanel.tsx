@@ -25,9 +25,7 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
     >
       <H2 className={styles.title}>{title}</H2>
 
-      <div className={styles.content}>
-        {children}
-      </div>
+      <div className={styles.content}>{children}</div>
 
       <div className={styles.cta}>
         <Button variant="outline" label="Close" onClick={onClose} />

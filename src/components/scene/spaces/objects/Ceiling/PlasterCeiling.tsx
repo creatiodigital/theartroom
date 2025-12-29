@@ -11,8 +11,8 @@ interface PlasterCeilingProps {
 /**
  * Ceiling with PBR plaster material.
  */
-const PlasterCeiling: React.FC<PlasterCeilingProps> = ({ 
-  geometry, 
+const PlasterCeiling: React.FC<PlasterCeilingProps> = ({
+  geometry,
   texturePath = '/assets/materials/plaster',
   textureRepeat = 2,
   color = '#ffffff',
@@ -35,11 +35,7 @@ const PlasterCeiling: React.FC<PlasterCeilingProps> = ({
   textures.map.colorSpace = SRGBColorSpace
 
   return (
-    <mesh
-      name="ceiling"
-      geometry={geometry}
-      receiveShadow
-    >
+    <mesh name="ceiling" geometry={geometry} receiveShadow>
       <meshStandardMaterial
         map={textures.map}
         normalMap={textures.normalMap}

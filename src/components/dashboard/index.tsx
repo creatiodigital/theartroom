@@ -183,9 +183,27 @@ export const DashboardPage = () => {
                 {exhibitions.map((ex: TExhibition) => (
                   <tr key={ex.id}>
                     <td>{ex.mainTitle}</td>
-                    <td><Button variant="small" label="View" onClick={() => handleViewExhibition(ex)} /></td>
-                    <td><Button variant="small" label="Edit" onClick={() => handleEditExhibition(ex)} /></td>
-                    <td><Button variant="small" label="Delete" onClick={() => handleDeleteExhibition(ex.id)} /></td>
+                    <td>
+                      <Button
+                        variant="small"
+                        label="View"
+                        onClick={() => handleViewExhibition(ex)}
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        variant="small"
+                        label="Edit"
+                        onClick={() => handleEditExhibition(ex)}
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        variant="small"
+                        label="Delete"
+                        onClick={() => handleDeleteExhibition(ex.id)}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

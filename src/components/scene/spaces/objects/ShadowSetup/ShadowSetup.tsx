@@ -9,12 +9,8 @@ export const ShadowSetup = () => {
   return (
     <>
       {/* SoftShadows enables PCSS for realistic soft shadow edges */}
-      <SoftShadows 
-        size={25}
-        focus={0.5}
-        samples={10}
-      />
-      
+      <SoftShadows size={25} focus={0.5} samples={10} />
+
       {/* Large rectangular area light for soft, diffused gallery lighting
           Positioned on ceiling, pointing down - creates even illumination
           without harsh specular highlights on floors */}
@@ -26,7 +22,7 @@ export const ShadowSetup = () => {
         intensity={1}
         color="#ffffff"
       />
-      
+
       {/* Secondary smaller area light for subtle fill */}
       <rectAreaLight
         position={[0, 9.5, 5]}
@@ -36,7 +32,7 @@ export const ShadowSetup = () => {
         intensity={0.5}
         color="#f8f4f0" // Slightly warm
       />
-      
+
       {/* Subtle spotlight for floor reflections */}
       <spotLight
         position={[0, 9, 0]}

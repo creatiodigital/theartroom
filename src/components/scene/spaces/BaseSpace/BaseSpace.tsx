@@ -1,9 +1,5 @@
 import { useGLTF } from '@react-three/drei'
-import { 
-  Mesh, 
-  BufferGeometry, 
-  MeshStandardMaterial, 
-} from 'three'
+import { Mesh, BufferGeometry, MeshStandardMaterial } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { PlasterCeiling } from '@/components/scene/spaces/objects/Ceiling/PlasterCeiling'
@@ -25,32 +21,19 @@ type BaseSpaceProps = React.ComponentProps<'group'> & {
   wallRefs: React.RefObject<Mesh | null>[]
 }
 
-const BaseSpace: React.FC<BaseSpaceProps> = ({
-  wallRefs,
-  ...props
-}) => {
+const BaseSpace: React.FC<BaseSpaceProps> = ({ wallRefs, ...props }) => {
   const { nodes } = useGLTF('/assets/spaces/base.glb?v=12') as unknown as GLTFResult
 
   return (
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      {nodes.floor && (
-        <ReflectiveFloor 
-          geometry={nodes.floor.geometry}
-          textureRepeat={0.5}
-        />
-      )}
-      {nodes.ceiling && (
-        <PlasterCeiling 
-          geometry={nodes.ceiling.geometry}
-          textureRepeat={2}
-        />
-      )}
+      {nodes.floor && <ReflectiveFloor geometry={nodes.floor.geometry} textureRepeat={0.5} />}
+      {nodes.ceiling && <PlasterCeiling geometry={nodes.ceiling.geometry} textureRepeat={2} />}
       {nodes.wall0 && (
-        <PlasterWall 
-          i={0} 
-          wallRef={wallRefs[0]} 
+        <PlasterWall
+          i={0}
+          wallRef={wallRefs[0]}
           geometry={nodes.wall0.geometry}
           textureRepeat={2}
         />

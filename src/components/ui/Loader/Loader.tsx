@@ -11,10 +11,7 @@ const Loader = () => {
     <Html center>
       <div className={styles.loader}>
         <div className={styles.progressContainer}>
-          <div
-            className={styles.progressBar}
-            style={{ width: `${progress}%` }}
-          />
+          <div className={styles.progressBar} style={{ width: `${progress}%` }} />
         </div>
         <span className={styles.percentage}>{Math.round(progress)}%</span>
       </div>

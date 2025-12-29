@@ -3,7 +3,7 @@ import { Environment, useEnvironment } from '@react-three/drei'
 const HDRI = () => {
   // Preload the HDR - this will suspend until loaded
   const envMap = useEnvironment({ files: '/assets/hdri/misty.hdr' })
-  
+
   return (
     <Environment
       background={true}

@@ -52,7 +52,12 @@ main {
    TYPOGRAPHY - Headings (Crimson Pro / heading font)
    =========================================================================== */
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading), var(--font-heading-fallback);
   font-weight: var(--font-regular);
   line-height: var(--leading-tight);
@@ -91,11 +96,13 @@ p {
   line-height: var(--leading-relaxed);
 }
 
-strong, b {
+strong,
+b {
   font-weight: var(--font-bold);
 }
 
-em, i {
+em,
+i {
   font-style: italic;
 }
 
@@ -110,7 +117,7 @@ small {
 a {
   color: inherit;
   text-decoration: none;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -137,7 +144,8 @@ label {
    =========================================================================== */
 
 .rich-text {
-  ul, ol {
+  ul,
+  ol {
     padding-left: var(--space-6);
     margin-bottom: var(--space-4);
   }
@@ -168,9 +176,19 @@ label {
    UTILITY CLASSES
    =========================================================================== */
 
-.text-center { text-align: center; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
 
-.text-muted { color: var(--color-text-muted); }
-.text-light { color: var(--color-text-light); }
+.text-muted {
+  color: var(--color-text-muted);
+}
+.text-light {
+  color: var(--color-text-light);
+}

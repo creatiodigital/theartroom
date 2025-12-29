@@ -24,13 +24,13 @@ type ArtworkImageProps = {
 const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useTexture(url)
   texture.colorSpace = SRGBColorSpace
-  
+
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshStandardMaterial 
-        map={texture} 
-        side={DoubleSide} 
+      <meshStandardMaterial
+        map={texture}
+        side={DoubleSide}
         roughness={1}
         metalness={0}
         toneMapped={true}
@@ -109,13 +109,7 @@ const Display = ({ artwork }: DisplayProps) => {
         </mesh>
       )}
 
-      {imageUrl && (
-        <ArtworkImage 
-          url={imageUrl} 
-          width={innerWidth} 
-          height={innerHeight} 
-        />
-      )}
+      {imageUrl && <ArtworkImage url={imageUrl} width={innerWidth} height={innerHeight} />}
 
       {showFrame && frameThickness?.value && (
         <Frame

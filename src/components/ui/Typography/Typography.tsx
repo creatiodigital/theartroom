@@ -46,14 +46,16 @@ export function Heading({
 }: HeadingProps) {
   const Component = as
   const visualSize = size || as
-  
+
   const classNames = [
     styles[visualSize],
     styles[`font-${font}`],
     styles[`heading-weight-${fontWeight}`],
     className,
-  ].filter(Boolean).join(' ')
-  
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <Component className={classNames} {...props}>
       {children}
@@ -131,7 +133,7 @@ export function Text({
   ...props
 }: TextProps) {
   const Component = as
-  
+
   const classNames = [
     styles[`text-${size}`],
     styles[`weight-${weight}`],
@@ -140,7 +142,7 @@ export function Text({
   ]
     .filter(Boolean)
     .join(' ')
-  
+
   return (
     <Component className={classNames} {...props}>
       {children}

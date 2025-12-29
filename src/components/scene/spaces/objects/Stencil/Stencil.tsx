@@ -45,8 +45,6 @@ const Stencil = ({ artwork }: StencilProps) => {
   const resolvedFontFamily = fontFamily?.value ?? 'roboto'
   const resolvedFontWeight = fontWeight?.value ?? 'regular'
   const fontUrl = fontMap[resolvedFontFamily][resolvedFontWeight]
-  
-
 
   const textRef = useRef<ComponentRef<typeof Text>>(null)
   const [textWidth, setTextWidth] = useState(0)
@@ -105,7 +103,9 @@ const Stencil = ({ artwork }: StencilProps) => {
             ref={textRef}
             fontSize={fontSize.value * fontSizeFactor}
             lineHeight={lineHeight?.value ?? 1}
-            letterSpacing={letterSpacing?.value && fontSize?.value ? letterSpacing.value / fontSize.value : 0}
+            letterSpacing={
+              letterSpacing?.value && fontSize?.value ? letterSpacing.value / fontSize.value : 0
+            }
             color={textColor ?? 'black'}
             font={fontUrl}
             anchorX={getAnchorX(textAlign, width ?? 1)}

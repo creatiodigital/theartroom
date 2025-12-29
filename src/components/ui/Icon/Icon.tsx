@@ -98,13 +98,7 @@ const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.25 }: I
   // Check if it's a Lucide icon
   const LucideIconComponent = lucideIcons[name as keyof typeof lucideIcons]
   if (LucideIconComponent) {
-    return (
-      <LucideIconComponent
-        size={size}
-        color={color}
-        strokeWidth={strokeWidth}
-      />
-    )
+    return <LucideIconComponent size={size} color={color} strokeWidth={strokeWidth} />
   }
 
   // Fallback to custom SVG icon

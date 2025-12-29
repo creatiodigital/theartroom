@@ -38,13 +38,13 @@ const ArtworkPanel = () => {
         {thumbnailUrl && (
           <div className={styles.imageSection}>
             <div className={styles.imageWrapper}>
-              <img src={thumbnailUrl} alt={artworkTitle || name || 'Artwork'} className={styles.preview} />
+              <img
+                src={thumbnailUrl}
+                alt={artworkTitle || name || 'Artwork'}
+                className={styles.preview}
+              />
             </div>
-            <Button
-              variant="primary"
-              label="View Image"
-              onClick={() => setIsLightboxOpen(true)}
-            />
+            <Button variant="primary" label="View Image" onClick={() => setIsLightboxOpen(true)} />
           </div>
         )}
 
@@ -53,7 +53,9 @@ const ArtworkPanel = () => {
           {selectedArtwork && (
             <div>
               {author && <H3 className={styles.author}>{author}</H3>}
-              {(artworkTitle || name) && <span className={styles.title}>{artworkTitle || name}</span>}
+              {(artworkTitle || name) && (
+                <span className={styles.title}>{artworkTitle || name}</span>
+              )}
               {artworkYear && <span className={styles.year}>{`, ${artworkYear}`}</span>}
               {description && <div className={styles.description}>{description}</div>}
               {artworkDimensions && <span className={styles.dimensions}>{artworkDimensions}</span>}

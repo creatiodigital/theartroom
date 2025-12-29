@@ -148,7 +148,7 @@ export const Dashboard = () => {
                 onCreate={handleCreateExhibition}
                 selectedSpace={selectedSpace}
                 handleSelectSpace={handleSelectSpace}
-                spaceOptions={spaceOptions.filter(opt => !opt.adminOnly)}
+                spaceOptions={spaceOptions.filter((opt) => !opt.adminOnly)}
                 userId={userData?.id ?? ''}
               />
             </Modal>

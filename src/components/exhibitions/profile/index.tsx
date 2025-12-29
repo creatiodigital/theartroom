@@ -32,7 +32,10 @@ interface ExhibitionProfilePageProps {
   exhibitionSlug: string
 }
 
-export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: ExhibitionProfilePageProps) => {
+export const ExhibitionProfilePage = ({
+  artistSlug,
+  exhibitionSlug,
+}: ExhibitionProfilePageProps) => {
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -93,7 +96,8 @@ export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: Exhibition
 
   const startDate = formatDate(exhibition.startDate)
   const endDate = formatDate(exhibition.endDate)
-  const dateRange = startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
+  const dateRange =
+    startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
 
   return (
     <>
@@ -122,8 +126,8 @@ export const ExhibitionProfilePage = ({ artistSlug, exhibitionSlug }: Exhibition
           {/* Description placeholder - to be filled when we add description field */}
           <div className={styles.description}>
             <p>
-              Welcome to this virtual exhibition. Step into the gallery and explore the artworks in an
-              immersive 3D environment.
+              Welcome to this virtual exhibition. Step into the gallery and explore the artworks in
+              an immersive 3D environment.
             </p>
           </div>
 

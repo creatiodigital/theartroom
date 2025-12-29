@@ -104,7 +104,12 @@ export const DashboardAdmin = () => {
   }, [deleteTarget, refetch])
 
   // Loading states
-  if (sessionStatus === 'loading' || loading) return <div className={styles.page}><LoadingBar /></div>
+  if (sessionStatus === 'loading' || loading)
+    return (
+      <div className={styles.page}>
+        <LoadingBar />
+      </div>
+    )
 
   // Not authorized
   if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {

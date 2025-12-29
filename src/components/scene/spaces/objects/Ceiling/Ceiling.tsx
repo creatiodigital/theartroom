@@ -42,13 +42,7 @@ const Ceiling: React.FC<CeilingProps> = ({ geometry, material }) => {
   }, [ceilingMaterial, ambientColor, scale])
 
   return (
-    <mesh
-      name="ceiling"
-      castShadow
-      receiveShadow
-      geometry={geometry}
-      material={ceilingMaterial}
-    />
+    <mesh name="ceiling" castShadow receiveShadow geometry={geometry} material={ceilingMaterial} />
   )
 }
 

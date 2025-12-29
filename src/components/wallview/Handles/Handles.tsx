@@ -25,24 +25,12 @@ const Handles = ({ artworkId, handleResize }: THandles) => (
       direction="bottom-right"
       onMouseDown={(event) => handleResize(event, artworkId, 'bottom-right')}
     />
-    
+
     {/* Edge handles (single-axis resize) */}
-    <Handle
-      direction="top"
-      onMouseDown={(event) => handleResize(event, artworkId, 'top')}
-    />
-    <Handle
-      direction="bottom"
-      onMouseDown={(event) => handleResize(event, artworkId, 'bottom')}
-    />
-    <Handle
-      direction="left"
-      onMouseDown={(event) => handleResize(event, artworkId, 'left')}
-    />
-    <Handle
-      direction="right"
-      onMouseDown={(event) => handleResize(event, artworkId, 'right')}
-    />
+    <Handle direction="top" onMouseDown={(event) => handleResize(event, artworkId, 'top')} />
+    <Handle direction="bottom" onMouseDown={(event) => handleResize(event, artworkId, 'bottom')} />
+    <Handle direction="left" onMouseDown={(event) => handleResize(event, artworkId, 'left')} />
+    <Handle direction="right" onMouseDown={(event) => handleResize(event, artworkId, 'right')} />
   </>
 )
 

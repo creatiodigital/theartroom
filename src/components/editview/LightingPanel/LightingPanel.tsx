@@ -22,10 +22,10 @@ const LightingPanel = () => {
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const ambientColor = useSelector(
-    (state: RootState) => state.exhibition.ambientLightColor ?? DEFAULT_COLOR
+    (state: RootState) => state.exhibition.ambientLightColor ?? DEFAULT_COLOR,
   )
   const ambientIntensity = useSelector(
-    (state: RootState) => state.exhibition.ambientLightIntensity ?? DEFAULT_INTENSITY
+    (state: RootState) => state.exhibition.ambientLightIntensity ?? DEFAULT_INTENSITY,
   )
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,9 +90,7 @@ const LightingPanel = () => {
 
       {/* Ambient Light Intensity */}
       <div className={styles.section}>
-        <label className={styles.label}>
-          Intensity: {ambientIntensity.toFixed(2)}
-        </label>
+        <label className={styles.label}>Intensity: {ambientIntensity.toFixed(2)}</label>
         <input
           type="range"
           min="0"

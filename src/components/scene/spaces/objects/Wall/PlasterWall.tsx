@@ -12,10 +12,10 @@ interface PlasterWallProps {
 /**
  * Wall with PBR plaster material.
  */
-const PlasterWall: React.FC<PlasterWallProps> = ({ 
+const PlasterWall: React.FC<PlasterWallProps> = ({
   i,
   wallRef,
-  geometry, 
+  geometry,
   texturePath = '/assets/materials/plaster',
   textureRepeat = 2,
 }) => {
@@ -37,13 +37,7 @@ const PlasterWall: React.FC<PlasterWallProps> = ({
   textures.map.colorSpace = SRGBColorSpace
 
   return (
-    <mesh
-      ref={wallRef}
-      name={`wall${i}`}
-      geometry={geometry}
-      castShadow
-      receiveShadow
-    >
+    <mesh ref={wallRef} name={`wall${i}`} geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial
         map={textures.map}
         normalMap={textures.normalMap}

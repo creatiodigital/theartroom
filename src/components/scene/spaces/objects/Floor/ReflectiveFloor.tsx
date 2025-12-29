@@ -12,8 +12,8 @@ interface ReflectiveFloorProps {
  * Polished floor with PBR textures and specular highlights.
  * Uses standard material for consistent appearance without reflection camera artifacts.
  */
-const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ 
-  geometry, 
+const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
+  geometry,
   texturePath = '/assets/materials/concrete',
   textureRepeat = 0.5,
 }) => {
@@ -35,12 +35,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   textures.map.colorSpace = SRGBColorSpace
 
   return (
-    <mesh
-      ref={meshRef}
-      name="floor"
-      geometry={geometry}
-      receiveShadow
-    >
+    <mesh ref={meshRef} name="floor" geometry={geometry} receiveShadow>
       <meshStandardMaterial
         map={textures.map}
         normalMap={textures.normalMap}

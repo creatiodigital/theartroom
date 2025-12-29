@@ -240,7 +240,11 @@ export const ArtworkLibraryPage = () => {
 
       {filteredArtworks.length === 0 ? (
         <div className={styles.empty}>
-          <p>{artworks.length === 0 ? 'No artworks yet. Click "Add Artwork" to create your first one.' : 'No artworks match this filter.'}</p>
+          <p>
+            {artworks.length === 0
+              ? 'No artworks yet. Click "Add Artwork" to create your first one.'
+              : 'No artworks match this filter.'}
+          </p>
         </div>
       ) : (
         <div className={styles.list}>
@@ -257,9 +261,7 @@ export const ArtworkLibraryPage = () => {
                     className={styles.thumbnail}
                   />
                 ) : artwork.artworkType === 'text' && artwork.textContent ? (
-                  <div className={styles.textPreview}>
-                    {truncateText(artwork.textContent, 100)}
-                  </div>
+                  <div className={styles.textPreview}>{truncateText(artwork.textContent, 100)}</div>
                 ) : (
                   <div className={styles.placeholder}>
                     {artwork.artworkType === 'image' ? '🖼️' : '📝'}

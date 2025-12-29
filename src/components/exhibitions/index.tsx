@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, H2 } from '@/components/ui/Typography'
+import { H2 } from '@/components/ui/Typography'
 
 import styles from './exhibitions.module.scss'
 
@@ -69,7 +69,8 @@ export const ExhibitionsPage = () => {
                       >
                         <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
                         <span className={styles.artistName}>
-                          {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                          {' '}
+                          — {exhibition.user.name} {exhibition.user.lastName}
                         </span>
                       </Link>
                     </li>
@@ -91,7 +92,8 @@ export const ExhibitionsPage = () => {
                       >
                         <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
                         <span className={styles.artistName}>
-                          {' '}— {exhibition.user.name} {exhibition.user.lastName}
+                          {' '}
+                          — {exhibition.user.name} {exhibition.user.lastName}
                         </span>
                       </Link>
                     </li>

@@ -10,7 +10,6 @@ import { CeilingGlass } from '@/components/scene/spaces/objects/CeilingGlass'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 
-
 import { PlasterWall } from '@/components/scene/spaces/objects/Wall/PlasterWall'
 import { addWall } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
@@ -45,8 +44,6 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
   const wallsArray = useMemo(() => Array.from({ length: 1 }), [])
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
 
-
-
   useEffect(() => {
     placeholdersArray.forEach((_, i) => {
       const wallNode = nodes[`placeholder${i}`]
@@ -60,32 +57,22 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      {nodes.floor && (
-        <ReflectiveFloor 
-          geometry={nodes.floor.geometry}
-          textureRepeat={1}
-        />
-      )}
-      {nodes.ceiling && (
-        <PlasterCeiling 
-          geometry={nodes.ceiling.geometry}
-          textureRepeat={4}
-        />
-      )}
+      {nodes.floor && <ReflectiveFloor geometry={nodes.floor.geometry} textureRepeat={1} />}
+      {nodes.ceiling && <PlasterCeiling geometry={nodes.ceiling.geometry} textureRepeat={4} />}
       {nodes.glass && (
-        <CeilingGlass 
-          geometry={nodes.glass.geometry} 
-          material={(nodes.glass.material as Material) || topMaterial} 
+        <CeilingGlass
+          geometry={nodes.glass.geometry}
+          material={(nodes.glass.material as Material) || topMaterial}
         />
       )}
       {wallsArray.map((_, i) => {
         const wallNode = nodes[`wall${i}`]
         if (!wallNode) return null
         return (
-          <PlasterWall 
-            key={i} 
-            i={i} 
-            wallRef={wallRefs[i]} 
+          <PlasterWall
+            key={i}
+            i={i}
+            wallRef={wallRefs[i]}
             geometry={wallNode.geometry}
             textureRepeat={4}
           />
@@ -94,11 +81,7 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
       {isPlaceholdersShown &&
         placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
       {nodes.rect1 && (
-        <mesh
-          name="rect1"
-          geometry={nodes.rect1.geometry}
-          material={rectLampMaterial}
-        />
+        <mesh name="rect1" geometry={nodes.rect1.geometry} material={rectLampMaterial} />
       )}
       {nodes.reel0 && (
         <mesh

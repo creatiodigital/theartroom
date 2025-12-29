@@ -30,7 +30,7 @@
   margin-bottom: var(--space-4);
   font-family: var(--font-body), var(--font-body-fallback);
   text-transform: uppercase;
-  font-weight: var(--font-light); 
+  font-weight: var(--font-light);
   border-bottom: 1px solid var(--color-border);
   padding-bottom: var(--space-4);
 }
@@ -54,7 +54,7 @@
 
   &:hover {
     text-decoration: none;
-  } 
+  }
 }
 
 .exhibitionAuthor {
@@ -68,5 +68,5 @@
   font-family: var(--font-body);
   font-weight: var(--font-regular);
   font-size: var(--text-md);
-   display: block;
+  display: block;
 }

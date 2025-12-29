@@ -35,4 +35,3 @@ function EditView() {
 }
 
 export default EditView
-

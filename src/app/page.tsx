@@ -40,13 +40,13 @@ export default async function Home() {
   const exhibitions = exhibitionData as unknown as ExhibitionWithUser[]
 
   // Fetch featured artists
-  const featuredArtists = await prisma.user.findMany({
-    where: {
-      isFeatured: true,
-    },
-    orderBy: { name: 'asc' },
-    take: 6,
-  })
+  // const featuredArtists = await prisma.user.findMany({
+  //   where: {
+  //     isFeatured: true,
+  //   },
+  //   orderBy: { name: 'asc' },
+  //   take: 6,
+  // })
 
   return (
     <main className={styles.home}>
@@ -66,7 +66,9 @@ export default async function Home() {
                     href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                     className={styles.exhibitionLink}
                   >
-                    <span className={styles.exhibitionAuthor}>{exhibition.user.name} {exhibition.user.lastName}</span>
+                    <span className={styles.exhibitionAuthor}>
+                      {exhibition.user.name} {exhibition.user.lastName}
+                    </span>
                     <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
                   </Link>
                 </li>

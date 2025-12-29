@@ -32,7 +32,7 @@ export const useResizeArtwork = (
   const dispatch = useDispatch()
   const isGridVisible = useSelector((state: RootState) => state.wallView.isGridVisible)
   const gridSize = 20
-  
+
   // Track if we're currently resizing
   const isResizingRef = useRef(false)
 
@@ -99,7 +99,7 @@ export const useResizeArtwork = (
               newWidth = Math.max(20, initialWidth + deltaX)
             }
             newHeight = Math.max(20, newWidth / aspectRatio)
-            
+
             // Adjust Y position for top handles
             if (direction.includes('top')) {
               newY = initialY + initialHeight - newHeight
@@ -113,7 +113,7 @@ export const useResizeArtwork = (
               newHeight = Math.max(20, initialHeight + deltaY)
             }
             newWidth = Math.max(20, newHeight * aspectRatio)
-            
+
             // Adjust X position for left handles
             if (direction.includes('left')) {
               newX = initialX + initialWidth - newWidth
@@ -154,7 +154,9 @@ export const useResizeArtwork = (
 
             if (isGridVisible) {
               newWidth =
-                Math.round((newX + newWidth - gridOffsetX) / gridSize) * gridSize - newX + gridOffsetX
+                Math.round((newX + newWidth - gridOffsetX) / gridSize) * gridSize -
+                newX +
+                gridOffsetX
             } else {
               // Snap right edge to other artworks' right edges
               for (const otherArtwork of sameWallArtworks) {
@@ -250,7 +252,7 @@ export const useResizeArtwork = (
       const handleMouseUp = () => {
         window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleMouseUp)
-        
+
         // Clear resize state and alignment pairs
         dispatch(stopResizing())
         dispatch(clearAlignedPairs())
