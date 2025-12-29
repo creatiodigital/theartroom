@@ -8,6 +8,7 @@ import { Mesh } from 'three'
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { Input } from '@/components/ui/Input'
 import { NumberInput } from '@/components/ui/NumberInput'
+import { H2, H3 } from '@/components/ui/Typography'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
@@ -56,9 +57,9 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <h2 className={styles.title}>Position</h2>
+        <H2 className={styles.title}>Position</H2>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Position in wall</h3>
+          <H3 className={styles.subtitle}>Position in wall</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlign('verticalTop')} />
@@ -83,7 +84,7 @@ const ArtworkPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Position (meters)</h3>
+          <H3 className={styles.subtitle}>Position (meters)</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -108,9 +109,9 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <h2 className={styles.title}>Layout</h2>
+        <H2 className={styles.title}>Layout</H2>
         <div className={styles.subsection}>
-          <h3 className={styles.subtitle}>Size (meters)</h3>
+          <H3 className={styles.subtitle}>Size (meters)</H3>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput

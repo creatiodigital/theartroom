@@ -10,4 +10,3 @@ export type TDashboardState = {
   isEditingArtwork: boolean
   selectedSpace: TSpaceOption
 }
-

@@ -31,6 +31,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     fontFamily,
     fontWeight,
     lineHeight,
+    letterSpacing,
   } = artisticText
 
   const fontFamilyMap: Record<'roboto' | 'lora', string> = {
@@ -86,6 +87,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
             fontWeight: fontWeightVariable,
             fontSize,
             lineHeight,
+            letterSpacing: `${letterSpacing}px`,
           }}
           className={`${styles.content} ${isEditing ? styles.editable : ''}`}
           contentEditable={isEditing}

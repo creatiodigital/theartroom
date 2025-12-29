@@ -1,0 +1,32 @@
+.page {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.backLink {
+  color: #666;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.pageTitle {
+  margin: 0.5rem 0 0;
+  font-size: 1.75rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.exhibitionList {
+  margin-top: 2rem;
+}

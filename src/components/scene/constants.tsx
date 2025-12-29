@@ -9,7 +9,7 @@ import type { SpaceConfig } from './spaces/types'
 /**
  * Available space keys. Add new spaces here.
  */
-export type SpaceKey = 'classic' | 'modern'
+export type SpaceKey = 'classic' | 'modern' | 'base'
 
 /**
  * Configuration for each space including refs, metadata, and assets.
@@ -39,6 +39,15 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
     },
     placeholders: 4,
   },
+  base: {
+    displayName: 'Base Space',
+    gltfPath: '/assets/spaces/base.glb',
+    thumbnailUrl: '/assets/thumbnails/classic.jpg', // reuse classic thumbnail for now
+    refs: {
+      walls: 1,
+    },
+    placeholders: 0,
+  },
 }
 
 /**
@@ -48,6 +57,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
 export const spaceComponents = {
   classic: dynamic(() => import('./spaces/ClassicSpace'), { ssr: false }),
   modern: dynamic(() => import('./spaces/ModernSpace'), { ssr: false }),
+  base: dynamic(() => import('./spaces/BaseSpace'), { ssr: false }),
 }
 
 // =============================================================================

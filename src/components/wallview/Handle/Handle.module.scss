@@ -10,22 +10,56 @@
   z-index: 20;
 }
 
+// Corner handles
 .top-left {
   top: -4px;
   left: -4px;
+  cursor: nwse-resize;
 }
 
 .top-right {
   top: -4px;
   right: -4px;
+  cursor: nesw-resize;
 }
 
 .bottom-left {
   bottom: -4px;
   left: -4px;
+  cursor: nesw-resize;
 }
 
 .bottom-right {
   bottom: -4px;
   right: -4px;
+  cursor: nwse-resize;
+}
+
+// Edge handles (single-axis resize)
+.top {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.bottom {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.left {
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.right {
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
 }

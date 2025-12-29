@@ -57,12 +57,12 @@ const MainCamera = () => {
   const mouseState: RefObject<MouseState> = useRef(createMouseState())
   const initialPositionSet = useRef(false)
   const rotationVelocity = useRef(0)
-  const fov = useRef(70)
+  const fov = useRef(50)
 
   const dampingFactor = 0.6
   const collisionDistance = 1
   const moveSpeed = 0.03
-  const cameraElevation = 1.1
+  const cameraElevation = 1.6 // Average person's eye height in meters
 
   const wallCoordinates = useSelector((state: RootState) => state.wallView.currentWallCoordinates)
   const wallNormal = useSelector((state: RootState) => state.wallView.currentWallNormal)
@@ -126,6 +126,7 @@ const MainCamera = () => {
 
     if (!initialPositionSet.current) {
       if (wallCoordinates && wallNormal) {
+        // Position camera based on wall/placeholder coordinates
         const lookAt = new Vector3(wallCoordinates.x, cameraElevation, wallCoordinates.z)
         const offsetDistance = 5
         const offset = new Vector3(wallNormal.x * offsetDistance, 0, wallNormal.z * offsetDistance)
@@ -134,6 +135,12 @@ const MainCamera = () => {
         cam.position.set(cameraPosition.x, cameraElevation, cameraPosition.z)
         cam.lookAt(lookAt)
         cam.updateProjectionMatrix()
+      } else {
+        // Default position: center of floor (0, cameraElevation, 0), looking forward
+        cam.position.set(0, cameraElevation, 0)
+        cam.lookAt(new Vector3(0, cameraElevation, -5))
+        cam.updateProjectionMatrix()
+        console.log('MainCamera: Using default position (floor center)')
       }
 
       initialPositionSet.current = true

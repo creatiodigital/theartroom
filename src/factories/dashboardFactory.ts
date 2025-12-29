@@ -7,4 +7,3 @@ export const createDashboardState = (): TDashboardState => ({
   isEditingArtwork: false,
   selectedSpace: { label: 'Classic', value: 'classic' },
 })
-

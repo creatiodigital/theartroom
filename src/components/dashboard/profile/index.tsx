@@ -8,6 +8,8 @@ import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './profile.module.scss'
@@ -183,7 +185,7 @@ export const DashboardProfilePage = () => {
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
-        <p>Loading...</p>
+        <LoadingBar />
       </div>
     )
   }
@@ -197,7 +199,7 @@ export const DashboardProfilePage = () => {
         <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <h1 className={styles.title}>Edit Profile</h1>
+      <H1 className={styles.title}>Edit Profile</H1>
 
       {/* Profile Image Section */}
       <div className={styles.imageSection}>

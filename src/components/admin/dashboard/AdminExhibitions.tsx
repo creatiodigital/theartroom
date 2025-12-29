@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
+import { H2 } from '@/components/ui/Typography'
 
 import styles from './AdminDashboard.module.scss'
 
@@ -81,7 +82,7 @@ export const AdminExhibitions = () => {
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
-        <h2>Exhibition Management</h2>
+        <H2>Exhibition Management</H2>
       </div>
 
       <table className={styles.table}>

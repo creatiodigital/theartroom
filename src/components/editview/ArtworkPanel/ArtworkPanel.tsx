@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
+import { H3 } from '@/components/ui/Typography'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -37,13 +38,13 @@ const ArtworkPanel = () => {
         {thumbnailUrl && (
           <div className={styles.imageSection}>
             <div className={styles.imageWrapper}>
-              <img src={thumbnailUrl} alt={artworkTitle || name || 'Artwork'} className={styles.preview} />
+              <img
+                src={thumbnailUrl}
+                alt={artworkTitle || name || 'Artwork'}
+                className={styles.preview}
+              />
             </div>
-            <Button
-              variant="primary"
-              label="View Image"
-              onClick={() => setIsLightboxOpen(true)}
-            />
+            <Button variant="primary" label="View Image" onClick={() => setIsLightboxOpen(true)} />
           </div>
         )}
 
@@ -51,8 +52,10 @@ const ArtworkPanel = () => {
         <div className={styles.info}>
           {selectedArtwork && (
             <div>
-              {author && <h3 className={styles.author}>{author}</h3>}
-              {(artworkTitle || name) && <span className={styles.title}>{artworkTitle || name}</span>}
+              {author && <H3 className={styles.author}>{author}</H3>}
+              {(artworkTitle || name) && (
+                <span className={styles.title}>{artworkTitle || name}</span>
+              )}
               {artworkYear && <span className={styles.year}>{`, ${artworkYear}`}</span>}
               {description && <div className={styles.description}>{description}</div>}
               {artworkDimensions && <span className={styles.dimensions}>{artworkDimensions}</span>}

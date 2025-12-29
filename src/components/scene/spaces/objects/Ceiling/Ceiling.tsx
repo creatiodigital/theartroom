@@ -1,34 +1,48 @@
-import { useMemo } from 'react'
-import { SRGBColorSpace, MeshStandardMaterial, Mesh, BufferGeometry, Texture } from 'three'
+import { useEffect, useMemo } from 'react'
+import { SRGBColorSpace, MeshStandardMaterial, BufferGeometry, Color } from 'three'
+
+import { useAmbientLight } from '@/hooks/useAmbientLight'
 
 interface CeilingProps {
-  nodes: {
-    ceiling: Mesh & {
-      geometry: BufferGeometry
-    }
-  }
-  materials: {
-    ceilingMaterial: MeshStandardMaterial & {
-      map?: Texture
-    }
-  }
+  geometry: BufferGeometry
+  material: MeshStandardMaterial
 }
 
-const Ceiling: React.FC<CeilingProps> = ({ nodes, materials }) => {
-  useMemo(() => {
-    if (materials.ceilingMaterial.map) {
-      materials.ceilingMaterial.map.colorSpace = SRGBColorSpace
+// Default ceiling material fallback
+const DEFAULT_CEILING_COLOR = '#f5f5f5'
+
+const Ceiling: React.FC<CeilingProps> = ({ geometry, material }) => {
+  const { ambientColor, scale } = useAmbientLight()
+
+  // Ensure ceiling material is double-sided
+  const ceilingMaterial = useMemo(() => {
+    if (material) {
+      material.side = 2 // DoubleSide
+      if (material.map) {
+        material.map.colorSpace = SRGBColorSpace
+      }
+      return material
     }
-  }, [materials])
+    // Fallback: create a default ceiling material
+    return new MeshStandardMaterial({
+      color: new Color(DEFAULT_CEILING_COLOR),
+      roughness: 0.9,
+      metalness: 0,
+      side: 2, // DoubleSide
+    })
+  }, [material])
+
+  // Apply ambient light as color multiplier
+  useEffect(() => {
+    if (ceilingMaterial) {
+      const color = new Color(ambientColor)
+      color.multiplyScalar(scale)
+      ceilingMaterial.color = color
+    }
+  }, [ceilingMaterial, ambientColor, scale])
 
   return (
-    <mesh
-      name="ceiling"
-      castShadow
-      receiveShadow
-      geometry={nodes.ceiling.geometry}
-      material={materials.ceilingMaterial}
-    />
+    <mesh name="ceiling" castShadow receiveShadow geometry={geometry} material={ceilingMaterial} />
   )
 }
 

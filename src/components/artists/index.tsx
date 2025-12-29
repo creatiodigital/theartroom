@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
 
 import styles from './artists.module.scss'
 
@@ -41,8 +43,8 @@ export const ArtistsPage = () => {
       <>
         <Header />
         <div className={styles.page}>
-          <h1 className={styles.title}>Artists</h1>
-          <p>Loading...</p>
+          <H1 className={styles.title}>Artists</H1>
+          <LoadingBar />
         </div>
         <Footer />
       </>
@@ -53,7 +55,7 @@ export const ArtistsPage = () => {
     <>
       <Header />
       <div className={styles.page}>
-        <h1 className={styles.title}>Artists</h1>
+        <H1 className={styles.title}>Artists</H1>
         {artists.length === 0 ? (
           <p className={styles.empty}>No artists found.</p>
         ) : (

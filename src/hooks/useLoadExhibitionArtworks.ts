@@ -57,7 +57,7 @@ type ExhibitionArtworkResponse = {
  */
 const preloadImages = (
   imageUrls: string[],
-  onProgress: (loaded: number, total: number) => void
+  onProgress: (loaded: number, total: number) => void,
 ): Promise<void> => {
   return new Promise((resolve) => {
     if (imageUrls.length === 0) {

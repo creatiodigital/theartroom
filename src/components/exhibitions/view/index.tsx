@@ -24,7 +24,7 @@ interface ExhibitionViewPageProps {
 const LoadingOverlay = () => {
   const { active, progress } = useProgress()
   const [dismissed, setDismissed] = useState(false)
-  
+
   // Dismiss overlay when loading is complete
   useEffect(() => {
     if (!active && progress >= 100) {
@@ -33,9 +33,9 @@ const LoadingOverlay = () => {
       return () => clearTimeout(timer)
     }
   }, [active, progress])
-  
+
   if (dismissed) return null
-  
+
   return (
     <div
       style={{
@@ -152,10 +152,10 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     <>
       {/* Loading overlay - uses useProgress which works OUTSIDE Canvas */}
       <LoadingOverlay />
-      
+
       {/* Scene renders as soon as exhibition data is available */}
       {exhibition && <Scene />}
-      
+
       {/* Artwork info panel - shows when user double-clicks artwork with showArtworkInformation enabled */}
       {isArtworkPanelOpen && <ArtworkPanel />}
     </>

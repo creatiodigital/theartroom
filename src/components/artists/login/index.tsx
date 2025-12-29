@@ -5,6 +5,8 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
@@ -91,7 +93,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   if (loading) {
     return (
       <div className={styles.loginPage}>
-        <p>Loading...</p>
+        <LoadingBar />
       </div>
     )
   }
@@ -99,7 +101,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   if (notFound) {
     return (
       <div className={styles.loginPage}>
-        <h1>Artist Not Found</h1>
+        <H1>Artist Not Found</H1>
         <p>The artist you are looking for does not exist.</p>
       </div>
     )
@@ -108,7 +110,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <h1>Welcome back, {artist?.name}</h1>
+        <H1>Welcome back, {artist?.name}</H1>
         <p className={styles.subtitle}>Sign in to manage your exhibitions</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>

@@ -1,5 +1,8 @@
+import { FolderDown, LampCeiling, Settings, X, type LucideIcon } from 'lucide-react'
+import type { FC, SVGProps } from 'react'
+
+// Custom SVG imports (for icons not available in Lucide)
 import ChevronDown from '@/icons/chevron-down.svg'
-import Close from '@/icons/close.svg'
 import DistributeHorizontal from '@/icons/distribute-horizontal.svg'
 import DistributeVertical from '@/icons/distribute-vertical.svg'
 import Drop from '@/icons/drop.svg'
@@ -8,7 +11,6 @@ import Grid from '@/icons/grid.svg'
 import HorizontalCenter from '@/icons/horizontal-center.svg'
 import HorizontalLeft from '@/icons/horizontal-left.svg'
 import HorizontalRight from '@/icons/horizontal-right.svg'
-import Light from '@/icons/light.svg'
 import Loading from '@/icons/loading.svg'
 import Move from '@/icons/move.svg'
 import Painting from '@/icons/painting.svg'
@@ -23,7 +25,6 @@ import PositionRight from '@/icons/position-right.svg'
 import PositionTop from '@/icons/position-top.svg'
 import Preview from '@/icons/preview.svg'
 import Reset from '@/icons/reset.svg'
-import Settings from '@/icons/settings.svg'
 import TextCenter from '@/icons/text-center.svg'
 import TextLeft from '@/icons/text-left.svg'
 import TextRight from '@/icons/text-right.svg'
@@ -34,9 +35,20 @@ import VerticalTop from '@/icons/vertical-top.svg'
 import ZoomIn from '@/icons/zoom-in.svg'
 import ZoomOut from '@/icons/zoom-out.svg'
 
-const icons = {
+// Type for custom SVG icons
+type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
+
+// Lucide icons registry (add Lucide icons here as needed)
+const lucideIcons: Record<string, LucideIcon> = {
+  close: X,
+  gallery: FolderDown,
+  light: LampCeiling,
+  settings: Settings,
+}
+
+// Custom SVG icons registry
+const customIcons: Record<string, CustomSvgIcon> = {
   chevronDown: ChevronDown,
-  close: Close,
   distributeHorizontal: DistributeHorizontal,
   distributeVertical: DistributeVertical,
   drop: Drop,
@@ -45,7 +57,6 @@ const icons = {
   horizontalCenter: HorizontalCenter,
   horizontalRight: HorizontalRight,
   expand: Expand,
-  light: Light,
   loading: Loading,
   move: Move,
   painting: Painting,
@@ -62,7 +73,6 @@ const icons = {
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
   reset: Reset,
-  settings: Settings,
   text: Text,
   textLeft: TextLeft,
   textCenter: TextCenter,
@@ -70,19 +80,34 @@ const icons = {
   verticalBottom: VerticalBottom,
   verticalCenter: VerticalCenter,
   verticalTop: VerticalTop,
-} as const
+}
 
-export type IconName = keyof typeof icons
+// Merge both registries for type inference
+const allIcons = { ...lucideIcons, ...customIcons }
+
+export type IconName = keyof typeof allIcons
 
 export type IconProps = {
   name: IconName
   size?: number
   color?: string
+  strokeWidth?: number
 }
 
-const Icon = ({ name, size = 24, color = 'currentColor' }: IconProps) => {
-  const SvgIcon = icons[name]
-  return SvgIcon ? <SvgIcon width={size} height={size} fill={color} /> : null
+const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.25 }: IconProps) => {
+  // Check if it's a Lucide icon
+  const LucideIconComponent = lucideIcons[name as keyof typeof lucideIcons]
+  if (LucideIconComponent) {
+    return <LucideIconComponent size={size} color={color} strokeWidth={strokeWidth} />
+  }
+
+  // Fallback to custom SVG icon
+  const CustomIconComponent = customIcons[name as keyof typeof customIcons]
+  if (CustomIconComponent) {
+    return <CustomIconComponent width={size} height={size} fill={color} />
+  }
+
+  return null
 }
 
 export default Icon

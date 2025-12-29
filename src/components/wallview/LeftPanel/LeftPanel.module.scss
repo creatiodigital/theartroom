@@ -23,12 +23,6 @@
   margin-bottom: 10px;
 }
 
-.wallTitle {
-  @include mediumSans();
-  font-weight: 600;
-  margin-bottom: 0;
-}
-
 .title {
   @include smallSans();
   font-weight: 600;

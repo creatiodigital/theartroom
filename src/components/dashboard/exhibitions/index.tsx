@@ -4,28 +4,21 @@ import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
+import { H1 } from '@/components/ui/Typography'
+
+import styles from './DashboardExhibitions.module.scss'
 
 export const DashboardExhibitionsPage = () => {
   return (
-    <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '2rem',
-        }}
-      >
+    <div className={styles.page}>
+      <div className={styles.header}>
         <div>
-          <Link
-            href="/dashboard"
-            style={{ color: '#666', textDecoration: 'none', fontSize: '0.875rem' }}
-          >
+          <Link href="/dashboard" className={styles.backLink}>
             ← Back to Dashboard
           </Link>
-          <h1 style={{ margin: '0.5rem 0 0', fontSize: '1.75rem' }}>My Exhibitions</h1>
+          <H1 className={styles.pageTitle}>My Exhibitions</H1>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className={styles.headerActions}>
           <Button
             variant="small"
             label="+ New Exhibition"
@@ -40,7 +33,7 @@ export const DashboardExhibitionsPage = () => {
       <p>Manage your current and past exhibitions</p>
 
       {/* Exhibition list will go here */}
-      <div style={{ marginTop: '2rem' }}>
+      <div className={styles.exhibitionList}>
         {/* Each exhibition card would have:
             - Exhibition name
             - Status (draft, published, archived)

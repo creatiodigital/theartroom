@@ -76,7 +76,7 @@ model Exhibition {
 
   // Lighting customization (space-agnostic)
   ambientLightColor     String? @default("#e4e8f2")
-  ambientLightIntensity Float?  @default(0.2)
+  ambientLightIntensity Float?  @default(1.0)
 
   exhibitionArtworks ExhibitionArtwork[]
 

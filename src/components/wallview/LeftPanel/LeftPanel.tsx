@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/Input'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
 import { editArtwork } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
-import { editWallName } from '@/redux/slices/sceneSlice'
 import { showHuman, hideHuman, removeGroup } from '@/redux/slices/wallViewSlice'
 import {
   increaseScaleFactor,
@@ -34,19 +33,12 @@ export const LeftPanel = () => {
   const positionsById = useSelector((state: RootState) => state.exhibition.exhibitionArtworksById)
 
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const walls = useSelector((state: RootState) => state.scene.walls)
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
 
-  const [isWallNameEditing, setIsWallNameEditing] = useState(false)
-  const [newWallName, setNewWallName] = useState('')
-
   const [isEditingArtwork, setIsEditingArtwork] = useState<string | null>(null)
   const [newArtworkName, setNewArtworkName] = useState('')
-
-  const currentWall = walls.find((wall) => wall.id === currentWallId)
-  const currentWallName = currentWall ? currentWall.name : 'Select a wall'
 
   const wallArtworks = useMemo(() => {
     if (!currentWallId) return []
@@ -98,32 +90,6 @@ export const LeftPanel = () => {
     }
     if (!isWizardOpen) {
       dispatch(showWizard())
-    }
-  }
-
-  const handleDoubleClick = () => {
-    if (currentWall) {
-      setNewWallName(currentWall.name)
-      setIsWallNameEditing(true)
-    }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewWallName(e.target.value)
-  }
-
-  const handleBlur = () => {
-    if (currentWall && newWallName.trim() !== '') {
-      dispatch(editWallName({ wallId: currentWallId!, newName: newWallName.trim() }))
-    }
-    setIsWallNameEditing(false)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleBlur()
-    } else if (e.key === 'Escape') {
-      setIsWallNameEditing(false)
     }
   }
 
@@ -196,25 +162,6 @@ export const LeftPanel = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div className={styles.section}>
-        {isWallNameEditing ? (
-          <Input
-            value={newWallName}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            autoFocus
-          />
-        ) : (
-          <h1
-            className={styles.wallTitle}
-            onDoubleClick={handleDoubleClick}
-            style={{ cursor: currentWall ? 'pointer' : 'default' }}
-          >
-            {currentWallName}
-          </h1>
-        )}
       </div>
       {wallArtworks.length > 0 && (
         <div className={styles.section}>

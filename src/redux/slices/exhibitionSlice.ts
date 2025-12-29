@@ -68,4 +68,3 @@ export const {
 } = exhibitionSlice.actions
 
 export default exhibitionSlice.reducer
-
