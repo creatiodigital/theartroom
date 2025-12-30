@@ -1,0 +1,11 @@
+.label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-1);
+}
+
+.required {
+  color: var(--color-error-text);
+  margin-left: 2px;
+}

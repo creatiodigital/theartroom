@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
-import { H1 } from '@/components/ui/Typography'
+import { H1, P } from '@/components/ui/Typography'
 
 import styles from './DashboardExhibitions.module.scss'
 
@@ -30,7 +30,7 @@ export const DashboardExhibitionsPage = () => {
         </div>
       </div>
 
-      <p>Manage your current and past exhibitions</p>
+      <P>Manage your current and past exhibitions</P>
 
       {/* Exhibition list will go here */}
       <div className={styles.exhibitionList}>

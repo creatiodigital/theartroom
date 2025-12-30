@@ -5,6 +5,8 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { Input } from '@/components/ui/Input'
 import { H2 } from '@/components/ui/Typography'
 
 import styles from './LoginModal.module.scss'
@@ -61,9 +63,10 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
       <form onSubmit={handleSubmit}>
         <div className={styles.field}>
           <label htmlFor="email">Email</label>
-          <input
+          <Input
             id="email"
             type="email"
+            size="medium"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -71,15 +74,16 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
         </div>
         <div className={styles.field}>
           <label htmlFor="password">Password</label>
-          <input
+          <Input
             id="password"
             type="password"
+            size="medium"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
-        {error && <p className={styles.error}>{error}</p>}
+        <ErrorText>{error}</ErrorText>
         <div className={styles.actions}>
           <Button variant="small" label={loading ? 'Logging in...' : 'Log in'} type="submit" />
           <Button variant="small" label="Cancel" onClick={onClose} type="button" />

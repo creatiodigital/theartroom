@@ -6,6 +6,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSession, signOut } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
@@ -168,7 +170,7 @@ export const DashboardPage = () => {
           <H2 className={styles.sectionTitle}>My Exhibitions</H2>
 
           {exhibitions.length === 0 ? (
-            <p className={styles.empty}>You do not have any exhibitions yet.</p>
+            <EmptyState message="You do not have any exhibitions yet." />
           ) : (
             <table className={styles.table}>
               <thead>
@@ -225,7 +227,7 @@ export const DashboardPage = () => {
           </Modal>
         )}
 
-        {error && <p className={styles.error}>⚠️ {JSON.stringify(error)}</p>}
+        <ErrorText>{error && `⚠️ ${JSON.stringify(error)}`}</ErrorText>
       </div>
     </div>
   )

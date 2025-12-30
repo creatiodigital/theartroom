@@ -7,9 +7,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { FileInput } from '@/components/ui/FileInput'
+import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1 } from '@/components/ui/Typography'
+import { H1, P } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './profile.module.scss'
@@ -219,12 +222,11 @@ export const DashboardProfilePage = () => {
             )}
           </div>
           <div className={styles.imageActions}>
-            <input
+            <FileInput
               ref={fileInputRef}
-              type="file"
+              id="profileImage"
               accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleImageUpload}
-              style={{ display: 'none' }}
             />
             <Button
               variant="small"
@@ -243,9 +245,10 @@ export const DashboardProfilePage = () => {
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="name">First Name *</label>
-            <input
+            <Input
               id="name"
               type="text"
+              size="medium"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               required
@@ -253,9 +256,10 @@ export const DashboardProfilePage = () => {
           </div>
           <div className={styles.field}>
             <label htmlFor="lastName">Last Name *</label>
-            <input
+            <Input
               id="lastName"
               type="text"
+              size="medium"
               value={formData.lastName}
               onChange={(e) => handleChange('lastName', e.target.value)}
               required
@@ -265,9 +269,10 @@ export const DashboardProfilePage = () => {
 
         <div className={styles.field}>
           <label htmlFor="handler">Handler (URL slug) *</label>
-          <input
+          <Input
             id="handler"
             type="text"
+            size="medium"
             value={formData.handler}
             onChange={(e) => handleChange('handler', e.target.value)}
             required
@@ -277,9 +282,10 @@ export const DashboardProfilePage = () => {
 
         <div className={styles.field}>
           <label htmlFor="email">Email</label>
-          <input
+          <Input
             id="email"
             type="email"
+            size="medium"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
           />
@@ -294,8 +300,8 @@ export const DashboardProfilePage = () => {
           />
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
-        {success && <p className={styles.success}>{success}</p>}
+        <ErrorText>{error}</ErrorText>
+        {success && <P className={styles.success}>{success}</P>}
 
         <div className={styles.actions}>
           <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />

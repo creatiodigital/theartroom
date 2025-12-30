@@ -149,3 +149,26 @@ export function Text({
     </Component>
   )
 }
+
+/* =============================================================================
+   P Component
+   
+   Dedicated paragraph component with consistent styling.
+   
+   Usage:
+     <P>Regular paragraph text</P>
+     <P className={styles.mySpacing}>Paragraph with custom spacing</P>
+   ============================================================================= */
+
+type PProps = {
+  children: ReactNode
+  className?: string
+}
+
+export function P({ children, className = '' }: PProps) {
+  return (
+    <p className={`${styles.paragraph} ${className}`}>
+      {children}
+    </p>
+  )
+}

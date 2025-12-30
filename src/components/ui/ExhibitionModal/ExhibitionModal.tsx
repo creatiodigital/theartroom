@@ -3,8 +3,10 @@
 import React, { useState, useCallback, useEffect } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { H3 } from '@/components/ui/Typography'
+import { H3, P } from '@/components/ui/Typography'
 import type { TOption } from '@/types/artwork'
 
 import styles from './ExhibitionModal.module.scss'
@@ -101,29 +103,32 @@ export const ExhibitionModal = React.memo(
         <div className={styles.content}>
           <div>
             <H3>Exhibition Title</H3>
-            <input
+            <Input
+              id="exhibitionTitle"
               type="text"
+              size="medium"
               value={mainTitle}
               onChange={(e) => setMainTitle(e.target.value)}
               placeholder="Exhibition name"
-              className={styles.input}
             />
           </div>
 
           <div>
             <H3>URL Slug</H3>
-            <input
+            <Input
+              id="exhibitionUrl"
               type="text"
+              size="medium"
               value={customUrl}
               onChange={(e) => handleUrlChange(e.target.value)}
               placeholder="exhibition-url"
-              className={`${styles.input} ${urlError ? styles.inputError : ''}`}
+              variant={urlError ? 'error' : undefined}
             />
-            <p className={styles.urlPreview}>
+            <P className={styles.urlPreview}>
               /exhibitions/your-name/<strong>{customUrl || 'exhibition-url'}</strong>
-            </p>
-            {urlError && <p className={styles.error}>{urlError}</p>}
-            {checking && <p className={styles.checking}>Checking availability...</p>}
+            </P>
+            <ErrorText>{urlError}</ErrorText>
+            {checking && <P className={styles.checking}>Checking availability...</P>}
           </div>
 
           <div>

@@ -51,7 +51,7 @@ const ArtworkPanel = () => {
           <div className={styles.row}>
             <div className={styles.item}>
               <span className={styles.label}>Name</span>
-              <Input value={name} onChange={handleNameChange} />
+              <Input id="artworkName" value={name} onChange={handleNameChange} />
             </div>
           </div>
         </div>

@@ -14,13 +14,14 @@ type ButtonProps = {
   onClick?: MouseEventHandler<HTMLButtonElement>
   label: string
   disabled?: boolean
+  className?: string
 }
 
 export const Button = React.memo(
-  ({ variant = 'primary', type = 'button', onClick, label, disabled }: ButtonProps) => {
+  ({ variant = 'primary', type = 'button', onClick, label, disabled, className }: ButtonProps) => {
     return (
       <button
-        className={c([styles.button, styles[variant], disabled && styles.disabled])}
+        className={c([styles.button, styles[variant], disabled && styles.disabled, className])}
         onClick={onClick}
         type={type}
         disabled={disabled}

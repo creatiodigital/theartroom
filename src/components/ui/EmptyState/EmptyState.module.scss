@@ -1,0 +1,11 @@
+.empty {
+  text-align: center;
+  padding: var(--space-12);
+  color: var(--color-text-muted);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+
+  p {
+    margin: 0;
+  }
+}

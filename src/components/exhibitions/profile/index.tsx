@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
-import { Button } from '@/components/ui/Button'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1 } from '@/components/ui/Typography'
+import { H1, P } from '@/components/ui/Typography'
 
 import styles from './ExhibitionProfile.module.scss'
 
@@ -76,7 +78,7 @@ export const ExhibitionProfilePage = ({
       <>
         <Header />
         <div className={styles.page}>
-          <p className={styles.error}>{error || 'Exhibition not found'}</p>
+          <ErrorText>{error || 'Exhibition not found'}</ErrorText>
           <Link href="/exhibitions">← Back to Exhibitions</Link>
         </div>
         <Footer />
@@ -108,27 +110,31 @@ export const ExhibitionProfilePage = ({
           <H1 className={styles.title}>{exhibition.mainTitle}</H1>
 
           {/* Artist Name */}
-          <p className={styles.artist}>
+          <P className={styles.artist}>
             by{' '}
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artistLink}>
               {artistName}
             </Link>
-          </p>
+          </P>
 
           {/* Date Range */}
-          {dateRange && <p className={styles.dates}>{dateRange}</p>}
+          {dateRange && <P className={styles.dates}>{dateRange}</P>}
 
           {/* Status Badge */}
-          <div className={styles.statusBadge}>
-            {exhibition.status === 'current' ? 'Now Showing' : 'Past Exhibition'}
+          <div className={styles.badge}>
+            <Badge
+              label={exhibition.status === 'current' ? 'Now Showing' : 'Past Exhibition'}
+              variant={exhibition.status === 'current' ? 'current' : 'past'}
+              size="regular"
+            />
           </div>
 
           {/* Description placeholder - to be filled when we add description field */}
           <div className={styles.description}>
-            <p>
+            <P>
               Welcome to this virtual exhibition. Step into the gallery and explore the artworks in
               an immersive 3D environment.
-            </p>
+            </P>
           </div>
 
           {/* Enter Exhibition CTA */}

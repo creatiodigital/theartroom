@@ -61,6 +61,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Author</span>
                     <Input
+                      id="artworkAuthor"
                       value={author || ''}
                       onChange={(e) => handleEditArtwork('author', e.target.value)}
                     />
@@ -70,6 +71,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Title</span>
                     <Input
+                      id="artworkTitle"
                       value={artworkTitle || ''}
                       onChange={(e) => handleEditArtwork('artworkTitle', e.target.value)}
                     />
@@ -79,6 +81,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Year</span>
                     <Input
+                      id="artworkYear"
                       value={artworkYear || ''}
                       onChange={(e) => handleEditArtwork('artworkYear', e.target.value)}
                     />
@@ -97,6 +100,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Dimensions</span>
                     <Input
+                      id="artworkDimensions"
                       value={artworkDimensions || ''}
                       onChange={(e) => handleEditArtwork('artworkDimensions', e.target.value)}
                     />

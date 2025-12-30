@@ -2,6 +2,8 @@
 
 import { useEffect, useCallback } from 'react'
 
+import { P } from '@/components/ui/Typography'
+
 import styles from './ImageLightbox.module.scss'
 
 type ImageLightboxProps = {
@@ -57,7 +59,7 @@ export const ImageLightbox = ({ imageUrl, alt, caption, onClose }: ImageLightbox
         </svg>
       </button>
       <img src={imageUrl} alt={alt} className={styles.image} />
-      {caption && <p className={styles.caption}>{caption}</p>}
+      {caption && <P className={styles.caption}>{caption}</P>}
     </div>
   )
 }

@@ -48,14 +48,7 @@
   margin: 0 0 var(--space-6);
 }
 
-.statusBadge {
-  display: inline-block;
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+.badge {
   margin-bottom: var(--space-8);
 }
 
@@ -72,11 +65,6 @@
 
 .cta {
   margin-top: var(--space-4);
-
-  button {
-    padding: var(--space-4) var(--space-8);
-    font-size: var(--text-lg);
-  }
 }
 
 .error {

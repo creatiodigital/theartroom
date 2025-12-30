@@ -77,3 +77,12 @@
 .muted {
   color: var(--color-text-muted);
 }
+
+/* Paragraph */
+.paragraph {
+  font-family: var(--font-body), var(--font-body-fallback);
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+}

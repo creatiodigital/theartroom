@@ -178,6 +178,7 @@ export const LeftPanel = () => {
                 >
                   {isEditingArtwork === artwork.id ? (
                     <Input
+                      id={`artworkEdit-${artwork.id}`}
                       value={newArtworkName}
                       onChange={handleChangeArtworkName}
                       onBlur={() => handleBlurArtworkName(artwork.id)}

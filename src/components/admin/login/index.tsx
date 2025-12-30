@@ -5,7 +5,9 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
-import { H1 } from '@/components/ui/Typography'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { Input } from '@/components/ui/Input'
+import { H1, P } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
@@ -56,14 +58,15 @@ export const AdminLoginPage = () => {
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
         <H1>Admin Login</H1>
-        <p className={styles.subtitle}>Lumen Gallery Administration</p>
+        <P className={styles.subtitle}>Lumen Gallery Administration</P>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label htmlFor="email">Email</label>
-            <input
+            <Input
               id="email"
               type="email"
+              size="medium"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -72,16 +75,17 @@ export const AdminLoginPage = () => {
 
           <div className={styles.field}>
             <label htmlFor="password">Password</label>
-            <input
+            <Input
               id="password"
               type="password"
+              size="medium"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          {error && <p className={styles.error}>{error}</p>}
+          <ErrorText>{error}</ErrorText>
 
           <Button variant="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>

@@ -1,0 +1,44 @@
+.badge {
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-medium);
+}
+
+// Size variants
+.small {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.regular {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+// Color variants
+.neutral {
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.current {
+  background: #d4edda;
+  color: #155724;
+}
+
+.past {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.public {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.hidden {
+  background: #fff3cd;
+  color: #856404;
+}

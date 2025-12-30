@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
@@ -58,7 +59,7 @@ export const ExhibitionsPage = () => {
             <section className={styles.section}>
               <H2 className={styles.sectionTitle}>Current</H2>
               {currentExhibitions.length === 0 ? (
-                <p className={styles.empty}>No current exhibitions.</p>
+                <EmptyState message="No current exhibitions." />
               ) : (
                 <ul className={styles.list}>
                   {currentExhibitions.map((exhibition) => (

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, H2 } from '@/components/ui/Typography'
+import { H1, H2, P } from '@/components/ui/Typography'
 
 import styles from './ArtistProfile.module.scss'
 
@@ -84,7 +85,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         <Header />
         <div className="page-content">
           <H1>Artist Profile</H1>
-          <p>{error || 'Artist not found'}</p>
+          <P>{error || 'Artist not found'}</P>
         </div>
         <Footer />
       </>
@@ -114,7 +115,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             <H1 className={styles.artistName}>
               {artist.name} {artist.lastName}
             </H1>
-            <p className={styles.handler}>@{artist.handler}</p>
+            <P className={styles.handler}>@{artist.handler}</P>
           </div>
         </div>
 
@@ -126,14 +127,14 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
               dangerouslySetInnerHTML={{ __html: artist.biography }}
             />
           ) : (
-            <p className={styles.emptyText}>No biography yet.</p>
+            <EmptyState message="No biography yet." />
           )}
         </div>
 
         <div>
           <H2>Exhibitions</H2>
           {exhibitions.length === 0 ? (
-            <p className={styles.emptyText}>No exhibitions yet.</p>
+            <EmptyState message="No exhibitions yet." />
           ) : (
             <ul className={styles.exhibitionList}>
               {exhibitions.map((ex) => (

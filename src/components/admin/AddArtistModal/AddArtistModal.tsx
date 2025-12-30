@@ -3,9 +3,18 @@
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Textarea } from '@/components/ui/Textarea'
 import { H2 } from '@/components/ui/Typography'
 
 import styles from './AddArtistModal.module.scss'
+
+const userTypeOptions = [
+  { value: 'artist', label: 'Artist' },
+  { value: 'curator', label: 'Curator' },
+]
 
 type AddArtistModalProps = {
   onClose: () => void
@@ -74,9 +83,10 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="name">First Name *</label>
-            <input
+            <Input
               id="name"
               type="text"
+              size="medium"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               required
@@ -84,9 +94,10 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
           </div>
           <div className={styles.field}>
             <label htmlFor="lastName">Last Name *</label>
-            <input
+            <Input
               id="lastName"
               type="text"
+              size="medium"
               value={formData.lastName}
               onChange={(e) => handleChange('lastName', e.target.value)}
               required
@@ -96,9 +107,10 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
         <div className={styles.field}>
           <label htmlFor="handler">Handler (URL slug) *</label>
-          <input
+          <Input
             id="handler"
             type="text"
+            size="medium"
             value={formData.handler}
             onChange={(e) => handleChange('handler', e.target.value)}
             required
@@ -107,9 +119,10 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
         <div className={styles.field}>
           <label htmlFor="email">Email *</label>
-          <input
+          <Input
             id="email"
             type="email"
+            size="medium"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
             required
@@ -118,9 +131,10 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
         <div className={styles.field}>
           <label htmlFor="password">Password</label>
-          <input
+          <Input
             id="password"
             type="password"
+            size="medium"
             value={formData.password}
             onChange={(e) => handleChange('password', e.target.value)}
           />
@@ -128,8 +142,9 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
         <div className={styles.field}>
           <label htmlFor="biography">Biography</label>
-          <textarea
+          <Textarea
             id="biography"
+            size="medium"
             value={formData.biography}
             onChange={(e) => handleChange('biography', e.target.value)}
             rows={3}
@@ -138,17 +153,15 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
         <div className={styles.field}>
           <label htmlFor="userType">Type</label>
-          <select
-            id="userType"
+          <Select
+            options={userTypeOptions}
             value={formData.userType}
-            onChange={(e) => handleChange('userType', e.target.value)}
-          >
-            <option value="artist">Artist</option>
-            <option value="curator">Curator</option>
-          </select>
+            onChange={(val) => handleChange('userType', val as string)}
+            size="medium"
+          />
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
           <Button variant="small" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />

@@ -6,9 +6,10 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { EditView } from '@/components/editview'
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
-import { H3 } from '@/components/ui/Typography'
+import { H3, P } from '@/components/ui/Typography'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
 import {
@@ -115,7 +116,7 @@ export const Dashboard = () => {
             <div className={styles.list}>
               <H3 className={styles.subtitle}>My exhibitions</H3>
               {exhibitions.length === 0 ? (
-                <p>You do not have any exhibitions yet.</p>
+                <P>You do not have any exhibitions yet.</P>
               ) : (
                 <ul className={styles.exhibitionList}>
                   {exhibitions.map((ex: TExhibition) => (
@@ -154,7 +155,7 @@ export const Dashboard = () => {
             </Modal>
           )}
 
-          {error && <p className={styles.error}>⚠️ {JSON.stringify(error)}</p>}
+          <ErrorText>{error && `⚠️ ${JSON.stringify(error)}`}</ErrorText>
         </div>
       )}
       {isEditMode && <EditView />}

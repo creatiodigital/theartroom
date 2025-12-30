@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { H2 } from '@/components/ui/Typography'
 
@@ -110,14 +111,16 @@ export const AdminExhibitions = () => {
                 {exhibition.user.name} {exhibition.user.lastName}
               </td>
               <td>
-                <span className={`${styles.statusBadge} ${styles[exhibition.status]}`}>
-                  {exhibition.status}
-                </span>
+                <Badge
+                  label={exhibition.status}
+                  variant={exhibition.status as 'current' | 'past'}
+                />
               </td>
               <td>
-                <span className={`${styles.statusBadge} ${styles[exhibition.visibility]}`}>
-                  {exhibition.visibility}
-                </span>
+                <Badge
+                  label={exhibition.visibility}
+                  variant={exhibition.visibility as 'public' | 'hidden'}
+                />
               </td>
               <td>
                 <div className={styles.actions}>

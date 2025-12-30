@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { HintText } from '@/components/ui/HintText'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1 } from '@/components/ui/Typography'
+import { H1, P } from '@/components/ui/Typography'
 
 import styles from './ExhibitionSettings.module.scss'
 
@@ -78,7 +80,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   if (error || !exhibition) {
     return (
       <div className={styles.page}>
-        <p className={styles.error}>{error || 'Exhibition not found'}</p>
+        <ErrorText>{error || 'Exhibition not found'}</ErrorText>
         <Link href="/dashboard">← Back to Dashboard</Link>
       </div>
     )
@@ -97,13 +99,13 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       </div>
 
       <H1 className={styles.pageTitle}>Exhibition Settings</H1>
-      <p className={styles.exhibitionName}>{exhibition.mainTitle}</p>
+      <P className={styles.exhibitionName}>{exhibition.mainTitle}</P>
 
       <div className={styles.placeholder}>
-        <p>Settings content coming soon...</p>
-        <p className={styles.hint}>
+        <P>Settings content coming soon...</P>
+        <HintText>
           This page will include: title, description, dates, artists, and more.
-        </p>
+        </HintText>
       </div>
 
       <div className={styles.actions}>
