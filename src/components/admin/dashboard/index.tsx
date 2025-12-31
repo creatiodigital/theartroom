@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
-import { H1, H2, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
@@ -125,7 +125,7 @@ export const DashboardAdmin = () => {
       {/* Header with Logout */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <H1>Admin Dashboard</H1>
+          <Text as="h1">Admin Dashboard</Text>
         </div>
         <div className={styles.headerActions}>
           <Button variant="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
@@ -135,7 +135,7 @@ export const DashboardAdmin = () => {
 
       {/* Users Section */}
       <div className={styles.section}>
-        <H2 className={styles.sectionTitle}>All Users</H2>
+        <Text as="h2" className={styles.sectionTitle}>All Users</Text>
         <div className={styles.sectionActions}>
           <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>
@@ -244,12 +244,12 @@ export const DashboardAdmin = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <H2>Are you sure?</H2>
-            <P>
+            <Text as="h2">Are you sure?</Text>
+            <Text as="p">
               You are about to delete <strong>{deleteTarget.name}</strong>.
               <br />
               This action cannot be undone.
-            </P>
+            </Text>
             <div className={styles.deleteActions}>
               <Button
                 variant="small"

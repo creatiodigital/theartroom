@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
-import { H3 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -52,7 +52,7 @@ const ArtworkPanel = () => {
         <div className={styles.info}>
           {selectedArtwork && (
             <div>
-              {author && <H3 className={styles.author}>{author}</H3>}
+              {author && <Text as="h3" className={styles.author}>{author}</Text>}
               {(artworkTitle || name) && (
                 <span className={styles.title}>{artworkTitle || name}</span>
               )}

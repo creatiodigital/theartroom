@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './LoginModal.module.scss'
 
@@ -59,7 +59,7 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
 
   return (
     <div className={styles.loginModal}>
-      <H2>Log in</H2>
+      <Text as="h2">Log in</Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.field}>
           <label htmlFor="email">Email</label>

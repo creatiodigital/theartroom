@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
-import { H1, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
@@ -57,8 +57,8 @@ export const AdminLoginPage = () => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <H1>Admin Login</H1>
-        <P className={styles.subtitle}>Lumen Gallery Administration</P>
+        <Text as="h1">Admin Login</Text>
+        <Text as="p" className={styles.subtitle}>Lumen Gallery Administration</Text>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>

@@ -22,7 +22,7 @@ export const RichTextEditor = ({
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [2, 3],
+          levels: [2, 3, 4, 5, 6],
         },
       }),
       Placeholder.configure({
@@ -32,7 +32,6 @@ export const RichTextEditor = ({
     content,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      // Get HTML content
       onChange(editor.getHTML())
     },
     editorProps: {
@@ -42,7 +41,6 @@ export const RichTextEditor = ({
     },
   })
 
-  // Update content when external value changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content)
@@ -57,11 +55,12 @@ export const RichTextEditor = ({
     <div className={styles.container}>
       {/* Toolbar */}
       <div className={styles.toolbar}>
+        {/* Text formatting */}
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={editor.isActive('bold') ? styles.active : ''}
-          title="Bold"
+          title="Bold (Ctrl+B)"
         >
           <strong>B</strong>
         </button>
@@ -69,16 +68,27 @@ export const RichTextEditor = ({
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={editor.isActive('italic') ? styles.active : ''}
-          title="Italic"
+          title="Italic (Ctrl+I)"
         >
           <em>I</em>
         </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={editor.isActive('strike') ? styles.active : ''}
+          title="Strikethrough"
+        >
+          <s>S</s>
+        </button>
+
         <span className={styles.divider} />
+
+        {/* Headings */}
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className={editor.isActive('heading', { level: 2 }) ? styles.active : ''}
-          title="Heading"
+          title="Heading 2"
         >
           H2
         </button>
@@ -86,11 +96,38 @@ export const RichTextEditor = ({
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           className={editor.isActive('heading', { level: 3 }) ? styles.active : ''}
-          title="Subheading"
+          title="Heading 3"
         >
           H3
         </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+          className={editor.isActive('heading', { level: 4 }) ? styles.active : ''}
+          title="Heading 4"
+        >
+          H4
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}
+          className={editor.isActive('heading', { level: 5 }) ? styles.active : ''}
+          title="Heading 5"
+        >
+          H5
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          className={editor.isActive('paragraph') ? styles.active : ''}
+          title="Paragraph"
+        >
+          P
+        </button>
+
         <span className={styles.divider} />
+
+        {/* Lists */}
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -107,7 +144,10 @@ export const RichTextEditor = ({
         >
           1.
         </button>
+
         <span className={styles.divider} />
+
+        {/* Block elements */}
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -115,6 +155,41 @@ export const RichTextEditor = ({
           title="Quote"
         >
           "
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={editor.isActive('codeBlock') ? styles.active : ''}
+          title="Code Block"
+        >
+          {'</>'}
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          title="Horizontal Rule"
+        >
+          —
+        </button>
+
+        <span className={styles.divider} />
+
+        {/* Undo/Redo */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+          title="Undo (Ctrl+Z)"
+        >
+          ↶
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+          title="Redo (Ctrl+Y)"
+        >
+          ↷
         </button>
       </div>
 

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, H2, H3, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 
 import styles from './artworks.module.scss'
@@ -199,7 +199,7 @@ export const ArtworkLibraryPage = () => {
         <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <H1 className={styles.pageTitle}>Artwork Library</H1>
+      <Text as="h1" className={styles.pageTitle}>Artwork Library</Text>
 
       <div className={styles.sectionActions}>
         <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
@@ -242,11 +242,11 @@ export const ArtworkLibraryPage = () => {
 
       {filteredArtworks.length === 0 ? (
         <div className={styles.empty}>
-          <P>
+          <Text as="p">
             {artworks.length === 0
               ? 'No artworks yet. Click "Add Artwork" to create your first one.'
               : 'No artworks match this filter.'}
-          </P>
+          </Text>
         </div>
       ) : (
         <div className={styles.list}>
@@ -271,13 +271,13 @@ export const ArtworkLibraryPage = () => {
                 )}
               </div>
               <div className={styles.cardInfo}>
-                <H3>{artwork.name}</H3>
-                <P className={styles.meta}>
+                <Text as="h3">{artwork.name}</Text>
+                <Text as="p" className={styles.meta}>
                   {artwork.artworkType === 'image' ? 'Image' : 'Text'}
                   {artwork.title && ` • ${artwork.title}`}
                   {artwork.year && ` • ${artwork.year}`}
                   {artwork.technique && ` • ${artwork.technique}`}
-                </P>
+                </Text>
                 {artwork.exhibitionArtworks.length > 0 && (
                   <div className={styles.exhibitions}>
                     <span className={styles.exhibitionsLabel}>In:</span>
@@ -329,12 +329,12 @@ export const ArtworkLibraryPage = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <H2>Delete Artwork?</H2>
-            <P>
+            <Text as="h2">Delete Artwork?</Text>
+            <Text as="p">
               Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
               <br />
               This action cannot be undone.
-            </P>
+            </Text>
             <div className={styles.deleteActions}>
               <Button
                 variant="small"
@@ -350,13 +350,13 @@ export const ArtworkLibraryPage = () => {
       {unlinkTarget && (
         <Modal onClose={() => setUnlinkTarget(null)}>
           <div className={styles.deleteModal}>
-            <H2>Remove from Exhibition?</H2>
-            <P>
+            <Text as="h2">Remove from Exhibition?</Text>
+            <Text as="p">
               Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
               <strong>{unlinkTarget.exhibitionTitle}</strong>?
               <br />
               The artwork will remain in your library.
-            </P>
+            </Text>
             <div className={styles.deleteActions}>
               <Button
                 variant="small"

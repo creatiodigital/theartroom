@@ -12,7 +12,7 @@ import { FileInput } from '@/components/ui/FileInput'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './profile.module.scss'
@@ -202,7 +202,7 @@ export const DashboardProfilePage = () => {
         <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <H1 className={styles.title}>Edit Profile</H1>
+      <Text as="h1" className={styles.title}>Edit Profile</Text>
 
       {/* Profile Image Section */}
       <div className={styles.imageSection}>
@@ -301,7 +301,7 @@ export const DashboardProfilePage = () => {
         </div>
 
         <ErrorText>{error}</ErrorText>
-        {success && <P className={styles.success}>{success}</P>}
+        {success && <Text as="p" className={styles.success}>{success}</Text>}
 
         <div className={styles.actions}>
           <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />

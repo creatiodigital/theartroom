@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './exhibitions.module.scss'
 
@@ -57,7 +57,7 @@ export const ExhibitionsPage = () => {
           <>
             {/* Current Exhibitions */}
             <section className={styles.section}>
-              <H2 className={styles.sectionTitle}>Current</H2>
+              <Text as="h2" font="sans" className={styles.sectionTitle}>Current</Text>
               {currentExhibitions.length === 0 ? (
                 <EmptyState message="No current exhibitions." />
               ) : (
@@ -68,11 +68,7 @@ export const ExhibitionsPage = () => {
                         href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                         className={styles.exhibitionLink}
                       >
-                        <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
-                        <span className={styles.artistName}>
-                          {' '}
-                          — {exhibition.user.name} {exhibition.user.lastName}
-                        </span>
+                        <span className={styles.exhibitionTitle}>{exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}</span>
                       </Link>
                     </li>
                   ))}
@@ -83,7 +79,7 @@ export const ExhibitionsPage = () => {
             {/* Past Exhibitions - only show if there are any */}
             {pastExhibitions.length > 0 && (
               <section className={styles.section}>
-                <H2 className={styles.sectionTitle}>Past</H2>
+                <Text as="h2" className={styles.sectionTitle}>Past</Text>
                 <ul className={styles.list}>
                   {pastExhibitions.map((exhibition) => (
                     <li key={exhibition.id} className={styles.listItem}>

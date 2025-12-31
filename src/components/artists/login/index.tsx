@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
@@ -103,8 +103,8 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   if (notFound) {
     return (
       <div className={styles.loginPage}>
-        <H1>Artist Not Found</H1>
-        <P>The artist you are looking for does not exist.</P>
+        <Text as="h1">Artist Not Found</Text>
+        <Text as="p">The artist you are looking for does not exist.</Text>
       </div>
     )
   }
@@ -112,8 +112,8 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <H1>Welcome back, {artist?.name}</H1>
-        <P className={styles.subtitle}>Sign in to manage your exhibitions</P>
+        <Text as="h1">Welcome back, {artist?.name}</Text>
+        <Text as="p" className={styles.subtitle}>Sign in to manage your exhibitions</Text>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>

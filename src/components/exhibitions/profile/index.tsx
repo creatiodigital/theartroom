@@ -2,20 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, P } from '@/components/ui/Typography'
+import { RichText } from '@/components/ui/RichText'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './ExhibitionProfile.module.scss'
 
 type Exhibition = {
   id: string
   mainTitle: string
+  description?: string
   url: string
   status: string
   visibility: string
@@ -65,7 +65,7 @@ export const ExhibitionProfilePage = ({
     return (
       <>
         <Header />
-        <div className={styles.page}>
+        <div className="page-content">
           <LoadingBar />
         </div>
         <Footer />
@@ -77,7 +77,7 @@ export const ExhibitionProfilePage = ({
     return (
       <>
         <Header />
-        <div className={styles.page}>
+        <div className="page-content">
           <ErrorText>{error || 'Exhibition not found'}</ErrorText>
           <Link href="/exhibitions">← Back to Exhibitions</Link>
         </div>
@@ -89,7 +89,6 @@ export const ExhibitionProfilePage = ({
   const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
 
-  // Format dates if available
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null
     const date = new Date(dateStr)
@@ -104,45 +103,35 @@ export const ExhibitionProfilePage = ({
   return (
     <>
       <Header />
-      <div className={styles.page}>
+      <div className="page-content">
         <div className={styles.content}>
-          {/* Exhibition Title */}
-          <H1 className={styles.title}>{exhibition.mainTitle}</H1>
-
-          {/* Artist Name */}
-          <P className={styles.artist}>
-            by{' '}
-            <Link href={`/artists/${exhibition.user.handler}`} className={styles.artistLink}>
+          <div className={styles.header}>
+            <Text as="h1" className={styles.title}>{exhibition.mainTitle}</Text>
+            <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
-          </P>
+            <div className={styles.cta}>
+              <Link href={visitUrl}>
+                <Button variant="small" label="Enter Exhibition" />
+              </Link>
+            </div>
+          </div>
 
-          {/* Date Range */}
-          {dateRange && <P className={styles.dates}>{dateRange}</P>}
+          {dateRange && <Text as="p" className={styles.dates}>{dateRange}</Text>}
 
-          {/* Status Badge */}
-          <div className={styles.badge}>
+          {/* <div className={styles.badge}>
             <Badge
               label={exhibition.status === 'current' ? 'Now Showing' : 'Past Exhibition'}
               variant={exhibition.status === 'current' ? 'current' : 'past'}
               size="regular"
             />
-          </div>
+          </div> */}
 
-          {/* Description placeholder - to be filled when we add description field */}
-          <div className={styles.description}>
-            <P>
-              Welcome to this virtual exhibition. Step into the gallery and explore the artworks in
-              an immersive 3D environment.
-            </P>
-          </div>
+          {exhibition.description && (
+            <RichText content={exhibition.description} className={styles.description} />
+          )}
 
-          {/* Enter Exhibition CTA */}
-          <div className={styles.cta}>
-            <Link href={visitUrl}>
-              <Button variant="primary" label="Enter Exhibition" />
-            </Link>
-          </div>
+        
         </div>
       </div>
       <Footer />

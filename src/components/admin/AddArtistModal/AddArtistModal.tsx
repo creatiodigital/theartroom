@@ -7,7 +7,7 @@ import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './AddArtistModal.module.scss'
 
@@ -78,7 +78,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
   return (
     <div className={styles.modal}>
-      <H2>Add New Artist</H2>
+      <Text as="h2">Add New Artist</Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>

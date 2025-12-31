@@ -65,6 +65,7 @@ model Exhibition {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   handler      String
   mainTitle    String
+  description  String?
   url          String    @unique
   thumbnailUrl String?
   bannerUrl    String?

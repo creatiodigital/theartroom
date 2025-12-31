@@ -1,5 +1,7 @@
 'use client'
 
+import { Text } from '@/components/ui/Typography'
+
 import c from 'classnames'
 
 import styles from './EmptyState.module.scss'
@@ -12,7 +14,7 @@ type EmptyStateProps = {
 export const EmptyState = ({ message, className }: EmptyStateProps) => {
   return (
     <div className={c(styles.empty, className)}>
-      <p>{message}</p>
+      <Text as="p">{message}</Text>
     </div>
   )
 }

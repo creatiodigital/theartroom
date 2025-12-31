@@ -18,15 +18,15 @@
 }
 
 .artistLink {
-  font-family: var(--font-heading), var(--font-heading-fallback);
-  font-size: var(--text-2xl);
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: var(--text-3xl);
   font-weight: var(--font-regular);
   color: var(--color-text);
   text-decoration: none;
   transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.7;
+    color: var(--color-brand);
     text-decoration: none;
   }
 }

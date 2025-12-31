@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './AdminDashboard.module.scss'
 
@@ -83,7 +83,7 @@ export const AdminExhibitions = () => {
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
-        <H2>Exhibition Management</H2>
+        <Text as="h2">Exhibition Management</Text>
       </div>
 
       <table className={styles.table}>

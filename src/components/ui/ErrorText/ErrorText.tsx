@@ -2,6 +2,8 @@
 
 import c from 'classnames'
 
+import { Text } from '@/components/ui/Typography'
+
 import styles from './ErrorText.module.scss'
 
 type ErrorTextProps = {
@@ -13,9 +15,9 @@ export const ErrorText = ({ children, className }: ErrorTextProps) => {
   if (!children) return null
   
   return (
-    <p className={c(styles.error, className)}>
+    <Text as="p" className={c(styles.error, className)}>
       {children}
-    </p>
+    </Text>
   )
 }
 

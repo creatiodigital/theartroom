@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { H3, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import type { TOption } from '@/types/artwork'
 
 import styles from './ExhibitionModal.module.scss'
@@ -102,7 +102,7 @@ export const ExhibitionModal = React.memo(
       <div className={styles.wrapper}>
         <div className={styles.content}>
           <div>
-            <H3>Exhibition Title</H3>
+            <Text as="h3">Exhibition Title</Text>
             <Input
               id="exhibitionTitle"
               type="text"
@@ -114,7 +114,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <H3>URL Slug</H3>
+            <Text as="h3">URL Slug</Text>
             <Input
               id="exhibitionUrl"
               type="text"
@@ -124,15 +124,15 @@ export const ExhibitionModal = React.memo(
               placeholder="exhibition-url"
               variant={urlError ? 'error' : undefined}
             />
-            <P className={styles.urlPreview}>
+            <Text as="p" className={styles.urlPreview}>
               /exhibitions/your-name/<strong>{customUrl || 'exhibition-url'}</strong>
-            </P>
+            </Text>
             <ErrorText>{urlError}</ErrorText>
-            {checking && <P className={styles.checking}>Checking availability...</P>}
+            {checking && <Text as="p" className={styles.checking}>Checking availability...</Text>}
           </div>
 
           <div>
-            <H3>Visibility</H3>
+            <Text as="h3">Visibility</Text>
             <Select<string>
               options={[
                 { value: 'public', label: 'Public' },
@@ -144,7 +144,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <H3>Choose a Space</H3>
+            <Text as="h3">Choose a Space</Text>
             <Select<string>
               options={spaceOptions}
               value={selectedSpace?.value}

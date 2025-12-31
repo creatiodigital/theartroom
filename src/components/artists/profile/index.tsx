@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, H2, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './ArtistProfile.module.scss'
 
@@ -49,7 +49,6 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         const data = await response.json()
         setArtist(data)
 
-        // Fetch public exhibitions for this artist
         const exResponse = await fetch(`/api/exhibitions?userId=${data.id}&visibility=public`)
         if (exResponse.ok) {
           const exData = await exResponse.json()
@@ -71,7 +70,6 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <>
         <Header />
         <div className="page-content">
-          <H1>Artist Profile</H1>
           <LoadingBar />
         </div>
         <Footer />
@@ -84,8 +82,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <>
         <Header />
         <div className="page-content">
-          <H1>Artist Profile</H1>
-          <P>{error || 'Artist not found'}</P>
+          <Text as="p">{error || 'Artist not found'}</Text>
         </div>
         <Footer />
       </>
@@ -112,15 +109,15 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             </div>
           )}
           <div>
-            <H1 className={styles.artistName}>
+            <Text as="h1" className={styles.artistName}>
               {artist.name} {artist.lastName}
-            </H1>
-            <P className={styles.handler}>@{artist.handler}</P>
+            </Text>
+            <Text as="p" className={styles.handler}>@{artist.handler}</Text>
           </div>
         </div>
 
         <div className={styles.section}>
-          <H2>About</H2>
+          <Text as="h2" font="sans">About</Text>
           {artist.biography ? (
             <div
               className={styles.biography}
@@ -132,7 +129,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         </div>
 
         <div>
-          <H2>Exhibitions</H2>
+          <Text as="h2" font="sans">Exhibitions</Text>
           {exhibitions.length === 0 ? (
             <EmptyState message="No exhibitions yet." />
           ) : (

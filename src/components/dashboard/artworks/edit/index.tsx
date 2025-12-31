@@ -13,7 +13,7 @@ import { HintText } from '@/components/ui/HintText'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Textarea } from '@/components/ui/Textarea'
-import { H1 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './edit.module.scss'
 
@@ -223,7 +223,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <Link href="/dashboard/artworks" className={styles.backLink}>
           ← Back to Library
         </Link>
-        <H1>Edit Artwork</H1>
+        <Text as="h1">Edit Artwork</Text>
       </div>
 
       {/* Image Upload Section */}

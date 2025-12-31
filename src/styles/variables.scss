@@ -25,7 +25,7 @@
   --gray-900: #212121;
 
   // Brand
-  --color-brand: #cf5243; // Logo color (Lumen Gallery)
+  --color-brand: #d92a1c; // Logo color (Lumen Gallery)
 
   // Semantic colors
   --color-text: #333333; // All texts
@@ -39,6 +39,10 @@
   --color-border: #eaeaea; // Borders and dividers
   --color-border-light: var(--gray-200);
   --color-border-dark: #ddd;
+
+  // Site padding: fixed at 48px, goes to 24px on small screens
+  --site-padding: 48px;
+
   --color-accent: #007aff;
   --color-accent-light: #c5e1ff;
 
@@ -62,8 +66,8 @@
      =========================================================================== */
 
   // These are set by Next.js font loader, fallbacks defined here
-  --font-body-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading-fallback: Georgia, 'Times New Roman', serif;
+  --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif-fallback: Georgia, 'Times New Roman', serif;
 
   /* ===========================================================================
      TYPOGRAPHY - Font Sizes (in pixels)
@@ -79,6 +83,7 @@
   --text-4xl: 26px;
   --text-5xl: 32px;
   --text-6xl: 40px;
+  --text-7xl: 48px;
 
   /* ===========================================================================
      TYPOGRAPHY - Line Heights
@@ -115,6 +120,7 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-9: 36px;
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
@@ -125,7 +131,8 @@
      LAYOUT
      =========================================================================== */
 
-  --content-max-width: 1660px;
+  --header-max-width: 1660px;
+  --content-max-width: 1580px;
 
   /* ===========================================================================
      BORDERS

@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H3, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import type { RootState } from '@/redux/store'
 
 import styles from './MediaLibrary.module.scss'
@@ -66,7 +66,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   return (
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
-        <H3>Media Library</H3>
+        <Text as="h3">Media Library</Text>
         <button className={styles.closeButton} onClick={onClose}>
           ×
         </button>
@@ -75,11 +75,11 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
       {loading ? (
         <LoadingBar />
       ) : availableArtworks.length === 0 ? (
-        <P className={styles.empty}>
+        <Text as="p" className={styles.empty}>
           {artworks.length === 0
             ? 'No artworks in library. Create some first!'
             : 'All artworks are already in this exhibition.'}
-        </P>
+        </Text>
       ) : (
         <div className={styles.grid}>
           {availableArtworks.map((artwork) => (

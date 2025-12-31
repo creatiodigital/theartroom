@@ -12,7 +12,7 @@ import { Lato, EB_Garamond, Roboto, Lora } from 'next/font/google'
 export const bodyFont = Lato({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
-  variable: '--font-body',
+  variable: '--font-sans',
   display: 'swap',
 })
 
@@ -24,7 +24,7 @@ export const bodyFont = Lato({
 export const headingFont = EB_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-heading',
+  variable: '--font-serif',
   display: 'swap',
 })
 

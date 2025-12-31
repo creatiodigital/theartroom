@@ -9,7 +9,7 @@ import { FileInput } from '@/components/ui/FileInput'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
-import { H2, P } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './AddArtworkModal.module.scss'
 
@@ -147,7 +147,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
   return (
     <div className={styles.modal}>
-      <H2>Add New Artwork</H2>
+      <Text as="h2">Add New Artwork</Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>
@@ -204,7 +204,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
                   </button>
                 </div>
               ) : (
-                <P>Click or drag image here</P>
+                <Text as="p">Click or drag image here</Text>
               )}
             </div>
             <FileInput

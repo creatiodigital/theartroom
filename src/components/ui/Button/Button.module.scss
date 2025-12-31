@@ -3,6 +3,27 @@
 .button {
   cursor: pointer;
   width: 100%;
+  @include mediumSerif();
+  padding: 10px;
+  background: var(--grayDarkest);
+  color: var(--white);
+  border: 1px solid var(--grayDarkest);
+
+  &:hover {
+    background: var(--black);
+    border: 1px solid var(--black);
+  }
+}
+
+.small {
+  @include smallSans();
+  padding: 8px;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .outline {
@@ -16,25 +37,6 @@
     background: var(--black);
     color: var(--white);
   }
-}
-
-.small {
-  @include smallSans();
-  padding: 10px;
-  background: var(--grayDarkest);
-  color: var(--white);
-  border: 1px solid var(--grayDarkest);
-
-  &:hover {
-    background: var(--black);
-    border: 1px solid var(--black);
-  }
-}
-
-.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
 }
 
 .link {
