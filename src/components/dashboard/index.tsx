@@ -6,10 +6,12 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSession, signOut } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
-import { H2, H3 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
@@ -146,7 +148,7 @@ export const DashboardPage = () => {
     <div className={styles.dashboard}>
       <div className={styles.main}>
         <div className={styles.header}>
-          <H3>Hello {userData?.name ?? session?.user?.name ?? ''}</H3>
+          <Text as="h3">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
           <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
         </div>
 
@@ -165,10 +167,12 @@ export const DashboardPage = () => {
             />
           </div>
 
-          <H2 className={styles.sectionTitle}>My Exhibitions</H2>
+          <Text as="h2" className={styles.sectionTitle}>
+            My Exhibitions
+          </Text>
 
           {exhibitions.length === 0 ? (
-            <p className={styles.empty}>You do not have any exhibitions yet.</p>
+            <EmptyState message="You do not have any exhibitions yet." />
           ) : (
             <table className={styles.table}>
               <thead>
@@ -225,7 +229,7 @@ export const DashboardPage = () => {
           </Modal>
         )}
 
-        {error && <p className={styles.error}>⚠️ {JSON.stringify(error)}</p>}
+        <ErrorText>{error && `⚠️ ${JSON.stringify(error)}`}</ErrorText>
       </div>
     </div>
   )

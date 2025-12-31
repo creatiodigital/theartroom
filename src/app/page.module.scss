@@ -28,11 +28,11 @@
 
 .sectionHeading {
   margin-bottom: var(--space-4);
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   text-transform: uppercase;
   font-weight: var(--font-light);
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
 }
 
 .emptyText {
@@ -58,15 +58,11 @@
 }
 
 .exhibitionAuthor {
-  font-family: var(--font-heading);
-  font-weight: var(--font-regular);
-  font-size: var(--text-4xl);
-  display: block;
+  margin-bottom: var(--space-2);
 }
 
 .exhibitionTitle {
-  font-family: var(--font-body);
-  font-weight: var(--font-regular);
-  font-size: var(--text-md);
+  font-size: var(--text-4xl);
   display: block;
+  color: var(--grayDarkest);
 }

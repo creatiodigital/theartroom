@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
-import { H1 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './DashboardExhibitions.module.scss'
 
@@ -16,7 +16,9 @@ export const DashboardExhibitionsPage = () => {
           <Link href="/dashboard" className={styles.backLink}>
             ← Back to Dashboard
           </Link>
-          <H1 className={styles.pageTitle}>My Exhibitions</H1>
+          <Text as="h1" className={styles.pageTitle}>
+            My Exhibitions
+          </Text>
         </div>
         <div className={styles.headerActions}>
           <Button
@@ -30,7 +32,7 @@ export const DashboardExhibitionsPage = () => {
         </div>
       </div>
 
-      <p>Manage your current and past exhibitions</p>
+      <Text as="p">Manage your current and past exhibitions</Text>
 
       {/* Exhibition list will go here */}
       <div className={styles.exhibitionList}>

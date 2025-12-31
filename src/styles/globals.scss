@@ -23,7 +23,7 @@ html {
 }
 
 body {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: var(--text-md);
   font-weight: var(--font-light);
   line-height: var(--leading-normal);
@@ -42,10 +42,14 @@ main {
 /* Page content container - use on any page content wrapper */
 .page-content {
   flex: 1 0 auto;
-  width: 100%;
-  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: var(--space-8);
+  padding: var(--space-8) 0;
+  width: calc(100% - var(--site-padding) * 2);
+
+  @media (max-width: 1020px) {
+    width: calc(100% - var(--space-6) * 2);
+  }
 }
 
 /* ===========================================================================
@@ -58,7 +62,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-family: var(--font-serif), var(--font-serif-fallback);
   font-weight: var(--font-regular);
   line-height: var(--leading-tight);
   color: var(--color-text);

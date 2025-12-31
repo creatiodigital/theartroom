@@ -107,34 +107,6 @@
   flex-wrap: nowrap;
 }
 
-.statusBadge {
-  display: inline-block;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-
-  &.current {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  &.past {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  &.public {
-    background: #cce5ff;
-    color: #004085;
-  }
-
-  &.hidden {
-    background: #fff3cd;
-    color: #856404;
-  }
-}
-
 .deleteModal {
   text-align: center;
 

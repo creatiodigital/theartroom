@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'
 
 type ExhibitionUpdateBody = {
   mainTitle?: string
+  description?: string
   status?: string // 'current' | 'past'
   visibility?: string // 'public' | 'hidden'
   thumbnailUrl?: string
@@ -55,6 +56,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     const data: Prisma.ExhibitionUpdateInput = {}
     if (body.mainTitle !== undefined) data.mainTitle = body.mainTitle
+    if (body.description !== undefined) data.description = body.description
     if (body.status !== undefined) data.status = body.status
     if (body.visibility !== undefined) data.visibility = body.visibility
     if (body.thumbnailUrl !== undefined) data.thumbnailUrl = body.thumbnailUrl

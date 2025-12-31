@@ -4,9 +4,19 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
-import { H2 } from '@/components/ui/Typography'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { FileInput } from '@/components/ui/FileInput'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Textarea } from '@/components/ui/Textarea'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './AddArtworkModal.module.scss'
+
+const artworkTypeOptions = [
+  { value: 'image', label: 'Image' },
+  { value: 'text', label: 'Text' },
+]
 
 type AddArtworkModalProps = {
   userId: string
@@ -137,14 +147,15 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
   return (
     <div className={styles.modal}>
-      <H2>Add New Artwork</H2>
+      <Text as="h2">Add New Artwork</Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="name">Name (Library Display) *</label>
-            <input
+            <Input
               id="name"
               type="text"
+              size="medium"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="e.g. Sunset Painting"
@@ -153,14 +164,12 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
           </div>
           <div className={styles.field}>
             <label htmlFor="artworkType">Type</label>
-            <select
-              id="artworkType"
+            <Select
+              options={artworkTypeOptions}
               value={formData.artworkType}
-              onChange={(e) => handleChange('artworkType', e.target.value)}
-            >
-              <option value="image">Image</option>
-              <option value="text">Text</option>
-            </select>
+              onChange={(val) => handleChange('artworkType', val as string)}
+              size="medium"
+            />
           </div>
         </div>
 
@@ -195,24 +204,24 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
                   </button>
                 </div>
               ) : (
-                <p>Click or drag image here</p>
+                <Text as="p">Click or drag image here</Text>
               )}
             </div>
-            <input
+            <FileInput
               ref={fileInputRef}
-              type="file"
+              id="newArtworkImage"
               accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleFileChange}
-              style={{ display: 'none' }}
             />
           </div>
         )}
 
         <div className={styles.field}>
           <label htmlFor="title">Artwork Title</label>
-          <input
+          <Input
             id="title"
             type="text"
+            size="medium"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder="Official artwork title"
@@ -222,9 +231,10 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="year">Year</label>
-            <input
+            <Input
               id="year"
               type="text"
+              size="medium"
               value={formData.year}
               onChange={(e) => handleChange('year', e.target.value)}
               placeholder="e.g. 2024"
@@ -232,9 +242,10 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
           </div>
           <div className={styles.field}>
             <label htmlFor="technique">Technique / Medium</label>
-            <input
+            <Input
               id="technique"
               type="text"
+              size="medium"
               value={formData.technique}
               onChange={(e) => handleChange('technique', e.target.value)}
               placeholder="e.g. Oil on canvas"
@@ -244,9 +255,10 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
         <div className={styles.field}>
           <label htmlFor="dimensions">Dimensions</label>
-          <input
+          <Input
             id="dimensions"
             type="text"
+            size="medium"
             value={formData.dimensions}
             onChange={(e) => handleChange('dimensions', e.target.value)}
             placeholder="e.g. 100 x 80 cm"
@@ -255,8 +267,9 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
         <div className={styles.field}>
           <label htmlFor="description">Description</label>
-          <textarea
+          <Textarea
             id="description"
+            size="medium"
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
             rows={3}
@@ -264,7 +277,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
           />
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
           <Button

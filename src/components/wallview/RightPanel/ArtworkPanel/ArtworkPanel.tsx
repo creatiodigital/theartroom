@@ -8,7 +8,7 @@ import { Mesh } from 'three'
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { Input } from '@/components/ui/Input'
 import { NumberInput } from '@/components/ui/NumberInput'
-import { H2, H3 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
@@ -51,15 +51,19 @@ const ArtworkPanel = () => {
           <div className={styles.row}>
             <div className={styles.item}>
               <span className={styles.label}>Name</span>
-              <Input value={name} onChange={handleNameChange} />
+              <Input id="artworkName" value={name} onChange={handleNameChange} />
             </div>
           </div>
         </div>
       </div>
       <div className={styles.section}>
-        <H2 className={styles.title}>Position</H2>
+        <Text as="h2" className={styles.title}>
+          Position
+        </Text>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Position in wall</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Position in wall
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlign('verticalTop')} />
@@ -84,7 +88,9 @@ const ArtworkPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Position (meters)</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Position (meters)
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -109,9 +115,13 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <H2 className={styles.title}>Layout</H2>
+        <Text as="h2" className={styles.title}>
+          Layout
+        </Text>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Size (meters)</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Size (meters)
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput

@@ -7,8 +7,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { FileInput } from '@/components/ui/FileInput'
+import { HintText } from '@/components/ui/HintText'
+import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1 } from '@/components/ui/Typography'
+import { Textarea } from '@/components/ui/Textarea'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './edit.module.scss'
 
@@ -206,7 +211,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   if (error && !artwork) {
     return (
       <div className={styles.page}>
-        <p className={styles.error}>{error}</p>
+        <ErrorText>{error}</ErrorText>
         <Link href="/dashboard/artworks">← Back to Library</Link>
       </div>
     )
@@ -218,7 +223,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <Link href="/dashboard/artworks" className={styles.backLink}>
           ← Back to Library
         </Link>
-        <H1>Edit Artwork</H1>
+        <Text as="h1">Edit Artwork</Text>
       </div>
 
       {/* Image Upload Section */}
@@ -238,12 +243,11 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           )}
         </div>
         <div className={styles.imageActions}>
-          <input
+          <FileInput
             ref={fileInputRef}
-            type="file"
+            id="artworkImage"
             accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={handleImageUpload}
-            style={{ display: 'none' }}
           />
           <Button
             variant="small"
@@ -255,39 +259,43 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             <Button variant="small" label="Remove" onClick={handleRemoveImage} type="button" />
           )}
         </div>
-        <p className={styles.imageHint}>
+        <HintText>
           Accepted: JPG, PNG, WebP, GIF (max 10MB). Images are automatically optimized.
-        </p>
+        </HintText>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="name">Name (Library Display) *</label>
-            <input
+            <Input
               id="name"
               type="text"
+              size="medium"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               required
             />
           </div>
           <div className={styles.field}>
-            <label>Type</label>
-            <input
+            <label htmlFor="artworkType">Type</label>
+            <Input
+              id="artworkType"
               type="text"
+              size="medium"
               value={formData.artworkType === 'image' ? 'Image' : 'Text'}
-              disabled
-              style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+              onChange={() => {}}
+              variant="disabled"
             />
           </div>
         </div>
 
         <div className={styles.field}>
           <label htmlFor="title">Artwork Title</label>
-          <input
+          <Input
             id="title"
             type="text"
+            size="medium"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
           />
@@ -295,9 +303,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         <div className={styles.field}>
           <label htmlFor="author">Author</label>
-          <input
+          <Input
             id="author"
             type="text"
+            size="medium"
             value={formData.author}
             onChange={(e) => handleChange('author', e.target.value)}
           />
@@ -306,18 +315,20 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="year">Year</label>
-            <input
+            <Input
               id="year"
               type="text"
+              size="medium"
               value={formData.year}
               onChange={(e) => handleChange('year', e.target.value)}
             />
           </div>
           <div className={styles.field}>
             <label htmlFor="technique">Technique / Medium</label>
-            <input
+            <Input
               id="technique"
               type="text"
+              size="medium"
               value={formData.technique}
               onChange={(e) => handleChange('technique', e.target.value)}
             />
@@ -326,9 +337,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         <div className={styles.field}>
           <label htmlFor="dimensions">Dimensions</label>
-          <input
+          <Input
             id="dimensions"
             type="text"
+            size="medium"
             value={formData.dimensions}
             onChange={(e) => handleChange('dimensions', e.target.value)}
           />
@@ -336,15 +348,16 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         <div className={styles.field}>
           <label htmlFor="description">Description</label>
-          <textarea
+          <Textarea
             id="description"
+            size="medium"
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
             rows={4}
           />
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+        <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
           <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />

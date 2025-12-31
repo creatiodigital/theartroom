@@ -3,7 +3,7 @@
 import { useRef } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './SettingsPanel.module.scss'
 
@@ -23,7 +23,9 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <H2 className={styles.title}>{title}</H2>
+      <Text as="h2" className={styles.title}>
+        {title}
+      </Text>
 
       <div className={styles.content}>{children}</div>
 

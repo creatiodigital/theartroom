@@ -1,5 +1,6 @@
 'use client'
 
+import c from 'classnames'
 import type { ChangeEventHandler } from 'react'
 
 import styles from './Checkbox.module.scss'
@@ -7,12 +8,13 @@ import styles from './Checkbox.module.scss'
 type CheckboxProps = {
   checked: boolean
   onChange: ChangeEventHandler<HTMLInputElement>
-  label: string
+  label?: string
+  className?: string
 }
 
-const Checkbox = ({ checked = false, onChange, label }: CheckboxProps) => {
+const Checkbox = ({ checked = false, onChange, label, className }: CheckboxProps) => {
   return (
-    <label className={styles.checkbox}>
+    <label className={c(styles.checkbox, className)}>
       <input type="checkbox" checked={checked} onChange={onChange} className={styles.hidden} />
       <span className={styles.span}></span>
       {label && <span className={styles.label}>{label}</span>}
