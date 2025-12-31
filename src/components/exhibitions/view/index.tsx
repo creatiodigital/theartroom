@@ -38,12 +38,9 @@ const LoadingOverlay = () => {
   return (
     <div className={styles.loadingOverlay}>
       <div className={styles.progressBar}>
-        <div 
-          className={styles.progressFill} 
-          style={{ width: `${progress}%` }} 
-        />
+        <div className={styles.progressFill} style={{ width: `${progress}%` }} />
       </div>
-      <Text as='span'>
+      <Text as="span">
         {active ? `Loading 3D scene... ${Math.round(progress)}%` : 'Almost ready...'}
       </Text>
     </div>
@@ -98,19 +95,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   useLoadExhibitionArtworks(exhibition?.id)
 
   if (error) {
-    return (
-      <div className={styles.errorState}>
-        Error loading exhibition
-      </div>
-    )
+    return <div className={styles.errorState}>Error loading exhibition</div>
   }
 
   if (!exhibition && !isApiLoading) {
-    return (
-      <div className={styles.emptyState}>
-        Exhibition not found
-      </div>
-    )
+    return <div className={styles.emptyState}>Exhibition not found</div>
   }
 
   return (

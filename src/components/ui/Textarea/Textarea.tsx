@@ -15,7 +15,15 @@ type TTextarea = {
   className?: string
 }
 
-function Textarea({ id, value, onChange, placeholder, rows = 3, size = 'regular', className }: TTextarea) {
+function Textarea({
+  id,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+  size = 'regular',
+  className,
+}: TTextarea) {
   return (
     <div className={c(styles.wrapper, className)}>
       <textarea

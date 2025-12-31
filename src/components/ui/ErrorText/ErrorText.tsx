@@ -13,7 +13,7 @@ type ErrorTextProps = {
 
 export const ErrorText = ({ children, className }: ErrorTextProps) => {
   if (!children) return null
-  
+
   return (
     <Text as="p" className={c(styles.error, className)}>
       {children}

@@ -23,7 +23,9 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <Text as="h2" className={styles.title}>{title}</Text>
+      <Text as="h2" className={styles.title}>
+        {title}
+      </Text>
 
       <div className={styles.content}>{children}</div>
 

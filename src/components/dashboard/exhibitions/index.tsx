@@ -16,7 +16,9 @@ export const DashboardExhibitionsPage = () => {
           <Link href="/dashboard" className={styles.backLink}>
             ← Back to Dashboard
           </Link>
-          <Text as="h1" className={styles.pageTitle}>My Exhibitions</Text>
+          <Text as="h1" className={styles.pageTitle}>
+            My Exhibitions
+          </Text>
         </div>
         <div className={styles.headerActions}>
           <Button

@@ -1,6 +1,5 @@
 @use '@/styles/mixins' as *;
 
-
 .content {
   padding: var(--space-16) 0 0 0;
 }
@@ -33,7 +32,6 @@
   }
 }
 
-
 .dates {
   font-size: var(--text-lg);
   color: var(--color-text-muted);
@@ -46,7 +44,6 @@
   column-count: 2;
   column-gap: var(--space-8);
 }
-
 
 .error {
   color: var(--color-error-text);

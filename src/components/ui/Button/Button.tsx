@@ -22,9 +22,19 @@ type ButtonProps = {
 }
 
 export const Button = React.memo(
-  ({ variant = 'primary', type = 'button', onClick, label, disabled, className, iconLeft, iconRight, href }: ButtonProps) => {
+  ({
+    variant = 'primary',
+    type = 'button',
+    onClick,
+    label,
+    disabled,
+    className,
+    iconLeft,
+    iconRight,
+    href,
+  }: ButtonProps) => {
     const classNames = c([styles.button, styles[variant], disabled && styles.disabled, className])
-    
+
     const content = (
       <>
         {iconLeft && <span className={styles.iconLeft}>{iconLeft}</span>}
@@ -43,12 +53,7 @@ export const Button = React.memo(
     }
 
     return (
-      <button
-        className={classNames}
-        onClick={onClick}
-        type={type}
-        disabled={disabled}
-      >
+      <button className={classNames} onClick={onClick} type={type} disabled={disabled}>
         {content}
       </button>
     )

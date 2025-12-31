@@ -128,7 +128,11 @@ export const ExhibitionModal = React.memo(
               /exhibitions/your-name/<strong>{customUrl || 'exhibition-url'}</strong>
             </Text>
             <ErrorText>{urlError}</ErrorText>
-            {checking && <Text as="p" className={styles.checking}>Checking availability...</Text>}
+            {checking && (
+              <Text as="p" className={styles.checking}>
+                Checking availability...
+              </Text>
+            )}
           </div>
 
           <div>

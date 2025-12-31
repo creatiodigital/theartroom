@@ -135,7 +135,9 @@ export const DashboardAdmin = () => {
 
       {/* Users Section */}
       <div className={styles.section}>
-        <Text as="h2" className={styles.sectionTitle}>All Users</Text>
+        <Text as="h2" className={styles.sectionTitle}>
+          All Users
+        </Text>
         <div className={styles.sectionActions}>
           <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>

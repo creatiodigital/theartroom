@@ -202,7 +202,9 @@ export const DashboardProfilePage = () => {
         <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <Text as="h1" className={styles.title}>Edit Profile</Text>
+      <Text as="h1" className={styles.title}>
+        Edit Profile
+      </Text>
 
       {/* Profile Image Section */}
       <div className={styles.imageSection}>
@@ -301,7 +303,11 @@ export const DashboardProfilePage = () => {
         </div>
 
         <ErrorText>{error}</ErrorText>
-        {success && <Text as="p" className={styles.success}>{success}</Text>}
+        {success && (
+          <Text as="p" className={styles.success}>
+            {success}
+          </Text>
+        )}
 
         <div className={styles.actions}>
           <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />

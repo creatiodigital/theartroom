@@ -112,12 +112,16 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             <Text as="h1" className={styles.artistName}>
               {artist.name} {artist.lastName}
             </Text>
-            <Text as="p" className={styles.handler}>@{artist.handler}</Text>
+            <Text as="p" className={styles.handler}>
+              @{artist.handler}
+            </Text>
           </div>
         </div>
 
         <div className={styles.section}>
-          <Text as="h2" font="sans">About</Text>
+          <Text as="h2" font="sans">
+            About
+          </Text>
           {artist.biography ? (
             <div
               className={styles.biography}
@@ -129,7 +133,9 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         </div>
 
         <div>
-          <Text as="h2" font="sans">Exhibitions</Text>
+          <Text as="h2" font="sans">
+            Exhibitions
+          </Text>
           {exhibitions.length === 0 ? (
             <EmptyState message="No exhibitions yet." />
           ) : (

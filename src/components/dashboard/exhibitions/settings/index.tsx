@@ -139,10 +139,14 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         </Link>
       </div>
 
-      <Text as="h1" className={styles.pageTitle}>{exhibition.mainTitle}</Text>
+      <Text as="h1" className={styles.pageTitle}>
+        {exhibition.mainTitle}
+      </Text>
 
       <div className={styles.section}>
-        <Text as="h3" font="sans" className={styles.sectionTitle}>Description</Text>
+        <Text as="h3" font="sans" className={styles.sectionTitle}>
+          Description
+        </Text>
         <RichTextEditor
           content={description}
           onChange={setDescription}
@@ -157,7 +161,11 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           onClick={handleSave}
           disabled={saving}
         />
-        {saveSuccess && <Text as="span" className={styles.successMessage}>Saved!</Text>}
+        {saveSuccess && (
+          <Text as="span" className={styles.successMessage}>
+            Saved!
+          </Text>
+        )}
       </div>
 
       {error && <ErrorText>{error}</ErrorText>}

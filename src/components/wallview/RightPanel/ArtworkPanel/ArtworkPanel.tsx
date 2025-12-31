@@ -57,9 +57,13 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>Position</Text>
+        <Text as="h2" className={styles.title}>
+          Position
+        </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Position in wall</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Position in wall
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlign('verticalTop')} />
@@ -84,7 +88,9 @@ const ArtworkPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Position (meters)</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Position (meters)
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -109,9 +115,13 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>Layout</Text>
+        <Text as="h2" className={styles.title}>
+          Layout
+        </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Size (meters)</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Size (meters)
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput

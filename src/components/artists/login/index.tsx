@@ -113,7 +113,9 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
         <Text as="h1">Welcome back, {artist?.name}</Text>
-        <Text as="p" className={styles.subtitle}>Sign in to manage your exhibitions</Text>
+        <Text as="p" className={styles.subtitle}>
+          Sign in to manage your exhibitions
+        </Text>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>

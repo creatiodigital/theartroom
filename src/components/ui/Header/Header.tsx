@@ -12,7 +12,9 @@ export const Header = () => {
     <header className={styles.header}>
       <div className={styles.headerInner}>
         <Link href="/" className={styles.logo}>
-          <Text as="h2" className={styles.logo}>Lumen Gallery</Text>
+          <Text as="h2" className={styles.logo}>
+            Lumen Gallery
+          </Text>
         </Link>
         <Navigation />
       </div>

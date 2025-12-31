@@ -199,7 +199,9 @@ export const ArtworkLibraryPage = () => {
         <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
       </div>
 
-      <Text as="h1" className={styles.pageTitle}>Artwork Library</Text>
+      <Text as="h1" className={styles.pageTitle}>
+        Artwork Library
+      </Text>
 
       <div className={styles.sectionActions}>
         <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />

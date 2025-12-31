@@ -54,9 +54,13 @@ export default async function Home() {
 
       <div className={styles.content}>
         <section className={styles.exhibitionsSection}>
-          <Text as="h2" className={styles.sectionHeading}>Exhibitions</Text>
+          <Text as="h2" className={styles.sectionHeading}>
+            Exhibitions
+          </Text>
           {exhibitions.length === 0 ? (
-            <Text as="p" className={styles.emptyText}>No current exhibitions at the moment.</Text>
+            <Text as="p" className={styles.emptyText}>
+              No current exhibitions at the moment.
+            </Text>
           ) : (
             <ul className={styles.exhibitionList}>
               {exhibitions.map((exhibition) => (
@@ -66,7 +70,7 @@ export default async function Home() {
                     className={styles.exhibitionLink}
                   >
                     <Text as="h2" className={styles.exhibitionTitle}>
-                      {exhibition.user.name} {exhibition.user.lastName}:  {exhibition.mainTitle}
+                      {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
                     </Text>
                   </Link>
                 </li>

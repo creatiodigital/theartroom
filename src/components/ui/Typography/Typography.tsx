@@ -2,7 +2,6 @@ import type { ReactNode, HTMLAttributes } from 'react'
 
 import styles from './Typography.module.scss'
 
-
 type TextElement = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label'
 type TextSize = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 type FontFamily = 'serif' | 'sans'
@@ -35,7 +34,8 @@ const getSizeClass = (element: TextElement, size?: TextSize): string => {
 
   if (headingElements.has(element)) {
     return styles[element] || ''
-  } return styles.paragraph || ''
+  }
+  return styles.paragraph || ''
 }
 
 const getWeightClass = (element: TextElement, weight?: TextWeight): string => {

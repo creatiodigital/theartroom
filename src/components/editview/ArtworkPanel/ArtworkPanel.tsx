@@ -52,7 +52,11 @@ const ArtworkPanel = () => {
         <div className={styles.info}>
           {selectedArtwork && (
             <div>
-              {author && <Text as="h3" className={styles.author}>{author}</Text>}
+              {author && (
+                <Text as="h3" className={styles.author}>
+                  {author}
+                </Text>
+              )}
               {(artworkTitle || name) && (
                 <span className={styles.title}>{artworkTitle || name}</span>
               )}

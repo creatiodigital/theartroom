@@ -107,21 +107,27 @@ export const ExhibitionProfilePage = ({
       <div className="page-content">
         <div className={styles.content}>
           <div className={styles.header}>
-            <Text as="h1" className={styles.title}>{exhibition.mainTitle}</Text>
+            <Text as="h1" className={styles.title}>
+              {exhibition.mainTitle}
+            </Text>
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
             <div className={styles.cta}>
-              <Button 
-                variant="small" 
-                label="Enter Exhibition" 
+              <Button
+                variant="small"
+                label="Enter Exhibition"
                 href={visitUrl}
-                iconRight={<ArrowRight size={16} />} 
+                iconRight={<ArrowRight size={16} />}
               />
             </div>
           </div>
 
-          {dateRange && <Text as="p" className={styles.dates}>{dateRange}</Text>}
+          {dateRange && (
+            <Text as="p" className={styles.dates}>
+              {dateRange}
+            </Text>
+          )}
 
           {/* <div className={styles.badge}>
             <Badge
@@ -134,8 +140,6 @@ export const ExhibitionProfilePage = ({
           {exhibition.description && (
             <RichText content={exhibition.description} className={styles.description} />
           )}
-
-        
         </div>
       </div>
       <Footer />

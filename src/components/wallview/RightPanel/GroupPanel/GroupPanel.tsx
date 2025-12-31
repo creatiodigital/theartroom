@@ -61,9 +61,13 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>Group</Text>
+        <Text as="h2" className={styles.title}>
+          Group
+        </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Position in wall</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Position in wall
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
@@ -100,7 +104,9 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Position (meters)</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Position (meters)
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -125,9 +131,13 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>Elements</Text>
+        <Text as="h2" className={styles.title}>
+          Elements
+        </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Align Elements</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Align Elements
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
@@ -167,7 +177,9 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>Distribution</Text>
+          <Text as="h3" className={styles.subtitle}>
+            Distribution
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon

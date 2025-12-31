@@ -57,7 +57,9 @@ export const ExhibitionsPage = () => {
           <>
             {/* Current Exhibitions */}
             <section className={styles.section}>
-              <Text as="h2" font="sans" className={styles.sectionTitle}>Current</Text>
+              <Text as="h2" font="sans" className={styles.sectionTitle}>
+                Current
+              </Text>
               {currentExhibitions.length === 0 ? (
                 <EmptyState message="No current exhibitions." />
               ) : (
@@ -68,7 +70,9 @@ export const ExhibitionsPage = () => {
                         href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                         className={styles.exhibitionLink}
                       >
-                        <span className={styles.exhibitionTitle}>{exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}</span>
+                        <span className={styles.exhibitionTitle}>
+                          {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -79,7 +83,9 @@ export const ExhibitionsPage = () => {
             {/* Past Exhibitions - only show if there are any */}
             {pastExhibitions.length > 0 && (
               <section className={styles.section}>
-                <Text as="h2" className={styles.sectionTitle}>Past</Text>
+                <Text as="h2" className={styles.sectionTitle}>
+                  Past
+                </Text>
                 <ul className={styles.list}>
                   {pastExhibitions.map((exhibition) => (
                     <li key={exhibition.id} className={styles.listItem}>

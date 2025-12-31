@@ -13,9 +13,6 @@ export const RichText = ({ content, className }: RichTextProps) => {
   if (!content) return null
 
   return (
-    <div
-      className={c(styles.richText, className)}
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
+    <div className={c(styles.richText, className)} dangerouslySetInnerHTML={{ __html: content }} />
   )
 }

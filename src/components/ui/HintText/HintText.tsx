@@ -11,12 +11,8 @@ type HintTextProps = {
 
 export const HintText = ({ children, className }: HintTextProps) => {
   if (!children) return null
-  
-  return (
-    <span className={c(styles.hint, className)}>
-      {children}
-    </span>
-  )
+
+  return <span className={c(styles.hint, className)}>{children}</span>
 }
 
 export default HintText

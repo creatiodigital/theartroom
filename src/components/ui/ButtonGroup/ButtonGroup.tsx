@@ -11,11 +11,7 @@ type ButtonGroupProps = {
 }
 
 export const ButtonGroup = ({ children, className, align = 'left' }: ButtonGroupProps) => {
-  return (
-    <div className={c(styles.group, styles[align], className)}>
-      {children}
-    </div>
-  )
+  return <div className={c(styles.group, styles[align], className)}>{children}</div>
 }
 
 export default ButtonGroup

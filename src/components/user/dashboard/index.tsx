@@ -114,7 +114,9 @@ export const Dashboard = () => {
           <div className={styles.exhibitions}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
             <div className={styles.list}>
-              <Text as="h3" className={styles.subtitle}>My exhibitions</Text>
+              <Text as="h3" className={styles.subtitle}>
+                My exhibitions
+              </Text>
               {exhibitions.length === 0 ? (
                 <Text as="p">You do not have any exhibitions yet.</Text>
               ) : (

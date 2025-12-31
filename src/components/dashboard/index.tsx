@@ -167,7 +167,9 @@ export const DashboardPage = () => {
             />
           </div>
 
-          <Text as="h2" className={styles.sectionTitle}>My Exhibitions</Text>
+          <Text as="h2" className={styles.sectionTitle}>
+            My Exhibitions
+          </Text>
 
           {exhibitions.length === 0 ? (
             <EmptyState message="You do not have any exhibitions yet." />

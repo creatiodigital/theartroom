@@ -111,7 +111,9 @@ const ArtisticImage = () => {
           )}
 
           <div className={styles.section}>
-            <Text as="h2" className={styles.title}>Features</Text>
+            <Text as="h2" className={styles.title}>
+              Features
+            </Text>
 
             <div className={styles.subsection}>
               <div className={styles.row}>

@@ -22,9 +22,13 @@ const ArtisticText = () => {
 
   return (
     <div className={styles.section}>
-      <Text as="h2" className={styles.title}>Text Styles</Text>
+      <Text as="h2" className={styles.title}>
+        Text Styles
+      </Text>
       <div className={styles.subsection}>
-        <Text as="h3" className={styles.subtitle}>Alignment</Text>
+        <Text as="h3" className={styles.subtitle}>
+          Alignment
+        </Text>
         <div className={styles.row}>
           <div className={styles.item}>
             <ButtonIcon

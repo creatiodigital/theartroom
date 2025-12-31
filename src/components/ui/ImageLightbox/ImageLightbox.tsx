@@ -59,7 +59,11 @@ export const ImageLightbox = ({ imageUrl, alt, caption, onClose }: ImageLightbox
         </svg>
       </button>
       <img src={imageUrl} alt={alt} className={styles.image} />
-      {caption && <Text as="p" className={styles.caption}>{caption}</Text>}
+      {caption && (
+        <Text as="p" className={styles.caption}>
+          {caption}
+        </Text>
+      )}
     </div>
   )
 }
