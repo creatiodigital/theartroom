@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+<<<<<<< HEAD
 import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
 import { HintText } from '@/components/ui/HintText'
@@ -14,6 +15,10 @@ import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Textarea } from '@/components/ui/Textarea'
 import { Text } from '@/components/ui/Typography'
+=======
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
+>>>>>>> develop
 
 import styles from './edit.module.scss'
 
@@ -223,7 +228,11 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <Link href="/dashboard/artworks" className={styles.backLink}>
           ← Back to Library
         </Link>
+<<<<<<< HEAD
         <Text as="h1">Edit Artwork</Text>
+=======
+        <H1>Edit Artwork</H1>
+>>>>>>> develop
       </div>
 
       {/* Image Upload Section */}

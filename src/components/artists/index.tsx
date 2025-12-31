@@ -7,6 +7,10 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
+<<<<<<< HEAD
+=======
+import { H1 } from '@/components/ui/Typography'
+>>>>>>> develop
 
 import styles from './artists.module.scss'
 
@@ -43,6 +47,10 @@ export const ArtistsPage = () => {
       <>
         <Header />
         <div className={styles.page}>
+<<<<<<< HEAD
+=======
+          <H1 className={styles.title}>Artists</H1>
+>>>>>>> develop
           <LoadingBar />
         </div>
         <Footer />
@@ -54,6 +62,10 @@ export const ArtistsPage = () => {
     <>
       <Header />
       <div className={styles.page}>
+<<<<<<< HEAD
+=======
+        <H1 className={styles.title}>Artists</H1>
+>>>>>>> develop
         {artists.length === 0 ? (
           <EmptyState message="No artists found." />
         ) : (

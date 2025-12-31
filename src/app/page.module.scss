@@ -28,11 +28,19 @@
 
 .sectionHeading {
   margin-bottom: var(--space-4);
+<<<<<<< HEAD
   font-family: var(--font-sans), var(--font-sans-fallback);
   text-transform: uppercase;
   font-weight: var(--font-light);
   border-top: 1px solid var(--color-border);
   padding-top: var(--space-4);
+=======
+  font-family: var(--font-body), var(--font-body-fallback);
+  text-transform: uppercase;
+  font-weight: var(--font-light);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-4);
+>>>>>>> develop
 }
 
 .emptyText {
@@ -58,6 +66,7 @@
 }
 
 .exhibitionAuthor {
+<<<<<<< HEAD
   margin-bottom: var(--space-2);
 }
 
@@ -65,4 +74,17 @@
   font-size: var(--text-4xl);
   display: block;
   color: var(--grayDarkest);
+=======
+  font-family: var(--font-heading);
+  font-weight: var(--font-regular);
+  font-size: var(--text-4xl);
+  display: block;
+}
+
+.exhibitionTitle {
+  font-family: var(--font-body);
+  font-weight: var(--font-regular);
+  font-size: var(--text-md);
+  display: block;
+>>>>>>> develop
 }

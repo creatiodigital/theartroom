@@ -23,6 +23,7 @@
   letter-spacing: 2px;
 }
 
+<<<<<<< HEAD
 .font-serif {
   font-family: var(--font-serif), var(--font-serif-fallback);
 }
@@ -63,6 +64,66 @@
   font-size: var(--text-xl);
 }
 
+=======
+/* Heading sizes - aligned with globals.scss base styles */
+.h1 {
+  font-size: var(--text-3xl);
+}
+.h2 {
+  font-size: var(--text-2xl);
+}
+.h3 {
+  font-size: var(--text-lg);
+}
+.h4 {
+  font-size: var(--text-md);
+}
+
+/* Font family variants */
+.font-serif {
+  font-family: var(--font-heading), var(--font-heading-fallback);
+}
+
+.font-sans {
+  font-family: var(--font-body), var(--font-body-fallback);
+}
+
+/* Heading font weights */
+.heading-weight-light {
+  font-weight: 300;
+}
+
+.heading-weight-normal {
+  font-weight: 400;
+}
+
+.heading-weight-medium {
+  font-weight: 500;
+}
+
+.heading-weight-bold {
+  font-weight: 700;
+}
+
+/* Text sizes */
+.text-xs {
+  font-size: var(--text-xs);
+}
+.text-sm {
+  font-size: var(--text-sm);
+}
+.text-base {
+  font-size: var(--text-md);
+}
+.text-lg {
+  font-size: var(--text-lg);
+}
+.text-xl {
+  font-size: var(--text-xl);
+}
+
+/* Font weights */
+>>>>>>> develop
 .weight-light {
   font-weight: var(--font-light);
 }

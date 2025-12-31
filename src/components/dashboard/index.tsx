@@ -11,7 +11,11 @@ import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
+<<<<<<< HEAD
 import { Text } from '@/components/ui/Typography'
+=======
+import { H2, H3 } from '@/components/ui/Typography'
+>>>>>>> develop
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
@@ -148,7 +152,11 @@ export const DashboardPage = () => {
     <div className={styles.dashboard}>
       <div className={styles.main}>
         <div className={styles.header}>
+<<<<<<< HEAD
           <Text as="h3">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
+=======
+          <H3>Hello {userData?.name ?? session?.user?.name ?? ''}</H3>
+>>>>>>> develop
           <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
         </div>
 
@@ -167,9 +175,13 @@ export const DashboardPage = () => {
             />
           </div>
 
+<<<<<<< HEAD
           <Text as="h2" className={styles.sectionTitle}>
             My Exhibitions
           </Text>
+=======
+          <H2 className={styles.sectionTitle}>My Exhibitions</H2>
+>>>>>>> develop
 
           {exhibitions.length === 0 ? (
             <EmptyState message="You do not have any exhibitions yet." />

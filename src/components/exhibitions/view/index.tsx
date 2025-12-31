@@ -26,6 +26,10 @@ const LoadingOverlay = () => {
   const { active, progress } = useProgress()
   const [dismissed, setDismissed] = useState(false)
 
+<<<<<<< HEAD
+=======
+  // Dismiss overlay when loading is complete
+>>>>>>> develop
   useEffect(() => {
     if (!active && progress >= 100) {
       const timer = setTimeout(() => setDismissed(true), 100)
@@ -105,7 +109,15 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   return (
     <>
       <LoadingOverlay />
+<<<<<<< HEAD
       {exhibition && <Scene />}
+=======
+
+      {/* Scene renders as soon as exhibition data is available */}
+      {exhibition && <Scene />}
+
+      {/* Artwork info panel - shows when user double-clicks artwork with showArtworkInformation enabled */}
+>>>>>>> develop
       {isArtworkPanelOpen && <ArtworkPanel />}
     </>
   )

@@ -5,10 +5,15 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
+<<<<<<< HEAD
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
+=======
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
+>>>>>>> develop
 
 import styles from './login.module.scss'
 
@@ -103,8 +108,13 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   if (notFound) {
     return (
       <div className={styles.loginPage}>
+<<<<<<< HEAD
         <Text as="h1">Artist Not Found</Text>
         <Text as="p">The artist you are looking for does not exist.</Text>
+=======
+        <H1>Artist Not Found</H1>
+        <p>The artist you are looking for does not exist.</p>
+>>>>>>> develop
       </div>
     )
   }
@@ -112,10 +122,15 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
+<<<<<<< HEAD
         <Text as="h1">Welcome back, {artist?.name}</Text>
         <Text as="p" className={styles.subtitle}>
           Sign in to manage your exhibitions
         </Text>
+=======
+        <H1>Welcome back, {artist?.name}</H1>
+        <p className={styles.subtitle}>Sign in to manage your exhibitions</p>
+>>>>>>> develop
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>

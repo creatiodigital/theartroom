@@ -7,9 +7,15 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
+<<<<<<< HEAD
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
+=======
+import { Button } from '@/components/ui/Button'
+import { LoadingBar } from '@/components/ui/LoadingBar'
+import { H1 } from '@/components/ui/Typography'
+>>>>>>> develop
 
 import styles from './ExhibitionProfile.module.scss'
 
@@ -66,7 +72,11 @@ export const ExhibitionProfilePage = ({
     return (
       <>
         <Header />
+<<<<<<< HEAD
         <div className="page-content">
+=======
+        <div className={styles.page}>
+>>>>>>> develop
           <LoadingBar />
         </div>
         <Footer />
@@ -106,11 +116,21 @@ export const ExhibitionProfilePage = ({
       <Header />
       <div className="page-content">
         <div className={styles.content}>
+<<<<<<< HEAD
           <div className={styles.header}>
             <Text as="h1" className={styles.title}>
               {exhibition.mainTitle}
             </Text>
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
+=======
+          {/* Exhibition Title */}
+          <H1 className={styles.title}>{exhibition.mainTitle}</H1>
+
+          {/* Artist Name */}
+          <p className={styles.artist}>
+            by{' '}
+            <Link href={`/artists/${exhibition.user.handler}`} className={styles.artistLink}>
+>>>>>>> develop
               {artistName}
             </Link>
             <div className={styles.cta}>
@@ -123,11 +143,21 @@ export const ExhibitionProfilePage = ({
             </div>
           </div>
 
+<<<<<<< HEAD
           {dateRange && (
             <Text as="p" className={styles.dates}>
               {dateRange}
             </Text>
           )}
+=======
+          {/* Description placeholder - to be filled when we add description field */}
+          <div className={styles.description}>
+            <p>
+              Welcome to this virtual exhibition. Step into the gallery and explore the artworks in
+              an immersive 3D environment.
+            </p>
+          </div>
+>>>>>>> develop
 
           {/* <div className={styles.badge}>
             <Badge
