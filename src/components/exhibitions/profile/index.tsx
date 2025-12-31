@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Header } from '@/components/ui/Header'
@@ -111,9 +112,12 @@ export const ExhibitionProfilePage = ({
               {artistName}
             </Link>
             <div className={styles.cta}>
-              <Link href={visitUrl}>
-                <Button variant="small" label="Enter Exhibition" />
-              </Link>
+              <Button 
+                variant="small" 
+                label="Enter Exhibition" 
+                href={visitUrl}
+                iconRight={<ArrowRight size={16} />} 
+              />
             </div>
           </div>
 

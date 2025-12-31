@@ -14,21 +14,20 @@ import { hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
+import { Text } from '@/components/ui/Typography'
+import styles from './ExhibitionView.module.scss'
 
 interface ExhibitionViewPageProps {
   artistSlug: string
   exhibitionSlug: string
 }
 
-// Loading overlay that uses useProgress from drei - works OUTSIDE Canvas!
 const LoadingOverlay = () => {
   const { active, progress } = useProgress()
   const [dismissed, setDismissed] = useState(false)
 
-  // Dismiss overlay when loading is complete
   useEffect(() => {
     if (!active && progress >= 100) {
-      // Small delay to ensure first frame has painted
       const timer = setTimeout(() => setDismissed(true), 100)
       return () => clearTimeout(timer)
     }
@@ -37,43 +36,16 @@ const LoadingOverlay = () => {
   if (dismissed) return null
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '12px',
-        backgroundColor: '#ffffff',
-        zIndex: 99999,
-      }}
-    >
-      <div
-        style={{
-          width: '200px',
-          height: '3px',
-          backgroundColor: 'rgba(0, 0, 0, 0.1)',
-          borderRadius: '2px',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            width: `${progress}%`,
-            height: '100%',
-            backgroundColor: '#333',
-            transition: 'width 0.3s ease-out',
-          }}
+    <div className={styles.loadingOverlay}>
+      <div className={styles.progressBar}>
+        <div 
+          className={styles.progressFill} 
+          style={{ width: `${progress}%` }} 
         />
       </div>
-      <span style={{ fontSize: '12px', color: '#666' }}>
+      <Text as='span'>
         {active ? `Loading 3D scene... ${Math.round(progress)}%` : 'Almost ready...'}
-      </span>
+      </Text>
     </div>
   )
 }
@@ -91,7 +63,6 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     skip: !exhibitionSlug,
   })
 
-  // Reset state and hide placeholders on mount (view mode only)
   useEffect(() => {
     if (!hasResetRef.current) {
       dispatch(resetWallView())
@@ -102,7 +73,6 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     }
   }, [dispatch])
 
-  // Load exhibition into Redux
   useEffect(() => {
     if (exhibition) {
       const exhibitionData: TExhibition = {
@@ -125,14 +95,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     }
   }, [exhibition, dispatch])
 
-  // Load saved artworks from database (preloads images)
   useLoadExhibitionArtworks(exhibition?.id)
 
   if (error) {
     return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
-      >
+      <div className={styles.errorState}>
         Error loading exhibition
       </div>
     )
@@ -140,9 +107,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
 
   if (!exhibition && !isApiLoading) {
     return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
-      >
+      <div className={styles.emptyState}>
         Exhibition not found
       </div>
     )
@@ -150,13 +115,8 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
 
   return (
     <>
-      {/* Loading overlay - uses useProgress which works OUTSIDE Canvas */}
       <LoadingOverlay />
-
-      {/* Scene renders as soon as exhibition data is available */}
       {exhibition && <Scene />}
-
-      {/* Artwork info panel - shows when user double-clicks artwork with showArtworkInformation enabled */}
       {isArtworkPanelOpen && <ArtworkPanel />}
     </>
   )

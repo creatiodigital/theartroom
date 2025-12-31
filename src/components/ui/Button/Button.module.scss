@@ -8,11 +8,25 @@
   background: var(--grayDarkest);
   color: var(--white);
   border: 1px solid var(--grayDarkest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
 
   &:hover {
     background: var(--black);
     border: 1px solid var(--black);
+    text-decoration: none;
   }
+}
+
+.iconLeft,
+.iconRight {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  line-height: 0;
 }
 
 .small {
