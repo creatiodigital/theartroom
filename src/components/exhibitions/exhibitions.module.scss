@@ -42,12 +42,9 @@
 }
 
 .exhibitionTitle {
-  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-size: var(--text-3xl);
+  font-family: var(--font-serif), var(--font-serif-fallback);
   font-weight: var(--font-regular);
-}
-
-.artistName {
-  color: var(--color-text-muted);
 }
 
 .empty {

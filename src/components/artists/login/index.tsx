@@ -5,8 +5,10 @@ import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
+import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
@@ -101,8 +103,8 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   if (notFound) {
     return (
       <div className={styles.loginPage}>
-        <H1>Artist Not Found</H1>
-        <p>The artist you are looking for does not exist.</p>
+        <Text as="h1">Artist Not Found</Text>
+        <Text as="p">The artist you are looking for does not exist.</Text>
       </div>
     )
   }
@@ -110,15 +112,18 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <H1>Welcome back, {artist?.name}</H1>
-        <p className={styles.subtitle}>Sign in to manage your exhibitions</p>
+        <Text as="h1">Welcome back, {artist?.name}</Text>
+        <Text as="p" className={styles.subtitle}>
+          Sign in to manage your exhibitions
+        </Text>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label htmlFor="email">Email</label>
-            <input
+            <Input
               id="email"
               type="email"
+              size="medium"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -127,16 +132,17 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
 
           <div className={styles.field}>
             <label htmlFor="password">Password</label>
-            <input
+            <Input
               id="password"
               type="password"
+              size="medium"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          {error && <p className={styles.error}>{error}</p>}
+          <ErrorText>{error}</ErrorText>
 
           <Button variant="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>

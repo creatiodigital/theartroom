@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1, H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './ArtistProfile.module.scss'
 
@@ -48,7 +49,6 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         const data = await response.json()
         setArtist(data)
 
-        // Fetch public exhibitions for this artist
         const exResponse = await fetch(`/api/exhibitions?userId=${data.id}&visibility=public`)
         if (exResponse.ok) {
           const exData = await exResponse.json()
@@ -70,7 +70,6 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <>
         <Header />
         <div className="page-content">
-          <H1>Artist Profile</H1>
           <LoadingBar />
         </div>
         <Footer />
@@ -83,8 +82,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <>
         <Header />
         <div className="page-content">
-          <H1>Artist Profile</H1>
-          <p>{error || 'Artist not found'}</p>
+          <Text as="p">{error || 'Artist not found'}</Text>
         </div>
         <Footer />
       </>
@@ -111,29 +109,35 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             </div>
           )}
           <div>
-            <H1 className={styles.artistName}>
+            <Text as="h1" className={styles.artistName}>
               {artist.name} {artist.lastName}
-            </H1>
-            <p className={styles.handler}>@{artist.handler}</p>
+            </Text>
+            <Text as="p" className={styles.handler}>
+              @{artist.handler}
+            </Text>
           </div>
         </div>
 
         <div className={styles.section}>
-          <H2>About</H2>
+          <Text as="h2" font="sans">
+            About
+          </Text>
           {artist.biography ? (
             <div
               className={styles.biography}
               dangerouslySetInnerHTML={{ __html: artist.biography }}
             />
           ) : (
-            <p className={styles.emptyText}>No biography yet.</p>
+            <EmptyState message="No biography yet." />
           )}
         </div>
 
         <div>
-          <H2>Exhibitions</H2>
+          <Text as="h2" font="sans">
+            Exhibitions
+          </Text>
           {exhibitions.length === 0 ? (
-            <p className={styles.emptyText}>No exhibitions yet.</p>
+            <EmptyState message="No exhibitions yet." />
           ) : (
             <ul className={styles.exhibitionList}>
               {exhibitions.map((ex) => (

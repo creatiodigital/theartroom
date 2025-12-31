@@ -2,69 +2,69 @@
    Legacy Mixins (backwards compatibility only)
    
    PREFER using CSS variables directly:
-     font-family: var(--font-body);
+     font-family: var(--font-sans);
      font-size: var(--text-lg);
      font-weight: var(--font-bold);
    ============================================================================= */
 
 @mixin xlargeSans($size: 28px, $weight: 500, $lineHeight: 33px) {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin xlargeSerif($size: 28px, $weight: 500, $lineHeight: 33px) {
-  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin largeSans($size: 24px, $weight: 500, $lineHeight: 28px) {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin largeSerif($size: 24px, $weight: 500, $lineHeight: 28px) {
-  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin mediumSans($size: 15px, $weight: 400, $lineHeight: 24px) {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin mediumSerif($size: 15px, $weight: 400, $lineHeight: 24px) {
-  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin smallSans($size: 14px, $weight: 400, $lineHeight: 20px) {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin tinySans($size: 12px, $weight: 400, $lineHeight: 16px) {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
 @mixin xtinySans($size: 10px, $weight: 400, $lineHeight: 12px) {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;

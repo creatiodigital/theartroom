@@ -1,15 +1,12 @@
 .page {
   padding: var(--space-8);
   width: 100%;
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .backLink {
@@ -23,40 +20,32 @@
 }
 
 .pageTitle {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-2xl);
-}
-
-.exhibitionName {
-  color: var(--color-text-muted);
-  font-size: var(--text-lg);
   margin: 0 0 var(--space-8);
 }
 
-.placeholder {
-  padding: var(--space-8);
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
-  text-align: center;
+.section {
   margin-bottom: var(--space-6);
-
-  p {
-    margin: 0 0 var(--space-2);
-  }
 }
 
-.hint {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
+.sectionTitle {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+
   button {
     width: auto;
   }
 }
 
-.error {
-  color: var(--color-error-text);
-  margin-bottom: var(--space-4);
+.successMessage {
+  color: var(--color-success);
+  font-size: var(--text-sm);
 }

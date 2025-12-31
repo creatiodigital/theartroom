@@ -10,6 +10,8 @@ import styles from './Input.module.scss'
 
 type TInput = {
   variant?: string
+  size?: 'regular' | 'medium'
+  type?: 'text' | 'password' | 'email'
   value: string
   onChange: ChangeEventHandler<HTMLInputElement>
   icon?: IconName
@@ -17,10 +19,16 @@ type TInput = {
   onBlur?: FocusEventHandler<HTMLInputElement>
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>
   autoFocus?: boolean
+  placeholder?: string
+  required?: boolean
+  id?: string
+  className?: string
 }
 
 const Input = ({
   variant,
+  size = 'regular',
+  type = 'text',
   value,
   onChange,
   icon,
@@ -28,17 +36,29 @@ const Input = ({
   onBlur,
   onKeyDown,
   autoFocus = false,
+  placeholder,
+  required,
+  id,
+  className,
 }: TInput) => {
   return (
-    <div className={styles.wrapper}>
+    <div className={c(styles.wrapper, className)}>
       <input
-        type="text"
-        className={c([styles.input, variant && styles[variant], { [styles.withIcon]: !!icon }])}
+        id={id}
+        type={type}
+        className={c([
+          styles.input,
+          styles[size],
+          variant && styles[variant],
+          { [styles.withIcon]: !!icon },
+        ])}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
         autoFocus={autoFocus}
+        placeholder={placeholder}
+        required={required}
       />
       {icon && (
         <div className={c(styles.icon, { [styles[`rotate${rotate}` as string]]: !!rotate })}>

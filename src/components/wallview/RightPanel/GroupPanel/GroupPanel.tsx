@@ -7,7 +7,7 @@ import { Mesh } from 'three'
 
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { NumberInput } from '@/components/ui/NumberInput'
-import { H2, H3 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import type { RootState } from '@/redux/store'
 import type { TAlign, TDistributeAlign } from '@/types/wizard'
@@ -61,9 +61,13 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <H2 className={styles.title}>Group</H2>
+        <Text as="h2" className={styles.title}>
+          Group
+        </Text>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Position in wall</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Position in wall
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
@@ -100,7 +104,9 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Position (meters)</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Position (meters)
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -125,9 +131,13 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <H2 className={styles.title}>Elements</H2>
+        <Text as="h2" className={styles.title}>
+          Elements
+        </Text>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Align Elements</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Align Elements
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
@@ -167,7 +177,9 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Distribution</H3>
+          <Text as="h3" className={styles.subtitle}>
+            Distribution
+          </Text>
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon

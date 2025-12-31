@@ -7,10 +7,69 @@
 .input {
   @include smallSans();
   width: 100%;
-  padding: 3px 6px;
-  border-radius: 3px;
   background-color: var(--white);
   border: none;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// Size variants
+.regular {
+  padding: 3px 6px;
+  border-radius: 3px;
+}
+
+.medium {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-dark);
+  border-radius: 0;
+  font-size: var(--text-md);
+
+  &:focus {
+    border-color: var(--color-text);
+  }
+}
+
+// Validation variants
+.error {
+  border-color: var(--color-error-text) !important;
+}
+
+.disabled {
+  background-color: var(--color-bg-disabled);
+  cursor: not-allowed;
+  color: var(--color-text-muted);
+}
+
+// Context-specific variants
+.table {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  min-width: 100px;
+
+  &:focus {
+    border-color: var(--color-text);
+  }
+}
+
+.search {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  min-width: 200px;
+
+  &:focus {
+    border-color: var(--color-text);
+  }
+
+  &::placeholder {
+    color: var(--color-text-light);
+  }
 }
 
 .withIcon {

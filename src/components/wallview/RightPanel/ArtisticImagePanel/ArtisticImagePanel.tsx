@@ -7,7 +7,7 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
@@ -61,6 +61,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Author</span>
                     <Input
+                      id="artworkAuthor"
                       value={author || ''}
                       onChange={(e) => handleEditArtwork('author', e.target.value)}
                     />
@@ -70,6 +71,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Title</span>
                     <Input
+                      id="artworkTitle"
                       value={artworkTitle || ''}
                       onChange={(e) => handleEditArtwork('artworkTitle', e.target.value)}
                     />
@@ -79,6 +81,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Year</span>
                     <Input
+                      id="artworkYear"
                       value={artworkYear || ''}
                       onChange={(e) => handleEditArtwork('artworkYear', e.target.value)}
                     />
@@ -97,6 +100,7 @@ const ArtisticImage = () => {
                   <div className={styles.item}>
                     <span className={styles.label}>Dimensions</span>
                     <Input
+                      id="artworkDimensions"
                       value={artworkDimensions || ''}
                       onChange={(e) => handleEditArtwork('artworkDimensions', e.target.value)}
                     />
@@ -107,7 +111,9 @@ const ArtisticImage = () => {
           )}
 
           <div className={styles.section}>
-            <H2 className={styles.title}>Features</H2>
+            <Text as="h2" className={styles.title}>
+              Features
+            </Text>
 
             <div className={styles.subsection}>
               <div className={styles.row}>

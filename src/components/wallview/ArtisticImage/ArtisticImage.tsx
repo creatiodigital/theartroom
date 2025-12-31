@@ -132,8 +132,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
           <FileInput
             ref={fileInputRef}
             id={`file-upload-${currentArtworkId}`}
-            onInput={handleFileChange}
-            style={{ display: 'none' }}
+            onChange={handleFileChange}
           />
         </div>
       </div>

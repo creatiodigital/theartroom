@@ -1,31 +1,36 @@
-/* =============================================================================
-   Typography Component Styles
-   ============================================================================= */
-
-/* Heading sizes - aligned with globals.scss base styles */
 .h1 {
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
+  letter-spacing: 2px;
 }
 .h2 {
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
+  letter-spacing: 2px;
 }
 .h3 {
   font-size: var(--text-lg);
+  letter-spacing: 2px;
 }
 .h4 {
   font-size: var(--text-md);
+  letter-spacing: 2px;
+}
+.h5 {
+  font-size: var(--text-sm);
+  letter-spacing: 2px;
+}
+.h6 {
+  font-size: var(--text-xs);
+  letter-spacing: 2px;
 }
 
-/* Font family variants */
 .font-serif {
-  font-family: var(--font-heading), var(--font-heading-fallback);
+  font-family: var(--font-serif), var(--font-serif-fallback);
 }
 
 .font-sans {
-  font-family: var(--font-body), var(--font-body-fallback);
+  font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
-/* Heading font weights */
 .heading-weight-light {
   font-weight: 300;
 }
@@ -42,14 +47,13 @@
   font-weight: 700;
 }
 
-/* Text sizes */
 .text-xs {
   font-size: var(--text-xs);
 }
 .text-sm {
   font-size: var(--text-sm);
 }
-.text-base {
+.text-md {
   font-size: var(--text-md);
 }
 .text-lg {
@@ -59,7 +63,6 @@
   font-size: var(--text-xl);
 }
 
-/* Font weights */
 .weight-light {
   font-weight: var(--font-light);
 }
@@ -73,7 +76,14 @@
   font-weight: var(--font-bold);
 }
 
-/* Muted text */
 .muted {
   color: var(--color-text-muted);
+}
+
+.paragraph {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
 }

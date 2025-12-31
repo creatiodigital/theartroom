@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
-import { H2 } from '@/components/ui/Typography'
+import { Text } from '@/components/ui/Typography'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
@@ -19,7 +19,6 @@ type ExhibitionWithUser = {
 }
 
 export default async function Home() {
-  // Fetch current public exhibitions
   const exhibitionData = await prisma.exhibition.findMany({
     where: {
       status: 'current',
@@ -55,9 +54,13 @@ export default async function Home() {
 
       <div className={styles.content}>
         <section className={styles.exhibitionsSection}>
-          <H2 className={styles.sectionHeading}>Exhibitions</H2>
+          <Text as="h2" className={styles.sectionHeading}>
+            Exhibitions
+          </Text>
           {exhibitions.length === 0 ? (
-            <p className={styles.emptyText}>No current exhibitions at the moment.</p>
+            <Text as="p" className={styles.emptyText}>
+              No current exhibitions at the moment.
+            </Text>
           ) : (
             <ul className={styles.exhibitionList}>
               {exhibitions.map((exhibition) => (
@@ -66,10 +69,9 @@ export default async function Home() {
                     href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                     className={styles.exhibitionLink}
                   >
-                    <span className={styles.exhibitionAuthor}>
-                      {exhibition.user.name} {exhibition.user.lastName}
-                    </span>
-                    <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
+                    <Text as="h2" className={styles.exhibitionTitle}>
+                      {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
+                    </Text>
                   </Link>
                 </li>
               ))}
@@ -89,7 +91,7 @@ export default async function Home() {
                     style={{
                       textDecoration: 'none',
                       color: 'inherit',
-                      fontFamily: 'var(--font-heading)',
+                      fontFamily: 'var(--font-serif)',
                       fontWeight: 'var(--font-regular)',
                       fontSize: 'var(--text-2xl)',
                     }}

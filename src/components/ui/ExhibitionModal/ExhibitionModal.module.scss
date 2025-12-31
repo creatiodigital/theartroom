@@ -11,23 +11,6 @@
   min-height: 100px;
 }
 
-.input {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-dark);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-md);
-
-  &:focus {
-    outline: none;
-    border-color: var(--color-text);
-  }
-}
-
-.inputError {
-  border-color: var(--color-error-text) !important;
-}
-
 .urlPreview {
   margin: var(--space-2) 0 0;
   font-size: var(--text-xs);

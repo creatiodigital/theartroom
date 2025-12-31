@@ -1,19 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
+import { ErrorText } from '@/components/ui/ErrorText'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { H1 } from '@/components/ui/Typography'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { Text } from '@/components/ui/Typography'
 
 import styles from './ExhibitionSettings.module.scss'
 
 type Exhibition = {
   id: string
   mainTitle: string
+  description: string | null
   url: string
   userId: string
   status: string
@@ -34,8 +37,11 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const router = useRouter()
 
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
+  const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -55,6 +61,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         }
         const data = await response.json()
         setExhibition(data)
+        setDescription(data.description || '')
       } catch {
         setError('Failed to load exhibition')
       } finally {
@@ -67,6 +74,33 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     }
   }, [exhibitionId])
 
+  const handleSave = useCallback(async () => {
+    if (!exhibition) return
+
+    setSaving(true)
+    setSaveSuccess(false)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save')
+      }
+
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch {
+      setError('Failed to save changes')
+    } finally {
+      setSaving(false)
+    }
+  }, [exhibition, description])
+
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
@@ -75,10 +109,19 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     )
   }
 
-  if (error || !exhibition) {
+  if (error && !exhibition) {
     return (
       <div className={styles.page}>
-        <p className={styles.error}>{error || 'Exhibition not found'}</p>
+        <ErrorText>{error}</ErrorText>
+        <Link href="/dashboard">← Back to Dashboard</Link>
+      </div>
+    )
+  }
+
+  if (!exhibition) {
+    return (
+      <div className={styles.page}>
+        <ErrorText>Exhibition not found</ErrorText>
         <Link href="/dashboard">← Back to Dashboard</Link>
       </div>
     )
@@ -96,19 +139,36 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         </Link>
       </div>
 
-      <H1 className={styles.pageTitle}>Exhibition Settings</H1>
-      <p className={styles.exhibitionName}>{exhibition.mainTitle}</p>
+      <Text as="h1" className={styles.pageTitle}>
+        {exhibition.mainTitle}
+      </Text>
 
-      <div className={styles.placeholder}>
-        <p>Settings content coming soon...</p>
-        <p className={styles.hint}>
-          This page will include: title, description, dates, artists, and more.
-        </p>
+      <div className={styles.section}>
+        <Text as="h3" font="sans" className={styles.sectionTitle}>
+          Description
+        </Text>
+        <RichTextEditor
+          content={description}
+          onChange={setDescription}
+          placeholder="Write a description for your exhibition..."
+        />
       </div>
 
       <div className={styles.actions}>
-        <Button variant="small" label="Back to Editor" onClick={() => router.push(editUrl)} />
+        <Button
+          variant="small"
+          label={saving ? 'Saving...' : 'Save Changes'}
+          onClick={handleSave}
+          disabled={saving}
+        />
+        {saveSuccess && (
+          <Text as="span" className={styles.successMessage}>
+            Saved!
+          </Text>
+        )}
       </div>
+
+      {error && <ErrorText>{error}</ErrorText>}
     </div>
   )
 }
