@@ -3,11 +3,7 @@
 import { useRef } from 'react'
 
 import { Button } from '@/components/ui/Button'
-<<<<<<< HEAD
 import { Text } from '@/components/ui/Typography'
-=======
-import { H2 } from '@/components/ui/Typography'
->>>>>>> develop
 
 import styles from './SettingsPanel.module.scss'
 
@@ -27,13 +23,9 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
-<<<<<<< HEAD
       <Text as="h2" className={styles.title}>
         {title}
       </Text>
-=======
-      <H2 className={styles.title}>{title}</H2>
->>>>>>> develop
 
       <div className={styles.content}>{children}</div>
 

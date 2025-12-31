@@ -9,11 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
-<<<<<<< HEAD
 import { Text } from '@/components/ui/Typography'
-=======
-import { H3 } from '@/components/ui/Typography'
->>>>>>> develop
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
 import {
@@ -112,23 +108,15 @@ export const Dashboard = () => {
       {!isEditMode && (
         <div className={styles.main}>
           <div className={styles.header}>
-<<<<<<< HEAD
             <Text as="h3">Hello {userData?.name ?? ''}</Text>
-=======
-            <H3>Hello {userData?.name ?? ''}</H3>
->>>>>>> develop
           </div>
 
           <div className={styles.exhibitions}>
             <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
             <div className={styles.list}>
-<<<<<<< HEAD
               <Text as="h3" className={styles.subtitle}>
                 My exhibitions
               </Text>
-=======
-              <H3 className={styles.subtitle}>My exhibitions</H3>
->>>>>>> develop
               {exhibitions.length === 0 ? (
                 <Text as="p">You do not have any exhibitions yet.</Text>
               ) : (

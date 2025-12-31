@@ -7,11 +7,7 @@ import { Mesh } from 'three'
 
 import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { NumberInput } from '@/components/ui/NumberInput'
-<<<<<<< HEAD
 import { Text } from '@/components/ui/Typography'
-=======
-import { H2, H3 } from '@/components/ui/Typography'
->>>>>>> develop
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import type { RootState } from '@/redux/store'
 import type { TAlign, TDistributeAlign } from '@/types/wizard'
@@ -65,7 +61,6 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-<<<<<<< HEAD
         <Text as="h2" className={styles.title}>
           Group
         </Text>
@@ -73,11 +68,6 @@ const GroupPanel = () => {
           <Text as="h3" className={styles.subtitle}>
             Position in wall
           </Text>
-=======
-        <H2 className={styles.title}>Group</H2>
-        <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Position in wall</H3>
->>>>>>> develop
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
@@ -114,13 +104,9 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-<<<<<<< HEAD
           <Text as="h3" className={styles.subtitle}>
             Position (meters)
           </Text>
-=======
-          <H3 className={styles.subtitle}>Position (meters)</H3>
->>>>>>> develop
           <div className={styles.row}>
             <div className={styles.item}>
               <NumberInput
@@ -145,7 +131,6 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-<<<<<<< HEAD
         <Text as="h2" className={styles.title}>
           Elements
         </Text>
@@ -153,11 +138,6 @@ const GroupPanel = () => {
           <Text as="h3" className={styles.subtitle}>
             Align Elements
           </Text>
-=======
-        <H2 className={styles.title}>Elements</H2>
-        <div className={styles.subsection}>
-          <H3 className={styles.subtitle}>Align Elements</H3>
->>>>>>> develop
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
@@ -197,13 +177,9 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-<<<<<<< HEAD
           <Text as="h3" className={styles.subtitle}>
             Distribution
           </Text>
-=======
-          <H3 className={styles.subtitle}>Distribution</H3>
->>>>>>> develop
           <div className={styles.row}>
             <div className={styles.item}>
               <ButtonIcon

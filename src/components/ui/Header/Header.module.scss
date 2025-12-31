@@ -1,7 +1,6 @@
 .header {
   border-bottom: 1px solid var(--color-border);
   background: var(--white);
-<<<<<<< HEAD
   padding: var(--space-10) 0;
   max-width: var(--header-max-width);
   margin: 0 auto;
@@ -10,9 +9,6 @@
   @media (max-width: 1020px) {
     width: calc(100% - var(--space-6) * 2);
   }
-=======
-  padding: var(--space-8) 0;
->>>>>>> develop
 }
 
 .headerInner {
@@ -22,19 +18,9 @@
 }
 
 .logo {
-<<<<<<< HEAD
-=======
-  font-family: var(--font-heading), var(--font-heading-fallback);
-  font-size: var(--text-lg);
-  font-weight: var(--font-light);
->>>>>>> develop
   color: var(--color-brand);
   text-transform: uppercase;
-<<<<<<< HEAD
   letter-spacing: 4px;
-=======
-  letter-spacing: 6px;
->>>>>>> develop
 
   &:hover {
     text-decoration: none;

@@ -6,11 +6,7 @@ import { useSelector } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-<<<<<<< HEAD
 import { Text } from '@/components/ui/Typography'
-=======
-import { H3 } from '@/components/ui/Typography'
->>>>>>> develop
 import type { RootState } from '@/redux/store'
 
 import styles from './MediaLibrary.module.scss'
@@ -70,11 +66,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   return (
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
-<<<<<<< HEAD
         <Text as="h3">Media Library</Text>
-=======
-        <H3>Media Library</H3>
->>>>>>> develop
         <button className={styles.closeButton} onClick={onClose}>
           ×
         </button>
