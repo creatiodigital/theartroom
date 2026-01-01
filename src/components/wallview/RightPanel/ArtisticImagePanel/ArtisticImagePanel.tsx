@@ -59,7 +59,7 @@ const ArtisticImage = () => {
               <div className={styles.subsection}>
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Author</span>
+                    <Text as="span" size="xs" className={styles.label}>Author</Text>
                     <Input
                       id="artworkAuthor"
                       value={author || ''}
@@ -69,7 +69,7 @@ const ArtisticImage = () => {
                 </div>
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Title</span>
+                    <Text as="span" size="xs" className={styles.label}>Title</Text>
                     <Input
                       id="artworkTitle"
                       value={artworkTitle || ''}
@@ -79,7 +79,7 @@ const ArtisticImage = () => {
                 </div>
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Year</span>
+                    <Text as="span" size="xs" className={styles.label}>Year</Text>
                     <Input
                       id="artworkYear"
                       value={artworkYear || ''}
@@ -89,7 +89,7 @@ const ArtisticImage = () => {
                 </div>
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Description</span>
+                    <Text as="span" size="xs" className={styles.label}>Description</Text>
                     <Textarea
                       value={description || ''}
                       onChange={(e) => handleEditArtwork('description', e.target.value)}
@@ -98,7 +98,7 @@ const ArtisticImage = () => {
                 </div>
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Dimensions</span>
+                    <Text as="span" size="xs" className={styles.label}>Dimensions</Text>
                     <Input
                       id="artworkDimensions"
                       value={artworkDimensions || ''}
@@ -111,7 +111,7 @@ const ArtisticImage = () => {
           )}
 
           <div className={styles.section}>
-            <Text as="h2" className={styles.title}>
+            <Text as="h3" font="sans" className={styles.title}>
               Features
             </Text>
 
@@ -129,14 +129,14 @@ const ArtisticImage = () => {
               {showFrame && (
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Color</span>
+                    <Text as="span" size="xs" className={styles.label}>Color</Text>
                     <ColorPicker
                       textColor={frameColor!}
                       onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
                     />
                   </div>
                   <div className={styles.item}>
-                    <span className={styles.label}>Thickness</span>
+                    <Text as="span" size="xs" className={styles.label}>Thickness</Text>
                     <Select<number>
                       options={frameThicknessOptions}
                       value={frameThickness?.value}
@@ -166,14 +166,14 @@ const ArtisticImage = () => {
               {showPassepartout && (
                 <div className={styles.row}>
                   <div className={styles.item}>
-                    <span className={styles.label}>Color</span>
+                    <Text as="span" size="xs" className={styles.label}>Color</Text>
                     <ColorPicker
                       textColor={passepartoutColor!}
                       onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}
                     />
                   </div>
                   <div className={styles.item}>
-                    <span className={styles.label}>Thickness</span>
+                    <Text as="span" size="xs" className={styles.label}>Thickness</Text>
                     <Select<number>
                       options={passepartoutThicknessOptions}
                       value={passepartoutThickness?.value}

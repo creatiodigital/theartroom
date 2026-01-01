@@ -58,11 +58,11 @@ const ArtworkPanel = () => {
                 </Text>
               )}
               {(artworkTitle || name) && (
-                <span className={styles.title}>{artworkTitle || name}</span>
+                <Text as="span" size="md" font="serif" className={styles.title}>{artworkTitle || name}</Text>
               )}
-              {artworkYear && <span className={styles.year}>{`, ${artworkYear}`}</span>}
-              {description && <div className={styles.description}>{description}</div>}
-              {artworkDimensions && <span className={styles.dimensions}>{artworkDimensions}</span>}
+              {artworkYear && <Text as="span" size="md" font="serif" className={styles.year}>{`, ${artworkYear}`}</Text>}
+              {description && <Text as="div" size="md" font="serif" className={styles.description}>{description}</Text>}
+              {artworkDimensions && <Text as="span" size="md" font="serif" className={styles.dimensions}>{artworkDimensions}</Text>}
             </div>
           )}
         </div>

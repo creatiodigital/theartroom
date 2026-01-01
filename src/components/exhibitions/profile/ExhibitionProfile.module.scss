@@ -9,7 +9,6 @@
 }
 
 .title {
-  @include largeSerif();
   font-size: var(--text-7xl);
   margin: 0 0 var(--space-4);
 

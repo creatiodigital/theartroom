@@ -85,8 +85,8 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
         </div>
         <ErrorText>{error}</ErrorText>
         <div className={styles.actions}>
-          <Button variant="small" label={loading ? 'Logging in...' : 'Log in'} type="submit" />
-          <Button variant="small" label="Cancel" onClick={onClose} type="button" />
+          <Button size="small" label={loading ? 'Logging in...' : 'Log in'} type="submit" />
+          <Button size="small" label="Cancel" onClick={onClose} type="button" />
         </div>
       </form>
     </div>

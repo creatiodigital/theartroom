@@ -164,8 +164,8 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
         <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
-          <Button variant="small" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
-          <Button variant="small" label="Cancel" onClick={onClose} type="button" />
+          <Button size="small" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
+          <Button size="small" label="Cancel" onClick={onClose} type="button" />
         </div>
       </form>
     </div>

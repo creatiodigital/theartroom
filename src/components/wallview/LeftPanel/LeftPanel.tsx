@@ -5,8 +5,8 @@ import { useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
-import { ButtonIcon } from '@/components/ui/ButtonIcon'
 import { Input } from '@/components/ui/Input'
+import { Text } from '@/components/ui/Typography'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
 import { editArtwork } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
@@ -135,7 +135,7 @@ export const LeftPanel = () => {
           <div className={styles.row}>
             <div className={styles.item}>
               <Button
-                variant="small"
+                size="small"
                 onClick={handleSaveWallView}
                 label={saving ? 'Saving...' : 'Save'}
               />
@@ -147,18 +147,18 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.item}>
-              <ButtonIcon icon="zoomOut" onClick={handleZoomOut} />
+              <Button size="tiny" icon="zoomOut" onClick={handleZoomOut} />
             </div>
             <div className={styles.item}>
-              <ButtonIcon icon="zoomIn" onClick={handleZoomIn} />
+              <Button size="tiny" icon="zoomIn" onClick={handleZoomIn} />
             </div>
           </div>
           <div className={styles.row}>
             <div className={styles.item}>
-              <ButtonIcon icon="reset" onClick={handleResetView} />
+              <Button size="tiny" icon="reset" onClick={handleResetView} />
             </div>
             <div className={styles.item}>
-              <ButtonIcon icon="person" onClick={handleToggleHuman} />
+              <Button size="tiny" icon="person" onClick={handleToggleHuman} />
             </div>
           </div>
         </div>
@@ -186,12 +186,14 @@ export const LeftPanel = () => {
                       autoFocus
                     />
                   ) : (
-                    <span
+                    <Text
+                      as="span"
+                      size="xs"
                       onDoubleClick={() => handleDoubleClickArtwork(artwork.id, artwork.name)}
                       style={{ cursor: 'pointer' }}
                     >
                       {artwork.name}
-                    </span>
+                    </Text>
                   )}
                 </li>
               ))}

@@ -3,7 +3,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 
-import { ButtonIcon } from '@/components/ui/ButtonIcon'
+import { Button } from '@/components/ui/Button'
 import { showLightingPanel, hideLightingPanel } from '@/redux/slices/dashboardSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
@@ -51,14 +51,14 @@ export const Menu = () => {
 
   return (
     <div className={styles.menu}>
-      <ButtonIcon icon="close" title="Go to main dashboard" onClick={handleClose} />
-      <ButtonIcon
+      <Button size="tiny" icon="close" title="Go to main dashboard" onClick={handleClose} />
+      <Button size="tiny"
         icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
         title="Show/Hide wall placeholders"
         onClick={() => togglePlaceholders()}
       />
-      <ButtonIcon icon="light" title="Global Light controls" onClick={toggleLightingPanel} />
-      <ButtonIcon icon="settings" title="Go to settings page" onClick={handleOpenSettings} />
+      <Button size="tiny" icon="light" title="Global Light controls" onClick={toggleLightingPanel} />
+      <Button size="tiny" icon="settings" title="Go to settings page" onClick={handleOpenSettings} />
     </div>
   )
 }

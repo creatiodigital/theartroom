@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { Logout } from '@/components/ui/Logout'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
@@ -196,7 +197,7 @@ export const ArtworkLibraryPage = () => {
         <Link href="/dashboard" className={styles.backLink}>
           ← Back to Dashboard
         </Link>
-        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        <Logout />
       </div>
 
       <Text as="h1" className={styles.pageTitle}>
@@ -204,7 +205,7 @@ export const ArtworkLibraryPage = () => {
       </Text>
 
       <div className={styles.sectionActions}>
-        <Button variant="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
+        <Button size="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
       </div>
 
       {/* Filter Tags and Search */}
@@ -303,12 +304,12 @@ export const ArtworkLibraryPage = () => {
               </div>
               <div className={styles.cardActions}>
                 <Button
-                  variant="small"
+                  size="small"
                   label="Edit"
                   onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
                 />
                 <Button
-                  variant="small"
+                  size="small"
                   label="Delete"
                   onClick={() => handleDeleteClick(artwork.id, artwork.name)}
                 />
@@ -339,11 +340,11 @@ export const ArtworkLibraryPage = () => {
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                variant="small"
+                size="small"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button variant="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
@@ -361,11 +362,11 @@ export const ArtworkLibraryPage = () => {
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                variant="small"
+                size="small"
                 label={unlinking ? 'Removing...' : 'Yes, Remove'}
                 onClick={handleUnlinkConfirm}
               />
-              <Button variant="small" label="Cancel" onClick={() => setUnlinkTarget(null)} />
+              <Button size="small" label="Cancel" onClick={() => setUnlinkTarget(null)} />
             </div>
           </div>
         </Modal>

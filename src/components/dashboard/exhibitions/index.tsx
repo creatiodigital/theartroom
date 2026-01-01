@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
+
 
 import { Button } from '@/components/ui/Button'
+import { Logout } from '@/components/ui/Logout'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './DashboardExhibitions.module.scss'
@@ -22,13 +23,13 @@ export const DashboardExhibitionsPage = () => {
         </div>
         <div className={styles.headerActions}>
           <Button
-            variant="small"
+            size="small"
             label="+ New Exhibition"
             onClick={() => {
               /* TODO */
             }}
           />
-          <Button variant="small" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+          <Logout />
         </div>
       </div>
 

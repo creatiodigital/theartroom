@@ -29,7 +29,7 @@ export const ImpersonationBanner = () => {
           <strong>{realUser?.name}</strong> impersonating: <strong>{effectiveUser?.name}</strong>
         </span>
       </div>
-      <Button variant="small" label="Exit Impersonation" onClick={handleExit} />
+      <Button size="small" label="Exit Impersonation" onClick={handleExit} />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { useGLTF } from '@react-three/drei'
 import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
 
-import { ButtonIcon } from '@/components/ui/ButtonIcon'
+import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Text } from '@/components/ui/Typography'
@@ -50,45 +50,45 @@ const ArtworkPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.item}>
-              <span className={styles.label}>Name</span>
+              <Text as="span" size="xs" className={styles.label}>Name</Text>
               <Input id="artworkName" value={name} onChange={handleNameChange} />
             </div>
           </div>
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>
+        <Text as="h3" font="sans" className={styles.title}>
           Position
         </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text as="h4" font="sans" className={styles.subtitle}>
             Position in wall
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
-              <ButtonIcon icon="positionTop" onClick={() => handleAlign('verticalTop')} />
+              <Button size="tiny" icon="positionTop" onClick={() => handleAlign('verticalTop')} />
             </div>
             <div className={styles.item}>
-              <ButtonIcon icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
+              <Button size="tiny" icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
             </div>
             <div className={styles.item}>
-              <ButtonIcon icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
+              <Button size="tiny" icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
             </div>
           </div>
           <div className={styles.row}>
             <div className={styles.item}>
-              <ButtonIcon icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
+              <Button size="tiny" icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
             </div>
             <div className={styles.item}>
-              <ButtonIcon icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
+              <Button size="tiny" icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
             </div>
             <div className={styles.item}>
-              <ButtonIcon icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
+              <Button size="tiny" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
             </div>
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text as="h4" font="sans" className={styles.subtitle}>
             Position (meters)
           </Text>
           <div className={styles.row}>
@@ -115,11 +115,11 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>
+        <Text as="h3" font="sans" className={styles.title}>
           Layout
         </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text as="span" font="sans" className={styles.label}>
             Size (meters)
           </Text>
           <div className={styles.row}>

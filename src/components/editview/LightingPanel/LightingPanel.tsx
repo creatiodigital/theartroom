@@ -110,7 +110,7 @@ const LightingPanel = () => {
           onClick={handleSave}
           disabled={saving}
         />
-        <Button variant="small" label="Reset to Default" onClick={handleReset} />
+        <Button size="small" label="Reset to Default" onClick={handleReset} />
       </div>
     </SettingsPanel>
   )
