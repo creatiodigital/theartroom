@@ -23,22 +23,18 @@
 }
 
 .title {
-  @include tinySans();
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 20px;
 }
 
 .subtitle {
-  @include xtinySans();
   color: var(--grayDark);
-  font-weight: 600;
   margin-bottom: 4px;
 }
 
 .label {
-  @include xtinySans();
   color: var(--grayDark);
-  font-weight: 600;
+  font-weight: 400;
   margin-bottom: 2px;
 }
 

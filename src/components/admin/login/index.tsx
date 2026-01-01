@@ -89,7 +89,7 @@ export const AdminLoginPage = () => {
 
           <ErrorText>{error}</ErrorText>
 
-          <Button variant="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
+          <Button size="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>
       </div>
     </div>

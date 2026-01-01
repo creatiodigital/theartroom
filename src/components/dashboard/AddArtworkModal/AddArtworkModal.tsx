@@ -281,11 +281,11 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
         <div className={styles.actions}>
           <Button
-            variant="small"
+            size="small"
             label={loading ? 'Creating...' : 'Create Artwork'}
             type="submit"
           />
-          <Button variant="small" label="Cancel" onClick={onClose} type="button" />
+          <Button size="small" label="Cancel" onClick={onClose} type="button" />
         </div>
       </form>
     </div>

@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { Logout } from '@/components/ui/Logout'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
 import { Input } from '@/components/ui/Input'
@@ -199,7 +200,7 @@ export const DashboardProfilePage = () => {
         <Link href="/dashboard" className={styles.backLink}>
           ← Back to Dashboard
         </Link>
-        <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+        <Logout />
       </div>
 
       <Text as="h1" className={styles.title}>
@@ -231,13 +232,13 @@ export const DashboardProfilePage = () => {
               onChange={handleImageUpload}
             />
             <Button
-              variant="small"
+              size="small"
               label={uploading ? 'Uploading...' : 'Upload Photo'}
               onClick={() => fileInputRef.current?.click()}
               type="button"
             />
             {user?.profileImageUrl && (
-              <Button variant="small" label="Remove" onClick={handleRemoveImage} type="button" />
+              <Button size="small" label="Remove" onClick={handleRemoveImage} type="button" />
             )}
           </div>
         </div>
@@ -310,7 +311,7 @@ export const DashboardProfilePage = () => {
         )}
 
         <div className={styles.actions}>
-          <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
+          <Button size="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
         </div>
       </form>
     </div>

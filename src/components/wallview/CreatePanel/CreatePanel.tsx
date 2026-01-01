@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
 
-import { ButtonIcon } from '@/components/ui/ButtonIcon'
+import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { useCreateArtwork } from '@/components/wallview/hooks/useCreateArtwork'
@@ -54,7 +54,7 @@ export const CreatePanel = () => {
       <div className={styles.panel}>
         <div className={styles.options}>
           <Tooltip label="Click or drag to wall to create an artistic image" top={-40}>
-            <ButtonIcon
+            <Button
               size="big"
               icon="picture"
               onClick={() => handleCreateArtwork('image')}
@@ -63,7 +63,7 @@ export const CreatePanel = () => {
             />
           </Tooltip>
           <Tooltip label="Click or drag to wall to create an artistic text" top={-40}>
-            <ButtonIcon
+            <Button
               size="big"
               icon="text"
               onClick={() => handleCreateArtwork('text')}
@@ -72,7 +72,7 @@ export const CreatePanel = () => {
             />
           </Tooltip>
           <Tooltip label="Add artwork from your library" top={-40}>
-            <ButtonIcon
+            <Button
               size="big"
               icon="gallery"
               onClick={() => setShowMediaLibrary(!showMediaLibrary)}

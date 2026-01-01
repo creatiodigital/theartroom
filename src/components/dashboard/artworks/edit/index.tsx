@@ -250,13 +250,13 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             onChange={handleImageUpload}
           />
           <Button
-            variant="small"
+            size="small"
             label={uploading ? 'Uploading...' : imageUrl ? 'Change Image' : 'Upload Image'}
             onClick={() => fileInputRef.current?.click()}
             type="button"
           />
           {imageUrl && (
-            <Button variant="small" label="Remove" onClick={handleRemoveImage} type="button" />
+            <Button size="small" label="Remove" onClick={handleRemoveImage} type="button" />
           )}
         </div>
         <HintText>
@@ -360,9 +360,9 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
-          <Button variant="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
+          <Button size="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
           <Button
-            variant="small"
+            size="small"
             label="Cancel"
             onClick={() => router.push('/dashboard/artworks')}
             type="button"

@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
 import { Button } from '@/components/ui/Button'
+import { Logout } from '@/components/ui/Logout'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
@@ -128,8 +129,8 @@ export const DashboardAdmin = () => {
           <Text as="h1">Admin Dashboard</Text>
         </div>
         <div className={styles.headerActions}>
-          <Button variant="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
-          <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+          <Button size="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
+          <Logout />
         </div>
       </div>
 
@@ -139,7 +140,7 @@ export const DashboardAdmin = () => {
           All Users
         </Text>
         <div className={styles.sectionActions}>
-          <Button variant="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button size="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>
 
         <table className={styles.table}>
@@ -216,13 +217,13 @@ export const DashboardAdmin = () => {
                   <div className={styles.actions}>
                     {user.userType !== 'admin' && (
                       <Button
-                        variant="small"
+                        size="small"
                         label="Impersonate"
                         onClick={() => handleImpersonate(user)}
                       />
                     )}
                     <Button
-                      variant="small"
+                      size="small"
                       label="Delete"
                       onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
                     />
@@ -254,11 +255,11 @@ export const DashboardAdmin = () => {
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                variant="small"
+                size="small"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button variant="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>

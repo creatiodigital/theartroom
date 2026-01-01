@@ -23,18 +23,6 @@
   margin-bottom: 10px;
 }
 
-.title {
-  @include smallSans();
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.subtitle {
-  @include tinySans();
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
 .row {
   display: flex;
   justify-content: space-between;
@@ -54,7 +42,6 @@
 }
 
 .artwork {
-  @include tinySans();
   color: var(--black);
   margin: 0 0 10px 0;
 }
@@ -62,3 +49,4 @@
 .selected {
   color: var(--borderBlue);
 }
+

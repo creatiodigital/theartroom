@@ -3,9 +3,10 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
+import { Logout } from '@/components/ui/Logout'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
@@ -148,20 +149,20 @@ export const DashboardPage = () => {
     <div className={styles.dashboard}>
       <div className={styles.main}>
         <div className={styles.header}>
-          <Text as="h3">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
-          <Button variant="link" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
+          <Text as="h1" font="sans">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
+          <Logout />
         </div>
 
         <div className={styles.exhibitions}>
           <div className={styles.sectionActions}>
-            <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
+            <Button size="small" label="New exhibition" onClick={handleNewExhibition} />
             <Button
-              variant="small"
+              size="small"
               label="Artwork Library"
               onClick={() => router.push('/dashboard/artworks')}
             />
             <Button
-              variant="small"
+              size="small"
               label="Edit Profile"
               onClick={() => router.push('/dashboard/profile')}
             />
@@ -189,21 +190,21 @@ export const DashboardPage = () => {
                     <td>{ex.mainTitle}</td>
                     <td>
                       <Button
-                        variant="small"
+                        size="small"
                         label="View"
                         onClick={() => handleViewExhibition(ex)}
                       />
                     </td>
                     <td>
                       <Button
-                        variant="small"
+                        size="small"
                         label="Edit"
                         onClick={() => handleEditExhibition(ex)}
                       />
                     </td>
                     <td>
                       <Button
-                        variant="small"
+                        size="small"
                         label="Delete"
                         onClick={() => handleDeleteExhibition(ex.id)}
                       />
