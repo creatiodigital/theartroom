@@ -10,13 +10,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const artworkType = searchParams.get('artworkType')
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
     const artworks = await prisma.artwork.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(artworkType && { artworkType }),
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         exhibitionArtworks: {
