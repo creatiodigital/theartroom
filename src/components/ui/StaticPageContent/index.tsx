@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import styles from './StaticPageContent.module.scss'
 
 
 interface PageData {
@@ -68,7 +67,7 @@ export const StaticPageContent = ({ slug }: StaticPageContentProps) => {
   }
 
   return (
-    <div className={styles.container}>
+    <div>
       <RichText content={page.content} />
     </div>
   )
