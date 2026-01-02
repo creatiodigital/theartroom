@@ -3,7 +3,7 @@ import type { ReactNode, HTMLAttributes } from 'react'
 import styles from './Typography.module.scss'
 
 type TextElement = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label'
-type TextSize = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+type TextSize = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl'
 type FontFamily = 'serif' | 'sans'
 type TextWeight = 'light' | 'normal' | 'medium' | 'bold'
 type TextOwnProps<T extends TextElement = 'span'> = {

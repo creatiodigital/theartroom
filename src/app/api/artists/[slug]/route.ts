@@ -17,6 +17,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
         lastName: true,
         handler: true,
         biography: true,
+        profileImageUrl: true,
       },
     })
 
