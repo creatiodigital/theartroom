@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
+import { ContentManagement } from '@/components/admin/dashboard/ContentManagement'
 import { Button } from '@/components/ui/Button'
 import { Logout } from '@/components/ui/Logout'
 import { Checkbox } from '@/components/ui/Checkbox'
@@ -237,6 +238,9 @@ export const DashboardAdmin = () => {
 
       {/* Exhibitions Section */}
       <AdminExhibitions />
+
+      {/* Content Management Section */}
+      <ContentManagement />
 
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>
