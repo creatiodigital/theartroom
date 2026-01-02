@@ -1,7 +1,7 @@
 'use client'
 
 import { useSelector } from 'react-redux'
-import { ButtonIcon } from '@/components/ui/ButtonIcon'
+import { Button } from '@/components/ui/Button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
@@ -22,28 +22,31 @@ const ArtisticText = () => {
 
   return (
     <div className={styles.section}>
-      <Text as="h2" className={styles.title}>
+      <Text as="h3" font="sans" className={styles.title}>
         Text Styles
       </Text>
       <div className={styles.subsection}>
-        <Text as="h3" className={styles.subtitle}>
+        <Text as="h4" font="sans" className={styles.subtitle}>
           Alignment
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
-            <ButtonIcon
+            <Button
+              size="tiny"
               icon="textLeft"
               onClick={() => handleEditArtworkText('textAlign', 'left')}
             />
           </div>
           <div className={styles.item}>
-            <ButtonIcon
+            <Button
+              size="tiny"
               icon="textCenter"
               onClick={() => handleEditArtworkText('textAlign', 'center')}
             />
           </div>
           <div className={styles.item}>
-            <ButtonIcon
+            <Button
+              size="tiny"
               icon="textRight"
               onClick={() => handleEditArtworkText('textAlign', 'right')}
             />
@@ -54,7 +57,7 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <span className={styles.label}>Font size</span>
+            <Text as="span" size="xs" className={styles.label}>Font size</Text>
             <Select<number>
               options={fontSizes}
               value={fontSize?.value}
@@ -65,7 +68,7 @@ const ArtisticText = () => {
           </div>
 
           <div className={styles.item}>
-            <span className={styles.label}>Line height</span>
+            <Text as="span" size="xs" className={styles.label}>Line height</Text>
 
             <Select<number>
               options={lineHeights}
@@ -78,7 +81,7 @@ const ArtisticText = () => {
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <span className={styles.label}>Font Weight</span>
+            <Text as="span" size="xs" className={styles.label}>Font Weight</Text>
             <Select<TFontWeight>
               options={fontWeights}
               value={fontWeight?.value}
@@ -86,7 +89,7 @@ const ArtisticText = () => {
             />
           </div>
           <div className={styles.item}>
-            <span className={styles.label}>Letter Spacing</span>
+            <Text as="span" size="xs" className={styles.label}>Letter Spacing</Text>
             <Select<number>
               options={letterSpacings}
               value={letterSpacing?.value}
@@ -98,7 +101,7 @@ const ArtisticText = () => {
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <span className={styles.label}>Font Family</span>
+            <Text as="span" size="xs" className={styles.label}>Font Family</Text>
             <Select<TFontFamily>
               options={fontFamilies}
               value={fontFamily?.value}
@@ -110,7 +113,7 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <span className={styles.label}>Color</span>
+            <Text as="span" size="xs" className={styles.label}>Color</Text>
             <ColorPicker
               textColor={textColor!}
               onColorSelect={(value) => handleEditArtworkText('textColor', value)}

@@ -3,7 +3,6 @@
 .button {
   cursor: pointer;
   width: 100%;
-  @include mediumSerif();
   padding: 10px;
   background: var(--grayDarkest);
   color: var(--white);
@@ -21,17 +20,53 @@
   }
 }
 
+
+.serif {
+  @include mediumSerif();
+}
+
+.sans {
+  @include mediumSans();
+}
+
+.regular {
+  padding: 10px;
+}
+
+.small {
+  @include smallSans();
+  padding: 6px;
+}
+
+.tiny {
+  @include tinySans();
+  padding: 3px 10px;
+  border-radius: 3px;
+}
+
+.big {
+  padding: 16px;
+}
+
+.iconOnly {
+  width: auto;
+  padding: 6px;
+  
+  &.tiny {
+    padding: 3px;
+  }
+  
+  &.small {
+    padding: 4px;
+  }
+}
+
 .iconLeft,
 .iconRight {
   display: flex;
   align-items: center;
   color: inherit;
   line-height: 0;
-}
-
-.small {
-  @include smallSans();
-  padding: 8px;
 }
 
 .disabled {
@@ -41,7 +76,6 @@
 }
 
 .outline {
-  @include mediumSerif();
   padding: 10px 20px;
   background: transparent;
   color: var(--black);
@@ -57,15 +91,18 @@
   padding: 0;
   background: transparent;
   border: none;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  color: var(--color-text);
+  font-size: var(--text-md);
   text-decoration: none;
   cursor: pointer;
   transition: color 0.15s ease;
   width: auto;
 
   &:hover {
+    background: transparent;
+    border: none;
     color: var(--color-text);
     text-decoration: underline;
   }
 }
+

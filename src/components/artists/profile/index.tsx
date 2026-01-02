@@ -9,6 +9,7 @@ import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
+import { RichText } from '@/components/ui/RichText'
 
 import styles from './ArtistProfile.module.scss'
 
@@ -94,46 +95,43 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
       <Header />
       <div className="page-content">
         <div className={styles.header}>
+           <div>
+            <Text as="h2" className={styles.artistName}>
+              {artist.name}
+            </Text>
+             <Text as="h2" className={styles.artistName}>
+              {artist.lastName}
+            </Text>
+          </div>
           {artist.profileImageUrl ? (
-            <Image
-              src={artist.profileImageUrl}
-              alt={`${artist.name} ${artist.lastName}`}
-              width={150}
-              height={150}
-              className={styles.avatar}
-            />
+            <div className={styles.avatarWrapper}>
+              <Image
+                src={artist.profileImageUrl}
+                alt={`${artist.name} ${artist.lastName}`}
+                fill
+                className={styles.avatar}
+              />
+            </div>
           ) : (
             <div className={styles.avatarPlaceholder}>
               {artist.name.charAt(0)}
               {artist.lastName.charAt(0)}
             </div>
           )}
-          <div>
-            <Text as="h1" className={styles.artistName}>
-              {artist.name} {artist.lastName}
-            </Text>
-            <Text as="p" className={styles.handler}>
-              @{artist.handler}
-            </Text>
-          </div>
+         
         </div>
 
         <div className={styles.section}>
-          <Text as="h2" font="sans">
-            About
-          </Text>
           {artist.biography ? (
-            <div
-              className={styles.biography}
-              dangerouslySetInnerHTML={{ __html: artist.biography }}
-            />
+           
+              <RichText content={artist.biography} className={styles.biography} />
           ) : (
             <EmptyState message="No biography yet." />
           )}
         </div>
 
-        <div>
-          <Text as="h2" font="sans">
+        <div className={styles.section}>
+          <Text as="h2" className={styles.sectionHeading}>
             Exhibitions
           </Text>
           {exhibitions.length === 0 ? (
@@ -146,7 +144,9 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
                     href={`/exhibitions/${artist.handler}/${ex.url}`}
                     className={styles.exhibitionLink}
                   >
-                    {ex.mainTitle} →
+                    <Text as="span" font="serif" size="4xl">
+                      {ex.mainTitle}
+                    </Text>
                   </Link>
                 </li>
               ))}

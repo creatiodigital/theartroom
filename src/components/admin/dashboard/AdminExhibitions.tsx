@@ -125,12 +125,12 @@ export const AdminExhibitions = () => {
               <td>
                 <div className={styles.actions}>
                   <Button
-                    variant="small"
+                    size="small"
                     label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
                     onClick={() => handleToggleStatus(exhibition.id, exhibition.status)}
                   />
                   <Button
-                    variant="small"
+                    size="small"
                     label={exhibition.visibility === 'public' ? 'Hide' : 'Make Public'}
                     onClick={() => handleToggleVisibility(exhibition.id, exhibition.visibility)}
                   />

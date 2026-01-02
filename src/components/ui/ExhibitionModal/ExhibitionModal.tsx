@@ -162,9 +162,9 @@ export const ExhibitionModal = React.memo(
         </div>
 
         <div className={styles.ctas}>
-          <Button variant="small" label="Cancel" onClick={onClose} />
+          <Button size="small" label="Cancel" onClick={onClose} />
           <Button
-            variant="small"
+            size="small"
             label={creating ? 'Creating...' : 'Create'}
             onClick={handleCreateClick}
             disabled={!canCreate}

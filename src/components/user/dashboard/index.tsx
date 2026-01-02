@@ -108,13 +108,13 @@ export const Dashboard = () => {
       {!isEditMode && (
         <div className={styles.main}>
           <div className={styles.header}>
-            <Text as="h3">Hello {userData?.name ?? ''}</Text>
+            <Text as="h1" font="sans">Hello {userData?.name ?? ''}</Text>
           </div>
 
           <div className={styles.exhibitions}>
-            <Button variant="small" label="New exhibition" onClick={handleNewExhibition} />
+            <Button size="small" label="New exhibition" onClick={handleNewExhibition} />
             <div className={styles.list}>
-              <Text as="h3" className={styles.subtitle}>
+              <Text as="h2" className={styles.subtitle}>
                 My exhibitions
               </Text>
               {exhibitions.length === 0 ? (
@@ -125,14 +125,14 @@ export const Dashboard = () => {
                     <li key={ex.id} className={styles.exhibitionItem}>
                       {ex.mainTitle}{' '}
                       <Button
-                        variant="small"
+                        size="small"
                         label="Edit"
                         onClick={() =>
                           router.push(`/${userData?.handler}/exhibition/${ex.url}/edit`)
                         }
                       />
                       <Button
-                        variant="small"
+                        size="small"
                         label="Delete"
                         onClick={() => handleDeleteExhibition(ex.id)}
                       />

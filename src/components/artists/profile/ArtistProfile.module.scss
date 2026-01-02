@@ -9,21 +9,24 @@
 .header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 2rem;
   margin-bottom: 2rem;
 }
 
+.avatarWrapper {
+  position: relative;
+  width: 66.67%;
+  aspect-ratio: 3 / 2;
+}
+
 .avatar {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
   object-fit: cover;
 }
 
 .avatarPlaceholder {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
+  width: 40vw;
+  height: 25vw;
   background-color: #eee;
   display: flex;
   align-items: center;
@@ -34,6 +37,7 @@
 
 .artistName {
   margin: 0;
+  font-size: 70px;
 }
 
 .handler {
@@ -42,11 +46,13 @@
 }
 
 .section {
-  margin-bottom: 2rem;
+  margin-top: var(--space-10);
+  margin-bottom: 4rem;
 }
 
 .biography {
-  line-height: 1.6;
+  column-count: 2;
+  column-gap: var(--space-6);
 }
 
 .emptyText {
@@ -69,6 +75,20 @@
   font-size: 1.1rem;
   display: inline-block;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #eee;
+
   width: 100%;
+}
+
+.sectionTitle {
+  font-size: var(--text-5xl);
+}
+
+
+.sectionHeading {
+  margin-bottom: var(--space-4);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  text-transform: uppercase;
+  font-weight: var(--font-light);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
 }

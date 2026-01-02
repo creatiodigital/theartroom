@@ -156,7 +156,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
 
       <div className={styles.actions}>
         <Button
-          variant="small"
+          size="small"
           label={saving ? 'Saving...' : 'Save Changes'}
           onClick={handleSave}
           disabled={saving}

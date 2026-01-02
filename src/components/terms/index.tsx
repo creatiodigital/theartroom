@@ -2,14 +2,14 @@
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
-import { Text } from '@/components/ui/Typography'
+import { StaticPageContent } from '@/components/ui/StaticPageContent'
 
 export const TermsPage = () => {
   return (
     <>
       <Header />
       <div className="page-content">
-        <Text as="h1">Terms and Conditions</Text>
+        <StaticPageContent slug="terms" />
       </div>
       <Footer />
     </>

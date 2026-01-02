@@ -115,7 +115,7 @@ export const ExhibitionProfilePage = ({
             </Link>
             <div className={styles.cta}>
               <Button
-                variant="small"
+                size="small"
                 label="Enter Exhibition"
                 href={visitUrl}
                 iconRight={<ArrowRight size={16} />}
