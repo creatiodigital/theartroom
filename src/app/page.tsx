@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { Text } from '@/components/ui/Typography'
+import { Slideshow } from '@/components/landing/Slideshow'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
@@ -19,6 +20,21 @@ type ExhibitionWithUser = {
 }
 
 export default async function Home() {
+  // Fetch slides from database
+  const slidesData = await prisma.slide.findMany({
+    where: { isActive: true },
+    orderBy: { order: 'asc' },
+  })
+
+  const slides = slidesData.map((slide) => ({
+    id: slide.id,
+    imageUrl: slide.imageUrl,
+    exhibitionUrl: slide.exhibitionUrl,
+    meta: slide.meta,
+    title: slide.title,
+    subtitle: slide.subtitle,
+  }))
+
   const exhibitionData = await prisma.exhibition.findMany({
     where: {
       status: 'current',
@@ -38,19 +54,10 @@ export default async function Home() {
   })
   const exhibitions = exhibitionData as unknown as ExhibitionWithUser[]
 
-  // Fetch featured artists
-  // const featuredArtists = await prisma.user.findMany({
-  //   where: {
-  //     isFeatured: true,
-  //   },
-  //   orderBy: { name: 'asc' },
-  //   take: 6,
-  // })
-
   return (
     <main className={styles.home}>
       <Header />
-      <section className={styles.hero} />
+      {slides.length > 0 && <Slideshow slides={slides} />}
 
       <div className={styles.content}>
         <section className={styles.exhibitionsSection}>

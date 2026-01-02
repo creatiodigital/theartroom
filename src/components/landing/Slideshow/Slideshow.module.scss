@@ -1,0 +1,119 @@
+.slideshow {
+  position: relative;
+  width: 100%;
+  height: 900px;
+  overflow: hidden;
+  margin-bottom: var(--space-8);
+}
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: var(--header-max-width);
+  margin: 0 auto;
+  padding: 0 var(--site-padding);
+  display: flex;
+  align-items: flex-end;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60px;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.meta {
+  color: var(--white);
+  font-size: var(--text-sm) !important;
+  font-weight: var(--font-regular) !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--white);
+  width: fit-content;
+}
+
+.title {
+  color: var(--white);
+  font-size: 72px !important;
+  font-weight: var(--font-light) !important;
+  margin: 0;
+  line-height: 1.1 !important;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.subtitle {
+  color: var(--white);
+  font-size: var(--text-3xl) !important;
+  margin-top: 4px;
+}
+
+.paginationContainer {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  width: 100%;
+  max-width: var(--header-max-width);
+  margin: 0 auto;
+  padding: 0 var(--site-padding);
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+}
+
+.bullet {
+  width: 4px;
+  height: 4px;
+  background: var(--white);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.bulletActive {
+  background: var(--black);
+}
+

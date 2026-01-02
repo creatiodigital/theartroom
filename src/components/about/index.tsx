@@ -2,14 +2,14 @@
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
-import { Text } from '@/components/ui/Typography'
+import { StaticPageContent } from '@/components/ui/StaticPageContent'
 
 export const AboutPage = () => {
   return (
     <>
       <Header />
       <div className="page-content">
-        <Text as="p">To be defined</Text>
+        <StaticPageContent slug="about" />
       </div>
       <Footer />
     </>
