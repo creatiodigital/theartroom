@@ -10,7 +10,9 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
     "check-format": "prettier --check .",
-    "compress-glb": "node scripts/compress-glb-ktx2.mjs"
+    "compress-glb": "node scripts/compress-glb-ktx2.mjs",
+    "db:push": "npx prisma db push --config prisma/prisma.config.ts",
+    "db:generate": "npx prisma generate --config prisma/prisma.config.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

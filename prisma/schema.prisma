@@ -44,7 +44,7 @@ model Artwork {
 
   name        String
   artworkType String  @default("image")
-  title       String?
+  title       String  @default("Untitled")
   author      String?
   year        String?
   technique   String?

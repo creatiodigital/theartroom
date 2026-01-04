@@ -28,9 +28,11 @@ const artworkSlice = createSlice({
       state.artworkCounters[artworkType] = (state.artworkCounters[artworkType] ?? 0) + 1
 
       const newArtwork = createNewArtwork({ id, artworkType })
-      newArtwork.name = `${artworkType.charAt(0).toUpperCase() + artworkType.slice(1)} ${
+      const defaultName = `${artworkType.charAt(0).toUpperCase() + artworkType.slice(1)} ${
         state.artworkCounters[artworkType]
       }`
+      newArtwork.name = defaultName
+      newArtwork.artworkTitle = defaultName  // Set default title to match name
 
       state.byId[id] = newArtwork
       state.allIds.push(id)

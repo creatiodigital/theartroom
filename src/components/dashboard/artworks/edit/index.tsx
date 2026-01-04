@@ -295,13 +295,14 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="title">Artwork Title</label>
+          <label htmlFor="title">Artwork Title *</label>
           <Input
             id="title"
             type="text"
             size="medium"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
+            required
           />
         </div>
 

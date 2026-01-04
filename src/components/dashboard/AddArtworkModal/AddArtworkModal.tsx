@@ -219,7 +219,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
         )}
 
         <div className={styles.field}>
-          <label htmlFor="title">Artwork Title</label>
+          <label htmlFor="title">Artwork Title *</label>
           <Input
             id="title"
             type="text"
@@ -227,6 +227,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder="Official artwork title"
+            required
           />
         </div>
 
