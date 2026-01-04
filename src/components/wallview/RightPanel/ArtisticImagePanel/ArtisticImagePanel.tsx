@@ -32,6 +32,7 @@ const ArtisticImage = () => {
     passepartoutThickness,
     frameColor,
     frameThickness,
+    featured,
   } = useArtworkDetails(currentArtworkId!)
 
   const { handleEditArtwork, handleEditArtisticImage } = useArtworkImageHandlers(currentArtworkId!)
@@ -49,6 +50,17 @@ const ArtisticImage = () => {
                     handleEditArtisticImage('showArtworkInformation', e.target.checked)
                   }
                   label="Display Information"
+                />
+              </div>
+            </div>
+            <div className={styles.row}>
+              <div className={styles.item}>
+                <Checkbox
+                  checked={featured ?? false}
+                  onChange={(e) =>
+                    handleEditArtwork('featured', e.target.checked)
+                  }
+                  label="Feature on artist profile"
                 />
               </div>
             </div>

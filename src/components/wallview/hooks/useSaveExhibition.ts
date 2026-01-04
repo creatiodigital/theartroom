@@ -142,7 +142,8 @@ export const useSaveExhibition = () => {
             dimensions: artwork.artworkDimensions || null,
             description: artwork.description || null,
             imageUrl,
-            textContent: artwork.textContent || null, // Fixed text content
+            textContent: artwork.textContent || null,
+            featured: artwork.featured ?? false,
           }
         })
         .filter(Boolean)

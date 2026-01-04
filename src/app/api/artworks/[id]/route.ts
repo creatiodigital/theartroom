@@ -41,6 +41,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         technique: body.technique,
         dimensions: body.dimensions,
         description: body.description,
+        featured: body.featured === true || body.featured === 'true',
       },
     })
 

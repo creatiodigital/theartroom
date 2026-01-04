@@ -66,7 +66,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         // Fetch exhibitions and artworks in parallel
         const [exResponse, artResponse] = await Promise.all([
           fetch(`/api/exhibitions?userId=${data.id}&visibility=public`),
-          fetch(`/api/artworks?userId=${data.id}&artworkType=image`),
+          fetch(`/api/artworks?userId=${data.id}&artworkType=image&featured=true`),
         ])
 
         if (exResponse.ok) {
@@ -162,14 +162,12 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
           )}
         </div>
 
-        <div className={styles.section}>
-          <Text as="h2" className={styles.sectionHeading}>Selected Works</Text>
-          {artworks.length === 0 ? (
-            <EmptyState message="No artworks yet." />
-          ) : (
+        {artworks.length > 0 && (
+          <div className={styles.section}>
+            <Text as="h2" className={styles.sectionHeading}>Selected Works</Text>
             <ArtworkGrid artworks={artworks} artistName={artistFullName} />
-          )}
-        </div>
+          </div>
+        )}
       </div>
       <Footer />
     </>

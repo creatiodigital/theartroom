@@ -52,6 +52,7 @@ model Artwork {
   description String?
   imageUrl    String?
   textContent String? // Fixed text content for stencil/text artworks
+  featured    Boolean @default(false)
 
   exhibitionArtworks ExhibitionArtwork[]
 

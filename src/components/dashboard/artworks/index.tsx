@@ -104,7 +104,7 @@ export const ArtworkLibraryPage = () => {
     try {
       const response = await fetch(`/api/artworks?userId=${effectiveUser.id}`)
       const data = await response.json()
-      setArtworks(data)
+      setArtworks(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch artworks:', error)
     } finally {

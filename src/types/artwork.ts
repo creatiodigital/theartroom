@@ -51,4 +51,5 @@ export type TArtwork = {
   lineHeight?: TOption<number>
   textColor?: string
   textAlign?: 'left' | 'right' | 'center'
+  featured?: boolean
 }
