@@ -8,7 +8,6 @@ import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
 
-// Force dynamic rendering and disable caching for fresh data
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -20,7 +19,6 @@ type ExhibitionWithUser = {
 }
 
 export default async function Home() {
-  // Fetch slides from database
   const slidesData = await prisma.slide.findMany({
     where: { isActive: true },
     orderBy: { order: 'asc' },
@@ -61,7 +59,7 @@ export default async function Home() {
 
       <div className={styles.content}>
         <section className={styles.exhibitionsSection}>
-          <Text as="h2" className={styles.sectionHeading}>
+          <Text as="h2" font="sans"className={styles.sectionHeading}>
             Exhibitions
           </Text>
           {exhibitions.length === 0 ? (
@@ -76,7 +74,7 @@ export default async function Home() {
                     href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                     className={styles.exhibitionLink}
                   >
-                    <Text as="h2" size="4xl" className={styles.exhibitionTitle}>
+                    <Text as="h3" className={styles.exhibitionTitle}>
                       {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
                     </Text>
                   </Link>
@@ -100,7 +98,7 @@ export default async function Home() {
                       color: 'inherit',
                       fontFamily: 'var(--font-serif)',
                       fontWeight: 'var(--font-regular)',
-                      fontSize: 'var(--text-2xl)',
+                      fontSize: 'var(--text-lg)',
                     }}
                   >
                     {artist.name} {artist.lastName}

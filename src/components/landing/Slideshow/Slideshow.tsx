@@ -3,9 +3,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination } from 'swiper/modules'
 import Link from 'next/link'
-
 import { Text } from '@/components/ui/Typography'
-
 import 'swiper/css'
 import 'swiper/css/pagination'
 
@@ -15,9 +13,9 @@ type Slide = {
   id: string
   imageUrl: string
   exhibitionUrl: string
-  subtitle: string      // e.g. "Back to the Source"
-  title: string         // e.g. "Ana Mendieta"
-  meta: string          // e.g. "7 NOVEMBER 2025 - 17 JANUARY 2026    NEW YORK"
+  subtitle: string 
+  title: string
+  meta: string
 }
 
 type SlideshowProps = {

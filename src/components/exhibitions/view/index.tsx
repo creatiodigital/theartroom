@@ -47,7 +47,7 @@ const LoadingOverlay = () => {
   )
 }
 
-export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
+export const ExhibitionViewPage = ({ exhibitionSlug }: ExhibitionViewPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef(false)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)

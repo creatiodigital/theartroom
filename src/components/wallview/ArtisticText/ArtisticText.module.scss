@@ -7,11 +7,11 @@
   height: 100%;
   width: 100%;
   position: relative;
-  background: var(--white);
+  background: var(--color-white);
   cursor: grab;
 
   &.editing {
-    background-color: var(--bgLight);
+    background-color: var(--color-bg-muted);
   }
 }
 
@@ -26,20 +26,20 @@
   overflow-wrap: break-word;
   white-space: pre-wrap;
   cursor: grab;
-  padding: 10px;
+  padding: var(--space-3);
 
   &.editable {
-    background-color: var(--bgLight);
+    background-color: var(--color-bg-muted);
     cursor: text;
   }
 }
 
 .empty {
   @include smallSans();
-  color: var(--black);
+  color: var(--color-black);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-2);
 }

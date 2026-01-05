@@ -50,12 +50,11 @@ export const ExhibitionsPage = () => {
   return (
     <>
       <Header />
-      <div className={styles.page}>
+      <div className="page-content">
         {loading ? (
           <LoadingBar />
         ) : (
           <>
-            {/* Current Exhibitions */}
             <section className={styles.section}>
               <Text as="h2" font="sans" className={styles.sectionTitle}>
                 Current

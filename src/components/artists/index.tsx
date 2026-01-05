@@ -42,7 +42,7 @@ export const ArtistsPage = () => {
     return (
       <>
         <Header />
-        <div className={styles.page}>
+        <div className="page-content">
           <LoadingBar />
         </div>
         <Footer />
@@ -53,7 +53,7 @@ export const ArtistsPage = () => {
   return (
     <>
       <Header />
-      <div className={styles.page}>
+      <div className="page-content">
         {artists.length === 0 ? (
           <EmptyState message="No artists found." />
         ) : (

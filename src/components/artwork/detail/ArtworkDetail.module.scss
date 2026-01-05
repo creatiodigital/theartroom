@@ -9,7 +9,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-6) var(--space-10);
-  background: var(--white);
+  background: var(--color-white);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -20,7 +20,7 @@
 .logoText {
   color: var(--color-brand);
   text-transform: uppercase;
-  letter-spacing: 4px;
+  letter-spacing: var(--space-1);
 }
 
 .closeButton {
@@ -31,8 +31,8 @@
   border: none;
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: var(--space-3);
+  letter-spacing: var(--space-1);
   color: var(--color-text);
   text-transform: uppercase;
 
@@ -86,13 +86,13 @@
 }
 
 .artistName {
-  font-size: 24px;
+  font-size: var(--space-6);
   font-weight: 400;
   margin-bottom: var(--space-2);
 }
 
 .title {
-  font-size: 16px;
+  font-size: var(--space-4);
   color: var(--color-brand);
 }
 

@@ -4,14 +4,14 @@
   width: 250px;
   max-width: 250px;
   height: 100vh;
-  background-color: var(--bgLight);
-  padding: 20px;
+  background-color: var(--color-bg-muted);
+  padding: var(--space-5);
   overflow: auto;
 }
 
 .section {
   margin: 0 0 10px 0;
-  border-bottom: 1px solid var(--borderLight);
+  border-bottom: 1px solid var(--color-border);
 
   &:last-child {
     border: none;
@@ -19,30 +19,30 @@
 }
 
 .subsection {
-  margin-bottom: 15px;
+  margin-bottom: var(--space-4);
 }
 
 .title {
   font-weight: 500;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .subtitle {
-  color: var(--grayDark);
-  margin-bottom: 4px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
 }
 
 .label {
-  color: var(--grayDark);
+  color: var(--color-text-muted);
   font-weight: 400;
-  margin-bottom: 2px;
+  margin-bottom: var(--space-1);
 }
 
 .row {
   display: flex;
   justify-content: space-between;
-  gap: 5px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .item {
@@ -53,5 +53,5 @@
 }
 
 .cta {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }

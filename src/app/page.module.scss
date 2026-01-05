@@ -28,7 +28,6 @@
 
 .sectionHeading {
   margin-bottom: var(--space-4);
-  font-family: var(--font-sans), var(--font-sans-fallback);
   text-transform: uppercase;
   font-weight: var(--font-light);
   border-top: 1px solid var(--color-border);
@@ -63,5 +62,4 @@
 
 .exhibitionTitle {
   display: block;
-  color: var(--grayDarkest);
 }

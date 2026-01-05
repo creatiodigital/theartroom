@@ -115,10 +115,11 @@ export const ExhibitionProfilePage = ({
             </Link>
             <div className={styles.cta}>
               <Button
-                size="small"
+                size="regular"
                 label="Enter Exhibition"
                 href={visitUrl}
-                iconRight={<ArrowRight size={16} />}
+                iconLeft={<ArrowRight size={16} />}
+                className={styles.button}
               />
             </div>
           </div>
@@ -128,14 +129,6 @@ export const ExhibitionProfilePage = ({
               {dateRange}
             </Text>
           )}
-
-          {/* <div className={styles.badge}>
-            <Badge
-              label={exhibition.status === 'current' ? 'Now Showing' : 'Past Exhibition'}
-              variant={exhibition.status === 'current' ? 'current' : 'past'}
-              size="regular"
-            />
-          </div> */}
 
           {exhibition.description && (
             <RichText content={exhibition.description} className={styles.description} />
