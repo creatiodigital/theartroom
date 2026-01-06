@@ -19,4 +19,5 @@ const Measurements = memo(({ width, height }: MeasurementsProps) => (
 
 Measurements.displayName = 'Measurements'
 
+export { Measurements }
 export default Measurements
