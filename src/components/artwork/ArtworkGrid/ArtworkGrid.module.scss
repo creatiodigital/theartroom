@@ -1,0 +1,76 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-10);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+}
+
+.imageWrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+.placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-muted);
+  color: var(--color-text-light);
+}
+
+.info {
+  text-align: center;
+  padding-top: var(--space-4);
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.artist {
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: var(--space-1);
+  color: var(--color-text);
+}
+
+.title {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.detail {
+  font-size: 13px;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+  line-height: 1.5;
+}
+
+.viewDetailsLink {
+  display: inline-block;
+  margin-top: var(--space-4);
+  text-decoration: none;
+}

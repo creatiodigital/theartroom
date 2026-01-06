@@ -17,8 +17,10 @@
 
 .sectionTitle {
   margin-bottom: var(--space-4);
+  font-weight: var(--font-light);  
   border-bottom: 1px solid var(--color-border);
   padding-bottom: var(--space-2);
+  text-transform: uppercase;
 }
 
 .list {
@@ -32,17 +34,17 @@
 }
 
 .exhibitionLink {
+  font-family: var(--font-serif), var(--font-serif-fallback);
   text-decoration: none;
-  color: inherit;
+  font-size: var(--text-xl);
 
   &:hover {
     text-decoration: none;
-    opacity: 0.8;
   }
 }
 
 .exhibitionTitle {
-  font-size: var(--text-3xl);
+  font-size: var(--text-lg);
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-weight: var(--font-regular);
 }

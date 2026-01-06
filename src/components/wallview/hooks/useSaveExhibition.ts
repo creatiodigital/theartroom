@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useSession } from 'next-auth/react'
 
 import { getAllPendingUploads, clearAllPendingUploads, isLocalBlobUrl } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 export const useSaveExhibition = () => {
-  const { data: session } = useSession()
+  const { effectiveUser } = useEffectiveUser()
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -18,7 +18,7 @@ export const useSaveExhibition = () => {
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
 
   const saveToDatabase = useCallback(async () => {
-    if (!session?.user?.id) {
+    if (!effectiveUser?.id) {
       setError('Not authenticated')
       return false
     }
@@ -85,7 +85,7 @@ export const useSaveExhibition = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: session.user.id,
+            userId: effectiveUser.id,
             artworks: [artworkPayload],
           }),
         })
@@ -142,7 +142,8 @@ export const useSaveExhibition = () => {
             dimensions: artwork.artworkDimensions || null,
             description: artwork.description || null,
             imageUrl,
-            textContent: artwork.textContent || null, // Fixed text content
+            textContent: artwork.textContent || null,
+            featured: artwork.featured ?? false,
           }
         })
         .filter(Boolean)
@@ -152,7 +153,7 @@ export const useSaveExhibition = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: effectiveUser.id,
           artworks,
         }),
       })
@@ -226,7 +227,7 @@ export const useSaveExhibition = () => {
     } finally {
       setSaving(false)
     }
-  }, [session?.user?.id, exhibitionId, allArtworkIds, artworksById, positionsById, dispatch])
+  }, [effectiveUser?.id, exhibitionId, allArtworkIds, artworksById, positionsById, dispatch])
 
   return {
     saveToDatabase,

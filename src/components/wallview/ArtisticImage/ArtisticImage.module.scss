@@ -1,5 +1,3 @@
-@use '@/styles/mixins' as *;
-
 .frame {
   position: relative;
   width: 100%;
@@ -24,25 +22,24 @@
 }
 
 .empty {
-  @include smallSans();
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--white);
-  color: var(--black);
+  background: var(--color-white);
+  color: var(--color-black);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-2);
   text-align: center;
   pointer-events: none;
   z-index: 2;
 }
 
 .over {
-  background: var(--black);
-  color: var(--white);
+  background: var(--color-black);
+  color: var(--color-white);
 }

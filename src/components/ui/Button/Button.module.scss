@@ -3,19 +3,19 @@
 .button {
   cursor: pointer;
   width: 100%;
-  padding: 10px;
-  background: var(--grayDarkest);
-  color: var(--white);
-  border: 1px solid var(--grayDarkest);
+  padding: var(--space-3);
+  background: var(--color-text);
+  color: var(--color-white);
+  border: 1px solid var(--color-text);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   text-decoration: none;
 
   &:hover {
-    background: var(--black);
-    border: 1px solid var(--black);
+    background: var(--color-black);
+    border: 1px solid var(--color-black);
     text-decoration: none;
   }
 }
@@ -30,34 +30,34 @@
 }
 
 .regular {
-  padding: 10px;
+  padding:  var(--space-4) var(--space-6);
 }
 
 .small {
   @include smallSans();
-  padding: 6px;
+  padding: var(--space-2);
 }
 
 .tiny {
   @include tinySans();
   padding: 3px 10px;
-  border-radius: 3px;
+  border-radius: var(--space-1);
 }
 
 .big {
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 .iconOnly {
   width: auto;
-  padding: 6px;
+  padding: var(--space-2);
   
   &.tiny {
-    padding: 3px;
+    padding: var(--space-1);
   }
   
   &.small {
-    padding: 4px;
+    padding: var(--space-1);
   }
 }
 
@@ -78,12 +78,12 @@
 .outline {
   padding: 10px 20px;
   background: transparent;
-  color: var(--black);
-  border: 1px solid var(--black);
+  color: var(--color-black);
+  border: 1px solid var(--color-black);
 
   &:hover {
-    background: var(--black);
-    color: var(--white);
+    background: var(--color-black);
+    color: var(--color-white);
   }
 }
 

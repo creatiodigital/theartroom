@@ -3,7 +3,7 @@
 .textarea {
   @include smallSans();
   width: 100%;
-  background-color: var(--white);
+  background-color: var(--color-white);
   border: none;
   resize: vertical;
 
@@ -18,7 +18,7 @@
 
 .regular {
   padding: 3px 6px;
-  border-radius: 3px;
+  border-radius: var(--space-1);
   min-height: 100px;
 }
 

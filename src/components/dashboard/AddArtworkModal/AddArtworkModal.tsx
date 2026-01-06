@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
 import { Input } from '@/components/ui/Input'
@@ -33,6 +34,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
     technique: '',
     dimensions: '',
     description: '',
+    featured: false,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -42,7 +44,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -217,7 +219,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
         )}
 
         <div className={styles.field}>
-          <label htmlFor="title">Artwork Title</label>
+          <label htmlFor="title">Artwork Title *</label>
           <Input
             id="title"
             type="text"
@@ -225,6 +227,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder="Official artwork title"
+            required
           />
         </div>
 
@@ -276,6 +279,16 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             placeholder="About this artwork..."
           />
         </div>
+
+        {formData.artworkType === 'image' && (
+          <div className={styles.checkboxField}>
+            <Checkbox
+              checked={formData.featured}
+              onChange={(e) => handleChange('featured', e.target.checked)}
+              label="Feature on artist profile"
+            />
+          </div>
+        )}
 
         <ErrorText>{error}</ErrorText>
 

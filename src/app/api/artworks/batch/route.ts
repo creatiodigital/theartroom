@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
         dimensions?: string
         description?: string
         imageUrl?: string
-        textContent?: string // Fixed text content for text artworks
+        textContent?: string
+        featured?: boolean
       }>
     }
 
@@ -38,26 +39,28 @@ export async function POST(request: NextRequest) {
             userId,
             name: artwork.name,
             artworkType: artwork.artworkType || 'image',
-            title: artwork.title || null,
-            author: artwork.author || null,
-            year: artwork.year || null,
-            technique: artwork.technique || null,
-            dimensions: artwork.dimensions || null,
-            description: artwork.description || null,
-            imageUrl: artwork.imageUrl || null,
-            textContent: artwork.textContent || null,
+            title: artwork.title || undefined,
+            author: artwork.author || undefined,
+            year: artwork.year || undefined,
+            technique: artwork.technique || undefined,
+            dimensions: artwork.dimensions || undefined,
+            description: artwork.description || undefined,
+            imageUrl: artwork.imageUrl || undefined,
+            textContent: artwork.textContent || undefined,
+            featured: artwork.featured ?? false,
           },
           update: {
             name: artwork.name,
             artworkType: artwork.artworkType || 'image',
-            title: artwork.title || null,
-            author: artwork.author || null,
-            year: artwork.year || null,
-            technique: artwork.technique || null,
-            dimensions: artwork.dimensions || null,
-            description: artwork.description || null,
-            imageUrl: artwork.imageUrl || null,
-            textContent: artwork.textContent || null,
+            title: artwork.title || undefined,
+            author: artwork.author || undefined,
+            year: artwork.year || undefined,
+            technique: artwork.technique || undefined,
+            dimensions: artwork.dimensions || undefined,
+            description: artwork.description || undefined,
+            imageUrl: artwork.imageUrl || undefined,
+            textContent: artwork.textContent || undefined,
+            featured: artwork.featured ?? false,
           },
         }),
       ),

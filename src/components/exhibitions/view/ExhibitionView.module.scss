@@ -8,8 +8,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  background-color: var(--white);
+  gap: var(--space-3);
+  background-color: var(--color-white);
   z-index: 99999;
 }
 
@@ -17,13 +17,13 @@
   width: 200px;
   height: 1px;
   background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
+  border-radius: var(--space-1);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background-color: var(--grayDarkest);
+  background-color: var(--color-text);
   transition: width 0.3s ease-out;
 }
 

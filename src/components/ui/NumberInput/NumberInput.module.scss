@@ -8,8 +8,8 @@
   @include smallSans();
   width: 100%;
   padding: 2px 6px;
-  border-radius: 3px;
-  background-color: var(--white);
+  border-radius: var(--space-1);
+  background-color: var(--color-white);
   border: none;
   appearance: none;
   -webkit-appearance: none;
@@ -23,12 +23,12 @@
 
 .icon {
   position: absolute;
-  left: 4px;
-  top: 5px;
+  left: var(--space-1);
+  top: var(--space-2);
 }
 .rotate90 {
-  top: 3px;
-  left: 2px;
+  top: var(--space-1);
+  left: var(--space-1);
   transform: rotate(90deg);
   transform-origin: center;
 }

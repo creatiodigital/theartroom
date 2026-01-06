@@ -27,21 +27,21 @@
 .avatarPlaceholder {
   width: 40vw;
   height: 25vw;
-  background-color: #eee;
+  background-color: var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
-  color: #999;
+  color: var(--color-text-light);
 }
 
 .artistName {
   margin: 0;
-  font-size: 70px;
+  font-size: var(--text-huge);
 }
 
 .handler {
-  color: #666;
+  color: var(--color-text-muted);
   margin: 0.5rem 0 0;
 }
 
@@ -52,11 +52,11 @@
 
 .biography {
   column-count: 2;
-  column-gap: var(--space-6);
+  column-gap: var(--space-14);
 }
 
 .emptyText {
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .exhibitionList {
@@ -70,19 +70,19 @@
 }
 
 .exhibitionLink {
-  color: #333;
   text-decoration: none;
-  font-size: 1.1rem;
   display: inline-block;
   padding: 0.5rem 0;
-
   width: 100%;
-}
 
-.sectionTitle {
-  font-size: var(--text-5xl);
-}
+  h3 {
+    font-size: var(--text-2xl);
+  }
 
+  &:hover {
+    text-decoration: none;
+  }
+}
 
 .sectionHeading {
   margin-bottom: var(--space-4);

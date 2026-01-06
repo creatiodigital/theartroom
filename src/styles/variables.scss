@@ -1,116 +1,39 @@
-/* =============================================================================
-   Design Tokens
-   
-   All design variables in one place for easy customization.
-   ============================================================================= */
-
 :root {
-  /* ===========================================================================
-     COLORS
-     =========================================================================== */
-
-  --black: #000000;
-  --white: #ffffff;
-
-  // Grays
-  --gray-50: #fafafa;
-  --gray-100: #f5f5f5;
-  --gray-200: #eeeeee;
-  --gray-300: #e0e0e0;
-  --gray-400: #bdbdbd;
-  --gray-500: #9e9e9e;
-  --gray-600: #757575;
-  --gray-700: #616161;
-  --gray-800: #424242;
-  --gray-900: #212121;
-
-  // Brand
-  --color-brand: #d92a1c; // Logo color (Lumen Gallery)
-
-  // Semantic colors
-  --color-text: #333333; // All texts
-  --color-text-muted: #757575; // Small light texts
-  --color-text-light: #9e9e9e;
+  --color-black: #000000;
   --color-white: #ffffff;
-  --color-bg: var(--white);
-  --color-bg-subtle: var(--gray-100);
+  --color-brand: #d92a1c;
+  --color-text: #333333;
+  --color-text-muted: #757575;
+  --color-text-light: #9e9e9e;
+  --color-bg: var(--color-white);
   --color-bg-muted: #f9f9f9;
   --color-bg-disabled: #f0f0f0;
-  --color-border: #eaeaea; // Borders and dividers
-  --color-border-light: var(--gray-200);
+  --color-border: #eaeaea;
   --color-border-dark: #ddd;
-
-  // Site padding: fixed at 48px, goes to 24px on small screens
-  --site-padding: 48px;
-
   --color-accent: #007aff;
-  --color-accent-light: #c5e1ff;
-
-  // Status colors
-  --color-success: #155724;
-  --color-success-bg: #d4edda;
-  --color-error: #721c24;
-  --color-error-bg: #f8d7da;
   --color-error-text: #c00;
-  --color-warning: #856404;
-  --color-warning-bg: #fff3cd;
-  --color-info: #004085;
-  --color-info-bg: #cce5ff;
+  --color-success: #155724;
 
-  /* ===========================================================================
-     TYPOGRAPHY - Font Families
-     
-     To change fonts:
-     1. Update the import in fonts.ts
-     2. The CSS variables will automatically use the new font
-     =========================================================================== */
-
-  // These are set by Next.js font loader, fallbacks defined here
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;
 
-  /* ===========================================================================
-     TYPOGRAPHY - Font Sizes (in pixels)
-     =========================================================================== */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 30px;
+  --text-huge: 60px;
 
-  --text-xs: 10px;
-  --text-sm: 12px;
-  --text-md: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
-  --text-2xl: 20px;
-  --text-3xl: 24px;
-  --text-4xl: 26px;
-  --text-5xl: 32px;
-  --text-6xl: 40px;
-  --text-7xl: 48px;
-
-  /* ===========================================================================
-     TYPOGRAPHY - Line Heights
-     =========================================================================== */
-
-  --leading-none: 1;
   --leading-tight: 1.2;
-  --leading-snug: 1.35;
   --leading-normal: 1.5;
-  --leading-relaxed: 1.65;
-  --leading-loose: 2;
-
-  /* ===========================================================================
-     TYPOGRAPHY - Font Weights
-     =========================================================================== */
+  --leading-relaxed: 1.6;
 
   --font-light: 300;
   --font-regular: 400;
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
-
-  /* ===========================================================================
-     SPACING (in pixels)
-     
-     Use: padding: var(--space-4);
-     =========================================================================== */
 
   --space-0: 0px;
   --space-1: 4px;
@@ -120,49 +43,17 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
-  --space-9: 36px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-14: 56px;
   --space-16: 64px;
-  --space-20: 80px;
-  --space-24: 96px;
 
-  /* ===========================================================================
-     LAYOUT
-     =========================================================================== */
+  --site-padding: var(--space-12);
 
   --header-max-width: 1660px;
   --content-max-width: 1580px;
 
-  /* ===========================================================================
-     BORDERS
-     =========================================================================== */
-
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
   --radius-full: 9999px;
-
-  /* ===========================================================================
-     LEGACY - Keep for backwards compatibility with existing components
-     =========================================================================== */
-
-  --blueLight: #c5e1ff;
-  --blue: #007aff;
-  --grayLighter: #f5f5f5;
-  --grayLight: #efefef;
-  --grayMedium: #d3d3d3;
-  --grayDark: #666666;
-  --grayDarker: #b5b5b5;
-  --grayDarkest: #333333;
-
-  --bgLighter: var(--grayLighter);
-  --bgLight: var(--grayLight);
-  --bgMedium: var(--grayMedium);
-  --bgDarker: var(--grayDarker);
-  --borderBlue: var(--blue);
-  --borderBlueLight: var(--blueLight);
-  --borderLight: var(--grayMedium);
-  --text: var(--black);
 }

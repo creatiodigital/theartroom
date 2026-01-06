@@ -5,9 +5,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
-import { LoadingBar } from '@/components/ui/LoadingBar'
+import { PageLayout } from '@/components/ui/PageLayout'
 import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 
@@ -63,27 +61,15 @@ export const ExhibitionProfilePage = ({
   }, [exhibitionSlug])
 
   if (loading) {
-    return (
-      <>
-        <Header />
-        <div className="page-content">
-          <LoadingBar />
-        </div>
-        <Footer />
-      </>
-    )
+    return <PageLayout loading />
   }
 
   if (error || !exhibition) {
     return (
-      <>
-        <Header />
-        <div className="page-content">
-          <ErrorText>{error || 'Exhibition not found'}</ErrorText>
-          <Link href="/exhibitions">← Back to Exhibitions</Link>
-        </div>
-        <Footer />
-      </>
+      <PageLayout>
+        <ErrorText>{error || 'Exhibition not found'}</ErrorText>
+        <Link href="/exhibitions">← Back to Exhibitions</Link>
+      </PageLayout>
     )
   }
 
@@ -102,47 +88,36 @@ export const ExhibitionProfilePage = ({
     startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
 
   return (
-    <>
-      <Header />
-      <div className="page-content">
-        <div className={styles.content}>
-          <div className={styles.header}>
-            <Text as="h1" className={styles.title}>
-              {exhibition.mainTitle}
-            </Text>
-            <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
-              {artistName}
-            </Link>
-            <div className={styles.cta}>
-              <Button
-                size="small"
-                label="Enter Exhibition"
-                href={visitUrl}
-                iconRight={<ArrowRight size={16} />}
-              />
-            </div>
-          </div>
-
-          {dateRange && (
-            <Text as="p" className={styles.dates}>
-              {dateRange}
-            </Text>
-          )}
-
-          {/* <div className={styles.badge}>
-            <Badge
-              label={exhibition.status === 'current' ? 'Now Showing' : 'Past Exhibition'}
-              variant={exhibition.status === 'current' ? 'current' : 'past'}
+    <PageLayout>
+      <div className={styles.content}>
+        <div className={styles.header}>
+          <Text as="h1" size="2xl" className={styles.title}>
+            {exhibition.mainTitle}
+          </Text>
+          <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
+            {artistName}
+          </Link>
+          <div className={styles.cta}>
+            <Button
               size="regular"
+              label="Enter Exhibition"
+              href={visitUrl}
+              iconLeft={<ArrowRight size={16} />}
+              className={styles.button}
             />
-          </div> */}
-
-          {exhibition.description && (
-            <RichText content={exhibition.description} className={styles.description} />
-          )}
+          </div>
         </div>
+
+        {dateRange && (
+          <Text as="p" className={styles.dates}>
+            {dateRange}
+          </Text>
+        )}
+
+        {exhibition.description && (
+          <RichText content={exhibition.description} className={styles.description} />
+        )}
       </div>
-      <Footer />
-    </>
+    </PageLayout>
   )
 }

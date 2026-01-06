@@ -7,12 +7,12 @@
   justify-content: center;
   flex-direction: column;
   position: fixed;
-  background-color: var(--black);
-  left: 20px;
-  top: 20px;
-  width: 40px;
+  background-color: var(--color-black);
+  left: var(--space-5);
+  top: var(--space-5);
+  width: var(--space-10);
   z-index: 2;
-  gap: 3px;
-  padding: 2px;
-  border-radius: 3px;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--space-1);
 }

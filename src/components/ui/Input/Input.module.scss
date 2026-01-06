@@ -7,11 +7,11 @@
 .input {
   @include smallSans();
   width: 100%;
-  background-color: var(--white);
+  background-color: var(--color-white);
   border: none;
 
   &::placeholder {
-    color: var(--color-text-muted, #999);
+    color: var(--color-text-muted);
     opacity: 0.7;
   }
 
@@ -23,7 +23,7 @@
 // Size variants
 .regular {
   padding: 3px 6px;
-  border-radius: 3px;
+  border-radius: var(--space-1);
 }
 
 .medium {
@@ -83,12 +83,12 @@
 
 .icon {
   position: absolute;
-  left: 4px;
-  top: 5px;
+  left: var(--space-1);
+  top: var(--space-2);
 }
 .rotate90 {
-  top: 3px;
-  left: 2px;
+  top: var(--space-1);
+  left: var(--space-1);
   transform: rotate(90deg);
   transform-origin: center;
 }

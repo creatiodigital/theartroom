@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
 import { HintText } from '@/components/ui/HintText'
@@ -33,6 +34,7 @@ type Artwork = {
   dimensions: string | null
   description: string | null
   imageUrl: string | null
+  featured: boolean
 }
 
 export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
@@ -56,6 +58,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     technique: '',
     dimensions: '',
     description: '',
+    featured: false,
   })
 
   // Redirect if not authenticated
@@ -93,6 +96,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           technique: data.technique || '',
           dimensions: data.dimensions || '',
           description: data.description || '',
+          featured: data.featured ?? false,
         })
       } catch {
         setError('Failed to load artwork')
@@ -106,7 +110,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId, session?.user?.id, session?.user?.userType, router])
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -291,13 +295,14 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="title">Artwork Title</label>
+          <label htmlFor="title">Artwork Title *</label>
           <Input
             id="title"
             type="text"
             size="medium"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
+            required
           />
         </div>
 
@@ -356,6 +361,16 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             rows={4}
           />
         </div>
+
+        {formData.artworkType === 'image' && (
+          <div className={styles.field}>
+            <Checkbox
+              checked={formData.featured}
+              onChange={(e) => handleChange('featured', e.target.checked)}
+              label="Feature on artist profile"
+            />
+          </div>
+        )}
 
         <ErrorText>{error}</ErrorText>
 
