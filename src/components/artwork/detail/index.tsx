@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
+import { PageLayout } from '@/components/ui/PageLayout'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 
@@ -71,9 +70,12 @@ export const ArtworkDetailPage = ({
     router.back()
   }
 
-  // Loading state
-  if (loading) {
-    if (isInternal) {
+  const displayTitle = artwork?.title || artwork?.name || ''
+  const displayAuthor = artwork?.author || (artist ? `${artist.name} ${artist.lastName}` : '')
+
+  // Internal mode - minimal header with close button (custom layout, no PageLayout)
+  if (isInternal) {
+    if (loading) {
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
@@ -87,20 +89,8 @@ export const ArtworkDetailPage = ({
         </div>
       )
     }
-    return (
-      <>
-        <Header />
-        <div className="page-content">
-          <LoadingBar />
-        </div>
-        <Footer />
-      </>
-    )
-  }
 
-  // Error state
-  if (error || !artwork) {
-    if (isInternal) {
+    if (error || !artwork) {
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
@@ -117,22 +107,7 @@ export const ArtworkDetailPage = ({
         </div>
       )
     }
-    return (
-      <>
-        <Header />
-        <div className="page-content">
-          <Text as="p">{error || 'Artwork not found'}</Text>
-        </div>
-        <Footer />
-      </>
-    )
-  }
 
-  const displayTitle = artwork.title || artwork.name
-  const displayAuthor = artwork.author || (artist ? `${artist.name} ${artist.lastName}` : '')
-
-  // Internal mode - minimal header with close button
-  if (isInternal) {
     return (
       <div className={styles.page}>
         <header className={styles.minimalHeader}>
@@ -180,45 +155,53 @@ export const ArtworkDetailPage = ({
     )
   }
 
-  // Standalone mode - full header and footer
-  return (
-    <>
-      <Header />
-      <div className="page-content">
-        <div className={styles.standaloneContent}>
-          <div className={styles.metadata}>
-            {displayAuthor && (
-              <Text as="h2" className={styles.artistName}>{displayAuthor}</Text>
-            )}
-            {displayTitle && (
-              <Text as="p" font="serif" className={styles.title}>
-                <em>{displayTitle}</em>
-                {artwork.year && <span>, {artwork.year}</span>}
-              </Text>
-            )}
-            {artwork.technique && (
-              <Text as="p" size="sm" className={styles.technique}>{artwork.technique}</Text>
-            )}
-            {artwork.dimensions && (
-              <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
-            )}
-            {artwork.description && (
-              <Text as="p" size="sm" className={styles.description}>{artwork.description}</Text>
-            )}
-          </div>
+  // Standalone mode - use PageLayout
+  if (loading) {
+    return <PageLayout loading />
+  }
 
-          <div className={styles.imageContainer}>
-            {artwork.imageUrl && (
-              <img
-                src={artwork.imageUrl}
-                alt={displayTitle || 'Artwork'}
-                className={styles.image}
-              />
-            )}
-          </div>
+  if (error || !artwork) {
+    return (
+      <PageLayout>
+        <Text as="p">{error || 'Artwork not found'}</Text>
+      </PageLayout>
+    )
+  }
+
+  return (
+    <PageLayout>
+      <div className={styles.standaloneContent}>
+        <div className={styles.metadata}>
+          {displayAuthor && (
+            <Text as="h2" className={styles.artistName}>{displayAuthor}</Text>
+          )}
+          {displayTitle && (
+            <Text as="p" font="serif" className={styles.title}>
+              <em>{displayTitle}</em>
+              {artwork.year && <span>, {artwork.year}</span>}
+            </Text>
+          )}
+          {artwork.technique && (
+            <Text as="p" size="sm" className={styles.technique}>{artwork.technique}</Text>
+          )}
+          {artwork.dimensions && (
+            <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
+          )}
+          {artwork.description && (
+            <Text as="p" size="sm" className={styles.description}>{artwork.description}</Text>
+          )}
+        </div>
+
+        <div className={styles.imageContainer}>
+          {artwork.imageUrl && (
+            <img
+              src={artwork.imageUrl}
+              alt={displayTitle || 'Artwork'}
+              className={styles.image}
+            />
+          )}
         </div>
       </div>
-      <Footer />
-    </>
+    </PageLayout>
   )
 }

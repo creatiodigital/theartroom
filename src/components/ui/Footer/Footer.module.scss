@@ -19,12 +19,9 @@
 }
 
 .brand {
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: var(--text-lg);
-  font-weight: var(--font-light);
   color: var(--color-brand);
   text-transform: uppercase;
-  letter-spacing: var(--space-2);
+  letter-spacing: var(--space-1);
 
   &:hover {
     text-decoration: none;

@@ -16,6 +16,11 @@
   margin: 0 0 var(--space-4);
   font-size: var(--text-xl);
   font-family: var(--font-serif);
+  display: block;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .cta {
@@ -38,7 +43,7 @@
   font-family: var(--font-serif);
   width: 100%;
   column-count: 2;
-  column-gap: var(--space-8);
+  column-gap: var(--space-14);
 }
 
 .error {

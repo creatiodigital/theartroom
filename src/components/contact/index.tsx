@@ -1,17 +1,12 @@
 'use client'
 
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
+import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
 
 export const ContactPage = () => {
   return (
-    <>
-      <Header />
-      <div className="page-content">
-        <Text as="p">To be defined</Text>
-      </div>
-      <Footer />
-    </>
+    <PageLayout>
+      <Text as="p">To be defined</Text>
+    </PageLayout>
   )
 }

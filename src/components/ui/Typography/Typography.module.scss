@@ -1,35 +1,3 @@
-/* Typography Styles
-   
-   Font size scale (5 sizes only):
-     xs: 10px - Fine print, labels
-     sm: 14px - Body text, form inputs
-     md: 16px - Default, comfortable reading
-     lg: 20px - Subheadings, emphasis
-     xl: 32px - Headlines, large titles
-*/
-
-/* Heading defaults by element type */
-.h1 {
-  font-size: var(--text-xl);
-  letter-spacing: var(--space-1);
-}
-.h2 {
-  font-size: var(--text-lg);
-  letter-spacing: 1px;
-}
-.h3 {
-  font-size: var(--text-lg);
-}
-.h4 {
-  font-size: var(--text-md);
-}
-.h5 {
-  font-size: var(--text-sm);
-}
-.h6 {
-  font-size: var(--text-xs);
-}
-
 /* Font families */
 .font-serif {
   font-family: var(--font-serif), var(--font-serif-fallback);
@@ -39,64 +7,49 @@
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
-/* Heading weights */
-.heading-weight-light {
-  font-weight: 300;
-}
-
-.heading-weight-normal {
-  font-weight: 400;
-}
-
-.heading-weight-medium {
-  font-weight: 500;
-}
-
-.heading-weight-bold {
-  font-weight: 700;
-}
-
-/* Explicit font sizes - 5 core sizes only */
+/* Text sizes - line-heights inherit from globals.scss for consistency */
 .text-xs {
   font-size: var(--text-xs);
 }
+
 .text-sm {
   font-size: var(--text-sm);
 }
+
 .text-md {
   font-size: var(--text-md);
 }
+
 .text-lg {
   font-size: var(--text-lg);
 }
+
 .text-xl {
   font-size: var(--text-xl);
 }
 
-/* Font weights */
+.text-2xl {
+  font-size: var(--text-2xl);
+}
+
+/* Weights */
 .weight-light {
   font-weight: var(--font-light);
 }
+
 .weight-normal {
   font-weight: var(--font-regular);
 }
+
 .weight-medium {
   font-weight: var(--font-medium);
 }
+
 .weight-bold {
   font-weight: var(--font-bold);
 }
 
-/* Text colors */
+/* Muted text */
 .muted {
   color: var(--color-text-muted);
-}
-
-/* Paragraph default */
-.paragraph {
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: var(--text-sm);
-  color: var(--color-text);
-  line-height: 1.6;
-  margin: 0;
 }

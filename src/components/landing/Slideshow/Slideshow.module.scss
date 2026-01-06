@@ -57,23 +57,26 @@
 }
 
 .meta {
+  display: block;
+  position: relative;
   color: var(--color-white);
-  font-size: var(--text-sm) !important;
-  font-weight: var(--font-regular) !important;
+  font-weight: var(--font-regular);
   text-transform: uppercase;
   letter-spacing: var(--space-1);
   padding-bottom: var(--space-3);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-white);
   width: fit-content;
+  line-height: 1.2;
 }
 
 .title {
+  display: block;
+  position: relative;
   color: var(--color-white);
-  font-size: 72px !important;
-  font-weight: var(--font-light) !important;
+  font-size: 72px;
+  line-height: 1;
   margin: 0;
-  line-height: 1.1 !important;
   text-decoration: none;
 
   &:hover {
@@ -82,9 +85,12 @@
 }
 
 .subtitle {
+  display: block;
+  position: relative;
   color: var(--color-white);
-  font-size: var(--text-lg) !important;
-  margin-top: var(--space-1);
+  font-size: var(--text-lg);
+  line-height: 1.4;
+  margin-top: var(--space-2);
 }
 
 .paginationContainer {
@@ -116,4 +122,3 @@
 .bulletActive {
   background: var(--color-black);
 }
-

@@ -4,9 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
-import { LoadingBar } from '@/components/ui/LoadingBar'
+import { PageLayout } from '@/components/ui/PageLayout'
 
 import styles from './artists.module.scss'
 
@@ -38,37 +36,21 @@ export const ArtistsPage = () => {
     fetchArtists()
   }, [])
 
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <div className="page-content">
-          <LoadingBar />
-        </div>
-        <Footer />
-      </>
-    )
-  }
-
   return (
-    <>
-      <Header />
-      <div className="page-content">
-        {artists.length === 0 ? (
-          <EmptyState message="No artists found." />
-        ) : (
-          <ul className={styles.list}>
-            {artists.map((artist) => (
-              <li key={artist.id}>
-                <Link href={`/artists/${artist.handler}`} className={styles.artistLink}>
-                  {artist.name} {artist.lastName}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <Footer />
-    </>
+    <PageLayout loading={loading}>
+      {artists.length === 0 ? (
+        <EmptyState message="No artists found." />
+      ) : (
+        <ul className={styles.list}>
+          {artists.map((artist) => (
+            <li key={artist.id}>
+              <Link href={`/artists/${artist.handler}`} className={styles.artistLink}>
+                {artist.name} {artist.lastName}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </PageLayout>
   )
 }

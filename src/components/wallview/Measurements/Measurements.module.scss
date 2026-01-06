@@ -1,7 +1,4 @@
-@use '@/styles/mixins' as *;
-
 .width {
-  @include largeSans();
   position: absolute;
   color: var(--color-black);
   top: 0;
@@ -10,7 +7,6 @@
 }
 
 .height {
-  @include largeSans();
   position: absolute;
   color: var(--color-black);
   top: 50%;

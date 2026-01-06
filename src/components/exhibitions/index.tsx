@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
-import { LoadingBar } from '@/components/ui/LoadingBar'
+import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './exhibitions.module.scss'
@@ -48,65 +46,52 @@ export const ExhibitionsPage = () => {
   const pastExhibitions = exhibitions.filter((e) => e.status === 'past')
 
   return (
-    <>
-      <Header />
-      <div className="page-content">
-        {loading ? (
-          <LoadingBar />
+    <PageLayout loading={loading}>
+      <section className={styles.section}>
+        <Text as="h3" font="sans" className={styles.sectionTitle}>
+          Current
+        </Text>
+        {currentExhibitions.length === 0 ? (
+          <EmptyState message="No current exhibitions." />
         ) : (
-          <>
-            <section className={styles.section}>
-              <Text as="h2" font="sans" className={styles.sectionTitle}>
-                Current
-              </Text>
-              {currentExhibitions.length === 0 ? (
-                <EmptyState message="No current exhibitions." />
-              ) : (
-                <ul className={styles.list}>
-                  {currentExhibitions.map((exhibition) => (
-                    <li key={exhibition.id} className={styles.listItem}>
-                      <Link
-                        href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                        className={styles.exhibitionLink}
-                      >
-                        <span className={styles.exhibitionTitle}>
-                          {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            {/* Past Exhibitions - only show if there are any */}
-            {pastExhibitions.length > 0 && (
-              <section className={styles.section}>
-                <Text as="h2" className={styles.sectionTitle}>
-                  Past
-                </Text>
-                <ul className={styles.list}>
-                  {pastExhibitions.map((exhibition) => (
-                    <li key={exhibition.id} className={styles.listItem}>
-                      <Link
-                        href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                        className={styles.exhibitionLink}
-                      >
-                        <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
-                        <span className={styles.artistName}>
-                          {' '}
-                          — {exhibition.user.name} {exhibition.user.lastName}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </>
+          <ul className={styles.list}>
+            {currentExhibitions.map((exhibition) => (
+              <li key={exhibition.id} className={styles.listItem}>
+                <Link
+                  href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
+                  className={styles.exhibitionLink}
+                >
+                  {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
-      <Footer />
-    </>
+      </section>
+
+      {pastExhibitions.length > 0 && (
+        <section className={styles.section}>
+          <Text as="h2" className={styles.sectionTitle}>
+            Past
+          </Text>
+          <ul className={styles.list}>
+            {pastExhibitions.map((exhibition) => (
+              <li key={exhibition.id} className={styles.listItem}>
+                <Link
+                  href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
+                  className={styles.exhibitionLink}
+                >
+                  <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
+                  <span className={styles.artistName}>
+                    {' '}
+                    — {exhibition.user.name} {exhibition.user.lastName}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </PageLayout>
   )
 }

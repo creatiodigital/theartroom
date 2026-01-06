@@ -13,7 +13,7 @@ type Slide = {
   id: string
   imageUrl: string
   exhibitionUrl: string
-  subtitle: string 
+  subtitle: string
   title: string
   meta: string
 }
@@ -29,13 +29,13 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
         modules={[Autoplay, Pagination]}
         spaceBetween={0}
         slidesPerView={1}
-        loop={true}
+        loop={false}
         speed={1500}
         allowTouchMove={false}
-        autoplay={{
-          delay: 5000,
-          disableOnInteraction: false,
-        }}
+        // autoplay={{
+        //   delay: 5000,
+        //   disableOnInteraction: false,
+        // }}
         pagination={{
           clickable: true,
           el: `.${styles.pagination}`,
@@ -53,13 +53,13 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
               />
               <div className={styles.container}>
                 <div className={styles.content}>
-                  <Text as="span" size="xs" className={styles.meta}>
+                  <Text as="p" size="xs" className={styles.meta}>
                     {slide.meta}
                   </Text>
-                  <Text as="h1" font="serif" className={styles.title}>
+                  <Text as="h2" font="serif" className={styles.title}>
                     {slide.title}
                   </Text>
-                  <Text as="h2" font="serif" className={styles.subtitle}>
+                  <Text as="p" font="serif" className={styles.subtitle}>
                     {slide.subtitle}
                   </Text>
                 </div>
@@ -76,4 +76,3 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
 }
 
 export default Slideshow
-

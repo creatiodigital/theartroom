@@ -37,7 +37,7 @@
 
 .artistName {
   margin: 0;
-  font-size: 70px;
+  font-size: var(--text-huge);
 }
 
 .handler {
@@ -52,7 +52,7 @@
 
 .biography {
   column-count: 2;
-  column-gap: var(--space-6);
+  column-gap: var(--space-14);
 }
 
 .emptyText {
@@ -70,12 +70,18 @@
 }
 
 .exhibitionLink {
-  color: var(--color-text);
   text-decoration: none;
-  font-size: 1.1rem;
   display: inline-block;
   padding: 0.5rem 0;
   width: 100%;
+
+  h3 {
+    font-size: var(--text-2xl);
+  }
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .sectionHeading {

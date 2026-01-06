@@ -10,14 +10,10 @@
 
 .artistLink {
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: var(--text-lg);
-  font-weight: var(--font-regular);
-  color: var(--color-text);
   text-decoration: none;
-  transition: opacity 0.2s;
+  font-size: var(--text-xl);
 
   &:hover {
-    color: var(--color-brand);
     text-decoration: none;
   }
 }

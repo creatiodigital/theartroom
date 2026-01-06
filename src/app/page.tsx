@@ -55,11 +55,16 @@ export default async function Home() {
   return (
     <main className={styles.home}>
       <Header />
+
+      <Text as="h1" className={styles.srOnly}>
+        Lumen Gallery
+      </Text>
+
       {slides.length > 0 && <Slideshow slides={slides} />}
 
       <div className={styles.content}>
         <section className={styles.exhibitionsSection}>
-          <Text as="h2" font="sans"className={styles.sectionHeading}>
+          <Text as="h2" size="lg" className={styles.sectionHeading}>
             Exhibitions
           </Text>
           {exhibitions.length === 0 ? (
@@ -74,7 +79,7 @@ export default async function Home() {
                     href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                     className={styles.exhibitionLink}
                   >
-                    <Text as="h3" className={styles.exhibitionTitle}>
+                    <Text as="h3" font="serif" size="xl" className={styles.exhibitionTitle}>
                       {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
                     </Text>
                   </Link>
