@@ -1,5 +1,3 @@
-@use '@/styles/mixins' as *;
-
 .frame {
   position: relative;
   width: 100%;
@@ -24,7 +22,6 @@
 }
 
 .empty {
-  @include smallSans();
   position: absolute;
   top: 0;
   left: 0;
