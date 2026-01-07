@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 
-import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './ArtworkGrid.module.scss'
