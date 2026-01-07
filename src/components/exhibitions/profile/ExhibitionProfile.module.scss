@@ -4,10 +4,6 @@
   padding: 0;
 }
 
-.title {
-  font-size: var(--text-huge);
-}
-
 .artist {
   font-size: var(--text-xl);
   font-family: var(--font-serif);
@@ -38,7 +34,6 @@
 
 .button {
   width: auto;
-  text-transform: uppercase;
 }
 
 .heroImageWrapper {
@@ -70,4 +65,8 @@
 .error {
   color: var(--color-error-text);
   margin-bottom: var(--space-4);
+}
+
+.artworksSection {
+  margin-top: var(--space-16);
 }

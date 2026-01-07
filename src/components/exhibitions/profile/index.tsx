@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { PageLayout } from '@/components/ui/PageLayout'
@@ -11,15 +12,28 @@ import { Text } from '@/components/ui/Typography'
 
 import styles from './ExhibitionProfile.module.scss'
 
+type Artwork = {
+  id: string
+  name: string
+  title?: string
+  author?: string
+  year?: string
+  technique?: string
+  dimensions?: string
+  imageUrl?: string
+}
+
 type Exhibition = {
   id: string
   mainTitle: string
   description?: string
+  featuredImageUrl?: string
   url: string
   status: string
   visibility: string
   startDate?: string
   endDate?: string
+  artworks?: Artwork[]
   user: {
     name: string
     lastName: string
@@ -92,14 +106,14 @@ export const ExhibitionProfilePage = ({
       <div className={styles.content}>
         <div className={styles.heroSection}>
           <div className={styles.heroCta}>
-            <Text as="h1" size="2xl" className={styles.title}>
+            <Text as="h1" size="3xl" className={styles.title}>
               {exhibition.mainTitle}
             </Text>
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
             <Button
-              size="regular"
+              size="small"
               label="Enter Virtual Exhibition"
               href={visitUrl}
               iconLeft={<ArrowRight size={16} />}
@@ -107,14 +121,15 @@ export const ExhibitionProfilePage = ({
             />
           </div>
 
-          
-          <div className={styles.heroImageWrapper}>
-            <img
-              src="/assets/landing/carousel1.webp"
-              alt={exhibition.mainTitle}
-              className={styles.heroImage}
-            />
-          </div>
+          {exhibition.featuredImageUrl && (
+            <div className={styles.heroImageWrapper}>
+              <img
+                src={exhibition.featuredImageUrl}
+                alt={exhibition.mainTitle}
+                className={styles.heroImage}
+              />
+            </div>
+          )}
         </div>
 
         {dateRange && (
@@ -125,6 +140,12 @@ export const ExhibitionProfilePage = ({
 
         {exhibition.description && (
           <RichText content={exhibition.description} className={styles.description} />
+        )}
+
+        {exhibition.artworks && exhibition.artworks.length > 0 && (
+          <div className={styles.artworksSection}>
+            <ArtworkGrid artworks={exhibition.artworks} artistName={artistName} />
+          </div>
         )}
       </div>
     </PageLayout>

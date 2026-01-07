@@ -61,20 +61,21 @@ model Artwork {
 }
 
 model Exhibition {
-  id           String    @id @default(uuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  handler      String
-  mainTitle    String
-  description  String?
-  url          String    @unique
-  thumbnailUrl String?
-  bannerUrl    String?
-  spaceId      String
-  startDate    DateTime?
-  endDate      DateTime?
-  status       String
-  visibility   String
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  handler          String
+  mainTitle        String
+  description      String?
+  url              String    @unique
+  thumbnailUrl     String?
+  bannerUrl        String?
+  featuredImageUrl String?
+  spaceId          String
+  startDate        DateTime?
+  endDate          DateTime?
+  status           String
+  visibility       String
 
   // Lighting customization (space-agnostic)
   ambientLightColor     String? @default("#e4e8f2")

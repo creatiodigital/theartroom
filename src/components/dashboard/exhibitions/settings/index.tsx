@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
+import { FileInput } from '@/components/ui/FileInput'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
@@ -17,6 +19,7 @@ type Exhibition = {
   id: string
   mainTitle: string
   description: string | null
+  featuredImageUrl: string | null
   url: string
   userId: string
   status: string
@@ -35,11 +38,13 @@ interface ExhibitionSettingsPageProps {
 export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageProps) => {
   const { status: sessionStatus } = useSession()
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
 
@@ -101,6 +106,71 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     }
   }, [exhibition, description])
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !exhibition) return
+
+    setUploading(true)
+    setError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch(`/api/exhibitions/${exhibition.id}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to upload image')
+        setUploading(false)
+        return
+      }
+
+      const data = await response.json()
+      setExhibition((prev) => (prev ? { ...prev, featuredImageUrl: data.url } : prev))
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch {
+      setError('Failed to upload image')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveImage = async () => {
+    if (!exhibition?.featuredImageUrl) return
+    if (!confirm('Remove featured image?')) return
+
+    setUploading(true)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibition.id}/image`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        setError('Failed to remove image')
+        setUploading(false)
+        return
+      }
+
+      setExhibition((prev) => (prev ? { ...prev, featuredImageUrl: null } : prev))
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch {
+      setError('Failed to remove image')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className={styles.page}>
@@ -142,6 +212,45 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       <Text as="h1" className={styles.pageTitle}>
         {exhibition.mainTitle}
       </Text>
+
+      {/* Featured Image Section */}
+      <div className={styles.section}>
+        <Text as="h3" font="sans" className={styles.sectionTitle}>
+          Featured Image
+        </Text>
+        <div className={styles.imageRow}>
+          <div className={styles.imagePreview}>
+            {exhibition.featuredImageUrl ? (
+              <Image
+                src={exhibition.featuredImageUrl}
+                alt="Featured"
+                width={300}
+                height={200}
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <div className={styles.noImage}>No image</div>
+            )}
+          </div>
+          <div className={styles.imageActions}>
+            <FileInput
+              ref={fileInputRef}
+              id="featuredImage"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageUpload}
+            />
+            <Button
+              size="small"
+              label={uploading ? 'Uploading...' : exhibition.featuredImageUrl ? 'Change Image' : 'Upload Image'}
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            />
+            {exhibition.featuredImageUrl && (
+              <Button size="small" label="Remove" onClick={handleRemoveImage} type="button" />
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className={styles.section}>
         <Text as="h3" font="sans" className={styles.sectionTitle}>

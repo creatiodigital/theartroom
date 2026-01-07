@@ -53,13 +53,13 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
               />
               <div className={styles.container}>
                 <div className={styles.content}>
-                  <Text as="p" size="xs" className={styles.meta}>
+                  <Text as="p" size="sm" className={styles.meta}>
                     {slide.meta}
                   </Text>
                   <Text as="h2" size="huge" font="serif" className={styles.title}>
                     {slide.title}
                   </Text>
-                  <Text as="p" font="serif" className={styles.subtitle}>
+                  <Text as="p" size="lg" font="serif" className={styles.subtitle}>
                     {slide.subtitle}
                   </Text>
                 </div>

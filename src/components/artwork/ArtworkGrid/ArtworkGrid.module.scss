@@ -15,6 +15,9 @@
 .card {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .imageWrapper {
@@ -23,6 +26,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 0;
+  flex-grow: 1;
 }
 
 .image {
@@ -45,28 +49,22 @@
 .info {
   text-align: center;
   padding-top: var(--space-4);
-  margin-top: var(--space-4);
   border-top: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .artist {
-  font-size: 14px;
   font-weight: 400;
   margin-bottom: var(--space-1);
   color: var(--color-text);
 }
 
 .title {
-  font-size: 14px;
   color: var(--color-text);
-  margin-bottom: var(--space-2);
 }
 
 .detail {
-  font-size: 13px;
   color: var(--color-text);
-  margin-bottom: var(--space-1);
-  line-height: 1.5;
 }
 
 .viewDetailsLink {

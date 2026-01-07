@@ -129,7 +129,15 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         )}
       </div>
 
-      <div className={styles.section}>
+    
+
+      {artworks.length > 0 && (
+        <div className={styles.section}>
+          <ArtworkGrid artworks={artworks} artistName={artistFullName} />
+        </div>
+      )}
+
+        <div className={styles.section}>
         <Text as="h2" font="sans" size="lg" className={styles.sectionHeading}>Exhibitions</Text>
         {exhibitions.length === 0 ? (
           <EmptyState message="No exhibitions yet." />
@@ -147,13 +155,6 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
           </ul>
         )}
       </div>
-
-      {artworks.length > 0 && (
-        <div className={styles.section}>
-          <Text as="h2" className={styles.sectionHeading}>Selected Works</Text>
-          <ArtworkGrid artworks={artworks} artistName={artistFullName} />
-        </div>
-      )}
     </PageLayout>
   )
 }
