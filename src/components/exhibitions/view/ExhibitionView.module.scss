@@ -34,3 +34,25 @@
   align-items: center;
   height: 100vh;
 }
+
+.navigationButton {
+  position: fixed;
+  top: var(--space-6);
+  left: var(--space-6);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  background-color: var(--color-black);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+
+  svg {
+    color: var(--color-white);
+  }
+
+
+}

@@ -102,8 +102,8 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     <PageLayout>
       <div className={styles.header}>
         <div>
-          <Text as="h1" className={styles.artistName}>{artist.name}</Text>
-          <Text as="h1" className={styles.artistName}>{artist.lastName}</Text>
+          <Text as="h1" size="huge" className={styles.artistName}>{artist.name}</Text>
+          <Text as="h1" size="huge" className={styles.artistName}>{artist.lastName}</Text>
         </div>
         {artist.profileImageUrl ? (
           <div className={styles.avatarWrapper}>

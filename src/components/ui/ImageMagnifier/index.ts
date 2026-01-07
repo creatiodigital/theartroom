@@ -1,0 +1,1 @@
+export { ImageMagnifier } from './ImageMagnifier'

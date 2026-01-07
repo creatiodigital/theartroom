@@ -73,7 +73,7 @@ export const ExhibitionProfilePage = ({
     )
   }
 
-  const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
+  const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit?ref=internal`
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
 
   const formatDate = (dateStr?: string) => {
@@ -90,20 +90,29 @@ export const ExhibitionProfilePage = ({
   return (
     <PageLayout>
       <div className={styles.content}>
-        <div className={styles.header}>
-          <Text as="h1" size="2xl" className={styles.title}>
-            {exhibition.mainTitle}
-          </Text>
-          <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
-            {artistName}
-          </Link>
-          <div className={styles.cta}>
+        <div className={styles.heroSection}>
+          <div className={styles.heroCta}>
+            <Text as="h1" size="2xl" className={styles.title}>
+              {exhibition.mainTitle}
+            </Text>
+            <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
+              {artistName}
+            </Link>
             <Button
               size="regular"
-              label="Enter Exhibition"
+              label="Enter Virtual Exhibition"
               href={visitUrl}
               iconLeft={<ArrowRight size={16} />}
               className={styles.button}
+            />
+          </div>
+
+          
+          <div className={styles.heroImageWrapper}>
+            <img
+              src="/assets/landing/carousel1.webp"
+              alt={exhibition.mainTitle}
+              className={styles.heroImage}
             />
           </div>
         </div>

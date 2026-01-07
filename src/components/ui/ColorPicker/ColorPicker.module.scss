@@ -9,7 +9,6 @@
 
   input[type='color'] {
     border: none;
-    border-radius: var(--space-1);
     padding: 0;
     height: 14px;
     width: 14px;
@@ -21,12 +20,10 @@
 
     &::-webkit-color-swatch {
       border: 0;
-      border-radius: var(--space-1);
     }
 
     &::-moz-color-swatch {
       border: 0;
-      border-radius: var(--space-1);
     }
   }
 }
