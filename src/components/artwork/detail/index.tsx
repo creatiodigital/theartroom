@@ -122,12 +122,11 @@ export const ArtworkDetailPage = ({
         <div className={styles.content}>
           <div className={styles.metadata}>
             {displayAuthor && (
-              <Text as="h2" className={styles.artistName}>{displayAuthor}</Text>
+              <Text as="h1" size="2xl" className={styles.artistName}>{displayAuthor}</Text>
             )}
-            {displayTitle && (
-              <Text as="p" font="serif" className={styles.title}>
-                <em>{displayTitle}</em>
-                {artwork.year && <span>, {artwork.year}</span>}
+            {displayTitle && (  
+              <Text as="h2" size="xl" font="serif" className={styles.title}>
+                {`${displayTitle} ${artwork.year ? `, ${artwork.year}` : ''}`}
               </Text>
             )}
             {artwork.technique && (

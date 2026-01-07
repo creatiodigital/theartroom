@@ -48,9 +48,9 @@ export const ExhibitionsPage = () => {
   return (
     <PageLayout loading={loading}>
       <section className={styles.section}>
-        <Text as="h3" font="sans" className={styles.sectionTitle}>
+        {/* <Text as="h3" font="sans" className={styles.sectionTitle}>
           Current
-        </Text>
+        </Text> */}
         {currentExhibitions.length === 0 ? (
           <EmptyState message="No current exhibitions." />
         ) : (

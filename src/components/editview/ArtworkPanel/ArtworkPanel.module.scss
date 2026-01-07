@@ -4,11 +4,11 @@
   position: fixed;
   right: 0;
   top: 0;
-  width: 350px;
+  width: 400px;
   height: 100vh;
   background-color: var(--color-bg-muted);
   z-index: 2;
-  padding: var(--space-10);
+  padding: var(--space-8);
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -30,15 +30,11 @@
   flex-direction: column;
   gap: var(--space-3);
   padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
 }
 
 .imageWrapper {
   width: 100%;
-  aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: var(--space-1);
-  background: var(--bgDark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,11 +56,10 @@
 }
 
 .author {
-  text-transform: uppercase;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .title {
+  margin-bottom: var(--space-6);
   font-style: italic;
-  margin-bottom: var(--space-2);
 }

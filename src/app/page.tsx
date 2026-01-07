@@ -64,7 +64,7 @@ export default async function Home() {
 
       <div className={styles.content}>
         <section className={styles.exhibitionsSection}>
-          <Text as="h2" size="lg" className={styles.sectionHeading}>
+          <Text as="h2" font="sans" size="lg" className={styles.sectionHeading}>
             Exhibitions
           </Text>
           {exhibitions.length === 0 ? (
