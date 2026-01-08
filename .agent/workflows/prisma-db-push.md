@@ -14,6 +14,18 @@ description: How to push database schema changes with Prisma
    - `DATABASE_URL` = Accelerate URL (runtime) - starts with `prisma+postgres://`
    - `DIRECT_DATABASE_URL` = Direct Postgres URL (CLI) - starts with `postgres://`
 
+> [!CAUTION]
+> **You must push schema changes to BOTH databases!**
+>
+> - **Production database** (default, uses `.env` settings)
+> - **Staging/Dev database** (requires setting `DIRECT_DATABASE_URL` to staging URL)
+>
+> Example for staging:
+>
+> ```bash
+> DIRECT_DATABASE_URL="postgres://...staging-url..." pnpm db:push
+> ```
+
 ---
 
 ## ✅ Bulletproof Workflow
