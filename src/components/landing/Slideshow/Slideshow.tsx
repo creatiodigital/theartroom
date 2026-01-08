@@ -32,10 +32,10 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
         loop={false}
         speed={1500}
         allowTouchMove={false}
-        // autoplay={{
-        //   delay: 5000,
-        //   disableOnInteraction: false,
-        // }}
+        autoplay={{
+          delay: 5000,
+          disableOnInteraction: false,
+        }}
         pagination={{
           clickable: true,
           el: `.${styles.pagination}`,
@@ -53,13 +53,13 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
               />
               <div className={styles.container}>
                 <div className={styles.content}>
-                  <Text as="p" size="xs" className={styles.meta}>
+                  <Text as="p" size="sm" className={styles.meta}>
                     {slide.meta}
                   </Text>
-                  <Text as="h2" font="serif" className={styles.title}>
+                  <Text as="h2" size="huge" font="serif" className={styles.title}>
                     {slide.title}
                   </Text>
-                  <Text as="p" font="serif" className={styles.subtitle}>
+                  <Text as="p" size="lg" font="serif" className={styles.subtitle}>
                     {slide.subtitle}
                   </Text>
                 </div>

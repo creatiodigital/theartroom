@@ -3,7 +3,7 @@ import styles from './Typography.module.scss'
 
 type TextElement = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'label' | 'a'
 
-type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'huge'
 type FontFamily = 'serif' | 'sans'
 type TextWeight = 'light' | 'normal' | 'medium' | 'bold'
 

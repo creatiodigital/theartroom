@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 
-import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './ArtworkGrid.module.scss'
@@ -30,14 +29,21 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
         <div key={artwork.id} className={styles.card}>
           <div className={styles.imageWrapper}>
             {artwork.imageUrl ? (
-              <img
-                src={artwork.imageUrl}
-                alt={artwork.title || artwork.name || 'Artwork'}
-                className={styles.image}
-              />
+              <Link
+                href={`/artworks/${artwork.id}?ref=internal`}
+                className={styles.viewDetailsLink}
+              >
+                <img
+                  src={artwork.imageUrl}
+                  alt={artwork.title || artwork.name || 'Artwork'}
+                  className={styles.image}
+                />
+              </Link>
             ) : (
               <div className={styles.placeholder}>
-                <Text as="span" size="sm">No image</Text>
+                <Text as="span" size="sm">
+                  No image
+                </Text>
               </div>
             )}
           </div>
@@ -45,7 +51,7 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
             <Text as="p" className={styles.artist}>
               {artwork.author || artistName || ''}
             </Text>
-            <Text as="p" font="serif" className={styles.title}>
+            <Text as="p" font="sans" className={styles.title}>
               <em>{artwork.title || artwork.name}</em>
               {artwork.year && <span>, {artwork.year}</span>}
             </Text>
@@ -59,12 +65,9 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
                 {artwork.dimensions}
               </Text>
             )}
-            <Link
-              href={`/artworks/${artwork.id}?ref=internal`}
-              className={styles.viewDetailsLink}
-            >
-              <Button variant="outline" label="View Details" />
-            </Link>
+            {/* <Link href={`/artworks/${artwork.id}?ref=internal`} className={styles.viewDetailsLink}>
+              <Button size="small" variant="outline" label="Inquire" />
+            </Link> */}
           </div>
         </div>
       ))}

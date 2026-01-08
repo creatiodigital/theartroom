@@ -57,39 +57,24 @@
 }
 
 .meta {
-  display: block;
   position: relative;
   color: var(--color-white);
-  font-weight: var(--font-regular);
   text-transform: uppercase;
   letter-spacing: var(--space-1);
   padding-bottom: var(--space-3);
   margin-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-white);
   width: fit-content;
-  line-height: 1.2;
 }
 
 .title {
-  display: block;
   position: relative;
   color: var(--color-white);
-  font-size: 72px;
-  line-height: 1;
-  margin: 0;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: none;
-  }
 }
 
 .subtitle {
-  display: block;
   position: relative;
   color: var(--color-white);
-  font-size: var(--text-lg);
-  line-height: 1.4;
   margin-top: var(--space-2);
 }
 

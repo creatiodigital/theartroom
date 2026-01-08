@@ -102,8 +102,8 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     <PageLayout>
       <div className={styles.header}>
         <div>
-          <Text as="h1" className={styles.artistName}>{artist.name}</Text>
-          <Text as="h1" className={styles.artistName}>{artist.lastName}</Text>
+          <Text as="h1" size="huge" className={styles.artistName}>{artist.name}</Text>
+          <Text as="h1" size="huge" className={styles.artistName}>{artist.lastName}</Text>
         </div>
         {artist.profileImageUrl ? (
           <div className={styles.avatarWrapper}>
@@ -129,8 +129,16 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         )}
       </div>
 
-      <div className={styles.section}>
-        <Text as="h2" className={styles.sectionHeading}>Exhibitions</Text>
+    
+
+      {artworks.length > 0 && (
+        <div className={styles.section}>
+          <ArtworkGrid artworks={artworks} artistName={artistFullName} />
+        </div>
+      )}
+
+        <div className={styles.section}>
+        <Text as="h2" font="sans" size="lg" className={styles.sectionHeading}>Exhibitions</Text>
         {exhibitions.length === 0 ? (
           <EmptyState message="No exhibitions yet." />
         ) : (
@@ -138,20 +146,15 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
             {exhibitions.map((ex) => (
               <li key={ex.id} className={styles.exhibitionItem}>
                 <Link href={`/exhibitions/${artist.handler}/${ex.url}`} className={styles.exhibitionLink}>
-                  <Text as="h3" font="serif">{ex.mainTitle}</Text>
+                  <Text as="h3" font="serif" size="xl" className={styles.exhibitionTitle}>
+                    {ex.mainTitle}
+                  </Text>
                 </Link>
               </li>
             ))}
           </ul>
         )}
       </div>
-
-      {artworks.length > 0 && (
-        <div className={styles.section}>
-          <Text as="h2" className={styles.sectionHeading}>Selected Works</Text>
-          <ArtworkGrid artworks={artworks} artistName={artistFullName} />
-        </div>
-      )}
     </PageLayout>
   )
 }

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 
 import { PageLayout } from '@/components/ui/PageLayout'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
+import { ImageMagnifier } from '@/components/ui/ImageMagnifier'
 
 import styles from './ArtworkDetail.module.scss'
 
@@ -73,15 +73,12 @@ export const ArtworkDetailPage = ({
   const displayTitle = artwork?.title || artwork?.name || ''
   const displayAuthor = artwork?.author || (artist ? `${artist.name} ${artist.lastName}` : '')
 
-  // Internal mode - minimal header with close button (custom layout, no PageLayout)
   if (isInternal) {
     if (loading) {
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
-            <Link href="/" className={styles.logo}>
-              <Text as="h2" className={styles.logoText}>Lumen Gallery</Text>
-            </Link>
+            <Text as="span" size="lg" font="serif" className={styles.logoText}>Lumen Gallery</Text>
           </header>
           <div className={styles.content}>
             <LoadingBar />
@@ -94,9 +91,7 @@ export const ArtworkDetailPage = ({
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
-            <Link href="/" className={styles.logo}>
-              <Text as="h2" className={styles.logoText}>Lumen Gallery</Text>
-            </Link>
+            <Text as="span" size="lg" font="serif" className={styles.logoText}>Lumen Gallery</Text>
             <button onClick={handleClose} className={styles.closeButton}>
               CLOSE <span className={styles.closeIcon}>×</span>
             </button>
@@ -111,9 +106,7 @@ export const ArtworkDetailPage = ({
     return (
       <div className={styles.page}>
         <header className={styles.minimalHeader}>
-          <Link href="/" className={styles.logo}>
-            <Text as="h2" className={styles.logoText}>Lumen Gallery</Text>
-          </Link>
+          <Text as="span" size="lg" font="serif" className={styles.logoText}>Lumen Gallery</Text>
           <button onClick={handleClose} className={styles.closeButton}>
             CLOSE <span className={styles.closeIcon}>×</span>
           </button>
@@ -122,12 +115,11 @@ export const ArtworkDetailPage = ({
         <div className={styles.content}>
           <div className={styles.metadata}>
             {displayAuthor && (
-              <Text as="h2" className={styles.artistName}>{displayAuthor}</Text>
+              <Text as="h1" size="2xl" className={styles.artistName}>{displayAuthor}</Text>
             )}
-            {displayTitle && (
-              <Text as="p" font="serif" className={styles.title}>
-                <em>{displayTitle}</em>
-                {artwork.year && <span>, {artwork.year}</span>}
+            {displayTitle && (  
+              <Text as="h2" size="xl" font="serif" className={styles.title}>
+                {`${displayTitle} ${artwork.year ? `, ${artwork.year}` : ''}`}
               </Text>
             )}
             {artwork.technique && (
@@ -143,10 +135,9 @@ export const ArtworkDetailPage = ({
 
           <div className={styles.imageContainer}>
             {artwork.imageUrl && (
-              <img
+              <ImageMagnifier
                 src={artwork.imageUrl}
                 alt={displayTitle || 'Artwork'}
-                className={styles.image}
               />
             )}
           </div>
@@ -194,10 +185,9 @@ export const ArtworkDetailPage = ({
 
         <div className={styles.imageContainer}>
           {artwork.imageUrl && (
-            <img
+            <ImageMagnifier
               src={artwork.imageUrl}
               alt={displayTitle || 'Artwork'}
-              className={styles.image}
             />
           )}
         </div>

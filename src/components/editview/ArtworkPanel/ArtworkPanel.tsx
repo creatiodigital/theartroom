@@ -44,7 +44,6 @@ const ArtworkPanel = () => {
 
   return (
     <div ref={panelRef} className={styles.panel}>
-      {/* Image Preview Section */}
       {thumbnailUrl && (
         <div className={styles.imageSection}>
           <div className={styles.imageWrapper}>
@@ -54,25 +53,23 @@ const ArtworkPanel = () => {
               className={styles.preview}
             />
           </div>
-          <Button variant="primary" label="View Details" onClick={handleViewDetails} />
+          <Button variant="outline" label="View Details" onClick={handleViewDetails} />
         </div>
       )}
 
-      {/* Artwork Info Section */}
       <div className={styles.info}>
         {selectedArtwork && (
           <div>
             {author && (
-              <Text as="h3" className={styles.author}>
+              <Text as="h1" size="2xl" font="serif" className={styles.author}>
                 {author}
               </Text>
             )}
             {(artworkTitle || name) && (
-              <Text as="span" size="md" font="serif" className={styles.title}>{artworkTitle || name}</Text>
+              <Text as="h2" size="xl" font="serif" className={styles.title}>{artworkTitle || name}, {artworkYear && `${artworkYear}`}</Text>
             )}
-            {artworkYear && <Text as="span" size="md" font="serif" className={styles.year}>{`, ${artworkYear}`}</Text>}
-            {description && <Text as="div" size="md" font="serif" className={styles.description}>{description}</Text>}
-            {artworkDimensions && <Text as="span" size="md" font="serif" className={styles.dimensions}>{artworkDimensions}</Text>}
+            {description && <Text as="p" size="sm" font="sans" className={styles.description}>{description}</Text>}
+            {artworkDimensions && <Text as="p" size="sm" font="sans" className={styles.dimensions}>{artworkDimensions}</Text>}
           </div>
         )}
       </div>
