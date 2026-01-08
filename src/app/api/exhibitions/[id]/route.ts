@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { del } from '@vercel/blob'
 
 import type { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
@@ -83,8 +84,23 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 /* ------------------------ DELETE ------------------------ */
 export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    // params is now a Promise — must be awaited
     const { id } = await context.params
+
+    // Fetch the exhibition first to get the featuredImageUrl
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id },
+      select: { featuredImageUrl: true },
+    })
+
+    // Delete featured image from Vercel Blob if it exists
+    if (exhibition?.featuredImageUrl) {
+      try {
+        await del(exhibition.featuredImageUrl)
+      } catch (error) {
+        console.warn('Failed to delete featured image blob:', error)
+        // Continue anyway - the blob might not exist
+      }
+    }
 
     await prisma.exhibition.delete({ where: { id } })
 
@@ -94,3 +110,4 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json({ error: 'Failed to delete exhibition' }, { status: 500 })
   }
 }
+

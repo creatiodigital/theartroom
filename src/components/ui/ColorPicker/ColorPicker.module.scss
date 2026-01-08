@@ -3,13 +3,12 @@
 .picker {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-2);
   width: 100%;
-  padding-top: 2px;
+  padding-top: var(--space-1);
 
   input[type='color'] {
     border: none;
-    border-radius: 3px;
     padding: 0;
     height: 14px;
     width: 14px;
@@ -21,17 +20,15 @@
 
     &::-webkit-color-swatch {
       border: 0;
-      border-radius: 3px;
     }
 
     &::-moz-color-swatch {
       border: 0;
-      border-radius: 3px;
     }
   }
 }
 
 .label {
   @include tinySans();
-  color: var(--black);
+  color: var(--color-black);
 }

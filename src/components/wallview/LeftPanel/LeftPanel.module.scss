@@ -4,15 +4,15 @@
   width: 250px;
   max-width: 250px;
   height: 100vh;
-  background-color: var(--bgLight);
-  padding: 20px;
+  background-color: var(--color-bg-gray);
+  padding: var(--space-5);
   overflow: auto;
 }
 
 .section {
   margin: 0 0 20px 0;
   padding: 0 0 20px 0;
-  border-bottom: 1px solid var(--borderLight);
+  border-bottom: 1px solid var(--color-border);
 
   &:last-child {
     border: none;
@@ -20,14 +20,14 @@
 }
 
 .subsection {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 }
 
 .row {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .item {
@@ -42,11 +42,11 @@
 }
 
 .artwork {
-  color: var(--black);
+  color: var(--color-black);
   margin: 0 0 10px 0;
 }
 
 .selected {
-  color: var(--borderBlue);
+  color: var(--color-accent);
 }
 

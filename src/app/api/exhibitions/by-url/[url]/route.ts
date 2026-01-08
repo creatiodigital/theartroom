@@ -18,6 +18,23 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
             biography: true,
           },
         },
+        exhibitionArtworks: {
+          include: {
+            artwork: {
+              select: {
+                id: true,
+                name: true,
+                title: true,
+                author: true,
+                year: true,
+                technique: true,
+                dimensions: true,
+                imageUrl: true,
+                artworkType: true,
+              },
+            },
+          },
+        },
       },
     })
 
@@ -25,7 +42,15 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    return NextResponse.json(exhibition)
+    // Extract artworks of type "image" from exhibitionArtworks
+    const artworks = exhibition.exhibitionArtworks
+      .map((ea) => ea.artwork)
+      .filter((artwork) => artwork.artworkType === 'image')
+
+    return NextResponse.json({
+      ...exhibition,
+      artworks,
+    })
   } catch (error) {
     console.error('[GET /api/exhibitions/by-url/[url]] error:', error)
     return NextResponse.json({ error: 'Failed to fetch exhibition' }, { status: 500 })

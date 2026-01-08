@@ -1,24 +1,4 @@
-.h1 {
-  font-size: var(--text-2xl);
-  letter-spacing: 2px;
-}
-.h2 {
-  font-size: var(--text-xl);
-  letter-spacing: 2px;
-}
-.h3 {
-  font-size: var(--text-lg);
-}
-.h4 {
-  font-size: var(--text-md);
-}
-.h5 {
-  font-size: var(--text-sm);
-}
-.h6 {
-  font-size: var(--text-xs);
-}
-
+/* Font families */
 .font-serif {
   font-family: var(--font-serif), var(--font-serif-fallback);
 }
@@ -27,71 +7,58 @@
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
-.heading-weight-light {
-  font-weight: 300;
-}
-
-.heading-weight-normal {
-  font-weight: 400;
-}
-
-.heading-weight-medium {
-  font-weight: 500;
-}
-
-.heading-weight-bold {
-  font-weight: 700;
-}
-
+/* Text sizes - line-heights inherit from globals.scss for consistency */
 .text-xs {
   font-size: var(--text-xs);
 }
+
 .text-sm {
   font-size: var(--text-sm);
 }
+
 .text-md {
   font-size: var(--text-md);
 }
+
 .text-lg {
   font-size: var(--text-lg);
 }
+
 .text-xl {
   font-size: var(--text-xl);
 }
+
 .text-2xl {
   font-size: var(--text-2xl);
 }
+
 .text-3xl {
   font-size: var(--text-3xl);
 }
-.text-4xl {
-  font-size: var(--text-4xl);
-}
-.text-5xl {
-  font-size: var(--text-5xl);
+
+
+.text-huge {
+  font-size: var(--text-huge);
 }
 
+/* Weights */
 .weight-light {
   font-weight: var(--font-light);
 }
+
 .weight-normal {
   font-weight: var(--font-regular);
 }
+
 .weight-medium {
   font-weight: var(--font-medium);
 }
+
 .weight-bold {
   font-weight: var(--font-bold);
 }
 
+/* Muted text */
 .muted {
   color: var(--color-text-muted);
-}
-
-.paragraph {
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 14px;
-  color: var(--color-text);
-  line-height: 1.6;
-  margin: 0;
 }

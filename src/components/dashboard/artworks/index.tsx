@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -13,6 +12,7 @@ import { Modal } from '@/components/ui/Modal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './artworks.module.scss'
 
@@ -48,7 +48,7 @@ type Artwork = {
 }
 
 export const ArtworkLibraryPage = () => {
-  const { data: session, status: sessionStatus } = useSession()
+  const { effectiveUser, status: sessionStatus } = useEffectiveUser()
   const router = useRouter()
 
   const [artworks, setArtworks] = useState<Artwork[]>([])
@@ -99,24 +99,24 @@ export const ArtworkLibraryPage = () => {
 
   // Fetch artworks
   const fetchArtworks = useCallback(async () => {
-    if (!session?.user?.id) return
+    if (!effectiveUser?.id) return
 
     try {
-      const response = await fetch(`/api/artworks?userId=${session.user.id}`)
+      const response = await fetch(`/api/artworks?userId=${effectiveUser.id}`)
       const data = await response.json()
-      setArtworks(data)
+      setArtworks(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch artworks:', error)
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id])
+  }, [effectiveUser?.id])
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (effectiveUser?.id) {
       fetchArtworks()
     }
-  }, [session?.user?.id, fetchArtworks])
+  }, [effectiveUser?.id, fetchArtworks])
 
   const handleAddSuccess = useCallback(() => {
     fetchArtworks()
@@ -322,7 +322,7 @@ export const ArtworkLibraryPage = () => {
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>
           <AddArtworkModal
-            userId={session?.user?.id ?? ''}
+            userId={effectiveUser?.id ?? ''}
             onClose={() => setShowAddModal(false)}
             onSuccess={handleAddSuccess}
           />

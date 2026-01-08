@@ -16,16 +16,16 @@
 
 .header {
   padding: 10px 0;
-  border-bottom: 1px solid var(--grayLight);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .subtitle {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .exhibitions {
   padding: 20px 0;
-  border-bottom: 1px solid var(--grayLight);
+  border-bottom: 1px solid var(--color-border);
   min-height: 400px;
 }
 

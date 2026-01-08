@@ -3,6 +3,8 @@
 import { useProgress } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ArrowLeft, Home } from 'lucide-react'
 
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { Scene } from '@/components/scene'
@@ -16,6 +18,35 @@ import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 import { Text } from '@/components/ui/Typography'
 import styles from './ExhibitionView.module.scss'
+
+interface NavigationButtonProps {
+  artistSlug: string
+  exhibitionSlug: string
+}
+
+const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps) => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isInternal = searchParams.get('ref') === 'internal'
+
+  const handleClick = () => {
+    if (isInternal) {
+      router.push(`/exhibitions/${artistSlug}/${exhibitionSlug}`)
+    } else {
+      router.push('/')
+    }
+  }
+
+  return (
+    <button
+      className={styles.navigationButton}
+      onClick={handleClick}
+      aria-label={isInternal ? 'Back to exhibition' : 'Go to home'}
+    >
+      {isInternal ? <ArrowLeft size={20} /> : <Home size={20} />}
+    </button>
+  )
+}
 
 interface ExhibitionViewPageProps {
   artistSlug: string
@@ -104,6 +135,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
 
   return (
     <>
+      <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
       <LoadingOverlay />
       {exhibition && <Scene />}
       {isArtworkPanelOpen && <ArtworkPanel />}

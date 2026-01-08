@@ -3,17 +3,17 @@
 .panel {
   position: fixed;
   bottom: 0;
-  padding: 4px;
+  padding: var(--space-1);
   border-radius: 4px 4px 0 0;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--black);
+  background: var(--color-black);
 }
 
 .options {
   display: flex;
   justify-content: space-between;
-  gap: 4px;
+  gap: var(--space-1);
 
   button {
     cursor: grab;

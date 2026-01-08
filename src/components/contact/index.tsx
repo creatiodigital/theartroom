@@ -1,17 +1,20 @@
 'use client'
 
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
+import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
+import styles from './Contact.module.scss'
 
 export const ContactPage = () => {
   return (
-    <>
-      <Header />
-      <div className="page-content">
-        <Text as="p">To be defined</Text>
+    <PageLayout>
+      <Text as="h1" className={styles.title}>Contact us</Text>
+      <div className={styles.contactInfo}>
+        <div className={styles.top}>
+          <a href="tel:+34665059941">T (+34) 665 05 99 41</a>
+          <a href="mailto:contact@lumengallery.com">contact@lumen.gallery</a>
+        </div>
+        <Text as="p" font="sans">Monday - Friday, 10 am - 6 pm</Text>
       </div>
-      <Footer />
-    </>
+    </PageLayout>
   )
 }

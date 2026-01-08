@@ -10,7 +10,7 @@
   justify-content: center;
   gap: var(--space-4);
   padding: var(--space-12);
-  background: var(--white);
+  background: var(--color-white);
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -25,14 +25,14 @@
 
 .closeButton {
   position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
+  top: var(--space-6);
+  right: var(--space-6);
+  width: var(--space-12);
+  height: var(--space-12);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gray-100);
+  background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: 50%;
   color: var(--color-text);
@@ -42,7 +42,7 @@
     transform 0.2s ease;
 
   &:hover {
-    background: var(--gray-200);
+    background: var(--color-border);
     transform: scale(1.05);
   }
 

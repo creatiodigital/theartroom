@@ -1,17 +1,12 @@
 'use client'
 
-import { Header } from '@/components/ui/Header'
-import { Footer } from '@/components/ui/Footer'
+import { PageLayout } from '@/components/ui/PageLayout'
 import { StaticPageContent } from '@/components/ui/StaticPageContent'
 
 export const AccessibilityPage = () => {
   return (
-    <>
-      <Header />
-      <div className="page-content">
-        <StaticPageContent slug="accessibility" />
-      </div>
-      <Footer />
-    </>
+    <PageLayout>
+      <StaticPageContent slug="accessibility" />
+    </PageLayout>
   )
 }

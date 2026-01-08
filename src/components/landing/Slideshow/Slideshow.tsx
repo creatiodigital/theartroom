@@ -3,9 +3,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination } from 'swiper/modules'
 import Link from 'next/link'
-
 import { Text } from '@/components/ui/Typography'
-
 import 'swiper/css'
 import 'swiper/css/pagination'
 
@@ -15,9 +13,9 @@ type Slide = {
   id: string
   imageUrl: string
   exhibitionUrl: string
-  subtitle: string      // e.g. "Back to the Source"
-  title: string         // e.g. "Ana Mendieta"
-  meta: string          // e.g. "7 NOVEMBER 2025 - 17 JANUARY 2026    NEW YORK"
+  subtitle: string
+  title: string
+  meta: string
 }
 
 type SlideshowProps = {
@@ -31,7 +29,7 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
         modules={[Autoplay, Pagination]}
         spaceBetween={0}
         slidesPerView={1}
-        loop={true}
+        loop={false}
         speed={1500}
         allowTouchMove={false}
         autoplay={{
@@ -55,13 +53,13 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
               />
               <div className={styles.container}>
                 <div className={styles.content}>
-                  <Text as="span" size="xs" className={styles.meta}>
+                  <Text as="p" size="sm" className={styles.meta}>
                     {slide.meta}
                   </Text>
-                  <Text as="h1" font="serif" className={styles.title}>
+                  <Text as="h2" size="huge" font="serif" className={styles.title}>
                     {slide.title}
                   </Text>
-                  <Text as="h2" font="serif" className={styles.subtitle}>
+                  <Text as="p" size="lg" font="serif" className={styles.subtitle}>
                     {slide.subtitle}
                   </Text>
                 </div>
@@ -78,4 +76,3 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
 }
 
 export default Slideshow
-

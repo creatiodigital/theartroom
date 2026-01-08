@@ -1,0 +1,19 @@
+.title {
+    margin-bottom: var(--space-12);
+}
+
+.contactInfo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.top {
+    margin-bottom: var(--space-12);
+    a {
+        display: block;
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}

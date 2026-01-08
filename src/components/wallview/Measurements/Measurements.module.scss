@@ -1,18 +1,14 @@
-@use '@/styles/mixins' as *;
-
 .width {
-  @include largeSans();
   position: absolute;
-  color: var(--black);
+  color: var(--color-black);
   top: 0;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .height {
-  @include largeSans();
   position: absolute;
-  color: var(--black);
+  color: var(--color-black);
   top: 50%;
   left: -20px;
   transform: translateY(-50%) rotate(-90deg);

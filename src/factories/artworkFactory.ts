@@ -32,5 +32,6 @@ export const createNewArtwork = ({
     lineHeight: { label: '1', value: 1 },
     textColor: '#000000',
     textAlign: 'left',
+    featured: false,
   }
 }

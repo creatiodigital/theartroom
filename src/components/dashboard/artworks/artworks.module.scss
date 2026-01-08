@@ -24,7 +24,7 @@
 
 .pageTitle {
   margin: 0 0 var(--space-3);
-  font-size: var(--text-2xl);
+  font-size: var(--text-lg);
 }
 
 .sectionActions {
@@ -121,8 +121,8 @@
 
 .cardThumbnail {
   flex-shrink: 0;
-  width: 60px;
-  height: 60px;
+  width: var(--space-16);
+  height: var(--space-16);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,7 +140,7 @@
 .textPreview {
   width: 100%;
   height: 100%;
-  padding: 4px;
+  padding: var(--space-1);
   font-size: 7px;
   line-height: 1.2;
   color: var(--color-text-muted);
@@ -150,7 +150,7 @@
 }
 
 .placeholder {
-  font-size: var(--text-2xl);
+  font-size: var(--text-lg);
   opacity: 0.5;
 }
 
@@ -198,8 +198,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
   padding: 0;
   margin-left: var(--space-1);
   background: transparent;
@@ -212,7 +212,7 @@
   transition: all 0.15s ease;
 
   &:hover {
-    background: var(--gray-300);
+    background: var(--color-border-dark);
     color: var(--color-error-text);
   }
 }
