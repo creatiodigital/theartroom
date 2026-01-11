@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
 import { useSelector } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
+import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import type { RootState } from '@/redux/store'
 
 import styles from './MediaLibrary.module.scss'
@@ -30,7 +30,8 @@ type MediaLibraryProps = {
 }
 
 export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => {
-  const { data: session } = useSession()
+  // Use effectiveUser to get the impersonated artist's ID when admin is impersonating
+  const { effectiveUser } = useEffectiveUser()
   const [artworks, setArtworks] = useState<Artwork[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -39,10 +40,11 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
 
   useEffect(() => {
     const fetchArtworks = async () => {
-      if (!session?.user?.id) return
+      if (!effectiveUser?.id) return
 
       try {
-        const response = await fetch(`/api/artworks?userId=${session.user.id}`)
+        // Use effectiveUser.id to fetch artworks of the impersonated artist (not the admin)
+        const response = await fetch(`/api/artworks?userId=${effectiveUser.id}`)
         const data = await response.json()
         setArtworks(data)
       } catch (error) {
@@ -53,7 +55,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
     }
 
     fetchArtworks()
-  }, [session?.user?.id])
+  }, [effectiveUser?.id])
 
   // Filter out artworks already in this exhibition
   const availableArtworks = artworks.filter((artwork) => !exhibitionArtworkIds.includes(artwork.id))

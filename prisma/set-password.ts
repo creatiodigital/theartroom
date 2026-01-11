@@ -22,7 +22,7 @@ async function main() {
     const user = await prisma.user.update({
       where: { id: existingUser.id },
       data: {
-        email: 'mathias@lumengallery.com',
+        email: 'mathias@thefoundation.gallery',
         password: hashedPassword,
       },
     })
@@ -35,7 +35,7 @@ async function main() {
         lastName: 'Heizmann',
         handler: 'mathias-heizmann',
         biography: 'A simple biography',
-        email: 'mathias@lumengallery.com',
+        email: 'mathias@thefoundation.gallery',
         userType: 'artist',
         password: hashedPassword,
       },

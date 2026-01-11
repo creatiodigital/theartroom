@@ -24,19 +24,31 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.exhibitions {
-  padding: var(--space-5) 0;
+.section {
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
 }
 
 .sectionTitle {
-  margin: 0 0 var(--space-4);
+  margin: 0;
   font-size: var(--text-xl);
 }
 
-.sectionActions {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-6);
+.sectionDescription {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-4);
 }
 
 .table {
@@ -45,12 +57,26 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  table-layout: fixed;
 
   th,
   td {
     padding: var(--space-3) var(--space-4);
     text-align: left;
     border-bottom: 1px solid var(--color-border);
+  }
+
+  // Exhibition name column - takes more space
+  th:first-child,
+  td:first-child {
+    width: 30%;
+  }
+
+  // Action button columns - evenly distributed
+  th:not(:first-child),
+  td:not(:first-child) {
+    width: 17.5%;
+    text-align: center;
   }
 
   th {

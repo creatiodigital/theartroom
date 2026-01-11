@@ -1,7 +1,6 @@
 'use client'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { showLightingPanel, hideLightingPanel } from '@/redux/slices/dashboardSlice'
@@ -13,11 +12,9 @@ import styles from './Menu.module.scss'
 
 export const Menu = () => {
   const dispatch = useDispatch()
-  const router = useRouter()
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
-  const exhibition = useSelector((state: RootState) => state.exhibition)
 
   const togglePlaceholders = () => {
     if (isPlaceholdersShown) {
@@ -42,13 +39,6 @@ export const Menu = () => {
     window.location.href = '/dashboard'
   }
 
-  const handleOpenSettings = () => {
-    // Navigate to exhibition settings page
-    if (exhibition?.url) {
-      router.push(`/dashboard/exhibitions/${exhibition.id}/settings`)
-    }
-  }
-
   return (
     <div className={styles.menu}>
       <Button size="tiny" icon="close" title="Go to main dashboard" onClick={handleClose} />
@@ -58,7 +48,6 @@ export const Menu = () => {
         onClick={() => togglePlaceholders()}
       />
       <Button size="tiny" icon="light" title="Global Light controls" onClick={toggleLightingPanel} />
-      <Button size="tiny" icon="settings" title="Go to settings page" onClick={handleOpenSettings} />
     </div>
   )
 }
