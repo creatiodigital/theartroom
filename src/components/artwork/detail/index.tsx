@@ -78,7 +78,7 @@ export const ArtworkDetailPage = ({
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
-            <Text as="span" size="lg" font="serif" className={styles.logoText}>Lumen Gallery</Text>
+            <Text as="span" size="lg" font="serif" className={styles.logoText}>The Foundation</Text>
           </header>
           <div className={styles.content}>
             <LoadingBar />
@@ -91,7 +91,7 @@ export const ArtworkDetailPage = ({
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
-            <Text as="span" size="lg" font="serif" className={styles.logoText}>Lumen Gallery</Text>
+            <Text as="span" size="lg" font="serif" className={styles.logoText}>The Foundation</Text>
             <button onClick={handleClose} className={styles.closeButton}>
               CLOSE <span className={styles.closeIcon}>×</span>
             </button>
@@ -106,7 +106,7 @@ export const ArtworkDetailPage = ({
     return (
       <div className={styles.page}>
         <header className={styles.minimalHeader}>
-          <Text as="span" size="lg" font="serif" className={styles.logoText}>Lumen Gallery</Text>
+          <Text as="span" size="lg" font="serif" className={styles.logoText}>The Foundation</Text>
           <button onClick={handleClose} className={styles.closeButton}>
             CLOSE <span className={styles.closeIcon}>×</span>
           </button>

@@ -11,7 +11,7 @@ export const ContactPage = () => {
       <div className={styles.contactInfo}>
         <div className={styles.top}>
           <a href="tel:+34665059941">T (+34) 665 05 99 41</a>
-          <a href="mailto:contact@lumengallery.com">contact@lumen.gallery</a>
+          <a href="mailto:contact@thefoundation.gallery">contact@thefoundation.gallery</a>
         </div>
         <Text as="p" font="sans">Monday - Friday, 10 am - 6 pm</Text>
       </div>

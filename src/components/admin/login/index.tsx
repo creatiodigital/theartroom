@@ -59,7 +59,7 @@ export const AdminLoginPage = () => {
       <div className={styles.loginCard}>
         <Text as="h1">Admin Login</Text>
         <Text as="p" className={styles.subtitle}>
-          Lumen Gallery Administration
+          The Foundation Administration
         </Text>
 
         <form onSubmit={handleSubmit} className={styles.form}>

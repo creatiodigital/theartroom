@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         userId,
         name,
         artworkType: artworkType || 'image',
-        title: title || null,
+        title: title || undefined,
         author: author || null,
         year: year || null,
         technique: technique || null,

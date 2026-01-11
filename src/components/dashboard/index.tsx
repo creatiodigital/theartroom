@@ -109,13 +109,20 @@ export const DashboardPage = () => {
     [deleteExhibition, dispatch],
   )
 
-  const handleEditExhibition = useCallback(
+  const handleEdit3DSpace = useCallback(
     (exhibition: TExhibition) => {
       const artistSlug = userHandler ?? ''
       const exhibitionSlug = exhibition.url
       router.push(`/exhibitions/${artistSlug}/${exhibitionSlug}/edit`)
     },
     [router, userHandler],
+  )
+
+  const handleEditExhibitionSettings = useCallback(
+    (exhibition: TExhibition) => {
+      router.push(`/dashboard/exhibitions/${exhibition.id}/settings`)
+    },
+    [router],
   )
 
   const handleViewExhibition = useCallback(
@@ -153,24 +160,43 @@ export const DashboardPage = () => {
           <Logout />
         </div>
 
-        <div className={styles.exhibitions}>
-          <div className={styles.sectionActions}>
-            <Button size="small" label="New exhibition" onClick={handleNewExhibition} />
-            <Button
-              size="small"
-              label="Artwork Library"
-              onClick={() => router.push('/dashboard/artworks')}
-            />
+        {/* Artist Profile Section */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <Text as="h2" className={styles.sectionTitle}>My Profile</Text>
             <Button
               size="small"
               label="Edit Profile"
               onClick={() => router.push('/dashboard/profile')}
             />
           </div>
-
-          <Text as="h2" className={styles.sectionTitle}>
-            My Exhibitions
+          <Text as="p" className={styles.sectionDescription}>
+            Manage your artist profile, biography, and profile picture.
           </Text>
+        </div>
+
+        {/* Artwork Library Section */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <Text as="h2" className={styles.sectionTitle}>My Artworks</Text>
+            <Button
+              size="small"
+              label="Manage Artworks"
+              onClick={() => router.push('/dashboard/artworks')}
+            />
+          </div>
+          <Text as="p" className={styles.sectionDescription}>
+            Upload and manage your artwork collection. Artworks can be used across multiple exhibitions.
+          </Text>
+        </div>
+
+        {/* Exhibitions Section */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <Text as="h2" className={styles.sectionTitle}>My Exhibitions</Text>
+            <Button size="small" label="+ New Exhibition" onClick={handleNewExhibition} />
+          </div>
+
 
           {exhibitions.length === 0 ? (
             <EmptyState message="You do not have any exhibitions yet." />
@@ -179,6 +205,7 @@ export const DashboardPage = () => {
               <thead>
                 <tr>
                   <th>Exhibition Name</th>
+                  <th></th>
                   <th></th>
                   <th></th>
                   <th></th>
@@ -198,8 +225,15 @@ export const DashboardPage = () => {
                     <td>
                       <Button
                         size="small"
-                        label="Edit"
-                        onClick={() => handleEditExhibition(ex)}
+                        label="Edit Exhibition"
+                        onClick={() => handleEditExhibitionSettings(ex)}
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        size="small"
+                        label="Edit 3D Space"
+                        onClick={() => handleEdit3DSpace(ex)}
                       />
                     </td>
                     <td>
