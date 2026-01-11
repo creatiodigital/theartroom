@@ -57,7 +57,7 @@ export default async function Home() {
       <Header />
 
       <Text as="h1" className={styles.srOnly}>
-        Lumen Gallery
+        The Foundation
       </Text>
 
       {slides.length > 0 && <Slideshow slides={slides} />}

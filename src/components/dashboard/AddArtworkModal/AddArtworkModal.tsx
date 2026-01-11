@@ -218,55 +218,60 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
           </div>
         )}
 
-        <div className={styles.field}>
-          <label htmlFor="title">Artwork Title *</label>
-          <Input
-            id="title"
-            type="text"
-            size="medium"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
-            placeholder="Official artwork title"
-            required
-          />
-        </div>
+        {/* Image-specific metadata fields */}
+        {formData.artworkType === 'image' && (
+          <>
+            <div className={styles.field}>
+              <label htmlFor="title">Artwork Title *</label>
+              <Input
+                id="title"
+                type="text"
+                size="medium"
+                value={formData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
+                placeholder="Official artwork title"
+                required
+              />
+            </div>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="year">Year</label>
-            <Input
-              id="year"
-              type="text"
-              size="medium"
-              value={formData.year}
-              onChange={(e) => handleChange('year', e.target.value)}
-              placeholder="e.g. 2024"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="technique">Technique / Medium</label>
-            <Input
-              id="technique"
-              type="text"
-              size="medium"
-              value={formData.technique}
-              onChange={(e) => handleChange('technique', e.target.value)}
-              placeholder="e.g. Oil on canvas"
-            />
-          </div>
-        </div>
+            <div className={styles.row}>
+              <div className={styles.field}>
+                <label htmlFor="year">Year</label>
+                <Input
+                  id="year"
+                  type="text"
+                  size="medium"
+                  value={formData.year}
+                  onChange={(e) => handleChange('year', e.target.value)}
+                  placeholder="e.g. 2024"
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="technique">Technique / Medium</label>
+                <Input
+                  id="technique"
+                  type="text"
+                  size="medium"
+                  value={formData.technique}
+                  onChange={(e) => handleChange('technique', e.target.value)}
+                  placeholder="e.g. Oil on canvas"
+                />
+              </div>
+            </div>
 
-        <div className={styles.field}>
-          <label htmlFor="dimensions">Dimensions</label>
-          <Input
-            id="dimensions"
-            type="text"
-            size="medium"
-            value={formData.dimensions}
-            onChange={(e) => handleChange('dimensions', e.target.value)}
-            placeholder="e.g. 100 x 80 cm"
-          />
-        </div>
+            <div className={styles.field}>
+              <label htmlFor="dimensions">Dimensions</label>
+              <Input
+                id="dimensions"
+                type="text"
+                size="medium"
+                value={formData.dimensions}
+                onChange={(e) => handleChange('dimensions', e.target.value)}
+                placeholder="e.g. 100 x 80 cm"
+              />
+            </div>
+          </>
+        )}
 
         <div className={styles.field}>
           <label htmlFor="description">Description</label>

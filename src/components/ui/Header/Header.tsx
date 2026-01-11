@@ -13,7 +13,7 @@ export const Header = () => {
       <div className={styles.headerInner}>
         <Link href="/" className={styles.logo}>
           <Text as="h3" className={styles.logo}>
-            Lumen Gallery
+            The Foundation
           </Text>
         </Link>
         <Navigation />
