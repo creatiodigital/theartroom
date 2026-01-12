@@ -78,7 +78,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
   return (
     <div className={styles.modal}>
-      <Text as="h2">Add New Artist</Text>
+      <Text font="dashboard" as="h2">Add New Artist</Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>
@@ -164,8 +164,8 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
         <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
-          <Button size="small" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
-          <Button size="small" label="Cancel" onClick={onClose} type="button" />
+          <Button font="dashboard" variant="secondary" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
+          <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
         </div>
       </form>
     </div>

@@ -20,7 +20,7 @@ export const ContentManagement = () => {
 
   return (
     <div className={styles.section}>
-      <Text as="h2" className={styles.sectionTitle}>
+      <Text font="dashboard" as="h2" className={styles.sectionTitle}>
         Content Management
       </Text>
 
@@ -37,7 +37,7 @@ export const ContentManagement = () => {
               <td>{page.label}</td>
               <td>
                 <Button
-                  size="small"
+                  variant="secondary"
                   label="Edit"
                   onClick={() => router.push(page.route)}
                 />

@@ -200,12 +200,12 @@ export const ArtworkLibraryPage = () => {
         <Logout />
       </div>
 
-      <Text as="h1" className={styles.pageTitle}>
+      <Text font="dashboard" as="h1" className={styles.pageTitle}>
         Artwork Library
       </Text>
 
       <div className={styles.sectionActions}>
-        <Button size="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
+        <Button font="dashboard" variant="secondary" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
       </div>
 
       {/* Filter Tags and Search */}
@@ -245,7 +245,7 @@ export const ArtworkLibraryPage = () => {
 
       {filteredArtworks.length === 0 ? (
         <div className={styles.empty}>
-          <Text as="p">
+          <Text font="dashboard" as="p">
             {artworks.length === 0
               ? 'No artworks yet. Click "Add Artwork" to create your first one.'
               : 'No artworks match this filter.'}
@@ -274,8 +274,8 @@ export const ArtworkLibraryPage = () => {
                 )}
               </div>
               <div className={styles.cardInfo}>
-                <Text as="h3">{artwork.name}</Text>
-                <Text as="p" className={styles.meta}>
+                <Text font="dashboard" as="h3">{artwork.name}</Text>
+                <Text font="dashboard" as="p" className={styles.meta}>
                   {artwork.artworkType === 'image' ? 'Image' : 'Text'}
                   {artwork.title && ` • ${artwork.title}`}
                   {artwork.year && ` • ${artwork.year}`}
@@ -304,12 +304,12 @@ export const ArtworkLibraryPage = () => {
               </div>
               <div className={styles.cardActions}>
                 <Button
-                  size="small"
+                  variant="secondary"
                   label="Edit"
                   onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
                 />
                 <Button
-                  size="small"
+                  variant="primary"
                   label="Delete"
                   onClick={() => handleDeleteClick(artwork.id, artwork.name)}
                 />
@@ -332,19 +332,19 @@ export const ArtworkLibraryPage = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text as="h2">Delete Artwork?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Delete Artwork?</Text>
+            <Text font="dashboard" as="p">
               Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
               <br />
               This action cannot be undone.
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                size="small"
+                variant="primary"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
@@ -353,8 +353,8 @@ export const ArtworkLibraryPage = () => {
       {unlinkTarget && (
         <Modal onClose={() => setUnlinkTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text as="h2">Remove from Exhibition?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Remove from Exhibition?</Text>
+            <Text font="dashboard" as="p">
               Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
               <strong>{unlinkTarget.exhibitionTitle}</strong>?
               <br />
@@ -362,11 +362,11 @@ export const ArtworkLibraryPage = () => {
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                size="small"
+                variant="primary"
                 label={unlinking ? 'Removing...' : 'Yes, Remove'}
                 onClick={handleUnlinkConfirm}
               />
-              <Button size="small" label="Cancel" onClick={() => setUnlinkTarget(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setUnlinkTarget(null)} />
             </div>
           </div>
         </Modal>

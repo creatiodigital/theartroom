@@ -7,6 +7,10 @@
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
+.font-dashboard {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+}
+
 /* Text sizes - line-heights inherit from globals.scss for consistency */
 .text-xs {
   font-size: var(--text-xs);

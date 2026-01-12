@@ -203,7 +203,7 @@ export const DashboardProfilePage = () => {
         <Logout />
       </div>
 
-      <Text as="h1" className={styles.title}>
+      <Text font="dashboard" as="h1" className={styles.title}>
         Edit Profile
       </Text>
 
@@ -232,13 +232,13 @@ export const DashboardProfilePage = () => {
               onChange={handleImageUpload}
             />
             <Button
-              size="small"
+              variant="secondary"
               label={uploading ? 'Uploading...' : 'Upload Photo'}
               onClick={() => fileInputRef.current?.click()}
               type="button"
             />
             {user?.profileImageUrl && (
-              <Button size="small" label="Remove" onClick={handleRemoveImage} type="button" />
+              <Button font="dashboard" variant="primary" label="Remove" onClick={handleRemoveImage} type="button" />
             )}
           </div>
         </div>
@@ -305,13 +305,13 @@ export const DashboardProfilePage = () => {
 
         <ErrorText>{error}</ErrorText>
         {success && (
-          <Text as="p" className={styles.success}>
+          <Text font="dashboard" as="p" className={styles.success}>
             {success}
           </Text>
         )}
 
         <div className={styles.actions}>
-          <Button size="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
+          <Button font="dashboard" variant="secondary" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
         </div>
       </form>
     </div>

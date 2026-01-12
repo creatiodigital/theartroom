@@ -95,12 +95,12 @@ export default function PageContentEditor({ params }: PageProps) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Text as="h1">Edit: {slugLabels[slug] || slug}</Text>
-        <Button size="small" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
+        <Text font="dashboard" as="h1">Edit: {slugLabels[slug] || slug}</Text>
+        <Button font="dashboard" variant="secondary" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
       </div>
 
       <div className={styles.field}>
-        <Text as="label">Page Title</Text>
+        <Text font="dashboard" as="label">Page Title</Text>
         <Input
           id="title"
           value={page.title}
@@ -109,7 +109,7 @@ export default function PageContentEditor({ params }: PageProps) {
       </div>
 
       <div className={styles.field}>
-        <Text as="label">Content</Text>
+        <Text font="dashboard" as="label">Content</Text>
         <RichTextEditor
           content={page.content}
           onChange={(content) => setPage({ ...page, content })}
@@ -119,7 +119,7 @@ export default function PageContentEditor({ params }: PageProps) {
 
       <div className={styles.actions}>
         <Button
-          size="small"
+          variant="secondary"
           label={saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Changes'}
           onClick={handleSave}
         />

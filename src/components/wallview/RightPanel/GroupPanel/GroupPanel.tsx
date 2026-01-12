@@ -61,25 +61,25 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>
+        <Text font="dashboard" as="h2" className={styles.title}>
           Group
         </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text font="dashboard" as="h3" className={styles.subtitle}>
             Position in wall
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
+              <Button size="small" icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="positionCenterV"
                 onClick={() => handleAlignGroup('verticalCenter')}
               />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="positionBottom"
                 onClick={() => handleAlignGroup('verticalBottom')}
               />
@@ -87,16 +87,16 @@ const GroupPanel = () => {
           </div>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionLeft" onClick={() => handleAlignGroup('horizontalLeft')} />
+              <Button size="small" icon="positionLeft" onClick={() => handleAlignGroup('horizontalLeft')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="positionCenterH"
                 onClick={() => handleAlignGroup('horizontalCenter')}
               />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="positionRight"
                 onClick={() => handleAlignGroup('horizontalRight')}
               />
@@ -104,7 +104,7 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text font="dashboard" as="h3" className={styles.subtitle}>
             Position (meters)
           </Text>
           <div className={styles.row}>
@@ -131,25 +131,25 @@ const GroupPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h2" className={styles.title}>
+        <Text font="dashboard" as="h2" className={styles.title}>
           Elements
         </Text>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text font="dashboard" as="h3" className={styles.subtitle}>
             Align Elements
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
+              <Button size="small" icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="verticalCenter"
                 onClick={() => handleAlignElements('verticalCenter')}
               />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="verticalBottom"
                 onClick={() => handleAlignElements('verticalBottom')}
               />
@@ -157,19 +157,19 @@ const GroupPanel = () => {
           </div>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="horizontalLeft"
                 onClick={() => handleAlignElements('horizontalLeft')}
               />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="horizontalCenter"
                 onClick={() => handleAlignElements('horizontalCenter')}
               />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="horizontalRight"
                 onClick={() => handleAlignElements('horizontalRight')}
               />
@@ -177,18 +177,18 @@ const GroupPanel = () => {
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h3" className={styles.subtitle}>
+          <Text font="dashboard" as="h3" className={styles.subtitle}>
             Distribution
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="distributeHorizontal"
                 onClick={() => handleDistributeElements('horizontal')}
               />
             </div>
             <div className={styles.item}>
-              <Button size="tiny"
+              <Button size="small"
                 icon="distributeVertical"
                 onClick={() => handleDistributeElements('vertical')}
               />

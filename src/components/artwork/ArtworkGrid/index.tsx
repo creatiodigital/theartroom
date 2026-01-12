@@ -66,7 +66,7 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
               </Text>
             )}
             {/* <Link href={`/artworks/${artwork.id}?ref=internal`} className={styles.viewDetailsLink}>
-              <Button size="small" variant="outline" label="Inquire" />
+              <Button size="small" variant="secondary" label="Inquire" />
             </Link> */}
           </div>
         </div>

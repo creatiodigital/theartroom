@@ -1,4 +1,4 @@
-import { Lato, EB_Garamond, Roboto, Lora } from 'next/font/google'
+import { Lato, EB_Garamond, Geist, Roboto, Lora } from 'next/font/google'
 
 // =============================================================================
 // MAIN TYPOGRAPHY - Change these to swap fonts across the entire site
@@ -25,6 +25,18 @@ export const headingFont = EB_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-serif',
+  display: 'swap',
+})
+
+/**
+ * Dashboard font - Used for: all dashboard pages (artist, admin, settings, etc.)
+ * Current: Geist
+ * To change: Replace Geist with any Google font
+ */
+export const dashboardFont = Geist({
+  subsets: ['latin'],
+  weight: ['300', '400', '600', '700'],
+  variable: '--font-dashboard',
   display: 'swap',
 })
 

@@ -83,7 +83,7 @@ export const AdminExhibitions = () => {
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
-        <Text as="h2">Exhibition Management</Text>
+        <Text font="dashboard" as="h2">Exhibition Management</Text>
       </div>
 
       <table className={styles.table}>
@@ -125,12 +125,12 @@ export const AdminExhibitions = () => {
               <td>
                 <div className={styles.actions}>
                   <Button
-                    size="small"
+                    variant="secondary"
                     label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
                     onClick={() => handleToggleStatus(exhibition.id, exhibition.status)}
                   />
                   <Button
-                    size="small"
+                    variant="secondary"
                     label={exhibition.visibility === 'public' ? 'Hide' : 'Make Public'}
                     onClick={() => handleToggleVisibility(exhibition.id, exhibition.visibility)}
                   />

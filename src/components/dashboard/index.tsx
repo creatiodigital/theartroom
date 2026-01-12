@@ -156,21 +156,21 @@ export const DashboardPage = () => {
     <div className={styles.dashboard}>
       <div className={styles.main}>
         <div className={styles.header}>
-          <Text as="h1" font="sans">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
+          <Text font="dashboard" as="h1">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
           <Logout />
         </div>
 
         {/* Artist Profile Section */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <Text as="h2" className={styles.sectionTitle}>My Profile</Text>
+            <Text font="dashboard" as="h2" className={styles.sectionTitle}>My Profile</Text>
             <Button
-              size="small"
+              variant="secondary"
               label="Edit Profile"
               onClick={() => router.push('/dashboard/profile')}
             />
           </div>
-          <Text as="p" className={styles.sectionDescription}>
+          <Text font="dashboard" as="p" className={styles.sectionDescription}>
             Manage your artist profile, biography, and profile picture.
           </Text>
         </div>
@@ -178,14 +178,14 @@ export const DashboardPage = () => {
         {/* Artwork Library Section */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <Text as="h2" className={styles.sectionTitle}>My Artworks</Text>
+            <Text font="dashboard" as="h2" className={styles.sectionTitle}>My Artworks</Text>
             <Button
-              size="small"
+              variant="secondary"
               label="Manage Artworks"
               onClick={() => router.push('/dashboard/artworks')}
             />
           </div>
-          <Text as="p" className={styles.sectionDescription}>
+          <Text font="dashboard" as="p" className={styles.sectionDescription}>
             Upload and manage your artwork collection. Artworks can be used across multiple exhibitions.
           </Text>
         </div>
@@ -193,8 +193,8 @@ export const DashboardPage = () => {
         {/* Exhibitions Section */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <Text as="h2" className={styles.sectionTitle}>My Exhibitions</Text>
-            <Button size="small" label="+ New Exhibition" onClick={handleNewExhibition} />
+            <Text font="dashboard" as="h2" className={styles.sectionTitle}>My Exhibitions</Text>
+            <Button font="dashboard" variant="secondary" label="+ New Exhibition" onClick={handleNewExhibition} />
           </div>
 
 
@@ -217,28 +217,28 @@ export const DashboardPage = () => {
                     <td>{ex.mainTitle}</td>
                     <td>
                       <Button
-                        size="small"
+                        variant="secondary"
                         label="View"
                         onClick={() => handleViewExhibition(ex)}
                       />
                     </td>
                     <td>
                       <Button
-                        size="small"
+                        variant="secondary"
                         label="Edit Exhibition"
                         onClick={() => handleEditExhibitionSettings(ex)}
                       />
                     </td>
                     <td>
                       <Button
-                        size="small"
+                        variant="secondary"
                         label="Edit 3D Space"
                         onClick={() => handleEdit3DSpace(ex)}
                       />
                     </td>
                     <td>
                       <Button
-                        size="small"
+                        variant="primary"
                         label="Delete"
                         onClick={() => handleDeleteExhibition(ex.id)}
                       />

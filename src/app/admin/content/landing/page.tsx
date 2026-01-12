@@ -124,16 +124,16 @@ export default function LandingContentPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Text as="h1">Landing Page - Slideshow</Text>
-        <Button size="small" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
+        <Text font="dashboard" as="h1">Landing Page - Slideshow</Text>
+        <Button font="dashboard" variant="secondary" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
       </div>
 
       <div className={styles.actions}>
-        <Button size="small" label="+ Add Slide" onClick={handleAddSlide} />
+        <Button font="dashboard" variant="secondary" label="+ Add Slide" onClick={handleAddSlide} />
       </div>
 
       {slides.length === 0 ? (
-        <Text as="p" className={styles.empty}>No slides yet. Click "Add Slide" to create one.</Text>
+        <Text font="dashboard" as="p" className={styles.empty}>No slides yet. Click "Add Slide" to create one.</Text>
       ) : (
         <div className={styles.slideList}>
           {slides.map((slide) => (
@@ -144,13 +144,13 @@ export default function LandingContentPage() {
                 )}
               </div>
               <div className={styles.slideInfo}>
-                <Text as="h3">{slide.title}</Text>
-                <Text as="p" className={styles.subtitle}>{slide.subtitle}</Text>
-                <Text as="p" className={styles.meta}>{slide.meta}</Text>
+                <Text font="dashboard" as="h3">{slide.title}</Text>
+                <Text font="dashboard" as="p" className={styles.subtitle}>{slide.subtitle}</Text>
+                <Text font="dashboard" as="p" className={styles.meta}>{slide.meta}</Text>
               </div>
               <div className={styles.slideActions}>
-                <Button size="small" label="Edit" onClick={() => handleEditSlide(slide)} />
-                <Button size="small" label="Remove" onClick={() => setDeleteTarget(slide)} />
+                <Button font="dashboard" variant="secondary" label="Edit" onClick={() => handleEditSlide(slide)} />
+                <Button font="dashboard" variant="primary" label="Remove" onClick={() => setDeleteTarget(slide)} />
               </div>
             </div>
           ))}
@@ -161,10 +161,10 @@ export default function LandingContentPage() {
       {editingSlide && (
         <Modal onClose={() => setEditingSlide(null)}>
           <div className={styles.modal}>
-            <Text as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
+            <Text font="dashboard" as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
 
             <div className={styles.field}>
-              <Text as="label">Image URL</Text>
+              <Text font="dashboard" as="label">Image URL</Text>
               <Input
                 id="imageUrl"
                 value={editingSlide.imageUrl}
@@ -174,7 +174,7 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.field}>
-              <Text as="label">Title (Artist Name)</Text>
+              <Text font="dashboard" as="label">Title (Artist Name)</Text>
               <Input
                 id="title"
                 value={editingSlide.title}
@@ -184,7 +184,7 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.field}>
-              <Text as="label">Subtitle (Exhibition Name)</Text>
+              <Text font="dashboard" as="label">Subtitle (Exhibition Name)</Text>
               <Input
                 id="subtitle"
                 value={editingSlide.subtitle}
@@ -194,7 +194,7 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.field}>
-              <Text as="label">Meta (Date + Location)</Text>
+              <Text font="dashboard" as="label">Meta (Date + Location)</Text>
               <Input
                 id="meta"
                 value={editingSlide.meta}
@@ -204,7 +204,7 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.field}>
-              <Text as="label">Exhibition URL</Text>
+              <Text font="dashboard" as="label">Exhibition URL</Text>
               <Input
                 id="exhibitionUrl"
                 value={editingSlide.exhibitionUrl}
@@ -214,7 +214,7 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.field}>
-              <Text as="label">Order</Text>
+              <Text font="dashboard" as="label">Order</Text>
               <Input
                 id="order"
                 value={String(editingSlide.order)}
@@ -224,11 +224,11 @@ export default function LandingContentPage() {
 
             <div className={styles.modalActions}>
               <Button
-                size="small"
+                variant="secondary"
                 label={saving ? 'Saving...' : 'Save'}
                 onClick={handleSaveSlide}
               />
-              <Button size="small" label="Cancel" onClick={() => setEditingSlide(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setEditingSlide(null)} />
             </div>
           </div>
         </Modal>
@@ -238,13 +238,13 @@ export default function LandingContentPage() {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.modal}>
-            <Text as="h2">Delete Slide?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Delete Slide?</Text>
+            <Text font="dashboard" as="p">
               Are you sure you want to delete the slide "{deleteTarget.title}"?
             </Text>
             <div className={styles.modalActions}>
-              <Button size="small" label="Yes, Delete" onClick={handleDeleteSlide} />
-              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button font="dashboard" variant="primary" label="Yes, Delete" onClick={handleDeleteSlide} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>

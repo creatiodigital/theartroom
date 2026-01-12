@@ -1,63 +1,85 @@
-@use '@/styles/mixins' as *;
-
+/* Base button styles */
 .button {
   cursor: pointer;
-  width: 100%;
-  padding: var(--space-3);
-  background: var(--color-text);
-  color: var(--color-white);
-  border: 1px solid var(--color-text);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Variants */
+.primary {
+  background: var(--color-black);
+  color: var(--color-white);
+  border: 1px solid var(--color-black);
 
   &:hover {
-    background: var(--color-black);
-    border: 1px solid var(--color-black);
-    text-decoration: none;
+    background: var(--color-text);
+    border-color: var(--color-text);
   }
 }
 
+.secondary {
+  background: var(--color-white);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-dark);
 
-.serif {
-  @include mediumSerif();
+  &:hover {
+    background: var(--color-border-dark);
+  }
 }
 
-.sans {
-  @include mediumSans();
+/* Sizes - small and regular are Vercel-style rounded, big is squared for CTAs */
+.small {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
 }
 
 .regular {
-  padding:  var(--space-4) var(--space-6);
-}
-
-.small {
-  @include smallSans();
-  padding: var(--space-2);
-}
-
-.tiny {
-  @include tinySans();
-  padding: 3px 10px;
-  border-radius: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
 }
 
 .big {
-  padding: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-md);
+  border-radius: 0;
+  width: 100%;
 }
 
+/* Font families */
+.serif {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-weight: var(--font-medium);
+}
+
+.sans {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-weight: var(--font-medium);
+}
+
+.dashboard {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-weight: var(--font-regular);
+}
+
+/* Icon only button */
 .iconOnly {
-  width: auto;
-  padding: var(--space-2);
-  
-  &.tiny {
+  &.small {
     padding: var(--space-1);
   }
   
-  &.small {
-    padding: var(--space-1);
+  &.regular {
+    padding: var(--space-2);
+  }
+  
+  &.big {
+    padding: var(--space-3);
+    width: auto;
   }
 }
 
@@ -69,40 +91,33 @@
   line-height: 0;
 }
 
+.small .iconLeft,
+.small .iconRight {
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.regular .iconLeft,
+.regular .iconRight {
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.big .iconLeft,
+.big .iconRight {
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Disabled state */
 .disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
 }
-
-.outline {
-  padding: 10px 20px;
-  background: transparent;
-  color: var(--color-black);
-  border: 1px solid var(--color-black);
-
-  &:hover {
-    background: var(--color-black);
-    color: var(--color-white);
-  }
-}
-
-.link {
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: var(--color-text);
-  font-size: var(--text-md);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.15s ease;
-  width: auto;
-
-  &:hover {
-    background: transparent;
-    border: none;
-    color: var(--color-text);
-    text-decoration: underline;
-  }
-}
-

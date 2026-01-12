@@ -103,8 +103,8 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   if (notFound) {
     return (
       <div className={styles.loginPage}>
-        <Text as="h1">Artist Not Found</Text>
-        <Text as="p">The artist you are looking for does not exist.</Text>
+        <Text font="dashboard" as="h1">Artist Not Found</Text>
+        <Text font="dashboard" as="p">The artist you are looking for does not exist.</Text>
       </div>
     )
   }
@@ -112,8 +112,8 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <Text as="h1">Welcome back, {artist?.name}</Text>
-        <Text as="p" className={styles.subtitle}>
+        <Text font="dashboard" as="h1">Welcome back, {artist?.name}</Text>
+        <Text font="dashboard" as="p" className={styles.subtitle}>
           Sign in to manage your exhibitions
         </Text>
 
@@ -144,7 +144,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
 
           <ErrorText>{error}</ErrorText>
 
-          <Button size="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
+          <Button font="dashboard" variant="primary" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>
       </div>
     </div>

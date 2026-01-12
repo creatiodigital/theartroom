@@ -149,7 +149,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
   return (
     <div className={styles.modal}>
-      <Text as="h2">Add New Artwork</Text>
+      <Text font="dashboard" as="h2">Add New Artwork</Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.row}>
           <div className={styles.field}>
@@ -206,7 +206,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
                   </button>
                 </div>
               ) : (
-                <Text as="p">Click or drag image here</Text>
+                <Text font="dashboard" as="p">Click or drag image here</Text>
               )}
             </div>
             <FileInput

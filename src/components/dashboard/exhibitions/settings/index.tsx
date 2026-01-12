@@ -209,13 +209,13 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         </Link>
       </div>
 
-      <Text as="h1" className={styles.pageTitle}>
+      <Text font="dashboard" as="h1" className={styles.pageTitle}>
         {exhibition.mainTitle}
       </Text>
 
       {/* Featured Image Section */}
       <div className={styles.section}>
-        <Text as="h3" font="sans" className={styles.sectionTitle}>
+        <Text font="dashboard" as="h3" className={styles.sectionTitle}>
           Featured Image
         </Text>
         <div className={styles.imageRow}>
@@ -253,7 +253,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       </div>
 
       <div className={styles.section}>
-        <Text as="h3" font="sans" className={styles.sectionTitle}>
+        <Text font="dashboard" as="h3" className={styles.sectionTitle}>
           Description
         </Text>
         <RichTextEditor
@@ -271,7 +271,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           disabled={saving}
         />
         {saveSuccess && (
-          <Text as="span" className={styles.successMessage}>
+          <Text font="dashboard" as="span" className={styles.successMessage}>
             Saved!
           </Text>
         )}

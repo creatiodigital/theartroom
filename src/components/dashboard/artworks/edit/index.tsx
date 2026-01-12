@@ -227,7 +227,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <Link href="/dashboard/artworks" className={styles.backLink}>
           ← Back to Library
         </Link>
-        <Text as="h1">Edit Artwork</Text>
+        <Text font="dashboard" as="h1">Edit Artwork</Text>
       </div>
 
       {/* Image Upload Section */}
@@ -254,13 +254,13 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             onChange={handleImageUpload}
           />
           <Button
-            size="small"
+            variant="secondary"
             label={uploading ? 'Uploading...' : imageUrl ? 'Change Image' : 'Upload Image'}
             onClick={() => fileInputRef.current?.click()}
             type="button"
           />
           {imageUrl && (
-            <Button size="small" label="Remove" onClick={handleRemoveImage} type="button" />
+            <Button font="dashboard" variant="primary" label="Remove" onClick={handleRemoveImage} type="button" />
           )}
         </div>
         <HintText>
@@ -375,9 +375,9 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
-          <Button size="small" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
+          <Button font="dashboard" variant="secondary" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
           <Button
-            size="small"
+            variant="secondary"
             label="Cancel"
             onClick={() => router.push('/dashboard/artworks')}
             type="button"

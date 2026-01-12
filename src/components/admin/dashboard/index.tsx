@@ -127,21 +127,21 @@ export const DashboardAdmin = () => {
       {/* Header with Logout */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Text as="h1">Admin Dashboard</Text>
+          <Text font="dashboard" as="h1">Admin Dashboard</Text>
         </div>
         <div className={styles.headerActions}>
-          <Button size="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
+          <Button font="dashboard" variant="secondary" label="My Dashboard" onClick={() => router.push('/dashboard')} />
           <Logout />
         </div>
       </div>
 
       {/* Users Section */}
       <div className={styles.section}>
-        <Text as="h2" className={styles.sectionTitle}>
+        <Text font="dashboard" as="h2" className={styles.sectionTitle}>
           All Users
         </Text>
         <div className={styles.sectionActions}>
-          <Button size="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button font="dashboard" variant="secondary" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>
 
         <table className={styles.table}>
@@ -218,13 +218,13 @@ export const DashboardAdmin = () => {
                   <div className={styles.actions}>
                     {user.userType !== 'admin' && (
                       <Button
-                        size="small"
+                        variant="secondary"
                         label="Impersonate"
                         onClick={() => handleImpersonate(user)}
                       />
                     )}
                     <Button
-                      size="small"
+                      variant="primary"
                       label="Delete"
                       onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
                     />
@@ -251,19 +251,19 @@ export const DashboardAdmin = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text as="h2">Are you sure?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Are you sure?</Text>
+            <Text font="dashboard" as="p">
               You are about to delete <strong>{deleteTarget.name}</strong>.
               <br />
               This action cannot be undone.
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                size="small"
+                variant="primary"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
