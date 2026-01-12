@@ -1,21 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
-import { Logout } from '@/components/ui/Logout'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
+import { DashboardLayout } from '../DashboardLayout'
+import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './profile.module.scss'
 
 type User = {
@@ -29,9 +26,7 @@ type User = {
 }
 
 export const DashboardProfilePage = () => {
-  const { status: sessionStatus } = useSession()
   const { effectiveUser } = useEffectiveUser()
-  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [user, setUser] = useState<User | null>(null)
@@ -49,12 +44,7 @@ export const DashboardProfilePage = () => {
     email: '',
   })
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-    }
-  }, [sessionStatus, router])
+
 
   // Fetch user data
   useEffect(() => {
@@ -186,26 +176,14 @@ export const DashboardProfilePage = () => {
     }
   }
 
-  if (sessionStatus === 'loading' || loading) {
-    return (
-      <div className={styles.page}>
-        <LoadingBar />
-      </div>
-    )
+  if (loading) {
+    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Link href="/dashboard" className={styles.backLink}>
-          ← Back to Dashboard
-        </Link>
-        <Logout />
-      </div>
-
-      <Text font="dashboard" as="h1" className={styles.title}>
-        Edit Profile
-      </Text>
+    <DashboardLayout backLink="/dashboard">
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>Edit Profile</h1>
 
       {/* Profile Image Section */}
       <div className={styles.imageSection}>
@@ -245,8 +223,8 @@ export const DashboardProfilePage = () => {
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.row}>
-          <div className={styles.field}>
+        <div className={dashboardStyles.row}>
+          <div className={dashboardStyles.field}>
             <label htmlFor="name">First Name *</label>
             <Input
               id="name"
@@ -257,7 +235,7 @@ export const DashboardProfilePage = () => {
               required
             />
           </div>
-          <div className={styles.field}>
+          <div className={dashboardStyles.field}>
             <label htmlFor="lastName">Last Name *</label>
             <Input
               id="lastName"
@@ -270,7 +248,7 @@ export const DashboardProfilePage = () => {
           </div>
         </div>
 
-        <div className={styles.field}>
+        <div className={dashboardStyles.field}>
           <label htmlFor="handler">Handler (URL slug) *</label>
           <Input
             id="handler"
@@ -280,10 +258,10 @@ export const DashboardProfilePage = () => {
             onChange={(e) => handleChange('handler', e.target.value)}
             required
           />
-          <span className={styles.hint}>This will be part of your public URL</span>
+          <span className={dashboardStyles.hint}>This will be part of your public URL</span>
         </div>
 
-        <div className={styles.field}>
+        <div className={dashboardStyles.field}>
           <label htmlFor="email">Email</label>
           <Input
             id="email"
@@ -294,7 +272,7 @@ export const DashboardProfilePage = () => {
           />
         </div>
 
-        <div className={styles.field}>
+        <div className={dashboardStyles.field}>
           <label>Biography</label>
           <RichTextEditor
             content={formData.biography}
@@ -310,10 +288,10 @@ export const DashboardProfilePage = () => {
           </Text>
         )}
 
-        <div className={styles.actions}>
-          <Button font="dashboard" variant="secondary" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
+        <div className={dashboardStyles.actions}>
+          <Button font="dashboard" variant="primary" label={saving ? 'Saving...' : 'Save'} type="submit" />
         </div>
       </form>
-    </div>
+    </DashboardLayout>
   )
 }

@@ -2,18 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
-import { Logout } from '@/components/ui/Logout'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
+import { DashboardLayout } from '../DashboardLayout'
+import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './artworks.module.scss'
 
 // Helper to truncate text
@@ -48,7 +47,7 @@ type Artwork = {
 }
 
 export const ArtworkLibraryPage = () => {
-  const { effectiveUser, status: sessionStatus } = useEffectiveUser()
+  const { effectiveUser } = useEffectiveUser()
   const router = useRouter()
 
   const [artworks, setArtworks] = useState<Artwork[]>([])
@@ -90,12 +89,7 @@ export const ArtworkLibraryPage = () => {
     return true
   })
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-    }
-  }, [sessionStatus, router])
+
 
   // Fetch artworks
   const fetchArtworks = useCallback(async () => {
@@ -179,32 +173,17 @@ export const ArtworkLibraryPage = () => {
     }
   }, [unlinkTarget, fetchArtworks])
 
-  if (sessionStatus === 'loading' || loading) {
-    return (
-      <div className={styles.page}>
-        <LoadingBar />
-      </div>
-    )
-  }
-
-  if (sessionStatus === 'unauthenticated') {
-    return <div className={styles.page}>Not authorized</div>
+  if (loading) {
+    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Link href="/dashboard" className={styles.backLink}>
-          ← Back to Dashboard
-        </Link>
-        <Logout />
-      </div>
+    <DashboardLayout backLink="/dashboard">
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>Artwork Library</h1>
 
-      <Text font="dashboard" as="h1" className={styles.pageTitle}>
-        Artwork Library
-      </Text>
-
-      <div className={styles.sectionActions}>
+      <div className={dashboardStyles.sectionHeader}>
+        <div></div>
         <Button font="dashboard" variant="secondary" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
       </div>
 
@@ -309,7 +288,7 @@ export const ArtworkLibraryPage = () => {
                   onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
                 />
                 <Button
-                  variant="primary"
+                  variant="danger"
                   label="Delete"
                   onClick={() => handleDeleteClick(artwork.id, artwork.name)}
                 />
@@ -371,6 +350,6 @@ export const ArtworkLibraryPage = () => {
           </div>
         </Modal>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

@@ -11,7 +11,7 @@ import type { MouseEventHandler, ReactNode } from 'react'
 import styles from './Button.module.scss'
 
 type ButtonProps = {
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'danger'
   size?: 'small' | 'regular' | 'big'
   font?: 'serif' | 'sans' | 'dashboard'
   type?: 'submit' | 'button' | 'reset'

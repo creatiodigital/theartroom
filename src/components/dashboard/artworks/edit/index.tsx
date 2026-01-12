@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
@@ -12,10 +11,10 @@ import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
 import { HintText } from '@/components/ui/HintText'
 import { Input } from '@/components/ui/Input'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Textarea } from '@/components/ui/Textarea'
-import { Text } from '@/components/ui/Typography'
 
+import { DashboardLayout } from '../../DashboardLayout'
+import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
 import styles from './edit.module.scss'
 
 type ArtworkEditPageProps = {
@@ -38,7 +37,7 @@ type Artwork = {
 }
 
 export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
-  const { data: session, status: sessionStatus } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -61,12 +60,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     featured: false,
   })
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-    }
-  }, [sessionStatus, router])
+
 
   // Fetch artwork
   useEffect(() => {
@@ -204,31 +198,22 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }
 
-  if (sessionStatus === 'loading' || loading) {
-    return (
-      <div className={styles.page}>
-        <LoadingBar />
-      </div>
-    )
+  if (loading) {
+    return <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">Loading...</DashboardLayout>
   }
 
   if (error && !artwork) {
     return (
-      <div className={styles.page}>
+      <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">
         <ErrorText>{error}</ErrorText>
-        <Link href="/dashboard/artworks">← Back to Library</Link>
-      </div>
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Link href="/dashboard/artworks" className={styles.backLink}>
-          ← Back to Library
-        </Link>
-        <Text font="dashboard" as="h1">Edit Artwork</Text>
-      </div>
+    <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>Edit Artwork</h1>
 
       {/* Image Upload Section */}
       <div className={styles.imageSection}>
@@ -374,9 +359,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         <ErrorText>{error}</ErrorText>
 
-        <div className={styles.actions}>
-          <Button font="dashboard" variant="secondary" label={saving ? 'Saving...' : 'Save Changes'} type="submit" />
+        <div className={dashboardStyles.actions}>
+          <Button font="dashboard" variant="primary" label={saving ? 'Saving...' : 'Save'} type="submit" />
           <Button
+            font="dashboard"
             variant="secondary"
             label="Cancel"
             onClick={() => router.push('/dashboard/artworks')}
@@ -384,6 +370,6 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           />
         </div>
       </form>
-    </div>
+    </DashboardLayout>
   )
 }

@@ -1,18 +1,16 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { FileInput } from '@/components/ui/FileInput'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
 
+import { DashboardLayout } from '../../DashboardLayout'
+import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
 import styles from './ExhibitionSettings.module.scss'
 
 type Exhibition = {
@@ -36,8 +34,6 @@ interface ExhibitionSettingsPageProps {
 }
 
 export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageProps) => {
-  const { status: sessionStatus } = useSession()
-  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
@@ -48,12 +44,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [error, setError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-    }
-  }, [sessionStatus, router])
+
 
   // Fetch exhibition data
   useEffect(() => {
@@ -171,53 +162,34 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     }
   }
 
-  if (sessionStatus === 'loading' || loading) {
-    return (
-      <div className={styles.page}>
-        <LoadingBar />
-      </div>
-    )
+  if (loading) {
+    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
   }
 
   if (error && !exhibition) {
     return (
-      <div className={styles.page}>
+      <DashboardLayout backLink="/dashboard">
         <ErrorText>{error}</ErrorText>
-        <Link href="/dashboard">← Back to Dashboard</Link>
-      </div>
+      </DashboardLayout>
     )
   }
 
   if (!exhibition) {
     return (
-      <div className={styles.page}>
+      <DashboardLayout backLink="/dashboard">
         <ErrorText>Exhibition not found</ErrorText>
-        <Link href="/dashboard">← Back to Dashboard</Link>
-      </div>
+      </DashboardLayout>
     )
   }
 
-  const editUrl = exhibition.user?.handler
-    ? `/exhibitions/${exhibition.user.handler}/${exhibition.url}/edit`
-    : `/dashboard`
-
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Link href={editUrl} className={styles.backLink}>
-          ← Back to Editor
-        </Link>
-      </div>
-
-      <Text font="dashboard" as="h1" className={styles.pageTitle}>
-        {exhibition.mainTitle}
-      </Text>
+    <DashboardLayout backLink="/dashboard">
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>{exhibition.mainTitle}</h1>
 
       {/* Featured Image Section */}
-      <div className={styles.section}>
-        <Text font="dashboard" as="h3" className={styles.sectionTitle}>
-          Featured Image
-        </Text>
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Featured Image</h3>
         <div className={styles.imageRow}>
           <div className={styles.imagePreview}>
             {exhibition.featuredImageUrl ? (
@@ -252,10 +224,8 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         </div>
       </div>
 
-      <div className={styles.section}>
-        <Text font="dashboard" as="h3" className={styles.sectionTitle}>
-          Description
-        </Text>
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Description</h3>
         <RichTextEditor
           content={description}
           onChange={setDescription}
@@ -263,10 +233,11 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         />
       </div>
 
-      <div className={styles.actions}>
+      <div className={dashboardStyles.actions}>
         <Button
-          size="small"
-          label={saving ? 'Saving...' : 'Save Changes'}
+          font="dashboard"
+          variant="primary"
+          label={saving ? 'Saving...' : 'Save'}
           onClick={handleSave}
           disabled={saving}
         />
@@ -278,6 +249,6 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       </div>
 
       {error && <ErrorText>{error}</ErrorText>}
-    </div>
+    </DashboardLayout>
   )
 }

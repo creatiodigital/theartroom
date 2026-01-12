@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import { bodyFont, headingFont, dashboardFont, wallFont1, wallFont2 } from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
-import { ImpersonationBanner } from '@/components/ui/ImpersonationBanner'
 import '@/styles/globals.scss'
 
 type RootLayoutProps = {
@@ -19,7 +18,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         <AuthProvider>
           <StoreProvider>
-            <ImpersonationBanner />
             <header></header>
             {children}
           </StoreProvider>
