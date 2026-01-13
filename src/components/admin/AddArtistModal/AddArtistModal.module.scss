@@ -1,52 +1,35 @@
 .modal {
+  min-width: 500px;
+
   h2 {
     margin: 0 0 var(--space-6);
   }
 }
 
-.row {
-  display: flex;
-  gap: var(--space-4);
+.section {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-bottom: var(--space-4);
-  flex: 1;
-
-  label {
-    font-weight: var(--font-medium);
-    font-size: var(--text-sm);
-  }
-
-  textarea,
-  select {
-    padding: var(--space-2);
-    border: 1px solid var(--color-border-dark);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-md);
-
-    &:focus {
-      outline: none;
-      border-color: var(--color-text);
-    }
-  }
-
-  textarea {
-    resize: vertical;
-  }
-}
-
-.error {
-  color: var(--color-error-text);
+.label {
+  display: block;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  margin-bottom: var(--space-4);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-1);
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .actions {
   display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  justify-content: flex-end;
+  gap: var(--space-3);
 }

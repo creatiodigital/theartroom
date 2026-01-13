@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button'
 
 import styles from './ImageUploader.module.scss'
 
+const MAX_FILE_SIZE = 1 * 1024 * 1024 // 1MB in bytes
+
 type ImageUploaderProps = {
   imageUrl?: string | null
   onUpload: (file: File) => Promise<void>
@@ -16,6 +18,7 @@ type ImageUploaderProps = {
   aspectRatio?: string
   objectFit?: 'cover' | 'contain'
   placeholder?: string
+  maxSizeBytes?: number
 }
 
 export const ImageUploader = ({
@@ -26,14 +29,36 @@ export const ImageUploader = ({
   aspectRatio = '16 / 10',
   objectFit = 'cover',
   placeholder = 'No image',
+  maxSizeBytes = MAX_FILE_SIZE,
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [sizeError, setSizeError] = useState<string | null>(null)
+
+  const validateFileSize = useCallback(
+    (file: File): boolean => {
+      if (file.size > maxSizeBytes) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2)
+        setSizeError(`File is too large (${sizeMB}MB). Maximum size is 1MB.`)
+        return false
+      }
+      setSizeError(null)
+      return true
+    },
+    [maxSizeBytes],
+  )
 
   const handleFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       if (file) {
+        if (!validateFileSize(file)) {
+          // Reset input so same file can be selected again
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
+          return
+        }
         await onUpload(file)
       }
       // Reset input so same file can be selected again
@@ -41,7 +66,7 @@ export const ImageUploader = ({
         fileInputRef.current.value = ''
       }
     },
-    [onUpload],
+    [onUpload, validateFileSize],
   )
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -64,10 +89,13 @@ export const ImageUploader = ({
 
       const file = e.dataTransfer.files?.[0]
       if (file && file.type.startsWith('image/')) {
+        if (!validateFileSize(file)) {
+          return
+        }
         await onUpload(file)
       }
     },
-    [onUpload],
+    [onUpload, validateFileSize],
   )
 
   const handleClick = useCallback(() => {
@@ -152,8 +180,13 @@ export const ImageUploader = ({
           )}
         </div>
       )}
+
+      {sizeError && (
+        <div className={styles.sizeError}>{sizeError}</div>
+      )}
     </div>
   )
 }
 
 export default ImageUploader
+

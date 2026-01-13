@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+
+import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
-// GET all slides
+// GET all slides (public - needed for landing page)
 export async function GET() {
   try {
     const slides = await prisma.slide.findMany({
@@ -14,9 +16,13 @@ export async function GET() {
   }
 }
 
-// POST create new slide
+// POST create new slide (admin only)
 export async function POST(request: Request) {
   try {
+    // Require admin role
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const body = await request.json()
     const { imageUrl, title, subtitle, meta, exhibitionUrl, order, isActive } = body
 

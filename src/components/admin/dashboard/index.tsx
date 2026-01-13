@@ -133,7 +133,7 @@ export const DashboardAdmin = () => {
       <div className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>
           <h2 className={dashboardStyles.sectionTitle}>All Users</h2>
-          <Button font="dashboard" variant="secondary" label="Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button font="dashboard" variant="primary" label="Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>
 
         <table className={dashboardStyles.table}>

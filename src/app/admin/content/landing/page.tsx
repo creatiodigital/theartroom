@@ -3,6 +3,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -22,6 +39,51 @@ type Slide = {
   meta: string
   exhibitionUrl: string
   isActive: boolean
+}
+
+type SortableSlideItemProps = {
+  slide: Slide
+  onEdit: (slide: Slide) => void
+  onDelete: (slide: Slide) => void
+}
+
+function SortableSlideItem({ slide, onEdit, onDelete }: SortableSlideItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: slide.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className={styles.slideItem}>
+      <div className={styles.dragHandle} {...attributes} {...listeners}>
+        <span className={styles.dragIcon}>⠿</span>
+      </div>
+      <div className={styles.slidePreview}>
+        {slide.imageUrl && (
+          <img src={slide.imageUrl} alt={slide.title} className={styles.slideImage} />
+        )}
+      </div>
+      <div className={styles.slideInfo}>
+        <Text font="dashboard" as="h3">{slide.title}</Text>
+        <Text font="dashboard" as="p" className={styles.subtitle}>{slide.subtitle}</Text>
+        <Text font="dashboard" as="p" className={styles.meta}>{slide.meta}</Text>
+      </div>
+      <div className={styles.slideActions}>
+        <Button font="dashboard" variant="secondary" label="Edit" onClick={() => onEdit(slide)} />
+        <Button font="dashboard" variant="secondary" label="Delete" onClick={() => onDelete(slide)} />
+      </div>
+    </div>
+  )
 }
 
 export default function LandingContentPage() {
@@ -119,6 +181,39 @@ export default function LandingContentPage() {
     setEditingSlide({ ...editingSlide, [field]: value })
   }
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = slides.findIndex((s) => s.id === active.id)
+      const newIndex = slides.findIndex((s) => s.id === over.id)
+      const newSlides = arrayMove(slides, oldIndex, newIndex)
+      setSlides(newSlides)
+
+      // Persist new order to the API
+      try {
+        await fetch('/api/slides/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slideIds: newSlides.map((s) => s.id),
+          }),
+        })
+      } catch (error) {
+        console.error('Error reordering slides:', error)
+        // Refetch to restore server state on error
+        fetchSlides()
+      }
+    }
+  }
+
   if (status === 'loading' || loading) {
     return <div className={styles.page}>Loading...</div>
   }
@@ -135,26 +230,24 @@ export default function LandingContentPage() {
       {slides.length === 0 ? (
         <Text font="dashboard" as="p" className={styles.empty}>No slides yet. Click "Add Slide" to create one.</Text>
       ) : (
-        <div className={styles.slideList}>
-          {slides.map((slide) => (
-            <div key={slide.id} className={styles.slideItem}>
-              <div className={styles.slidePreview}>
-                {slide.imageUrl && (
-                  <img src={slide.imageUrl} alt={slide.title} className={styles.slideImage} />
-                )}
-              </div>
-              <div className={styles.slideInfo}>
-                <Text font="dashboard" as="h3">{slide.title}</Text>
-                <Text font="dashboard" as="p" className={styles.subtitle}>{slide.subtitle}</Text>
-                <Text font="dashboard" as="p" className={styles.meta}>{slide.meta}</Text>
-              </div>
-              <div className={styles.slideActions}>
-                <Button font="dashboard" variant="secondary" label="Edit" onClick={() => handleEditSlide(slide)} />
-                <Button font="dashboard" variant="primary" label="Remove" onClick={() => setDeleteTarget(slide)} />
-              </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <div className={styles.slideList}>
+              {slides.map((slide) => (
+                <SortableSlideItem
+                  key={slide.id}
+                  slide={slide}
+                  onEdit={handleEditSlide}
+                  onDelete={setDeleteTarget}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Edit/Add Modal */}
@@ -164,92 +257,45 @@ export default function LandingContentPage() {
             <Text font="dashboard" as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
 
             <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Image URL</h3>
-              <p className={styles.sectionDescription}>
-                Path to the slide image. Use assets in the public folder.
-              </p>
+              <label className={styles.label} htmlFor="imageUrl">Image URL</label>
               <Input
                 id="imageUrl"
                 size="medium"
                 value={editingSlide.imageUrl}
                 onChange={(e) => updateField('imageUrl', e.target.value)}
-                placeholder="/assets/landing/image.webp"
               />
-              <span className={styles.hint}>Example: /assets/landing/carousel1.webp</span>
-            </div>
 
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Title</h3>
-              <p className={styles.sectionDescription}>
-                The artist name displayed on the slide.
-              </p>
+              <label className={styles.label} htmlFor="title">Title</label>
               <Input
                 id="title"
                 size="medium"
                 value={editingSlide.title}
                 onChange={(e) => updateField('title', e.target.value)}
-                placeholder="Ana Mendieta"
               />
-              <span className={styles.hint}>This appears as the main heading on the slideshow.</span>
-            </div>
 
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Subtitle</h3>
-              <p className={styles.sectionDescription}>
-                The exhibition name displayed below the title.
-              </p>
+              <label className={styles.label} htmlFor="subtitle">Subtitle</label>
               <Input
                 id="subtitle"
                 size="medium"
                 value={editingSlide.subtitle}
                 onChange={(e) => updateField('subtitle', e.target.value)}
-                placeholder="Back to the Source"
               />
-              <span className={styles.hint}>Usually the exhibition title.</span>
-            </div>
 
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Meta</h3>
-              <p className={styles.sectionDescription}>
-                Date range and location for the exhibition.
-              </p>
+              <label className={styles.label} htmlFor="meta">Meta</label>
               <Input
                 id="meta"
                 size="medium"
                 value={editingSlide.meta}
                 onChange={(e) => updateField('meta', e.target.value)}
-                placeholder="7 NOVEMBER 2025 – 17 JANUARY 2026    NEW YORK"
               />
-              <span className={styles.hint}>Displayed below the subtitle.</span>
-            </div>
 
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Exhibition URL</h3>
-              <p className={styles.sectionDescription}>
-                The link when clicking on the slide.
-              </p>
+              <label className={styles.label} htmlFor="exhibitionUrl">Exhibition URL</label>
               <Input
                 id="exhibitionUrl"
                 size="medium"
                 value={editingSlide.exhibitionUrl}
                 onChange={(e) => updateField('exhibitionUrl', e.target.value)}
-                placeholder="/exhibitions/handler/exhibition-url"
               />
-              <span className={styles.hint}>Full path to the exhibition page.</span>
-            </div>
-
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Order</h3>
-              <p className={styles.sectionDescription}>
-                Display order in the slideshow (0 = first).
-              </p>
-              <Input
-                id="order"
-                size="medium"
-                value={String(editingSlide.order)}
-                onChange={(e) => updateField('order', parseInt(e.target.value) || 0)}
-              />
-              <span className={styles.hint}>Lower numbers appear first.</span>
             </div>
 
             <div className={styles.modalActions}>

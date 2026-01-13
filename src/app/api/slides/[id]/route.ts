@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 type RouteParams = { params: Promise<{ id: string }> }
@@ -22,9 +24,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 }
 
-// PUT update slide
+// PUT update slide (admin only)
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
+    // Require admin role
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const { id } = await params
     const body = await request.json()
     const { imageUrl, title, subtitle, meta, exhibitionUrl, order, isActive } = body
@@ -49,9 +55,13 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
-// DELETE slide
+// DELETE slide (admin only)
 export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
+    // Require admin role
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const { id } = await params
     await prisma.slide.delete({
       where: { id },

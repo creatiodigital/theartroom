@@ -157,7 +157,7 @@ export const DashboardPage = () => {
           <h2 className={dashboardStyles.sectionTitle}>My Profile</h2>
           <Button
             font="dashboard"
-            variant="primary"
+            variant="secondary"
             label="Edit Profile"
             onClick={() => router.push('/dashboard/profile')}
           />
@@ -173,7 +173,7 @@ export const DashboardPage = () => {
           <h2 className={dashboardStyles.sectionTitle}>My Artworks</h2>
           <Button
             font="dashboard"
-            variant="primary"
+            variant="secondary"
             label="Manage Artworks"
             onClick={() => router.push('/dashboard/artworks')}
           />
@@ -190,7 +190,7 @@ export const DashboardPage = () => {
           <h2 className={dashboardStyles.sectionTitle}>My Exhibitions</h2>
           <Button
             font="dashboard"
-            variant="primary"
+            variant="secondary"
             label="New Exhibition"
             onClick={handleNewExhibition}
           />

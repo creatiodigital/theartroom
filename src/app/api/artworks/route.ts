@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-// GET artworks for a user
+// GET artworks for a user (public - needed for artist profiles)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -42,12 +43,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create new artwork
+// POST create new artwork (requires auth)
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication and get effective user ID
+    const { userId, error: authError } = await getEffectiveUserId()
+    if (authError) return authError
+
     const body = await request.json()
     const {
-      userId,
       artworkType,
       title,
       author,
@@ -57,10 +61,6 @@ export async function POST(request: NextRequest) {
       description,
       featured,
     } = body
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
-    }
 
     // Auto-generate title if not provided
     let finalTitle = title
