@@ -19,6 +19,17 @@ const nextConfig = {
   // Cache headers for optimal performance
   async headers() {
     return [
+      // Global security headers
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
       // Static 3D assets - cache forever (1 year)
       {
         source: '/assets/:path*',

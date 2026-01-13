@@ -5,10 +5,9 @@ import type { ChangeEvent, DragEvent } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 
 import styles from './ImageUploader.module.scss'
-
-const MAX_FILE_SIZE = 1 * 1024 * 1024 // 1MB in bytes
 
 type ImageUploaderProps = {
   imageUrl?: string | null
@@ -29,7 +28,7 @@ export const ImageUploader = ({
   aspectRatio = '16 / 10',
   objectFit = 'cover',
   placeholder = 'No image',
-  maxSizeBytes = MAX_FILE_SIZE,
+  maxSizeBytes = MAX_UPLOAD_SIZE,
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -39,7 +38,8 @@ export const ImageUploader = ({
     (file: File): boolean => {
       if (file.size > maxSizeBytes) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2)
-        setSizeError(`File is too large (${sizeMB}MB). Maximum size is 1MB.`)
+        const maxMB = (maxSizeBytes / (1024 * 1024)).toFixed(0)
+        setSizeError(`File is too large (${sizeMB}MB). Maximum size is ${maxMB}MB.`)
         return false
       }
       setSizeError(null)
@@ -47,6 +47,7 @@ export const ImageUploader = ({
     },
     [maxSizeBytes],
   )
+
 
   const handleFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {

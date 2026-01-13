@@ -90,8 +90,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(artwork, { status: 201 })
   } catch (error) {
     console.error('[POST /api/artworks] error:', error)
-    console.error('[POST /api/artworks] error details:', JSON.stringify(error, null, 2))
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: 'Failed to create artwork', details: errorMessage }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create artwork' }, { status: 500 })
   }
 }

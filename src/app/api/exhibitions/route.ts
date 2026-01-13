@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(exhibition, { status: 201 })
   } catch (error) {
     console.error('[POST /api/exhibitions] error:', error)
-    console.error('[POST /api/exhibitions] error details:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: 'Failed to create exhibition' }, { status: 500 })
   }
 }
