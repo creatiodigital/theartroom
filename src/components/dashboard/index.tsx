@@ -157,7 +157,7 @@ export const DashboardPage = () => {
           <h2 className={dashboardStyles.sectionTitle}>My Profile</h2>
           <Button
             font="dashboard"
-            variant="secondary"
+            variant="primary"
             label="Edit Profile"
             onClick={() => router.push('/dashboard/profile')}
           />
@@ -173,7 +173,7 @@ export const DashboardPage = () => {
           <h2 className={dashboardStyles.sectionTitle}>My Artworks</h2>
           <Button
             font="dashboard"
-            variant="secondary"
+            variant="primary"
             label="Manage Artworks"
             onClick={() => router.push('/dashboard/artworks')}
           />
@@ -190,8 +190,8 @@ export const DashboardPage = () => {
           <h2 className={dashboardStyles.sectionTitle}>My Exhibitions</h2>
           <Button
             font="dashboard"
-            variant="secondary"
-            label="+ New Exhibition"
+            variant="primary"
+            label="New Exhibition"
             onClick={handleNewExhibition}
           />
         </div>
@@ -240,7 +240,7 @@ export const DashboardPage = () => {
                   <td>
                     <Button
                       font="dashboard"
-                      variant="danger"
+                      variant="secondary"
                       label="Delete"
                       onClick={() => handleDeleteClick(ex.id, ex.mainTitle)}
                     />

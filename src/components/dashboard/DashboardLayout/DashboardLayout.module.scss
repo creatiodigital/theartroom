@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background: var(--color-bg);
+  background: rgb(250, 250, 250);
 }
 
 /* Impersonation Banner */
@@ -37,6 +37,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
+  background: var(--color-white);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -55,7 +56,7 @@
 .backLink {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text);
   text-decoration: none;
 
   &:hover {
@@ -76,18 +77,24 @@
    import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
    ============================================ */
 
-/* Page Title - Large heading like "Hello User" */
+/* Page Title - Large heading with bottom border separator like Vercel */
 .pageTitle {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: 32px;
   font-weight: 500;
   color: var(--color-text);
-  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
+  border-bottom: 1px solid var(--color-border);
 }
 
-/* Section */
+/* Section Card - Vercel style with white background and subtle border */
 .section {
-  margin-bottom: var(--space-8);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 .sectionHeader {
@@ -103,12 +110,13 @@
   font-size: 20px;
   font-weight: var(--font-bold);
   color: var(--color-text);
+  margin-bottom: var(--space-3);
 }
 
 .sectionDescription {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text);
   margin-bottom: var(--space-4);
 }
 
@@ -127,17 +135,28 @@
   }
 
   th {
-    font-weight: var(--font-medium);
-    color: var(--color-text-muted);
-    background: var(--color-bg-muted);
+    font-weight: 600;
+    color: var(--color-text);
+    background: var(--color-white);
   }
 
   td {
     color: var(--color-text);
   }
 
-  tr:hover td {
-    background: var(--color-bg-muted);
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 0;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 0;
+    text-align: right;
   }
 }
 
@@ -145,6 +164,7 @@
 .actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
 }
 
@@ -174,8 +194,13 @@
 .hint {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  margin-top: var(--space-1);
+  color: var(--color-text);
+  display: block;
+  background: var(--color-bg-muted);
+  margin: var(--space-4) calc(-1 * var(--space-6)) calc(-1 * var(--space-6));
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
 }
 
 /* Delete Confirmation Modal */

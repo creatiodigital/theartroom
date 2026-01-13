@@ -7,7 +7,8 @@ import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { Text } from '@/components/ui/Typography'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import styles from './page.module.scss'
 
@@ -93,37 +94,44 @@ export default function PageContentEditor({ params }: PageProps) {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Text font="dashboard" as="h1">Edit: {slugLabels[slug] || slug}</Text>
-        <Button font="dashboard" variant="secondary" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
-      </div>
+    <DashboardLayout backLink="/admin/dashboard">
+      <h1 className={dashboardStyles.pageTitle}>Edit: {slugLabels[slug] || slug}</h1>
 
-      <div className={styles.field}>
-        <Text font="dashboard" as="label">Page Title</Text>
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Page Title</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          The title displayed at the top of the page.
+        </p>
         <Input
           id="title"
+          size="medium"
           value={page.title}
           onChange={(e) => setPage({ ...page, title: e.target.value })}
         />
+        <span className={dashboardStyles.hint}>This appears as the main heading.</span>
       </div>
 
-      <div className={styles.field}>
-        <Text font="dashboard" as="label">Content</Text>
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Content</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          The main body content of the page. Supports rich text formatting.
+        </p>
         <RichTextEditor
           content={page.content}
           onChange={(content) => setPage({ ...page, content })}
           placeholder="Start writing your page content..."
         />
+        <span className={dashboardStyles.hint}>Use the toolbar to format text, add headings, lists, and more.</span>
       </div>
 
-      <div className={styles.actions}>
+      <div className={dashboardStyles.actions}>
         <Button
-          variant="secondary"
+          font="dashboard"
+          variant="primary"
           label={saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Changes'}
           onClick={handleSave}
         />
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

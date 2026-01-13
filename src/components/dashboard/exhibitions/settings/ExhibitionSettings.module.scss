@@ -10,7 +10,7 @@
 }
 
 .backLink {
-  color: var(--color-text-muted);
+  color: var(--color-text);
   text-decoration: none;
   font-size: var(--text-sm);
 
@@ -34,6 +34,10 @@
   letter-spacing: 1px;
 }
 
+.imageSection {
+  width: calc(50% - 7px);
+}
+
 .imageRow {
   display: flex;
   align-items: flex-start;
@@ -51,7 +55,7 @@
 }
 
 .noImage {
-  color: var(--color-text-muted);
+  color: var(--color-text);
   font-size: var(--text-sm);
 }
 

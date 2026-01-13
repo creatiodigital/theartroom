@@ -16,12 +16,14 @@ type DashboardLayoutProps = {
   children: ReactNode
   backLink?: string
   backLabel?: string
+  headerActions?: ReactNode
 }
 
 export const DashboardLayout = ({
   children,
   backLink,
   backLabel = '← Back to Dashboard',
+  headerActions,
 }: DashboardLayoutProps) => {
   const { status: sessionStatus } = useSession()
   const { effectiveUser, isImpersonating, stopImpersonation } = useEffectiveUser()
@@ -61,7 +63,7 @@ export const DashboardLayout = ({
             className={styles.stopButton}
             onClick={() => {
               stopImpersonation()
-              router.push('/admin')
+              router.push('/admin/dashboard')
             }}
           >
             Stop Impersonating
@@ -79,6 +81,7 @@ export const DashboardLayout = ({
           )}
         </div>
         <div className={styles.headerRight}>
+          {headerActions}
           <Logout />
         </div>
       </div>

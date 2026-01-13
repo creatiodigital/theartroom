@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import styles from './page.module.scss'
 
@@ -122,14 +124,12 @@ export default function LandingContentPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Text font="dashboard" as="h1">Landing Page - Slideshow</Text>
-        <Button font="dashboard" variant="secondary" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
-      </div>
+    <DashboardLayout backLink="/admin/dashboard">
+      <h1 className={dashboardStyles.pageTitle}>Landing Page - Slideshow</h1>
 
-      <div className={styles.actions}>
-        <Button font="dashboard" variant="secondary" label="+ Add Slide" onClick={handleAddSlide} />
+      <div className={dashboardStyles.sectionHeader}>
+        <div></div>
+        <Button font="dashboard" variant="primary" label="Add Slide" onClick={handleAddSlide} />
       </div>
 
       {slides.length === 0 ? (
@@ -163,72 +163,103 @@ export default function LandingContentPage() {
           <div className={styles.modal}>
             <Text font="dashboard" as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
 
-            <div className={styles.field}>
-              <Text font="dashboard" as="label">Image URL</Text>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Image URL</h3>
+              <p className={styles.sectionDescription}>
+                Path to the slide image. Use assets in the public folder.
+              </p>
               <Input
                 id="imageUrl"
+                size="medium"
                 value={editingSlide.imageUrl}
                 onChange={(e) => updateField('imageUrl', e.target.value)}
                 placeholder="/assets/landing/image.webp"
               />
+              <span className={styles.hint}>Example: /assets/landing/carousel1.webp</span>
             </div>
 
-            <div className={styles.field}>
-              <Text font="dashboard" as="label">Title (Artist Name)</Text>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Title</h3>
+              <p className={styles.sectionDescription}>
+                The artist name displayed on the slide.
+              </p>
               <Input
                 id="title"
+                size="medium"
                 value={editingSlide.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Ana Mendieta"
               />
+              <span className={styles.hint}>This appears as the main heading on the slideshow.</span>
             </div>
 
-            <div className={styles.field}>
-              <Text font="dashboard" as="label">Subtitle (Exhibition Name)</Text>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Subtitle</h3>
+              <p className={styles.sectionDescription}>
+                The exhibition name displayed below the title.
+              </p>
               <Input
                 id="subtitle"
+                size="medium"
                 value={editingSlide.subtitle}
                 onChange={(e) => updateField('subtitle', e.target.value)}
                 placeholder="Back to the Source"
               />
+              <span className={styles.hint}>Usually the exhibition title.</span>
             </div>
 
-            <div className={styles.field}>
-              <Text font="dashboard" as="label">Meta (Date + Location)</Text>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Meta</h3>
+              <p className={styles.sectionDescription}>
+                Date range and location for the exhibition.
+              </p>
               <Input
                 id="meta"
+                size="medium"
                 value={editingSlide.meta}
                 onChange={(e) => updateField('meta', e.target.value)}
                 placeholder="7 NOVEMBER 2025 – 17 JANUARY 2026    NEW YORK"
               />
+              <span className={styles.hint}>Displayed below the subtitle.</span>
             </div>
 
-            <div className={styles.field}>
-              <Text font="dashboard" as="label">Exhibition URL</Text>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Exhibition URL</h3>
+              <p className={styles.sectionDescription}>
+                The link when clicking on the slide.
+              </p>
               <Input
                 id="exhibitionUrl"
+                size="medium"
                 value={editingSlide.exhibitionUrl}
                 onChange={(e) => updateField('exhibitionUrl', e.target.value)}
                 placeholder="/exhibitions/handler/exhibition-url"
               />
+              <span className={styles.hint}>Full path to the exhibition page.</span>
             </div>
 
-            <div className={styles.field}>
-              <Text font="dashboard" as="label">Order</Text>
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Order</h3>
+              <p className={styles.sectionDescription}>
+                Display order in the slideshow (0 = first).
+              </p>
               <Input
                 id="order"
+                size="medium"
                 value={String(editingSlide.order)}
                 onChange={(e) => updateField('order', parseInt(e.target.value) || 0)}
               />
+              <span className={styles.hint}>Lower numbers appear first.</span>
             </div>
 
             <div className={styles.modalActions}>
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setEditingSlide(null)} />
               <Button
-                variant="secondary"
+                font="dashboard"
+                variant="primary"
                 label={saving ? 'Saving...' : 'Save'}
                 onClick={handleSaveSlide}
               />
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setEditingSlide(null)} />
             </div>
           </div>
         </Modal>
@@ -249,6 +280,6 @@ export default function LandingContentPage() {
           </div>
         </Modal>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

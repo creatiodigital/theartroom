@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
-import Image from 'next/image'
+import { useEffect, useState, useCallback } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
-import { FileInput } from '@/components/ui/FileInput'
+import { ImageUploader } from '@/components/ui/ImageUploader'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
 
@@ -34,8 +33,6 @@ interface ExhibitionSettingsPageProps {
 }
 
 export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(true)
@@ -97,46 +94,44 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     }
   }, [exhibition, description])
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !exhibition) return
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      if (!exhibition) return
 
-    setUploading(true)
-    setError('')
+      setUploading(true)
+      setError('')
 
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
 
-      const response = await fetch(`/api/exhibitions/${exhibition.id}/image`, {
-        method: 'POST',
-        body: formData,
-      })
+        const response = await fetch(`/api/exhibitions/${exhibition.id}/image`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (!response.ok) {
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.error || 'Failed to upload image')
+          setUploading(false)
+          return
+        }
+
         const data = await response.json()
-        setError(data.error || 'Failed to upload image')
+        setExhibition((prev) => (prev ? { ...prev, featuredImageUrl: data.url } : prev))
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      } catch {
+        setError('Failed to upload image')
+      } finally {
         setUploading(false)
-        return
       }
+    },
+    [exhibition],
+  )
 
-      const data = await response.json()
-      setExhibition((prev) => (prev ? { ...prev, featuredImageUrl: data.url } : prev))
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
-    } catch {
-      setError('Failed to upload image')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleRemoveImage = async () => {
+  const handleRemoveImage = useCallback(async () => {
     if (!exhibition?.featuredImageUrl) return
-    if (!confirm('Remove featured image?')) return
 
     setUploading(true)
     setError('')
@@ -160,7 +155,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     } finally {
       setUploading(false)
     }
-  }
+  }, [exhibition])
 
   if (loading) {
     return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
@@ -188,49 +183,32 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       <h1 className={dashboardStyles.pageTitle}>{exhibition.mainTitle}</h1>
 
       {/* Featured Image Section */}
-      <div className={dashboardStyles.section}>
+      <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
         <h3 className={dashboardStyles.sectionTitle}>Featured Image</h3>
-        <div className={styles.imageRow}>
-          <div className={styles.imagePreview}>
-            {exhibition.featuredImageUrl ? (
-              <Image
-                src={exhibition.featuredImageUrl}
-                alt="Featured"
-                width={300}
-                height={200}
-                style={{ objectFit: 'cover' }}
-              />
-            ) : (
-              <div className={styles.noImage}>No image</div>
-            )}
-          </div>
-          <div className={styles.imageActions}>
-            <FileInput
-              ref={fileInputRef}
-              id="featuredImage"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={handleImageUpload}
-            />
-            <Button
-              size="small"
-              label={uploading ? 'Uploading...' : exhibition.featuredImageUrl ? 'Change Image' : 'Upload Image'}
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
-            />
-            {exhibition.featuredImageUrl && (
-              <Button size="small" label="Remove" onClick={handleRemoveImage} type="button" />
-            )}
-          </div>
-        </div>
+        <p className={dashboardStyles.sectionDescription}>
+          The main image for your exhibition. This will be displayed on exhibition listings and as a cover.
+        </p>
+        <ImageUploader
+          imageUrl={exhibition.featuredImageUrl}
+          onUpload={handleImageUpload}
+          onRemove={handleRemoveImage}
+          uploading={uploading}
+          aspectRatio="16 / 10"
+        />
+        <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
       </div>
 
       <div className={dashboardStyles.section}>
         <h3 className={dashboardStyles.sectionTitle}>Description</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          Tell visitors about this exhibition. Supports rich text formatting.
+        </p>
         <RichTextEditor
           content={description}
           onChange={setDescription}
           placeholder="Write a description for your exhibition..."
         />
+        <span className={dashboardStyles.hint}>A compelling description helps attract visitors to your exhibition.</span>
       </div>
 
       <div className={dashboardStyles.actions}>

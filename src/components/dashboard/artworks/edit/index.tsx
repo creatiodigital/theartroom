@@ -1,17 +1,15 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
-import { FileInput } from '@/components/ui/FileInput'
-import { HintText } from '@/components/ui/HintText'
+import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
-import { Textarea } from '@/components/ui/Textarea'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
 
 import { DashboardLayout } from '../../DashboardLayout'
 import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
@@ -39,7 +37,6 @@ type Artwork = {
 export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const { data: session } = useSession()
   const router = useRouter()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [loading, setLoading] = useState(true)
@@ -134,46 +131,40 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      setUploading(true)
+      setError('')
 
-    setUploading(true)
-    setError('')
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
 
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
+        const response = await fetch(`/api/artworks/${artworkId}/image`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      const response = await fetch(`/api/artworks/${artworkId}/image`, {
-        method: 'POST',
-        body: formData,
-      })
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.error || 'Failed to upload image')
+          setUploading(false)
+          return
+        }
 
-      if (!response.ok) {
         const data = await response.json()
-        setError(data.error || 'Failed to upload image')
+        setImageUrl(data.url)
+      } catch {
+        setError('Failed to upload image')
+      } finally {
         setUploading(false)
-        return
       }
+    },
+    [artworkId],
+  )
 
-      const data = await response.json()
-      setImageUrl(data.url)
-    } catch {
-      setError('Failed to upload image')
-    } finally {
-      setUploading(false)
-      // Clear input so same file can be selected again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleRemoveImage = async () => {
+  const handleRemoveImage = useCallback(async () => {
     if (!imageUrl) return
-
-    if (!confirm('Remove this image?')) return
 
     setUploading(true)
     setError('')
@@ -196,7 +187,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     } finally {
       setUploading(false)
     }
-  }
+  }, [artworkId, imageUrl])
 
   if (loading) {
     return <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">Loading...</DashboardLayout>
@@ -215,72 +206,34 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Edit Artwork</h1>
 
-      {/* Image Upload Section */}
-      <div className={styles.imageSection}>
-        <label>Artwork Image (optional)</label>
-        <div className={styles.imagePreview}>
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt="Artwork preview"
-              width={300}
-              height={300}
-              style={{ objectFit: 'contain' }}
-            />
-          ) : (
-            <div className={styles.noImage}>No image uploaded</div>
-          )}
-        </div>
-        <div className={styles.imageActions}>
-          <FileInput
-            ref={fileInputRef}
-            id="artworkImage"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={handleImageUpload}
+      {/* Image Upload Section - only for image type */}
+      {formData.artworkType === 'image' && (
+        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+          <h3 className={dashboardStyles.sectionTitle}>Artwork Image</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Upload the artwork image. This will be displayed in exhibitions and on your profile.
+          </p>
+          <ImageUploader
+            imageUrl={imageUrl}
+            onUpload={handleImageUpload}
+            onRemove={handleRemoveImage}
+            uploading={uploading}
+            aspectRatio="1 / 1"
+            objectFit="contain"
           />
-          <Button
-            variant="secondary"
-            label={uploading ? 'Uploading...' : imageUrl ? 'Change Image' : 'Upload Image'}
-            onClick={() => fileInputRef.current?.click()}
-            type="button"
-          />
-          {imageUrl && (
-            <Button font="dashboard" variant="primary" label="Remove" onClick={handleRemoveImage} type="button" />
-          )}
+          <span className={dashboardStyles.hint}>
+            Accepted: JPG, PNG, WebP, GIF (max 1MB). Images are automatically optimized.
+          </span>
         </div>
-        <HintText>
-          Accepted: JPG, PNG, WebP, GIF (max 10MB). Images are automatically optimized.
-        </HintText>
-      </div>
+      )}
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="name">Name (Library Display) *</label>
-            <Input
-              id="name"
-              type="text"
-              size="medium"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              required
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="artworkType">Type</label>
-            <Input
-              id="artworkType"
-              type="text"
-              size="medium"
-              value={formData.artworkType === 'image' ? 'Image' : 'Text'}
-              onChange={() => {}}
-              variant="disabled"
-            />
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="title">Artwork Title *</label>
+      <form onSubmit={handleSubmit}>
+        {/* Title Section */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Title</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            The display title for your artwork.
+          </p>
           <Input
             id="title"
             type="text"
@@ -289,22 +242,44 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             onChange={(e) => handleChange('title', e.target.value)}
             required
           />
+          <span className={dashboardStyles.hint}>This will be shown in exhibitions and on your profile.</span>
         </div>
 
-        <div className={styles.field}>
-          <label htmlFor="author">Author</label>
+        {/* Type Section */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Type</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            The artwork type cannot be changed after creation.
+          </p>
           <Input
-            id="author"
+            id="artworkType"
             type="text"
             size="medium"
-            value={formData.author}
-            onChange={(e) => handleChange('author', e.target.value)}
+            value={formData.artworkType === 'image' ? 'Image' : 'Text'}
+            onChange={() => {}}
+            variant="disabled"
           />
+          <span className={dashboardStyles.hint}>Image for visual artworks, Text for written content.</span>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="year">Year</label>
+        {/* Author */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Author</h3>
+            <Input
+              id="author"
+              type="text"
+              size="medium"
+              value={formData.author}
+              onChange={(e) => handleChange('author', e.target.value)}
+            />
+          </div>
+        )}
+
+        {/* Year */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Year</h3>
             <Input
               id="year"
               type="text"
@@ -313,42 +288,49 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
               onChange={(e) => handleChange('year', e.target.value)}
             />
           </div>
-          <div className={styles.field}>
-            <label htmlFor="technique">Technique / Medium</label>
-            <Input
-              id="technique"
-              type="text"
-              size="medium"
-              value={formData.technique}
-              onChange={(e) => handleChange('technique', e.target.value)}
+        )}
+
+        {/* Technique / Medium */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Technique / Medium</h3>
+            <RichTextEditor
+              content={formData.technique}
+              onChange={(content) => handleChange('technique', content)}
+              placeholder="e.g. Oil on canvas, mixed media..."
             />
           </div>
-        </div>
+        )}
 
-        <div className={styles.field}>
-          <label htmlFor="dimensions">Dimensions</label>
-          <Input
-            id="dimensions"
-            type="text"
-            size="medium"
-            value={formData.dimensions}
-            onChange={(e) => handleChange('dimensions', e.target.value)}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="description">Description</label>
-          <Textarea
-            id="description"
-            size="medium"
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            rows={4}
-          />
-        </div>
-
+        {/* Dimensions */}
         {formData.artworkType === 'image' && (
-          <div className={styles.field}>
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Dimensions</h3>
+            <Input
+              id="dimensions"
+              type="text"
+              size="medium"
+              value={formData.dimensions}
+              onChange={(e) => handleChange('dimensions', e.target.value)}
+            />
+          </div>
+        )}
+
+        {/* Description / Text Content */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>
+            {formData.artworkType === 'text' ? 'Text Content' : 'Description'}
+          </h3>
+          <RichTextEditor
+            content={formData.description}
+            onChange={(content) => handleChange('description', content)}
+            placeholder={formData.artworkType === 'text' ? 'Enter the text to display...' : 'About this artwork...'}
+          />
+        </div>
+
+        {/* Featured Checkbox */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
             <Checkbox
               checked={formData.featured}
               onChange={(e) => handleChange('featured', e.target.checked)}

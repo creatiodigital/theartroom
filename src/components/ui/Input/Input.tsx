@@ -19,6 +19,7 @@ type TInput = {
   onBlur?: FocusEventHandler<HTMLInputElement>
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>
   autoFocus?: boolean
+  autoComplete?: string
   placeholder?: string
   required?: boolean
   id?: string
@@ -36,6 +37,7 @@ const Input = ({
   onBlur,
   onKeyDown,
   autoFocus = false,
+  autoComplete,
   placeholder,
   required,
   id,
@@ -57,6 +59,7 @@ const Input = ({
         onBlur={onBlur}
         onKeyDown={onKeyDown}
         autoFocus={autoFocus}
+        autoComplete={autoComplete}
         placeholder={placeholder}
         required={required}
       />

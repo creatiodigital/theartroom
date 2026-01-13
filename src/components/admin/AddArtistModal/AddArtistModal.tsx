@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Textarea } from '@/components/ui/Textarea'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './AddArtistModal.module.scss'
@@ -27,7 +26,6 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
     lastName: '',
     handler: '',
     email: '',
-    biography: '',
     password: '',
     userType: 'artist',
   })
@@ -79,7 +77,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
   return (
     <div className={styles.modal}>
       <Text font="dashboard" as="h2">Add New Artist</Text>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} autoComplete="off">
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="name">First Name *</label>
@@ -125,6 +123,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
             size="medium"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
+            autoComplete="off"
             required
           />
         </div>
@@ -137,17 +136,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
             size="medium"
             value={formData.password}
             onChange={(e) => handleChange('password', e.target.value)}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="biography">Biography</label>
-          <Textarea
-            id="biography"
-            size="medium"
-            value={formData.biography}
-            onChange={(e) => handleChange('biography', e.target.value)}
-            rows={3}
+            autoComplete="new-password"
           />
         </div>
 

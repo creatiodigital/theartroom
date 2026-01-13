@@ -27,7 +27,7 @@
     border: none;
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--color-text-muted);
+    color: var(--color-text);
     font-size: var(--text-sm);
     cursor: pointer;
     transition: all 0.15s ease;
@@ -52,7 +52,7 @@
 }
 
 .editor {
-  min-height: 150px;
+  min-height: 250px;
   padding: var(--space-3);
   outline: none;
   font-size: var(--text-md);
@@ -104,7 +104,7 @@
     border-left: 3px solid var(--color-border-dark);
     padding-left: var(--space-4);
     margin: var(--space-3) 0;
-    color: var(--color-text-muted);
+    color: var(--color-text);
     font-style: italic;
   }
 
@@ -121,7 +121,7 @@
   p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     float: left;
-    color: var(--color-text-light);
+    color: var(--color-text);
     pointer-events: none;
     height: 0;
   }

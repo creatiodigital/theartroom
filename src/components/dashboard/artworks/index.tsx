@@ -79,12 +79,11 @@ export const ArtworkLibraryPage = () => {
     if (typeFilter !== 'all' && artwork.artworkType !== typeFilter) {
       return false
     }
-    // Search filter (case-insensitive, matches name)
+    // Search filter (case-insensitive, matches title)
     if (debouncedSearch) {
       const searchLower = debouncedSearch.toLowerCase()
-      const nameMatch = artwork.name?.toLowerCase().includes(searchLower)
       const titleMatch = artwork.title?.toLowerCase().includes(searchLower)
-      return nameMatch || titleMatch
+      return titleMatch
     }
     return true
   })
@@ -182,12 +181,7 @@ export const ArtworkLibraryPage = () => {
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Artwork Library</h1>
 
-      <div className={dashboardStyles.sectionHeader}>
-        <div></div>
-        <Button font="dashboard" variant="secondary" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
-      </div>
-
-      {/* Filter Tags and Search */}
+      {/* Filter Tags */}
       <div className={styles.filterBar}>
         <div className={styles.filters}>
           <button
@@ -212,14 +206,17 @@ export const ArtworkLibraryPage = () => {
             Text
           </button>
         </div>
-        <Input
-          id="artwork-search"
-          type="text"
-          variant="search"
-          placeholder="Search by name or title..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className={styles.searchRow}>
+          <Input
+            id="artwork-search"
+            type="text"
+            variant="search"
+            placeholder="Search by title..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Button font="dashboard" variant="primary" label="Add Artwork" onClick={() => setShowAddModal(true)} />
+        </div>
       </div>
 
       {filteredArtworks.length === 0 ? (
@@ -239,7 +236,7 @@ export const ArtworkLibraryPage = () => {
                 {artwork.artworkType === 'image' && artwork.imageUrl ? (
                   <Image
                     src={artwork.imageUrl}
-                    alt={artwork.name}
+                    alt={artwork.title || 'Artwork'}
                     width={60}
                     height={60}
                     className={styles.thumbnail}
@@ -253,13 +250,7 @@ export const ArtworkLibraryPage = () => {
                 )}
               </div>
               <div className={styles.cardInfo}>
-                <Text font="dashboard" as="h3">{artwork.name}</Text>
-                <Text font="dashboard" as="p" className={styles.meta}>
-                  {artwork.artworkType === 'image' ? 'Image' : 'Text'}
-                  {artwork.title && ` • ${artwork.title}`}
-                  {artwork.year && ` • ${artwork.year}`}
-                  {artwork.technique && ` • ${artwork.technique}`}
-                </Text>
+                <Text font="dashboard" as="h3">{artwork.title}</Text>
                 {artwork.exhibitionArtworks.length > 0 && (
                   <div className={styles.exhibitions}>
                     <span className={styles.exhibitionsLabel}>In:</span>
@@ -270,7 +261,7 @@ export const ArtworkLibraryPage = () => {
                           type="button"
                           className={styles.removeBtn}
                           onClick={() =>
-                            handleUnlinkClick(ea.id, artwork.name, ea.exhibition.mainTitle)
+                            handleUnlinkClick(ea.id, artwork.title || 'Artwork', ea.exhibition.mainTitle)
                           }
                           title={`Remove from ${ea.exhibition.mainTitle}`}
                         >
@@ -288,9 +279,9 @@ export const ArtworkLibraryPage = () => {
                   onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
                 />
                 <Button
-                  variant="danger"
+                  variant="secondary"
                   label="Delete"
-                  onClick={() => handleDeleteClick(artwork.id, artwork.name)}
+                  onClick={() => handleDeleteClick(artwork.id, artwork.title || 'Artwork')}
                 />
               </div>
             </div>

@@ -1,53 +1,16 @@
 /* Profile-specific styles (shared styles now come from DashboardLayout.module.scss) */
 
 .imageSection {
-  margin-bottom: var(--space-8);
-  padding: var(--space-4);
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
-
-  > label {
-    display: block;
-    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-    font-weight: var(--font-medium);
-    margin-bottom: var(--space-3);
-  }
+  width: calc(50% - 7px);
 }
 
-.imageRow {
+.row {
   display: flex;
-  align-items: center;
-  gap: var(--space-6);
-}
-
-.imagePreview {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-white);
-  overflow: hidden;
-}
-
-.noImage {
-  color: var(--color-text-light);
-  font-size: var(--text-xs);
-  text-align: center;
-}
-
-.imageActions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
   gap: var(--space-4);
+}
+
+.fieldHalf {
+  flex: 1;
 }
 
 .success {

@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       userId,
-      name,
       artworkType,
       title,
       author,
@@ -59,16 +58,26 @@ export async function POST(request: NextRequest) {
       featured,
     } = body
 
-    if (!userId || !name) {
-      return NextResponse.json({ error: 'userId and name are required' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+    }
+
+    // Auto-generate title if not provided
+    let finalTitle = title
+    if (!finalTitle || finalTitle.trim() === '') {
+      // Count existing artworks to generate "Untitled 1", "Untitled 2", etc.
+      const count = await prisma.artwork.count({
+        where: { userId },
+      })
+      finalTitle = `Untitled ${count + 1}`
     }
 
     const artwork = await prisma.artwork.create({
       data: {
         userId,
-        name,
+        name: finalTitle, // Use title as name for backwards compatibility
         artworkType: artworkType || 'image',
-        title: title || undefined,
+        title: finalTitle,
         author: author || null,
         year: year || null,
         technique: technique || null,

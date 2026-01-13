@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
+import { useState, useEffect, useCallback } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
-import { FileInput } from '@/components/ui/FileInput'
+import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
@@ -27,7 +26,6 @@ type User = {
 
 export const DashboardProfilePage = () => {
   const { effectiveUser } = useEffectiveUser()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -113,45 +111,43 @@ export const DashboardProfilePage = () => {
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !effectiveUser?.id) return
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      if (!effectiveUser?.id) return
 
-    setUploading(true)
-    setError('')
+      setUploading(true)
+      setError('')
 
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
 
-      const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
-        method: 'POST',
-        body: formData,
-      })
+        const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (!response.ok) {
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.error || 'Failed to upload image')
+          setUploading(false)
+          return
+        }
+
         const data = await response.json()
-        setError(data.error || 'Failed to upload image')
+        setUser((prev) => (prev ? { ...prev, profileImageUrl: data.url } : prev))
+        setSuccess('Profile image updated!')
+      } catch {
+        setError('Failed to upload image')
+      } finally {
         setUploading(false)
-        return
       }
+    },
+    [effectiveUser?.id],
+  )
 
-      const data = await response.json()
-      setUser((prev) => (prev ? { ...prev, profileImageUrl: data.url } : prev))
-      setSuccess('Profile image updated!')
-    } catch {
-      setError('Failed to upload image')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleRemoveImage = async () => {
+  const handleRemoveImage = useCallback(async () => {
     if (!user?.profileImageUrl || !effectiveUser?.id) return
-    if (!confirm('Remove profile picture?')) return
 
     setUploading(true)
     setError('')
@@ -174,7 +170,7 @@ export const DashboardProfilePage = () => {
     } finally {
       setUploading(false)
     }
-  }
+  }, [user?.profileImageUrl, effectiveUser?.id])
 
   if (loading) {
     return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
@@ -186,70 +182,61 @@ export const DashboardProfilePage = () => {
       <h1 className={dashboardStyles.pageTitle}>Edit Profile</h1>
 
       {/* Profile Image Section */}
-      <div className={styles.imageSection}>
-        <label>Profile Picture</label>
-        <div className={styles.imageRow}>
-          <div className={styles.imagePreview}>
-            {user?.profileImageUrl ? (
-              <Image
-                src={user.profileImageUrl}
-                alt="Profile"
-                width={120}
-                height={120}
-                style={{ objectFit: 'cover', borderRadius: '50%' }}
-              />
-            ) : (
-              <div className={styles.noImage}>No photo</div>
-            )}
-          </div>
-          <div className={styles.imageActions}>
-            <FileInput
-              ref={fileInputRef}
-              id="profileImage"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={handleImageUpload}
-            />
-            <Button
-              variant="secondary"
-              label={uploading ? 'Uploading...' : 'Upload Photo'}
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
-            />
-            {user?.profileImageUrl && (
-              <Button font="dashboard" variant="primary" label="Remove" onClick={handleRemoveImage} type="button" />
-            )}
-          </div>
-        </div>
+      <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+        <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          Upload a photo to personalize your artist profile. This will be displayed on your public page.
+        </p>
+        <ImageUploader
+          imageUrl={user?.profileImageUrl}
+          onUpload={handleImageUpload}
+          onRemove={handleRemoveImage}
+          uploading={uploading}
+          aspectRatio="16 / 10"
+        />
+        <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={dashboardStyles.row}>
-          <div className={dashboardStyles.field}>
-            <label htmlFor="name">First Name *</label>
-            <Input
-              id="name"
-              type="text"
-              size="medium"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              required
-            />
+      <form onSubmit={handleSubmit}>
+        {/* Name Row */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Display Name</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Your name as it will appear on your public artist profile.
+          </p>
+          <div className={styles.row}>
+            <div className={styles.fieldHalf}>
+              <Input
+                id="name"
+                type="text"
+                size="medium"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                placeholder="First Name"
+                required
+              />
+            </div>
+            <div className={styles.fieldHalf}>
+              <Input
+                id="lastName"
+                type="text"
+                size="medium"
+                value={formData.lastName}
+                onChange={(e) => handleChange('lastName', e.target.value)}
+                placeholder="Last Name"
+                required
+              />
+            </div>
           </div>
-          <div className={dashboardStyles.field}>
-            <label htmlFor="lastName">Last Name *</label>
-            <Input
-              id="lastName"
-              type="text"
-              size="medium"
-              value={formData.lastName}
-              onChange={(e) => handleChange('lastName', e.target.value)}
-              required
-            />
-          </div>
+          <span className={dashboardStyles.hint}>This is how your name will appear throughout the site.</span>
         </div>
 
-        <div className={dashboardStyles.field}>
-          <label htmlFor="handler">Handler (URL slug) *</label>
+        {/* Handler */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Profile URL</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            A unique identifier for your profile URL. Use lowercase letters, numbers, and hyphens only.
+          </p>
           <Input
             id="handler"
             type="text"
@@ -258,27 +245,38 @@ export const DashboardProfilePage = () => {
             onChange={(e) => handleChange('handler', e.target.value)}
             required
           />
-          <span className={dashboardStyles.hint}>This will be part of your public URL</span>
+          <span className={dashboardStyles.hint}>Your profile will be available at: thefoundation.art/artists/{formData.handler || 'your-handle'}</span>
         </div>
 
-        <div className={dashboardStyles.field}>
-          <label htmlFor="email">Email</label>
+        {/* Email */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Email Address</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Your contact email. This may be displayed on your public profile.
+          </p>
           <Input
             id="email"
             type="email"
             size="medium"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
+            placeholder="email@example.com"
           />
+          <span className={dashboardStyles.hint}>Leave blank if you prefer not to display your email publicly.</span>
         </div>
 
-        <div className={dashboardStyles.field}>
-          <label>Biography</label>
+        {/* Biography */}
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Biography</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Tell visitors about yourself, your artistic journey, and your work. Supports rich text formatting.
+          </p>
           <RichTextEditor
             content={formData.biography}
             onChange={(content) => handleChange('biography', content)}
             placeholder="Tell visitors about yourself..."
           />
+          <span className={dashboardStyles.hint}>A well-written biography helps visitors connect with your work.</span>
         </div>
 
         <ErrorText>{error}</ErrorText>

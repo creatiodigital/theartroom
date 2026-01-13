@@ -2,10 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 
+import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
-
-import styles from './AdminDashboard.module.scss'
 
 const contentPages = [
   { label: 'Landing Page', route: '/admin/content/landing' },
@@ -19,16 +17,16 @@ export const ContentManagement = () => {
   const router = useRouter()
 
   return (
-    <div className={styles.section}>
-      <Text font="dashboard" as="h2" className={styles.sectionTitle}>
-        Content Management
-      </Text>
+    <div className={dashboardStyles.section}>
+      <div className={dashboardStyles.sectionHeader}>
+        <h2 className={dashboardStyles.sectionTitle}>Content Management</h2>
+      </div>
 
-      <table className={styles.table}>
+      <table className={dashboardStyles.table}>
         <thead>
           <tr>
             <th>Page</th>
-            <th style={{ width: 100 }}>Action</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -37,6 +35,7 @@ export const ContentManagement = () => {
               <td>{page.label}</td>
               <td>
                 <Button
+                  font="dashboard"
                   variant="secondary"
                   label="Edit"
                   onClick={() => router.push(page.route)}
