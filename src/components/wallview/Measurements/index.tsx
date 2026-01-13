@@ -12,8 +12,8 @@ type MeasurementsProps = {
 
 const Measurements = memo(({ width, height }: MeasurementsProps) => (
   <>
-    <Text as="span" size="lg" className={styles.width}>{`${width} m`}</Text>
-    <Text as="span" size="lg" className={styles.height}>{`${height} m`}</Text>
+    <Text font="dashboard" as="span" size="lg" className={styles.width}>{`${width} m`}</Text>
+    <Text font="dashboard" as="span" size="lg" className={styles.height}>{`${height} m`}</Text>
   </>
 ))
 

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button'
 const Logout = () => {
   return (
     <Button
-      variant="link"
+      variant="secondary"
       label="Log out"
       onClick={() => signOut({ callbackUrl: '/' })}
     />

@@ -50,45 +50,45 @@ const ArtworkPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Text as="span" size="xs" className={styles.label}>Name</Text>
+              <Text font="dashboard" as="span" size="xs" className={styles.label}>Name</Text>
               <Input id="artworkName" value={name} onChange={handleNameChange} />
             </div>
           </div>
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h3" font="sans" className={styles.title}>
+        <Text font="dashboard" as="h3" className={styles.title}>
           Position
         </Text>
         <div className={styles.subsection}>
-          <Text as="h4" font="sans" className={styles.subtitle}>
+          <Text font="dashboard" as="h4" className={styles.subtitle}>
             Position in wall
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionTop" onClick={() => handleAlign('verticalTop')} />
+              <Button size="small" icon="positionTop" onClick={() => handleAlign('verticalTop')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
+              <Button size="small" icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
+              <Button size="small" icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
             </div>
           </div>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
+              <Button size="small" icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
+              <Button size="small" icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
+              <Button size="small" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
             </div>
           </div>
         </div>
         <div className={styles.subsection}>
-          <Text as="h4" font="sans" className={styles.subtitle}>
+          <Text font="dashboard" as="h4" className={styles.subtitle}>
             Position (meters)
           </Text>
           <div className={styles.row}>
@@ -115,11 +115,11 @@ const ArtworkPanel = () => {
         </div>
       </div>
       <div className={styles.section}>
-        <Text as="h3" font="sans" className={styles.title}>
+        <Text font="dashboard" as="h3" className={styles.title}>
           Layout
         </Text>
         <div className={styles.subsection}>
-          <Text as="span" font="sans" className={styles.label}>
+          <Text font="dashboard" as="span" className={styles.label}>
             Size (meters)
           </Text>
           <div className={styles.row}>

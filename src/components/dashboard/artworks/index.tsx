@@ -2,18 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
-import { Logout } from '@/components/ui/Logout'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
+import { DashboardLayout } from '../DashboardLayout'
+import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './artworks.module.scss'
 
 // Helper to truncate text
@@ -48,7 +47,7 @@ type Artwork = {
 }
 
 export const ArtworkLibraryPage = () => {
-  const { effectiveUser, status: sessionStatus } = useEffectiveUser()
+  const { effectiveUser } = useEffectiveUser()
   const router = useRouter()
 
   const [artworks, setArtworks] = useState<Artwork[]>([])
@@ -80,22 +79,16 @@ export const ArtworkLibraryPage = () => {
     if (typeFilter !== 'all' && artwork.artworkType !== typeFilter) {
       return false
     }
-    // Search filter (case-insensitive, matches name)
+    // Search filter (case-insensitive, matches title)
     if (debouncedSearch) {
       const searchLower = debouncedSearch.toLowerCase()
-      const nameMatch = artwork.name?.toLowerCase().includes(searchLower)
       const titleMatch = artwork.title?.toLowerCase().includes(searchLower)
-      return nameMatch || titleMatch
+      return titleMatch
     }
     return true
   })
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-    }
-  }, [sessionStatus, router])
+
 
   // Fetch artworks
   const fetchArtworks = useCallback(async () => {
@@ -179,36 +172,16 @@ export const ArtworkLibraryPage = () => {
     }
   }, [unlinkTarget, fetchArtworks])
 
-  if (sessionStatus === 'loading' || loading) {
-    return (
-      <div className={styles.page}>
-        <LoadingBar />
-      </div>
-    )
-  }
-
-  if (sessionStatus === 'unauthenticated') {
-    return <div className={styles.page}>Not authorized</div>
+  if (loading) {
+    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Link href="/dashboard" className={styles.backLink}>
-          ← Back to Dashboard
-        </Link>
-        <Logout />
-      </div>
+    <DashboardLayout backLink="/dashboard">
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>Artwork Library</h1>
 
-      <Text as="h1" className={styles.pageTitle}>
-        Artwork Library
-      </Text>
-
-      <div className={styles.sectionActions}>
-        <Button size="small" label="+ Add Artwork" onClick={() => setShowAddModal(true)} />
-      </div>
-
-      {/* Filter Tags and Search */}
+      {/* Filter Tags */}
       <div className={styles.filterBar}>
         <div className={styles.filters}>
           <button
@@ -233,19 +206,22 @@ export const ArtworkLibraryPage = () => {
             Text
           </button>
         </div>
-        <Input
-          id="artwork-search"
-          type="text"
-          variant="search"
-          placeholder="Search by name or title..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className={styles.searchRow}>
+          <Input
+            id="artwork-search"
+            type="text"
+            variant="search"
+            placeholder="Search by title..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Button font="dashboard" variant="primary" label="Add Artwork" onClick={() => setShowAddModal(true)} />
+        </div>
       </div>
 
       {filteredArtworks.length === 0 ? (
         <div className={styles.empty}>
-          <Text as="p">
+          <Text font="dashboard" as="p">
             {artworks.length === 0
               ? 'No artworks yet. Click "Add Artwork" to create your first one.'
               : 'No artworks match this filter.'}
@@ -260,7 +236,7 @@ export const ArtworkLibraryPage = () => {
                 {artwork.artworkType === 'image' && artwork.imageUrl ? (
                   <Image
                     src={artwork.imageUrl}
-                    alt={artwork.name}
+                    alt={artwork.title || 'Artwork'}
                     width={60}
                     height={60}
                     className={styles.thumbnail}
@@ -274,13 +250,7 @@ export const ArtworkLibraryPage = () => {
                 )}
               </div>
               <div className={styles.cardInfo}>
-                <Text as="h3">{artwork.name}</Text>
-                <Text as="p" className={styles.meta}>
-                  {artwork.artworkType === 'image' ? 'Image' : 'Text'}
-                  {artwork.title && ` • ${artwork.title}`}
-                  {artwork.year && ` • ${artwork.year}`}
-                  {artwork.technique && ` • ${artwork.technique}`}
-                </Text>
+                <Text font="dashboard" as="h3">{artwork.title}</Text>
                 {artwork.exhibitionArtworks.length > 0 && (
                   <div className={styles.exhibitions}>
                     <span className={styles.exhibitionsLabel}>In:</span>
@@ -291,7 +261,7 @@ export const ArtworkLibraryPage = () => {
                           type="button"
                           className={styles.removeBtn}
                           onClick={() =>
-                            handleUnlinkClick(ea.id, artwork.name, ea.exhibition.mainTitle)
+                            handleUnlinkClick(ea.id, artwork.title || 'Artwork', ea.exhibition.mainTitle)
                           }
                           title={`Remove from ${ea.exhibition.mainTitle}`}
                         >
@@ -304,14 +274,14 @@ export const ArtworkLibraryPage = () => {
               </div>
               <div className={styles.cardActions}>
                 <Button
-                  size="small"
+                  variant="secondary"
                   label="Edit"
                   onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
                 />
                 <Button
-                  size="small"
+                  variant="secondary"
                   label="Delete"
-                  onClick={() => handleDeleteClick(artwork.id, artwork.name)}
+                  onClick={() => handleDeleteClick(artwork.id, artwork.title || 'Artwork')}
                 />
               </div>
             </div>
@@ -332,19 +302,19 @@ export const ArtworkLibraryPage = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text as="h2">Delete Artwork?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Delete Artwork?</Text>
+            <Text font="dashboard" as="p">
               Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
               <br />
               This action cannot be undone.
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                size="small"
+                variant="primary"
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
@@ -353,8 +323,8 @@ export const ArtworkLibraryPage = () => {
       {unlinkTarget && (
         <Modal onClose={() => setUnlinkTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text as="h2">Remove from Exhibition?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Remove from Exhibition?</Text>
+            <Text font="dashboard" as="p">
               Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
               <strong>{unlinkTarget.exhibitionTitle}</strong>?
               <br />
@@ -362,15 +332,15 @@ export const ArtworkLibraryPage = () => {
             </Text>
             <div className={styles.deleteActions}>
               <Button
-                size="small"
+                variant="primary"
                 label={unlinking ? 'Removing...' : 'Yes, Remove'}
                 onClick={handleUnlinkConfirm}
               />
-              <Button size="small" label="Cancel" onClick={() => setUnlinkTarget(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setUnlinkTarget(null)} />
             </div>
           </div>
         </Modal>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

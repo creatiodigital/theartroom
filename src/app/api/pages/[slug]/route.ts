@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
+
+import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 type RouteParams = { params: Promise<{ slug: string }> }
 
-// GET page content by slug
+// GET page content by slug (public)
 export async function GET(_request: Request, { params }: RouteParams) {
   try {
     const { slug } = await params
@@ -29,9 +31,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 }
 
-// PUT update page content
+// PUT update page content (admin only)
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
+    // Require admin role
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const { slug } = await params
     const body = await request.json()
     const { title, content } = body

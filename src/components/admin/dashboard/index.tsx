@@ -8,18 +8,16 @@ import { useEffect } from 'react'
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
 import { ContentManagement } from '@/components/admin/dashboard/ContentManagement'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
-import { Logout } from '@/components/ui/Logout'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
-
-import styles from './AdminDashboard.module.scss'
 
 export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
@@ -110,41 +108,35 @@ export const DashboardAdmin = () => {
   // Loading states
   if (sessionStatus === 'loading' || loading)
     return (
-      <div className={styles.page}>
+      <div className={dashboardStyles.page}>
         <LoadingBar />
       </div>
     )
 
   // Not authorized
   if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
-    return <div className={styles.page}>Not authorized</div>
+    return <div className={dashboardStyles.page}>Not authorized</div>
   }
 
-  if (error) return <div className={styles.page}>Error: {error}</div>
+  if (error) return <div className={dashboardStyles.page}>Error: {error}</div>
 
   return (
-    <div className={styles.page}>
-      {/* Header with Logout */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <Text as="h1">Admin Dashboard</Text>
-        </div>
-        <div className={styles.headerActions}>
-          <Button size="small" label="My Dashboard" onClick={() => router.push('/dashboard')} />
-          <Logout />
-        </div>
-      </div>
+    <DashboardLayout
+      headerActions={
+        <Button font="dashboard" variant="secondary" label="My Dashboard" onClick={() => router.push('/dashboard')} />
+      }
+    >
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>Admin Dashboard</h1>
 
       {/* Users Section */}
-      <div className={styles.section}>
-        <Text as="h2" className={styles.sectionTitle}>
-          All Users
-        </Text>
-        <div className={styles.sectionActions}>
-          <Button size="small" label="+ Add New Artist" onClick={() => setShowAddModal(true)} />
+      <div className={dashboardStyles.section}>
+        <div className={dashboardStyles.sectionHeader}>
+          <h2 className={dashboardStyles.sectionTitle}>All Users</h2>
+          <Button font="dashboard" variant="primary" label="Add New Artist" onClick={() => setShowAddModal(true)} />
         </div>
 
-        <table className={styles.table}>
+        <table className={dashboardStyles.table}>
           <thead>
             <tr>
               <th>Name</th>
@@ -215,16 +207,18 @@ export const DashboardAdmin = () => {
                   />
                 </td>
                 <td>
-                  <div className={styles.actions}>
+                  <div className={dashboardStyles.actions}>
                     {user.userType !== 'admin' && (
                       <Button
-                        size="small"
+                        font="dashboard"
+                        variant="secondary"
                         label="Impersonate"
                         onClick={() => handleImpersonate(user)}
                       />
                     )}
                     <Button
-                      size="small"
+                      font="dashboard"
+                      variant="secondary"
                       label="Delete"
                       onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
                     />
@@ -250,24 +244,28 @@ export const DashboardAdmin = () => {
 
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
-          <div className={styles.deleteModal}>
-            <Text as="h2">Are you sure?</Text>
-            <Text as="p">
-              You are about to delete <strong>{deleteTarget.name}</strong>.
-              <br />
+          <div className={dashboardStyles.deleteModal}>
+            <h2>Delete User</h2>
+            <p>
+              Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
               This action cannot be undone.
-            </Text>
-            <div className={styles.deleteActions}>
+            </p>
+            <div className={dashboardStyles.deleteWarning}>
+              This action is not reversible. Please be certain.
+            </div>
+            <div className={dashboardStyles.deleteActions}>
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
               <Button
-                size="small"
-                label={deleting ? 'Deleting...' : 'Yes, Delete'}
+                font="dashboard"
+                variant="primary"
+                label={deleting ? 'Deleting...' : 'Delete'}
                 onClick={handleDeleteConfirm}
+                disabled={deleting}
               />
-              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

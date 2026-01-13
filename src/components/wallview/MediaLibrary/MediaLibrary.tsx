@@ -68,7 +68,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   return (
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
-        <Text as="h3">Media Library</Text>
+        <Text font="dashboard" as="h3">Media Library</Text>
         <button className={styles.closeButton} onClick={onClose}>
           ×
         </button>
@@ -77,7 +77,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
       {loading ? (
         <LoadingBar />
       ) : availableArtworks.length === 0 ? (
-        <Text as="p" className={styles.empty}>
+        <Text font="dashboard" as="p" className={styles.empty}>
           {artworks.length === 0
             ? 'No artworks in library. Create some first!'
             : 'All artworks are already in this exhibition.'}

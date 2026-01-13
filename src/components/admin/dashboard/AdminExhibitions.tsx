@@ -3,11 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
+import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
-
-import styles from './AdminDashboard.module.scss'
 
 type Exhibition = {
   id: string
@@ -81,12 +79,12 @@ export const AdminExhibitions = () => {
   if (loading) return <div>Loading exhibitions...</div>
 
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionHeader}>
-        <Text as="h2">Exhibition Management</Text>
+    <div className={dashboardStyles.section}>
+      <div className={dashboardStyles.sectionHeader}>
+        <h2 className={dashboardStyles.sectionTitle}>Exhibition Management</h2>
       </div>
 
-      <table className={styles.table}>
+      <table className={dashboardStyles.table}>
         <thead>
           <tr>
             <th>Exhibition</th>
@@ -102,7 +100,6 @@ export const AdminExhibitions = () => {
               <td>
                 <Link
                   href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                  className={styles.exhibitionLink}
                 >
                   {exhibition.mainTitle}
                 </Link>
@@ -123,14 +120,16 @@ export const AdminExhibitions = () => {
                 />
               </td>
               <td>
-                <div className={styles.actions}>
+                <div className={dashboardStyles.actions}>
                   <Button
-                    size="small"
+                    font="dashboard"
+                    variant="secondary"
                     label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
                     onClick={() => handleToggleStatus(exhibition.id, exhibition.status)}
                   />
                   <Button
-                    size="small"
+                    font="dashboard"
+                    variant="secondary"
                     label={exhibition.visibility === 'public' ? 'Hide' : 'Make Public'}
                     onClick={() => handleToggleVisibility(exhibition.id, exhibition.visibility)}
                   />

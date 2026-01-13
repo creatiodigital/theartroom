@@ -17,13 +17,13 @@ export const DashboardExhibitionsPage = () => {
           <Link href="/dashboard" className={styles.backLink}>
             ← Back to Dashboard
           </Link>
-          <Text as="h1" className={styles.pageTitle}>
+          <Text font="dashboard" as="h1" className={styles.pageTitle}>
             My Exhibitions
           </Text>
         </div>
         <div className={styles.headerActions}>
           <Button
-            size="small"
+            variant="secondary"
             label="+ New Exhibition"
             onClick={() => {
               /* TODO */
@@ -33,7 +33,7 @@ export const DashboardExhibitionsPage = () => {
         </div>
       </div>
 
-      <Text as="p">Manage your current and past exhibitions</Text>
+      <Text font="dashboard" as="p">Manage your current and past exhibitions</Text>
 
       {/* Exhibition list will go here */}
       <div className={styles.exhibitionList}>

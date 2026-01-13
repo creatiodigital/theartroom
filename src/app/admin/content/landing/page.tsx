@@ -3,11 +3,30 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import styles from './page.module.scss'
 
@@ -20,6 +39,51 @@ type Slide = {
   meta: string
   exhibitionUrl: string
   isActive: boolean
+}
+
+type SortableSlideItemProps = {
+  slide: Slide
+  onEdit: (slide: Slide) => void
+  onDelete: (slide: Slide) => void
+}
+
+function SortableSlideItem({ slide, onEdit, onDelete }: SortableSlideItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: slide.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className={styles.slideItem}>
+      <div className={styles.dragHandle} {...attributes} {...listeners}>
+        <span className={styles.dragIcon}>⠿</span>
+      </div>
+      <div className={styles.slidePreview}>
+        {slide.imageUrl && (
+          <img src={slide.imageUrl} alt={slide.title} className={styles.slideImage} />
+        )}
+      </div>
+      <div className={styles.slideInfo}>
+        <Text font="dashboard" as="h3">{slide.title}</Text>
+        <Text font="dashboard" as="p" className={styles.subtitle}>{slide.subtitle}</Text>
+        <Text font="dashboard" as="p" className={styles.meta}>{slide.meta}</Text>
+      </div>
+      <div className={styles.slideActions}>
+        <Button font="dashboard" variant="secondary" label="Edit" onClick={() => onEdit(slide)} />
+        <Button font="dashboard" variant="secondary" label="Delete" onClick={() => onDelete(slide)} />
+      </div>
+    </div>
+  )
 }
 
 export default function LandingContentPage() {
@@ -117,118 +181,131 @@ export default function LandingContentPage() {
     setEditingSlide({ ...editingSlide, [field]: value })
   }
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = slides.findIndex((s) => s.id === active.id)
+      const newIndex = slides.findIndex((s) => s.id === over.id)
+      const newSlides = arrayMove(slides, oldIndex, newIndex)
+      setSlides(newSlides)
+
+      // Persist new order to the API
+      try {
+        await fetch('/api/slides/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slideIds: newSlides.map((s) => s.id),
+          }),
+        })
+      } catch (error) {
+        console.error('Error reordering slides:', error)
+        // Refetch to restore server state on error
+        fetchSlides()
+      }
+    }
+  }
+
   if (status === 'loading' || loading) {
     return <div className={styles.page}>Loading...</div>
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <Text as="h1">Landing Page - Slideshow</Text>
-        <Button size="small" label="← Back to Dashboard" onClick={() => router.push('/admin')} />
-      </div>
+    <DashboardLayout backLink="/admin/dashboard">
+      <h1 className={dashboardStyles.pageTitle}>Landing Page - Slideshow</h1>
 
-      <div className={styles.actions}>
-        <Button size="small" label="+ Add Slide" onClick={handleAddSlide} />
+      <div className={dashboardStyles.sectionHeader}>
+        <div></div>
+        <Button font="dashboard" variant="primary" label="Add Slide" onClick={handleAddSlide} />
       </div>
 
       {slides.length === 0 ? (
-        <Text as="p" className={styles.empty}>No slides yet. Click "Add Slide" to create one.</Text>
+        <Text font="dashboard" as="p" className={styles.empty}>No slides yet. Click "Add Slide" to create one.</Text>
       ) : (
-        <div className={styles.slideList}>
-          {slides.map((slide) => (
-            <div key={slide.id} className={styles.slideItem}>
-              <div className={styles.slidePreview}>
-                {slide.imageUrl && (
-                  <img src={slide.imageUrl} alt={slide.title} className={styles.slideImage} />
-                )}
-              </div>
-              <div className={styles.slideInfo}>
-                <Text as="h3">{slide.title}</Text>
-                <Text as="p" className={styles.subtitle}>{slide.subtitle}</Text>
-                <Text as="p" className={styles.meta}>{slide.meta}</Text>
-              </div>
-              <div className={styles.slideActions}>
-                <Button size="small" label="Edit" onClick={() => handleEditSlide(slide)} />
-                <Button size="small" label="Remove" onClick={() => setDeleteTarget(slide)} />
-              </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <div className={styles.slideList}>
+              {slides.map((slide) => (
+                <SortableSlideItem
+                  key={slide.id}
+                  slide={slide}
+                  onEdit={handleEditSlide}
+                  onDelete={setDeleteTarget}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Edit/Add Modal */}
       {editingSlide && (
         <Modal onClose={() => setEditingSlide(null)}>
           <div className={styles.modal}>
-            <Text as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
+            <Text font="dashboard" as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
 
-            <div className={styles.field}>
-              <Text as="label">Image URL</Text>
+            <div className={styles.section}>
+              <label className={styles.label} htmlFor="imageUrl">Image URL</label>
               <Input
                 id="imageUrl"
+                size="medium"
                 value={editingSlide.imageUrl}
                 onChange={(e) => updateField('imageUrl', e.target.value)}
-                placeholder="/assets/landing/image.webp"
               />
-            </div>
 
-            <div className={styles.field}>
-              <Text as="label">Title (Artist Name)</Text>
+              <label className={styles.label} htmlFor="title">Title</label>
               <Input
                 id="title"
+                size="medium"
                 value={editingSlide.title}
                 onChange={(e) => updateField('title', e.target.value)}
-                placeholder="Ana Mendieta"
               />
-            </div>
 
-            <div className={styles.field}>
-              <Text as="label">Subtitle (Exhibition Name)</Text>
+              <label className={styles.label} htmlFor="subtitle">Subtitle</label>
               <Input
                 id="subtitle"
+                size="medium"
                 value={editingSlide.subtitle}
                 onChange={(e) => updateField('subtitle', e.target.value)}
-                placeholder="Back to the Source"
               />
-            </div>
 
-            <div className={styles.field}>
-              <Text as="label">Meta (Date + Location)</Text>
+              <label className={styles.label} htmlFor="meta">Meta</label>
               <Input
                 id="meta"
+                size="medium"
                 value={editingSlide.meta}
                 onChange={(e) => updateField('meta', e.target.value)}
-                placeholder="7 NOVEMBER 2025 – 17 JANUARY 2026    NEW YORK"
               />
-            </div>
 
-            <div className={styles.field}>
-              <Text as="label">Exhibition URL</Text>
+              <label className={styles.label} htmlFor="exhibitionUrl">Exhibition URL</label>
               <Input
                 id="exhibitionUrl"
+                size="medium"
                 value={editingSlide.exhibitionUrl}
                 onChange={(e) => updateField('exhibitionUrl', e.target.value)}
-                placeholder="/exhibitions/handler/exhibition-url"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <Text as="label">Order</Text>
-              <Input
-                id="order"
-                value={String(editingSlide.order)}
-                onChange={(e) => updateField('order', parseInt(e.target.value) || 0)}
               />
             </div>
 
             <div className={styles.modalActions}>
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setEditingSlide(null)} />
               <Button
-                size="small"
+                font="dashboard"
+                variant="primary"
                 label={saving ? 'Saving...' : 'Save'}
                 onClick={handleSaveSlide}
               />
-              <Button size="small" label="Cancel" onClick={() => setEditingSlide(null)} />
             </div>
           </div>
         </Modal>
@@ -238,17 +315,17 @@ export default function LandingContentPage() {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.modal}>
-            <Text as="h2">Delete Slide?</Text>
-            <Text as="p">
+            <Text font="dashboard" as="h2">Delete Slide?</Text>
+            <Text font="dashboard" as="p">
               Are you sure you want to delete the slide "{deleteTarget.title}"?
             </Text>
             <div className={styles.modalActions}>
-              <Button size="small" label="Yes, Delete" onClick={handleDeleteSlide} />
-              <Button size="small" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button font="dashboard" variant="primary" label="Yes, Delete" onClick={handleDeleteSlide} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
             </div>
           </div>
         </Modal>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

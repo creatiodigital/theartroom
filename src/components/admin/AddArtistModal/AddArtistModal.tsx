@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Textarea } from '@/components/ui/Textarea'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './AddArtistModal.module.scss'
@@ -27,7 +26,6 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
     lastName: '',
     handler: '',
     email: '',
-    biography: '',
     password: '',
     userType: 'artist',
   })
@@ -78,35 +76,30 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
   return (
     <div className={styles.modal}>
-      <Text as="h2">Add New Artist</Text>
-      <form onSubmit={handleSubmit}>
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="name">First Name *</label>
-            <Input
-              id="name"
-              type="text"
-              size="medium"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              required
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="lastName">Last Name *</label>
-            <Input
-              id="lastName"
-              type="text"
-              size="medium"
-              value={formData.lastName}
-              onChange={(e) => handleChange('lastName', e.target.value)}
-              required
-            />
-          </div>
-        </div>
+      <Text font="dashboard" as="h2">Add New Artist</Text>
+      <form onSubmit={handleSubmit} autoComplete="off">
+        <div className={styles.section}>
+          <label className={styles.label} htmlFor="name">First Name</label>
+          <Input
+            id="name"
+            type="text"
+            size="medium"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            required
+          />
 
-        <div className={styles.field}>
-          <label htmlFor="handler">Handler (URL slug) *</label>
+          <label className={styles.label} htmlFor="lastName">Last Name</label>
+          <Input
+            id="lastName"
+            type="text"
+            size="medium"
+            value={formData.lastName}
+            onChange={(e) => handleChange('lastName', e.target.value)}
+            required
+          />
+
+          <label className={styles.label} htmlFor="handler">Handler (URL slug)</label>
           <Input
             id="handler"
             type="text"
@@ -115,44 +108,29 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
             onChange={(e) => handleChange('handler', e.target.value)}
             required
           />
-        </div>
 
-        <div className={styles.field}>
-          <label htmlFor="email">Email *</label>
+          <label className={styles.label} htmlFor="email">Email</label>
           <Input
             id="email"
             type="email"
             size="medium"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
+            autoComplete="off"
             required
           />
-        </div>
 
-        <div className={styles.field}>
-          <label htmlFor="password">Password</label>
+          <label className={styles.label} htmlFor="password">Password</label>
           <Input
             id="password"
             type="password"
             size="medium"
             value={formData.password}
             onChange={(e) => handleChange('password', e.target.value)}
+            autoComplete="new-password"
           />
-        </div>
 
-        <div className={styles.field}>
-          <label htmlFor="biography">Biography</label>
-          <Textarea
-            id="biography"
-            size="medium"
-            value={formData.biography}
-            onChange={(e) => handleChange('biography', e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="userType">Type</label>
+          <label className={styles.label} htmlFor="userType">Type</label>
           <Select
             options={userTypeOptions}
             value={formData.userType}
@@ -164,8 +142,8 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
         <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
-          <Button size="small" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
-          <Button size="small" label="Cancel" onClick={onClose} type="button" />
+          <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
+          <Button font="dashboard" variant="primary" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
         </div>
       </form>
     </div>

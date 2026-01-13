@@ -53,7 +53,7 @@ const ArtworkPanel = () => {
               className={styles.preview}
             />
           </div>
-          <Button variant="outline" label="View Details" onClick={handleViewDetails} />
+          <Button variant="secondary" label="View Details" onClick={handleViewDetails} />
         </div>
       )}
 
@@ -61,21 +61,21 @@ const ArtworkPanel = () => {
         {selectedArtwork && (
           <div>
             {author && (
-              <Text as="h1" size="2xl" font="serif" className={styles.author}>
+              <Text font="dashboard" as="h1" size="2xl" className={styles.author}>
                 {author}
               </Text>
             )}
             {(artworkTitle || name) && (
-              <Text as="h2" size="xl" font="serif" className={styles.title}>{artworkTitle || name}, {artworkYear && `${artworkYear}`}</Text>
+              <Text font="dashboard" as="h2" size="xl" className={styles.title}>{artworkTitle || name}, {artworkYear && `${artworkYear}`}</Text>
             )}
-            {description && <Text as="p" size="sm" font="sans" className={styles.description}>{description}</Text>}
-            {artworkDimensions && <Text as="p" size="sm" font="sans" className={styles.dimensions}>{artworkDimensions}</Text>}
+            {description && <Text font="dashboard" as="p" size="sm" className={styles.description}>{description}</Text>}
+            {artworkDimensions && <Text font="dashboard" as="p" size="sm" className={styles.dimensions}>{artworkDimensions}</Text>}
           </div>
         )}
       </div>
 
       <div className={styles.cta}>
-        <Button variant="outline" label="Close" onClick={() => dispatch(hideArtworkPanel())} />
+        <Button variant="secondary" label="Close" onClick={() => dispatch(hideArtworkPanel())} />
       </div>
     </div>
   )

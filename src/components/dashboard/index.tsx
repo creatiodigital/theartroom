@@ -6,13 +6,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 
 import { Button } from '@/components/ui/Button'
-import { Logout } from '@/components/ui/Logout'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
+
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
@@ -28,13 +26,14 @@ import type { TOption } from '@/types/artwork'
 import type { TSpaceOption } from '@/types/dashboard'
 import type { TExhibition } from '@/types/exhibition'
 
+import { DashboardLayout } from './DashboardLayout'
 import { spaceOptions } from './constants'
-import styles from './Dashboard.module.scss'
+import dashboardStyles from './DashboardLayout/DashboardLayout.module.scss'
 
 export const DashboardPage = () => {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  const { data: session } = useSession()
   const { effectiveUser } = useEffectiveUser()
 
   const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
@@ -42,6 +41,8 @@ export const DashboardPage = () => {
   const [deleteExhibition] = useDeleteExhibitionMutation()
 
   const [isModalShown, setIsModalShown] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Use effective user ID (handles impersonation)
   const userId = effectiveUser?.id
@@ -97,16 +98,25 @@ export const DashboardPage = () => {
     [createExhibition, dispatch, userId, userHandler, selectedSpace, refetchExhibitions],
   )
 
-  const handleDeleteExhibition = useCallback(
-    async (id: string) => {
+  const handleDeleteClick = useCallback((id: string, title: string) => {
+    setDeleteTarget({ id, title })
+  }, [])
+
+  const handleDeleteConfirm = useCallback(
+    async () => {
+      if (!deleteTarget) return
+      setDeleting(true)
       try {
-        await deleteExhibition(id).unwrap()
-        dispatch(removeExhibition(id))
+        await deleteExhibition(deleteTarget.id).unwrap()
+        dispatch(removeExhibition(deleteTarget.id))
+        setDeleteTarget(null)
       } catch (err) {
         console.error('Failed to delete exhibition', err)
+      } finally {
+        setDeleting(false)
       }
     },
-    [deleteExhibition, dispatch],
+    [deleteExhibition, dispatch, deleteTarget],
   )
 
   const handleEdit3DSpace = useCallback(
@@ -134,138 +144,159 @@ export const DashboardPage = () => {
     [router, userHandler],
   )
 
-  // Redirect to home if not logged in
-  useEffect(() => {
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-    }
-  }, [sessionStatus, router])
-
-  // Show loading while checking session or if unauthenticated (redirect pending)
-  if (sessionStatus === 'loading' || sessionStatus === 'unauthenticated') {
-    return (
-      <div className={styles.dashboard}>
-        <div className={styles.main}>
-          <LoadingBar />
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={styles.dashboard}>
-      <div className={styles.main}>
-        <div className={styles.header}>
-          <Text as="h1" font="sans">Hello {userData?.name ?? session?.user?.name ?? ''}</Text>
-          <Logout />
+    <DashboardLayout>
+      {/* Page Title */}
+      <h1 className={dashboardStyles.pageTitle}>
+        Hello {userData?.name ?? session?.user?.name ?? ''}
+      </h1>
+
+      {/* Artist Profile Section */}
+      <div className={dashboardStyles.section}>
+        <div className={dashboardStyles.sectionHeader}>
+          <h2 className={dashboardStyles.sectionTitle}>My Profile</h2>
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="Edit Profile"
+            onClick={() => router.push('/dashboard/profile')}
+          />
         </div>
-
-        {/* Artist Profile Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <Text as="h2" className={styles.sectionTitle}>My Profile</Text>
-            <Button
-              size="small"
-              label="Edit Profile"
-              onClick={() => router.push('/dashboard/profile')}
-            />
-          </div>
-          <Text as="p" className={styles.sectionDescription}>
-            Manage your artist profile, biography, and profile picture.
-          </Text>
-        </div>
-
-        {/* Artwork Library Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <Text as="h2" className={styles.sectionTitle}>My Artworks</Text>
-            <Button
-              size="small"
-              label="Manage Artworks"
-              onClick={() => router.push('/dashboard/artworks')}
-            />
-          </div>
-          <Text as="p" className={styles.sectionDescription}>
-            Upload and manage your artwork collection. Artworks can be used across multiple exhibitions.
-          </Text>
-        </div>
-
-        {/* Exhibitions Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <Text as="h2" className={styles.sectionTitle}>My Exhibitions</Text>
-            <Button size="small" label="+ New Exhibition" onClick={handleNewExhibition} />
-          </div>
-
-
-          {exhibitions.length === 0 ? (
-            <EmptyState message="You do not have any exhibitions yet." />
-          ) : (
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Exhibition Name</th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {exhibitions.map((ex: TExhibition) => (
-                  <tr key={ex.id}>
-                    <td>{ex.mainTitle}</td>
-                    <td>
-                      <Button
-                        size="small"
-                        label="View"
-                        onClick={() => handleViewExhibition(ex)}
-                      />
-                    </td>
-                    <td>
-                      <Button
-                        size="small"
-                        label="Edit Exhibition"
-                        onClick={() => handleEditExhibitionSettings(ex)}
-                      />
-                    </td>
-                    <td>
-                      <Button
-                        size="small"
-                        label="Edit 3D Space"
-                        onClick={() => handleEdit3DSpace(ex)}
-                      />
-                    </td>
-                    <td>
-                      <Button
-                        size="small"
-                        label="Delete"
-                        onClick={() => handleDeleteExhibition(ex.id)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {isModalShown && (
-          <Modal onClose={() => setIsModalShown(false)}>
-            <ExhibitionModal
-              creating={creating}
-              onClose={() => setIsModalShown(false)}
-              onCreate={handleCreateExhibition}
-              selectedSpace={selectedSpace}
-              handleSelectSpace={handleSelectSpace}
-              spaceOptions={spaceOptions}
-              userId={userId ?? ''}
-            />
-          </Modal>
-        )}
-
-        <ErrorText>{error && `⚠️ ${JSON.stringify(error)}`}</ErrorText>
+        <p className={dashboardStyles.sectionDescription}>
+          Manage your artist profile, biography, and profile picture.
+        </p>
       </div>
-    </div>
+
+      {/* Artwork Library Section */}
+      <div className={dashboardStyles.section}>
+        <div className={dashboardStyles.sectionHeader}>
+          <h2 className={dashboardStyles.sectionTitle}>My Artworks</h2>
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="Manage Artworks"
+            onClick={() => router.push('/dashboard/artworks')}
+          />
+        </div>
+        <p className={dashboardStyles.sectionDescription}>
+          Upload and manage your artwork collection. Artworks can be used across multiple
+          exhibitions.
+        </p>
+      </div>
+
+      {/* Exhibitions Section */}
+      <div className={dashboardStyles.section}>
+        <div className={dashboardStyles.sectionHeader}>
+          <h2 className={dashboardStyles.sectionTitle}>My Exhibitions</h2>
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="New Exhibition"
+            onClick={handleNewExhibition}
+          />
+        </div>
+
+        {exhibitions.length === 0 ? (
+          <EmptyState message="You do not have any exhibitions yet." />
+        ) : (
+          <table className={dashboardStyles.table}>
+            <thead>
+              <tr>
+                <th>Exhibition Name</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {exhibitions.map((ex: TExhibition) => (
+                <tr key={ex.id}>
+                  <td>{ex.mainTitle}</td>
+                  <td>
+                    <Button
+                      font="dashboard"
+                      variant="secondary"
+                      label="View"
+                      onClick={() => handleViewExhibition(ex)}
+                    />
+                  </td>
+                  <td>
+                    <Button
+                      font="dashboard"
+                      variant="secondary"
+                      label="Edit Exhibition"
+                      onClick={() => handleEditExhibitionSettings(ex)}
+                    />
+                  </td>
+                  <td>
+                    <Button
+                      font="dashboard"
+                      variant="secondary"
+                      label="Edit 3D Space"
+                      onClick={() => handleEdit3DSpace(ex)}
+                    />
+                  </td>
+                  <td>
+                    <Button
+                      font="dashboard"
+                      variant="secondary"
+                      label="Delete"
+                      onClick={() => handleDeleteClick(ex.id, ex.mainTitle)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {isModalShown && (
+        <Modal onClose={() => setIsModalShown(false)}>
+          <ExhibitionModal
+            creating={creating}
+            onClose={() => setIsModalShown(false)}
+            onCreate={handleCreateExhibition}
+            selectedSpace={selectedSpace}
+            handleSelectSpace={handleSelectSpace}
+            spaceOptions={spaceOptions}
+            userId={userId ?? ''}
+          />
+        </Modal>
+      )}
+
+      <ErrorText>{error && `⚠️ ${JSON.stringify(error)}`}</ErrorText>
+
+      {deleteTarget && (
+        <Modal onClose={() => setDeleteTarget(null)}>
+          <div className={dashboardStyles.deleteModal}>
+            <h2>Delete Exhibition</h2>
+            <p>
+              Are you sure you want to delete <strong>{deleteTarget.title}</strong>?
+              This will permanently remove the exhibition and all its data.
+            </p>
+            <div className={dashboardStyles.deleteWarning}>
+              This action is not reversible. Please be certain.
+            </div>
+            <div className={dashboardStyles.deleteActions}>
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => setDeleteTarget(null)}
+              />
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={deleting ? 'Deleting...' : 'Delete'}
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
+    </DashboardLayout>
   )
 }
