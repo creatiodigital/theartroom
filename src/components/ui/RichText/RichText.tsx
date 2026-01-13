@@ -1,7 +1,7 @@
 'use client'
 
 import c from 'classnames'
-import DOMPurify from 'isomorphic-dompurify'
+import DOMPurify from 'dompurify'
 
 import styles from './RichText.module.scss'
 
