@@ -2,15 +2,20 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { put, del } from '@vercel/blob'
 
-import prisma from '@/lib/prisma'
+import { requireOwnership } from '@/lib/authUtils'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
+import prisma from '@/lib/prisma'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB for profile images
 
-// POST - Upload profile image
+// POST - Upload profile image (requires auth + ownership)
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+
+    // Verify user can only update their own profile
+    const { error: authError } = await requireOwnership(id)
+    if (authError) return authError
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -73,13 +78,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-// DELETE - Remove profile image
+// DELETE - Remove profile image (requires auth + ownership)
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
+
+    // Verify user can only delete their own profile image
+    const { error: authError } = await requireOwnership(id)
+    if (authError) return authError
 
     const user = await prisma.user.findUnique({
       where: { id },

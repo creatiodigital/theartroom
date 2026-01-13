@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { put, del } from '@vercel/blob'
 
+import { requireOwnership } from '@/lib/authUtils'
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
-import prisma from '@/lib/prisma'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
+import prisma from '@/lib/prisma'
 
 const MAX_FILE_SIZE = MAX_UPLOAD_SIZE // 5MB from centralized config
 
-// POST - Upload image for artwork
+// POST - Upload image for artwork (requires auth + ownership)
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -21,6 +22,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!artwork) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
     }
+
+    // Verify user owns this artwork
+    const { error: authError } = await requireOwnership(artwork.userId)
+    if (authError) return authError
 
     // Get the image from form data
     const formData = await request.formData()
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-// DELETE - Remove image from artwork
+// DELETE - Remove image from artwork (requires auth + ownership)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -99,6 +104,10 @@ export async function DELETE(
     if (!artwork) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
     }
+
+    // Verify user owns this artwork
+    const { error: authError } = await requireOwnership(artwork.userId)
+    if (authError) return authError
 
     if (!artwork.imageUrl) {
       return NextResponse.json({ message: 'No image to delete' })

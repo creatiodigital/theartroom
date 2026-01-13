@@ -102,7 +102,7 @@ export const ExhibitionModal = React.memo(
       <div className={styles.wrapper}>
         <div className={styles.content}>
           <div>
-            <Text as="h3">Exhibition Title</Text>
+            <Text font="dashboard" as="h3">Exhibition Title</Text>
             <Input
               id="exhibitionTitle"
               type="text"
@@ -114,7 +114,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <Text as="h3">URL Slug</Text>
+            <Text font="dashboard" as="h3">URL Slug</Text>
             <Input
               id="exhibitionUrl"
               type="text"
@@ -124,19 +124,19 @@ export const ExhibitionModal = React.memo(
               placeholder="exhibition-url"
               variant={urlError ? 'error' : undefined}
             />
-            <Text as="p" className={styles.urlPreview}>
+            <Text font="dashboard" as="p" className={styles.urlPreview}>
               /exhibitions/your-name/<strong>{customUrl || 'exhibition-url'}</strong>
             </Text>
             <ErrorText>{urlError}</ErrorText>
             {checking && (
-              <Text as="p" className={styles.checking}>
+              <Text font="dashboard" as="p" className={styles.checking}>
                 Checking availability...
               </Text>
             )}
           </div>
 
           <div>
-            <Text as="h3">Visibility</Text>
+            <Text font="dashboard" as="h3">Visibility</Text>
             <Select<string>
               options={[
                 { value: 'public', label: 'Public' },
@@ -148,7 +148,7 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div>
-            <Text as="h3">Choose a Space</Text>
+            <Text font="dashboard" as="h3">Choose a Space</Text>
             <Select<string>
               options={spaceOptions}
               value={selectedSpace?.value}

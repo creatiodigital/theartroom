@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { put, del } from '@vercel/blob'
 
+import { requireOwnership } from '@/lib/authUtils'
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
-import prisma from '@/lib/prisma'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
+import prisma from '@/lib/prisma'
 
 const MAX_FILE_SIZE = MAX_UPLOAD_SIZE
 
-// POST - Upload featured image for exhibition
+// POST - Upload featured image for exhibition (requires auth + ownership)
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -21,6 +22,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!exhibition) {
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
+
+    // Verify user owns this exhibition
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
 
     // Get the image from form data
     const formData = await request.formData()
@@ -83,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-// DELETE - Remove featured image from exhibition
+// DELETE - Remove featured image from exhibition (requires auth + ownership)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -98,6 +103,10 @@ export async function DELETE(
     if (!exhibition) {
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
+
+    // Verify user owns this exhibition
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
 
     if (!exhibition.featuredImageUrl) {
       return NextResponse.json({ message: 'No image to delete' })

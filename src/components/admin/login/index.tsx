@@ -57,8 +57,8 @@ export const AdminLoginPage = () => {
   return (
     <div className={styles.loginPage}>
       <div className={styles.loginCard}>
-        <Text as="h1">Admin Login</Text>
-        <Text as="p" className={styles.subtitle}>
+        <Text font="dashboard" as="h1">Admin Login</Text>
+        <Text font="dashboard" as="p" className={styles.subtitle}>
           The Foundation Administration
         </Text>
 
@@ -89,7 +89,7 @@ export const AdminLoginPage = () => {
 
           <ErrorText>{error}</ErrorText>
 
-          <Button size="small" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
+          <Button font="dashboard" variant="primary" label={submitting ? 'Signing in...' : 'Sign in'} type="submit" />
         </form>
       </div>
     </div>

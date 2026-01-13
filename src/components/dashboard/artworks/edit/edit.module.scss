@@ -14,7 +14,7 @@
 }
 
 .backLink {
-  color: var(--color-text-muted);
+  color: var(--color-text);
   text-decoration: none;
   font-size: var(--text-sm);
 
@@ -34,34 +34,8 @@
   gap: var(--space-4);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+.fieldHalf {
   flex: 1;
-
-  label {
-    font-weight: var(--font-medium);
-    font-size: var(--text-sm);
-  }
-
-  input,
-  textarea,
-  select {
-    padding: var(--space-2);
-    border: 1px solid var(--color-border-dark);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-md);
-
-    &:focus {
-      outline: none;
-      border-color: var(--color-text);
-    }
-  }
-
-  textarea {
-    resize: vertical;
-  }
 }
 
 .error {
@@ -77,12 +51,11 @@
 
 .imageSection {
   margin-bottom: var(--space-8);
-  padding: var(--space-4);
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
+  width: calc(50% - 7px);
 
   > label {
     display: block;
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
     font-weight: var(--font-medium);
     margin-bottom: var(--space-3);
   }
@@ -107,7 +80,7 @@
 }
 
 .noImage {
-  color: var(--color-text-light);
+  color: var(--color-text);
   font-size: var(--text-sm);
 }
 
@@ -119,6 +92,6 @@
 
 .imageHint {
   font-size: var(--text-xs);
-  color: var(--color-text-muted);
+  color: var(--color-text);
   margin: 0;
 }

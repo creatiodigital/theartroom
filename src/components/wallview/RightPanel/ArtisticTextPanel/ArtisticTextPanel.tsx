@@ -22,31 +22,31 @@ const ArtisticText = () => {
 
   return (
     <div className={styles.section}>
-      <Text as="h3" font="sans" className={styles.title}>
+      <Text font="dashboard" as="h3" className={styles.title}>
         Text Styles
       </Text>
       <div className={styles.subsection}>
-        <Text as="h4" font="sans" className={styles.subtitle}>
+        <Text font="dashboard" as="h4" className={styles.subtitle}>
           Alignment
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
             <Button
-              size="tiny"
+              size="small"
               icon="textLeft"
               onClick={() => handleEditArtworkText('textAlign', 'left')}
             />
           </div>
           <div className={styles.item}>
             <Button
-              size="tiny"
+              size="small"
               icon="textCenter"
               onClick={() => handleEditArtworkText('textAlign', 'center')}
             />
           </div>
           <div className={styles.item}>
             <Button
-              size="tiny"
+              size="small"
               icon="textRight"
               onClick={() => handleEditArtworkText('textAlign', 'right')}
             />
@@ -57,7 +57,7 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text as="span" size="xs" className={styles.label}>Font size</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Font size</Text>
             <Select<number>
               options={fontSizes}
               value={fontSize?.value}
@@ -68,7 +68,7 @@ const ArtisticText = () => {
           </div>
 
           <div className={styles.item}>
-            <Text as="span" size="xs" className={styles.label}>Line height</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Line height</Text>
 
             <Select<number>
               options={lineHeights}
@@ -81,7 +81,7 @@ const ArtisticText = () => {
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text as="span" size="xs" className={styles.label}>Font Weight</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Font Weight</Text>
             <Select<TFontWeight>
               options={fontWeights}
               value={fontWeight?.value}
@@ -89,7 +89,7 @@ const ArtisticText = () => {
             />
           </div>
           <div className={styles.item}>
-            <Text as="span" size="xs" className={styles.label}>Letter Spacing</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Letter Spacing</Text>
             <Select<number>
               options={letterSpacings}
               value={letterSpacing?.value}
@@ -101,7 +101,7 @@ const ArtisticText = () => {
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text as="span" size="xs" className={styles.label}>Font Family</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Font Family</Text>
             <Select<TFontFamily>
               options={fontFamilies}
               value={fontFamily?.value}
@@ -113,7 +113,7 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text as="span" size="xs" className={styles.label}>Color</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
             <ColorPicker
               textColor={textColor!}
               onColorSelect={(value) => handleEditArtworkText('textColor', value)}

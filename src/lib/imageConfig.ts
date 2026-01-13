@@ -1,5 +1,5 @@
 // Upload limits
-export const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
+export const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 1MB
 
 // Processing settings for stored image (high-quality source for Vercel optimization)
 export const STORED_IMAGE = {

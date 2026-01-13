@@ -1,79 +1,7 @@
-.page {
-  padding: var(--space-8);
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.backLink {
-  color: var(--color-text-muted);
-  text-decoration: none;
-  font-size: var(--text-sm);
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.title {
-  margin: 0 0 var(--space-6);
-  font-size: var(--text-lg);
-}
+/* Profile-specific styles (shared styles now come from DashboardLayout.module.scss) */
 
 .imageSection {
-  margin-bottom: var(--space-8);
-  padding: var(--space-4);
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
-
-  > label {
-    display: block;
-    font-weight: var(--font-medium);
-    margin-bottom: var(--space-3);
-  }
-}
-
-.imageRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-}
-
-.imagePreview {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-white);
-  overflow: hidden;
-}
-
-.noImage {
-  color: var(--color-text-light);
-  font-size: var(--text-xs);
-  text-align: center;
-}
-
-.imageActions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  width: calc(50% - 7px);
 }
 
 .row {
@@ -81,40 +9,8 @@
   gap: var(--space-4);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+.fieldHalf {
   flex: 1;
-
-  label {
-    font-weight: var(--font-medium);
-    font-size: var(--text-sm);
-  }
-
-  textarea {
-    padding: var(--space-2);
-    border: 1px solid var(--color-border-dark);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-md);
-
-    &:focus {
-      outline: none;
-      border-color: var(--color-text);
-    }
-
-    resize: vertical;
-  }
-}
-
-.hint {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
-.error {
-  color: var(--color-error-text);
-  font-size: var(--text-sm);
 }
 
 .success {
@@ -122,12 +18,3 @@
   font-size: var(--text-sm);
 }
 
-.actions {
-  display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-
-  button {
-    width: auto;
-  }
-}

@@ -11,9 +11,9 @@ import type { MouseEventHandler, ReactNode } from 'react'
 import styles from './Button.module.scss'
 
 type ButtonProps = {
-  variant?: 'primary' | 'outline' | 'link'
-  size?: 'tiny' | 'small' | 'regular' | 'big'
-  fontFamily?: 'serif' | 'sans'
+  variant?: 'primary' | 'secondary' | 'danger'
+  size?: 'small' | 'regular' | 'big'
+  font?: 'serif' | 'sans' | 'dashboard'
   type?: 'submit' | 'button' | 'reset'
   onClick?: MouseEventHandler<HTMLButtonElement>
   label?: string
@@ -32,7 +32,7 @@ export const Button = React.memo(
   ({
     variant = 'primary',
     size = 'regular',
-    fontFamily = 'sans',
+    font = 'sans',
     type = 'button',
     onClick,
     label,
@@ -52,13 +52,13 @@ export const Button = React.memo(
       styles.button,
       styles[variant],
       styles[size],
-      styles[fontFamily],
+      styles[font],
       isIconOnly && styles.iconOnly,
       disabled && styles.disabled,
       className,
     ])
 
-    const iconSize = size === 'big' ? 24 : size === 'tiny' ? 16 : size === 'small' ? 18 : 20
+    const iconSize = size === 'big' ? 24 : size === 'small' ? 16 : 20
 
     const content = (
       <>
@@ -97,4 +97,3 @@ export const Button = React.memo(
 Button.displayName = 'Button'
 
 export default Button
-

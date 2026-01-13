@@ -108,31 +108,31 @@ export const Dashboard = () => {
       {!isEditMode && (
         <div className={styles.main}>
           <div className={styles.header}>
-            <Text as="h1" font="sans">Hello {userData?.name ?? ''}</Text>
+            <Text font="dashboard" as="h1">Hello {userData?.name ?? ''}</Text>
           </div>
 
           <div className={styles.exhibitions}>
-            <Button size="small" label="New exhibition" onClick={handleNewExhibition} />
+            <Button font="dashboard" variant="secondary" label="New exhibition" onClick={handleNewExhibition} />
             <div className={styles.list}>
-              <Text as="h2" className={styles.subtitle}>
+              <Text font="dashboard" as="h2" className={styles.subtitle}>
                 My exhibitions
               </Text>
               {exhibitions.length === 0 ? (
-                <Text as="p">You do not have any exhibitions yet.</Text>
+                <Text font="dashboard" as="p">You do not have any exhibitions yet.</Text>
               ) : (
                 <ul className={styles.exhibitionList}>
                   {exhibitions.map((ex: TExhibition) => (
                     <li key={ex.id} className={styles.exhibitionItem}>
                       {ex.mainTitle}{' '}
                       <Button
-                        size="small"
+                        variant="secondary"
                         label="Edit"
                         onClick={() =>
                           router.push(`/${userData?.handler}/exhibition/${ex.url}/edit`)
                         }
                       />
                       <Button
-                        size="small"
+                        variant="primary"
                         label="Delete"
                         onClick={() => handleDeleteExhibition(ex.id)}
                       />

@@ -7,6 +7,7 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 import { ImageMagnifier } from '@/components/ui/ImageMagnifier'
+import Logo from '@/icons/logo.svg'
 
 import styles from './ArtworkDetail.module.scss'
 
@@ -78,7 +79,7 @@ export const ArtworkDetailPage = ({
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
-            <Text as="span" size="lg" font="serif" className={styles.logoText}>The Foundation</Text>
+            <Logo className={styles.logo} />
           </header>
           <div className={styles.content}>
             <LoadingBar />
@@ -91,7 +92,7 @@ export const ArtworkDetailPage = ({
       return (
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
-            <Text as="span" size="lg" font="serif" className={styles.logoText}>The Foundation</Text>
+            <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
               CLOSE <span className={styles.closeIcon}>×</span>
             </button>
@@ -106,7 +107,7 @@ export const ArtworkDetailPage = ({
     return (
       <div className={styles.page}>
         <header className={styles.minimalHeader}>
-          <Text as="span" size="lg" font="serif" className={styles.logoText}>The Foundation</Text>
+          <Logo className={styles.logo} />
           <button onClick={handleClose} className={styles.closeButton}>
             CLOSE <span className={styles.closeIcon}>×</span>
           </button>

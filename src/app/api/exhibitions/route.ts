@@ -2,23 +2,28 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import type { Exhibition, Prisma } from '@/generated/prisma'
+import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 // Force dynamic rendering to prevent caching
 export const dynamic = 'force-dynamic'
 
+// POST create new exhibition (requires auth)
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication and get effective user ID
+    const { userId, error: authError } = await getEffectiveUserId()
+    if (authError) return authError
+
     const body = (await request.json()) as {
       mainTitle: string
       visibility: string
-      userId: string
       handler: string
       url: string
       spaceId: string
     }
 
-    const { mainTitle, visibility, userId, handler, url, spaceId } = body
+    const { mainTitle, visibility, handler, url, spaceId } = body
 
     // Validate required fields
     if (!url) {
@@ -55,7 +60,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(exhibition, { status: 201 })
   } catch (error) {
     console.error('[POST /api/exhibitions] error:', error)
-    console.error('[POST /api/exhibitions] error details:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: 'Failed to create exhibition' }, { status: 500 })
   }
 }

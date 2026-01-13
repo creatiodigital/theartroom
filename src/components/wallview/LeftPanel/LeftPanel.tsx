@@ -147,18 +147,18 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="zoomOut" onClick={handleZoomOut} />
+              <Button size="small" icon="zoomOut" onClick={handleZoomOut} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny" icon="zoomIn" onClick={handleZoomIn} />
+              <Button size="small" icon="zoomIn" onClick={handleZoomIn} />
             </div>
           </div>
           <div className={styles.row}>
             <div className={styles.item}>
-              <Button size="tiny" icon="reset" onClick={handleResetView} />
+              <Button size="small" icon="reset" onClick={handleResetView} />
             </div>
             <div className={styles.item}>
-              <Button size="tiny" icon="person" onClick={handleToggleHuman} />
+              <Button size="small" icon="person" onClick={handleToggleHuman} />
             </div>
           </div>
         </div>

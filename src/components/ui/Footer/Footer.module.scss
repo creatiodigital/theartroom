@@ -18,14 +18,18 @@
   align-items: center;
 }
 
-.brand {
-  color: var(--color-brand);
-  text-transform: uppercase;
-  letter-spacing: var(--space-1);
+.logoLink {
+  display: flex;
+  align-items: center;
 
   &:hover {
-    text-decoration: none;
+    opacity: 0.8;
   }
+}
+
+.logo {
+  width: 150px;
+  height: auto;
 }
 
 .links {
