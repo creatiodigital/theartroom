@@ -1,4 +1,4 @@
-import { FolderDown, LampCeiling, Settings, X, type LucideIcon } from 'lucide-react'
+import { ArrowRight, FolderDown, LampCeiling, Settings, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 // Custom SVG imports (for icons not available in Lucide)
@@ -40,6 +40,7 @@ type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 
 // Lucide icons registry (add Lucide icons here as needed)
 const lucideIcons: Record<string, LucideIcon> = {
+  arrowRight: ArrowRight,
   close: X,
   gallery: FolderDown,
   light: LampCeiling,

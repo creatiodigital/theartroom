@@ -141,6 +141,7 @@ export const ArtworkDetailPage = ({
               <Button
                 variant="secondary"
                 label="Inquire"
+                icon="arrowRight"
                 size="bigSquared"
                 onClick={() => setIsInquireOpen(true)}
                 className={styles.inquireButton}

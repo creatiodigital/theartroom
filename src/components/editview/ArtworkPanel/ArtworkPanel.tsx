@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
+import { RichText } from '@/components/ui/RichText'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -31,8 +32,7 @@ const ArtworkPanel = () => {
     }
   }, [selectedSceneArtworkId, selectedArtwork, dispatch])
 
-  const { name, artworkTitle, author, artworkYear, description, artworkDimensions, imageUrl } =
-    selectedArtwork || {}
+  const { name, artworkTitle, artworkYear, artworkDimensions, imageUrl } = selectedArtwork || {}
 
   // Use original URLs - Next.js image optimization has issues with Vercel Blob URLs in production
   const thumbnailUrl = imageUrl || null
@@ -44,8 +44,8 @@ const ArtworkPanel = () => {
 
   return (
     <div ref={panelRef} className={styles.panel}>
-      {thumbnailUrl && (
-        <div className={styles.imageSection}>
+      <div className={styles.header}>
+        {thumbnailUrl && (
           <div className={styles.imageWrapper}>
             <img
               src={thumbnailUrl}
@@ -53,29 +53,56 @@ const ArtworkPanel = () => {
               className={styles.preview}
             />
           </div>
-          <Button variant="secondary" label="View Details" onClick={handleViewDetails} />
-        </div>
-      )}
-
-      <div className={styles.info}>
-        {selectedArtwork && (
-          <div>
-            {author && (
-              <Text font="dashboard" as="h1" size="2xl" className={styles.author}>
-                {author}
-              </Text>
-            )}
-            {(artworkTitle || name) && (
-              <Text font="dashboard" as="h2" size="xl" className={styles.title}>{artworkTitle || name}, {artworkYear && `${artworkYear}`}</Text>
-            )}
-            {description && <Text font="dashboard" as="p" size="sm" className={styles.description}>{description}</Text>}
-            {artworkDimensions && <Text font="dashboard" as="p" size="sm" className={styles.dimensions}>{artworkDimensions}</Text>}
-          </div>
         )}
+        <div className={styles.info}>
+          {selectedArtwork && (
+            <div>
+              {selectedArtwork.author && (
+                <Text font="dashboard" as="h1" size="2xl" className={styles.author}>
+                  {selectedArtwork.author}
+                </Text>
+              )}
+              {(artworkTitle || name) && (
+                <>
+                  <Text font="dashboard" as="span" size="xl" className={styles.title}>
+                    {artworkTitle || name},{' '}
+                  </Text>
+                  <Text font="dashboard" as="span" size="xl" className={styles.year}>
+                    {artworkYear && `${artworkYear}`}
+                  </Text>
+                </>
+              )}
+              {selectedArtwork.technique && (
+                <RichText
+                  content={selectedArtwork.technique}
+                  variant="compact"
+                  className={styles.technique}
+                />
+              )}
+              {artworkDimensions && (
+                <Text font="dashboard" as="p" size="sm" className={styles.dimensions}>
+                  {artworkDimensions}
+                </Text>
+              )}
+            </div>
+          )}
+        </div>
+        <Button
+          variant="secondary"
+          size="bigSquared"
+          label="View Details"
+          icon="arrowRight"
+          onClick={handleViewDetails}
+         />
       </div>
 
       <div className={styles.cta}>
-        <Button variant="secondary" label="Close" onClick={() => dispatch(hideArtworkPanel())} />
+        <Button
+          variant="primary"
+          size="bigSquared"
+          label="Close"
+          onClick={() => dispatch(hideArtworkPanel())}
+        />
       </div>
     </div>
   )

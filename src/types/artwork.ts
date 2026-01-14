@@ -34,6 +34,7 @@ export type TArtwork = {
   author?: string
   artworkDimensions?: string
   artworkYear?: string
+  technique?: string
   description?: string
   imageUrl?: string
   showArtworkInformation?: boolean
