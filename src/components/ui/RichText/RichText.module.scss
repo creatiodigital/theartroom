@@ -174,4 +174,25 @@
   > *:first-child {
     margin-top: 0;
   }
+
+  // Compact variant - for artwork metadata (technique, dimensions, etc.)
+  &.compact {
+    // Base styles for the wrapper (for content without p tags)
+    font-family: var(--font-sans), var(--font-sans-fallback);
+    font-size: var(--text-sm);
+    font-weight: var(--font-regular);
+    line-height: var(--leading-loose);
+
+    p {
+      font-family: var(--font-sans), var(--font-sans-fallback);
+      font-size: var(--text-sm);
+      font-weight: var(--font-regular);
+      line-height: var(--leading-loose);
+      margin: 0 0 var(--space-2);
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
 }

@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Text } from '@/components/ui/Typography'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
@@ -27,12 +26,11 @@ const ArtworkPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
-  const { width, height, x, y, name } = useArtworkDetails(currentArtworkId!)
+  const { width, height, x, y, artworkTitle } = useArtworkDetails(currentArtworkId!)
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
   const {
-    handleNameChange,
     handleAlignChange,
     handleMoveXChange,
     handleMoveYChange,
@@ -46,102 +44,98 @@ const ArtworkPanel = () => {
 
   return (
     <>
+      <Text font="dashboard" as="h1" size="lg" className={styles.panelTitle}>
+        {artworkTitle || 'Untitled'}
+      </Text>
+
+      <div className={styles.editButtonWrapper}>
+        <Button
+          font="dashboard"
+          size="small"
+          variant="primary"
+          label="Edit Artwork"
+          href={`/dashboard/artworks/${currentArtworkId}/edit?returnUrl=${encodeURIComponent(window.location.pathname)}`}
+        />
+      </div>
+
       <div className={styles.section}>
-        <div className={styles.subsection}>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>Name</Text>
-              <Input id="artworkName" value={name} onChange={handleNameChange} />
-            </div>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Position in wall
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionTop" onClick={() => handleAlign('verticalTop')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
+          </div>
+        </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
           </div>
         </div>
       </div>
+
       <div className={styles.section}>
-        <Text font="dashboard" as="h3" className={styles.title}>
-          Position
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Position (meters)
         </Text>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="h4" className={styles.subtitle}>
-            Position in wall
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="positionTop" onClick={() => handleAlign('verticalTop')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small" icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small" icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
-            </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <NumberInput
+              value={x / 100}
+              icon="move"
+              rotate={90}
+              min={0}
+              max={1000}
+              onChange={handleMoveXChange}
+            />
           </div>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small" icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
-            </div>
-          </div>
-        </div>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="h4" className={styles.subtitle}>
-            Position (meters)
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <NumberInput
-                value={x / 100}
-                icon="move"
-                rotate={90}
-                min={0}
-                max={1000}
-                onChange={handleMoveXChange}
-              />
-            </div>
-            <div className={styles.item}>
-              <NumberInput
-                value={y / 100}
-                icon="move"
-                min={0}
-                max={1000}
-                onChange={handleMoveYChange}
-              />
-            </div>
+          <div className={styles.item}>
+            <NumberInput
+              value={y / 100}
+              icon="move"
+              min={0}
+              max={1000}
+              onChange={handleMoveYChange}
+            />
           </div>
         </div>
       </div>
+
       <div className={styles.section}>
-        <Text font="dashboard" as="h3" className={styles.title}>
-          Layout
+        <Text font="dashboard" as="span" size="xs" className={styles.label}>
+          Size (meters)
         </Text>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="span" className={styles.label}>
-            Size (meters)
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <NumberInput
-                value={width / 100}
-                icon="expand"
-                rotate={90}
-                min={0.1}
-                max={50}
-                onChange={handleWidthChange}
-              />
-            </div>
-            <div className={styles.item}>
-              <NumberInput
-                value={height / 100}
-                icon="expand"
-                min={0.1}
-                max={50}
-                onChange={handleHeightChange}
-              />
-            </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <NumberInput
+              value={width / 100}
+              icon="expand"
+              rotate={90}
+              min={0.1}
+              max={50}
+              onChange={handleWidthChange}
+            />
+          </div>
+          <div className={styles.item}>
+            <NumberInput
+              value={height / 100}
+              icon="expand"
+              min={0.1}
+              max={50}
+              onChange={handleHeightChange}
+            />
           </div>
         </div>
       </div>

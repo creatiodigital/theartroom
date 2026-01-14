@@ -17,6 +17,7 @@ import styles from './edit.module.scss'
 
 type ArtworkEditPageProps = {
   artworkId: string
+  returnUrl?: string
 }
 
 type Artwork = {
@@ -34,9 +35,11 @@ type Artwork = {
   featured: boolean
 }
 
-export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
+export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) => {
   const { data: session } = useSession()
   const router = useRouter()
+  const defaultBackLink = '/dashboard/artworks'
+  const backLink = returnUrl || defaultBackLink
 
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [loading, setLoading] = useState(true)
@@ -72,7 +75,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         // Verify ownership
         if (data.userId !== session?.user?.id && session?.user?.userType !== 'admin') {
-          router.push('/dashboard/artworks')
+          router.push(backLink)
           return
         }
 
@@ -124,7 +127,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         return
       }
 
-      router.push('/dashboard/artworks')
+      router.push(backLink)
     } catch {
       setError('Something went wrong')
       setSaving(false)
@@ -189,20 +192,53 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId, imageUrl])
 
+  const backLabel = returnUrl ? '← Back' : '← Back to Library'
+  const isMinimalMode = !!returnUrl
+
+  const handleClose = () => {
+    router.push(backLink)
+  }
+
   if (loading) {
-    return <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">Loading...</DashboardLayout>
+    if (isMinimalMode) {
+      return (
+        <div className={styles.minimalPage}>
+          <header className={styles.minimalHeader}>
+            <button onClick={handleClose} className={styles.closeButton}>
+              CLOSE <span className={styles.closeIcon}>×</span>
+            </button>
+          </header>
+          <div className={styles.minimalContent}>Loading...</div>
+        </div>
+      )
+    }
+    return <DashboardLayout backLink={backLink} backLabel={backLabel}>Loading...</DashboardLayout>
   }
 
   if (error && !artwork) {
+    if (isMinimalMode) {
+      return (
+        <div className={styles.minimalPage}>
+          <header className={styles.minimalHeader}>
+            <button onClick={handleClose} className={styles.closeButton}>
+              CLOSE <span className={styles.closeIcon}>×</span>
+            </button>
+          </header>
+          <div className={styles.minimalContent}>
+            <ErrorText>{error}</ErrorText>
+          </div>
+        </div>
+      )
+    }
     return (
-      <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">
+      <DashboardLayout backLink={backLink} backLabel={backLabel}>
         <ErrorText>{error}</ErrorText>
       </DashboardLayout>
     )
   }
 
-  return (
-    <DashboardLayout backLink="/dashboard/artworks" backLabel="← Back to Library">
+  const formContent = (
+    <>
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Edit Artwork</h1>
 
@@ -347,11 +383,32 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             font="dashboard"
             variant="secondary"
             label="Cancel"
-            onClick={() => router.push('/dashboard/artworks')}
+            onClick={() => router.push(backLink)}
             type="button"
           />
         </div>
       </form>
+    </>
+  )
+
+  if (isMinimalMode) {
+    return (
+      <div className={styles.minimalPage}>
+        <header className={styles.minimalHeader}>
+          <button onClick={handleClose} className={styles.closeButton}>
+            CLOSE <span className={styles.closeIcon}>×</span>
+          </button>
+        </header>
+        <div className={styles.minimalContent}>
+          {formContent}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <DashboardLayout backLink={backLink} backLabel={backLabel}>
+      {formContent}
     </DashboardLayout>
   )
 }

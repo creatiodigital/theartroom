@@ -46,7 +46,7 @@ export const Scene = () => {
 
   return (
     <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
-      <div className={styles.scene}>
+      <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
         <Canvas
           shadows
           gl={{

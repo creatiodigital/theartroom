@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
+import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
 import { setAmbientLightColor, setAmbientLightIntensity } from '@/redux/slices/exhibitionSlice'
@@ -73,44 +74,70 @@ const LightingPanel = () => {
   }
 
   return (
-    <SettingsPanel title="Lighting" onClose={handleClose}>
-      {/* Ambient Light Color */}
+    <SettingsPanel title="Lighting">
+      {/* Ambient Light Section */}
       <div className={styles.section}>
-        <label className={styles.label}>Ambient Light Color</label>
-        <div className={styles.colorRow}>
-          <input
-            type="color"
-            value={ambientColor}
-            onChange={handleColorChange}
-            className={styles.colorPicker}
-          />
-          <span className={styles.colorValue}>{ambientColor}</span>
+        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+          Ambient Light
+        </Text>
+        
+        <div className={styles.field}>
+          <label className={styles.label}>Color</label>
+          <div className={styles.colorRow}>
+            <input
+              type="color"
+              value={ambientColor}
+              onChange={handleColorChange}
+              className={styles.colorPicker}
+            />
+            <input
+              type="text"
+              value={ambientColor}
+              onChange={handleColorChange}
+              className={styles.colorInput}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Ambient Light Intensity */}
-      <div className={styles.section}>
-        <label className={styles.label}>Intensity: {ambientIntensity.toFixed(2)}</label>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={ambientIntensity}
-          onChange={handleIntensityChange}
-          className={styles.slider}
-        />
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Intensity</label>
+            <span className={styles.sliderValue}>{ambientIntensity.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={ambientIntensity}
+            onChange={handleIntensityChange}
+            className={styles.slider}
+          />
+          <Button
+            variant="secondary"
+            size="regular"
+            label="Reset to Default"
+            onClick={handleReset}
+            className={styles.resetButton}
+          />
+        </div>
       </div>
 
       {/* Actions */}
       <div className={styles.actions}>
         <Button
+          variant="secondary"
+          label="Close"
+          onClick={handleClose}
+          className={styles.closeButton}
+        />
+        <Button
           variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
+          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
           onClick={handleSave}
           disabled={saving}
+          className={styles.saveButton}
         />
-        <Button size="small" label="Reset to Default" onClick={handleReset} />
       </div>
     </SettingsPanel>
   )

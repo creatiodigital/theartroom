@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation'
 
 import { PageLayout } from '@/components/ui/PageLayout'
 import { LoadingBar } from '@/components/ui/LoadingBar'
+import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 import { ImageMagnifier } from '@/components/ui/ImageMagnifier'
+import { Button } from '@/components/ui/Button'
+import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import Logo from '@/icons/logo.svg'
 
 import styles from './ArtworkDetail.module.scss'
@@ -44,6 +47,7 @@ export const ArtworkDetailPage = ({
   const [artist, setArtist] = useState<Artist | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isInquireOpen, setIsInquireOpen] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,45 +109,68 @@ export const ArtworkDetailPage = ({
     }
 
     return (
-      <div className={styles.page}>
-        <header className={styles.minimalHeader}>
-          <Logo className={styles.logo} />
-          <button onClick={handleClose} className={styles.closeButton}>
-            CLOSE <span className={styles.closeIcon}>×</span>
-          </button>
-        </header>
+      <>
+        <div className={styles.page}>
+          <header className={styles.minimalHeader}>
+            <Logo className={styles.logo} />
+            <button onClick={handleClose} className={styles.closeButton}>
+              CLOSE <span className={styles.closeIcon}>×</span>
+            </button>
+          </header>
 
-        <div className={styles.content}>
-          <div className={styles.metadata}>
-            {displayAuthor && (
-              <Text as="h1" size="2xl" className={styles.artistName}>{displayAuthor}</Text>
-            )}
-            {displayTitle && (  
-              <Text as="h2" size="xl" font="serif" className={styles.title}>
-                {`${displayTitle} ${artwork.year ? `, ${artwork.year}` : ''}`}
-              </Text>
-            )}
-            {artwork.technique && (
-              <Text as="p" size="sm" className={styles.technique}>{artwork.technique}</Text>
-            )}
-            {artwork.dimensions && (
-              <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
-            )}
-            {artwork.description && (
-              <Text as="p" size="sm" className={styles.description}>{artwork.description}</Text>
-            )}
-          </div>
-
-          <div className={styles.imageContainer}>
-            {artwork.imageUrl && (
-              <ImageMagnifier
-                src={artwork.imageUrl}
-                alt={displayTitle || 'Artwork'}
+          <div className={styles.content}>
+            <div className={styles.metadata}>
+              {displayAuthor && (
+                <Text as="h1" size="2xl" className={styles.artistName}>{displayAuthor}</Text>
+              )}
+              {displayTitle && (  
+                <div className={styles.title}>
+                  {displayTitle && <Text as="span" size="xl" font="serif" className={styles.titleText}>{displayTitle}</Text>}
+                  {artwork.year && <Text as="span" size="xl" font="serif" className={styles.year}>, {artwork.year}</Text>}
+                </div>
+              )}
+              {artwork.technique && (
+                <RichText content={artwork.technique} variant="compact" className={styles.technique} />
+              )}
+              {artwork.dimensions && (
+                <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
+              )}
+              {artwork.description && (
+                <RichText content={artwork.description} variant="compact" className={styles.description} />
+              )}
+              <Button
+                variant="secondary"
+                label="Inquire"
+                icon="arrowRight"
+                size="bigSquared"
+                onClick={() => setIsInquireOpen(true)}
+                className={styles.inquireButton}
               />
-            )}
+            </div>
+
+            <div className={styles.imageContainer}>
+              {artwork.imageUrl && (
+                <ImageMagnifier
+                  src={artwork.imageUrl}
+                  alt={displayTitle || 'Artwork'}
+                />
+              )}
+            </div>
           </div>
         </div>
-      </div>
+
+        <InquireSidebar
+          isOpen={isInquireOpen}
+          onClose={() => setIsInquireOpen(false)}
+          artwork={{
+            id: artwork.id,
+            title: displayTitle || '',
+            year: artwork.year ? parseInt(artwork.year) : undefined,
+            artistName: displayAuthor || '',
+            imageUrl: artwork.imageUrl || '',
+          }}
+        />
+      </>
     )
   }
 
@@ -167,20 +194,20 @@ export const ArtworkDetailPage = ({
           {displayAuthor && (
             <Text as="h2" className={styles.artistName}>{displayAuthor}</Text>
           )}
-          {displayTitle && (
-            <Text as="p" font="serif" className={styles.title}>
-              <em>{displayTitle}</em>
-              {artwork.year && <span>, {artwork.year}</span>}
-            </Text>
-          )}
+            {displayTitle && (
+              <div className={styles.title}>
+                <Text as="span" font="serif" className={styles.titleText}>{displayTitle}</Text>
+                {artwork.year && <Text as="span" font="serif" className={styles.year}>, {artwork.year}</Text>}
+              </div>
+            )}
           {artwork.technique && (
-            <Text as="p" size="sm" className={styles.technique}>{artwork.technique}</Text>
+            <RichText content={artwork.technique} variant="compact" className={styles.technique} />
           )}
           {artwork.dimensions && (
             <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
           )}
           {artwork.description && (
-            <Text as="p" size="sm" className={styles.description}>{artwork.description}</Text>
+            <RichText content={artwork.description} variant="compact" className={styles.description} />
           )}
         </div>
 

@@ -123,7 +123,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
 
       <div className={styles.section}>
         {artist.biography ? (
-          <RichText content={artist.biography} className={styles.biography} />
+          <RichText content={artist.biography} variant="compact" className={styles.biography} />
         ) : (
           <EmptyState message="No biography yet." />
         )}

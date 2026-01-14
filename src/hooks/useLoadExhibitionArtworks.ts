@@ -126,6 +126,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             author: ea.artwork.author || undefined,
             artworkYear: ea.artwork.year || undefined,
             artworkDimensions: ea.artwork.dimensions || undefined,
+            technique: ea.artwork.technique || undefined,
             description: ea.artwork.description || undefined,
             imageUrl: ea.artwork.imageUrl || undefined,
             textContent: ea.artwork.textContent || undefined, // Fixed content from Artwork

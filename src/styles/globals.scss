@@ -21,7 +21,7 @@ html {
 body {
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: var(--text-md);
-  font-weight: var(--font-light);
+  font-weight: var(--font-regular);
   line-height: var(--leading-relaxed);
   color: var(--color-text);
   background-color: var(--color-bg);
@@ -139,3 +139,36 @@ label {
     font-style: italic;
   }
 }
+
+/* =============================================================================
+   Image Protection
+   
+   Prevents easy downloading of artwork images on client-facing pages.
+   ============================================================================= */
+
+img {
+  // Disable right-click context menu
+  pointer-events: auto;
+  
+  // Prevent drag and drop
+  -webkit-user-drag: none;
+  user-drag: none;
+  
+  // Prevent text selection
+  -webkit-user-select: none;
+  user-select: none;
+  
+  // Prevent touch callout on mobile (Safari)
+  -webkit-touch-callout: none;
+}
+
+// Re-enable for dashboard/admin areas
+.dashboard-images img {
+  pointer-events: auto;
+  -webkit-user-drag: auto;
+  user-drag: auto;
+  -webkit-user-select: auto;
+  user-select: auto;
+  -webkit-touch-callout: default;
+}
+

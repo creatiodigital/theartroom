@@ -1,14 +1,12 @@
 'use client'
 
 import c from 'classnames'
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Text } from '@/components/ui/Typography'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
-import { editArtwork } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
 import { showHuman, hideHuman, removeGroup } from '@/redux/slices/wallViewSlice'
 import {
@@ -36,9 +34,6 @@ export const LeftPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
-
-  const [isEditingArtwork, setIsEditingArtwork] = useState<string | null>(null)
-  const [newArtworkName, setNewArtworkName] = useState('')
 
   const wallArtworks = useMemo(() => {
     if (!currentWallId) return []
@@ -76,6 +71,14 @@ export const LeftPanel = () => {
     dispatch(removeGroup())
   }
 
+  const handleCancel = () => {
+    dispatch(hideHuman())
+    dispatch(hideWallView())
+    dispatch(showEditMode())
+    dispatch(chooseCurrentArtworkId(null))
+    dispatch(removeGroup())
+  }
+
   const handleToggleHuman = () => {
     if (isHumanVisible) {
       dispatch(hideHuman())
@@ -93,36 +96,6 @@ export const LeftPanel = () => {
     }
   }
 
-  const handleDoubleClickArtwork = (artworkId: string, currentName: string) => {
-    setNewArtworkName(currentName)
-    setIsEditingArtwork(artworkId)
-  }
-
-  const handleChangeArtworkName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewArtworkName(e.target.value)
-  }
-
-  const handleBlurArtworkName = (artworkId: string) => {
-    if (newArtworkName.trim() !== '') {
-      dispatch(
-        editArtwork({
-          currentArtworkId: artworkId,
-          property: 'name',
-          value: newArtworkName.trim(),
-        }),
-      )
-    }
-    setIsEditingArtwork(null)
-  }
-
-  const handleKeyDownArtworkName = (e: React.KeyboardEvent, artworkId: string) => {
-    if (e.key === 'Enter') {
-      handleBlurArtworkName(artworkId)
-    } else if (e.key === 'Escape') {
-      setIsEditingArtwork(null)
-    }
-  }
-
   return (
     <div
       className={styles.panel}
@@ -133,9 +106,20 @@ export const LeftPanel = () => {
       <div className={styles.section}>
         <div className={styles.subsection}>
           <div className={styles.row}>
-            <div className={styles.item}>
+            <div className={styles.itemFlex}>
               <Button
-                size="small"
+                size="regular"
+                variant="secondary"
+                font="dashboard"
+                onClick={handleCancel}
+                label="Cancel"
+              />
+            </div>
+            <div className={styles.itemFlex}>
+              <Button
+                size="regular"
+                variant="primary"
+                font="dashboard"
                 onClick={handleSaveWallView}
                 label={saving ? 'Saving...' : 'Save'}
               />
@@ -146,19 +130,19 @@ export const LeftPanel = () => {
       <div className={styles.section}>
         <div className={styles.subsection}>
           <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="zoomOut" onClick={handleZoomOut} />
+            <div className={styles.itemFlex}>
+              <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
             </div>
-            <div className={styles.item}>
-              <Button size="small" icon="zoomIn" onClick={handleZoomIn} />
+            <div className={styles.itemFlex}>
+              <Button size="regular" variant="secondary" icon="zoomIn" onClick={handleZoomIn} />
             </div>
           </div>
           <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="reset" onClick={handleResetView} />
+            <div className={styles.itemFlex}>
+              <Button size="regular" variant="secondary" icon="reset" onClick={handleResetView} />
             </div>
-            <div className={styles.item}>
-              <Button size="small" icon="person" onClick={handleToggleHuman} />
+            <div className={styles.itemFlex}>
+              <Button size="regular" variant="secondary" icon="person" onClick={handleToggleHuman} />
             </div>
           </div>
         </div>
@@ -176,25 +160,13 @@ export const LeftPanel = () => {
                   })}
                   style={{ cursor: 'pointer' }}
                 >
-                  {isEditingArtwork === artwork.id ? (
-                    <Input
-                      id={`artworkEdit-${artwork.id}`}
-                      value={newArtworkName}
-                      onChange={handleChangeArtworkName}
-                      onBlur={() => handleBlurArtworkName(artwork.id)}
-                      onKeyDown={(e) => handleKeyDownArtworkName(e, artwork.id)}
-                      autoFocus
-                    />
-                  ) : (
-                    <Text
-                      as="span"
-                      size="xs"
-                      onDoubleClick={() => handleDoubleClickArtwork(artwork.id, artwork.name)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {artwork.name}
-                    </Text>
-                  )}
+                  <Text
+                    as="span"
+                    font="dashboard"
+                    size="sm"
+                  >
+                    {artwork.artworkTitle || artwork.name}
+                  </Text>
                 </li>
               ))}
             </ul>

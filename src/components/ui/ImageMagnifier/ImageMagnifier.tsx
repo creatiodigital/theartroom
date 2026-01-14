@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import styles from './ImageMagnifier.module.scss'
 
 interface ImageMagnifierProps {
@@ -16,11 +16,45 @@ export const ImageMagnifier = ({
   highResSrc,
   alt,
   className = '',
-  zoomLevel = 1.75,
+  zoomLevel = 2.5,
 }: ImageMagnifierProps) => {
   const [isHovering, setIsHovering] = useState(false)
-  const [imagePosition, setImagePosition] = useState({ x: 50, y: 50 })
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 })
+  const [expandedSize, setExpandedSize] = useState({ width: 0, height: 0 })
+  const [aspectRatio, setAspectRatio] = useState(1)
   const containerRef = useRef<HTMLDivElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // Calculate expanded container size
+  const calculateExpandedSize = useCallback(() => {
+    if (!imageRef.current || !wrapperRef.current) return
+
+    const imgWidth = imageRef.current.offsetWidth
+    const imgHeight = imageRef.current.offsetHeight
+    const ratio = imgWidth / imgHeight
+    
+    // Get available width from the image container area
+    const viewportWidth = window.innerWidth
+    const maxWidth = Math.min(viewportWidth * 0.55, 800)
+    
+    setAspectRatio(ratio)
+    setExpandedSize({ 
+      width: Math.max(imgWidth, maxWidth),
+      height: imgHeight
+    })
+    setImageDimensions({ width: imgWidth, height: imgHeight })
+  }, [])
+
+  const handleImageLoad = useCallback(() => {
+    calculateExpandedSize()
+  }, [calculateExpandedSize])
+
+  useEffect(() => {
+    window.addEventListener('resize', calculateExpandedSize)
+    return () => window.removeEventListener('resize', calculateExpandedSize)
+  }, [calculateExpandedSize])
 
   const handleMouseEnter = useCallback(() => {
     setIsHovering(true)
@@ -28,51 +62,80 @@ export const ImageMagnifier = ({
 
   const handleMouseLeave = useCallback(() => {
     setIsHovering(false)
-    setImagePosition({ x: 50, y: 50 })
   }, [])
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!containerRef.current) return
+      if (!containerRef.current || !isHovering) return
 
       const rect = containerRef.current.getBoundingClientRect()
       
-      // Get cursor position as percentage (0-100)
-      const xPercent = ((e.clientX - rect.left) / rect.width) * 100
-      const yPercent = ((e.clientY - rect.top) / rect.height) * 100
+      const xPercent = (e.clientX - rect.left) / rect.width
+      const yPercent = (e.clientY - rect.top) / rect.height
 
-      // Set image position (moves opposite to cursor)
-      setImagePosition({ x: xPercent, y: yPercent })
+      // Calculate zoomed image size preserving aspect ratio
+      const zoomedWidth = expandedSize.width * zoomLevel
+      const zoomedHeight = zoomedWidth / aspectRatio // Maintain aspect ratio
+
+      const offsetX = -(xPercent * (zoomedWidth - expandedSize.width))
+      const offsetY = -(yPercent * (zoomedHeight - expandedSize.height))
+
+      setZoomPosition({ x: offsetX, y: offsetY })
     },
-    []
+    [isHovering, expandedSize, zoomLevel, aspectRatio]
   )
 
   const zoomedSrc = highResSrc || src
 
+  // Calculate zoomed image dimensions preserving aspect ratio
+  const zoomedWidth = expandedSize.width * zoomLevel
+  const zoomedHeight = zoomedWidth / aspectRatio
+
   return (
-    <div
-      ref={containerRef}
-      className={`${styles.container} ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onMouseMove={handleMouseMove}
-    >
-      {/* Normal resolution image */}
+    <div ref={wrapperRef} className={`${styles.wrapper} ${className}`}>
+      {/* Normal image - hidden when hovering */}
       <img
+        ref={imageRef}
         src={src}
         alt={alt}
         className={`${styles.image} ${isHovering ? styles.hidden : ''}`}
+        onLoad={handleImageLoad}
       />
 
-      {/* High resolution zoomed image */}
+      {/* Expanded zoom container - appears on hover */}
       <div
-        className={`${styles.zoomedWrapper} ${isHovering ? styles.visible : ''}`}
+        ref={containerRef}
+        className={`${styles.zoomContainer} ${isHovering ? styles.visible : ''}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMouseMove}
         style={{
-          backgroundImage: `url(${zoomedSrc})`,
-          backgroundPosition: `${imagePosition.x}% ${imagePosition.y}%`,
-          backgroundSize: `${zoomLevel * 100}%`,
+          width: isHovering ? `${expandedSize.width}px` : `${imageDimensions.width}px`,
+          height: isHovering ? `${expandedSize.height}px` : `${imageDimensions.height}px`,
         }}
-      />
+      >
+        {isHovering && (
+          <img
+            src={zoomedSrc}
+            alt=""
+            className={styles.zoomImg}
+            style={{
+              width: `${zoomedWidth}px`,
+              height: `${zoomedHeight}px`,
+              top: `${zoomPosition.y}px`,
+              left: `${zoomPosition.x}px`,
+            }}
+          />
+        )}
+      </div>
+
+      {/* Invisible trigger area over the image */}
+      {!isHovering && (
+        <div 
+          className={styles.trigger}
+          onMouseEnter={handleMouseEnter}
+        />
+      )}
     </div>
   )
 }
