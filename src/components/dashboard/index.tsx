@@ -203,6 +203,8 @@ export const DashboardPage = () => {
             <thead>
               <tr>
                 <th>Exhibition Name</th>
+                <th>Space</th>
+                <th>Visibility</th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -211,8 +213,10 @@ export const DashboardPage = () => {
             </thead>
             <tbody>
               {exhibitions.map((ex: TExhibition) => (
-                <tr key={ex.id}>
+                  <tr key={ex.id}>
                   <td>{ex.mainTitle}</td>
+                  <td>{spaceOptions.find((s) => s.value === ex.spaceId)?.label || ex.spaceId}</td>
+                  <td>{ex.visibility === 'public' ? 'Public' : 'Private'}</td>
                   <td>
                     <Button
                       font="dashboard"

@@ -12,7 +12,7 @@ import styles from './Button.module.scss'
 
 type ButtonProps = {
   variant?: 'primary' | 'secondary' | 'danger'
-  size?: 'small' | 'regular' | 'big'
+  size?: 'small' | 'smallSquared' | 'regular' | 'regularSquared' | 'big' | 'bigSquared'
   font?: 'serif' | 'sans' | 'dashboard'
   type?: 'submit' | 'button' | 'reset'
   onClick?: MouseEventHandler<HTMLButtonElement>

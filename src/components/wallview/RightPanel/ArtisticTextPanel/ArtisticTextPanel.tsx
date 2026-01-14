@@ -22,17 +22,15 @@ const ArtisticText = () => {
 
   return (
     <div className={styles.section}>
-      <Text font="dashboard" as="h3" className={styles.title}>
-        Text Styles
-      </Text>
       <div className={styles.subsection}>
-        <Text font="dashboard" as="h4" className={styles.subtitle}>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
           Alignment
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
             <Button
               size="small"
+              variant="secondary"
               icon="textLeft"
               onClick={() => handleEditArtworkText('textAlign', 'left')}
             />
@@ -40,6 +38,7 @@ const ArtisticText = () => {
           <div className={styles.item}>
             <Button
               size="small"
+              variant="secondary"
               icon="textCenter"
               onClick={() => handleEditArtworkText('textAlign', 'center')}
             />
@@ -47,6 +46,7 @@ const ArtisticText = () => {
           <div className={styles.item}>
             <Button
               size="small"
+              variant="secondary"
               icon="textRight"
               onClick={() => handleEditArtworkText('textAlign', 'right')}
             />

@@ -99,44 +99,36 @@ export const ExhibitionModal = React.memo(
     const canCreate = mainTitle.trim() && customUrl.trim() && !urlError && !checking
 
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.content}>
-          <div>
-            <Text font="dashboard" as="h3">Exhibition Title</Text>
+      <div className={styles.modal}>
+        <Text font="dashboard" as="h2">New Exhibition</Text>
+        <form onSubmit={(e) => { e.preventDefault(); handleCreateClick() }} autoComplete="off">
+          <div className={styles.section}>
+            <label className={styles.label} htmlFor="exhibitionTitle">Exhibition Title</label>
             <Input
               id="exhibitionTitle"
               type="text"
               size="medium"
               value={mainTitle}
               onChange={(e) => setMainTitle(e.target.value)}
-              placeholder="Exhibition name"
+              required
             />
-          </div>
 
-          <div>
-            <Text font="dashboard" as="h3">URL Slug</Text>
+            <label className={styles.label} htmlFor="exhibitionUrl">URL Slug</label>
             <Input
               id="exhibitionUrl"
               type="text"
               size="medium"
               value={customUrl}
               onChange={(e) => handleUrlChange(e.target.value)}
-              placeholder="exhibition-url"
               variant={urlError ? 'error' : undefined}
+              required
             />
             <Text font="dashboard" as="p" className={styles.urlPreview}>
               /exhibitions/your-name/<strong>{customUrl || 'exhibition-url'}</strong>
             </Text>
             <ErrorText>{urlError}</ErrorText>
-            {checking && (
-              <Text font="dashboard" as="p" className={styles.checking}>
-                Checking availability...
-              </Text>
-            )}
-          </div>
 
-          <div>
-            <Text font="dashboard" as="h3">Visibility</Text>
+            <label className={styles.label} htmlFor="visibility">Visibility</label>
             <Select<string>
               options={[
                 { value: 'public', label: 'Public' },
@@ -144,11 +136,10 @@ export const ExhibitionModal = React.memo(
               ]}
               value={visibility}
               onChange={(val) => setVisibility(val as 'public' | 'private')}
+              size="medium"
             />
-          </div>
 
-          <div>
-            <Text font="dashboard" as="h3">Choose a Space</Text>
+            <label className={styles.label} htmlFor="space">Space</label>
             <Select<string>
               options={spaceOptions}
               value={selectedSpace?.value}
@@ -159,17 +150,18 @@ export const ExhibitionModal = React.memo(
               size="medium"
             />
           </div>
-        </div>
 
-        <div className={styles.ctas}>
-          <Button size="small" label="Cancel" onClick={onClose} />
-          <Button
-            size="small"
-            label={creating ? 'Creating...' : 'Create'}
-            onClick={handleCreateClick}
-            disabled={!canCreate}
-          />
-        </div>
+          <div className={styles.actions}>
+            <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
+            <Button
+              font="dashboard"
+              variant="primary"
+              label={creating ? 'Creating...' : 'Create Exhibition'}
+              type="submit"
+              disabled={!canCreate}
+            />
+          </div>
+        </form>
       </div>
     )
   },

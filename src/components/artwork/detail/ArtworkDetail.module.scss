@@ -49,7 +49,7 @@
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: var(--space-10);
-  padding: 0 var(--space-10);
+  padding: 0 var(--space-10) var(--space-10);
   max-width: var(--max-width);
   margin: 0 auto;
   width: 100%;
@@ -90,8 +90,21 @@
 
 .title {
   margin-bottom: var(--space-4);
-  font-style: italic;
 }
+
+.titleText {
+  font-style: italic;
+  display: inline;
+}
+
+.year {
+  font-style: normal;
+  display: inline;
+}
+
+.dimensions, .technique {
+  margin-bottom: var(--space-4);
+}  
 
 .imageContainer {
   display: flex;
@@ -107,5 +120,14 @@
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 80vh;
+  max-height: 70vh;
+}
+
+.description {
+  margin-bottom: var(--space-6);
+}
+
+.inquireButton {
+  margin-top: var(--space-4);
+  align-self: flex-start;
 }

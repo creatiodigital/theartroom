@@ -4,7 +4,7 @@
   width: 250px;
   max-width: 250px;
   height: 100vh;
-  background-color: var(--color-bg-gray);
+  background-color: #ebebeb;
   padding: var(--space-5);
   overflow: auto;
 }
@@ -54,4 +54,12 @@
 
 .cta {
   margin-bottom: var(--space-10);
+}
+
+.panelTitle {
+  margin-bottom: var(--space-4);
+}
+
+.editButtonWrapper {
+  margin-bottom: var(--space-4);
 }

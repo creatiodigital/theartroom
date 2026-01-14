@@ -2,7 +2,6 @@
 
 import { useRef } from 'react'
 
-import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './SettingsPanel.module.scss'
@@ -10,10 +9,9 @@ import styles from './SettingsPanel.module.scss'
 type SettingsPanelProps = {
   title: string
   children: React.ReactNode
-  onClose: () => void
 }
 
-const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
+const SettingsPanel = ({ title, children }: SettingsPanelProps) => {
   const panelRef = useRef(null)
 
   return (
@@ -28,10 +26,6 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
       </Text>
 
       <div className={styles.content}>{children}</div>
-
-      <div className={styles.cta}>
-        <Button variant="secondary" label="Close" onClick={onClose} />
-      </div>
     </div>
   )
 }

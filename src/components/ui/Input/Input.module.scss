@@ -22,7 +22,7 @@
 
 // Size variants
 .regular {
-  padding: 3px 6px;
+  padding: 6px 8px;
   border-radius: var(--space-1);
 }
 
@@ -91,4 +91,17 @@
   left: var(--space-1);
   transform: rotate(90deg);
   transform-origin: center;
+}
+
+// Underline variant - only bottom border
+.underline {
+  padding: var(--space-2) 0;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  font-size: var(--text-sm);
+
+  &:focus {
+    border-bottom-color: var(--color-text);
+  }
 }

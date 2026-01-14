@@ -8,6 +8,12 @@ import styles from './RichText.module.scss'
 type RichTextProps = {
   content: string
   className?: string
+  /**
+   * Predefined style variants:
+   * - 'default': Large serif text for editorial content (biographies, descriptions)
+   * - 'compact': Smaller sans-serif text for artwork metadata (technique, dimensions)
+   */
+  variant?: 'default' | 'compact'
 }
 
 // Allowed tags from TipTap rich text editor
@@ -21,7 +27,7 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'class']
 
-export const RichText = ({ content, className }: RichTextProps) => {
+export const RichText = ({ content, className, variant = 'default' }: RichTextProps) => {
   if (!content) return null
 
   // Sanitize HTML to prevent XSS attacks
@@ -31,7 +37,13 @@ export const RichText = ({ content, className }: RichTextProps) => {
   })
 
   return (
-    <div className={c(styles.richText, className)} dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+    <div 
+      className={c(
+        styles.richText, 
+        variant === 'compact' && styles.compact,
+        className
+      )} 
+      dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
+    />
   )
 }
-

@@ -4,7 +4,7 @@
   width: 250px;
   max-width: 250px;
   height: 100vh;
-  background-color: var(--color-bg-gray);
+  background-color: #ebebeb;
   padding: var(--space-5);
   overflow: auto;
 }
@@ -26,6 +26,7 @@
 .row {
   display: flex;
   justify-content: space-between;
+  align-items: stretch;
   gap: var(--space-3);
   margin-bottom: var(--space-3);
 }
@@ -34,6 +35,16 @@
   flex: 1;
 }
 
+.itemFlex {
+  flex: 1;
+  display: flex;
+
+  button,
+  a {
+    width: 100%;
+    flex: 1;
+  }
+}
 .artworks {
   list-style: inside;
   list-style-type: none;

@@ -79,8 +79,11 @@ export default async function Home() {
                     href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                     className={styles.exhibitionLink}
                   >
-                    <Text as="h3" font="serif" size="xl" className={styles.exhibitionTitle}>
-                      {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
+                    <Text as="span" font="serif" size="xl">
+                      {exhibition.mainTitle}
+                    </Text>
+                    <Text as="span" font="serif" size="lg" className={styles.exhibitionAuthor}>
+                      {exhibition.user.name} {exhibition.user.lastName}
                     </Text>
                   </Link>
                 </li>
