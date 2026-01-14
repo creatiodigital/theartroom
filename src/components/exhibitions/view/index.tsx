@@ -4,7 +4,7 @@ import { useProgress } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Home } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, X } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
@@ -42,9 +42,9 @@ const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps)
     <button
       className={styles.navigationButton}
       onClick={handleClick}
-      aria-label={isInternal ? 'Back to exhibition' : 'Go to home'}
+      aria-label="Close exhibition"
     >
-      {isInternal ? <ArrowLeft size={20} strokeWidth={ICON_STROKE_WIDTH} /> : <Home size={20} strokeWidth={ICON_STROKE_WIDTH} />}
+      <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
     </button>
   )
 }
@@ -91,14 +91,83 @@ const MobileOverlay = () => {
         <Text as="p" size="md" className={styles.mobileOverlayText}>
           This 3D exhibition is best viewed on a desktop or laptop computer.
         </Text>
-        <button
-          className={styles.mobileOverlayButton}
-          onClick={() => router.back()}
-        >
+        <button className={styles.mobileOverlayButton} onClick={() => router.back()}>
           Go Back
         </button>
       </div>
     </div>
+  )
+}
+
+const InfoButton = () => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        className={styles.infoButton}
+        onClick={() => setIsOpen(true)}
+        aria-label="Navigation help"
+      >
+        <Info size={20} strokeWidth={ICON_STROKE_WIDTH} />
+      </button>
+      {isOpen && (
+        <div className={styles.infoOverlay} onClick={() => setIsOpen(false)}>
+          <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.infoPanelClose}
+              onClick={() => setIsOpen(false)}
+              aria-label="Close"
+            >
+              <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
+            </button>
+            <Text as="h3" size="lg" font="sans" className={styles.infoPanelTitle}>
+              How to Navigate
+            </Text>
+            <div className={styles.infoPanelContent}>
+              <div className={styles.infoItem}>
+                <div className={styles.infoKeysColumn}>
+                  <div className={styles.infoKeys}>
+                    <Text as="span" size="sm" className={styles.infoKey}>W</Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>A</Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>S</Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>D</Text>
+                  </div>
+                  <div className={styles.infoKeys}>
+                    <span className={styles.infoKey}><ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
+                    <span className={styles.infoKey}><ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
+                    <span className={styles.infoKey}><ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
+                    <span className={styles.infoKey}><ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
+                  </div>
+                </div>
+                <Text as="span" size="sm">Walk inside the room</Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">Hold + Drag</Text>
+                </span>
+                <Text as="span" size="sm">Rotate the view</Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">Single Click</Text>
+                </span>
+                <Text as="span" size="sm">Auto focus</Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">Double Click</Text>
+                </span>
+                <Text as="span" size="sm">Artwork details</Text>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -161,7 +230,12 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
 
   return (
     <>
-      <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
+      {!isArtworkPanelOpen && (
+        <>
+          <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
+          <InfoButton />
+        </>
+      )}
       <LoadingOverlay />
       <MobileOverlay />
       {exhibition && <Scene />}

@@ -49,10 +49,10 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
             )}
           </div>
           <div className={styles.info}>
-            <Text as="p" className={styles.artist}>
+            <Text as="p" font="serif" size="lg" className={styles.artist}>
               {artwork.author || artistName || ''}
             </Text>
-            <Text as="p" font="sans" className={styles.title}>
+            <Text as="p" font="serif" className={styles.title}>
               <em>{artwork.title || artwork.name}</em>
               {artwork.year && <span>, {artwork.year}</span>}
             </Text>

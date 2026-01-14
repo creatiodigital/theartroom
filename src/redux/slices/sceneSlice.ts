@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 import { sceneFactory } from '@/factories/sceneFactory'
-import type { TScene } from '@/types/scene'
+import type { TScene, TFocusTarget } from '@/types/scene'
 
 const sceneSlice = createSlice({
   name: 'scene',
@@ -34,6 +34,14 @@ const sceneSlice = createSlice({
       }
     },
 
+    setFocusTarget: (state: TScene, action: PayloadAction<TFocusTarget>) => {
+      state.focusTarget = action.payload
+    },
+
+    clearFocusTarget: (state: TScene) => {
+      state.focusTarget = null
+    },
+
     resetScene: () => {
       // Return fresh initial state to prevent stale data between exhibitions
       return sceneFactory()
@@ -47,7 +55,10 @@ export const {
   hidePlaceholders,
   addWall,
   editWallName,
+  setFocusTarget,
+  clearFocusTarget,
   resetScene,
 } = sceneSlice.actions
 
 export default sceneSlice.reducer
+
