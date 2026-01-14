@@ -13,10 +13,12 @@ import Controls from './controls'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
 
-const showPerfMonitor =
-  process.env.NEXT_PUBLIC_DEBUG_MODE === 'true' &&
-  typeof window !== 'undefined' &&
-  window.location.hostname === 'localhost'
+// Temporarily disabled
+const showPerfMonitor = false
+// const showPerfMonitor =
+//   process.env.NEXT_PUBLIC_DEBUG_MODE === 'true' &&
+//   typeof window !== 'undefined' &&
+//   window.location.hostname === 'localhost'
 
 const DrawCallLogger = () => {
   const lastLogTime = useRef(0)

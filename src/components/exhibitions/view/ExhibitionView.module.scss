@@ -38,14 +38,14 @@
 .navigationButton {
   position: fixed;
   top: var(--space-6);
-  left: var(--space-6);
+  right: var(--space-6);
   z-index: 1000;
   display: none;
   justify-content: center;
   align-items: center;
   width: 36px;
   height: 36px;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.85);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -109,5 +109,143 @@
 
   &:hover {
     background-color: var(--color-black);
+  }
+}
+
+// Info button - same style as navigation button but bottom right
+.infoButton {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: 1000;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+
+  @media (min-width: 1024px) {
+    display: flex;
+  }
+
+  svg {
+    color: var(--color-black);
+  }
+}
+
+// Info overlay and panel
+.infoOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.infoPanel {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: var(--space-8);
+  max-width: 320px;
+  width: 90%;
+}
+
+.infoPanelClose {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    color: var(--color-black);
+  }
+}
+
+.infoPanelTitle {
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.infoPanelContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.infoKeysColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.infoKeys {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.infoKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+
+  svg {
+    color: var(--color-black);
+  }
+}
+
+.infoKeyWide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 140px;
+  height: 32px;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+
+  svg {
+    color: var(--color-black);
+  }
+}
+
+// Remove focus outline from all buttons in the view
+.navigationButton,
+.infoButton,
+.infoPanelClose,
+.mobileOverlayButton {
+  &:focus {
+    outline: none;
   }
 }
