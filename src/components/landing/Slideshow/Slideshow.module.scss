@@ -1,9 +1,20 @@
+@use '@/styles/mixins' as *;
+
 .slideshow {
   position: relative;
   width: 100%;
-  height: 832px;
+  height: 400px;
   overflow: hidden;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
+
+  @include breakpoint(md) {
+    height: 600px;
+  }
+
+  @include breakpoint(lg) {
+    height: 832px;
+    margin-bottom: var(--space-8);
+  }
 }
 
 .swiper {
@@ -43,17 +54,25 @@
   height: 100%;
   max-width: var(--header-max-width);
   margin: 0 auto;
-  padding: 0 var(--site-padding);
+  padding: 0 var(--space-6);
   display: flex;
   align-items: flex-end;
+
+  @include breakpoint(lg) {
+    padding: 0 var(--site-padding);
+  }
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  padding-bottom: var(--space-16);
+  padding-bottom: var(--space-8);
   will-change: transform;
   backface-visibility: hidden;
+
+  @include breakpoint(lg) {
+    padding-bottom: var(--space-16);
+  }
 }
 
 .meta {
@@ -80,14 +99,19 @@
 
 .paginationContainer {
   position: absolute;
-  bottom: var(--space-6);
+  bottom: var(--space-4);
   left: 0;
   right: 0;
   z-index: 10;
   width: 100%;
   max-width: var(--header-max-width);
   margin: 0 auto;
-  padding: 0 var(--site-padding);
+  padding: 0 var(--space-6);
+
+  @include breakpoint(lg) {
+    bottom: var(--space-6);
+    padding: 0 var(--site-padding);
+  }
 }
 
 .pagination {

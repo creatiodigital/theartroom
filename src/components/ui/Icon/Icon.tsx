@@ -1,6 +1,8 @@
 import { ArrowRight, FolderDown, LampCeiling, Settings, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+
 // Custom SVG imports (for icons not available in Lucide)
 import ChevronDown from '@/icons/chevron-down.svg'
 import DistributeHorizontal from '@/icons/distribute-horizontal.svg'
@@ -95,7 +97,7 @@ export type IconProps = {
   strokeWidth?: number
 }
 
-const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = 1.25 }: IconProps) => {
+const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = ICON_STROKE_WIDTH }: IconProps) => {
   // Check if it's a Lucide icon
   const LucideIconComponent = lucideIcons[name as keyof typeof lucideIcons]
   if (LucideIconComponent) {

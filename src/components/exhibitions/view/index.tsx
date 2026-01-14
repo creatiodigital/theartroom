@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Home } from 'lucide-react'
 
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { Scene } from '@/components/scene'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
@@ -43,7 +44,7 @@ const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps)
       onClick={handleClick}
       aria-label={isInternal ? 'Back to exhibition' : 'Go to home'}
     >
-      {isInternal ? <ArrowLeft size={20} /> : <Home size={20} />}
+      {isInternal ? <ArrowLeft size={20} strokeWidth={ICON_STROKE_WIDTH} /> : <Home size={20} strokeWidth={ICON_STROKE_WIDTH} />}
     </button>
   )
 }
@@ -74,6 +75,29 @@ const LoadingOverlay = () => {
       <Text as="span">
         {active ? `Loading 3D scene... ${Math.round(progress)}%` : 'Almost ready...'}
       </Text>
+    </div>
+  )
+}
+
+const MobileOverlay = () => {
+  const router = useRouter()
+
+  return (
+    <div className={styles.mobileOverlay}>
+      <div className={styles.mobileOverlayContent}>
+        <Text as="h2" size="xl" font="serif" className={styles.mobileOverlayTitle}>
+          Desktop Experience
+        </Text>
+        <Text as="p" size="md" className={styles.mobileOverlayText}>
+          This 3D exhibition is best viewed on a desktop or laptop computer.
+        </Text>
+        <button
+          className={styles.mobileOverlayButton}
+          onClick={() => router.back()}
+        >
+          Go Back
+        </button>
+      </div>
     </div>
   )
 }
@@ -139,6 +163,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     <>
       <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
       <LoadingOverlay />
+      <MobileOverlay />
       {exhibition && <Scene />}
       {isArtworkPanelOpen && <ArtworkPanel />}
     </>

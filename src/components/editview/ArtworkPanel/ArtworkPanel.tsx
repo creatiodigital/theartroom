@@ -43,7 +43,7 @@ const ArtworkPanel = () => {
   }
 
   return (
-    <div ref={panelRef} className={styles.panel}>
+    <div ref={panelRef} className={styles.panel} data-panel-overlay onPointerDown={(e) => e.stopPropagation()}>
       <div className={styles.header}>
         {thumbnailUrl && (
           <div className={styles.imageWrapper}>
@@ -58,19 +58,19 @@ const ArtworkPanel = () => {
           {selectedArtwork && (
             <div>
               {selectedArtwork.author && (
-                <Text font="dashboard" as="h1" size="2xl" className={styles.author}>
+                <Text font="serif" as="h1" size="2xl" className={styles.author}>
                   {selectedArtwork.author}
                 </Text>
               )}
               {(artworkTitle || name) && (
-                <>
-                  <Text font="dashboard" as="span" size="xl" className={styles.title}>
+                <div className={styles.titleWrapper}>
+                  <Text font="serif" as="span" size="xl" className={styles.title}>
                     {artworkTitle || name},{' '}
                   </Text>
-                  <Text font="dashboard" as="span" size="xl" className={styles.year}>
+                  <Text font="serif" as="span" size="xl" className={styles.year}>
                     {artworkYear && `${artworkYear}`}
                   </Text>
-                </>
+                </div>
               )}
               {selectedArtwork.technique && (
                 <RichText

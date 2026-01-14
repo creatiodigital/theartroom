@@ -37,8 +37,17 @@
 
 .header {
   display: flex;
-  justify-content: flex-end;
-  padding: var(--space-6) var(--space-8);
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--space-6);
+
+  @media (min-width: 768px) {
+    padding: var(--space-6) var(--space-8);
+  }
+}
+
+.title {
+  margin: 0;
 }
 
 .closeButton {
@@ -61,8 +70,12 @@
 }
 
 .content {
-  padding: 0 var(--space-8) var(--space-8);
+  padding: var(--space-6);
   flex: 1;
+
+  @media (min-width: 768px) {
+    padding: var(--space-6) var(--space-8) var(--space-8);
+  }
 }
 
 .title {
