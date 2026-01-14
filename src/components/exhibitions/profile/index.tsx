@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
+import { isRichTextEmpty } from '@/lib/textUtils'
 
 import styles from './ExhibitionProfile.module.scss'
 
@@ -116,7 +118,7 @@ export const ExhibitionProfilePage = ({
               size="regularSquared"
               label="Enter Exhibition"
               href={visitUrl}
-              iconLeft={<ArrowRight size={16} />}
+              iconLeft={<ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />}
               className={styles.button}
             />
           </div>
@@ -138,8 +140,8 @@ export const ExhibitionProfilePage = ({
           </Text>
         )}
 
-        {exhibition.description && (
-          <RichText content={exhibition.description} className={styles.description} />
+        {!isRichTextEmpty(exhibition.description) && (
+          <RichText content={exhibition.description!} className={styles.description} />
         )}
 
         {exhibition.artworks && exhibition.artworks.length > 0 && (

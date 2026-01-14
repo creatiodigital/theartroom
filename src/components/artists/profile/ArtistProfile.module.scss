@@ -5,21 +5,36 @@
   width: 100%;
   max-width: calc(var(--content-max-width) + var(--space-8) * 2);
   margin: 0 auto;
-  padding: var(--space-8);
+  padding: var(--space-6);
+
+  @include breakpoint(lg) {
+    padding: var(--space-8);
+  }
 }
 
 .header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+
+  @include breakpoint(lg) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
 }
 
 .avatarWrapper {
   position: relative;
-  width: 66.67%;
+  width: 100%;
   aspect-ratio: 3 / 2;
+
+  @include breakpoint(lg) {
+    width: 66.67%;
+  }
 }
 
 .avatar {
@@ -27,19 +42,23 @@
 }
 
 .avatarPlaceholder {
-  width: 40vw;
-  height: 25vw;
+  width: 100%;
+  aspect-ratio: 3 / 2;
   background-color: var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
   color: var(--color-text);
+
+  @include breakpoint(lg) {
+    width: 40vw;
+    height: 25vw;
+  }
 }
 
 .artistName {
   margin: 0;
-  font-size: var(--text-huge);
 }
 
 .handler {
@@ -48,14 +67,24 @@
 }
 
 .section {
-  margin-top: var(--space-10);
-  margin-bottom: 4rem;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-8);
+
+  @include breakpoint(lg) {
+    margin-top: var(--space-10);
+    margin-bottom: 4rem;
+  }
 }
 
 .biography {
-  column-count: 3;
-  column-gap: var(--space-10);
-  margin-bottom: var(--space-40);
+  column-count: 1;
+  margin-bottom: var(--space-12);
+
+  @include breakpoint(lg) {
+    column-count: 3;
+    column-gap: var(--space-10);
+    margin-bottom: var(--space-40);
+  }
 }
 
 .emptyText {
@@ -84,10 +113,15 @@
 }
 
 .sectionHeading {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
   text-transform: uppercase;
   font-weight: var(--font-regular);
   border-top: 1px solid var(--color-border);
-  padding-top: var(--space-8);
+  padding-top: var(--space-6);
   letter-spacing: var(--space-1);
+
+  @include breakpoint(lg) {
+    margin-bottom: var(--space-6);
+    padding-top: var(--space-8);
+  }
 }

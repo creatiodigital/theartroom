@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 /* Font families */
 .font-serif {
   font-family: var(--font-serif), var(--font-serif-fallback);
@@ -11,38 +13,82 @@
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
 }
 
-/* Text sizes - line-heights inherit from globals.scss for consistency */
+/* =============================================================================
+   Text sizes - Responsive scaling (mobile-first)
+   
+   Mobile sizes are 2px smaller than desktop, maintaining proportions:
+   - xs:   10px → 12px
+   - sm:   12px → 14px
+   - md:   14px → 16px
+   - lg:   16px → 18px
+   - xl:   22px → 24px
+   - 2xl:  28px → 30px
+   - 3xl:  42px → 45px
+   - huge: 56px → 60px
+============================================================================= */
+
 .text-xs {
-  font-size: var(--text-xs);
+  font-size: var(--text-xs-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-xs);
+  }
 }
 
 .text-sm {
-  font-size: var(--text-sm);
+  font-size: var(--text-sm-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-sm);
+  }
 }
 
 .text-md {
-  font-size: var(--text-md);
+  font-size: var(--text-md-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-md);
+  }
 }
 
 .text-lg {
-  font-size: var(--text-lg);
+  font-size: var(--text-lg-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-lg);
+  }
 }
 
 .text-xl {
-  font-size: var(--text-xl);
+  font-size: var(--text-xl-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-xl);
+  }
 }
 
 .text-2xl {
-  font-size: var(--text-2xl);
+  font-size: var(--text-2xl-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-2xl);
+  }
 }
 
 .text-3xl {
-  font-size: var(--text-3xl);
+  font-size: var(--text-3xl-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-3xl);
+  }
 }
 
-
 .text-huge {
-  font-size: var(--text-huge);
+  font-size: var(--text-huge-mobile);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-huge);
+  }
 }
 
 /* Weights */

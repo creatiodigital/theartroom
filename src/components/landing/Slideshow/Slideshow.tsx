@@ -68,9 +68,11 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className={styles.paginationContainer}>
-        <div className={styles.pagination} />
-      </div>
+      {slides.length > 1 && (
+        <div className={styles.paginationContainer}>
+          <div className={styles.pagination} />
+        </div>
+      )}
     </div>
   )
 }

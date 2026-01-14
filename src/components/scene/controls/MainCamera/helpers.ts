@@ -62,6 +62,12 @@ export const handleKeyPress = (
 export const attachMouseHandlers =
   (onMouseMove: (event: MouseEvent) => void, mouseState: RefObject<MouseState>) =>
   (event: MouseEvent) => {
+    // Check if click originated from a UI panel overlay - don't activate camera controls
+    const target = event.target as HTMLElement | null
+    if (target?.closest('[data-panel-overlay]')) {
+      return
+    }
+
     if (event.button === 0 && mouseState.current) {
       mouseState.current.isLeftButtonPressed = true
       mouseState.current.lastMouseX = event.clientX

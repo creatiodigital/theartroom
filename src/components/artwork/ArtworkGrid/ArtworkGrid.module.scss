@@ -1,14 +1,18 @@
+@use '@/styles/mixins' as *;
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-10);
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
 
-  @media (max-width: 1024px) {
+  @include breakpoint(md) {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
   }
 
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
+  @include breakpoint(lg) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-10);
   }
 }
 
@@ -17,7 +21,11 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-6);
+
+  @include breakpoint(lg) {
+    gap: var(--space-8);
+  }
 }
 
 .imageWrapper {
