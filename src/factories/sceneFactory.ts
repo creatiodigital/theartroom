@@ -5,4 +5,6 @@ export const sceneFactory = (): TScene => ({
   isPlaceholdersShown: true,
   currentArtworkId: null,
   walls: [],
+  focusTarget: null,
 })
+
