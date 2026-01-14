@@ -202,15 +202,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
         <div className={`${styles.backdrop} ${styles.open}`}>
           <div className={`${styles.sidebar} ${styles.open}`}>
             <div className={styles.header}>
+              <Text as="h2" size="2xl" font="serif" className={styles.title}>
+                Send an inquiry
+              </Text>
               <button onClick={onClose} className={styles.closeButton}>
                 CLOSE <span className={styles.closeIcon}>×</span>
               </button>
             </div>
 
             <div className={styles.content}>
-              <Text as="h2" size="2xl" font="serif" className={styles.title}>
-                Send an inquiry
-              </Text>
 
               <form onSubmit={handleSubmit} className={styles.form}>
                 {/* Honeypot field */}

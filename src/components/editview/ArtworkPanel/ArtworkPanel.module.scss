@@ -61,9 +61,16 @@
   margin-bottom: var(--space-4);
 }
 
+.titleWrapper {
+ margin-bottom: var(--space-6);
+}
+
 .title {
-  margin-bottom: var(--space-6);
   font-style: italic;
+}
+
+.year {
+  font-style: normal;
 }
 
 .technique {

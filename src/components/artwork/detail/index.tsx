@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/Typography'
 import { ImageMagnifier } from '@/components/ui/ImageMagnifier'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
+import { isRichTextEmpty } from '@/lib/textUtils'
 import Logo from '@/icons/logo.svg'
 
 import styles from './ArtworkDetail.module.scss'
@@ -135,8 +136,8 @@ export const ArtworkDetailPage = ({
               {artwork.dimensions && (
                 <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
               )}
-              {artwork.description && (
-                <RichText content={artwork.description} variant="compact" className={styles.description} />
+              {!isRichTextEmpty(artwork.description) && (
+                <RichText content={artwork.description!} variant="compact" className={styles.description} />
               )}
               <Button
                 variant="secondary"
@@ -206,8 +207,8 @@ export const ArtworkDetailPage = ({
           {artwork.dimensions && (
             <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
           )}
-          {artwork.description && (
-            <RichText content={artwork.description} variant="compact" className={styles.description} />
+          {!isRichTextEmpty(artwork.description) && (
+            <RichText content={artwork.description!} variant="compact" className={styles.description} />
           )}
         </div>
 
