@@ -56,11 +56,6 @@
   column-count: 3;
   column-gap: var(--space-10);
   margin-bottom: var(--space-40);
-
-  p {
-    @include smallSans();
-    line-height: 2.5; 
-  }
 }
 
 .emptyText {

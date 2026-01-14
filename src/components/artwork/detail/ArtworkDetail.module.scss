@@ -90,7 +90,16 @@
 
 .title {
   margin-bottom: var(--space-4);
+}
+
+.titleText {
   font-style: italic;
+  display: inline;
+}
+
+.year {
+  font-style: normal;
+  display: inline;
 }
 
 .dimensions, .technique {
@@ -112,4 +121,13 @@
   height: auto;
   max-width: 100%;
   max-height: 70vh;
+}
+
+.description {
+  margin-bottom: var(--space-6);
+}
+
+.inquireButton {
+  margin-top: var(--space-4);
+  align-self: flex-start;
 }
