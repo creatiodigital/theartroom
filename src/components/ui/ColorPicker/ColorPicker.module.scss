@@ -13,6 +13,7 @@
     height: 14px;
     width: 14px;
     cursor: pointer;
+    border-radius: var(--radius-sm);
 
     &::-webkit-color-swatch-wrapper {
       padding: 0;
@@ -20,10 +21,12 @@
 
     &::-webkit-color-swatch {
       border: 0;
+      border-radius: var(--radius-sm);
     }
 
     &::-moz-color-swatch {
       border: 0;
+      border-radius: var(--radius-sm);
     }
   }
 }

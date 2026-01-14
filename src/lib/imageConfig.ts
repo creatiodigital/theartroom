@@ -11,7 +11,7 @@ export const STORED_IMAGE = {
 
 // Vercel Image Optimization presets
 export const IMAGE_PRESETS = {
-  gallery3D: { width: 1024, quality: 60 },
-  isolated: { width: 2048, quality: 85 },
+  gallery3D: { width: 1536, quality: 80 },
+  isolated: { width: 2048, quality: 100 },
   thumbnail: { width: 400, quality: 70 },
 } as const

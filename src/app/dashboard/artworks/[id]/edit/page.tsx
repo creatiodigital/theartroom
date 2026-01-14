@@ -2,9 +2,11 @@ import { ArtworkEditPage } from '@/components/dashboard/artworks/edit'
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ returnUrl?: string }>
 }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { id } = await params
-  return <ArtworkEditPage artworkId={id} />
+  const { returnUrl } = await searchParams
+  return <ArtworkEditPage artworkId={id} returnUrl={returnUrl} />
 }

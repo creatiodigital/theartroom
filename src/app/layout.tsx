@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { bodyFont, headingFont, dashboardFont, wallFont1, wallFont2 } from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { ImageProtection } from '@/components/providers/ImageProtection'
 import '@/styles/globals.scss'
 
 type RootLayoutProps = {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         <AuthProvider>
           <StoreProvider>
+            <ImageProtection />
             <header></header>
             {children}
           </StoreProvider>
@@ -26,3 +28,4 @@ export default function RootLayout({ children }: RootLayoutProps) {
     </html>
   )
 }
+

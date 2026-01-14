@@ -9,7 +9,7 @@
 
 .sectionTitle {
   margin-bottom: var(--space-4);
-  font-weight: var(--font-light);  
+  font-weight: var(--font-regular);  
   border-bottom: 1px solid var(--color-border);
   padding-bottom: var(--space-2);
   text-transform: uppercase;
@@ -26,19 +26,17 @@
 }
 
 .exhibitionLink {
-  font-family: var(--font-serif), var(--font-serif-fallback);
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
-  font-size: var(--text-xl);
 
   &:hover {
     text-decoration: none;
   }
 }
 
-.exhibitionTitle {
-  font-size: var(--text-lg);
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-weight: var(--font-regular);
+.artistName {
+  font-style: italic;
 }
 
 .empty {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { PageLayout } from '@/components/ui/PageLayout'
 import { LoadingBar } from '@/components/ui/LoadingBar'
+import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 import { ImageMagnifier } from '@/components/ui/ImageMagnifier'
 import Logo from '@/icons/logo.svg'
@@ -124,13 +125,13 @@ export const ArtworkDetailPage = ({
               </Text>
             )}
             {artwork.technique && (
-              <Text as="p" size="sm" className={styles.technique}>{artwork.technique}</Text>
+              <RichText content={artwork.technique} variant="compact" className={styles.technique} />
             )}
             {artwork.dimensions && (
               <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
             )}
             {artwork.description && (
-              <Text as="p" size="sm" className={styles.description}>{artwork.description}</Text>
+              <RichText content={artwork.description} variant="compact" className={styles.description} />
             )}
           </div>
 
@@ -174,13 +175,13 @@ export const ArtworkDetailPage = ({
             </Text>
           )}
           {artwork.technique && (
-            <Text as="p" size="sm" className={styles.technique}>{artwork.technique}</Text>
+            <RichText content={artwork.technique} variant="compact" className={styles.technique} />
           )}
           {artwork.dimensions && (
             <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
           )}
           {artwork.description && (
-            <Text as="p" size="sm" className={styles.description}>{artwork.description}</Text>
+            <RichText content={artwork.description} variant="compact" className={styles.description} />
           )}
         </div>
 

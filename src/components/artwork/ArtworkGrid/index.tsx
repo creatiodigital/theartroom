@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './ArtworkGrid.module.scss'
@@ -56,9 +57,7 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
               {artwork.year && <span>, {artwork.year}</span>}
             </Text>
             {artwork.technique && (
-              <Text as="p" size="sm" className={styles.detail}>
-                {artwork.technique}
-              </Text>
+              <RichText content={artwork.technique} variant="compact" className={styles.detail} />
             )}
             {artwork.dimensions && (
               <Text as="p" size="sm" className={styles.detail}>

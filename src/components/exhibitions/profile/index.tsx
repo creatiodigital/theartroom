@@ -113,8 +113,8 @@ export const ExhibitionProfilePage = ({
               {artistName}
             </Link>
             <Button
-              size="small"
-              label="Enter Virtual Exhibition"
+              size="regular"
+              label="Enter Exhibition"
               href={visitUrl}
               iconLeft={<ArrowRight size={16} />}
               className={styles.button}

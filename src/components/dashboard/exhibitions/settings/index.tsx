@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
 
 import { DashboardLayout } from '../../DashboardLayout'
@@ -35,6 +36,7 @@ interface ExhibitionSettingsPageProps {
 export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageProps) => {
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [description, setDescription] = useState('')
+  const [visibility, setVisibility] = useState<'public' | 'private'>('private')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -55,6 +57,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         const data = await response.json()
         setExhibition(data)
         setDescription(data.description || '')
+        setVisibility(data.visibility || 'private')
       } catch {
         setError('Failed to load exhibition')
       } finally {
@@ -78,7 +81,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
+        body: JSON.stringify({ description, visibility }),
       })
 
       if (!response.ok) {
@@ -209,6 +212,22 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           placeholder="Write a description for your exhibition..."
         />
         <span className={dashboardStyles.hint}>A compelling description helps attract visitors to your exhibition.</span>
+      </div>
+
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Visibility</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          Control who can see this exhibition.
+        </p>
+        <Select<string>
+          options={[
+            { value: 'public', label: 'Public - Visible to everyone' },
+            { value: 'private', label: 'Private - Only visible to you' },
+          ]}
+          value={visibility}
+          onChange={(val) => setVisibility(val as 'public' | 'private')}
+          size="medium"
+        />
       </div>
 
       <div className={dashboardStyles.actions}>

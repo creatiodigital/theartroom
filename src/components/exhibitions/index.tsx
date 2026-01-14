@@ -61,7 +61,10 @@ export const ExhibitionsPage = () => {
                   href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                   className={styles.exhibitionLink}
                 >
-                  {exhibition.user.name} {exhibition.user.lastName}: {exhibition.mainTitle}
+                  <Text as="span" font="serif" size="xl">{exhibition.mainTitle}</Text>
+                  <Text as="span" font="serif" size="lg" className={styles.artistName}>
+                    {exhibition.user.name} {exhibition.user.lastName}
+                  </Text>
                 </Link>
               </li>
             ))}
@@ -81,11 +84,10 @@ export const ExhibitionsPage = () => {
                   href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
                   className={styles.exhibitionLink}
                 >
-                  <span className={styles.exhibitionTitle}>{exhibition.mainTitle}</span>
-                  <span className={styles.artistName}>
-                    {' '}
-                    — {exhibition.user.name} {exhibition.user.lastName}
-                  </span>
+                  <Text as="span" font="serif" size="xl">{exhibition.mainTitle}</Text>
+                  <Text as="span" font="serif" size="lg" className={styles.artistName}>
+                    {exhibition.user.name} {exhibition.user.lastName}
+                  </Text>
                 </Link>
               </li>
             ))}

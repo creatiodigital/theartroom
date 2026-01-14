@@ -49,7 +49,7 @@
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: var(--space-10);
-  padding: 0 var(--space-10);
+  padding: 0 var(--space-10) var(--space-10);
   max-width: var(--max-width);
   margin: 0 auto;
   width: 100%;
@@ -93,6 +93,10 @@
   font-style: italic;
 }
 
+.dimensions, .technique {
+  margin-bottom: var(--space-4);
+}  
+
 .imageContainer {
   display: flex;
   justify-content: center;
@@ -107,5 +111,5 @@
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 80vh;
+  max-height: 70vh;
 }

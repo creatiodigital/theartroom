@@ -118,6 +118,8 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         allExhibitionArtworkIds: exhibition.allExhibitionArtworkIds || [],
         status: exhibition.status,
         visibility: exhibition.visibility,
+        ambientLightColor: exhibition.ambientLightColor ?? undefined,
+        ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
       }
       dispatch(setExhibition(exhibitionData))
     }
