@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
   setAlignedPairs,
   clearAlignedPairs,
@@ -62,6 +62,7 @@ export const useResizeArtwork = (
         .map((id) => exhibitionArtworksById[id])
 
       // Start resizing state
+      dispatch(pushToHistory()) // Save current state before resize
       dispatch(startResizing())
       isResizingRef.current = true
 

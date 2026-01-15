@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TDistributeAlign } from '@/types/wizard'
@@ -16,6 +16,8 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
 
   const distributeArtworksInGroup = (alignment: TDistributeAlign) => {
     const { groupX, groupY, groupWidth, groupHeight } = artworkGroup
+
+    dispatch(pushToHistory()) // Save state before distribute
 
     let groupedArtworks = artworkGroupIds.map((id) => exhibitionArtworksById[id]).filter(Boolean)
 

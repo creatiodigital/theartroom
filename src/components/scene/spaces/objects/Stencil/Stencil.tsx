@@ -43,16 +43,16 @@ const Stencil = ({ artwork }: StencilProps) => {
       bold: '/fonts/lora-bold.ttf',
     },
     lato: {
-      regular: '/fonts/lato-regular.ttf',
-      bold: '/fonts/lato-bold.ttf',
+      regular: '/fonts/Lato-Regular.ttf',
+      bold: '/fonts/Lato-Bold.ttf',
     },
     'eb-garamond': {
-      regular: '/fonts/eb-garamond-regular.ttf',
-      bold: '/fonts/eb-garamond-bold.ttf',
+      regular: '/fonts/EBGaramond-Regular.ttf',
+      bold: '/fonts/EBGaramond-Bold.ttf',
     },
     geist: {
-      regular: '/fonts/geist-regular.ttf',
-      bold: '/fonts/geist-bold.ttf',
+      regular: '/fonts/Geist-Regular.ttf',
+      bold: '/fonts/Geist-Bold.ttf',
     },
   } as const
 

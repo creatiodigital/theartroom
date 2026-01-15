@@ -1,13 +1,20 @@
 'use client'
 
 import c from 'classnames'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
+import {
+  restoreSnapshot,
+  clearSnapshot,
+  undo,
+  redo,
+  clearHistory,
+} from '@/redux/slices/exhibitionSlice'
 import { showHuman, hideHuman, removeGroup } from '@/redux/slices/wallViewSlice'
 import {
   increaseScaleFactor,
@@ -35,6 +42,12 @@ export const LeftPanel = () => {
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
 
+  // Undo/Redo state
+  const historyLength = useSelector((state: RootState) => state.exhibition._history?.length ?? 0)
+  const futureLength = useSelector((state: RootState) => state.exhibition._future?.length ?? 0)
+  const canUndo = historyLength > 0
+  const canRedo = futureLength > 0
+
   const wallArtworks = useMemo(() => {
     if (!currentWallId) return []
 
@@ -54,6 +67,43 @@ export const LeftPanel = () => {
   const handleZoomOut = () => dispatch(decreaseScaleFactor())
   const handleResetView = () => dispatch(resetPan())
 
+  const handleUndo = () => {
+    if (canUndo) {
+      dispatch(undo())
+    }
+  }
+
+  const handleRedo = () => {
+    if (canRedo) {
+      dispatch(redo())
+    }
+  }
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd+Z (Mac) or Ctrl+Z (Windows)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          // Cmd+Shift+Z = Redo
+          e.preventDefault()
+          if (canRedo) {
+            dispatch(redo())
+          }
+        } else {
+          // Cmd+Z = Undo
+          e.preventDefault()
+          if (canUndo) {
+            dispatch(undo())
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [dispatch, canUndo, canRedo])
+
   const handleSaveWallView = async () => {
     // Save to database first
     const success = await saveToDatabase()
@@ -62,6 +112,10 @@ export const LeftPanel = () => {
       // Optionally show error - for now just log
       console.error('Failed to save to database')
     }
+
+    // Clear the snapshot and history since we're keeping the changes
+    dispatch(clearSnapshot())
+    dispatch(clearHistory())
 
     // Then hide wall view and show edit mode
     dispatch(hideHuman())
@@ -72,6 +126,8 @@ export const LeftPanel = () => {
   }
 
   const handleCancel = () => {
+    // Restore the exhibition state from before wall view was opened
+    dispatch(restoreSnapshot())
     dispatch(hideHuman())
     dispatch(hideWallView())
     dispatch(showEditMode())
@@ -131,6 +187,28 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
+              <Button
+                size="regular"
+                variant="secondary"
+                icon="undo"
+                onClick={handleUndo}
+                disabled={!canUndo}
+                title="Undo (⌘Z)"
+              />
+            </div>
+            <div className={styles.itemFlex}>
+              <Button
+                size="regular"
+                variant="secondary"
+                icon="redo"
+                onClick={handleRedo}
+                disabled={!canRedo}
+                title="Redo (⌘⇧Z)"
+              />
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
               <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
             </div>
             <div className={styles.itemFlex}>
@@ -178,3 +256,4 @@ export const LeftPanel = () => {
 }
 
 export default LeftPanel
+

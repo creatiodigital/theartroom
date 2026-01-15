@@ -42,17 +42,18 @@ model Artwork {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name        String
-  artworkType String  @default("image")
-  title       String  @default("Untitled")
-  author      String?
-  year        String?
-  technique   String?
-  dimensions  String?
-  description String?
-  imageUrl    String?
-  textContent String? // Fixed text content for stencil/text artworks
-  featured    Boolean @default(false)
+  name                 String
+  artworkType          String  @default("image")
+  title                String  @default("Untitled")
+  author               String?
+  year                 String?
+  technique            String?
+  dimensions           String?
+  description          String?
+  imageUrl             String?
+  textContent          String? // Fixed text content for stencil/text artworks
+  featured             Boolean @default(false)
+  hiddenFromExhibition Boolean @default(false)
 
   exhibitionArtworks ExhibitionArtwork[]
 

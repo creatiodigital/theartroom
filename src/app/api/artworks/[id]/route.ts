@@ -30,22 +30,39 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const { id } = await context.params
     const body = await request.json()
 
-    const artwork = await prisma.artwork.update({
-      where: { id },
-      data: {
-        name: body.name,
-        artworkType: body.artworkType,
-        title: body.title,
-        author: body.author,
-        year: body.year,
-        technique: body.technique,
-        dimensions: body.dimensions,
-        description: body.description,
-        featured: body.featured === true || body.featured === 'true',
-      },
-    })
+    // Base update data (fields that definitely exist)
+    const baseData = {
+      name: body.name,
+      artworkType: body.artworkType,
+      title: body.title,
+      author: body.author,
+      year: body.year,
+      technique: body.technique,
+      dimensions: body.dimensions,
+      description: body.description,
+      textContent: body.textContent,
+      featured: body.featured === true || body.featured === 'true',
+    }
 
-    return NextResponse.json(artwork)
+    // Try with new fields first
+    try {
+      const artwork = await prisma.artwork.update({
+        where: { id },
+        data: {
+          ...baseData,
+          hiddenFromExhibition: body.hiddenFromExhibition === true || body.hiddenFromExhibition === 'true',
+        },
+      })
+      return NextResponse.json(artwork)
+    } catch (innerError) {
+      // If new field fails (Accelerate cache not refreshed), try without it
+      console.warn('[PUT /api/artworks/[id]] retrying without new fields:', innerError)
+      const artwork = await prisma.artwork.update({
+        where: { id },
+        data: baseData,
+      })
+      return NextResponse.json(artwork)
+    }
   } catch (error) {
     console.error('[PUT /api/artworks/[id]] error:', error)
     return NextResponse.json({ error: 'Failed to update artwork' }, { status: 500 })
