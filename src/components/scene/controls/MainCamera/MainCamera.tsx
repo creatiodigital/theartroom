@@ -87,12 +87,36 @@ const MainCamera = () => {
       const { position, normal, width, height } = focusTarget
       
       // Calculate optimal viewing distance based on artwork size and camera FOV
-      // Use the larger dimension to ensure entire artwork fits in view
-      const artworkMaxDimension = Math.max(width, height)
+      // Must account for artwork position relative to fixed camera eye height
       const fovRad = (fov.current * Math.PI) / 180
-      // Calculate distance needed to fit artwork in view (using vertical FOV)
+      const halfFov = fovRad / 2
+      
+      // Calculate vertical distance from camera to artwork extremes
+      const artworkTop = position.y + height / 2
+      const artworkBottom = position.y - height / 2
+      
+      // How far above/below eye level are the artwork extremes?
+      const topOffset = artworkTop - cameraElevation
+      const bottomOffset = cameraElevation - artworkBottom
+      
+      // The larger offset determines how far back we need to be
+      const maxVerticalOffset = Math.max(topOffset, bottomOffset)
+      
+      // Distance needed to see the most extreme vertical point
+      // tan(halfFov) = verticalOffset / distance => distance = verticalOffset / tan(halfFov)
+      const distanceForVertical = maxVerticalOffset > 0 
+        ? (maxVerticalOffset * FOCUS_PADDING) / Math.tan(halfFov)
+        : FOCUS_MIN_DISTANCE
+      
+      // Also check horizontal fit (use aspect ratio approximation)
+      const aspectRatio = 16 / 9 // Approximate viewport aspect ratio
+      const horizontalFov = 2 * Math.atan(Math.tan(halfFov) * aspectRatio)
+      const distanceForHorizontal = (width * FOCUS_PADDING) / (2 * Math.tan(horizontalFov / 2))
+      
+      // Use the larger distance to ensure artwork fits both horizontally and vertically
       const optimalDistance = Math.max(
-        (artworkMaxDimension * FOCUS_PADDING) / (2 * Math.tan(fovRad / 2)),
+        distanceForVertical,
+        distanceForHorizontal,
         FOCUS_MIN_DISTANCE
       )
       
@@ -104,11 +128,10 @@ const MainCamera = () => {
       const cameraTargetPos = artworkPos.clone().add(
         normalVec.clone().multiplyScalar(optimalDistance)
       )
-      // Keep camera at eye height
+      // Keep camera at eye height (no vertical tilt)
       cameraTargetPos.y = cameraElevation
       
-      // Look straight ahead - at the point on the wall at camera's eye height
-      // This keeps the camera horizontal (no vertical tilt)
+      // Look straight ahead at the point on the wall at camera's eye height
       const lookAtTarget = new Vector3(position.x, cameraElevation, position.z)
       
       targetPosition.current = cameraTargetPos
