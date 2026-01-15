@@ -198,7 +198,9 @@ export const useSaveExhibition = () => {
             letterSpacing: artwork.letterSpacing?.value ?? 0,
             lineHeight: artwork.lineHeight?.value ?? 1.4,
             textColor: artwork.textColor ?? '#000000',
+            textBackgroundColor: artwork.textBackgroundColor ?? undefined,
             textAlign: artwork.textAlign ?? 'left',
+            textVerticalAlign: artwork.textVerticalAlign ?? 'top',
           }
         })
 

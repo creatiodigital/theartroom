@@ -117,13 +117,15 @@ model ExhibitionArtwork {
   showArtworkInformation Boolean @default(false)
 
   // Text styling (per-exhibition customization)
-  fontFamily    String @default("Montserrat")
-  fontSize      Float  @default(16)
-  fontWeight    String @default("400")
-  letterSpacing Float  @default(0)
-  lineHeight    Float  @default(1.4)
-  textColor     String @default("#000000")
-  textAlign     String @default("left")
+  fontFamily          String  @default("Montserrat")
+  fontSize            Float   @default(16)
+  fontWeight          String  @default("400")
+  letterSpacing       Float   @default(0)
+  lineHeight          Float   @default(1.4)
+  textColor           String  @default("#000000")
+  textBackgroundColor String?
+  textAlign           String  @default("left")
+  textVerticalAlign   String  @default("top")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

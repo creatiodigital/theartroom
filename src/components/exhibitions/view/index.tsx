@@ -18,6 +18,7 @@ import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 import { Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/Button'
 import styles from './ExhibitionView.module.scss'
 
 interface NavigationButtonProps {
@@ -99,8 +100,36 @@ const MobileOverlay = () => {
   )
 }
 
-const InfoButton = () => {
+const NAVIGATION_HELP_STORAGE_KEY = 'lumen-gallery:navigation-help-dismissed'
+
+const NavigationHelpModal = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const [alreadyDismissed, setAlreadyDismissed] = useState(false)
+  const hasCheckedStorage = useRef(false)
+
+  // Check localStorage on mount and auto-open if not dismissed
+  useEffect(() => {
+    if (hasCheckedStorage.current) return
+    hasCheckedStorage.current = true
+    
+    try {
+      const dismissed = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY)
+      if (dismissed === 'true') {
+        setAlreadyDismissed(true)
+      } else {
+        // Small delay to let the scene load first
+        const timer = setTimeout(() => setIsOpen(true), 500)
+        return () => clearTimeout(timer)
+      }
+    } catch {
+      // localStorage not available, show modal anyway
+      setIsOpen(true)
+    }
+  }, [])
+
+  const handleClose = () => {
+    setIsOpen(false)
+  }
 
   return (
     <>
@@ -112,11 +141,11 @@ const InfoButton = () => {
         <Info size={20} strokeWidth={ICON_STROKE_WIDTH} />
       </button>
       {isOpen && (
-        <div className={styles.infoOverlay} onClick={() => setIsOpen(false)}>
+        <div className={styles.infoOverlay} onClick={handleClose}>
           <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
             <button
               className={styles.infoPanelClose}
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               aria-label="Close"
             >
               <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
@@ -164,6 +193,23 @@ const InfoButton = () => {
                 <Text as="span" size="sm">Artwork details</Text>
               </div>
             </div>
+            {!alreadyDismissed && (
+              <Button
+                variant="primary"
+                size="regularSquared"
+                label="Don't show this again"
+                className={styles.dismissButton}
+                onClick={() => {
+                  try {
+                    localStorage.setItem(NAVIGATION_HELP_STORAGE_KEY, 'true')
+                  } catch {
+                    // localStorage not available, ignore
+                  }
+                  setAlreadyDismissed(true)
+                  setIsOpen(false)
+                }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -233,7 +279,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {!isArtworkPanelOpen && (
         <>
           <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
-          <InfoButton />
+          <NavigationHelpModal />
         </>
       )}
       <LoadingOverlay />

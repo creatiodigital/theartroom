@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
         letterSpacing?: number
         lineHeight?: number
         textColor?: string
+        textBackgroundColor?: string
         textAlign?: string
+        textVerticalAlign?: string
       }>
     }
 
@@ -136,7 +138,9 @@ export async function POST(request: NextRequest) {
             letterSpacing: pos.letterSpacing ?? 0,
             lineHeight: pos.lineHeight ?? 1.4,
             textColor: pos.textColor ?? '#000000',
+            textBackgroundColor: pos.textBackgroundColor ?? null,
             textAlign: pos.textAlign ?? 'left',
+            textVerticalAlign: pos.textVerticalAlign ?? 'top',
           },
           update: {
             wallId: pos.wallId,
@@ -166,7 +170,9 @@ export async function POST(request: NextRequest) {
             letterSpacing: pos.letterSpacing ?? 0,
             lineHeight: pos.lineHeight ?? 1.4,
             textColor: pos.textColor ?? '#000000',
+            textBackgroundColor: pos.textBackgroundColor ?? null,
             textAlign: pos.textAlign ?? 'left',
+            textVerticalAlign: pos.textVerticalAlign ?? 'top',
           },
         }),
       ),

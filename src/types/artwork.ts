@@ -51,6 +51,8 @@ export type TArtwork = {
   letterSpacing?: TOption<number>
   lineHeight?: TOption<number>
   textColor?: string
+  textBackgroundColor?: string
   textAlign?: 'left' | 'right' | 'center'
+  textVerticalAlign?: 'top' | 'center' | 'bottom'
   featured?: boolean
 }

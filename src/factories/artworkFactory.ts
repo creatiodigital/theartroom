@@ -31,7 +31,9 @@ export const createNewArtwork = ({
     letterSpacing: { label: '1', value: 1 },
     lineHeight: { label: '1', value: 1 },
     textColor: '#000000',
+    textBackgroundColor: undefined,
     textAlign: 'left',
+    textVerticalAlign: 'top',
     featured: false,
   }
 }

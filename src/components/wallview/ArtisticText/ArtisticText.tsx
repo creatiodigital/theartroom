@@ -25,8 +25,10 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
   const {
     textContent,
     textAlign,
+    textVerticalAlign,
     handleArtisticTextChange,
     textColor,
+    textBackgroundColor,
     fontSize,
     fontFamily,
     fontWeight,
@@ -34,17 +36,27 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     letterSpacing,
   } = artisticText
 
-  const fontFamilyMap: Record<'roboto' | 'lora', string> = {
+  const fontFamilyMap: Record<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist', string> = {
     roboto: 'var(--font-wall1)',
     lora: 'var(--font-wall2)',
+    lato: 'var(--font-sans)',
+    'eb-garamond': 'var(--font-serif)',
+    geist: 'var(--font-dashboard)',
   }
   const fontWeightMap: Record<'regular' | 'bold', number> = {
     regular: 400,
     bold: 600,
   }
 
-  const fontFamilyVariable = fontFamilyMap[fontFamily]
+  const verticalAlignMap: Record<'top' | 'center' | 'bottom', string> = {
+    top: 'flex-end',
+    center: 'center',
+    bottom: 'flex-start',
+  }
+
+  const fontFamilyVariable = fontFamilyMap[fontFamily] ?? fontFamilyMap.roboto
   const fontWeightVariable = fontWeightMap[fontWeight]
+  const justifyContentValue = verticalAlignMap[textVerticalAlign] ?? 'flex-start'
 
   const handleDoubleClick = () => {
     if (!isEditing) {
@@ -72,6 +84,12 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     <div
       className={`${styles.text} ${isEditing ? styles.editing : ''}`}
       onDoubleClick={handleDoubleClick}
+      style={{
+        backgroundColor: textBackgroundColor ?? 'transparent',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: justifyContentValue,
+      }}
     >
       {!textContent?.trim() && !isEditing ? (
         <div className={styles.empty}>
