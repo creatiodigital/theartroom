@@ -17,14 +17,14 @@ const ArtisticText = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
-  const { textColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
+  const { textColor, textBackgroundColor, textVerticalAlign, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
     useArtworkDetails(currentArtworkId!)
 
   return (
     <div className={styles.section}>
       <div className={styles.subsection}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Alignment
+          Horizontal Alignment
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -49,6 +49,35 @@ const ArtisticText = () => {
               variant="secondary"
               icon="textRight"
               onClick={() => handleEditArtworkText('textAlign', 'right')}
+            />
+          </div>
+        </div>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Vertical Alignment
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant={textVerticalAlign === 'top' ? 'primary' : 'secondary'}
+              label="Top"
+              onClick={() => handleEditArtworkText('textVerticalAlign', 'top')}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant={textVerticalAlign === 'center' ? 'primary' : 'secondary'}
+              label="Center"
+              onClick={() => handleEditArtworkText('textVerticalAlign', 'center')}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant={textVerticalAlign === 'bottom' ? 'primary' : 'secondary'}
+              label="Bottom"
+              onClick={() => handleEditArtworkText('textVerticalAlign', 'bottom')}
             />
           </div>
         </div>
@@ -113,11 +142,26 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Text Color</Text>
             <ColorPicker
               textColor={textColor!}
               onColorSelect={(value) => handleEditArtworkText('textColor', value)}
             />
+          </div>
+          <div className={styles.item}>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Background</Text>
+            <div className={styles.backgroundColorRow}>
+              <ColorPicker
+                textColor={textBackgroundColor ?? '#ffffff'}
+                onColorSelect={(value) => handleEditArtworkText('textBackgroundColor', value)}
+              />
+              <Button
+                size="small"
+                variant={textBackgroundColor === undefined ? 'primary' : 'secondary'}
+                label="None"
+                onClick={() => handleEditArtworkText('textBackgroundColor', undefined)}
+              />
+            </div>
           </div>
         </div>
       </div>

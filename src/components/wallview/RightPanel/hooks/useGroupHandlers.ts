@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Box3 } from 'three'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import { editArtworkGroup } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
@@ -27,6 +27,7 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
     const newGroupX = Number(e.target.value) * 100
     const deltaX = newGroupX - artworkGroup.groupX
 
+    dispatch(pushToHistory()) // Save state before group X change
     dispatch(editArtworkGroup({ groupX: newGroupX, groupY: artworkGroup.groupY }))
 
     artworkGroupIds.forEach((artworkId) => {
@@ -61,6 +62,7 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
     const newGroupY = Number(e.target.value) * 100
     const deltaY = newGroupY - artworkGroup.groupY
 
+    dispatch(pushToHistory()) // Save state before group Y change
     dispatch(editArtworkGroup({ groupX: artworkGroup.groupX, groupY: newGroupY }))
 
     artworkGroupIds.forEach((artworkId) => {
@@ -123,6 +125,7 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
         return
     }
 
+    dispatch(pushToHistory()) // Save state before group alignment
     dispatch(editArtworkGroup({ groupX: newGroupX, groupY: newGroupY }))
 
     const deltaX = newGroupX - artworkGroup.groupX

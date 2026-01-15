@@ -15,6 +15,19 @@ import { DashboardLayout } from '../../DashboardLayout'
 import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
 import styles from './edit.module.scss'
 
+// Strip HTML tags from text content (for content saved with RichTextEditor previously)
+const stripHtml = (html: string): string => {
+  if (!html) return ''
+  return html
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+    .replace(/&amp;/g, '&')  // Replace ampersands
+    .replace(/&lt;/g, '<')   // Replace less than
+    .replace(/&gt;/g, '>')   // Replace greater than
+    .replace(/&quot;/g, '"') // Replace quotes
+    .trim()
+}
+
 type ArtworkEditPageProps = {
   artworkId: string
   returnUrl?: string
@@ -32,7 +45,9 @@ type Artwork = {
   dimensions: string | null
   description: string | null
   imageUrl: string | null
+  textContent: string | null
   featured: boolean
+  hiddenFromExhibition: boolean
 }
 
 export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) => {
@@ -57,7 +72,9 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
     technique: '',
     dimensions: '',
     description: '',
+    textContent: '',
     featured: false,
+    hiddenFromExhibition: false,
   })
 
 
@@ -90,7 +107,9 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
           technique: data.technique || '',
           dimensions: data.dimensions || '',
           description: data.description || '',
+          textContent: stripHtml(data.textContent || ''),
           featured: data.featured ?? false,
+          hiddenFromExhibition: data.hiddenFromExhibition ?? false,
         })
       } catch {
         setError('Failed to load artwork')
@@ -352,17 +371,46 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
           </div>
         )}
 
-        {/* Description / Text Content */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>
-            {formData.artworkType === 'text' ? 'Text Content' : 'Description'}
-          </h3>
-          <RichTextEditor
-            content={formData.description}
-            onChange={(content) => handleChange('description', content)}
-            placeholder={formData.artworkType === 'text' ? 'Enter the text to display...' : 'About this artwork...'}
-          />
-        </div>
+        {/* Text Content - for text artworks (plain text only for 3D) */}
+        {formData.artworkType === 'text' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Text Content</h3>
+            <p className={dashboardStyles.sectionDescription}>
+              Plain text content that will be displayed on the 3D stencil.
+            </p>
+            <textarea
+              value={formData.textContent}
+              onChange={(e) => handleChange('textContent', e.target.value)}
+              placeholder="Enter the text to display..."
+              rows={8}
+              style={{
+                width: '100%',
+                padding: 'var(--space-3)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-sm)',
+                fontFamily: 'inherit',
+                fontSize: 'var(--text-sm)',
+                lineHeight: '1.6',
+                resize: 'vertical',
+              }}
+            />
+            <span className={dashboardStyles.hint}>
+              Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall panel.
+            </span>
+          </div>
+        )}
+
+        {/* Description - for image artworks (supports rich text) */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Description</h3>
+            <RichTextEditor
+              content={formData.description}
+              onChange={(content) => handleChange('description', content)}
+              placeholder="About this artwork..."
+            />
+          </div>
+        )}
 
         {/* Featured Checkbox */}
         {formData.artworkType === 'image' && (
@@ -371,6 +419,11 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
               checked={formData.featured}
               onChange={(e) => handleChange('featured', e.target.checked)}
               label="Feature on artist profile"
+            />
+            <Checkbox
+              checked={formData.hiddenFromExhibition}
+              onChange={(e) => handleChange('hiddenFromExhibition', e.target.checked)}
+              label="Hide from exhibition page"
             />
           </div>
         )}

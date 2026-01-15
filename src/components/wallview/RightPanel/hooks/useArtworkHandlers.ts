@@ -3,7 +3,7 @@ import { Box3 } from 'three'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { editArtwork } from '@/redux/slices/artworkSlice'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TAlign } from '@/types/wizard'
@@ -74,6 +74,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const artworkPosition = { posX2d: newX, posY2d: newY }
     const new3DCoordinate = convert2DTo3D(newX, newY, artworkWidth, artworkHeight, boundingData)
 
+    dispatch(pushToHistory()) // Save state before alignment change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
@@ -92,6 +93,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const artworkY = currentEdited.posY2d
     const new3DCoordinate = convert2DTo3D(newX, artworkY, artworkWidth, artworkHeight, boundingData)
 
+    dispatch(pushToHistory()) // Save state before X change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
@@ -111,6 +113,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
 
     const new3DCoordinate = convert2DTo3D(artworkX, newY, artworkWidth, artworkHeight, boundingData)
 
+    dispatch(pushToHistory()) // Save state before Y change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
@@ -128,6 +131,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const currentWidth = currentEdited.width2d
     const newX = x + (currentWidth - newWidth) / 2
 
+    dispatch(pushToHistory()) // Save state before width change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
@@ -145,6 +149,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const currentHeight = currentEdited.height2d
     const newY = y + (currentHeight - newHeight) / 2
 
+    dispatch(pushToHistory()) // Save state before height change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,

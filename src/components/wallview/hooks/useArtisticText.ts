@@ -23,7 +23,9 @@ export const useArtisticText = (artworkId: string) => {
   const {
     textContent,
     textAlign = 'left',
+    textVerticalAlign = 'top',
     textColor = '#000000',
+    textBackgroundColor,
     fontSize,
     lineHeight,
     fontFamily,
@@ -44,7 +46,9 @@ export const useArtisticText = (artworkId: string) => {
   return {
     textContent,
     textAlign,
+    textVerticalAlign,
     textColor,
+    textBackgroundColor,
     fontSize: fontSize?.value ?? DEFAULT_FONT_SIZE,
     lineHeight: lineHeight?.value ?? DEFAULT_LINE_HEIGHT,
     fontFamily: fontFamily?.value ?? DEFAULT_FONT_FAMILY,

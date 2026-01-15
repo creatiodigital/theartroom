@@ -42,17 +42,18 @@ model Artwork {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name        String
-  artworkType String  @default("image")
-  title       String  @default("Untitled")
-  author      String?
-  year        String?
-  technique   String?
-  dimensions  String?
-  description String?
-  imageUrl    String?
-  textContent String? // Fixed text content for stencil/text artworks
-  featured    Boolean @default(false)
+  name                 String
+  artworkType          String  @default("image")
+  title                String  @default("Untitled")
+  author               String?
+  year                 String?
+  technique            String?
+  dimensions           String?
+  description          String?
+  imageUrl             String?
+  textContent          String? // Fixed text content for stencil/text artworks
+  featured             Boolean @default(false)
+  hiddenFromExhibition Boolean @default(false)
 
   exhibitionArtworks ExhibitionArtwork[]
 
@@ -117,13 +118,15 @@ model ExhibitionArtwork {
   showArtworkInformation Boolean @default(false)
 
   // Text styling (per-exhibition customization)
-  fontFamily    String @default("Montserrat")
-  fontSize      Float  @default(16)
-  fontWeight    String @default("400")
-  letterSpacing Float  @default(0)
-  lineHeight    Float  @default(1.4)
-  textColor     String @default("#000000")
-  textAlign     String @default("left")
+  fontFamily          String  @default("Montserrat")
+  fontSize            Float   @default(16)
+  fontWeight          String  @default("400")
+  letterSpacing       Float   @default(0)
+  lineHeight          Float   @default(1.4)
+  textColor           String  @default("#000000")
+  textBackgroundColor String?
+  textAlign           String  @default("left")
+  textVerticalAlign   String  @default("top")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

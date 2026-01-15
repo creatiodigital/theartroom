@@ -63,3 +63,9 @@
 .editButtonWrapper {
   margin-bottom: var(--space-4);
 }
+
+.backgroundColorRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

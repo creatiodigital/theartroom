@@ -7,7 +7,7 @@ function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[
   }))
 }
 
-export const fontSizes = toOptions(Array.from({ length: 17 }, (_, i) => i + 8) as number[])
+export const fontSizes = toOptions(Array.from({ length: 23 }, (_, i) => i + 2) as number[])
 
 export const lineHeights = toOptions(
   Array.from({ length: 11 }, (_, i) => +(1 + i * 0.1).toFixed(1)),
@@ -20,7 +20,10 @@ export const fontWeights: TOption<'regular' | 'bold'>[] = [
   { value: 'bold', label: 'Bold' },
 ]
 
-export const fontFamilies: TOption<'roboto' | 'lora'>[] = [
+export const fontFamilies: TOption<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist'>[] = [
   { value: 'roboto', label: 'Roboto' },
   { value: 'lora', label: 'Lora' },
+  { value: 'lato', label: 'Lato' },
+  { value: 'eb-garamond', label: 'EB Garamond' },
+  { value: 'geist', label: 'Geist' },
 ]
