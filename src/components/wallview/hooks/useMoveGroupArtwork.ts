@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
   editArtworkGroup,
   startDraggingGroup,
@@ -40,6 +40,7 @@ export const useMoveGroupArtwork = (
 
       setOffset({ x: offsetX, y: offsetY })
       setIsDraggingGroup(true)
+      dispatch(pushToHistory()) // Save state before group drag
       dispatch(startDraggingGroup())
       preventClick.current = true
     },

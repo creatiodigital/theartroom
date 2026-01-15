@@ -49,7 +49,9 @@ type ExhibitionArtworkResponse = {
   letterSpacing: number
   lineHeight: number
   textColor: string
+  textBackgroundColor: string | null
   textAlign: string
+  textVerticalAlign: string
 }
 
 /**
@@ -154,7 +156,9 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             letterSpacing: { label: String(ea.letterSpacing), value: ea.letterSpacing },
             lineHeight: { label: String(ea.lineHeight), value: ea.lineHeight },
             textColor: ea.textColor,
+            textBackgroundColor: ea.textBackgroundColor ?? undefined,
             textAlign: ea.textAlign as 'left' | 'center' | 'right',
+            textVerticalAlign: ea.textVerticalAlign as 'top' | 'center' | 'bottom',
           }
 
           dispatch(restoreArtwork(artwork))

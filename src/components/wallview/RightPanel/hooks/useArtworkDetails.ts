@@ -36,6 +36,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       showPassepartout: false,
       passepartoutColor: '#ffffff',
       passepartoutThickness: { label: '0', value: 0 },
+      textBackgroundColor: undefined,
+      textVerticalAlign: 'top',
       imageUrl: '',
       featured: false,
       width: 0,
@@ -68,6 +70,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     showPassepartout,
     passepartoutColor,
     passepartoutThickness,
+    textBackgroundColor,
+    textVerticalAlign,
     featured,
     imageUrl,
   } = artwork
@@ -98,6 +102,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     showPassepartout,
     passepartoutColor,
     passepartoutThickness,
+    textBackgroundColor,
+    textVerticalAlign,
     featured,
     imageUrl,
   }

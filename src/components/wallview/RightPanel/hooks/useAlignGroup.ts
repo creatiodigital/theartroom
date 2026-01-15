@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TAlign } from '@/types/wizard'
@@ -16,6 +16,8 @@ export const useAlignGroup = (boundingData: TDimensions | null) => {
 
   const alignArtworksInGroup = (alignment: TAlign) => {
     const { groupX, groupY, groupWidth, groupHeight } = artworkGroup
+
+    dispatch(pushToHistory()) // Save state before group alignment
 
     artworkGroupIds.forEach((artworkId) => {
       const artwork = exhibitionArtworksById[artworkId]

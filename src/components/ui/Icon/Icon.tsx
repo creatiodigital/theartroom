@@ -1,4 +1,4 @@
-import { ArrowRight, FolderDown, LampCeiling, Settings, X, type LucideIcon } from 'lucide-react'
+import { ArrowRight, FolderDown, LampCeiling, Redo2, Settings, Undo2, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -46,7 +46,9 @@ const lucideIcons: Record<string, LucideIcon> = {
   close: X,
   gallery: FolderDown,
   light: LampCeiling,
+  redo: Redo2,
   settings: Settings,
+  undo: Undo2,
 }
 
 // Custom SVG icons registry

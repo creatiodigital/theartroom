@@ -18,7 +18,9 @@ const Stencil = ({ artwork }: StencilProps) => {
     height,
     textContent,
     textAlign,
+    textVerticalAlign,
     textColor,
+    textBackgroundColor,
     fontSize,
     lineHeight,
     fontWeight,
@@ -40,23 +42,38 @@ const Stencil = ({ artwork }: StencilProps) => {
       regular: '/fonts/lora-regular.ttf',
       bold: '/fonts/lora-bold.ttf',
     },
+    lato: {
+      regular: '/fonts/Lato-Regular.ttf',
+      bold: '/fonts/Lato-Bold.ttf',
+    },
+    'eb-garamond': {
+      regular: '/fonts/EBGaramond-Regular.ttf',
+      bold: '/fonts/EBGaramond-Bold.ttf',
+    },
+    geist: {
+      regular: '/fonts/Geist-Regular.ttf',
+      bold: '/fonts/Geist-Bold.ttf',
+    },
   } as const
 
   const resolvedFontFamily = fontFamily?.value ?? 'roboto'
   const resolvedFontWeight = fontWeight?.value ?? 'regular'
-  const fontUrl = fontMap[resolvedFontFamily][resolvedFontWeight]
+  const fontUrl = fontMap[resolvedFontFamily]?.[resolvedFontWeight] ?? fontMap.roboto.regular
 
   const textRef = useRef<ComponentRef<typeof Text>>(null)
   const [textWidth, setTextWidth] = useState(0)
+  const [textHeight, setTextHeight] = useState(0)
 
-  const calculateTextWidth = () => {
+  const calculateTextDimensions = () => {
     if (textRef.current) {
       const geometry = textRef.current.geometry
       geometry.computeBoundingBox()
       const boundingBox = geometry.boundingBox
       if (boundingBox) {
-        const width = boundingBox.max.x - boundingBox.min.x
-        setTextWidth(width > 0 ? width : 0)
+        const w = boundingBox.max.x - boundingBox.min.x
+        const h = boundingBox.max.y - boundingBox.min.y
+        setTextWidth(w > 0 ? w : 0)
+        setTextHeight(h > 0 ? h : 0)
       }
     }
   }
@@ -64,7 +81,7 @@ const Stencil = ({ artwork }: StencilProps) => {
   useEffect(() => {
     if (textRef.current) {
       textRef.current.sync()
-      calculateTextWidth()
+      calculateTextDimensions()
     }
   }, [textContent])
 
@@ -84,21 +101,38 @@ const Stencil = ({ artwork }: StencilProps) => {
     }
   }
 
-  const getAnchorY = (planeH: number): number => {
-    return planeH / 2 - planeH
+  // Calculate vertical position offset based on alignment
+  // The text is anchored at 'top' and we offset its Y position
+  const getTextYOffset = (vAlign: typeof textVerticalAlign, planeH: number): number => {
+    const halfPlane = planeH / 2
+    switch (vAlign) {
+      case 'top':
+        return halfPlane // Position at top of plane
+      case 'center':
+        return textHeight / 2 // Center based on actual text height
+      case 'bottom':
+        return -halfPlane + textHeight // Position at bottom
+      default:
+        return halfPlane
+    }
   }
 
   return (
     <group position={position} quaternion={quaternion}>
-      {!textContent && (
+      {/* Background plane - shown when textBackgroundColor is set or no text content (placeholder) */}
+      {(textBackgroundColor || !textContent) && (
         <mesh renderOrder={1}>
           <planeGeometry args={[planeWidth, planeHeight]} />
-          <meshBasicMaterial color="white" side={DoubleSide} />
+          <meshBasicMaterial color={textBackgroundColor ?? 'white'} side={DoubleSide} />
         </mesh>
       )}
 
       {textContent && fontSize?.value && (
-        <mesh key={id} renderOrder={2}>
+        <mesh 
+          key={id} 
+          renderOrder={2}
+          position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.001]}
+        >
           <Text
             ref={textRef}
             fontSize={fontSize.value * fontSizeFactor}
@@ -109,12 +143,12 @@ const Stencil = ({ artwork }: StencilProps) => {
             color={textColor ?? 'black'}
             font={fontUrl}
             anchorX={getAnchorX(textAlign, width ?? 1)}
-            anchorY={getAnchorY(height ?? 1)}
+            anchorY="top"
             maxWidth={(width ?? 0) - paddingOffset}
             textAlign={textAlign ?? 'left'}
             whiteSpace="normal"
             overflowWrap="break-word"
-            onSync={calculateTextWidth}
+            onSync={calculateTextDimensions}
           >
             {textContent}
           </Text>

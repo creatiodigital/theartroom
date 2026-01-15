@@ -42,10 +42,11 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    // Extract artworks of type "image" from exhibitionArtworks
+    // Extract artworks of type "image" that are not hidden from exhibition
+    // Use optional chaining for hiddenFromExhibition to handle Prisma Accelerate cache delay
     const artworks = exhibition.exhibitionArtworks
       .map((ea) => ea.artwork)
-      .filter((artwork) => artwork.artworkType === 'image')
+      .filter((artwork) => artwork.artworkType === 'image' && !(artwork as { hiddenFromExhibition?: boolean }).hiddenFromExhibition)
 
     return NextResponse.json({
       ...exhibition,
