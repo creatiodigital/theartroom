@@ -99,8 +99,8 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
       className={`${styles.frame} ${isDragOver ? styles.dragOver : ''}`}
       style={{
         border:
-          showFrame && imageUrl && frameThickness?.value
-            ? `${frameThickness.value}px solid ${frameColor}`
+          showFrame && imageUrl
+            ? `${frameThickness?.value ?? 3}px solid ${frameColor ?? '#000000'}`
             : undefined,
       }}
       onDoubleClick={handleDoubleClick}

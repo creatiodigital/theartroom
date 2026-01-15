@@ -75,11 +75,12 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
             break
         }
 
-        const artworkPosition = {
+        const artworkPosition: Record<string, unknown> = {
           posX2d: newX,
           posY2d: newY,
         }
 
+        // Add 3D coordinates if boundingData is available
         if (boundingData) {
           const new3DCoordinate = convert2DTo3D(
             newX,
@@ -88,15 +89,16 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
             artwork.height2d,
             boundingData,
           )
+          Object.assign(artworkPosition, new3DCoordinate)
+        }
 
-          if (artwork?.id) {
-            dispatch(
-              updateArtworkPosition({
-                artworkId: artwork.id,
-                artworkPosition: { ...artworkPosition, ...new3DCoordinate },
-              }),
-            )
-          }
+        if (artwork?.id) {
+          dispatch(
+            updateArtworkPosition({
+              artworkId: artwork.id,
+              artworkPosition,
+            }),
+          )
         }
       }
     })
