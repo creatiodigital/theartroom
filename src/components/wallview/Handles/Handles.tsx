@@ -1,6 +1,8 @@
 import { Handle } from '@/components/wallview/Handle'
 import type { ResizeHandler } from '@/types/wallView'
 
+import styles from './Handles.module.scss'
+
 export type THandles = {
   artworkId: string | ''
   handleResize: ResizeHandler<HTMLDivElement>
@@ -8,7 +10,7 @@ export type THandles = {
 
 const Handles = ({ artworkId, handleResize }: THandles) => (
   <>
-    {/* Corner handles (diagonal resize) */}
+    {/* Corner handles (diagonal resize) - visible */}
     <Handle
       direction="top-left"
       onMouseDown={(event) => handleResize(event, artworkId, 'top-left')}
@@ -26,11 +28,27 @@ const Handles = ({ artworkId, handleResize }: THandles) => (
       onMouseDown={(event) => handleResize(event, artworkId, 'bottom-right')}
     />
 
-    {/* Edge handles (single-axis resize) */}
-    <Handle direction="top" onMouseDown={(event) => handleResize(event, artworkId, 'top')} />
-    <Handle direction="bottom" onMouseDown={(event) => handleResize(event, artworkId, 'bottom')} />
-    <Handle direction="left" onMouseDown={(event) => handleResize(event, artworkId, 'left')} />
-    <Handle direction="right" onMouseDown={(event) => handleResize(event, artworkId, 'right')} />
+    {/* Edge resize zones (invisible, but full edge is draggable like Figma) */}
+    <div
+      className={styles.edgeZone}
+      style={{ top: -4, left: 12, right: 12, height: 8, cursor: 'ns-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'top')}
+    />
+    <div
+      className={styles.edgeZone}
+      style={{ bottom: -4, left: 12, right: 12, height: 8, cursor: 'ns-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'bottom')}
+    />
+    <div
+      className={styles.edgeZone}
+      style={{ left: -4, top: 12, bottom: 12, width: 8, cursor: 'ew-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'left')}
+    />
+    <div
+      className={styles.edgeZone}
+      style={{ right: -4, top: 12, bottom: 12, width: 8, cursor: 'ew-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'right')}
+    />
   </>
 )
 

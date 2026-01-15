@@ -48,7 +48,7 @@
 .links {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-5);
 
   @include breakpoint(lg) {
     flex-direction: row;
@@ -62,9 +62,11 @@
     text-decoration: none;
     font-weight: var(--font-regular);
     text-transform: uppercase;
+    padding: var(--space-2) 0;
 
     @include breakpoint(lg) {
       font-size: var(--text-xs);
+      padding: 0;
     }
 
     &:hover {

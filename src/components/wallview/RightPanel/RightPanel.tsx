@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 
+import { Button } from '@/components/ui/Button'
 import type { RootState } from '@/redux/store'
 
 import { ArtisticImagePanel } from './ArtisticImagePanel'
@@ -32,6 +33,16 @@ const RightPanel = () => {
             <ArtworkPanel />
             {artworkType === 'image' && <ArtisticImagePanel />}
             {artworkType === 'text' && <ArtisticTextPanel />}
+
+            <div className={styles.editButtonWrapper}>
+              <Button
+                font="dashboard"
+                size="small"
+                variant="primary"
+                label="Edit Artwork Details"
+                href={`/dashboard/artworks/${currentArtworkId}/edit?returnUrl=${encodeURIComponent(window.location.pathname)}`}
+              />
+            </div>
           </>
         )}
       </div>

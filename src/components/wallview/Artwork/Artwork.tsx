@@ -60,19 +60,20 @@ const Artwork = memo(
       scaleFactor,
     )
 
-    const { handleAddArtworkToGroup } = groupArtworkHandlers
+    const { handleAddArtworkToGroup, handleRemoveArtworkGroup } = groupArtworkHandlers
 
     const handleArtworkClick = (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
 
       if (isShiftKeyDown) {
+        // Shift+click: add to group (multi-select)
         handleAddArtworkToGroup(id)
       } else {
+        // Regular click: select only this artwork
         dispatch(chooseCurrentArtworkId(id))
-
-        if (artworkGroupIds.length === 0) {
-          handleAddArtworkToGroup(id)
-        }
+        // Clear the group and add only this artwork
+        handleRemoveArtworkGroup()
+        handleAddArtworkToGroup(id)
       }
 
       dispatch(showWizard())

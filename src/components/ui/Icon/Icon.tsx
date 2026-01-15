@@ -30,6 +30,9 @@ import Reset from '@/icons/reset.svg'
 import TextCenter from '@/icons/text-center.svg'
 import TextLeft from '@/icons/text-left.svg'
 import TextRight from '@/icons/text-right.svg'
+import TextVerticalBottom from '@/icons/text-vertical-bottom.svg'
+import TextVerticalCenter from '@/icons/text-vertical-center.svg'
+import TextVerticalTop from '@/icons/text-vertical-top.svg'
 import Text from '@/icons/text.svg'
 import VerticalBottom from '@/icons/vertical-bottom.svg'
 import VerticalCenter from '@/icons/vertical-center.svg'
@@ -82,6 +85,9 @@ const customIcons: Record<string, CustomSvgIcon> = {
   textLeft: TextLeft,
   textCenter: TextCenter,
   textRight: TextRight,
+  textVerticalTop: TextVerticalTop,
+  textVerticalCenter: TextVerticalCenter,
+  textVerticalBottom: TextVerticalBottom,
   verticalBottom: VerticalBottom,
   verticalCenter: VerticalCenter,
   verticalTop: VerticalTop,

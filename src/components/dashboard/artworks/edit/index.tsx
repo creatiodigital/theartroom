@@ -21,9 +21,9 @@ const stripHtml = (html: string): string => {
   return html
     .replace(/<[^>]*>/g, '') // Remove HTML tags
     .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-    .replace(/&amp;/g, '&')  // Replace ampersands
-    .replace(/&lt;/g, '<')   // Replace less than
-    .replace(/&gt;/g, '>')   // Replace greater than
+    .replace(/&amp;/g, '&') // Replace ampersands
+    .replace(/&lt;/g, '<') // Replace less than
+    .replace(/&gt;/g, '>') // Replace greater than
     .replace(/&quot;/g, '"') // Replace quotes
     .trim()
 }
@@ -76,8 +76,6 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
     featured: false,
     hiddenFromExhibition: false,
   })
-
-
 
   // Fetch artwork
   useEffect(() => {
@@ -231,7 +229,11 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
         </div>
       )
     }
-    return <DashboardLayout backLink={backLink} backLabel={backLabel}>Loading...</DashboardLayout>
+    return (
+      <DashboardLayout backLink={backLink} backLabel={backLabel}>
+        Loading...
+      </DashboardLayout>
+    )
   }
 
   if (error && !artwork) {
@@ -286,9 +288,7 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
         {/* Title Section */}
         <div className={dashboardStyles.section}>
           <h3 className={dashboardStyles.sectionTitle}>Title</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            The display title for your artwork.
-          </p>
+          <p className={dashboardStyles.sectionDescription}>The display title for your artwork.</p>
           <Input
             id="title"
             type="text"
@@ -297,7 +297,9 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
             onChange={(e) => handleChange('title', e.target.value)}
             required
           />
-          <span className={dashboardStyles.hint}>This will be shown in exhibitions and on your profile.</span>
+          <span className={dashboardStyles.hint}>
+            This will be shown in exhibitions and on your profile.
+          </span>
         </div>
 
         {/* Type Section */}
@@ -314,7 +316,9 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
             onChange={() => {}}
             variant="disabled"
           />
-          <span className={dashboardStyles.hint}>Image for visual artworks, Text for written content.</span>
+          <span className={dashboardStyles.hint}>
+            Image for visual artworks, Text for written content.
+          </span>
         </div>
 
         {/* Author */}
@@ -395,7 +399,8 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
               }}
             />
             <span className={dashboardStyles.hint}>
-              Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall panel.
+              Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall
+              panel.
             </span>
           </div>
         )}
@@ -415,23 +420,49 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
         {/* Featured Checkbox */}
         {formData.artworkType === 'image' && (
           <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Featured Artwork</h3>
+            <p className={dashboardStyles.sectionDescription}>
+              Highlight this artwork on your public artist profile.
+            </p>
             <Checkbox
               checked={formData.featured}
               onChange={(e) => handleChange('featured', e.target.checked)}
               label="Feature on artist profile"
             />
+            <span className={dashboardStyles.hint}>
+              Featured artworks appear prominently in your profile&apos;s artwork grid.
+            </span>
+          </div>
+        )}
+
+        {/* Hidden from Exhibition Checkbox */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Exhibition Visibility</h3>
+            <p className={dashboardStyles.sectionDescription}>
+              Control whether this artwork appears on the exhibition page.
+            </p>
             <Checkbox
               checked={formData.hiddenFromExhibition}
               onChange={(e) => handleChange('hiddenFromExhibition', e.target.checked)}
               label="Hide from exhibition page"
             />
+            <span className={dashboardStyles.hint}>
+              Hidden artworks will still be visible in the 3D space, but won&apos;t appear in the
+              exhibition&apos;s artwork list.
+            </span>
           </div>
         )}
 
         <ErrorText>{error}</ErrorText>
 
         <div className={dashboardStyles.actions}>
-          <Button font="dashboard" variant="primary" label={saving ? 'Saving...' : 'Save'} type="submit" />
+          <Button
+            font="dashboard"
+            variant="primary"
+            label={saving ? 'Saving...' : 'Save'}
+            type="submit"
+          />
           <Button
             font="dashboard"
             variant="secondary"
@@ -452,9 +483,7 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
             CLOSE <span className={styles.closeIcon}>×</span>
           </button>
         </header>
-        <div className={styles.minimalContent}>
-          {formContent}
-        </div>
+        <div className={styles.minimalContent}>{formContent}</div>
       </div>
     )
   }

@@ -1,7 +1,7 @@
-import { useMemo, useRef, useCallback } from 'react'
+import { useMemo, useRef, useCallback, Suspense, useState, useEffect } from 'react'
 import { useTexture } from '@react-three/drei'
 import { useDispatch, useSelector } from 'react-redux'
-import { DoubleSide, MeshStandardMaterial, SRGBColorSpace, Vector3, Quaternion } from 'three'
+import { DoubleSide, MeshStandardMaterial, SRGBColorSpace, Vector3, Quaternion, TextureLoader, Texture } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
@@ -22,7 +22,72 @@ type ArtworkImageProps = {
   height: number
 }
 
-const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
+// Placeholder shown while texture loads
+const ImagePlaceholder = ({ width, height }: { width: number; height: number }) => (
+  <mesh renderOrder={2}>
+    <planeGeometry args={[width, height]} />
+    <meshBasicMaterial color="#f0f0f0" side={DoubleSide} />
+  </mesh>
+)
+
+// Custom hook to load blob URLs directly with TextureLoader
+const useBlobTexture = (url: string): Texture | null => {
+  const [texture, setTexture] = useState<Texture | null>(null)
+
+  useEffect(() => {
+    if (!url || !url.startsWith('blob:')) {
+      setTexture(null)
+      return
+    }
+
+    const loader = new TextureLoader()
+    loader.load(
+      url,
+      (loadedTexture) => {
+        loadedTexture.colorSpace = SRGBColorSpace
+        setTexture(loadedTexture)
+      },
+      undefined,
+      (error) => {
+        console.warn('Failed to load blob texture:', error)
+        setTexture(null)
+      }
+    )
+
+    return () => {
+      if (texture) {
+        texture.dispose()
+      }
+    }
+  }, [url])
+
+  return texture
+}
+
+// Component for blob URL images (uses custom loader)
+const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
+  const texture = useBlobTexture(url)
+
+  if (!texture) {
+    return <ImagePlaceholder width={width} height={height} />
+  }
+
+  return (
+    <mesh castShadow receiveShadow renderOrder={2}>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial
+        map={texture}
+        side={DoubleSide}
+        roughness={1}
+        metalness={0}
+        toneMapped={true}
+      />
+    </mesh>
+  )
+}
+
+// Component for regular URL images (uses drei's useTexture with Suspense)
+const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useTexture(url)
   texture.colorSpace = SRGBColorSpace
 
@@ -37,6 +102,25 @@ const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
         toneMapped={true}
       />
     </mesh>
+  )
+}
+
+const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
+  // Skip rendering if URL is empty or invalid
+  if (!url || url === '') {
+    return <ImagePlaceholder width={width} height={height} />
+  }
+
+  // Use custom loader for blob URLs (temporary local previews)
+  if (url.startsWith('blob:')) {
+    return <BlobImage url={url} width={width} height={height} />
+  }
+
+  // Use drei's useTexture for regular URLs (with Suspense support)
+  return (
+    <Suspense fallback={<ImagePlaceholder width={width} height={height} />}>
+      <RegularImage url={url} width={width} height={height} />
+    </Suspense>
   )
 }
 

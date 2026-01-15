@@ -4,8 +4,11 @@ import c from 'classnames'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { Button } from '@/components/ui/Button'
 import { FileInput } from '@/components/ui/FileInput'
 import { Icon } from '@/components/ui/Icon'
+import Modal from '@/components/ui/Modal/Modal'
+import { Text } from '@/components/ui/Typography'
 import { addPendingUpload } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
@@ -18,12 +21,19 @@ type ArtisticImageProps = {
   artwork: TArtwork
 }
 
+const MAX_FILE_SIZE_MB = 1
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
 const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const dispatch = useDispatch()
   const [isDragOver, setIsDragOver] = useState(false)
+  const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({
+    show: false,
+    message: '',
+  })
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
   const {
@@ -40,13 +50,26 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     fileInputRef.current?.click()
   }
 
+  const showError = (message: string) => {
+    setErrorModal({ show: true, message })
+  }
+
+  const closeErrorModal = () => {
+    setErrorModal({ show: false, message: '' })
+  }
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file && validateFile(file)) {
+    if (!file) return
+
+    const validation = validateFile(file)
+    if (validation.valid) {
       processFile(file)
     } else {
-      alert('Only JPG, PNG, WebP, or GIF files are allowed!')
+      showError(validation.error!)
     }
+    // Reset input so user can select same file again after fixing
+    event.target.value = ''
   }
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -67,15 +90,32 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
       dispatch(chooseCurrentArtworkId(artwork.id))
     }
 
-    if (file && validateFile(file)) {
+    if (!file) return
+
+    const validation = validateFile(file)
+    if (validation.valid) {
       processFile(file)
     } else {
-      console.log('Only JPG, PNG, WebP, or GIF files are allowed!')
+      showError(validation.error!)
     }
   }
 
-  const validateFile = (file: File) => {
-    return allowedTypes.includes(file.type)
+  const validateFile = (file: File): { valid: boolean; error?: string } => {
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+      return { valid: false, error: 'Only JPG, PNG, WebP, or GIF files are allowed.' }
+    }
+
+    // Check file size (1MB max)
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2)
+      return {
+        valid: false,
+        error: `Image is too large (${fileSizeMB}MB). Maximum size is ${MAX_FILE_SIZE_MB}MB. Please compress or resize your image before uploading.`,
+      }
+    }
+
+    return { valid: true }
   }
 
   const processFile = (file: File) => {
@@ -95,48 +135,71 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
   }
 
   return (
-    <div
-      className={`${styles.frame} ${isDragOver ? styles.dragOver : ''}`}
-      style={{
-        border:
-          showFrame && imageUrl
-            ? `${frameThickness?.value ?? 3}px solid ${frameColor ?? '#000000'}`
-            : undefined,
-      }}
-      onDoubleClick={handleDoubleClick}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <>
       <div
-        className={styles.passepartout}
+        className={`${styles.frame} ${isDragOver ? styles.dragOver : ''}`}
         style={{
           border:
-            showPassepartout && imageUrl && passepartoutThickness
-              ? `${passepartoutThickness.value}px solid ${passepartoutColor}`
+            showFrame && imageUrl
+              ? `${frameThickness?.value ?? 3}px solid ${frameColor ?? '#000000'}`
               : undefined,
         }}
+        onDoubleClick={handleDoubleClick}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <div
-          className={styles.image}
+          className={styles.passepartout}
           style={{
-            backgroundImage: imageUrl ? `url(${imageUrl})` : 'none',
+            border:
+              showPassepartout && imageUrl && passepartoutThickness
+                ? `${passepartoutThickness.value}px solid ${passepartoutColor}`
+                : undefined,
           }}
         >
-          {!imageUrl && (
-            <div className={c([styles.empty, { [styles.over]: isDragOver }])}>
-              <Icon name="picture" size={40} color={isDragOver ? '#ffffff' : '#000000'} />
-            </div>
-          )}
-          <FileInput
-            ref={fileInputRef}
-            id={`file-upload-${currentArtworkId}`}
-            onChange={handleFileChange}
-          />
+          <div
+            className={styles.image}
+            style={{
+              backgroundImage: imageUrl ? `url(${imageUrl})` : 'none',
+            }}
+          >
+            {!imageUrl && (
+              <div className={c([styles.empty, { [styles.over]: isDragOver }])}>
+                <Icon name="picture" size={40} color={isDragOver ? '#ffffff' : '#000000'} />
+              </div>
+            )}
+            <FileInput
+              ref={fileInputRef}
+              id={`file-upload-${currentArtworkId}`}
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
       </div>
-    </div>
+
+      {errorModal.show && (
+        <Modal onClose={closeErrorModal}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <Text as="h3" font="dashboard" size="lg" weight="medium">
+              Image Too Large
+            </Text>
+            <Text as="p" font="dashboard" size="sm">
+              {errorModal.message}
+            </Text>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
+              <Button
+                font="dashboard"
+                variant="primary"
+                label="OK"
+                onClick={closeErrorModal}
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   )
 }
 
