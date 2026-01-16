@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtisticText } from '@/components/wallview/hooks/useArtisticText'
 import { setEditingArtwork } from '@/redux/slices/dashboardSlice'
 
@@ -97,7 +98,11 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     >
       {!hasContent && !isEditing ? (
         <div className={styles.empty}>
-          <Icon name="text" size={40} color="#000000" />
+          <Tooltip label="Double-click to start typing" placement="top">
+            <span style={{ display: 'inline-flex' }}>
+              <Icon name="type" size={40} color="#000000" />
+            </span>
+          </Tooltip>
         </div>
       ) : (
         <div

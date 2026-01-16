@@ -1,4 +1,4 @@
-import { ArrowRight, FolderDown, LampCeiling, Redo2, Settings, Undo2, X, type LucideIcon } from 'lucide-react'
+import { ArrowRight, FolderDown, Image, LampCeiling, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -48,9 +48,12 @@ const lucideIcons: Record<string, LucideIcon> = {
   arrowRight: ArrowRight,
   close: X,
   gallery: FolderDown,
+  'human-standing': PersonStanding,
+  image: Image,
   light: LampCeiling,
   redo: Redo2,
   settings: Settings,
+  type: Type,
   undo: Undo2,
 }
 

@@ -9,6 +9,7 @@ import { FileInput } from '@/components/ui/FileInput'
 import { Icon } from '@/components/ui/Icon'
 import Modal from '@/components/ui/Modal/Modal'
 import { Text } from '@/components/ui/Typography'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { addPendingUpload } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
@@ -167,7 +168,11 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
           >
             {!imageUrl && (
               <div className={c([styles.empty, { [styles.over]: isDragOver }])}>
-                <Icon name="picture" size={40} color={isDragOver ? '#ffffff' : '#000000'} />
+                <Tooltip label="Drag and drop an image or double-click" placement="top">
+                  <span style={{ display: 'inline-flex' }}>
+                    <Icon name="image" size={40} color={isDragOver ? '#ffffff' : '#000000'} />
+                  </span>
+                </Tooltip>
               </div>
             )}
             <FileInput

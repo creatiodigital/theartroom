@@ -69,11 +69,9 @@ const Artwork = memo(
         // Shift+click: add to group (multi-select)
         handleAddArtworkToGroup(id)
       } else {
-        // Regular click: select only this artwork
+        // Regular click: select only this artwork and clear any group
         dispatch(chooseCurrentArtworkId(id))
-        // Clear the group and add only this artwork
         handleRemoveArtworkGroup()
-        handleAddArtworkToGroup(id)
       }
 
       dispatch(showWizard())

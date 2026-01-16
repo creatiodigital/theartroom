@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
 import {
   restoreArtworksSnapshot,
@@ -269,40 +270,50 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="secondary"
-                icon="undo"
-                onClick={handleUndo}
-                disabled={!canUndo}
-                title="Undo (⌘Z)"
-              />
+              <Tooltip label="Undo (⌘Z)" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  icon="undo"
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                />
+              </Tooltip>
             </div>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="secondary"
-                icon="redo"
-                onClick={handleRedo}
-                disabled={!canRedo}
-                title="Redo (⌘⇧Z)"
-              />
-            </div>
-          </div>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
-            </div>
-            <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="zoomIn" onClick={handleZoomIn} />
+              <Tooltip label="Redo (⌘⇧Z)" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  icon="redo"
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                />
+              </Tooltip>
             </div>
           </div>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="reset" onClick={handleResetView} />
+              <Tooltip label="Zoom out" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
+              </Tooltip>
             </div>
             <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="person" onClick={handleToggleHuman} />
+              <Tooltip label="Zoom in" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="zoomIn" onClick={handleZoomIn} />
+              </Tooltip>
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Fit to view" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="reset" onClick={handleResetView} />
+              </Tooltip>
+            </div>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Show human height reference" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="human-standing" onClick={handleToggleHuman} />
+              </Tooltip>
             </div>
           </div>
         </div>

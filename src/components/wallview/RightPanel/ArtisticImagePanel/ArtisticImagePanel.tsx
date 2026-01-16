@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
@@ -34,19 +35,29 @@ const ArtisticImage = () => {
   return (
     <>
       <div className={styles.section}>
-        <Checkbox
-          checked={showArtworkInformation!}
-          onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
-          label="Show details on double-click"
-        />
+        <Tooltip
+          label="When enabled, visitors can double-click this artwork in the 3D exhibition to view its details"
+          placement="left"
+        >
+          <Checkbox
+            checked={showArtworkInformation!}
+            onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
+            label="Show information in exhibition"
+          />
+        </Tooltip>
       </div>
 
       <div className={styles.section}>
-        <Checkbox
-          checked={showFrame!}
-          onChange={(e) => handleEditArtisticImage('showFrame', e.target.checked)}
-          label="Add Frame"
-        />
+        <Tooltip
+          label="Add a picture frame around this artwork, visible in the 3D exhibition"
+          placement="left"
+        >
+          <Checkbox
+            checked={showFrame!}
+            onChange={(e) => handleEditArtisticImage('showFrame', e.target.checked)}
+            label="Add Frame"
+          />
+        </Tooltip>
         {showFrame && (
           <div className={styles.row}>
             <div className={styles.item}>
@@ -74,11 +85,16 @@ const ArtisticImage = () => {
       </div>
 
       <div className={styles.section}>
-        <Checkbox
-          checked={showPassepartout!}
-          onChange={(e) => handleEditArtisticImage('showPassepartout', e.target.checked)}
-          label="Add Passepartout"
-        />
+        <Tooltip
+          label="Add a mat border between the artwork and frame, like traditional gallery framing"
+          placement="left"
+        >
+          <Checkbox
+            checked={showPassepartout!}
+            onChange={(e) => handleEditArtisticImage('showPassepartout', e.target.checked)}
+            label="Add Passepartout"
+          />
+        </Tooltip>
         {showPassepartout && (
           <div className={styles.row}>
             <div className={styles.item}>
