@@ -50,6 +50,10 @@ export const hasPendingUpload = (artworkId: string): boolean => {
   return pendingUploads.has(artworkId)
 }
 
+export const hasAnyPendingUploads = (): boolean => {
+  return pendingUploads.size > 0
+}
+
 // Check if URL is a local blob URL (not yet uploaded)
 export const isLocalBlobUrl = (url: string | undefined): boolean => {
   if (!url) return false

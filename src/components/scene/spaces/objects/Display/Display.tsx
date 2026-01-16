@@ -1,5 +1,4 @@
-import { useMemo, useRef, useCallback, Suspense, useState, useEffect } from 'react'
-import { useTexture } from '@react-three/drei'
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { DoubleSide, MeshStandardMaterial, SRGBColorSpace, Vector3, Quaternion, TextureLoader, Texture } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -86,10 +85,54 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   )
 }
 
-// Component for regular URL images (uses drei's useTexture with Suspense)
+// Custom hook to load regular URL textures with error handling
+const useRegularTexture = (url: string): Texture | null => {
+  const [texture, setTexture] = useState<Texture | null>(null)
+
+  useEffect(() => {
+    if (!url || url === '') {
+      setTexture(null)
+      return
+    }
+
+    let disposed = false
+    const loader = new TextureLoader()
+    
+    loader.load(
+      url,
+      (loadedTexture) => {
+        if (!disposed) {
+          loadedTexture.colorSpace = SRGBColorSpace
+          setTexture(loadedTexture)
+        }
+      },
+      undefined,
+      (error) => {
+        console.warn('Failed to load image texture:', url, error)
+        if (!disposed) {
+          setTexture(null)
+        }
+      }
+    )
+
+    return () => {
+      disposed = true
+      if (texture) {
+        texture.dispose()
+      }
+    }
+  }, [url])
+
+  return texture
+}
+
+// Component for regular URL images (uses custom loader with error handling)
 const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
-  const texture = useTexture(url)
-  texture.colorSpace = SRGBColorSpace
+  const texture = useRegularTexture(url)
+
+  if (!texture) {
+    return <ImagePlaceholder width={width} height={height} />
+  }
 
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
@@ -116,12 +159,8 @@ const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
     return <BlobImage url={url} width={width} height={height} />
   }
 
-  // Use drei's useTexture for regular URLs (with Suspense support)
-  return (
-    <Suspense fallback={<ImagePlaceholder width={width} height={height} />}>
-      <RegularImage url={url} width={width} height={height} />
-    </Suspense>
-  )
+  // Use custom loader for regular URLs (with error handling)
+  return <RegularImage url={url} width={width} height={height} />
 }
 
 // Constants for click detection

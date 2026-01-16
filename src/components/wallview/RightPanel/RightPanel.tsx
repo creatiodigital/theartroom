@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip/Tooltip'
+import { hasAnyPendingUploads } from '@/lib/pendingUploads'
 import { openArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
@@ -20,11 +21,11 @@ const RightPanel = () => {
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
-  // Check if there are unsaved changes (history or snapshot exist)
+  // Check if there are unsaved changes (history, snapshot, or pending image uploads)
   const hasUnsavedChanges = useSelector(
     (state: RootState) => (state.exhibition as { _history: unknown[] })._history.length > 0 || 
                           (state.exhibition as { _snapshot: unknown })._snapshot !== null
-  )
+  ) || hasAnyPendingUploads()
 
   const { artworkType } = useArtworkDetails(currentArtworkId!)
   const { saveToDatabase, saving } = useSaveExhibition()
@@ -35,8 +36,10 @@ const RightPanel = () => {
   const handleEditArtworkDetails = async () => {
     if (!currentArtworkId) return
     
-    // Save artwork to database first if there are unsaved changes
-    if (hasUnsavedChanges) {
+    // Always save to database before opening modal
+    // This ensures new artworks and pending image uploads are persisted
+    // Check hasAnyPendingUploads() at call time since it's not reactive
+    if (hasUnsavedChanges || hasAnyPendingUploads()) {
       const success = await saveToDatabase()
       if (!success) {
         console.error('Failed to save before editing')

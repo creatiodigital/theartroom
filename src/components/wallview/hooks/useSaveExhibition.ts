@@ -80,8 +80,8 @@ export const useSaveExhibition = () => {
           imageUrl: null, // Will be updated after upload
         }
 
-        // Create/update artwork first
-        await fetch('/api/artworks/batch', {
+        // Create/update artwork first (required before uploading image)
+        const batchResponse = await fetch('/api/artworks/batch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -89,6 +89,11 @@ export const useSaveExhibition = () => {
             artworks: [artworkPayload],
           }),
         })
+
+        if (!batchResponse.ok) {
+          console.error(`Failed to create artwork ${artworkId} before image upload`)
+          continue
+        }
 
         // Upload image
         const uploadResponse = await fetch(`/api/artworks/${artworkId}/image`, {
@@ -98,6 +103,7 @@ export const useSaveExhibition = () => {
 
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json()
+
           uploadedUrls.set(artworkId, uploadData.url)
 
           // Update Redux with cloud URL
@@ -108,6 +114,25 @@ export const useSaveExhibition = () => {
               value: uploadData.url,
             }),
           )
+          // Update original dimensions for Match Ratio feature
+          if (uploadData.originalWidth) {
+            dispatch(
+              editArtisticImage({
+                currentArtworkId: artworkId,
+                property: 'originalWidth',
+                value: uploadData.originalWidth,
+              }),
+            )
+          }
+          if (uploadData.originalHeight) {
+            dispatch(
+              editArtisticImage({
+                currentArtworkId: artworkId,
+                property: 'originalHeight',
+                value: uploadData.originalHeight,
+              }),
+            )
+          }
         } else {
           console.warn(`Failed to upload image for artwork ${artworkId}`)
         }

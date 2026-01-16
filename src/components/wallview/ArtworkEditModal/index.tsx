@@ -137,6 +137,13 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         setImageUrl(data.url)
         // Sync with Redux immediately so wall view updates
         dispatch(editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: data.url }))
+        // Sync original dimensions for Match Ratio feature
+        if (data.originalWidth) {
+          dispatch(editArtwork({ currentArtworkId: artworkId, property: 'originalWidth', value: data.originalWidth }))
+        }
+        if (data.originalHeight) {
+          dispatch(editArtwork({ currentArtworkId: artworkId, property: 'originalHeight', value: data.originalHeight }))
+        }
       } catch {
         setError('Failed to upload image')
       } finally {
