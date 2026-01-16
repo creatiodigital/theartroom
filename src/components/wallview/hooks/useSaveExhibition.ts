@@ -114,25 +114,6 @@ export const useSaveExhibition = () => {
               value: uploadData.url,
             }),
           )
-          // Update original dimensions for Match Ratio feature
-          if (uploadData.originalWidth) {
-            dispatch(
-              editArtisticImage({
-                currentArtworkId: artworkId,
-                property: 'originalWidth',
-                value: uploadData.originalWidth,
-              }),
-            )
-          }
-          if (uploadData.originalHeight) {
-            dispatch(
-              editArtisticImage({
-                currentArtworkId: artworkId,
-                property: 'originalHeight',
-                value: uploadData.originalHeight,
-              }),
-            )
-          }
         } else {
           console.warn(`Failed to upload image for artwork ${artworkId}`)
         }
