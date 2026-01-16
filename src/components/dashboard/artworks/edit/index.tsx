@@ -4,57 +4,23 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-import { Button } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/Checkbox'
-import { ErrorText } from '@/components/ui/ErrorText'
-import { ImageUploader } from '@/components/ui/ImageUploader'
-import { Input } from '@/components/ui/Input'
-import { RichTextEditor } from '@/components/ui/RichTextEditor'
-
 import { DashboardLayout } from '../../DashboardLayout'
-import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
-import styles from './edit.module.scss'
-
-// Strip HTML tags from text content (for content saved with RichTextEditor previously)
-const stripHtml = (html: string): string => {
-  if (!html) return ''
-  return html
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-    .replace(/&amp;/g, '&')  // Replace ampersands
-    .replace(/&lt;/g, '<')   // Replace less than
-    .replace(/&gt;/g, '>')   // Replace greater than
-    .replace(/&quot;/g, '"') // Replace quotes
-    .trim()
-}
+import { ErrorText } from '@/components/ui/ErrorText'
+import {
+  ArtworkEditForm,
+  getInitialFormData,
+  populateFormData,
+} from '@/components/shared/ArtworkEditForm'
+import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
 
 type ArtworkEditPageProps = {
   artworkId: string
-  returnUrl?: string
 }
 
-type Artwork = {
-  id: string
-  userId: string
-  name: string
-  artworkType: string
-  title: string | null
-  author: string | null
-  year: string | null
-  technique: string | null
-  dimensions: string | null
-  description: string | null
-  imageUrl: string | null
-  textContent: string | null
-  featured: boolean
-  hiddenFromExhibition: boolean
-}
-
-export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) => {
+export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const { data: session } = useSession()
   const router = useRouter()
-  const defaultBackLink = '/dashboard/artworks'
-  const backLink = returnUrl || defaultBackLink
+  const backLink = '/dashboard/artworks'
 
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [loading, setLoading] = useState(true)
@@ -62,22 +28,7 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
-
-  const [formData, setFormData] = useState({
-    name: '',
-    artworkType: 'image',
-    title: '',
-    author: '',
-    year: '',
-    technique: '',
-    dimensions: '',
-    description: '',
-    textContent: '',
-    featured: false,
-    hiddenFromExhibition: false,
-  })
-
-
+  const [formData, setFormData] = useState<ArtworkFormData>(getInitialFormData())
 
   // Fetch artwork
   useEffect(() => {
@@ -98,19 +49,7 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
 
         setArtwork(data)
         setImageUrl(data.imageUrl)
-        setFormData({
-          name: data.name || '',
-          artworkType: data.artworkType || 'image',
-          title: data.title || '',
-          author: data.author || '',
-          year: data.year || '',
-          technique: data.technique || '',
-          dimensions: data.dimensions || '',
-          description: data.description || '',
-          textContent: stripHtml(data.textContent || ''),
-          featured: data.featured ?? false,
-          hiddenFromExhibition: data.hiddenFromExhibition ?? false,
-        })
+        setFormData(populateFormData(data))
       } catch {
         setError('Failed to load artwork')
       } finally {
@@ -121,7 +60,7 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
     if (session?.user?.id) {
       fetchArtwork()
     }
-  }, [artworkId, session?.user?.id, session?.user?.userType, router])
+  }, [artworkId, session?.user?.id, session?.user?.userType, router, backLink])
 
   const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -211,257 +150,36 @@ export const ArtworkEditPage = ({ artworkId, returnUrl }: ArtworkEditPageProps) 
     }
   }, [artworkId, imageUrl])
 
-  const backLabel = returnUrl ? '← Back' : '← Back to Library'
-  const isMinimalMode = !!returnUrl
-
-  const handleClose = () => {
-    router.push(backLink)
-  }
-
   if (loading) {
-    if (isMinimalMode) {
-      return (
-        <div className={styles.minimalPage}>
-          <header className={styles.minimalHeader}>
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
-            </button>
-          </header>
-          <div className={styles.minimalContent}>Loading...</div>
-        </div>
-      )
-    }
-    return <DashboardLayout backLink={backLink} backLabel={backLabel}>Loading...</DashboardLayout>
+    return (
+      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
+        Loading...
+      </DashboardLayout>
+    )
   }
 
   if (error && !artwork) {
-    if (isMinimalMode) {
-      return (
-        <div className={styles.minimalPage}>
-          <header className={styles.minimalHeader}>
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
-            </button>
-          </header>
-          <div className={styles.minimalContent}>
-            <ErrorText>{error}</ErrorText>
-          </div>
-        </div>
-      )
-    }
     return (
-      <DashboardLayout backLink={backLink} backLabel={backLabel}>
+      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
         <ErrorText>{error}</ErrorText>
       </DashboardLayout>
     )
   }
 
-  const formContent = (
-    <>
-      {/* Page Title */}
-      <h1 className={dashboardStyles.pageTitle}>Edit Artwork</h1>
-
-      {/* Image Upload Section - only for image type */}
-      {formData.artworkType === 'image' && (
-        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
-          <h3 className={dashboardStyles.sectionTitle}>Artwork Image</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Upload the artwork image. This will be displayed in exhibitions and on your profile.
-          </p>
-          <ImageUploader
-            imageUrl={imageUrl}
-            onUpload={handleImageUpload}
-            onRemove={handleRemoveImage}
-            uploading={uploading}
-            aspectRatio="1 / 1"
-            objectFit="contain"
-          />
-          <span className={dashboardStyles.hint}>
-            Accepted: JPG, PNG, WebP, GIF (max 1MB). Images are automatically optimized.
-          </span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* Title Section */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Title</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            The display title for your artwork.
-          </p>
-          <Input
-            id="title"
-            type="text"
-            size="medium"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
-            required
-          />
-          <span className={dashboardStyles.hint}>This will be shown in exhibitions and on your profile.</span>
-        </div>
-
-        {/* Type Section */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Type</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            The artwork type cannot be changed after creation.
-          </p>
-          <Input
-            id="artworkType"
-            type="text"
-            size="medium"
-            value={formData.artworkType === 'image' ? 'Image' : 'Text'}
-            onChange={() => {}}
-            variant="disabled"
-          />
-          <span className={dashboardStyles.hint}>Image for visual artworks, Text for written content.</span>
-        </div>
-
-        {/* Author */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Author</h3>
-            <Input
-              id="author"
-              type="text"
-              size="medium"
-              value={formData.author}
-              onChange={(e) => handleChange('author', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Year */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Year</h3>
-            <Input
-              id="year"
-              type="text"
-              size="medium"
-              value={formData.year}
-              onChange={(e) => handleChange('year', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Technique / Medium */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Technique / Medium</h3>
-            <RichTextEditor
-              content={formData.technique}
-              onChange={(content) => handleChange('technique', content)}
-              placeholder="e.g. Oil on canvas, mixed media..."
-            />
-          </div>
-        )}
-
-        {/* Dimensions */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Dimensions</h3>
-            <Input
-              id="dimensions"
-              type="text"
-              size="medium"
-              value={formData.dimensions}
-              onChange={(e) => handleChange('dimensions', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Text Content - for text artworks (plain text only for 3D) */}
-        {formData.artworkType === 'text' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Text Content</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Plain text content that will be displayed on the 3D stencil.
-            </p>
-            <textarea
-              value={formData.textContent}
-              onChange={(e) => handleChange('textContent', e.target.value)}
-              placeholder="Enter the text to display..."
-              rows={8}
-              style={{
-                width: '100%',
-                padding: 'var(--space-3)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-sm)',
-                fontFamily: 'inherit',
-                fontSize: 'var(--text-sm)',
-                lineHeight: '1.6',
-                resize: 'vertical',
-              }}
-            />
-            <span className={dashboardStyles.hint}>
-              Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall panel.
-            </span>
-          </div>
-        )}
-
-        {/* Description - for image artworks (supports rich text) */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Description</h3>
-            <RichTextEditor
-              content={formData.description}
-              onChange={(content) => handleChange('description', content)}
-              placeholder="About this artwork..."
-            />
-          </div>
-        )}
-
-        {/* Featured Checkbox */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <Checkbox
-              checked={formData.featured}
-              onChange={(e) => handleChange('featured', e.target.checked)}
-              label="Feature on artist profile"
-            />
-            <Checkbox
-              checked={formData.hiddenFromExhibition}
-              onChange={(e) => handleChange('hiddenFromExhibition', e.target.checked)}
-              label="Hide from exhibition page"
-            />
-          </div>
-        )}
-
-        <ErrorText>{error}</ErrorText>
-
-        <div className={dashboardStyles.actions}>
-          <Button font="dashboard" variant="primary" label={saving ? 'Saving...' : 'Save'} type="submit" />
-          <Button
-            font="dashboard"
-            variant="secondary"
-            label="Cancel"
-            onClick={() => router.push(backLink)}
-            type="button"
-          />
-        </div>
-      </form>
-    </>
-  )
-
-  if (isMinimalMode) {
-    return (
-      <div className={styles.minimalPage}>
-        <header className={styles.minimalHeader}>
-          <button onClick={handleClose} className={styles.closeButton}>
-            CLOSE <span className={styles.closeIcon}>×</span>
-          </button>
-        </header>
-        <div className={styles.minimalContent}>
-          {formContent}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <DashboardLayout backLink={backLink} backLabel={backLabel}>
-      {formContent}
+    <DashboardLayout backLink={backLink} backLabel="← Back to Library">
+      <ArtworkEditForm
+        formData={formData}
+        imageUrl={imageUrl}
+        uploading={uploading}
+        saving={saving}
+        error={error}
+        onFormChange={handleChange}
+        onImageUpload={handleImageUpload}
+        onImageRemove={handleRemoveImage}
+        onSubmit={handleSubmit}
+        onCancel={() => router.push(backLink)}
+      />
     </DashboardLayout>
   )
 }

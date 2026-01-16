@@ -8,6 +8,7 @@ import {
   BufferGeometry,
 } from 'three'
 
+import { snapshotArtworks } from '@/redux/slices/artworkSlice'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { snapshotExhibition } from '@/redux/slices/exhibitionSlice'
 import { showWallView } from '@/redux/slices/wallViewSlice'
@@ -40,9 +41,10 @@ const Placeholder: React.FC<PlaceholderProps> = ({ i, nodes }) => {
   }, [])
 
   const handleOnPlaceholderClick = (mesh: Mesh) => {
-    // Snapshot current exhibition state before opening wall view
+    // Snapshot current state before opening wall view
     // This allows Cancel to restore the original state
     dispatch(snapshotExhibition())
+    dispatch(snapshotArtworks())
     // Use mesh.name instead of mesh.uuid for stable identification across page loads
     dispatch(showWallView(mesh.name))
     dispatch(hideArtworkPanel())

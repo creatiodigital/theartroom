@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { deleteArtwork } from '@/redux/slices/artworkSlice'
 import { deleteArtworkPosition } from '@/redux/slices/exhibitionSlice'
-import { removeGroup, setShiftKeyDown } from '@/redux/slices/wallViewSlice'
+import { removeGroup, setShiftKeyDown, chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
+import { hideWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
 
 export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: boolean) => {
@@ -21,6 +22,8 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
           dispatch(deleteArtwork({ artworkId: currentArtworkId }))
           dispatch(deleteArtworkPosition({ artworkId: currentArtworkId }))
           dispatch(removeGroup())
+          dispatch(chooseCurrentArtworkId(null))
+          dispatch(hideWizard())
         }
 
         if (isGroupHovered && artworkGroupIds.length > 0) {
@@ -29,6 +32,8 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
             dispatch(deleteArtworkPosition({ artworkId }))
           })
           dispatch(removeGroup())
+          dispatch(chooseCurrentArtworkId(null))
+          dispatch(hideWizard())
         }
       }
 

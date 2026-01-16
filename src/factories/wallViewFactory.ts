@@ -4,6 +4,7 @@ export const wallViewFactory = (): TWallView => ({
   isWallView: false,
   currentArtworkId: null,
   currentWallId: null,
+  editingArtworkId: null,
   currentWallCoordinates: { x: 0, y: 0, z: 0 },
   currentWallNormal: { x: 0, y: 0, z: 1 },
   scaleFactor: 1,

@@ -53,146 +53,103 @@ const GroupPanel = () => {
 
   return (
     <>
+      <Text font="dashboard" as="h1" size="lg" className={styles.panelTitle}>
+        {artworkGroupIds.length} elements
+      </Text>
+
       <div className={styles.section}>
-        <div className={styles.subsection}>
-          <div className={styles.row}>
-            <div className={styles.item}>{`${artworkGroupIds.length}`} elements</div>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Position in wall
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionCenterV" onClick={() => handleAlignGroup('verticalCenter')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionBottom" onClick={() => handleAlignGroup('verticalBottom')} />
+          </div>
+        </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionLeft" onClick={() => handleAlignGroup('horizontalLeft')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionCenterH" onClick={() => handleAlignGroup('horizontalCenter')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="positionRight" onClick={() => handleAlignGroup('horizontalRight')} />
           </div>
         </div>
       </div>
+
       <div className={styles.section}>
-        <Text font="dashboard" as="h2" className={styles.title}>
-          Group
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Position (meters)
         </Text>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="h3" className={styles.subtitle}>
-            Position in wall
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="positionCenterV"
-                onClick={() => handleAlignGroup('verticalCenter')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="positionBottom"
-                onClick={() => handleAlignGroup('verticalBottom')}
-              />
-            </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <NumberInput
+              value={groupX / 100}
+              icon="move"
+              rotate={90}
+              min={0}
+              max={1000}
+              onChange={handleMoveGroupXChange}
+            />
           </div>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="positionLeft" onClick={() => handleAlignGroup('horizontalLeft')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="positionCenterH"
-                onClick={() => handleAlignGroup('horizontalCenter')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="positionRight"
-                onClick={() => handleAlignGroup('horizontalRight')}
-              />
-            </div>
-          </div>
-        </div>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="h3" className={styles.subtitle}>
-            Position (meters)
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <NumberInput
-                value={groupX / 100}
-                icon="move"
-                rotate={90}
-                min={0}
-                max={1000}
-                onChange={handleMoveGroupXChange}
-              />
-            </div>
-            <div className={styles.item}>
-              <NumberInput
-                value={groupY / 100}
-                icon="move"
-                min={0}
-                max={1000}
-                onChange={handleMoveGroupYChange}
-              />
-            </div>
+          <div className={styles.item}>
+            <NumberInput
+              value={groupY / 100}
+              icon="move"
+              min={0}
+              max={1000}
+              onChange={handleMoveGroupYChange}
+            />
           </div>
         </div>
       </div>
+
       <div className={styles.section}>
-        <Text font="dashboard" as="h2" className={styles.title}>
-          Elements
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Align Elements
         </Text>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="h3" className={styles.subtitle}>
-            Align Elements
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small" icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="verticalCenter"
-                onClick={() => handleAlignElements('verticalCenter')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="verticalBottom"
-                onClick={() => handleAlignElements('verticalBottom')}
-              />
-            </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
           </div>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="horizontalLeft"
-                onClick={() => handleAlignElements('horizontalLeft')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="horizontalCenter"
-                onClick={() => handleAlignElements('horizontalCenter')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="horizontalRight"
-                onClick={() => handleAlignElements('horizontalRight')}
-              />
-            </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="verticalCenter" onClick={() => handleAlignElements('verticalCenter')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="verticalBottom" onClick={() => handleAlignElements('verticalBottom')} />
           </div>
         </div>
-        <div className={styles.subsection}>
-          <Text font="dashboard" as="h3" className={styles.subtitle}>
-            Distribution
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="distributeHorizontal"
-                onClick={() => handleDistributeElements('horizontal')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button size="small"
-                icon="distributeVertical"
-                onClick={() => handleDistributeElements('vertical')}
-              />
-            </div>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="horizontalLeft" onClick={() => handleAlignElements('horizontalLeft')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="horizontalCenter" onClick={() => handleAlignElements('horizontalCenter')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="horizontalRight" onClick={() => handleAlignElements('horizontalRight')} />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Distribution
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="distributeHorizontal" onClick={() => handleDistributeElements('horizontal')} />
+          </div>
+          <div className={styles.item}>
+            <Button size="small" variant="secondary" icon="distributeVertical" onClick={() => handleDistributeElements('vertical')} />
           </div>
         </div>
       </div>

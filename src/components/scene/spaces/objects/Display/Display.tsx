@@ -1,7 +1,6 @@
-import { useMemo, useRef, useCallback } from 'react'
-import { useTexture } from '@react-three/drei'
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { DoubleSide, MeshStandardMaterial, SRGBColorSpace, Vector3, Quaternion } from 'three'
+import { DoubleSide, MeshStandardMaterial, SRGBColorSpace, Vector3, Quaternion, TextureLoader, Texture } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
@@ -22,9 +21,55 @@ type ArtworkImageProps = {
   height: number
 }
 
-const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
-  const texture = useTexture(url)
-  texture.colorSpace = SRGBColorSpace
+// Placeholder shown while texture loads
+const ImagePlaceholder = ({ width, height }: { width: number; height: number }) => (
+  <mesh renderOrder={2}>
+    <planeGeometry args={[width, height]} />
+    <meshBasicMaterial color="#f0f0f0" side={DoubleSide} />
+  </mesh>
+)
+
+// Custom hook to load blob URLs directly with TextureLoader
+const useBlobTexture = (url: string): Texture | null => {
+  const [texture, setTexture] = useState<Texture | null>(null)
+
+  useEffect(() => {
+    if (!url || !url.startsWith('blob:')) {
+      setTexture(null)
+      return
+    }
+
+    const loader = new TextureLoader()
+    loader.load(
+      url,
+      (loadedTexture) => {
+        loadedTexture.colorSpace = SRGBColorSpace
+        setTexture(loadedTexture)
+      },
+      undefined,
+      (error) => {
+        console.warn('Failed to load blob texture:', error)
+        setTexture(null)
+      }
+    )
+
+    return () => {
+      if (texture) {
+        texture.dispose()
+      }
+    }
+  }, [url])
+
+  return texture
+}
+
+// Component for blob URL images (uses custom loader)
+const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
+  const texture = useBlobTexture(url)
+
+  if (!texture) {
+    return <ImagePlaceholder width={width} height={height} />
+  }
 
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
@@ -38,6 +83,84 @@ const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
       />
     </mesh>
   )
+}
+
+// Custom hook to load regular URL textures with error handling
+const useRegularTexture = (url: string): Texture | null => {
+  const [texture, setTexture] = useState<Texture | null>(null)
+
+  useEffect(() => {
+    if (!url || url === '') {
+      setTexture(null)
+      return
+    }
+
+    let disposed = false
+    const loader = new TextureLoader()
+    
+    loader.load(
+      url,
+      (loadedTexture) => {
+        if (!disposed) {
+          loadedTexture.colorSpace = SRGBColorSpace
+          setTexture(loadedTexture)
+        }
+      },
+      undefined,
+      (error) => {
+        console.warn('Failed to load image texture:', url, error)
+        if (!disposed) {
+          setTexture(null)
+        }
+      }
+    )
+
+    return () => {
+      disposed = true
+      if (texture) {
+        texture.dispose()
+      }
+    }
+  }, [url])
+
+  return texture
+}
+
+// Component for regular URL images (uses custom loader with error handling)
+const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
+  const texture = useRegularTexture(url)
+
+  if (!texture) {
+    return <ImagePlaceholder width={width} height={height} />
+  }
+
+  return (
+    <mesh castShadow receiveShadow renderOrder={2}>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial
+        map={texture}
+        side={DoubleSide}
+        roughness={1}
+        metalness={0}
+        toneMapped={true}
+      />
+    </mesh>
+  )
+}
+
+const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
+  // Skip rendering if URL is empty or invalid
+  if (!url || url === '') {
+    return <ImagePlaceholder width={width} height={height} />
+  }
+
+  // Use custom loader for blob URLs (temporary local previews)
+  if (url.startsWith('blob:')) {
+    return <BlobImage url={url} width={width} height={height} />
+  }
+
+  // Use custom loader for regular URLs (with error handling)
+  return <RegularImage url={url} width={width} height={height} />
 }
 
 // Constants for click detection

@@ -12,6 +12,15 @@
   box-sizing: border-box;
 }
 
+// Remove Chrome's blue focus outline globally
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: none;
+}
+
 html {
   font-size: var(--text-md-mobile);
   -webkit-font-smoothing: antialiased;

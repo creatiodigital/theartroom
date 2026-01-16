@@ -1,5 +1,11 @@
-import { useSelector } from 'react-redux'
+'use client'
 
+import { useDispatch, useSelector } from 'react-redux'
+
+import { Button } from '@/components/ui/Button'
+import Tooltip from '@/components/ui/Tooltip/Tooltip'
+import { hasAnyPendingUploads } from '@/lib/pendingUploads'
+import { openArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
 import { ArtisticImagePanel } from './ArtisticImagePanel'
@@ -7,16 +13,50 @@ import { ArtisticTextPanel } from './ArtisticTextPanel'
 import { ArtworkPanel } from './ArtworkPanel'
 import { GroupPanel } from './GroupPanel'
 import { useArtworkDetails } from './hooks/useArtworkDetails'
+import { useSaveExhibition } from '../hooks/useSaveExhibition'
 import styles from './RightPanel.module.scss'
 
 const RightPanel = () => {
+  const dispatch = useDispatch()
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
+  // Check if there are unsaved changes (history, snapshot, or pending image uploads)
+  const hasUnsavedChanges = useSelector(
+    (state: RootState) => (state.exhibition as { _history: unknown[] })._history.length > 0 || 
+                          (state.exhibition as { _snapshot: unknown })._snapshot !== null
+  ) || hasAnyPendingUploads()
 
   const { artworkType } = useArtworkDetails(currentArtworkId!)
+  const { saveToDatabase, saving } = useSaveExhibition()
 
   const isGroupCreated = artworkGroupIds.length > 1
+
+  // Save first, then open the edit modal
+  const handleEditArtworkDetails = async () => {
+    if (!currentArtworkId) return
+    
+    // Always save to database before opening modal
+    // This ensures new artworks and pending image uploads are persisted
+    // Check hasAnyPendingUploads() at call time since it's not reactive
+    if (hasUnsavedChanges || hasAnyPendingUploads()) {
+      const success = await saveToDatabase()
+      if (!success) {
+        console.error('Failed to save before editing')
+        return
+      }
+    }
+    
+    // Open the modal overlay
+    dispatch(openArtworkEditModal(currentArtworkId))
+  }
+
+  // Determine button label
+  const getButtonLabel = () => {
+    if (saving) return 'Saving...'
+    if (hasUnsavedChanges) return 'View Details'
+    return 'View Details'
+  }
 
   return (
     <div
@@ -27,11 +67,24 @@ const RightPanel = () => {
     >
       <div className={styles.properties}>
         {isGroupCreated && <GroupPanel />}
-        {!isGroupCreated && isWizardOpen && (
+        {!isGroupCreated && isWizardOpen && currentArtworkId && (
           <>
             <ArtworkPanel />
             {artworkType === 'image' && <ArtisticImagePanel />}
             {artworkType === 'text' && <ArtisticTextPanel />}
+
+            <div className={styles.editButtonWrapper}>
+              <Tooltip label="Clicking will save any pending changes on the current selected artwork" placement="top" fullWidth>
+                <Button
+                  font="dashboard"
+                  size="regular"
+                  variant="primary"
+                  label={getButtonLabel()}
+                  onClick={handleEditArtworkDetails}
+                  disabled={saving}
+                />
+              </Tooltip>
+            </div>
           </>
         )}
       </div>
@@ -40,3 +93,4 @@ const RightPanel = () => {
 }
 
 export default RightPanel
+

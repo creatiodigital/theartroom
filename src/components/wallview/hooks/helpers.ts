@@ -5,12 +5,12 @@ type TAlignedArtwork = {
   height: number
 }
 
-type HorizontalAlignment = 'top' | 'bottom' | 'center-horizontal' | null
-type VerticalAlignment = 'left' | 'right' | 'center-vertical' | null
+type HorizontalAlignment = 'top' | 'bottom' | 'center-horizontal'
+type VerticalAlignment = 'left' | 'right' | 'center-vertical'
 
 export interface AlignmentResult {
-  horizontal: HorizontalAlignment
-  vertical: VerticalAlignment
+  horizontal: HorizontalAlignment[]
+  vertical: VerticalAlignment[]
 }
 
 const tolerance = 3
@@ -20,34 +20,40 @@ export const areAligned = (
   artworkB: TAlignedArtwork,
 ): AlignmentResult => {
   const directions: AlignmentResult = {
-    horizontal: null,
-    vertical: null,
+    horizontal: [],
+    vertical: [],
   }
 
+  // Check top alignment
   if (Math.abs(artworkA.y - artworkB.y) <= tolerance) {
-    directions.horizontal = 'top'
+    directions.horizontal.push('top')
   }
 
+  // Check bottom alignment
   if (Math.abs(artworkA.y + artworkA.height - (artworkB.y + artworkB.height)) <= tolerance) {
-    directions.horizontal = 'bottom'
+    directions.horizontal.push('bottom')
   }
 
+  // Check horizontal center alignment
   if (
     Math.abs(artworkA.y + artworkA.height / 2 - (artworkB.y + artworkB.height / 2)) <= tolerance
   ) {
-    directions.horizontal = 'center-horizontal'
+    directions.horizontal.push('center-horizontal')
   }
 
+  // Check left alignment
   if (Math.abs(artworkA.x - artworkB.x) <= tolerance) {
-    directions.vertical = 'left'
+    directions.vertical.push('left')
   }
 
+  // Check right alignment
   if (Math.abs(artworkA.x + artworkA.width - (artworkB.x + artworkB.width)) <= tolerance) {
-    directions.vertical = 'right'
+    directions.vertical.push('right')
   }
 
+  // Check vertical center alignment
   if (Math.abs(artworkA.x + artworkA.width / 2 - (artworkB.x + artworkB.width / 2)) <= tolerance) {
-    directions.vertical = 'center-vertical'
+    directions.vertical.push('center-vertical')
   }
 
   return directions

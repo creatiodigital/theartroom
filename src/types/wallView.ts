@@ -44,6 +44,7 @@ export type TWallView = {
   isWallView: boolean
   currentArtworkId: string | null
   currentWallId: string | null
+  editingArtworkId: string | null // Artwork ID for the edit modal overlay
   currentWallCoordinates: TCoordinates
   currentWallNormal: TCoordinates
   scaleFactor: number

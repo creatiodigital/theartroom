@@ -17,7 +17,7 @@ const ArtisticText = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
-  const { textColor, textBackgroundColor, textVerticalAlign, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
+  const { textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
     useArtworkDetails(currentArtworkId!)
 
   return (
@@ -59,24 +59,24 @@ const ArtisticText = () => {
           <div className={styles.item}>
             <Button
               size="small"
-              variant={textVerticalAlign === 'top' ? 'primary' : 'secondary'}
-              label="Top"
+              variant="secondary"
+              icon="textVerticalTop"
               onClick={() => handleEditArtworkText('textVerticalAlign', 'top')}
             />
           </div>
           <div className={styles.item}>
             <Button
               size="small"
-              variant={textVerticalAlign === 'center' ? 'primary' : 'secondary'}
-              label="Center"
+              variant="secondary"
+              icon="textVerticalCenter"
               onClick={() => handleEditArtworkText('textVerticalAlign', 'center')}
             />
           </div>
           <div className={styles.item}>
             <Button
               size="small"
-              variant={textVerticalAlign === 'bottom' ? 'primary' : 'secondary'}
-              label="Bottom"
+              variant="secondary"
+              icon="textVerticalBottom"
               onClick={() => handleEditArtworkText('textVerticalAlign', 'bottom')}
             />
           </div>

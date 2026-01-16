@@ -13,26 +13,40 @@ import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import { resetScene } from '@/redux/slices/sceneSlice'
-import { resetWallView } from '@/redux/slices/wallViewSlice'
-import { resetWizard } from '@/redux/slices/wizardSlice'
+import {
+  resetWallView,
+  showWallView,
+  chooseCurrentArtworkId,
+  addArtworkToGroup,
+} from '@/redux/slices/wallViewSlice'
+import { resetWizard, showWizard } from '@/redux/slices/wizardSlice'
 import type { AppDispatch } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 
 interface ExhibitionEditPageProps {
   artistSlug: string
   exhibitionSlug: string
+  initialWallId?: string
+  initialArtworkId?: string
 }
 
-export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEditPageProps) => {
+export const ExhibitionEditPage = ({
+  artistSlug,
+  exhibitionSlug,
+  initialWallId,
+  initialArtworkId,
+}: ExhibitionEditPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
   const { data: session, status: sessionStatus } = useSession()
-  const hasResetRef = useRef(false)
+  const hasResetRef = useRef<string | null>(null)
+  const hasRestoredStateRef = useRef<string | null>(null)
 
-  // Reset all exhibition-related state when page loads
+  // Reset all exhibition-related state when page loads or exhibition changes
   // This ensures complete isolation between exhibitions
   useEffect(() => {
-    if (!hasResetRef.current) {
+    // Only reset if this is a new exhibition or first load
+    if (hasResetRef.current !== exhibitionSlug) {
       // Reset all Redux state
       dispatch(resetWallView())
       dispatch(resetScene())
@@ -43,9 +57,11 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
       useGLTF.clear('/assets/spaces/classic.glb')
       useGLTF.clear('/assets/spaces/modern.glb')
 
-      hasResetRef.current = true
+      hasResetRef.current = exhibitionSlug
+      // Reset restored state ref when exhibition changes
+      hasRestoredStateRef.current = null
     }
-  }, [dispatch])
+  }, [dispatch, exhibitionSlug])
 
   const {
     data: exhibition,
@@ -83,7 +99,29 @@ export const ExhibitionEditPage = ({ artistSlug, exhibitionSlug }: ExhibitionEdi
   }, [exhibition, dispatch])
 
   // Load saved artworks from database
-  useLoadExhibitionArtworks(exhibition?.id)
+  const { isReady: artworksReady } = useLoadExhibitionArtworks(exhibition?.id)
+
+  // Restore wall view state from URL params (when returning from artwork edit)
+  // Wait for artworks to be loaded before restoring
+  useEffect(() => {
+    if (
+      exhibition &&
+      artworksReady &&
+      initialWallId &&
+      hasRestoredStateRef.current !== exhibitionSlug &&
+      hasResetRef.current === exhibitionSlug
+    ) {
+      dispatch(showWallView(initialWallId))
+      
+      if (initialArtworkId) {
+        dispatch(chooseCurrentArtworkId(initialArtworkId))
+        dispatch(addArtworkToGroup(initialArtworkId))
+        dispatch(showWizard())
+      }
+      
+      hasRestoredStateRef.current = exhibitionSlug
+    }
+  }, [exhibition, artworksReady, initialWallId, initialArtworkId, dispatch, exhibitionSlug])
 
   // Redirect to home if not logged in
   useEffect(() => {
