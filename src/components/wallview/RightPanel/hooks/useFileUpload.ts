@@ -21,14 +21,6 @@ export const useFileUpload = (currentArtworkId: string) => {
     if (file && currentArtworkId) {
       const imageUrl = URL.createObjectURL(file)
       dispatch(editArtisticImage({ currentArtworkId, property: 'imageUrl', value: imageUrl }))
-
-      // Load image to get original dimensions for Match Ratio feature
-      const img = new Image()
-      img.onload = () => {
-        dispatch(editArtisticImage({ currentArtworkId, property: 'originalWidth', value: img.naturalWidth }))
-        dispatch(editArtisticImage({ currentArtworkId, property: 'originalHeight', value: img.naturalHeight }))
-      }
-      img.src = imageUrl
     }
   }
 
