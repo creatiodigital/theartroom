@@ -48,16 +48,6 @@ const ArtworkPanel = () => {
         {artworkTitle || 'Untitled'}
       </Text>
 
-      <div className={styles.editButtonWrapper}>
-        <Button
-          font="dashboard"
-          size="small"
-          variant="primary"
-          label="Edit Artwork"
-          href={`/dashboard/artworks/${currentArtworkId}/edit?returnUrl=${encodeURIComponent(window.location.pathname)}`}
-        />
-      </div>
-
       <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
           Position in wall

@@ -6,7 +6,12 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
+import {
+  restoreArtworksSnapshot,
+  clearArtworksSnapshot,
+} from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
 import {
   restoreSnapshot,
@@ -187,10 +192,12 @@ export const LeftPanel = () => {
     if (!success) {
       // Optionally show error - for now just log
       console.error('Failed to save to database')
+      return
     }
 
     // Clear the snapshot and history since we're keeping the changes
     dispatch(clearSnapshot())
+    dispatch(clearArtworksSnapshot())
     dispatch(clearHistory())
 
     // Then hide wall view and show edit mode
@@ -201,9 +208,26 @@ export const LeftPanel = () => {
     dispatch(removeGroup())
   }
 
+  const handleSaveProgress = async () => {
+    // Save to database
+    const success = await saveToDatabase()
+
+    if (!success) {
+      console.error('Failed to save progress')
+      return
+    }
+
+    // Clear the snapshot and history to mark changes as saved
+    // but keep the wall view open
+    dispatch(clearSnapshot())
+    dispatch(clearArtworksSnapshot())
+    dispatch(clearHistory())
+  }
+
   const handleCancel = () => {
-    // Restore the exhibition state from before wall view was opened
+    // Restore the exhibition and artworks state from before wall view was opened
     dispatch(restoreSnapshot())
+    dispatch(restoreArtworksSnapshot())
     dispatch(hideHuman())
     dispatch(hideWallView())
     dispatch(showEditMode())
@@ -239,22 +263,44 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="secondary"
-                font="dashboard"
-                onClick={handleCancel}
-                label="Cancel"
-              />
+              <Tooltip label="Discard all changes and exit" placement="bottom" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  font="dashboard"
+                  onClick={handleCancel}
+                  label="Cancel"
+                  disabled={saving}
+                />
+              </Tooltip>
             </div>
+          </div>
+          <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="primary"
-                font="dashboard"
-                onClick={handleSaveWallView}
-                label={saving ? 'Saving...' : 'Save'}
-              />
+              <Tooltip label="Save all changes and continue editing" placement="bottom" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  font="dashboard"
+                  onClick={handleSaveProgress}
+                  label={saving ? 'Saving...' : 'Save Progress'}
+                  disabled={saving}
+                />
+              </Tooltip>
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Save all changes and exit" placement="bottom" fullWidth>
+                <Button
+                  size="regular"
+                  variant="primary"
+                  font="dashboard"
+                  onClick={handleSaveWallView}
+                  label={saving ? 'Saving...' : 'Save & Close'}
+                  disabled={saving}
+                />
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -263,40 +309,50 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="secondary"
-                icon="undo"
-                onClick={handleUndo}
-                disabled={!canUndo}
-                title="Undo (⌘Z)"
-              />
+              <Tooltip label="Undo (⌘Z)" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  icon="undo"
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                />
+              </Tooltip>
             </div>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="secondary"
-                icon="redo"
-                onClick={handleRedo}
-                disabled={!canRedo}
-                title="Redo (⌘⇧Z)"
-              />
-            </div>
-          </div>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
-            </div>
-            <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="zoomIn" onClick={handleZoomIn} />
+              <Tooltip label="Redo (⌘⇧Z)" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  icon="redo"
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                />
+              </Tooltip>
             </div>
           </div>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="reset" onClick={handleResetView} />
+              <Tooltip label="Zoom out" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
+              </Tooltip>
             </div>
             <div className={styles.itemFlex}>
-              <Button size="regular" variant="secondary" icon="person" onClick={handleToggleHuman} />
+              <Tooltip label="Zoom in" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="zoomIn" onClick={handleZoomIn} />
+              </Tooltip>
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Fit to view" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="reset" onClick={handleResetView} />
+              </Tooltip>
+            </div>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Show human height reference" placement="right" fullWidth>
+                <Button size="regular" variant="secondary" icon="human-standing" onClick={handleToggleHuman} />
+              </Tooltip>
             </div>
           </div>
         </div>

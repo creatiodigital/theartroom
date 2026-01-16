@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtisticText } from '@/components/wallview/hooks/useArtisticText'
 import { setEditingArtwork } from '@/redux/slices/dashboardSlice'
 
@@ -49,14 +50,18 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
   }
 
   const verticalAlignMap: Record<'top' | 'center' | 'bottom', string> = {
-    top: 'flex-end',
+    top: 'flex-start',
     center: 'center',
-    bottom: 'flex-start',
+    bottom: 'flex-end',
   }
 
   const fontFamilyVariable = fontFamilyMap[fontFamily] ?? fontFamilyMap.roboto
   const fontWeightVariable = fontWeightMap[fontWeight]
-  const justifyContentValue = verticalAlignMap[textVerticalAlign] ?? 'flex-start'
+  // Only apply vertical alignment when there's actual text content
+  const hasContent = !!textContent?.trim()
+  const justifyContentValue = hasContent
+    ? (verticalAlignMap[textVerticalAlign] ?? 'flex-start')
+    : 'center'
 
   const handleDoubleClick = () => {
     if (!isEditing) {
@@ -91,9 +96,13 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
         justifyContent: justifyContentValue,
       }}
     >
-      {!textContent?.trim() && !isEditing ? (
+      {!hasContent && !isEditing ? (
         <div className={styles.empty}>
-          <Icon name="text" size={40} color="#000000" />
+          <Tooltip label="Double-click to start typing" placement="top">
+            <span style={{ display: 'inline-flex' }}>
+              <Icon name="type" size={40} color="#000000" />
+            </span>
+          </Tooltip>
         </div>
       ) : (
         <div

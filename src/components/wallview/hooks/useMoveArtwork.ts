@@ -102,42 +102,50 @@ export const useMoveArtwork = (
           },
         )
 
-        if (alignment.horizontal) {
-          if (alignment.horizontal === 'top') {
+        // Handle horizontal alignments (can be multiple)
+        if (alignment.horizontal.length > 0) {
+          // Use first alignment for snapping
+          const firstH = alignment.horizontal[0]
+          if (firstH === 'top') {
             snapY = otherArtwork.posY2d
-          }
-          if (alignment.horizontal === 'bottom') {
+          } else if (firstH === 'bottom') {
             snapY = otherArtwork.posY2d + otherArtwork.height2d - artwork.height2d
-          }
-          if (alignment.horizontal === 'center-horizontal') {
+          } else if (firstH === 'center-horizontal') {
             snapY = otherArtwork.posY2d + otherArtwork.height2d / 2 - artwork.height2d / 2
           }
 
+          // Add all matching alignments to pairs
           if (draggedArtworkId && otherArtwork?.artworkId) {
-            alignedPairs.push({
-              from: draggedArtworkId,
-              to: otherArtwork.artworkId,
-              direction: alignment.horizontal,
+            alignment.horizontal.forEach((dir) => {
+              alignedPairs.push({
+                from: draggedArtworkId,
+                to: otherArtwork.artworkId,
+                direction: dir,
+              })
             })
           }
         }
 
-        if (alignment.vertical) {
-          if (alignment.vertical === 'left') {
+        // Handle vertical alignments (can be multiple)
+        if (alignment.vertical.length > 0) {
+          // Use first alignment for snapping
+          const firstV = alignment.vertical[0]
+          if (firstV === 'left') {
             snapX = otherArtwork.posX2d
-          }
-          if (alignment.vertical === 'right') {
+          } else if (firstV === 'right') {
             snapX = otherArtwork.posX2d + otherArtwork.width2d - artwork.width2d
-          }
-          if (alignment.vertical === 'center-vertical') {
+          } else if (firstV === 'center-vertical') {
             snapX = otherArtwork.posX2d + otherArtwork.width2d / 2 - artwork.width2d / 2
           }
 
+          // Add all matching alignments to pairs
           if (draggedArtworkId && otherArtwork?.artworkId) {
-            alignedPairs.push({
-              from: draggedArtworkId,
-              to: otherArtwork.artworkId,
-              direction: alignment.vertical,
+            alignment.vertical.forEach((dir) => {
+              alignedPairs.push({
+                from: draggedArtworkId,
+                to: otherArtwork.artworkId,
+                direction: dir,
+              })
             })
           }
         }

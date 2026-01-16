@@ -1,40 +1,49 @@
 .tooltip {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.childWrapper {
+  display: contents;
 }
 
 .content {
-  position: absolute;
-
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--color-text);
-  color: var(--color-white);
-  padding: 5px 10px;
-  border-radius: var(--space-1);
-  font-size: var(--space-3);
-  white-space: nowrap;
-  z-index: 10;
+  background-color: var(--color-white);
+  color: var(--color-text);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  max-width: 200px;
+  white-space: normal;
+  text-align: center;
+  z-index: 9999;
   pointer-events: none;
-  border: 1px solid var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.content::before {
-  content: '';
-  position: absolute;
-  bottom: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-top-color: var(--color-text);
+/* Top placement */
+.top {
+  transform: translate(-50%, -100%);
 }
 
-.content::after {
-  content: '';
-  position: absolute;
-  bottom: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: var(--color-text);
+/* Bottom placement */
+.bottom {
+  transform: translate(-50%, 0);
+}
+
+/* Left placement */
+.left {
+  transform: translate(-100%, -50%);
+}
+
+/* Right placement */
+.right {
+  transform: translate(0, -50%);
 }

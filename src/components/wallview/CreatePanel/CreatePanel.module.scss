@@ -3,19 +3,33 @@
 .panel {
   position: fixed;
   bottom: 0;
-  padding: var(--space-1);
-  border-radius: 4px 4px 0 0;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-black);
+  background: transparent;
+  padding: 0 0 var(--space-2);
 }
 
 .options {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--space-2);
 
   button {
     cursor: grab;
+    background: var(--color-white);
+    color: var(--color-text);
+    transition: all 0.15s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    svg {
+      stroke: var(--color-text);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { ArrowRight, FolderDown, LampCeiling, Redo2, Settings, Undo2, X, type LucideIcon } from 'lucide-react'
+import { ArrowRight, FolderDown, Image, LampCeiling, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -30,6 +30,9 @@ import Reset from '@/icons/reset.svg'
 import TextCenter from '@/icons/text-center.svg'
 import TextLeft from '@/icons/text-left.svg'
 import TextRight from '@/icons/text-right.svg'
+import TextVerticalBottom from '@/icons/text-vertical-bottom.svg'
+import TextVerticalCenter from '@/icons/text-vertical-center.svg'
+import TextVerticalTop from '@/icons/text-vertical-top.svg'
 import Text from '@/icons/text.svg'
 import VerticalBottom from '@/icons/vertical-bottom.svg'
 import VerticalCenter from '@/icons/vertical-center.svg'
@@ -45,9 +48,12 @@ const lucideIcons: Record<string, LucideIcon> = {
   arrowRight: ArrowRight,
   close: X,
   gallery: FolderDown,
+  'human-standing': PersonStanding,
+  image: Image,
   light: LampCeiling,
   redo: Redo2,
   settings: Settings,
+  type: Type,
   undo: Undo2,
 }
 
@@ -82,6 +88,9 @@ const customIcons: Record<string, CustomSvgIcon> = {
   textLeft: TextLeft,
   textCenter: TextCenter,
   textRight: TextRight,
+  textVerticalTop: TextVerticalTop,
+  textVerticalCenter: TextVerticalCenter,
+  textVerticalBottom: TextVerticalBottom,
   verticalBottom: VerticalBottom,
   verticalCenter: VerticalCenter,
   verticalTop: VerticalTop,
