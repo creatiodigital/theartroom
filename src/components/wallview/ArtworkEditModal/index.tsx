@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux'
 
 import { ErrorText } from '@/components/ui/ErrorText'
 import { closeArtworkEditModal } from '@/redux/slices/wallViewSlice'
+import { editArtwork } from '@/redux/slices/artworkSlice'
 import {
   ArtworkEditForm,
   getInitialFormData,
@@ -73,6 +74,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setSaving(true)
     setError('')
 
@@ -90,9 +92,19 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         return
       }
 
-      // Close the modal - data is saved to database
-      // The metadata fields (title, author, etc.) aren't visible in 2D wall view
-      // so we don't need to update Redux immediately
+      // Update Redux state to reflect the saved changes
+      // Map form field names to TArtwork property names
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'artworkTitle', value: formData.title }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'author', value: formData.author }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'artworkYear', value: formData.year }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'artworkDimensions', value: formData.dimensions }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'technique', value: formData.technique }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'description', value: formData.description }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'textContent', value: formData.textContent }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'featured', value: formData.featured }))
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: imageUrl || undefined }))
+
+      // Close the modal
       dispatch(closeArtworkEditModal())
     } catch {
       setError('Something went wrong')
@@ -123,13 +135,15 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
 
         const data = await response.json()
         setImageUrl(data.url)
+        // Sync with Redux immediately so wall view updates
+        dispatch(editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: data.url }))
       } catch {
         setError('Failed to upload image')
       } finally {
         setUploading(false)
       }
     },
-    [artworkId],
+    [artworkId, dispatch],
   )
 
   const handleRemoveImage = useCallback(async () => {
@@ -151,12 +165,14 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       }
 
       setImageUrl(null)
+      // Sync with Redux immediately so wall view updates
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: undefined }))
     } catch {
       setError('Failed to remove image')
     } finally {
       setUploading(false)
     }
-  }, [artworkId, imageUrl])
+  }, [artworkId, imageUrl, dispatch])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -179,7 +195,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
 
   if (loading) {
     return (
-      <div className={styles.overlay}>
+      <div className={styles.overlay} data-no-deselect="true">
         <div className={styles.modal}>
           <header className={styles.header}>
             <button onClick={handleClose} className={styles.closeButton}>
@@ -194,7 +210,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
 
   if (error && !artwork) {
     return (
-      <div className={styles.overlay}>
+      <div className={styles.overlay} data-no-deselect="true">
         <div className={styles.modal}>
           <header className={styles.header}>
             <button onClick={handleClose} className={styles.closeButton}>
@@ -210,7 +226,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
   }
 
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} data-no-deselect="true">
       <div className={styles.modal}>
         <header className={styles.header}>
           <button onClick={handleClose} className={styles.closeButton}>

@@ -3,6 +3,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
+import Tooltip from '@/components/ui/Tooltip/Tooltip'
 import { openArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
@@ -70,14 +71,16 @@ const RightPanel = () => {
             {artworkType === 'text' && <ArtisticTextPanel />}
 
             <div className={styles.editButtonWrapper}>
-              <Button
-                font="dashboard"
-                size="regular"
-                variant="primary"
-                label={getButtonLabel()}
-                onClick={handleEditArtworkDetails}
-                disabled={saving}
-              />
+              <Tooltip label="Clicking will save any pending changes on the current selected artwork" placement="top" fullWidth>
+                <Button
+                  font="dashboard"
+                  size="regular"
+                  variant="primary"
+                  label={getButtonLabel()}
+                  onClick={handleEditArtworkDetails}
+                  disabled={saving}
+                />
+              </Tooltip>
             </div>
           </>
         )}

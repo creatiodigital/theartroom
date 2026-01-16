@@ -192,6 +192,7 @@ export const LeftPanel = () => {
     if (!success) {
       // Optionally show error - for now just log
       console.error('Failed to save to database')
+      return
     }
 
     // Clear the snapshot and history since we're keeping the changes
@@ -205,6 +206,22 @@ export const LeftPanel = () => {
     dispatch(showEditMode())
     dispatch(chooseCurrentArtworkId(null))
     dispatch(removeGroup())
+  }
+
+  const handleSaveProgress = async () => {
+    // Save to database
+    const success = await saveToDatabase()
+
+    if (!success) {
+      console.error('Failed to save progress')
+      return
+    }
+
+    // Clear the snapshot and history to mark changes as saved
+    // but keep the wall view open
+    dispatch(clearSnapshot())
+    dispatch(clearArtworksSnapshot())
+    dispatch(clearHistory())
   }
 
   const handleCancel = () => {
@@ -246,22 +263,44 @@ export const LeftPanel = () => {
         <div className={styles.subsection}>
           <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="secondary"
-                font="dashboard"
-                onClick={handleCancel}
-                label="Cancel"
-              />
+              <Tooltip label="Discard all changes and exit" placement="bottom" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  font="dashboard"
+                  onClick={handleCancel}
+                  label="Cancel"
+                  disabled={saving}
+                />
+              </Tooltip>
             </div>
+          </div>
+          <div className={styles.row}>
             <div className={styles.itemFlex}>
-              <Button
-                size="regular"
-                variant="primary"
-                font="dashboard"
-                onClick={handleSaveWallView}
-                label={saving ? 'Saving...' : 'Save'}
-              />
+              <Tooltip label="Save all changes and continue editing" placement="bottom" fullWidth>
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  font="dashboard"
+                  onClick={handleSaveProgress}
+                  label={saving ? 'Saving...' : 'Save Progress'}
+                  disabled={saving}
+                />
+              </Tooltip>
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Save all changes and exit" placement="bottom" fullWidth>
+                <Button
+                  size="regular"
+                  variant="primary"
+                  font="dashboard"
+                  onClick={handleSaveWallView}
+                  label={saving ? 'Saving...' : 'Save & Close'}
+                  disabled={saving}
+                />
+              </Tooltip>
             </div>
           </div>
         </div>
