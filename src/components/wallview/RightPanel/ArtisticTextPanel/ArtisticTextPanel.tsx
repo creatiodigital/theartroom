@@ -17,7 +17,7 @@ const ArtisticText = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
-  const { textColor, textBackgroundColor, textVerticalAlign, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
+  const { textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
     useArtworkDetails(currentArtworkId!)
 
   return (

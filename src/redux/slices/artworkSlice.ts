@@ -7,6 +7,11 @@ interface TArtworksState {
   byId: Record<string, TArtwork>
   allIds: string[]
   artworkCounters: Record<TArtworkKind, number>
+  _snapshot: {
+    byId: Record<string, TArtwork>
+    allIds: string[]
+    artworkCounters: Record<TArtworkKind, number>
+  } | null
 }
 
 const initialState: TArtworksState = {
@@ -16,6 +21,7 @@ const initialState: TArtworksState = {
     image: 0,
     text: 0,
   },
+  _snapshot: null,
 }
 
 const artworkSlice = createSlice({
@@ -95,6 +101,31 @@ const artworkSlice = createSlice({
       // Return fresh initial state to prevent stale data between exhibitions
       return initialState
     },
+
+    // Snapshot actions for cancel functionality
+    snapshotArtworks: (state) => {
+      state._snapshot = {
+        byId: JSON.parse(JSON.stringify(state.byId)),
+        allIds: [...state.allIds],
+        artworkCounters: { ...state.artworkCounters },
+      }
+    },
+
+    restoreArtworksSnapshot: (state) => {
+      if (state._snapshot) {
+        // Return a new state object to ensure Immer properly updates
+        return {
+          byId: state._snapshot.byId,
+          allIds: state._snapshot.allIds,
+          artworkCounters: state._snapshot.artworkCounters,
+          _snapshot: null,
+        }
+      }
+    },
+
+    clearArtworksSnapshot: (state) => {
+      state._snapshot = null
+    },
   },
 })
 
@@ -106,6 +137,9 @@ export const {
   editArtisticText,
   deleteArtwork,
   resetArtworks,
+  snapshotArtworks,
+  restoreArtworksSnapshot,
+  clearArtworksSnapshot,
 } = artworkSlice.actions
 
 export default artworkSlice.reducer

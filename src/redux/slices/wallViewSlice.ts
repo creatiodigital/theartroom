@@ -121,6 +121,12 @@ const wallViewSlice = createSlice({
     setGroupNotHovered: (state: TWallView) => {
       state.isGroupHovered = false
     },
+    openArtworkEditModal: (state: TWallView, action: PayloadAction<string>) => {
+      state.editingArtworkId = action.payload
+    },
+    closeArtworkEditModal: (state: TWallView) => {
+      state.editingArtworkId = null
+    },
   },
 })
 
@@ -153,6 +159,8 @@ export const {
   removeGroup,
   setGroupHovered,
   setGroupNotHovered,
+  openArtworkEditModal,
+  closeArtworkEditModal,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer

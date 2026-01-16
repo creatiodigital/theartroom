@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useDispatch } from 'react-redux'
 
-import { DashboardLayout } from '../../DashboardLayout'
 import { ErrorText } from '@/components/ui/ErrorText'
+import { closeArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import {
   ArtworkEditForm,
   getInitialFormData,
@@ -13,14 +13,15 @@ import {
 } from '@/components/shared/ArtworkEditForm'
 import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
 
-type ArtworkEditPageProps = {
+import styles from './ArtworkEditModal.module.scss'
+
+type ArtworkEditModalProps = {
   artworkId: string
 }
 
-export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
+export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
   const { data: session } = useSession()
-  const router = useRouter()
-  const backLink = '/dashboard/artworks'
+  const dispatch = useDispatch()
 
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [loading, setLoading] = useState(true)
@@ -43,7 +44,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         // Verify ownership
         if (data.userId !== session?.user?.id && session?.user?.userType !== 'admin') {
-          router.push(backLink)
+          dispatch(closeArtworkEditModal())
           return
         }
 
@@ -60,10 +61,14 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     if (session?.user?.id) {
       fetchArtwork()
     }
-  }, [artworkId, session?.user?.id, session?.user?.userType, router, backLink])
+  }, [artworkId, session?.user?.id, session?.user?.userType, dispatch])
 
   const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleClose = () => {
+    dispatch(closeArtworkEditModal())
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +90,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         return
       }
 
-      router.push(backLink)
+      // Close the modal - data is saved to database
+      // The metadata fields (title, author, etc.) aren't visible in 2D wall view
+      // so we don't need to update Redux immediately
+      dispatch(closeArtworkEditModal())
     } catch {
       setError('Something went wrong')
       setSaving(false)
@@ -150,36 +158,80 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId, imageUrl])
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
+
+  // Handle escape key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   if (loading) {
     return (
-      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
-        Loading...
-      </DashboardLayout>
+      <div className={styles.overlay}>
+        <div className={styles.modal}>
+          <header className={styles.header}>
+            <button onClick={handleClose} className={styles.closeButton}>
+              CLOSE <span className={styles.closeIcon}>×</span>
+            </button>
+          </header>
+          <div className={styles.content}>Loading...</div>
+        </div>
+      </div>
     )
   }
 
   if (error && !artwork) {
     return (
-      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
-        <ErrorText>{error}</ErrorText>
-      </DashboardLayout>
+      <div className={styles.overlay}>
+        <div className={styles.modal}>
+          <header className={styles.header}>
+            <button onClick={handleClose} className={styles.closeButton}>
+              CLOSE <span className={styles.closeIcon}>×</span>
+            </button>
+          </header>
+          <div className={styles.content}>
+            <ErrorText>{error}</ErrorText>
+          </div>
+        </div>
+      </div>
     )
   }
 
   return (
-    <DashboardLayout backLink={backLink} backLabel="← Back to Library">
-      <ArtworkEditForm
-        formData={formData}
-        imageUrl={imageUrl}
-        uploading={uploading}
-        saving={saving}
-        error={error}
-        onFormChange={handleChange}
-        onImageUpload={handleImageUpload}
-        onImageRemove={handleRemoveImage}
-        onSubmit={handleSubmit}
-        onCancel={() => router.push(backLink)}
-      />
-    </DashboardLayout>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <header className={styles.header}>
+          <button onClick={handleClose} className={styles.closeButton}>
+            CLOSE <span className={styles.closeIcon}>×</span>
+          </button>
+        </header>
+        <div className={styles.content}>
+          <ArtworkEditForm
+            formData={formData}
+            imageUrl={imageUrl}
+            uploading={uploading}
+            saving={saving}
+            error={error}
+            onFormChange={handleChange}
+            onImageUpload={handleImageUpload}
+            onImageRemove={handleRemoveImage}
+            onSubmit={handleSubmit}
+            onCancel={handleClose}
+          />
+        </div>
+      </div>
+    </div>
   )
 }

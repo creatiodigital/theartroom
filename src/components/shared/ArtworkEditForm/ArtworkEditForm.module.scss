@@ -1,0 +1,10 @@
+.imageSection {
+  width: calc(50% - 7px);
+
+  > label {
+    display: block;
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+    font-weight: var(--font-medium);
+    margin-bottom: var(--space-3);
+  }
+}

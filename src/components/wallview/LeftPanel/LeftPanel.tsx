@@ -7,6 +7,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
+import {
+  restoreArtworksSnapshot,
+  clearArtworksSnapshot,
+} from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
 import {
   restoreSnapshot,
@@ -191,6 +195,7 @@ export const LeftPanel = () => {
 
     // Clear the snapshot and history since we're keeping the changes
     dispatch(clearSnapshot())
+    dispatch(clearArtworksSnapshot())
     dispatch(clearHistory())
 
     // Then hide wall view and show edit mode
@@ -202,8 +207,9 @@ export const LeftPanel = () => {
   }
 
   const handleCancel = () => {
-    // Restore the exhibition state from before wall view was opened
+    // Restore the exhibition and artworks state from before wall view was opened
     dispatch(restoreSnapshot())
+    dispatch(restoreArtworksSnapshot())
     dispatch(hideHuman())
     dispatch(hideWallView())
     dispatch(showEditMode())

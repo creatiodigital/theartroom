@@ -37,7 +37,7 @@ const ArtisticImage = () => {
         <Checkbox
           checked={showArtworkInformation!}
           onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
-          label="Display Information"
+          label="Show details on double-click"
         />
       </div>
 
