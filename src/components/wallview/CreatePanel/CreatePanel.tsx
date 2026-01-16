@@ -57,6 +57,7 @@ export const CreatePanel = () => {
             <Button
               size="big"
               icon="image"
+              variant="secondary"
               onClick={() => handleCreateArtwork('image')}
               draggable
               onDragStart={(e) => handleArtworkDragStart(e, 'image')}
@@ -66,6 +67,7 @@ export const CreatePanel = () => {
             <Button
               size="big"
               icon="type"
+              variant="secondary"
               onClick={() => handleCreateArtwork('text')}
               draggable
               onDragStart={(e) => handleArtworkDragStart(e, 'text')}
@@ -75,6 +77,7 @@ export const CreatePanel = () => {
             <Button
               size="big"
               icon="gallery"
+              variant="secondary"
               onClick={() => setShowMediaLibrary(!showMediaLibrary)}
             />
           </Tooltip>

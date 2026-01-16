@@ -50,8 +50,8 @@ const RightPanel = () => {
   // Determine button label
   const getButtonLabel = () => {
     if (saving) return 'Saving...'
-    if (hasUnsavedChanges) return 'Save and Edit Details'
-    return 'Edit Details'
+    if (hasUnsavedChanges) return 'View Details'
+    return 'View Details'
   }
 
   return (

@@ -41,13 +41,13 @@ export const Menu = () => {
 
   return (
     <div className={styles.menu}>
-      <Button size="small" icon="close" title="Go to main dashboard" onClick={handleClose} />
-      <Button size="small"
+      <Button size="regular" variant="secondary" icon="close" title="Go to main dashboard" onClick={handleClose} />
+      <Button size="regular" variant="secondary"
         icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
         title="Show/Hide wall placeholders"
         onClick={() => togglePlaceholders()}
       />
-      <Button size="small" icon="light" title="Global Light controls" onClick={toggleLightingPanel} />
+      <Button size="regular" variant="secondary" icon="light" title="Global Light controls" onClick={toggleLightingPanel} />
     </div>
   )
 }

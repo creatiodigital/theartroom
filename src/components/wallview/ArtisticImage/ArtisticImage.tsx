@@ -168,7 +168,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
           >
             {!imageUrl && (
               <div className={c([styles.empty, { [styles.over]: isDragOver }])}>
-                <Tooltip label="Drag and drop an image or double-click" placement="top">
+                <Tooltip label="Drag and drop an image or double-click. Size should not exceed 1MB." placement="top">
                   <span style={{ display: 'inline-flex' }}>
                     <Icon name="image" size={40} color={isDragOver ? '#ffffff' : '#000000'} />
                   </span>
