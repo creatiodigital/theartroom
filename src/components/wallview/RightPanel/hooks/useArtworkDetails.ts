@@ -9,6 +9,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
+  const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
   const artwork = artworksById[currentArtworkId]
   const artworkPosition = exhibitionArtworksById[currentArtworkId]
@@ -42,8 +44,10 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       featured: false,
       width: 0,
       height: 0,
-      x: 0,
-      y: 0,
+      fromTop: 0,
+      fromBottom: 0,
+      fromLeft: 0,
+      fromRight: 0,
     }
   }
 
@@ -76,11 +80,27 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     imageUrl,
   } = artwork
 
+  // Wall dimensions in 2D scale (meters * 100)
+  const wallWidth2d = (wallWidth || 0) * 100
+  const wallHeight2d = (wallHeight || 0) * 100
+
+  // Calculate artwork center position
+  const centerX = posX2d + width2d / 2
+  const centerY = posY2d + height2d / 2
+
+  // Calculate distances from all 4 wall edges to artwork center
+  const fromTop = centerY
+  const fromBottom = wallHeight2d - centerY
+  const fromLeft = centerX
+  const fromRight = wallWidth2d - centerX
+
   return {
     width: Math.round(width2d),
     height: Math.round(height2d),
-    x: Math.round(posX2d),
-    y: Math.round(posY2d),
+    fromTop: Math.round(fromTop),
+    fromBottom: Math.round(fromBottom),
+    fromLeft: Math.round(fromLeft),
+    fromRight: Math.round(fromRight),
     name,
     artworkTitle,
     author,

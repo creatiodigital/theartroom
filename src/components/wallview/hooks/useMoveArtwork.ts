@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -18,6 +18,8 @@ import { areAligned } from './helpers'
 
 type TOffset = { x: number; y: number }
 
+const DRAG_DELAY_MS = 150 // Milliseconds to hold before showing distance lines
+
 export const useMoveArtwork = (
   wallRef: RefObject<HTMLDivElement>,
   boundingData: TDimensions | null,
@@ -25,6 +27,8 @@ export const useMoveArtwork = (
 ) => {
   const [draggedArtworkId, setDraggedArtworkId] = useState<string | null>(null)
   const [offset, setOffset] = useState<TOffset>({ x: 0, y: 0 })
+  const dragDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasDragStarted = useRef(false)
 
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
@@ -33,7 +37,6 @@ export const useMoveArtwork = (
     (state: RootState) => state.exhibition.allExhibitionArtworkIds,
   )
   const isEditingArtwork = useSelector((state: RootState) => state.dashboard.isEditingArtwork)
-  const isDragging = useSelector((state: RootState) => state.wallView.isDragging)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const dispatch = useDispatch()
@@ -54,22 +57,31 @@ export const useMoveArtwork = (
       const offsetY = (event.clientY - rect.top) / scaleFactor - artwork.posY2d
       setOffset({ x: offsetX, y: offsetY })
 
+      hasDragStarted.current = false
+
       // Save current state to history before starting drag
       dispatch(pushToHistory())
-      dispatch(startDragging())
       setDraggedArtworkId(artworkId)
       dispatch(chooseCurrentArtworkId(artworkId))
+
+      // Start timer - dispatch startDragging after delay
+      dragDelayTimer.current = setTimeout(() => {
+        hasDragStarted.current = true
+        dispatch(startDragging())
+      }, DRAG_DELAY_MS)
     },
     [isEditingArtwork, wallRef, isArtworkVisible, exhibitionArtworksById, scaleFactor, dispatch],
   )
 
   const handleArtworkDragMove = useCallback(
     (event: MouseEvent) => {
-      if (!isDragging || !draggedArtworkId || !boundingData || !wallRef.current) return
+      // Check if we have an artwork to drag (mousedown happened)
+      if (!draggedArtworkId || !boundingData || !wallRef.current) return
 
       event.preventDefault()
       event.stopPropagation()
 
+      // Always move the artwork (even before timer fires for distance lines)
       const rect = wallRef.current.getBoundingClientRect()
       const scaledMouseX = (event.clientX - rect.left) / scaleFactor
       const scaledMouseY = (event.clientY - rect.top) / scaleFactor
@@ -203,7 +215,6 @@ export const useMoveArtwork = (
       )
     },
     [
-      isDragging,
       draggedArtworkId,
       wallRef,
       boundingData,
@@ -217,12 +228,20 @@ export const useMoveArtwork = (
   )
 
   const handleArtworkDragEnd = useCallback(() => {
-    dispatch(stopDragging())
+    // Clear the timer if it's still pending
+    if (dragDelayTimer.current) {
+      clearTimeout(dragDelayTimer.current)
+      dragDelayTimer.current = null
+    }
+    if (hasDragStarted.current) {
+      dispatch(stopDragging())
+    }
     setDraggedArtworkId(null)
+    hasDragStarted.current = false
   }, [dispatch])
 
   useEffect(() => {
-    if (isDragging) {
+    if (draggedArtworkId) {
       const moveHandler = (event: MouseEvent) => handleArtworkDragMove(event)
       const upHandler = () => handleArtworkDragEnd()
 
@@ -234,7 +253,7 @@ export const useMoveArtwork = (
         document.removeEventListener('mouseup', upHandler)
       }
     }
-  }, [isDragging, handleArtworkDragMove, handleArtworkDragEnd])
+  }, [draggedArtworkId, handleArtworkDragMove, handleArtworkDragEnd])
 
   return useMemo(
     () => ({

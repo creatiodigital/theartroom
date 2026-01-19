@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwork'
 import { Wall } from '@/components/wallview/Wall/Wall'
+import { Text } from '@/components/ui/Typography'
 import {
   increaseScaleFactor,
   decreaseScaleFactor,
@@ -59,6 +60,11 @@ export const CenterPanel = () => {
 
   return (
     <div ref={containerRef} className={styles.panel}>
+      <div className={styles.scaleIndicator}>
+        <Text font="dashboard" as="span" size="xs">
+          Zoom: {Math.round(scaleFactor * 100)}%
+        </Text>
+      </div>
       <div
         id="wallWrapper"
         className={styles.wrapper}

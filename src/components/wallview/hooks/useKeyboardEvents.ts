@@ -48,12 +48,19 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
       }
     }
 
+    // Reset shift key when window loses focus (prevents stuck shift state)
+    const handleBlur = () => {
+      dispatch(setShiftKeyDown(false))
+    }
+
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
     }
   }, [currentArtworkId, isMouseOver, isEditingArtwork, isGroupHovered, artworkGroupIds, dispatch])
 }

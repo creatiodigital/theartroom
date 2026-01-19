@@ -56,10 +56,17 @@ export const useSaveExhibition = () => {
       // 1. Upload pending images to Vercel Blob
       const pendingUploads = getAllPendingUploads()
       const uploadedUrls = new Map<string, string>()
+      const originalDimensions = new Map<string, { width: number; height: number }>()
 
-      for (const [artworkId, file] of pendingUploads) {
+      for (const [artworkId, uploadData] of pendingUploads) {
         const formData = new FormData()
-        formData.append('image', file)
+        formData.append('image', uploadData.file)
+
+        // Store original dimensions for later
+        originalDimensions.set(artworkId, {
+          width: uploadData.originalWidth,
+          height: uploadData.originalHeight,
+        })
 
         // First save the artwork record (needed for the image API)
         const artwork = artworksById[artworkId]
@@ -102,16 +109,16 @@ export const useSaveExhibition = () => {
         })
 
         if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json()
+          const uploadResponseData = await uploadResponse.json()
 
-          uploadedUrls.set(artworkId, uploadData.url)
+          uploadedUrls.set(artworkId, uploadResponseData.url)
 
           // Update Redux with cloud URL
           dispatch(
             editArtisticImage({
               currentArtworkId: artworkId,
               property: 'imageUrl',
-              value: uploadData.url,
+              value: uploadResponseData.url,
             }),
           )
         } else {
@@ -137,6 +144,9 @@ export const useSaveExhibition = () => {
             imageUrl = null
           }
 
+          // Get original dimensions (from pending upload or existing artwork)
+          const dims = originalDimensions.get(id)
+
           return {
             id,
             name: artwork.name || 'Untitled',
@@ -150,6 +160,9 @@ export const useSaveExhibition = () => {
             imageUrl,
             textContent: artwork.textContent || null,
             featured: artwork.featured ?? false,
+            // Include original dimensions if we have them
+            originalWidth: dims?.width ?? artwork.originalWidth ?? null,
+            originalHeight: dims?.height ?? artwork.originalHeight ?? null,
           }
         })
         .filter(Boolean)

@@ -5,6 +5,7 @@ import type { RefObject } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { useMoveGroupArtwork } from '@/components/wallview/hooks/useMoveGroupArtwork'
+import { ArtworkMeasurements } from '@/components/wallview/ArtworkMeasurements'
 import { setGroupHovered, setGroupNotHovered } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
@@ -70,7 +71,9 @@ const Group: React.FC<GroupProps> = memo(({ wallRef, boundingData, scaleFactor, 
       onMouseUp={handleMouseUp}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-    />
+    >
+      <ArtworkMeasurements width2d={groupWidth as number} height2d={groupHeight as number} />
+    </div>
   )
 })
 

@@ -17,8 +17,13 @@ const ArtisticText = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
-  const { textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
+  const { textContent, textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
     useArtworkDetails(currentArtworkId!)
+
+  // Hide all text styling fields if there's no text content
+  if (!textContent || textContent.trim() === '') {
+    return null
+  }
 
   return (
     <div className={styles.section}>

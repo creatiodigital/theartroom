@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
         imageUrl?: string
         textContent?: string
         featured?: boolean
+        originalWidth?: number | null
+        originalHeight?: number | null
       }>
     }
 
@@ -48,6 +50,8 @@ export async function POST(request: NextRequest) {
             imageUrl: artwork.imageUrl || undefined,
             textContent: artwork.textContent || undefined,
             featured: artwork.featured ?? false,
+            originalWidth: artwork.originalWidth ?? undefined,
+            originalHeight: artwork.originalHeight ?? undefined,
           },
           update: {
             name: artwork.name,
@@ -61,6 +65,8 @@ export async function POST(request: NextRequest) {
             imageUrl: artwork.imageUrl || undefined,
             textContent: artwork.textContent || undefined,
             featured: artwork.featured ?? false,
+            originalWidth: artwork.originalWidth ?? undefined,
+            originalHeight: artwork.originalHeight ?? undefined,
           },
         }),
       ),
