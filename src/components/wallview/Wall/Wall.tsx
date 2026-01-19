@@ -245,7 +245,7 @@ export const Wall = () => {
           />
         ))}
 
-        <DistanceLines scaleFactor={scaleFactor} />
+        <DistanceLines />
 
         {artworkGroupIds.length > 1 && (
           <Group

@@ -67,7 +67,7 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
         setPosition(calculatePosition())
         setIsVisible(true)
       }
-    }, 500)
+    }, 1000)
   }
 
   const hideTooltip = () => {

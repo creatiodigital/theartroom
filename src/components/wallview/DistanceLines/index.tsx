@@ -17,15 +17,10 @@ type DistanceLine = {
   labelY: number
 }
 
-type DistanceLinesProps = {
-  scaleFactor: number
-}
-
-export const DistanceLines = ({ scaleFactor }: DistanceLinesProps) => {
+export const DistanceLines = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const isDragging = useSelector((state: RootState) => state.wallView.isDragging)
-  const isResizing = useSelector((state: RootState) => state.wallView.isResizing)
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
@@ -33,8 +28,8 @@ export const DistanceLines = ({ scaleFactor }: DistanceLinesProps) => {
     (state: RootState) => state.exhibition.allExhibitionArtworkIds,
   )
 
-  // Only show when artwork is selected, being moved, or resized
-  const shouldShow = currentArtworkId && (isDragging || isResizing || currentArtworkId)
+  // Only show during drag operations (not resize)
+  const shouldShow = currentArtworkId && isDragging
 
   if (!shouldShow || !currentArtworkId) return null
 
@@ -186,7 +181,7 @@ export const DistanceLines = ({ scaleFactor }: DistanceLinesProps) => {
   if (distanceLines.length === 0) return null
 
   return (
-    <svg className={styles.container} style={{ transform: `scale(${scaleFactor})` }}>
+    <svg className={styles.container}>
       {distanceLines.map((line, index) => (
         <g key={index}>
           <line

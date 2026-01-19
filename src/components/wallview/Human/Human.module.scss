@@ -1,7 +1,8 @@
 .human {
   position: absolute;
-  bottom: -5px;
-  left: var(--space-2);
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
   opacity: 0.3;
   pointer-events: none;
   user-select: none;
