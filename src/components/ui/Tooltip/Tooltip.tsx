@@ -19,6 +19,7 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const [isMounted, setIsMounted] = useState(false)
+  const [isMouseDown, setIsMouseDown] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -59,9 +60,13 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
   }
 
   const showTooltip = () => {
+    // Don't show tooltip if mouse is pressed (dragging/resizing)
+    if (isMouseDown) return
     timerRef.current = setTimeout(() => {
-      setPosition(calculatePosition())
-      setIsVisible(true)
+      if (!isMouseDown) {
+        setPosition(calculatePosition())
+        setIsVisible(true)
+      }
     }, 500)
   }
 
@@ -72,7 +77,24 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
     setIsVisible(false)
   }
 
-  const tooltipContent = isVisible && isMounted ? createPortal(
+  // Track global mouse state to hide tooltip during drag operations
+  useEffect(() => {
+    const handleGlobalMouseDown = () => {
+      setIsMouseDown(true)
+      hideTooltip()
+    }
+    const handleGlobalMouseUp = () => {
+      setIsMouseDown(false)
+    }
+    document.addEventListener('mousedown', handleGlobalMouseDown)
+    document.addEventListener('mouseup', handleGlobalMouseUp)
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalMouseDown)
+      document.removeEventListener('mouseup', handleGlobalMouseUp)
+    }
+  }, [])
+
+  const tooltipContent = isVisible && isMounted && !isMouseDown ? createPortal(
     <div
       className={`${styles.content} ${styles[placement]}`}
       style={{

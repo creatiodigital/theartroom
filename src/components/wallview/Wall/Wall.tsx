@@ -17,6 +17,7 @@ import { useKeyboardEvents } from '@/components/wallview/hooks/useKeyboardEvents
 import { useResizeArtwork } from '@/components/wallview/hooks/useResizeArtwork'
 import { useSelectBox } from '@/components/wallview/hooks/useSelectBox'
 import { Human } from '@/components/wallview/Human'
+import { DistanceLines } from '@/components/wallview/DistanceLines'
 import { SelectionBox } from '@/components/wallview/SelectionBox'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
@@ -243,6 +244,8 @@ export const Wall = () => {
             groupArtworkHandlers={groupArtworkHandlers}
           />
         ))}
+
+        <DistanceLines scaleFactor={scaleFactor} />
 
         {artworkGroupIds.length > 1 && (
           <Group
