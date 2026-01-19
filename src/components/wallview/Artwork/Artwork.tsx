@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { ArtisticImage } from '@/components/wallview/ArtisticImage'
 import { ArtisticText } from '@/components/wallview/ArtisticText'
+import { ArtworkMeasurements } from '@/components/wallview/ArtworkMeasurements'
 import { Handles } from '@/components/wallview/Handles'
 import { useMoveArtwork } from '@/components/wallview/hooks/useMoveArtwork'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
@@ -106,6 +107,9 @@ const Artwork = memo(
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {currentArtworkId === id && (
+          <ArtworkMeasurements width2d={width2d} height2d={height2d} />
+        )}
         {currentArtworkId === id && artworkGroupIds.length <= 1 && (
           <Handles artworkId={id} handleResize={onHandleResize} />
         )}
