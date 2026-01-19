@@ -19,6 +19,8 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
+  const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
   const sanitizeNumberInput = (value: number | string): number => {
     const normalizedValue = Number(value) * 100
@@ -83,17 +85,20 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     )
   }
 
-  const handleMoveXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newX = sanitizeNumberInput(e.target.value)
+  // Handler for "from left" input - distance from left wall edge to artwork center
+  const handleFromLeftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromLeft = sanitizeNumberInput(e.target.value)
     const currentEdited = exhibitionArtworksById[currentArtworkId]
     if (!currentEdited) return
 
     const artworkWidth = currentEdited.width2d
     const artworkHeight = currentEdited.height2d
     const artworkY = currentEdited.posY2d
+    // fromLeft is distance from left edge to center, so top-left X = fromLeft - width/2
+    const newX = fromLeft - artworkWidth / 2
     const new3DCoordinate = convert2DTo3D(newX, artworkY, artworkWidth, artworkHeight, boundingData)
 
-    dispatch(pushToHistory()) // Save state before X change
+    dispatch(pushToHistory())
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
@@ -102,18 +107,68 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     )
   }
 
-  const handleMoveYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newY = sanitizeNumberInput(e.target.value)
+  // Handler for "from right" input - distance from right wall edge to artwork center
+  const handleFromRightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromRight = sanitizeNumberInput(e.target.value)
+    const currentEdited = exhibitionArtworksById[currentArtworkId]
+    if (!currentEdited) return
+
+    const artworkWidth = currentEdited.width2d
+    const artworkHeight = currentEdited.height2d
+    const artworkY = currentEdited.posY2d
+    const wallWidth2d = (wallWidth || 0) * 100
+    // fromRight = wallWidth - centerX, so centerX = wallWidth - fromRight
+    const centerX = wallWidth2d - fromRight
+    const newX = centerX - artworkWidth / 2
+    const new3DCoordinate = convert2DTo3D(newX, artworkY, artworkWidth, artworkHeight, boundingData)
+
+    dispatch(pushToHistory())
+    dispatch(
+      updateArtworkPosition({
+        artworkId: currentArtworkId,
+        artworkPosition: { posX2d: newX, ...new3DCoordinate },
+      }),
+    )
+  }
+
+  // Handler for "from top" input - distance from top wall edge to artwork center
+  const handleFromTopChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromTop = sanitizeNumberInput(e.target.value)
     const currentEdited = exhibitionArtworksById[currentArtworkId]
     if (!currentEdited) return
 
     const artworkWidth = currentEdited.width2d
     const artworkHeight = currentEdited.height2d
     const artworkX = currentEdited.posX2d
-
+    // fromTop is distance from top to center, so top-left Y = fromTop - height/2
+    const newY = fromTop - artworkHeight / 2
     const new3DCoordinate = convert2DTo3D(artworkX, newY, artworkWidth, artworkHeight, boundingData)
 
-    dispatch(pushToHistory()) // Save state before Y change
+    dispatch(pushToHistory())
+    dispatch(
+      updateArtworkPosition({
+        artworkId: currentArtworkId,
+        artworkPosition: { posY2d: newY, ...new3DCoordinate },
+      }),
+    )
+  }
+
+  // Handler for "from bottom" input - distance from bottom wall edge to artwork center
+  const handleFromBottomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromBottom = sanitizeNumberInput(e.target.value)
+    const currentEdited = exhibitionArtworksById[currentArtworkId]
+    if (!currentEdited) return
+
+    const artworkWidth = currentEdited.width2d
+    const artworkHeight = currentEdited.height2d
+    const artworkX = currentEdited.posX2d
+    const wallHeight2d = (wallHeight || 0) * 100
+    // fromBottom = wallHeight - centerY, so centerY = wallHeight - fromBottom
+    const centerY = wallHeight2d - fromBottom
+    const newY = centerY - artworkHeight / 2
+    const new3DCoordinate = convert2DTo3D(artworkX, newY, artworkWidth, artworkHeight, boundingData)
+
+    dispatch(pushToHistory())
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
@@ -161,8 +216,10 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
   return {
     handleNameChange,
     handleAlignChange,
-    handleMoveXChange,
-    handleMoveYChange,
+    handleFromLeftChange,
+    handleFromRightChange,
+    handleFromTopChange,
+    handleFromBottomChange,
     handleWidthChange,
     handleHeightChange,
   }

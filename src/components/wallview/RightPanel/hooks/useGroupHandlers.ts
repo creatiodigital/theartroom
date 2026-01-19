@@ -23,19 +23,14 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const artworkGroup = useSelector((state: RootState) => state.wallView.artworkGroup)
 
-  const handleMoveGroupXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newGroupX = Number(e.target.value) * 100
-    const deltaX = newGroupX - artworkGroup.groupX
-
-    dispatch(pushToHistory()) // Save state before group X change
-    dispatch(editArtworkGroup({ groupX: newGroupX, groupY: artworkGroup.groupY }))
-
+  // Helper to move all artworks in group by delta
+  const moveGroupByDelta = (deltaX: number, deltaY: number) => {
     artworkGroupIds.forEach((artworkId) => {
       const artwork = exhibitionArtworksById[artworkId]
 
       if (artwork) {
         const posX2d = artwork.posX2d + deltaX
-        const posY2d = artwork.posY2d
+        const posY2d = artwork.posY2d + deltaY
         const width2d = artwork.width2d
         const height2d = artwork.height2d
 
@@ -58,39 +53,54 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
     })
   }
 
-  const handleMoveGroupYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newGroupY = Number(e.target.value) * 100
+  // Handler for "from left" input - distance from left wall edge to group center
+  const handleFromLeftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromLeft = Number(e.target.value) * 100
+    const groupCenterX = fromLeft
+    const newGroupX = groupCenterX - artworkGroup.groupWidth / 2
+    const deltaX = newGroupX - artworkGroup.groupX
+
+    dispatch(pushToHistory())
+    dispatch(editArtworkGroup({ groupX: newGroupX, groupY: artworkGroup.groupY }))
+    moveGroupByDelta(deltaX, 0)
+  }
+
+  // Handler for "from right" input - distance from right wall edge to group center
+  const handleFromRightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromRight = Number(e.target.value) * 100
+    const wallWidth2d = (wallWidth || 0) * 100
+    const groupCenterX = wallWidth2d - fromRight
+    const newGroupX = groupCenterX - artworkGroup.groupWidth / 2
+    const deltaX = newGroupX - artworkGroup.groupX
+
+    dispatch(pushToHistory())
+    dispatch(editArtworkGroup({ groupX: newGroupX, groupY: artworkGroup.groupY }))
+    moveGroupByDelta(deltaX, 0)
+  }
+
+  // Handler for "from top" input - distance from top wall edge to group center
+  const handleFromTopChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromTop = Number(e.target.value) * 100
+    const groupCenterY = fromTop
+    const newGroupY = groupCenterY - artworkGroup.groupHeight / 2
     const deltaY = newGroupY - artworkGroup.groupY
 
-    dispatch(pushToHistory()) // Save state before group Y change
+    dispatch(pushToHistory())
     dispatch(editArtworkGroup({ groupX: artworkGroup.groupX, groupY: newGroupY }))
+    moveGroupByDelta(0, deltaY)
+  }
 
-    artworkGroupIds.forEach((artworkId) => {
-      const artwork = exhibitionArtworksById[artworkId]
+  // Handler for "from bottom" input - distance from bottom wall edge to group center
+  const handleFromBottomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fromBottom = Number(e.target.value) * 100
+    const wallHeight2d = (wallHeight || 0) * 100
+    const groupCenterY = wallHeight2d - fromBottom
+    const newGroupY = groupCenterY - artworkGroup.groupHeight / 2
+    const deltaY = newGroupY - artworkGroup.groupY
 
-      if (artwork) {
-        const posX2d = artwork.posX2d
-        const posY2d = artwork.posY2d + deltaY
-        const width2d = artwork.width2d
-        const height2d = artwork.height2d
-
-        const artworkPosition = {
-          posX2d,
-          posY2d,
-          width2d,
-          height2d,
-        }
-
-        const new3DCoordinate = convert2DTo3D(posX2d, posY2d, width2d, height2d, boundingData)
-
-        dispatch(
-          updateArtworkPosition({
-            artworkId: artworkId,
-            artworkPosition: { ...artworkPosition, ...new3DCoordinate },
-          }),
-        )
-      }
-    })
+    dispatch(pushToHistory())
+    dispatch(editArtworkGroup({ groupX: artworkGroup.groupX, groupY: newGroupY }))
+    moveGroupByDelta(0, deltaY)
   }
 
   const alignGroupToWall = (alignment: TAlign) => {
@@ -125,43 +135,19 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
         return
     }
 
-    dispatch(pushToHistory()) // Save state before group alignment
-    dispatch(editArtworkGroup({ groupX: newGroupX, groupY: newGroupY }))
-
     const deltaX = newGroupX - artworkGroup.groupX
     const deltaY = newGroupY - artworkGroup.groupY
 
-    artworkGroupIds.forEach((artworkId) => {
-      const artwork = exhibitionArtworksById[artworkId]
-
-      if (artwork) {
-        const posX2d = artwork.posX2d + deltaX
-        const posY2d = artwork.posY2d + deltaY
-        const width2d = artwork.width2d
-        const height2d = artwork.height2d
-
-        const artworkPosition = {
-          posX2d,
-          posY2d,
-          width2d,
-          height2d,
-        }
-
-        const new3DCoordinate = convert2DTo3D(posX2d, posY2d, width2d, height2d, boundingData)
-
-        dispatch(
-          updateArtworkPosition({
-            artworkId: artworkId,
-            artworkPosition: { ...artworkPosition, ...new3DCoordinate },
-          }),
-        )
-      }
-    })
+    dispatch(pushToHistory())
+    dispatch(editArtworkGroup({ groupX: newGroupX, groupY: newGroupY }))
+    moveGroupByDelta(deltaX, deltaY)
   }
 
   return {
-    handleMoveGroupXChange,
-    handleMoveGroupYChange,
+    handleFromLeftChange,
+    handleFromRightChange,
+    handleFromTopChange,
+    handleFromBottomChange,
     alignGroupToWall,
   }
 }

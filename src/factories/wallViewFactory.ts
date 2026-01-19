@@ -16,6 +16,7 @@ export const wallViewFactory = (): TWallView => ({
   isDraggingGroup: false,
   isResizing: false,
   isShiftKeyDown: false,
+  sizeLocked: false,
   artworkGroupIds: [],
   artworkGroup: {
     groupY: 0,

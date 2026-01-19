@@ -109,7 +109,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                   </span>
                 ) : (
                   <Icon
-                    name={artwork.artworkType === 'image' ? 'picture' : 'text'}
+                    name={artwork.artworkType === 'image' ? 'image' : 'type'}
                     size={32}
                     color="#333"
                   />

@@ -94,6 +94,9 @@ const wallViewSlice = createSlice({
     setShiftKeyDown: (state: TWallView, action: PayloadAction<boolean>) => {
       state.isShiftKeyDown = action.payload
     },
+    setSizeLocked: (state: TWallView, action: PayloadAction<boolean>) => {
+      state.sizeLocked = action.payload
+    },
     addArtworkToGroup: (state: TWallView, action: PayloadAction<string>) => {
       if (!state.artworkGroupIds.includes(action.payload)) {
         state.artworkGroupIds.push(action.payload)
@@ -156,6 +159,7 @@ export const {
   addArtworkToGroup,
   removeArtworkFromGroup,
   setShiftKeyDown,
+  setSizeLocked,
   removeGroup,
   setGroupHovered,
   setGroupNotHovered,

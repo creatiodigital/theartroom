@@ -122,17 +122,25 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
   const processFile = (file: File) => {
     const fileUrl = URL.createObjectURL(file)
 
-    // Store the File object for later upload on Save
-    addPendingUpload(artwork.id, file, fileUrl)
+    // Load image to get original dimensions
+    const img = new Image()
+    img.onload = () => {
+      const originalWidth = img.naturalWidth
+      const originalHeight = img.naturalHeight
 
-    // Update Redux for instant preview
-    dispatch(
-      editArtisticImage({
-        currentArtworkId: artwork.id,
-        property: 'imageUrl',
-        value: fileUrl,
-      }),
-    )
+      // Store the File object with dimensions for later upload on Save
+      addPendingUpload(artwork.id, file, fileUrl, originalWidth, originalHeight)
+
+      // Update Redux for instant preview
+      dispatch(
+        editArtisticImage({
+          currentArtworkId: artwork.id,
+          property: 'imageUrl',
+          value: fileUrl,
+        }),
+      )
+    }
+    img.src = fileUrl
   }
 
   return (

@@ -37,6 +37,8 @@ export type TArtwork = {
   technique?: string
   description?: string
   imageUrl?: string
+  originalWidth?: number | null
+  originalHeight?: number | null
   showArtworkInformation?: boolean
   showFrame?: boolean
   frameColor?: string

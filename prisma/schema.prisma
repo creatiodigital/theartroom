@@ -51,6 +51,8 @@ model Artwork {
   dimensions           String?
   description          String?
   imageUrl             String?
+  originalWidth        Int? // Original image width in pixels
+  originalHeight       Int? // Original image height in pixels
   textContent          String? // Fixed text content for stencil/text artworks
   featured             Boolean @default(false)
   hiddenFromExhibition Boolean @default(false)

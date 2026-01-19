@@ -1,4 +1,4 @@
-import { ArrowRight, FolderDown, Image, LampCeiling, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
+import { ArrowDownFromLine, ArrowLeftFromLine, ArrowRightFromLine, ArrowUpFromLine, ArrowRight, FolderDown, Image, LampCeiling, MoveHorizontal, MoveVertical, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -46,11 +46,17 @@ type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 // Lucide icons registry (add Lucide icons here as needed)
 const lucideIcons: Record<string, LucideIcon> = {
   arrowRight: ArrowRight,
+  arrowTopFromLine: ArrowUpFromLine,
+  arrowBottomFromLine: ArrowDownFromLine,
+  arrowLeftFromLine: ArrowLeftFromLine,
+  arrowRightFromLine: ArrowRightFromLine,
   close: X,
   gallery: FolderDown,
   'human-standing': PersonStanding,
   image: Image,
   light: LampCeiling,
+  moveHorizontal: MoveHorizontal,
+  moveVertical: MoveVertical,
   redo: Redo2,
   settings: Settings,
   type: Type,
