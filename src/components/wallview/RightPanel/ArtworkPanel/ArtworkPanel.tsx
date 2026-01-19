@@ -26,14 +26,16 @@ const ArtworkPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
-  const { width, height, x, y, artworkTitle } = useArtworkDetails(currentArtworkId!)
+  const { width, height, fromTop, fromBottom, fromLeft, fromRight, artworkTitle } = useArtworkDetails(currentArtworkId!)
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
   const {
     handleAlignChange,
-    handleMoveXChange,
-    handleMoveYChange,
+    handleFromTopChange,
+    handleFromBottomChange,
+    handleFromLeftChange,
+    handleFromRightChange,
     handleWidthChange,
     handleHeightChange,
   } = useArtworkHandlers(currentArtworkId!, boundingData!)
@@ -78,26 +80,55 @@ const ArtworkPanel = () => {
 
       <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Position (meters)
+          Vertical position (meters)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={x / 100}
-              icon="move"
-              rotate={90}
+              value={fromTop / 100}
+              icon="arrowTopFromLine"
+              label="from top"
               min={0}
               max={1000}
-              onChange={handleMoveXChange}
+              onChange={handleFromTopChange}
             />
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={y / 100}
-              icon="move"
+              value={fromBottom / 100}
+              icon="arrowBottomFromLine"
+              label="from bottom"
               min={0}
               max={1000}
-              onChange={handleMoveYChange}
+              onChange={handleFromBottomChange}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Horizontal position (meters)
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <NumberInput
+              value={fromLeft / 100}
+              icon="arrowLeftFromLine"
+              label="from left"
+              min={0}
+              max={1000}
+              onChange={handleFromLeftChange}
+            />
+          </div>
+          <div className={styles.item}>
+            <NumberInput
+              value={fromRight / 100}
+              icon="arrowRightFromLine"
+              label="from right"
+              min={0}
+              max={1000}
+              onChange={handleFromRightChange}
             />
           </div>
         </div>
@@ -111,8 +142,8 @@ const ArtworkPanel = () => {
           <div className={styles.item}>
             <NumberInput
               value={width / 100}
-              icon="expand"
-              rotate={90}
+              icon="moveHorizontal"
+              label="horizontal"
               min={0.1}
               max={50}
               onChange={handleWidthChange}
@@ -121,7 +152,8 @@ const ArtworkPanel = () => {
           <div className={styles.item}>
             <NumberInput
               value={height / 100}
-              icon="expand"
+              icon="moveVertical"
+              label="vertical"
               min={0.1}
               max={50}
               onChange={handleHeightChange}

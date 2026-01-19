@@ -92,6 +92,7 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
       className={`${styles.tooltip} ${fullWidth ? styles.fullWidth : ''}`}
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
+      onMouseDown={hideTooltip}
     >
       {children}
       {tooltipContent}

@@ -1,6 +1,6 @@
 @use '@/styles/mixins' as *;
 
-.wrapper {
+.inputContainer {
   position: relative;
 }
 
@@ -34,4 +34,11 @@
 
 .rotate90 {
   transform: translateY(calc(-50% + 1px)) rotate(90deg);
+}
+
+.label {
+  display: block;
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 2px;
 }

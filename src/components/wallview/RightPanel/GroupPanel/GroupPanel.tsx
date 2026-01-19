@@ -29,9 +29,9 @@ const GroupPanel = () => {
   }
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
-  const { groupX, groupY } = useGroupDetails()
+  const { fromTop, fromBottom, fromLeft, fromRight } = useGroupDetails()
 
-  const { handleMoveGroupXChange, handleMoveGroupYChange, alignGroupToWall } = useGroupHandlers(
+  const { handleFromLeftChange, handleFromRightChange, handleFromTopChange, handleFromBottomChange, alignGroupToWall } = useGroupHandlers(
     artworkGroupIds,
     boundingData!,
   )
@@ -87,26 +87,55 @@ const GroupPanel = () => {
 
       <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Position (meters)
+          Vertical position (meters)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={groupX / 100}
-              icon="move"
-              rotate={90}
+              value={fromTop / 100}
+              icon="arrowTopFromLine"
+              label="from top"
               min={0}
               max={1000}
-              onChange={handleMoveGroupXChange}
+              onChange={handleFromTopChange}
             />
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={groupY / 100}
-              icon="move"
+              value={fromBottom / 100}
+              icon="arrowBottomFromLine"
+              label="from bottom"
               min={0}
               max={1000}
-              onChange={handleMoveGroupYChange}
+              onChange={handleFromBottomChange}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Horizontal position (meters)
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <NumberInput
+              value={fromLeft / 100}
+              icon="arrowLeftFromLine"
+              label="from left"
+              min={0}
+              max={1000}
+              onChange={handleFromLeftChange}
+            />
+          </div>
+          <div className={styles.item}>
+            <NumberInput
+              value={fromRight / 100}
+              icon="arrowRightFromLine"
+              label="from right"
+              min={0}
+              max={1000}
+              onChange={handleFromRightChange}
             />
           </div>
         </div>

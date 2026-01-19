@@ -15,9 +15,10 @@ type NumberInputProps = {
   rotate?: number
   max?: number
   min?: number
+  label?: string
 }
 
-const NumberInput = ({ variant, value, onChange, icon, rotate, max, min }: NumberInputProps) => {
+const NumberInput = ({ variant, value, onChange, icon, rotate, max, min, label }: NumberInputProps) => {
   // Track the display value as a string to allow empty state and proper editing
   const [displayValue, setDisplayValue] = useState<string>(String(value))
   const [isFocused, setIsFocused] = useState(false)
@@ -82,22 +83,25 @@ const NumberInput = ({ variant, value, onChange, icon, rotate, max, min }: Numbe
 
   return (
     <div className={styles.wrapper}>
-      <input
-        type="number"
-        className={c([styles.input, variant && styles[variant], { [styles.withIcon]: !!icon }])}
-        value={displayValue}
-        min={min}
-        max={max}
-        step={0.01}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-      />
-      {icon && (
-        <div className={c(styles.icon, { [styles[`rotate${rotate}`]]: !!rotate })}>
-          <Icon name={icon} size={16} color="#444444" />
-        </div>
-      )}
+      {label && <span className={styles.label}>{label}</span>}
+      <div className={styles.inputContainer}>
+        <input
+          type="number"
+          className={c([styles.input, variant && styles[variant], { [styles.withIcon]: !!icon }])}
+          value={displayValue}
+          min={min}
+          max={max}
+          step={0.01}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {icon && (
+          <div className={c(styles.icon, { [styles[`rotate${rotate}`]]: !!rotate })}>
+            <Icon name={icon} size={16} color="#444444" />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

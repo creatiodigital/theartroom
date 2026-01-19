@@ -107,7 +107,7 @@ export const useSelectBox = (
         const only = selectedArtworks[0]
         if (only.artworkId) {
           dispatch(chooseCurrentArtworkId(only.artworkId))
-          handleAddArtworkToGroup(only.artworkId)
+          // Don't add single artwork to group - groups are only for multi-select
           dispatch(showWizard())
         }
       } else if (selectedArtworks.length > 1) {
