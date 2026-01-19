@@ -56,6 +56,7 @@ export type TWallView = {
   isDraggingGroup: boolean
   isResizing: boolean
   isShiftKeyDown: boolean
+  sizeLocked: boolean // Lock proportions when resizing
   artworkGroupIds: string[]
   artworkGroup: TArtworkGroup
   isGroupHovered: boolean

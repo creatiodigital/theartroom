@@ -31,6 +31,7 @@ export const useResizeArtwork = (
 
   const dispatch = useDispatch()
   const isGridVisible = useSelector((state: RootState) => state.wallView.isGridVisible)
+  const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
   const gridSize = 20
 
   // Track if we're currently resizing
@@ -85,8 +86,8 @@ export const useResizeArtwork = (
 
         const alignedPairs: TAlignmentPair[] = []
 
-        // Proportional resize with Shift key (only for corner handles)
-        if (moveEvent.shiftKey && isCornerResize) {
+        // Proportional resize with Shift key OR sizeLocked checkbox (only for corner handles)
+        if ((moveEvent.shiftKey || sizeLocked) && isCornerResize) {
           // Use the larger delta to determine the resize amount
           const absDeltaX = Math.abs(deltaX)
           const absDeltaY = Math.abs(deltaY)
@@ -271,6 +272,7 @@ export const useResizeArtwork = (
       gridSize,
       scaleFactor,
       isGridVisible,
+      sizeLocked,
       boundingData,
       dispatch,
     ],

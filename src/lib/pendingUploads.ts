@@ -4,6 +4,7 @@
  * When user uploads an image in the 2D wall, we:
  * 1. Create object URL for instant preview
  * 2. Store the File object here for later upload
+ * 3. Store original image dimensions for aspect ratio restoration
  *
  * On Save button:
  * 1. Upload all pending files to Vercel Blob
@@ -11,38 +12,49 @@
  * 3. Clear pending files
  */
 
-// Map of artworkId -> File
-const pendingUploads = new Map<string, File>()
+type PendingUploadData = {
+  file: File
+  localUrl: string
+  originalWidth: number
+  originalHeight: number
+}
 
-// Map of artworkId -> local blob URL (for cleanup)
-const localBlobUrls = new Map<string, string>()
+// Map of artworkId -> upload data
+const pendingUploads = new Map<string, PendingUploadData>()
 
-export const addPendingUpload = (artworkId: string, file: File, localUrl: string) => {
-  pendingUploads.set(artworkId, file)
-  localBlobUrls.set(artworkId, localUrl)
+export const addPendingUpload = (
+  artworkId: string,
+  file: File,
+  localUrl: string,
+  originalWidth: number,
+  originalHeight: number
+) => {
+  pendingUploads.set(artworkId, { file, localUrl, originalWidth, originalHeight })
 }
 
 export const removePendingUpload = (artworkId: string) => {
-  pendingUploads.delete(artworkId)
-  const localUrl = localBlobUrls.get(artworkId)
-  if (localUrl) {
-    URL.revokeObjectURL(localUrl)
-    localBlobUrls.delete(artworkId)
+  const data = pendingUploads.get(artworkId)
+  if (data) {
+    URL.revokeObjectURL(data.localUrl)
+    pendingUploads.delete(artworkId)
   }
 }
 
-export const getPendingUpload = (artworkId: string): File | undefined => {
+export const getPendingUpload = (artworkId: string): PendingUploadData | undefined => {
   return pendingUploads.get(artworkId)
 }
 
-export const getAllPendingUploads = (): Map<string, File> => {
+export const getPendingFile = (artworkId: string): File | undefined => {
+  return pendingUploads.get(artworkId)?.file
+}
+
+export const getAllPendingUploads = (): Map<string, PendingUploadData> => {
   return pendingUploads
 }
 
 export const clearAllPendingUploads = () => {
   // Revoke all local URLs
-  localBlobUrls.forEach((url) => URL.revokeObjectURL(url))
-  localBlobUrls.clear()
+  pendingUploads.forEach((data) => URL.revokeObjectURL(data.localUrl))
   pendingUploads.clear()
 }
 
@@ -58,4 +70,13 @@ export const hasAnyPendingUploads = (): boolean => {
 export const isLocalBlobUrl = (url: string | undefined): boolean => {
   if (!url) return false
   return url.startsWith('blob:')
+}
+
+// Get original dimensions for an artwork
+export const getOriginalDimensions = (artworkId: string): { width: number; height: number } | undefined => {
+  const data = pendingUploads.get(artworkId)
+  if (data) {
+    return { width: data.originalWidth, height: data.originalHeight }
+  }
+  return undefined
 }

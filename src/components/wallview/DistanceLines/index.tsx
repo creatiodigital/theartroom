@@ -182,39 +182,64 @@ export const DistanceLines = () => {
 
   return (
     <svg className={styles.container}>
-      {distanceLines.map((line, index) => (
-        <g key={index}>
-          <line
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
-            className={styles.line}
-          />
-          {line.direction === 'horizontal' ? (
-            <text
-              x={line.labelX}
-              y={line.labelY - 8}
-              className={styles.label}
-              dominantBaseline="auto"
-              textAnchor="middle"
-            >
-              {(line.distance / 100).toFixed(2)} m
-            </text>
-          ) : (
-            <text
-              x={line.labelX - 8}
-              y={line.labelY}
-              className={styles.label}
-              dominantBaseline="middle"
-              textAnchor="end"
-              transform={`rotate(-90 ${line.labelX - 8} ${line.labelY})`}
-            >
-              {(line.distance / 100).toFixed(2)} m
-            </text>
-          )}
-        </g>
-      ))}
+      {distanceLines.map((line, index) => {
+        const labelText = `${(line.distance / 100).toFixed(2)} m`
+        const labelWidth = labelText.length * 6 + 8 // Approximate width
+        const labelHeight = 14
+
+        return (
+          <g key={index}>
+            <line
+              x1={line.x1}
+              y1={line.y1}
+              x2={line.x2}
+              y2={line.y2}
+              className={styles.line}
+            />
+            {line.direction === 'horizontal' ? (
+              <>
+                <rect
+                  x={line.labelX - labelWidth / 2}
+                  y={line.labelY - 8 - labelHeight + 2}
+                  width={labelWidth}
+                  height={labelHeight}
+                  fill="white"
+                  rx={2}
+                />
+                <text
+                  x={line.labelX}
+                  y={line.labelY - 8}
+                  className={styles.label}
+                  dominantBaseline="auto"
+                  textAnchor="middle"
+                >
+                  {labelText}
+                </text>
+              </>
+            ) : (
+              <g transform={`rotate(-90 ${line.labelX - 12} ${line.labelY})`}>
+                <rect
+                  x={line.labelX - 12 - labelWidth / 2}
+                  y={line.labelY - labelHeight / 2}
+                  width={labelWidth}
+                  height={labelHeight}
+                  fill="white"
+                  rx={2}
+                />
+                <text
+                  x={line.labelX - 12}
+                  y={line.labelY}
+                  className={styles.label}
+                  dominantBaseline="middle"
+                  textAnchor="middle"
+                >
+                  {labelText}
+                </text>
+              </g>
+            )}
+          </g>
+        )
+      })}
     </svg>
   )
 }

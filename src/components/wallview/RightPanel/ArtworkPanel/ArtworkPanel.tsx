@@ -2,13 +2,17 @@
 
 import { useGLTF } from '@react-three/drei'
 
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Text } from '@/components/ui/Typography'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
+import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
+import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { setSizeLocked } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
 
@@ -17,6 +21,9 @@ import { useArtworkHandlers } from '../hooks/useArtworkHandlers'
 import styles from '../RightPanel.module.scss'
 
 const ArtworkPanel = () => {
+  const dispatch = useDispatch()
+  const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
+
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
@@ -25,6 +32,12 @@ const ArtworkPanel = () => {
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
+
+  // Get artwork data to check if it has an uploaded image
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  const exhibitionArtworksById = useSelector((state: RootState) => state.exhibition.exhibitionArtworksById)
+  const artwork = currentArtworkId ? artworksById[currentArtworkId] : null
+  const exhibitionArtwork = currentArtworkId ? exhibitionArtworksById[currentArtworkId] : null
 
   const { width, height, fromTop, fromBottom, fromLeft, fromRight, artworkTitle } = useArtworkDetails(currentArtworkId!)
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
@@ -42,6 +55,85 @@ const ArtworkPanel = () => {
 
   const handleAlign = (alignment: TAlign) => {
     handleAlignChange(alignment, wallWidth!, wallHeight!)
+  }
+
+  // Check if we can show the "Use image proportions" button
+  const hasPendingImage = currentArtworkId ? hasPendingUpload(currentArtworkId) : false
+  const showProportionsButton = artwork?.artworkType === 'image' && hasPendingImage
+
+  const handleUseImageProportions = () => {
+    if (!currentArtworkId || !exhibitionArtwork) return
+
+    const dimensions = getOriginalDimensions(currentArtworkId)
+    if (!dimensions) return
+
+    const { width: originalWidth, height: originalHeight } = dimensions
+    const originalRatio = originalWidth / originalHeight
+
+    const currentWidth = exhibitionArtwork.width2d
+    const currentHeight = exhibitionArtwork.height2d
+
+    let newWidth: number
+    let newHeight: number
+
+    // Keep the larger dimension, adjust the smaller one
+    if (currentWidth >= currentHeight) {
+      newWidth = currentWidth
+      newHeight = currentWidth / originalRatio
+    } else {
+      newHeight = currentHeight
+      newWidth = currentHeight * originalRatio
+    }
+
+    // Update both width and height
+    dispatch(updateArtworkPosition({
+      artworkId: currentArtworkId,
+      artworkPosition: {
+        width2d: newWidth,
+        height2d: newHeight,
+      },
+    }))
+  }
+
+  // Proportional resize handlers (when Lock size is checked)
+  const handleLockedWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!sizeLocked || !currentArtworkId || !exhibitionArtwork) {
+      handleWidthChange(e)
+      return
+    }
+
+    const newWidthMeters = Number(e.target.value)
+    const currentRatio = width / height
+    const newWidth2d = newWidthMeters * 100
+    const newHeight2d = newWidth2d / currentRatio
+
+    dispatch(updateArtworkPosition({
+      artworkId: currentArtworkId,
+      artworkPosition: {
+        width2d: newWidth2d,
+        height2d: newHeight2d,
+      },
+    }))
+  }
+
+  const handleLockedHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!sizeLocked || !currentArtworkId || !exhibitionArtwork) {
+      handleHeightChange(e)
+      return
+    }
+
+    const newHeightMeters = Number(e.target.value)
+    const currentRatio = width / height
+    const newHeight2d = newHeightMeters * 100
+    const newWidth2d = newHeight2d * currentRatio
+
+    dispatch(updateArtworkPosition({
+      artworkId: currentArtworkId,
+      artworkPosition: {
+        width2d: newWidth2d,
+        height2d: newHeight2d,
+      },
+    }))
   }
 
   return (
@@ -146,7 +238,7 @@ const ArtworkPanel = () => {
               label="horizontal"
               min={0.1}
               max={50}
-              onChange={handleWidthChange}
+              onChange={handleLockedWidthChange}
             />
           </div>
           <div className={styles.item}>
@@ -156,9 +248,26 @@ const ArtworkPanel = () => {
               label="vertical"
               min={0.1}
               max={50}
-              onChange={handleHeightChange}
+              onChange={handleLockedHeightChange}
             />
           </div>
+        </div>
+        {showProportionsButton && (
+          <div style={{ marginTop: 'var(--space-2)', width: '100%' }}>
+            <Button
+              font="dashboard"
+              variant="secondary"
+              label="Use image proportions"
+              onClick={handleUseImageProportions}
+            />
+          </div>
+        )}
+        <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
+          <Checkbox
+            checked={sizeLocked}
+            onChange={(e) => dispatch(setSizeLocked(e.target.checked))}
+            label="Lock proportions when resizing"
+          />
         </div>
       </div>
     </>
@@ -166,3 +275,5 @@ const ArtworkPanel = () => {
 }
 
 export default ArtworkPanel
+
+
