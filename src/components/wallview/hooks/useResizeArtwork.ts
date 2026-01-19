@@ -14,7 +14,7 @@ import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TDirection, TAlignmentPair } from '@/types/wallView'
 
-const SNAP_TOLERANCE = 3
+const SNAP_TOLERANCE = 0.5 // Pixel-perfect alignment for proportional resize
 
 export const useResizeArtwork = (
   boundingData: TDimensions | null,
@@ -88,37 +88,52 @@ export const useResizeArtwork = (
 
         // Proportional resize with Shift key OR sizeLocked checkbox (only for corner handles)
         if ((moveEvent.shiftKey || sizeLocked) && isCornerResize) {
-          // Use the larger delta to determine the resize amount
-          const absDeltaX = Math.abs(deltaX)
-          const absDeltaY = Math.abs(deltaY)
+          // Calculate scale factor based on diagonal movement for smooth proportional resize
+          // Determine the direction signs based on which corner handle is being dragged
+          const xSign = direction.includes('left') ? -1 : 1
+          const ySign = direction.includes('top') ? -1 : 1
 
-          if (absDeltaX > absDeltaY) {
-            // Width is the primary dimension
-            if (direction.includes('left')) {
-              newWidth = Math.max(20, initialWidth - deltaX)
-              newX = initialX + (initialWidth - newWidth)
-            } else {
-              newWidth = Math.max(20, initialWidth + deltaX)
-            }
-            newHeight = Math.max(20, newWidth / aspectRatio)
+          // Project the mouse movement onto the diagonal direction
+          // This gives a smooth scale factor without sudden jumps
+          const diagonalDelta = (deltaX * xSign + deltaY * ySign * aspectRatio) / (1 + aspectRatio)
+          
+          // Apply the scale
+          newWidth = Math.max(20, initialWidth + diagonalDelta * xSign)
+          newHeight = Math.max(20, newWidth / aspectRatio)
 
-            // Adjust Y position for top handles
-            if (direction.includes('top')) {
-              newY = initialY + initialHeight - newHeight
-            }
-          } else {
-            // Height is the primary dimension
-            if (direction.includes('top')) {
-              newHeight = Math.max(20, initialHeight - deltaY)
-              newY = initialY + (initialHeight - newHeight)
-            } else {
-              newHeight = Math.max(20, initialHeight + deltaY)
-            }
-            newWidth = Math.max(20, newHeight * aspectRatio)
+          // Adjust position for left/top handles
+          if (direction.includes('left')) {
+            newX = initialX + initialWidth - newWidth
+          }
+          if (direction.includes('top')) {
+            newY = initialY + initialHeight - newHeight
+          }
 
-            // Adjust X position for left handles
-            if (direction.includes('left')) {
-              newX = initialX + initialWidth - newWidth
+          // Add edge snapping for proportional resize to show alignment lines
+          // Only check edges that are actually moving based on the resize direction
+          if (!isGridVisible) {
+            for (const otherArtwork of sameWallArtworks) {
+              const newRight = newX + newWidth
+              const newBottom = newY + newHeight
+              const otherRight = otherArtwork.posX2d + otherArtwork.width2d
+              const otherBottom = otherArtwork.posY2d + otherArtwork.height2d
+
+              // Only check left edge if dragging from left side
+              if (direction.includes('left') && Math.abs(newX - otherArtwork.posX2d) <= SNAP_TOLERANCE) {
+                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'left' })
+              }
+              // Only check right edge if dragging from right side
+              if (direction.includes('right') && Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
+                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'right' })
+              }
+              // Only check top edge if dragging from top side
+              if (direction.includes('top') && Math.abs(newY - otherArtwork.posY2d) <= SNAP_TOLERANCE) {
+                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'top' })
+              }
+              // Only check bottom edge if dragging from bottom side
+              if (direction.includes('bottom') && Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
+                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'bottom' })
+              }
             }
           }
         } else {

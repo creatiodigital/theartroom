@@ -21,6 +21,8 @@ type ExhibitionArtworkResponse = {
     description: string | null
     imageUrl: string | null
     textContent: string | null // Fixed text content
+    originalWidth: number | null
+    originalHeight: number | null
   }
   wallId: string
   posX2d: number
@@ -131,6 +133,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             technique: ea.artwork.technique || undefined,
             description: ea.artwork.description || undefined,
             imageUrl: ea.artwork.imageUrl || undefined,
+            originalWidth: ea.artwork.originalWidth ?? undefined,
+            originalHeight: ea.artwork.originalHeight ?? undefined,
             textContent: ea.artwork.textContent || undefined, // Fixed content from Artwork
             // Display properties from ExhibitionArtwork (per-exhibition)
             showFrame: ea.showFrame,

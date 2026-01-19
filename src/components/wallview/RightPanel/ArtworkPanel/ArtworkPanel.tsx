@@ -58,16 +58,47 @@ const ArtworkPanel = () => {
   }
 
   // Check if we can show the "Use image proportions" button
+  // Show for any image artwork that has either a pending upload or an existing imageUrl
   const hasPendingImage = currentArtworkId ? hasPendingUpload(currentArtworkId) : false
-  const showProportionsButton = artwork?.artworkType === 'image' && hasPendingImage
+  const hasExistingImage = artwork?.artworkType === 'image' && artwork?.imageUrl
+  const showProportionsButton = artwork?.artworkType === 'image' && (hasPendingImage || hasExistingImage)
 
-  const handleUseImageProportions = () => {
+  const handleUseImageProportions = async () => {
     if (!currentArtworkId || !exhibitionArtwork) return
 
-    const dimensions = getOriginalDimensions(currentArtworkId)
-    if (!dimensions) return
+    let originalWidth: number
+    let originalHeight: number
 
-    const { width: originalWidth, height: originalHeight } = dimensions
+    // Priority 1: Get dimensions from pending upload (freshly dropped)
+    const pendingDimensions = getOriginalDimensions(currentArtworkId)
+    if (pendingDimensions) {
+      originalWidth = pendingDimensions.width
+      originalHeight = pendingDimensions.height
+    }
+    // Priority 2: Get dimensions from artwork data (stored in DB)
+    else if (artwork?.originalWidth && artwork?.originalHeight) {
+      originalWidth = artwork.originalWidth
+      originalHeight = artwork.originalHeight
+    }
+    // Priority 3: Load dynamically from image URL as fallback
+    else if (artwork?.imageUrl) {
+      try {
+        const img = new Image()
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve()
+          img.onerror = () => reject(new Error('Failed to load image'))
+          img.src = artwork.imageUrl!
+        })
+        originalWidth = img.naturalWidth
+        originalHeight = img.naturalHeight
+      } catch {
+        console.error('Failed to load image dimensions')
+        return
+      }
+    } else {
+      return
+    }
+
     const originalRatio = originalWidth / originalHeight
 
     const currentWidth = exhibitionArtwork.width2d
