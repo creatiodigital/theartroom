@@ -130,13 +130,14 @@ export const ExhibitionEditPage = ({
     }
   }, [sessionStatus, router])
 
-  // Check ownership: user must own the exhibition OR be an admin
+  // Check ownership: user must own the exhibition OR be an admin/superAdmin
   useEffect(() => {
     if (sessionStatus === 'authenticated' && exhibition) {
       const isOwner = session?.user?.id === exhibition.userId
-      const isAdmin = session?.user?.userType === 'admin'
+      const userType = session?.user?.userType
+      const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
 
-      if (!isOwner && !isAdmin) {
+      if (!isOwner && !isAdminOrAbove) {
         router.push('/dashboard')
       }
     }
@@ -173,9 +174,10 @@ export const ExhibitionEditPage = ({
 
   // Final ownership check before rendering
   const isOwner = session?.user?.id === exhibition.userId
-  const isAdmin = session?.user?.userType === 'admin'
+  const userType = session?.user?.userType
+  const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
 
-  if (!isOwner && !isAdmin) {
+  if (!isOwner && !isAdminOrAbove) {
     return (
       <div
         style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}

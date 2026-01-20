@@ -41,8 +41,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         }
         const data = await response.json()
 
-        // Verify ownership
-        if (data.userId !== session?.user?.id && session?.user?.userType !== 'admin') {
+        // Verify ownership (allow admin and superAdmin to edit any artwork)
+        const userType = session?.user?.userType
+        const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
+        if (data.userId !== session?.user?.id && !isAdminOrAbove) {
           router.push(backLink)
           return
         }

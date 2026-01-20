@@ -10,7 +10,8 @@ import { Text } from '@/components/ui/Typography'
 
 import styles from './AddArtistModal.module.scss'
 
-const userTypeOptions = [
+// Base user types - admin option added dynamically for superAdmin
+const baseUserTypeOptions = [
   { value: 'artist', label: 'Artist' },
   { value: 'curator', label: 'Curator' },
 ]
@@ -18,9 +19,14 @@ const userTypeOptions = [
 type AddArtistModalProps = {
   onClose: () => void
   onSuccess: () => void
+  isSuperAdmin?: boolean
 }
 
-export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
+export const AddArtistModal = ({ onClose, onSuccess, isSuperAdmin = false }: AddArtistModalProps) => {
+  // Add admin option only for superAdmin users
+  const userTypeOptions = isSuperAdmin
+    ? [...baseUserTypeOptions, { value: 'admin', label: 'Admin' }]
+    : baseUserTypeOptions
   const [formData, setFormData] = useState({
     name: '',
     lastName: '',
@@ -76,7 +82,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
   return (
     <div className={styles.modal}>
-      <Text font="dashboard" as="h2">Add New Artist</Text>
+      <Text font="dashboard" as="h2">Add New User</Text>
       <form onSubmit={handleSubmit} autoComplete="off">
         <div className={styles.section}>
           <label className={styles.label} htmlFor="name">First Name</label>
@@ -143,7 +149,7 @@ export const AddArtistModal = ({ onClose, onSuccess }: AddArtistModalProps) => {
 
         <div className={styles.actions}>
           <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
-          <Button font="dashboard" variant="primary" label={loading ? 'Creating...' : 'Create Artist'} type="submit" />
+          <Button font="dashboard" variant="primary" label={loading ? 'Creating...' : 'Create User'} type="submit" />
         </div>
       </form>
     </div>

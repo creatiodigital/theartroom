@@ -101,8 +101,11 @@ export default function LandingContentPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/')
-    } else if (status === 'authenticated' && session?.user?.userType !== 'admin') {
-      router.push('/')
+    } else if (status === 'authenticated') {
+      const userType = session?.user?.userType
+      if (userType !== 'admin' && userType !== 'superAdmin') {
+        router.push('/')
+      }
     }
   }, [status, session, router])
 

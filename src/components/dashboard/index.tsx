@@ -34,7 +34,7 @@ export const DashboardPage = () => {
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
   const { data: session } = useSession()
-  const { effectiveUser } = useEffectiveUser()
+  const { effectiveUser, isImpersonating } = useEffectiveUser()
 
   const selectedSpace = useSelector((state: RootState) => state.dashboard.selectedSpace)
   const exhibitions = useSelector(selectExhibitions)
@@ -144,8 +144,16 @@ export const DashboardPage = () => {
     [router, userHandler],
   )
 
+  // Show "Back to Admin Dashboard" for admins/superadmins using test dashboard
+  const userType = session?.user?.userType
+  const isAdminOrSuperAdmin = userType === 'admin' || userType === 'superAdmin'
+  const showBackToAdmin = isAdminOrSuperAdmin && !isImpersonating
+
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      backLink={showBackToAdmin ? '/admin/dashboard' : undefined}
+      backLabel={showBackToAdmin ? '← Back to Admin Dashboard' : undefined}
+    >
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>
         Hello {userData?.name ?? session?.user?.name ?? ''}
