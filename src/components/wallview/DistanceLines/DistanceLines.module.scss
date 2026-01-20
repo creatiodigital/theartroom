@@ -11,15 +11,15 @@
 }
 
 .line {
-  stroke: #ff6b35;
+  stroke: var(--color-highlight);
   stroke-width: 1;
   stroke-dasharray: 4 2;
 }
 
 .label {
-  fill: #ff6b35;
+  fill: var(--color-highlight);
   font-size: 10px;
   font-weight: 500;
-  background: white;
+  background: var(--color-white);
   user-select: none;
 }
