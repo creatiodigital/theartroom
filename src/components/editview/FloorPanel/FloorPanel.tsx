@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideFloorPanel } from '@/redux/slices/dashboardSlice'
@@ -14,6 +16,10 @@ const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
 
 const FloorPanel = () => {
   const dispatch = useDispatch()
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
 
   const floorReflectiveness = useSelector(
     (state: RootState) => state.exhibition.floorReflectiveness ?? DEFAULT_FLOOR_REFLECTIVENESS,
@@ -21,6 +27,28 @@ const FloorPanel = () => {
 
   const handleReflectivenessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setFloorReflectiveness(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
+  const handleSave = async () => {
+    if (!exhibitionId) return
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ floorReflectiveness }),
+      })
+
+      if (response.ok) {
+        setSaved(true)
+      }
+    } catch (error) {
+      console.error('Failed to save floor settings:', error)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleClose = () => {
@@ -54,8 +82,20 @@ const FloorPanel = () => {
           </div>
         </div>
       </div>
+
+      {/* Actions */}
+      <div className={styles.actions}>
+        <Button
+          variant="primary"
+          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+          onClick={handleSave}
+          disabled={saving}
+          className={styles.saveButton}
+        />
+      </div>
     </SettingsPanel>
   )
 }
 
 export default FloorPanel
+

@@ -22,6 +22,8 @@ export type TExhibition = {
   skylightIntensity?: number
   ceilingLampColor?: string
   ceilingLampIntensity?: number
+  windowLightColor?: string
+  windowLightIntensity?: number
   floorReflectiveness?: number
 }
 

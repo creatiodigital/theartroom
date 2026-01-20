@@ -6,7 +6,7 @@ import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
-import { Floor } from '@/components/scene/spaces/objects/Floor'
+import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { Lamp } from '@/components/scene/spaces/objects/Lamp'
 import { Line } from '@/components/scene/spaces/objects/Line'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
@@ -77,9 +77,9 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
       <Lights />
       <Effects />
       {nodes.floor && (
-        <Floor
+        <ReflectiveFloor
           geometry={nodes.floor.geometry}
-          material={nodes.floor.material as MeshStandardMaterial}
+          textureRepeat={1}
         />
       )}
       {nodes.ceiling && (

@@ -1,4 +1,6 @@
+import { useSelector } from 'react-redux'
 import { Mesh, BufferGeometry, Material } from 'three'
+import type { RootState } from '@/redux/store'
 
 interface WindowProps {
   i: number
@@ -9,14 +11,27 @@ interface WindowProps {
   glassMaterial: Material
 }
 
+const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
+const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
+
 const Window: React.FC<WindowProps> = ({
   i,
   windowRef,
   glassRef,
   nodes,
   windowMaterial,
-  glassMaterial,
 }) => {
+  // Read from Redux for dynamic control
+  const windowLightIntensity = useSelector(
+    (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_LIGHT_INTENSITY,
+  )
+  const windowLightColor = useSelector(
+    (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_LIGHT_COLOR,
+  )
+
+  // Scale slider (0-10) to emissive intensity
+  const emissiveIntensity = windowLightIntensity * 0.5
+
   return (
     <>
       <mesh
@@ -28,11 +43,17 @@ const Window: React.FC<WindowProps> = ({
         material={windowMaterial}
       />
       <mesh
+        key={`glass-${i}-${windowLightColor}-${emissiveIntensity}`}
         ref={glassRef}
         name={`glass${i}`}
         geometry={nodes[`glass${i}`]?.geometry}
-        material={glassMaterial}
-      />
+      >
+        <meshStandardMaterial
+          color={windowLightColor}
+          emissive={windowLightColor}
+          emissiveIntensity={emissiveIntensity}
+        />
+      </mesh>
     </>
   )
 }

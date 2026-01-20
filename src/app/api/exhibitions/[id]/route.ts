@@ -17,6 +17,13 @@ type ExhibitionUpdateBody = {
   // Lighting customization
   ambientLightColor?: string
   ambientLightIntensity?: number
+  skylightColor?: string
+  skylightIntensity?: number
+  ceilingLampColor?: string
+  ceilingLampIntensity?: number
+  windowLightColor?: string
+  windowLightIntensity?: number
+  floorReflectiveness?: number
 }
 
 /* ------------------------ GET ------------------------ */
@@ -68,6 +75,15 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.ambientLightColor !== undefined) data.ambientLightColor = body.ambientLightColor
     if (body.ambientLightIntensity !== undefined)
       data.ambientLightIntensity = body.ambientLightIntensity
+    if (body.skylightColor !== undefined) data.skylightColor = body.skylightColor
+    if (body.skylightIntensity !== undefined) data.skylightIntensity = body.skylightIntensity
+    if (body.ceilingLampColor !== undefined) data.ceilingLampColor = body.ceilingLampColor
+    if (body.ceilingLampIntensity !== undefined)
+      data.ceilingLampIntensity = body.ceilingLampIntensity
+    if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
+    if (body.windowLightIntensity !== undefined)
+      data.windowLightIntensity = body.windowLightIntensity
+    if (body.floorReflectiveness !== undefined) data.floorReflectiveness = body.floorReflectiveness
 
     const updated = await prisma.exhibition.update({
       where: { id },

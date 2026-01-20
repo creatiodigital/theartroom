@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import { getSpaceFeatures } from '@/config/spaceConfig'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
 import {
   setAmbientLightColor,
@@ -14,6 +15,8 @@ import {
   setSkylightIntensity,
   setCeilingLampColor,
   setCeilingLampIntensity,
+  setWindowLightColor,
+  setWindowLightIntensity,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -26,10 +29,8 @@ const DEFAULT_SKYLIGHT_COLOR = '#ffffff'
 const DEFAULT_SKYLIGHT_INTENSITY = 4.0
 const DEFAULT_LAMP_COLOR = '#ffffff'
 const DEFAULT_LAMP_INTENSITY = 4.0
-
-// Spaces that have specific light types
-const SPACES_WITH_SKYLIGHT = ['modern']
-const SPACES_WITH_LAMPS = ['modern']
+const DEFAULT_WINDOW_COLOR = '#ffffff'
+const DEFAULT_WINDOW_INTENSITY = 4.0
 
 const LightingPanel = () => {
   const dispatch = useDispatch()
@@ -57,9 +58,18 @@ const LightingPanel = () => {
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.ceilingLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
+  const windowColor = useSelector(
+    (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_COLOR,
+  )
+  const windowIntensity = useSelector(
+    (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_INTENSITY,
+  )
 
-  const hasSkylight = SPACES_WITH_SKYLIGHT.includes(spaceId)
-  const hasLamps = SPACES_WITH_LAMPS.includes(spaceId)
+  // Get features from space config
+  const spaceFeatures = getSpaceFeatures(spaceId)
+  const hasSkylight = spaceFeatures.hasSkylight
+  const hasLamps = spaceFeatures.hasLamps
+  const hasWindows = spaceFeatures.hasWindows
 
   // Ambient light handlers
   const handleAmbientColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +104,17 @@ const LightingPanel = () => {
     setSaved(false)
   }
 
+  // Window light handlers
+  const handleWindowColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setWindowLightColor(e.target.value))
+    setSaved(false)
+  }
+
+  const handleWindowIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setWindowLightIntensity(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -105,7 +126,13 @@ const LightingPanel = () => {
         body: JSON.stringify({
           ambientLightColor: ambientColor,
           ambientLightIntensity: ambientIntensity,
-          // Note: other light settings not saved to DB yet
+          skylightColor,
+          skylightIntensity,
+          ceilingLampColor: lampColor,
+          ceilingLampIntensity: lampIntensity,
+          windowLightColor: windowColor,
+          windowLightIntensity: windowIntensity,
+          // Note: floorReflectiveness is in FloorPanel
         }),
       })
 
@@ -246,6 +273,49 @@ const LightingPanel = () => {
               step="0.1"
               value={lampIntensity}
               onChange={handleLampIntensityChange}
+              className={styles.slider}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Window Light Section - only for spaces with windows */}
+      {hasWindows && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Window Light
+          </Text>
+          
+          <div className={styles.field}>
+            <label className={styles.label}>Color</label>
+            <div className={styles.colorRow}>
+              <input
+                type="color"
+                value={windowColor}
+                onChange={handleWindowColorChange}
+                className={styles.colorPicker}
+              />
+              <input
+                type="text"
+                value={windowColor}
+                onChange={handleWindowColorChange}
+                className={styles.colorInput}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Intensity</label>
+              <span className={styles.sliderValue}>{windowIntensity.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="0.1"
+              value={windowIntensity}
+              onChange={handleWindowIntensityChange}
               className={styles.slider}
             />
           </div>

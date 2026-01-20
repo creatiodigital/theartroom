@@ -93,6 +93,13 @@ model Exhibition {
   // Lighting customization (space-agnostic)
   ambientLightColor     String? @default("#e4e8f2")
   ambientLightIntensity Float?  @default(1.0)
+  skylightColor         String? @default("#ffffff")
+  skylightIntensity     Float?  @default(4.0)
+  ceilingLampColor      String? @default("#ffffff")
+  ceilingLampIntensity  Float?  @default(4.0)
+  windowLightColor      String? @default("#ffffff")
+  windowLightIntensity  Float?  @default(4.0)
+  floorReflectiveness   Float?  @default(0.3)
 
   exhibitionArtworks ExhibitionArtwork[]
 

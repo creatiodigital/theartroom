@@ -94,6 +94,14 @@ const exhibitionSlice = createSlice({
       state.ceilingLampIntensity = action.payload
     },
 
+    setWindowLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.windowLightColor = action.payload
+    },
+
+    setWindowLightIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.windowLightIntensity = action.payload
+    },
+
     setFloorReflectiveness: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
       state.floorReflectiveness = action.payload
     },
@@ -174,6 +182,8 @@ export const {
   setSkylightIntensity,
   setCeilingLampColor,
   setCeilingLampIntensity,
+  setWindowLightColor,
+  setWindowLightIntensity,
   setFloorReflectiveness,
   snapshotExhibition,
   restoreSnapshot,
