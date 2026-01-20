@@ -28,7 +28,15 @@ const BaseSpace: React.FC<BaseSpaceProps> = ({ wallRefs, ...props }) => {
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      {nodes.floor && <ReflectiveFloor geometry={nodes.floor.geometry} textureRepeat={0.5} />}
+      {nodes.floor && (
+        <>
+          <primitive object={nodes.floor} visible={false} />
+          <ReflectiveFloor
+            textureRepeat={0.5}
+            position={[nodes.floor.position.x, nodes.floor.position.y, nodes.floor.position.z]}
+          />
+        </>
+      )}
       {nodes.ceiling && <PlasterCeiling geometry={nodes.ceiling.geometry} textureRepeat={2} />}
       {nodes.wall0 && (
         <PlasterWall
