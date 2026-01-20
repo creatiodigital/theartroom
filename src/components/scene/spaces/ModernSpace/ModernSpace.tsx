@@ -58,7 +58,16 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      {nodes.floor && <ReflectiveFloor geometry={nodes.floor.geometry} textureRepeat={1} />}
+      {nodes.floor && (
+        <>
+          {/* Hide original floor but use its position for the reflective floor */}
+          <primitive object={nodes.floor} visible={false} />
+          <ReflectiveFloor
+            textureRepeat={1}
+            position={[nodes.floor.position.x, nodes.floor.position.y, nodes.floor.position.z]}
+          />
+        </>
+      )}
       {nodes.ceiling && <PlasterCeiling geometry={nodes.ceiling.geometry} textureRepeat={4} />}
       {nodes.top && <CeilingGlass geometry={nodes.top.geometry} />}
       {wallsArray.map((_, i) => {
