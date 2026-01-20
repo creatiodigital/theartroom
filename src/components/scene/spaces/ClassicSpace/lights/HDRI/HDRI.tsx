@@ -8,7 +8,7 @@ const HDRI = () => {
     <Environment
       background={true}
       map={envMap}
-      environmentIntensity={0.55}
+      environmentIntensity={0.3}
       backgroundRotation={[0, Math.PI / 1.4, 0]}
     />
   )

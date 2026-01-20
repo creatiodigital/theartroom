@@ -4,6 +4,7 @@ export const createDashboardState = (): TDashboardState => ({
   isEditMode: false,
   isArtworkPanelOpen: false,
   isLightingPanelOpen: false,
+  isFloorPanelOpen: false,
   isEditingArtwork: false,
   selectedSpace: { label: 'Classic', value: 'classic' },
 })

@@ -1,36 +1,36 @@
+import { useSelector } from 'react-redux'
+
 import { AmbientLight } from './AmbientLight'
 import { HDRI } from './HDRI'
 import { ShadowSetup } from '@/components/scene/spaces/objects/ShadowSetup'
+import type { RootState } from '@/redux/store'
 
-// Ceiling light positions (adjust these to match your Blender layout)
-const ceilingLightPositions = [
-  [-4, 9.5, -3],
-  [0, 9.5, -3],
-  [4, 9.5, -3],
-  [-4, 9.5, 3],
-  [0, 9.5, 3],
-  [4, 9.5, 3],
-]
+const DEFAULT_SKYLIGHT_COLOR = '#ffffff'
+const DEFAULT_SKYLIGHT_INTENSITY = 4.0
 
 export const Lights = () => {
+  const skylightColor = useSelector(
+    (state: RootState) => state.exhibition.skylightColor ?? DEFAULT_SKYLIGHT_COLOR,
+  )
+  const skylightIntensity = useSelector(
+    (state: RootState) => state.exhibition.skylightIntensity ?? DEFAULT_SKYLIGHT_INTENSITY,
+  )
+
   return (
     <>
       <AmbientLight />
       <HDRI />
       <ShadowSetup />
 
-      {/* RectAreaLights at ceiling fixture positions */}
-      {ceilingLightPositions.map((pos, i) => (
-        <rectAreaLight
-          key={i}
-          position={pos as [number, number, number]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          width={0.4}
-          height={0.4}
-          intensity={8}
-          color="#ffffff"
-        />
-      ))}
+      {/* Single large skylight - simulates light through glass ceiling */}
+      <rectAreaLight
+        position={[0, 9, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        width={12}
+        height={8}
+        intensity={skylightIntensity}
+        color={skylightColor}
+      />
     </>
   )
 }

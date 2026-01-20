@@ -22,21 +22,21 @@
 }
 
 .current {
-  background: #d4edda;
-  color: #155724;
+  background: var(--color-badge-success-bg);
+  color: var(--color-badge-success-text);
 }
 
 .past {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--color-badge-danger-bg);
+  color: var(--color-badge-danger-text);
 }
 
 .public {
-  background: #cce5ff;
-  color: #004085;
+  background: var(--color-badge-info-bg);
+  color: var(--color-badge-info-text);
 }
 
 .hidden {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--color-badge-warning-bg);
+  color: var(--color-badge-warning-text);
 }

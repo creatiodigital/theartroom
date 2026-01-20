@@ -20,7 +20,8 @@
 .header {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .title {
@@ -38,7 +39,7 @@
   padding: 0;
 
   &:hover {
-    color: var(--color-text-muted);
+    color: var(--color-black);
   }
 }
 
