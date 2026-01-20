@@ -78,6 +78,26 @@ const exhibitionSlice = createSlice({
       state.ambientLightIntensity = action.payload
     },
 
+    setSkylightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.skylightColor = action.payload
+    },
+
+    setSkylightIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.skylightIntensity = action.payload
+    },
+
+    setCeilingLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.ceilingLampColor = action.payload
+    },
+
+    setCeilingLampIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.ceilingLampIntensity = action.payload
+    },
+
+    setFloorReflectiveness: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.floorReflectiveness = action.payload
+    },
+
     // Snapshot actions for cancel functionality
     snapshotExhibition: (state: TExhibitionWithHistory) => {
       state._snapshot = extractExhibitionData(state)
@@ -150,6 +170,11 @@ export const {
   setExhibition,
   setAmbientLightColor,
   setAmbientLightIntensity,
+  setSkylightColor,
+  setSkylightIntensity,
+  setCeilingLampColor,
+  setCeilingLampIntensity,
+  setFloorReflectiveness,
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,

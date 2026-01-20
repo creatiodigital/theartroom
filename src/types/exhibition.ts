@@ -18,4 +18,10 @@ export type TExhibition = {
   // Lighting customization
   ambientLightColor?: string
   ambientLightIntensity?: number
+  skylightColor?: string
+  skylightIntensity?: number
+  ceilingLampColor?: string
+  ceilingLampIntensity?: number
+  floorReflectiveness?: number
 }
+

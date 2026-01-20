@@ -1,12 +1,13 @@
 import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Mesh, MeshStandardMaterial, BufferGeometry, Material } from 'three'
+import { Mesh, MeshStandardMaterial, BufferGeometry } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { PlasterCeiling } from '@/components/scene/spaces/objects/Ceiling/PlasterCeiling'
 import { CeilingGlass } from '@/components/scene/spaces/objects/CeilingGlass'
+import { CeilingLamps } from '@/components/scene/spaces/objects/CeilingLamps'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 
@@ -17,7 +18,7 @@ import type { TArtwork } from '@/types/artwork'
 
 import { Lights } from './lights'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
-import { reelMaterial, topMaterial, rectLampMaterial } from './materials'
+import { reelMaterial } from './materials'
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -59,12 +60,7 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
       <Effects />
       {nodes.floor && <ReflectiveFloor geometry={nodes.floor.geometry} textureRepeat={1} />}
       {nodes.ceiling && <PlasterCeiling geometry={nodes.ceiling.geometry} textureRepeat={4} />}
-      {nodes.glass && (
-        <CeilingGlass
-          geometry={nodes.glass.geometry}
-          material={(nodes.glass.material as Material) || topMaterial}
-        />
-      )}
+      {nodes.top && <CeilingGlass geometry={nodes.top.geometry} />}
       {wallsArray.map((_, i) => {
         const wallNode = nodes[`wall${i}`]
         if (!wallNode) return null
@@ -80,9 +76,7 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
       })}
       {isPlaceholdersShown &&
         placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
-      {nodes.rect1 && (
-        <mesh name="rect1" geometry={nodes.rect1.geometry} material={rectLampMaterial} />
-      )}
+      {nodes.rectlamp0 && <CeilingLamps geometry={nodes.rectlamp0.geometry} />}
       {nodes.reel0 && (
         <mesh
           name="reel0"

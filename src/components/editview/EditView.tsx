@@ -3,6 +3,7 @@
 import { useSelector } from 'react-redux'
 
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
+import { FloorPanel } from '@/components/editview/FloorPanel'
 import { LightingPanel } from '@/components/editview/LightingPanel'
 import { Scene } from '@/components/scene'
 import { WallView } from '@/components/wallview'
@@ -18,6 +19,9 @@ function EditView() {
   const isLightingPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isLightingPanelOpen,
   )
+  const isFloorPanelOpen: boolean = useSelector(
+    (state: RootState) => state.dashboard.isFloorPanelOpen,
+  )
 
   return (
     <>
@@ -27,6 +31,7 @@ function EditView() {
           <Scene />
           {isArtworkPanelOpen && <ArtworkPanel />}
           {isLightingPanelOpen && <LightingPanel />}
+          {isFloorPanelOpen && <FloorPanel />}
         </div>
       )}
       {isWallView && <WallView />}
@@ -35,3 +40,4 @@ function EditView() {
 }
 
 export default EditView
+
