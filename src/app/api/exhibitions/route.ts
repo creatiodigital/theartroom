@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { auth } from '@/auth'
 import type { Exhibition, Prisma } from '@/generated/prisma'
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
@@ -71,12 +72,47 @@ export async function GET(request: NextRequest) {
   const visibility = searchParams.get('visibility') // 'public' | 'hidden'
 
   try {
+    // Get current session to determine filtering
+    const session = await auth()
+
     // Build where clause
     const where: Prisma.ExhibitionWhereInput = {}
 
     if (userId) where.userId = userId
     if (status) where.status = status
     if (visibility) where.visibility = visibility
+
+    // Permission rules:
+    // - SuperAdmin: can see own + other admins + all artists/curators
+    // - Admin: can see own + all artists/curators (NOT other admins or superAdmin)
+    // - Artist/Curator: can see only own
+    const requesterType = session?.user?.userType
+    const requesterId = session?.user?.id
+    const isSuperAdmin = requesterType === 'superAdmin'
+    const isAdmin = requesterType === 'admin'
+
+    // Apply permission filtering
+    if (session?.user) {
+      // SuperAdmin can see everything - no filter needed
+      if (isSuperAdmin) {
+        // No additional filter
+      }
+      // Admin can see their own + artists/curators (but NOT other admins or superAdmin)
+      else if (isAdmin) {
+        where.OR = [
+          { userId: requesterId }, // Own exhibitions
+          { user: { userType: { notIn: ['admin', 'superAdmin'] } } }, // Artist/curator exhibitions
+        ]
+      }
+      // Artists/Curators: by default the userId filter already limits to their own
+      // For public browsing, just filter out admin/superAdmin exhibitions
+      else {
+        where.user = { userType: { notIn: ['admin', 'superAdmin'] } }
+      }
+    } else {
+      // Public (unauthenticated) users can only see artist/curator exhibitions
+      where.user = { userType: { notIn: ['admin', 'superAdmin'] } }
+    }
 
     const exhibitions = await prisma.exhibition.findMany({
       where,
@@ -87,6 +123,7 @@ export async function GET(request: NextRequest) {
             name: true,
             lastName: true,
             handler: true,
+            userType: true,
           },
         },
       },

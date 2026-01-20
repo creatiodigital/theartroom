@@ -16,25 +16,35 @@ datasource db {
 enum UserType {
   artist
   admin
+  superAdmin
   curator
   general
 }
 
 model User {
-  id              String       @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
   lastName        String
-  userType        UserType     @default(general)
-  handler         String       @unique
+  userType        UserType @default(general)
+  handler         String   @unique
   biography       String
-  email           String?      @unique
+  email           String?  @unique
   password        String?
   profileImageUrl String?
-  isFeatured      Boolean      @default(false)
-  exhibitions     Exhibition[]
-  artworks        Artwork[]
-  accounts        Account[]
-  sessions        Session[]
+  isFeatured      Boolean  @default(false)
+
+  // Two-Factor Authentication
+  totpSecret       String?
+  twoFactorEnabled Boolean @default(false)
+
+  // Magic Link Authentication
+  magicLinkToken  String?
+  magicLinkExpiry DateTime?
+
+  exhibitions Exhibition[]
+  artworks    Artwork[]
+  accounts    Account[]
+  sessions    Session[]
 }
 
 model Artwork {
@@ -83,6 +93,13 @@ model Exhibition {
   // Lighting customization (space-agnostic)
   ambientLightColor     String? @default("#e4e8f2")
   ambientLightIntensity Float?  @default(1.0)
+  skylightColor         String? @default("#ffffff")
+  skylightIntensity     Float?  @default(4.0)
+  ceilingLampColor      String? @default("#ffffff")
+  ceilingLampIntensity  Float?  @default(4.0)
+  windowLightColor      String? @default("#ffffff")
+  windowLightIntensity  Float?  @default(4.0)
+  floorReflectiveness   Float?  @default(0.3)
 
   exhibitionArtworks ExhibitionArtwork[]
 

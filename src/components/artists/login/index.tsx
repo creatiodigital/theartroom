@@ -80,7 +80,8 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
       // Get session to check user type
       const session = await getSession()
 
-      if (session?.user?.userType === 'admin') {
+      const userType = session?.user?.userType
+      if (userType === 'admin' || userType === 'superAdmin') {
         router.push('/admin/dashboard')
       } else {
         router.push('/dashboard')

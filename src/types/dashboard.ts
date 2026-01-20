@@ -7,6 +7,8 @@ export type TDashboardState = {
   isEditMode: boolean
   isArtworkPanelOpen: boolean
   isLightingPanelOpen: boolean
+  isFloorPanelOpen: boolean
   isEditingArtwork: boolean
   selectedSpace: TSpaceOption
 }
+

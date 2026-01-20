@@ -37,10 +37,11 @@ export const AdminLoginPage = () => {
         return
       }
 
-      // Get session to verify admin
+      // Get session to verify admin or superAdmin
       const session = await getSession()
 
-      if (session?.user?.userType !== 'admin') {
+      const userType = session?.user?.userType
+      if (userType !== 'admin' && userType !== 'superAdmin') {
         setError('Access denied. Admin only.')
         setSubmitting(false)
         return

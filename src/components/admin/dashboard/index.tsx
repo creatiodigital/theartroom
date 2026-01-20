@@ -34,8 +34,11 @@ export const DashboardAdmin = () => {
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
       router.push('/')
-    } else if (sessionStatus === 'authenticated' && session?.user?.userType !== 'admin') {
-      router.push('/')
+    } else if (sessionStatus === 'authenticated') {
+      const userType = session?.user?.userType
+      if (userType !== 'admin' && userType !== 'superAdmin') {
+        router.push('/')
+      }
     }
   }, [sessionStatus, session, router])
 
@@ -114,16 +117,19 @@ export const DashboardAdmin = () => {
     )
 
   // Not authorized
-  if (sessionStatus === 'unauthenticated' || session?.user?.userType !== 'admin') {
+  const userType = session?.user?.userType
+  if (sessionStatus === 'unauthenticated' || (userType !== 'admin' && userType !== 'superAdmin')) {
     return <div className={dashboardStyles.page}>Not authorized</div>
   }
+
+  const isSuperAdminUser = userType === 'superAdmin'
 
   if (error) return <div className={dashboardStyles.page}>Error: {error}</div>
 
   return (
     <DashboardLayout
       headerActions={
-        <Button font="dashboard" variant="secondary" label="My Dashboard" onClick={() => router.push('/dashboard')} />
+        <Button font="dashboard" variant="secondary" label="Test Dashboard" onClick={() => router.push('/dashboard')} />
       }
     >
       {/* Page Title */}
@@ -133,7 +139,7 @@ export const DashboardAdmin = () => {
       <div className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>
           <h2 className={dashboardStyles.sectionTitle}>All Users</h2>
-          <Button font="dashboard" variant="primary" label="Add New Artist" onClick={() => setShowAddModal(true)} />
+          <Button font="dashboard" variant="primary" label="Add New User" onClick={() => setShowAddModal(true)} />
         </div>
 
         <table className={dashboardStyles.table}>
@@ -208,7 +214,7 @@ export const DashboardAdmin = () => {
                 </td>
                 <td>
                   <div className={dashboardStyles.actions}>
-                    {user.userType !== 'admin' && (
+                    {user.userType !== 'admin' && user.userType !== 'superAdmin' && (
                       <Button
                         font="dashboard"
                         variant="secondary"
@@ -216,12 +222,15 @@ export const DashboardAdmin = () => {
                         onClick={() => handleImpersonate(user)}
                       />
                     )}
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label="Delete"
-                      onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
-                    />
+                    {/* Only superAdmin can delete, and cannot delete themselves */}
+                    {isSuperAdminUser && user.id !== session?.user?.id && (
+                      <Button
+                        font="dashboard"
+                        variant="secondary"
+                        label="Delete"
+                        onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
+                      />
+                    )}
                   </div>
                 </td>
               </tr>
@@ -238,7 +247,7 @@ export const DashboardAdmin = () => {
 
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>
-          <AddArtistModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} />
+          <AddArtistModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} isSuperAdmin={isSuperAdminUser} />
         </Modal>
       )}
 

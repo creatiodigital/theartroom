@@ -3,7 +3,8 @@
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
-import { showLightingPanel, hideLightingPanel } from '@/redux/slices/dashboardSlice'
+import { Tooltip } from '@/components/ui/Tooltip'
+import { showLightingPanel, hideLightingPanel, showFloorPanel, hideFloorPanel } from '@/redux/slices/dashboardSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
@@ -15,6 +16,7 @@ export const Menu = () => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
+  const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
 
   const togglePlaceholders = () => {
     if (isPlaceholdersShown) {
@@ -28,7 +30,19 @@ export const Menu = () => {
     if (isLightingPanelOpen) {
       dispatch(hideLightingPanel())
     } else {
+      // Close other panels first
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
       dispatch(showLightingPanel())
+    }
+  }
+
+  const toggleFloorPanel = () => {
+    if (isFloorPanelOpen) {
+      dispatch(hideFloorPanel())
+    } else {
+      // Close other panels first
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      dispatch(showFloorPanel())
     }
   }
 
@@ -41,13 +55,23 @@ export const Menu = () => {
 
   return (
     <div className={styles.menu}>
-      <Button size="regular" variant="secondary" icon="close" title="Go to main dashboard" onClick={handleClose} />
-      <Button size="regular" variant="secondary"
-        icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
-        title="Show/Hide wall placeholders"
-        onClick={() => togglePlaceholders()}
-      />
-      <Button size="regular" variant="secondary" icon="light" title="Global Light controls" onClick={toggleLightingPanel} />
+      <Tooltip label="Back to Dashboard" placement="right">
+        <Button size="regular" variant="secondary" icon="close" onClick={handleClose} />
+      </Tooltip>
+      <Tooltip label={isPlaceholdersShown ? 'Hide Placeholders' : 'Show Placeholders'} placement="right">
+        <Button 
+          size="regular" 
+          variant="secondary"
+          icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
+          onClick={() => togglePlaceholders()}
+        />
+      </Tooltip>
+      <Tooltip label="Lighting controls" placement="right">
+        <Button size="regular" variant="secondary" icon="light" onClick={toggleLightingPanel} />
+      </Tooltip>
+      <Tooltip label="Floor controls" placement="right">
+        <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
+      </Tooltip>
     </div>
   )
 }

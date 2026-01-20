@@ -45,7 +45,8 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
       onClose()
 
       // Redirect based on user type
-      if (session?.user?.userType === 'admin') {
+      const userType = session?.user?.userType
+      if (userType === 'admin' || userType === 'superAdmin') {
         router.push('/admin/dashboard')
       } else {
         router.push('/dashboard')

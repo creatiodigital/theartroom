@@ -9,11 +9,9 @@ export const windowMaterial = new MeshStandardMaterial({
 
 export const glassMaterial = new MeshStandardMaterial({
   color: '#ffffff',
-  transparent: true,
-  opacity: 0,
-  depthWrite: false,
-  // emissive: '#ffffff',
-  // emissiveIntensity: 1,
+  transparent: false,
+  emissive: '#ffffff',
+  emissiveIntensity: 1,
 })
 
 export const lineMaterial = new MeshStandardMaterial({
