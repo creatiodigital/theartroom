@@ -71,7 +71,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.handler = token.handler as string
-        session.user.userType = token.userType as string
+        
+        // Fetch fresh userType from database to ensure role changes take effect immediately
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { userType: true },
+          })
+          session.user.userType = dbUser?.userType ?? (token.userType as string)
+        } catch {
+          // Fallback to token if DB lookup fails
+          session.user.userType = token.userType as string
+        }
       }
 
       // Add impersonation data to session if present

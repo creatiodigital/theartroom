@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { auth } from '@/auth'
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
@@ -9,6 +10,7 @@ export const dynamic = 'force-dynamic'
 // GET artworks for a user (public - needed for artist profiles)
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth()
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const artworkType = searchParams.get('artworkType')
@@ -16,6 +18,56 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+    }
+
+    // Permission rules:
+    // - SuperAdmin: can see own + other admins + all artists/curators
+    // - Admin: can see own + all artists/curators (NOT other admins or superAdmin)
+    // - Artist/Curator: can see only own
+    const requesterType = session?.user?.userType
+    const requesterId = session?.user?.id
+    const isSuperAdmin = requesterType === 'superAdmin'
+    const isAdmin = requesterType === 'admin'
+
+    // Fetch target user's type to check permissions
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { userType: true },
+    })
+
+    if (!targetUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const targetType = targetUser.userType
+    const targetIsAdminOrAbove = targetType === 'admin' || targetType === 'superAdmin'
+
+    // Check access permissions
+    if (session?.user) {
+      // SuperAdmin can see everything
+      if (isSuperAdmin) {
+        // Allow access
+      }
+      // Admin can see their own + artists/curators (but NOT other admins or superAdmin)
+      else if (isAdmin) {
+        if (targetIsAdminOrAbove && userId !== requesterId) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+        }
+      }
+      // Artists/Curators can only see their own
+      else {
+        if (userId !== requesterId) {
+          // Allow public access to artist/curator profiles (non-admin accounts)
+          if (targetIsAdminOrAbove) {
+            return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+          }
+        }
+      }
+    } else {
+      // Public (unauthenticated) users can only see artist/curator artworks
+      if (targetIsAdminOrAbove) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
     }
 
     const artworks = await prisma.artwork.findMany({

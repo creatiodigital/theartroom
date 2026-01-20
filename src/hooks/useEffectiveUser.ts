@@ -25,9 +25,10 @@ export function useEffectiveUser() {
       }
     : session?.user
 
-  // Start impersonating a user (admin only)
+  // Start impersonating a user (admin or superAdmin only)
   const startImpersonation = async (user: { id: string; name: string; handler: string }) => {
-    if (session?.user?.userType !== 'admin') {
+    const userType = session?.user?.userType
+    if (userType !== 'admin' && userType !== 'superAdmin') {
       console.error('Only admins can impersonate')
       return false
     }

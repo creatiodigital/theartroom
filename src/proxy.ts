@@ -1,15 +1,18 @@
 import { auth } from '@/auth'
 import { NextResponse } from 'next/server'
 
+// Role hierarchy constants
+const ADMIN_ROLES = ['admin', 'superAdmin'] as const
+
 export default auth((request) => {
   const { auth: session, nextUrl } = request
 
-  // Protect admin routes - require admin role
+  // Protect admin routes - require admin or superAdmin role
   if (nextUrl.pathname.startsWith('/admin')) {
     if (!session?.user) {
       return NextResponse.redirect(new URL('/', nextUrl.origin))
     }
-    if (session.user.userType !== 'admin') {
+    if (!ADMIN_ROLES.includes(session.user.userType as (typeof ADMIN_ROLES)[number])) {
       return NextResponse.redirect(new URL('/dashboard', nextUrl.origin))
     }
   }
