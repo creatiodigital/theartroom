@@ -60,7 +60,7 @@ export const AdminLoginPage = () => {
       <div className={styles.loginCard}>
         <Text font="dashboard" as="h1">Admin Login</Text>
         <Text font="dashboard" as="p" className={styles.subtitle}>
-          The Foundation Administration
+          The Art Room Administration
         </Text>
 
         <form onSubmit={handleSubmit} className={styles.form}>
