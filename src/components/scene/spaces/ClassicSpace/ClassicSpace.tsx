@@ -76,16 +76,21 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      {nodes.floor && (
-        <>
-          {/* Hide original floor but use its position for the reflective floor */}
-          <primitive object={nodes.floor} visible={false} />
-          <ReflectiveFloor
-            textureRepeat={1}
-            position={[nodes.floor.position.x, nodes.floor.position.y, nodes.floor.position.z]}
-          />
-        </>
-      )}
+      {nodes.floor && (() => {
+          // Calculate actual floor surface Y from geometry bounding box
+          nodes.floor.geometry.computeBoundingBox()
+          const floorSurfaceY = nodes.floor.position.y + (nodes.floor.geometry.boundingBox?.max.y ?? 0)
+          return (
+            <>
+              {/* Hide original floor but use its computed surface position for the reflective floor */}
+              <primitive object={nodes.floor} visible={false} />
+              <ReflectiveFloor
+                textureRepeat={1}
+                position={[nodes.floor.position.x, floorSurfaceY, nodes.floor.position.z]}
+              />
+            </>
+          )
+        })()}
       {nodes.ceiling && (
         <Ceiling
           geometry={nodes.ceiling.geometry}
