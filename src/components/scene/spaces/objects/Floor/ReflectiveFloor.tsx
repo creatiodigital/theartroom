@@ -1,13 +1,14 @@
 import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { MeshReflectorMaterial, useTexture } from '@react-three/drei'
-import { Mesh, BufferGeometry, RepeatWrapping, SRGBColorSpace } from 'three'
+import { Mesh, RepeatWrapping, SRGBColorSpace } from 'three'
+import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 
 interface ReflectiveFloorProps {
-  geometry: BufferGeometry
   texturePath?: string
   textureRepeat?: number
+  position?: Vector3Tuple
 }
 
 const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
@@ -15,10 +16,10 @@ const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
 /**
  * Polished floor with mirror reflections and PBR textures.
  */
-const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ 
-  geometry,
+const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   texturePath = '/assets/materials/concrete',
   textureRepeat = 1,
+  position = [0, 0, 0],
 }) => {
   const meshRef = useRef<Mesh>(null)
 
@@ -42,11 +43,11 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   textures.map.colorSpace = SRGBColorSpace
 
   return (
-    <mesh 
-      ref={meshRef} 
-      name="floor" 
+    <mesh
+      ref={meshRef}
+      name="floor"
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, 0, 0]}
+      position={position}
       receiveShadow
     >
       <planeGeometry args={[100, 100]} />
@@ -70,4 +71,3 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
 
 export { ReflectiveFloor }
 export default ReflectiveFloor
-

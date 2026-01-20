@@ -77,10 +77,14 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
       <Lights />
       <Effects />
       {nodes.floor && (
-        <ReflectiveFloor
-          geometry={nodes.floor.geometry}
-          textureRepeat={1}
-        />
+        <>
+          {/* Hide original floor but use its position for the reflective floor */}
+          <primitive object={nodes.floor} visible={false} />
+          <ReflectiveFloor
+            textureRepeat={1}
+            position={[nodes.floor.position.x, nodes.floor.position.y, nodes.floor.position.z]}
+          />
+        </>
       )}
       {nodes.ceiling && (
         <Ceiling
