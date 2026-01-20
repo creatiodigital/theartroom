@@ -245,7 +245,7 @@ export const DashboardProfilePage = () => {
             onChange={(e) => handleChange('handler', e.target.value)}
             required
           />
-          <span className={dashboardStyles.hint}>Your profile will be available at: thefoundation.art/artists/{formData.handler || 'your-handle'}</span>
+          <span className={dashboardStyles.hint}>Your profile will be available at: theartroom.gallery/artists/{formData.handler || 'your-handle'}</span>
         </div>
 
         {/* Email */}

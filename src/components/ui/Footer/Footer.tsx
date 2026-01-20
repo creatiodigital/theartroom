@@ -18,7 +18,7 @@ export const Footer = () => {
           <Link href="/privacy-policy">Privacy Policy</Link>
           <Link href="/accessibility-policy">Accessibility Policy</Link>
         </nav>
-        <span className={styles.copyright}>© 2025 The Foundation</span>
+        <span className={styles.copyright}>© 2025 The Art Room</span>
       </div>
     </footer>
   )
