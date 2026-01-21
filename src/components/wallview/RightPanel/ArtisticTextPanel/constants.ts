@@ -27,3 +27,6 @@ export const fontFamilies: TOption<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 
   { value: 'eb-garamond', label: 'EB Garamond' },
   { value: 'geist', label: 'Geist' },
 ]
+
+export const textPaddings = toOptions(Array.from({ length: 25 }, (_, i) => i) as number[])
+

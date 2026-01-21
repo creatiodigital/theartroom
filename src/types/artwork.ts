@@ -56,5 +56,6 @@ export type TArtwork = {
   textBackgroundColor?: string
   textAlign?: 'left' | 'right' | 'center'
   textVerticalAlign?: 'top' | 'center' | 'bottom'
+  textPadding?: TOption<number>
   featured?: boolean
 }

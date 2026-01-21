@@ -49,11 +49,7 @@
 
 .button {
   width: auto;
-  display: none;
-
-  @include breakpoint(lg) {
-    display: inline-flex;
-  }
+  display: inline-flex;
 }
 
 .heroImageWrapper {

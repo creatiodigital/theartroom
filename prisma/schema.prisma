@@ -146,6 +146,7 @@ model ExhibitionArtwork {
   textBackgroundColor String?
   textAlign           String  @default("left")
   textVerticalAlign   String  @default("top")
+  textPadding         Float   @default(12) // Padding in pixels
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

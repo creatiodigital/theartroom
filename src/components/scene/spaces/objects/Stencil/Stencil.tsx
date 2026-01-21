@@ -26,12 +26,14 @@ const Stencil = ({ artwork }: StencilProps) => {
     fontWeight,
     fontFamily,
     letterSpacing,
+    textPadding,
   } = artwork
 
   const fontSizeFactor = 0.01
-  // 2D CSS has padding: 10px, so we need to subtract 20px (both sides) from width
-  // In 3D units: 20px / 100 = 0.2
-  const paddingOffset = 0.2
+  // Convert textPadding (pixels) to 3D units
+  // Both sides: (padding * 2) / 100 = padding offset in 3D space
+  const textPaddingValue = textPadding?.value ?? 12
+  const paddingOffset = (textPaddingValue * 2) / 100
 
   const fontMap = {
     roboto: {

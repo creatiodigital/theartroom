@@ -98,8 +98,8 @@ export const useResizeArtwork = (
           const diagonalDelta = (deltaX * xSign + deltaY * ySign * aspectRatio) / (1 + aspectRatio)
           
           // Apply the scale
-          newWidth = Math.max(20, initialWidth + diagonalDelta * xSign)
-          newHeight = Math.max(20, newWidth / aspectRatio)
+          newWidth = Math.max(5, initialWidth + diagonalDelta * xSign)
+          newHeight = Math.max(5, newWidth / aspectRatio)
 
           // Adjust position for left/top handles
           if (direction.includes('left')) {
@@ -141,18 +141,18 @@ export const useResizeArtwork = (
 
           // Handle LEFT edge
           if (direction.includes('left')) {
-            newWidth = Math.max(20, initialWidth - deltaX)
+            newWidth = Math.max(5, initialWidth - deltaX)
             newX = initialX + deltaX
 
             if (isGridVisible) {
               newX = Math.round((newX - gridOffsetX) / gridSize) * gridSize + gridOffsetX
-              newWidth = Math.max(20, initialWidth - (newX - initialX))
+              newWidth = Math.max(5, initialWidth - (newX - initialX))
             } else {
               // Snap left edge to other artworks' left edges
               for (const otherArtwork of sameWallArtworks) {
                 if (Math.abs(newX - otherArtwork.posX2d) <= SNAP_TOLERANCE) {
                   newX = otherArtwork.posX2d
-                  newWidth = Math.max(20, initialX + initialWidth - newX)
+                  newWidth = Math.max(5, initialX + initialWidth - newX)
                   alignedPairs.push({
                     from: artworkId,
                     to: otherArtwork.artworkId,
@@ -166,7 +166,7 @@ export const useResizeArtwork = (
 
           // Handle RIGHT edge
           if (direction.includes('right')) {
-            newWidth = Math.max(20, initialWidth + deltaX)
+            newWidth = Math.max(5, initialWidth + deltaX)
             const newRight = newX + newWidth
 
             if (isGridVisible) {
@@ -179,7 +179,7 @@ export const useResizeArtwork = (
               for (const otherArtwork of sameWallArtworks) {
                 const otherRight = otherArtwork.posX2d + otherArtwork.width2d
                 if (Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
-                  newWidth = Math.max(20, otherRight - newX)
+                  newWidth = Math.max(5, otherRight - newX)
                   alignedPairs.push({
                     from: artworkId,
                     to: otherArtwork.artworkId,
@@ -193,18 +193,18 @@ export const useResizeArtwork = (
 
           // Handle TOP edge
           if (direction.includes('top')) {
-            newHeight = Math.max(20, initialHeight - deltaY)
+            newHeight = Math.max(5, initialHeight - deltaY)
             newY = initialY + deltaY
 
             if (isGridVisible) {
               newY = Math.round((newY - gridOffsetY) / gridSize) * gridSize + gridOffsetY
-              newHeight = Math.max(20, initialHeight - (newY - initialY))
+              newHeight = Math.max(5, initialHeight - (newY - initialY))
             } else {
               // Snap top edge to other artworks' top edges
               for (const otherArtwork of sameWallArtworks) {
                 if (Math.abs(newY - otherArtwork.posY2d) <= SNAP_TOLERANCE) {
                   newY = otherArtwork.posY2d
-                  newHeight = Math.max(20, initialY + initialHeight - newY)
+                  newHeight = Math.max(5, initialY + initialHeight - newY)
                   alignedPairs.push({
                     from: artworkId,
                     to: otherArtwork.artworkId,
@@ -218,7 +218,7 @@ export const useResizeArtwork = (
 
           // Handle BOTTOM edge
           if (direction.includes('bottom')) {
-            newHeight = Math.max(20, initialHeight + deltaY)
+            newHeight = Math.max(5, initialHeight + deltaY)
             const newBottom = newY + newHeight
 
             if (isGridVisible) {
@@ -231,7 +231,7 @@ export const useResizeArtwork = (
               for (const otherArtwork of sameWallArtworks) {
                 const otherBottom = otherArtwork.posY2d + otherArtwork.height2d
                 if (Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
-                  newHeight = Math.max(20, otherBottom - newY)
+                  newHeight = Math.max(5, otherBottom - newY)
                   alignedPairs.push({
                     from: artworkId,
                     to: otherArtwork.artworkId,
