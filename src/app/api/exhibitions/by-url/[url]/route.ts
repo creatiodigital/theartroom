@@ -31,6 +31,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
                 dimensions: true,
                 imageUrl: true,
                 artworkType: true,
+                hiddenFromExhibition: true,
               },
             },
           },
@@ -43,17 +44,16 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     }
 
     // Extract artworks of type "image" that are not hidden from exhibition
-    // Use optional chaining for hiddenFromExhibition to handle Prisma Accelerate cache delay
     const artworks = exhibition.exhibitionArtworks
       .map((ea) => ea.artwork)
-      .filter((artwork) => artwork.artworkType === 'image' && !(artwork as { hiddenFromExhibition?: boolean }).hiddenFromExhibition)
+      .filter((artwork) => artwork.artworkType === 'image' && !artwork.hiddenFromExhibition)
 
     return NextResponse.json({
       ...exhibition,
       artworks,
     })
   } catch (error) {
-    console.error('[GET /api/exhibitions/by-url/[url]] error:', error)
+    console.error('[GET /api/exhibitions/by-url/[url]] error:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: 'Failed to fetch exhibition' }, { status: 500 })
   }
 }

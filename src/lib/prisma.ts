@@ -1,23 +1,25 @@
-import { withAccelerate } from '@prisma/extension-accelerate'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
 import { PrismaClient } from '../generated/prisma/client'
 
-const createClient = () =>
-  new PrismaClient({
-    accelerateUrl: process.env.DATABASE_URL,
-  }).$extends(withAccelerate())
+// Supabase uses Neon under the hood, so we use the Neon adapter
+// POSTGRES_PRISMA_URL is the connection pooler URL from Supabase
+const connectionString = process.env.POSTGRES_PRISMA_URL
 
-type AcceleratedPrismaClient = ReturnType<typeof createClient>
-
-declare global {
-  var __prisma: AcceleratedPrismaClient | undefined
+if (!connectionString) {
+  throw new Error('POSTGRES_PRISMA_URL is required. Make sure Supabase is connected.')
 }
 
-const prisma: AcceleratedPrismaClient =
-  process.env.NODE_ENV === 'production' ? createClient() : (globalThis.__prisma ?? createClient())
+// PrismaNeon expects a PoolConfig object with connectionString
+const adapter = new PrismaNeon({ connectionString })
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+
+const prisma = globalForPrisma.prisma || new PrismaClient({ adapter })
 
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.__prisma = prisma
+  globalForPrisma.prisma = prisma
 }
 
 export default prisma
+

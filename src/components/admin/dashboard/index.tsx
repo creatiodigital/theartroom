@@ -29,6 +29,7 @@ export const DashboardAdmin = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
 
   // Redirect non-admins
   useEffect(() => {
@@ -97,6 +98,7 @@ export const DashboardAdmin = () => {
       if (response.ok) {
         refetch()
         setDeleteTarget(null)
+        setConfirmText('')
       } else {
         alert('Failed to delete user')
       }
@@ -214,7 +216,12 @@ export const DashboardAdmin = () => {
                 </td>
                 <td>
                   <div className={dashboardStyles.actions}>
-                    {user.userType !== 'admin' && user.userType !== 'superAdmin' && (
+                    {/* Impersonate logic:
+                        - superAdmin: can impersonate anyone except themselves
+                        - admin: can only impersonate artists/curators (not other admins) */}
+                    {user.id !== session?.user?.id &&
+                      (isSuperAdminUser ||
+                        (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
                       <Button
                         font="dashboard"
                         variant="secondary"
@@ -252,7 +259,7 @@ export const DashboardAdmin = () => {
       )}
 
       {deleteTarget && (
-        <Modal onClose={() => setDeleteTarget(null)}>
+        <Modal onClose={() => { setDeleteTarget(null); setConfirmText(''); }}>
           <div className={dashboardStyles.deleteModal}>
             <h2>Delete User</h2>
             <p>
@@ -262,14 +269,24 @@ export const DashboardAdmin = () => {
             <div className={dashboardStyles.deleteWarning}>
               This action is not reversible. Please be certain.
             </div>
+            <div className={dashboardStyles.confirmInput}>
+              <label htmlFor="confirm-delete-user">Type <strong>CONFIRM</strong> to enable deletion:</label>
+              <Input
+                id="confirm-delete-user"
+                type="text"
+                variant="table"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+              />
+            </div>
             <div className={dashboardStyles.deleteActions}>
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => { setDeleteTarget(null); setConfirmText(''); }} />
               <Button
                 font="dashboard"
                 variant="primary"
                 label={deleting ? 'Deleting...' : 'Delete'}
                 onClick={handleDeleteConfirm}
-                disabled={deleting}
+                disabled={deleting || confirmText !== 'CONFIRM'}
               />
             </div>
           </div>

@@ -74,7 +74,7 @@ const LoadingOverlay = () => {
         <div className={styles.progressFill} style={{ width: `${progress}%` }} />
       </div>
       <Text as="span">
-        {active ? `Loading 3D scene... ${Math.round(progress)}%` : 'Almost ready...'}
+        {active ? `Loading Exhibition ${Math.round(progress)}%` : 'Almost ready...'}
       </Text>
     </div>
   )
@@ -107,10 +107,14 @@ const NavigationHelpModal = () => {
   const [alreadyDismissed, setAlreadyDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
 
-  // Check localStorage on mount and auto-open if not dismissed
+  // Check localStorage on mount and auto-open if not dismissed (desktop only)
   useEffect(() => {
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
+
+    // Don't show on mobile - controls are disabled anyway
+    const isMobile = window.innerWidth < 1024
+    if (isMobile) return
     
     try {
       const dismissed = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY)

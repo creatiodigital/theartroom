@@ -239,3 +239,22 @@
   gap: var(--space-2);
 }
 
+.confirmInput {
+  margin-bottom: var(--space-6);
+
+  label {
+    display: block;
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    margin-bottom: var(--space-2);
+
+    strong {
+      font-weight: var(--font-bold);
+    }
+  }
+
+  input {
+    width: 100%;
+  }
+}
