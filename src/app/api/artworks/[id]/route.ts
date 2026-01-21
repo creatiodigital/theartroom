@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       })
       return NextResponse.json(artwork)
     } catch (innerError) {
-      // If new field fails (Accelerate cache not refreshed), try without it
+      // If new field fails, try without it (fallback for schema mismatch)
       console.warn('[PUT /api/artworks/[id]] retrying without new fields:', innerError)
       const artwork = await prisma.artwork.update({
         where: { id },

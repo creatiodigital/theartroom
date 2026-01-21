@@ -1,15 +1,17 @@
 import 'dotenv/config'
-import { withAccelerate } from '@prisma/extension-accelerate'
+import { PrismaNeon } from '@prisma/adapter-neon'
 import bcrypt from 'bcryptjs'
 
 import { PrismaClient } from '../src/generated/prisma/index.js'
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-}).$extends(withAccelerate())
+const connectionString = process.env.POSTGRES_PRISMA_URL
+if (!connectionString) throw new Error('POSTGRES_PRISMA_URL required')
+
+const adapter = new PrismaNeon({ connectionString })
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('admin1234@', 10)
+  const hashedPassword = await bcrypt.hash('nataliaNATALIA6344@t', 10)
 
   const admin = await prisma.user.create({
     data: {
@@ -17,13 +19,13 @@ async function main() {
       lastName: 'Plaza',
       handler: 'eduardo-plaza',
       email: 'contact@creatio.art',
-      biography: 'Gallery Administrator',
+      biography: 'Gallery Owner',
       password: hashedPassword,
-      userType: 'admin',
+      userType: 'superAdmin',
     },
   })
 
-  console.log('✅ Admin user created:', admin.email)
+  console.log('✅ Super Admin user created:', admin.email)
 }
 
 main()

@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Rate limiting - simple in-memory store (resets on redeploy)
 const rateLimitStore = new Map<string, { count: number; timestamp: number }>()
@@ -67,42 +71,79 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Implement Resend email sending
-    // When ready, add:
-    // 1. Install resend: pnpm add resend
-    // 2. Add RESEND_API_KEY to .env
-    // 3. Add INQUIRY_EMAIL (recipient) to .env
-    // 4. Add FROM_EMAIL (sender) to .env
-    //
-    // Example implementation:
-    // import { Resend } from 'resend'
-    // const resend = new Resend(process.env.RESEND_API_KEY)
-    //
-    // // Send inquiry to gallery
-    // await resend.emails.send({
-    //   from: process.env.FROM_EMAIL,
-    //   to: process.env.INQUIRY_EMAIL,
-    //   subject: `Artwork Inquiry: ${artworkTitle} by ${artworkArtist}`,
-    //   html: `...email template...`
-    // })
-    //
-    // // Send confirmation to user
-    // await resend.emails.send({
-    //   from: process.env.FROM_EMAIL,
-    //   to: email,
-    //   subject: 'We received your inquiry',
-    //   html: `...confirmation template...`
-    // })
+    // Get environment variables
+    const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'
+    const inquiryRecipientsEnv = process.env.INQUIRY_EMAIL_TO || 'contact@creatio.art'
+    // Support comma-separated emails for multiple recipients
+    const inquiryRecipients = inquiryRecipientsEnv.split(',').map(e => e.trim())
 
-    console.log('Inquiry received (email not yet configured):', {
-      firstName,
-      lastName,
-      email,
-      phone,
-      message,
+    // Send inquiry notification to admin
+    await resend.emails.send({
+      from: `The Art Room <${fromEmail}>`,
+      to: inquiryRecipients,
+      replyTo: email,
+      subject: `New Inquiry: ${artworkTitle} by ${artworkArtist}`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="font-size: 24px; margin-bottom: 24px;">New Artwork Inquiry</h2>
+          
+          <div style="background-color: #f9f9f9; padding: 20px; margin-bottom: 24px;">
+            <p style="margin: 0 0 8px 0;"><strong>Artwork:</strong> ${artworkTitle}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Artist:</strong> ${artworkArtist}</p>
+            <p style="margin: 0;"><strong>Artwork ID:</strong> ${artworkId}</p>
+          </div>
+          
+          <h3 style="font-size: 18px; margin-bottom: 16px;">Contact Information</h3>
+          <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${firstName} ${lastName}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+          <p style="margin: 0 0 24px 0;"><strong>Phone:</strong> ${phone}</p>
+          
+          <h3 style="font-size: 18px; margin-bottom: 16px;">Message</h3>
+          <div style="background-color: #f9f9f9; padding: 20px; white-space: pre-wrap;">${message}</div>
+          
+          <p style="margin-top: 32px; color: #666; font-size: 12px;">
+            This inquiry was submitted via The Art Room website.
+          </p>
+        </div>
+      `,
+    })
+
+    // Send confirmation to the user
+    await resend.emails.send({
+      from: `The Art Room <${fromEmail}>`,
+      to: email,
+      subject: `We received your inquiry about "${artworkTitle}"`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="font-size: 24px; margin-bottom: 24px;">Thank you for your inquiry</h2>
+          
+          <p>Dear ${firstName},</p>
+          
+          <p>We have received your inquiry about <strong>${artworkTitle}</strong> by ${artworkArtist}.</p>
+          
+          <p>Our team will review your message and get back to you as soon as possible.</p>
+          
+          <div style="background-color: #f9f9f9; padding: 20px; margin: 24px 0;">
+            <p style="margin: 0 0 8px 0;"><strong>Your message:</strong></p>
+            <p style="margin: 0; white-space: pre-wrap;">${message}</p>
+          </div>
+          
+          <p>Best regards,<br>The Art Room Team</p>
+          
+          <hr style="margin: 32px 0; border: none; border-top: 1px solid #eee;" />
+          
+          <p style="color: #666; font-size: 12px;">
+            This is an automated confirmation. Please do not reply to this email.
+          </p>
+        </div>
+      `,
+    })
+
+    console.log('Inquiry sent successfully:', {
       artworkId,
       artworkTitle,
       artworkArtist,
+      userEmail: email,
     })
 
     return NextResponse.json({ success: true })

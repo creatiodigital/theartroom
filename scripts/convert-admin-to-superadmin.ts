@@ -9,12 +9,14 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 require('dotenv').config()
 
-const { withAccelerate } = require('@prisma/extension-accelerate')
+const { PrismaNeon } = require('@prisma/adapter-neon')
 const { PrismaClient } = require('../src/generated/prisma')
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-}).$extends(withAccelerate())
+const connectionString = process.env.POSTGRES_PRISMA_URL
+if (!connectionString) throw new Error('POSTGRES_PRISMA_URL required')
+
+const adapter = new PrismaNeon({ connectionString })
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   console.log('Converting existing admin users to superAdmin...')

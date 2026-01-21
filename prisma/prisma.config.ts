@@ -1,27 +1,34 @@
 /**
- * Prisma Configuration for Prisma 7 with Accelerate
+ * Prisma Configuration for Prisma 7 with Supabase
  * 
- * IMPORTANT: This project uses Prisma Accelerate for runtime queries.
- * 
- * - DATABASE_URL (in .env): Prisma Accelerate URL - used at RUNTIME for queries
- * - DIRECT_DATABASE_URL (in .env): Direct Postgres URL - used here for CLI commands
- * 
- * The datasource URL here uses DIRECT_DATABASE_URL because Prisma CLI commands
- * (like db push, migrate) need direct database access, not Accelerate.
+ * Uses POSTGRES_URL_NON_POOLING for CLI commands (db push, migrate)
+ * This is the direct database connection without connection pooling.
  * 
  * Quick commands:
  *   pnpm db:push     - Push schema changes to database
  *   pnpm db:generate - Regenerate Prisma client
  */
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import path from 'node:path'
-import { defineConfig, env } from 'prisma/config'
+import { defineConfig } from 'prisma/config'
+
+// Load .env.local first (for local dev), then .env as fallback
+dotenv.config({ path: path.join(__dirname, '..', '.env.local') })
+dotenv.config({ path: path.join(__dirname, '..', '.env') })
+
+// Supabase provides POSTGRES_URL_NON_POOLING for direct connection
+// This is required for CLI commands like db push
+const directUrl = process.env.POSTGRES_URL_NON_POOLING
+
+if (!directUrl) {
+  throw new Error('POSTGRES_URL_NON_POOLING is required for Prisma CLI commands. Check your .env.local file.')
+}
 
 export default defineConfig({
   schema: path.join(__dirname, 'schema.prisma'),
   datasource: {
-    // Uses DIRECT_DATABASE_URL for CLI commands (db push, migrate)
-    // This bypasses Prisma Accelerate which caches the schema
-    url: env('DIRECT_DATABASE_URL'),
+    url: directUrl,
   },
 })
+
+

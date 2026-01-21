@@ -2,33 +2,28 @@
 description: How to push database schema changes with Prisma
 ---
 
-# Prisma Database Schema Push (Prisma 7 + Accelerate)
+# Prisma Database Schema Push (Prisma 7 + Supabase)
 
-> **This project uses Prisma 7 with Prisma Accelerate.** The workflow below is specifically designed for this setup.
+> **This project uses Prisma 7 with Supabase.** The workflow below is specifically designed for this setup.
 
 ## ⚠️ Key Constraints
 
 1. **Prisma 7 requires `--config` flag** - Without it, `prisma db push` will fail
-2. **Accelerate caches the schema** - After pushing, wait 5-10 minutes before testing
-3. **Two different URLs required**:
-   - `DATABASE_URL` = Accelerate URL (runtime) - starts with `prisma+postgres://`
-   - `DIRECT_DATABASE_URL` = Direct Postgres URL (CLI) - starts with `postgres://`
+2. **Two different URLs required**:
+   - `POSTGRES_PRISMA_URL` = Connection pooler URL (runtime queries)
+   - `POSTGRES_URL_NON_POOLING` = Direct connection (CLI commands)
 
 > [!CAUTION]
-> **You must push schema changes to BOTH databases!**
+> **Different URLs for different environments!**
 >
-> - **Production database** (default, uses `.env` settings)
-> - **Staging/Dev database** (requires setting `DIRECT_DATABASE_URL` to staging URL)
+> - **Local Development**: Uses URLs from `.env.local`
+> - **Production**: Uses URLs from Vercel (injected automatically)
 >
-> Example for staging:
->
-> ```bash
-> DIRECT_DATABASE_URL="postgres://...staging-url..." pnpm db:push
-> ```
+> Make sure you're pushing to the correct database!
 
 ---
 
-## ✅ Bulletproof Workflow
+## ✅ Standard Workflow
 
 ### Step 1: Edit the schema
 
@@ -37,7 +32,7 @@ Edit `prisma/schema.prisma` to add your new field:
 ```prisma
 model Artwork {
   // ... existing fields
-  featured Boolean @default(false)  // New field
+  newField String?  // New field
 }
 ```
 
@@ -61,16 +56,7 @@ pnpm db:push
 
 This syncs your schema with the actual database.
 
-### Step 4: Wait for Accelerate cache (CRITICAL)
-
-**Prisma Accelerate caches the schema. You MUST wait 5-10 minutes before the new field works at runtime.**
-
-Signs the cache hasn't refreshed:
-
-- Error `P6001` with model name in meta
-- "Invalid request to Prisma Accelerate" errors
-
-### Step 5: Update application code
+### Step 4: Update application code
 
 Now add the field to:
 
@@ -83,26 +69,21 @@ Now add the field to:
 
 ## 🔧 Troubleshooting
 
-| Error                            | Cause                                   | Fix                                                |
-| -------------------------------- | --------------------------------------- | -------------------------------------------------- |
-| `P6001: Invalid request`         | Accelerate schema cache not refreshed   | Wait 5-10 minutes                                  |
-| `URL must start with prisma://`  | Wrong DATABASE_URL in .env              | Use Accelerate URL (prisma+postgres://)            |
-| `datasource property required`   | Missing --config flag                   | Use `pnpm db:push` instead of `npx prisma db push` |
-| `Unknown property datasourceUrl` | Tried to use direct URL in PrismaClient | PrismaClient only accepts `accelerateUrl`          |
+| Error                          | Cause                 | Fix                                                |
+| ------------------------------ | --------------------- | -------------------------------------------------- |
+| `datasource property required` | Missing --config flag | Use `pnpm db:push` instead of `npx prisma db push` |
+| `Connection refused`           | Wrong database URL    | Check `.env.local` has correct `POSTGRES_*` URLs   |
+| `Column not found`             | Schema not pushed     | Run `pnpm db:push`                                 |
 
 ---
 
-## 📁 Required .env Structure
+## 📁 Required .env.local Structure
 
 ```env
-# Prisma Accelerate URL (for RUNTIME queries)
-DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=YOUR_KEY"
-
-# Direct Postgres URL (for CLI commands like db:push)
-DIRECT_DATABASE_URL="postgres://user:pass@host:5432/database?sslmode=require"
+# Supabase connection URLs (from Vercel/Supabase dashboard)
+POSTGRES_PRISMA_URL="postgres://...?pgbouncer=true"
+POSTGRES_URL_NON_POOLING="postgres://..."
 ```
-
-**NEVER** swap these URLs. The app will break.
 
 ---
 
@@ -112,6 +93,5 @@ DIRECT_DATABASE_URL="postgres://user:pass@host:5432/database?sslmode=require"
 # After editing schema.prisma:
 pnpm db:generate  # Update TypeScript types
 pnpm db:push      # Push to database
-# Wait 5-10 minutes for Accelerate cache
 # Then update application code
 ```

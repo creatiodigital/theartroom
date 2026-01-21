@@ -1,6 +1,6 @@
 {
   "name": "the-art-room",
-  "version": "3.3.18",
+  "version": "3.3.19",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,6 +12,8 @@
     "check-format": "prettier --check .",
     "compress-glb": "node scripts/compress-glb-ktx2.mjs",
     "db:push": "npx prisma db push --config prisma/prisma.config.ts",
+    "db:push:prod": "dotenv -e .env.db.prod -- npx prisma db push --config prisma/prisma.config.ts",
+    "db:push:dev": "dotenv -e .env.db.dev -- npx prisma db push --config prisma/prisma.config.ts",
     "db:generate": "npx prisma generate --config prisma/prisma.config.ts"
   },
   "prisma": {
@@ -24,9 +26,10 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "^7.3.0",
     "@prisma/client": "7.1.0",
     "@prisma/client-runtime-utils": "^7.1.0",
-    "@prisma/extension-accelerate": "^3.0.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
     "@react-three/postprocessing": "^3.0.4",
@@ -48,6 +51,7 @@
     "react-dom": "^19.2.0",
     "react-error-boundary": "^6.0.3",
     "react-redux": "^9.1.2",
+    "resend": "^6.8.0",
     "sharp": "^0.34.5",
     "swiper": "^12.0.3",
     "three": "^0.175.0",
@@ -70,6 +74,7 @@
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
     "autoprefixer": "^10.0.1",
+    "dotenv-cli": "^11.0.0",
     "draco3dgltf": "^1.5.7",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.3",

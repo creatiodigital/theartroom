@@ -284,24 +284,6 @@ export const ArtworkEditForm = ({
           </div>
         )}
 
-        {/* Hidden from Exhibition Checkbox */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Exhibition Visibility</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Control whether this artwork appears on the exhibition page.
-            </p>
-            <Checkbox
-              checked={formData.hiddenFromExhibition}
-              onChange={(e) => onFormChange('hiddenFromExhibition', e.target.checked)}
-              label="Hide from exhibition page"
-            />
-            <span className={dashboardStyles.hint}>
-              Hidden artworks will still be visible in the 3D space, but won&apos;t appear in the
-              exhibition&apos;s artwork list.
-            </span>
-          </div>
-        )}
 
         <ErrorText>{error}</ErrorText>
 
