@@ -1,11 +1,13 @@
 import 'dotenv/config'
-import { withAccelerate } from '@prisma/extension-accelerate'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
 import { PrismaClient } from '../src/generated/prisma/index.js'
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-}).$extends(withAccelerate())
+const connectionString = process.env.POSTGRES_PRISMA_URL
+if (!connectionString) throw new Error('POSTGRES_PRISMA_URL required')
+
+const adapter = new PrismaNeon({ connectionString })
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   // Update Mathias to be an artist
