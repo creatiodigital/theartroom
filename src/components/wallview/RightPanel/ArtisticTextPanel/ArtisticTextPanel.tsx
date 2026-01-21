@@ -11,13 +11,13 @@ import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 import type { TFontFamily, TFontWeight } from '@/types/fonts'
 
-import { fontSizes, lineHeights, fontFamilies, fontWeights, letterSpacings } from './constants'
+import { fontSizes, lineHeights, fontFamilies, fontWeights, letterSpacings, textPaddings } from './constants'
 
 const ArtisticText = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
-  const { textContent, textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily } =
+  const { textContent, textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily, textPadding } =
     useArtworkDetails(currentArtworkId!)
 
   // Hide all text styling fields if there's no text content
@@ -140,6 +140,16 @@ const ArtisticText = () => {
               options={fontFamilies}
               value={fontFamily?.value}
               onChange={(val) => handleEditArtworkText('fontFamily', { label: val, value: val })}
+            />
+          </div>
+          <div className={styles.item}>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>Padding</Text>
+            <Select<number>
+              options={textPaddings}
+              value={textPadding?.value ?? 12}
+              onChange={(val) =>
+                handleEditArtworkText('textPadding', { label: String(val), value: val })
+              }
             />
           </div>
         </div>

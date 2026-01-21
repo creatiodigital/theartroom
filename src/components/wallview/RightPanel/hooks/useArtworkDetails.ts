@@ -40,6 +40,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       passepartoutThickness: { label: '5', value: 5 },
       textBackgroundColor: undefined,
       textVerticalAlign: 'top',
+      textPadding: { label: '12', value: 12 } as TOption<number>,
       imageUrl: '',
       featured: false,
       width: 0,
@@ -76,6 +77,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     passepartoutThickness,
     textBackgroundColor,
     textVerticalAlign,
+    textPadding,
     featured,
     imageUrl,
   } = artwork
@@ -124,6 +126,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     passepartoutThickness,
     textBackgroundColor,
     textVerticalAlign,
+    textPadding,
     featured,
     imageUrl,
   }

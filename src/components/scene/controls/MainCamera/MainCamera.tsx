@@ -174,20 +174,42 @@ const MainCamera = () => {
   )
 
   useEffect(() => {
-    window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('keyup', onKeyUp)
-    window.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mouseup', onMouseUp)
-    window.addEventListener('touchstart', onTouchStart)
-    window.addEventListener('touchend', onTouchEnd)
+    const attachHandlers = () => {
+      window.addEventListener('keydown', onKeyDown)
+      window.addEventListener('keyup', onKeyUp)
+      window.addEventListener('mousedown', onMouseDown)
+      window.addEventListener('mouseup', onMouseUp)
+      window.addEventListener('touchstart', onTouchStart)
+      window.addEventListener('touchend', onTouchEnd)
+    }
 
-    return () => {
+    const detachHandlers = () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mouseup', onMouseUp)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchend', onTouchEnd)
+    }
+
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024
+      if (isMobile) {
+        detachHandlers()
+      } else {
+        attachHandlers()
+      }
+    }
+
+    // Initial check
+    handleResize()
+
+    // Listen for resize
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      detachHandlers()
+      window.removeEventListener('resize', handleResize)
     }
   }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchEnd])
 
