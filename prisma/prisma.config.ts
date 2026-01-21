@@ -17,18 +17,16 @@ dotenv.config({ path: path.join(__dirname, '..', '.env.local') })
 dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
 // Supabase provides POSTGRES_URL_NON_POOLING for direct connection
-// This is required for CLI commands like db push
-const directUrl = process.env.POSTGRES_URL_NON_POOLING
+// Fall back to POSTGRES_PRISMA_URL for generate command during build
+const directUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_PRISMA_URL
 
-if (!directUrl) {
-  throw new Error('POSTGRES_URL_NON_POOLING is required for Prisma CLI commands. Check your .env.local file.')
-}
+// For Vercel build, if no URL is available, use a placeholder
+// This allows prisma generate to work during build
+const url = directUrl || 'postgresql://placeholder:placeholder@placeholder:5432/placeholder'
 
 export default defineConfig({
   schema: path.join(__dirname, 'schema.prisma'),
   datasource: {
-    url: directUrl,
+    url,
   },
 })
-
-
