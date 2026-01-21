@@ -86,11 +86,11 @@ const MobileOverlay = () => {
   return (
     <div className={styles.mobileOverlay}>
       <div className={styles.mobileOverlayContent}>
-        <Text as="h2" size="xl" font="serif" className={styles.mobileOverlayTitle}>
-          Desktop Experience
+        <Text as="h2" size="lg" font="serif" className={styles.mobileOverlayTitle}>
+          3D Exhibition Available
         </Text>
         <Text as="p" size="md" className={styles.mobileOverlayText}>
-          This 3D exhibition is best viewed on a desktop or laptop computer.
+          Visit this page on a laptop or desktop to explore the full 3D exhibition experience.
         </Text>
         <button className={styles.mobileOverlayButton} onClick={() => router.back()}>
           Go Back
