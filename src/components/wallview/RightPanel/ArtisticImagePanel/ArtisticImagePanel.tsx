@@ -26,6 +26,7 @@ const ArtisticImage = () => {
     passepartoutThickness,
     frameColor,
     frameThickness,
+    hiddenFromExhibition,
   } = useArtworkDetails(currentArtworkId!)
 
   const { handleEditArtisticImage } = useArtworkImageHandlers(currentArtworkId!)
@@ -43,6 +44,19 @@ const ArtisticImage = () => {
             checked={showArtworkInformation!}
             onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
             label="Show information in exhibition"
+          />
+        </Tooltip>
+      </div>
+
+      <div className={styles.section}>
+        <Tooltip
+          label="When enabled, this artwork won't appear in the exhibition's artwork grid on the public page"
+          placement="left"
+        >
+          <Checkbox
+            checked={hiddenFromExhibition ?? false}
+            onChange={(e) => handleEditArtisticImage('hiddenFromExhibition', e.target.checked)}
+            label="Hide in exhibition page"
           />
         </Tooltip>
       </div>

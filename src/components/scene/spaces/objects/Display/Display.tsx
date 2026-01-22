@@ -194,7 +194,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const singleClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Use the ambient light hook for frame and passepartout colors
-  const frameAmbientColor = useAmbientLightColor(frameColor ?? '#ffffff')
+  const frameAmbientColor = useAmbientLightColor(frameColor ?? '#000000')
   const passepartoutAmbientColor = useAmbientLightColor(passepartoutColor ?? '#ffffff')
 
   // Calculate the normal vector from artwork's quaternion (facing direction)

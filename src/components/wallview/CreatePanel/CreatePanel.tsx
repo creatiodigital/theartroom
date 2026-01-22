@@ -53,7 +53,19 @@ export const CreatePanel = () => {
       )}
       <div className={styles.panel}>
         <div className={styles.options}>
-          <Tooltip label="Click to create image in the middle of the wall, or drag and drop anywhere on the wall" placement="top" offset={16}>
+          <Tooltip label="Add artwork from your library" placement="top" offset={16}>
+            <Button
+              size="big"
+              icon="gallery"
+              variant="secondary"
+              onClick={() => setShowMediaLibrary(!showMediaLibrary)}
+            />
+          </Tooltip>
+          <Tooltip
+            label="Click to create image in the middle of the wall, or drag and drop anywhere on the wall"
+            placement="top"
+            offset={16}
+          >
             <Button
               size="big"
               icon="image"
@@ -63,7 +75,11 @@ export const CreatePanel = () => {
               onDragStart={(e) => handleArtworkDragStart(e, 'image')}
             />
           </Tooltip>
-          <Tooltip label="Click to create text in the middle of the wall, or drag and drop anywhere on the wall" placement="top" offset={16}>
+          <Tooltip
+            label="Click to create text in the middle of the wall, or drag and drop anywhere on the wall"
+            placement="top"
+            offset={16}
+          >
             <Button
               size="big"
               icon="type"
@@ -71,14 +87,6 @@ export const CreatePanel = () => {
               onClick={() => handleCreateArtwork('text')}
               draggable
               onDragStart={(e) => handleArtworkDragStart(e, 'text')}
-            />
-          </Tooltip>
-          <Tooltip label="Add artwork from your library" placement="top" offset={16}>
-            <Button
-              size="big"
-              icon="gallery"
-              variant="secondary"
-              onClick={() => setShowMediaLibrary(!showMediaLibrary)}
             />
           </Tooltip>
         </div>

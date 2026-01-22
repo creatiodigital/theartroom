@@ -10,7 +10,6 @@ import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { Scene } from '@/components/scene'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
-import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import { hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
@@ -238,7 +237,9 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     if (!hasResetRef.current) {
       dispatch(resetWallView())
       dispatch(resetScene())
-      dispatch(resetArtworks())
+      // Note: Do NOT call resetArtworks() here - artworks should persist across
+      // same-exhibition navigation (e.g., when viewing artwork details and returning).
+      // The useLoadExhibitionArtworks hook handles loading artworks when needed.
       dispatch(hidePlaceholders())
       hasResetRef.current = true
     }
