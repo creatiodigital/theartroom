@@ -39,11 +39,7 @@ const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps)
   }
 
   return (
-    <button
-      className={styles.navigationButton}
-      onClick={handleClick}
-      aria-label="Close exhibition"
-    >
+    <button className={styles.navigationButton} onClick={handleClick} aria-label="Close exhibition">
       <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
     </button>
   )
@@ -101,7 +97,11 @@ const MobileOverlay = () => {
 
 const NAVIGATION_HELP_STORAGE_KEY = 'lumen-gallery:navigation-help-dismissed'
 
-const NavigationHelpModal = () => {
+interface NavigationHelpModalProps {
+  hidden?: boolean
+}
+
+const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [alreadyDismissed, setAlreadyDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
@@ -114,7 +114,7 @@ const NavigationHelpModal = () => {
     // Don't show on mobile - controls are disabled anyway
     const isMobile = window.innerWidth < 1024
     if (isMobile) return
-    
+
     try {
       const dismissed = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY)
       if (dismissed === 'true') {
@@ -134,6 +134,8 @@ const NavigationHelpModal = () => {
     setIsOpen(false)
   }
 
+  if (hidden) return null
+
   return (
     <>
       <button
@@ -146,11 +148,7 @@ const NavigationHelpModal = () => {
       {isOpen && (
         <div className={styles.infoOverlay} onClick={handleClose}>
           <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
-            <button
-              className={styles.infoPanelClose}
-              onClick={handleClose}
-              aria-label="Close"
-            >
+            <button className={styles.infoPanelClose} onClick={handleClose} aria-label="Close">
               <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
             </button>
             <Text as="h3" size="lg" font="sans" className={styles.infoPanelTitle}>
@@ -160,40 +158,70 @@ const NavigationHelpModal = () => {
               <div className={styles.infoItem}>
                 <div className={styles.infoKeysColumn}>
                   <div className={styles.infoKeys}>
-                    <Text as="span" size="sm" className={styles.infoKey}>W</Text>
-                    <Text as="span" size="sm" className={styles.infoKey}>A</Text>
-                    <Text as="span" size="sm" className={styles.infoKey}>S</Text>
-                    <Text as="span" size="sm" className={styles.infoKey}>D</Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>
+                      W
+                    </Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>
+                      A
+                    </Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>
+                      S
+                    </Text>
+                    <Text as="span" size="sm" className={styles.infoKey}>
+                      D
+                    </Text>
                   </div>
                   <div className={styles.infoKeys}>
-                    <span className={styles.infoKey}><ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
-                    <span className={styles.infoKey}><ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
-                    <span className={styles.infoKey}><ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
-                    <span className={styles.infoKey}><ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} /></span>
+                    <span className={styles.infoKey}>
+                      <ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    </span>
+                    <span className={styles.infoKey}>
+                      <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    </span>
+                    <span className={styles.infoKey}>
+                      <ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    </span>
+                    <span className={styles.infoKey}>
+                      <ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    </span>
                   </div>
                 </div>
-                <Text as="span" size="sm">Walk inside the room</Text>
+                <Text as="span" size="sm">
+                  Walk inside the room
+                </Text>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoKeyWide}>
                   <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                  <Text as="span" size="sm">Hold + Drag</Text>
+                  <Text as="span" size="sm">
+                    Hold + Drag
+                  </Text>
                 </span>
-                <Text as="span" size="sm">Rotate the view</Text>
+                <Text as="span" size="sm">
+                  Rotate the view
+                </Text>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoKeyWide}>
                   <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                  <Text as="span" size="sm">Single Click</Text>
+                  <Text as="span" size="sm">
+                    Single Click
+                  </Text>
                 </span>
-                <Text as="span" size="sm">Auto focus</Text>
+                <Text as="span" size="sm">
+                  Auto focus
+                </Text>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoKeyWide}>
                   <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                  <Text as="span" size="sm">Double Click</Text>
+                  <Text as="span" size="sm">
+                    Double Click
+                  </Text>
                 </span>
-                <Text as="span" size="sm">Artwork details</Text>
+                <Text as="span" size="sm">
+                  Artwork details
+                </Text>
               </div>
             </div>
             {!alreadyDismissed && (
@@ -282,11 +310,9 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   return (
     <>
       {!isArtworkPanelOpen && (
-        <>
-          <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
-          <NavigationHelpModal />
-        </>
+        <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
       )}
+      <NavigationHelpModal hidden={isArtworkPanelOpen} />
       <LoadingOverlay />
       <MobileOverlay />
       {exhibition && <Scene />}

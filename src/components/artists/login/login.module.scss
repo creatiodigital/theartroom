@@ -64,3 +64,50 @@
     opacity: 0.8;
   }
 }
+
+.codeMessage {
+  margin: 0 0 var(--space-4);
+  
+  strong {
+    font-weight: var(--font-bold);
+  }
+}
+
+.codeActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.resendLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.backLink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
