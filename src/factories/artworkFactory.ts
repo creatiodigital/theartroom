@@ -35,5 +35,6 @@ export const createNewArtwork = ({
     textAlign: 'left',
     textVerticalAlign: 'top',
     featured: false,
+    hiddenFromExhibition: false,
   }
 }

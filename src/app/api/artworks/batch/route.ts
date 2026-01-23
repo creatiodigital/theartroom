@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
         imageUrl?: string
         textContent?: string
         featured?: boolean
+        hiddenFromExhibition?: boolean
         originalWidth?: number | null
         originalHeight?: number | null
       }>
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
             imageUrl: artwork.imageUrl || undefined,
             textContent: artwork.textContent || undefined,
             featured: artwork.featured ?? false,
+            hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             originalWidth: artwork.originalWidth ?? undefined,
             originalHeight: artwork.originalHeight ?? undefined,
           },
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
             imageUrl: artwork.imageUrl || undefined,
             textContent: artwork.textContent || undefined,
             featured: artwork.featured ?? false,
+            hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             originalWidth: artwork.originalWidth ?? undefined,
             originalHeight: artwork.originalHeight ?? undefined,
           },
