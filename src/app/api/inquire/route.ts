@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Get environment variables
     const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'
-    const inquiryRecipientsEnv = process.env.INQUIRY_EMAIL_TO || 'contact@creatio.art'
+    const inquiryRecipientsEnv = process.env.INQUIRY_EMAIL_TO || 'contact@theartroom.gallery'
     // Support comma-separated emails for multiple recipients
     const inquiryRecipients = inquiryRecipientsEnv.split(',').map(e => e.trim())
 
