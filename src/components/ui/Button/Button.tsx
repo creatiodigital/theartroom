@@ -26,6 +26,7 @@ type ButtonProps = {
   title?: string
   draggable?: boolean
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void
+  fullWidth?: boolean
 }
 
 export const Button = React.memo(
@@ -45,6 +46,7 @@ export const Button = React.memo(
     title,
     draggable,
     onDragStart,
+    fullWidth,
   }: ButtonProps) => {
     const isIconOnly = icon && !label
     
@@ -55,6 +57,7 @@ export const Button = React.memo(
       styles[font],
       isIconOnly && styles.iconOnly,
       disabled && styles.disabled,
+      fullWidth && styles.fullWidth,
       className,
     ])
 

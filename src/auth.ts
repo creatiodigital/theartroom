@@ -11,14 +11,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        loginCode: { label: 'Login Code', type: 'text' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password || !credentials?.loginCode) {
           return null
         }
 
         const email = credentials.email as string
         const password = credentials.password as string
+        const loginCode = credentials.loginCode as string
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -33,6 +35,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!passwordMatch) {
           return null
         }
+
+        // Verify login code
+        if (!user.loginCode || user.loginCode !== loginCode) {
+          return null
+        }
+
+        // Check if code has expired
+        if (!user.loginCodeExpiry || new Date() > user.loginCodeExpiry) {
+          return null
+        }
+
+        // Clear the login code after successful authentication
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            loginCode: null,
+            loginCodeExpiry: null,
+          },
+        })
 
         return {
           id: user.id,

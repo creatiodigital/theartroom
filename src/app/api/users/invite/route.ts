@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       to: user.email,
       subject: 'You\'ve been invited to The Art Room',
       html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">Welcome to The Art Room!</h2>
           
           <p>Hi ${user.name},</p>

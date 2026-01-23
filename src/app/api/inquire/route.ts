@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       replyTo: email,
       subject: `New Inquiry: ${artworkTitle} by ${artworkArtist}`,
       html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">New Artwork Inquiry</h2>
           
           <div style="background-color: #f9f9f9; padding: 20px; margin-bottom: 24px;">
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       to: email,
       subject: `We received your inquiry about "${artworkTitle}"`,
       html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">Thank you for your inquiry</h2>
           
           <p>Dear ${firstName},</p>
