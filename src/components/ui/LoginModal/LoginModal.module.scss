@@ -26,3 +26,20 @@
   gap: var(--space-2);
   margin-top: var(--space-6);
 }
+
+.forgotLink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    color: var(--color-text);
+    opacity: 0.8;
+  }
+}
