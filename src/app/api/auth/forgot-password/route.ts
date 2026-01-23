@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       to: email,
       subject: 'Reset your password',
       html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">Reset Your Password</h2>
           
           <p>Hi ${user.name},</p>

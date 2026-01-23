@@ -284,9 +284,10 @@ const ArtworkPanel = () => {
           </div>
         </div>
         {showProportionsButton && (
-          <div style={{ marginTop: 'var(--space-2)', width: '100%' }}>
+          <div style={{ marginTop: 'var(--space-2)' }}>
             <Button
               font="dashboard"
+              fullWidth
               variant="secondary"
               label="Use image proportions"
               onClick={handleUseImageProportions}

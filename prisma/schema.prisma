@@ -38,6 +38,10 @@ model User {
   magicLinkToken  String?
   magicLinkExpiry DateTime?
 
+  // Email 2FA Login Code
+  loginCode       String?
+  loginCodeExpiry DateTime?
+
   exhibitions Exhibition[]
   artworks    Artwork[]
   accounts    Account[]
