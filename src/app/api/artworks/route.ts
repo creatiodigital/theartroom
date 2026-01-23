@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
         ...(artworkType && { artworkType }),
         ...(featured === 'true' && { featured: true }),
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { order: 'asc' },
       include: {
         exhibitionArtworks: {
           include: {

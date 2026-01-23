@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
+import { ForgotPasswordModal } from '@/components/ui/ForgotPasswordModal'
 import { Input } from '@/components/ui/Input'
 import { Text } from '@/components/ui/Typography'
 
@@ -21,6 +22,7 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,6 +60,15 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
     }
   }
 
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordModal
+        onClose={onClose}
+        onBack={() => setShowForgotPassword(false)}
+      />
+    )
+  }
+
   return (
     <div className={styles.loginModal}>
       <Text as="h2">Log in</Text>
@@ -81,8 +92,16 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
             size="medium"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            showPasswordToggle
             required
           />
+          <button
+            type="button"
+            className={styles.forgotLink}
+            onClick={() => setShowForgotPassword(true)}
+          >
+            Forgot password?
+          </button>
         </div>
         <ErrorText>{error}</ErrorText>
         <div className={styles.actions}>
@@ -93,3 +112,4 @@ export const LoginModal = ({ onClose }: LoginModalProps) => {
     </div>
   )
 }
+

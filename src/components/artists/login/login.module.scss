@@ -48,3 +48,19 @@
   font-size: var(--text-sm);
   margin: 0;
 }
+
+.forgotLink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import c from 'classnames'
+import { useState } from 'react'
 import type { ChangeEventHandler, FocusEventHandler, KeyboardEventHandler } from 'react'
 
 import { Icon } from '@/components/ui/Icon'
@@ -24,6 +25,7 @@ type TInput = {
   required?: boolean
   id?: string
   className?: string
+  showPasswordToggle?: boolean
 }
 
 const Input = ({
@@ -42,17 +44,24 @@ const Input = ({
   required,
   id,
   className,
+  showPasswordToggle = false,
 }: TInput) => {
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Determine actual input type based on password visibility
+  const inputType = type === 'password' && showPassword ? 'text' : type
+
   return (
     <div className={c(styles.wrapper, className)}>
       <input
         id={id}
-        type={type}
+        type={inputType}
         className={c([
           styles.input,
           styles[size],
           variant && styles[variant],
           { [styles.withIcon]: !!icon },
+          { [styles.withToggle]: type === 'password' && showPasswordToggle },
         ])}
         value={value}
         onChange={onChange}
@@ -68,8 +77,19 @@ const Input = ({
           <Icon name={icon} size={16} color="#444444" />
         </div>
       )}
+      {type === 'password' && showPasswordToggle && (
+        <button
+          type="button"
+          className={styles.passwordToggle}
+          onClick={() => setShowPassword(!showPassword)}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+        >
+          <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#666666" />
+        </button>
+      )}
     </div>
   )
 }
 
 export default Input
+

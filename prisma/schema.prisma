@@ -63,6 +63,7 @@ model Artwork {
   textContent          String? // Fixed text content for stencil/text artworks
   featured             Boolean @default(false)
   hiddenFromExhibition Boolean @default(false)
+  order                Int     @default(0)
 
   exhibitionArtworks ExhibitionArtwork[]
 

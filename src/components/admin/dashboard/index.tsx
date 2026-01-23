@@ -25,11 +25,12 @@ export const DashboardAdmin = () => {
   const { users, loading, error, refetch } = useUsers()
   const { startImpersonation } = useEffectiveUser()
 
-  const [editingUsers, setEditingUsers] = useState<Record<string, TUser>>({})
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [confirmText, setConfirmText] = useState('')
+  const [invitingId, setInvitingId] = useState<string | null>(null)
+  const [inviteTarget, setInviteTarget] = useState<{ id: string; name: string; email: string } | null>(null)
 
   // Redirect non-admins
   useEffect(() => {
@@ -42,25 +43,6 @@ export const DashboardAdmin = () => {
       }
     }
   }, [sessionStatus, session, router])
-
-  const handleChange = (id: string, field: keyof TUser, value: string) => {
-    setEditingUsers((prev) => {
-      const current = prev[id] ?? users.find((a) => a.id === id)
-      if (!current) return prev
-
-      return {
-        ...prev,
-        [id]: {
-          ...current,
-          [field]: value,
-        },
-      }
-    })
-  }
-
-  const getFieldValue = (user: TUser, field: keyof TUser): string => {
-    return (editingUsers[user.id]?.[field] as string) ?? (user[field] as string) ?? ''
-  }
 
   const handleAddSuccess = useCallback(() => {
     refetch()
@@ -85,6 +67,38 @@ export const DashboardAdmin = () => {
     },
     [startImpersonation, router],
   )
+
+  const handleInviteClick = useCallback((user: TUser) => {
+    if (user.email) {
+      setInviteTarget({ id: user.id, name: `${user.name} ${user.lastName}`, email: user.email })
+    }
+  }, [])
+
+  const handleInviteConfirm = useCallback(async () => {
+    if (!inviteTarget) return
+
+    setInvitingId(inviteTarget.id)
+    try {
+      const response = await fetch('/api/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: inviteTarget.id }),
+      })
+
+      if (response.ok) {
+        setInviteTarget(null)
+        alert('Invite email sent successfully!')
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Failed to send invite')
+      }
+    } catch (error) {
+      console.error('Invite error:', error)
+      alert('Failed to send invite')
+    } finally {
+      setInvitingId(null)
+    }
+  }, [inviteTarget])
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return
@@ -159,42 +173,10 @@ export const DashboardAdmin = () => {
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td>
-                  <Input
-                    id={`name-${user.id}`}
-                    type="text"
-                    variant="table"
-                    value={getFieldValue(user, 'name')}
-                    onChange={(e) => handleChange(user.id, 'name', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <Input
-                    id={`lastName-${user.id}`}
-                    type="text"
-                    variant="table"
-                    value={getFieldValue(user, 'lastName')}
-                    onChange={(e) => handleChange(user.id, 'lastName', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <Input
-                    id={`handler-${user.id}`}
-                    type="text"
-                    variant="table"
-                    value={getFieldValue(user, 'handler')}
-                    onChange={(e) => handleChange(user.id, 'handler', e.target.value)}
-                  />
-                </td>
-                <td>
-                  <Input
-                    id={`email-${user.id}`}
-                    type="email"
-                    variant="table"
-                    value={getFieldValue(user, 'email')}
-                    onChange={(e) => handleChange(user.id, 'email', e.target.value)}
-                  />
-                </td>
+                <td>{user.name}</td>
+                <td>{user.lastName}</td>
+                <td>{user.handler}</td>
+                <td>{user.email || '-'}</td>
                 <td>{user.userType}</td>
                 <td>
                   <Checkbox
@@ -216,6 +198,15 @@ export const DashboardAdmin = () => {
                 </td>
                 <td>
                   <div className={dashboardStyles.actions}>
+                    {/* Invite button - superAdmin only, for users with email */}
+                    {isSuperAdminUser && user.email && (
+                      <Button
+                        font="dashboard"
+                        variant="secondary"
+                        label="Invite"
+                        onClick={() => handleInviteClick(user)}
+                      />
+                    )}
                     {/* Impersonate logic:
                         - superAdmin: can impersonate anyone except themselves
                         - admin: can only impersonate artists/curators (not other admins) */}
@@ -287,6 +278,30 @@ export const DashboardAdmin = () => {
                 label={deleting ? 'Deleting...' : 'Delete'}
                 onClick={handleDeleteConfirm}
                 disabled={deleting || confirmText !== 'CONFIRM'}
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {inviteTarget && (
+        <Modal onClose={() => setInviteTarget(null)}>
+          <div className={dashboardStyles.deleteModal}>
+            <h2>Send Invite Email</h2>
+            <p>
+              Send an invitation email to <strong>{inviteTarget.name}</strong>?
+            </p>
+            <p>
+              The email will be sent to: <strong>{inviteTarget.email}</strong>
+            </p>
+            <div className={dashboardStyles.deleteActions}>
+              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setInviteTarget(null)} />
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={invitingId === inviteTarget.id ? 'Sending...' : 'Send Invite'}
+                onClick={handleInviteConfirm}
+                disabled={invitingId === inviteTarget.id}
               />
             </div>
           </div>
