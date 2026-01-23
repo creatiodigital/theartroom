@@ -43,6 +43,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       textPadding: { label: '12', value: 12 } as TOption<number>,
       imageUrl: '',
       featured: false,
+      hiddenFromExhibition: false,
       width: 0,
       height: 0,
       fromTop: 0,
@@ -79,6 +80,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     textVerticalAlign,
     textPadding,
     featured,
+    hiddenFromExhibition,
     imageUrl,
   } = artwork
 
@@ -128,6 +130,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     textVerticalAlign,
     textPadding,
     featured,
+    hiddenFromExhibition,
     imageUrl,
   }
 }

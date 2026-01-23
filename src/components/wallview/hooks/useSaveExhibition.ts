@@ -160,6 +160,7 @@ export const useSaveExhibition = () => {
             imageUrl,
             textContent: artwork.textContent || null,
             featured: artwork.featured ?? false,
+            hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             // Include original dimensions if we have them
             originalWidth: dims?.width ?? artwork.originalWidth ?? null,
             originalHeight: dims?.height ?? artwork.originalHeight ?? null,

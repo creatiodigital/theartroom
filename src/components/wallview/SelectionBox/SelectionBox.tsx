@@ -12,14 +12,17 @@ export type TSelectionBox = {
   scaleFactor: number
 }
 
-const SelectionBox = ({ selectionBox, scaleFactor }: TSelectionBox) => (
+// Note: scaleFactor is kept in props for backwards compatibility but not used
+// The parent CenterPanel applies CSS transform: scale(scaleFactor) to the wall wrapper,
+// so the selection box coordinates (stored in wall space) are automatically scaled
+const SelectionBox = ({ selectionBox }: TSelectionBox) => (
   <div
     className={styles.selectionBox}
     style={{
-      left: `${Math.min(selectionBox.startX, selectionBox.endX) * scaleFactor}px`,
-      top: `${Math.min(selectionBox.startY, selectionBox.endY) * scaleFactor}px`,
-      width: `${Math.abs(selectionBox.endX - selectionBox.startX) * scaleFactor}px`,
-      height: `${Math.abs(selectionBox.endY - selectionBox.startY) * scaleFactor}px`,
+      left: `${Math.min(selectionBox.startX, selectionBox.endX)}px`,
+      top: `${Math.min(selectionBox.startY, selectionBox.endY)}px`,
+      width: `${Math.abs(selectionBox.endX - selectionBox.startX)}px`,
+      height: `${Math.abs(selectionBox.endY - selectionBox.startY)}px`,
     }}
   ></div>
 )

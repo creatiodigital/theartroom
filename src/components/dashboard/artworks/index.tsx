@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
@@ -245,7 +246,11 @@ export const ArtworkLibraryPage = () => {
                   <div className={styles.textPreview}>{truncateText(artwork.textContent, 100)}</div>
                 ) : (
                   <div className={styles.placeholder}>
-                    {artwork.artworkType === 'image' ? '🖼️' : '📝'}
+                    <Icon
+                      name={artwork.artworkType === 'image' ? 'image' : 'type'}
+                      size={32}
+                      color="#666"
+                    />
                   </div>
                 )}
               </div>
