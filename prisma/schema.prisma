@@ -102,6 +102,10 @@ model Exhibition {
   windowLightColor      String? @default("#ffffff")
   windowLightIntensity  Float?  @default(4.0)
   floorReflectiveness   Float?  @default(0.3)
+  floorMaterial         String? @default("concrete")
+  floorTextureScale     Float?  @default(1.0)
+  floorTextureOffsetX   Float?  @default(0)
+  floorTextureOffsetY   Float?  @default(0)
 
   exhibitionArtworks ExhibitionArtwork[]
 

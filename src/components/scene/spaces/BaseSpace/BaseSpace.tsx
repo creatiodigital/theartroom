@@ -36,7 +36,6 @@ const BaseSpace: React.FC<BaseSpaceProps> = ({ wallRefs, ...props }) => {
             <>
               <primitive object={nodes.floor} visible={false} />
               <ReflectiveFloor
-                textureRepeat={0.5}
                 position={[nodes.floor.position.x, floorSurfaceY, nodes.floor.position.z]}
               />
             </>

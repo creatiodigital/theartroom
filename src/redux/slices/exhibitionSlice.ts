@@ -106,6 +106,23 @@ const exhibitionSlice = createSlice({
       state.floorReflectiveness = action.payload
     },
 
+    setFloorMaterial: (state: TExhibitionWithHistory, action: PayloadAction<'concrete' | 'wood'>) => {
+      state.floorMaterial = action.payload
+    },
+
+    setFloorTextureScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      // Clamp scale between 0.45 and 2.0
+      state.floorTextureScale = Math.max(0.45, Math.min(2.0, action.payload))
+    },
+
+    setFloorTextureOffsetX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.floorTextureOffsetX = action.payload
+    },
+
+    setFloorTextureOffsetY: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.floorTextureOffsetY = action.payload
+    },
+
     // Snapshot actions for cancel functionality
     snapshotExhibition: (state: TExhibitionWithHistory) => {
       state._snapshot = extractExhibitionData(state)
@@ -185,6 +202,10 @@ export const {
   setWindowLightColor,
   setWindowLightIntensity,
   setFloorReflectiveness,
+  setFloorMaterial,
+  setFloorTextureScale,
+  setFloorTextureOffsetX,
+  setFloorTextureOffsetY,
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,
