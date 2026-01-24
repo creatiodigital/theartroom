@@ -1,4 +1,4 @@
-import { ArrowDownFromLine, ArrowLeftFromLine, ArrowRightFromLine, ArrowUpFromLine, ArrowRight, BrickWall, Eye, EyeOff, FolderDown, Image, LampCeiling, MoveHorizontal, MoveVertical, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
+import { ArrowDownFromLine, ArrowLeftFromLine, ArrowRightFromLine, ArrowUpFromLine, ArrowRight, BrickWall, Camera, Eye, EyeOff, FolderDown, Image, LampCeiling, MoveHorizontal, MoveVertical, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -51,6 +51,7 @@ const lucideIcons: Record<string, LucideIcon> = {
   arrowLeftFromLine: ArrowLeftFromLine,
   arrowRightFromLine: ArrowRightFromLine,
   'brick-wall': BrickWall,
+  camera: Camera,
   close: X,
   eye: Eye,
   eyeOff: EyeOff,

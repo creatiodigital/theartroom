@@ -15,30 +15,30 @@
 
 /* Variants */
 .primary {
-  background: var(--color-black);
-  color: var(--color-white);
-  border: 1px solid var(--color-black);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+  border: 1px solid var(--color-button-primary-border);
 
   &:hover {
-    background: var(--color-text);
-    border-color: var(--color-text);
+    background: var(--color-button-primary-hover-bg);
+    border-color: var(--color-button-primary-hover-bg);
   }
 }
 
 .secondary {
-  background: var(--color-white);
-  color: var(--color-text);
-  border: 1px solid var(--color-border-dark);
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-text);
+  border: 1px solid var(--color-button-secondary-border);
 
   &:hover {
-    background: var(--color-gray-light);
+    background: var(--color-button-secondary-hover-bg);
   }
 }
 
 .danger {
-  background: var(--color-brand);
-  color: var(--color-white);
-  border: 1px solid var(--color-brand);
+  background: var(--color-button-danger-bg);
+  color: var(--color-button-danger-text);
+  border: 1px solid var(--color-button-danger-border);
 
   &:hover {
     opacity: 0.9;

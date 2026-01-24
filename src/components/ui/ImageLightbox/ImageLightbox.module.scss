@@ -32,17 +32,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-default);
   border-radius: 50%;
-  color: var(--color-text);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition:
     background 0.2s ease,
     transform 0.2s ease;
 
   &:hover {
-    background: var(--color-border);
+    background: var(--color-border-default);
     transform: scale(1.05);
   }
 
@@ -62,7 +62,7 @@
 
 .caption {
   font-size: var(--text-lg);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   text-align: center;
 }
 

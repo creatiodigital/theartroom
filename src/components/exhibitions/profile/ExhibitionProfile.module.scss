@@ -73,7 +73,7 @@
 
 .dates {
   font-size: var(--text-md-mobile);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   margin: 0 0 var(--space-6);
 
   @include breakpoint(lg) {

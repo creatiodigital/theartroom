@@ -50,29 +50,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-muted);
-  color: var(--color-text);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-primary);
 }
 
 .info {
   text-align: center;
   padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-default);
   width: 100%;
 }
 
 .artist {
   font-weight: 400;
   margin-bottom: var(--space-1);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .title {
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .detail {
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .viewDetailsLink {

@@ -11,7 +11,7 @@
   border: none;
 
   &::placeholder {
-    color: var(--color-text);
+    color: var(--color-text-primary);
     opacity: 0.7;
   }
 
@@ -28,12 +28,12 @@
 
 .medium {
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
 
   &:focus {
-    border-color: var(--color-text);
+    border-color: var(--color-text-primary);
   }
 }
 
@@ -43,37 +43,37 @@
 }
 
 .disabled {
-  background-color: var(--color-bg-disabled);
+  background-color: var(--color-surface-disabled);
   cursor: not-allowed;
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 // Context-specific variants
 .table {
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   min-width: 100px;
 
   &:focus {
-    border-color: var(--color-text);
+    border-color: var(--color-text-primary);
   }
 }
 
 .search {
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   min-width: 200px;
 
   &:focus {
-    border-color: var(--color-text);
+    border-color: var(--color-text-primary);
   }
 
   &::placeholder {
-    color: var(--color-text);
+    color: var(--color-text-primary);
   }
 }
 
@@ -97,12 +97,12 @@
 .underline {
   padding: var(--space-2) 0;
   border: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-default);
   border-radius: 0;
   font-size: var(--text-sm);
 
   &:focus {
-    border-bottom-color: var(--color-text);
+    border-bottom-color: var(--color-text-primary);
   }
 }
 

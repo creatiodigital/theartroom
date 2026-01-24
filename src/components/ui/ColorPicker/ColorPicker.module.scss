@@ -33,5 +33,5 @@
 
 .label {
   @include tinySans();
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }

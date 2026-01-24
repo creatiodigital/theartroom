@@ -65,7 +65,6 @@ const MainCamera = () => {
   const mouseState: RefObject<MouseState> = useRef(createMouseState())
   const initialPositionSet = useRef(false)
   const rotationVelocity = useRef(0)
-  const fov = useRef(50)
 
   // Focus animation state
   const isAnimating = useRef(false)
@@ -75,7 +74,10 @@ const MainCamera = () => {
   const dampingFactor = 0.6
   const collisionDistance = 1
   const moveSpeed = 0.03
-  const cameraElevation = 1.6 // Average person's eye height in meters
+
+  // Get camera settings from Redux
+  const cameraFOV = useSelector((state: RootState) => state.exhibition.cameraFOV ?? 50)
+  const cameraElevation = useSelector((state: RootState) => state.exhibition.cameraElevation ?? 1.6)
 
   const wallCoordinates = useSelector((state: RootState) => state.wallView.currentWallCoordinates)
   const wallNormal = useSelector((state: RootState) => state.wallView.currentWallNormal)
@@ -88,7 +90,7 @@ const MainCamera = () => {
       
       // Calculate optimal viewing distance based on artwork size and camera FOV
       // Must account for artwork position relative to fixed camera eye height
-      const fovRad = (fov.current * Math.PI) / 180
+      const fovRad = (cameraFOV * Math.PI) / 180
       const halfFov = fovRad / 2
       
       // Calculate vertical distance from camera to artwork extremes
@@ -216,7 +218,7 @@ const MainCamera = () => {
   useFrame(({ camera }, delta) => {
     const cam = camera as PerspectiveCamera
 
-    cam.fov = fov.current
+    cam.fov = cameraFOV
     cam.updateProjectionMatrix()
 
     if (!initialPositionSet.current) {
@@ -240,6 +242,9 @@ const MainCamera = () => {
 
       initialPositionSet.current = true
     }
+
+    // Continuously update camera elevation (allows real-time adjustment)
+    cam.position.y = cameraElevation
 
     // Handle focus animation
     if (isAnimating.current && targetPosition.current && targetLookAt.current) {
