@@ -123,6 +123,11 @@ const exhibitionSlice = createSlice({
       state.floorTextureOffsetY = action.payload
     },
 
+    setFloorTemperature: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      // Clamp temperature between -1 (cool) and 1 (warm)
+      state.floorTemperature = Math.max(-1, Math.min(1, action.payload))
+    },
+
     setCameraFOV: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
       // Clamp FOV between 40 and 60
       state.cameraFOV = Math.max(40, Math.min(60, action.payload))
@@ -216,6 +221,7 @@ export const {
   setFloorTextureScale,
   setFloorTextureOffsetX,
   setFloorTextureOffsetY,
+  setFloorTemperature,
   setCameraFOV,
   setCameraElevation,
   snapshotExhibition,

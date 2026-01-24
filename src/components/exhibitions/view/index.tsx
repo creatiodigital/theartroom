@@ -304,6 +304,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         floorTextureScale: exhibition.floorTextureScale ?? undefined,
         floorTextureOffsetX: exhibition.floorTextureOffsetX ?? undefined,
         floorTextureOffsetY: exhibition.floorTextureOffsetY ?? undefined,
+        floorTemperature: exhibition.floorTemperature ?? undefined,
         // Camera settings
         cameraFOV: exhibition.cameraFOV ?? undefined,
         cameraElevation: exhibition.cameraElevation ?? undefined,

@@ -106,6 +106,7 @@ model Exhibition {
   floorTextureScale     Float?  @default(1.0)
   floorTextureOffsetX   Float?  @default(0)
   floorTextureOffsetY   Float?  @default(0)
+  floorTemperature      Float?  @default(0)
   // Camera settings
   cameraFOV             Float?  @default(50)
   cameraElevation       Float?  @default(1.6)

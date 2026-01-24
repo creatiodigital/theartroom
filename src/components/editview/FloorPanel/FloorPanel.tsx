@@ -13,6 +13,7 @@ import {
   setFloorTextureScale,
   setFloorTextureOffsetX,
   setFloorTextureOffsetY,
+  setFloorTemperature,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -24,6 +25,7 @@ const DEFAULT_FLOOR_TEXTURE_SCALE = 1.0
 const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
   { value: 'wood', label: 'Wood' },
+  { value: 'marble', label: 'Marble' },
 ] as const
 
 const FloorPanel = () => {
@@ -53,6 +55,10 @@ const FloorPanel = () => {
     (state: RootState) => state.exhibition.floorTextureOffsetY ?? 0,
   )
 
+  const floorTemperature = useSelector(
+    (state: RootState) => state.exhibition.floorTemperature ?? 0,
+  )
+
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood'))
     setSaved(false)
@@ -80,6 +86,11 @@ const FloorPanel = () => {
     setSaved(false)
   }
 
+  const handleTemperatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setFloorTemperature(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -93,6 +104,7 @@ const FloorPanel = () => {
           floorTextureScale,
           floorTextureOffsetX,
           floorTextureOffsetY,
+          floorTemperature,
           floorReflectiveness,
         }),
       })
@@ -208,6 +220,28 @@ const FloorPanel = () => {
           <div className={styles.sliderLabels}>
             <span>Matte</span>
             <span>Mirror</span>
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Color Temperature</label>
+            <span className={styles.sliderValue}>
+              {floorTemperature.toFixed(2)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="-1"
+            max="1"
+            step="0.05"
+            value={floorTemperature}
+            onChange={handleTemperatureChange}
+            className={styles.slider}
+          />
+          <div className={styles.sliderLabels}>
+            <span>Cool</span>
+            <span>Warm</span>
           </div>
         </div>
       </div>
