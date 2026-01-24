@@ -123,6 +123,16 @@ const exhibitionSlice = createSlice({
       state.floorTextureOffsetY = action.payload
     },
 
+    setCameraFOV: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      // Clamp FOV between 40 and 60
+      state.cameraFOV = Math.max(40, Math.min(60, action.payload))
+    },
+
+    setCameraElevation: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      // Clamp elevation between 1.5 and 1.7 meters
+      state.cameraElevation = Math.max(1.5, Math.min(1.7, action.payload))
+    },
+
     // Snapshot actions for cancel functionality
     snapshotExhibition: (state: TExhibitionWithHistory) => {
       state._snapshot = extractExhibitionData(state)
@@ -206,6 +216,8 @@ export const {
   setFloorTextureScale,
   setFloorTextureOffsetX,
   setFloorTextureOffsetY,
+  setCameraFOV,
+  setCameraElevation,
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,

@@ -29,5 +29,8 @@ export type TExhibition = {
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number
+  // Camera settings
+  cameraFOV?: number
+  cameraElevation?: number
 }
 
