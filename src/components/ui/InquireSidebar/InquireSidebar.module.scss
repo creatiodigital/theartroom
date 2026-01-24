@@ -60,7 +60,7 @@
   font-family: var(--font-sans);
   font-size: var(--text-xs);
   letter-spacing: var(--space-1);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   text-transform: uppercase;
 }
 
@@ -108,7 +108,7 @@
 .label {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .input {
@@ -118,7 +118,7 @@
 .textarea {
   width: 100%;
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-default);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   resize: vertical;
@@ -126,7 +126,7 @@
 
   &:focus {
     outline: none;
-    border-color: var(--color-text);
+    border-color: var(--color-text-primary);
   }
 }
 
@@ -154,8 +154,8 @@
   display: flex;
   gap: var(--space-4);
   padding: var(--space-4) 0;
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-default);
+  border-bottom: 1px solid var(--color-border-default);
   margin: var(--space-4) 0;
 }
 
@@ -175,7 +175,7 @@
 
 .submitButton {
   width: 100%;
-  background: var(--color-text);
+  background: var(--color-text-primary);
   color: var(--color-white);
   padding: var(--space-4);
   font-size: var(--text-sm);
@@ -191,7 +191,7 @@
 }
 
 .link {
-  color: var(--color-text);
+  color: var(--color-text-primary);
   text-decoration: underline;
 
   &:hover {

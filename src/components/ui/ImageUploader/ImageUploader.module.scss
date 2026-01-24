@@ -14,15 +14,15 @@
   justify-content: center;
   gap: var(--space-3);
   width: 100%;
-  border: 2px dashed var(--color-border);
+  border: 2px dashed var(--color-border-default);
   border-radius: var(--radius-sm);
   background: var(--color-white);
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: var(--color-text);
-    background: var(--color-bg-muted);
+    border-color: var(--color-text-primary);
+    background: var(--color-surface-subtle);
   }
 
   &.dragging {
@@ -34,13 +34,13 @@
 .dropText {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .uploadingText {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 /* Preview - image exists state */
@@ -49,8 +49,8 @@
   width: 100%;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-subtle);
 }
 
 .removeButton {
@@ -60,9 +60,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-default);
   background: var(--color-white);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
@@ -73,7 +73,7 @@
   line-height: 1;
 
   &:hover {
-    background: var(--color-bg-muted);
+    background: var(--color-surface-subtle);
   }
 
   &:disabled {
@@ -91,7 +91,7 @@
   justify-content: center;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }
 
 .sizeError {

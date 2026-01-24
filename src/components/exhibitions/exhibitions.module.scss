@@ -10,7 +10,7 @@
 .sectionTitle {
   margin-bottom: var(--space-4);
   font-weight: var(--font-regular);  
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-default);
   padding-bottom: var(--space-2);
   text-transform: uppercase;
 }
@@ -40,5 +40,5 @@
 }
 
 .empty {
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }

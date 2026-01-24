@@ -45,20 +45,12 @@
   --color-text-primary: var(--color-gray-80);
   --color-text-secondary: var(--color-gray-70);
   --color-text-inverse: var(--color-white);
-  // Legacy aliases (for backward compatibility during migration)
-  --color-text: var(--color-text-primary);
-  --color-text-muted: var(--color-text-secondary);
 
   // Surfaces
   --color-surface-page: var(--color-white);
   --color-surface-subtle: var(--color-gray-10);
   --color-surface-panel: var(--color-gray-40);
   --color-surface-disabled: var(--color-gray-20);
-  // Legacy aliases
-  --color-bg: var(--color-surface-page);
-  --color-bg-muted: var(--color-surface-subtle);
-  --color-bg-disabled: var(--color-surface-disabled);
-  --color-panel-bg: var(--color-surface-panel);
 
   // Buttons - Primary
   --color-button-primary-bg: var(--color-black);
@@ -80,9 +72,6 @@
   // Borders
   --color-border-default: var(--color-gray-50);
   --color-border-strong: var(--color-gray-60);
-  // Legacy aliases
-  --color-border: var(--color-border-default);
-  --color-border-dark: var(--color-border-strong);
 
   // Brand & Accents
   --color-brand: var(--color-red-50);

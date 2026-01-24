@@ -39,13 +39,13 @@
   }
 
   .hidden:checked + .span {
-    background-color: var(--color-bg-muted);
+    background-color: var(--color-surface-subtle);
     border-color: var(--color-black);
   }
 
   .label {
     @include tinySans();
     margin-left: var(--space-2);
-    color: var(--color-text);
+    color: var(--color-text-primary);
   }
 }

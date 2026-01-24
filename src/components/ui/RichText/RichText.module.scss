@@ -1,6 +1,6 @@
 .richText {
   line-height: var(--leading-relaxed);
-  color: var(--color-text);
+  color: var(--color-text-primary);
 
   // Headings
   h1 {
@@ -50,7 +50,7 @@
     font-weight: var(--font-medium);
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: var(--color-text);
+    color: var(--color-text-primary);
     margin: var(--space-3) 0 var(--space-2);
   }
 
@@ -102,10 +102,10 @@
 
   // Blockquote
   blockquote {
-    border-left: 3px solid var(--color-border);
+    border-left: 3px solid var(--color-border-default);
     padding-left: var(--space-4);
     margin: var(--space-4) 0;
-    color: var(--color-text);
+    color: var(--color-text-primary);
     font-style: italic;
 
     p:last-child {
@@ -117,13 +117,13 @@
   code {
     font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
     font-size: 0.9em;
-    background: var(--color-bg-muted);
+    background: var(--color-surface-subtle);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
   }
 
   pre {
-    background: var(--color-bg-muted);
+    background: var(--color-surface-subtle);
     padding: var(--space-4);
     border-radius: var(--radius-md);
     overflow-x: auto;
@@ -139,7 +139,7 @@
   // Horizontal rule
   hr {
     border: none;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border-default);
     margin: var(--space-6) 0;
   }
 

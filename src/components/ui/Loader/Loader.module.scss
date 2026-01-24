@@ -19,10 +19,10 @@
 
 .progressBar {
   height: 100%;
-  background-color: var(--color-text);
+  background-color: var(--color-text-primary);
   transition: width 0.2s ease-out;
 }
 
 .percentage {
-  color: var(--color-text);
+  color: var(--color-text-primary);
 }

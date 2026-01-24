@@ -1,6 +1,6 @@
 .width {
   position: absolute;
-  color: var(--color-text);
+  color: var(--color-text-primary);
   top: -18px;
   left: 50%;
   transform: translateX(-50%);
@@ -15,7 +15,7 @@
 
 .height {
   position: absolute;
-  color: var(--color-text);
+  color: var(--color-text-primary);
   top: 50%;
   left: 9px;
   transform: translateY(-50%) translateX(-100%) rotate(-90deg);

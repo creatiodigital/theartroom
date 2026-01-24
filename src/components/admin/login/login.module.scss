@@ -22,7 +22,7 @@
 }
 
 .subtitle {
-  color: var(--color-text);
+  color: var(--color-text-primary);
   margin: 0 0 var(--space-8);
 }
 
@@ -55,7 +55,7 @@
   padding: 0;
   margin-top: var(--space-1);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   text-decoration: underline;
   cursor: pointer;
   text-align: left;
@@ -84,7 +84,7 @@
   border: none;
   padding: 0;
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   text-decoration: underline;
   cursor: pointer;
 
@@ -104,7 +104,7 @@
   padding: 0;
   margin-top: var(--space-4);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-text-primary);
   cursor: pointer;
 
   &:hover {
