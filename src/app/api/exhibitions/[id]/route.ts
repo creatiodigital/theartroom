@@ -24,6 +24,14 @@ type ExhibitionUpdateBody = {
   windowLightColor?: string
   windowLightIntensity?: number
   floorReflectiveness?: number
+  floorMaterial?: string
+  floorTextureScale?: number
+  floorTextureOffsetX?: number
+  floorTextureOffsetY?: number
+  floorTemperature?: number
+  // Camera settings
+  cameraFOV?: number
+  cameraElevation?: number
 }
 
 /* ------------------------ GET ------------------------ */
@@ -84,6 +92,26 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
     if (body.floorReflectiveness !== undefined) data.floorReflectiveness = body.floorReflectiveness
+    if (body.floorMaterial !== undefined) data.floorMaterial = body.floorMaterial
+    if (body.floorTextureScale !== undefined) {
+      // Clamp scale between 0.45 and 2.0
+      data.floorTextureScale = Math.max(0.45, Math.min(2.0, body.floorTextureScale))
+    }
+    if (body.floorTextureOffsetX !== undefined) data.floorTextureOffsetX = body.floorTextureOffsetX
+    if (body.floorTextureOffsetY !== undefined) data.floorTextureOffsetY = body.floorTextureOffsetY
+    if (body.floorTemperature !== undefined) {
+      // Clamp temperature between -1 (cool) and 1 (warm)
+      data.floorTemperature = Math.max(-1, Math.min(1, body.floorTemperature))
+    }
+    // Camera settings
+    if (body.cameraFOV !== undefined) {
+      // Clamp FOV between 40 and 60
+      data.cameraFOV = Math.max(40, Math.min(60, body.cameraFOV))
+    }
+    if (body.cameraElevation !== undefined) {
+      // Clamp elevation between 1.5 and 1.7 meters
+      data.cameraElevation = Math.max(1.5, Math.min(1.7, body.cameraElevation))
+    }
 
     const updated = await prisma.exhibition.update({
       where: { id },

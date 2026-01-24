@@ -85,7 +85,6 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
               {/* Hide original floor but use its computed surface position for the reflective floor */}
               <primitive object={nodes.floor} visible={false} />
               <ReflectiveFloor
-                textureRepeat={1}
                 position={[nodes.floor.position.x, floorSurfaceY, nodes.floor.position.z]}
               />
             </>

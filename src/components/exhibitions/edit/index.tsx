@@ -93,6 +93,22 @@ export const ExhibitionEditPage = ({
         // Lighting customization
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
+        skylightColor: exhibition.skylightColor ?? undefined,
+        skylightIntensity: exhibition.skylightIntensity ?? undefined,
+        ceilingLampColor: exhibition.ceilingLampColor ?? undefined,
+        ceilingLampIntensity: exhibition.ceilingLampIntensity ?? undefined,
+        windowLightColor: exhibition.windowLightColor ?? undefined,
+        windowLightIntensity: exhibition.windowLightIntensity ?? undefined,
+        // Floor customization
+        floorReflectiveness: exhibition.floorReflectiveness ?? undefined,
+        floorMaterial: exhibition.floorMaterial ?? undefined,
+        floorTextureScale: exhibition.floorTextureScale ?? undefined,
+        floorTextureOffsetX: exhibition.floorTextureOffsetX ?? undefined,
+        floorTextureOffsetY: exhibition.floorTextureOffsetY ?? undefined,
+        floorTemperature: exhibition.floorTemperature ?? undefined,
+        // Camera settings
+        cameraFOV: exhibition.cameraFOV ?? undefined,
+        cameraElevation: exhibition.cameraElevation ?? undefined,
       }
       dispatch(setExhibition(exhibitionData))
     }
