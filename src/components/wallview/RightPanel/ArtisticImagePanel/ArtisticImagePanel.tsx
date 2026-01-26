@@ -12,7 +12,7 @@ import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 
-import { frameThicknessOptions, passepartoutThicknessOptions } from './constants'
+import { frameSizeOptions, frameThicknessOptions, passepartoutSizeOptions, passepartoutThicknessOptions } from './constants'
 
 const ArtisticImage = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -23,8 +23,10 @@ const ArtisticImage = () => {
     imageUrl,
     showPassepartout,
     passepartoutColor,
+    passepartoutSize,
     passepartoutThickness,
     frameColor,
+    frameSize,
     frameThickness,
     hiddenFromExhibition,
   } = useArtworkDetails(currentArtworkId!)
@@ -73,26 +75,43 @@ const ArtisticImage = () => {
           />
         </Tooltip>
         {showFrame && (
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
-              <ColorPicker
-                textColor={frameColor!}
-                onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
-              />
+          <div className={styles.controlGroup}>
+            <div className={styles.row}>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
+                <ColorPicker
+                  textColor={frameColor!}
+                  onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
+                />
+              </div>
             </div>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness</Text>
-              <Select<number>
-                options={frameThicknessOptions}
-                value={frameThickness?.value}
-                onChange={(val) =>
-                  handleEditArtisticImage('frameThickness', {
-                    label: String(val),
-                    value: val,
-                  })
-                }
-              />
+            <div className={styles.row}>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Size (cm)</Text>
+                <Select<number>
+                  options={frameSizeOptions}
+                  value={frameSize?.value}
+                  onChange={(val) =>
+                    handleEditArtisticImage('frameSize', {
+                      label: String(val),
+                      value: val,
+                    })
+                  }
+                />
+              </div>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness (cm)</Text>
+                <Select<number>
+                  options={frameThicknessOptions}
+                  value={frameThickness?.value}
+                  onChange={(val) =>
+                    handleEditArtisticImage('frameThickness', {
+                      label: String(val),
+                      value: val,
+                    })
+                  }
+                />
+              </div>
             </div>
           </div>
         )}
@@ -110,26 +129,43 @@ const ArtisticImage = () => {
           />
         </Tooltip>
         {showPassepartout && (
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
-              <ColorPicker
-                textColor={passepartoutColor!}
-                onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}
-              />
+          <div className={styles.controlGroup}>
+            <div className={styles.row}>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
+                <ColorPicker
+                  textColor={passepartoutColor!}
+                  onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}
+                />
+              </div>
             </div>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness</Text>
-              <Select<number>
-                options={passepartoutThicknessOptions}
-                value={passepartoutThickness?.value}
-                onChange={(val) =>
-                  handleEditArtisticImage('passepartoutThickness', {
-                    label: String(val),
-                    value: val,
-                  })
-                }
-              />
+            <div className={styles.row}>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Size (cm)</Text>
+                <Select<number>
+                  options={passepartoutSizeOptions}
+                  value={passepartoutSize?.value}
+                  onChange={(val) =>
+                    handleEditArtisticImage('passepartoutSize', {
+                      label: String(val),
+                      value: val,
+                    })
+                  }
+                />
+              </div>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness (cm)</Text>
+                <Select<number>
+                  options={passepartoutThicknessOptions}
+                  value={passepartoutThickness?.value}
+                  onChange={(val) =>
+                    handleEditArtisticImage('passepartoutThickness', {
+                      label: String(val),
+                      value: val,
+                    })
+                  }
+                />
+              </div>
             </div>
           </div>
         )}

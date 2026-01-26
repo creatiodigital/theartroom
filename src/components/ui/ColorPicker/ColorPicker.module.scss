@@ -20,12 +20,12 @@
     }
 
     &::-webkit-color-swatch {
-      border: 0;
+      border: 1px solid #333333;
       border-radius: var(--radius-sm);
     }
 
     &::-moz-color-swatch {
-      border: 0;
+      border: 1px solid #333333;
       border-radius: var(--radius-sm);
     }
   }

@@ -12,7 +12,7 @@ import styles from './ImageUploader.module.scss'
 type ImageUploaderProps = {
   imageUrl?: string | null
   onUpload: (file: File) => Promise<void>
-  onRemove?: () => Promise<void>
+  onRemove?: () => void | Promise<void>
   uploading?: boolean
   aspectRatio?: string
   objectFit?: 'cover' | 'contain'

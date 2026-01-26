@@ -190,6 +190,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
                   size="medium"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -202,6 +203,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
                   size="medium"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   showPasswordToggle
                   required
                 />
@@ -220,6 +222,12 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
             </form>
           ) : (
             <form onSubmit={handleVerifyCode} className={styles.form}>
+              {/* Visually hidden credentials for Chrome password manager detection */}
+              <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}>
+                <input type="email" name="email" value={email} autoComplete="email" readOnly tabIndex={-1} />
+                <input type="password" name="password" value={password} autoComplete="current-password" readOnly tabIndex={-1} />
+              </div>
+              
               <Text font="dashboard" as="p" className={styles.codeMessage}>
                 We sent a verification code to <strong>{email}</strong>
               </Text>
@@ -233,6 +241,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
                   value={loginCode}
                   onChange={(e) => setLoginCode(e.target.value)}
                   placeholder="Enter 6-digit code"
+                  autoComplete="one-time-code"
                   required
                 />
               </div>

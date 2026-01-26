@@ -90,7 +90,7 @@ type ArtworkEditFormProps = {
   error: string
   onFormChange: (field: string, value: string | boolean) => void
   onImageUpload: (file: File) => Promise<void>
-  onImageRemove: () => Promise<void>
+  onImageRemove: () => void | Promise<void>
   onSubmit: (e: React.FormEvent) => void
   onCancel: () => void
 }

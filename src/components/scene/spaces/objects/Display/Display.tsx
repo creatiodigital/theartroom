@@ -178,9 +178,11 @@ const Display = ({ artwork }: DisplayProps) => {
     imageUrl,
     showFrame,
     frameColor,
+    frameSize,
     frameThickness,
     showPassepartout,
     passepartoutColor,
+    passepartoutSize,
     passepartoutThickness,
   } = artwork
 
@@ -291,11 +293,15 @@ const Display = ({ artwork }: DisplayProps) => {
     })
   }, [passepartoutAmbientColor])
 
-  const frameT = (showFrame ? frameThickness?.value : 0) || 0
-  const passepartoutT = (showPassepartout ? passepartoutThickness?.value : 0) || 0
+  const frameS = (showFrame ? frameSize?.value : 0) || 0
+  // frameThickness is for Z-depth, range 1-20
+  const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
+  const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
+  // passepartoutThickness is for Z-depth, clamped 0.1-1.0
+  const passepartoutDepth = Math.min(1.0, Math.max(0.1, passepartoutThickness?.value ?? 0.3))
 
-  const innerWidth = planeWidth - (frameT + passepartoutT) / 50
-  const innerHeight = planeHeight - (frameT + passepartoutT) / 50
+  const innerWidth = planeWidth - (frameS + passepartoutS) / 50
+  const innerHeight = planeHeight - (frameS + passepartoutS) / 50
 
   return (
     <group
@@ -319,20 +325,22 @@ const Display = ({ artwork }: DisplayProps) => {
 
       {imageUrl && <ArtworkImage url={imageUrl} width={innerWidth} height={innerHeight} />}
 
-      {showFrame && frameThickness?.value && (
+      {showFrame && frameSize?.value && (
         <Frame
           width={planeWidth}
           height={planeHeight}
-          thickness={frameThickness.value / 100}
+          thickness={frameS / 100}
+          depth={frameDepth / 100}
           material={frameMaterial}
         />
       )}
 
-      {showPassepartout && passepartoutThickness?.value && frameThickness?.value && (
+      {showPassepartout && passepartoutSize?.value && (
         <Passepartout
-          width={planeWidth - frameThickness.value / 50}
-          height={planeHeight - frameThickness.value / 50}
-          thickness={passepartoutThickness.value / 100}
+          width={planeWidth - frameS / 50}
+          height={planeHeight - frameS / 50}
+          thickness={passepartoutS / 100}
+          depth={passepartoutDepth / 100}
           material={passepartoutMaterial}
         />
       )}
