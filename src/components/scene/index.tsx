@@ -52,6 +52,7 @@ export const Scene = () => {
         <Canvas
           shadows
           gl={{
+            antialias: true,
             toneMapping: ReinhardToneMapping,
             toneMappingExposure: 1.0,
           }}

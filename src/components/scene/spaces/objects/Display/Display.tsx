@@ -276,12 +276,12 @@ const Display = ({ artwork }: DisplayProps) => {
   const planeWidth = width || 1
   const planeHeight = height || 1
 
-  // Frame material with ambient light applied
+  // Frame material with ambient light applied - polished lacquered wood look
   const frameMaterial = useMemo(() => {
     return new MeshStandardMaterial({
       color: frameAmbientColor,
-      roughness: 0.3,
-      metalness: 0.1,
+      roughness: 0.15,  // Low roughness for glossy/polished finish
+      metalness: 0.2,   // Slight metalness for subtle reflections
     })
   }, [frameAmbientColor])
 
