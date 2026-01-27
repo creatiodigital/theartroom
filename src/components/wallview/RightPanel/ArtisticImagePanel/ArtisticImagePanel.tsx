@@ -37,7 +37,9 @@ const ArtisticImage = () => {
 
   return (
     <>
+      {/* DISPLAY Section */}
       <div className={styles.section}>
+        
         <Tooltip
           label="When enabled, visitors can double-click this artwork in the 3D exhibition to view its details"
           placement="left"
@@ -48,9 +50,7 @@ const ArtisticImage = () => {
             label="Show information in exhibition"
           />
         </Tooltip>
-      </div>
 
-      <div className={styles.section}>
         <Tooltip
           label="When enabled, this artwork won't appear in the exhibition's artwork grid on the public page"
           placement="left"
@@ -63,7 +63,9 @@ const ArtisticImage = () => {
         </Tooltip>
       </div>
 
+      {/* FRAME Section */}
       <div className={styles.section}>
+        
         <Tooltip
           label="Add a picture frame around this artwork, visible in the 3D exhibition"
           placement="left"
@@ -78,7 +80,7 @@ const ArtisticImage = () => {
           <div className={styles.controlGroup}>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Frame color</Text>
                 <ColorPicker
                   textColor={frameColor!}
                   onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
@@ -117,7 +119,9 @@ const ArtisticImage = () => {
         )}
       </div>
 
+      {/* PASSEPARTOUT Section */}
       <div className={styles.section}>
+        
         <Tooltip
           label="Add a mat border between the artwork and frame, like traditional gallery framing"
           placement="left"
@@ -132,7 +136,7 @@ const ArtisticImage = () => {
           <div className={styles.controlGroup}>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Color</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Passepartout color</Text>
                 <ColorPicker
                   textColor={passepartoutColor!}
                   onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}

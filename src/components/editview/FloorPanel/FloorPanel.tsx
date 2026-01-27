@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideFloorPanel } from '@/redux/slices/dashboardSlice'
 import {
@@ -126,12 +125,8 @@ const FloorPanel = () => {
   return (
     <SettingsPanel title="Floor" onClose={handleClose}>
       <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Material
-        </Text>
-
         <div className={styles.field}>
-          <label className={styles.label}>Type</label>
+          <label className={styles.label}>Material type</label>
           <select
             value={floorMaterial}
             onChange={handleMaterialChange}
@@ -159,10 +154,6 @@ const FloorPanel = () => {
             onChange={handleTextureScaleChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Smaller</span>
-            <span>Larger</span>
-          </div>
         </div>
 
         <div className={styles.field}>
@@ -199,9 +190,6 @@ const FloorPanel = () => {
       </div>
 
       <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Surface
-        </Text>
 
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
@@ -217,10 +205,6 @@ const FloorPanel = () => {
             onChange={handleReflectivenessChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Matte</span>
-            <span>Mirror</span>
-          </div>
         </div>
 
         <div className={styles.field}>
@@ -239,10 +223,6 @@ const FloorPanel = () => {
             onChange={handleTemperatureChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Cool</span>
-            <span>Warm</span>
-          </div>
         </div>
       </div>
 
