@@ -52,9 +52,11 @@ export async function POST(request: NextRequest) {
         // Display properties (per-exhibition)
         showFrame?: boolean
         frameColor?: string
+        frameSize?: number
         frameThickness?: number
         showPassepartout?: boolean
         passepartoutColor?: string
+        passepartoutSize?: number
         passepartoutThickness?: number
         showArtworkInformation?: boolean
         // Text styling (per-exhibition)
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
         textBackgroundColor?: string
         textAlign?: string
         textVerticalAlign?: string
+        textPadding?: number
       }>
     }
 
@@ -126,10 +129,12 @@ export async function POST(request: NextRequest) {
             // Display properties
             showFrame: pos.showFrame ?? false,
             frameColor: pos.frameColor ?? '#000000',
-            frameThickness: pos.frameThickness ?? 5,
+            frameSize: pos.frameSize ?? 5,
+            frameThickness: pos.frameThickness ?? 0.5,
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
-            passepartoutThickness: pos.passepartoutThickness ?? 10,
+            passepartoutSize: pos.passepartoutSize ?? 10,
+            passepartoutThickness: pos.passepartoutThickness ?? 0.3,
             showArtworkInformation: pos.showArtworkInformation ?? false,
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
@@ -141,6 +146,7 @@ export async function POST(request: NextRequest) {
             textBackgroundColor: pos.textBackgroundColor ?? null,
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
+            textPadding: pos.textPadding ?? 12,
           },
           update: {
             wallId: pos.wallId,
@@ -158,10 +164,12 @@ export async function POST(request: NextRequest) {
             // Display properties
             showFrame: pos.showFrame ?? false,
             frameColor: pos.frameColor ?? '#000000',
-            frameThickness: pos.frameThickness ?? 5,
+            frameSize: pos.frameSize ?? 5,
+            frameThickness: pos.frameThickness ?? 0.5,
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
-            passepartoutThickness: pos.passepartoutThickness ?? 10,
+            passepartoutSize: pos.passepartoutSize ?? 10,
+            passepartoutThickness: pos.passepartoutThickness ?? 0.3,
             showArtworkInformation: pos.showArtworkInformation ?? false,
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
@@ -173,6 +181,7 @@ export async function POST(request: NextRequest) {
             textBackgroundColor: pos.textBackgroundColor ?? null,
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
+            textPadding: pos.textPadding ?? 12,
           },
         }),
       ),
