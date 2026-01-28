@@ -33,6 +33,8 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
         )}
       </div>
 
+      <div className={styles.divider} />
+
       <div className={styles.content}>{children}</div>
     </div>
   )

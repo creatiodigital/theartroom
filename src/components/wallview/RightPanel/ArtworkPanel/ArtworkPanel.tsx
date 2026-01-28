@@ -169,6 +169,13 @@ const ArtworkPanel = () => {
 
   return (
     <>
+      {/* HEADER Section */}
+      <div className={styles.header}>
+        <Text font="dashboard" as="h2" size="sm" weight="bold" className={styles.headerTitle}>
+          {artwork?.name || 'Artwork'}
+        </Text>
+      </div>
+
       {/* POSITION Section */}
       <div className={styles.section}>
         
@@ -199,7 +206,7 @@ const ArtworkPanel = () => {
         </div>
 
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Vertical Position (meters)
+          Vertical Position (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -225,7 +232,7 @@ const ArtworkPanel = () => {
         </div>
 
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Horizontal Position (meters)
+          Horizontal Position (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -255,7 +262,7 @@ const ArtworkPanel = () => {
       <div className={styles.section}>
         
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Dimensions (meters)
+          Dimensions (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>

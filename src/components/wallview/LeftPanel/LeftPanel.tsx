@@ -259,6 +259,11 @@ export const LeftPanel = () => {
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
+      <div className={styles.header}>
+        <Text font="dashboard" as="h2" className={styles.headerTitle}>
+          Wall Options
+        </Text>
+      </div>
       <div className={styles.section}>
         <div className={styles.subsection}>
           <div className={styles.row}>

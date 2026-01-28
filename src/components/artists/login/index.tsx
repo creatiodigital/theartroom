@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -8,63 +8,24 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ForgotPasswordModal } from '@/components/ui/ForgotPasswordModal'
 import { Input } from '@/components/ui/Input'
-import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './login.module.scss'
 
-type Artist = {
-  id: string
-  name: string
-  lastName: string
-  handler: string
-  email: string
-}
-
-interface ArtistLoginPageProps {
-  handler: string
-}
-
-export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
+export const LoginPage = () => {
   const router = useRouter()
-  const [artist, setArtist] = useState<Artist | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginCode, setLoginCode] = useState('')
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   
   // 2FA step: 'credentials' or 'code'
   const [step, setStep] = useState<'credentials' | 'code'>('credentials')
-
-  // Fetch artist info
-  useEffect(() => {
-    const fetchArtist = async () => {
-      try {
-        const response = await fetch(`/api/artists/${handler}`)
-        if (!response.ok) {
-          setNotFound(true)
-          return
-        }
-        const data = await response.json()
-        setArtist(data)
-        if (data.email) {
-          setEmail(data.email)
-        }
-      } catch {
-        setNotFound(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchArtist()
-  }, [handler])
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -132,6 +93,7 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
 
   const handleResendCode = async () => {
     setError('')
+    setSuccessMessage('')
     setSubmitting(true)
 
     try {
@@ -144,6 +106,9 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
       if (response.ok) {
         setError('')
         setLoginCode('')
+        setSuccessMessage('Verification code resent!')
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccessMessage(''), 5000)
       } else {
         setError('Failed to resend code')
       }
@@ -154,30 +119,13 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className={styles.loginPage}>
-        <LoadingBar />
-      </div>
-    )
-  }
-
-  if (notFound) {
-    return (
-      <div className={styles.loginPage}>
-        <Text font="dashboard" as="h1">Artist Not Found</Text>
-        <Text font="dashboard" as="p">The artist you are looking for does not exist.</Text>
-      </div>
-    )
-  }
-
   return (
     <>
       <div className={styles.loginPage}>
         <div className={styles.loginCard}>
-          <Text font="dashboard" as="h1">Welcome back, {artist?.name}</Text>
+          <Text font="dashboard" as="h1">Sign In</Text>
           <Text font="dashboard" as="p" className={styles.subtitle}>
-            Sign in to manage your exhibitions
+            Sign in to your account
           </Text>
 
           {step === 'credentials' ? (
@@ -247,6 +195,11 @@ export const ArtistLoginPage = ({ handler }: ArtistLoginPageProps) => {
               </div>
 
               <ErrorText>{error}</ErrorText>
+              {successMessage && (
+                <Text font="dashboard" as="p" style={{ color: '#22c55e', fontSize: '14px', marginBottom: '8px' }}>
+                  {successMessage}
+                </Text>
+              )}
 
               <div className={styles.codeActions}>
                 <Button font="dashboard" variant="primary" label={submitting ? 'Verifying...' : 'Sign in'} type="submit" />

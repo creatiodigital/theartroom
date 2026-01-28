@@ -87,7 +87,7 @@ const GroupPanel = () => {
 
       <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Vertical position (meters)
+          Vertical position (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -115,7 +115,7 @@ const GroupPanel = () => {
 
       <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Horizontal position (meters)
+          Horizontal position (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>

@@ -230,7 +230,12 @@ export const Wall = () => {
         onDragOver={handleDragArtworkOverWall}
         onDrop={handleDropArtworkOnWall}
       >
-        {isHumanVisible && <Human humanWidth={humanWidth} humanHeight={humanHeight} />}
+        {isHumanVisible && (
+          <>
+            <Human humanWidth={humanWidth} humanHeight={humanHeight} position="left" />
+            <Human humanWidth={humanWidth} humanHeight={humanHeight} position="right" />
+          </>
+        )}
         {wallArtworks.map((artwork) => (
           <Artwork
             key={artwork.id}
