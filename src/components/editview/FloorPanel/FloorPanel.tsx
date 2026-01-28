@@ -14,6 +14,7 @@ import {
   setFloorTextureOffsetX,
   setFloorTextureOffsetY,
   setFloorTemperature,
+  setFloorNormalScale,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -59,6 +60,10 @@ const FloorPanel = () => {
     (state: RootState) => state.exhibition.floorTemperature ?? 0,
   )
 
+  const floorNormalScale = useSelector(
+    (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
+  )
+
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood'))
     setSaved(false)
@@ -91,6 +96,11 @@ const FloorPanel = () => {
     setSaved(false)
   }
 
+  const handleNormalScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setFloorNormalScale(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -105,6 +115,7 @@ const FloorPanel = () => {
           floorTextureOffsetX,
           floorTextureOffsetY,
           floorTemperature,
+          floorNormalScale,
           floorReflectiveness,
         }),
       })
@@ -210,6 +221,22 @@ const FloorPanel = () => {
             step="0.01"
             value={floorReflectiveness}
             onChange={handleReflectivenessChange}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Floor Details</label>
+            <span className={styles.sliderValue}>{floorNormalScale.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min="0.1"
+            max="2"
+            step="0.05"
+            value={floorNormalScale}
+            onChange={handleNormalScaleChange}
             className={styles.slider}
           />
         </div>

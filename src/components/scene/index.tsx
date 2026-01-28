@@ -48,9 +48,9 @@ export const Scene = () => {
     <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
       <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
         <Canvas
-          shadows
+          shadows={false} // PERF TEST: disabled
           gl={{
-            antialias: true,
+            antialias: false, // PERF TEST: disabled
             toneMapping: ReinhardToneMapping,
             toneMappingExposure: 1.0,
           }}

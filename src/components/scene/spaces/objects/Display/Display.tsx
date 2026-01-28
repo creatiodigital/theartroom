@@ -5,6 +5,7 @@ import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
+import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
@@ -344,6 +345,9 @@ const Display = ({ artwork }: DisplayProps) => {
           material={passepartoutMaterial}
         />
       )}
+
+      {/* Shadow blur - memoized component, size proportional to frame depth */}
+      <ShadowDecal width={planeWidth} height={planeHeight} frameDepth={frameDepth / 100} />
     </group>
   )
 }
