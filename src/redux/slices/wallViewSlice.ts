@@ -35,7 +35,7 @@ const wallViewSlice = createSlice({
       state.currentArtworkId = action.payload
     },
     increaseScaleFactor: (state: TWallView) => {
-      state.scaleFactor = Math.min(state.scaleFactor + 0.02, 2)
+      state.scaleFactor = Math.min(state.scaleFactor + 0.02, 3)
     },
     decreaseScaleFactor: (state: TWallView) => {
       state.scaleFactor = Math.max(state.scaleFactor - 0.02, 0.64)

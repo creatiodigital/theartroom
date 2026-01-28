@@ -1,0 +1,1 @@
+export { ShadowDecal } from './ShadowDecal'

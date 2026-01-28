@@ -5,6 +5,9 @@ import { Mesh, RepeatWrapping, SRGBColorSpace } from 'three'
 import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 
+// Floor reflections disabled for performance
+const ENABLE_REFLECTIONS = false
+
 interface ReflectiveFloorProps {
   position?: Vector3Tuple
 }
@@ -95,6 +98,10 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     (state: RootState) => state.exhibition.floorTemperature ?? 0,
   )
 
+  const floorNormalScale = useSelector(
+    (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
+  )
+
   // Compute temperature-based floor color
   const floorColor = getTemperatureColor(floorTemperature)
 
@@ -140,22 +147,35 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
       receiveShadow
     >
       <planeGeometry args={[100, 100]} />
-      <MeshReflectorMaterial
-        blur={[500, 300]}
-        resolution={1024}
-        mixBlur={1}
-        mixStrength={reflectiveness * 3}
-        roughness={1 - reflectiveness * 0.3}
-        depthScale={0}
-        color={floorColor}
-        metalness={0.1}
-        mirror={reflectiveness * 0.05}
-        map={textures.map}
-        normalMap={textures.normalMap}
-        normalScale={[0.8, 0.8]}
-        roughnessMap={reflectiveness < 0.3 ? textures.roughnessMap : undefined}
-        metalnessMap={textures.metalnessMap}
-      />
+      {ENABLE_REFLECTIONS ? (
+        <MeshReflectorMaterial
+          blur={[600, 400]} // Higher blur for maximum stability
+          resolution={1024} // Full resolution for smooth reflections
+          mixBlur={0.9}     // High blend for stable reflections
+          mixStrength={reflectiveness * 1.5} // Reduced from *3 to let normal map show
+          roughness={1 - reflectiveness * 0.2}
+          depthScale={0}
+          color={floorColor}
+          metalness={0.05}
+          mirror={reflectiveness * 0.03}
+          map={textures.map}
+          normalMap={textures.normalMap}
+          normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
+          roughnessMap={textures.roughnessMap}
+          metalnessMap={textures.metalnessMap}
+        />
+      ) : (
+        <meshStandardMaterial
+          color={floorColor}
+          map={textures.map}
+          normalMap={textures.normalMap}
+          normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
+          roughnessMap={textures.roughnessMap}
+          metalnessMap={textures.metalnessMap}
+          roughness={1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
+          metalness={0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
+        />
+      )}
     </mesh>
   )
 }

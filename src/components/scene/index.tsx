@@ -1,7 +1,6 @@
 'use client'
 
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Stats } from '@react-three/drei'
+import { Canvas } from '@react-three/fiber'
 import { useRef, Suspense } from 'react'
 import { ReinhardToneMapping, Mesh } from 'three'
 
@@ -13,35 +12,13 @@ import Controls from './controls'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
 
-// Temporarily disabled
-const showPerfMonitor = false
-// const showPerfMonitor =
-//   process.env.NEXT_PUBLIC_DEBUG_MODE === 'true' &&
-//   typeof window !== 'undefined' &&
-//   window.location.hostname === 'localhost'
-
-const DrawCallLogger = () => {
-  const lastLogTime = useRef(0)
-
-  useFrame(({ gl }) => {
-    const now = Date.now()
-    if (now - lastLogTime.current > 2000) {
-      const info = gl.info.render
-      console.log(`Draw calls: ${info.calls}, Triangles: ${info.triangles.toLocaleString()}`)
-      lastLogTime.current = now
-    }
-  })
-
-  return null
-}
-
 export const Scene = () => {
   const wallRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const windowRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const glassRefs = useRef<React.RefObject<Mesh | null>[]>([])
 
-  const handlePlaceholderClick = (wallId: string) => {
-    console.log('Clicked placeholder on wall:', wallId)
+  const handlePlaceholderClick = (_wallId: string) => {
+    // Placeholder click handler - used by Space component
   }
 
   const artworks: TArtwork[] = []
@@ -50,18 +27,13 @@ export const Scene = () => {
     <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
       <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
         <Canvas
-          shadows
+          shadows={false}
           gl={{
+            antialias: false,
             toneMapping: ReinhardToneMapping,
             toneMappingExposure: 1.0,
           }}
         >
-          {showPerfMonitor && (
-            <>
-              <Stats className="stats-panel" />
-              <DrawCallLogger />
-            </>
-          )}
           <Suspense fallback={<Loader />}>
             <group>
               <Controls />

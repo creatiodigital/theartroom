@@ -88,6 +88,8 @@ const ArtisticText = () => {
         </div>
       </div>
 
+      <div className={styles.divider} />
+
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>

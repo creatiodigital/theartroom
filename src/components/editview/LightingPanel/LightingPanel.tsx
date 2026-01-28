@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
+import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
@@ -72,44 +73,24 @@ const LightingPanel = () => {
   const hasWindows = spaceFeatures.hasWindows
 
   // Ambient light handlers
-  const handleAmbientColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setAmbientLightColor(e.target.value))
-    setSaved(false)
-  }
-
   const handleAmbientIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setAmbientLightIntensity(parseFloat(e.target.value)))
     setSaved(false)
   }
 
   // Skylight handlers
-  const handleSkylightColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSkylightColor(e.target.value))
-    setSaved(false)
-  }
-
   const handleSkylightIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setSkylightIntensity(parseFloat(e.target.value)))
     setSaved(false)
   }
 
   // Ceiling lamp handlers
-  const handleLampColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setCeilingLampColor(e.target.value))
-    setSaved(false)
-  }
-
   const handleLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setCeilingLampIntensity(parseFloat(e.target.value)))
     setSaved(false)
   }
 
   // Window light handlers
-  const handleWindowColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setWindowLightColor(e.target.value))
-    setSaved(false)
-  }
-
   const handleWindowIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setWindowLightIntensity(parseFloat(e.target.value)))
     setSaved(false)
@@ -160,20 +141,10 @@ const LightingPanel = () => {
         
         <div className={styles.field}>
           <label className={styles.label}>Color</label>
-          <div className={styles.colorRow}>
-            <input
-              type="color"
-              value={ambientColor}
-              onChange={handleAmbientColorChange}
-              className={styles.colorPicker}
-            />
-            <input
-              type="text"
-              value={ambientColor}
-              onChange={handleAmbientColorChange}
-              className={styles.colorInput}
-            />
-          </div>
+          <ColorPicker
+            textColor={ambientColor}
+            onColorSelect={(color) => { dispatch(setAmbientLightColor(color)); setSaved(false) }}
+          />
         </div>
 
         <div className={styles.field}>
@@ -202,26 +173,16 @@ const LightingPanel = () => {
           
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
-            <div className={styles.colorRow}>
-              <input
-                type="color"
-                value={skylightColor}
-                onChange={handleSkylightColorChange}
-                className={styles.colorPicker}
-              />
-              <input
-                type="text"
-                value={skylightColor}
-                onChange={handleSkylightColorChange}
-                className={styles.colorInput}
-              />
-            </div>
+            <ColorPicker
+              textColor={skylightColor}
+              onColorSelect={(color) => { dispatch(setSkylightColor(color)); setSaved(false) }}
+            />
           </div>
 
           <div className={styles.field}>
             <div className={styles.sliderHeader}>
               <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{skylightIntensity.toFixed(1)}</span>
+              <span className={styles.sliderValue}>{skylightIntensity.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -245,26 +206,16 @@ const LightingPanel = () => {
           
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
-            <div className={styles.colorRow}>
-              <input
-                type="color"
-                value={lampColor}
-                onChange={handleLampColorChange}
-                className={styles.colorPicker}
-              />
-              <input
-                type="text"
-                value={lampColor}
-                onChange={handleLampColorChange}
-                className={styles.colorInput}
-              />
-            </div>
+            <ColorPicker
+              textColor={lampColor}
+              onColorSelect={(color) => { dispatch(setCeilingLampColor(color)); setSaved(false) }}
+            />
           </div>
 
           <div className={styles.field}>
             <div className={styles.sliderHeader}>
               <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{lampIntensity.toFixed(1)}</span>
+              <span className={styles.sliderValue}>{lampIntensity.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -288,26 +239,16 @@ const LightingPanel = () => {
           
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
-            <div className={styles.colorRow}>
-              <input
-                type="color"
-                value={windowColor}
-                onChange={handleWindowColorChange}
-                className={styles.colorPicker}
-              />
-              <input
-                type="text"
-                value={windowColor}
-                onChange={handleWindowColorChange}
-                className={styles.colorInput}
-              />
-            </div>
+            <ColorPicker
+              textColor={windowColor}
+              onColorSelect={(color) => { dispatch(setWindowLightColor(color)); setSaved(false) }}
+            />
           </div>
 
           <div className={styles.field}>
             <div className={styles.sliderHeader}>
               <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{windowIntensity.toFixed(1)}</span>
+              <span className={styles.sliderValue}>{windowIntensity.toFixed(2)}</span>
             </div>
             <input
               type="range"

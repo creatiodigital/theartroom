@@ -89,10 +89,6 @@ const CameraPanel = () => {
             onChange={handleFOVChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Narrow</span>
-            <span>Wide</span>
-          </div>
         </div>
 
         <div className={styles.field}>
@@ -109,10 +105,6 @@ const CameraPanel = () => {
             onChange={handleElevationChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Lower</span>
-            <span>Higher</span>
-          </div>
         </div>
       </div>
 

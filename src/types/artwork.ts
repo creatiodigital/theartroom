@@ -42,10 +42,12 @@ export type TArtwork = {
   showArtworkInformation?: boolean
   showFrame?: boolean
   frameColor?: string
-  frameThickness?: TOption<number>
+  frameSize?: TOption<number>           // Border width (XY)
+  frameThickness?: TOption<number>      // Z-depth
   showPassepartout?: boolean
   passepartoutColor?: string
-  passepartoutThickness?: TOption<number>
+  passepartoutSize?: TOption<number>       // Border width (XY)
+  passepartoutThickness?: TOption<number>  // Z-depth in 3D
   textContent?: string
   fontFamily?: TOption<TFontFamily>
   fontSize?: TOption<number>

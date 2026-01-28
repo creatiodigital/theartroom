@@ -32,11 +32,19 @@ const NumberInput = ({ variant, value, onChange, icon, rotate, max, min, label }
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const rawValue = e.target.value
+      let rawValue = e.target.value
+
+      // Convert comma to dot for decimal separator (support European input)
+      rawValue = rawValue.replace(',', '.')
 
       // Allow empty string for clearing
       if (rawValue === '' || rawValue === '-') {
         setDisplayValue(rawValue)
+        return
+      }
+
+      // Only allow valid number characters
+      if (!/^-?\d*\.?\d*$/.test(rawValue)) {
         return
       }
 
@@ -86,12 +94,10 @@ const NumberInput = ({ variant, value, onChange, icon, rotate, max, min, label }
       {label && <span className={styles.label}>{label}</span>}
       <div className={styles.inputContainer}>
         <input
-          type="number"
+          type="text"
+          inputMode="decimal"
           className={c([styles.input, variant && styles[variant], { [styles.withIcon]: !!icon }])}
           value={displayValue}
-          min={min}
-          max={max}
-          step={0.01}
           onChange={handleChange}
           onFocus={handleFocus}
           onBlur={handleBlur}

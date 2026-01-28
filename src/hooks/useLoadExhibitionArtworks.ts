@@ -39,9 +39,11 @@ type ExhibitionArtworkResponse = {
   // Display properties (per-exhibition)
   showFrame: boolean
   frameColor: string
-  frameThickness: number
+  frameSize: number       // Border width (XY)
+  frameThickness: number  // Z-depth
   showPassepartout: boolean
   passepartoutColor: string
+  passepartoutSize: number
   passepartoutThickness: number
   showArtworkInformation: boolean
   // Text styling (per-exhibition)
@@ -139,13 +141,21 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             // Display properties from ExhibitionArtwork (per-exhibition)
             showFrame: ea.showFrame,
             frameColor: ea.frameColor,
-            frameThickness: { label: String(ea.frameThickness), value: ea.frameThickness },
+            frameSize: { label: String(ea.frameSize ?? 3), value: ea.frameSize ?? 3 },
+            frameThickness: { label: String(ea.frameThickness ?? 1), value: ea.frameThickness ?? 1 },
             showPassepartout: ea.showPassepartout,
             passepartoutColor: ea.passepartoutColor,
-            passepartoutThickness: {
-              label: String(ea.passepartoutThickness),
-              value: ea.passepartoutThickness,
+            passepartoutSize: {
+              label: String(ea.passepartoutSize ?? 5),
+              value: ea.passepartoutSize ?? 5,
             },
+            // Clamp passepartoutThickness to valid range 0.1-1.0 (old data may have invalid values)
+            passepartoutThickness: (() => {
+              const val = ea.passepartoutThickness
+              // If value is outside 0.1-1.0 range or undefined, default to 0.3
+              const clampedVal = (val && val >= 0.1 && val <= 1.0) ? val : 0.3
+              return { label: String(clampedVal), value: clampedVal }
+            })(),
             showArtworkInformation: ea.showArtworkInformation,
             // Text styling from ExhibitionArtwork (per-exhibition)
             fontFamily: {

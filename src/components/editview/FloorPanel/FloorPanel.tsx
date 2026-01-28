@@ -14,6 +14,7 @@ import {
   setFloorTextureOffsetX,
   setFloorTextureOffsetY,
   setFloorTemperature,
+  setFloorNormalScale,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -59,6 +60,10 @@ const FloorPanel = () => {
     (state: RootState) => state.exhibition.floorTemperature ?? 0,
   )
 
+  const floorNormalScale = useSelector(
+    (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
+  )
+
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood'))
     setSaved(false)
@@ -91,6 +96,11 @@ const FloorPanel = () => {
     setSaved(false)
   }
 
+  const handleNormalScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setFloorNormalScale(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -105,6 +115,7 @@ const FloorPanel = () => {
           floorTextureOffsetX,
           floorTextureOffsetY,
           floorTemperature,
+          floorNormalScale,
           floorReflectiveness,
         }),
       })
@@ -129,7 +140,6 @@ const FloorPanel = () => {
         <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
           Material
         </Text>
-
         <div className={styles.field}>
           <label className={styles.label}>Type</label>
           <select
@@ -159,10 +169,6 @@ const FloorPanel = () => {
             onChange={handleTextureScaleChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Smaller</span>
-            <span>Larger</span>
-          </div>
         </div>
 
         <div className={styles.field}>
@@ -217,10 +223,22 @@ const FloorPanel = () => {
             onChange={handleReflectivenessChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Matte</span>
-            <span>Mirror</span>
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Floor Details</label>
+            <span className={styles.sliderValue}>{floorNormalScale.toFixed(2)}</span>
           </div>
+          <input
+            type="range"
+            min="0.1"
+            max="2"
+            step="0.05"
+            value={floorNormalScale}
+            onChange={handleNormalScaleChange}
+            className={styles.slider}
+          />
         </div>
 
         <div className={styles.field}>
@@ -239,10 +257,6 @@ const FloorPanel = () => {
             onChange={handleTemperatureChange}
             className={styles.slider}
           />
-          <div className={styles.sliderLabels}>
-            <span>Cool</span>
-            <span>Warm</span>
-          </div>
         </div>
       </div>
 

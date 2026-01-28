@@ -39,7 +39,7 @@ const ArtworkPanel = () => {
   const artwork = currentArtworkId ? artworksById[currentArtworkId] : null
   const exhibitionArtwork = currentArtworkId ? exhibitionArtworksById[currentArtworkId] : null
 
-  const { width, height, fromTop, fromBottom, fromLeft, fromRight, artworkTitle } = useArtworkDetails(currentArtworkId!)
+  const { width, height, fromTop, fromBottom, fromLeft, fromRight } = useArtworkDetails(currentArtworkId!)
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
@@ -169,13 +169,18 @@ const ArtworkPanel = () => {
 
   return (
     <>
-      <Text font="dashboard" as="h1" size="lg" className={styles.panelTitle}>
-        {artworkTitle || 'Untitled'}
-      </Text>
+      {/* HEADER Section */}
+      <div className={styles.header}>
+        <Text font="dashboard" as="h2" size="sm" weight="bold" className={styles.headerTitle}>
+          {artwork?.name || 'Artwork'}
+        </Text>
+      </div>
 
+      {/* POSITION Section */}
       <div className={styles.section}>
+        
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Position in wall
+          Alignment
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -199,11 +204,9 @@ const ArtworkPanel = () => {
             <Button size="small" variant="secondary" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
           </div>
         </div>
-      </div>
 
-      <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Vertical position (meters)
+          Vertical Position (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -227,11 +230,9 @@ const ArtworkPanel = () => {
             />
           </div>
         </div>
-      </div>
 
-      <div className={styles.section}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Horizontal position (meters)
+          Horizontal Position (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -257,9 +258,11 @@ const ArtworkPanel = () => {
         </div>
       </div>
 
+      {/* SIZE Section */}
       <div className={styles.section}>
-        <Text font="dashboard" as="span" size="xs" className={styles.label}>
-          Size (meters)
+        
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Dimensions (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>

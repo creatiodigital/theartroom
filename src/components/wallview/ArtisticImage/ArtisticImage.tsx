@@ -40,11 +40,11 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
   const {
     showFrame,
     frameColor,
-    frameThickness,
+    frameSize,
     imageUrl,
     showPassepartout,
     passepartoutColor,
-    passepartoutThickness,
+    passepartoutSize,
   } = artwork
 
   const handleDoubleClick = () => {
@@ -150,7 +150,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         style={{
           border:
             showFrame && imageUrl
-              ? `${frameThickness?.value ?? 3}px solid ${frameColor ?? '#000000'}`
+              ? `${frameSize?.value ?? 3}px solid ${frameColor ?? '#000000'}`
               : undefined,
         }}
         onDoubleClick={handleDoubleClick}
@@ -163,8 +163,8 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
           className={styles.passepartout}
           style={{
             border:
-              showPassepartout && imageUrl && passepartoutThickness
-                ? `${passepartoutThickness.value}px solid ${passepartoutColor}`
+              showPassepartout && imageUrl && passepartoutSize
+                ? `${passepartoutSize.value}px solid ${passepartoutColor}`
                 : undefined,
           }}
         >

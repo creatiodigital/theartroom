@@ -69,6 +69,29 @@ export const Wall = () => {
   const currentArtwork = exhibitionArtworksById[currentArtworkId ?? '']
 
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
+
+  // Calculate floor offset (distance from wall placeholder bottom to floor surface)
+  const { floorOffsetPx, floorOffsetMeters } = useMemo(() => {
+    if (!boundingData || !nodes.floor) return { floorOffsetPx: 0, floorOffsetMeters: 0 }
+    
+    // Get floor surface Y (top of floor mesh)
+    const floorMesh = nodes.floor as Mesh
+    if (!floorMesh.geometry.boundingBox) {
+      floorMesh.geometry.computeBoundingBox()
+    }
+    const floorSurfaceY = floorMesh.position.y + (floorMesh.geometry.boundingBox?.max.y ?? 0)
+    
+    // Get wall placeholder bottom Y
+    const wallBottomY = boundingData.boundingBox.min.y
+    
+    // Calculate offset in meters
+    const offsetMeters = Math.max(0, wallBottomY - floorSurfaceY)
+    return {
+      floorOffsetPx: offsetMeters * scaling,
+      floorOffsetMeters: offsetMeters
+    }
+  }, [boundingData, nodes.floor, scaling])
+
   const { handleCreateArtworkDrag } = useCreateArtwork(boundingData!)
   const { handleAddExistingArtworkDrag } = useAddExistingArtwork(boundingData)
 
@@ -219,7 +242,7 @@ export const Wall = () => {
 
   return (
     <div className={styles.wrapper}>
-      {wallWidth && wallHeight && <Measurements width={wallWidth} height={wallHeight} />}
+      {wallWidth && wallHeight && <Measurements width={wallWidth} height={wallHeight} floorOffset={floorOffsetMeters} />}
       <div
         ref={wallRef}
         className={styles.wall}
@@ -230,7 +253,21 @@ export const Wall = () => {
         onDragOver={handleDragArtworkOverWall}
         onDrop={handleDropArtworkOnWall}
       >
-        {isHumanVisible && <Human humanWidth={humanWidth} humanHeight={humanHeight} />}
+        {isHumanVisible && (
+          <>
+            <Human humanWidth={humanWidth} humanHeight={humanHeight} position="left" floorOffset={floorOffsetPx} />
+            <Human humanWidth={humanWidth} humanHeight={humanHeight} position="right" floorOffset={floorOffsetPx} />
+          </>
+        )}
+        {/* Floor level indicator line - always visible when offset > 0 */}
+        {floorOffsetPx > 0 && (
+          <div 
+            className={styles.floorLine}
+            style={{ bottom: -floorOffsetPx }}
+          >
+            <span className={styles.floorLabel}>Floor level</span>
+          </div>
+        )}
         {wallArtworks.map((artwork) => (
           <Artwork
             key={artwork.id}
