@@ -61,7 +61,7 @@ export const CenterPanel = () => {
   return (
     <div ref={containerRef} className={styles.panel}>
       <div className={styles.scaleIndicator}>
-        <Text font="dashboard" as="span" size="xs">
+        <Text font="dashboard" as="span" size="sm">
           Zoom: {Math.round(scaleFactor * 100)}%
         </Text>
       </div>

@@ -9,7 +9,7 @@ import {
 } from 'three'
 
 import { snapshotArtworks } from '@/redux/slices/artworkSlice'
-import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
+import { hideArtworkPanel, hideFloorPanel, hideLightingPanel, hideCameraPanel } from '@/redux/slices/dashboardSlice'
 import { snapshotExhibition } from '@/redux/slices/exhibitionSlice'
 import { showWallView } from '@/redux/slices/wallViewSlice'
 
@@ -47,7 +47,11 @@ const Placeholder: React.FC<PlaceholderProps> = ({ i, nodes }) => {
     dispatch(snapshotArtworks())
     // Use mesh.name instead of mesh.uuid for stable identification across page loads
     dispatch(showWallView(mesh.name))
+    // Close all settings panels when entering wall mode
     dispatch(hideArtworkPanel())
+    dispatch(hideFloorPanel())
+    dispatch(hideLightingPanel())
+    dispatch(hideCameraPanel())
   }
 
   const meshKey = `placeholder${i}`

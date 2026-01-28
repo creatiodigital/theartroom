@@ -107,6 +107,7 @@ model Exhibition {
   floorTextureOffsetX   Float?  @default(0)
   floorTextureOffsetY   Float?  @default(0)
   floorTemperature      Float?  @default(0)
+  floorNormalScale      Float?  @default(1.0)
   // Camera settings
   cameraFOV             Float?  @default(50)
   cameraElevation       Float?  @default(1.6)
@@ -140,10 +141,12 @@ model ExhibitionArtwork {
   // Display properties (per-exhibition customization)
   showFrame              Boolean @default(false)
   frameColor             String  @default("#000000")
-  frameThickness         Float   @default(5)
+  frameSize              Float   @default(5) // Border width (XY)
+  frameThickness         Float   @default(0.5) // Z-depth
   showPassepartout       Boolean @default(false)
   passepartoutColor      String  @default("#ffffff")
-  passepartoutThickness  Float   @default(10)
+  passepartoutSize       Float   @default(10) // Border width around artwork (XY)
+  passepartoutThickness  Float   @default(0.3) // Z-depth of passepartout in 3D
   showArtworkInformation Boolean @default(false)
 
   // Text styling (per-exhibition customization)

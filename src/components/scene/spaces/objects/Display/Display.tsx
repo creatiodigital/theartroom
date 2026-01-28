@@ -5,6 +5,7 @@ import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
+import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
@@ -178,9 +179,11 @@ const Display = ({ artwork }: DisplayProps) => {
     imageUrl,
     showFrame,
     frameColor,
+    frameSize,
     frameThickness,
     showPassepartout,
     passepartoutColor,
+    passepartoutSize,
     passepartoutThickness,
   } = artwork
 
@@ -274,12 +277,12 @@ const Display = ({ artwork }: DisplayProps) => {
   const planeWidth = width || 1
   const planeHeight = height || 1
 
-  // Frame material with ambient light applied
+  // Frame material with ambient light applied - polished lacquered wood look
   const frameMaterial = useMemo(() => {
     return new MeshStandardMaterial({
       color: frameAmbientColor,
-      roughness: 0.3,
-      metalness: 0.1,
+      roughness: 0.15,  // Low roughness for glossy/polished finish
+      metalness: 0.2,   // Slight metalness for subtle reflections
     })
   }, [frameAmbientColor])
 
@@ -291,11 +294,15 @@ const Display = ({ artwork }: DisplayProps) => {
     })
   }, [passepartoutAmbientColor])
 
-  const frameT = (showFrame ? frameThickness?.value : 0) || 0
-  const passepartoutT = (showPassepartout ? passepartoutThickness?.value : 0) || 0
+  const frameS = (showFrame ? frameSize?.value : 0) || 0
+  // frameThickness is for Z-depth, range 1-20
+  const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
+  const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
+  // passepartoutThickness is for Z-depth, clamped 0.1-1.0
+  const passepartoutDepth = Math.min(1.0, Math.max(0.1, passepartoutThickness?.value ?? 0.3))
 
-  const innerWidth = planeWidth - (frameT + passepartoutT) / 50
-  const innerHeight = planeHeight - (frameT + passepartoutT) / 50
+  const innerWidth = planeWidth - (frameS + passepartoutS) / 50
+  const innerHeight = planeHeight - (frameS + passepartoutS) / 50
 
   return (
     <group
@@ -319,23 +326,28 @@ const Display = ({ artwork }: DisplayProps) => {
 
       {imageUrl && <ArtworkImage url={imageUrl} width={innerWidth} height={innerHeight} />}
 
-      {showFrame && frameThickness?.value && (
+      {showFrame && frameSize?.value && (
         <Frame
           width={planeWidth}
           height={planeHeight}
-          thickness={frameThickness.value / 100}
+          thickness={frameS / 100}
+          depth={frameDepth / 100}
           material={frameMaterial}
         />
       )}
 
-      {showPassepartout && passepartoutThickness?.value && frameThickness?.value && (
+      {showPassepartout && passepartoutSize?.value && (
         <Passepartout
-          width={planeWidth - frameThickness.value / 50}
-          height={planeHeight - frameThickness.value / 50}
-          thickness={passepartoutThickness.value / 100}
+          width={planeWidth - frameS / 50}
+          height={planeHeight - frameS / 50}
+          thickness={passepartoutS / 100}
+          depth={passepartoutDepth / 100}
           material={passepartoutMaterial}
         />
       )}
+
+      {/* Shadow blur - memoized component, size proportional to frame depth */}
+      <ShadowDecal width={planeWidth} height={planeHeight} frameDepth={frameDepth / 100} />
     </group>
   )
 }

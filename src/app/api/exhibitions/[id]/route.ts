@@ -29,6 +29,7 @@ type ExhibitionUpdateBody = {
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number
   floorTemperature?: number
+  floorNormalScale?: number
   // Camera settings
   cameraFOV?: number
   cameraElevation?: number
@@ -102,6 +103,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.floorTemperature !== undefined) {
       // Clamp temperature between -1 (cool) and 1 (warm)
       data.floorTemperature = Math.max(-1, Math.min(1, body.floorTemperature))
+    }
+    if (body.floorNormalScale !== undefined) {
+      // Clamp normal scale between 0.1 and 2.0
+      data.floorNormalScale = Math.max(0.1, Math.min(2.0, body.floorNormalScale))
     }
     // Camera settings
     if (body.cameraFOV !== undefined) {

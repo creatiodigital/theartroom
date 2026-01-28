@@ -75,7 +75,7 @@ const ClassicSpace: React.FC<ClassicSpaceProps> = ({
   return (
     <group {...props} dispose={null}>
       <Lights />
-      <Effects />
+      <Effects enabled={true} />
       {nodes.floor && (() => {
           // Calculate actual floor surface Y from geometry bounding box
           nodes.floor.geometry.computeBoundingBox()

@@ -237,7 +237,6 @@ const MainCamera = () => {
         cam.position.set(0, cameraElevation, 0)
         cam.lookAt(new Vector3(0, cameraElevation, -5))
         cam.updateProjectionMatrix()
-        console.log('MainCamera: Using default position (floor center)')
       }
 
       initialPositionSet.current = true

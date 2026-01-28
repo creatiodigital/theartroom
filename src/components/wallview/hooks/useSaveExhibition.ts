@@ -206,10 +206,12 @@ export const useSaveExhibition = () => {
             // Display properties (per-exhibition)
             showFrame: artwork.showFrame ?? false,
             frameColor: artwork.frameColor ?? '#000000',
-            frameThickness: artwork.frameThickness?.value ?? 5,
+            frameSize: artwork.frameSize?.value ?? 5,
+            frameThickness: artwork.frameThickness?.value ?? 0.5,
             showPassepartout: artwork.showPassepartout ?? false,
             passepartoutColor: artwork.passepartoutColor ?? '#ffffff',
-            passepartoutThickness: artwork.passepartoutThickness?.value ?? 10,
+            passepartoutSize: artwork.passepartoutSize?.value ?? 10,
+            passepartoutThickness: artwork.passepartoutThickness?.value ?? 0.3,
             showArtworkInformation: artwork.showArtworkInformation ?? false,
             // Text styling (per-exhibition)
             fontFamily: artwork.fontFamily?.value ?? 'Montserrat',
