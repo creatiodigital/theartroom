@@ -9,7 +9,7 @@ const DEFAULT_SKYLIGHT_COLOR = '#ffffff'
 const DEFAULT_SKYLIGHT_INTENSITY = 4.0
 
 // PERF: Set to false to disable expensive area lights
-const ENABLE_AREA_LIGHTS = false
+const ENABLE_AREA_LIGHTS = true
 
 export const Lights = () => {
   const skylightColor = useSelector(
