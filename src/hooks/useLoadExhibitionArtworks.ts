@@ -56,6 +56,7 @@ type ExhibitionArtworkResponse = {
   textBackgroundColor: string | null
   textAlign: string
   textVerticalAlign: string
+  textPadding: number
 }
 
 /**
@@ -173,6 +174,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
             textBackgroundColor: ea.textBackgroundColor ?? undefined,
             textAlign: ea.textAlign as 'left' | 'center' | 'right',
             textVerticalAlign: ea.textVerticalAlign as 'top' | 'center' | 'bottom',
+            textPadding: { label: String(ea.textPadding ?? 12), value: ea.textPadding ?? 12 },
           }
 
           dispatch(restoreArtwork(artwork))

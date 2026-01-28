@@ -223,6 +223,7 @@ export const useSaveExhibition = () => {
             textBackgroundColor: artwork.textBackgroundColor ?? undefined,
             textAlign: artwork.textAlign ?? 'left',
             textVerticalAlign: artwork.textVerticalAlign ?? 'top',
+            textPadding: artwork.textPadding?.value ?? 12,
           }
         })
 
