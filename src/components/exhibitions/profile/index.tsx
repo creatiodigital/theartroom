@@ -115,7 +115,7 @@ export const ExhibitionProfilePage = ({
               {artistName}
             </Link>
             <Button
-              size="regularSquared"
+              size="bigSquared"
               label="Enter Exhibition"
               href={visitUrl}
               iconLeft={<ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />}

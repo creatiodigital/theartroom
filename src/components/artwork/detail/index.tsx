@@ -85,6 +85,9 @@ export const ArtworkDetailPage = ({
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
+            <button onClick={handleClose} className={styles.closeButton}>
+              CLOSE <span className={styles.closeIcon}>×</span>
+            </button>
           </header>
           <div className={styles.content}>
             <LoadingBar />

@@ -7,16 +7,15 @@
 .minimalHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: var(--space-6);
+  align-items: baseline;
+  padding: calc(var(--space-10) - 4px) var(--space-6) var(--space-10);
   background: var(--color-white);
+  border-bottom: 1px solid transparent;
 
   @media (min-width: 768px) {
-    padding: var(--space-6) var(--space-10);
+    padding: calc(var(--space-10) - 4px) var(--space-8) var(--space-10);
   }
 }
-
-
 
 .logo {
   width: 160px;
@@ -37,7 +36,7 @@
   border: none;
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: var(--space-3);
+  font-size: var(--text-xs);
   letter-spacing: var(--space-1);
   color: var(--color-text-primary);
   text-transform: uppercase;
@@ -62,6 +61,7 @@
     grid-template-columns: 1fr;
     gap: var(--space-4);
     padding: var(--space-4) var(--space-6) var(--space-6);
+    align-content: start;
   }
 }
 
@@ -108,9 +108,10 @@
   display: inline;
 }
 
-.dimensions, .technique {
+.dimensions,
+.technique {
   margin-bottom: var(--space-2);
-}  
+}
 
 .imageContainer {
   display: flex;
