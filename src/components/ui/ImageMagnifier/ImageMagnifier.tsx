@@ -18,6 +18,7 @@ export const ImageMagnifier = ({
   className = '',
   zoomLevel = 2.5,
 }: ImageMagnifierProps) => {
+  const [isMobile, setIsMobile] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 })
@@ -26,6 +27,16 @@ export const ImageMagnifier = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // Detect mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Calculate expanded container size
   const calculateExpandedSize = useCallback(() => {
@@ -90,6 +101,19 @@ export const ImageMagnifier = ({
   // Calculate zoomed image dimensions preserving aspect ratio
   const zoomedWidth = expandedSize.width * zoomLevel
   const zoomedHeight = zoomedWidth / aspectRatio
+
+  // On mobile, just render a simple image without zoom functionality
+  if (isMobile) {
+    return (
+      <div className={`${styles.wrapper} ${className}`}>
+        <img
+          src={src}
+          alt={alt}
+          className={styles.image}
+        />
+      </div>
+    )
+  }
 
   return (
     <div ref={wrapperRef} className={`${styles.wrapper} ${className}`}>
