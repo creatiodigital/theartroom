@@ -45,6 +45,9 @@ type ExhibitionArtworkResponse = {
   passepartoutColor: string
   passepartoutSize: number
   passepartoutThickness: number
+  supportThickness: number
+  supportColor: string
+  showSupport: boolean
   showArtworkInformation: boolean
   // Text styling (per-exhibition)
   fontFamily: string
@@ -157,6 +160,12 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
               const clampedVal = (val && val >= 0.1 && val <= 1.0) ? val : 0.3
               return { label: String(clampedVal), value: clampedVal }
             })(),
+            supportThickness: {
+              label: String(ea.supportThickness ?? 2),
+              value: ea.supportThickness ?? 2,
+            },
+            supportColor: ea.supportColor ?? '#ffffff',
+            showSupport: ea.showSupport ?? true,
             showArtworkInformation: ea.showArtworkInformation,
             // Text styling from ExhibitionArtwork (per-exhibition)
             fontFamily: {

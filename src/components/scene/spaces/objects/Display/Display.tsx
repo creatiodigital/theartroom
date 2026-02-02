@@ -6,6 +6,7 @@ import type { ThreeEvent } from '@react-three/fiber'
 import { Frame } from '@/components/scene/spaces/objects/Frame'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
 import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
+import { Support } from '@/components/scene/spaces/objects/Support'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
@@ -185,6 +186,9 @@ const Display = ({ artwork }: DisplayProps) => {
     passepartoutColor,
     passepartoutSize,
     passepartoutThickness,
+    supportThickness,
+    supportColor,
+    showSupport,
   } = artwork
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -199,6 +203,7 @@ const Display = ({ artwork }: DisplayProps) => {
   // Use the ambient light hook for frame and passepartout colors
   const frameAmbientColor = useAmbientLightColor(frameColor ?? '#000000')
   const passepartoutAmbientColor = useAmbientLightColor(passepartoutColor ?? '#ffffff')
+  const supportAmbientColor = useAmbientLightColor(supportColor ?? '#ffffff')
 
   // Calculate the normal vector from artwork's quaternion (facing direction)
   const getNormalFromQuaternion = useCallback((q: Quaternion): Vector3 => {
@@ -294,12 +299,22 @@ const Display = ({ artwork }: DisplayProps) => {
     })
   }, [passepartoutAmbientColor])
 
+  // Support material with ambient light applied
+  const supportMaterial = useMemo(() => {
+    return new MeshStandardMaterial({
+      color: supportAmbientColor,
+      roughness: 1.0,  // Fully rough like canvas or wood
+    })
+  }, [supportAmbientColor])
+
   const frameS = (showFrame ? frameSize?.value : 0) || 0
   // frameThickness is for Z-depth, range 1-20
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
   const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
   // passepartoutThickness is for Z-depth, clamped 0.1-1.0
   const passepartoutDepth = Math.min(1.0, Math.max(0.1, passepartoutThickness?.value ?? 0.3))
+  // supportThickness is for Z-depth, clamped 0-10
+  const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
 
   const innerWidth = planeWidth - (frameS + passepartoutS) / 50
   const innerHeight = planeHeight - (frameS + passepartoutS) / 50
@@ -317,15 +332,19 @@ const Display = ({ artwork }: DisplayProps) => {
         <meshBasicMaterial visible={false} />
       </mesh>
 
-      {!imageUrl && (
-        <mesh renderOrder={2}>
-          <planeGeometry args={[innerWidth, innerHeight]} />
-          <meshBasicMaterial color="white" side={DoubleSide} />
-        </mesh>
-      )}
+      {/* Artwork sits on top of support surface */}
+      <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
+        {!imageUrl && (
+          <mesh renderOrder={2}>
+            <planeGeometry args={[innerWidth, innerHeight]} />
+            <meshBasicMaterial color="white" side={DoubleSide} />
+          </mesh>
+        )}
 
-      {imageUrl && <ArtworkImage url={imageUrl} width={innerWidth} height={innerHeight} />}
+        {imageUrl && <ArtworkImage url={imageUrl} width={innerWidth} height={innerHeight} />}
+      </group>
 
+      {/* Frame extends backward from Z=0 by frameDepth */}
       {showFrame && frameSize?.value && (
         <Frame
           width={planeWidth}
@@ -336,18 +355,31 @@ const Display = ({ artwork }: DisplayProps) => {
         />
       )}
 
+      {/* Passepartout sits ON TOP of support surface */}
       {showPassepartout && passepartoutSize?.value && (
-        <Passepartout
-          width={planeWidth - frameS / 50}
-          height={planeHeight - frameS / 50}
-          thickness={passepartoutS / 100}
-          depth={passepartoutDepth / 100}
-          material={passepartoutMaterial}
-        />
+        <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
+          <Passepartout
+            width={planeWidth - frameS / 50}
+            height={planeHeight - frameS / 50}
+            thickness={passepartoutS / 100}
+            depth={passepartoutDepth / 100}
+            material={passepartoutMaterial}
+          />
+        </group>
       )}
 
       {/* Shadow blur - memoized component, size proportional to frame depth */}
       <ShadowDecal width={planeWidth} height={planeHeight} frameDepth={frameDepth / 100} />
+
+      {/* Support (canvas/panel depth) - fits inside frame, front at Z=0 */}
+      {showSupport && supportDepth > 0 && (
+        <Support
+          width={planeWidth - frameS / 50}
+          height={planeHeight - frameS / 50}
+          depth={supportDepth / 100}
+          material={supportMaterial}
+        />
+      )}
     </group>
   )
 }

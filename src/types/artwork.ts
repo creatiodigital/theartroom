@@ -48,6 +48,9 @@ export type TArtwork = {
   passepartoutColor?: string
   passepartoutSize?: TOption<number>       // Border width (XY)
   passepartoutThickness?: TOption<number>  // Z-depth in 3D
+  showSupport?: boolean                     // Whether support is visible
+  supportThickness?: TOption<number>       // Canvas/panel depth in cm
+  supportColor?: string                    // Edge color
   textContent?: string
   fontFamily?: TOption<TFontFamily>
   fontSize?: TOption<number>

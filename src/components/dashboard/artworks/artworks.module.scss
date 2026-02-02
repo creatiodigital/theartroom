@@ -217,6 +217,10 @@
 .exhibitionsLabel {
   font-size: var(--text-sm);
   color: var(--color-text-primary);
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 }
 
 .exhibitionTag {
