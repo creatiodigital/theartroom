@@ -7,6 +7,7 @@ import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { useCreateArtwork } from '@/components/wallview/hooks/useCreateArtwork'
 import { useAddExistingArtwork } from '@/components/wallview/hooks/useAddExistingArtwork'
@@ -19,9 +20,10 @@ export const CreatePanel = () => {
   const [showMediaLibrary, setShowMediaLibrary] = useState(false)
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
-  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
 

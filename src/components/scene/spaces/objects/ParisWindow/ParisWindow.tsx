@@ -1,0 +1,98 @@
+import { useMemo } from 'react'
+import { useSelector } from 'react-redux'
+import { Mesh, BufferGeometry } from 'three'
+import type { RootState } from '@/redux/store'
+
+import { useAmbientLightColor } from '@/hooks/useAmbientLight'
+
+const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
+const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
+
+interface ParisWindowProps {
+  nodes: Record<string, Mesh & { geometry: BufferGeometry }>
+  frameCount?: number
+  handleCount?: number
+}
+
+const ParisWindow: React.FC<ParisWindowProps> = ({ 
+  nodes, 
+  frameCount = 2, 
+  handleCount = 2 
+}) => {
+  const windowLightIntensity = useSelector(
+    (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_LIGHT_INTENSITY,
+  )
+  const windowLightColor = useSelector(
+    (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_LIGHT_COLOR,
+  )
+
+  // Tinted colors that respond to ambient light (NOT for glass)
+  const tintedFrame = useAmbientLightColor('#e8e8e8')
+  const tintedHandle = useAmbientLightColor('#8d8d8a')
+
+  const framesArray = useMemo(() => Array.from({ length: frameCount }), [frameCount])
+  const handlesArray = useMemo(() => Array.from({ length: handleCount }), [handleCount])
+
+  return (
+    <>
+      {/* Window Glass - NOT affected by ambient light */}
+      {nodes.windowGlass0 && (
+        <mesh
+          name="windowGlass0"
+          geometry={nodes.windowGlass0.geometry}
+          position={[
+            nodes.windowGlass0.position.x,
+            nodes.windowGlass0.position.y,
+            nodes.windowGlass0.position.z - 0.05, // Push back behind frames
+          ]}
+          rotation={nodes.windowGlass0.rotation}
+          scale={nodes.windowGlass0.scale}
+        >
+          <meshStandardMaterial
+            color={windowLightColor}
+            emissive={windowLightColor}
+            emissiveIntensity={windowLightIntensity * 0.3}
+          />
+        </mesh>
+      )}
+
+      {/* Window Frames */}
+      {framesArray.map((_, i) => {
+        const frameNode = nodes[`windowFrame${i}`]
+        if (!frameNode) return null
+        return (
+          <mesh
+            key={`frame-${i}`}
+            name={`windowFrame${i}`}
+            geometry={frameNode.geometry}
+            position={frameNode.position}
+            rotation={frameNode.rotation}
+            scale={frameNode.scale}
+          >
+            <meshStandardMaterial color={tintedFrame} roughness={0.5} />
+          </mesh>
+        )
+      })}
+
+      {/* Window Handles */}
+      {handlesArray.map((_, i) => {
+        const handleNode = nodes[`windowHandle${i}`]
+        if (!handleNode) return null
+        return (
+          <mesh
+            key={`handle-${i}`}
+            name={`windowHandle${i}`}
+            geometry={handleNode.geometry}
+            position={handleNode.position}
+            rotation={handleNode.rotation}
+            scale={handleNode.scale}
+          >
+            <meshStandardMaterial color={tintedHandle} roughness={0.3} metalness={0.9} />
+          </mesh>
+        )
+      })}
+    </>
+  )
+}
+
+export default ParisWindow

@@ -1,0 +1,169 @@
+import { useGLTF, useTexture } from '@react-three/drei'
+import { useEffect, useMemo } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { Mesh, BufferGeometry, MeshStandardMaterial, SRGBColorSpace, Color } from 'three'
+import type { GLTF } from 'three-stdlib'
+
+import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
+import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
+import { Door } from '@/components/scene/spaces/objects/Door'
+import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
+import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
+import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
+import { Radiator } from '@/components/scene/spaces/objects/Radiator'
+import { Sockets } from '@/components/scene/spaces/objects/Sockets'
+import { Wall } from '@/components/scene/spaces/objects/Wall'
+import { Effects } from '@/components/scene/spaces/objects/Effects'
+import { useAmbientLight } from '@/hooks/useAmbientLight'
+import { addWall } from '@/redux/slices/sceneSlice'
+import type { RootState } from '@/redux/store'
+import type { TArtwork } from '@/types/artwork'
+
+import { Lights } from './lights'
+
+
+type GLTFResult = GLTF & {
+  nodes: {
+    floor0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    ceiling0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    wall0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    [key: string]: Mesh
+  }
+}
+
+type ParisSpaceProps = React.ComponentProps<'group'> & {
+  wallRefs: React.RefObject<Mesh | null>[]
+  windowRefs: React.RefObject<Mesh | null>[]
+  glassRefs: React.RefObject<Mesh | null>[]
+  onPlaceholderClick: (wallId: string) => void
+  artworks: TArtwork[]
+}
+
+const ParisSpace: React.FC<ParisSpaceProps> = ({
+  wallRefs,
+  windowRefs,
+  glassRefs,
+  ...props
+}) => {
+  const { nodes } = useGLTF('/assets/spaces/paris/parisx1.glb?v=6') as unknown as GLTFResult
+
+  const dispatch = useDispatch()
+  const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
+
+
+  // Ambient light for wall/ceiling tinting
+  const { ambientColor, scale } = useAmbientLight()
+
+  // Load external baked textures
+  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWallX.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingX.jpg')
+
+  // Configure textures
+  useMemo(() => {
+    wallTexture.colorSpace = SRGBColorSpace
+    wallTexture.flipY = false
+    ceilingTexture.colorSpace = SRGBColorSpace
+    ceilingTexture.flipY = false
+  }, [wallTexture, ceilingTexture])
+
+  // Create materials with baked textures
+  const wallMaterial = useMemo(() => {
+    return new MeshStandardMaterial({
+      map: wallTexture,
+      roughness: 0.9,
+      metalness: 0,
+      side: 2,
+    })
+  }, [wallTexture])
+
+  const ceilingMaterial = useMemo(() => {
+    return new MeshStandardMaterial({
+      map: ceilingTexture,
+      roughness: 0.9,
+      metalness: 0,
+      side: 2,
+    })
+  }, [ceilingTexture])
+
+  // Apply ambient light tinting
+  useEffect(() => {
+    const color = new Color(ambientColor)
+    color.multiplyScalar(scale)
+    wallMaterial.color = color
+    ceilingMaterial.color = color
+  }, [wallMaterial, ceilingMaterial, ambientColor, scale])
+
+  // Arrays for iterating over indexed meshes
+  const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
+
+  // Register placeholders with Redux
+  useEffect(() => {
+    placeholdersArray.forEach((_, i) => {
+      const placeholderNode = nodes[`placeholder${i}`]
+      if (placeholderNode) {
+        dispatch(addWall({ id: placeholderNode.uuid }))
+      }
+    })
+  }, [nodes, dispatch, placeholdersArray])
+
+  return (
+    <group {...props} dispose={null}>
+      <Lights />
+      <Effects enabled={true} />
+
+      {/* Floor */}
+      {nodes.floor0 && (() => {
+        nodes.floor0.geometry.computeBoundingBox()
+        const floorSurfaceY = nodes.floor0.position.y + (nodes.floor0.geometry.boundingBox?.max.y ?? 0)
+        return (
+          <>
+            <primitive object={nodes.floor0} visible={false} />
+            <ReflectiveFloor
+              position={[nodes.floor0.position.x, floorSurfaceY, nodes.floor0.position.z]}
+            />
+          </>
+        )
+      })()}
+
+      {/* Ceiling */}
+      {nodes.ceiling0 && (
+        <Ceiling
+          geometry={nodes.ceiling0.geometry}
+          material={ceilingMaterial}
+        />
+      )}
+
+      {/* Wall */}
+      {nodes.wall0 && (
+        <Wall
+          i={0}
+          wallRef={wallRefs[0]}
+          geometry={nodes.wall0.geometry}
+          material={wallMaterial}
+        />
+      )}
+
+      {/* Window */}
+      <ParisWindow nodes={nodes} frameCount={2} handleCount={2} />
+
+
+      {/* Door */}
+      <Door nodes={nodes} />
+
+      {/* Radiator */}
+      <Radiator nodes={nodes} />
+
+      {/* Sockets */}
+      <Sockets nodes={nodes} socketCount={4} screwCount={4} />
+
+      {/* Placeholders */}
+      {isPlaceholdersShown &&
+        placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
+
+      {/* Artworks */}
+      <ArtObjects />
+    </group>
+  )
+}
+
+export default ParisSpace
