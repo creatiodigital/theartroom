@@ -71,7 +71,7 @@ const FloorPanel = () => {
 
   const handleTextureScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Invert: slider right = larger tiles (lower repeat value)
-    const invertedValue = 2.45 - parseFloat(e.target.value)
+    const invertedValue = 2.95 - parseFloat(e.target.value)
     dispatch(setFloorTextureScale(invertedValue))
     setSaved(false)
   }
@@ -163,9 +163,9 @@ const FloorPanel = () => {
           <input
             type="range"
             min="0.45"
-            max="2"
+            max="2.5"
             step="0.01"
-            value={2.45 - floorTextureScale}
+            value={2.95 - floorTextureScale}
             onChange={handleTextureScaleChange}
             className={styles.slider}
           />

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Text } from '@/components/ui/Typography'
+import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
@@ -25,8 +26,9 @@ const ArtworkPanel = () => {
   const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
-  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
-  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
+  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
