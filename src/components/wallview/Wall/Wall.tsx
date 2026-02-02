@@ -20,6 +20,7 @@ import { Human } from '@/components/wallview/Human'
 import { DistanceLines } from '@/components/wallview/DistanceLines'
 import { SelectionBox } from '@/components/wallview/SelectionBox'
 import { convert2DTo3D } from '@/components/wallview/utils'
+import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import { setShiftKeyDown } from '@/redux/slices/wallViewSlice'
 import { setWallCoordinates, setWallDimensions } from '@/redux/slices/wallViewSlice'
@@ -32,8 +33,9 @@ import styles from './Wall.module.scss'
 
 export const Wall = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
-  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
-  const { nodes } = useGLTF(`/assets/spaces/${spaceId || 'classic'}.glb`) as unknown as {
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
+  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
 
@@ -72,10 +74,12 @@ export const Wall = () => {
 
   // Calculate floor offset (distance from wall placeholder bottom to floor surface)
   const { floorOffsetPx, floorOffsetMeters } = useMemo(() => {
-    if (!boundingData || !nodes.floor) return { floorOffsetPx: 0, floorOffsetMeters: 0 }
+    // Support both 'floor' and 'floor0' naming conventions
+    const floorNode = nodes.floor || nodes.floor0
+    if (!boundingData || !floorNode) return { floorOffsetPx: 0, floorOffsetMeters: 0 }
     
     // Get floor surface Y (top of floor mesh)
-    const floorMesh = nodes.floor as Mesh
+    const floorMesh = floorNode as Mesh
     if (!floorMesh.geometry.boundingBox) {
       floorMesh.geometry.computeBoundingBox()
     }
@@ -90,7 +94,7 @@ export const Wall = () => {
       floorOffsetPx: offsetMeters * scaling,
       floorOffsetMeters: offsetMeters
     }
-  }, [boundingData, nodes.floor, scaling])
+  }, [boundingData, nodes.floor, nodes.floor0, scaling])
 
   const { handleCreateArtworkDrag } = useCreateArtwork(boundingData!)
   const { handleAddExistingArtworkDrag } = useAddExistingArtwork(boundingData)
