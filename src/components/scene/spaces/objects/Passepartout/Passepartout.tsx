@@ -9,8 +9,8 @@ interface PassepartoutProps {
 }
 
 const Passepartout: React.FC<PassepartoutProps> = ({ width, height, thickness, depth = 0.02, material }) => {
-  // Position the passepartout to protrude outward (positive Z direction)
-  // Half of the depth so the back is flush with the wall/image plane
+  // Passepartout sits ON TOP of the artwork/support, extending forward (positive Z)
+  // The back face touches the support surface, mat body extends toward viewer
   const zOffset = depth / 2
 
   return (

@@ -24,7 +24,7 @@ const WARM_COLOR = { r: 0xa8, g: 0x9a, b: 0x8a } // Amber
 const getTemperatureColor = (temperature: number): string => {
   const t = Math.max(-1, Math.min(1, temperature))
   let r, g, b
-  
+
   if (t < 0) {
     // Cool: interpolate from neutral to cool
     const factor = -t
@@ -38,29 +38,48 @@ const getTemperatureColor = (temperature: number): string => {
     g = Math.round(NEUTRAL_COLOR.g + (WARM_COLOR.g - NEUTRAL_COLOR.g) * factor)
     b = Math.round(NEUTRAL_COLOR.b + (WARM_COLOR.b - NEUTRAL_COLOR.b) * factor)
   }
-  
+
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
-// Material configurations with file extensions (metallic and normal are optional - set to null if not available)
-const MATERIAL_CONFIG: Record<string, { diffuse: string; normal: string | null; roughness: string; metallic: string | null }> = {
+// Material configurations with file extensions (metallic, normal, and ao are optional - set to null if not available)
+const MATERIAL_CONFIG: Record<
+  string,
+  {
+    diffuse: string
+    normal: string | null
+    roughness: string
+    metallic: string | null
+    ao: string | null
+  }
+> = {
   concrete: {
     diffuse: 'diffuse.png',
     normal: 'normal.png',
     roughness: 'roughness.png',
     metallic: 'metallic.png',
+    ao: null,
   },
   wood: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
     roughness: 'roughness.jpg',
     metallic: null,
+    ao: null,
   },
   marble: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
     roughness: 'roughness.jpg',
     metallic: null,
+    ao: null,
+  },
+  parquet: {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
   },
 }
 
@@ -68,9 +87,7 @@ const MATERIAL_CONFIG: Record<string, { diffuse: string; normal: string | null; 
  * Polished floor with mirror reflections and PBR textures.
  * Reads material, texture scale, and reflectiveness from Redux.
  */
-const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
-  position = [0, 0, 0],
-}) => {
+const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] }) => {
   const meshRef = useRef<Mesh>(null)
 
   // Read floor settings from Redux
@@ -94,9 +111,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     (state: RootState) => state.exhibition.floorTextureOffsetY ?? 0,
   )
 
-  const floorTemperature = useSelector(
-    (state: RootState) => state.exhibition.floorTemperature ?? 0,
-  )
+  const floorTemperature = useSelector((state: RootState) => state.exhibition.floorTemperature ?? 0)
 
   const floorNormalScale = useSelector(
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
@@ -105,14 +120,14 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   // Compute temperature-based floor color
   const floorColor = getTemperatureColor(floorTemperature)
 
-  // Clamp scale for safety (0.45 = largest tiles, 2 = smallest)
-  const clampedScale = Math.max(0.45, Math.min(2.0, floorTextureScale))
+  // Clamp scale for safety (0.5 = largest tiles, 5.0 = smallest)
+  const clampedScale = Math.max(0.5, Math.min(5.0, floorTextureScale))
 
   // Get material config for dynamic texture paths
   const materialConfig = MATERIAL_CONFIG[floorMaterial] || MATERIAL_CONFIG.concrete
   const texturePath = `/assets/materials/${floorMaterial}`
 
-  // Build texture paths (metallic and normal are optional)
+  // Build texture paths (metallic, normal, and ao are optional)
   const texturePaths: Record<string, string> = {
     map: `${texturePath}/${materialConfig.diffuse}`,
     roughnessMap: `${texturePath}/${materialConfig.roughness}`,
@@ -122,6 +137,9 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   }
   if (materialConfig.metallic) {
     texturePaths.metalnessMap = `${texturePath}/${materialConfig.metallic}`
+  }
+  if (materialConfig.ao) {
+    texturePaths.aoMap = `${texturePath}/${materialConfig.ao}`
   }
 
   // Load PBR textures with correct extensions per material
@@ -151,7 +169,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
         <MeshReflectorMaterial
           blur={[600, 400]} // Higher blur for maximum stability
           resolution={1024} // Full resolution for smooth reflections
-          mixBlur={0.9}     // High blend for stable reflections
+          mixBlur={0.9} // High blend for stable reflections
           mixStrength={reflectiveness * 1.5} // Reduced from *3 to let normal map show
           roughness={1 - reflectiveness * 0.2}
           depthScale={0}
@@ -163,6 +181,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
           roughnessMap={textures.roughnessMap}
           metalnessMap={textures.metalnessMap}
+          aoMap={textures.aoMap}
+          aoMapIntensity={1.0}
         />
       ) : (
         <meshStandardMaterial
@@ -172,6 +192,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
           roughnessMap={textures.roughnessMap}
           metalnessMap={textures.metalnessMap}
+          aoMap={textures.aoMap}
+          aoMapIntensity={1.0}
           roughness={1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
           metalness={0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
         />

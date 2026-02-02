@@ -21,6 +21,7 @@ export { RectLight } from './RectLight'
 export { Reel } from './Reel'
 export { Sockets } from './Sockets'
 export { Stencil } from './Stencil'
+export { Support } from './Support'
 export { Wall } from './Wall'
 export { Window } from './Window'
 

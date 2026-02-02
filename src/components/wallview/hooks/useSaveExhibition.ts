@@ -212,6 +212,9 @@ export const useSaveExhibition = () => {
             passepartoutColor: artwork.passepartoutColor ?? '#ffffff',
             passepartoutSize: artwork.passepartoutSize?.value ?? 10,
             passepartoutThickness: artwork.passepartoutThickness?.value ?? 0.3,
+            supportThickness: artwork.supportThickness?.value ?? 2,
+            supportColor: artwork.supportColor ?? '#ffffff',
+            showSupport: artwork.showSupport ?? true,
             showArtworkInformation: artwork.showArtworkInformation ?? false,
             // Text styling (per-exhibition)
             fontFamily: artwork.fontFamily?.value ?? 'Montserrat',

@@ -12,7 +12,7 @@ import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 
-import { frameSizeOptions, frameThicknessOptions, passepartoutSizeOptions, passepartoutThicknessOptions } from './constants'
+import { frameSizeOptions, frameThicknessOptions, passepartoutSizeOptions, passepartoutThicknessOptions, supportThicknessOptions } from './constants'
 
 const ArtisticImage = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -28,6 +28,9 @@ const ArtisticImage = () => {
     frameColor,
     frameSize,
     frameThickness,
+    showSupport,
+    supportThickness,
+    supportColor,
     hiddenFromExhibition,
   } = useArtworkDetails(currentArtworkId!)
 
@@ -61,6 +64,47 @@ const ArtisticImage = () => {
             label="Hide in exhibition page"
           />
         </Tooltip>
+      </div>
+
+      {/* SUPPORT Section - on top */}
+      <div className={styles.section}>
+        
+        <Tooltip
+          label="Add the canvas or panel depth behind the artwork (stretcher bars, wood panel, etc.)"
+          placement="left"
+        >
+          <Checkbox
+            checked={showSupport!}
+            onChange={(e) => handleEditArtisticImage('showSupport', e.target.checked)}
+            label="Add Support"
+          />
+        </Tooltip>
+        {showSupport && (
+          <div className={styles.controlGroup}>
+            <div className={styles.row}>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Support color</Text>
+                <ColorPicker
+                  textColor={supportColor!}
+                  onColorSelect={(value) => handleEditArtisticImage('supportColor', value)}
+                />
+              </div>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness (cm)</Text>
+                <Select<number>
+                  options={supportThicknessOptions}
+                  value={supportThickness?.value}
+                  onChange={(val) =>
+                    handleEditArtisticImage('supportThickness', {
+                      label: String(val),
+                      value: val,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* FRAME Section */}
@@ -179,3 +223,4 @@ const ArtisticImage = () => {
 }
 
 export default ArtisticImage
+

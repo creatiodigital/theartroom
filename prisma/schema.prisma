@@ -149,6 +149,11 @@ model ExhibitionArtwork {
   passepartoutThickness  Float   @default(0.3) // Z-depth of passepartout in 3D
   showArtworkInformation Boolean @default(false)
 
+  // Support (canvas/panel depth) - rendering depth behind artwork
+  showSupport      Boolean @default(true) // Whether support is visible
+  supportThickness Float   @default(2.0) // Depth in cm (0-10)
+  supportColor     String  @default("#ffffff") // Edge color
+
   // Text styling (per-exhibition customization)
   fontFamily          String  @default("Montserrat")
   fontSize            Float   @default(16)

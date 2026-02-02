@@ -86,6 +86,7 @@ type ArtworkEditFormProps = {
   formData: ArtworkFormData
   imageUrl: string | null
   uploading: boolean
+  loadingText?: string
   saving: boolean
   error: string
   onFormChange: (field: string, value: string | boolean) => void
@@ -99,6 +100,7 @@ export const ArtworkEditForm = ({
   formData,
   imageUrl,
   uploading,
+  loadingText = 'Uploading...',
   saving,
   error,
   onFormChange,
@@ -124,6 +126,7 @@ export const ArtworkEditForm = ({
             onUpload={onImageUpload}
             onRemove={onImageRemove}
             uploading={uploading}
+            loadingText={loadingText}
             aspectRatio="1 / 1"
             objectFit="contain"
           />

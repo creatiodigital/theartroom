@@ -28,6 +28,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
   const [error, setError] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState<ArtworkFormData>(getInitialFormData())
@@ -151,7 +152,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
   const handleRemoveImage = useCallback(async () => {
     if (!imageUrl) return
 
-    setUploading(true)
+    setIsRemoving(true)
     setError('')
 
     try {
@@ -162,7 +163,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       if (!response.ok) {
         const data = await response.json()
         setError(data.error || 'Failed to remove image')
-        setUploading(false)
+        setIsRemoving(false)
         return
       }
 
@@ -172,7 +173,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
     } catch {
       setError('Failed to remove image')
     } finally {
-      setUploading(false)
+      setIsRemoving(false)
     }
   }, [artworkId, imageUrl, dispatch])
 
@@ -239,7 +240,8 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
           <ArtworkEditForm
             formData={formData}
             imageUrl={imageUrl}
-            uploading={uploading}
+            uploading={uploading || isRemoving}
+            loadingText={isRemoving ? 'Removing...' : 'Uploading...'}
             saving={saving}
             error={error}
             onFormChange={handleChange}
