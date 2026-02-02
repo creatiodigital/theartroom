@@ -106,13 +106,13 @@ const exhibitionSlice = createSlice({
       state.floorReflectiveness = action.payload
     },
 
-    setFloorMaterial: (state: TExhibitionWithHistory, action: PayloadAction<'concrete' | 'wood'>) => {
+    setFloorMaterial: (state: TExhibitionWithHistory, action: PayloadAction<'concrete' | 'wood' | 'marble' | 'parquet'>) => {
       state.floorMaterial = action.payload
     },
 
     setFloorTextureScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp scale between 0.45 and 2.0
-      state.floorTextureScale = Math.max(0.45, Math.min(2.0, action.payload))
+      // Clamp scale between 0.5 and 5.0
+      state.floorTextureScale = Math.max(0.5, Math.min(5.0, action.payload))
     },
 
     setFloorTextureOffsetX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {

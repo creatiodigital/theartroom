@@ -14,6 +14,7 @@ type ImageUploaderProps = {
   onUpload: (file: File) => Promise<void>
   onRemove?: () => void | Promise<void>
   uploading?: boolean
+  loadingText?: string
   aspectRatio?: string
   objectFit?: 'cover' | 'contain'
   placeholder?: string
@@ -25,6 +26,7 @@ export const ImageUploader = ({
   onUpload,
   onRemove,
   uploading = false,
+  loadingText = 'Uploading...',
   aspectRatio = '16 / 10',
   objectFit = 'cover',
   placeholder = 'No image',
@@ -145,7 +147,7 @@ export const ImageUploader = ({
           )}
           {uploading && (
             <div className={styles.uploadingOverlay}>
-              <span>Uploading...</span>
+              <span>{loadingText}</span>
             </div>
           )}
         </div>
@@ -163,7 +165,7 @@ export const ImageUploader = ({
           onKeyDown={(e) => e.key === 'Enter' && handleClick()}
         >
           {uploading ? (
-            <span className={styles.uploadingText}>Uploading...</span>
+            <span className={styles.uploadingText}>{loadingText}</span>
           ) : (
             <>
               <Button

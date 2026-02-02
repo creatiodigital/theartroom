@@ -21,12 +21,13 @@ import type { RootState } from '@/redux/store'
 import styles from './FloorPanel.module.scss'
 
 const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
-const DEFAULT_FLOOR_TEXTURE_SCALE = 1.0
+const DEFAULT_FLOOR_TEXTURE_SCALE = 2.0
 
 const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
   { value: 'wood', label: 'Wood' },
   { value: 'marble', label: 'Marble' },
+  { value: 'parquet', label: 'Parquet' },
 ] as const
 
 const FloorPanel = () => {
@@ -44,9 +45,11 @@ const FloorPanel = () => {
     (state: RootState) => state.exhibition.floorMaterial ?? 'concrete',
   )
 
-  const floorTextureScale = useSelector(
+  // Clamp to valid range 0.5-5.0 in case of legacy values
+  const rawFloorTextureScale = useSelector(
     (state: RootState) => state.exhibition.floorTextureScale ?? DEFAULT_FLOOR_TEXTURE_SCALE,
   )
+  const floorTextureScale = Math.max(0.5, Math.min(5.0, rawFloorTextureScale))
 
   const floorTextureOffsetX = useSelector(
     (state: RootState) => state.exhibition.floorTextureOffsetX ?? 0,
@@ -65,13 +68,13 @@ const FloorPanel = () => {
   )
 
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood'))
+    dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood' | 'marble' | 'parquet'))
     setSaved(false)
   }
 
   const handleTextureScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Invert: slider right = larger tiles (lower repeat value)
-    const invertedValue = 2.95 - parseFloat(e.target.value)
+    // Invert: slider right = bigger tiles (lower repeat value internally)
+    const invertedValue = 5.5 - parseFloat(e.target.value)
     dispatch(setFloorTextureScale(invertedValue))
     setSaved(false)
   }
@@ -158,14 +161,14 @@ const FloorPanel = () => {
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
             <label className={styles.label}>Tile Scale</label>
-            <span className={styles.sliderValue}>{floorTextureScale.toFixed(2)}</span>
+            <span className={styles.sliderValue}>{(5.5 - floorTextureScale).toFixed(2)}</span>
           </div>
           <input
             type="range"
-            min="0.45"
-            max="2.5"
+            min="0.5"
+            max="5"
             step="0.01"
-            value={2.95 - floorTextureScale}
+            value={5.5 - floorTextureScale}
             onChange={handleTextureScaleChange}
             className={styles.slider}
           />

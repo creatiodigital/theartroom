@@ -9,8 +9,8 @@ interface FrameProps {
 }
 
 const Frame: React.FC<FrameProps> = ({ width, height, thickness, depth = 0.01, material }) => {
-  // Frame protrudes forward from the wall to create shadows
-  // depth is controlled separately from thickness now
+  // Frame extends forward from the wall (positive Z direction)
+  // Both frame and support start at Z=0 (wall), frame protrudes toward viewer
   const zOffset = depth / 2
 
   return (

@@ -25,7 +25,7 @@ export type TExhibition = {
   windowLightColor?: string
   windowLightIntensity?: number
   floorReflectiveness?: number
-  floorMaterial?: 'concrete' | 'wood'
+  floorMaterial?: 'concrete' | 'wood' | 'marble' | 'parquet'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number
