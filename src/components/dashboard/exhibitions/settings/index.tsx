@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 
+import { slugify } from '@/utils/slugify'
+
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ImageUploader } from '@/components/ui/ImageUploader'
@@ -35,6 +37,7 @@ interface ExhibitionSettingsPageProps {
 
 export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageProps) => {
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
+  const [mainTitle, setMainTitle] = useState('')
   const [description, setDescription] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'private'>('private')
   const [loading, setLoading] = useState(true)
@@ -56,6 +59,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         }
         const data = await response.json()
         setExhibition(data)
+        setMainTitle(data.mainTitle || '')
         setDescription(data.description || '')
         setVisibility(data.visibility || 'private')
       } catch {
@@ -81,7 +85,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, visibility }),
+        body: JSON.stringify({ mainTitle, description, visibility }),
       })
 
       if (!response.ok) {
@@ -95,7 +99,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     } finally {
       setSaving(false)
     }
-  }, [exhibition, description])
+  }, [exhibition, mainTitle, description, visibility])
 
   const handleImageUpload = useCallback(
     async (file: File) => {
@@ -183,7 +187,25 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   return (
     <DashboardLayout backLink="/dashboard">
       {/* Page Title */}
-      <h1 className={dashboardStyles.pageTitle}>{exhibition.mainTitle}</h1>
+      <h1 className={dashboardStyles.pageTitle}>Exhibition Settings</h1>
+
+      {/* Exhibition Name Section */}
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Exhibition Name</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          The name of your exhibition. This also determines the URL slug.
+        </p>
+        <input
+          type="text"
+          value={mainTitle}
+          onChange={(e) => setMainTitle(e.target.value)}
+          placeholder="Exhibition name"
+          className={styles.titleInput}
+        />
+        <span className={dashboardStyles.hint}>
+          URL: {exhibition.user?.handler || 'artist'}/{slugify(mainTitle) || exhibition.url}
+        </span>
+      </div>
 
       {/* Featured Image Section */}
       <div className={`${dashboardStyles.section} ${styles.imageSection}`}>

@@ -5,6 +5,8 @@ import { del } from '@vercel/blob'
 import type { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 
+import { slugify } from '@/utils/slugify'
+
 type ExhibitionUpdateBody = {
   mainTitle?: string
   description?: string
@@ -79,7 +81,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const body = (await request.json()) as ExhibitionUpdateBody
 
     const data: Prisma.ExhibitionUpdateInput = {}
-    if (body.mainTitle !== undefined) data.mainTitle = body.mainTitle
+    if (body.mainTitle !== undefined) {
+      data.mainTitle = body.mainTitle
+      data.url = slugify(body.mainTitle)
+    }
     if (body.description !== undefined) data.description = body.description
     if (body.status !== undefined) data.status = body.status
     if (body.visibility !== undefined) data.visibility = body.visibility

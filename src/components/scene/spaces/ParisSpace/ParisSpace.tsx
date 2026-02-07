@@ -48,7 +48,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   glassRefs,
   ...props
 }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/paris7x.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris8x.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -58,7 +58,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   const { ambientColor, scale } = useAmbientLight()
 
   // Load external baked textures
-  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWallu.jpg')
+  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWall8.jpg')
   const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingu.jpg')
 
   // Configure textures
