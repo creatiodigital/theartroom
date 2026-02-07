@@ -17,10 +17,10 @@ export default auth((request) => {
     }
   }
 
-  // Protect dashboard routes - require authentication
-  if (nextUrl.pathname.startsWith('/dashboard')) {
+  // Protect dashboard routes - require authentication (except login page)
+  if (nextUrl.pathname.startsWith('/dashboard') && nextUrl.pathname !== '/dashboard/login') {
     if (!session?.user) {
-      return NextResponse.redirect(new URL('/', nextUrl.origin))
+      return NextResponse.redirect(new URL('/dashboard/login', nextUrl.origin))
     }
   }
 

@@ -6,17 +6,22 @@
   // Neutrals (10=lightest, 90=darkest)
   --color-white: #ffffff;
   --color-gray-10: #f9f9f9;
+  --color-gray-15: #f6f6f6;
   --color-gray-20: #f0f0f0;
+  --color-gray-25: #e2e2e2;
   --color-gray-30: #ececec;
+  --color-gray-35: #e0e0e0;
   --color-gray-40: #ebebeb;
   --color-gray-50: #eaeaea;
+  --color-gray-55: #d0d0d0;
   --color-gray-60: #dcdcdc;
+  --color-gray-65: #cccccc;
   --color-gray-70: #666666;
   --color-gray-80: #333333;
   --color-black: #000000;
 
   // Brand Colors
-  --color-red-50: #d92a1c;
+  --color-red-50: #DB230D;
   --color-red-60: #c00;
   --color-red-70: #721c24;
 
@@ -72,11 +77,20 @@
   // Borders
   --color-border-default: var(--color-gray-50);
   --color-border-strong: var(--color-gray-60);
+  --color-border-light: var(--color-gray-35);
 
   // Brand & Accents
   --color-brand: var(--color-red-50);
   --color-accent: var(--color-blue-50);
   --color-highlight: var(--color-orange-50);
+
+  // Panels
+  --color-surface-elevated: var(--color-gray-15);
+  --color-surface-workspace: var(--color-gray-25);
+
+  // Controls
+  --color-slider-track: var(--color-gray-55);
+  --color-toggle-off: var(--color-gray-65);
 
   // Errors
   --color-error-text: var(--color-red-60);
