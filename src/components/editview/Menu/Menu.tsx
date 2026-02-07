@@ -11,6 +11,8 @@ import {
   hideFloorPanel,
   showCameraPanel,
   hideCameraPanel,
+  showHumanPanel,
+  hideHumanPanel,
 } from '@/redux/slices/dashboardSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
@@ -25,12 +27,25 @@ export const Menu = () => {
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
   const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
   const isCameraPanelOpen = useSelector((state: RootState) => state.dashboard.isCameraPanelOpen)
+  const isHumanPanelOpen = useSelector((state: RootState) => state.dashboard.isHumanPanelOpen)
 
   const togglePlaceholders = () => {
     if (isPlaceholdersShown) {
       dispatch(hidePlaceholders())
     } else {
       dispatch(showPlaceholders())
+    }
+  }
+
+  const toggleHumanPanel = () => {
+    if (isHumanPanelOpen) {
+      dispatch(hideHumanPanel())
+    } else {
+      // Close other panels first
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      dispatch(showHumanPanel())
     }
   }
 
@@ -41,6 +56,7 @@ export const Menu = () => {
       // Close other panels first
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
       dispatch(showLightingPanel())
     }
   }
@@ -52,6 +68,7 @@ export const Menu = () => {
       // Close other panels first
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
       dispatch(showFloorPanel())
     }
   }
@@ -63,6 +80,7 @@ export const Menu = () => {
       // Close other panels first
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
       dispatch(showCameraPanel())
     }
   }
@@ -85,6 +103,14 @@ export const Menu = () => {
           variant="secondary"
           icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
           onClick={() => togglePlaceholders()}
+        />
+      </Tooltip>
+      <Tooltip label="Human reference" placement="right">
+        <Button 
+          size="regular" 
+          variant="secondary"
+          icon="human-standing"
+          onClick={toggleHumanPanel}
         />
       </Tooltip>
       <Tooltip label="Lighting controls" placement="right">

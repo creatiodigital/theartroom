@@ -9,6 +9,7 @@ export type TDashboardState = {
   isLightingPanelOpen: boolean
   isFloorPanelOpen: boolean
   isCameraPanelOpen: boolean
+  isHumanPanelOpen: boolean
   isEditingArtwork: boolean
   selectedSpace: TSpaceOption
 }

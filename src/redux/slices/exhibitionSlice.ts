@@ -69,6 +69,10 @@ const exhibitionSlice = createSlice({
       return { ...action.payload, _snapshot: null, _history: [], _future: [] }
     },
 
+    setMainTitle: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.mainTitle = action.payload
+    },
+
     // Lighting customization actions
     setAmbientLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.ambientLightColor = action.payload
@@ -242,6 +246,7 @@ export const {
   updateArtworkPosition,
   deleteArtworkPosition,
   setExhibition,
+  setMainTitle,
   setAmbientLightColor,
   setAmbientLightIntensity,
   setSkylightColor,
