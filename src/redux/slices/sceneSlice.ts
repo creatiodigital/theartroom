@@ -19,6 +19,14 @@ const sceneSlice = createSlice({
       state.isPlaceholdersShown = false
     },
 
+    showHuman: (state: TScene) => {
+      state.isHumanVisible = true
+    },
+
+    hideHuman: (state: TScene) => {
+      state.isHumanVisible = false
+    },
+
     addWall: (state: TScene, action: PayloadAction<{ id: string }>) => {
       const wallId = action.payload.id
       const wallIndex = state.walls.length + 1
@@ -53,6 +61,8 @@ export const {
   setCurrentArtwork,
   showPlaceholders,
   hidePlaceholders,
+  showHuman,
+  hideHuman,
   addWall,
   editWallName,
   setFocusTarget,

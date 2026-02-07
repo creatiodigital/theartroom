@@ -11,6 +11,7 @@ export type TFocusTarget = {
 export type TScene = {
   isArtworkPanelOpen: boolean
   isPlaceholdersShown: boolean
+  isHumanVisible: boolean
   currentArtworkId: string | null
   walls: TWall[]
   focusTarget: TFocusTarget | null

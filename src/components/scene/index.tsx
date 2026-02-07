@@ -9,6 +9,7 @@ import SceneContext from '@/contexts/SceneContext'
 import type { TArtwork } from '@/types/artwork'
 
 import Controls from './controls'
+import HumanReference from './objects/HumanReference/HumanReference'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
 
@@ -38,6 +39,7 @@ export const Scene = () => {
             <group>
               <Controls />
               <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
+              <HumanReference />
             </group>
           </Suspense>
         </Canvas>

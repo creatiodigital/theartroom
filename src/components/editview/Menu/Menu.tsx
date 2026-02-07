@@ -14,7 +14,7 @@ import {
   hideCameraPanel,
 } from '@/redux/slices/dashboardSlice'
 import { setMainTitle } from '@/redux/slices/exhibitionSlice'
-import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
+import { hidePlaceholders, showPlaceholders, showHuman, hideHuman } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
@@ -27,6 +27,7 @@ export const Menu = () => {
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const mainTitle = useSelector((state: RootState) => state.exhibition.mainTitle ?? '')
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
+  const isHumanVisible = useSelector((state: RootState) => state.scene.isHumanVisible)
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
   const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
   const isCameraPanelOpen = useSelector((state: RootState) => state.dashboard.isCameraPanelOpen)
@@ -58,6 +59,14 @@ export const Menu = () => {
       dispatch(hidePlaceholders())
     } else {
       dispatch(showPlaceholders())
+    }
+  }
+
+  const toggleHuman = () => {
+    if (isHumanVisible) {
+      dispatch(hideHuman())
+    } else {
+      dispatch(showHuman())
     }
   }
 
@@ -126,6 +135,14 @@ export const Menu = () => {
           variant="secondary"
           icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
           onClick={() => togglePlaceholders()}
+        />
+      </Tooltip>
+      <Tooltip label={isHumanVisible ? 'Hide Human Reference' : 'Show Human Reference'} placement="right">
+        <Button 
+          size="regular" 
+          variant="secondary"
+          icon="human-standing"
+          onClick={() => toggleHuman()}
         />
       </Tooltip>
       <Tooltip label="Lighting controls" placement="right">
