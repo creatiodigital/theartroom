@@ -13,7 +13,7 @@ interface SwitchProps {
  * Iterates over indexed meshes: doubleSwitch0, doubleSwitch1, etc.
  */
 const Switch: React.FC<SwitchProps> = ({ nodes, count = 2 }) => {
-  const tintedPlastic = useAmbientLightColor('#ffffff')
+  const tintedPlastic = useAmbientLightColor('#d8d8d8')
 
   const switchesArray = useMemo(() => Array.from({ length: count }), [count])
 

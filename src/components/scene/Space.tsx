@@ -45,7 +45,7 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
   if (spaceConfig.refs.windows) windowRefs.current = windowRefArray
   if (spaceConfig.refs.glass) glassRefs.current = glassRefArray
 
-  const SpaceComponent = spaceComponents[spaceKey]
+  const SpaceComponent = spaceComponents[spaceKey] || spaceComponents['classic']
   if (!SpaceComponent) return null
 
   return (

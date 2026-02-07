@@ -18,6 +18,7 @@ import {
   setCeilingLampIntensity,
   setTrackLampColor,
   setTrackLampIntensity,
+  setTrackLampsVisible,
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,
@@ -80,6 +81,9 @@ const LightingPanel = () => {
   )
   const recessedLampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_RECESSED_LAMP_INTENSITY,
+  )
+  const trackLampsVisible = useSelector(
+    (state: RootState) => state.exhibition.trackLampsVisible ?? true,
   )
   const trackLampMaterialColor = useSelector(
     (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_TRACK_LAMP_MATERIAL_COLOR,
@@ -152,6 +156,7 @@ const LightingPanel = () => {
           ceilingLampIntensity: lampIntensity,
           trackLampColor,
           trackLampIntensity,
+          trackLampsVisible,
           recessedLampColor,
           recessedLampIntensity,
           trackLampMaterialColor,
@@ -277,9 +282,19 @@ const LightingPanel = () => {
       {/* Track Lamps Section - only for spaces with track lamps */}
       {hasTrackLamps && (
         <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Track Lamps
-          </Text>
+          <div className={styles.sectionHeader}>
+            <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+              Track Lamps
+            </Text>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                checked={trackLampsVisible}
+                onChange={(e) => { dispatch(setTrackLampsVisible(e.target.checked)); setSaved(false) }}
+              />
+              <span className={styles.toggleSlider} />
+            </label>
+          </div>
           
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
@@ -302,6 +317,23 @@ const LightingPanel = () => {
               value={trackLampIntensity}
               onChange={handleTrackLampIntensityChange}
               className={styles.slider}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Track Lamp Material Section - color only, for arm/body */}
+      {hasTrackLamps && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Track Lamp Material
+          </Text>
+          
+          <div className={styles.field}>
+            <label className={styles.label}>Color</label>
+            <ColorPicker
+              textColor={trackLampMaterialColor}
+              onColorSelect={(color) => { dispatch(setTrackLampMaterialColor(color)); setSaved(false) }}
             />
           </div>
         </div>
@@ -335,23 +367,6 @@ const LightingPanel = () => {
               value={recessedLampIntensity}
               onChange={handleRecessedLampIntensityChange}
               className={styles.slider}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Track Lamp Material Section - color only, for arm/body */}
-      {hasTrackLamps && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Track Lamp Material
-          </Text>
-          
-          <div className={styles.field}>
-            <label className={styles.label}>Color</label>
-            <ColorPicker
-              textColor={trackLampMaterialColor}
-              onColorSelect={(color) => { dispatch(setTrackLampMaterialColor(color)); setSaved(false) }}
             />
           </div>
         </div>

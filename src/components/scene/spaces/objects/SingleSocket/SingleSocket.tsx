@@ -13,7 +13,7 @@ interface SingleSocketProps {
  * Iterates over indexed meshes: singleSocket0, singleSocket1, etc.
  */
 const SingleSocket: React.FC<SingleSocketProps> = ({ nodes, count = 2 }) => {
-  const tintedPlastic = useAmbientLightColor('#ffffff')
+  const tintedPlastic = useAmbientLightColor('#d8d8d8')
 
   const socketsArray = useMemo(() => Array.from({ length: count }), [count])
 

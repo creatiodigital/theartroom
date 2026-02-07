@@ -102,6 +102,10 @@ const exhibitionSlice = createSlice({
       state.trackLampIntensity = action.payload
     },
 
+    setTrackLampsVisible: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
+      state.trackLampsVisible = action.payload
+    },
+
     setRecessedLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.recessedLampColor = action.payload
     },
@@ -246,6 +250,7 @@ export const {
   setCeilingLampIntensity,
   setTrackLampColor,
   setTrackLampIntensity,
+  setTrackLampsVisible,
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,

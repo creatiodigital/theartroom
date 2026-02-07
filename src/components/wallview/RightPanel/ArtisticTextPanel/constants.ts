@@ -13,7 +13,7 @@ export const lineHeights = toOptions(
   Array.from({ length: 11 }, (_, i) => +(1 + i * 0.1).toFixed(1)),
 )
 
-export const letterSpacings = toOptions([1, 1.5, 2] as const)
+export const letterSpacings = toOptions([0, 0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 3.5, 4] as const)
 
 export const fontWeights: TOption<'regular' | 'bold'>[] = [
   { value: 'regular', label: 'Regular' },

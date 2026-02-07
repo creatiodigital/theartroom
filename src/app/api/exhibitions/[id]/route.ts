@@ -23,6 +23,7 @@ type ExhibitionUpdateBody = {
   ceilingLampIntensity?: number
   trackLampColor?: string
   trackLampIntensity?: number
+  trackLampsVisible?: boolean
   recessedLampColor?: string
   recessedLampIntensity?: number
   trackLampMaterialColor?: string
@@ -98,6 +99,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.trackLampColor !== undefined) data.trackLampColor = body.trackLampColor
     if (body.trackLampIntensity !== undefined)
       data.trackLampIntensity = body.trackLampIntensity
+    if (body.trackLampsVisible !== undefined) data.trackLampsVisible = body.trackLampsVisible
     if (body.recessedLampColor !== undefined) data.recessedLampColor = body.recessedLampColor
     if (body.recessedLampIntensity !== undefined)
       data.recessedLampIntensity = body.recessedLampIntensity

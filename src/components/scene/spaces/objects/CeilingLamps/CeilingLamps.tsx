@@ -7,7 +7,6 @@ interface CeilingLampsProps {
 }
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
-const DEFAULT_LAMP_INTENSITY = 4.0 // User-friendly 0-10 range
 
 /**
  * Small ceiling lamps with emissive glow.
@@ -17,19 +16,16 @@ const CeilingLamps: React.FC<CeilingLampsProps> = ({ geometry }) => {
   const lampColor = useSelector(
     (state: RootState) => state.exhibition.ceilingLampColor ?? DEFAULT_LAMP_COLOR,
   )
-  const lampIntensity = useSelector(
-    (state: RootState) => state.exhibition.ceilingLampIntensity ?? DEFAULT_LAMP_INTENSITY,
-  )
 
-  // Scale user-friendly 0-10 to actual emissive intensity (0-500 range)
-  const emissiveIntensity = lampIntensity * 50
+  const bulbEmissiveIntensity = 2
 
   return (
-    <mesh key={`lamps-${lampColor}-${emissiveIntensity}`} name="rectlamp0" geometry={geometry}>
+    <mesh key={`lamps-${lampColor}-${bulbEmissiveIntensity}`} name="rectlamp0" geometry={geometry}>
       <meshStandardMaterial
-        color={lampColor}
+        color="#000000"
         emissive={lampColor}
-        emissiveIntensity={emissiveIntensity}
+        emissiveIntensity={bulbEmissiveIntensity}
+        toneMapped={false}
         side={DoubleSide}
       />
     </mesh>

@@ -58,12 +58,12 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   const { ambientColor, scale } = useAmbientLight()
 
   // Load external baked textures
-  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWallw.jpg')
-  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingw.jpg')
+  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWallu.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingu.jpg')
 
   // Configure textures
   useMemo(() => {
-    wallTexture.colorSpace = SRGBColorSpace
+    wallTexture.colorSpace = SRGBColorSpace // TODO: remove
     wallTexture.flipY = false
     ceilingTexture.colorSpace = SRGBColorSpace
     ceilingTexture.flipY = false

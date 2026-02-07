@@ -11,7 +11,7 @@ interface TrackLampProps {
 }
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
-const DEFAULT_LAMP_INTENSITY = 4.0
+
 const DEFAULT_MATERIAL_COLOR = '#ffffff'
 
 /**
@@ -29,12 +29,14 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const lampColor = useSelector(
     (state: RootState) => state.exhibition.trackLampColor ?? DEFAULT_LAMP_COLOR,
   )
-  const lampIntensity = useSelector(
-    (state: RootState) => state.exhibition.trackLampIntensity ?? DEFAULT_LAMP_INTENSITY,
+  const trackLampsVisible = useSelector(
+    (state: RootState) => state.exhibition.trackLampsVisible ?? true,
   )
-  const emissiveIntensity = lampIntensity * 50
+  const bulbEmissiveIntensity = 2
 
   const lampsArray = useMemo(() => Array.from({ length: count }), [count])
+
+  if (!trackLampsVisible) return null
 
   return (
     <>
@@ -62,14 +64,15 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
             {/* Bulb (emissive) */}
             {bulbNode && (
               <mesh
-                key={`trackLampBulb-${i}-${lampColor}-${emissiveIntensity}`}
+                key={`trackLampBulb-${i}-${lampColor}`}
                 name={`trackLampBulb${i}`}
                 geometry={bulbNode.geometry}
               >
                 <meshStandardMaterial
-                  color={lampColor}
+                  color="#000000"
                   emissive={lampColor}
-                  emissiveIntensity={emissiveIntensity}
+                  emissiveIntensity={bulbEmissiveIntensity}
+                  toneMapped={false}
                   side={DoubleSide}
                 />
               </mesh>

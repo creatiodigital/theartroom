@@ -4,7 +4,7 @@
   width: 300px;
   max-width: 300px;
   height: 100vh;
-  background-color: #f6f6f6;
+  background-color: var(--color-surface-elevated);
   padding: var(--space-5) 0;
   overflow: auto;
 }

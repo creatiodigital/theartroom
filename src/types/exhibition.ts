@@ -24,6 +24,7 @@ export type TExhibition = {
   ceilingLampIntensity?: number
   trackLampColor?: string
   trackLampIntensity?: number
+  trackLampsVisible?: boolean
   recessedLampColor?: string
   recessedLampIntensity?: number
   trackLampMaterialColor?: string
