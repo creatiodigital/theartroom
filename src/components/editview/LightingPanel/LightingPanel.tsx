@@ -16,6 +16,11 @@ import {
   setSkylightIntensity,
   setCeilingLampColor,
   setCeilingLampIntensity,
+  setTrackLampColor,
+  setTrackLampIntensity,
+  setRecessedLampColor,
+  setRecessedLampIntensity,
+  setTrackLampMaterialColor,
   setWindowLightColor,
   setWindowLightIntensity,
 } from '@/redux/slices/exhibitionSlice'
@@ -30,6 +35,11 @@ const DEFAULT_SKYLIGHT_COLOR = '#ffffff'
 const DEFAULT_SKYLIGHT_INTENSITY = 4.0
 const DEFAULT_LAMP_COLOR = '#ffffff'
 const DEFAULT_LAMP_INTENSITY = 4.0
+const DEFAULT_TRACK_LAMP_COLOR = '#ffffff'
+const DEFAULT_TRACK_LAMP_INTENSITY = 4.0
+const DEFAULT_RECESSED_LAMP_COLOR = '#ffffff'
+const DEFAULT_RECESSED_LAMP_INTENSITY = 4.0
+const DEFAULT_TRACK_LAMP_MATERIAL_COLOR = '#ffffff'
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
 
@@ -59,6 +69,21 @@ const LightingPanel = () => {
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.ceilingLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
+  const trackLampColor = useSelector(
+    (state: RootState) => state.exhibition.trackLampColor ?? DEFAULT_TRACK_LAMP_COLOR,
+  )
+  const trackLampIntensity = useSelector(
+    (state: RootState) => state.exhibition.trackLampIntensity ?? DEFAULT_TRACK_LAMP_INTENSITY,
+  )
+  const recessedLampColor = useSelector(
+    (state: RootState) => state.exhibition.recessedLampColor ?? DEFAULT_RECESSED_LAMP_COLOR,
+  )
+  const recessedLampIntensity = useSelector(
+    (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_RECESSED_LAMP_INTENSITY,
+  )
+  const trackLampMaterialColor = useSelector(
+    (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_TRACK_LAMP_MATERIAL_COLOR,
+  )
   const windowColor = useSelector(
     (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_COLOR,
   )
@@ -70,6 +95,8 @@ const LightingPanel = () => {
   const spaceFeatures = getSpaceFeatures(spaceId)
   const hasSkylight = spaceFeatures.hasSkylight
   const hasLamps = spaceFeatures.hasLamps
+  const hasTrackLamps = spaceFeatures.hasTrackLamps
+  const hasRecessedLamps = spaceFeatures.hasRecessedLamps
   const hasWindows = spaceFeatures.hasWindows
 
   // Ambient light handlers
@@ -87,6 +114,18 @@ const LightingPanel = () => {
   // Ceiling lamp handlers
   const handleLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setCeilingLampIntensity(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
+  // Track lamp handlers
+  const handleTrackLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setTrackLampIntensity(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
+  // Recessed lamp handlers
+  const handleRecessedLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setRecessedLampIntensity(parseFloat(e.target.value)))
     setSaved(false)
   }
 
@@ -111,6 +150,11 @@ const LightingPanel = () => {
           skylightIntensity,
           ceilingLampColor: lampColor,
           ceilingLampIntensity: lampIntensity,
+          trackLampColor,
+          trackLampIntensity,
+          recessedLampColor,
+          recessedLampIntensity,
+          trackLampMaterialColor,
           windowLightColor: windowColor,
           windowLightIntensity: windowIntensity,
           // Note: floorReflectiveness is in FloorPanel
@@ -225,6 +269,89 @@ const LightingPanel = () => {
               value={lampIntensity}
               onChange={handleLampIntensityChange}
               className={styles.slider}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Track Lamps Section - only for spaces with track lamps */}
+      {hasTrackLamps && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Track Lamps
+          </Text>
+          
+          <div className={styles.field}>
+            <label className={styles.label}>Color</label>
+            <ColorPicker
+              textColor={trackLampColor}
+              onColorSelect={(color) => { dispatch(setTrackLampColor(color)); setSaved(false) }}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Intensity</label>
+              <span className={styles.sliderValue}>{trackLampIntensity.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="0.1"
+              value={trackLampIntensity}
+              onChange={handleTrackLampIntensityChange}
+              className={styles.slider}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Recessed Lamps Section - only for spaces with recessed lamps */}
+      {hasRecessedLamps && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Recessed Lamps
+          </Text>
+          
+          <div className={styles.field}>
+            <label className={styles.label}>Color</label>
+            <ColorPicker
+              textColor={recessedLampColor}
+              onColorSelect={(color) => { dispatch(setRecessedLampColor(color)); setSaved(false) }}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Intensity</label>
+              <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="0.1"
+              value={recessedLampIntensity}
+              onChange={handleRecessedLampIntensityChange}
+              className={styles.slider}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Track Lamp Material Section - color only, for arm/body */}
+      {hasTrackLamps && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Track Lamp Material
+          </Text>
+          
+          <div className={styles.field}>
+            <label className={styles.label}>Color</label>
+            <ColorPicker
+              textColor={trackLampMaterialColor}
+              onColorSelect={(color) => { dispatch(setTrackLampMaterialColor(color)); setSaved(false) }}
             />
           </div>
         </div>

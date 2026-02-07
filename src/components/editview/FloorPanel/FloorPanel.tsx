@@ -15,6 +15,7 @@ import {
   setFloorTextureOffsetY,
   setFloorTemperature,
   setFloorNormalScale,
+  setFloorRotation,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -27,6 +28,7 @@ const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
   { value: 'wood', label: 'Wood' },
   { value: 'marble', label: 'Marble' },
+  { value: 'chevron', label: 'Chevron' },
   { value: 'parquet', label: 'Parquet' },
 ] as const
 
@@ -67,8 +69,12 @@ const FloorPanel = () => {
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
   )
 
+  const floorRotation = useSelector(
+    (state: RootState) => state.exhibition.floorRotation ?? 0,
+  )
+
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood' | 'marble' | 'parquet'))
+    dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'))
     setSaved(false)
   }
 
@@ -104,6 +110,11 @@ const FloorPanel = () => {
     setSaved(false)
   }
 
+  const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setFloorRotation(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -117,6 +128,7 @@ const FloorPanel = () => {
           floorTextureScale,
           floorTextureOffsetX,
           floorTextureOffsetY,
+          floorRotation,
           floorTemperature,
           floorNormalScale,
           floorReflectiveness,
@@ -205,6 +217,22 @@ const FloorPanel = () => {
             className={styles.slider}
           />
         </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Floor Rotation</label>
+            <span className={styles.sliderValue}>{floorRotation.toFixed(0)}°</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value={floorRotation}
+            onChange={handleRotationChange}
+            className={styles.slider}
+          />
+        </div>
       </div>
 
       <div className={styles.section}>
@@ -235,9 +263,9 @@ const FloorPanel = () => {
           </div>
           <input
             type="range"
-            min="0.1"
-            max="2"
-            step="0.05"
+            min="0"
+            max="5"
+            step="0.1"
             value={floorNormalScale}
             onChange={handleNormalScaleChange}
             className={styles.slider}

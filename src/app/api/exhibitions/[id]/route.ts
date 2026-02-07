@@ -21,6 +21,11 @@ type ExhibitionUpdateBody = {
   skylightIntensity?: number
   ceilingLampColor?: string
   ceilingLampIntensity?: number
+  trackLampColor?: string
+  trackLampIntensity?: number
+  recessedLampColor?: string
+  recessedLampIntensity?: number
+  trackLampMaterialColor?: string
   windowLightColor?: string
   windowLightIntensity?: number
   floorReflectiveness?: number
@@ -30,6 +35,7 @@ type ExhibitionUpdateBody = {
   floorTextureOffsetY?: number
   floorTemperature?: number
   floorNormalScale?: number
+  floorRotation?: number
   // Camera settings
   cameraFOV?: number
   cameraElevation?: number
@@ -89,6 +95,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.ceilingLampColor !== undefined) data.ceilingLampColor = body.ceilingLampColor
     if (body.ceilingLampIntensity !== undefined)
       data.ceilingLampIntensity = body.ceilingLampIntensity
+    if (body.trackLampColor !== undefined) data.trackLampColor = body.trackLampColor
+    if (body.trackLampIntensity !== undefined)
+      data.trackLampIntensity = body.trackLampIntensity
+    if (body.recessedLampColor !== undefined) data.recessedLampColor = body.recessedLampColor
+    if (body.recessedLampIntensity !== undefined)
+      data.recessedLampIntensity = body.recessedLampIntensity
+    if (body.trackLampMaterialColor !== undefined) data.trackLampMaterialColor = body.trackLampMaterialColor
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
@@ -105,8 +118,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.floorTemperature = Math.max(-1, Math.min(1, body.floorTemperature))
     }
     if (body.floorNormalScale !== undefined) {
-      // Clamp normal scale between 0.1 and 2.0
-      data.floorNormalScale = Math.max(0.1, Math.min(2.0, body.floorNormalScale))
+      // Clamp normal scale between 0 and 5.0
+      data.floorNormalScale = Math.max(0, Math.min(5.0, body.floorNormalScale))
+    }
+    if (body.floorRotation !== undefined) {
+      // Clamp rotation between 0 and 360 degrees
+      data.floorRotation = ((body.floorRotation % 360) + 360) % 360
     }
     // Camera settings
     if (body.cameraFOV !== undefined) {

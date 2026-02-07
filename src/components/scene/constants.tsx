@@ -50,7 +50,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   },
   paris: {
     displayName: 'Paris',
-    gltfPath: '/assets/spaces/paris/parisx1.glb?v=6',
+    gltfPath: '/assets/spaces/paris/paris7x.glb',
     thumbnailUrl: '/assets/thumbnails/paris.jpg',
     refs: {
       walls: 1,

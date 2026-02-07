@@ -97,6 +97,11 @@ export const ExhibitionEditPage = ({
         skylightIntensity: exhibition.skylightIntensity ?? undefined,
         ceilingLampColor: exhibition.ceilingLampColor ?? undefined,
         ceilingLampIntensity: exhibition.ceilingLampIntensity ?? undefined,
+        trackLampColor: exhibition.trackLampColor ?? undefined,
+        trackLampIntensity: exhibition.trackLampIntensity ?? undefined,
+        recessedLampColor: exhibition.recessedLampColor ?? undefined,
+        recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,
+        trackLampMaterialColor: exhibition.trackLampMaterialColor ?? undefined,
         windowLightColor: exhibition.windowLightColor ?? undefined,
         windowLightIntensity: exhibition.windowLightIntensity ?? undefined,
         // Floor customization

@@ -94,6 +94,26 @@ const exhibitionSlice = createSlice({
       state.ceilingLampIntensity = action.payload
     },
 
+    setTrackLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.trackLampColor = action.payload
+    },
+
+    setTrackLampIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.trackLampIntensity = action.payload
+    },
+
+    setRecessedLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.recessedLampColor = action.payload
+    },
+
+    setRecessedLampIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.recessedLampIntensity = action.payload
+    },
+
+    setTrackLampMaterialColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.trackLampMaterialColor = action.payload
+    },
+
     setWindowLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.windowLightColor = action.payload
     },
@@ -106,7 +126,7 @@ const exhibitionSlice = createSlice({
       state.floorReflectiveness = action.payload
     },
 
-    setFloorMaterial: (state: TExhibitionWithHistory, action: PayloadAction<'concrete' | 'wood' | 'marble' | 'parquet'>) => {
+    setFloorMaterial: (state: TExhibitionWithHistory, action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'>) => {
       state.floorMaterial = action.payload
     },
 
@@ -129,8 +149,13 @@ const exhibitionSlice = createSlice({
     },
 
     setFloorNormalScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp normal scale between 0.1 and 2.0
-      state.floorNormalScale = Math.max(0.1, Math.min(2.0, action.payload))
+      // Clamp normal scale between 0 and 5.0
+      state.floorNormalScale = Math.max(0, Math.min(5.0, action.payload))
+    },
+
+    setFloorRotation: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      // Normalize rotation to 0-360 range
+      state.floorRotation = ((action.payload % 360) + 360) % 360
     },
 
     setCameraFOV: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
@@ -219,6 +244,11 @@ export const {
   setSkylightIntensity,
   setCeilingLampColor,
   setCeilingLampIntensity,
+  setTrackLampColor,
+  setTrackLampIntensity,
+  setRecessedLampColor,
+  setRecessedLampIntensity,
+  setTrackLampMaterialColor,
   setWindowLightColor,
   setWindowLightIntensity,
   setFloorReflectiveness,
@@ -228,6 +258,7 @@ export const {
   setFloorTextureOffsetY,
   setFloorTemperature,
   setFloorNormalScale,
+  setFloorRotation,
   setCameraFOV,
   setCameraElevation,
   snapshotExhibition,

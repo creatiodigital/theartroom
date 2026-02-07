@@ -11,7 +11,10 @@ import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/Reflect
 import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 import { Radiator } from '@/components/scene/spaces/objects/Radiator'
-import { Sockets } from '@/components/scene/spaces/objects/Sockets'
+import { RecessedLamp } from '@/components/scene/spaces/objects/RecessedLamp'
+import { SingleSocket } from '@/components/scene/spaces/objects/SingleSocket'
+import { Switch } from '@/components/scene/spaces/objects/Switch'
+import { TrackLamp } from '@/components/scene/spaces/objects/TrackLamp'
 import { Wall } from '@/components/scene/spaces/objects/Wall'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
 import { useAmbientLight } from '@/hooks/useAmbientLight'
@@ -45,7 +48,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   glassRefs,
   ...props
 }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/parisx1.glb?v=6') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris7x.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -55,8 +58,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   const { ambientColor, scale } = useAmbientLight()
 
   // Load external baked textures
-  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWallX.jpg')
-  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingX.jpg')
+  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWallw.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingw.jpg')
 
   // Configure textures
   useMemo(() => {
@@ -153,8 +156,17 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
       {/* Radiator */}
       <Radiator nodes={nodes} />
 
-      {/* Sockets */}
-      <Sockets nodes={nodes} socketCount={4} screwCount={4} />
+      {/* Track Lamps */}
+      <TrackLamp nodes={nodes} count={14} />
+
+      {/* Recessed Lamps */}
+      <RecessedLamp nodes={nodes} count={6} />
+
+      {/* Single Sockets */}
+      <SingleSocket nodes={nodes} count={2} />
+
+      {/* Switches */}
+      <Switch nodes={nodes} count={2} />
 
       {/* Placeholders */}
       {isPlaceholdersShown &&
