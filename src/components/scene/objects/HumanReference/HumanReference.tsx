@@ -9,6 +9,9 @@ const HUMAN_MODEL_PATH = '/assets/human.glb'
 
 const HumanReference = () => {
   const isHumanVisible = useSelector((state: RootState) => state.scene.isHumanVisible)
+  const humanPositionX = useSelector((state: RootState) => state.scene.humanPositionX)
+  const humanPositionZ = useSelector((state: RootState) => state.scene.humanPositionZ)
+  const humanRotationY = useSelector((state: RootState) => state.scene.humanRotationY)
   const { scene } = useGLTF(HUMAN_MODEL_PATH)
 
   if (!isHumanVisible) return null
@@ -16,7 +19,8 @@ const HumanReference = () => {
   return (
     <primitive
       object={scene.clone()}
-      position={[0, 0, 0]}
+      position={[humanPositionX, 0, humanPositionZ]}
+      rotation={[0, (humanRotationY * Math.PI) / 180, 0]}
       scale={1}
     />
   )

@@ -1,6 +1,5 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
@@ -12,9 +11,10 @@ import {
   hideFloorPanel,
   showCameraPanel,
   hideCameraPanel,
+  showHumanPanel,
+  hideHumanPanel,
 } from '@/redux/slices/dashboardSlice'
-import { setMainTitle } from '@/redux/slices/exhibitionSlice'
-import { hidePlaceholders, showPlaceholders, showHuman, hideHuman } from '@/redux/slices/sceneSlice'
+import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
@@ -22,37 +22,12 @@ import styles from './Menu.module.scss'
 
 export const Menu = () => {
   const dispatch = useDispatch()
-  const nameRef = useRef<HTMLSpanElement>(null)
 
-  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
-  const mainTitle = useSelector((state: RootState) => state.exhibition.mainTitle ?? '')
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
-  const isHumanVisible = useSelector((state: RootState) => state.scene.isHumanVisible)
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
   const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
   const isCameraPanelOpen = useSelector((state: RootState) => state.dashboard.isCameraPanelOpen)
-
-  const handleNameBlur = useCallback(async () => {
-    const newName = nameRef.current?.textContent?.trim() || ''
-    if (!newName || newName === mainTitle || !exhibitionId) return
-    dispatch(setMainTitle(newName))
-    try {
-      await fetch(`/api/exhibitions/${exhibitionId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mainTitle: newName }),
-      })
-    } catch (err) {
-      console.error('Failed to save exhibition name:', err)
-    }
-  }, [mainTitle, exhibitionId, dispatch])
-
-  const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      nameRef.current?.blur()
-    }
-  }, [])
+  const isHumanPanelOpen = useSelector((state: RootState) => state.dashboard.isHumanPanelOpen)
 
   const togglePlaceholders = () => {
     if (isPlaceholdersShown) {
@@ -62,11 +37,15 @@ export const Menu = () => {
     }
   }
 
-  const toggleHuman = () => {
-    if (isHumanVisible) {
-      dispatch(hideHuman())
+  const toggleHumanPanel = () => {
+    if (isHumanPanelOpen) {
+      dispatch(hideHumanPanel())
     } else {
-      dispatch(showHuman())
+      // Close other panels first
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      dispatch(showHumanPanel())
     }
   }
 
@@ -77,6 +56,7 @@ export const Menu = () => {
       // Close other panels first
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
       dispatch(showLightingPanel())
     }
   }
@@ -88,6 +68,7 @@ export const Menu = () => {
       // Close other panels first
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
       dispatch(showFloorPanel())
     }
   }
@@ -99,6 +80,7 @@ export const Menu = () => {
       // Close other panels first
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
       dispatch(showCameraPanel())
     }
   }
@@ -111,20 +93,6 @@ export const Menu = () => {
   }
 
   return (
-    <>
-    <div className={styles.nameBar}>
-      <span
-        ref={nameRef}
-        className={styles.editableName}
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={handleNameBlur}
-        onKeyDown={handleNameKeyDown}
-        spellCheck={false}
-      >
-        {mainTitle}
-      </span>
-    </div>
     <div className={styles.menu}>
       <Tooltip label="Back to Dashboard" placement="right">
         <Button size="regular" variant="secondary" icon="close" onClick={handleClose} />
@@ -137,12 +105,12 @@ export const Menu = () => {
           onClick={() => togglePlaceholders()}
         />
       </Tooltip>
-      <Tooltip label={isHumanVisible ? 'Hide Human Reference' : 'Show Human Reference'} placement="right">
+      <Tooltip label="Human reference" placement="right">
         <Button 
           size="regular" 
           variant="secondary"
           icon="human-standing"
-          onClick={() => toggleHuman()}
+          onClick={toggleHumanPanel}
         />
       </Tooltip>
       <Tooltip label="Lighting controls" placement="right">
@@ -155,7 +123,6 @@ export const Menu = () => {
         <Button size="regular" variant="secondary" icon="camera" onClick={toggleCameraPanel} />
       </Tooltip>
     </div>
-    </>
   )
 }
 

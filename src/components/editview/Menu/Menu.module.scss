@@ -1,41 +1,5 @@
 @use '@/styles/mixins' as *;
 
-.nameBar {
-  position: fixed;
-  top: var(--space-5);
-  left: 80px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-}
-
-.editableName {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-black);
-  background: rgba(255, 255, 255, 0.9);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  outline: none;
-  cursor: text;
-  max-width: 300px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: var(--color-border-default);
-  }
-
-  &:focus {
-    border-color: var(--color-gray-80);
-    background: rgba(255, 255, 255, 1);
-  }
-}
-
 .menu {
   width: 100%;
   display: flex;
