@@ -22,15 +22,22 @@ export type TExhibition = {
   skylightIntensity?: number
   ceilingLampColor?: string
   ceilingLampIntensity?: number
+  trackLampColor?: string
+  trackLampIntensity?: number
+  trackLampsVisible?: boolean
+  recessedLampColor?: string
+  recessedLampIntensity?: number
+  trackLampMaterialColor?: string
   windowLightColor?: string
   windowLightIntensity?: number
   floorReflectiveness?: number
-  floorMaterial?: 'concrete' | 'wood' | 'marble' | 'parquet'
+  floorMaterial?: 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number
   floorTemperature?: number
   floorNormalScale?: number
+  floorRotation?: number
   // Camera settings
   cameraFOV?: number
   cameraElevation?: number

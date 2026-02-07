@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { MeshReflectorMaterial, useTexture } from '@react-three/drei'
-import { Mesh, RepeatWrapping, SRGBColorSpace } from 'three'
+import { Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
 import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 
@@ -54,10 +54,10 @@ const MATERIAL_CONFIG: Record<
   }
 > = {
   concrete: {
-    diffuse: 'diffuse.png',
-    normal: 'normal.png',
-    roughness: 'roughness.png',
-    metallic: 'metallic.png',
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    roughness: 'roughness.jpg',
+    metallic: 'metallic.jpg',
     ao: null,
   },
   wood: {
@@ -65,7 +65,7 @@ const MATERIAL_CONFIG: Record<
     normal: 'normal.jpg',
     roughness: 'roughness.jpg',
     metallic: null,
-    ao: null,
+    ao: 'ao.jpg',
   },
   marble: {
     diffuse: 'diffuse.jpg',
@@ -73,6 +73,13 @@ const MATERIAL_CONFIG: Record<
     roughness: 'roughness.jpg',
     metallic: null,
     ao: null,
+  },
+  chevron: {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
   },
   parquet: {
     diffuse: 'diffuse.jpg',
@@ -117,6 +124,10 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
   )
 
+  const floorRotation = useSelector(
+    (state: RootState) => state.exhibition.floorRotation ?? 0,
+  )
+
   // Compute temperature-based floor color
   const floorColor = getTemperatureColor(floorTemperature)
 
@@ -145,16 +156,22 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
   // Load PBR textures with correct extensions per material
   const textures = useTexture(texturePaths)
 
-  // Configure texture tiling and offset
+  // Configure texture tiling, offset, and rotation
   useMemo(() => {
+    const rotationRad = (floorRotation * Math.PI) / 180 // Convert degrees to radians
     Object.values(textures).forEach((texture) => {
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
       texture.repeat.set(clampedScale * 10, clampedScale * 10)
       texture.offset.set(floorTextureOffsetX, floorTextureOffsetY)
+      texture.rotation = rotationRad
+      texture.center.set(0.5, 0.5) // Rotate around center
     })
     textures.map.colorSpace = SRGBColorSpace
-  }, [textures, clampedScale, floorTextureOffsetX, floorTextureOffsetY])
+  }, [textures, clampedScale, floorTextureOffsetX, floorTextureOffsetY, floorRotation])
+
+  // Create Vector2 for normalScale (required by Three.js)
+  const normalScaleVec = useMemo(() => new Vector2(floorNormalScale, floorNormalScale), [floorNormalScale])
 
   return (
     <mesh
@@ -186,10 +203,11 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
         />
       ) : (
         <meshStandardMaterial
+          key={`floor-mat-${floorMaterial}`}
           color={floorColor}
           map={textures.map}
           normalMap={textures.normalMap}
-          normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
+          normalScale={normalScaleVec}
           roughnessMap={textures.roughnessMap}
           metalnessMap={textures.metalnessMap}
           aoMap={textures.aoMap}
