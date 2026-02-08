@@ -119,8 +119,8 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
               </mesh>
             )}
 
-            {/* Spotlight pointing downward */}
-            {bulbNode && (
+            {/* Spotlight pointing downward (every other lamp for performance) */}
+            {bulbNode && i % 2 === 0 && (
               <RoundSpotlight
                 position={bulbPos}
                 color={lampColor}
