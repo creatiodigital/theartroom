@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
@@ -95,7 +95,9 @@ export default function LandingContentPage() {
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null)
   const [isNewSlide, setIsNewSlide] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Slide | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Redirect non-admins
   useEffect(() => {
@@ -142,6 +144,61 @@ export default function LandingContentPage() {
   const handleEditSlide = (slide: Slide) => {
     setEditingSlide(slide)
     setIsNewSlide(false)
+  }
+
+  const handleUploadImage = async (file: File, slideId: string) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch(`/api/slides/${slideId}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setEditingSlide((prev) => prev ? { ...prev, imageUrl: data.url } : null)
+      } else {
+        console.error('Upload failed:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !editingSlide) return
+
+    // For new slides, save first to get an ID
+    if (isNewSlide && !editingSlide.id) {
+      setSaving(true)
+      try {
+        const response = await fetch('/api/slides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editingSlide),
+        })
+        const savedSlide = await response.json()
+        setEditingSlide(savedSlide)
+        setIsNewSlide(false)
+        await handleUploadImage(file, savedSlide.id)
+        await fetchSlides()
+      } catch (error) {
+        console.error('Error creating slide:', error)
+      } finally {
+        setSaving(false)
+      }
+    } else {
+      await handleUploadImage(file, editingSlide.id)
+    }
+
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleSaveSlide = async () => {
@@ -231,7 +288,7 @@ export default function LandingContentPage() {
       </div>
 
       {slides.length === 0 ? (
-        <Text font="dashboard" as="p" className={styles.empty}>No slides yet. Click "Add Slide" to create one.</Text>
+        <Text font="dashboard" as="p" className={styles.empty}>No slides yet. Click &quot;Add Slide&quot; to create one.</Text>
       ) : (
         <DndContext
           sensors={sensors}
@@ -260,13 +317,26 @@ export default function LandingContentPage() {
             <Text font="dashboard" as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
 
             <div className={styles.section}>
-              <label className={styles.label} htmlFor="imageUrl">Image URL</label>
-              <Input
-                id="imageUrl"
-                size="medium"
-                value={editingSlide.imageUrl}
-                onChange={(e) => updateField('imageUrl', e.target.value)}
+              <label className={styles.label}>Image</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
               />
+              <div
+                className={styles.uploadArea}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? (
+                  <Text font="dashboard" as="p" className={styles.uploadText}>Uploading...</Text>
+                ) : editingSlide.imageUrl ? (
+                  <img src={editingSlide.imageUrl} alt="Slide preview" className={styles.uploadPreview} />
+                ) : (
+                  <Text font="dashboard" as="p" className={styles.uploadText}>Click to upload image</Text>
+                )}
+              </div>
 
               <label className={styles.label} htmlFor="title">Title</label>
               <Input
