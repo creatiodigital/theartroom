@@ -39,6 +39,7 @@ export const useMoveArtwork = (
   const isEditingArtwork = useSelector((state: RootState) => state.dashboard.isEditingArtwork)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
+  const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
   const dispatch = useDispatch()
 
   const isArtworkVisible = artworkGroupIds.length > 1
@@ -116,14 +117,16 @@ export const useMoveArtwork = (
 
         // Handle horizontal alignments (can be multiple)
         if (alignment.horizontal.length > 0) {
-          // Use first alignment for snapping
-          const firstH = alignment.horizontal[0]
-          if (firstH === 'top') {
-            snapY = otherArtwork.posY2d
-          } else if (firstH === 'bottom') {
-            snapY = otherArtwork.posY2d + otherArtwork.height2d - artwork.height2d
-          } else if (firstH === 'center-horizontal') {
-            snapY = otherArtwork.posY2d + otherArtwork.height2d / 2 - artwork.height2d / 2
+          // Use first alignment for snapping (only if snap enabled)
+          if (snapEnabled) {
+            const firstH = alignment.horizontal[0]
+            if (firstH === 'top') {
+              snapY = otherArtwork.posY2d
+            } else if (firstH === 'bottom') {
+              snapY = otherArtwork.posY2d + otherArtwork.height2d - artwork.height2d
+            } else if (firstH === 'center-horizontal') {
+              snapY = otherArtwork.posY2d + otherArtwork.height2d / 2 - artwork.height2d / 2
+            }
           }
 
           // Add all matching alignments to pairs
@@ -140,14 +143,16 @@ export const useMoveArtwork = (
 
         // Handle vertical alignments (can be multiple)
         if (alignment.vertical.length > 0) {
-          // Use first alignment for snapping
-          const firstV = alignment.vertical[0]
-          if (firstV === 'left') {
-            snapX = otherArtwork.posX2d
-          } else if (firstV === 'right') {
-            snapX = otherArtwork.posX2d + otherArtwork.width2d - artwork.width2d
-          } else if (firstV === 'center-vertical') {
-            snapX = otherArtwork.posX2d + otherArtwork.width2d / 2 - artwork.width2d / 2
+          // Use first alignment for snapping (only if snap enabled)
+          if (snapEnabled) {
+            const firstV = alignment.vertical[0]
+            if (firstV === 'left') {
+              snapX = otherArtwork.posX2d
+            } else if (firstV === 'right') {
+              snapX = otherArtwork.posX2d + otherArtwork.width2d - artwork.width2d
+            } else if (firstV === 'center-vertical') {
+              snapX = otherArtwork.posX2d + otherArtwork.width2d / 2 - artwork.width2d / 2
+            }
           }
 
           // Add all matching alignments to pairs
@@ -172,7 +177,9 @@ export const useMoveArtwork = (
       const artworkCenterX = snapX + artwork.width2d / 2
       const wallCenterX = wallWidth2d / 2
       if (Math.abs(artworkCenterX - wallCenterX) <= tolerance) {
-        snapX = wallCenterX - artwork.width2d / 2
+        if (snapEnabled) {
+          snapX = wallCenterX - artwork.width2d / 2
+        }
         alignedPairs.push({
           from: draggedArtworkId,
           to: '__wall__',
@@ -184,7 +191,9 @@ export const useMoveArtwork = (
       const artworkCenterY = snapY + artwork.height2d / 2
       const wallCenterY = wallHeight2d / 2
       if (Math.abs(artworkCenterY - wallCenterY) <= tolerance) {
-        snapY = wallCenterY - artwork.height2d / 2
+        if (snapEnabled) {
+          snapY = wallCenterY - artwork.height2d / 2
+        }
         alignedPairs.push({
           from: draggedArtworkId,
           to: '__wall__',
@@ -223,6 +232,7 @@ export const useMoveArtwork = (
       currentWallId,
       allExhibitionArtworkIds,
       exhibitionArtworksById,
+      snapEnabled,
       dispatch,
     ],
   )

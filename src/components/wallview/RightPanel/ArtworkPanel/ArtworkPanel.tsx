@@ -13,7 +13,7 @@ import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
-import { setSizeLocked } from '@/redux/slices/wallViewSlice'
+import { setSizeLocked, setSnapEnabled } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
 
@@ -24,6 +24,7 @@ import styles from '../RightPanel.module.scss'
 const ArtworkPanel = () => {
   const dispatch = useDispatch()
   const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
+  const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
@@ -178,6 +179,54 @@ const ArtworkPanel = () => {
         </Text>
       </div>
 
+      {/* SIZE Section */}
+      <div className={styles.section}>
+        
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Dimensions (m)
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <NumberInput
+              value={width / 100}
+              icon="moveHorizontal"
+              label="horizontal"
+              min={0.1}
+              max={50}
+              onChange={handleLockedWidthChange}
+            />
+          </div>
+          <div className={styles.item}>
+            <NumberInput
+              value={height / 100}
+              icon="moveVertical"
+              label="vertical"
+              min={0.1}
+              max={50}
+              onChange={handleLockedHeightChange}
+            />
+          </div>
+        </div>
+        {showProportionsButton && (
+          <div style={{ marginTop: 'var(--space-2)' }}>
+            <Button
+              font="dashboard"
+              fullWidth
+              variant="secondary"
+              label="Use image proportions"
+              onClick={handleUseImageProportions}
+            />
+          </div>
+        )}
+        <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
+          <Checkbox
+            checked={sizeLocked}
+            onChange={(e) => dispatch(setSizeLocked(e.target.checked))}
+            label="Lock proportions when resizing"
+          />
+        </div>
+      </div>
+
       {/* POSITION Section */}
       <div className={styles.section}>
         
@@ -258,52 +307,11 @@ const ArtworkPanel = () => {
             />
           </div>
         </div>
-      </div>
-
-      {/* SIZE Section */}
-      <div className={styles.section}>
-        
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Dimensions (m)
-        </Text>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <NumberInput
-              value={width / 100}
-              icon="moveHorizontal"
-              label="horizontal"
-              min={0.1}
-              max={50}
-              onChange={handleLockedWidthChange}
-            />
-          </div>
-          <div className={styles.item}>
-            <NumberInput
-              value={height / 100}
-              icon="moveVertical"
-              label="vertical"
-              min={0.1}
-              max={50}
-              onChange={handleLockedHeightChange}
-            />
-          </div>
-        </div>
-        {showProportionsButton && (
-          <div style={{ marginTop: 'var(--space-2)' }}>
-            <Button
-              font="dashboard"
-              fullWidth
-              variant="secondary"
-              label="Use image proportions"
-              onClick={handleUseImageProportions}
-            />
-          </div>
-        )}
         <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
           <Checkbox
-            checked={sizeLocked}
-            onChange={(e) => dispatch(setSizeLocked(e.target.checked))}
-            label="Lock proportions when resizing"
+            checked={snapEnabled}
+            onChange={(e) => dispatch(setSnapEnabled(e.target.checked))}
+            label="Snap Align"
           />
         </div>
       </div>

@@ -26,7 +26,7 @@ export const createNewArtwork = ({
     passepartoutColor: '#ffffff',
     passepartoutSize: { label: '5', value: 5 },
     passepartoutThickness: { label: '0.3', value: 0.3 },
-    showSupport: true,
+    showSupport: false,
     supportThickness: { label: '2', value: 2 },
     supportColor: '#ffffff',
     textContent: '',
@@ -41,5 +41,6 @@ export const createNewArtwork = ({
     textVerticalAlign: 'top',
     featured: false,
     hiddenFromExhibition: false,
+    hideShadow: false,
   }
 }

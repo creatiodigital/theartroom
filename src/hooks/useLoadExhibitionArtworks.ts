@@ -48,6 +48,7 @@ type ExhibitionArtworkResponse = {
   supportThickness: number
   supportColor: string
   showSupport: boolean
+  hideShadow: boolean
   showArtworkInformation: boolean
   // Text styling (per-exhibition)
   fontFamily: string
@@ -165,7 +166,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
               value: ea.supportThickness ?? 2,
             },
             supportColor: ea.supportColor ?? '#ffffff',
-            showSupport: ea.showSupport ?? true,
+            showSupport: ea.showSupport ?? false,
+            hideShadow: ea.hideShadow ?? false,
             showArtworkInformation: ea.showArtworkInformation,
             // Text styling from ExhibitionArtwork (per-exhibition)
             fontFamily: {

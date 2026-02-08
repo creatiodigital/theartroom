@@ -12,6 +12,7 @@ import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 import { Radiator } from '@/components/scene/spaces/objects/Radiator'
 import { RecessedLamp } from '@/components/scene/spaces/objects/RecessedLamp'
+import RoundLamp from '@/components/scene/spaces/objects/RoundLamp/RoundLamp'
 import { SingleSocket } from '@/components/scene/spaces/objects/SingleSocket'
 import { Switch } from '@/components/scene/spaces/objects/Switch'
 import { TrackLamp } from '@/components/scene/spaces/objects/TrackLamp'
@@ -48,10 +49,13 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   glassRefs,
   ...props
 }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/paris8x.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris9.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
+  const ceilingLightMode = useSelector(
+    (state: RootState) => state.exhibition.ceilingLightMode ?? 'track-plafond',
+  )
 
 
   // Ambient light for wall/ceiling tinting
@@ -59,7 +63,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
 
   // Load external baked textures
   const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWall8.jpg')
-  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeilingu.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeiling9.jpg')
 
   // Configure textures
   useMemo(() => {
@@ -156,11 +160,20 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
       {/* Radiator */}
       <Radiator nodes={nodes} />
 
-      {/* Track Lamps */}
-      <TrackLamp nodes={nodes} count={14} />
+      {/* Track Lamps - visible in 'track' and 'track-plafond' modes */}
+      {(ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
+        <TrackLamp nodes={nodes} count={14} />
+      )}
 
-      {/* Recessed Lamps */}
-      <RecessedLamp nodes={nodes} count={6} />
+      {/* Recessed Lamps - visible only in 'track-plafond' mode */}
+      {ceilingLightMode === 'track-plafond' && (
+        <RecessedLamp nodes={nodes} count={6} />
+      )}
+
+      {/* Round Lamps - visible only in 'plafond' mode */}
+      {ceilingLightMode === 'plafond' && (
+        <RoundLamp nodes={nodes} count={15} />
+      )}
 
       {/* Single Sockets */}
       <SingleSocket nodes={nodes} count={2} />

@@ -11,16 +11,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const url = searchParams.get('url')
+    const excludeId = searchParams.get('excludeId')
 
     if (!userId || !url) {
       return NextResponse.json({ error: 'userId and url are required' }, { status: 400 })
     }
 
     // Check if an exhibition with this URL already exists for this user
+    // Optionally exclude a specific exhibition (for edit scenarios)
     const existing = await prisma.exhibition.findFirst({
       where: {
         userId,
         url,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
       },
       select: { id: true },
     })

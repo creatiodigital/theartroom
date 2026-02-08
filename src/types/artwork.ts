@@ -64,4 +64,5 @@ export type TArtwork = {
   textPadding?: TOption<number>
   featured?: boolean
   hiddenFromExhibition?: boolean
+  hideShadow?: boolean
 }

@@ -29,14 +29,9 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const lampColor = useSelector(
     (state: RootState) => state.exhibition.trackLampColor ?? DEFAULT_LAMP_COLOR,
   )
-  const trackLampsVisible = useSelector(
-    (state: RootState) => state.exhibition.trackLampsVisible ?? true,
-  )
   const bulbEmissiveIntensity = 2
 
   const lampsArray = useMemo(() => Array.from({ length: count }), [count])
-
-  if (!trackLampsVisible) return null
 
   return (
     <>

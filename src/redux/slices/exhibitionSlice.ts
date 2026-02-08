@@ -166,6 +166,14 @@ const exhibitionSlice = createSlice({
       state.floorRotation = ((action.payload % 360) + 360) % 360
     },
 
+    setHdriEnvironment: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.hdriEnvironment = action.payload
+    },
+
+    setCeilingLightMode: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.ceilingLightMode = action.payload
+    },
+
     setCameraFOV: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
       // Clamp FOV between 40 and 60
       state.cameraFOV = Math.max(40, Math.min(60, action.payload))
@@ -269,6 +277,8 @@ export const {
   setFloorTemperature,
   setFloorNormalScale,
   setFloorRotation,
+  setHdriEnvironment,
+  setCeilingLightMode,
   setCameraFOV,
   setCameraElevation,
   snapshotExhibition,
