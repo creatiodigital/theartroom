@@ -82,6 +82,7 @@ model Exhibition {
   handler          String
   mainTitle        String
   description      String?
+  shortDescription String?
   url              String    @unique
   thumbnailUrl     String?
   bannerUrl        String?

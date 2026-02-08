@@ -19,6 +19,7 @@ type Exhibition = {
   id: string
   mainTitle: string
   description: string | null
+  shortDescription: string | null
   featuredImageUrl: string | null
   url: string
   userId: string
@@ -39,6 +40,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [mainTitle, setMainTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [shortDescription, setShortDescription] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'private'>('private')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -64,6 +66,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         setExhibition(data)
         setMainTitle(data.mainTitle || '')
         setDescription(data.description || '')
+        setShortDescription(data.shortDescription || '')
         setVisibility(data.visibility || 'private')
       } catch {
         setError('Failed to load exhibition')
@@ -149,7 +152,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, visibility }),
+        body: JSON.stringify({ description, shortDescription, visibility }),
       })
 
       if (!response.ok) {
@@ -165,7 +168,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     } finally {
       setSaving(false)
     }
-  }, [exhibition, description, visibility])
+  }, [exhibition, description, shortDescription, visibility])
 
   const handleImageUpload = useCallback(
     async (file: File) => {
@@ -317,6 +320,24 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           aspectRatio="16 / 10"
         />
         <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
+      </div>
+
+      <div className={dashboardStyles.section}>
+        <h3 className={dashboardStyles.sectionTitle}>Short Description</h3>
+        <p className={dashboardStyles.sectionDescription}>
+          A brief summary shown on exhibition listings. Max 400 characters.
+        </p>
+        <textarea
+          value={shortDescription}
+          onChange={(e) => {
+            if (e.target.value.length <= 400) setShortDescription(e.target.value)
+          }}
+          placeholder="Write a short description..."
+          className={styles.shortDescriptionInput}
+          rows={3}
+          maxLength={400}
+        />
+        <span className={dashboardStyles.hint}>{shortDescription.length}/400 characters</span>
       </div>
 
       <div className={dashboardStyles.section}>

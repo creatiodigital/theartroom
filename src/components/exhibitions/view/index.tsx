@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, X } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+import Monogram from '@/icons/monogram.svg'
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { Scene } from '@/components/scene'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
@@ -95,7 +96,7 @@ const MobileOverlay = () => {
   )
 }
 
-const NAVIGATION_HELP_STORAGE_KEY = 'lumen-gallery:navigation-help-dismissed'
+const NAVIGATION_HELP_STORAGE_KEY = 'the-art-room:navigation-help-dismissed'
 
 interface NavigationHelpModalProps {
   hidden?: boolean
@@ -151,8 +152,17 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
             <button className={styles.infoPanelClose} onClick={handleClose} aria-label="Close">
               <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
             </button>
-            <Text as="h3" size="lg" font="sans" className={styles.infoPanelTitle}>
-              How to Navigate
+            <div className={styles.welcomeSection}>
+              <Monogram className={styles.welcomeMonogram} />
+              <Text as="h2" size="lg" font="sans" className={styles.welcomeTitle}>
+                Welcome visitor
+              </Text>
+              <Text as="p" size="sm" className={styles.welcomeText}>
+                You are about to enter an immersive virtual exhibition. Use the controls below to explore the space freely.
+              </Text>
+            </div>
+            <Text as="h3" size="md" font="sans" className={styles.infoPanelTitle}>
+              Controls
             </Text>
             <div className={styles.infoPanelContent}>
               <div className={styles.infoItem}>
@@ -209,7 +219,7 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                   </Text>
                 </span>
                 <Text as="span" size="sm">
-                  Auto focus
+                  Auto focus on any artwork
                 </Text>
               </div>
               <div className={styles.infoItem}>
@@ -220,10 +230,13 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                   </Text>
                 </span>
                 <Text as="span" size="sm">
-                  Artwork details
+                  Show artwork details
                 </Text>
               </div>
             </div>
+            <Text as="p" size="xs" className={styles.infoHint}>
+              You can reopen this guide anytime by clicking the <Info size={12} strokeWidth={ICON_STROKE_WIDTH} style={{ verticalAlign: 'middle' }} /> icon in the bottom-right corner.
+            </Text>
             {!alreadyDismissed && (
               <Button
                 variant="primary"

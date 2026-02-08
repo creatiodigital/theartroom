@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
@@ -15,6 +16,8 @@ type ExhibitionWithUser = {
   id: string
   mainTitle: string
   url: string
+  featuredImageUrl: string | null
+  shortDescription: string | null
   user: { name: string; lastName: string; handler: string }
 }
 
@@ -72,23 +75,40 @@ export default async function Home() {
               No current exhibitions at the moment.
             </Text>
           ) : (
-            <ul className={styles.exhibitionList}>
+            <div className={styles.exhibitionGrid}>
               {exhibitions.map((exhibition) => (
-                <li key={exhibition.id} className={styles.exhibitionItem}>
-                  <Link
-                    href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                    className={styles.exhibitionLink}
-                  >
-                    <Text as="span" font="serif" size="xl">
-                      {exhibition.mainTitle}
+                <Link
+                  key={exhibition.id}
+                  href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
+                  className={styles.exhibitionCard}
+                >
+                  <div className={styles.exhibitionImageWrapper}>
+                    {exhibition.featuredImageUrl ? (
+                      <Image
+                        src={exhibition.featuredImageUrl}
+                        alt={exhibition.mainTitle}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className={styles.exhibitionImage}
+                      />
+                    ) : (
+                      <div className={styles.exhibitionImagePlaceholder} />
+                    )}
+                  </div>
+                  <Text as="span" size="xs" className={styles.exhibitionLabel}>
+                    {exhibition.user.name} {exhibition.user.lastName}
+                  </Text>
+                  <Text as="span" font="serif" size="2xl" className={styles.exhibitionTitle}>
+                    {exhibition.mainTitle}
+                  </Text>
+                  {exhibition.shortDescription && (
+                    <Text as="p" size="sm" className={styles.exhibitionDescription}>
+                      {exhibition.shortDescription}
                     </Text>
-                    <Text as="span" font="serif" size="lg" className={styles.exhibitionAuthor}>
-                      {exhibition.user.name} {exhibition.user.lastName}
-                    </Text>
-                  </Link>
-                </li>
+                  )}
+                </Link>
               ))}
-            </ul>
+            </div>
           )}
         </section>
 
