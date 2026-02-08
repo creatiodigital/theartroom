@@ -1,19 +1,61 @@
+@use '@/styles/mixins' as *;
+
+.content {
+  max-width: 600px;
+}
+
 .title {
-    margin-bottom: var(--space-12);
+  margin-bottom: var(--space-6);
 }
 
-.contactInfo {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+.intro {
+  color: var(--color-text-primary);
+  line-height: 1.7;
+  margin-bottom: var(--space-12);
 }
 
-.top {
-    margin-bottom: var(--space-12);
-    a {
-        display: block;
-        &:hover {
-            text-decoration: none;
-        }
-    }
+.section {
+  padding: var(--space-6) 0;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.label {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-regular);
+}
+
+.email {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl-mobile);
+  color: var(--color-text-primary);
+  text-decoration: none;
+
+  @include breakpoint(lg) {
+    font-size: var(--text-2xl);
+  }
+
+  &:hover {
+    text-decoration: none;
+    color: var(--color-brand);
+  }
+}
+
+.value {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+}
+
+.footer {
+  margin-top: var(--space-12);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.note {
+  color: var(--color-text-primary);
+  line-height: 1.7;
 }

@@ -164,7 +164,7 @@
   backdrop-filter: blur(8px);
   border-radius: 8px;
   padding: var(--space-8);
-  max-width: 320px;
+  max-width: 440px;
   width: 90%;
 }
 
@@ -186,8 +186,43 @@
 }
 
 .infoPanelTitle {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.welcomeSection {
+  text-align: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.welcomeMonogram {
+  width: 36px;
+  height: auto;
+  color: var(--color-brand);
+  margin: 0 auto var(--space-4);
+  display: block;
+  overflow: visible;
+}
+
+.welcomeTitle {
+  margin-bottom: var(--space-3);
+}
+
+.welcomeText {
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+.infoHint {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+  line-height: 1.5;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 .infoPanelContent {
