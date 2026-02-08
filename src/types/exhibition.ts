@@ -38,6 +38,9 @@ export type TExhibition = {
   floorTemperature?: number
   floorNormalScale?: number
   floorRotation?: number
+  // HDRI environment
+  hdriEnvironment?: string
+  ceilingLightMode?: string
   // Camera settings
   cameraFOV?: number
   cameraElevation?: number

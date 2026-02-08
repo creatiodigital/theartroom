@@ -44,6 +44,9 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [urlError, setUrlError] = useState('')
+  const [editingName, setEditingName] = useState(false)
+  const [savingName, setSavingName] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
 
@@ -74,6 +77,67 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     }
   }, [exhibitionId])
 
+  const handleSaveName = useCallback(async () => {
+    if (!exhibition || !mainTitle.trim()) return
+
+    const newUrl = slugify(mainTitle)
+    // Skip check if URL hasn't changed
+    if (newUrl !== exhibition.url) {
+      // Check uniqueness
+      setSavingName(true)
+      try {
+        const checkResponse = await fetch(
+          `/api/exhibitions/check-url?userId=${exhibition.userId}&url=${encodeURIComponent(newUrl)}&excludeId=${exhibition.id}`,
+        )
+        const checkData = await checkResponse.json()
+        if (!checkData.available) {
+          setUrlError('An exhibition with this name already exists.')
+          setSavingName(false)
+          return
+        }
+      } catch {
+        // Continue — server-side will catch it
+      }
+    }
+
+    setSavingName(true)
+    setUrlError('')
+
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mainTitle }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        if (response.status === 409) {
+          setUrlError(data.error || 'An exhibition with this name already exists.')
+        } else {
+          setError(data.error || 'Failed to save name')
+        }
+        return
+      }
+
+      // Update local exhibition state with new name/url
+      setExhibition((prev) => prev ? { ...prev, mainTitle, url: slugify(mainTitle) } : prev)
+      setEditingName(false)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch {
+      setError('Failed to save name')
+    } finally {
+      setSavingName(false)
+    }
+  }, [exhibition, mainTitle])
+
+  const handleCancelEditName = useCallback(() => {
+    setMainTitle(exhibition?.mainTitle || '')
+    setUrlError('')
+    setEditingName(false)
+  }, [exhibition])
+
   const handleSave = useCallback(async () => {
     if (!exhibition) return
 
@@ -85,11 +149,13 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mainTitle, description, visibility }),
+        body: JSON.stringify({ description, visibility }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to save')
+        const data = await response.json()
+        setError(data.error || 'Failed to save')
+        return
       }
 
       setSaveSuccess(true)
@@ -99,7 +165,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     } finally {
       setSaving(false)
     }
-  }, [exhibition, mainTitle, description, visibility])
+  }, [exhibition, description, visibility])
 
   const handleImageUpload = useCallback(
     async (file: File) => {
@@ -201,7 +267,37 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           onChange={(e) => setMainTitle(e.target.value)}
           placeholder="Exhibition name"
           className={styles.titleInput}
+          readOnly={!editingName}
+          style={!editingName ? { opacity: 0.6, cursor: 'default', border: 'none' } : undefined}
         />
+        <div style={{ marginTop: 'var(--space-2)', display: 'flex', gap: 'var(--space-2)' }}>
+          {!editingName ? (
+            <Button
+              font="dashboard"
+              variant="secondary"
+              label="Edit Exhibition Name"
+              onClick={() => setEditingName(true)}
+            />
+          ) : (
+            <>
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={savingName ? 'Saving...' : 'Save Name'}
+                onClick={handleSaveName}
+                disabled={savingName || !mainTitle.trim()}
+              />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={handleCancelEditName}
+                disabled={savingName}
+              />
+            </>
+          )}
+        </div>
+        {urlError && <ErrorText>{urlError}</ErrorText>}
         <span className={dashboardStyles.hint}>
           URL: {exhibition.user?.handler || 'artist'}/{slugify(mainTitle) || exhibition.url}
         </span>

@@ -115,6 +115,9 @@ model Exhibition {
   floorTemperature       Float?   @default(0)
   floorNormalScale       Float?   @default(1.0)
   floorRotation          Float?   @default(0)
+  // HDRI environment
+  hdriEnvironment        String?  @default("soil")
+  ceilingLightMode       String?  @default("track-plafond")
   // Camera settings
   cameraFOV              Float?   @default(50)
   cameraElevation        Float?   @default(1.6)
@@ -157,9 +160,12 @@ model ExhibitionArtwork {
   showArtworkInformation Boolean @default(false)
 
   // Support (canvas/panel depth) - rendering depth behind artwork
-  showSupport      Boolean @default(true) // Whether support is visible
+  showSupport      Boolean @default(false) // Whether support is visible
   supportThickness Float   @default(2.0) // Depth in cm (0-10)
   supportColor     String  @default("#ffffff") // Edge color
+
+  // Shadow
+  hideShadow Boolean @default(false) // Whether to hide artwork shadow
 
   // Text styling (per-exhibition customization)
   fontFamily          String  @default("Montserrat")

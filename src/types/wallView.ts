@@ -62,6 +62,7 @@ export type TWallView = {
   isGroupHovered: boolean
   alignedPairs: TAlignmentPair[]
   isGridVisible: boolean
+  snapEnabled: boolean
 }
 
 export type TDirection =

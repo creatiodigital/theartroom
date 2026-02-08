@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
         supportThickness?: number
         supportColor?: string
         showSupport?: boolean
+        hideShadow?: boolean
         showArtworkInformation?: boolean
         // Text styling (per-exhibition)
         fontFamily?: string
@@ -140,7 +141,8 @@ export async function POST(request: NextRequest) {
             passepartoutThickness: pos.passepartoutThickness ?? 0.3,
             supportThickness: pos.supportThickness ?? 2,
             supportColor: pos.supportColor ?? '#ffffff',
-            showSupport: pos.showSupport ?? true,
+            showSupport: pos.showSupport ?? false,
+            hideShadow: pos.hideShadow ?? false,
             showArtworkInformation: pos.showArtworkInformation ?? false,
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
@@ -178,7 +180,8 @@ export async function POST(request: NextRequest) {
             passepartoutThickness: pos.passepartoutThickness ?? 0.3,
             supportThickness: pos.supportThickness ?? 2,
             supportColor: pos.supportColor ?? '#ffffff',
-            showSupport: pos.showSupport ?? true,
+            showSupport: pos.showSupport ?? false,
+            hideShadow: pos.hideShadow ?? false,
             showArtworkInformation: pos.showArtworkInformation ?? false,
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
