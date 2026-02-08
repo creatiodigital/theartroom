@@ -18,12 +18,13 @@ import {
   setCeilingLampIntensity,
   setTrackLampColor,
   setTrackLampIntensity,
-  setTrackLampsVisible,
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,
   setWindowLightColor,
   setWindowLightIntensity,
+  setHdriEnvironment,
+  setCeilingLightMode,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -43,6 +44,17 @@ const DEFAULT_RECESSED_LAMP_INTENSITY = 4.0
 const DEFAULT_TRACK_LAMP_MATERIAL_COLOR = '#ffffff'
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
+
+const HDRI_OPTIONS = [
+  { value: 'soil', label: 'Soil' },
+  { value: 'misty', label: 'Misty' },
+] as const
+
+const CEILING_LIGHT_OPTIONS = [
+  { value: 'track', label: 'Track Lamps' },
+  { value: 'plafond', label: 'Plafond Lamps' },
+  { value: 'track-plafond', label: 'Track Lamps + Plafond Lamps' },
+] as const
 
 const LightingPanel = () => {
   const dispatch = useDispatch()
@@ -82,17 +94,20 @@ const LightingPanel = () => {
   const recessedLampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_RECESSED_LAMP_INTENSITY,
   )
-  const trackLampsVisible = useSelector(
-    (state: RootState) => state.exhibition.trackLampsVisible ?? true,
-  )
   const trackLampMaterialColor = useSelector(
     (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_TRACK_LAMP_MATERIAL_COLOR,
+  )
+  const ceilingLightMode = useSelector(
+    (state: RootState) => state.exhibition.ceilingLightMode ?? 'track-plafond',
   )
   const windowColor = useSelector(
     (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_COLOR,
   )
   const windowIntensity = useSelector(
     (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_INTENSITY,
+  )
+  const hdriEnvironment = useSelector(
+    (state: RootState) => state.exhibition.hdriEnvironment ?? 'soil',
   )
 
   // Get features from space config
@@ -139,6 +154,16 @@ const LightingPanel = () => {
     setSaved(false)
   }
 
+  const handleHdriChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    dispatch(setHdriEnvironment(e.target.value))
+    setSaved(false)
+  }
+
+  const handleCeilingLightModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    dispatch(setCeilingLightMode(e.target.value))
+    setSaved(false)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -156,12 +181,13 @@ const LightingPanel = () => {
           ceilingLampIntensity: lampIntensity,
           trackLampColor,
           trackLampIntensity,
-          trackLampsVisible,
           recessedLampColor,
           recessedLampIntensity,
           trackLampMaterialColor,
           windowLightColor: windowColor,
           windowLightIntensity: windowIntensity,
+          hdriEnvironment,
+          ceilingLightMode,
           // Note: floorReflectiveness is in FloorPanel
         }),
       })
@@ -182,6 +208,27 @@ const LightingPanel = () => {
 
   return (
     <SettingsPanel title="Lighting" onClose={handleClose}>
+      {/* HDRI Environment Section */}
+      <div className={styles.section}>
+        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+          Sky Light
+        </Text>
+        <div className={styles.field}>
+          <label className={styles.label}>Type</label>
+          <select
+            value={hdriEnvironment}
+            onChange={handleHdriChange}
+            className={styles.select}
+          >
+            {HDRI_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Ambient Light Section */}
       <div className={styles.section}>
         <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
@@ -279,22 +326,35 @@ const LightingPanel = () => {
         </div>
       )}
 
-      {/* Track Lamps Section - only for spaces with track lamps */}
+      {/* Ceiling Light Mode Section - only for spaces with track lamps */}
       {hasTrackLamps && (
         <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-              Track Lamps
-            </Text>
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={trackLampsVisible}
-                onChange={(e) => { dispatch(setTrackLampsVisible(e.target.checked)); setSaved(false) }}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Ceiling Lights
+          </Text>
+          <div className={styles.field}>
+            <label className={styles.label}>Type</label>
+            <select
+              value={ceilingLightMode}
+              onChange={handleCeilingLightModeChange}
+              className={styles.select}
+            >
+              {CEILING_LIGHT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
+      )}
+
+      {/* Track Lamps Section - only when track lamps are visible */}
+      {hasTrackLamps && (ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Track Lamps
+          </Text>
           
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
@@ -322,8 +382,8 @@ const LightingPanel = () => {
         </div>
       )}
 
-      {/* Track Lamp Material Section - color only, for arm/body */}
-      {hasTrackLamps && (
+      {/* Track Lamp Material Section - only when track lamps are visible */}
+      {hasTrackLamps && (ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
         <div className={styles.section}>
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
             Track Lamp Material
@@ -339,11 +399,11 @@ const LightingPanel = () => {
         </div>
       )}
 
-      {/* Recessed Lamps Section - only for spaces with recessed lamps */}
-      {hasRecessedLamps && (
+      {/* Recessed / Plafond Lamps Section - only when plafond lamps are visible */}
+      {hasRecessedLamps && (ceilingLightMode === 'plafond' || ceilingLightMode === 'track-plafond') && (
         <div className={styles.section}>
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Recessed Lamps
+            Plafond Lamps
           </Text>
           
           <div className={styles.field}>

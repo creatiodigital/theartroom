@@ -42,6 +42,8 @@ type ExhibitionUpdateBody = {
   // Camera settings
   cameraFOV?: number
   cameraElevation?: number
+  hdriEnvironment?: string
+  ceilingLightMode?: string
 }
 
 /* ------------------------ GET ------------------------ */
@@ -83,7 +85,30 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const data: Prisma.ExhibitionUpdateInput = {}
     if (body.mainTitle !== undefined) {
       data.mainTitle = body.mainTitle
-      data.url = slugify(body.mainTitle)
+      const newUrl = slugify(body.mainTitle)
+      data.url = newUrl
+
+      // Check if another exhibition by this user already uses this URL
+      const current = await prisma.exhibition.findUnique({
+        where: { id },
+        select: { userId: true },
+      })
+      if (current) {
+        const conflict = await prisma.exhibition.findFirst({
+          where: {
+            userId: current.userId,
+            url: newUrl,
+            id: { not: id },
+          },
+          select: { id: true },
+        })
+        if (conflict) {
+          return NextResponse.json(
+            { error: 'An exhibition with this name already exists' },
+            { status: 409 },
+          )
+        }
+      }
     }
     if (body.description !== undefined) data.description = body.description
     if (body.status !== undefined) data.status = body.status
@@ -141,6 +166,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // Clamp elevation between 1.5 and 1.7 meters
       data.cameraElevation = Math.max(1.5, Math.min(1.7, body.cameraElevation))
     }
+    if (body.hdriEnvironment !== undefined) data.hdriEnvironment = body.hdriEnvironment
+    if (body.ceilingLightMode !== undefined) data.ceilingLightMode = body.ceilingLightMode
 
     const updated = await prisma.exhibition.update({
       where: { id },

@@ -32,6 +32,7 @@ const ArtisticImage = () => {
     supportThickness,
     supportColor,
     hiddenFromExhibition,
+    hideShadow,
   } = useArtworkDetails(currentArtworkId!)
 
   const { handleEditArtisticImage } = useArtworkImageHandlers(currentArtworkId!)
@@ -62,6 +63,17 @@ const ArtisticImage = () => {
             checked={hiddenFromExhibition ?? false}
             onChange={(e) => handleEditArtisticImage('hiddenFromExhibition', e.target.checked)}
             label="Hide in exhibition page"
+          />
+        </Tooltip>
+
+        <Tooltip
+          label="When enabled, the drop shadow behind the artwork in the 3D scene will be hidden"
+          placement="left"
+        >
+          <Checkbox
+            checked={hideShadow ?? false}
+            onChange={(e) => handleEditArtisticImage('hideShadow', e.target.checked)}
+            label="Hide shadow"
           />
         </Tooltip>
       </div>

@@ -189,6 +189,7 @@ const Display = ({ artwork }: DisplayProps) => {
     supportThickness,
     supportColor,
     showSupport,
+    hideShadow,
   } = artwork
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -369,7 +370,7 @@ const Display = ({ artwork }: DisplayProps) => {
       )}
 
       {/* Shadow blur - memoized component, size proportional to frame depth */}
-      <ShadowDecal width={planeWidth} height={planeHeight} frameDepth={frameDepth / 100} />
+      {!hideShadow && <ShadowDecal width={planeWidth} height={planeHeight} frameDepth={frameDepth / 100} />}
 
       {/* Support (canvas/panel depth) - fits inside frame, front at Z=0 */}
       {showSupport && supportDepth > 0 && (

@@ -27,4 +27,5 @@ export const wallViewFactory = (): TWallView => ({
   isGroupHovered: false,
   alignedPairs: [],
   isGridVisible: false,
+  snapEnabled: true,
 })

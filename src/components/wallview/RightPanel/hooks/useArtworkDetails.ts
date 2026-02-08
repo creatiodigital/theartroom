@@ -42,13 +42,14 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       passepartoutThickness: { label: '0.3', value: 0.3 },
       supportThickness: { label: '2', value: 2 },
       supportColor: '#ffffff',
-      showSupport: true,
+      showSupport: false,
       textBackgroundColor: undefined,
       textVerticalAlign: 'top',
       textPadding: { label: '12', value: 12 } as TOption<number>,
       imageUrl: '',
       featured: false,
       hiddenFromExhibition: false,
+      hideShadow: false,
       width: 0,
       height: 0,
       fromTop: 0,
@@ -91,6 +92,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     textPadding,
     featured,
     hiddenFromExhibition,
+    hideShadow,
     imageUrl,
   } = artwork
 
@@ -140,12 +142,13 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     passepartoutThickness: passepartoutThickness ?? { label: '0.3', value: 0.3 },
     supportThickness: supportThickness ?? { label: '2', value: 2 },
     supportColor: supportColor ?? '#ffffff',
-    showSupport: showSupport ?? true,
+    showSupport: showSupport ?? false,
     textBackgroundColor,
     textVerticalAlign,
     textPadding,
     featured,
     hiddenFromExhibition,
+    hideShadow: hideShadow ?? false,
     imageUrl,
   }
 }

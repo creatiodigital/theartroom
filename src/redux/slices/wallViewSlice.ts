@@ -130,6 +130,9 @@ const wallViewSlice = createSlice({
     closeArtworkEditModal: (state: TWallView) => {
       state.editingArtworkId = null
     },
+    setSnapEnabled: (state: TWallView, action: PayloadAction<boolean>) => {
+      state.snapEnabled = action.payload
+    },
   },
 })
 
@@ -165,6 +168,7 @@ export const {
   setGroupNotHovered,
   openArtworkEditModal,
   closeArtworkEditModal,
+  setSnapEnabled,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer

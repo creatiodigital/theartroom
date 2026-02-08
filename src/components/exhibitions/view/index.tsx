@@ -299,6 +299,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         trackLampColor: exhibition.trackLampColor ?? undefined,
         trackLampIntensity: exhibition.trackLampIntensity ?? undefined,
         trackLampsVisible: exhibition.trackLampsVisible ?? undefined,
+        ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,
         trackLampMaterialColor: exhibition.trackLampMaterialColor ?? undefined,
@@ -311,6 +312,10 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         floorTextureOffsetX: exhibition.floorTextureOffsetX ?? undefined,
         floorTextureOffsetY: exhibition.floorTextureOffsetY ?? undefined,
         floorTemperature: exhibition.floorTemperature ?? undefined,
+        floorNormalScale: exhibition.floorNormalScale ?? undefined,
+        floorRotation: exhibition.floorRotation ?? undefined,
+        // HDRI
+        hdriEnvironment: exhibition.hdriEnvironment ?? undefined,
         // Camera settings
         cameraFOV: exhibition.cameraFOV ?? undefined,
         cameraElevation: exhibition.cameraElevation ?? undefined,
