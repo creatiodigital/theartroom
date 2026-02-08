@@ -65,6 +65,7 @@ const Stencil = ({ artwork }: StencilProps) => {
   const textRef = useRef<ComponentRef<typeof Text>>(null)
   const [textWidth, setTextWidth] = useState(0)
   const [textHeight, setTextHeight] = useState(0)
+  const [fontReady, setFontReady] = useState(false)
 
   const calculateTextDimensions = () => {
     if (textRef.current) {
@@ -78,6 +79,8 @@ const Stencil = ({ artwork }: StencilProps) => {
         setTextHeight(h > 0 ? h : 0)
       }
     }
+    // Font is loaded and text is laid out — safe to show
+    setFontReady(true)
   }
 
   useEffect(() => {
@@ -134,6 +137,7 @@ const Stencil = ({ artwork }: StencilProps) => {
           key={id} 
           renderOrder={2}
           position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.001]}
+          visible={fontReady}
         >
           <Text
             ref={textRef}
@@ -161,3 +165,4 @@ const Stencil = ({ artwork }: StencilProps) => {
 }
 
 export default Stencil
+

@@ -10,6 +10,7 @@ import { slugify } from '@/utils/slugify'
 type ExhibitionUpdateBody = {
   mainTitle?: string
   description?: string
+  shortDescription?: string
   status?: string // 'current' | 'past'
   visibility?: string // 'public' | 'hidden'
   thumbnailUrl?: string
@@ -111,6 +112,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       }
     }
     if (body.description !== undefined) data.description = body.description
+    if (body.shortDescription !== undefined) data.shortDescription = body.shortDescription
     if (body.status !== undefined) data.status = body.status
     if (body.visibility !== undefined) data.visibility = body.visibility
     if (body.thumbnailUrl !== undefined) data.thumbnailUrl = body.thumbnailUrl

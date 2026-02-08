@@ -18,6 +18,15 @@
   }
 }
 
+.logoRow {
+  display: flex;
+  margin-bottom: var(--space-6);
+
+  @include breakpoint(lg) {
+    display: none;
+  }
+}
+
 .monogramRow {
   display: none;
 
@@ -46,7 +55,7 @@
 .footerInner {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-6);
 
   @include breakpoint(lg) {

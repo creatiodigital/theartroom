@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 
-
+import Logo from '@/icons/logo.svg'
 import Monogram from '@/icons/monogram.svg'
 
 import styles from './Footer.module.scss'
@@ -10,6 +10,11 @@ import styles from './Footer.module.scss'
 export const Footer = () => {
   return (
     <footer className={styles.footer}>
+      <div className={styles.logoRow}>
+        <Link href="/" className={styles.logoLink}>
+          <Logo className={styles.logo} />
+        </Link>
+      </div>
       <div className={styles.monogramRow}>
         <Link href="/" className={styles.monogramLink}>
           <Monogram className={styles.monogram} />
