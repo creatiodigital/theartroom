@@ -44,8 +44,57 @@ model User {
 
   exhibitions Exhibition[]
   artworks    Artwork[]
+  presets     ArtworkPreset[]
   accounts    Account[]
   sessions    Session[]
+}
+
+model ArtworkPreset {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name       String
+  presetType String @default("image") // "image" or "text"
+
+  // Dimensions
+  width2d  Float @default(100)
+  height2d Float @default(100)
+
+  // Frame
+  showFrame      Boolean @default(false)
+  frameColor     String  @default("#000000")
+  frameSize      Float   @default(5)
+  frameThickness Float   @default(0.5)
+
+  // Passepartout
+  showPassepartout      Boolean @default(false)
+  passepartoutColor     String  @default("#ffffff")
+  passepartoutSize      Float   @default(10)
+  passepartoutThickness Float   @default(0.3)
+
+  // Support
+  showSupport      Boolean @default(false)
+  supportThickness Float   @default(2.0)
+  supportColor     String  @default("#ffffff")
+
+  // Shadow
+  hideShadow Boolean @default(false)
+
+  // Text styling (used when presetType = "text")
+  fontFamily          String  @default("Montserrat")
+  fontSize            Float   @default(16)
+  fontWeight          String  @default("400")
+  letterSpacing       Float   @default(0)
+  lineHeight          Float   @default(1.4)
+  textColor           String  @default("#000000")
+  textBackgroundColor String?
+  textAlign           String  @default("left")
+  textVerticalAlign   String  @default("top")
+  textPadding         Float   @default(12)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Artwork {

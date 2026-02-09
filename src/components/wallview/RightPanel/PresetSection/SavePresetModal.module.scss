@@ -1,0 +1,40 @@
+.title {
+  margin: 0 0 var(--space-5) 0;
+}
+
+.inputGroup {
+  margin-bottom: var(--space-5);
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--color-text-primary);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: var(--color-black);
+  }
+}
+
+.error {
+  color: #d32f2f;
+  margin-top: var(--space-1);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

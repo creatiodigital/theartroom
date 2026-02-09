@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
+import PresetSection from '@/components/wallview/RightPanel/PresetSection/PresetSection'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 
@@ -77,6 +78,8 @@ const ArtisticImage = () => {
           />
         </Tooltip>
       </div>
+
+      <PresetSection presetType="image" />
 
       {/* SUPPORT Section - on top */}
       <div className={styles.section}>
