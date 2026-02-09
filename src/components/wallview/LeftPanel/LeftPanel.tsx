@@ -8,10 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
-import {
-  restoreArtworksSnapshot,
-  clearArtworksSnapshot,
-} from '@/redux/slices/artworkSlice'
+import { restoreArtworksSnapshot, clearArtworksSnapshot } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
 import {
   restoreSnapshot,
@@ -120,17 +117,18 @@ export const LeftPanel = () => {
         return
       }
 
-      // Skip if typing in an input field
+      // Skip if typing in an input field or editing text content
       if (
         e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
       ) {
         return
       }
 
       // Determine which artworks to move
       const artworkIdsToMove: string[] = []
-      
+
       if (artworkGroupIds.length > 0) {
         // Move all artworks in the group
         artworkIdsToMove.push(...artworkGroupIds)
@@ -176,7 +174,7 @@ export const LeftPanel = () => {
               posX2d: currentPos.posX2d + deltaX,
               posY2d: currentPos.posY2d + deltaY,
             },
-          })
+          }),
         )
       })
     }
@@ -356,7 +354,12 @@ export const LeftPanel = () => {
             </div>
             <div className={styles.itemFlex}>
               <Tooltip label="Show human height reference" placement="right" fullWidth>
-                <Button size="regular" variant="secondary" icon="human-standing" onClick={handleToggleHuman} />
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  icon="human-standing"
+                  onClick={handleToggleHuman}
+                />
               </Tooltip>
             </div>
           </div>
@@ -375,11 +378,7 @@ export const LeftPanel = () => {
                   })}
                   style={{ cursor: 'pointer' }}
                 >
-                  <Text
-                    as="span"
-                    font="dashboard"
-                    size="sm"
-                  >
+                  <Text as="span" font="dashboard" size="sm">
                     {artwork.artworkTitle || artwork.name}
                   </Text>
                 </li>
@@ -393,4 +392,3 @@ export const LeftPanel = () => {
 }
 
 export default LeftPanel
-

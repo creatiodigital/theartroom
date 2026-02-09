@@ -11,26 +11,26 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
   const dispatch = useDispatch()
   const isEditingArtwork = useSelector((state: RootState) => state.dashboard.isEditingArtwork)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
-  const isGroupHovered = useSelector((state: RootState) => state.wallView.isGroupHovered)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isEditingArtwork) return
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (currentArtworkId && isMouseOver) {
-          dispatch(deleteArtwork({ artworkId: currentArtworkId }))
-          dispatch(deleteArtworkPosition({ artworkId: currentArtworkId }))
-          dispatch(removeGroup())
-          dispatch(chooseCurrentArtworkId(null))
-          dispatch(hideWizard())
-        }
-
-        if (isGroupHovered && artworkGroupIds.length > 0) {
+        // Delete group if a group is selected and mouse is over the wall
+        if (artworkGroupIds.length > 0 && isMouseOver) {
           artworkGroupIds.forEach((artworkId) => {
             dispatch(deleteArtwork({ artworkId }))
             dispatch(deleteArtworkPosition({ artworkId }))
           })
+          dispatch(removeGroup())
+          dispatch(chooseCurrentArtworkId(null))
+          dispatch(hideWizard())
+        }
+        // Delete single artwork if selected and mouse is over the wall (and no group)
+        else if (currentArtworkId && isMouseOver && artworkGroupIds.length === 0) {
+          dispatch(deleteArtwork({ artworkId: currentArtworkId }))
+          dispatch(deleteArtworkPosition({ artworkId: currentArtworkId }))
           dispatch(removeGroup())
           dispatch(chooseCurrentArtworkId(null))
           dispatch(hideWizard())
@@ -62,5 +62,5 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
     }
-  }, [currentArtworkId, isMouseOver, isEditingArtwork, isGroupHovered, artworkGroupIds, dispatch])
+  }, [currentArtworkId, isMouseOver, isEditingArtwork, artworkGroupIds, dispatch])
 }

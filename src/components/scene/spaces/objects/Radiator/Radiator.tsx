@@ -4,9 +4,10 @@ import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 
 interface RadiatorProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
+  radiatorRef?: React.Ref<Mesh>
 }
 
-const Radiator: React.FC<RadiatorProps> = ({ nodes }) => {
+const Radiator: React.FC<RadiatorProps> = ({ nodes, radiatorRef }) => {
   // Tinted color that responds to ambient light
   const tintedColor = useAmbientLightColor('#e8e8e8')
 
@@ -14,6 +15,7 @@ const Radiator: React.FC<RadiatorProps> = ({ nodes }) => {
 
   return (
     <mesh
+      ref={radiatorRef}
       name="radiator0"
       geometry={nodes.radiator0.geometry}
       position={nodes.radiator0.position}

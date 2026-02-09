@@ -64,6 +64,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         artworkDimensions: artworkData.dimensions || undefined,
         description: artworkData.description || undefined,
         imageUrl: artworkData.imageUrl || undefined,
+        // Text-specific core content
+        textContent: artworkData.textContent || undefined,
       }
 
       dispatch(restoreArtwork(artwork))
@@ -132,6 +134,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         artworkDimensions: artworkData.dimensions || undefined,
         description: artworkData.description || undefined,
         imageUrl: artworkData.imageUrl || undefined,
+        // Text-specific core content
+        textContent: artworkData.textContent || undefined,
       }
 
       dispatch(restoreArtwork(artwork))

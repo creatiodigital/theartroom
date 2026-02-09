@@ -1,13 +1,23 @@
 import { Text } from '@react-three/drei'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ComponentRef } from 'react'
-import { DoubleSide } from 'three'
+import { DoubleSide, Vector3, Quaternion } from 'three'
+import type { ThreeEvent } from '@react-three/fiber'
+import { useDispatch, useSelector } from 'react-redux'
 
+import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
+import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
+import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 
 type StencilProps = {
   artwork: RuntimeArtwork
 }
+
+// Constants for click detection
+const CLICK_MAX_DISTANCE = 5
+const CLICK_MAX_DURATION = 300
+const DOUBLE_CLICK_DELAY = 250
 
 const Stencil = ({ artwork }: StencilProps) => {
   const {
@@ -27,7 +37,84 @@ const Stencil = ({ artwork }: StencilProps) => {
     fontFamily,
     letterSpacing,
     textPadding,
+    showArtworkInformation,
   } = artwork
+
+  const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
+  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const dispatch = useDispatch()
+
+  // Refs for click detection
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
+  const pointerDownTime = useRef<number>(0)
+  const singleClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Calculate the normal vector from artwork's quaternion (facing direction)
+  const getNormalFromQuaternion = useCallback((q: Quaternion): Vector3 => {
+    const normal = new Vector3(0, 0, 1)
+    normal.applyQuaternion(q)
+    return normal
+  }, [])
+
+  // Handle single click for focus
+  const handleSingleClick = useCallback(() => {
+    if (!isPlaceholdersShown && quaternion && position) {
+      const normal = getNormalFromQuaternion(quaternion)
+      dispatch(setFocusTarget({
+        artworkId: artwork.id,
+        position: { x: position.x, y: position.y, z: position.z },
+        normal: { x: normal.x, y: normal.y, z: normal.z },
+        width: width || 1,
+        height: height || 1,
+      }))
+
+      if (isArtworkPanelOpen) {
+        dispatch(setCurrentArtwork(artwork.id))
+      }
+    }
+  }, [dispatch, artwork.id, position, quaternion, width, height, isPlaceholdersShown, isArtworkPanelOpen, getNormalFromQuaternion])
+
+  // Handle double click for info panel
+  const handleDoubleClick = useCallback(() => {
+    if (singleClickTimeout.current) {
+      clearTimeout(singleClickTimeout.current)
+      singleClickTimeout.current = null
+    }
+
+    if (!isPlaceholdersShown && showArtworkInformation) {
+      dispatch(showArtworkPanel())
+      dispatch(setCurrentArtwork(artwork.id))
+    }
+  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+
+  // Pointer down
+  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
+    if (singleClickTimeout.current) {
+      clearTimeout(singleClickTimeout.current)
+      singleClickTimeout.current = null
+    }
+    pointerDownPos.current = { x: event.clientX, y: event.clientY }
+    pointerDownTime.current = Date.now()
+  }, [])
+
+  // Pointer up
+  const handlePointerUp = useCallback((event: ThreeEvent<PointerEvent>) => {
+    if (!pointerDownPos.current) return
+
+    const dx = event.clientX - pointerDownPos.current.x
+    const dy = event.clientY - pointerDownPos.current.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    const duration = Date.now() - pointerDownTime.current
+
+    pointerDownPos.current = null
+
+    if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+      singleClickTimeout.current = setTimeout(() => {
+        handleSingleClick()
+        singleClickTimeout.current = null
+      }, DOUBLE_CLICK_DELAY)
+    }
+  }, [handleSingleClick])
 
   const fontSizeFactor = 0.01
   // Convert textPadding (pixels) to 3D units
@@ -123,7 +210,13 @@ const Stencil = ({ artwork }: StencilProps) => {
   }
 
   return (
-    <group position={position} quaternion={quaternion}>
+    <group
+      position={position}
+      quaternion={quaternion}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onDoubleClick={handleDoubleClick}
+    >
       {/* Background plane - shown when textBackgroundColor is set or no text content (placeholder) */}
       {(textBackgroundColor || !textContent) && (
         <mesh renderOrder={1}>

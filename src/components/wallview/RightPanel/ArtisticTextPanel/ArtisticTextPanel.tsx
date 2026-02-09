@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkTextHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkTextHandlers'
+import PresetSection from '@/components/wallview/RightPanel/PresetSection/PresetSection'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 import type { TFontFamily, TFontWeight } from '@/types/fonts'
@@ -89,6 +90,8 @@ const ArtisticText = () => {
       </div>
 
       <div className={styles.divider} />
+
+      <PresetSection presetType="text" />
 
       <div className={styles.subsection}>
         <div className={styles.row}>

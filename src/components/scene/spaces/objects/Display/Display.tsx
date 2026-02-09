@@ -68,6 +68,7 @@ const useBlobTexture = (url: string): Texture | null => {
 // Component for blob URL images (uses custom loader)
 const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useBlobTexture(url)
+  const ambientColor = useAmbientLightColor('#ffffff')
 
   if (!texture) {
     return <ImagePlaceholder width={width} height={height} />
@@ -76,12 +77,11 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshStandardMaterial
+      <meshBasicMaterial
         map={texture}
+        color={ambientColor}
         side={DoubleSide}
-        roughness={1}
-        metalness={0}
-        toneMapped={true}
+        toneMapped={false}
       />
     </mesh>
   )
@@ -131,6 +131,7 @@ const useRegularTexture = (url: string): Texture | null => {
 // Component for regular URL images (uses custom loader with error handling)
 const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useRegularTexture(url)
+  const ambientColor = useAmbientLightColor('#ffffff')
 
   if (!texture) {
     return <ImagePlaceholder width={width} height={height} />
@@ -139,12 +140,11 @@ const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshStandardMaterial
+      <meshBasicMaterial
         map={texture}
+        color={ambientColor}
         side={DoubleSide}
-        roughness={1}
-        metalness={0}
-        toneMapped={true}
+        toneMapped={false}
       />
     </mesh>
   )

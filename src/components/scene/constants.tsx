@@ -45,7 +45,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
     gltfPath: '/assets/spaces/paris/paris9.glb',
     thumbnailUrl: '/assets/thumbnails/paris.jpg',
     refs: {
-      walls: 1,
+      walls: 4, // wall0 + doorFrame0 + doorMain0 + radiator0
       windows: 2,
       glass: 1,
     },
