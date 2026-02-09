@@ -151,14 +151,14 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
       )}
 
       {/* Window */}
-      <ParisWindow nodes={nodes} frameCount={2} handleCount={2} />
+      <ParisWindow nodes={nodes} frameCount={2} handleCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
 
 
       {/* Door */}
-      <Door nodes={nodes} />
+      <Door nodes={nodes} doorFrameRef={wallRefs[1]} doorMainRef={wallRefs[2]} />
 
       {/* Radiator */}
-      <Radiator nodes={nodes} />
+      <Radiator nodes={nodes} radiatorRef={wallRefs[3]} />
 
       {/* Track Lamps - visible in 'track' and 'track-plafond' modes */}
       {(ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (

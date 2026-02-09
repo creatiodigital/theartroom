@@ -52,9 +52,19 @@ const exhibitionSlice = createSlice({
       const { artworkId, artworkPosition } = action.payload
 
       if (state.exhibitionArtworksById[artworkId]) {
+        // Auto-derive 3D dimensions when 2D dimensions change
+        const derived: Partial<TArtworkPosition> = {}
+        if (artworkPosition.width2d !== undefined) {
+          derived.width3d = artworkPosition.width2d / 100
+        }
+        if (artworkPosition.height2d !== undefined) {
+          derived.height3d = artworkPosition.height2d / 100
+        }
+
         state.exhibitionArtworksById[artworkId] = {
           ...state.exhibitionArtworksById[artworkId],
           ...artworkPosition,
+          ...derived,
         }
       }
     },

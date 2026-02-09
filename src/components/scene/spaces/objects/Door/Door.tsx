@@ -4,9 +4,11 @@ import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 
 interface DoorProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
+  doorFrameRef?: React.Ref<Mesh>
+  doorMainRef?: React.Ref<Mesh>
 }
 
-const Door: React.FC<DoorProps> = ({ nodes }) => {
+const Door: React.FC<DoorProps> = ({ nodes, doorFrameRef, doorMainRef }) => {
   // Tinted colors that respond to ambient light
   const tintedWhite = useAmbientLightColor('#d8d8d8')
   const tintedMetal = useAmbientLightColor('#d8d8d8')
@@ -16,6 +18,7 @@ const Door: React.FC<DoorProps> = ({ nodes }) => {
       {/* Door Frame */}
       {nodes.doorFrame0 && (
         <mesh
+          ref={doorFrameRef}
           name="doorFrame0"
           geometry={nodes.doorFrame0.geometry}
           position={nodes.doorFrame0.position}
@@ -29,6 +32,7 @@ const Door: React.FC<DoorProps> = ({ nodes }) => {
       {/* Door Main Panel */}
       {nodes.doorMain0 && (
         <mesh
+          ref={doorMainRef}
           name="doorMain0"
           geometry={nodes.doorMain0.geometry}
           position={nodes.doorMain0.position}
