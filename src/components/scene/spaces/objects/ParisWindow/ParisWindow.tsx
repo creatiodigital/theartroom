@@ -12,12 +12,16 @@ interface ParisWindowProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
   frameCount?: number
   handleCount?: number
+  windowRefs?: React.RefObject<Mesh | null>[]
+  glassRefs?: React.RefObject<Mesh | null>[]
 }
 
 const ParisWindow: React.FC<ParisWindowProps> = ({ 
   nodes, 
   frameCount = 2, 
-  handleCount = 2 
+  handleCount = 2,
+  windowRefs,
+  glassRefs,
 }) => {
   const windowLightIntensity = useSelector(
     (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_LIGHT_INTENSITY,
@@ -38,6 +42,7 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
       {/* Window Glass - NOT affected by ambient light */}
       {nodes.windowGlass0 && (
         <mesh
+          ref={glassRefs?.[0]}
           name="windowGlass0"
           geometry={nodes.windowGlass0.geometry}
           position={[
@@ -63,6 +68,7 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
         return (
           <mesh
             key={`frame-${i}`}
+            ref={windowRefs?.[i]}
             name={`windowFrame${i}`}
             geometry={frameNode.geometry}
             position={frameNode.position}
