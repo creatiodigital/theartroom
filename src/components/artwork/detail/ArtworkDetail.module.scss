@@ -11,6 +11,9 @@
   padding: calc(var(--space-10) - 4px) var(--space-6) var(--space-10);
   background: var(--color-white);
   border-bottom: 1px solid transparent;
+  max-width: var(--header-max-width);
+  margin: 0 auto;
+  width: 100%;
 
   @media (min-width: 768px) {
     padding: calc(var(--space-10) - 4px) var(--space-8) var(--space-10);
@@ -54,7 +57,7 @@
   grid-template-columns: 1fr 1.5fr;
   gap: var(--space-10);
   padding: 0 var(--space-10) var(--space-10);
-  max-width: var(--max-width);
+  max-width: var(--content-max-width);
   margin: 0 auto;
   width: 100%;
 
