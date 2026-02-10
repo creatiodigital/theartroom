@@ -23,7 +23,7 @@ export const LoginPage = () => {
   const [successMessage, setSuccessMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
-  
+
   // 2FA step: 'credentials' or 'code'
   const [step, setStep] = useState<'credentials' | 'code'>('credentials')
 
@@ -44,6 +44,25 @@ export const LoginPage = () => {
       if (!response.ok) {
         setError(data.error || 'Invalid email or password')
         setSubmitting(false)
+        return
+      }
+
+      // If user must change password, sign in directly (no OTP) and redirect
+      if (data.mustChangePassword) {
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        })
+
+        if (result?.error) {
+          setError('Failed to sign in')
+          setSubmitting(false)
+          return
+        }
+
+        router.push('/dashboard/change-password')
+        router.refresh()
         return
       }
 
@@ -123,7 +142,9 @@ export const LoginPage = () => {
     <>
       <div className={styles.loginPage}>
         <div className={styles.loginCard}>
-          <Text font="dashboard" as="h1">Sign In</Text>
+          <Text font="dashboard" as="h1">
+            Sign In
+          </Text>
           <Text font="dashboard" as="p" className={styles.subtitle}>
             Sign in to your account
           </Text>
@@ -166,16 +187,43 @@ export const LoginPage = () => {
 
               <ErrorText>{error}</ErrorText>
 
-              <Button font="dashboard" variant="primary" label={submitting ? 'Sending code...' : 'Continue'} type="submit" />
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={submitting ? 'Signing in...' : 'Continue'}
+                type="submit"
+              />
             </form>
           ) : (
             <form onSubmit={handleVerifyCode} className={styles.form}>
               {/* Visually hidden credentials for Chrome password manager detection */}
-              <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}>
-                <input type="email" name="email" value={email} autoComplete="email" readOnly tabIndex={-1} />
-                <input type="password" name="password" value={password} autoComplete="current-password" readOnly tabIndex={-1} />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  opacity: 0,
+                  height: 0,
+                  overflow: 'hidden',
+                }}
+              >
+                <input
+                  type="email"
+                  name="email"
+                  value={email}
+                  autoComplete="email"
+                  readOnly
+                  tabIndex={-1}
+                />
+                <input
+                  type="password"
+                  name="password"
+                  value={password}
+                  autoComplete="current-password"
+                  readOnly
+                  tabIndex={-1}
+                />
               </div>
-              
+
               <Text font="dashboard" as="p" className={styles.codeMessage}>
                 We sent a verification code to <strong>{email}</strong>
               </Text>
@@ -196,13 +244,22 @@ export const LoginPage = () => {
 
               <ErrorText>{error}</ErrorText>
               {successMessage && (
-                <Text font="dashboard" as="p" style={{ color: '#22c55e', fontSize: '14px', marginBottom: '8px' }}>
+                <Text
+                  font="dashboard"
+                  as="p"
+                  style={{ color: '#22c55e', fontSize: '14px', marginBottom: '8px' }}
+                >
                   {successMessage}
                 </Text>
               )}
 
               <div className={styles.codeActions}>
-                <Button font="dashboard" variant="primary" label={submitting ? 'Verifying...' : 'Sign in'} type="submit" />
+                <Button
+                  font="dashboard"
+                  variant="primary"
+                  label={submitting ? 'Verifying...' : 'Sign in'}
+                  type="submit"
+                />
                 <button
                   type="button"
                   className={styles.resendLink}
@@ -216,7 +273,11 @@ export const LoginPage = () => {
               <button
                 type="button"
                 className={styles.backLink}
-                onClick={() => { setStep('credentials'); setLoginCode(''); setError(''); }}
+                onClick={() => {
+                  setStep('credentials')
+                  setLoginCode('')
+                  setError('')
+                }}
               >
                 ← Back to login
               </button>

@@ -31,7 +31,7 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
           <div className={styles.imageWrapper}>
             {artwork.imageUrl ? (
               <Link
-                href={`/artworks/${artwork.id}?ref=internal`}
+                href={`/artworks/${artwork.id}`}
                 className={styles.viewDetailsLink}
               >
                 <img

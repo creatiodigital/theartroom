@@ -18,13 +18,12 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as {
       mainTitle: string
-      visibility: string
       handler: string
       url: string
       spaceId: string
     }
 
-    const { mainTitle, visibility, handler, url, spaceId } = body
+    const { mainTitle, handler, url, spaceId } = body
 
     // Validate required fields
     if (!url) {
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
     const exhibition: Exhibition = await prisma.exhibition.create({
       data: {
         mainTitle,
-        visibility,
+        published: false,
         userId,
         handler,
         url,
@@ -69,7 +68,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('userId')
   const status = searchParams.get('status') // 'current' | 'past'
-  const visibility = searchParams.get('visibility') // 'public' | 'hidden'
+  const published = searchParams.get('published') // 'true' | 'false'
 
   try {
     // Get current session to determine filtering
@@ -80,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     if (userId) where.userId = userId
     if (status) where.status = status
-    if (visibility) where.visibility = visibility
+    if (published !== null) where.published = published === 'true'
 
     // Permission rules:
     // - SuperAdmin: can see own + other admins + all artists/curators

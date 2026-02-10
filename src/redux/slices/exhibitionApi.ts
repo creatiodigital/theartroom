@@ -11,21 +11,20 @@ export const exhibitionApi = baseApi.injectEndpoints({
       TExhibition,
       {
         mainTitle: string
-        visibility: string
         userId: string
         userHandler: string
         spaceId?: string
         customUrl: string
       }
     >({
-      query: ({ mainTitle, visibility, userId, userHandler, spaceId, customUrl }) => {
+      query: ({ mainTitle, userId, userHandler, spaceId, customUrl }) => {
         const handler = userHandler
         const url = customUrl
 
         return {
           url: 'exhibitions',
           method: 'POST',
-          body: { mainTitle, visibility, userId, handler, url, spaceId },
+          body: { mainTitle, userId, handler, url, spaceId },
         }
       },
     }),

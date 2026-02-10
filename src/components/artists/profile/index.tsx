@@ -63,7 +63,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
 
         // Fetch exhibitions and artworks in parallel
         const [exResponse, artResponse] = await Promise.all([
-          fetch(`/api/exhibitions?userId=${data.id}&visibility=public`),
+          fetch(`/api/exhibitions?userId=${data.id}&published=true`),
           fetch(`/api/artworks?userId=${data.id}&artworkType=image&featured=true`),
         ])
 
@@ -102,8 +102,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     <PageLayout>
       <div className={styles.header}>
         <div>
-          <Text as="h1" size="huge" className={styles.artistName}>{artist.name}</Text>
-          <Text as="h1" size="huge" className={styles.artistName}>{artist.lastName}</Text>
+          <Text as="h1" size="huge" className={styles.artistName}>{artist.name} {artist.lastName}</Text>
         </div>
         {artist.profileImageUrl ? (
           <div className={styles.avatarWrapper}>

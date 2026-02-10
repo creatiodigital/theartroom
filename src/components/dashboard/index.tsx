@@ -78,11 +78,10 @@ export const DashboardPage = () => {
   }, [])
 
   const handleCreateExhibition = useCallback(
-    async (mainTitle: string, visibility: string, customUrl: string) => {
+    async (mainTitle: string, customUrl: string) => {
       try {
         const newEx = await createExhibition({
           mainTitle,
-          visibility,
           userId: userId ?? '',
           userHandler: userHandler ?? '',
           spaceId: selectedSpace.value,
@@ -212,7 +211,7 @@ export const DashboardPage = () => {
               <tr>
                 <th>Exhibition Name</th>
                 <th>Space</th>
-                <th>Visibility</th>
+                <th>Status</th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -224,13 +223,14 @@ export const DashboardPage = () => {
                   <tr key={ex.id}>
                   <td>{ex.mainTitle}</td>
                   <td>{spaceOptions.find((s) => s.value === ex.spaceId)?.label || ex.spaceId}</td>
-                  <td>{ex.visibility === 'public' ? 'Public' : 'Private'}</td>
+                  <td>{ex.published ? 'Published' : 'Unpublished'}</td>
                   <td>
                     <Button
                       font="dashboard"
                       variant="secondary"
                       label="View"
                       onClick={() => handleViewExhibition(ex)}
+                      disabled={!ex.published}
                     />
                   </td>
                   <td>
