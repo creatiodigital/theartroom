@@ -81,7 +81,6 @@ export const AddArtistModal = ({
       // If provisional password was generated, show it
       if (data.provisionalPassword) {
         setProvisionalPassword(data.provisionalPassword)
-        onSuccess()
         return // Don't close modal yet, show the password
       }
 
@@ -116,7 +115,7 @@ export const AddArtistModal = ({
             </Text>
           </div>
           <div className={styles.actions}>
-            <Button font="dashboard" variant="primary" label="Done" onClick={onClose} />
+            <Button font="dashboard" variant="primary" label="Done" onClick={() => { onSuccess(); onClose(); }} />
           </div>
         </>
       ) : (

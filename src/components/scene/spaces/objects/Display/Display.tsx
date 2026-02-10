@@ -68,7 +68,7 @@ const useBlobTexture = (url: string): Texture | null => {
 // Component for blob URL images (uses custom loader)
 const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useBlobTexture(url)
-  const ambientColor = useAmbientLightColor('#ffffff')
+  const ambientColor = useAmbientLightColor('#ffffff', 1.0)
 
   if (!texture) {
     return <ImagePlaceholder width={width} height={height} />
@@ -81,7 +81,6 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
         map={texture}
         color={ambientColor}
         side={DoubleSide}
-        toneMapped={false}
       />
     </mesh>
   )
@@ -131,7 +130,7 @@ const useRegularTexture = (url: string): Texture | null => {
 // Component for regular URL images (uses custom loader with error handling)
 const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useRegularTexture(url)
-  const ambientColor = useAmbientLightColor('#ffffff')
+  const ambientColor = useAmbientLightColor('#ffffff', 1.0)
 
   if (!texture) {
     return <ImagePlaceholder width={width} height={height} />
@@ -144,7 +143,6 @@ const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
         map={texture}
         color={ambientColor}
         side={DoubleSide}
-        toneMapped={false}
       />
     </mesh>
   )

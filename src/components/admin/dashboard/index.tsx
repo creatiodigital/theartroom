@@ -11,6 +11,7 @@ import { ContentManagement } from '@/components/admin/dashboard/ContentManagemen
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
@@ -45,7 +46,24 @@ export const DashboardAdmin = () => {
   }, [sessionStatus, session, router])
 
   const handleAddSuccess = useCallback(() => {
+    setShowAddModal(false)
     refetch()
+  }, [refetch])
+
+  const handleTogglePublished = useCallback(async (userId: string, currentPublished: boolean) => {
+    const newPublished = !currentPublished
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ published: newPublished }),
+      })
+      if (response.ok) {
+        refetch()
+      }
+    } catch (error) {
+      console.error('Failed to update published status:', error)
+    }
   }, [refetch])
 
   const handleDeleteClick = useCallback((userId: string, userName: string) => {
@@ -166,6 +184,7 @@ export const DashboardAdmin = () => {
               <th>Handler</th>
               <th>Email</th>
               <th>Type</th>
+              <th>Published</th>
               <th>Featured</th>
               <th>Actions</th>
             </tr>
@@ -178,6 +197,12 @@ export const DashboardAdmin = () => {
                 <td>{user.handler}</td>
                 <td>{user.email || '-'}</td>
                 <td>{user.userType}</td>
+                <td>
+                  <Badge
+                    label={user.published ? 'Published' : 'Unpublished'}
+                    variant={user.published ? 'published' : 'unpublished'}
+                  />
+                </td>
                 <td>
                   <Checkbox
                     checked={user.isFeatured ?? false}
@@ -207,6 +232,12 @@ export const DashboardAdmin = () => {
                         onClick={() => handleInviteClick(user)}
                       />
                     )}
+                    <Button
+                      font="dashboard"
+                      variant="secondary"
+                      label={user.published ? 'Unpublish' : 'Publish'}
+                      onClick={() => handleTogglePublished(user.id, user.published ?? false)}
+                    />
                     {/* Impersonate logic:
                         - superAdmin: can impersonate anyone except themselves
                         - admin: can only impersonate artists/curators (not other admins) */}

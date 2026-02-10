@@ -13,6 +13,7 @@ type Body = {
   userType?: string
   email?: string
   isFeatured?: boolean
+  published?: boolean
 }
 
 type UserTypeValue = (typeof UserTypeEnum)[keyof typeof UserTypeEnum]
@@ -86,9 +87,19 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.handler !== undefined) data.handler = body.handler
     if (body.email !== undefined) data.email = body.email
     if (body.isFeatured !== undefined) data.isFeatured = body.isFeatured
+    if (body.published !== undefined) data.published = body.published
     if (userTypeEnum !== undefined) data.userType = { set: userTypeEnum }
 
     const updated = await prisma.user.update({ where: { id }, data })
+
+    // Cascade: unpublishing an artist also unpublishes all their exhibitions
+    if (body.published === false) {
+      await prisma.exhibition.updateMany({
+        where: { userId: id, published: true },
+        data: { published: false },
+      })
+    }
+
     return NextResponse.json(updated)
   } catch (error) {
     console.error('[PUT /api/users/[id]] error:', error)

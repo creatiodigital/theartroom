@@ -85,6 +85,57 @@
   margin-top: 2px;
 }
 
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  cursor: pointer;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  input:checked + .toggleSlider {
+    background-color: var(--color-text-primary);
+  }
+
+  input:checked + .toggleSlider::before {
+    transform: translateX(14px);
+  }
+}
+
+.toggleSlider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-toggle-off);
+  border-radius: 18px;
+  transition: 0.2s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+}
+
 .actions {
   display: flex;
   padding: var(--space-4) var(--space-5) 0;

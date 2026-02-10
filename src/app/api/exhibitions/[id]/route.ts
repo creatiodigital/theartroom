@@ -168,6 +168,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // Clamp elevation between 1.5 and 1.7 meters
       data.cameraElevation = Math.max(1.5, Math.min(1.7, body.cameraElevation))
     }
+
     if (body.hdriEnvironment !== undefined) data.hdriEnvironment = body.hdriEnvironment
     if (body.ceilingLightMode !== undefined) data.ceilingLightMode = body.ceilingLightMode
 

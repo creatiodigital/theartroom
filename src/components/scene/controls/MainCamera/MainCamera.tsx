@@ -174,6 +174,29 @@ const MainCamera = () => {
     (event: KeyboardEvent) => handleKeyPress(keysPressed, event.key, false),
     [],
   )
+  // Trackpad two-finger horizontal swipe → camera rotation
+  const onWheel = useCallback(
+    (event: WheelEvent) => {
+      // Ignore if event is on a UI panel
+      const target = event.target as HTMLElement | null
+      if (target?.closest('[data-panel-overlay]')) return
+
+      event.preventDefault()
+
+      // Horizontal swipe → rotation, vertical swipe → movement
+      if (mouseState.current) {
+        if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+          // Horizontal dominant: rotate
+          mouseState.current.deltaX += event.deltaX * -0.5
+        } else if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+          // Vertical dominant: walk forward/backward
+          mouseState.current.wheelZ = (mouseState.current.wheelZ ?? 0) + event.deltaY * 0.002
+        }
+        setTick((tick) => tick + 1)
+      }
+    },
+    [mouseState],
+  )
 
   useEffect(() => {
     const attachHandlers = () => {
@@ -183,6 +206,7 @@ const MainCamera = () => {
       window.addEventListener('mouseup', onMouseUp)
       window.addEventListener('touchstart', onTouchStart)
       window.addEventListener('touchend', onTouchEnd)
+      window.addEventListener('wheel', onWheel, { passive: false })
     }
 
     const detachHandlers = () => {
@@ -192,6 +216,7 @@ const MainCamera = () => {
       window.removeEventListener('mouseup', onMouseUp)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchend', onTouchEnd)
+      window.removeEventListener('wheel', onWheel)
     }
 
     const handleResize = () => {
@@ -213,7 +238,7 @@ const MainCamera = () => {
       detachHandlers()
       window.removeEventListener('resize', handleResize)
     }
-  }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchEnd])
+  }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, onWheel])
 
   useFrame(({ camera }, delta) => {
     const cam = camera as PerspectiveCamera
@@ -287,6 +312,15 @@ const MainCamera = () => {
     cam.rotateY(rotationDelta)
 
     const moveVector = calculateMovementVector(keysPressed, moveSpeed, cam)
+
+    // Add wheel-based forward/backward movement
+    if (mouseState.current?.wheelZ) {
+      const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
+      forward.y = 0
+      forward.normalize()
+      moveVector.add(forward.clone().multiplyScalar(-mouseState.current.wheelZ))
+      mouseState.current.wheelZ = 0
+    }
 
     const wallRefsArray = wallRefs.current ?? []
     const windowRefsArray = windowRefs.current ?? []
