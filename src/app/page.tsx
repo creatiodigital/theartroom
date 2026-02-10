@@ -39,7 +39,7 @@ export default async function Home() {
   const exhibitionData = await prisma.exhibition.findMany({
     where: {
       status: 'current',
-      visibility: 'public',
+      published: true,
     },
     include: {
       user: {

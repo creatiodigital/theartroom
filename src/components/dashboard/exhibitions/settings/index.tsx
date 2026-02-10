@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { Select } from '@/components/ui/Select'
+
 import { Text } from '@/components/ui/Typography'
 
 import { DashboardLayout } from '../../DashboardLayout'
@@ -24,7 +24,7 @@ type Exhibition = {
   url: string
   userId: string
   status: string
-  visibility: string
+
   startDate: string | null
   endDate: string | null
   user?: {
@@ -41,7 +41,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [mainTitle, setMainTitle] = useState('')
   const [description, setDescription] = useState('')
   const [shortDescription, setShortDescription] = useState('')
-  const [visibility, setVisibility] = useState<'public' | 'private'>('private')
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -67,7 +67,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         setMainTitle(data.mainTitle || '')
         setDescription(data.description || '')
         setShortDescription(data.shortDescription || '')
-        setVisibility(data.visibility || 'private')
+
       } catch {
         setError('Failed to load exhibition')
       } finally {
@@ -152,7 +152,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, shortDescription, visibility }),
+        body: JSON.stringify({ description, shortDescription }),
       })
 
       if (!response.ok) {
@@ -168,7 +168,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     } finally {
       setSaving(false)
     }
-  }, [exhibition, description, shortDescription, visibility])
+  }, [exhibition, description, shortDescription])
 
   const handleImageUpload = useCallback(
     async (file: File) => {
@@ -353,21 +353,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         <span className={dashboardStyles.hint}>A compelling description helps attract visitors to your exhibition.</span>
       </div>
 
-      <div className={dashboardStyles.section}>
-        <h3 className={dashboardStyles.sectionTitle}>Visibility</h3>
-        <p className={dashboardStyles.sectionDescription}>
-          Control who can see this exhibition.
-        </p>
-        <Select<string>
-          options={[
-            { value: 'public', label: 'Public - Visible to everyone' },
-            { value: 'private', label: 'Private - Only visible to you' },
-          ]}
-          value={visibility}
-          onChange={(val) => setVisibility(val as 'public' | 'private')}
-          size="medium"
-        />
-      </div>
+
 
       <div className={dashboardStyles.actions}>
         <Button

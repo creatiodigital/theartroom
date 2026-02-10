@@ -14,7 +14,7 @@ export type TExhibition = {
   exhibitionArtworksById: Record<string, TArtworkPosition>
   allExhibitionArtworkIds: string[]
   status: string
-  visibility: string
+  published: boolean
   // Lighting customization
   ambientLightColor?: string
   ambientLightIntensity?: number

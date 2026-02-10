@@ -14,7 +14,7 @@ import styles from './ExhibitionModal.module.scss'
 type ExhibitionModalProps = {
   creating: boolean
   onClose: () => void
-  onCreate: (title: string, visibility: string, customUrl: string) => void
+  onCreate: (title: string, customUrl: string) => void
   selectedSpace: TOption<string> | null
   handleSelectSpace: (opt: TOption<string>) => void
   spaceOptions: TOption<string>[]
@@ -42,7 +42,7 @@ export const ExhibitionModal = React.memo(
     const [mainTitle, setMainTitle] = useState('')
     const [customUrl, setCustomUrl] = useState('')
     const [urlEdited, setUrlEdited] = useState(false)
-    const [visibility, setVisibility] = useState<'public' | 'private'>('private')
+
     const [urlError, setUrlError] = useState('')
     const [checking, setChecking] = useState(false)
 
@@ -93,8 +93,8 @@ export const ExhibitionModal = React.memo(
 
     const handleCreateClick = useCallback(() => {
       if (urlError || !customUrl) return
-      onCreate(mainTitle, visibility, customUrl)
-    }, [onCreate, mainTitle, visibility, customUrl, urlError])
+      onCreate(mainTitle, customUrl)
+    }, [onCreate, mainTitle, customUrl, urlError])
 
     const canCreate = mainTitle.trim() && customUrl.trim() && !urlError && !checking
 
@@ -127,17 +127,6 @@ export const ExhibitionModal = React.memo(
               /exhibitions/your-name/<strong>{customUrl || 'exhibition-url'}</strong>
             </Text>
             <ErrorText>{urlError}</ErrorText>
-
-            <label className={styles.label} htmlFor="visibility">Visibility</label>
-            <Select<string>
-              options={[
-                { value: 'public', label: 'Public' },
-                { value: 'private', label: 'Private' },
-              ]}
-              value={visibility}
-              onChange={(val) => setVisibility(val as 'public' | 'private')}
-              size="medium"
-            />
 
             <label className={styles.label} htmlFor="space">Space</label>
             <Select<string>

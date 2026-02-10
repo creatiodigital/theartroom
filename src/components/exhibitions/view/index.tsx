@@ -302,7 +302,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         exhibitionArtworksById: exhibition.exhibitionArtworksById || {},
         allExhibitionArtworkIds: exhibition.allExhibitionArtworkIds || [],
         status: exhibition.status,
-        visibility: exhibition.visibility,
+        published: exhibition.published ?? false,
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
         skylightColor: exhibition.skylightColor ?? undefined,

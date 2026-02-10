@@ -12,7 +12,7 @@ type ExhibitionUpdateBody = {
   description?: string
   shortDescription?: string
   status?: string // 'current' | 'past'
-  visibility?: string // 'public' | 'hidden'
+  published?: boolean
   thumbnailUrl?: string
   bannerUrl?: string
   startDate?: string
@@ -114,7 +114,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.description !== undefined) data.description = body.description
     if (body.shortDescription !== undefined) data.shortDescription = body.shortDescription
     if (body.status !== undefined) data.status = body.status
-    if (body.visibility !== undefined) data.visibility = body.visibility
+    if (body.published !== undefined) data.published = body.published
     if (body.thumbnailUrl !== undefined) data.thumbnailUrl = body.thumbnailUrl
     if (body.bannerUrl !== undefined) data.bannerUrl = body.bannerUrl
     if (body.startDate !== undefined) data.startDate = new Date(body.startDate)

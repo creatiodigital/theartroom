@@ -6,7 +6,6 @@ import type { TExhibition } from '@/types/exhibition'
 
 type CreateTExhibition = {
   mainTitle: string
-  visibility: string
   userId: string
   userHandler: string
   spaceId?: string
@@ -27,7 +26,6 @@ export function useCreateExhibition() {
 
   const createExhibition = async ({
     mainTitle,
-    visibility,
     userId,
     userHandler,
     spaceId = '',
@@ -44,7 +42,6 @@ export function useCreateExhibition() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mainTitle,
-          visibility,
           userId,
           handler,
           url,

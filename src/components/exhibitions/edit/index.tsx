@@ -89,7 +89,7 @@ export const ExhibitionEditPage = ({
         exhibitionArtworksById: exhibition.exhibitionArtworksById || {},
         allExhibitionArtworkIds: exhibition.allExhibitionArtworkIds || [],
         status: exhibition.status,
-        visibility: exhibition.visibility,
+        published: exhibition.published ?? false,
         // Lighting customization
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,

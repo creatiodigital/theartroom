@@ -17,10 +17,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = body
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
     // Find user by email
@@ -30,19 +27,18 @@ export async function POST(request: NextRequest) {
 
     if (!user || !user.password) {
       // Return generic error to prevent email enumeration
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.password)
     if (!passwordMatch) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    }
+
+    // If user must change password (provisional login), skip OTP
+    if (user.mustChangePassword) {
+      return NextResponse.json({ success: true, mustChangePassword: true })
     }
 
     // Generate 6-digit code with 10-minute expiry
@@ -99,9 +95,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error sending login code:', error)
-    return NextResponse.json(
-      { error: 'Failed to send verification code' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to send verification code' }, { status: 500 })
   }
 }

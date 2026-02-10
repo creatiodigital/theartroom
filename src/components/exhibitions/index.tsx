@@ -61,7 +61,7 @@ export const ExhibitionsPage = () => {
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
-        const response = await fetch('/api/exhibitions?visibility=public')
+        const response = await fetch('/api/exhibitions?published=true')
         if (response.ok) {
           const data = await response.json()
           setExhibitions(data)
