@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 import { EmptyState } from '@/components/ui/EmptyState'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
 
 import styles from './artists.module.scss'
 
@@ -45,12 +45,10 @@ export const ArtistsPage = () => {
         <EmptyState message="No artists found." />
       ) : (
         <>
-          <div className={styles.pageHeader}>
-            <Text as="h1" font="serif" size="3xl" className={styles.pageTitle}>Artists</Text>
-            <Text as="p" size="sm" className={styles.pageSubtitle}>
-              Artists in current and past exhibitions
-            </Text>
-          </div>
+          <PageHeader
+            pageTitle="Artists"
+            pageSubtitle="Participants in current and past exhibitions."
+          />
           <ul className={styles.list}>
             {artists.map((artist, index) => (
               <li key={artist.id}>
