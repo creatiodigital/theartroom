@@ -18,10 +18,16 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
         handler: true,
         biography: true,
         profileImageUrl: true,
+        published: true,
       },
     })
 
     if (!artist) {
+      return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
+    }
+
+    // Hide unpublished artists from public
+    if (!artist.published) {
       return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
     }
 

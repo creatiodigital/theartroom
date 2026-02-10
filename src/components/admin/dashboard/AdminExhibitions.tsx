@@ -21,6 +21,7 @@ type Exhibition = {
     name: string
     lastName: string
     handler: string
+    published?: boolean
   }
 }
 
@@ -162,6 +163,7 @@ export const AdminExhibitions = () => {
                       variant="secondary"
                       label={exhibition.published ? 'Unpublish' : 'Publish'}
                       onClick={() => handleTogglePublished(exhibition.id, exhibition.published)}
+                      disabled={!exhibition.published && !exhibition.user.published}
                     />
                     <Button
                       font="dashboard"

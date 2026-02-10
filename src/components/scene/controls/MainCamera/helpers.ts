@@ -7,6 +7,7 @@ export type MouseState = {
   lastMouseX: number | null
   lastTouchX: number | null
   deltaX: number
+  wheelZ: number
 }
 
 export const createMouseState = (): MouseState => ({
@@ -15,6 +16,7 @@ export const createMouseState = (): MouseState => ({
   lastMouseX: null,
   lastTouchX: null,
   deltaX: 0,
+  wheelZ: 0,
 })
 
 export const handleMouseMove =
