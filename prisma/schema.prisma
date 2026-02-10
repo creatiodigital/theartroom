@@ -30,6 +30,7 @@ model User {
   mustChangePassword Boolean  @default(false)
   profileImageUrl    String?
   isFeatured         Boolean  @default(false)
+  published          Boolean  @default(false)
 
   // Two-Factor Authentication
   totpSecret       String?

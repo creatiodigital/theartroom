@@ -4,7 +4,7 @@ import { useProgress } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, Touchpad, X } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Monogram from '@/icons/monogram.svg'
@@ -209,6 +209,28 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                 </span>
                 <Text as="span" size="sm">
                   Rotate the view
+                </Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">
+                    Swipe Left / Right
+                  </Text>
+                </span>
+                <Text as="span" size="sm">
+                  Rotate the view
+                </Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">
+                    Swipe Up / Down
+                  </Text>
+                </span>
+                <Text as="span" size="sm">
+                  Walk forward / backward
                 </Text>
               </div>
               <div className={styles.infoItem}>

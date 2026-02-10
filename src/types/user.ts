@@ -11,6 +11,7 @@ export type TUser = {
   email: string
   profileImageUrl?: string
   isFeatured?: boolean
+  published?: boolean
 }
 
 export type TUserState = TUser & {

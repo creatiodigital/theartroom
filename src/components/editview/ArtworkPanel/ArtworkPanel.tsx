@@ -4,9 +4,12 @@ import { useRef, useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useRouter } from 'next/navigation'
 
+import { X } from 'lucide-react'
+
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -44,6 +47,9 @@ const ArtworkPanel = () => {
 
   return (
     <div ref={panelRef} className={styles.panel} data-panel-overlay onPointerDown={(e) => e.stopPropagation()}>
+      <button className={styles.closeButton} onClick={() => dispatch(hideArtworkPanel())} aria-label="Close">
+        CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
+      </button>
       <div className={styles.header}>
         {thumbnailUrl && (
           <div className={styles.imageWrapper}>
@@ -88,21 +94,12 @@ const ArtworkPanel = () => {
           )}
         </div>
         <Button
-          variant="secondary"
-          size="bigSquared"
+          variant="primary"
+          size="regularSquared"
           label="View Details"
           icon="arrowRight"
           onClick={handleViewDetails}
          />
-      </div>
-
-      <div className={styles.cta}>
-        <Button
-          variant="primary"
-          size="bigSquared"
-          label="Close"
-          onClick={() => dispatch(hideArtworkPanel())}
-        />
       </div>
     </div>
   )

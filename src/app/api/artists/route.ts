@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const artists = await prisma.user.findMany({
-      where: { userType: 'artist' },
+      where: { userType: 'artist', published: true },
       select: {
         id: true,
         name: true,

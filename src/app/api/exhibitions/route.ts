@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
             lastName: true,
             handler: true,
             userType: true,
+            published: true,
           },
         },
       },

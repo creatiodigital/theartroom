@@ -2,7 +2,7 @@
 
 import { Canvas } from '@react-three/fiber'
 import { useRef, Suspense } from 'react'
-import { ReinhardToneMapping, Mesh } from 'three'
+import { NoToneMapping, Mesh } from 'three'
 
 import { Loader } from '@/components/ui/Loader'
 import SceneContext from '@/contexts/SceneContext'
@@ -31,8 +31,7 @@ export const Scene = () => {
           shadows={false}
           gl={{
             antialias: false,
-            toneMapping: ReinhardToneMapping,
-            toneMappingExposure: 1.0,
+            toneMapping: NoToneMapping,
           }}
         >
           <Suspense fallback={<Loader />}>
