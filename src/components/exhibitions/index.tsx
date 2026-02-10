@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 import { EmptyState } from '@/components/ui/EmptyState'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
 
@@ -80,6 +81,10 @@ export const ExhibitionsPage = () => {
 
   return (
     <PageLayout loading={loading}>
+      <PageHeader
+        pageTitle="Exhibitions"
+        pageSubtitle="Explore our curated exhibitions, both current and past."
+      />
       <section className={styles.section}>
         {currentExhibitions.length === 0 ? (
           <EmptyState message="No current exhibitions." />
