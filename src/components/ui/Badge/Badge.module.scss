@@ -31,12 +31,12 @@
   color: var(--color-badge-danger-text);
 }
 
-.public {
+.published {
   background: var(--color-badge-info-bg);
   color: var(--color-badge-info-text);
 }
 
-.hidden {
+.unpublished {
   background: var(--color-badge-warning-bg);
   color: var(--color-badge-warning-text);
 }

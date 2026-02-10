@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 
 import prisma from '@/lib/prisma'
+import { generateProvisionalPassword, validatePassword } from '@/utils/password'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,7 @@ export async function GET() {
         lastName: true,
         handler: true,
         biography: true,
+        profileImageUrl: true,
       },
       orderBy: { name: 'asc' },
     })
@@ -42,8 +44,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash password if provided
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : null
+    // Determine password: use provided or auto-generate provisional
+    let rawPassword = password as string | undefined
+    let isProvisional = false
+
+    if (!rawPassword) {
+      rawPassword = generateProvisionalPassword()
+      isProvisional = true
+    } else {
+      // Validate manual password
+      const validation = validatePassword(rawPassword)
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: `Password must have ${validation.errors.join(', ')}` },
+          { status: 400 },
+        )
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(rawPassword, 10)
 
     const artist = await prisma.user.create({
       data: {
@@ -53,11 +72,15 @@ export async function POST(request: NextRequest) {
         email,
         biography: biography || '',
         password: hashedPassword,
+        mustChangePassword: isProvisional,
         userType: userType || 'artist',
       },
     })
 
-    return NextResponse.json(artist, { status: 201 })
+    return NextResponse.json(
+      { ...artist, provisionalPassword: isProvisional ? rawPassword : undefined },
+      { status: 201 },
+    )
   } catch (error: unknown) {
     console.error('[POST /api/artists] error:', error)
 

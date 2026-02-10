@@ -4,7 +4,7 @@ import c from 'classnames'
 
 import styles from './Badge.module.scss'
 
-type BadgeVariant = 'current' | 'past' | 'public' | 'hidden' | 'neutral'
+type BadgeVariant = 'current' | 'past' | 'published' | 'unpublished' | 'neutral'
 type BadgeSize = 'small' | 'regular'
 
 type BadgeProps = {

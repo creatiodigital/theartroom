@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 
 export async function GET(_req: NextRequest, context: { params: Promise<{ url: string }> }) {
@@ -12,6 +13,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             lastName: true,
             handler: true,
@@ -41,6 +43,18 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
     if (!exhibition) {
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    }
+
+    // If exhibition is not published, only allow owner or admin/superAdmin to access
+    if (!exhibition.published) {
+      const session = await auth()
+      const isOwner = session?.user?.id === exhibition.userId
+      const userType = session?.user?.userType
+      const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
+
+      if (!isOwner && !isAdminOrAbove) {
+        return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+      }
     }
 
     // Extract artworks of type "image" that are not hidden from exhibition

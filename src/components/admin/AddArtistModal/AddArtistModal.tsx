@@ -22,7 +22,11 @@ type AddArtistModalProps = {
   isSuperAdmin?: boolean
 }
 
-export const AddArtistModal = ({ onClose, onSuccess, isSuperAdmin = false }: AddArtistModalProps) => {
+export const AddArtistModal = ({
+  onClose,
+  onSuccess,
+  isSuperAdmin = false,
+}: AddArtistModalProps) => {
   // Add admin option only for superAdmin users
   const userTypeOptions = isSuperAdmin
     ? [...baseUserTypeOptions, { value: 'admin', label: 'Admin' }]
@@ -37,6 +41,7 @@ export const AddArtistModal = ({ onClose, onSuccess, isSuperAdmin = false }: Add
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [provisionalPassword, setProvisionalPassword] = useState('')
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -65,11 +70,19 @@ export const AddArtistModal = ({ onClose, onSuccess, isSuperAdmin = false }: Add
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const data = await response.json()
         setError(data.error || 'Failed to create artist')
         setLoading(false)
         return
+      }
+
+      // If provisional password was generated, show it
+      if (data.provisionalPassword) {
+        setProvisionalPassword(data.provisionalPassword)
+        onSuccess()
+        return // Don't close modal yet, show the password
       }
 
       onSuccess()
@@ -82,76 +95,133 @@ export const AddArtistModal = ({ onClose, onSuccess, isSuperAdmin = false }: Add
 
   return (
     <div className={styles.modal}>
-      <Text font="dashboard" as="h2">Add New User</Text>
-      <form onSubmit={handleSubmit} autoComplete="off">
-        <div className={styles.section}>
-          <label className={styles.label} htmlFor="name">First Name</label>
-          <Input
-            id="name"
-            type="text"
-            size="medium"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            required
-          />
+      {provisionalPassword ? (
+        <>
+          <Text font="dashboard" as="h2">
+            User Created Successfully
+          </Text>
+          <div className={styles.section}>
+            <Text font="dashboard" as="p" style={{ marginBottom: '16px' }}>
+              The following temporary password was generated. Please share it with the artist:
+            </Text>
+            <div className={styles.provisionalPassword}>
+              <code>{provisionalPassword}</code>
+            </div>
+            <Text
+              font="dashboard"
+              as="p"
+              style={{ fontSize: '13px', color: '#666', marginTop: '12px' }}
+            >
+              The artist will be asked to set a new password on their first login.
+            </Text>
+          </div>
+          <div className={styles.actions}>
+            <Button font="dashboard" variant="primary" label="Done" onClick={onClose} />
+          </div>
+        </>
+      ) : (
+        <>
+          <Text font="dashboard" as="h2">
+            Add New User
+          </Text>
+          <form onSubmit={handleSubmit} autoComplete="off">
+            <div className={styles.section}>
+              <label className={styles.label} htmlFor="name">
+                First Name
+              </label>
+              <Input
+                id="name"
+                type="text"
+                size="medium"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                required
+              />
 
-          <label className={styles.label} htmlFor="lastName">Last Name</label>
-          <Input
-            id="lastName"
-            type="text"
-            size="medium"
-            value={formData.lastName}
-            onChange={(e) => handleChange('lastName', e.target.value)}
-            required
-          />
+              <label className={styles.label} htmlFor="lastName">
+                Last Name
+              </label>
+              <Input
+                id="lastName"
+                type="text"
+                size="medium"
+                value={formData.lastName}
+                onChange={(e) => handleChange('lastName', e.target.value)}
+                required
+              />
 
-          <label className={styles.label} htmlFor="handler">Handler (URL slug)</label>
-          <Input
-            id="handler"
-            type="text"
-            size="medium"
-            value={formData.handler}
-            onChange={(e) => handleChange('handler', e.target.value)}
-            required
-          />
+              <label className={styles.label} htmlFor="handler">
+                Handler (URL slug)
+              </label>
+              <Input
+                id="handler"
+                type="text"
+                size="medium"
+                value={formData.handler}
+                onChange={(e) => handleChange('handler', e.target.value)}
+                required
+              />
 
-          <label className={styles.label} htmlFor="email">Email</label>
-          <Input
-            id="email"
-            type="email"
-            size="medium"
-            value={formData.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            autoComplete="off"
-            required
-          />
+              <label className={styles.label} htmlFor="email">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                size="medium"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                autoComplete="off"
+                required
+              />
 
-          <label className={styles.label} htmlFor="password">Password</label>
-          <Input
-            id="password"
-            type="password"
-            size="medium"
-            value={formData.password}
-            onChange={(e) => handleChange('password', e.target.value)}
-            autoComplete="new-password"
-          />
+              <label className={styles.label} htmlFor="password">
+                Password{' '}
+                <span style={{ fontWeight: 'normal', fontSize: '12px', color: '#888' }}>
+                  (optional — auto-generated if empty)
+                </span>
+              </label>
+              <Input
+                id="password"
+                type="password"
+                size="medium"
+                value={formData.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                autoComplete="new-password"
+                showPasswordToggle
+              />
 
-          <label className={styles.label} htmlFor="userType">Type</label>
-          <Select
-            options={userTypeOptions}
-            value={formData.userType}
-            onChange={(val) => handleChange('userType', val as string)}
-            size="medium"
-          />
-        </div>
+              <label className={styles.label} htmlFor="userType">
+                Type
+              </label>
+              <Select
+                options={userTypeOptions}
+                value={formData.userType}
+                onChange={(val) => handleChange('userType', val as string)}
+                size="medium"
+              />
+            </div>
 
-        <ErrorText>{error}</ErrorText>
+            <ErrorText>{error}</ErrorText>
 
-        <div className={styles.actions}>
-          <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
-          <Button font="dashboard" variant="primary" label={loading ? 'Creating...' : 'Create User'} type="submit" />
-        </div>
-      </form>
+            <div className={styles.actions}>
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={onClose}
+                type="button"
+              />
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={loading ? 'Creating...' : 'Create User'}
+                type="submit"
+              />
+            </div>
+          </form>
+        </>
+      )}
     </div>
   )
 }

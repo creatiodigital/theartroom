@@ -14,13 +14,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         loginCode: { label: 'Login Code', type: 'text' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password || !credentials?.loginCode) {
+        if (!credentials?.email || !credentials?.password) {
           return null
         }
 
         const email = credentials.email as string
         const password = credentials.password as string
-        const loginCode = credentials.loginCode as string
+        const loginCode = credentials.loginCode as string | undefined
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -33,6 +33,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const passwordMatch = await bcrypt.compare(password, user.password)
 
         if (!passwordMatch) {
+          return null
+        }
+
+        // If user must change password (provisional), skip OTP and allow login
+        if (user.mustChangePassword) {
+          // Clear any existing login code
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { loginCode: null, loginCodeExpiry: null },
+          })
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            handler: user.handler,
+            userType: user.userType,
+            mustChangePassword: true,
+          }
+        }
+
+        // Normal flow: require login code
+        if (!loginCode) {
           return null
         }
 
@@ -61,6 +84,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           handler: user.handler,
           userType: user.userType,
+          mustChangePassword: false,
         }
       },
     }),
@@ -71,6 +95,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id
         token.handler = (user as { handler?: string }).handler
         token.userType = (user as { userType?: string }).userType
+        token.mustChangePassword =
+          (user as { mustChangePassword?: boolean }).mustChangePassword ?? false
       }
 
       // Handle impersonation updates from client
@@ -92,14 +118,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.handler = token.handler as string
-        
+
         // Fetch fresh userType from database to ensure role changes take effect immediately
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { userType: true },
+            select: { userType: true, mustChangePassword: true },
           })
           session.user.userType = dbUser?.userType ?? (token.userType as string)
+          session.user.mustChangePassword =
+            dbUser?.mustChangePassword ?? (token.mustChangePassword as boolean) ?? false
         } catch {
           // Fallback to token if DB lookup fails
           session.user.userType = token.userType as string

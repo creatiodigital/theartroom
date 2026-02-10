@@ -64,11 +64,10 @@ export const Dashboard = () => {
   }, [])
 
   const handleCreateExhibition = useCallback(
-    async (mainTitle: string, visibility: string, customUrl: string) => {
+    async (mainTitle: string, customUrl: string) => {
       try {
         const newEx = await createExhibition({
           mainTitle,
-          visibility,
           userId: userData?.id ?? '',
           userHandler: userData?.handler ?? '',
           spaceId: selectedSpace.value,

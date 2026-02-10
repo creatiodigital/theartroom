@@ -15,7 +15,7 @@ type Exhibition = {
   url: string
   handler: string
   status: string
-  visibility: string
+  published: boolean
   user: {
     id: string
     name: string
@@ -65,19 +65,19 @@ export const AdminExhibitions = () => {
     }
   }
 
-  const handleToggleVisibility = async (exhibitionId: string, currentVisibility: string) => {
-    const newVisibility = currentVisibility === 'public' ? 'hidden' : 'public'
+  const handleTogglePublished = async (exhibitionId: string, currentPublished: boolean) => {
+    const newPublished = !currentPublished
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visibility: newVisibility }),
+        body: JSON.stringify({ published: newPublished }),
       })
       if (response.ok) {
         fetchExhibitions()
       }
     } catch (error) {
-      console.error('Failed to update visibility:', error)
+      console.error('Failed to update published status:', error)
     }
   }
 
@@ -120,7 +120,7 @@ export const AdminExhibitions = () => {
               <th>Exhibition</th>
               <th>Artist</th>
               <th>Status</th>
-              <th>Visibility</th>
+              <th>Published</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -145,8 +145,8 @@ export const AdminExhibitions = () => {
                 </td>
                 <td>
                   <Badge
-                    label={exhibition.visibility}
-                    variant={exhibition.visibility as 'public' | 'hidden'}
+                    label={exhibition.published ? 'Published' : 'Unpublished'}
+                    variant={exhibition.published ? 'published' : 'unpublished'}
                   />
                 </td>
                 <td>
@@ -160,8 +160,8 @@ export const AdminExhibitions = () => {
                     <Button
                       font="dashboard"
                       variant="secondary"
-                      label={exhibition.visibility === 'public' ? 'Hide' : 'Make Public'}
-                      onClick={() => handleToggleVisibility(exhibition.id, exhibition.visibility)}
+                      label={exhibition.published ? 'Unpublish' : 'Publish'}
+                      onClick={() => handleTogglePublished(exhibition.id, exhibition.published)}
                     />
                     <Button
                       font="dashboard"

@@ -32,7 +32,6 @@ type Exhibition = {
   featuredImageUrl?: string
   url: string
   status: string
-  visibility: string
   startDate?: string
   endDate?: string
   artworks?: Artwork[]

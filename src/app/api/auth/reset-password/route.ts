@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
 import prisma from '@/lib/prisma'
+import { validatePassword } from '@/utils/password'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,17 +10,15 @@ export async function POST(request: NextRequest) {
     const { token, password } = body
 
     if (!token || !password) {
-      return NextResponse.json(
-        { error: 'Token and password are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Token and password are required' }, { status: 400 })
     }
 
     // Password validation
-    if (password.length < 8) {
+    const validation = validatePassword(password)
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
-        { status: 400 }
+        { error: `Password must have ${validation.errors.join(', ')}` },
+        { status: 400 },
       )
     }
 
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid or expired reset link. Please request a new one.' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -58,9 +57,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error resetting password:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

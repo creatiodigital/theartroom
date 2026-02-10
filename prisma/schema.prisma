@@ -19,16 +19,17 @@ enum UserType {
 }
 
 model User {
-  id              String   @id @default(uuid())
-  name            String
-  lastName        String
-  userType        UserType @default(general)
-  handler         String   @unique
-  biography       String
-  email           String?  @unique
-  password        String?
-  profileImageUrl String?
-  isFeatured      Boolean  @default(false)
+  id                 String   @id @default(uuid())
+  name               String
+  lastName           String
+  userType           UserType @default(general)
+  handler            String   @unique
+  biography          String
+  email              String?  @unique
+  password           String?
+  mustChangePassword Boolean  @default(false)
+  profileImageUrl    String?
+  isFeatured         Boolean  @default(false)
 
   // Two-Factor Authentication
   totpSecret       String?
@@ -140,7 +141,7 @@ model Exhibition {
   startDate        DateTime?
   endDate          DateTime?
   status           String
-  visibility       String
+  published        Boolean   @default(false)
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")

@@ -8,6 +8,7 @@ declare module 'next-auth' {
       name?: string | null
       handler?: string
       userType?: string
+      mustChangePassword?: boolean
     }
     impersonating?: {
       id: string
@@ -19,6 +20,7 @@ declare module 'next-auth' {
   interface User {
     handler?: string
     userType?: string
+    mustChangePassword?: boolean
   }
 }
 
@@ -27,6 +29,7 @@ declare module 'next-auth/jwt' {
     id?: string
     handler?: string
     userType?: string
+    mustChangePassword?: boolean
     impersonatingId?: string
     impersonatingName?: string
     impersonatingHandler?: string
