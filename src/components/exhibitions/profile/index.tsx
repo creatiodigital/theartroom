@@ -141,7 +141,7 @@ export const ExhibitionProfilePage = ({
         )}
 
         {!isRichTextEmpty(exhibition.description) && (
-          <RichText content={exhibition.description!} className={styles.description} />
+          <RichText content={exhibition.description!} variant="compact" className={styles.description} />
         )}
 
         {exhibition.artworks && exhibition.artworks.length > 0 && (

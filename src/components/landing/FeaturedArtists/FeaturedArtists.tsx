@@ -24,7 +24,7 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
 
   return (
     <section className={styles.section}>
-      <NiceTitle title="Featured Artists" align="left" />
+      <NiceTitle title="Featured Artists" />
 
       <div className={styles.grid}>
         {artists.map((artist, i) => (

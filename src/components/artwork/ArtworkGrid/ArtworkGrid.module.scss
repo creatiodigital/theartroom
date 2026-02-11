@@ -62,12 +62,13 @@
 }
 
 .artist {
-  font-weight: 400;
+  font-weight: 600;
   margin-bottom: var(--space-1);
   color: var(--color-text-primary);
 }
 
 .title {
+  font-size: var(--text-sm);
   color: var(--color-text-primary);
 }
 
