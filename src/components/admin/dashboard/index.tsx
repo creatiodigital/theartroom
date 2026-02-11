@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect as useEffectImport, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { MoreVertical } from 'lucide-react'
 
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
 import { AdminExhibitions } from '@/components/admin/dashboard/AdminExhibitions'
@@ -12,10 +13,11 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { Checkbox } from '@/components/ui/Checkbox'
+
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Modal } from '@/components/ui/Modal'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
@@ -32,6 +34,20 @@ export const DashboardAdmin = () => {
   const [confirmText, setConfirmText] = useState('')
   const [invitingId, setInvitingId] = useState<string | null>(null)
   const [inviteTarget, setInviteTarget] = useState<{ id: string; name: string; email: string } | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close kebab menu on outside click
+  useEffectImport(() => {
+    if (!openMenuId) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openMenuId])
 
   // Redirect non-admins
   useEffect(() => {
@@ -180,11 +196,9 @@ export const DashboardAdmin = () => {
           <thead>
             <tr>
               <th>Name</th>
-              <th>Last Name</th>
-              <th>Handler</th>
               <th>Email</th>
               <th>Type</th>
-              <th>Published</th>
+              <th>Visibility</th>
               <th>Featured</th>
               <th>Actions</th>
             </tr>
@@ -192,9 +206,7 @@ export const DashboardAdmin = () => {
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td>{user.name}</td>
-                <td>{user.lastName}</td>
-                <td>{user.handler}</td>
+                <td>{user.name} {user.lastName}</td>
                 <td>{user.email || '-'}</td>
                 <td>{user.userType}</td>
                 <td>
@@ -204,61 +216,58 @@ export const DashboardAdmin = () => {
                   />
                 </td>
                 <td>
-                  <Checkbox
-                    checked={user.isFeatured ?? false}
-                    onChange={async (e) => {
-                      const newValue = e.target.checked
-                      try {
-                        await fetch(`/api/users/${user.id}`, {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ isFeatured: newValue }),
-                        })
-                        refetch()
-                      } catch (err) {
-                        console.error('Failed to update featured status:', err)
-                      }
-                    }}
-                  />
+                  {user.isFeatured && <Badge label="Featured" variant="current" />}
                 </td>
                 <td>
-                  <div className={dashboardStyles.actions}>
-                    {/* Invite button - superAdmin only, for users with email */}
-                    {isSuperAdminUser && user.email && (
-                      <Button
-                        font="dashboard"
-                        variant="secondary"
-                        label="Invite"
-                        onClick={() => handleInviteClick(user)}
-                      />
-                    )}
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label={user.published ? 'Unpublish' : 'Publish'}
-                      onClick={() => handleTogglePublished(user.id, user.published ?? false)}
-                    />
-                    {/* Impersonate logic:
-                        - superAdmin: can impersonate anyone except themselves
-                        - admin: can only impersonate artists/curators (not other admins) */}
-                    {user.id !== session?.user?.id &&
-                      (isSuperAdminUser ||
-                        (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
-                      <Button
-                        font="dashboard"
-                        variant="secondary"
-                        label="Impersonate"
-                        onClick={() => handleImpersonate(user)}
-                      />
-                    )}
-                    {/* Only superAdmin can delete, and cannot delete themselves */}
-                    {isSuperAdminUser && user.id !== session?.user?.id && (
-                      <Button
-                        font="dashboard"
-                        variant="secondary"
-                        label="Delete"
-                        onClick={() => handleDeleteClick(user.id, `${user.name} ${user.lastName}`)}
-                      />
+                  <div className={dashboardStyles.kebabWrapper} ref={openMenuId === user.id ? menuRef : undefined}>
+                    <button
+                      className={dashboardStyles.kebabButton}
+                      onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
+                      aria-label="Actions"
+                    >
+                      <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                    </button>
+                    {openMenuId === user.id && (
+                      <div className={dashboardStyles.kebabMenu}>
+                        {/* Invite - superAdmin only, for users with email */}
+                        {isSuperAdminUser && user.email && (
+                          <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleInviteClick(user); }}>
+                            Invite
+                          </button>
+                        )}
+                        <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleTogglePublished(user.id, user.published ?? false); }}>
+                          {user.published ? 'Unpublish' : 'Publish'}
+                        </button>
+                        <button className={dashboardStyles.kebabMenuItem} onClick={async () => {
+                          setOpenMenuId(null)
+                          try {
+                            await fetch(`/api/users/${user.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isFeatured: !user.isFeatured }),
+                            })
+                            refetch()
+                          } catch (err) {
+                            console.error('Failed to update featured status:', err)
+                          }
+                        }}>
+                          {user.isFeatured ? 'Remove Featured' : 'Set as Featured'}
+                        </button>
+                        {/* Impersonate */}
+                        {user.id !== session?.user?.id &&
+                          (isSuperAdminUser ||
+                            (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
+                          <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleImpersonate(user); }}>
+                            Impersonate
+                          </button>
+                        )}
+                        {/* Delete - superAdmin only */}
+                        {isSuperAdminUser && user.id !== session?.user?.id && (
+                          <button className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`} onClick={() => { setOpenMenuId(null); handleDeleteClick(user.id, `${user.name} ${user.lastName}`); }}>
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </td>

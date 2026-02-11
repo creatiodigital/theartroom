@@ -1,0 +1,69 @@
+import Link from 'next/link'
+import Image from 'next/image'
+
+import { Text } from '@/components/ui/Typography'
+import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
+
+import styles from './FeaturedArtists.module.scss'
+
+type FeaturedArtist = {
+  id: string
+  name: string
+  lastName: string
+  handler: string
+  biography: string
+  profileImageUrl: string | null
+}
+
+interface FeaturedArtistsProps {
+  artists: FeaturedArtist[]
+}
+
+export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
+  if (artists.length === 0) return null
+
+  return (
+    <section className={styles.section}>
+      <NiceTitle title="Featured Artists" align="left" />
+
+      <div className={styles.grid}>
+        {artists.map((artist, i) => (
+          <Link
+            key={artist.id}
+            href={`/artists/${artist.handler}`}
+            className={styles.artistRow}
+          >
+            <div className={styles.artistInfo}>
+              <span className={styles.index}>
+                ({String(i + 1).padStart(2, '0')})
+              </span>
+              <div className={styles.nameBlock}>
+                <Text as="span" font="serif" size="2xl">
+                  {artist.name} {artist.lastName}
+                </Text>
+                {artist.biography && (
+                  <span className={styles.biography}>
+                    {artist.biography.length > 40
+                      ? `${artist.biography.slice(0, 40)}…`
+                      : artist.biography}
+                  </span>
+                )}
+              </div>
+            </div>
+            {artist.profileImageUrl && (
+              <div className={styles.imageContainer}>
+                <Image
+                  src={artist.profileImageUrl}
+                  alt={`${artist.name} ${artist.lastName}`}
+                  width={100}
+                  height={100}
+                  className={styles.profileImage}
+                />
+              </div>
+            )}
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}

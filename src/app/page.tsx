@@ -5,6 +5,9 @@ import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { Text } from '@/components/ui/Typography'
 import { Slideshow } from '@/components/landing/Slideshow'
+import { Intro } from '@/components/landing/Intro/Intro'
+import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
+import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
@@ -55,6 +58,22 @@ export default async function Home() {
   })
   const exhibitions = exhibitionData as unknown as ExhibitionWithUser[]
 
+  const featuredArtists = await prisma.user.findMany({
+    where: {
+      isFeatured: true,
+      published: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      lastName: true,
+      handler: true,
+      biography: true,
+      profileImageUrl: true,
+    },
+    orderBy: { name: 'asc' },
+  })
+
   return (
     <main className={styles.home}>
       <Header />
@@ -66,10 +85,11 @@ export default async function Home() {
       {slides.length > 0 && <Slideshow slides={slides} />}
 
       <div className={styles.content}>
+        <Intro />
+
+        <NiceTitle title="Current Exhibitions" />
+
         <section className={styles.exhibitionsSection}>
-          <Text as="h2" font="sans" size="lg" className={styles.sectionHeading}>
-            Exhibitions
-          </Text>
           {exhibitions.length === 0 ? (
             <Text as="p" className={styles.emptyText}>
               No current exhibitions at the moment.
@@ -112,30 +132,7 @@ export default async function Home() {
           )}
         </section>
 
-        {/* Featured Artists - only show if there are any */}
-        {/* {featuredArtists.length > 0 && (
-          <section>
-            <H2 className={styles.sectionHeading}>Featured Artists</H2>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {featuredArtists.map((artist) => (
-                <li key={artist.id} style={{ padding: 'var(--space-3) 0' }}>
-                  <Link
-                    href={`/artists/${artist.handler}`}
-                    style={{
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      fontFamily: 'var(--font-serif)',
-                      fontWeight: 'var(--font-regular)',
-                      fontSize: 'var(--text-lg)',
-                    }}
-                  >
-                    {artist.name} {artist.lastName}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )} */}
+        <FeaturedArtists artists={featuredArtists} />
       </div>
 
       <Footer />

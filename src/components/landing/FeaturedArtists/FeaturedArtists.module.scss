@@ -1,0 +1,70 @@
+
+
+.section {
+  margin-top: var(--space-12);
+  margin-bottom: 80px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-8);
+  }
+}
+
+.artistRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--color-border-default);
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+}
+
+.artistInfo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6);
+}
+
+.index {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: #7a7a7a;
+  min-width: 36px;
+}
+
+.nameBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.biography {
+  font-size: var(--text-xs);
+  color: #7a7a7a;
+  margin-top: var(--space-1);
+}
+
+.imageContainer {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+}
+
+.profileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
