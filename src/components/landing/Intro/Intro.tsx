@@ -6,7 +6,7 @@ export const Intro = () => {
   return (
     <div className={styles.intro}>
       <Text as="h2" font="serif" size="3xl">
-        Step inside and explore artists{'\u2019'} work.
+        Art beyond immediacy.
       </Text>
     </div>
   )

@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
+import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
+import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
 
 import styles from './ArtistProfile.module.scss'
 
@@ -26,6 +27,8 @@ type Exhibition = {
   mainTitle: string
   url: string
   handler: string
+  featuredImageUrl?: string | null
+  shortDescription?: string | null
 }
 
 type Artwork = {
@@ -128,7 +131,9 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         )}
       </div>
 
-    
+      {artworks.length > 0 && (
+        <NiceTitle title="Featured Works" align="left" />
+      )}
 
       {artworks.length > 0 && (
         <div className={styles.section}>
@@ -136,22 +141,21 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         </div>
       )}
 
-        <div className={styles.section}>
-        <Text as="h2" font="sans" size="lg" className={styles.sectionHeading}>Exhibitions</Text>
+      <NiceTitle title="Artist's Exhibitions" align="left" />
+      <div className={styles.section}>
         {exhibitions.length === 0 ? (
           <EmptyState message="No exhibitions yet." />
         ) : (
-          <ul className={styles.exhibitionList}>
-            {exhibitions.map((ex) => (
-              <li key={ex.id} className={styles.exhibitionItem}>
-                <Link href={`/exhibitions/${artist.handler}/${ex.url}`} className={styles.exhibitionLink}>
-                  <Text as="h3" font="serif" size="xl" className={styles.exhibitionTitle}>
-                    {ex.mainTitle}
-                  </Text>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ExhibitionGrid
+            exhibitions={exhibitions.map((ex) => ({
+              id: ex.id,
+              mainTitle: ex.mainTitle,
+              featuredImageUrl: ex.featuredImageUrl,
+              shortDescription: ex.shortDescription,
+              artistLabel: artistFullName,
+              href: `/exhibitions/${artist.handler}/${ex.url}`,
+            }))}
+          />
         )}
       </div>
     </PageLayout>

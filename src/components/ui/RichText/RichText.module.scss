@@ -187,8 +187,8 @@
       font-family: var(--font-sans), var(--font-sans-fallback);
       font-size: var(--text-sm);
       font-weight: var(--font-regular);
-      line-height: var(--leading-loose);
-      margin: 0 0 var(--space-2);
+      line-height: 2.2;
+      margin: 0 0 var(--space-6);
 
       &:last-child {
         margin-bottom: 0;
