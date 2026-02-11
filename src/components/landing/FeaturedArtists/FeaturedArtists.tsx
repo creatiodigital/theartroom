@@ -37,18 +37,9 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
               <span className={styles.index}>
                 ({String(i + 1).padStart(2, '0')})
               </span>
-              <div className={styles.nameBlock}>
-                <Text as="span" font="serif" size="2xl">
-                  {artist.name} {artist.lastName}
-                </Text>
-                {artist.biography && (
-                  <span className={styles.biography}>
-                    {artist.biography.length > 40
-                      ? `${artist.biography.slice(0, 40)}…`
-                      : artist.biography}
-                  </span>
-                )}
-              </div>
+              <Text as="span" font="serif" size="2xl">
+                {artist.name} {artist.lastName}
+              </Text>
             </div>
             {artist.profileImageUrl && (
               <div className={styles.imageContainer}>
