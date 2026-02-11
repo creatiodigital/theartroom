@@ -38,16 +38,13 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXTAUTH_URL || 'https://theartroom.gallery'
     const loginUrl = `${baseUrl}/dashboard/login`
 
-    // If user has mustChangePassword, generate a fresh provisional password
-    let provisionalPassword: string | null = null
-    if (user.mustChangePassword) {
-      provisionalPassword = generateProvisionalPassword()
-      const hashedPassword = await bcrypt.hash(provisionalPassword, 10)
-      await prisma.user.update({
-        where: { id: userId },
-        data: { password: hashedPassword },
-      })
-    }
+    // Always generate a fresh provisional password on invite/re-invite
+    const provisionalPassword = generateProvisionalPassword()
+    const hashedPassword = await bcrypt.hash(provisionalPassword, 10)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword, mustChangePassword: true },
+    })
 
     // Send invite email
     const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'
@@ -70,20 +67,12 @@ export async function POST(request: NextRequest) {
           <h3 style="font-size: 18px; margin-top: 24px;">Your Login Details:</h3>
           <ul style="line-height: 1.8;">
             <li><strong>Email:</strong> ${user.email}</li>
-            ${
-              provisionalPassword
-                ? `<li><strong>Temporary Password:</strong> <code style="font-size: 16px; background: #f3f3f3; padding: 2px 8px; border-radius: 3px; letter-spacing: 1px;">${provisionalPassword}</code></li>`
-                : `<li><strong>Password:</strong> The password set by your administrator</li>`
-            }
+            ${`<li><strong>Temporary Password:</strong> <code style="font-size: 16px; background: #f3f3f3; padding: 2px 8px; border-radius: 3px; letter-spacing: 1px;">${provisionalPassword}</code></li>`}
           </ul>
           
-          ${
-            provisionalPassword
-              ? `<p style="color: #b45309; background: #fef3c7; padding: 12px; border-radius: 4px;">
-                <strong>Important:</strong> You will be asked to set a new password when you first log in.
-              </p>`
-              : ''
-          }
+          <p style="color: #b45309; background: #fef3c7; padding: 12px; border-radius: 4px;">
+            <strong>Important:</strong> You will be asked to set a new password when you first log in.
+          </p>
           
           <div style="text-align: center; margin: 32px 0;">
             <a href="${loginUrl}" style="display: inline-block; padding: 12px 32px; background-color: #000; color: #fff; text-decoration: none; font-size: 16px;">
