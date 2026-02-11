@@ -39,10 +39,6 @@
 
   &:hover {
     text-decoration: none;
-
-    .image {
-      transform: scale(1.02);
-    }
   }
 }
 
@@ -62,7 +58,6 @@
 
 .image {
   object-fit: cover;
-  transition: transform 0.4s ease;
 }
 
 .imagePlaceholder {

@@ -31,10 +31,9 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
         slidesPerView={1}
         loop={false}
         speed={1500}
-        allowTouchMove={false}
         autoplay={{
           delay: 5000,
-          disableOnInteraction: false,
+          disableOnInteraction: true,
         }}
         pagination={{
           clickable: true,

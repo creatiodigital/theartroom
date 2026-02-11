@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import Image from 'next/image'
-
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { Text } from '@/components/ui/Typography'
@@ -8,6 +5,7 @@ import { Slideshow } from '@/components/landing/Slideshow'
 import { Intro } from '@/components/landing/Intro/Intro'
 import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
+import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
@@ -95,40 +93,16 @@ export default async function Home() {
               No current exhibitions at the moment.
             </Text>
           ) : (
-            <div className={styles.exhibitionGrid}>
-              {exhibitions.map((exhibition) => (
-                <Link
-                  key={exhibition.id}
-                  href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                  className={styles.exhibitionCard}
-                >
-                  <div className={styles.exhibitionImageWrapper}>
-                    {exhibition.featuredImageUrl ? (
-                      <Image
-                        src={exhibition.featuredImageUrl}
-                        alt={exhibition.mainTitle}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className={styles.exhibitionImage}
-                      />
-                    ) : (
-                      <div className={styles.exhibitionImagePlaceholder} />
-                    )}
-                  </div>
-                  <Text as="span" size="xs" className={styles.exhibitionLabel}>
-                    {exhibition.user.name} {exhibition.user.lastName}
-                  </Text>
-                  <Text as="span" font="serif" size="2xl" className={styles.exhibitionTitle}>
-                    {exhibition.mainTitle}
-                  </Text>
-                  {exhibition.shortDescription && (
-                    <Text as="p" size="sm" className={styles.exhibitionDescription}>
-                      {exhibition.shortDescription}
-                    </Text>
-                  )}
-                </Link>
-              ))}
-            </div>
+            <ExhibitionGrid
+              exhibitions={exhibitions.map((exhibition) => ({
+                id: exhibition.id,
+                mainTitle: exhibition.mainTitle,
+                featuredImageUrl: exhibition.featuredImageUrl,
+                shortDescription: exhibition.shortDescription,
+                artistLabel: `${exhibition.user.name} ${exhibition.user.lastName}`,
+                href: `/exhibitions/${exhibition.user.handler}/${exhibition.url}`,
+              }))}
+            />
           )}
         </section>
 

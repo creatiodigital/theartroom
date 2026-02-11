@@ -14,7 +14,7 @@ export const PageHeader = ({ pageTitle, pageSubtitle }: PageHeaderProps) => {
         {pageTitle}
       </Text>
       {pageSubtitle && (
-        <Text as="p" size="sm" className={styles.subtitle}>
+        <Text as="p" size="md" className={styles.subtitle}>
           {pageSubtitle}
         </Text>
       )}
