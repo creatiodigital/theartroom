@@ -168,6 +168,70 @@
   gap: var(--space-2);
 }
 
+/* Kebab Menu */
+.kebabWrapper {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.kebabButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: var(--space-1);
+  color: var(--color-text-primary);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.kebabMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  min-width: 140px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: var(--space-1) 0;
+  margin-top: var(--space-1);
+}
+
+.kebabMenuItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.kebabMenuItemDanger {
+  color: var(--color-brand);
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.06);
+  }
+}
+
 /* Form Fields */
 .field {
   margin-bottom: var(--space-4);

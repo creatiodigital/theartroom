@@ -1,0 +1,22 @@
+@use '@/styles/mixins' as *;
+
+.niceTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-bottom: var(--space-10);
+}
+
+.line {
+  flex: 1;
+  height: 0;
+  border-top: 3px double var(--color-border-default);
+}
+
+.title {
+
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}

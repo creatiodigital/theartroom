@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { MoreVertical } from 'lucide-react'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 type Exhibition = {
   id: string
@@ -31,6 +33,20 @@ export const AdminExhibitions = () => {
   const [deleteTarget, setDeleteTarget] = useState<Exhibition | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [confirmText, setConfirmText] = useState('')
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close kebab menu on outside click
+  useEffect(() => {
+    if (!openMenuId) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openMenuId])
 
   const fetchExhibitions = useCallback(async () => {
     try {
@@ -121,7 +137,7 @@ export const AdminExhibitions = () => {
               <th>Exhibition</th>
               <th>Artist</th>
               <th>Status</th>
-              <th>Published</th>
+              <th>Visibility</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -151,26 +167,31 @@ export const AdminExhibitions = () => {
                   />
                 </td>
                 <td>
-                  <div className={dashboardStyles.actions}>
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
-                      onClick={() => handleToggleStatus(exhibition.id, exhibition.status)}
-                    />
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label={exhibition.published ? 'Unpublish' : 'Publish'}
-                      onClick={() => handleTogglePublished(exhibition.id, exhibition.published)}
-                      disabled={!exhibition.published && !exhibition.user.published}
-                    />
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label="Delete"
-                      onClick={() => setDeleteTarget(exhibition)}
-                    />
+                  <div className={dashboardStyles.kebabWrapper} ref={openMenuId === exhibition.id ? menuRef : undefined}>
+                    <button
+                      className={dashboardStyles.kebabButton}
+                      onClick={() => setOpenMenuId(openMenuId === exhibition.id ? null : exhibition.id)}
+                      aria-label="Actions"
+                    >
+                      <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                    </button>
+                    {openMenuId === exhibition.id && (
+                      <div className={dashboardStyles.kebabMenu}>
+                        <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleToggleStatus(exhibition.id, exhibition.status); }}>
+                          {exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
+                        </button>
+                        <button
+                          className={dashboardStyles.kebabMenuItem}
+                          onClick={() => { setOpenMenuId(null); handleTogglePublished(exhibition.id, exhibition.published); }}
+                          disabled={!exhibition.published && !exhibition.user.published}
+                        >
+                          {exhibition.published ? 'Unpublish' : 'Publish'}
+                        </button>
+                        <button className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`} onClick={() => { setOpenMenuId(null); setDeleteTarget(exhibition); }}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </td>
               </tr>
