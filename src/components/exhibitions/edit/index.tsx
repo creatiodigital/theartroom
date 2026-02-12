@@ -67,7 +67,7 @@ export const ExhibitionEditPage = ({
     data: exhibition,
     isLoading,
     error,
-  } = useGetExhibitionByUrlQuery(exhibitionSlug, {
+  } = useGetExhibitionByUrlQuery({ url: exhibitionSlug, mode: 'edit' }, {
     skip: !exhibitionSlug,
     refetchOnMountOrArgChange: true,
   })
@@ -90,6 +90,7 @@ export const ExhibitionEditPage = ({
         allExhibitionArtworkIds: exhibition.allExhibitionArtworkIds || [],
         status: exhibition.status,
         published: exhibition.published ?? false,
+        hasPendingChanges: exhibition.hasPendingChanges ?? false,
         // Lighting customization
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
@@ -126,7 +127,7 @@ export const ExhibitionEditPage = ({
   }, [exhibition, dispatch])
 
   // Load saved artworks from database
-  const { isReady: artworksReady } = useLoadExhibitionArtworks(exhibition?.id)
+  const { isReady: artworksReady } = useLoadExhibitionArtworks(exhibition?.id, 'edit')
 
   // Restore wall view state from URL params (when returning from artwork edit)
   // Wait for artworks to be loaded before restoring

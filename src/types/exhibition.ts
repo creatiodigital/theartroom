@@ -15,6 +15,7 @@ export type TExhibition = {
   allExhibitionArtworkIds: string[]
   status: string
   published: boolean
+  hasPendingChanges: boolean
   // Lighting customization
   ambientLightColor?: string
   ambientLightIntensity?: number

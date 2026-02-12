@@ -292,7 +292,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     data: exhibition,
     isLoading: isApiLoading,
     error,
-  } = useGetExhibitionByUrlQuery(exhibitionSlug, {
+  } = useGetExhibitionByUrlQuery({ url: exhibitionSlug }, {
     skip: !exhibitionSlug,
   })
 
@@ -325,6 +325,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         allExhibitionArtworkIds: exhibition.allExhibitionArtworkIds || [],
         status: exhibition.status,
         published: exhibition.published ?? false,
+        hasPendingChanges: exhibition.hasPendingChanges ?? false,
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
         skylightColor: exhibition.skylightColor ?? undefined,
