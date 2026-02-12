@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { del } from '@vercel/blob'
 
-import type { Prisma } from '@/generated/prisma'
+import { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
+import { buildExhibitionSnapshot } from '@/lib/exhibitionSnapshot'
 
 import { slugify } from '@/utils/slugify'
 
@@ -114,7 +115,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.description !== undefined) data.description = body.description
     if (body.shortDescription !== undefined) data.shortDescription = body.shortDescription
     if (body.status !== undefined) data.status = body.status
-    if (body.published !== undefined) data.published = body.published
     if (body.thumbnailUrl !== undefined) data.thumbnailUrl = body.thumbnailUrl
     if (body.bannerUrl !== undefined) data.bannerUrl = body.bannerUrl
     if (body.startDate !== undefined) data.startDate = new Date(body.startDate)
@@ -171,6 +171,31 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     if (body.hdriEnvironment !== undefined) data.hdriEnvironment = body.hdriEnvironment
     if (body.ceilingLightMode !== undefined) data.ceilingLightMode = body.ceilingLightMode
+
+    // --- Draft/Publish logic ---
+    if (body.published === true) {
+      // Publishing or re-publishing: build snapshot from current state
+      data.published = true
+      const snapshot = await buildExhibitionSnapshot(id)
+      data.publishedSnapshot = snapshot
+      data.publishedAt = new Date()
+      data.hasPendingChanges = false
+    } else if (body.published === false) {
+      // Unpublishing: clear snapshot
+      data.published = false
+      data.publishedSnapshot = Prisma.JsonNull
+      data.publishedAt = null
+      data.hasPendingChanges = false
+    } else {
+      // Any other edit on a published exhibition → mark as having pending changes
+      const exhibition = await prisma.exhibition.findUnique({
+        where: { id },
+        select: { published: true },
+      })
+      if (exhibition?.published) {
+        data.hasPendingChanges = true
+      }
+    }
 
     const updated = await prisma.exhibition.update({
       where: { id },

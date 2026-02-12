@@ -15,4 +15,5 @@ export const exhibitionFactory = (): TExhibition => ({
   allExhibitionArtworkIds: [],
   status: '',
   published: false,
+  hasPendingChanges: false,
 })

@@ -31,6 +31,18 @@ export async function DELETE(
       where: { id },
     })
 
+    // If the exhibition is published, mark it as having pending changes
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id: existing.exhibitionId },
+      select: { published: true },
+    })
+    if (exhibition?.published) {
+      await prisma.exhibition.update({
+        where: { id: existing.exhibitionId },
+        data: { hasPendingChanges: true },
+      })
+    }
+
     return NextResponse.json({ success: true, deleted: id })
   } catch (error) {
     console.error('[DELETE /api/exhibition-artworks/[id]] error:', error)
