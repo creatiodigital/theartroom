@@ -3,6 +3,7 @@ import type { RefObject } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { useGroupArtwork } from '@/components/wallview/hooks/useGroupArtwork'
+import { getVisualBounds } from '@/components/wallview/utils'
 import { chooseCurrentArtworkId, removeGroup } from '@/redux/slices/wallViewSlice'
 import { showWizard, hideWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
@@ -27,6 +28,7 @@ export const useSelectBox = (
   )
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const isShiftKeyDown = useSelector((state: RootState) => state.wallView.isShiftKeyDown)
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
 
   const dispatch = useDispatch()
   const { handleAddArtworkToGroup } = useGroupArtwork()
@@ -94,8 +96,8 @@ export const useSelectBox = (
         .filter((a) => a.wallId === currentWallId)
 
       const selectedArtworks = filteredArtworks.filter((a) => {
-        const { posX2d: x, posY2d: y, width2d: w, height2d: h } = a
-        return minX < x + w && maxX > x && minY < y + h && maxY > y
+        const vb = getVisualBounds(a, artworksById[a.artworkId])
+        return minX < vb.x + vb.width && maxX > vb.x && minY < vb.y + vb.height && maxY > vb.y
       })
 
       if (!isShiftKeyDown) {
@@ -135,6 +137,7 @@ export const useSelectBox = (
       draggingSelectBox,
       allExhibitionArtworkIds,
       exhibitionArtworksById,
+      artworksById,
       currentWallId,
       isShiftKeyDown,
       handleAddArtworkToGroup,

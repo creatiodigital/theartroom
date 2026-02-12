@@ -19,7 +19,7 @@ import { useSelectBox } from '@/components/wallview/hooks/useSelectBox'
 import { Human } from '@/components/wallview/Human'
 import { DistanceLines } from '@/components/wallview/DistanceLines'
 import { SelectionBox } from '@/components/wallview/SelectionBox'
-import { convert2DTo3D } from '@/components/wallview/utils'
+import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import { setShiftKeyDown } from '@/redux/slices/wallViewSlice'
@@ -333,24 +333,18 @@ export const Wall = () => {
             return null
           }
 
-          const from = exhibitionArtworksById[pair.from] || {}
-          const to = exhibitionArtworksById[pair.to] || {}
+          const fromPos = exhibitionArtworksById[pair.from]
+          const toPos = exhibitionArtworksById[pair.to]
+          if (!fromPos || !toPos) return null
+
+          const fromVisual = getVisualBounds(fromPos, artworksById[fromPos.artworkId])
+          const toVisual = getVisualBounds(toPos, artworksById[toPos.artworkId])
 
           return (
             <AlignedLine
               key={index}
-              start={{
-                x: from.posX2d,
-                y: from.posY2d,
-                width: from.width2d,
-                height: from.height2d,
-              }}
-              end={{
-                x: to.posX2d,
-                y: to.posY2d,
-                width: to.width2d,
-                height: to.height2d,
-              }}
+              start={fromVisual}
+              end={toVisual}
               direction={pair.direction}
             />
           )
