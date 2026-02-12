@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { convert2DTo3D } from '@/components/wallview/utils'
+import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
   setAlignedPairs,
@@ -32,6 +32,7 @@ export const useResizeArtwork = (
   const dispatch = useDispatch()
   const isGridVisible = useSelector((state: RootState) => state.wallView.isGridVisible)
   const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const gridSize = 20
 
   // Track if we're currently resizing
@@ -57,10 +58,13 @@ export const useResizeArtwork = (
       const initialX = artwork.posX2d
       const initialY = artwork.posY2d
 
-      // Get other artworks on the same wall for snapping
+      // Get other artworks on the same wall for snapping (use visual bounds)
       const sameWallArtworks = allExhibitionArtworkIds
         .filter((id) => id !== artworkId && exhibitionArtworksById[id].wallId === currentWallId)
-        .map((id) => exhibitionArtworksById[id])
+        .map((id) => ({
+          pos: exhibitionArtworksById[id],
+          visual: getVisualBounds(exhibitionArtworksById[id], artworksById[exhibitionArtworksById[id].artworkId]),
+        }))
 
       // Start resizing state
       dispatch(pushToHistory()) // Save current state before resize
@@ -112,27 +116,27 @@ export const useResizeArtwork = (
           // Add edge snapping for proportional resize to show alignment lines
           // Only check edges that are actually moving based on the resize direction
           if (!isGridVisible) {
-            for (const otherArtwork of sameWallArtworks) {
+            for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
               const newRight = newX + newWidth
               const newBottom = newY + newHeight
-              const otherRight = otherArtwork.posX2d + otherArtwork.width2d
-              const otherBottom = otherArtwork.posY2d + otherArtwork.height2d
+              const otherRight = otherVisual.x + otherVisual.width
+              const otherBottom = otherVisual.y + otherVisual.height
 
               // Only check left edge if dragging from left side
-              if (direction.includes('left') && Math.abs(newX - otherArtwork.posX2d) <= SNAP_TOLERANCE) {
-                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'left' })
+              if (direction.includes('left') && Math.abs(newX - otherVisual.x) <= SNAP_TOLERANCE) {
+                alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'left' })
               }
               // Only check right edge if dragging from right side
               if (direction.includes('right') && Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
-                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'right' })
+                alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'right' })
               }
               // Only check top edge if dragging from top side
-              if (direction.includes('top') && Math.abs(newY - otherArtwork.posY2d) <= SNAP_TOLERANCE) {
-                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'top' })
+              if (direction.includes('top') && Math.abs(newY - otherVisual.y) <= SNAP_TOLERANCE) {
+                alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'top' })
               }
               // Only check bottom edge if dragging from bottom side
               if (direction.includes('bottom') && Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
-                alignedPairs.push({ from: artworkId, to: otherArtwork.artworkId, direction: 'bottom' })
+                alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'bottom' })
               }
             }
           }
@@ -149,13 +153,13 @@ export const useResizeArtwork = (
               newWidth = Math.max(5, initialWidth - (newX - initialX))
             } else {
               // Snap left edge to other artworks' left edges
-              for (const otherArtwork of sameWallArtworks) {
-                if (Math.abs(newX - otherArtwork.posX2d) <= SNAP_TOLERANCE) {
-                  newX = otherArtwork.posX2d
+              for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
+                if (Math.abs(newX - otherVisual.x) <= SNAP_TOLERANCE) {
+                  newX = otherVisual.x
                   newWidth = Math.max(5, initialX + initialWidth - newX)
                   alignedPairs.push({
                     from: artworkId,
-                    to: otherArtwork.artworkId,
+                    to: otherPos.artworkId,
                     direction: 'left',
                   })
                   break
@@ -176,13 +180,13 @@ export const useResizeArtwork = (
                 gridOffsetX
             } else {
               // Snap right edge to other artworks' right edges
-              for (const otherArtwork of sameWallArtworks) {
-                const otherRight = otherArtwork.posX2d + otherArtwork.width2d
+              for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
+                const otherRight = otherVisual.x + otherVisual.width
                 if (Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
                   newWidth = Math.max(5, otherRight - newX)
                   alignedPairs.push({
                     from: artworkId,
-                    to: otherArtwork.artworkId,
+                    to: otherPos.artworkId,
                     direction: 'right',
                   })
                   break
@@ -201,13 +205,13 @@ export const useResizeArtwork = (
               newHeight = Math.max(5, initialHeight - (newY - initialY))
             } else {
               // Snap top edge to other artworks' top edges
-              for (const otherArtwork of sameWallArtworks) {
-                if (Math.abs(newY - otherArtwork.posY2d) <= SNAP_TOLERANCE) {
-                  newY = otherArtwork.posY2d
+              for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
+                if (Math.abs(newY - otherVisual.y) <= SNAP_TOLERANCE) {
+                  newY = otherVisual.y
                   newHeight = Math.max(5, initialY + initialHeight - newY)
                   alignedPairs.push({
                     from: artworkId,
-                    to: otherArtwork.artworkId,
+                    to: otherPos.artworkId,
                     direction: 'top',
                   })
                   break
@@ -228,13 +232,13 @@ export const useResizeArtwork = (
                 gridOffsetY
             } else {
               // Snap bottom edge to other artworks' bottom edges
-              for (const otherArtwork of sameWallArtworks) {
-                const otherBottom = otherArtwork.posY2d + otherArtwork.height2d
+              for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
+                const otherBottom = otherVisual.y + otherVisual.height
                 if (Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
                   newHeight = Math.max(5, otherBottom - newY)
                   alignedPairs.push({
                     from: artworkId,
-                    to: otherArtwork.artworkId,
+                    to: otherPos.artworkId,
                     direction: 'bottom',
                   })
                   break
@@ -288,6 +292,7 @@ export const useResizeArtwork = (
       scaleFactor,
       isGridVisible,
       sizeLocked,
+      artworksById,
       boundingData,
       dispatch,
     ],

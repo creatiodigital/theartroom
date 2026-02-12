@@ -1,6 +1,36 @@
 import { Vector3, Quaternion, Mesh, BufferGeometry, Box3 } from 'three'
 
+import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 import type { TDimensions } from '@/types/geometry'
+
+/**
+ * Compute the visual bounding rect of an artwork, including its
+ * frame and passepartout borders (which grow outward from the image).
+ *
+ * Returns { x, y, width, height } in 2D wall-view pixel units.
+ * When no artwork metadata is available, falls back to the raw image rect.
+ */
+export const getVisualBounds = (
+  pos: TArtworkPosition,
+  artwork: TArtwork | undefined,
+): { x: number; y: number; width: number; height: number } => {
+  const frameBorder =
+    artwork?.showFrame && artwork?.imageUrl && artwork?.frameSize?.value
+      ? artwork.frameSize.value
+      : 0
+  const ppBorder =
+    artwork?.showPassepartout && artwork?.imageUrl && artwork?.passepartoutSize?.value
+      ? artwork.passepartoutSize.value
+      : 0
+  const totalBorder = frameBorder + ppBorder
+
+  return {
+    x: pos.posX2d - totalBorder,
+    y: pos.posY2d - totalBorder,
+    width: pos.width2d + totalBorder * 2,
+    height: pos.height2d + totalBorder * 2,
+  }
+}
 
 export const calculateAverageNormal = (placeholder: Mesh<BufferGeometry>): Vector3 => {
   const normal = new Vector3(0, 0, 0)
