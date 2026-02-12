@@ -55,6 +55,21 @@ const Artwork = memo(
     const artworkPositions = exhibitionArtworksById[id]
     const { posX2d, posY2d, height2d, width2d } = artworkPositions
 
+    // Calculate how much frame + passepartout borders add around the image
+    const { showFrame, frameSize, imageUrl, showPassepartout, passepartoutSize } = artwork
+    const frameBorderPx = (showFrame && imageUrl && frameSize?.value) ? frameSize.value : 0
+    const ppBorderPx = (showPassepartout && imageUrl && passepartoutSize?.value) ? passepartoutSize.value : 0
+    const totalBorderEachSide = frameBorderPx + ppBorderPx
+
+    // The container grows to include borders. With border-box, the CSS borders
+    // eat inward, so the image content naturally ends up at width2d × height2d.
+    const containerWidth = width2d + totalBorderEachSide * 2
+    const containerHeight = height2d + totalBorderEachSide * 2
+
+    // Offset position so the image center stays at the same place
+    const adjustedX = posX2d - totalBorderEachSide
+    const adjustedY = posY2d - totalBorderEachSide
+
     const { handleArtworkDragStart, handleArtworkDragMove, handleArtworkDragEnd } = useMoveArtwork(
       wallRef,
       boundingData,
@@ -90,10 +105,10 @@ const Artwork = memo(
         id={`artwork-${id}`}
         className={styles.artwork}
         style={{
-          top: `${posY2d}px`,
-          left: `${posX2d}px`,
-          width: `${width2d}px`,
-          height: `${height2d}px`,
+          top: `${adjustedY}px`,
+          left: `${adjustedX}px`,
+          width: `${containerWidth}px`,
+          height: `${containerHeight}px`,
           zIndex: currentArtworkId === id ? 10 : 1,
           cursor: 'grabbing',
         }}
@@ -108,7 +123,7 @@ const Artwork = memo(
         onMouseLeave={handleMouseLeave}
       >
         {currentArtworkId === id && (
-          <ArtworkMeasurements width2d={width2d} height2d={height2d} />
+          <ArtworkMeasurements width2d={containerWidth} height2d={containerHeight} />
         )}
         {currentArtworkId === id && artworkGroupIds.length <= 1 && (
           <Handles artworkId={id} handleResize={onHandleResize} />

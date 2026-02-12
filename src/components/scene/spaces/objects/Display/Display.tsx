@@ -315,8 +315,22 @@ const Display = ({ artwork }: DisplayProps) => {
   // supportThickness is for Z-depth, clamped 0-10
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
 
-  const innerWidth = planeWidth - (frameS + passepartoutS) / 50
-  const innerHeight = planeHeight - (frameS + passepartoutS) / 50
+  // Image stays at the artist-specified size (planeWidth × planeHeight).
+  // Passepartout and frame grow OUTWARD around the image.
+  const passepartoutBorder = passepartoutS / 100  // border width in 3D units
+  const frameBorder = frameS / 100                // border width in 3D units
+
+  // Passepartout outer = image + passepartout border on each side
+  const passepartoutOuterW = planeWidth + passepartoutBorder * 2
+  const passepartoutOuterH = planeHeight + passepartoutBorder * 2
+
+  // Frame outer = passepartout outer + frame border on each side
+  const frameOuterW = passepartoutOuterW + frameBorder * 2
+  const frameOuterH = passepartoutOuterH + frameBorder * 2
+
+  // The overall display size (for hit area and shadow)
+  const totalWidth = frameOuterW
+  const totalHeight = frameOuterH
 
   return (
     <group
@@ -327,40 +341,40 @@ const Display = ({ artwork }: DisplayProps) => {
       onPointerUp={handlePointerUp}
     >
       <mesh renderOrder={1}>
-        <planeGeometry args={[planeWidth, planeHeight]} />
+        <planeGeometry args={[totalWidth, totalHeight]} />
         <meshBasicMaterial visible={false} />
       </mesh>
 
-      {/* Artwork sits on top of support surface */}
+      {/* Artwork sits on top of support surface — at the artist-specified size */}
       <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
         {!imageUrl && (
           <mesh renderOrder={2}>
-            <planeGeometry args={[innerWidth, innerHeight]} />
+            <planeGeometry args={[planeWidth, planeHeight]} />
             <meshBasicMaterial color="white" side={DoubleSide} />
           </mesh>
         )}
 
-        {imageUrl && <ArtworkImage url={imageUrl} width={innerWidth} height={innerHeight} />}
+        {imageUrl && <ArtworkImage url={imageUrl} width={planeWidth} height={planeHeight} />}
       </group>
 
-      {/* Frame extends backward from Z=0 by frameDepth */}
+      {/* Frame extends backward from Z=0 by frameDepth — outermost layer */}
       {showFrame && frameSize?.value && (
         <Frame
-          width={planeWidth}
-          height={planeHeight}
-          thickness={frameS / 100}
+          width={frameOuterW}
+          height={frameOuterH}
+          thickness={frameBorder}
           depth={frameDepth / 100}
           material={frameMaterial}
         />
       )}
 
-      {/* Passepartout sits ON TOP of support surface */}
+      {/* Passepartout sits ON TOP of support surface — between frame and image */}
       {showPassepartout && passepartoutSize?.value && (
         <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
           <Passepartout
-            width={planeWidth - frameS / 50}
-            height={planeHeight - frameS / 50}
-            thickness={passepartoutS / 100}
+            width={passepartoutOuterW}
+            height={passepartoutOuterH}
+            thickness={passepartoutBorder}
             depth={passepartoutDepth / 100}
             material={passepartoutMaterial}
           />
@@ -368,13 +382,13 @@ const Display = ({ artwork }: DisplayProps) => {
       )}
 
       {/* Shadow blur - memoized component, size proportional to frame depth */}
-      {!hideShadow && <ShadowDecal width={planeWidth} height={planeHeight} frameDepth={frameDepth / 100} />}
+      {!hideShadow && <ShadowDecal width={totalWidth} height={totalHeight} frameDepth={frameDepth / 100} />}
 
       {/* Support (canvas/panel depth) - fits inside frame, front at Z=0 */}
       {showSupport && supportDepth > 0 && (
         <Support
-          width={planeWidth - frameS / 50}
-          height={planeHeight - frameS / 50}
+          width={passepartoutOuterW}
+          height={passepartoutOuterH}
           depth={supportDepth / 100}
           material={supportMaterial}
         />
