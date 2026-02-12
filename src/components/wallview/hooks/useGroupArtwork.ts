@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { getVisualBounds } from '@/components/wallview/utils'
 import { addArtworkToGroup, removeGroup, createArtworkGroup } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
@@ -10,6 +11,7 @@ export const useGroupArtwork = () => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
 
   const handleAddArtworkToGroup = useCallback(
     (artworkId: string) => {
@@ -24,10 +26,15 @@ export const useGroupArtwork = () => {
       .map((id) => exhibitionArtworksById[id])
       .filter(Boolean)
     if (artworkGroupItems.length === 0) return
-    const xValues = artworkGroupItems.map((artwork) => artwork.posX2d)
-    const xEdgeValues = artworkGroupItems.map((artwork) => artwork.posX2d + artwork.width2d)
-    const yValues = artworkGroupItems.map((artwork) => artwork.posY2d)
-    const yEdgeValues = artworkGroupItems.map((artwork) => artwork.posY2d + artwork.height2d)
+
+    // Use visual bounds (including frame/passepartout) for group bounding box
+    const visualBounds = artworkGroupItems.map((pos) =>
+      getVisualBounds(pos, artworksById[pos.artworkId]),
+    )
+    const xValues = visualBounds.map((b) => b.x)
+    const xEdgeValues = visualBounds.map((b) => b.x + b.width)
+    const yValues = visualBounds.map((b) => b.y)
+    const yEdgeValues = visualBounds.map((b) => b.y + b.height)
 
     const groupX = Math.min(...xValues)
     const maxGroupX = Math.max(...xEdgeValues)
@@ -44,7 +51,7 @@ export const useGroupArtwork = () => {
     }
 
     dispatch(createArtworkGroup(groupProps))
-  }, [artworkGroupIds, exhibitionArtworksById, dispatch])
+  }, [artworkGroupIds, exhibitionArtworksById, artworksById, dispatch])
 
   const handleRemoveArtworkGroup = useCallback(() => {
     dispatch(removeGroup())

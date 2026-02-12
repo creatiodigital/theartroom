@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 
-import { convert2DTo3D } from '@/components/wallview/utils'
+import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtworkPosition } from '@/types/artwork'
@@ -13,6 +13,7 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
 
   const distributeArtworksInGroup = (alignment: TDistributeAlign) => {
     // Get all artworks in the group with their original keys
@@ -33,11 +34,14 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
       groupedArtworks = [...groupedArtworks].sort((a, b) => a.artwork.posY2d - b.artwork.posY2d)
     }
 
-    // Calculate group bounds from sorted artworks
-    const xValues = groupedArtworks.map(({ artwork }) => artwork.posX2d)
-    const xEdgeValues = groupedArtworks.map(({ artwork }) => artwork.posX2d + artwork.width2d)
-    const yValues = groupedArtworks.map(({ artwork }) => artwork.posY2d)
-    const yEdgeValues = groupedArtworks.map(({ artwork }) => artwork.posY2d + artwork.height2d)
+    // Calculate group bounds from sorted artworks using visual bounds
+    const visualBounds = groupedArtworks.map(({ artwork }) =>
+      getVisualBounds(artwork, artworksById[artwork.artworkId]),
+    )
+    const xValues = visualBounds.map((b) => b.x)
+    const xEdgeValues = visualBounds.map((b) => b.x + b.width)
+    const yValues = visualBounds.map((b) => b.y)
+    const yEdgeValues = visualBounds.map((b) => b.y + b.height)
 
     const groupX = Math.min(...xValues)
     const groupY = Math.min(...yValues)
@@ -46,12 +50,9 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
 
     dispatch(pushToHistory()) // Save state before distribute
 
-    // Calculate total dimensions and spacing
-    const artworkTotalWidth = groupedArtworks.reduce((total, { artwork }) => total + artwork.width2d, 0)
-    const artworkTotalHeight = groupedArtworks.reduce(
-      (total, { artwork }) => total + artwork.height2d,
-      0,
-    )
+    // Calculate total visual dimensions and spacing
+    const artworkTotalWidth = visualBounds.reduce((total, b) => total + b.width, 0)
+    const artworkTotalHeight = visualBounds.reduce((total, b) => total + b.height, 0)
 
     const gapsBetweenArtworks = groupedArtworks.length - 1
 
@@ -65,17 +66,22 @@ export const useDistributeGroup = (boundingData: TDimensions | null) => {
 
     if (alignment === 'horizontal') {
       let currentX = groupX
-      groupedArtworks.forEach(({ artwork }) => {
-        horizontalPositions.push(currentX)
-        currentX += artwork.width2d + horizontalSpacing
+      groupedArtworks.forEach(({ artwork }, index) => {
+        // Position so that the visual left edge is at currentX
+        const vb = visualBounds[index]
+        const offsetX = artwork.posX2d - vb.x // how much image pos is offset from visual edge
+        horizontalPositions.push(currentX + offsetX)
+        currentX += vb.width + horizontalSpacing
       })
     }
 
     if (alignment === 'vertical') {
       let currentY = groupY
-      groupedArtworks.forEach(({ artwork }) => {
-        verticalPositions.push(currentY)
-        currentY += artwork.height2d + verticalSpacing
+      groupedArtworks.forEach(({ artwork }, index) => {
+        const vb = visualBounds[index]
+        const offsetY = artwork.posY2d - vb.y
+        verticalPositions.push(currentY + offsetY)
+        currentY += vb.height + verticalSpacing
       })
     }
 

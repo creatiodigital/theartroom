@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { convert2DTo3D } from '@/components/wallview/utils'
+import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
   setAlignedPairs,
@@ -40,6 +40,7 @@ export const useMoveArtwork = (
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const dispatch = useDispatch()
 
   const isArtworkVisible = artworkGroupIds.length > 1
@@ -99,19 +100,26 @@ export const useMoveArtwork = (
         )
         .map((id) => exhibitionArtworksById[id])
 
+      // Compute visual bounds (including frame/passepartout) for alignment
+      const draggedVisual = getVisualBounds(artwork, artworksById[artwork.artworkId])
+      // Visual offset: how much the visual edge extends beyond the image position
+      const draggedOffsetX = artwork.posX2d - draggedVisual.x
+      const draggedOffsetY = artwork.posY2d - draggedVisual.y
+
       let snapX = x
       let snapY = y
 
       const alignedPairs: TAlignmentPair[] = []
 
       sameWallArtworks.forEach((otherArtwork) => {
+        const otherVisual = getVisualBounds(otherArtwork, artworksById[otherArtwork.artworkId])
         const alignment = areAligned(
-          { x: snapX, y: snapY, width: artwork.width2d, height: artwork.height2d },
+          { x: snapX - draggedOffsetX, y: snapY - draggedOffsetY, width: draggedVisual.width, height: draggedVisual.height },
           {
-            x: otherArtwork.posX2d,
-            y: otherArtwork.posY2d,
-            width: otherArtwork.width2d,
-            height: otherArtwork.height2d,
+            x: otherVisual.x,
+            y: otherVisual.y,
+            width: otherVisual.width,
+            height: otherVisual.height,
           },
         )
 
@@ -121,11 +129,11 @@ export const useMoveArtwork = (
           if (snapEnabled) {
             const firstH = alignment.horizontal[0]
             if (firstH === 'top') {
-              snapY = otherArtwork.posY2d
+              snapY = otherVisual.y + draggedOffsetY
             } else if (firstH === 'bottom') {
-              snapY = otherArtwork.posY2d + otherArtwork.height2d - artwork.height2d
+              snapY = otherVisual.y + otherVisual.height - draggedVisual.height + draggedOffsetY
             } else if (firstH === 'center-horizontal') {
-              snapY = otherArtwork.posY2d + otherArtwork.height2d / 2 - artwork.height2d / 2
+              snapY = otherVisual.y + otherVisual.height / 2 - draggedVisual.height / 2 + draggedOffsetY
             }
           }
 
@@ -147,11 +155,11 @@ export const useMoveArtwork = (
           if (snapEnabled) {
             const firstV = alignment.vertical[0]
             if (firstV === 'left') {
-              snapX = otherArtwork.posX2d
+              snapX = otherVisual.x + draggedOffsetX
             } else if (firstV === 'right') {
-              snapX = otherArtwork.posX2d + otherArtwork.width2d - artwork.width2d
+              snapX = otherVisual.x + otherVisual.width - draggedVisual.width + draggedOffsetX
             } else if (firstV === 'center-vertical') {
-              snapX = otherArtwork.posX2d + otherArtwork.width2d / 2 - artwork.width2d / 2
+              snapX = otherVisual.x + otherVisual.width / 2 - draggedVisual.width / 2 + draggedOffsetX
             }
           }
 
@@ -173,12 +181,12 @@ export const useMoveArtwork = (
       const wallHeight2d = boundingData.height * 100
       const tolerance = 3
 
-      // Vertical center of wall (artwork centered horizontally)
-      const artworkCenterX = snapX + artwork.width2d / 2
+      // Vertical center of wall (artwork visual center aligned with wall center)
+      const artworkVisualCenterX = snapX - draggedOffsetX + draggedVisual.width / 2
       const wallCenterX = wallWidth2d / 2
-      if (Math.abs(artworkCenterX - wallCenterX) <= tolerance) {
+      if (Math.abs(artworkVisualCenterX - wallCenterX) <= tolerance) {
         if (snapEnabled) {
-          snapX = wallCenterX - artwork.width2d / 2
+          snapX = wallCenterX - draggedVisual.width / 2 + draggedOffsetX
         }
         alignedPairs.push({
           from: draggedArtworkId,
@@ -187,12 +195,12 @@ export const useMoveArtwork = (
         })
       }
 
-      // Horizontal center of wall (artwork centered vertically)
-      const artworkCenterY = snapY + artwork.height2d / 2
+      // Horizontal center of wall (artwork visual center aligned with wall center)
+      const artworkVisualCenterY = snapY - draggedOffsetY + draggedVisual.height / 2
       const wallCenterY = wallHeight2d / 2
-      if (Math.abs(artworkCenterY - wallCenterY) <= tolerance) {
+      if (Math.abs(artworkVisualCenterY - wallCenterY) <= tolerance) {
         if (snapEnabled) {
-          snapY = wallCenterY - artwork.height2d / 2
+          snapY = wallCenterY - draggedVisual.height / 2 + draggedOffsetY
         }
         alignedPairs.push({
           from: draggedArtworkId,
@@ -232,6 +240,7 @@ export const useMoveArtwork = (
       currentWallId,
       allExhibitionArtworkIds,
       exhibitionArtworksById,
+      artworksById,
       snapEnabled,
       dispatch,
     ],

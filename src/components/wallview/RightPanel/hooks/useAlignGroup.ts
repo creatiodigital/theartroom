@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 
-import { convert2DTo3D } from '@/components/wallview/utils'
+import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
@@ -13,6 +13,7 @@ export const useAlignGroup = (boundingData: TDimensions | null) => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
 
   const alignArtworksInGroup = (alignment: TAlign) => {
     const { groupX, groupY, groupWidth, groupHeight } = artworkGroup
@@ -23,32 +24,32 @@ export const useAlignGroup = (boundingData: TDimensions | null) => {
       const artwork = exhibitionArtworksById[artworkId]
 
       if (artwork) {
-        const posX2d = artwork.posX2d
-        const posY2d = artwork.posY2d
-        const width2d = artwork.width2d
-        const height2d = artwork.height2d
+        // Compute visual bounds to align by visual edges
+        const vb = getVisualBounds(artwork, artworksById[artwork.artworkId])
+        const offsetX = artwork.posX2d - vb.x
+        const offsetY = artwork.posY2d - vb.y
 
-        let newX = posX2d
-        let newY = posY2d
+        let newX = artwork.posX2d
+        let newY = artwork.posY2d
 
         switch (alignment) {
           case 'verticalTop':
-            newY = groupY
+            newY = groupY + offsetY
             break
           case 'verticalCenter':
-            newY = groupY + groupHeight / 2 - height2d / 2
+            newY = groupY + groupHeight / 2 - vb.height / 2 + offsetY
             break
           case 'verticalBottom':
-            newY = groupY + groupHeight - height2d
+            newY = groupY + groupHeight - vb.height + offsetY
             break
           case 'horizontalLeft':
-            newX = groupX
+            newX = groupX + offsetX
             break
           case 'horizontalCenter':
-            newX = groupX + groupWidth / 2 - width2d / 2
+            newX = groupX + groupWidth / 2 - vb.width / 2 + offsetX
             break
           case 'horizontalRight':
-            newX = groupX + groupWidth - width2d
+            newX = groupX + groupWidth - vb.width + offsetX
             break
           default:
             break
@@ -57,12 +58,12 @@ export const useAlignGroup = (boundingData: TDimensions | null) => {
         const artworkPosition = {
           posX2d: newX,
           posY2d: newY,
-          width2d,
-          height2d,
+          width2d: artwork.width2d,
+          height2d: artwork.height2d,
         }
 
         if (boundingData) {
-          const new3DCoordinate = convert2DTo3D(newX, newY, width2d, height2d, boundingData)
+          const new3DCoordinate = convert2DTo3D(newX, newY, artwork.width2d, artwork.height2d, boundingData)
           dispatch(
             updateArtworkPosition({
               artworkId,
