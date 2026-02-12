@@ -127,22 +127,25 @@ model Artwork {
 }
 
 model Exhibition {
-  id               String    @id @default(uuid())
-  userId           String
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  handler          String
-  mainTitle        String
-  description      String?
-  shortDescription String?
-  url              String    @unique
-  thumbnailUrl     String?
-  bannerUrl        String?
-  featuredImageUrl String?
-  spaceId          String
-  startDate        DateTime?
-  endDate          DateTime?
-  status           String
-  published        Boolean   @default(false)
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  handler           String
+  mainTitle         String
+  description       String?
+  shortDescription  String?
+  url               String    @unique
+  thumbnailUrl      String?
+  bannerUrl         String?
+  featuredImageUrl  String?
+  spaceId           String
+  startDate         DateTime?
+  endDate           DateTime?
+  status            String
+  published         Boolean   @default(false)
+  publishedAt       DateTime? // When last published/updated
+  publishedSnapshot Json? // Full snapshot at publish time
+  hasPendingChanges Boolean   @default(false) // True when draft differs from published
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")

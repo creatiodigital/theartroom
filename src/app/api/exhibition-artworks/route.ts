@@ -15,6 +15,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'exhibitionId is required' }, { status: 400 })
     }
 
+    // mode=edit → always live data (for the edit page)
+    // no mode → serve snapshot if available (for visit/public)
+    const mode = searchParams.get('mode')
+
+    if (mode !== 'edit') {
+      const exhibition = await prisma.exhibition.findUnique({
+        where: { id: exhibitionId },
+        select: { published: true, publishedSnapshot: true },
+      })
+
+      if (exhibition?.published && exhibition.publishedSnapshot) {
+        const snapshot = exhibition.publishedSnapshot as Record<string, unknown>
+        const snapshotArtworks = (snapshot.artworks ?? []) as Array<Record<string, unknown>>
+        return NextResponse.json(snapshotArtworks)
+      }
+    }
+
+    // Editor or no snapshot → return live data
     const exhibitionArtworks = await prisma.exhibitionArtwork.findMany({
       where: { exhibitionId },
       include: {
@@ -198,6 +216,18 @@ export async function POST(request: NextRequest) {
         }),
       ),
     )
+
+    // If the exhibition is published, mark it as having pending changes
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id: exhibitionId },
+      select: { published: true },
+    })
+    if (exhibition?.published) {
+      await prisma.exhibition.update({
+        where: { id: exhibitionId },
+        data: { hasPendingChanges: true },
+      })
+    }
 
     return NextResponse.json(
       {

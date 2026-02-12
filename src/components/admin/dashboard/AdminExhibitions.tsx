@@ -18,6 +18,7 @@ type Exhibition = {
   handler: string
   status: string
   published: boolean
+  hasPendingChanges: boolean
   user: {
     id: string
     name: string
@@ -82,13 +83,12 @@ export const AdminExhibitions = () => {
     }
   }
 
-  const handleTogglePublished = async (exhibitionId: string, currentPublished: boolean) => {
-    const newPublished = !currentPublished
+  const handlePublishAction = async (exhibitionId: string, action: 'publish' | 'unpublish') => {
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ published: newPublished }),
+        body: JSON.stringify({ published: action === 'publish' }),
       })
       if (response.ok) {
         fetchExhibitions()
@@ -138,6 +138,7 @@ export const AdminExhibitions = () => {
               <th>Artist</th>
               <th>Status</th>
               <th>Visibility</th>
+              <th>Review</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -167,6 +168,14 @@ export const AdminExhibitions = () => {
                   />
                 </td>
                 <td>
+                  {exhibition.published && (
+                    <Badge
+                      label={exhibition.hasPendingChanges ? 'Needs Review' : 'Up to date'}
+                      variant={exhibition.hasPendingChanges ? 'current' : 'published'}
+                    />
+                  )}
+                </td>
+                <td>
                   <div className={dashboardStyles.kebabWrapper} ref={openMenuId === exhibition.id ? menuRef : undefined}>
                     <button
                       className={dashboardStyles.kebabButton}
@@ -180,13 +189,25 @@ export const AdminExhibitions = () => {
                         <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleToggleStatus(exhibition.id, exhibition.status); }}>
                           {exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
                         </button>
-                        <button
-                          className={dashboardStyles.kebabMenuItem}
-                          onClick={() => { setOpenMenuId(null); handleTogglePublished(exhibition.id, exhibition.published); }}
-                          disabled={!exhibition.published && !exhibition.user.published}
-                        >
-                          {exhibition.published ? 'Unpublish' : 'Publish'}
-                        </button>
+                        {/* Publish / Update Exhibition */}
+                        {(!exhibition.published || exhibition.hasPendingChanges) && (
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => { setOpenMenuId(null); handlePublishAction(exhibition.id, 'publish'); }}
+                            disabled={!exhibition.published && !exhibition.user.published}
+                          >
+                            {exhibition.published && exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
+                          </button>
+                        )}
+                        {/* Unpublish — always available when published */}
+                        {exhibition.published && (
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => { setOpenMenuId(null); handlePublishAction(exhibition.id, 'unpublish'); }}
+                          >
+                            Unpublish
+                          </button>
+                        )}
                         <button className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`} onClick={() => { setOpenMenuId(null); setDeleteTarget(exhibition); }}>
                           Delete
                         </button>

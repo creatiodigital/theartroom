@@ -94,7 +94,7 @@ const preloadImages = (
   })
 }
 
-export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
+export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode?: 'edit') => {
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const [imagesLoading, setImagesLoading] = useState(false)
@@ -115,7 +115,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined) => {
       setLoading(true)
       setImagesLoading(true)
       try {
-        const response = await fetch(`/api/exhibition-artworks?exhibitionId=${exhibitionId}`)
+        const modeParam = mode ? `&mode=${mode}` : ''
+        const response = await fetch(`/api/exhibition-artworks?exhibitionId=${exhibitionId}${modeParam}`)
         if (!response.ok) {
           console.error('Failed to load exhibition artworks')
           return

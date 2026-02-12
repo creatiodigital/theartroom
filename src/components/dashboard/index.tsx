@@ -1,15 +1,19 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 
+import { MoreVertical } from 'lucide-react'
+
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitions } from '@/redux/selectors/userSelectors'
@@ -43,6 +47,20 @@ export const DashboardPage = () => {
   const [isModalShown, setIsModalShown] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close kebab menu on outside click
+  useEffect(() => {
+    if (!openMenuId) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openMenuId])
 
   // Use effective user ID (handles impersonation)
   const userId = effectiveUser?.id
@@ -209,13 +227,11 @@ export const DashboardPage = () => {
           <table className={dashboardStyles.table}>
             <thead>
               <tr>
-                <th>Exhibition Name</th>
+              <th>Exhibition Name</th>
                 <th>Space</th>
                 <th>Status</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
+                <th>Visibility</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -223,39 +239,58 @@ export const DashboardPage = () => {
                   <tr key={ex.id}>
                   <td>{ex.mainTitle}</td>
                   <td>{spaceOptions.find((s) => s.value === ex.spaceId)?.label || ex.spaceId}</td>
-                  <td>{ex.published ? 'Published' : 'Unpublished'}</td>
                   <td>
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label="View"
-                      onClick={() => handleViewExhibition(ex)}
-                      disabled={!ex.published}
+                    <Badge
+                      label={ex.published ? 'Published' : 'Unpublished'}
+                      variant={ex.published ? 'published' : 'unpublished'}
                     />
                   </td>
                   <td>
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label="Edit Exhibition"
-                      onClick={() => handleEditExhibitionSettings(ex)}
-                    />
+                    {ex.published && ex.hasPendingChanges ? (
+                      <Badge label="Pending Changes" variant="current" />
+                    ) : ex.published ? (
+                      <Badge label="Up to date" variant="published" />
+                    ) : null}
                   </td>
                   <td>
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label="Edit 3D Space"
-                      onClick={() => handleEdit3DSpace(ex)}
-                    />
-                  </td>
-                  <td>
-                    <Button
-                      font="dashboard"
-                      variant="secondary"
-                      label="Delete"
-                      onClick={() => handleDeleteClick(ex.id, ex.mainTitle)}
-                    />
+                    <div className={dashboardStyles.kebabWrapper} ref={openMenuId === ex.id ? menuRef : undefined}>
+                      <button
+                        className={dashboardStyles.kebabButton}
+                        onClick={() => setOpenMenuId(openMenuId === ex.id ? null : ex.id)}
+                        aria-label="Actions"
+                      >
+                        <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                      </button>
+                      {openMenuId === ex.id && (
+                        <div className={dashboardStyles.kebabMenu}>
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => { setOpenMenuId(null); handleViewExhibition(ex); }}
+                            disabled={!ex.published}
+                          >
+                            View
+                          </button>
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => { setOpenMenuId(null); handleEditExhibitionSettings(ex); }}
+                          >
+                            Edit Exhibition
+                          </button>
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => { setOpenMenuId(null); handleEdit3DSpace(ex); }}
+                          >
+                            Edit 3D Space
+                          </button>
+                          <button
+                            className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
+                            onClick={() => { setOpenMenuId(null); handleDeleteClick(ex.id, ex.mainTitle); }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
