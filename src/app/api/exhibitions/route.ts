@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 import { auth } from '@/auth'
 import type { Exhibition, Prisma } from '@/generated/prisma'
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
-
-// Force dynamic rendering to prevent caching
-export const dynamic = 'force-dynamic'
 
 // POST create new exhibition (requires auth)
 export async function POST(request: NextRequest) {
@@ -56,6 +54,10 @@ export async function POST(request: NextRequest) {
         status: 'current',
       },
     })
+
+    // Revalidate caches
+    revalidateTag('exhibitions', 'default')
+    revalidatePath('/')
 
     return NextResponse.json(exhibition, { status: 201 })
   } catch (error) {

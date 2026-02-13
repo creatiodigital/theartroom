@@ -3,20 +3,25 @@
 import { Canvas } from '@react-three/fiber'
 import { useRef, Suspense } from 'react'
 import { NoToneMapping, Mesh } from 'three'
+import { useSelector } from 'react-redux'
 
 import { Loader } from '@/components/ui/Loader'
 import SceneContext from '@/contexts/SceneContext'
+import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
 import Controls from './controls'
 import HumanReference from './objects/HumanReference/HumanReference'
+import { SceneErrorBoundary } from './SceneErrorBoundary'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
+import { WebGLMonitor } from './WebGLMonitor'
 
 export const Scene = () => {
   const wallRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const windowRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const glassRefs = useRef<React.RefObject<Mesh | null>[]>([])
+  const exhibitionUrl = useSelector((state: RootState) => state.exhibition.url)
 
   const handlePlaceholderClick = (_wallId: string) => {
     // Placeholder click handler - used by Space component
@@ -27,22 +32,26 @@ export const Scene = () => {
   return (
     <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
       <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
-        <Canvas
-          shadows={false}
-          gl={{
-            antialias: false,
-            toneMapping: NoToneMapping,
-          }}
-        >
-          <Suspense fallback={<Loader />}>
-            <group>
-              <Controls />
-              <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
-              <HumanReference />
-            </group>
-          </Suspense>
-        </Canvas>
+        <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
+          <Canvas
+            shadows={false}
+            gl={{
+              antialias: false,
+              toneMapping: NoToneMapping,
+            }}
+          >
+            <WebGLMonitor exhibitionUrl={exhibitionUrl} />
+            <Suspense fallback={<Loader />}>
+              <group>
+                <Controls />
+                <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
+                <HumanReference />
+              </group>
+            </Suspense>
+          </Canvas>
+        </SceneErrorBoundary>
       </div>
     </SceneContext.Provider>
   )
 }
+

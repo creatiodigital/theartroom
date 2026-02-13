@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
 import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
@@ -48,6 +49,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
       },
     })
 
+    // Revalidate homepage
+    revalidatePath('/')
+
     return NextResponse.json(slide)
   } catch (error) {
     console.error('Error updating slide:', error)
@@ -66,6 +70,9 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     await prisma.slide.delete({
       where: { id },
     })
+
+    // Revalidate homepage
+    revalidatePath('/')
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['@prisma/client', '@prisma/client-runtime-utils'],
@@ -42,15 +44,8 @@ const nextConfig = {
       },
       // Edit routes - never cache (artists need real-time updates)
       {
-        source: '/:handler/exhibition/:slug/edit',
+        source: '/exhibitions/:artistSlug/:exhibitionSlug/edit',
         headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
-      },
-      // View routes - cache at edge, stale-while-revalidate
-      {
-        source: '/:handler/exhibition/:slug',
-        headers: [
-          { key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' },
-        ],
       },
     ]
   },
@@ -75,4 +70,15 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  // Upload source maps for readable stack traces in Sentry
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+
+  // Suppress Sentry CLI logs during build
+  silent: !process.env.CI,
+
+  // Disable Sentry telemetry
+  telemetry: false,
+})
