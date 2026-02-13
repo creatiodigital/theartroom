@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['@prisma/client', '@prisma/client-runtime-utils'],
@@ -68,4 +70,15 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  // Upload source maps for readable stack traces in Sentry
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+
+  // Suppress Sentry CLI logs during build
+  silent: !process.env.CI,
+
+  // Disable Sentry telemetry
+  telemetry: false,
+})
