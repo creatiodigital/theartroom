@@ -267,7 +267,9 @@ const Stencil = ({ artwork }: StencilProps) => {
             whiteSpace="normal"
             overflowWrap="break-word"
             onSync={calculateTextDimensions}
-            sdfGlyphSize={128}
+            sdfGlyphSize={512}
+            outlineWidth="1%"
+            outlineColor={textColor ?? 'black'}
           >
             {textContent}
           </Text>
