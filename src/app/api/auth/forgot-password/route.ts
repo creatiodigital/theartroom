@@ -31,15 +31,16 @@ function isRateLimited(ip: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
-               request.headers.get('x-real-ip') || 
-               'unknown'
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0] ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
 
     // Check rate limit
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       )
     }
 
@@ -47,19 +48,13 @@ export async function POST(request: NextRequest) {
     const { email } = body
 
     if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
     // Find user by email (don't reveal if email exists or not for security)
@@ -130,9 +125,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error processing forgot password:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

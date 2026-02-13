@@ -37,9 +37,5 @@ export default auth((request) => {
 })
 
 export const config = {
-  matcher: [
-    '/admin/:path*',
-    '/dashboard/:path*',
-    '/:handler/exhibition/:slug/edit',
-  ],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/:handler/exhibition/:slug/edit'],
 }

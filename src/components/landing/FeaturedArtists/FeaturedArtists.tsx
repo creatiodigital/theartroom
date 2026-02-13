@@ -28,15 +28,9 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
 
       <div className={styles.grid}>
         {artists.map((artist, i) => (
-          <Link
-            key={artist.id}
-            href={`/artists/${artist.handler}`}
-            className={styles.artistRow}
-          >
+          <Link key={artist.id} href={`/artists/${artist.handler}`} className={styles.artistRow}>
             <div className={styles.artistInfo}>
-              <span className={styles.index}>
-                ({String(i + 1).padStart(2, '0')})
-              </span>
+              <span className={styles.index}>({String(i + 1).padStart(2, '0')})</span>
               <Text as="span" font="serif" size="2xl">
                 {artist.name} {artist.lastName}
               </Text>

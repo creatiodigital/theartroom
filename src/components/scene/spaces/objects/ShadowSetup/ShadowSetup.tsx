@@ -1,6 +1,6 @@
 /**
  * Minimal shadow/lighting setup for gallery spaces.
- * 
+ *
  * PERFORMANCE: Dynamic shadows (PCSS) and multiple lights removed.
  * For baked-texture spaces, lighting should come from:
  * - Baked lightmaps in the GLB

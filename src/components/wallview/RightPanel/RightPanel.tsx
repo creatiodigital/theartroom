@@ -22,10 +22,12 @@ const RightPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   // Check if there are unsaved changes (history, snapshot, or pending image uploads)
-  const hasUnsavedChanges = useSelector(
-    (state: RootState) => (state.exhibition as { _history: unknown[] })._history.length > 0 || 
-                          (state.exhibition as { _snapshot: unknown })._snapshot !== null
-  ) || hasAnyPendingUploads()
+  const hasUnsavedChanges =
+    useSelector(
+      (state: RootState) =>
+        (state.exhibition as { _history: unknown[] })._history.length > 0 ||
+        (state.exhibition as { _snapshot: unknown })._snapshot !== null,
+    ) || hasAnyPendingUploads()
 
   const { artworkType } = useArtworkDetails(currentArtworkId!)
   const { saveToDatabase, saving } = useSaveExhibition()
@@ -35,7 +37,7 @@ const RightPanel = () => {
   // Save first, then open the edit modal
   const handleEditArtworkDetails = async () => {
     if (!currentArtworkId) return
-    
+
     // Always save to database before opening modal
     // This ensures new artworks and pending image uploads are persisted
     // Check hasAnyPendingUploads() at call time since it's not reactive
@@ -46,7 +48,7 @@ const RightPanel = () => {
         return
       }
     }
-    
+
     // Open the modal overlay
     dispatch(openArtworkEditModal(currentArtworkId))
   }
@@ -74,7 +76,11 @@ const RightPanel = () => {
             {artworkType === 'text' && <ArtisticTextPanel />}
 
             <div className={styles.editButtonWrapper}>
-              <Tooltip label="Clicking will save any pending changes on the current selected artwork" placement="top" fullWidth>
+              <Tooltip
+                label="Clicking will save any pending changes on the current selected artwork"
+                placement="top"
+                fullWidth
+              >
                 <Button
                   font="dashboard"
                   size="regular"
@@ -93,4 +99,3 @@ const RightPanel = () => {
 }
 
 export default RightPanel
-

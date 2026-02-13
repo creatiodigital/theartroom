@@ -11,4 +11,3 @@ export const sceneFactory = (): TScene => ({
   walls: [],
   focusTarget: null,
 })
-

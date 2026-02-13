@@ -58,10 +58,12 @@ const ModernSpace: React.FC<ModernSpaceProps> = ({ wallRefs, ...props }) => {
     <group {...props} dispose={null}>
       <Lights />
       <Effects />
-      {nodes.floor && (() => {
+      {nodes.floor &&
+        (() => {
           // Calculate actual floor surface Y from geometry bounding box
           nodes.floor.geometry.computeBoundingBox()
-          const floorSurfaceY = nodes.floor.position.y + (nodes.floor.geometry.boundingBox?.max.y ?? 0)
+          const floorSurfaceY =
+            nodes.floor.position.y + (nodes.floor.geometry.boundingBox?.max.y ?? 0)
           return (
             <>
               {/* Hide original floor but use its computed surface position for the reflective floor */}

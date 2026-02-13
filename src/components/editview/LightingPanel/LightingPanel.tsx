@@ -63,7 +63,7 @@ const LightingPanel = () => {
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'classic'
-  
+
   const ambientColor = useSelector(
     (state: RootState) => state.exhibition.ambientLightColor ?? DEFAULT_AMBIENT_COLOR,
   )
@@ -95,7 +95,8 @@ const LightingPanel = () => {
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_RECESSED_LAMP_INTENSITY,
   )
   const trackLampMaterialColor = useSelector(
-    (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_TRACK_LAMP_MATERIAL_COLOR,
+    (state: RootState) =>
+      state.exhibition.trackLampMaterialColor ?? DEFAULT_TRACK_LAMP_MATERIAL_COLOR,
   )
   const ceilingLightMode = useSelector(
     (state: RootState) => state.exhibition.ceilingLightMode ?? 'track-plafond',
@@ -215,11 +216,7 @@ const LightingPanel = () => {
         </Text>
         <div className={styles.field}>
           <label className={styles.label}>Type</label>
-          <select
-            value={hdriEnvironment}
-            onChange={handleHdriChange}
-            className={styles.select}
-          >
+          <select value={hdriEnvironment} onChange={handleHdriChange} className={styles.select}>
             {HDRI_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -234,12 +231,15 @@ const LightingPanel = () => {
         <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
           Ambient Light
         </Text>
-        
+
         <div className={styles.field}>
           <label className={styles.label}>Color</label>
           <ColorPicker
             textColor={ambientColor}
-            onColorSelect={(color) => { dispatch(setAmbientLightColor(color)); setSaved(false) }}
+            onColorSelect={(color) => {
+              dispatch(setAmbientLightColor(color))
+              setSaved(false)
+            }}
           />
         </div>
 
@@ -266,12 +266,15 @@ const LightingPanel = () => {
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
             Ceiling Light
           </Text>
-          
+
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
             <ColorPicker
               textColor={skylightColor}
-              onColorSelect={(color) => { dispatch(setSkylightColor(color)); setSaved(false) }}
+              onColorSelect={(color) => {
+                dispatch(setSkylightColor(color))
+                setSaved(false)
+              }}
             />
           </div>
 
@@ -299,12 +302,15 @@ const LightingPanel = () => {
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
             Ceiling Lamps
           </Text>
-          
+
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
             <ColorPicker
               textColor={lampColor}
-              onColorSelect={(color) => { dispatch(setCeilingLampColor(color)); setSaved(false) }}
+              onColorSelect={(color) => {
+                dispatch(setCeilingLampColor(color))
+                setSaved(false)
+              }}
             />
           </div>
 
@@ -355,12 +361,15 @@ const LightingPanel = () => {
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
             Track Lamps
           </Text>
-          
+
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
             <ColorPicker
               textColor={trackLampColor}
-              onColorSelect={(color) => { dispatch(setTrackLampColor(color)); setSaved(false) }}
+              onColorSelect={(color) => {
+                dispatch(setTrackLampColor(color))
+                setSaved(false)
+              }}
             />
           </div>
 
@@ -388,49 +397,56 @@ const LightingPanel = () => {
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
             Track Lamp Material
           </Text>
-          
+
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
             <ColorPicker
               textColor={trackLampMaterialColor}
-              onColorSelect={(color) => { dispatch(setTrackLampMaterialColor(color)); setSaved(false) }}
+              onColorSelect={(color) => {
+                dispatch(setTrackLampMaterialColor(color))
+                setSaved(false)
+              }}
             />
           </div>
         </div>
       )}
 
       {/* Recessed / Plafond Lamps Section - only when plafond lamps are visible */}
-      {hasRecessedLamps && (ceilingLightMode === 'plafond' || ceilingLightMode === 'track-plafond') && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Plafond Lamps
-          </Text>
-          
-          <div className={styles.field}>
-            <label className={styles.label}>Color</label>
-            <ColorPicker
-              textColor={recessedLampColor}
-              onColorSelect={(color) => { dispatch(setRecessedLampColor(color)); setSaved(false) }}
-            />
-          </div>
+      {hasRecessedLamps &&
+        (ceilingLightMode === 'plafond' || ceilingLightMode === 'track-plafond') && (
+          <div className={styles.section}>
+            <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+              Plafond Lamps
+            </Text>
 
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
+            <div className={styles.field}>
+              <label className={styles.label}>Color</label>
+              <ColorPicker
+                textColor={recessedLampColor}
+                onColorSelect={(color) => {
+                  dispatch(setRecessedLampColor(color))
+                  setSaved(false)
+                }}
+              />
             </div>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.1"
-              value={recessedLampIntensity}
-              onChange={handleRecessedLampIntensityChange}
-              className={styles.slider}
-            />
+
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Intensity</label>
+                <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                value={recessedLampIntensity}
+                onChange={handleRecessedLampIntensityChange}
+                className={styles.slider}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Window Light Section - only for spaces with windows */}
       {hasWindows && (
@@ -438,12 +454,15 @@ const LightingPanel = () => {
           <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
             Window Light
           </Text>
-          
+
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
             <ColorPicker
               textColor={windowColor}
-              onColorSelect={(color) => { dispatch(setWindowLightColor(color)); setSaved(false) }}
+              onColorSelect={(color) => {
+                dispatch(setWindowLightColor(color))
+                setSaved(false)
+              }}
             />
           </div>
 
@@ -480,6 +499,3 @@ const LightingPanel = () => {
 }
 
 export default LightingPanel
-
-
-

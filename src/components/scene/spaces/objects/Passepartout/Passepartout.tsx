@@ -3,12 +3,18 @@ import { Material } from 'three'
 interface PassepartoutProps {
   width: number
   height: number
-  thickness: number  // This is the border width, not depth
-  depth?: number     // Z-depth (how much it protrudes)
+  thickness: number // This is the border width, not depth
+  depth?: number // Z-depth (how much it protrudes)
   material: Material
 }
 
-const Passepartout: React.FC<PassepartoutProps> = ({ width, height, thickness, depth = 0.02, material }) => {
+const Passepartout: React.FC<PassepartoutProps> = ({
+  width,
+  height,
+  thickness,
+  depth = 0.02,
+  material,
+}) => {
   // Passepartout sits ON TOP of the artwork/support, extending forward (positive Z)
   // The back face touches the support surface, mat body extends toward viewer
   const zOffset = depth / 2

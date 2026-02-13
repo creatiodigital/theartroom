@@ -37,10 +37,13 @@ const GroupPanel = () => {
 
   const { fromTop, fromBottom, fromLeft, fromRight } = useGroupDetails()
 
-  const { handleFromLeftChange, handleFromRightChange, handleFromTopChange, handleFromBottomChange, alignGroupToWall } = useGroupHandlers(
-    artworkGroupIds,
-    boundingData!,
-  )
+  const {
+    handleFromLeftChange,
+    handleFromRightChange,
+    handleFromTopChange,
+    handleFromBottomChange,
+    alignGroupToWall,
+  } = useGroupHandlers(artworkGroupIds, boundingData!)
 
   const { alignArtworksInGroup } = useAlignGroup(boundingData)
   const { distributeArtworksInGroup } = useDistributeGroup(boundingData)
@@ -69,24 +72,54 @@ const GroupPanel = () => {
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionTop" onClick={() => handleAlignGroup('verticalTop')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionTop"
+              onClick={() => handleAlignGroup('verticalTop')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionCenterV" onClick={() => handleAlignGroup('verticalCenter')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionCenterV"
+              onClick={() => handleAlignGroup('verticalCenter')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionBottom" onClick={() => handleAlignGroup('verticalBottom')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionBottom"
+              onClick={() => handleAlignGroup('verticalBottom')}
+            />
           </div>
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionLeft" onClick={() => handleAlignGroup('horizontalLeft')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionLeft"
+              onClick={() => handleAlignGroup('horizontalLeft')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionCenterH" onClick={() => handleAlignGroup('horizontalCenter')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionCenterH"
+              onClick={() => handleAlignGroup('horizontalCenter')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionRight" onClick={() => handleAlignGroup('horizontalRight')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionRight"
+              onClick={() => handleAlignGroup('horizontalRight')}
+            />
           </div>
         </div>
       </div>
@@ -160,24 +193,54 @@ const GroupPanel = () => {
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="verticalTop" onClick={() => handleAlignElements('verticalTop')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="verticalTop"
+              onClick={() => handleAlignElements('verticalTop')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="verticalCenter" onClick={() => handleAlignElements('verticalCenter')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="verticalCenter"
+              onClick={() => handleAlignElements('verticalCenter')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="verticalBottom" onClick={() => handleAlignElements('verticalBottom')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="verticalBottom"
+              onClick={() => handleAlignElements('verticalBottom')}
+            />
           </div>
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="horizontalLeft" onClick={() => handleAlignElements('horizontalLeft')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="horizontalLeft"
+              onClick={() => handleAlignElements('horizontalLeft')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="horizontalCenter" onClick={() => handleAlignElements('horizontalCenter')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="horizontalCenter"
+              onClick={() => handleAlignElements('horizontalCenter')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="horizontalRight" onClick={() => handleAlignElements('horizontalRight')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="horizontalRight"
+              onClick={() => handleAlignElements('horizontalRight')}
+            />
           </div>
         </div>
       </div>
@@ -188,10 +251,20 @@ const GroupPanel = () => {
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="distributeHorizontal" onClick={() => handleDistributeElements('horizontal')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="distributeHorizontal"
+              onClick={() => handleDistributeElements('horizontal')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="distributeVertical" onClick={() => handleDistributeElements('vertical')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="distributeVertical"
+              onClick={() => handleDistributeElements('vertical')}
+            />
           </div>
         </div>
       </div>

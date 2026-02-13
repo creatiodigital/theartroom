@@ -100,10 +100,20 @@ export const ExhibitionModal = React.memo(
 
     return (
       <div className={styles.modal}>
-        <Text font="dashboard" as="h2">New Exhibition</Text>
-        <form onSubmit={(e) => { e.preventDefault(); handleCreateClick() }} autoComplete="off">
+        <Text font="dashboard" as="h2">
+          New Exhibition
+        </Text>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleCreateClick()
+          }}
+          autoComplete="off"
+        >
           <div className={styles.section}>
-            <label className={styles.label} htmlFor="exhibitionTitle">Exhibition Title</label>
+            <label className={styles.label} htmlFor="exhibitionTitle">
+              Exhibition Title
+            </label>
             <Input
               id="exhibitionTitle"
               type="text"
@@ -113,7 +123,9 @@ export const ExhibitionModal = React.memo(
               required
             />
 
-            <label className={styles.label} htmlFor="exhibitionUrl">URL Slug</label>
+            <label className={styles.label} htmlFor="exhibitionUrl">
+              URL Slug
+            </label>
             <Input
               id="exhibitionUrl"
               type="text"
@@ -128,7 +140,9 @@ export const ExhibitionModal = React.memo(
             </Text>
             <ErrorText>{urlError}</ErrorText>
 
-            <label className={styles.label} htmlFor="space">Space</label>
+            <label className={styles.label} htmlFor="space">
+              Space
+            </label>
             <Select<string>
               options={spaceOptions}
               value={selectedSpace?.value}
@@ -141,7 +155,13 @@ export const ExhibitionModal = React.memo(
           </div>
 
           <div className={styles.actions}>
-            <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
+            <Button
+              font="dashboard"
+              variant="secondary"
+              label="Cancel"
+              onClick={onClose}
+              type="button"
+            />
             <Button
               font="dashboard"
               variant="primary"

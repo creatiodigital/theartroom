@@ -39,8 +39,8 @@ type ExhibitionArtworkResponse = {
   // Display properties (per-exhibition)
   showFrame: boolean
   frameColor: string
-  frameSize: number       // Border width (XY)
-  frameThickness: number  // Z-depth
+  frameSize: number // Border width (XY)
+  frameThickness: number // Z-depth
   showPassepartout: boolean
   passepartoutColor: string
   passepartoutSize: number
@@ -116,7 +116,9 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
       setImagesLoading(true)
       try {
         const modeParam = mode ? `&mode=${mode}` : ''
-        const response = await fetch(`/api/exhibition-artworks?exhibitionId=${exhibitionId}${modeParam}`)
+        const response = await fetch(
+          `/api/exhibition-artworks?exhibitionId=${exhibitionId}${modeParam}`,
+        )
         if (!response.ok) {
           console.error('Failed to load exhibition artworks')
           return
@@ -148,7 +150,10 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             showFrame: ea.showFrame,
             frameColor: ea.frameColor,
             frameSize: { label: String(ea.frameSize ?? 3), value: ea.frameSize ?? 3 },
-            frameThickness: { label: String(ea.frameThickness ?? 1), value: ea.frameThickness ?? 1 },
+            frameThickness: {
+              label: String(ea.frameThickness ?? 1),
+              value: ea.frameThickness ?? 1,
+            },
             showPassepartout: ea.showPassepartout,
             passepartoutColor: ea.passepartoutColor,
             passepartoutSize: {
@@ -159,7 +164,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             passepartoutThickness: (() => {
               const val = ea.passepartoutThickness
               // If value is outside 0.1-1.0 range or undefined, default to 0.3
-              const clampedVal = (val && val >= 0.1 && val <= 1.0) ? val : 0.3
+              const clampedVal = val && val >= 0.1 && val <= 1.0 ? val : 0.3
               return { label: String(clampedVal), value: clampedVal }
             })(),
             supportThickness: {

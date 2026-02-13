@@ -23,9 +23,12 @@ export const RichTextEditor = ({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: variant === 'full' ? {
-          levels: [2, 3, 4, 5, 6],
-        } : false,
+        heading:
+          variant === 'full'
+            ? {
+                levels: [2, 3, 4, 5, 6],
+              }
+            : false,
         bulletList: variant === 'full' ? {} : false,
         orderedList: variant === 'full' ? {} : false,
         blockquote: variant === 'full' ? {} : false,

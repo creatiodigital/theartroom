@@ -57,8 +57,9 @@ const Artwork = memo(
 
     // Calculate how much frame + passepartout borders add around the image
     const { showFrame, frameSize, imageUrl, showPassepartout, passepartoutSize } = artwork
-    const frameBorderPx = (showFrame && imageUrl && frameSize?.value) ? frameSize.value : 0
-    const ppBorderPx = (showPassepartout && imageUrl && passepartoutSize?.value) ? passepartoutSize.value : 0
+    const frameBorderPx = showFrame && imageUrl && frameSize?.value ? frameSize.value : 0
+    const ppBorderPx =
+      showPassepartout && imageUrl && passepartoutSize?.value ? passepartoutSize.value : 0
     const totalBorderEachSide = frameBorderPx + ppBorderPx
 
     // The container grows to include borders. With border-box, the CSS borders

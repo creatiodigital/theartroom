@@ -176,7 +176,10 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
           >
             {!imageUrl && (
               <div className={c([styles.empty, { [styles.over]: isDragOver }])}>
-                <Tooltip label="Drag and drop an image or double-click. Size should not exceed 1MB." placement="top">
+                <Tooltip
+                  label="Drag and drop an image or double-click. Size should not exceed 1MB."
+                  placement="top"
+                >
                   <span style={{ display: 'inline-flex' }}>
                     <Icon name="image" size={40} color={isDragOver ? '#ffffff' : '#000000'} />
                   </span>
@@ -201,13 +204,10 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
             <Text as="p" font="dashboard" size="sm">
               {errorModal.message}
             </Text>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
-              <Button
-                font="dashboard"
-                variant="primary"
-                label="OK"
-                onClick={closeErrorModal}
-              />
+            <div
+              style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}
+            >
+              <Button font="dashboard" variant="primary" label="OK" onClick={closeErrorModal} />
             </div>
           </div>
         </Modal>

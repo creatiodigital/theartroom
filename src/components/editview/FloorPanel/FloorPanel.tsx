@@ -61,20 +61,18 @@ const FloorPanel = () => {
     (state: RootState) => state.exhibition.floorTextureOffsetY ?? 0,
   )
 
-  const floorTemperature = useSelector(
-    (state: RootState) => state.exhibition.floorTemperature ?? 0,
-  )
+  const floorTemperature = useSelector((state: RootState) => state.exhibition.floorTemperature ?? 0)
 
   const floorNormalScale = useSelector(
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
   )
 
-  const floorRotation = useSelector(
-    (state: RootState) => state.exhibition.floorRotation ?? 0,
-  )
+  const floorRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
 
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setFloorMaterial(e.target.value as 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'))
+    dispatch(
+      setFloorMaterial(e.target.value as 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'),
+    )
     setSaved(false)
   }
 
@@ -157,11 +155,7 @@ const FloorPanel = () => {
         </Text>
         <div className={styles.field}>
           <label className={styles.label}>Type</label>
-          <select
-            value={floorMaterial}
-            onChange={handleMaterialChange}
-            className={styles.select}
-          >
+          <select value={floorMaterial} onChange={handleMaterialChange} className={styles.select}>
             {FLOOR_MATERIALS.map((material) => (
               <option key={material.value} value={material.value}>
                 {material.label}
@@ -275,9 +269,7 @@ const FloorPanel = () => {
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
             <label className={styles.label}>Color Temperature</label>
-            <span className={styles.sliderValue}>
-              {floorTemperature.toFixed(2)}
-            </span>
+            <span className={styles.sliderValue}>{floorTemperature.toFixed(2)}</span>
           </div>
           <input
             type="range"

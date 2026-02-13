@@ -38,12 +38,13 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     textPadding,
   } = artisticText
 
-  const fontFamilyMap: Record<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist', string> = {
+  const fontFamilyMap: Record<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display', string> = {
     roboto: 'var(--font-wall1)',
     lora: 'var(--font-wall2)',
     lato: 'var(--font-sans)',
     'eb-garamond': 'var(--font-serif)',
     geist: 'var(--font-dashboard)',
+    'playfair-display': 'var(--font-playfair)',
   }
   const fontWeightMap: Record<'regular' | 'bold', number> = {
     regular: 400,

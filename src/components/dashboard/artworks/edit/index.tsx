@@ -27,7 +27,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState<ArtworkFormData>(getInitialFormData())
-  
+
   // Original image URL from server
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
   // Pending file to upload (not yet saved)
@@ -142,20 +142,23 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   }
 
   // Store file locally and create preview (actual upload happens on save)
-  const handleImageUpload = useCallback(async (file: File) => {
-    // Revoke old preview URL if exists
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-    }
-    
-    // Create local preview
-    const newPreviewUrl = URL.createObjectURL(file)
-    setPreviewUrl(newPreviewUrl)
-    setPendingFile(file)
-    
-    // Clear pending removal since we have a new file
-    setPendingImageRemoval(false)
-  }, [previewUrl])
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      // Revoke old preview URL if exists
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+
+      // Create local preview
+      const newPreviewUrl = URL.createObjectURL(file)
+      setPreviewUrl(newPreviewUrl)
+      setPendingFile(file)
+
+      // Clear pending removal since we have a new file
+      setPendingImageRemoval(false)
+    },
+    [previewUrl],
+  )
 
   // Mark image for removal (actual deletion happens on save)
   const handleRemoveImage = useCallback(() => {
@@ -173,9 +176,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   }, [pendingFile, previewUrl])
 
   // Determine what image URL to display
-  const displayImageUrl = pendingFile 
-    ? previewUrl 
-    : (pendingImageRemoval ? null : originalImageUrl)
+  const displayImageUrl = pendingFile ? previewUrl : pendingImageRemoval ? null : originalImageUrl
 
   if (loading) {
     return (
@@ -210,5 +211,3 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     </DashboardLayout>
   )
 }
-
-

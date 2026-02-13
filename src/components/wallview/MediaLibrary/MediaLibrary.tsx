@@ -68,7 +68,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   return (
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
-        <Text font="dashboard" as="h3">Media Library</Text>
+        <Text font="dashboard" as="h3">
+          Media Library
+        </Text>
         <button className={styles.closeButton} onClick={onClose}>
           ×
         </button>

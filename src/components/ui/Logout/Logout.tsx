@@ -10,11 +10,7 @@ import { Button } from '@/components/ui/Button'
  */
 const Logout = () => {
   return (
-    <Button
-      variant="secondary"
-      label="Log out"
-      onClick={() => signOut({ callbackUrl: '/' })}
-    />
+    <Button variant="secondary" label="Log out" onClick={() => signOut({ callbackUrl: '/' })} />
   )
 }
 

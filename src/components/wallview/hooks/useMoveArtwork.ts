@@ -114,7 +114,12 @@ export const useMoveArtwork = (
       sameWallArtworks.forEach((otherArtwork) => {
         const otherVisual = getVisualBounds(otherArtwork, artworksById[otherArtwork.artworkId])
         const alignment = areAligned(
-          { x: snapX - draggedOffsetX, y: snapY - draggedOffsetY, width: draggedVisual.width, height: draggedVisual.height },
+          {
+            x: snapX - draggedOffsetX,
+            y: snapY - draggedOffsetY,
+            width: draggedVisual.width,
+            height: draggedVisual.height,
+          },
           {
             x: otherVisual.x,
             y: otherVisual.y,
@@ -133,7 +138,8 @@ export const useMoveArtwork = (
             } else if (firstH === 'bottom') {
               snapY = otherVisual.y + otherVisual.height - draggedVisual.height + draggedOffsetY
             } else if (firstH === 'center-horizontal') {
-              snapY = otherVisual.y + otherVisual.height / 2 - draggedVisual.height / 2 + draggedOffsetY
+              snapY =
+                otherVisual.y + otherVisual.height / 2 - draggedVisual.height / 2 + draggedOffsetY
             }
           }
 
@@ -159,7 +165,8 @@ export const useMoveArtwork = (
             } else if (firstV === 'right') {
               snapX = otherVisual.x + otherVisual.width - draggedVisual.width + draggedOffsetX
             } else if (firstV === 'center-vertical') {
-              snapX = otherVisual.x + otherVisual.width / 2 - draggedVisual.width / 2 + draggedOffsetX
+              snapX =
+                otherVisual.x + otherVisual.width / 2 - draggedVisual.width / 2 + draggedOffsetX
             }
           }
 

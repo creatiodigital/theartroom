@@ -1,4 +1,4 @@
-import { Lato, EB_Garamond, Geist, Roboto, Lora } from 'next/font/google'
+import { Lato, EB_Garamond, Geist, Roboto, Lora, Playfair_Display } from 'next/font/google'
 
 // =============================================================================
 // MAIN TYPOGRAPHY - Change these to swap fonts across the entire site
@@ -54,5 +54,12 @@ export const wallFont1 = Roboto({
 export const wallFont2 = Lora({
   subsets: ['latin'],
   variable: '--font-wall2',
+  display: 'swap',
+})
+
+export const wallFont3 = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-playfair',
   display: 'swap',
 })

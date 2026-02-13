@@ -46,8 +46,17 @@ const ArtworkPanel = () => {
   }
 
   return (
-    <div ref={panelRef} className={styles.panel} data-panel-overlay onPointerDown={(e) => e.stopPropagation()}>
-      <button className={styles.closeButton} onClick={() => dispatch(hideArtworkPanel())} aria-label="Close">
+    <div
+      ref={panelRef}
+      className={styles.panel}
+      data-panel-overlay
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <button
+        className={styles.closeButton}
+        onClick={() => dispatch(hideArtworkPanel())}
+        aria-label="Close"
+      >
         CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
       </button>
       <div className={styles.header}>
@@ -99,7 +108,7 @@ const ArtworkPanel = () => {
           label="View Details"
           icon="arrowRight"
           onClick={handleViewDetails}
-         />
+        />
       </div>
     </div>
   )

@@ -23,8 +23,8 @@ export async function POST(request: Request) {
         prisma.slide.update({
           where: { id },
           data: { order: index },
-        })
-      )
+        }),
+      ),
     )
 
     return NextResponse.json({ success: true })

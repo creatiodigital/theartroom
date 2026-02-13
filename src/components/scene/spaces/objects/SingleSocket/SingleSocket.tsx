@@ -23,11 +23,7 @@ const SingleSocket: React.FC<SingleSocketProps> = ({ nodes, count = 2 }) => {
         const socketNode = nodes[`singleSocket${i}`]
         if (!socketNode) return null
         return (
-          <mesh
-            key={`singleSocket-${i}`}
-            name={`singleSocket${i}`}
-            geometry={socketNode.geometry}
-          >
+          <mesh key={`singleSocket-${i}`} name={`singleSocket${i}`} geometry={socketNode.geometry}>
             <meshStandardMaterial color={tintedPlastic} roughness={0.9} metalness={0.0} />
           </mesh>
         )

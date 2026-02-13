@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { bodyFont, headingFont, dashboardFont, wallFont1, wallFont2 } from '@/app/fonts'
+import { bodyFont, headingFont, dashboardFont, wallFont1, wallFont2, wallFont3 } from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`${bodyFont.variable} ${headingFont.variable} ${dashboardFont.variable} ${wallFont1.variable} ${wallFont2.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${dashboardFont.variable} ${wallFont1.variable} ${wallFont2.variable} ${wallFont3.variable}`}
     >
       <body>
         <AuthProvider>
@@ -28,4 +28,3 @@ export default function RootLayout({ children }: RootLayoutProps) {
     </html>
   )
 }
-

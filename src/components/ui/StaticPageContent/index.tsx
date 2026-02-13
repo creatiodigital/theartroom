@@ -5,7 +5,6 @@ import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 
-
 interface PageData {
   id: string
   slug: string
@@ -45,7 +44,7 @@ export const StaticPageContent = ({ slug }: StaticPageContentProps) => {
   if (loading) {
     return (
       <div>
-         <LoadingBar />
+        <LoadingBar />
       </div>
     )
   }

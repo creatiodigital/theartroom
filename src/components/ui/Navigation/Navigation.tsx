@@ -76,11 +76,7 @@ export const Navigation = () => {
           <Link href="/" className={styles.mobileLogo} onClick={() => setIsMenuOpen(false)}>
             <Logo />
           </Link>
-          <button
-            className={styles.closeButton}
-            onClick={toggleMenu}
-            aria-label="Close menu"
-          >
+          <button className={styles.closeButton} onClick={toggleMenu} aria-label="Close menu">
             <X size={24} strokeWidth={ICON_STROKE_WIDTH} />
           </button>
         </div>

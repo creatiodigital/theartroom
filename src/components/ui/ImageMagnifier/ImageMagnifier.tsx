@@ -45,15 +45,15 @@ export const ImageMagnifier = ({
     const imgWidth = imageRef.current.offsetWidth
     const imgHeight = imageRef.current.offsetHeight
     const ratio = imgWidth / imgHeight
-    
+
     // Get available width from the image container area
     const viewportWidth = window.innerWidth
     const maxWidth = Math.min(viewportWidth * 0.55, 800)
-    
+
     setAspectRatio(ratio)
-    setExpandedSize({ 
+    setExpandedSize({
       width: Math.max(imgWidth, maxWidth),
-      height: imgHeight
+      height: imgHeight,
     })
     setImageDimensions({ width: imgWidth, height: imgHeight })
   }, [])
@@ -80,7 +80,7 @@ export const ImageMagnifier = ({
       if (!containerRef.current || !isHovering) return
 
       const rect = containerRef.current.getBoundingClientRect()
-      
+
       const xPercent = (e.clientX - rect.left) / rect.width
       const yPercent = (e.clientY - rect.top) / rect.height
 
@@ -93,7 +93,7 @@ export const ImageMagnifier = ({
 
       setZoomPosition({ x: offsetX, y: offsetY })
     },
-    [isHovering, expandedSize, zoomLevel, aspectRatio]
+    [isHovering, expandedSize, zoomLevel, aspectRatio],
   )
 
   const zoomedSrc = highResSrc || src
@@ -106,11 +106,7 @@ export const ImageMagnifier = ({
   if (isMobile) {
     return (
       <div className={`${styles.wrapper} ${className}`}>
-        <img
-          src={src}
-          alt={alt}
-          className={styles.image}
-        />
+        <img src={src} alt={alt} className={styles.image} />
       </div>
     )
   }
@@ -154,12 +150,7 @@ export const ImageMagnifier = ({
       </div>
 
       {/* Invisible trigger area over the image */}
-      {!isHovering && (
-        <div 
-          className={styles.trigger}
-          onMouseEnter={handleMouseEnter}
-        />
-      )}
+      {!isHovering && <div className={styles.trigger} onMouseEnter={handleMouseEnter} />}
     </div>
   )
 }

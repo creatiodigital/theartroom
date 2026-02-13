@@ -36,8 +36,3 @@ const CeilingGlass: React.FC<CeilingGlassProps> = ({ geometry }) => {
 }
 
 export default CeilingGlass
-
-
-
-
-

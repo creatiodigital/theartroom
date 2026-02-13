@@ -42,8 +42,6 @@ export const DashboardProfilePage = () => {
     email: '',
   })
 
-
-
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
@@ -185,7 +183,8 @@ export const DashboardProfilePage = () => {
       <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
         <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
         <p className={dashboardStyles.sectionDescription}>
-          Upload a photo to personalize your artist profile. This will be displayed on your public page.
+          Upload a photo to personalize your artist profile. This will be displayed on your public
+          page.
         </p>
         <ImageUploader
           imageUrl={user?.profileImageUrl}
@@ -228,14 +227,17 @@ export const DashboardProfilePage = () => {
               />
             </div>
           </div>
-          <span className={dashboardStyles.hint}>This is how your name will appear throughout the site.</span>
+          <span className={dashboardStyles.hint}>
+            This is how your name will appear throughout the site.
+          </span>
         </div>
 
         {/* Handler */}
         <div className={dashboardStyles.section}>
           <h3 className={dashboardStyles.sectionTitle}>Profile URL</h3>
           <p className={dashboardStyles.sectionDescription}>
-            A unique identifier for your profile URL. Use lowercase letters, numbers, and hyphens only.
+            A unique identifier for your profile URL. Use lowercase letters, numbers, and hyphens
+            only.
           </p>
           <Input
             id="handler"
@@ -245,7 +247,10 @@ export const DashboardProfilePage = () => {
             onChange={(e) => handleChange('handler', e.target.value)}
             required
           />
-          <span className={dashboardStyles.hint}>Your profile will be available at: theartroom.gallery/artists/{formData.handler || 'your-handle'}</span>
+          <span className={dashboardStyles.hint}>
+            Your profile will be available at: theartroom.gallery/artists/
+            {formData.handler || 'your-handle'}
+          </span>
         </div>
 
         {/* Email */}
@@ -262,21 +267,26 @@ export const DashboardProfilePage = () => {
             onChange={(e) => handleChange('email', e.target.value)}
             placeholder="email@example.com"
           />
-          <span className={dashboardStyles.hint}>Leave blank if you prefer not to display your email publicly.</span>
+          <span className={dashboardStyles.hint}>
+            Leave blank if you prefer not to display your email publicly.
+          </span>
         </div>
 
         {/* Biography */}
         <div className={dashboardStyles.section}>
           <h3 className={dashboardStyles.sectionTitle}>Biography</h3>
           <p className={dashboardStyles.sectionDescription}>
-            Tell visitors about yourself, your artistic journey, and your work. Supports rich text formatting.
+            Tell visitors about yourself, your artistic journey, and your work. Supports rich text
+            formatting.
           </p>
           <RichTextEditor
             content={formData.biography}
             onChange={(content) => handleChange('biography', content)}
             placeholder="Tell visitors about yourself..."
           />
-          <span className={dashboardStyles.hint}>A well-written biography helps visitors connect with your work.</span>
+          <span className={dashboardStyles.hint}>
+            A well-written biography helps visitors connect with your work.
+          </span>
         </div>
 
         <ErrorText>{error}</ErrorText>
@@ -287,7 +297,12 @@ export const DashboardProfilePage = () => {
         )}
 
         <div className={dashboardStyles.actions}>
-          <Button font="dashboard" variant="primary" label={saving ? 'Saving...' : 'Save'} type="submit" />
+          <Button
+            font="dashboard"
+            variant="primary"
+            label={saving ? 'Saving...' : 'Save'}
+            type="submit"
+          />
         </div>
       </form>
     </DashboardLayout>

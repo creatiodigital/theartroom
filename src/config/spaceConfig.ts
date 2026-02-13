@@ -1,6 +1,6 @@
 /**
  * Space Configuration Registry
- * 
+ *
  * Defines which lighting features are available for each space type.
  * Add entries here when creating new spaces.
  */
@@ -45,12 +45,14 @@ export const spaceConfig: Record<string, SpaceFeatures> = {
  * Get features for a space, with sensible defaults for unknown spaces.
  */
 export const getSpaceFeatures = (spaceId: string): SpaceFeatures => {
-  return spaceConfig[spaceId] ?? {
-    hasSkylight: true,
-    hasLamps: false,
-    hasTrackLamps: false,
-    hasRecessedLamps: false,
-    hasWindows: false,
-    hasReflectiveFloor: true,
-  }
+  return (
+    spaceConfig[spaceId] ?? {
+      hasSkylight: true,
+      hasLamps: false,
+      hasTrackLamps: false,
+      hasRecessedLamps: false,
+      hasWindows: false,
+      hasReflectiveFloor: true,
+    }
+  )
 }

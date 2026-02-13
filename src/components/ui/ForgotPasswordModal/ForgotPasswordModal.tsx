@@ -84,11 +84,7 @@ export const ForgotPasswordModal = ({ onClose, onBack }: ForgotPasswordModalProp
         </div>
         <ErrorText>{error}</ErrorText>
         <div className={styles.actions}>
-          <Button
-            size="small"
-            label={loading ? 'Sending...' : 'Send Reset Link'}
-            type="submit"
-          />
+          <Button size="small" label={loading ? 'Sending...' : 'Send Reset Link'} type="submit" />
           <Button
             size="small"
             variant="secondary"

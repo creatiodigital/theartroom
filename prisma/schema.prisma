@@ -176,6 +176,11 @@ model Exhibition {
   // Camera settings
   cameraFOV              Float?   @default(50)
   cameraElevation        Float?   @default(1.6)
+  // Furniture
+  benchVisible           Boolean? @default(false)
+  benchPositionX         Float?   @default(0)
+  benchPositionZ         Float?   @default(0)
+  benchRotationY         Float?   @default(0)
 
   exhibitionArtworks ExhibitionArtwork[]
 

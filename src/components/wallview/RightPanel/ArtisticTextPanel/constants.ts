@@ -20,13 +20,13 @@ export const fontWeights: TOption<'regular' | 'bold'>[] = [
   { value: 'bold', label: 'Bold' },
 ]
 
-export const fontFamilies: TOption<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist'>[] = [
+export const fontFamilies: TOption<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display'>[] = [
   { value: 'roboto', label: 'Roboto' },
   { value: 'lora', label: 'Lora' },
   { value: 'lato', label: 'Lato' },
   { value: 'eb-garamond', label: 'EB Garamond' },
   { value: 'geist', label: 'Geist' },
+  { value: 'playfair-display', label: 'Playfair Display' },
 ]
 
 export const textPaddings = toOptions(Array.from({ length: 25 }, (_, i) => i) as number[])
-

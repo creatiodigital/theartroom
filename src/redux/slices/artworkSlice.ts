@@ -38,7 +38,7 @@ const artworkSlice = createSlice({
         state.artworkCounters[artworkType]
       }`
       newArtwork.name = defaultName
-      newArtwork.artworkTitle = defaultName  // Set default title to match name
+      newArtwork.artworkTitle = defaultName // Set default title to match name
 
       state.byId[id] = newArtwork
       state.allIds.push(id)

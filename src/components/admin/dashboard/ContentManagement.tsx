@@ -50,7 +50,10 @@ export const ContentManagement = () => {
             <tr key={page.route}>
               <td>{page.label}</td>
               <td>
-                <div className={dashboardStyles.kebabWrapper} ref={openMenuId === page.route ? menuRef : undefined}>
+                <div
+                  className={dashboardStyles.kebabWrapper}
+                  ref={openMenuId === page.route ? menuRef : undefined}
+                >
                   <button
                     className={dashboardStyles.kebabButton}
                     onClick={() => setOpenMenuId(openMenuId === page.route ? null : page.route)}
@@ -60,7 +63,13 @@ export const ContentManagement = () => {
                   </button>
                   {openMenuId === page.route && (
                     <div className={dashboardStyles.kebabMenu}>
-                      <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); router.push(page.route); }}>
+                      <button
+                        className={dashboardStyles.kebabMenuItem}
+                        onClick={() => {
+                          setOpenMenuId(null)
+                          router.push(page.route)
+                        }}
+                      >
                         Edit
                       </button>
                     </div>

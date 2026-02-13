@@ -18,11 +18,27 @@ type RichTextProps = {
 
 // Allowed tags from TipTap rich text editor
 const ALLOWED_TAGS = [
-  'p', 'br', 'strong', 'em', 'u', 's', 'a',
-  'ul', 'ol', 'li',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'blockquote', 'code', 'pre',
-  'span', 'div',
+  'p',
+  'br',
+  'strong',
+  'em',
+  'u',
+  's',
+  'a',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'code',
+  'pre',
+  'span',
+  'div',
 ]
 
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'class']
@@ -37,13 +53,9 @@ export const RichText = ({ content, className, variant = 'default' }: RichTextPr
   })
 
   return (
-    <div 
-      className={c(
-        styles.richText, 
-        variant === 'compact' && styles.compact,
-        className
-      )} 
-      dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
+    <div
+      className={c(styles.richText, variant === 'compact' && styles.compact, className)}
+      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
     />
   )
 }

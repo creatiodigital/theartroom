@@ -29,53 +29,40 @@ function isRateLimited(ip: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
-               request.headers.get('x-real-ip') || 
-               'unknown'
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0] ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
 
     // Check rate limit
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       )
     }
 
     const body = await request.json()
-    
-    const { 
-      firstName, 
-      lastName, 
-      email, 
-      phone, 
-      message, 
-      artworkId, 
-      artworkTitle, 
-      artworkArtist 
-    } = body
+
+    const { firstName, lastName, email, phone, message, artworkId, artworkTitle, artworkArtist } =
+      body
 
     // Validate required fields
     if (!firstName || !lastName || !email || !phone || !message) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
     // Get environment variables
     const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'
     const inquiryRecipientsEnv = process.env.INQUIRY_EMAIL_TO || 'contact@theartroom.gallery'
     // Support comma-separated emails for multiple recipients
-    const inquiryRecipients = inquiryRecipientsEnv.split(',').map(e => e.trim())
+    const inquiryRecipients = inquiryRecipientsEnv.split(',').map((e) => e.trim())
 
     // Send inquiry notification to admin
     await resend.emails.send({
@@ -149,9 +136,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error processing inquiry:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

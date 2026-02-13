@@ -63,7 +63,13 @@ export const useAlignGroup = (boundingData: TDimensions | null) => {
         }
 
         if (boundingData) {
-          const new3DCoordinate = convert2DTo3D(newX, newY, artwork.width2d, artwork.height2d, boundingData)
+          const new3DCoordinate = convert2DTo3D(
+            newX,
+            newY,
+            artwork.width2d,
+            artwork.height2d,
+            boundingData,
+          )
           dispatch(
             updateArtworkPosition({
               artworkId,

@@ -35,32 +35,32 @@ const AlignedLine: React.FC<AlignedLineProps> = ({ start, end, direction, color 
 
   // For alignment lines, use consistent positions from the target artwork (end)
   // to avoid 1px offset when artworks are within tolerance but not exactly aligned
-  const alignedY = direction === 'top' ? end.y
-    : direction === 'bottom' ? end.y + end.height
-    : direction === 'center-horizontal' ? end.y + end.height / 2
-    : 0
+  const alignedY =
+    direction === 'top'
+      ? end.y
+      : direction === 'bottom'
+        ? end.y + end.height
+        : direction === 'center-horizontal'
+          ? end.y + end.height / 2
+          : 0
 
-  const alignedX = direction === 'left' ? end.x
-    : direction === 'right' ? end.x + end.width
-    : direction === 'center-vertical' ? end.x + end.width / 2
-    : 0
+  const alignedX =
+    direction === 'left'
+      ? end.x
+      : direction === 'right'
+        ? end.x + end.width
+        : direction === 'center-vertical'
+          ? end.x + end.width / 2
+          : 0
 
   const lineStart = {
-    x: isHorizontal
-      ? Math.min(start.x, end.x)
-      : alignedX,
-    y: isHorizontal
-      ? alignedY
-      : Math.min(start.y, end.y),
+    x: isHorizontal ? Math.min(start.x, end.x) : alignedX,
+    y: isHorizontal ? alignedY : Math.min(start.y, end.y),
   }
 
   const lineEnd = {
-    x: isHorizontal
-      ? Math.max(start.x + start.width, end.x + end.width)
-      : alignedX,
-    y: isHorizontal
-      ? alignedY
-      : Math.max(start.y + start.height, end.y + end.height),
+    x: isHorizontal ? Math.max(start.x + start.width, end.x + end.width) : alignedX,
+    y: isHorizontal ? alignedY : Math.max(start.y + start.height, end.y + end.height),
   }
 
   const style: React.CSSProperties = {

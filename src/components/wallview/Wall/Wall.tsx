@@ -77,22 +77,22 @@ export const Wall = () => {
     // Support both 'floor' and 'floor0' naming conventions
     const floorNode = nodes.floor || nodes.floor0
     if (!boundingData || !floorNode) return { floorOffsetPx: 0, floorOffsetMeters: 0 }
-    
+
     // Get floor surface Y (top of floor mesh)
     const floorMesh = floorNode as Mesh
     if (!floorMesh.geometry.boundingBox) {
       floorMesh.geometry.computeBoundingBox()
     }
     const floorSurfaceY = floorMesh.position.y + (floorMesh.geometry.boundingBox?.max.y ?? 0)
-    
+
     // Get wall placeholder bottom Y
     const wallBottomY = boundingData.boundingBox.min.y
-    
+
     // Calculate offset in meters
     const offsetMeters = Math.max(0, wallBottomY - floorSurfaceY)
     return {
       floorOffsetPx: offsetMeters * scaling,
-      floorOffsetMeters: offsetMeters
+      floorOffsetMeters: offsetMeters,
     }
   }, [boundingData, nodes.floor, nodes.floor0, scaling])
 
@@ -246,7 +246,9 @@ export const Wall = () => {
 
   return (
     <div className={styles.wrapper}>
-      {wallWidth && wallHeight && <Measurements width={wallWidth} height={wallHeight} floorOffset={floorOffsetMeters} />}
+      {wallWidth && wallHeight && (
+        <Measurements width={wallWidth} height={wallHeight} floorOffset={floorOffsetMeters} />
+      )}
       <div
         ref={wallRef}
         className={styles.wall}
@@ -259,16 +261,23 @@ export const Wall = () => {
       >
         {isHumanVisible && (
           <>
-            <Human humanWidth={humanWidth} humanHeight={humanHeight} position="left" floorOffset={floorOffsetPx} />
-            <Human humanWidth={humanWidth} humanHeight={humanHeight} position="right" floorOffset={floorOffsetPx} />
+            <Human
+              humanWidth={humanWidth}
+              humanHeight={humanHeight}
+              position="left"
+              floorOffset={floorOffsetPx}
+            />
+            <Human
+              humanWidth={humanWidth}
+              humanHeight={humanHeight}
+              position="right"
+              floorOffset={floorOffsetPx}
+            />
           </>
         )}
         {/* Floor level indicator line - always visible when offset > 0 */}
         {floorOffsetPx > 0 && (
-          <div 
-            className={styles.floorLine}
-            style={{ bottom: -floorOffsetPx }}
-          >
+          <div className={styles.floorLine} style={{ bottom: -floorOffsetPx }}>
             <span className={styles.floorLabel}>Floor level</span>
           </div>
         )}
@@ -341,12 +350,7 @@ export const Wall = () => {
           const toVisual = getVisualBounds(toPos, artworksById[toPos.artworkId])
 
           return (
-            <AlignedLine
-              key={index}
-              start={fromVisual}
-              end={toVisual}
-              direction={pair.direction}
-            />
+            <AlignedLine key={index} start={fromVisual} end={toVisual} direction={pair.direction} />
           )
         })}
       </div>

@@ -69,7 +69,10 @@ const exhibitionSlice = createSlice({
       }
     },
 
-    deleteArtworkPosition: (state: TExhibitionWithHistory, action: PayloadAction<{ artworkId: string }>) => {
+    deleteArtworkPosition: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ artworkId: string }>,
+    ) => {
       const { artworkId } = action.payload
       delete state.exhibitionArtworksById[artworkId]
       state.allExhibitionArtworkIds = state.allExhibitionArtworkIds.filter((id) => id !== artworkId)
@@ -144,7 +147,10 @@ const exhibitionSlice = createSlice({
       state.floorReflectiveness = action.payload
     },
 
-    setFloorMaterial: (state: TExhibitionWithHistory, action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'>) => {
+    setFloorMaterial: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'>,
+    ) => {
       state.floorMaterial = action.payload
     },
 
@@ -194,6 +200,23 @@ const exhibitionSlice = createSlice({
       state.cameraElevation = Math.max(1.5, Math.min(1.7, action.payload))
     },
 
+    // Furniture actions
+    setBenchVisible: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
+      state.benchVisible = action.payload
+    },
+
+    setBenchPositionX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.benchPositionX = action.payload
+    },
+
+    setBenchPositionZ: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.benchPositionZ = action.payload
+    },
+
+    setBenchRotationY: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.benchRotationY = action.payload
+    },
+
     // Snapshot actions for cancel functionality
     snapshotExhibition: (state: TExhibitionWithHistory) => {
       state._snapshot = extractExhibitionData(state)
@@ -218,12 +241,12 @@ const exhibitionSlice = createSlice({
       // Save current state to history before making changes
       const currentState = extractExhibitionData(state)
       state._history.push(JSON.parse(JSON.stringify(currentState)))
-      
+
       // Limit history size
       if (state._history.length > HISTORY_LIMIT) {
         state._history.shift()
       }
-      
+
       // Clear future on new action (can't redo after new action)
       state._future = []
     },
@@ -291,6 +314,10 @@ export const {
   setCeilingLightMode,
   setCameraFOV,
   setCameraElevation,
+  setBenchVisible,
+  setBenchPositionX,
+  setBenchPositionZ,
+  setBenchRotationY,
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,
@@ -301,4 +328,3 @@ export const {
 } = exhibitionSlice.actions
 
 export default exhibitionSlice.reducer
-

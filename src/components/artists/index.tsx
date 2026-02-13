@@ -54,9 +54,7 @@ export const ArtistsPage = () => {
               <li key={artist.id}>
                 <Link href={`/artists/${artist.handler}`} className={styles.artistRow}>
                   <div className={styles.artistInfo}>
-                    <span className={styles.index}>
-                      ({String(index + 1).padStart(2, '0')})
-                    </span>
+                    <span className={styles.index}>({String(index + 1).padStart(2, '0')})</span>
                     <span className={styles.artistName}>
                       {artist.name} {artist.lastName}
                     </span>
