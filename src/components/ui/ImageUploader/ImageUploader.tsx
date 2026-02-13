@@ -50,7 +50,6 @@ export const ImageUploader = ({
     [maxSizeBytes],
   )
 
-
   const handleFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -128,12 +127,7 @@ export const ImageUploader = ({
       {imageUrl ? (
         // Image preview state
         <div className={styles.preview} style={{ aspectRatio }}>
-          <Image
-            src={imageUrl}
-            alt="Uploaded image"
-            fill
-            style={{ objectFit }}
-          />
+          <Image src={imageUrl} alt="Uploaded image" fill style={{ objectFit }} />
           {onRemove && (
             <button
               type="button"
@@ -184,12 +178,9 @@ export const ImageUploader = ({
         </div>
       )}
 
-      {sizeError && (
-        <div className={styles.sizeError}>{sizeError}</div>
-      )}
+      {sizeError && <div className={styles.sizeError}>{sizeError}</div>}
     </div>
   )
 }
 
 export default ImageUploader
-

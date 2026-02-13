@@ -4,7 +4,7 @@ import { Shape, ExtrudeGeometry, MeshStandardMaterial } from 'three'
 interface SupportProps {
   width: number
   height: number
-  depth: number  // Thickness/depth of the support in scene units
+  depth: number // Thickness/depth of the support in scene units
   material: MeshStandardMaterial
 }
 
@@ -18,7 +18,7 @@ const Support: React.FC<SupportProps> = ({ width, height, depth, material }) => 
     const shape = new Shape()
     const halfW = width / 2
     const halfH = height / 2
-    
+
     // Draw rectangle centered at origin
     shape.moveTo(-halfW, -halfH)
     shape.lineTo(halfW, -halfH)
@@ -39,13 +39,7 @@ const Support: React.FC<SupportProps> = ({ width, height, depth, material }) => 
   // Position so back face is at Z=0 (wall) and support extends forward toward viewer
   // ExtrudeGeometry creates shape at Z=0 and extrudes to Z=depth
   return (
-    <mesh 
-      geometry={geometry} 
-      material={material}
-      position={[0, 0, 0]}
-      castShadow
-      receiveShadow
-    />
+    <mesh geometry={geometry} material={material} position={[0, 0, 0]} castShadow receiveShadow />
   )
 }
 

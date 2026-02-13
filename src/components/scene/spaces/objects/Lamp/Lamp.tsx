@@ -65,4 +65,3 @@ const Lamp: React.FC<LampProps> = ({ i, nodes, lampMaterial, bulbMaterial }) => 
 }
 
 export default Lamp
-

@@ -124,7 +124,9 @@ export default function PageContentEditor({ params }: PageProps) {
           onChange={(content) => setPage({ ...page, content })}
           placeholder="Start writing your page content..."
         />
-        <span className={dashboardStyles.hint}>Use the toolbar to format text, add headings, lists, and more.</span>
+        <span className={dashboardStyles.hint}>
+          Use the toolbar to format text, add headings, lists, and more.
+        </span>
       </div>
 
       <div className={dashboardStyles.actions}>

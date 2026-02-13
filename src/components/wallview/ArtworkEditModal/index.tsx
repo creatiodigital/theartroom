@@ -97,15 +97,61 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
 
       // Update Redux state to reflect the saved changes
       // Map form field names to TArtwork property names
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'artworkTitle', value: formData.title }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'author', value: formData.author }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'artworkYear', value: formData.year }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'artworkDimensions', value: formData.dimensions }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'technique', value: formData.technique }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'description', value: formData.description }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'textContent', value: formData.textContent }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'featured', value: formData.featured }))
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: imageUrl || undefined }))
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'artworkTitle',
+          value: formData.title,
+        }),
+      )
+      dispatch(
+        editArtwork({ currentArtworkId: artworkId, property: 'author', value: formData.author }),
+      )
+      dispatch(
+        editArtwork({ currentArtworkId: artworkId, property: 'artworkYear', value: formData.year }),
+      )
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'artworkDimensions',
+          value: formData.dimensions,
+        }),
+      )
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'technique',
+          value: formData.technique,
+        }),
+      )
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'description',
+          value: formData.description,
+        }),
+      )
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'textContent',
+          value: formData.textContent,
+        }),
+      )
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'featured',
+          value: formData.featured,
+        }),
+      )
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'imageUrl',
+          value: imageUrl || undefined,
+        }),
+      )
 
       // Close the modal
       dispatch(closeArtworkEditModal())
@@ -139,7 +185,9 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         const data = await response.json()
         setImageUrl(data.url)
         // Sync with Redux immediately so wall view updates
-        dispatch(editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: data.url }))
+        dispatch(
+          editArtwork({ currentArtworkId: artworkId, property: 'imageUrl', value: data.url }),
+        )
       } catch {
         setError('Failed to upload image')
       } finally {

@@ -130,6 +130,11 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         ceilingLightMode: snapshotExhibition.ceilingLightMode,
         cameraFOV: snapshotExhibition.cameraFOV,
         cameraElevation: snapshotExhibition.cameraElevation,
+        // Furniture
+        benchVisible: snapshotExhibition.benchVisible,
+        benchPositionX: snapshotExhibition.benchPositionX,
+        benchPositionZ: snapshotExhibition.benchPositionZ,
+        benchRotationY: snapshotExhibition.benchRotationY,
         // Artworks from snapshot
         exhibitionArtworks: snapshotArtworks,
         artworks,

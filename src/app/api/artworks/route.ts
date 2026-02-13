@@ -103,16 +103,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const {
-      artworkType,
-      title,
-      author,
-      year,
-      technique,
-      dimensions,
-      description,
-      featured,
-    } = body
+    const { artworkType, title, author, year, technique, dimensions, description, featured } = body
 
     // Auto-generate title if not provided
     let finalTitle = title

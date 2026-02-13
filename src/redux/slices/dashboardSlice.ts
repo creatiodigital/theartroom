@@ -43,6 +43,12 @@ const dashboardSlice = createSlice({
     hideHumanPanel: (state: TDashboardState) => {
       state.isHumanPanelOpen = false
     },
+    showFurniturePanel: (state: TDashboardState) => {
+      state.isFurniturePanelOpen = true
+    },
+    hideFurniturePanel: (state: TDashboardState) => {
+      state.isFurniturePanelOpen = false
+    },
     setEditingArtwork: (state: TDashboardState, action: PayloadAction<boolean>) => {
       state.isEditingArtwork = action.payload
     },
@@ -65,9 +71,10 @@ export const {
   hideCameraPanel,
   showHumanPanel,
   hideHumanPanel,
+  showFurniturePanel,
+  hideFurniturePanel,
   setEditingArtwork,
   selectSpace,
 } = dashboardSlice.actions
 
 export default dashboardSlice.reducer
-

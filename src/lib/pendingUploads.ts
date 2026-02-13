@@ -27,7 +27,7 @@ export const addPendingUpload = (
   file: File,
   localUrl: string,
   originalWidth: number,
-  originalHeight: number
+  originalHeight: number,
 ) => {
   pendingUploads.set(artworkId, { file, localUrl, originalWidth, originalHeight })
 }
@@ -73,7 +73,9 @@ export const isLocalBlobUrl = (url: string | undefined): boolean => {
 }
 
 // Get original dimensions for an artwork
-export const getOriginalDimensions = (artworkId: string): { width: number; height: number } | undefined => {
+export const getOriginalDimensions = (
+  artworkId: string,
+): { width: number; height: number } | undefined => {
   const data = pendingUploads.get(artworkId)
   if (data) {
     return { width: data.originalWidth, height: data.originalHeight }

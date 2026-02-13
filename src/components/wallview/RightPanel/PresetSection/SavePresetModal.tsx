@@ -15,7 +15,12 @@ type SavePresetModalProps = {
   existingNames?: string[]
 }
 
-const SavePresetModal = ({ onSave, onClose, loading, existingNames = [] }: SavePresetModalProps) => {
+const SavePresetModal = ({
+  onSave,
+  onClose,
+  loading,
+  existingNames = [],
+}: SavePresetModalProps) => {
   const [name, setName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -24,7 +29,8 @@ const SavePresetModal = ({ onSave, onClose, loading, existingNames = [] }: SaveP
   }, [])
 
   const trimmed = name.trim()
-  const isDuplicate = trimmed.length > 0 && existingNames.some(n => n.toLowerCase() === trimmed.toLowerCase())
+  const isDuplicate =
+    trimmed.length > 0 && existingNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

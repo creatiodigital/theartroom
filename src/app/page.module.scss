@@ -35,7 +35,6 @@
   }
 }
 
-
 .content {
   width: 100%;
   padding: var(--space-6);
@@ -51,7 +50,7 @@
   margin-bottom: var(--space-8);
 
   @include breakpoint(lg) {
-    margin-bottom: 120px
+    margin-bottom: 120px;
   }
 }
 
@@ -72,4 +71,3 @@
 .emptyText {
   color: var(--color-text-primary);
 }
-

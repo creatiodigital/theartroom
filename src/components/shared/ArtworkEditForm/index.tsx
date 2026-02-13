@@ -287,7 +287,6 @@ export const ArtworkEditForm = ({
           </div>
         )}
 
-
         <ErrorText>{error}</ErrorText>
 
         <div className={dashboardStyles.actions}>

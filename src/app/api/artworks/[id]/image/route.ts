@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Update artwork with new image URL
     await prisma.artwork.update({
       where: { id },
-      data: { 
+      data: {
         imageUrl: blob.url,
       },
     })

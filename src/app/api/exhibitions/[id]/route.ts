@@ -47,6 +47,11 @@ type ExhibitionUpdateBody = {
   cameraElevation?: number
   hdriEnvironment?: string
   ceilingLightMode?: string
+  // Furniture
+  benchVisible?: boolean
+  benchPositionX?: number
+  benchPositionZ?: number
+  benchRotationY?: number
 }
 
 /* ------------------------ GET ------------------------ */
@@ -130,13 +135,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.ceilingLampIntensity !== undefined)
       data.ceilingLampIntensity = body.ceilingLampIntensity
     if (body.trackLampColor !== undefined) data.trackLampColor = body.trackLampColor
-    if (body.trackLampIntensity !== undefined)
-      data.trackLampIntensity = body.trackLampIntensity
+    if (body.trackLampIntensity !== undefined) data.trackLampIntensity = body.trackLampIntensity
     if (body.trackLampsVisible !== undefined) data.trackLampsVisible = body.trackLampsVisible
     if (body.recessedLampColor !== undefined) data.recessedLampColor = body.recessedLampColor
     if (body.recessedLampIntensity !== undefined)
       data.recessedLampIntensity = body.recessedLampIntensity
-    if (body.trackLampMaterialColor !== undefined) data.trackLampMaterialColor = body.trackLampMaterialColor
+    if (body.trackLampMaterialColor !== undefined)
+      data.trackLampMaterialColor = body.trackLampMaterialColor
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
@@ -172,6 +177,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     if (body.hdriEnvironment !== undefined) data.hdriEnvironment = body.hdriEnvironment
     if (body.ceilingLightMode !== undefined) data.ceilingLightMode = body.ceilingLightMode
+    // Furniture
+    if (body.benchVisible !== undefined) data.benchVisible = body.benchVisible
+    if (body.benchPositionX !== undefined) data.benchPositionX = body.benchPositionX
+    if (body.benchPositionZ !== undefined) data.benchPositionZ = body.benchPositionZ
+    if (body.benchRotationY !== undefined) {
+      data.benchRotationY = ((body.benchRotationY % 360) + 360) % 360
+    }
 
     // --- Draft/Publish logic ---
     if (body.published === true) {
@@ -250,4 +262,3 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json({ error: 'Failed to delete exhibition' }, { status: 500 })
   }
 }
-

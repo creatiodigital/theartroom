@@ -41,4 +41,3 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
 }
 
 export default SettingsPanel
-

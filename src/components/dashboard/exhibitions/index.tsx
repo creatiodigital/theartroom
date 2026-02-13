@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 
-
 import { Button } from '@/components/ui/Button'
 import { Logout } from '@/components/ui/Logout'
 import { Text } from '@/components/ui/Typography'
@@ -33,7 +32,9 @@ export const DashboardExhibitionsPage = () => {
         </div>
       </div>
 
-      <Text font="dashboard" as="p">Manage your current and past exhibitions</Text>
+      <Text font="dashboard" as="p">
+        Manage your current and past exhibitions
+      </Text>
 
       {/* Exhibition list will go here */}
       <div className={styles.exhibitionList}>

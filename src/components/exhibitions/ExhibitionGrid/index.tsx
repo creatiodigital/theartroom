@@ -22,11 +22,7 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
   return (
     <div className={styles.grid}>
       {exhibitions.map((exhibition) => (
-        <Link
-          key={exhibition.id}
-          href={exhibition.href}
-          className={styles.card}
-        >
+        <Link key={exhibition.id} href={exhibition.href} className={styles.card}>
           <div className={styles.imageWrapper}>
             {exhibition.featuredImageUrl ? (
               <Image

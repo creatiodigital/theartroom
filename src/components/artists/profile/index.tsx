@@ -105,7 +105,9 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
     <PageLayout>
       <div className={styles.header}>
         <div>
-          <Text as="h1" size="huge" className={styles.artistName}>{artist.name} {artist.lastName}</Text>
+          <Text as="h1" size="huge" className={styles.artistName}>
+            {artist.name} {artist.lastName}
+          </Text>
         </div>
         {artist.profileImageUrl ? (
           <div className={styles.avatarWrapper}>
@@ -118,7 +120,8 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
           </div>
         ) : (
           <div className={styles.avatarPlaceholder}>
-            {artist.name.charAt(0)}{artist.lastName.charAt(0)}
+            {artist.name.charAt(0)}
+            {artist.lastName.charAt(0)}
           </div>
         )}
       </div>
@@ -131,9 +134,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         )}
       </div>
 
-      {artworks.length > 0 && (
-        <NiceTitle title="Featured Works" align="left" />
-      )}
+      {artworks.length > 0 && <NiceTitle title="Featured Works" align="left" />}
 
       {artworks.length > 0 && (
         <div className={styles.section}>

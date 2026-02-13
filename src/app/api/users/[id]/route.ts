@@ -3,7 +3,12 @@ import { revalidateTag, revalidatePath } from 'next/cache'
 
 import type { Prisma } from '@/generated/prisma'
 import { UserType as UserTypeEnum } from '@/generated/prisma'
-import { requireAdminOrAbove, requireSuperAdmin, canModifyUser, isSuperAdmin } from '@/lib/authUtils'
+import {
+  requireAdminOrAbove,
+  requireSuperAdmin,
+  canModifyUser,
+  isSuperAdmin,
+} from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 type Body = {
@@ -21,7 +26,9 @@ type UserTypeValue = (typeof UserTypeEnum)[keyof typeof UserTypeEnum]
 
 const toUserType = (val: unknown): UserTypeValue | undefined => {
   if (typeof val !== 'string') return undefined
-  return (Object.values(UserTypeEnum) as string[]).includes(val) ? (val as UserTypeValue) : undefined
+  return (Object.values(UserTypeEnum) as string[]).includes(val)
+    ? (val as UserTypeValue)
+    : undefined
 }
 
 // Admin roles that require superAdmin to assign
@@ -60,10 +67,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     // Check if actor can modify target user based on role hierarchy
     if (!canModifyUser(session.user.userType, targetUser.userType)) {
-      return NextResponse.json(
-        { error: 'Forbidden - Cannot modify Super Admin' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden - Cannot modify Super Admin' }, { status: 403 })
     }
 
     const userTypeEnum = toUserType(body.userType)
@@ -76,7 +80,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       if (!isSuperAdmin(session.user.userType)) {
         return NextResponse.json(
           { error: 'Forbidden - Only Super Admin can assign admin roles' },
-          { status: 403 }
+          { status: 403 },
         )
       }
     }
@@ -126,10 +130,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     // Prevent self-deletion
     if (id === session.user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden - Cannot delete yourself' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden - Cannot delete yourself' }, { status: 403 })
     }
 
     // Get target user to verify it exists
@@ -153,4 +154,3 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
-

@@ -84,15 +84,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
       phone: validateField('phone', phone),
       message: validateField('message', message),
     }
-    
+
     setErrors(newErrors)
-    return !Object.values(newErrors).some(error => error !== undefined)
+    return !Object.values(newErrors).some((error) => error !== undefined)
   }
 
   const handleBlur = (field: string, value: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }))
+    setTouched((prev) => ({ ...prev, [field]: true }))
     const error = validateField(field, value)
-    setErrors(prev => ({ ...prev, [field]: error }))
+    setErrors((prev) => ({ ...prev, [field]: error }))
   }
 
   const resetForm = () => {
@@ -107,7 +107,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Honeypot check - if filled, it's a bot
     if (honeypot) {
       console.log('Bot detected via honeypot')
@@ -162,7 +162,6 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
     }
   }
 
-
   const closeModal = () => {
     setShowModal(false)
     setSubmitStatus('idle')
@@ -211,7 +210,6 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
             </div>
 
             <div className={styles.content}>
-
               <form onSubmit={handleSubmit} className={styles.form}>
                 {/* Honeypot field */}
                 <input
@@ -225,7 +223,9 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                 />
 
                 <div className={styles.field}>
-                  <label htmlFor="firstName" className={styles.label}>First name</label>
+                  <label htmlFor="firstName" className={styles.label}>
+                    First name
+                  </label>
                   <Input
                     id="firstName"
                     value={firstName}
@@ -235,12 +235,16 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     className={`${styles.input} ${touched.firstName && errors.firstName ? styles.inputError : ''}`}
                   />
                   {touched.firstName && errors.firstName && (
-                    <Text as="span" size="xs" className={styles.errorText}>{errors.firstName}</Text>
+                    <Text as="span" size="xs" className={styles.errorText}>
+                      {errors.firstName}
+                    </Text>
                   )}
                 </div>
 
                 <div className={styles.field}>
-                  <label htmlFor="lastName" className={styles.label}>Last name</label>
+                  <label htmlFor="lastName" className={styles.label}>
+                    Last name
+                  </label>
                   <Input
                     id="lastName"
                     value={lastName}
@@ -250,12 +254,16 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     className={`${styles.input} ${touched.lastName && errors.lastName ? styles.inputError : ''}`}
                   />
                   {touched.lastName && errors.lastName && (
-                    <Text as="span" size="xs" className={styles.errorText}>{errors.lastName}</Text>
+                    <Text as="span" size="xs" className={styles.errorText}>
+                      {errors.lastName}
+                    </Text>
                   )}
                 </div>
 
                 <div className={styles.field}>
-                  <label htmlFor="email" className={styles.label}>Email</label>
+                  <label htmlFor="email" className={styles.label}>
+                    Email
+                  </label>
                   <Input
                     id="email"
                     type="email"
@@ -266,12 +274,16 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     className={`${styles.input} ${touched.email && errors.email ? styles.inputError : ''}`}
                   />
                   {touched.email && errors.email && (
-                    <Text as="span" size="xs" className={styles.errorText}>{errors.email}</Text>
+                    <Text as="span" size="xs" className={styles.errorText}>
+                      {errors.email}
+                    </Text>
                   )}
                 </div>
 
                 <div className={styles.field}>
-                  <label htmlFor="phone" className={styles.label}>Phone</label>
+                  <label htmlFor="phone" className={styles.label}>
+                    Phone
+                  </label>
                   <Input
                     id="phone"
                     value={phone}
@@ -281,12 +293,16 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     className={`${styles.input} ${touched.phone && errors.phone ? styles.inputError : ''}`}
                   />
                   {touched.phone && errors.phone && (
-                    <Text as="span" size="xs" className={styles.errorText}>{errors.phone}</Text>
+                    <Text as="span" size="xs" className={styles.errorText}>
+                      {errors.phone}
+                    </Text>
                   )}
                 </div>
 
                 <div className={styles.field}>
-                  <label htmlFor="message" className={styles.label}>Message</label>
+                  <label htmlFor="message" className={styles.label}>
+                    Message
+                  </label>
                   <textarea
                     id="message"
                     value={message}
@@ -296,7 +312,9 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     rows={4}
                   />
                   {touched.message && errors.message && (
-                    <Text as="span" size="xs" className={styles.errorText}>{errors.message}</Text>
+                    <Text as="span" size="xs" className={styles.errorText}>
+                      {errors.message}
+                    </Text>
                   )}
                 </div>
 
@@ -311,7 +329,9 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     />
                   </div>
                   <div className={styles.artworkInfo}>
-                    <Text as="p" size="sm" weight="medium">{artwork.artistName}</Text>
+                    <Text as="p" size="sm" weight="medium">
+                      {artwork.artistName}
+                    </Text>
                     <Text as="p" size="sm" font="serif">
                       <em>{artwork.title}</em>
                       {artwork.year && `, ${artwork.year}`}
@@ -329,8 +349,12 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                 />
 
                 <Text as="p" size="xs" className={styles.disclaimer}>
-                  In order to respond to your inquiry, we will process the personal data you have supplied in accordance with our{' '}
-                  <a href="/privacy-policy" className={styles.link}>privacy policy</a>.
+                  In order to respond to your inquiry, we will process the personal data you have
+                  supplied in accordance with our{' '}
+                  <a href="/privacy-policy" className={styles.link}>
+                    privacy policy
+                  </a>
+                  .
                 </Text>
               </form>
             </div>

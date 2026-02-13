@@ -52,7 +52,6 @@ main {
   flex: 1 0 auto;
 }
 
-
 h1,
 h2,
 h3,
@@ -199,15 +198,15 @@ label {
 img {
   // Disable right-click context menu
   pointer-events: auto;
-  
+
   // Prevent drag and drop
   -webkit-user-drag: none;
   user-drag: none;
-  
+
   // Prevent text selection
   -webkit-user-select: none;
   user-select: none;
-  
+
   // Prevent touch callout on mobile (Safari)
   -webkit-touch-callout: none;
 }
@@ -221,4 +220,3 @@ img {
   user-select: auto;
   -webkit-touch-callout: default;
 }
-

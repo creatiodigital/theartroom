@@ -9,7 +9,12 @@ import {
 } from 'three'
 
 import { snapshotArtworks } from '@/redux/slices/artworkSlice'
-import { hideArtworkPanel, hideFloorPanel, hideLightingPanel, hideCameraPanel } from '@/redux/slices/dashboardSlice'
+import {
+  hideArtworkPanel,
+  hideFloorPanel,
+  hideLightingPanel,
+  hideCameraPanel,
+} from '@/redux/slices/dashboardSlice'
 import { snapshotExhibition } from '@/redux/slices/exhibitionSlice'
 import { showWallView } from '@/redux/slices/wallViewSlice'
 

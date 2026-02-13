@@ -63,7 +63,10 @@ export const useResizeArtwork = (
         .filter((id) => id !== artworkId && exhibitionArtworksById[id].wallId === currentWallId)
         .map((id) => ({
           pos: exhibitionArtworksById[id],
-          visual: getVisualBounds(exhibitionArtworksById[id], artworksById[exhibitionArtworksById[id].artworkId]),
+          visual: getVisualBounds(
+            exhibitionArtworksById[id],
+            artworksById[exhibitionArtworksById[id].artworkId],
+          ),
         }))
 
       // Start resizing state
@@ -100,7 +103,7 @@ export const useResizeArtwork = (
           // Project the mouse movement onto the diagonal direction
           // This gives a smooth scale factor without sudden jumps
           const diagonalDelta = (deltaX * xSign + deltaY * ySign * aspectRatio) / (1 + aspectRatio)
-          
+
           // Apply the scale
           newWidth = Math.max(5, initialWidth + diagonalDelta * xSign)
           newHeight = Math.max(5, newWidth / aspectRatio)
@@ -127,7 +130,10 @@ export const useResizeArtwork = (
                 alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'left' })
               }
               // Only check right edge if dragging from right side
-              if (direction.includes('right') && Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
+              if (
+                direction.includes('right') &&
+                Math.abs(newRight - otherRight) <= SNAP_TOLERANCE
+              ) {
                 alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'right' })
               }
               // Only check top edge if dragging from top side
@@ -135,7 +141,10 @@ export const useResizeArtwork = (
                 alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'top' })
               }
               // Only check bottom edge if dragging from bottom side
-              if (direction.includes('bottom') && Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
+              if (
+                direction.includes('bottom') &&
+                Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE
+              ) {
                 alignedPairs.push({ from: artworkId, to: otherPos.artworkId, direction: 'bottom' })
               }
             }

@@ -34,4 +34,3 @@ const CeilingLamps: React.FC<CeilingLampsProps> = ({ geometry }) => {
 
 export { CeilingLamps }
 export default CeilingLamps
-

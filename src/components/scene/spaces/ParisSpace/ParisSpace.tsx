@@ -25,7 +25,6 @@ import type { TArtwork } from '@/types/artwork'
 
 import { Lights } from './lights'
 
-
 type GLTFResult = GLTF & {
   nodes: {
     floor0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
@@ -43,12 +42,7 @@ type ParisSpaceProps = React.ComponentProps<'group'> & {
   artworks: TArtwork[]
 }
 
-const ParisSpace: React.FC<ParisSpaceProps> = ({
-  wallRefs,
-  windowRefs,
-  glassRefs,
-  ...props
-}) => {
+const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
   const { nodes } = useGLTF('/assets/spaces/paris/paris9.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
@@ -56,7 +50,6 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
   const ceilingLightMode = useSelector(
     (state: RootState) => state.exhibition.ceilingLightMode ?? 'track-plafond',
   )
-
 
   // Ambient light for wall/ceiling tinting
   const { ambientColor, scale } = useAmbientLight()
@@ -119,40 +112,37 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
       <Effects enabled={true} />
 
       {/* Floor */}
-      {nodes.floor0 && (() => {
-        nodes.floor0.geometry.computeBoundingBox()
-        const floorSurfaceY = nodes.floor0.position.y + (nodes.floor0.geometry.boundingBox?.max.y ?? 0)
-        return (
-          <>
-            <primitive object={nodes.floor0} visible={false} />
-            <ReflectiveFloor
-              position={[nodes.floor0.position.x, floorSurfaceY, nodes.floor0.position.z]}
-            />
-          </>
-        )
-      })()}
+      {nodes.floor0 &&
+        (() => {
+          nodes.floor0.geometry.computeBoundingBox()
+          const floorSurfaceY =
+            nodes.floor0.position.y + (nodes.floor0.geometry.boundingBox?.max.y ?? 0)
+          return (
+            <>
+              <primitive object={nodes.floor0} visible={false} />
+              <ReflectiveFloor
+                position={[nodes.floor0.position.x, floorSurfaceY, nodes.floor0.position.z]}
+              />
+            </>
+          )
+        })()}
 
       {/* Ceiling */}
-      {nodes.ceiling0 && (
-        <Ceiling
-          geometry={nodes.ceiling0.geometry}
-          material={ceilingMaterial}
-        />
-      )}
+      {nodes.ceiling0 && <Ceiling geometry={nodes.ceiling0.geometry} material={ceilingMaterial} />}
 
       {/* Wall */}
       {nodes.wall0 && (
-        <Wall
-          i={0}
-          wallRef={wallRefs[0]}
-          geometry={nodes.wall0.geometry}
-          material={wallMaterial}
-        />
+        <Wall i={0} wallRef={wallRefs[0]} geometry={nodes.wall0.geometry} material={wallMaterial} />
       )}
 
       {/* Window */}
-      <ParisWindow nodes={nodes} frameCount={2} handleCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
-
+      <ParisWindow
+        nodes={nodes}
+        frameCount={2}
+        handleCount={2}
+        windowRefs={windowRefs}
+        glassRefs={glassRefs}
+      />
 
       {/* Door */}
       <Door nodes={nodes} doorFrameRef={wallRefs[1]} doorMainRef={wallRefs[2]} />
@@ -166,14 +156,10 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({
       )}
 
       {/* Recessed Lamps - visible only in 'track-plafond' mode */}
-      {ceilingLightMode === 'track-plafond' && (
-        <RecessedLamp nodes={nodes} count={6} />
-      )}
+      {ceilingLightMode === 'track-plafond' && <RecessedLamp nodes={nodes} count={6} />}
 
       {/* Round Lamps - visible only in 'plafond' mode */}
-      {ceilingLightMode === 'plafond' && (
-        <RoundLamp nodes={nodes} count={15} />
-      )}
+      {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={15} />}
 
       {/* Single Sockets */}
       <SingleSocket nodes={nodes} count={2} />

@@ -14,13 +14,7 @@ interface WindowProps {
 const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
 const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
 
-const Window: React.FC<WindowProps> = ({
-  i,
-  windowRef,
-  glassRef,
-  nodes,
-  windowMaterial,
-}) => {
+const Window: React.FC<WindowProps> = ({ i, windowRef, glassRef, nodes, windowMaterial }) => {
   // Read from Redux for dynamic control
   const windowLightIntensity = useSelector(
     (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_LIGHT_INTENSITY,

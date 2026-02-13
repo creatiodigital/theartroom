@@ -3,8 +3,8 @@ import { Material } from 'three'
 interface FrameProps {
   width: number
   height: number
-  thickness: number  // Border width (XY)
-  depth?: number     // Z-depth (how much it protrudes)
+  thickness: number // Border width (XY)
+  depth?: number // Z-depth (how much it protrudes)
   material: Material
 }
 

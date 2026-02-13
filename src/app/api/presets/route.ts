@@ -42,16 +42,17 @@ export async function POST(request: Request) {
         // Frame
         showFrame: body.showFrame ?? false,
         frameColor: body.frameColor ?? '#000000',
-        frameSize: Number(body.frameSize) || 5,
-        frameThickness: Number(body.frameThickness) || 0.5,
+        frameSize: body.frameSize != null ? Number(body.frameSize) : 5,
+        frameThickness: body.frameThickness != null ? Number(body.frameThickness) : 0.5,
         // Passepartout
         showPassepartout: body.showPassepartout ?? false,
         passepartoutColor: body.passepartoutColor ?? '#ffffff',
-        passepartoutSize: Number(body.passepartoutSize) || 10,
-        passepartoutThickness: Number(body.passepartoutThickness) || 0.3,
+        passepartoutSize: body.passepartoutSize != null ? Number(body.passepartoutSize) : 10,
+        passepartoutThickness:
+          body.passepartoutThickness != null ? Number(body.passepartoutThickness) : 0.3,
         // Support
         showSupport: body.showSupport ?? false,
-        supportThickness: Number(body.supportThickness) || 2.0,
+        supportThickness: body.supportThickness != null ? Number(body.supportThickness) : 2.0,
         supportColor: body.supportColor ?? '#ffffff',
         // Shadow
         hideShadow: body.hideShadow ?? false,
@@ -59,13 +60,13 @@ export async function POST(request: Request) {
         fontFamily: body.fontFamily ?? 'Montserrat',
         fontSize: Number(body.fontSize) || 16,
         fontWeight: body.fontWeight ?? '400',
-        letterSpacing: Number(body.letterSpacing ?? 0),
+        letterSpacing: body.letterSpacing != null ? Number(body.letterSpacing) : 0,
         lineHeight: Number(body.lineHeight) || 1.4,
         textColor: body.textColor ?? '#000000',
         textBackgroundColor: body.textBackgroundColor ?? null,
         textAlign: body.textAlign ?? 'left',
         textVerticalAlign: body.textVerticalAlign ?? 'top',
-        textPadding: Number(body.textPadding) || 12,
+        textPadding: body.textPadding != null ? Number(body.textPadding) : 12,
       },
     })
 

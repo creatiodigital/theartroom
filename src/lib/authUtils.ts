@@ -28,7 +28,7 @@ export function isAdminOrAbove(userType: string | undefined): boolean {
  */
 export function canModifyUser(
   actorUserType: string | undefined,
-  targetUserType: string | undefined
+  targetUserType: string | undefined,
 ): boolean {
   if (isSuperAdmin(actorUserType)) {
     return true
@@ -138,4 +138,3 @@ export async function getEffectiveUserId() {
 
   return { userId, error: null }
 }
-

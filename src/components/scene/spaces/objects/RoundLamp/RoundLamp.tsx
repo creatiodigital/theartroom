@@ -1,6 +1,15 @@
 import { useMemo, useRef, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { Mesh, BufferGeometry, DoubleSide, Vector3, Box3, Object3D, SpotLight, BufferAttribute } from 'three'
+import {
+  Mesh,
+  BufferGeometry,
+  DoubleSide,
+  Vector3,
+  Box3,
+  Object3D,
+  SpotLight,
+  BufferAttribute,
+} from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import type { RootState } from '@/redux/store'
@@ -72,7 +81,7 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
       const bulbNode = nodes[`roundLampBulb${i}`]
       if (bulbNode) {
         const box = new Box3().setFromBufferAttribute(
-          bulbNode.geometry.attributes.position as BufferAttribute
+          bulbNode.geometry.attributes.position as BufferAttribute,
         )
         const center = new Vector3()
         box.getCenter(center)
@@ -97,7 +106,11 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
           <group key={`roundLamp-${i}`}>
             {/* Body */}
             {bodyNode && (
-              <mesh key={`roundLampBody-${i}`} name={`roundLampBody${i}`} geometry={bodyNode.geometry}>
+              <mesh
+                key={`roundLampBody-${i}`}
+                name={`roundLampBody${i}`}
+                geometry={bodyNode.geometry}
+              >
                 <meshStandardMaterial color={tintedPlastic} roughness={0.4} metalness={0.0} />
               </mesh>
             )}
@@ -121,11 +134,7 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
 
             {/* Spotlight pointing downward (every other lamp for performance) */}
             {bulbNode && i % 2 === 0 && (
-              <RoundSpotlight
-                position={bulbPos}
-                color={lampColor}
-                intensity={lampIntensity * 2}
-              />
+              <RoundSpotlight position={bulbPos} color={lampColor} intensity={lampIntensity * 2} />
             )}
           </group>
         )

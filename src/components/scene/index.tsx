@@ -11,6 +11,7 @@ import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
 import Controls from './controls'
+import FurnitureReference from './objects/FurnitureReference/FurnitureReference'
 import HumanReference from './objects/HumanReference/HumanReference'
 import { SceneErrorBoundary } from './SceneErrorBoundary'
 import styles from './Scene.module.scss'
@@ -46,6 +47,7 @@ export const Scene = () => {
                 <Controls />
                 <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
                 <HumanReference />
+                <FurnitureReference />
               </group>
             </Suspense>
           </Canvas>
@@ -54,4 +56,3 @@ export const Scene = () => {
     </SceneContext.Provider>
   )
 }
-

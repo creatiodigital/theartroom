@@ -63,7 +63,7 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
       onSuccess()
       onClose()
-      
+
       // Redirect to edit page
       router.push(`/dashboard/artworks/${artwork.id}/edit`)
     } catch {
@@ -74,7 +74,9 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
 
   return (
     <div className={styles.modal}>
-      <Text font="dashboard" as="h2">Add New Artwork</Text>
+      <Text font="dashboard" as="h2">
+        Add New Artwork
+      </Text>
       <form onSubmit={handleSubmit}>
         {/* Title Section */}
         <div className={dashboardStyles.section}>
@@ -105,13 +107,21 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             onChange={(val) => handleChange('artworkType', val as string)}
             size="medium"
           />
-          <span className={dashboardStyles.hint}>Image for visual artworks, Text for written content.</span>
+          <span className={dashboardStyles.hint}>
+            Image for visual artworks, Text for written content.
+          </span>
         </div>
 
         <ErrorText>{error}</ErrorText>
 
         <div className={styles.actions}>
-          <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} type="button" />
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="Cancel"
+            onClick={onClose}
+            type="button"
+          />
           <Button
             font="dashboard"
             variant="primary"

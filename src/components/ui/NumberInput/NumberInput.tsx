@@ -18,7 +18,16 @@ type NumberInputProps = {
   label?: string
 }
 
-const NumberInput = ({ variant, value, onChange, icon, rotate, max, min, label }: NumberInputProps) => {
+const NumberInput = ({
+  variant,
+  value,
+  onChange,
+  icon,
+  rotate,
+  max,
+  min,
+  label,
+}: NumberInputProps) => {
   // Track the display value as a string to allow empty state and proper editing
   const [displayValue, setDisplayValue] = useState<string>(String(value))
   const [isFocused, setIsFocused] = useState(false)

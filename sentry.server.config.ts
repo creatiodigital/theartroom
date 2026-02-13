@@ -10,9 +10,7 @@ Sentry.init({
   enableLogs: true,
 
   // Console logging integration
-  integrations: [
-    Sentry.consoleLoggingIntegration({ levels: ['warn', 'error'] }),
-  ],
+  integrations: [Sentry.consoleLoggingIntegration({ levels: ['warn', 'error'] })],
 
   // Only send errors in production
   enabled: process.env.NODE_ENV === 'production',

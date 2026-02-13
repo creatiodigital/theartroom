@@ -60,4 +60,3 @@ export const useArtisticText = (artworkId: string) => {
     handleArtisticTextChange,
   }
 }
-

@@ -73,14 +73,9 @@ type SortableArtworkCardProps = {
 }
 
 function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink }: SortableArtworkCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: artwork.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: artwork.id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -118,7 +113,9 @@ function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink }: SortableAr
         )}
       </div>
       <div className={styles.cardInfo}>
-        <Text font="dashboard" as="h3">{artwork.title}</Text>
+        <Text font="dashboard" as="h3">
+          {artwork.title}
+        </Text>
         {artwork.exhibitionArtworks.length > 0 && (
           <div className={styles.exhibitions}>
             <span className={styles.exhibitionsLabel}>In:</span>
@@ -141,11 +138,7 @@ function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink }: SortableAr
         )}
       </div>
       <div className={styles.cardActions}>
-        <Button
-          variant="secondary"
-          label="Edit"
-          onClick={() => onEdit(artwork.id)}
-        />
+        <Button variant="secondary" label="Edit" onClick={() => onEdit(artwork.id)} />
         <Button
           variant="secondary"
           label="Delete"
@@ -180,7 +173,7 @@ export const ArtworkLibraryPage = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   )
 
   // Debounce search input
@@ -361,7 +354,12 @@ export const ArtworkLibraryPage = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <Button font="dashboard" variant="primary" label="Add Artwork" onClick={() => setShowAddModal(true)} />
+          <Button
+            font="dashboard"
+            variant="primary"
+            label="Add Artwork"
+            onClick={() => setShowAddModal(true)}
+          />
         </div>
       </div>
 
@@ -374,12 +372,11 @@ export const ArtworkLibraryPage = () => {
           </Text>
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={filteredArtworks.map((a) => a.id)} strategy={verticalListSortingStrategy}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={filteredArtworks.map((a) => a.id)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className={styles.list}>
               {filteredArtworks.map((artwork) => (
                 <SortableArtworkCard
@@ -408,7 +405,9 @@ export const ArtworkLibraryPage = () => {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text font="dashboard" as="h2">Delete Artwork?</Text>
+            <Text font="dashboard" as="h2">
+              Delete Artwork?
+            </Text>
             <Text font="dashboard" as="p">
               Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
               <br />
@@ -420,7 +419,12 @@ export const ArtworkLibraryPage = () => {
                 label={deleting ? 'Deleting...' : 'Yes, Delete'}
                 onClick={handleDeleteConfirm}
               />
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => setDeleteTarget(null)}
+              />
             </div>
           </div>
         </Modal>
@@ -429,7 +433,9 @@ export const ArtworkLibraryPage = () => {
       {unlinkTarget && (
         <Modal onClose={() => setUnlinkTarget(null)}>
           <div className={styles.deleteModal}>
-            <Text font="dashboard" as="h2">Remove from Exhibition?</Text>
+            <Text font="dashboard" as="h2">
+              Remove from Exhibition?
+            </Text>
             <Text font="dashboard" as="p">
               Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
               <strong>{unlinkTarget.exhibitionTitle}</strong>?
@@ -442,7 +448,12 @@ export const ArtworkLibraryPage = () => {
                 label={unlinking ? 'Removing...' : 'Yes, Remove'}
                 onClick={handleUnlinkConfirm}
               />
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setUnlinkTarget(null)} />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => setUnlinkTarget(null)}
+              />
             </div>
           </div>
         </Modal>

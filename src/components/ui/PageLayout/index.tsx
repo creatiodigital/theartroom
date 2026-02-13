@@ -30,9 +30,7 @@ export const PageLayout = ({
   return (
     <>
       {showHeader && <Header />}
-      <div className={contentClassName}>
-        {loading ? <LoadingBar /> : children}
-      </div>
+      <div className={contentClassName}>{loading ? <LoadingBar /> : children}</div>
       {showFooter && <Footer />}
     </>
   )

@@ -50,7 +50,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         where: { id },
         data: {
           ...baseData,
-          hiddenFromExhibition: body.hiddenFromExhibition === true || body.hiddenFromExhibition === 'true',
+          hiddenFromExhibition:
+            body.hiddenFromExhibition === true || body.hiddenFromExhibition === 'true',
         },
       })
       return NextResponse.json(artwork)

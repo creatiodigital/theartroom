@@ -52,7 +52,7 @@
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
-} 
+}
 
 @mixin tinySans($size: var(--text-xs), $weight: 400, $lineHeight: 1.4) {
   font-family: var(--font-sans), var(--font-sans-fallback);
@@ -82,15 +82,25 @@ $breakpoint-2xl: 1440px;
 
 @mixin breakpoint($size) {
   @if $size == sm {
-    @media (min-width: $breakpoint-sm) { @content; }
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
   } @else if $size == md {
-    @media (min-width: $breakpoint-md) { @content; }
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
   } @else if $size == lg {
-    @media (min-width: $breakpoint-lg) { @content; }
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
   } @else if $size == xl {
-    @media (min-width: $breakpoint-xl) { @content; }
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
   } @else if $size == 2xl {
-    @media (min-width: $breakpoint-2xl) { @content; }
+    @media (min-width: $breakpoint-2xl) {
+      @content;
+    }
   }
 }
 

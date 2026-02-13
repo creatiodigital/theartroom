@@ -67,10 +67,13 @@ export const ExhibitionEditPage = ({
     data: exhibition,
     isLoading,
     error,
-  } = useGetExhibitionByUrlQuery({ url: exhibitionSlug, mode: 'edit' }, {
-    skip: !exhibitionSlug,
-    refetchOnMountOrArgChange: true,
-  })
+  } = useGetExhibitionByUrlQuery(
+    { url: exhibitionSlug, mode: 'edit' },
+    {
+      skip: !exhibitionSlug,
+      refetchOnMountOrArgChange: true,
+    },
+  )
 
   useEffect(() => {
     if (exhibition) {
@@ -140,13 +143,13 @@ export const ExhibitionEditPage = ({
       hasResetRef.current === exhibitionSlug
     ) {
       dispatch(showWallView(initialWallId))
-      
+
       if (initialArtworkId) {
         dispatch(chooseCurrentArtworkId(initialArtworkId))
         dispatch(addArtworkToGroup(initialArtworkId))
         dispatch(showWizard())
       }
-      
+
       hasRestoredStateRef.current = exhibitionSlug
     }
   }, [exhibition, artworksReady, initialWallId, initialArtworkId, dispatch, exhibitionSlug])

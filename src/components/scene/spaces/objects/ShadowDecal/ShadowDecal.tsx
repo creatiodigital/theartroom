@@ -51,7 +51,7 @@ type ShadowDecalProps = {
 }
 
 // Base blur size + subtle addition based on frame depth
-const BASE_BLUR = 0.10
+const BASE_BLUR = 0.1
 const DEPTH_MULTIPLIER = 0.5 // Very subtle - adds 50% of frame depth to blur
 
 /**
@@ -62,22 +62,25 @@ const DEPTH_MULTIPLIER = 0.5 // Very subtle - adds 50% of frame depth to blur
  */
 export function ShadowDecal({ width, height, frameDepth = 0.05 }: ShadowDecalProps) {
   const materialRef = useRef<ShaderMaterial>(null)
-  
+
   // No frame = no shadow
   if (frameDepth <= 0) return null
-  
+
   // Blur size: base + subtle proportion of frame depth
-  const blurSize = BASE_BLUR + (frameDepth * DEPTH_MULTIPLIER)
-  
+  const blurSize = BASE_BLUR + frameDepth * DEPTH_MULTIPLIER
+
   const outerWidth = width + blurSize
   const outerHeight = height + blurSize
-  
+
   // Memoize the uniforms object to prevent recreation
-  const uniforms = useMemo(() => ({
-    uInnerSize: { value: new Vector2(width, height) },
-    uOuterSize: { value: new Vector2(outerWidth, outerHeight) },
-  }), []) // Empty deps - we'll update uniforms manually
-  
+  const uniforms = useMemo(
+    () => ({
+      uInnerSize: { value: new Vector2(width, height) },
+      uOuterSize: { value: new Vector2(outerWidth, outerHeight) },
+    }),
+    [],
+  ) // Empty deps - we'll update uniforms manually
+
   // Update uniforms when dimensions change (avoids material recreation)
   useEffect(() => {
     if (materialRef.current) {
@@ -85,7 +88,7 @@ export function ShadowDecal({ width, height, frameDepth = 0.05 }: ShadowDecalPro
       materialRef.current.uniforms.uOuterSize.value.set(outerWidth, outerHeight)
     }
   }, [width, height, outerWidth, outerHeight])
-  
+
   return (
     <mesh position={[0, 0, 0.001]} renderOrder={0}>
       <planeGeometry args={[outerWidth, outerHeight]} />

@@ -35,7 +35,7 @@ const DeletePresetsModal = ({ presets, onDelete, onClose }: DeletePresetsModalPr
             No presets to delete.
           </Text>
         ) : (
-          presets.map(preset => (
+          presets.map((preset) => (
             <div key={preset.id} className={styles.item}>
               <Text font="dashboard" as="span" size="xs" className={styles.name}>
                 {preset.name}
@@ -51,7 +51,6 @@ const DeletePresetsModal = ({ presets, onDelete, onClose }: DeletePresetsModalPr
           ))
         )}
       </div>
-
     </Modal>
   )
 }

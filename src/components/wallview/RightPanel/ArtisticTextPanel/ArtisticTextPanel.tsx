@@ -12,14 +12,30 @@ import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 import type { TFontFamily, TFontWeight } from '@/types/fonts'
 
-import { fontSizes, lineHeights, fontFamilies, fontWeights, letterSpacings, textPaddings } from './constants'
+import {
+  fontSizes,
+  lineHeights,
+  fontFamilies,
+  fontWeights,
+  letterSpacings,
+  textPaddings,
+} from './constants'
 
 const ArtisticText = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
-  const { textContent, textColor, textBackgroundColor, fontSize, lineHeight, fontWeight, letterSpacing, fontFamily, textPadding } =
-    useArtworkDetails(currentArtworkId!)
+  const {
+    textContent,
+    textColor,
+    textBackgroundColor,
+    fontSize,
+    lineHeight,
+    fontWeight,
+    letterSpacing,
+    fontFamily,
+    textPadding,
+  } = useArtworkDetails(currentArtworkId!)
 
   // Hide all text styling fields if there's no text content
   if (!textContent || textContent.trim() === '') {
@@ -96,7 +112,9 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Font size</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Font size
+            </Text>
             <Select<number>
               options={fontSizes}
               value={fontSize?.value}
@@ -107,7 +125,9 @@ const ArtisticText = () => {
           </div>
 
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Line height</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Line height
+            </Text>
 
             <Select<number>
               options={lineHeights}
@@ -120,7 +140,9 @@ const ArtisticText = () => {
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Font Weight</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Font Weight
+            </Text>
             <Select<TFontWeight>
               options={fontWeights}
               value={fontWeight?.value}
@@ -128,7 +150,9 @@ const ArtisticText = () => {
             />
           </div>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Letter Spacing</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Letter Spacing
+            </Text>
             <Select<number>
               options={letterSpacings}
               value={letterSpacing?.value}
@@ -140,7 +164,9 @@ const ArtisticText = () => {
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Font Family</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Font Family
+            </Text>
             <Select<TFontFamily>
               options={fontFamilies}
               value={fontFamily?.value}
@@ -148,7 +174,9 @@ const ArtisticText = () => {
             />
           </div>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Padding</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Padding
+            </Text>
             <Select<number>
               options={textPaddings}
               value={textPadding?.value ?? 12}
@@ -162,14 +190,18 @@ const ArtisticText = () => {
       <div className={styles.subsection}>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Text Color</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Text Color
+            </Text>
             <ColorPicker
               textColor={textColor!}
               onColorSelect={(value) => handleEditArtworkText('textColor', value)}
             />
           </div>
           <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>Background</Text>
+            <Text font="dashboard" as="span" size="xs" className={styles.label}>
+              Background
+            </Text>
             <div className={styles.backgroundColorRow}>
               <ColorPicker
                 textColor={textBackgroundColor ?? '#ffffff'}

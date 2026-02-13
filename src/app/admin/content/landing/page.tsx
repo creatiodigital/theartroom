@@ -48,14 +48,9 @@ type SortableSlideItemProps = {
 }
 
 function SortableSlideItem({ slide, onEdit, onDelete }: SortableSlideItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: slide.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: slide.id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -74,13 +69,24 @@ function SortableSlideItem({ slide, onEdit, onDelete }: SortableSlideItemProps) 
         )}
       </div>
       <div className={styles.slideInfo}>
-        <Text font="dashboard" as="h3">{slide.title}</Text>
-        <Text font="dashboard" as="p" className={styles.subtitle}>{slide.subtitle}</Text>
-        <Text font="dashboard" as="p" className={styles.meta}>{slide.meta}</Text>
+        <Text font="dashboard" as="h3">
+          {slide.title}
+        </Text>
+        <Text font="dashboard" as="p" className={styles.subtitle}>
+          {slide.subtitle}
+        </Text>
+        <Text font="dashboard" as="p" className={styles.meta}>
+          {slide.meta}
+        </Text>
       </div>
       <div className={styles.slideActions}>
         <Button font="dashboard" variant="secondary" label="Edit" onClick={() => onEdit(slide)} />
-        <Button font="dashboard" variant="secondary" label="Delete" onClick={() => onDelete(slide)} />
+        <Button
+          font="dashboard"
+          variant="secondary"
+          label="Delete"
+          onClick={() => onDelete(slide)}
+        />
       </div>
     </div>
   )
@@ -159,7 +165,7 @@ export default function LandingContentPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setEditingSlide((prev) => prev ? { ...prev, imageUrl: data.url } : null)
+        setEditingSlide((prev) => (prev ? { ...prev, imageUrl: data.url } : null))
       } else {
         console.error('Upload failed:', await response.text())
       }
@@ -245,7 +251,7 @@ export default function LandingContentPage() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   )
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -288,13 +294,11 @@ export default function LandingContentPage() {
       </div>
 
       {slides.length === 0 ? (
-        <Text font="dashboard" as="p" className={styles.empty}>No slides yet. Click &quot;Add Slide&quot; to create one.</Text>
+        <Text font="dashboard" as="p" className={styles.empty}>
+          No slides yet. Click &quot;Add Slide&quot; to create one.
+        </Text>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <div className={styles.slideList}>
               {slides.map((slide) => (
@@ -314,7 +318,9 @@ export default function LandingContentPage() {
       {editingSlide && (
         <Modal onClose={() => setEditingSlide(null)}>
           <div className={styles.modal}>
-            <Text font="dashboard" as="h2">{isNewSlide ? 'Add Slide' : 'Edit Slide'}</Text>
+            <Text font="dashboard" as="h2">
+              {isNewSlide ? 'Add Slide' : 'Edit Slide'}
+            </Text>
 
             <div className={styles.section}>
               <label className={styles.label}>Image</label>
@@ -325,20 +331,27 @@ export default function LandingContentPage() {
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
               />
-              <div
-                className={styles.uploadArea}
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <div className={styles.uploadArea} onClick={() => fileInputRef.current?.click()}>
                 {uploading ? (
-                  <Text font="dashboard" as="p" className={styles.uploadText}>Uploading...</Text>
+                  <Text font="dashboard" as="p" className={styles.uploadText}>
+                    Uploading...
+                  </Text>
                 ) : editingSlide.imageUrl ? (
-                  <img src={editingSlide.imageUrl} alt="Slide preview" className={styles.uploadPreview} />
+                  <img
+                    src={editingSlide.imageUrl}
+                    alt="Slide preview"
+                    className={styles.uploadPreview}
+                  />
                 ) : (
-                  <Text font="dashboard" as="p" className={styles.uploadText}>Click to upload image</Text>
+                  <Text font="dashboard" as="p" className={styles.uploadText}>
+                    Click to upload image
+                  </Text>
                 )}
               </div>
 
-              <label className={styles.label} htmlFor="title">Title</label>
+              <label className={styles.label} htmlFor="title">
+                Title
+              </label>
               <Input
                 id="title"
                 size="medium"
@@ -346,7 +359,9 @@ export default function LandingContentPage() {
                 onChange={(e) => updateField('title', e.target.value)}
               />
 
-              <label className={styles.label} htmlFor="subtitle">Subtitle</label>
+              <label className={styles.label} htmlFor="subtitle">
+                Subtitle
+              </label>
               <Input
                 id="subtitle"
                 size="medium"
@@ -354,7 +369,9 @@ export default function LandingContentPage() {
                 onChange={(e) => updateField('subtitle', e.target.value)}
               />
 
-              <label className={styles.label} htmlFor="meta">Meta</label>
+              <label className={styles.label} htmlFor="meta">
+                Meta
+              </label>
               <Input
                 id="meta"
                 size="medium"
@@ -362,7 +379,9 @@ export default function LandingContentPage() {
                 onChange={(e) => updateField('meta', e.target.value)}
               />
 
-              <label className={styles.label} htmlFor="exhibitionUrl">Exhibition URL</label>
+              <label className={styles.label} htmlFor="exhibitionUrl">
+                Exhibition URL
+              </label>
               <Input
                 id="exhibitionUrl"
                 size="medium"
@@ -372,7 +391,12 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.modalActions}>
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setEditingSlide(null)} />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => setEditingSlide(null)}
+              />
               <Button
                 font="dashboard"
                 variant="primary"
@@ -388,13 +412,25 @@ export default function LandingContentPage() {
       {deleteTarget && (
         <Modal onClose={() => setDeleteTarget(null)}>
           <div className={styles.modal}>
-            <Text font="dashboard" as="h2">Delete Slide?</Text>
+            <Text font="dashboard" as="h2">
+              Delete Slide?
+            </Text>
             <Text font="dashboard" as="p">
               Are you sure you want to delete the slide "{deleteTarget.title}"?
             </Text>
             <div className={styles.modalActions}>
-              <Button font="dashboard" variant="primary" label="Yes, Delete" onClick={handleDeleteSlide} />
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setDeleteTarget(null)} />
+              <Button
+                font="dashboard"
+                variant="primary"
+                label="Yes, Delete"
+                onClick={handleDeleteSlide}
+              />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => setDeleteTarget(null)}
+              />
             </div>
           </div>
         </Modal>
