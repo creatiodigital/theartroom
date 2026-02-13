@@ -39,10 +39,7 @@ interface ArtworkDetailPageProps {
   isInternal: boolean
 }
 
-export const ArtworkDetailPage = ({
-  artworkId,
-  isInternal,
-}: ArtworkDetailPageProps) => {
+export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPageProps) => {
   const router = useRouter()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
   const [artist, setArtist] = useState<Artist | null>(null)
@@ -125,22 +122,42 @@ export const ArtworkDetailPage = ({
           <div className={styles.content}>
             <div className={styles.metadata}>
               {displayAuthor && (
-                <Text as="h1" size="2xl" className={styles.artistName}>{displayAuthor}</Text>
+                <Text as="h1" size="2xl" className={styles.artistName}>
+                  {displayAuthor}
+                </Text>
               )}
-              {displayTitle && (  
+              {displayTitle && (
                 <div className={styles.title}>
-                  {displayTitle && <Text as="span" size="xl" font="serif" className={styles.titleText}>{displayTitle}</Text>}
-                  {artwork.year && <Text as="span" size="xl" font="serif" className={styles.year}>, {artwork.year}</Text>}
+                  {displayTitle && (
+                    <Text as="span" size="xl" font="serif" className={styles.titleText}>
+                      {displayTitle}
+                    </Text>
+                  )}
+                  {artwork.year && (
+                    <Text as="span" size="xl" font="serif" className={styles.year}>
+                      , {artwork.year}
+                    </Text>
+                  )}
                 </div>
               )}
               {artwork.technique && (
-                <RichText content={artwork.technique} variant="compact" className={styles.technique} />
+                <RichText
+                  content={artwork.technique}
+                  variant="compact"
+                  className={styles.technique}
+                />
               )}
               {artwork.dimensions && (
-                <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
+                <Text as="p" size="sm" className={styles.dimensions}>
+                  {artwork.dimensions}
+                </Text>
               )}
               {!isRichTextEmpty(artwork.description) && (
-                <RichText content={artwork.description!} variant="compact" className={styles.description} />
+                <RichText
+                  content={artwork.description!}
+                  variant="compact"
+                  className={styles.description}
+                />
               )}
               <Button
                 variant="secondary"
@@ -154,10 +171,7 @@ export const ArtworkDetailPage = ({
 
             <div className={styles.imageContainer}>
               {artwork.imageUrl && (
-                <ImageMagnifier
-                  src={artwork.imageUrl}
-                  alt={displayTitle || 'Artwork'}
-                />
+                <ImageMagnifier src={artwork.imageUrl} alt={displayTitle || 'Artwork'} />
               )}
             </div>
           </div>
@@ -192,38 +206,75 @@ export const ArtworkDetailPage = ({
   }
 
   return (
-    <PageLayout>
-      <div className={styles.standaloneContent}>
-        <div className={styles.metadata}>
-          {displayAuthor && (
-            <Text as="h2" className={styles.artistName}>{displayAuthor}</Text>
-          )}
+    <>
+      <PageLayout>
+        <div className={styles.standaloneContent}>
+          <div className={styles.metadata}>
+            {displayAuthor && (
+              <Text as="h2" className={styles.artistName}>
+                {displayAuthor}
+              </Text>
+            )}
             {displayTitle && (
               <div className={styles.title}>
-                <Text as="span" font="serif" className={styles.titleText}>{displayTitle}</Text>
-                {artwork.year && <Text as="span" font="serif" className={styles.year}>, {artwork.year}</Text>}
+                <Text as="span" font="serif" className={styles.titleText}>
+                  {displayTitle}
+                </Text>
+                {artwork.year && (
+                  <Text as="span" font="serif" className={styles.year}>
+                    , {artwork.year}
+                  </Text>
+                )}
               </div>
             )}
-          {artwork.technique && (
-            <RichText content={artwork.technique} variant="compact" className={styles.technique} />
-          )}
-          {artwork.dimensions && (
-            <Text as="p" size="sm" className={styles.dimensions}>{artwork.dimensions}</Text>
-          )}
-          {!isRichTextEmpty(artwork.description) && (
-            <RichText content={artwork.description!} variant="compact" className={styles.description} />
-          )}
-        </div>
-
-        <div className={styles.imageContainer}>
-          {artwork.imageUrl && (
-            <ImageMagnifier
-              src={artwork.imageUrl}
-              alt={displayTitle || 'Artwork'}
+            {artwork.technique && (
+              <RichText
+                content={artwork.technique}
+                variant="compact"
+                className={styles.technique}
+              />
+            )}
+            {artwork.dimensions && (
+              <Text as="p" size="sm" className={styles.dimensions}>
+                {artwork.dimensions}
+              </Text>
+            )}
+            {!isRichTextEmpty(artwork.description) && (
+              <RichText
+                content={artwork.description!}
+                variant="compact"
+                className={styles.description}
+              />
+            )}
+            <Button
+              variant="secondary"
+              label="Inquire"
+              icon="arrowRight"
+              size="bigSquared"
+              onClick={() => setIsInquireOpen(true)}
+              className={styles.inquireButton}
             />
-          )}
+          </div>
+
+          <div className={styles.imageContainer}>
+            {artwork.imageUrl && (
+              <ImageMagnifier src={artwork.imageUrl} alt={displayTitle || 'Artwork'} />
+            )}
+          </div>
         </div>
-      </div>
-    </PageLayout>
+      </PageLayout>
+
+      <InquireSidebar
+        isOpen={isInquireOpen}
+        onClose={() => setIsInquireOpen(false)}
+        artwork={{
+          id: artwork.id,
+          title: displayTitle || '',
+          year: artwork.year ? parseInt(artwork.year) : undefined,
+          artistName: displayAuthor || '',
+          imageUrl: artwork.imageUrl || '',
+        }}
+      />
+    </>
   )
 }
