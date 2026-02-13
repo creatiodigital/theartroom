@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { unstable_cache, revalidateTag } from 'next/cache'
 
 import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
@@ -9,21 +10,31 @@ type RouteParams = { params: Promise<{ slug: string }> }
 export async function GET(_request: Request, { params }: RouteParams) {
   try {
     const { slug } = await params
-    let page = await prisma.pageContent.findUnique({
-      where: { slug },
-    })
 
-    // Create page with default content if it doesn't exist
-    if (!page) {
-      page = await prisma.pageContent.create({
-        data: {
-          slug,
-          title: formatSlugToTitle(slug),
-          content: '<p>Content coming soon...</p>',
-        },
-      })
-    }
+    const getCachedPage = unstable_cache(
+      async () => {
+        let page = await prisma.pageContent.findUnique({
+          where: { slug },
+        })
 
+        // Create page with default content if it doesn't exist
+        if (!page) {
+          page = await prisma.pageContent.create({
+            data: {
+              slug,
+              title: formatSlugToTitle(slug),
+              content: '<p>Content coming soon...</p>',
+            },
+          })
+        }
+
+        return page
+      },
+      [`page-${slug}`],
+      { tags: [`page-${slug}`], revalidate: 86400 },
+    )
+
+    const page = await getCachedPage()
     return NextResponse.json(page)
   } catch (error) {
     console.error('Error fetching page:', error)
@@ -47,6 +58,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
       update: { title, content },
       create: { slug, title, content },
     })
+
+    // Revalidate cache for this page
+    revalidateTag(`page-${slug}`, 'default')
 
     return NextResponse.json(page)
   } catch (error) {

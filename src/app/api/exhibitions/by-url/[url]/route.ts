@@ -1,71 +1,83 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { unstable_cache } from 'next/cache'
 
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 
-export async function GET(_req: NextRequest, context: { params: Promise<{ url: string }> }) {
-  try {
-    const { url } = await context.params
-
-    const exhibition = await prisma.exhibition.findUnique({
-      where: { url },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            lastName: true,
-            handler: true,
-            biography: true,
+// Cached query for public exhibition data (snapshot path)
+const getCachedExhibition = (url: string) =>
+  unstable_cache(
+    async () => {
+      return prisma.exhibition.findUnique({
+        where: { url },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              handler: true,
+              biography: true,
+            },
           },
-        },
-        exhibitionArtworks: {
-          include: {
-            artwork: {
-              select: {
-                id: true,
-                name: true,
-                title: true,
-                author: true,
-                year: true,
-                technique: true,
-                dimensions: true,
-                imageUrl: true,
-                artworkType: true,
-                hiddenFromExhibition: true,
+          exhibitionArtworks: {
+            include: {
+              artwork: {
+                select: {
+                  id: true,
+                  name: true,
+                  title: true,
+                  author: true,
+                  year: true,
+                  technique: true,
+                  dimensions: true,
+                  imageUrl: true,
+                  artworkType: true,
+                  hiddenFromExhibition: true,
+                },
               },
             },
           },
         },
-      },
-    })
+      })
+    },
+    [`exhibition-by-url-${url}`],
+    { tags: [`exhibition-${url}`], revalidate: 3600 },
+  )()
+
+export async function GET(_req: NextRequest, context: { params: Promise<{ url: string }> }) {
+  try {
+    const { url } = await context.params
+    const mode = _req.nextUrl.searchParams.get('mode')
+
+    // Edit mode → always fresh data, bypass cache
+    if (mode === 'edit') {
+      return getEditModeResponse(url)
+    }
+
+    // Public view → use cached data
+    const exhibition = await getCachedExhibition(url)
 
     if (!exhibition) {
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    // Determine if requester is the owner or an admin
-    const session = await auth()
-    const isOwner = session?.user?.id === exhibition.userId
-    const userType = session?.user?.userType
-    const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
-    const isEditor = isOwner || isAdminOrAbove
-
-    // If exhibition is not published, only allow owner or admin/superAdmin to access
+    // If exhibition is not published, check permissions
     if (!exhibition.published) {
-      if (!isEditor) {
+      const session = await auth()
+      const isOwner = session?.user?.id === exhibition.userId
+      const userType = session?.user?.userType
+      const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
+      if (!isOwner && !isAdminOrAbove) {
         return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
       }
     }
 
     // --- Draft/Publish logic ---
-    // mode=edit → always live data (for the edit page)
-    // no mode → serve snapshot if available (for visit/public)
-    const mode = _req.nextUrl.searchParams.get('mode')
     const snapshot = exhibition.publishedSnapshot as Record<string, unknown> | null
 
-    if (exhibition.published && snapshot && mode !== 'edit') {
+    if (exhibition.published && snapshot) {
       // Public visitor viewing a published exhibition → return snapshot data
       const snapshotExhibition = snapshot.exhibition as Record<string, unknown>
       const snapshotArtworks = snapshot.artworks as Array<Record<string, unknown>>
@@ -124,7 +136,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       })
     }
 
-    // Editor view OR legacy published exhibition (no snapshot) → return live data
+    // Legacy published exhibition (no snapshot) → return live data
     const artworks = exhibition.exhibitionArtworks
       .map((ea) => ea.artwork)
       .filter((artwork) => artwork.artworkType === 'image' && !artwork.hiddenFromExhibition)
@@ -137,4 +149,63 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     console.error('[GET /api/exhibitions/by-url/[url]] error:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: 'Failed to fetch exhibition' }, { status: 500 })
   }
+}
+
+// Edit mode: always fresh, never cached
+async function getEditModeResponse(url: string) {
+  const exhibition = await prisma.exhibition.findUnique({
+    where: { url },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          handler: true,
+          biography: true,
+        },
+      },
+      exhibitionArtworks: {
+        include: {
+          artwork: {
+            select: {
+              id: true,
+              name: true,
+              title: true,
+              author: true,
+              year: true,
+              technique: true,
+              dimensions: true,
+              imageUrl: true,
+              artworkType: true,
+              hiddenFromExhibition: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!exhibition) {
+    return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+  }
+
+  // Check permissions for edit mode
+  const session = await auth()
+  const isOwner = session?.user?.id === exhibition.userId
+  const userType = session?.user?.userType
+  const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
+
+  if (!isOwner && !isAdminOrAbove) {
+    return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+  }
+
+  const artworks = exhibition.exhibitionArtworks
+    .map((ea) => ea.artwork)
+    .filter((artwork) => artwork.artworkType === 'image' && !artwork.hiddenFromExhibition)
+
+  return NextResponse.json({
+    ...exhibition,
+    artworks,
+  })
 }

@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Typography'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { editArtisticImage } from '@/redux/slices/artworkSlice'
+import { editArtisticImage, editArtisticText } from '@/redux/slices/artworkSlice'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -238,8 +238,9 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     }
 
     // Apply display properties via artworkSlice
+    const editAction = presetType === 'text' ? editArtisticText : editArtisticImage
     const applyProp = <K extends keyof TArtwork>(property: K, value: TArtwork[K]) => {
-      dispatch(editArtisticImage({ currentArtworkId, property, value }))
+      dispatch(editAction({ currentArtworkId, property, value }))
     }
 
     // Frame

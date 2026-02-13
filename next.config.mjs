@@ -42,15 +42,8 @@ const nextConfig = {
       },
       // Edit routes - never cache (artists need real-time updates)
       {
-        source: '/:handler/exhibition/:slug/edit',
+        source: '/exhibitions/:artistSlug/:exhibitionSlug/edit',
         headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
-      },
-      // View routes - cache at edge, stale-while-revalidate
-      {
-        source: '/:handler/exhibition/:slug',
-        headers: [
-          { key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' },
-        ],
       },
     ]
   },

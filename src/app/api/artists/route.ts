@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
 
 import prisma from '@/lib/prisma'
 import { generateProvisionalPassword, validatePassword } from '@/utils/password'
 
-export const dynamic = 'force-dynamic'
-
-// GET all artists
-export async function GET() {
-  try {
-    const artists = await prisma.user.findMany({
+const getCachedArtists = unstable_cache(
+  async () => {
+    return prisma.user.findMany({
       where: { userType: 'artist', published: true },
       select: {
         id: true,
@@ -22,7 +20,15 @@ export async function GET() {
       },
       orderBy: { name: 'asc' },
     })
+  },
+  ['artists-list'],
+  { tags: ['artists'], revalidate: 3600 },
+)
 
+// GET all artists
+export async function GET() {
+  try {
+    const artists = await getCachedArtists()
     return NextResponse.json(artists)
   } catch (error) {
     console.error('[GET /api/artists] error:', error)
@@ -76,6 +82,10 @@ export async function POST(request: NextRequest) {
         userType: userType || 'artist',
       },
     })
+
+    // Revalidate caches
+    revalidateTag('artists', 'default')
+    revalidatePath('/')
 
     return NextResponse.json(
       { ...artist, provisionalPassword: isProvisional ? rawPassword : undefined },
