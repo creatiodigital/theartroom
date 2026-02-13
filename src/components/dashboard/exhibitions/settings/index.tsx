@@ -51,8 +51,6 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [savingName, setSavingName] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
-
-
   // Fetch exhibition data
   useEffect(() => {
     const fetchExhibition = async () => {
@@ -67,7 +65,6 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         setMainTitle(data.mainTitle || '')
         setDescription(data.description || '')
         setShortDescription(data.shortDescription || '')
-
       } catch {
         setError('Failed to load exhibition')
       } finally {
@@ -124,7 +121,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       }
 
       // Update local exhibition state with new name/url
-      setExhibition((prev) => prev ? { ...prev, mainTitle, url: slugify(mainTitle) } : prev)
+      setExhibition((prev) => (prev ? { ...prev, mainTitle, url: slugify(mainTitle) } : prev))
       setEditingName(false)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -310,7 +307,8 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
         <h3 className={dashboardStyles.sectionTitle}>Featured Image</h3>
         <p className={dashboardStyles.sectionDescription}>
-          The main image for your exhibition. This will be displayed on exhibition listings and as a cover.
+          The main image for your exhibition. This will be displayed on exhibition listings and as a
+          cover.
         </p>
         <ImageUploader
           imageUrl={exhibition.featuredImageUrl}
@@ -350,10 +348,10 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           onChange={setDescription}
           placeholder="Write a description for your exhibition..."
         />
-        <span className={dashboardStyles.hint}>A compelling description helps attract visitors to your exhibition.</span>
+        <span className={dashboardStyles.hint}>
+          A compelling description helps attract visitors to your exhibition.
+        </span>
       </div>
-
-
 
       <div className={dashboardStyles.actions}>
         <Button

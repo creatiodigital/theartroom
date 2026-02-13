@@ -16,12 +16,7 @@ export default function AppleIcon() {
           background: '#ffffff',
         }}
       >
-        <svg
-          viewBox="0 0 122 133"
-          fill="none"
-          width="140"
-          height="153"
-        >
+        <svg viewBox="0 0 122 133" fill="none" width="140" height="153">
           <path
             fillRule="evenodd"
             clipRule="evenodd"

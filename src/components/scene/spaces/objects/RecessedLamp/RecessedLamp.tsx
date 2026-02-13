@@ -1,6 +1,15 @@
 import { useMemo, useRef, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { Mesh, BufferGeometry, DoubleSide, Vector3, Box3, Object3D, SpotLight, BufferAttribute } from 'three'
+import {
+  Mesh,
+  BufferGeometry,
+  DoubleSide,
+  Vector3,
+  Box3,
+  Object3D,
+  SpotLight,
+  BufferAttribute,
+} from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import type { RootState } from '@/redux/store'
@@ -74,7 +83,7 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({ nodes, count = 6 }) => {
       const bulbNode = nodes[`recessedLampBulb${i}`]
       if (bulbNode) {
         const box = new Box3().setFromBufferAttribute(
-          bulbNode.geometry.attributes.position as BufferAttribute
+          bulbNode.geometry.attributes.position as BufferAttribute,
         )
         const center = new Vector3()
         box.getCenter(center)
@@ -99,7 +108,11 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({ nodes, count = 6 }) => {
           <group key={`recessedLamp-${i}`}>
             {/* Body */}
             {bodyNode && (
-              <mesh key={`recessedLampBody-${i}`} name={`recessedLampBody${i}`} geometry={bodyNode.geometry}>
+              <mesh
+                key={`recessedLampBody-${i}`}
+                name={`recessedLampBody${i}`}
+                geometry={bodyNode.geometry}
+              >
                 <meshStandardMaterial color={tintedPlastic} roughness={0.4} metalness={0.0} />
               </mesh>
             )}

@@ -2,7 +2,7 @@
   /* ═══════════════════════════════════════════════════════
      PRIMITIVE TOKENS - Base Color Palette (Single Source of Truth)
      ═══════════════════════════════════════════════════════ */
-  
+
   // Neutrals (10=lightest, 90=darkest)
   --color-white: #ffffff;
   --color-gray-10: #f9f9f9;
@@ -21,7 +21,7 @@
   --color-black: #000000;
 
   // Brand Colors
-  --color-red-50: #DB230D;
+  --color-red-50: #db230d;
   --color-red-60: #c00;
   --color-red-70: #721c24;
 
@@ -34,7 +34,7 @@
   --color-yellow-30: #fff3cd;
   --color-yellow-70: #856404;
 
-  // Status Colors  
+  // Status Colors
   --color-green-30: #d4edda;
   --color-green-70: #155724;
   --color-red-30: #fef2f2;
@@ -45,7 +45,7 @@
   /* ═══════════════════════════════════════════════════════
      SEMANTIC TOKENS - Intent-based (Reference Primitives)
      ═══════════════════════════════════════════════════════ */
-  
+
   // Text
   --color-text-primary: var(--color-gray-80);
   --color-text-secondary: var(--color-gray-70);

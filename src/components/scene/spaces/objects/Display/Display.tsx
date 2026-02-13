@@ -1,6 +1,14 @@
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { DoubleSide, MeshStandardMaterial, SRGBColorSpace, Vector3, Quaternion, TextureLoader, Texture } from 'three'
+import {
+  DoubleSide,
+  MeshStandardMaterial,
+  SRGBColorSpace,
+  Vector3,
+  Quaternion,
+  TextureLoader,
+  Texture,
+} from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
@@ -52,7 +60,7 @@ const useBlobTexture = (url: string): Texture | null => {
       (error) => {
         console.warn('Failed to load blob texture:', error)
         setTexture(null)
-      }
+      },
     )
 
     return () => {
@@ -77,11 +85,7 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshBasicMaterial
-        map={texture}
-        color={ambientColor}
-        side={DoubleSide}
-      />
+      <meshBasicMaterial map={texture} color={ambientColor} side={DoubleSide} />
     </mesh>
   )
 }
@@ -98,7 +102,7 @@ const useRegularTexture = (url: string): Texture | null => {
 
     let disposed = false
     const loader = new TextureLoader()
-    
+
     loader.load(
       url,
       (loadedTexture) => {
@@ -113,7 +117,7 @@ const useRegularTexture = (url: string): Texture | null => {
         if (!disposed) {
           setTexture(null)
         }
-      }
+      },
     )
 
     return () => {
@@ -139,11 +143,7 @@ const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshBasicMaterial
-        map={texture}
-        color={ambientColor}
-        side={DoubleSide}
-      />
+      <meshBasicMaterial map={texture} color={ambientColor} side={DoubleSide} />
     </mesh>
   )
 }
@@ -216,20 +216,32 @@ const Display = ({ artwork }: DisplayProps) => {
   const handleSingleClick = useCallback(() => {
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
-      dispatch(setFocusTarget({
-        artworkId: artwork.id,
-        position: { x: position.x, y: position.y, z: position.z },
-        normal: { x: normal.x, y: normal.y, z: normal.z },
-        width: width || 1,
-        height: height || 1,
-      }))
-      
+      dispatch(
+        setFocusTarget({
+          artworkId: artwork.id,
+          position: { x: position.x, y: position.y, z: position.z },
+          normal: { x: normal.x, y: normal.y, z: normal.z },
+          width: width || 1,
+          height: height || 1,
+        }),
+      )
+
       // If the panel is already open, also update the current artwork info
       if (isArtworkPanelOpen) {
         dispatch(setCurrentArtwork(artwork.id))
       }
     }
-  }, [dispatch, artwork.id, position, quaternion, width, height, isPlaceholdersShown, isArtworkPanelOpen, getNormalFromQuaternion])
+  }, [
+    dispatch,
+    artwork.id,
+    position,
+    quaternion,
+    width,
+    height,
+    isPlaceholdersShown,
+    isArtworkPanelOpen,
+    getNormalFromQuaternion,
+  ])
 
   // Handle double click for info panel (existing behavior)
   const handleDoubleClick = useCallback(() => {
@@ -238,7 +250,7 @@ const Display = ({ artwork }: DisplayProps) => {
       clearTimeout(singleClickTimeout.current)
       singleClickTimeout.current = null
     }
-    
+
     if (!isPlaceholdersShown && showArtworkInformation) {
       dispatch(showArtworkPanel())
       dispatch(setCurrentArtwork(artwork.id))
@@ -257,26 +269,29 @@ const Display = ({ artwork }: DisplayProps) => {
   }, [])
 
   // Pointer up - check if it qualifies as a click
-  const handlePointerUp = useCallback((event: ThreeEvent<PointerEvent>) => {
-    if (!pointerDownPos.current) return
+  const handlePointerUp = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      if (!pointerDownPos.current) return
 
-    const dx = event.clientX - pointerDownPos.current.x
-    const dy = event.clientY - pointerDownPos.current.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    const duration = Date.now() - pointerDownTime.current
+      const dx = event.clientX - pointerDownPos.current.x
+      const dy = event.clientY - pointerDownPos.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      const duration = Date.now() - pointerDownTime.current
 
-    // Reset tracking
-    pointerDownPos.current = null
+      // Reset tracking
+      pointerDownPos.current = null
 
-    // Check if this qualifies as a click (minimal movement + short duration)
-    if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
-      // Delay single-click action to see if a double-click follows
-      singleClickTimeout.current = setTimeout(() => {
-        handleSingleClick()
-        singleClickTimeout.current = null
-      }, DOUBLE_CLICK_DELAY)
-    }
-  }, [handleSingleClick])
+      // Check if this qualifies as a click (minimal movement + short duration)
+      if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+        // Delay single-click action to see if a double-click follows
+        singleClickTimeout.current = setTimeout(() => {
+          handleSingleClick()
+          singleClickTimeout.current = null
+        }, DOUBLE_CLICK_DELAY)
+      }
+    },
+    [handleSingleClick],
+  )
 
   const planeWidth = width || 1
   const planeHeight = height || 1
@@ -285,8 +300,8 @@ const Display = ({ artwork }: DisplayProps) => {
   const frameMaterial = useMemo(() => {
     return new MeshStandardMaterial({
       color: frameAmbientColor,
-      roughness: 0.15,  // Low roughness for glossy/polished finish
-      metalness: 0.2,   // Slight metalness for subtle reflections
+      roughness: 0.15, // Low roughness for glossy/polished finish
+      metalness: 0.2, // Slight metalness for subtle reflections
     })
   }, [frameAmbientColor])
 
@@ -302,7 +317,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const supportMaterial = useMemo(() => {
     return new MeshStandardMaterial({
       color: supportAmbientColor,
-      roughness: 1.0,  // Fully rough like canvas or wood
+      roughness: 1.0, // Fully rough like canvas or wood
     })
   }, [supportAmbientColor])
 
@@ -317,8 +332,8 @@ const Display = ({ artwork }: DisplayProps) => {
 
   // Image stays at the artist-specified size (planeWidth × planeHeight).
   // Passepartout and frame grow OUTWARD around the image.
-  const passepartoutBorder = passepartoutS / 100  // border width in 3D units
-  const frameBorder = frameS / 100                // border width in 3D units
+  const passepartoutBorder = passepartoutS / 100 // border width in 3D units
+  const frameBorder = frameS / 100 // border width in 3D units
 
   // Passepartout outer = image + passepartout border on each side
   const passepartoutOuterW = planeWidth + passepartoutBorder * 2
@@ -382,7 +397,9 @@ const Display = ({ artwork }: DisplayProps) => {
       )}
 
       {/* Shadow blur - memoized component, size proportional to frame depth */}
-      {!hideShadow && <ShadowDecal width={totalWidth} height={totalHeight} frameDepth={frameDepth / 100} />}
+      {!hideShadow && (
+        <ShadowDecal width={totalWidth} height={totalHeight} frameDepth={frameDepth / 100} />
+      )}
 
       {/* Support (canvas/panel depth) - fits inside frame, front at Z=0 */}
       {showSupport && supportDepth > 0 && (
@@ -398,4 +415,3 @@ const Display = ({ artwork }: DisplayProps) => {
 }
 
 export default Display
-

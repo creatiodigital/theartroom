@@ -87,55 +87,56 @@ const MainCamera = () => {
   useEffect(() => {
     if (focusTarget) {
       const { position, normal, width, height } = focusTarget
-      
+
       // Calculate optimal viewing distance based on artwork size and camera FOV
       // Must account for artwork position relative to fixed camera eye height
       const fovRad = (cameraFOV * Math.PI) / 180
       const halfFov = fovRad / 2
-      
+
       // Calculate vertical distance from camera to artwork extremes
       const artworkTop = position.y + height / 2
       const artworkBottom = position.y - height / 2
-      
+
       // How far above/below eye level are the artwork extremes?
       const topOffset = artworkTop - cameraElevation
       const bottomOffset = cameraElevation - artworkBottom
-      
+
       // The larger offset determines how far back we need to be
       const maxVerticalOffset = Math.max(topOffset, bottomOffset)
-      
+
       // Distance needed to see the most extreme vertical point
       // tan(halfFov) = verticalOffset / distance => distance = verticalOffset / tan(halfFov)
-      const distanceForVertical = maxVerticalOffset > 0 
-        ? (maxVerticalOffset * FOCUS_PADDING) / Math.tan(halfFov)
-        : FOCUS_MIN_DISTANCE
-      
+      const distanceForVertical =
+        maxVerticalOffset > 0
+          ? (maxVerticalOffset * FOCUS_PADDING) / Math.tan(halfFov)
+          : FOCUS_MIN_DISTANCE
+
       // Also check horizontal fit (use aspect ratio approximation)
       const aspectRatio = 16 / 9 // Approximate viewport aspect ratio
       const horizontalFov = 2 * Math.atan(Math.tan(halfFov) * aspectRatio)
       const distanceForHorizontal = (width * FOCUS_PADDING) / (2 * Math.tan(horizontalFov / 2))
-      
+
       // Use the larger distance to ensure artwork fits both horizontally and vertically
       const optimalDistance = Math.max(
         distanceForVertical,
         distanceForHorizontal,
-        FOCUS_MIN_DISTANCE
+        FOCUS_MIN_DISTANCE,
       )
-      
+
       // Calculate target camera position: offset from artwork along its normal
       const artworkPos = new Vector3(position.x, position.y, position.z)
       const normalVec = new Vector3(normal.x, normal.y, normal.z)
-      
+
       // Camera positioned in front of artwork at the calculated distance
-      const cameraTargetPos = artworkPos.clone().add(
-        normalVec.clone().multiplyScalar(optimalDistance)
-      )
+      const cameraTargetPos = artworkPos
+        .clone()
+        .add(normalVec.clone().multiplyScalar(optimalDistance))
       // Keep camera at eye height (no vertical tilt)
       cameraTargetPos.y = cameraElevation
-      
+
       // Look straight ahead at the point on the wall at camera's eye height
       const lookAtTarget = new Vector3(position.x, cameraElevation, position.z)
-      
+
       targetPosition.current = cameraTargetPos
       targetLookAt.current = lookAtTarget
       isAnimating.current = true
@@ -273,10 +274,10 @@ const MainCamera = () => {
     // Handle focus animation
     if (isAnimating.current && targetPosition.current && targetLookAt.current) {
       const lerpFactor = 1 - Math.exp(-FOCUS_ANIMATION_SPEED * delta)
-      
+
       // Smoothly interpolate position
       cam.position.lerp(targetPosition.current, lerpFactor)
-      
+
       // Smoothly interpolate rotation by looking at target
       // Create a temporary camera to get target quaternion
       const currentQuat = cam.quaternion.clone()
@@ -284,21 +285,21 @@ const MainCamera = () => {
       const targetQuat = cam.quaternion.clone()
       cam.quaternion.copy(currentQuat)
       cam.quaternion.slerp(targetQuat, lerpFactor)
-      
+
       // Check if animation is complete
       const distanceToTarget = cam.position.distanceTo(targetPosition.current)
       if (distanceToTarget < FOCUS_THRESHOLD) {
         // Snap to final position
         cam.position.copy(targetPosition.current)
         cam.lookAt(targetLookAt.current)
-        
+
         // Clean up
         isAnimating.current = false
         targetPosition.current = null
         targetLookAt.current = null
         dispatch(clearFocusTarget())
       }
-      
+
       // Skip normal controls during animation
       return
     }

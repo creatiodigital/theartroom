@@ -33,7 +33,11 @@ export const DashboardAdmin = () => {
   const [deleting, setDeleting] = useState(false)
   const [confirmText, setConfirmText] = useState('')
   const [invitingId, setInvitingId] = useState<string | null>(null)
-  const [inviteTarget, setInviteTarget] = useState<{ id: string; name: string; email: string } | null>(null)
+  const [inviteTarget, setInviteTarget] = useState<{
+    id: string
+    name: string
+    email: string
+  } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -66,21 +70,24 @@ export const DashboardAdmin = () => {
     refetch()
   }, [refetch])
 
-  const handleTogglePublished = useCallback(async (userId: string, currentPublished: boolean) => {
-    const newPublished = !currentPublished
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ published: newPublished }),
-      })
-      if (response.ok) {
-        refetch()
+  const handleTogglePublished = useCallback(
+    async (userId: string, currentPublished: boolean) => {
+      const newPublished = !currentPublished
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ published: newPublished }),
+        })
+        if (response.ok) {
+          refetch()
+        }
+      } catch (error) {
+        console.error('Failed to update published status:', error)
       }
-    } catch (error) {
-      console.error('Failed to update published status:', error)
-    }
-  }, [refetch])
+    },
+    [refetch],
+  )
 
   const handleDeleteClick = useCallback((userId: string, userName: string) => {
     setDeleteTarget({ id: userId, name: userName })
@@ -179,7 +186,12 @@ export const DashboardAdmin = () => {
   return (
     <DashboardLayout
       headerActions={
-        <Button font="dashboard" variant="secondary" label="Test Dashboard" onClick={() => router.push('/dashboard')} />
+        <Button
+          font="dashboard"
+          variant="secondary"
+          label="Test Dashboard"
+          onClick={() => router.push('/dashboard')}
+        />
       }
     >
       {/* Page Title */}
@@ -189,7 +201,12 @@ export const DashboardAdmin = () => {
       <div className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>
           <h2 className={dashboardStyles.sectionTitle}>All Users</h2>
-          <Button font="dashboard" variant="primary" label="Add New User" onClick={() => setShowAddModal(true)} />
+          <Button
+            font="dashboard"
+            variant="primary"
+            label="Add New User"
+            onClick={() => setShowAddModal(true)}
+          />
         </div>
 
         <table className={dashboardStyles.table}>
@@ -206,7 +223,9 @@ export const DashboardAdmin = () => {
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td>{user.name} {user.lastName}</td>
+                <td>
+                  {user.name} {user.lastName}
+                </td>
                 <td>{user.email || '-'}</td>
                 <td>{user.userType}</td>
                 <td>
@@ -215,11 +234,12 @@ export const DashboardAdmin = () => {
                     variant={user.published ? 'published' : 'unpublished'}
                   />
                 </td>
+                <td>{user.isFeatured && <Badge label="Featured" variant="current" />}</td>
                 <td>
-                  {user.isFeatured && <Badge label="Featured" variant="current" />}
-                </td>
-                <td>
-                  <div className={dashboardStyles.kebabWrapper} ref={openMenuId === user.id ? menuRef : undefined}>
+                  <div
+                    className={dashboardStyles.kebabWrapper}
+                    ref={openMenuId === user.id ? menuRef : undefined}
+                  >
                     <button
                       className={dashboardStyles.kebabButton}
                       onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
@@ -231,39 +251,66 @@ export const DashboardAdmin = () => {
                       <div className={dashboardStyles.kebabMenu}>
                         {/* Invite - superAdmin only, for users with email */}
                         {isSuperAdminUser && user.email && (
-                          <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleInviteClick(user); }}>
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleInviteClick(user)
+                            }}
+                          >
                             Invite
                           </button>
                         )}
-                        <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleTogglePublished(user.id, user.published ?? false); }}>
+                        <button
+                          className={dashboardStyles.kebabMenuItem}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleTogglePublished(user.id, user.published ?? false)
+                          }}
+                        >
                           {user.published ? 'Unpublish' : 'Publish'}
                         </button>
-                        <button className={dashboardStyles.kebabMenuItem} onClick={async () => {
-                          setOpenMenuId(null)
-                          try {
-                            await fetch(`/api/users/${user.id}`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ isFeatured: !user.isFeatured }),
-                            })
-                            refetch()
-                          } catch (err) {
-                            console.error('Failed to update featured status:', err)
-                          }
-                        }}>
+                        <button
+                          className={dashboardStyles.kebabMenuItem}
+                          onClick={async () => {
+                            setOpenMenuId(null)
+                            try {
+                              await fetch(`/api/users/${user.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ isFeatured: !user.isFeatured }),
+                              })
+                              refetch()
+                            } catch (err) {
+                              console.error('Failed to update featured status:', err)
+                            }
+                          }}
+                        >
                           {user.isFeatured ? 'Remove Featured' : 'Set as Featured'}
                         </button>
                         {/* Impersonate */}
                         {user.id !== session?.user?.id &&
                           (isSuperAdminUser ||
                             (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
-                          <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleImpersonate(user); }}>
-                            Impersonate
-                          </button>
-                        )}
+                            <button
+                              className={dashboardStyles.kebabMenuItem}
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                handleImpersonate(user)
+                              }}
+                            >
+                              Impersonate
+                            </button>
+                          )}
                         {/* Delete - superAdmin only */}
                         {isSuperAdminUser && user.id !== session?.user?.id && (
-                          <button className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`} onClick={() => { setOpenMenuId(null); handleDeleteClick(user.id, `${user.name} ${user.lastName}`); }}>
+                          <button
+                            className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleDeleteClick(user.id, `${user.name} ${user.lastName}`)
+                            }}
+                          >
                             Delete
                           </button>
                         )}
@@ -285,23 +332,34 @@ export const DashboardAdmin = () => {
 
       {showAddModal && (
         <Modal onClose={() => setShowAddModal(false)}>
-          <AddArtistModal onClose={() => setShowAddModal(false)} onSuccess={handleAddSuccess} isSuperAdmin={isSuperAdminUser} />
+          <AddArtistModal
+            onClose={() => setShowAddModal(false)}
+            onSuccess={handleAddSuccess}
+            isSuperAdmin={isSuperAdminUser}
+          />
         </Modal>
       )}
 
       {deleteTarget && (
-        <Modal onClose={() => { setDeleteTarget(null); setConfirmText(''); }}>
+        <Modal
+          onClose={() => {
+            setDeleteTarget(null)
+            setConfirmText('')
+          }}
+        >
           <div className={dashboardStyles.deleteModal}>
             <h2>Delete User</h2>
             <p>
-              Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
-              This action cannot be undone.
+              Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action
+              cannot be undone.
             </p>
             <div className={dashboardStyles.deleteWarning}>
               This action is not reversible. Please be certain.
             </div>
             <div className={dashboardStyles.confirmInput}>
-              <label htmlFor="confirm-delete-user">Type <strong>CONFIRM</strong> to enable deletion:</label>
+              <label htmlFor="confirm-delete-user">
+                Type <strong>CONFIRM</strong> to enable deletion:
+              </label>
               <Input
                 id="confirm-delete-user"
                 type="text"
@@ -311,7 +369,15 @@ export const DashboardAdmin = () => {
               />
             </div>
             <div className={dashboardStyles.deleteActions}>
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => { setDeleteTarget(null); setConfirmText(''); }} />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => {
+                  setDeleteTarget(null)
+                  setConfirmText('')
+                }}
+              />
               <Button
                 font="dashboard"
                 variant="primary"
@@ -335,7 +401,12 @@ export const DashboardAdmin = () => {
               The email will be sent to: <strong>{inviteTarget.email}</strong>
             </p>
             <div className={dashboardStyles.deleteActions}>
-              <Button font="dashboard" variant="secondary" label="Cancel" onClick={() => setInviteTarget(null)} />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Cancel"
+                onClick={() => setInviteTarget(null)}
+              />
               <Button
                 font="dashboard"
                 variant="primary"

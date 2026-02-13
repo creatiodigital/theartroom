@@ -30,10 +30,7 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
         <div key={artwork.id} className={styles.card}>
           <div className={styles.imageWrapper}>
             {artwork.imageUrl ? (
-              <Link
-                href={`/artworks/${artwork.id}`}
-                className={styles.viewDetailsLink}
-              >
+              <Link href={`/artworks/${artwork.id}`} className={styles.viewDetailsLink}>
                 <img
                   src={artwork.imageUrl}
                   alt={artwork.title || artwork.name || 'Artwork'}

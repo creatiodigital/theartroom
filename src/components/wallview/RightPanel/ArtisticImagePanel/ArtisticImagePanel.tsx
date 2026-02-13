@@ -13,7 +13,13 @@ import PresetSection from '@/components/wallview/RightPanel/PresetSection/Preset
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 
-import { frameSizeOptions, frameThicknessOptions, passepartoutSizeOptions, passepartoutThicknessOptions, supportThicknessOptions } from './constants'
+import {
+  frameSizeOptions,
+  frameThicknessOptions,
+  passepartoutSizeOptions,
+  passepartoutThicknessOptions,
+  supportThicknessOptions,
+} from './constants'
 
 const ArtisticImage = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -44,7 +50,6 @@ const ArtisticImage = () => {
     <>
       {/* DISPLAY Section */}
       <div className={styles.section}>
-        
         <Tooltip
           label="When enabled, visitors can double-click this artwork in the 3D exhibition to view its details"
           placement="left"
@@ -83,7 +88,6 @@ const ArtisticImage = () => {
 
       {/* SUPPORT Section - on top */}
       <div className={styles.section}>
-        
         <Tooltip
           label="Add the canvas or panel depth behind the artwork (stretcher bars, wood panel, etc.)"
           placement="left"
@@ -98,14 +102,18 @@ const ArtisticImage = () => {
           <div className={styles.controlGroup}>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Support color</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Support color
+                </Text>
                 <ColorPicker
                   textColor={supportColor!}
                   onColorSelect={(value) => handleEditArtisticImage('supportColor', value)}
                 />
               </div>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness (cm)</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Thickness (cm)
+                </Text>
                 <Select<number>
                   options={supportThicknessOptions}
                   value={supportThickness?.value}
@@ -124,7 +132,6 @@ const ArtisticImage = () => {
 
       {/* FRAME Section */}
       <div className={styles.section}>
-        
         <Tooltip
           label="Add a picture frame around this artwork, visible in the 3D exhibition"
           placement="left"
@@ -139,7 +146,9 @@ const ArtisticImage = () => {
           <div className={styles.controlGroup}>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Frame color</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Frame color
+                </Text>
                 <ColorPicker
                   textColor={frameColor!}
                   onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
@@ -148,7 +157,9 @@ const ArtisticImage = () => {
             </div>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Size (cm)</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Size (cm)
+                </Text>
                 <Select<number>
                   options={frameSizeOptions}
                   value={frameSize?.value}
@@ -161,7 +172,9 @@ const ArtisticImage = () => {
                 />
               </div>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness (cm)</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Thickness (cm)
+                </Text>
                 <Select<number>
                   options={frameThicknessOptions}
                   value={frameThickness?.value}
@@ -180,7 +193,6 @@ const ArtisticImage = () => {
 
       {/* PASSEPARTOUT Section */}
       <div className={styles.section}>
-        
         <Tooltip
           label="Add a mat border between the artwork and frame, like traditional gallery framing"
           placement="left"
@@ -195,7 +207,9 @@ const ArtisticImage = () => {
           <div className={styles.controlGroup}>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Passepartout color</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Passepartout color
+                </Text>
                 <ColorPicker
                   textColor={passepartoutColor!}
                   onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}
@@ -204,7 +218,9 @@ const ArtisticImage = () => {
             </div>
             <div className={styles.row}>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Size (cm)</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Size (cm)
+                </Text>
                 <Select<number>
                   options={passepartoutSizeOptions}
                   value={passepartoutSize?.value}
@@ -217,7 +233,9 @@ const ArtisticImage = () => {
                 />
               </div>
               <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>Thickness (cm)</Text>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Thickness (cm)
+                </Text>
                 <Select<number>
                   options={passepartoutThicknessOptions}
                   value={passepartoutThickness?.value}
@@ -238,4 +256,3 @@ const ArtisticImage = () => {
 }
 
 export default ArtisticImage
-

@@ -146,9 +146,7 @@ export const AdminExhibitions = () => {
             {exhibitions.map((exhibition) => (
               <tr key={exhibition.id}>
                 <td>
-                  <Link
-                    href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-                  >
+                  <Link href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}>
                     {exhibition.mainTitle}
                   </Link>
                 </td>
@@ -176,39 +174,64 @@ export const AdminExhibitions = () => {
                   )}
                 </td>
                 <td>
-                  <div className={dashboardStyles.kebabWrapper} ref={openMenuId === exhibition.id ? menuRef : undefined}>
+                  <div
+                    className={dashboardStyles.kebabWrapper}
+                    ref={openMenuId === exhibition.id ? menuRef : undefined}
+                  >
                     <button
                       className={dashboardStyles.kebabButton}
-                      onClick={() => setOpenMenuId(openMenuId === exhibition.id ? null : exhibition.id)}
+                      onClick={() =>
+                        setOpenMenuId(openMenuId === exhibition.id ? null : exhibition.id)
+                      }
                       aria-label="Actions"
                     >
                       <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
                     </button>
                     {openMenuId === exhibition.id && (
                       <div className={dashboardStyles.kebabMenu}>
-                        <button className={dashboardStyles.kebabMenuItem} onClick={() => { setOpenMenuId(null); handleToggleStatus(exhibition.id, exhibition.status); }}>
+                        <button
+                          className={dashboardStyles.kebabMenuItem}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleToggleStatus(exhibition.id, exhibition.status)
+                          }}
+                        >
                           {exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
                         </button>
                         {/* Publish / Update Exhibition */}
                         {(!exhibition.published || exhibition.hasPendingChanges) && (
                           <button
                             className={dashboardStyles.kebabMenuItem}
-                            onClick={() => { setOpenMenuId(null); handlePublishAction(exhibition.id, 'publish'); }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handlePublishAction(exhibition.id, 'publish')
+                            }}
                             disabled={!exhibition.published && !exhibition.user.published}
                           >
-                            {exhibition.published && exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
+                            {exhibition.published && exhibition.hasPendingChanges
+                              ? 'Update Exhibition'
+                              : 'Publish'}
                           </button>
                         )}
                         {/* Unpublish — always available when published */}
                         {exhibition.published && (
                           <button
                             className={dashboardStyles.kebabMenuItem}
-                            onClick={() => { setOpenMenuId(null); handlePublishAction(exhibition.id, 'unpublish'); }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handlePublishAction(exhibition.id, 'unpublish')
+                            }}
                           >
                             Unpublish
                           </button>
                         )}
-                        <button className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`} onClick={() => { setOpenMenuId(null); setDeleteTarget(exhibition); }}>
+                        <button
+                          className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            setDeleteTarget(exhibition)
+                          }}
+                        >
                           Delete
                         </button>
                       </div>
@@ -223,7 +246,12 @@ export const AdminExhibitions = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <Modal onClose={() => { setDeleteTarget(null); setConfirmText(''); }}>
+        <Modal
+          onClose={() => {
+            setDeleteTarget(null)
+            setConfirmText('')
+          }}
+        >
           <div className={dashboardStyles.deleteModal}>
             <h2>Delete Exhibition</h2>
             <p>
@@ -234,7 +262,9 @@ export const AdminExhibitions = () => {
               This action is not reversible. Please be certain.
             </div>
             <div className={dashboardStyles.confirmInput}>
-              <label htmlFor="confirm-delete">Type <strong>CONFIRM</strong> to enable deletion:</label>
+              <label htmlFor="confirm-delete">
+                Type <strong>CONFIRM</strong> to enable deletion:
+              </label>
               <Input
                 id="confirm-delete"
                 type="text"
@@ -248,7 +278,10 @@ export const AdminExhibitions = () => {
                 font="dashboard"
                 variant="secondary"
                 label="Cancel"
-                onClick={() => { setDeleteTarget(null); setConfirmText(''); }}
+                onClick={() => {
+                  setDeleteTarget(null)
+                  setConfirmText('')
+                }}
               />
               <Button
                 font="dashboard"

@@ -1,4 +1,4 @@
-export const FONT_FAMILIES = ['roboto', 'lora', 'lato', 'eb-garamond', 'geist'] as const
+export const FONT_FAMILIES = ['roboto', 'lora', 'lato', 'eb-garamond', 'geist', 'playfair-display'] as const
 export type TFontFamily = (typeof FONT_FAMILIES)[number]
 
 export const FONT_WEIGHTS = ['regular', 'bold'] as const

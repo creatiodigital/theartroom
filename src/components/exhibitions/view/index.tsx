@@ -158,7 +158,8 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                 Welcome visitor
               </Text>
               <Text as="p" size="sm" className={styles.welcomeText}>
-                You are about to enter an immersive virtual exhibition. Use the controls below to explore the space freely.
+                You are about to enter an immersive virtual exhibition. Use the controls below to
+                explore the space freely.
               </Text>
             </div>
             <Text as="h3" size="md" font="sans" className={styles.infoPanelTitle}>
@@ -257,7 +258,9 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
               </div>
             </div>
             <Text as="p" size="xs" className={styles.infoHint}>
-              You can reopen this guide anytime by clicking the <Info size={12} strokeWidth={ICON_STROKE_WIDTH} style={{ verticalAlign: 'middle' }} /> icon in the bottom-right corner.
+              You can reopen this guide anytime by clicking the{' '}
+              <Info size={12} strokeWidth={ICON_STROKE_WIDTH} style={{ verticalAlign: 'middle' }} />{' '}
+              icon in the bottom-right corner.
             </Text>
             {!alreadyDismissed && (
               <Button
@@ -292,9 +295,12 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     data: exhibition,
     isLoading: isApiLoading,
     error,
-  } = useGetExhibitionByUrlQuery({ url: exhibitionSlug }, {
-    skip: !exhibitionSlug,
-  })
+  } = useGetExhibitionByUrlQuery(
+    { url: exhibitionSlug },
+    {
+      skip: !exhibitionSlug,
+    },
+  )
 
   useEffect(() => {
     if (!hasResetRef.current) {

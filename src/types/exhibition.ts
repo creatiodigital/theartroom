@@ -45,5 +45,9 @@ export type TExhibition = {
   // Camera settings
   cameraFOV?: number
   cameraElevation?: number
+  // Furniture
+  benchVisible?: boolean
+  benchPositionX?: number
+  benchPositionZ?: number
+  benchRotationY?: number
 }
-

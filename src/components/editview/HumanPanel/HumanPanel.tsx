@@ -4,7 +4,13 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideHumanPanel } from '@/redux/slices/dashboardSlice'
-import { showHuman, hideHuman, setHumanPositionX, setHumanPositionZ, setHumanRotationY } from '@/redux/slices/sceneSlice'
+import {
+  showHuman,
+  hideHuman,
+  setHumanPositionX,
+  setHumanPositionZ,
+  setHumanRotationY,
+} from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 
 import styles from './HumanPanel.module.scss'
@@ -35,11 +41,7 @@ const HumanPanel = () => {
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTitle}>Show Human</span>
           <label className={styles.toggle}>
-            <input
-              type="checkbox"
-              checked={isHumanVisible}
-              onChange={handleToggle}
-            />
+            <input type="checkbox" checked={isHumanVisible} onChange={handleToggle} />
             <span className={styles.toggleSlider} />
           </label>
         </div>

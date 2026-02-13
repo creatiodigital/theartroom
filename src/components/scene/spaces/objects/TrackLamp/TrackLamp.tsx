@@ -44,14 +44,22 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
           <group key={`trackLamp-${i}`}>
             {/* Arm */}
             {armNode && (
-              <mesh key={`trackLampArm-${i}-${materialColor}`} name={`trackLampArm${i}`} geometry={armNode.geometry}>
+              <mesh
+                key={`trackLampArm-${i}-${materialColor}`}
+                name={`trackLampArm${i}`}
+                geometry={armNode.geometry}
+              >
                 <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
               </mesh>
             )}
 
             {/* Body */}
             {bodyNode && (
-              <mesh key={`trackLampBody-${i}-${materialColor}`} name={`trackLampBody${i}`} geometry={bodyNode.geometry}>
+              <mesh
+                key={`trackLampBody-${i}-${materialColor}`}
+                name={`trackLampBody${i}`}
+                geometry={bodyNode.geometry}
+              >
                 <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
               </mesh>
             )}

@@ -16,9 +16,9 @@ interface ParisWindowProps {
   glassRefs?: React.RefObject<Mesh | null>[]
 }
 
-const ParisWindow: React.FC<ParisWindowProps> = ({ 
-  nodes, 
-  frameCount = 2, 
+const ParisWindow: React.FC<ParisWindowProps> = ({
+  nodes,
+  frameCount = 2,
   handleCount = 2,
   windowRefs,
   glassRefs,

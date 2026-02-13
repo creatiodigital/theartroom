@@ -60,19 +60,31 @@ const Stencil = ({ artwork }: StencilProps) => {
   const handleSingleClick = useCallback(() => {
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
-      dispatch(setFocusTarget({
-        artworkId: artwork.id,
-        position: { x: position.x, y: position.y, z: position.z },
-        normal: { x: normal.x, y: normal.y, z: normal.z },
-        width: width || 1,
-        height: height || 1,
-      }))
+      dispatch(
+        setFocusTarget({
+          artworkId: artwork.id,
+          position: { x: position.x, y: position.y, z: position.z },
+          normal: { x: normal.x, y: normal.y, z: normal.z },
+          width: width || 1,
+          height: height || 1,
+        }),
+      )
 
       if (isArtworkPanelOpen) {
         dispatch(setCurrentArtwork(artwork.id))
       }
     }
-  }, [dispatch, artwork.id, position, quaternion, width, height, isPlaceholdersShown, isArtworkPanelOpen, getNormalFromQuaternion])
+  }, [
+    dispatch,
+    artwork.id,
+    position,
+    quaternion,
+    width,
+    height,
+    isPlaceholdersShown,
+    isArtworkPanelOpen,
+    getNormalFromQuaternion,
+  ])
 
   // Handle double click for info panel
   const handleDoubleClick = useCallback(() => {
@@ -98,23 +110,26 @@ const Stencil = ({ artwork }: StencilProps) => {
   }, [])
 
   // Pointer up
-  const handlePointerUp = useCallback((event: ThreeEvent<PointerEvent>) => {
-    if (!pointerDownPos.current) return
+  const handlePointerUp = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      if (!pointerDownPos.current) return
 
-    const dx = event.clientX - pointerDownPos.current.x
-    const dy = event.clientY - pointerDownPos.current.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    const duration = Date.now() - pointerDownTime.current
+      const dx = event.clientX - pointerDownPos.current.x
+      const dy = event.clientY - pointerDownPos.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      const duration = Date.now() - pointerDownTime.current
 
-    pointerDownPos.current = null
+      pointerDownPos.current = null
 
-    if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
-      singleClickTimeout.current = setTimeout(() => {
-        handleSingleClick()
-        singleClickTimeout.current = null
-      }, DOUBLE_CLICK_DELAY)
-    }
-  }, [handleSingleClick])
+      if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+        singleClickTimeout.current = setTimeout(() => {
+          handleSingleClick()
+          singleClickTimeout.current = null
+        }, DOUBLE_CLICK_DELAY)
+      }
+    },
+    [handleSingleClick],
+  )
 
   const fontSizeFactor = 0.01
   // Convert textPadding (pixels) to 3D units
@@ -142,6 +157,10 @@ const Stencil = ({ artwork }: StencilProps) => {
     geist: {
       regular: '/fonts/Geist-Regular.ttf',
       bold: '/fonts/Geist-Bold.ttf',
+    },
+    'playfair-display': {
+      regular: '/fonts/PlayfairDisplay-Regular.ttf',
+      bold: '/fonts/PlayfairDisplay-Bold.ttf',
     },
   } as const
 
@@ -226,8 +245,8 @@ const Stencil = ({ artwork }: StencilProps) => {
       )}
 
       {textContent && fontSize?.value && (
-        <mesh 
-          key={id} 
+        <mesh
+          key={id}
           renderOrder={2}
           position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.001]}
           visible={fontReady}
@@ -248,6 +267,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             whiteSpace="normal"
             overflowWrap="break-word"
             onSync={calculateTextDimensions}
+            sdfGlyphSize={128}
           >
             {textContent}
           </Text>
@@ -258,4 +278,3 @@ const Stencil = ({ artwork }: StencilProps) => {
 }
 
 export default Stencil
-

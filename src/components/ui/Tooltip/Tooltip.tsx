@@ -15,7 +15,13 @@ type TooltipProps = {
   fullWidth?: boolean
 }
 
-const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = false }: TooltipProps) => {
+const Tooltip = ({
+  label,
+  children,
+  placement = 'top',
+  offset = 8,
+  fullWidth = false,
+}: TooltipProps) => {
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0 })
   const [isMounted, setIsMounted] = useState(false)
@@ -32,7 +38,7 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
     if (!wrapperRef.current) return { top: 0, left: 0 }
 
     const rect = wrapperRef.current.getBoundingClientRect()
-    
+
     switch (placement) {
       case 'top':
         return {
@@ -94,19 +100,22 @@ const Tooltip = ({ label, children, placement = 'top', offset = 8, fullWidth = f
     }
   }, [])
 
-  const tooltipContent = isVisible && isMounted && !isMouseDown ? createPortal(
-    <div
-      className={`${styles.content} ${styles[placement]}`}
-      style={{
-        position: 'fixed',
-        top: position.top,
-        left: position.left,
-      }}
-    >
-      {label}
-    </div>,
-    document.body
-  ) : null
+  const tooltipContent =
+    isVisible && isMounted && !isMouseDown
+      ? createPortal(
+          <div
+            className={`${styles.content} ${styles[placement]}`}
+            style={{
+              position: 'fixed',
+              top: position.top,
+              left: position.left,
+            }}
+          >
+            {label}
+          </div>,
+          document.body,
+        )
+      : null
 
   return (
     <div

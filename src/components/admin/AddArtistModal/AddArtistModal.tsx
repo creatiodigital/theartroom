@@ -115,7 +115,15 @@ export const AddArtistModal = ({
             </Text>
           </div>
           <div className={styles.actions}>
-            <Button font="dashboard" variant="primary" label="Done" onClick={() => { onSuccess(); onClose(); }} />
+            <Button
+              font="dashboard"
+              variant="primary"
+              label="Done"
+              onClick={() => {
+                onSuccess()
+                onClose()
+              }}
+            />
           </div>
         </>
       ) : (

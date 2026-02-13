@@ -38,11 +38,15 @@ const ArtworkPanel = () => {
 
   // Get artwork data to check if it has an uploaded image
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
-  const exhibitionArtworksById = useSelector((state: RootState) => state.exhibition.exhibitionArtworksById)
+  const exhibitionArtworksById = useSelector(
+    (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
   const artwork = currentArtworkId ? artworksById[currentArtworkId] : null
   const exhibitionArtwork = currentArtworkId ? exhibitionArtworksById[currentArtworkId] : null
 
-  const { width, height, fromTop, fromBottom, fromLeft, fromRight } = useArtworkDetails(currentArtworkId!)
+  const { width, height, fromTop, fromBottom, fromLeft, fromRight } = useArtworkDetails(
+    currentArtworkId!,
+  )
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
@@ -64,7 +68,8 @@ const ArtworkPanel = () => {
   // Show for any image artwork that has either a pending upload or an existing imageUrl
   const hasPendingImage = currentArtworkId ? hasPendingUpload(currentArtworkId) : false
   const hasExistingImage = artwork?.artworkType === 'image' && artwork?.imageUrl
-  const showProportionsButton = artwork?.artworkType === 'image' && (hasPendingImage || hasExistingImage)
+  const showProportionsButton =
+    artwork?.artworkType === 'image' && (hasPendingImage || hasExistingImage)
 
   const handleUseImageProportions = async () => {
     if (!currentArtworkId || !exhibitionArtwork) return
@@ -120,13 +125,15 @@ const ArtworkPanel = () => {
     }
 
     // Update both width and height
-    dispatch(updateArtworkPosition({
-      artworkId: currentArtworkId,
-      artworkPosition: {
-        width2d: newWidth,
-        height2d: newHeight,
-      },
-    }))
+    dispatch(
+      updateArtworkPosition({
+        artworkId: currentArtworkId,
+        artworkPosition: {
+          width2d: newWidth,
+          height2d: newHeight,
+        },
+      }),
+    )
   }
 
   // Proportional resize handlers (when Lock size is checked)
@@ -141,13 +148,15 @@ const ArtworkPanel = () => {
     const newWidth2d = newWidthMeters * 100
     const newHeight2d = newWidth2d / currentRatio
 
-    dispatch(updateArtworkPosition({
-      artworkId: currentArtworkId,
-      artworkPosition: {
-        width2d: newWidth2d,
-        height2d: newHeight2d,
-      },
-    }))
+    dispatch(
+      updateArtworkPosition({
+        artworkId: currentArtworkId,
+        artworkPosition: {
+          width2d: newWidth2d,
+          height2d: newHeight2d,
+        },
+      }),
+    )
   }
 
   const handleLockedHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,13 +170,15 @@ const ArtworkPanel = () => {
     const newHeight2d = newHeightMeters * 100
     const newWidth2d = newHeight2d * currentRatio
 
-    dispatch(updateArtworkPosition({
-      artworkId: currentArtworkId,
-      artworkPosition: {
-        width2d: newWidth2d,
-        height2d: newHeight2d,
-      },
-    }))
+    dispatch(
+      updateArtworkPosition({
+        artworkId: currentArtworkId,
+        artworkPosition: {
+          width2d: newWidth2d,
+          height2d: newHeight2d,
+        },
+      }),
+    )
   }
 
   return (
@@ -181,7 +192,6 @@ const ArtworkPanel = () => {
 
       {/* SIZE Section */}
       <div className={styles.section}>
-        
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
           Dimensions (m)
         </Text>
@@ -229,30 +239,59 @@ const ArtworkPanel = () => {
 
       {/* POSITION Section */}
       <div className={styles.section}>
-        
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
           Alignment
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionTop" onClick={() => handleAlign('verticalTop')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionTop"
+              onClick={() => handleAlign('verticalTop')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionCenterV" onClick={() => handleAlign('verticalCenter')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionCenterV"
+              onClick={() => handleAlign('verticalCenter')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionBottom" onClick={() => handleAlign('verticalBottom')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionBottom"
+              onClick={() => handleAlign('verticalBottom')}
+            />
           </div>
         </div>
         <div className={styles.row}>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionLeft" onClick={() => handleAlign('horizontalLeft')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionLeft"
+              onClick={() => handleAlign('horizontalLeft')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionCenterH" onClick={() => handleAlign('horizontalCenter')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionCenterH"
+              onClick={() => handleAlign('horizontalCenter')}
+            />
           </div>
           <div className={styles.item}>
-            <Button size="small" variant="secondary" icon="positionRight" onClick={() => handleAlign('horizontalRight')} />
+            <Button
+              size="small"
+              variant="secondary"
+              icon="positionRight"
+              onClick={() => handleAlign('horizontalRight')}
+            />
           </div>
         </div>
 
@@ -320,5 +359,3 @@ const ArtworkPanel = () => {
 }
 
 export default ArtworkPanel
-
-

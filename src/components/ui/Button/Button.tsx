@@ -49,7 +49,7 @@ export const Button = React.memo(
     fullWidth,
   }: ButtonProps) => {
     const isIconOnly = icon && !label
-    
+
     const classNames = c([
       styles.button,
       styles[variant],

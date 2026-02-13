@@ -1,4 +1,27 @@
-import { ArrowDownFromLine, ArrowLeftFromLine, ArrowRightFromLine, ArrowUpFromLine, ArrowRight, BrickWall, Camera, Eye, EyeOff, FolderDown, Image, LampCeiling, MoveHorizontal, MoveVertical, PersonStanding, Redo2, Settings, Type, Undo2, X, type LucideIcon } from 'lucide-react'
+import {
+  Armchair,
+  ArrowDownFromLine,
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
+  ArrowUpFromLine,
+  ArrowRight,
+  BrickWall,
+  Camera,
+  Eye,
+  EyeOff,
+  FolderDown,
+  Image,
+  LampCeiling,
+  MoveHorizontal,
+  MoveVertical,
+  PersonStanding,
+  Redo2,
+  Settings,
+  Type,
+  Undo2,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import type { FC, SVGProps } from 'react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -45,6 +68,7 @@ type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 
 // Lucide icons registry (add Lucide icons here as needed)
 const lucideIcons: Record<string, LucideIcon> = {
+  armchair: Armchair,
   arrowRight: ArrowRight,
   arrowTopFromLine: ArrowUpFromLine,
   arrowBottomFromLine: ArrowDownFromLine,
@@ -118,7 +142,12 @@ export type IconProps = {
   strokeWidth?: number
 }
 
-const Icon = ({ name, size = 24, color = 'currentColor', strokeWidth = ICON_STROKE_WIDTH }: IconProps) => {
+const Icon = ({
+  name,
+  size = 24,
+  color = 'currentColor',
+  strokeWidth = ICON_STROKE_WIDTH,
+}: IconProps) => {
   // Check if it's a Lucide icon
   const LucideIconComponent = lucideIcons[name as keyof typeof lucideIcons]
   if (LucideIconComponent) {

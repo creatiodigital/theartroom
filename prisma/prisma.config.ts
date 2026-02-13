@@ -1,9 +1,9 @@
 /**
  * Prisma Configuration for Prisma 7 with Supabase
- * 
+ *
  * Uses POSTGRES_URL_NON_POOLING for CLI commands (db push, migrate)
  * This is the direct database connection without connection pooling.
- * 
+ *
  * Quick commands:
  *   pnpm db:push     - Push schema changes to database
  *   pnpm db:generate - Regenerate Prisma client

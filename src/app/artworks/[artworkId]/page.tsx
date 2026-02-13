@@ -10,12 +10,7 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
   const { ref } = await searchParams
   const isInternal = ref === 'internal'
 
-  return (
-    <ArtworkDetailPage
-      artworkId={artworkId}
-      isInternal={isInternal}
-    />
-  )
+  return <ArtworkDetailPage artworkId={artworkId} isInternal={isInternal} />
 }
 
 export default ArtworkPage

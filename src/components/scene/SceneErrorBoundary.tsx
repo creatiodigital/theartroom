@@ -84,8 +84,8 @@ export class SceneErrorBoundary extends Component<Props, State> {
             The 3D exhibition couldn&apos;t load
           </h2>
           <p style={{ color: '#999', fontSize: '0.875rem', maxWidth: '400px', lineHeight: 1.5 }}>
-            Something went wrong while rendering the exhibition.
-            This has been reported and we&apos;re looking into it.
+            Something went wrong while rendering the exhibition. This has been reported and
+            we&apos;re looking into it.
           </p>
           <button
             onClick={() => window.location.reload()}

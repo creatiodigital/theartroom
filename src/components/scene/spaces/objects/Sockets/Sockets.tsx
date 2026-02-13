@@ -9,11 +9,7 @@ interface SocketsProps {
   screwCount?: number
 }
 
-const Sockets: React.FC<SocketsProps> = ({ 
-  nodes, 
-  socketCount = 4, 
-  screwCount = 4 
-}) => {
+const Sockets: React.FC<SocketsProps> = ({ nodes, socketCount = 4, screwCount = 4 }) => {
   // Tinted colors that respond to ambient light
   const tintedSocket = useAmbientLightColor('#f5f5f0')
   const tintedScrew = useAmbientLightColor('#a0a0a0')

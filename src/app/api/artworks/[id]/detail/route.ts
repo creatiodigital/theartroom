@@ -43,10 +43,7 @@ const getCachedArtworkDetail = (id: string) =>
   )()
 
 // GET artwork detail with artist info
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
 

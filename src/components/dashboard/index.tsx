@@ -119,22 +119,19 @@ export const DashboardPage = () => {
     setDeleteTarget({ id, title })
   }, [])
 
-  const handleDeleteConfirm = useCallback(
-    async () => {
-      if (!deleteTarget) return
-      setDeleting(true)
-      try {
-        await deleteExhibition(deleteTarget.id).unwrap()
-        dispatch(removeExhibition(deleteTarget.id))
-        setDeleteTarget(null)
-      } catch (err) {
-        console.error('Failed to delete exhibition', err)
-      } finally {
-        setDeleting(false)
-      }
-    },
-    [deleteExhibition, dispatch, deleteTarget],
-  )
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await deleteExhibition(deleteTarget.id).unwrap()
+      dispatch(removeExhibition(deleteTarget.id))
+      setDeleteTarget(null)
+    } catch (err) {
+      console.error('Failed to delete exhibition', err)
+    } finally {
+      setDeleting(false)
+    }
+  }, [deleteExhibition, dispatch, deleteTarget])
 
   const handleEdit3DSpace = useCallback(
     (exhibition: TExhibition) => {
@@ -227,7 +224,7 @@ export const DashboardPage = () => {
           <table className={dashboardStyles.table}>
             <thead>
               <tr>
-              <th>Exhibition Name</th>
+                <th>Exhibition Name</th>
                 <th>Space</th>
                 <th>Status</th>
                 <th>Visibility</th>
@@ -236,7 +233,7 @@ export const DashboardPage = () => {
             </thead>
             <tbody>
               {exhibitions.map((ex: TExhibition) => (
-                  <tr key={ex.id}>
+                <tr key={ex.id}>
                   <td>{ex.mainTitle}</td>
                   <td>{spaceOptions.find((s) => s.value === ex.spaceId)?.label || ex.spaceId}</td>
                   <td>
@@ -253,7 +250,10 @@ export const DashboardPage = () => {
                     ) : null}
                   </td>
                   <td>
-                    <div className={dashboardStyles.kebabWrapper} ref={openMenuId === ex.id ? menuRef : undefined}>
+                    <div
+                      className={dashboardStyles.kebabWrapper}
+                      ref={openMenuId === ex.id ? menuRef : undefined}
+                    >
                       <button
                         className={dashboardStyles.kebabButton}
                         onClick={() => setOpenMenuId(openMenuId === ex.id ? null : ex.id)}
@@ -265,26 +265,38 @@ export const DashboardPage = () => {
                         <div className={dashboardStyles.kebabMenu}>
                           <button
                             className={dashboardStyles.kebabMenuItem}
-                            onClick={() => { setOpenMenuId(null); handleViewExhibition(ex); }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleViewExhibition(ex)
+                            }}
                             disabled={!ex.published}
                           >
                             View
                           </button>
                           <button
                             className={dashboardStyles.kebabMenuItem}
-                            onClick={() => { setOpenMenuId(null); handleEditExhibitionSettings(ex); }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleEditExhibitionSettings(ex)
+                            }}
                           >
                             Edit Exhibition
                           </button>
                           <button
                             className={dashboardStyles.kebabMenuItem}
-                            onClick={() => { setOpenMenuId(null); handleEdit3DSpace(ex); }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleEdit3DSpace(ex)
+                            }}
                           >
                             Edit 3D Space
                           </button>
                           <button
                             className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
-                            onClick={() => { setOpenMenuId(null); handleDeleteClick(ex.id, ex.mainTitle); }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleDeleteClick(ex.id, ex.mainTitle)
+                            }}
                           >
                             Delete
                           </button>
@@ -320,8 +332,8 @@ export const DashboardPage = () => {
           <div className={dashboardStyles.deleteModal}>
             <h2>Delete Exhibition</h2>
             <p>
-              Are you sure you want to delete <strong>{deleteTarget.title}</strong>?
-              This will permanently remove the exhibition and all its data.
+              Are you sure you want to delete <strong>{deleteTarget.title}</strong>? This will
+              permanently remove the exhibition and all its data.
             </p>
             <div className={dashboardStyles.deleteWarning}>
               This action is not reversible. Please be certain.

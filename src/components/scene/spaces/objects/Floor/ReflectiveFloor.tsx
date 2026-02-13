@@ -138,9 +138,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
   )
 
-  const floorRotation = useSelector(
-    (state: RootState) => state.exhibition.floorRotation ?? 0,
-  )
+  const floorRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
 
   // Compute temperature-based floor color
   const floorColor = getTemperatureColor(floorTemperature)
@@ -189,7 +187,10 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
   }, [textures, clampedScale, floorTextureOffsetX, floorTextureOffsetY, floorRotation])
 
   // Create Vector2 for normalScale (required by Three.js)
-  const normalScaleVec = useMemo(() => new Vector2(floorNormalScale, floorNormalScale), [floorNormalScale])
+  const normalScaleVec = useMemo(
+    () => new Vector2(floorNormalScale, floorNormalScale),
+    [floorNormalScale],
+  )
 
   return (
     <mesh
