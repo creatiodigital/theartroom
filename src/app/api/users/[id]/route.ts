@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 import type { Prisma } from '@/generated/prisma'
 import { UserType as UserTypeEnum } from '@/generated/prisma'
@@ -100,6 +101,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       })
     }
 
+    // Revalidate artist caches
+    revalidateTag('artists', 'default')
+    if (updated.handler) {
+      revalidateTag(`artist-${updated.handler}`, 'default')
+    }
+    revalidatePath('/')
+
     return NextResponse.json(updated)
   } catch (error) {
     console.error('[PUT /api/users/[id]] error:', error)
@@ -131,6 +139,14 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     }
 
     await prisma.user.delete({ where: { id } })
+
+    // Revalidate artist caches
+    revalidateTag('artists', 'default')
+    if (targetUser.handler) {
+      revalidateTag(`artist-${targetUser.handler}`, 'default')
+    }
+    revalidatePath('/')
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/users/[id]] error:', error)

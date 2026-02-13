@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { revalidateTag, revalidatePath } from 'next/cache'
 import { del } from '@vercel/blob'
 
 import { Prisma } from '@/generated/prisma'
@@ -202,6 +203,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data,
     })
 
+    // Revalidate caches
+    revalidateTag(`exhibition-${updated.url}`, 'default')
+    if (body.published !== undefined || body.mainTitle !== undefined) {
+      revalidateTag('exhibitions', 'default')
+      revalidatePath('/')
+    }
+
     return NextResponse.json(updated)
   } catch (error) {
     console.error('[PUT /api/exhibitions/[id]] error:', error)
@@ -231,6 +239,10 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     }
 
     await prisma.exhibition.delete({ where: { id } })
+
+    // Revalidate caches
+    revalidateTag('exhibitions', 'default')
+    revalidatePath('/')
 
     return NextResponse.json({ success: true, id })
   } catch (error) {

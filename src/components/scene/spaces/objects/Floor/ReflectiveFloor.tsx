@@ -90,6 +90,20 @@ const MATERIAL_CONFIG: Record<
   },
 }
 
+// Preload all floor textures at module scope so useTexture doesn't trigger
+// loading manager state updates during render (fixes Loader setState warning)
+Object.entries(MATERIAL_CONFIG).forEach(([material, config]) => {
+  const basePath = `/assets/materials/${material}`
+  const paths: Record<string, string> = {
+    map: `${basePath}/${config.diffuse}`,
+    roughnessMap: `${basePath}/${config.roughness}`,
+  }
+  if (config.normal) paths.normalMap = `${basePath}/${config.normal}`
+  if (config.metallic) paths.metalnessMap = `${basePath}/${config.metallic}`
+  if (config.ao) paths.aoMap = `${basePath}/${config.ao}`
+  useTexture.preload(Object.values(paths))
+})
+
 /**
  * Polished floor with mirror reflections and PBR textures.
  * Reads material, texture scale, and reflectiveness from Redux.
@@ -138,20 +152,24 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
   const materialConfig = MATERIAL_CONFIG[floorMaterial] || MATERIAL_CONFIG.concrete
   const texturePath = `/assets/materials/${floorMaterial}`
 
-  // Build texture paths (metallic, normal, and ao are optional)
-  const texturePaths: Record<string, string> = {
-    map: `${texturePath}/${materialConfig.diffuse}`,
-    roughnessMap: `${texturePath}/${materialConfig.roughness}`,
-  }
-  if (materialConfig.normal) {
-    texturePaths.normalMap = `${texturePath}/${materialConfig.normal}`
-  }
-  if (materialConfig.metallic) {
-    texturePaths.metalnessMap = `${texturePath}/${materialConfig.metallic}`
-  }
-  if (materialConfig.ao) {
-    texturePaths.aoMap = `${texturePath}/${materialConfig.ao}`
-  }
+  // Build texture paths (metallic, normal, and ao are optional) — memoized to avoid
+  // unstable references that cause useTexture to re-trigger loading on every render
+  const texturePaths = useMemo(() => {
+    const paths: Record<string, string> = {
+      map: `${texturePath}/${materialConfig.diffuse}`,
+      roughnessMap: `${texturePath}/${materialConfig.roughness}`,
+    }
+    if (materialConfig.normal) {
+      paths.normalMap = `${texturePath}/${materialConfig.normal}`
+    }
+    if (materialConfig.metallic) {
+      paths.metalnessMap = `${texturePath}/${materialConfig.metallic}`
+    }
+    if (materialConfig.ao) {
+      paths.aoMap = `${texturePath}/${materialConfig.ao}`
+    }
+    return paths
+  }, [texturePath, materialConfig])
 
   // Load PBR textures with correct extensions per material
   const textures = useTexture(texturePaths)

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
 import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
         isActive: isActive ?? true,
       },
     })
+
+    // Revalidate homepage
+    revalidatePath('/')
 
     return NextResponse.json(slide, { status: 201 })
   } catch (error) {

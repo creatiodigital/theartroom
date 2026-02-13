@@ -1,3 +1,5 @@
+import { unstable_cache } from 'next/cache'
+
 import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { Text } from '@/components/ui/Typography'
@@ -10,8 +12,71 @@ import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+const getSlides = unstable_cache(
+  async () => {
+    const slidesData = await prisma.slide.findMany({
+      where: { isActive: true },
+      orderBy: { order: 'asc' },
+    })
+    return slidesData.map((slide) => ({
+      id: slide.id,
+      imageUrl: slide.imageUrl,
+      exhibitionUrl: slide.exhibitionUrl,
+      meta: slide.meta,
+      title: slide.title,
+      subtitle: slide.subtitle,
+    }))
+  },
+  ['homepage-slides'],
+  { tags: ['homepage'], revalidate: 3600 },
+)
+
+const getExhibitions = unstable_cache(
+  async () => {
+    const exhibitionData = await prisma.exhibition.findMany({
+      where: {
+        status: 'current',
+        published: true,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            lastName: true,
+            handler: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    })
+    return exhibitionData as unknown as ExhibitionWithUser[]
+  },
+  ['homepage-exhibitions'],
+  { tags: ['homepage', 'exhibitions'], revalidate: 3600 },
+)
+
+const getFeaturedArtists = unstable_cache(
+  async () => {
+    return prisma.user.findMany({
+      where: {
+        isFeatured: true,
+        published: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        handler: true,
+        biography: true,
+        profileImageUrl: true,
+      },
+      orderBy: { name: 'asc' },
+    })
+  },
+  ['homepage-featured-artists'],
+  { tags: ['homepage', 'artists'], revalidate: 3600 },
+)
 
 type ExhibitionWithUser = {
   id: string
@@ -23,54 +88,9 @@ type ExhibitionWithUser = {
 }
 
 export default async function Home() {
-  const slidesData = await prisma.slide.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' },
-  })
-
-  const slides = slidesData.map((slide) => ({
-    id: slide.id,
-    imageUrl: slide.imageUrl,
-    exhibitionUrl: slide.exhibitionUrl,
-    meta: slide.meta,
-    title: slide.title,
-    subtitle: slide.subtitle,
-  }))
-
-  const exhibitionData = await prisma.exhibition.findMany({
-    where: {
-      status: 'current',
-      published: true,
-    },
-    include: {
-      user: {
-        select: {
-          name: true,
-          lastName: true,
-          handler: true,
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 6,
-  })
-  const exhibitions = exhibitionData as unknown as ExhibitionWithUser[]
-
-  const featuredArtists = await prisma.user.findMany({
-    where: {
-      isFeatured: true,
-      published: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      lastName: true,
-      handler: true,
-      biography: true,
-      profileImageUrl: true,
-    },
-    orderBy: { name: 'asc' },
-  })
+  const slides = await getSlides()
+  const exhibitions = await getExhibitions()
+  const featuredArtists = await getFeaturedArtists()
 
   return (
     <main className={styles.home}>
