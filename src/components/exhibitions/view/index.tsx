@@ -384,7 +384,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       <NavigationHelpModal hidden={isArtworkPanelOpen} />
       <LoadingOverlay />
       <MobileOverlay />
-      {exhibition && <Scene />}
+      {exhibition && <Scene hideLoader />}
       {isArtworkPanelOpen && <ArtworkPanel />}
     </>
   )

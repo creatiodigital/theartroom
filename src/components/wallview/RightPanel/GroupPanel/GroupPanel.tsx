@@ -24,7 +24,9 @@ import styles from '../RightPanel.module.scss'
 const GroupPanel = () => {
   const dispatch = useDispatch()
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
-  const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
+  const snapEnabledById = useSelector((state: RootState) => state.wallView.snapEnabledById)
+  // Snap is enabled if any artwork in the group has it enabled
+  const snapEnabled = artworkGroupIds.some((id) => snapEnabledById[id] ?? true)
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
@@ -181,7 +183,11 @@ const GroupPanel = () => {
         <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
           <Checkbox
             checked={snapEnabled}
-            onChange={(e) => dispatch(setSnapEnabled(e.target.checked))}
+            onChange={(e) => {
+              artworkGroupIds.forEach((id) =>
+                dispatch(setSnapEnabled({ artworkId: id, value: e.target.checked }))
+              )
+            }}
             label="Snap Align"
           />
         </div>

@@ -31,7 +31,7 @@ export const useResizeArtwork = (
 
   const dispatch = useDispatch()
   const isGridVisible = useSelector((state: RootState) => state.wallView.isGridVisible)
-  const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
+  const sizeLockedById = useSelector((state: RootState) => state.wallView.sizeLockedById)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const gridSize = 20
 
@@ -94,6 +94,7 @@ export const useResizeArtwork = (
         const alignedPairs: TAlignmentPair[] = []
 
         // Proportional resize with Shift key OR sizeLocked checkbox (only for corner handles)
+        const sizeLocked = sizeLockedById[artworkId] ?? false
         if ((moveEvent.shiftKey || sizeLocked) && isCornerResize) {
           // Calculate scale factor based on diagonal movement for smooth proportional resize
           // Determine the direction signs based on which corner handle is being dragged
@@ -300,7 +301,7 @@ export const useResizeArtwork = (
       gridSize,
       scaleFactor,
       isGridVisible,
-      sizeLocked,
+      sizeLockedById,
       artworksById,
       boundingData,
       dispatch,

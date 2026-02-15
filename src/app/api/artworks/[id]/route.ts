@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import type { NextRequest } from 'next/server'
 import { del } from '@vercel/blob'
 
@@ -54,6 +55,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
             body.hiddenFromExhibition === true || body.hiddenFromExhibition === 'true',
         },
       })
+
+      // Bust caches that include this artwork's data
+      revalidateTag(`artwork-${id}`, 'default')
+
       return NextResponse.json(artwork)
     } catch (innerError) {
       // If new field fails, try without it (fallback for schema mismatch)
@@ -62,6 +67,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         where: { id },
         data: baseData,
       })
+
+      // Bust caches that include this artwork's data
+      revalidateTag(`artwork-${id}`, 'default')
+
       return NextResponse.json(artwork)
     }
   } catch (error) {
@@ -98,6 +107,9 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     await prisma.artwork.delete({
       where: { id },
     })
+
+    // Bust detail page cache
+    revalidateTag(`artwork-${id}`, 'default')
 
     return NextResponse.json({ success: true })
   } catch (error) {

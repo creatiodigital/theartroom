@@ -23,8 +23,13 @@ import styles from '../RightPanel.module.scss'
 
 const ArtworkPanel = () => {
   const dispatch = useDispatch()
-  const sizeLocked = useSelector((state: RootState) => state.wallView.sizeLocked)
-  const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
+  const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
+  const sizeLocked = useSelector(
+    (state: RootState) => (currentArtworkId ? state.wallView.sizeLockedById[currentArtworkId] ?? false : false),
+  )
+  const snapEnabled = useSelector(
+    (state: RootState) => (currentArtworkId ? state.wallView.snapEnabledById[currentArtworkId] ?? true : true),
+  )
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
@@ -33,7 +38,6 @@ const ArtworkPanel = () => {
     nodes: Record<string, Mesh>
   }
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
   // Get artwork data to check if it has an uploaded image
@@ -231,7 +235,9 @@ const ArtworkPanel = () => {
         <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
           <Checkbox
             checked={sizeLocked}
-            onChange={(e) => dispatch(setSizeLocked(e.target.checked))}
+            onChange={(e) =>
+              currentArtworkId && dispatch(setSizeLocked({ artworkId: currentArtworkId, value: e.target.checked }))
+            }
             label="Lock proportions when resizing"
           />
         </div>
@@ -349,7 +355,9 @@ const ArtworkPanel = () => {
         <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
           <Checkbox
             checked={snapEnabled}
-            onChange={(e) => dispatch(setSnapEnabled(e.target.checked))}
+            onChange={(e) =>
+              currentArtworkId && dispatch(setSnapEnabled({ artworkId: currentArtworkId, value: e.target.checked }))
+            }
             label="Snap Align"
           />
         </div>

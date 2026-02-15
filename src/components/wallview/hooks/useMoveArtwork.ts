@@ -39,7 +39,7 @@ export const useMoveArtwork = (
   const isEditingArtwork = useSelector((state: RootState) => state.dashboard.isEditingArtwork)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
+  const snapEnabledById = useSelector((state: RootState) => state.wallView.snapEnabledById)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const dispatch = useDispatch()
 
@@ -131,6 +131,7 @@ export const useMoveArtwork = (
         // Handle horizontal alignments (can be multiple)
         if (alignment.horizontal.length > 0) {
           // Use first alignment for snapping (only if snap enabled)
+          const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
           if (snapEnabled) {
             const firstH = alignment.horizontal[0]
             if (firstH === 'top') {
@@ -158,6 +159,7 @@ export const useMoveArtwork = (
         // Handle vertical alignments (can be multiple)
         if (alignment.vertical.length > 0) {
           // Use first alignment for snapping (only if snap enabled)
+          const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
           if (snapEnabled) {
             const firstV = alignment.vertical[0]
             if (firstV === 'left') {
@@ -187,6 +189,7 @@ export const useMoveArtwork = (
       const wallWidth2d = boundingData.width * 100 // scaling factor
       const wallHeight2d = boundingData.height * 100
       const tolerance = 3
+      const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
 
       // Vertical center of wall (artwork visual center aligned with wall center)
       const artworkVisualCenterX = snapX - draggedOffsetX + draggedVisual.width / 2
@@ -248,7 +251,7 @@ export const useMoveArtwork = (
       allExhibitionArtworkIds,
       exhibitionArtworksById,
       artworksById,
-      snapEnabled,
+      snapEnabledById,
       dispatch,
     ],
   )
