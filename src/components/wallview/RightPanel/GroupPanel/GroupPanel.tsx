@@ -185,7 +185,7 @@ const GroupPanel = () => {
             checked={snapEnabled}
             onChange={(e) => {
               artworkGroupIds.forEach((id) =>
-                dispatch(setSnapEnabled({ artworkId: id, value: e.target.checked }))
+                dispatch(setSnapEnabled({ artworkId: id, value: e.target.checked })),
               )
             }}
             label="Snap Align"

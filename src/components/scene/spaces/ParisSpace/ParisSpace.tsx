@@ -43,7 +43,7 @@ type ParisSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/paris9.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris10.glb?v=2') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -115,13 +115,17 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
       {nodes.floor0 &&
         (() => {
           nodes.floor0.geometry.computeBoundingBox()
-          const floorSurfaceY =
-            nodes.floor0.position.y + (nodes.floor0.geometry.boundingBox?.max.y ?? 0)
+          const bb = nodes.floor0.geometry.boundingBox!
+          const floorSurfaceY = nodes.floor0.position.y + (bb.max.y ?? 0)
+          const floorWidth = bb.max.x - bb.min.x
+          const floorDepth = bb.max.z - bb.min.z
           return (
             <>
               <primitive object={nodes.floor0} visible={false} />
               <ReflectiveFloor
                 position={[nodes.floor0.position.x, floorSurfaceY, nodes.floor0.position.z]}
+                width={floorWidth}
+                depth={floorDepth}
               />
             </>
           )

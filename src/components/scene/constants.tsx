@@ -42,7 +42,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
 
   paris: {
     displayName: 'Paris',
-    gltfPath: '/assets/spaces/paris/paris9.glb',
+    gltfPath: '/assets/spaces/paris/paris10.glb?v=2',
     thumbnailUrl: '/assets/thumbnails/paris.jpg',
     refs: {
       walls: 4, // wall0 + doorFrame0 + doorMain0 + radiator0

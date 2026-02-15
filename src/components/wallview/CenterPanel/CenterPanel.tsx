@@ -6,10 +6,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwork'
 import { Wall } from '@/components/wallview/Wall/Wall'
 import { Text } from '@/components/ui/Typography'
-import {
-  zoomAtPoint,
-  setPanPosition,
-} from '@/redux/slices/wallViewSlice'
+import { zoomAtPoint, setPanPosition } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
 import styles from './CenterPanel.module.scss'

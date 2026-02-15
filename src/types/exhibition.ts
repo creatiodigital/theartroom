@@ -31,6 +31,8 @@ export type TExhibition = {
   trackLampMaterialColor?: string
   windowLightColor?: string
   windowLightIntensity?: number
+  windowTransparency?: boolean
+  hdriRotation?: number
   floorReflectiveness?: number
   floorMaterial?: 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'
   floorTextureScale?: number
