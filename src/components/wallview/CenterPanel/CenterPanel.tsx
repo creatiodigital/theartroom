@@ -7,8 +7,7 @@ import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwo
 import { Wall } from '@/components/wallview/Wall/Wall'
 import { Text } from '@/components/ui/Typography'
 import {
-  increaseScaleFactor,
-  decreaseScaleFactor,
+  zoomAtPoint,
   setPanPosition,
 } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
@@ -29,12 +28,44 @@ export const CenterPanel = () => {
     el.style.overscrollBehavior = 'contain'
     el.style.touchAction = 'none'
 
+    // Momentum / inertia guard for Magic Mouse and trackpads.
+    // After 120 ms of silence we assume the gesture ended; any further
+    // events are OS-generated momentum and should be ignored until a
+    // fresh gap resets the flag.
+    let zoomCooldownId: ReturnType<typeof setTimeout> | null = null
+    let isMomentum = false
+
     const handleWheel = (e: WheelEvent) => {
       if (e.cancelable) e.preventDefault()
 
       if (e.metaKey || e.ctrlKey) {
-        if (e.deltaY < 0) dispatch(increaseScaleFactor())
-        else if (e.deltaY > 0) dispatch(decreaseScaleFactor())
+        // Block momentum events
+        if (isMomentum) return
+
+        // Reset the cooldown on every real event
+        if (zoomCooldownId) clearTimeout(zoomCooldownId)
+        zoomCooldownId = setTimeout(() => {
+          // Gesture ended – any further wheel events are momentum
+          isMomentum = true
+          // Re-allow after a full stop (another gap)
+          zoomCooldownId = setTimeout(() => {
+            isMomentum = false
+          }, 200)
+        }, 120)
+
+        const rect = el.getBoundingClientRect()
+        const cursorXRatio = (e.clientX - rect.left) / rect.width
+        const cursorYRatio = (e.clientY - rect.top) / rect.height
+
+        dispatch(
+          zoomAtPoint({
+            direction: e.deltaY < 0 ? 'in' : 'out',
+            cursorXRatio,
+            cursorYRatio,
+            containerWidth: rect.width,
+            containerHeight: rect.height,
+          }),
+        )
         return
       }
 
@@ -55,6 +86,7 @@ export const CenterPanel = () => {
     el.addEventListener('wheel', handleWheel, { passive: false })
     return () => {
       el.removeEventListener('wheel', handleWheel)
+      if (zoomCooldownId) clearTimeout(zoomCooldownId)
     }
   }, [dispatch])
 

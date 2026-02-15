@@ -18,7 +18,11 @@ import styles from './Scene.module.scss'
 import { Space } from './Space'
 import { WebGLMonitor } from './WebGLMonitor'
 
-export const Scene = () => {
+interface SceneProps {
+  hideLoader?: boolean
+}
+
+export const Scene = ({ hideLoader }: SceneProps = {}) => {
   const wallRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const windowRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const glassRefs = useRef<React.RefObject<Mesh | null>[]>([])
@@ -42,7 +46,7 @@ export const Scene = () => {
             }}
           >
             <WebGLMonitor exhibitionUrl={exhibitionUrl} />
-            <Suspense fallback={<Loader />}>
+            <Suspense fallback={hideLoader ? null : <Loader />}>
               <group>
                 <Controls />
                 <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />

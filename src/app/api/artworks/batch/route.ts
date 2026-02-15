@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { revalidateTag } from 'next/cache'
 
 import prisma from '@/lib/prisma'
 
@@ -74,6 +75,11 @@ export async function POST(request: NextRequest) {
         }),
       ),
     )
+
+    // Bust detail page caches for each upserted artwork
+    results.forEach((artwork) => {
+      revalidateTag(`artwork-${artwork.id}`, 'default')
+    })
 
     return NextResponse.json({ count: results.length, artworks: results }, { status: 201 })
   } catch (error) {

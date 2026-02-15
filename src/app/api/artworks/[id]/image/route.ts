@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { put, del } from '@vercel/blob'
 
 import { requireOwnership } from '@/lib/authUtils'
@@ -81,6 +82,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
+    // Bust detail page cache
+    revalidateTag(`artwork-${id}`, 'default')
+
     return NextResponse.json({
       url: blob.url,
       size: processedBuffer.length,
@@ -127,6 +131,9 @@ export async function DELETE(
       where: { id },
       data: { imageUrl: null },
     })
+
+    // Bust detail page cache
+    revalidateTag(`artwork-${id}`, 'default')
 
     return NextResponse.json({ message: 'Image deleted' })
   } catch (error) {

@@ -16,7 +16,7 @@ export const wallViewFactory = (): TWallView => ({
   isDraggingGroup: false,
   isResizing: false,
   isShiftKeyDown: false,
-  sizeLocked: false,
+  sizeLockedById: {},
   artworkGroupIds: [],
   artworkGroup: {
     groupY: 0,
@@ -27,5 +27,5 @@ export const wallViewFactory = (): TWallView => ({
   isGroupHovered: false,
   alignedPairs: [],
   isGridVisible: false,
-  snapEnabled: true,
+  snapEnabledById: {},
 })
