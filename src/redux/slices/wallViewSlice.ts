@@ -35,10 +35,71 @@ const wallViewSlice = createSlice({
       state.currentArtworkId = action.payload
     },
     increaseScaleFactor: (state: TWallView) => {
-      state.scaleFactor = Math.min(state.scaleFactor + 0.02, 3)
+      state.scaleFactor = Math.min(state.scaleFactor + 0.02, 4)
     },
     decreaseScaleFactor: (state: TWallView) => {
       state.scaleFactor = Math.max(state.scaleFactor - 0.02, 0.64)
+    },
+    // Zoom toward / away from the mouse cursor position
+    zoomAtPoint: (
+      state: TWallView,
+      action: PayloadAction<{
+        direction: 'in' | 'out'
+        // Mouse position relative to the container element, normalised 0-1
+        cursorXRatio: number
+        cursorYRatio: number
+        // Container dimensions in px
+        containerWidth: number
+        containerHeight: number
+      }>,
+    ) => {
+      const { direction, cursorXRatio, cursorYRatio, containerWidth, containerHeight } =
+        action.payload
+      const W = 3000 // wrapper size in px – matches the CSS
+      const oldScale = state.scaleFactor
+      const newScale =
+        direction === 'in' ? Math.min(oldScale + 0.02, 4) : Math.max(oldScale - 0.02, 0.64)
+
+      if (newScale === oldScale) return
+
+      // ---- Geometry ----------------------------------------------------------
+      // CSS: wrapper positioned at left:50%; top:50% (TL corner at container centre)
+      //      transform: translate(panX%, panY%) scale(s)
+      //      transform-origin: 50% 50% (default = W/2, H/2 = 1500, 1500)
+      //
+      // CSS transforms compose R-to-L, so scale is applied first, then translate.
+      // With transform-origin ox = W/2:
+      //
+      //   transformedX = (px - ox)*s + tx + ox
+      //
+      // where tx = panX/100 * W,  ox = W/2 = 1500
+      //
+      // Screen position (from container TL) = containerW/2 + transformedX
+      //   screenX = containerW/2 + (px - ox)*s + tx + ox
+      //
+      // To keep cursor at (cx, cy) pointing to the same wrapper point (px, py)
+      // when scale changes from s_old to s_new, we solve:
+      //
+      //   tx_new = D - (D - tx_old) * (s_new / s_old)
+      //   where D = cx - containerW/2 - ox
+      // ------------------------------------------------------------------
+
+      const cx = cursorXRatio * containerWidth
+      const cy = cursorYRatio * containerHeight
+      const ox = W / 2
+      const txOld = (state.panPosition.x / 100) * W
+      const tyOld = (state.panPosition.y / 100) * W
+
+      const Dx = cx - containerWidth / 2 - ox
+      const Dy = cy - containerHeight / 2 - ox
+
+      const ratio = newScale / oldScale
+      const txNew = Dx - (Dx - txOld) * ratio
+      const tyNew = Dy - (Dy - tyOld) * ratio
+
+      state.scaleFactor = newScale
+      state.panPosition.x = (txNew / W) * 100
+      state.panPosition.y = (tyNew / W) * 100
     },
     setPanPosition: (
       state: TWallView,
@@ -94,8 +155,11 @@ const wallViewSlice = createSlice({
     setShiftKeyDown: (state: TWallView, action: PayloadAction<boolean>) => {
       state.isShiftKeyDown = action.payload
     },
-    setSizeLocked: (state: TWallView, action: PayloadAction<boolean>) => {
-      state.sizeLocked = action.payload
+    setSizeLocked: (
+      state: TWallView,
+      action: PayloadAction<{ artworkId: string; value: boolean }>,
+    ) => {
+      state.sizeLockedById[action.payload.artworkId] = action.payload.value
     },
     addArtworkToGroup: (state: TWallView, action: PayloadAction<string>) => {
       if (!state.artworkGroupIds.includes(action.payload)) {
@@ -130,8 +194,11 @@ const wallViewSlice = createSlice({
     closeArtworkEditModal: (state: TWallView) => {
       state.editingArtworkId = null
     },
-    setSnapEnabled: (state: TWallView, action: PayloadAction<boolean>) => {
-      state.snapEnabled = action.payload
+    setSnapEnabled: (
+      state: TWallView,
+      action: PayloadAction<{ artworkId: string; value: boolean }>,
+    ) => {
+      state.snapEnabledById[action.payload.artworkId] = action.payload.value
     },
   },
 })
@@ -145,6 +212,7 @@ export const {
   chooseCurrentArtworkId,
   increaseScaleFactor,
   decreaseScaleFactor,
+  zoomAtPoint,
   setPanPosition,
   resetPan,
   setWallDimensions,

@@ -26,7 +26,7 @@ export const useMoveGroupArtwork = (
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
-  const snapEnabled = useSelector((state: RootState) => state.wallView.snapEnabled)
+  const snapEnabledById = useSelector((state: RootState) => state.wallView.snapEnabledById)
 
   const [isDraggingGroup, setIsDraggingGroup] = useState(false)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -71,6 +71,9 @@ export const useMoveGroupArtwork = (
       // Vertical center (group centered horizontally with wall)
       const groupCenterX = x + groupWidth / 2
       const wallCenterX = wallWidth2d / 2
+      // Snap is enabled if any artwork in the group has it enabled
+      const snapEnabled = artworkGroupIds.some((id) => snapEnabledById[id] ?? true)
+
       if (Math.abs(groupCenterX - wallCenterX) <= tolerance) {
         if (snapEnabled) {
           x = wallCenterX - groupWidth / 2
@@ -131,7 +134,7 @@ export const useMoveGroupArtwork = (
       artworkGroup,
       artworkGroupIds,
       exhibitionArtworksById,
-      snapEnabled,
+      snapEnabledById,
       dispatch,
     ],
   )

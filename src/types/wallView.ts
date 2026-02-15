@@ -56,13 +56,13 @@ export type TWallView = {
   isDraggingGroup: boolean
   isResizing: boolean
   isShiftKeyDown: boolean
-  sizeLocked: boolean // Lock proportions when resizing
+  sizeLockedById: Record<string, boolean> // Lock proportions per artwork
   artworkGroupIds: string[]
   artworkGroup: TArtworkGroup
   isGroupHovered: boolean
   alignedPairs: TAlignmentPair[]
   isGridVisible: boolean
-  snapEnabled: boolean
+  snapEnabledById: Record<string, boolean> // Snap align per artwork
 }
 
 export type TDirection =
