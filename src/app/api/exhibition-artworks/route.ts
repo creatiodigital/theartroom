@@ -28,7 +28,50 @@ export async function GET(request: NextRequest) {
       if (exhibition?.published && exhibition.publishedSnapshot) {
         const snapshot = exhibition.publishedSnapshot as Record<string, unknown>
         const snapshotArtworks = (snapshot.artworks ?? []) as Array<Record<string, unknown>>
-        return NextResponse.json(snapshotArtworks)
+
+        // Fetch live artwork metadata so updates (title, dimensions, image, etc.)
+        // are reflected immediately without re-publishing
+        const artworkIds = snapshotArtworks
+          .map((ea) => {
+            const art = ea.artwork as Record<string, unknown> | undefined
+            return (art?.id as string) ?? (ea.artworkId as string)
+          })
+          .filter(Boolean)
+
+        const liveArtworks = await prisma.artwork.findMany({
+          where: { id: { in: artworkIds } },
+        })
+        const liveById = Object.fromEntries(liveArtworks.map((a) => [a.id, a]))
+
+        // Merge: snapshot layout + live artwork metadata
+        const merged = snapshotArtworks.map((ea) => {
+          const art = ea.artwork as Record<string, unknown> | undefined
+          const artworkId = (art?.id as string) ?? (ea.artworkId as string)
+          const live = liveById[artworkId]
+          if (live) {
+            return {
+              ...ea,
+              artwork: {
+                ...art,
+                // Override with live metadata
+                name: live.name,
+                title: live.title,
+                author: live.author,
+                year: live.year,
+                technique: live.technique,
+                dimensions: live.dimensions,
+                description: live.description,
+                imageUrl: live.imageUrl,
+                textContent: live.textContent,
+                originalWidth: live.originalWidth,
+                originalHeight: live.originalHeight,
+              },
+            }
+          }
+          return ea
+        })
+
+        return NextResponse.json(merged)
       }
     }
 
