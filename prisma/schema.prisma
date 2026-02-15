@@ -162,6 +162,8 @@ model Exhibition {
   trackLampMaterialColor String?  @default("#ffffff")
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
+  windowTransparency     Boolean? @default(false)
+  hdriRotation           Float?   @default(128)
   floorReflectiveness    Float?   @default(0.3)
   floorMaterial          String?  @default("concrete")
   floorTextureScale      Float?   @default(1.0)

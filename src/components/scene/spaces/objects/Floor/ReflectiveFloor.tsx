@@ -10,6 +10,8 @@ const ENABLE_REFLECTIONS = false
 
 interface ReflectiveFloorProps {
   position?: Vector3Tuple
+  width?: number
+  depth?: number
 }
 
 const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
@@ -108,7 +110,11 @@ Object.entries(MATERIAL_CONFIG).forEach(([material, config]) => {
  * Polished floor with mirror reflections and PBR textures.
  * Reads material, texture scale, and reflectiveness from Redux.
  */
-const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] }) => {
+const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
+  position = [0, 0, 0],
+  width = 100,
+  depth = 100,
+}) => {
   const meshRef = useRef<Mesh>(null)
 
   // Read floor settings from Redux
@@ -175,16 +181,28 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
   // Configure texture tiling, offset, and rotation
   useMemo(() => {
     const rotationRad = (floorRotation * Math.PI) / 180 // Convert degrees to radians
+    // Scale repeat to maintain same physical tile size as the old 100-unit plane
+    // Old: clampedScale * 10 on a 100-unit plane. Now: scale proportionally to actual floor size.
+    const repeatX = clampedScale * 10 * (width / 100)
+    const repeatY = clampedScale * 10 * (depth / 100)
     Object.values(textures).forEach((texture) => {
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
-      texture.repeat.set(clampedScale * 10, clampedScale * 10)
+      texture.repeat.set(repeatX, repeatY)
       texture.offset.set(floorTextureOffsetX, floorTextureOffsetY)
       texture.rotation = rotationRad
       texture.center.set(0.5, 0.5) // Rotate around center
     })
     textures.map.colorSpace = SRGBColorSpace
-  }, [textures, clampedScale, floorTextureOffsetX, floorTextureOffsetY, floorRotation])
+  }, [
+    textures,
+    clampedScale,
+    floorTextureOffsetX,
+    floorTextureOffsetY,
+    floorRotation,
+    width,
+    depth,
+  ])
 
   // Create Vector2 for normalScale (required by Three.js)
   const normalScaleVec = useMemo(
@@ -200,7 +218,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({ position = [0, 0, 0] 
       position={position}
       receiveShadow
     >
-      <planeGeometry args={[100, 100]} />
+      <planeGeometry args={[width, depth]} />
       {ENABLE_REFLECTIONS ? (
         <MeshReflectorMaterial
           blur={[600, 400]} // Higher blur for maximum stability

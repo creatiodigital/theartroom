@@ -29,6 +29,9 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
   const windowLightColor = useSelector(
     (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_LIGHT_COLOR,
   )
+  const windowTransparency = useSelector(
+    (state: RootState) => state.exhibition.windowTransparency ?? false,
+  )
 
   // Tinted colors that respond to ambient light (NOT for glass)
   const tintedFrame = useAmbientLightColor('#e8e8e8')
@@ -39,8 +42,8 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
 
   return (
     <>
-      {/* Window Glass - NOT affected by ambient light */}
-      {nodes.windowGlass0 && (
+      {/* Window Glass - only render when NOT transparent */}
+      {nodes.windowGlass0 && !windowTransparency && (
         <mesh
           ref={glassRefs?.[0]}
           name="windowGlass0"
@@ -53,10 +56,12 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
           rotation={nodes.windowGlass0.rotation}
           scale={nodes.windowGlass0.scale}
         >
+          {/* Opaque emissive mode: colored glowing glass */}
           <meshStandardMaterial
             color={windowLightColor}
             emissive={windowLightColor}
             emissiveIntensity={windowLightIntensity * 0.3}
+            envMapIntensity={0}
           />
         </mesh>
       )}

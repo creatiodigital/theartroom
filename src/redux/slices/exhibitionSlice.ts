@@ -143,6 +143,10 @@ const exhibitionSlice = createSlice({
       state.windowLightIntensity = action.payload
     },
 
+    setWindowTransparency: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
+      state.windowTransparency = action.payload
+    },
+
     setFloorReflectiveness: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
       state.floorReflectiveness = action.payload
     },
@@ -184,6 +188,10 @@ const exhibitionSlice = createSlice({
 
     setHdriEnvironment: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.hdriEnvironment = action.payload
+    },
+
+    setHdriRotation: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.hdriRotation = action.payload
     },
 
     setCeilingLightMode: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
@@ -302,6 +310,7 @@ export const {
   setTrackLampMaterialColor,
   setWindowLightColor,
   setWindowLightIntensity,
+  setWindowTransparency,
   setFloorReflectiveness,
   setFloorMaterial,
   setFloorTextureScale,
@@ -311,6 +320,7 @@ export const {
   setFloorNormalScale,
   setFloorRotation,
   setHdriEnvironment,
+  setHdriRotation,
   setCeilingLightMode,
   setCameraFOV,
   setCameraElevation,

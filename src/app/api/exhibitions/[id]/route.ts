@@ -34,6 +34,8 @@ type ExhibitionUpdateBody = {
   trackLampMaterialColor?: string
   windowLightColor?: string
   windowLightIntensity?: number
+  windowTransparency?: boolean
+  hdriRotation?: number
   floorReflectiveness?: number
   floorMaterial?: string
   floorTextureScale?: number
@@ -145,6 +147,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
+    if (body.windowTransparency !== undefined) data.windowTransparency = body.windowTransparency
+    if (body.hdriRotation !== undefined) data.hdriRotation = body.hdriRotation
     if (body.floorReflectiveness !== undefined) data.floorReflectiveness = body.floorReflectiveness
     if (body.floorMaterial !== undefined) data.floorMaterial = body.floorMaterial
     if (body.floorTextureScale !== undefined) {

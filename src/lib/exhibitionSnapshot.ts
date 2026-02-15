@@ -77,6 +77,8 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       trackLampMaterialColor: exhibitionData.trackLampMaterialColor,
       windowLightColor: exhibitionData.windowLightColor,
       windowLightIntensity: exhibitionData.windowLightIntensity,
+      windowTransparency: exhibitionData.windowTransparency,
+      hdriRotation: exhibitionData.hdriRotation,
       // Floor
       floorReflectiveness: exhibitionData.floorReflectiveness,
       floorMaterial: exhibitionData.floorMaterial,
