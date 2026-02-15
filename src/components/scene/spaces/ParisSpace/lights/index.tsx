@@ -25,28 +25,16 @@ export const Lights = () => {
       <HDRI />
       <ShadowSetup />
 
-      {/* Area lights - positioned for the Paris space */}
+      {/* Ceiling skylight */}
       {ENABLE_AREA_LIGHTS && (
-        <>
-          {/* Ceiling skylight */}
-          <rectAreaLight
-            position={[0, 3.2, 0]}
-            rotation={[-Math.PI / 2, 0, 0]}
-            width={3}
-            height={3}
-            intensity={skylightIntensity}
-            color={skylightColor}
-          />
-          {/* Window light - simulates daylight through window */}
-          <rectAreaLight
-            position={[-3, 1.5, -6.5]}
-            rotation={[0, 0, 0]}
-            width={1.2}
-            height={2.5}
-            intensity={skylightIntensity * 0.8}
-            color={skylightColor}
-          />
-        </>
+        <rectAreaLight
+          position={[0, 3.2, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          width={3}
+          height={3}
+          intensity={skylightIntensity}
+          color={skylightColor}
+        />
       )}
     </>
   )

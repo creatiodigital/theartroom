@@ -24,11 +24,11 @@ import styles from '../RightPanel.module.scss'
 const ArtworkPanel = () => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
-  const sizeLocked = useSelector(
-    (state: RootState) => (currentArtworkId ? state.wallView.sizeLockedById[currentArtworkId] ?? false : false),
+  const sizeLocked = useSelector((state: RootState) =>
+    currentArtworkId ? (state.wallView.sizeLockedById[currentArtworkId] ?? false) : false,
   )
-  const snapEnabled = useSelector(
-    (state: RootState) => (currentArtworkId ? state.wallView.snapEnabledById[currentArtworkId] ?? true : true),
+  const snapEnabled = useSelector((state: RootState) =>
+    currentArtworkId ? (state.wallView.snapEnabledById[currentArtworkId] ?? true) : true,
   )
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
@@ -236,7 +236,8 @@ const ArtworkPanel = () => {
           <Checkbox
             checked={sizeLocked}
             onChange={(e) =>
-              currentArtworkId && dispatch(setSizeLocked({ artworkId: currentArtworkId, value: e.target.checked }))
+              currentArtworkId &&
+              dispatch(setSizeLocked({ artworkId: currentArtworkId, value: e.target.checked }))
             }
             label="Lock proportions when resizing"
           />
@@ -356,7 +357,8 @@ const ArtworkPanel = () => {
           <Checkbox
             checked={snapEnabled}
             onChange={(e) =>
-              currentArtworkId && dispatch(setSnapEnabled({ artworkId: currentArtworkId, value: e.target.checked }))
+              currentArtworkId &&
+              dispatch(setSnapEnabled({ artworkId: currentArtworkId, value: e.target.checked }))
             }
             label="Snap Align"
           />

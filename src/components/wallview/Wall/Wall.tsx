@@ -173,6 +173,23 @@ export const Wall = () => {
     }
   }, [boundingData, dispatch])
 
+  // Recalculate 3D positions for all artworks on this wall when boundingData loads.
+  // This fixes stale posZ3d values from the database by recomputing from 2D coordinates.
+  const hasRecalculated = useRef(false)
+  useEffect(() => {
+    if (!boundingData || !currentWallId || hasRecalculated.current) return
+    hasRecalculated.current = true
+
+    allIds.forEach((id) => {
+      const pos = exhibitionArtworksById[id]
+      if (!pos || pos.wallId !== currentWallId) return
+
+      const new3D = convert2DTo3D(pos.posX2d, pos.posY2d, pos.width2d, pos.height2d, boundingData)
+      dispatch(updateArtworkPosition({ artworkId: id, artworkPosition: { ...new3D } }))
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boundingData, currentWallId])
+
   useEffect(() => {
     if (boundingData && currentArtwork) {
       const new3DCoordinate = convert2DTo3D(

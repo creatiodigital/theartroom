@@ -23,7 +23,9 @@ import {
   setTrackLampMaterialColor,
   setWindowLightColor,
   setWindowLightIntensity,
+  setWindowTransparency,
   setHdriEnvironment,
+  setHdriRotation,
   setCeilingLightMode,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
@@ -44,11 +46,9 @@ const DEFAULT_RECESSED_LAMP_INTENSITY = 4.0
 const DEFAULT_TRACK_LAMP_MATERIAL_COLOR = '#ffffff'
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
+const DEFAULT_HDRI_ROTATION = 128
 
-const HDRI_OPTIONS = [
-  { value: 'soil', label: 'Soil' },
-  { value: 'misty', label: 'Misty' },
-] as const
+const HDRI_OPTIONS = [{ value: 'soil', label: 'Soil' }] as const
 
 const CEILING_LIGHT_OPTIONS = [
   { value: 'track', label: 'Track Lamps' },
@@ -107,8 +107,14 @@ const LightingPanel = () => {
   const windowIntensity = useSelector(
     (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_INTENSITY,
   )
+  const windowTransparency = useSelector(
+    (state: RootState) => state.exhibition.windowTransparency ?? false,
+  )
   const hdriEnvironment = useSelector(
     (state: RootState) => state.exhibition.hdriEnvironment ?? 'soil',
+  )
+  const hdriRotation = useSelector(
+    (state: RootState) => state.exhibition.hdriRotation ?? DEFAULT_HDRI_ROTATION,
   )
 
   // Get features from space config
@@ -155,8 +161,18 @@ const LightingPanel = () => {
     setSaved(false)
   }
 
+  const handleWindowTransparencyChange = () => {
+    dispatch(setWindowTransparency(!windowTransparency))
+    setSaved(false)
+  }
+
   const handleHdriChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setHdriEnvironment(e.target.value))
+    setSaved(false)
+  }
+
+  const handleHdriRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setHdriRotation(parseFloat(e.target.value)))
     setSaved(false)
   }
 
@@ -187,7 +203,9 @@ const LightingPanel = () => {
           trackLampMaterialColor,
           windowLightColor: windowColor,
           windowLightIntensity: windowIntensity,
+          windowTransparency,
           hdriEnvironment,
+          hdriRotation,
           ceilingLightMode,
           // Note: floorReflectiveness is in FloorPanel
         }),
@@ -223,6 +241,22 @@ const LightingPanel = () => {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Rotation</label>
+            <span className={styles.sliderValue}>{hdriRotation.toFixed(0)}°</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value={hdriRotation}
+            onChange={handleHdriRotationChange}
+            className={styles.slider}
+          />
         </div>
       </div>
 
@@ -451,36 +485,54 @@ const LightingPanel = () => {
       {/* Window Light Section - only for spaces with windows */}
       {hasWindows && (
         <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Window Light
-          </Text>
-
-          <div className={styles.field}>
-            <label className={styles.label}>Color</label>
-            <ColorPicker
-              textColor={windowColor}
-              onColorSelect={(color) => {
-                dispatch(setWindowLightColor(color))
-                setSaved(false)
-              }}
-            />
+          <div className={styles.sectionHeader}>
+            <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+              Transparent Window
+            </Text>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                checked={windowTransparency}
+                onChange={handleWindowTransparencyChange}
+              />
+              <span className={styles.toggleSlider} />
+            </label>
           </div>
 
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{windowIntensity.toFixed(2)}</span>
+          {windowTransparency ? (
+            <div className={styles.field}>
+              <label className={styles.label}>Window is transparent — HDRI visible</label>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.1"
-              value={windowIntensity}
-              onChange={handleWindowIntensityChange}
-              className={styles.slider}
-            />
-          </div>
+          ) : (
+            <>
+              <div className={styles.field}>
+                <label className={styles.label}>Color</label>
+                <ColorPicker
+                  textColor={windowColor}
+                  onColorSelect={(color) => {
+                    dispatch(setWindowLightColor(color))
+                    setSaved(false)
+                  }}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <div className={styles.sliderHeader}>
+                  <label className={styles.label}>Intensity</label>
+                  <span className={styles.sliderValue}>{windowIntensity.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={windowIntensity}
+                  onChange={handleWindowIntensityChange}
+                  className={styles.slider}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 

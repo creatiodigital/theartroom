@@ -20,7 +20,9 @@ export const fontWeights: TOption<'regular' | 'bold'>[] = [
   { value: 'bold', label: 'Bold' },
 ]
 
-export const fontFamilies: TOption<'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display'>[] = [
+export const fontFamilies: TOption<
+  'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display'
+>[] = [
   { value: 'roboto', label: 'Roboto' },
   { value: 'lora', label: 'Lora' },
   { value: 'lato', label: 'Lato' },

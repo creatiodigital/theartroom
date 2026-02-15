@@ -129,6 +129,15 @@ export const convert2DTo3D = (
 
   const center3D = boundingBox.getCenter(new Vector3())
 
+  // Snap center to the front face of the placeholder along the normal.
+  // boundingBox.getCenter() returns the volumetric center, which is offset
+  // from the wall surface if the placeholder has geometric depth.
+  // Project to the max extent along the normal (front face = wall surface).
+  const normalVec = new Vector3(normal.x, normal.y, normal.z)
+  const centerDotN = center3D.dot(normalVec)
+  const frontDotN = Math.max(boundingBox.min.dot(normalVec), boundingBox.max.dot(normalVec))
+  center3D.addScaledVector(normalVec, frontDotN - centerDotN)
+
   let posX3d = center3D.x + u.x * xRatio * width + v.x * yRatio * height
   let posY3d = center3D.y + u.y * xRatio * width + v.y * yRatio * height
   let posZ3d = center3D.z + u.z * xRatio * width + v.z * yRatio * height

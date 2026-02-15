@@ -110,6 +110,8 @@ export const ExhibitionEditPage = ({
         trackLampMaterialColor: exhibition.trackLampMaterialColor ?? undefined,
         windowLightColor: exhibition.windowLightColor ?? undefined,
         windowLightIntensity: exhibition.windowLightIntensity ?? undefined,
+        windowTransparency: exhibition.windowTransparency ?? undefined,
+        hdriRotation: exhibition.hdriRotation ?? undefined,
         // Floor customization
         floorReflectiveness: exhibition.floorReflectiveness ?? undefined,
         floorMaterial: exhibition.floorMaterial ?? undefined,
