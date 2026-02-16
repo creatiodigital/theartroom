@@ -62,6 +62,7 @@ export type TArtwork = {
   textAlign?: 'left' | 'right' | 'center'
   textVerticalAlign?: 'top' | 'center' | 'bottom'
   textPadding?: TOption<number>
+  textThickness?: TOption<number>
   featured?: boolean
   hiddenFromExhibition?: boolean
   hideShadow?: boolean

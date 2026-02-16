@@ -37,6 +37,7 @@ const Stencil = ({ artwork }: StencilProps) => {
     fontFamily,
     letterSpacing,
     textPadding,
+    textThickness,
     showArtworkInformation,
   } = artwork
 
@@ -132,10 +133,10 @@ const Stencil = ({ artwork }: StencilProps) => {
   )
 
   const fontSizeFactor = 0.01
-  // Convert textPadding (pixels) to 3D units
-  // Both sides: (padding * 2) / 100 = padding offset in 3D space
+  // Convert textPadding (pixels) to 3D units using the same scale factor as fontSize
   const textPaddingValue = textPadding?.value ?? 12
-  const paddingOffset = (textPaddingValue * 2) / 100
+  const padding3D = textPaddingValue * fontSizeFactor
+  const paddingOffset = padding3D * 2  // total padding on both sides
 
   const fontMap = {
     roboto: {
@@ -202,9 +203,9 @@ const Stencil = ({ artwork }: StencilProps) => {
   const getAnchorX = (align: typeof textAlign, planeW: number): number => {
     switch (align) {
       case 'left':
-        return -planeW / 2 + planeW
+        return -planeW / 2 + planeW - padding3D
       case 'right':
-        return planeW / 2 - planeW + textWidth
+        return planeW / 2 - planeW + textWidth + padding3D
       case 'center':
         return textWidth / 2
       default:
@@ -218,13 +219,13 @@ const Stencil = ({ artwork }: StencilProps) => {
     const halfPlane = planeH / 2
     switch (vAlign) {
       case 'top':
-        return halfPlane // Position at top of plane
+        return halfPlane - padding3D // Position at top of plane, inset by padding
       case 'center':
         return textHeight / 2 // Center based on actual text height
       case 'bottom':
-        return -halfPlane + textHeight // Position at bottom
+        return -halfPlane + textHeight + padding3D // Position at bottom, inset by padding
       default:
-        return halfPlane
+        return halfPlane - padding3D
     }
   }
 
@@ -236,13 +237,24 @@ const Stencil = ({ artwork }: StencilProps) => {
       onPointerUp={handlePointerUp}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Background plane - shown when textBackgroundColor is set or no text content (placeholder) */}
-      {(textBackgroundColor || !textContent) && (
-        <mesh renderOrder={1}>
-          <planeGeometry args={[planeWidth, planeHeight]} />
-          <meshBasicMaterial color={textBackgroundColor ?? 'white'} side={DoubleSide} />
-        </mesh>
-      )}
+      {/* Background - box with depth when textThickness > 0, flat plane otherwise */}
+      {(textBackgroundColor || !textContent) && (() => {
+        const cardDepth = Math.min(5, Math.max(0, textThickness?.value ?? 0)) / 100
+        if (cardDepth > 0) {
+          return (
+            <mesh renderOrder={1} position={[0, 0, -cardDepth / 2]}>
+              <boxGeometry args={[planeWidth, planeHeight, cardDepth]} />
+              <meshStandardMaterial color={textBackgroundColor ?? 'white'} roughness={1.0} />
+            </mesh>
+          )
+        }
+        return (
+          <mesh renderOrder={1}>
+            <planeGeometry args={[planeWidth, planeHeight]} />
+            <meshBasicMaterial color={textBackgroundColor ?? 'white'} side={DoubleSide} />
+          </mesh>
+        )
+      })()}
 
       {textContent && fontSize?.value && (
         <mesh

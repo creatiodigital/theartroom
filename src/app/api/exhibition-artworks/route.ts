@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
         textAlign?: string
         textVerticalAlign?: string
         textPadding?: number
+        textThickness?: number
       }>
     }
 
@@ -216,6 +217,7 @@ export async function POST(request: NextRequest) {
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 12,
+            textThickness: pos.textThickness ?? 0,
           },
           update: {
             wallId: pos.wallId,
@@ -255,6 +257,7 @@ export async function POST(request: NextRequest) {
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 12,
+            textThickness: pos.textThickness ?? 0,
           },
         }),
       ),
