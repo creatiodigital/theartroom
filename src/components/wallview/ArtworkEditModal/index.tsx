@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useDispatch } from 'react-redux'
 
 import { ErrorText } from '@/components/ui/ErrorText'
+import { Icon } from '@/components/ui/Icon'
 import { closeArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import { editArtwork } from '@/redux/slices/artworkSlice'
 import {
@@ -250,7 +251,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         <div className={styles.modal}>
           <header className={styles.header}>
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
+              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
             </button>
           </header>
           <div className={styles.content}>Loading...</div>
@@ -265,7 +266,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         <div className={styles.modal}>
           <header className={styles.header}>
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
+              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
             </button>
           </header>
           <div className={styles.content}>
@@ -281,7 +282,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       <div className={styles.modal}>
         <header className={styles.header}>
           <button onClick={handleClose} className={styles.closeButton}>
-            CLOSE <span className={styles.closeIcon}>×</span>
+            CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
           </button>
         </header>
         <div className={styles.content}>

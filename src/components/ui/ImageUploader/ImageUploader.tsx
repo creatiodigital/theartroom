@@ -5,6 +5,7 @@ import type { ChangeEvent, DragEvent } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 
 import styles from './ImageUploader.module.scss'
@@ -136,7 +137,7 @@ export const ImageUploader = ({
               disabled={uploading}
               aria-label="Remove image"
             >
-              ×
+              <Icon name="close" size={16} />
             </button>
           )}
           {uploading && (

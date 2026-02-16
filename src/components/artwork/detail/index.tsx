@@ -9,6 +9,7 @@ import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 import { ImageMagnifier } from '@/components/ui/ImageMagnifier'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import Logo from '@/icons/logo.svg'
@@ -83,7 +84,7 @@ export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPagePr
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
+              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
             </button>
           </header>
           <div className={styles.content}>
@@ -99,7 +100,7 @@ export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPagePr
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
+              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
             </button>
           </header>
           <div className={styles.content}>
@@ -115,7 +116,7 @@ export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPagePr
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}>×</span>
+              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
             </button>
           </header>
 

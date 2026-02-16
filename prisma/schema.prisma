@@ -94,6 +94,7 @@ model ArtworkPreset {
   textAlign           String  @default("left")
   textVerticalAlign   String  @default("top")
   textPadding         Float   @default(12)
+  textThickness       Float   @default(0) // Card depth in cm (0-5), only when background color is set
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -240,6 +241,7 @@ model ExhibitionArtwork {
   textAlign           String  @default("left")
   textVerticalAlign   String  @default("top")
   textPadding         Float   @default(12) // Padding in pixels
+  textThickness       Float   @default(0) // Card depth in cm (0-5), only when background color is set
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

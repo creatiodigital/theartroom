@@ -5,6 +5,7 @@ import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Icon } from '@/components/ui/Icon'
 import { Text } from '@/components/ui/Typography'
 import { Modal } from '@/components/ui/Modal'
 
@@ -205,7 +206,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                 Send an inquiry
               </Text>
               <button onClick={onClose} className={styles.closeButton}>
-                CLOSE <span className={styles.closeIcon}>×</span>
+                CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
               </button>
             </div>
 

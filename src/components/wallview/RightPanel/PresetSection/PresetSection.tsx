@@ -50,6 +50,7 @@ type TPreset = {
   textAlign: string
   textVerticalAlign: string
   textPadding: number
+  textThickness: number
 }
 
 type PresetSectionProps = {
@@ -168,6 +169,10 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
         typeof artwork.textPadding === 'object'
           ? (artwork.textPadding?.value ?? 12)
           : (artwork.textPadding ?? 12)
+      props.textThickness =
+        typeof artwork.textThickness === 'object'
+          ? (artwork.textThickness?.value ?? 0)
+          : (artwork.textThickness ?? 0)
     }
 
     return props
@@ -296,6 +301,10 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       applyProp('textAlign', preset.textAlign as TArtwork['textAlign'])
       applyProp('textVerticalAlign', preset.textVerticalAlign as TArtwork['textVerticalAlign'])
       applyProp('textPadding', { label: String(preset.textPadding), value: preset.textPadding })
+      applyProp('textThickness', {
+        label: String(preset.textThickness),
+        value: preset.textThickness,
+      })
     }
   }
 
