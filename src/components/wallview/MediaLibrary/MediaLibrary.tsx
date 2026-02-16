@@ -72,7 +72,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
           Media Library
         </Text>
         <button className={styles.closeButton} onClick={onClose}>
-          ×
+          <Icon name="close" size={18} />
         </button>
       </div>
 

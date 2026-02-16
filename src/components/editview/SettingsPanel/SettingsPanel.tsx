@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 
 import { Text } from '@/components/ui/Typography'
+import { Icon } from '@/components/ui/Icon'
 
 import styles from './SettingsPanel.module.scss'
 
@@ -13,7 +14,7 @@ type SettingsPanelProps = {
 }
 
 const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
-  const panelRef = useRef(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   return (
     <div
@@ -21,6 +22,7 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
       className={styles.panel}
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
     >
       <div className={styles.header}>
         <Text font="dashboard" as="h2" className={styles.title}>
@@ -28,7 +30,7 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
         </Text>
         {onClose && (
           <button className={styles.closeButton} onClick={onClose} aria-label="Close panel">
-            ✕
+            <Icon name="close" size={18} />
           </button>
         )}
       </div>

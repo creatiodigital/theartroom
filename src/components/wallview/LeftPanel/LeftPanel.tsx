@@ -87,6 +87,12 @@ export const LeftPanel = () => {
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // When editing text in a contentEditable element, let the browser's
+      // native undo/redo handle typing changes instead of our global handler
+      if (e.target instanceof HTMLElement && e.target.isContentEditable) {
+        return
+      }
+
       // Check for Cmd+Z (Mac) or Ctrl+Z (Windows)
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         if (e.shiftKey) {

@@ -4,7 +4,7 @@ import { exhibitionFactory } from '@/factories/exhibitionFactory'
 import type { TArtworkPosition } from '@/types/artwork'
 import type { TExhibition } from '@/types/exhibition'
 
-const HISTORY_LIMIT = 5
+const HISTORY_LIMIT = 20
 
 // Extended state type to include snapshot and history
 type TExhibitionWithHistory = TExhibition & {

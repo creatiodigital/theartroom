@@ -130,7 +130,7 @@ function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink }: SortableAr
                   }
                   title={`Remove from ${ea.exhibition.mainTitle}`}
                 >
-                  ×
+                  <Icon name="close" size={14} />
                 </button>
               </span>
             ))}
