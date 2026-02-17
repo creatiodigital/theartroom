@@ -129,7 +129,7 @@ export const Wall = () => {
           handleAddExistingArtworkDrag(existingArtworkId, x, y)
         }
         // Handle new artwork creation
-        else if (artworkType === 'image' || artworkType === 'text') {
+        else if (artworkType === 'image' || artworkType === 'text' || artworkType === 'sound') {
           handleCreateArtworkDrag(artworkType, x, y)
         }
       }

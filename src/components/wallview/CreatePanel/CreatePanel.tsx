@@ -91,6 +91,20 @@ export const CreatePanel = () => {
               onDragStart={(e) => handleArtworkDragStart(e, 'text')}
             />
           </Tooltip>
+          <Tooltip
+            label="Click to create sound in the middle of the wall, or drag and drop anywhere on the wall"
+            placement="top"
+            offset={16}
+          >
+            <Button
+              size="big"
+              icon="volume-2"
+              variant="secondary"
+              onClick={() => handleCreateArtwork('sound')}
+              draggable
+              onDragStart={(e) => handleArtworkDragStart(e, 'sound')}
+            />
+          </Tooltip>
         </div>
       </div>
     </>

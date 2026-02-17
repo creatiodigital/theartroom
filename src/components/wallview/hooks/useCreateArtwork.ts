@@ -17,7 +17,8 @@ import type { TDimensions } from '@/types/geometry'
 
 export const useCreateArtwork = (boundingData: TDimensions) => {
   const dispatch = useDispatch()
-  const initialSize = 100
+
+  const sizeForType = (type: TArtworkKind) => (type === 'sound' ? 40 : 100)
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
@@ -27,8 +28,9 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
     (artworkType: TArtworkKind) => {
       if (!boundingData || !wallWidth || !wallHeight) return
 
-      const posX2d = (wallWidth * 100) / 2 - initialSize / 2
-      const posY2d = (wallHeight * 100) / 2 - initialSize / 2
+      const size = sizeForType(artworkType)
+      const posX2d = (wallWidth * 100) / 2 - size / 2
+      const posY2d = (wallHeight * 100) / 2 - size / 2
 
       const artworkId = uuidv4()
 
@@ -39,7 +41,7 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
       dispatch(removeGroup())
       dispatch(addArtworkToGroup(artworkId))
 
-      const new3DCoordinate = convert2DTo3D(posX2d, posY2d, initialSize, initialSize, boundingData)
+      const new3DCoordinate = convert2DTo3D(posX2d, posY2d, size, size, boundingData)
 
       const artworkPosition: TArtworkPosition = {
         id: artworkId,
@@ -47,22 +49,23 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
         wallId: currentWallId!,
         posX2d,
         posY2d,
-        width2d: initialSize,
-        height2d: initialSize,
+        width2d: size,
+        height2d: size,
         ...new3DCoordinate,
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
     },
-    [boundingData, wallWidth, wallHeight, dispatch, currentWallId, initialSize],
+    [boundingData, wallWidth, wallHeight, dispatch, currentWallId],
   )
 
   const handleCreateArtworkDrag = useCallback(
     (artworkType: TArtworkKind, posX2d: number, posY2d: number) => {
       if (!boundingData) return
 
-      const adjustedX = posX2d - initialSize / 2
-      const adjustedY = posY2d - initialSize / 2
+      const size = sizeForType(artworkType)
+      const adjustedX = posX2d - size / 2
+      const adjustedY = posY2d - size / 2
 
       const artworkId = uuidv4()
 
@@ -76,8 +79,8 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
       const new3DCoordinate = convert2DTo3D(
         adjustedX,
         adjustedY,
-        initialSize,
-        initialSize,
+        size,
+        size,
         boundingData,
       )
 
@@ -87,14 +90,14 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
         wallId: currentWallId ?? '',
         posX2d: adjustedX,
         posY2d: adjustedY,
-        width2d: initialSize,
-        height2d: initialSize,
+        width2d: size,
+        height2d: size,
         ...new3DCoordinate,
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
     },
-    [boundingData, dispatch, currentWallId, initialSize],
+    [boundingData, dispatch, currentWallId],
   )
 
   return useMemo(
@@ -105,3 +108,4 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
     [handleCreateArtwork, handleCreateArtworkDrag],
   )
 }
+

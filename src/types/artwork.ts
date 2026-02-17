@@ -3,7 +3,7 @@ export type { TFontFamily, TFontWeight, TTextAlign, TOption } from '@/types/font
 
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
-export type TArtworkKind = 'image' | 'text'
+export type TArtworkKind = 'image' | 'text' | 'sound'
 
 export type TArtworkPosition = {
   id?: string
@@ -66,4 +66,13 @@ export type TArtwork = {
   featured?: boolean
   hiddenFromExhibition?: boolean
   hideShadow?: boolean
+  // Sound artwork settings (exhibition-level)
+  soundUrl?: string // URL of the audio file
+  soundIcon?: string // Lucide icon name to display
+  soundPlayMode?: 'loop' | 'play-once' // Playback mode
+  soundSpatial?: boolean // 3D spatial audio
+  soundDistance?: number // Reference distance for spatial audio falloff
+  soundBackgroundColor?: string | null // Background color of the sound object
+  soundIconColor?: string // Icon color
+  soundIconSize?: number // Icon size (px in 2D)
 }

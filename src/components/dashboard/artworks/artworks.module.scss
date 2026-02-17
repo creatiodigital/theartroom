@@ -187,6 +187,15 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+
+  &.soundPlayable {
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: var(--color-border-default);
+    }
+  }
 }
 
 .cardInfo {

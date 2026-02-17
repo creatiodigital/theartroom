@@ -21,6 +21,7 @@ type ExhibitionArtworkResponse = {
     description: string | null
     imageUrl: string | null
     textContent: string | null // Fixed text content
+    soundUrl: string | null
     originalWidth: number | null
     originalHeight: number | null
   }
@@ -61,6 +62,14 @@ type ExhibitionArtworkResponse = {
   textAlign: string
   textVerticalAlign: string
   textPadding: number
+  // Sound styling (per-exhibition)
+  soundIcon: string
+  soundBackgroundColor: string | null
+  soundIconColor: string
+  soundIconSize: number
+  soundPlayMode: string
+  soundSpatial: boolean
+  soundDistance: number
 }
 
 /**
@@ -135,7 +144,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
           const artwork: TArtwork = {
             id: ea.artworkId,
             name: ea.artwork.name,
-            artworkType: ea.artwork.artworkType as 'image' | 'text',
+            artworkType: ea.artwork.artworkType as 'image' | 'text' | 'sound',
             artworkTitle: ea.artwork.title || undefined,
             author: ea.artwork.author || undefined,
             artworkYear: ea.artwork.year || undefined,
@@ -146,6 +155,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             originalWidth: ea.artwork.originalWidth ?? undefined,
             originalHeight: ea.artwork.originalHeight ?? undefined,
             textContent: ea.artwork.textContent || undefined, // Fixed content from Artwork
+            soundUrl: ea.artwork.soundUrl || undefined,
             // Display properties from ExhibitionArtwork (per-exhibition)
             showFrame: ea.showFrame,
             frameColor: ea.frameColor,
@@ -192,6 +202,14 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             textAlign: ea.textAlign as 'left' | 'center' | 'right',
             textVerticalAlign: ea.textVerticalAlign as 'top' | 'center' | 'bottom',
             textPadding: { label: String(ea.textPadding ?? 12), value: ea.textPadding ?? 12 },
+            // Sound styling from ExhibitionArtwork (per-exhibition)
+            soundIcon: ea.soundIcon ?? 'volume-2',
+            soundBackgroundColor: ea.soundBackgroundColor ?? undefined,
+            soundIconColor: ea.soundIconColor ?? '#000000',
+            soundIconSize: ea.soundIconSize ?? 24,
+            soundPlayMode: (ea.soundPlayMode ?? 'play-once') as 'loop' | 'play-once',
+            soundSpatial: ea.soundSpatial ?? true,
+            soundDistance: ea.soundDistance ?? 5,
           }
 
           dispatch(restoreArtwork(artwork))
