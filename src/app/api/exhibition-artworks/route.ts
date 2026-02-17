@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
                 ...art,
                 // Override with live metadata
                 name: live.name,
+                artworkType: live.artworkType,
                 title: live.title,
                 author: live.author,
                 year: live.year,
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
                 description: live.description,
                 imageUrl: live.imageUrl,
                 textContent: live.textContent,
+                soundUrl: live.soundUrl,
                 originalWidth: live.originalWidth,
                 originalHeight: live.originalHeight,
               },

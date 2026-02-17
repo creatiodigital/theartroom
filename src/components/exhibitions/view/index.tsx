@@ -4,7 +4,7 @@ import { useProgress } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, Touchpad, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, Touchpad, Volume2, X } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Monogram from '@/icons/monogram.svg'
@@ -254,6 +254,17 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                 </span>
                 <Text as="span" size="sm">
                   Show artwork details
+                </Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">
+                    Double Click
+                  </Text>
+                </span>
+                <Text as="span" size="sm">
+                  Play sound
                 </Text>
               </div>
             </div>
