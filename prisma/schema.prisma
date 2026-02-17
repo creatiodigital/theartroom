@@ -162,6 +162,8 @@ model Exhibition {
   recessedLampColor      String?  @default("#ffffff")
   recessedLampIntensity  Float?   @default(4.0)
   trackLampMaterialColor String?  @default("#ffffff")
+  trackLampAngle         Float?   @default(0.45)
+  trackLampDistance      Float?   @default(5.0)
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)

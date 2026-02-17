@@ -17,6 +17,7 @@ import type { RootState } from '@/redux/store'
 interface RecessedLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
   count?: number
+  disableSpotlights?: boolean
 }
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
@@ -65,7 +66,7 @@ const RecessedSpotlight: React.FC<{
  * Bulb color/intensity controlled by recessedLampColor/recessedLampIntensity.
  * A spotlight is placed at each bulb position, pointing downward.
  */
-const RecessedLamp: React.FC<RecessedLampProps> = ({ nodes, count = 6 }) => {
+const RecessedLamp: React.FC<RecessedLampProps> = ({ nodes, count = 6, disableSpotlights = false }) => {
   const tintedPlastic = useAmbientLightColor('#ffffff')
 
   const lampColor = useSelector(
@@ -135,7 +136,7 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({ nodes, count = 6 }) => {
             )}
 
             {/* Spotlight pointing downward */}
-            {bulbNode && (
+            {bulbNode && !disableSpotlights && (
               <RecessedSpotlight
                 position={bulbPos}
                 color={lampColor}

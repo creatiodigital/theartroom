@@ -1,4 +1,4 @@
-import { useGLTF, useTexture } from '@react-three/drei'
+import { useGLTF, useTexture, SoftShadows, BakeShadows, Preload } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh, BufferGeometry, MeshStandardMaterial, SRGBColorSpace, Color } from 'three'
@@ -18,6 +18,7 @@ import { Switch } from '@/components/scene/spaces/objects/Switch'
 import { TrackLamp } from '@/components/scene/spaces/objects/TrackLamp'
 import { Wall } from '@/components/scene/spaces/objects/Wall'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
+
 import { useAmbientLight } from '@/hooks/useAmbientLight'
 import { addWall } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
@@ -109,6 +110,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   return (
     <group {...props} dispose={null}>
       <Lights />
+      <SoftShadows size={10} samples={16} focus={0} />
+      <BakeShadows />
       <Effects enabled={true} />
 
       {/* Floor */}
@@ -148,6 +151,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         glassRefs={glassRefs}
       />
 
+
       {/* Door */}
       <Door nodes={nodes} doorFrameRef={wallRefs[1]} doorMainRef={wallRefs[2]} />
 
@@ -159,8 +163,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         <TrackLamp nodes={nodes} count={14} />
       )}
 
-      {/* Recessed Lamps - visible only in 'track-plafond' mode */}
-      {ceilingLightMode === 'track-plafond' && <RecessedLamp nodes={nodes} count={6} />}
+      {/* Recessed Lamps - visible only in 'track-plafond' mode, spotlights disabled when track lamps present */}
+      {ceilingLightMode === 'track-plafond' && <RecessedLamp nodes={nodes} count={6} disableSpotlights />}
 
       {/* Round Lamps - visible only in 'plafond' mode */}
       {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={15} />}
@@ -177,6 +181,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
 
       {/* Artworks */}
       <ArtObjects />
+
+      <Preload all />
     </group>
   )
 }
