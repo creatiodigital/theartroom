@@ -9,6 +9,7 @@ import { openArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
 import { ArtisticImagePanel } from './ArtisticImagePanel'
+import { ArtisticSoundPanel } from './ArtisticSoundPanel'
 import { ArtisticTextPanel } from './ArtisticTextPanel'
 import { ArtworkPanel } from './ArtworkPanel'
 import { GroupPanel } from './GroupPanel'
@@ -74,6 +75,7 @@ const RightPanel = () => {
             <ArtworkPanel />
             {artworkType === 'image' && <ArtisticImagePanel />}
             {artworkType === 'text' && <ArtisticTextPanel />}
+            {artworkType === 'sound' && <ArtisticSoundPanel />}
 
             <div className={styles.editButtonWrapper}>
               <Tooltip

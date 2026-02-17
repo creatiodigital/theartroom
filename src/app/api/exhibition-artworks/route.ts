@@ -136,6 +136,14 @@ export async function POST(request: NextRequest) {
         textVerticalAlign?: string
         textPadding?: number
         textThickness?: number
+        // Sound styling (per-exhibition)
+        soundIcon?: string
+        soundBackgroundColor?: string | null
+        soundIconColor?: string
+        soundIconSize?: number
+        soundPlayMode?: string
+        soundSpatial?: boolean
+        soundDistance?: number
       }>
     }
 
@@ -218,6 +226,14 @@ export async function POST(request: NextRequest) {
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 12,
             textThickness: pos.textThickness ?? 0,
+            // Sound styling
+            soundIcon: pos.soundIcon ?? 'volume-2',
+            soundBackgroundColor: pos.soundBackgroundColor ?? null,
+            soundIconColor: pos.soundIconColor ?? '#000000',
+            soundIconSize: pos.soundIconSize ?? 24,
+            soundPlayMode: pos.soundPlayMode ?? 'play-once',
+            soundSpatial: pos.soundSpatial ?? true,
+            soundDistance: pos.soundDistance ?? 5,
           },
           update: {
             wallId: pos.wallId,
@@ -258,6 +274,14 @@ export async function POST(request: NextRequest) {
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 12,
             textThickness: pos.textThickness ?? 0,
+            // Sound styling
+            soundIcon: pos.soundIcon ?? 'volume-2',
+            soundBackgroundColor: pos.soundBackgroundColor ?? null,
+            soundIconColor: pos.soundIconColor ?? '#000000',
+            soundIconSize: pos.soundIconSize ?? 24,
+            soundPlayMode: pos.soundPlayMode ?? 'play-once',
+            soundSpatial: pos.soundSpatial ?? true,
+            soundDistance: pos.soundDistance ?? 5,
           },
         }),
       ),

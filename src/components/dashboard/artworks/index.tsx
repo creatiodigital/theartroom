@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -60,6 +60,7 @@ type Artwork = {
   technique: string | null
   imageUrl: string | null
   textContent: string | null
+  soundUrl: string | null
   createdAt: string
   order?: number
   exhibitionArtworks: ExhibitionArtwork[]
@@ -70,9 +71,12 @@ type SortableArtworkCardProps = {
   onEdit: (id: string) => void
   onDelete: (id: string, name: string) => void
   onUnlink: (exhibitionArtworkId: string, artworkName: string, exhibitionTitle: string) => void
+  playingArtworkId: string | null
+  onTogglePlay: (artworkId: string, soundUrl: string) => void
 }
 
-function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink }: SortableArtworkCardProps) {
+function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink, playingArtworkId, onTogglePlay }: SortableArtworkCardProps) {
+  const isPlaying = playingArtworkId === artwork.id
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: artwork.id,
   })
@@ -102,6 +106,24 @@ function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink }: SortableAr
           />
         ) : artwork.artworkType === 'text' && artwork.textContent ? (
           <div className={styles.textPreview}>{truncateText(artwork.textContent, 100)}</div>
+        ) : artwork.artworkType === 'sound' ? (
+          <div
+            className={`${styles.placeholder} ${artwork.soundUrl ? styles.soundPlayable : ''}`}
+            onClick={(e) => {
+              if (artwork.soundUrl) {
+                e.stopPropagation()
+                onTogglePlay(artwork.id, artwork.soundUrl)
+              }
+            }}
+            role={artwork.soundUrl ? 'button' : undefined}
+            tabIndex={artwork.soundUrl ? 0 : undefined}
+          >
+            <Icon
+              name={isPlaying ? 'square' : artwork.soundUrl ? 'play' : 'volume-2'}
+              size={32}
+              color={isPlaying ? '#e53e3e' : artwork.soundUrl ? '#333' : '#666'}
+            />
+          </div>
         ) : (
           <div className={styles.placeholder}>
             <Icon
@@ -164,9 +186,49 @@ export const ArtworkLibraryPage = () => {
     exhibitionTitle: string
   } | null>(null)
   const [unlinking, setUnlinking] = useState(false)
-  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // Sound preview playback
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [playingArtworkId, setPlayingArtworkId] = useState<string | null>(null)
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
+  const handleTogglePlay = useCallback((artworkId: string, soundUrl: string) => {
+    // If the same artwork is already playing, stop it
+    if (audioRef.current && playingArtworkId === artworkId) {
+      audioRef.current.pause()
+      audioRef.current = null
+      setPlayingArtworkId(null)
+      return
+    }
+
+    // Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+
+    // Play the new sound
+    const audio = new Audio(soundUrl)
+    audio.addEventListener('ended', () => {
+      setPlayingArtworkId(null)
+      audioRef.current = null
+    })
+    audio.play()
+    audioRef.current = audio
+    setPlayingArtworkId(artworkId)
+  }, [playingArtworkId])
 
   // DnD sensors
   const sensors = useSensors(
@@ -344,6 +406,13 @@ export const ArtworkLibraryPage = () => {
           >
             Text
           </button>
+          <button
+            type="button"
+            className={`${styles.filterTag} ${typeFilter === 'sound' ? styles.active : ''}`}
+            onClick={() => setTypeFilter('sound')}
+          >
+            Sound
+          </button>
         </div>
         <div className={styles.searchRow}>
           <Input
@@ -385,6 +454,8 @@ export const ArtworkLibraryPage = () => {
                   onEdit={(id) => router.push(`/dashboard/artworks/${id}/edit`)}
                   onDelete={handleDeleteClick}
                   onUnlink={handleUnlinkClick}
+                  playingArtworkId={playingArtworkId}
+                  onTogglePlay={handleTogglePlay}
                 />
               ))}
             </div>

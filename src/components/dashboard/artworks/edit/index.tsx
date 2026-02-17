@@ -37,6 +37,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   // Track if user wants to remove the original image (only delete on save)
   const [pendingImageRemoval, setPendingImageRemoval] = useState(false)
 
+  // Sound state (sound uploads are immediate, not deferred)
+  const [soundUrl, setSoundUrl] = useState<string | null>(null)
+  const [soundUploading, setSoundUploading] = useState(false)
+
   // Cleanup preview URL when component unmounts or file changes
   useEffect(() => {
     return () => {
@@ -67,6 +71,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
         setArtwork(data)
         setOriginalImageUrl(data.imageUrl)
+        setSoundUrl(data.soundUrl || null)
         setFormData(populateFormData(data))
       } catch {
         setError('Failed to load artwork')
@@ -178,6 +183,51 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   // Determine what image URL to display
   const displayImageUrl = pendingFile ? previewUrl : pendingImageRemoval ? null : originalImageUrl
 
+  // Sound upload (immediate - no deferred save needed)
+  const handleSoundUpload = useCallback(async (file: File) => {
+    setSoundUploading(true)
+    try {
+      const uploadFormData = new FormData()
+      uploadFormData.append('sound', file)
+
+      const response = await fetch(`/api/artworks/${artworkId}/sound`, {
+        method: 'POST',
+        body: uploadFormData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to upload sound')
+        return
+      }
+
+      const data = await response.json()
+      setSoundUrl(data.url)
+    } catch {
+      setError('Failed to upload sound')
+    } finally {
+      setSoundUploading(false)
+    }
+  }, [artworkId])
+
+  const handleSoundRemove = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/artworks/${artworkId}/sound`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to remove sound')
+        return
+      }
+
+      setSoundUrl(null)
+    } catch {
+      setError('Failed to remove sound')
+    }
+  }, [artworkId])
+
   if (loading) {
     return (
       <DashboardLayout backLink={backLink} backLabel="← Back to Library">
@@ -199,12 +249,16 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
       <ArtworkEditForm
         formData={formData}
         imageUrl={displayImageUrl}
-        uploading={false}
+        soundUrl={soundUrl}
+        uploading={soundUploading}
+        loadingText="Uploading sound..."
         saving={saving}
         error={error}
         onFormChange={handleChange}
         onImageUpload={handleImageUpload}
         onImageRemove={handleRemoveImage}
+        onSoundUpload={handleSoundUpload}
+        onSoundRemove={handleSoundRemove}
         onSubmit={handleSubmit}
         onCancel={() => router.push(backLink)}
       />

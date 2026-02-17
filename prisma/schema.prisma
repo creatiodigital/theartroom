@@ -117,6 +117,7 @@ model Artwork {
   originalWidth        Int? // Original image width in pixels
   originalHeight       Int? // Original image height in pixels
   textContent          String? // Fixed text content for stencil/text artworks
+  soundUrl             String? // Audio file URL for sound artworks
   featured             Boolean @default(false)
   hiddenFromExhibition Boolean @default(false)
   order                Int     @default(0)
@@ -242,6 +243,15 @@ model ExhibitionArtwork {
   textVerticalAlign   String  @default("top")
   textPadding         Float   @default(12) // Padding in pixels
   textThickness       Float   @default(0) // Card depth in cm (0-5), only when background color is set
+
+  // Sound styling (per-exhibition customization)
+  soundIcon            String  @default("volume-2")
+  soundBackgroundColor String?
+  soundIconColor       String  @default("#000000")
+  soundIconSize        Int     @default(24)
+  soundPlayMode        String  @default("play-once")
+  soundSpatial         Boolean @default(true)
+  soundDistance        Float   @default(5)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

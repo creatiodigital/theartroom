@@ -32,6 +32,8 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
   const [isRemoving, setIsRemoving] = useState(false)
   const [error, setError] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [soundUrl, setSoundUrl] = useState<string | null>(null)
+  const [soundUploading, setSoundUploading] = useState(false)
   const [formData, setFormData] = useState<ArtworkFormData>(getInitialFormData())
 
   // Fetch artwork
@@ -55,6 +57,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
 
         setArtwork(data)
         setImageUrl(data.imageUrl)
+        setSoundUrl(data.soundUrl || null)
         setFormData(populateFormData(data))
       } catch {
         setError('Failed to load artwork')
@@ -226,6 +229,51 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
     }
   }, [artworkId, imageUrl, dispatch])
 
+  // Sound upload (immediate)
+  const handleSoundUpload = useCallback(async (file: File) => {
+    setSoundUploading(true)
+    setError('')
+    try {
+      const uploadFormData = new FormData()
+      uploadFormData.append('sound', file)
+      const response = await fetch(`/api/artworks/${artworkId}/sound`, {
+        method: 'POST',
+        body: uploadFormData,
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to upload sound')
+        return
+      }
+      const data = await response.json()
+      setSoundUrl(data.url)
+      // Sync with Redux so the 3D scene updates
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'soundUrl', value: data.url }))
+    } catch {
+      setError('Failed to upload sound')
+    } finally {
+      setSoundUploading(false)
+    }
+  }, [artworkId, dispatch])
+
+  const handleSoundRemove = useCallback(async () => {
+    setError('')
+    try {
+      const response = await fetch(`/api/artworks/${artworkId}/sound`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to remove sound')
+        return
+      }
+      setSoundUrl(null)
+      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'soundUrl', value: undefined }))
+    } catch {
+      setError('Failed to remove sound')
+    }
+  }, [artworkId, dispatch])
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -289,13 +337,16 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
           <ArtworkEditForm
             formData={formData}
             imageUrl={imageUrl}
-            uploading={uploading || isRemoving}
-            loadingText={isRemoving ? 'Removing...' : 'Uploading...'}
+            soundUrl={soundUrl}
+            uploading={uploading || isRemoving || soundUploading}
+            loadingText={soundUploading ? 'Uploading sound...' : isRemoving ? 'Removing...' : 'Uploading...'}
             saving={saving}
             error={error}
             onFormChange={handleChange}
             onImageUpload={handleImageUpload}
             onImageRemove={handleRemoveImage}
+            onSoundUpload={handleSoundUpload}
+            onSoundRemove={handleSoundRemove}
             onSubmit={handleSubmit}
             onCancel={handleClose}
           />

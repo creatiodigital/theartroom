@@ -31,7 +31,8 @@ const Select = <T extends string | number = string | number>({
   const currentOption =
     options.find((opt) => opt.value === value) ?? ({ label: '', value: '' as T } as SelectOption<T>)
 
-  const handleSelect = (option: SelectOption<T>) => {
+  const handleSelect = (option: SelectOption<T>, e: React.MouseEvent) => {
+    e.stopPropagation()
     setIsOpen(false)
     onChange(option.value)
   }
@@ -57,7 +58,7 @@ const Select = <T extends string | number = string | number>({
       {isOpen && (
         <ul className={styles.dropdown}>
           {options.map((option) => (
-            <li key={option.value} className={styles.option} onClick={() => handleSelect(option)}>
+            <li key={option.value} className={styles.option} onClick={(e) => handleSelect(option, e)}>
               {option.label}
             </li>
           ))}

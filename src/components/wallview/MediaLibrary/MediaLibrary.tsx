@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 
 import { Icon } from '@/components/ui/Icon'
@@ -17,6 +17,7 @@ type Artwork = {
   artworkType: string
   imageUrl?: string | null
   textContent?: string | null
+  soundUrl?: string | null
 }
 
 const truncateText = (text: string, maxLength: number) => {
@@ -65,6 +66,46 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
     e.dataTransfer.setData('existingArtworkType', artwork.artworkType)
   }
 
+  // Sound preview playback (single audio at a time)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [playingId, setPlayingId] = useState<string | null>(null)
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
+  const handleTogglePlay = useCallback((artworkId: string, soundUrl: string) => {
+    // Same sound — stop it
+    if (audioRef.current && playingId === artworkId) {
+      audioRef.current.pause()
+      audioRef.current = null
+      setPlayingId(null)
+      return
+    }
+
+    // Stop any current sound
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+
+    // Play new sound (no loop)
+    const audio = new Audio(soundUrl)
+    audio.addEventListener('ended', () => {
+      setPlayingId(null)
+      audioRef.current = null
+    })
+    audio.play()
+    audioRef.current = audio
+    setPlayingId(artworkId)
+  }, [playingId])
+
   return (
     <div className={styles.sidebar} data-no-deselect="true">
       <div className={styles.header}>
@@ -109,6 +150,22 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                   <span className={styles.textPreview}>
                     {truncateText(artwork.textContent, 50)}
                   </span>
+                ) : artwork.artworkType === 'sound' ? (
+                  <div
+                    className={`${styles.soundPlayBtn} ${artwork.soundUrl ? styles.playable : ''}`}
+                    onClick={(e) => {
+                      if (artwork.soundUrl) {
+                        e.stopPropagation()
+                        handleTogglePlay(artwork.id, artwork.soundUrl)
+                      }
+                    }}
+                  >
+                    <Icon
+                      name={playingId === artwork.id ? 'square' : artwork.soundUrl ? 'play' : 'volume-2'}
+                      size={32}
+                      color={playingId === artwork.id ? '#e53e3e' : '#333'}
+                    />
+                  </div>
                 ) : (
                   <Icon
                     name={artwork.artworkType === 'image' ? 'image' : 'type'}

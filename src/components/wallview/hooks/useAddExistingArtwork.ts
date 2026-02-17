@@ -16,7 +16,8 @@ import type { TDimensions } from '@/types/geometry'
 
 export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
   const dispatch = useDispatch()
-  const initialSize = 100
+
+  const sizeForType = (type: string) => (type === 'sound' ? 40 : 100)
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
@@ -50,14 +51,15 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       }
       const artworkData = await response.json()
 
-      const posX2d = (wallWidth * 100) / 2 - initialSize / 2
-      const posY2d = (wallHeight * 100) / 2 - initialSize / 2
+      const size = sizeForType(artworkData.artworkType)
+      const posX2d = (wallWidth * 100) / 2 - size / 2
+      const posY2d = (wallHeight * 100) / 2 - size / 2
 
       // Restore artwork to Redux with full data
       const artwork: TArtwork = {
         id: artworkData.id,
         name: artworkData.name,
-        artworkType: artworkData.artworkType as 'image' | 'text',
+        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound',
         artworkTitle: artworkData.title || undefined,
         author: artworkData.author || undefined,
         artworkYear: artworkData.year || undefined,
@@ -66,6 +68,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         imageUrl: artworkData.imageUrl || undefined,
         // Text-specific core content
         textContent: artworkData.textContent || undefined,
+        // Sound-specific
+        soundUrl: artworkData.soundUrl || undefined,
       }
 
       dispatch(restoreArtwork(artwork))
@@ -74,7 +78,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       dispatch(removeGroup())
       dispatch(addArtworkToGroup(artworkId))
 
-      const new3DCoordinate = convert2DTo3D(posX2d, posY2d, initialSize, initialSize, boundingData)
+      const new3DCoordinate = convert2DTo3D(posX2d, posY2d, size, size, boundingData)
 
       const artworkPosition: TArtworkPosition = {
         id: artworkId,
@@ -82,8 +86,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         wallId: currentWallId,
         posX2d,
         posY2d,
-        width2d: initialSize,
-        height2d: initialSize,
+        width2d: size,
+        height2d: size,
         ...new3DCoordinate,
       }
 
@@ -96,7 +100,6 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       wallHeight,
       dispatch,
       currentWallId,
-      initialSize,
       isArtworkInExhibition,
     ],
   )
@@ -120,14 +123,15 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       }
       const artworkData = await response.json()
 
-      const adjustedX = posX2d - initialSize / 2
-      const adjustedY = posY2d - initialSize / 2
+      const size = sizeForType(artworkData.artworkType)
+      const adjustedX = posX2d - size / 2
+      const adjustedY = posY2d - size / 2
 
       // Restore artwork to Redux with full data
       const artwork: TArtwork = {
         id: artworkData.id,
         name: artworkData.name,
-        artworkType: artworkData.artworkType as 'image' | 'text',
+        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound',
         artworkTitle: artworkData.title || undefined,
         author: artworkData.author || undefined,
         artworkYear: artworkData.year || undefined,
@@ -136,6 +140,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         imageUrl: artworkData.imageUrl || undefined,
         // Text-specific core content
         textContent: artworkData.textContent || undefined,
+        // Sound-specific
+        soundUrl: artworkData.soundUrl || undefined,
       }
 
       dispatch(restoreArtwork(artwork))
@@ -147,8 +153,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       const new3DCoordinate = convert2DTo3D(
         adjustedX,
         adjustedY,
-        initialSize,
-        initialSize,
+        size,
+        size,
         boundingData,
       )
 
@@ -158,15 +164,15 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         wallId: currentWallId,
         posX2d: adjustedX,
         posY2d: adjustedY,
-        width2d: initialSize,
-        height2d: initialSize,
+        width2d: size,
+        height2d: size,
         ...new3DCoordinate,
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
       return true
     },
-    [boundingData, dispatch, currentWallId, initialSize, isArtworkInExhibition],
+    [boundingData, dispatch, currentWallId, isArtworkInExhibition],
   )
 
   return {
@@ -175,3 +181,4 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
     isArtworkInExhibition,
   }
 }
+
