@@ -18,6 +18,8 @@ import {
   setCeilingLampIntensity,
   setTrackLampColor,
   setTrackLampIntensity,
+  setTrackLampAngle,
+  setTrackLampDistance,
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,
@@ -44,6 +46,8 @@ const DEFAULT_TRACK_LAMP_INTENSITY = 4.0
 const DEFAULT_RECESSED_LAMP_COLOR = '#ffffff'
 const DEFAULT_RECESSED_LAMP_INTENSITY = 4.0
 const DEFAULT_TRACK_LAMP_MATERIAL_COLOR = '#ffffff'
+const DEFAULT_TRACK_LAMP_ANGLE = 0.45
+const DEFAULT_TRACK_LAMP_DISTANCE = 5.0
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
 const DEFAULT_HDRI_ROTATION = 128
@@ -98,6 +102,12 @@ const LightingPanel = () => {
     (state: RootState) =>
       state.exhibition.trackLampMaterialColor ?? DEFAULT_TRACK_LAMP_MATERIAL_COLOR,
   )
+  const trackLampAngle = useSelector(
+    (state: RootState) => state.exhibition.trackLampAngle ?? DEFAULT_TRACK_LAMP_ANGLE,
+  )
+  const trackLampDistance = useSelector(
+    (state: RootState) => state.exhibition.trackLampDistance ?? DEFAULT_TRACK_LAMP_DISTANCE,
+  )
   const ceilingLightMode = useSelector(
     (state: RootState) => state.exhibition.ceilingLightMode ?? 'track-plafond',
   )
@@ -146,6 +156,16 @@ const LightingPanel = () => {
   // Track lamp handlers
   const handleTrackLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setTrackLampIntensity(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
+  const handleTrackLampAngleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setTrackLampAngle(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
+  const handleTrackLampDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setTrackLampDistance(parseFloat(e.target.value)))
     setSaved(false)
   }
 
@@ -198,6 +218,8 @@ const LightingPanel = () => {
           ceilingLampIntensity: lampIntensity,
           trackLampColor,
           trackLampIntensity,
+          trackLampAngle,
+          trackLampDistance,
           recessedLampColor,
           recessedLampIntensity,
           trackLampMaterialColor,
@@ -419,6 +441,38 @@ const LightingPanel = () => {
               step="0.1"
               value={trackLampIntensity}
               onChange={handleTrackLampIntensityChange}
+              className={styles.slider}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Angle</label>
+              <span className={styles.sliderValue}>{(trackLampAngle * (180 / Math.PI)).toFixed(0)}°</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1.2"
+              step="0.05"
+              value={trackLampAngle}
+              onChange={handleTrackLampAngleChange}
+              className={styles.slider}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Distance</label>
+              <span className={styles.sliderValue}>{trackLampDistance.toFixed(1)}m</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              step="0.5"
+              value={trackLampDistance}
+              onChange={handleTrackLampDistanceChange}
               className={styles.slider}
             />
           </div>

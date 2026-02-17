@@ -135,6 +135,14 @@ const exhibitionSlice = createSlice({
       state.trackLampMaterialColor = action.payload
     },
 
+    setTrackLampAngle: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.trackLampAngle = Math.max(0.1, Math.min(1.2, action.payload))
+    },
+
+    setTrackLampDistance: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.trackLampDistance = Math.max(1, Math.min(10, action.payload))
+    },
+
     setWindowLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.windowLightColor = action.payload
     },
@@ -308,6 +316,8 @@ export const {
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,
+  setTrackLampAngle,
+  setTrackLampDistance,
   setWindowLightColor,
   setWindowLightIntensity,
   setWindowTransparency,

@@ -32,6 +32,8 @@ type ExhibitionUpdateBody = {
   recessedLampColor?: string
   recessedLampIntensity?: number
   trackLampMaterialColor?: string
+  trackLampAngle?: number
+  trackLampDistance?: number
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
@@ -144,6 +146,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.recessedLampIntensity = body.recessedLampIntensity
     if (body.trackLampMaterialColor !== undefined)
       data.trackLampMaterialColor = body.trackLampMaterialColor
+    if (body.trackLampAngle !== undefined)
+      data.trackLampAngle = Math.max(0.1, Math.min(1.2, body.trackLampAngle))
+    if (body.trackLampDistance !== undefined)
+      data.trackLampDistance = Math.max(1, Math.min(10, body.trackLampDistance))
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
