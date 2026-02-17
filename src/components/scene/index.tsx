@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { Stats } from '@react-three/drei'
+
 import { useRef, Suspense } from 'react'
 import { NoToneMapping, Mesh } from 'three'
 import { useSelector } from 'react-redux'
@@ -61,7 +61,7 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
                 toneMapping: NoToneMapping,
               }}
             >
-              <Stats />
+
               <WebGLMonitor exhibitionUrl={exhibitionUrl} />
               <Suspense fallback={hideLoader ? null : <Loader />}>
                 <group>
