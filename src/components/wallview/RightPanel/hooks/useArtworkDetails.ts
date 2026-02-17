@@ -51,6 +51,13 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       featured: false,
       hiddenFromExhibition: false,
       hideShadow: false,
+      soundIcon: 'volume-2',
+      soundPlayMode: 'play-once' as const,
+      soundSpatial: true,
+      soundBackgroundColor: '#ffffff',
+      soundIconColor: '#000000',
+      soundIconSize: 24,
+      soundUrl: '',
       width: 0,
       height: 0,
       fromTop: 0,
@@ -96,6 +103,14 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     hiddenFromExhibition,
     hideShadow,
     imageUrl,
+    soundIcon,
+    soundPlayMode,
+    soundSpatial,
+    soundDistance,
+    soundBackgroundColor,
+    soundIconColor,
+    soundIconSize,
+    soundUrl,
   } = artwork
 
   // Wall dimensions in 2D scale (meters * 100)
@@ -153,5 +168,13 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     hiddenFromExhibition,
     hideShadow: hideShadow ?? false,
     imageUrl,
+    soundIcon: soundIcon ?? 'volume-2',
+    soundPlayMode: soundPlayMode ?? 'play-once',
+    soundSpatial: soundSpatial ?? true,
+    soundDistance: soundDistance ?? 5,
+    soundBackgroundColor: soundBackgroundColor,
+    soundIconColor: soundIconColor ?? '#000000',
+    soundIconSize: soundIconSize ?? 24,
+    soundUrl: soundUrl ?? '',
   }
 }

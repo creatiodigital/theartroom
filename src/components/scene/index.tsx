@@ -5,7 +5,9 @@ import { useRef, Suspense } from 'react'
 import { NoToneMapping, Mesh } from 'three'
 import { useSelector } from 'react-redux'
 
+import { Icon } from '@/components/ui/Icon'
 import { Loader } from '@/components/ui/Loader'
+import { SceneAudioProvider, useSceneAudio } from '@/contexts/SceneAudioContext'
 import SceneContext from '@/contexts/SceneContext'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -22,6 +24,18 @@ interface SceneProps {
   hideLoader?: boolean
 }
 
+const FloatingStopButton = () => {
+  const { playingId, stop } = useSceneAudio()
+
+  if (!playingId) return null
+
+  return (
+    <button className={styles.stopButton} onClick={stop} title="Stop sound">
+      <Icon name="square" size={14} color="#000000" />
+    </button>
+  )
+}
+
 export const Scene = ({ hideLoader }: SceneProps = {}) => {
   const wallRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const windowRefs = useRef<React.RefObject<Mesh | null>[]>([])
@@ -35,28 +49,31 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
   const artworks: TArtwork[] = []
 
   return (
-    <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
-      <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
-        <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
-          <Canvas
-            shadows={false}
-            gl={{
-              antialias: false,
-              toneMapping: NoToneMapping,
-            }}
-          >
-            <WebGLMonitor exhibitionUrl={exhibitionUrl} />
-            <Suspense fallback={hideLoader ? null : <Loader />}>
-              <group>
-                <Controls />
-                <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
-                <HumanReference />
-                <FurnitureReference />
-              </group>
-            </Suspense>
-          </Canvas>
-        </SceneErrorBoundary>
-      </div>
-    </SceneContext.Provider>
+    <SceneAudioProvider>
+      <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
+        <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
+          <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
+            <Canvas
+              shadows={false}
+              gl={{
+                antialias: false,
+                toneMapping: NoToneMapping,
+              }}
+            >
+              <WebGLMonitor exhibitionUrl={exhibitionUrl} />
+              <Suspense fallback={hideLoader ? null : <Loader />}>
+                <group>
+                  <Controls />
+                  <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
+                  <HumanReference />
+                  <FurnitureReference />
+                </group>
+              </Suspense>
+            </Canvas>
+          </SceneErrorBoundary>
+          <FloatingStopButton />
+        </div>
+      </SceneContext.Provider>
+    </SceneAudioProvider>
   )
 }

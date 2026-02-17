@@ -98,8 +98,17 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       try {
         await del(artwork.imageUrl)
       } catch (error) {
-        console.warn('Failed to delete blob:', error)
+        console.warn('Failed to delete image blob:', error)
         // Continue anyway - blob might not exist
+      }
+    }
+
+    // Delete associated sound blob if exists
+    if (artwork.soundUrl) {
+      try {
+        await del(artwork.soundUrl)
+      } catch (error) {
+        console.warn('Failed to delete sound blob:', error)
       }
     }
 

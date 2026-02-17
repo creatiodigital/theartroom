@@ -1,11 +1,15 @@
 'use client'
 
+import { useRef, useState, useCallback } from 'react'
+import type { ChangeEvent, DragEvent } from 'react'
+
+import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
+import { Icon } from '@/components/ui/Icon'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { Button } from '@/components/ui/Button'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import styles from './ArtworkEditForm.module.scss'
@@ -36,6 +40,7 @@ export type Artwork = {
   description: string | null
   imageUrl: string | null
   textContent: string | null
+  soundUrl: string | null
   featured: boolean
   hiddenFromExhibition: boolean
 }
@@ -85,6 +90,7 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
 type ArtworkEditFormProps = {
   formData: ArtworkFormData
   imageUrl: string | null
+  soundUrl?: string | null
   uploading: boolean
   loadingText?: string
   saving: boolean
@@ -92,6 +98,8 @@ type ArtworkEditFormProps = {
   onFormChange: (field: string, value: string | boolean) => void
   onImageUpload: (file: File) => Promise<void>
   onImageRemove: () => void | Promise<void>
+  onSoundUpload?: (file: File) => Promise<void>
+  onSoundRemove?: () => void | Promise<void>
   onSubmit: (e: React.FormEvent) => void
   onCancel: () => void
 }
@@ -99,6 +107,7 @@ type ArtworkEditFormProps = {
 export const ArtworkEditForm = ({
   formData,
   imageUrl,
+  soundUrl,
   uploading,
   loadingText = 'Uploading...',
   saving,
@@ -106,9 +115,47 @@ export const ArtworkEditForm = ({
   onFormChange,
   onImageUpload,
   onImageRemove,
+  onSoundUpload,
+  onSoundRemove,
   onSubmit,
   onCancel,
 }: ArtworkEditFormProps) => {
+  const soundInputRef = useRef<HTMLInputElement>(null)
+  const [isDraggingSound, setIsDraggingSound] = useState(false)
+  const [soundSizeError, setSoundSizeError] = useState<string | null>(null)
+
+  const ALLOWED_SOUND_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/wav', 'audio/x-wav', 'audio/aac', 'audio/flac']
+  const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
+
+  const handleSoundFileSelect = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && onSoundUpload) {
+      if (file.size > MAX_SOUND_SIZE) {
+        setSoundSizeError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 3MB.`)
+        if (soundInputRef.current) soundInputRef.current.value = ''
+        return
+      }
+      setSoundSizeError(null)
+      await onSoundUpload(file)
+    }
+    if (soundInputRef.current) soundInputRef.current.value = ''
+  }, [onSoundUpload])
+
+  const handleSoundDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingSound(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file && ALLOWED_SOUND_TYPES.includes(file.type) && onSoundUpload) {
+      if (file.size > MAX_SOUND_SIZE) {
+        setSoundSizeError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 3MB.`)
+        return
+      }
+      setSoundSizeError(null)
+      await onSoundUpload(file)
+    }
+  }, [onSoundUpload])
+
   return (
     <>
       {/* Page Title */}
@@ -132,6 +179,78 @@ export const ArtworkEditForm = ({
           />
           <span className={dashboardStyles.hint}>
             Accepted: JPG, PNG, WebP, GIF (max 1MB). Images are automatically optimized.
+          </span>
+        </div>
+      )}
+
+      {/* Sound Upload Section - only for sound type */}
+      {formData.artworkType === 'sound' && (
+        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+          <h3 className={dashboardStyles.sectionTitle}>Audio File</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Upload an audio file. This sound will be playable in exhibitions.
+          </p>
+
+          <input
+            ref={soundInputRef}
+            type="file"
+            accept="audio/mpeg,audio/mp4,audio/ogg,audio/webm,audio/wav,audio/x-wav,audio/aac,audio/flac"
+            onChange={handleSoundFileSelect}
+            className={styles.hiddenInput}
+          />
+
+          {soundUrl ? (
+            <div className={styles.soundPreview}>
+              <div className={styles.soundInfo}>
+                <Icon name="volume-2" size={24} color="#333" />
+                <audio controls src={soundUrl} className={styles.audioPlayer}>
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+              {onSoundRemove && (
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label="Remove"
+                  onClick={() => onSoundRemove()}
+                  type="button"
+                />
+              )}
+            </div>
+          ) : (
+            <div
+              className={`${styles.soundDropzone} ${isDraggingSound ? styles.dragging : ''}`}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingSound(true) }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingSound(false) }}
+              onDrop={handleSoundDrop}
+              onClick={() => soundInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && soundInputRef.current?.click()}
+            >
+              {uploading ? (
+                <span className={styles.uploadingText}>{loadingText}</span>
+              ) : (
+                <>
+                  <Button
+                    font="dashboard"
+                    variant="primary"
+                    label="Select an Audio File"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      soundInputRef.current?.click()
+                    }}
+                    type="button"
+                  />
+                  <span className={styles.dropText}>or drag and drop files</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {soundSizeError && <div className={styles.sizeError}>{soundSizeError}</div>}
+          <span className={dashboardStyles.hint}>
+            Accepted: MP3, M4A, OGG, WebM, WAV, AAC, FLAC (max 3MB).
           </span>
         </div>
       )}
@@ -164,12 +283,12 @@ export const ArtworkEditForm = ({
             id="artworkType"
             type="text"
             size="medium"
-            value={formData.artworkType === 'image' ? 'Image' : 'Text'}
+            value={formData.artworkType === 'image' ? 'Image' : formData.artworkType === 'sound' ? 'Sound' : 'Text'}
             onChange={() => {}}
             variant="disabled"
           />
           <span className={dashboardStyles.hint}>
-            Image for visual artworks, Text for written content.
+            Image for visual artworks, Text for written content, Sound for audio.
           </span>
         </div>
 

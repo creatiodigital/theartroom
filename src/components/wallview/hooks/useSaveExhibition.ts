@@ -229,6 +229,14 @@ export const useSaveExhibition = () => {
             textVerticalAlign: artwork.textVerticalAlign ?? 'top',
             textPadding: artwork.textPadding?.value ?? 12,
             textThickness: artwork.textThickness?.value ?? 0,
+            // Sound styling (per-exhibition)
+            soundIcon: artwork.soundIcon ?? 'volume-2',
+            soundBackgroundColor: artwork.soundBackgroundColor ?? null,
+            soundIconColor: artwork.soundIconColor ?? '#000000',
+            soundIconSize: artwork.soundIconSize ?? 24,
+            soundPlayMode: artwork.soundPlayMode ?? 'play-once',
+            soundSpatial: artwork.soundSpatial ?? true,
+            soundDistance: artwork.soundDistance ?? 5,
           }
         })
 
