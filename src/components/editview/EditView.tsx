@@ -8,6 +8,7 @@ import { FloorPanel } from '@/components/editview/FloorPanel'
 import FurniturePanel from '@/components/editview/FurniturePanel/FurniturePanel'
 import HumanPanel from '@/components/editview/HumanPanel/HumanPanel'
 import { LightingPanel } from '@/components/editview/LightingPanel'
+import WallCeilingPanel from '@/components/editview/WallCeilingPanel/WallCeilingPanel'
 import { Scene } from '@/components/scene'
 import { WallView } from '@/components/wallview'
 import type { RootState } from '@/redux/store'
@@ -34,6 +35,9 @@ function EditView() {
   const isFurniturePanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isFurniturePanelOpen,
   )
+  const isWallCeilingPanelOpen: boolean = useSelector(
+    (state: RootState) => state.dashboard.isWallCeilingPanelOpen,
+  )
 
   return (
     <>
@@ -47,6 +51,7 @@ function EditView() {
           {isCameraPanelOpen && <CameraPanel />}
           {isHumanPanelOpen && <HumanPanel />}
           {isFurniturePanelOpen && <FurniturePanel />}
+          {isWallCeilingPanelOpen && <WallCeilingPanel />}
         </div>
       )}
       {isWallView && <WallView />}

@@ -139,6 +139,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         benchPositionX: snapshotExhibition.benchPositionX,
         benchPositionZ: snapshotExhibition.benchPositionZ,
         benchRotationY: snapshotExhibition.benchRotationY,
+        // Wall & Ceiling
+        wallColor: snapshotExhibition.wallColor,
+        ceilingColor: snapshotExhibition.ceilingColor,
         // Artworks from snapshot
         exhibitionArtworks: snapshotArtworks,
         artworks,

@@ -187,6 +187,9 @@ model Exhibition {
   benchPositionX         Float?   @default(0)
   benchPositionZ         Float?   @default(0)
   benchRotationY         Float?   @default(0)
+  // Wall & Ceiling customization
+  wallColor              String?  @default("#ffffff")
+  ceilingColor           String?  @default("#ffffff")
 
   exhibitionArtworks ExhibitionArtwork[]
 
