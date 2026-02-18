@@ -54,4 +54,7 @@ export type TExhibition = {
   benchPositionX?: number
   benchPositionZ?: number
   benchRotationY?: number
+  // Wall & Ceiling customization
+  wallColor?: string
+  ceilingColor?: string
 }

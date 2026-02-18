@@ -15,6 +15,8 @@ import {
   hideHumanPanel,
   showFurniturePanel,
   hideFurniturePanel,
+  showWallCeilingPanel,
+  hideWallCeilingPanel,
 } from '@/redux/slices/dashboardSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
@@ -32,6 +34,9 @@ export const Menu = () => {
   const isHumanPanelOpen = useSelector((state: RootState) => state.dashboard.isHumanPanelOpen)
   const isFurniturePanelOpen = useSelector(
     (state: RootState) => state.dashboard.isFurniturePanelOpen,
+  )
+  const isWallCeilingPanelOpen = useSelector(
+    (state: RootState) => state.dashboard.isWallCeilingPanelOpen,
   )
 
   const togglePlaceholders = () => {
@@ -51,6 +56,7 @@ export const Menu = () => {
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showHumanPanel())
     }
   }
@@ -66,6 +72,7 @@ export const Menu = () => {
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showFurniturePanel())
     }
   }
@@ -79,6 +86,7 @@ export const Menu = () => {
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
       if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showLightingPanel())
     }
   }
@@ -92,6 +100,7 @@ export const Menu = () => {
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
       if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showFloorPanel())
     }
   }
@@ -105,7 +114,21 @@ export const Menu = () => {
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
       if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showCameraPanel())
+    }
+  }
+
+  const toggleWallCeilingPanel = () => {
+    if (isWallCeilingPanelOpen) {
+      dispatch(hideWallCeilingPanel())
+    } else {
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isHumanPanelOpen) dispatch(hideHumanPanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+      dispatch(showWallCeilingPanel())
     }
   }
 
@@ -148,6 +171,9 @@ export const Menu = () => {
         <Button size="regular" variant="secondary" icon="armchair" onClick={toggleFurniturePanel} />
       </Tooltip>
       */}
+      <Tooltip label="Walls and Ceiling" placement="right">
+        <Button size="regular" variant="secondary" icon="house" onClick={toggleWallCeilingPanel} />
+      </Tooltip>
       <Tooltip label="Floor controls" placement="right">
         <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
       </Tooltip>

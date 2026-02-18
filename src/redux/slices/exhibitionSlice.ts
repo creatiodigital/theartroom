@@ -216,6 +216,15 @@ const exhibitionSlice = createSlice({
       state.cameraElevation = Math.max(1.5, Math.min(1.7, action.payload))
     },
 
+    // Wall & Ceiling customization
+    setWallColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.wallColor = action.payload
+    },
+
+    setCeilingColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      state.ceilingColor = action.payload
+    },
+
     // Furniture actions
     setBenchVisible: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
       state.benchVisible = action.payload
@@ -334,6 +343,8 @@ export const {
   setCeilingLightMode,
   setCameraFOV,
   setCameraElevation,
+  setWallColor,
+  setCeilingColor,
   setBenchVisible,
   setBenchPositionX,
   setBenchPositionZ,

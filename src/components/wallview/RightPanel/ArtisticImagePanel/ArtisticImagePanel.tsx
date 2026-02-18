@@ -84,7 +84,9 @@ const ArtisticImage = () => {
         </Tooltip>
       </div>
 
-      <PresetSection presetType="image" />
+      <div className={styles.section}>
+        <PresetSection presetType="image" />
+      </div>
 
       {/* SUPPORT Section - on top */}
       <div className={styles.section}>
