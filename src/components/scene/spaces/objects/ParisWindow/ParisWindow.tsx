@@ -42,12 +42,13 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
 
   return (
     <>
-      {/* Window Glass - only render when NOT transparent */}
-      {nodes.windowGlass0 && !windowTransparency && (
+      {/* Window Glass - always render for collision, hide visually when transparent */}
+      {nodes.windowGlass0 && (
         <mesh
           ref={glassRefs?.[0]}
           name="windowGlass0"
           geometry={nodes.windowGlass0.geometry}
+          visible={!windowTransparency}
           position={[
             nodes.windowGlass0.position.x,
             nodes.windowGlass0.position.y,

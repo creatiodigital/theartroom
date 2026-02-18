@@ -94,6 +94,9 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       // Camera
       cameraFOV: exhibitionData.cameraFOV,
       cameraElevation: exhibitionData.cameraElevation,
+      // Wall & Ceiling
+      wallColor: exhibitionData.wallColor,
+      ceilingColor: exhibitionData.ceilingColor,
     },
     artworks: exhibitionArtworks.map((ea) => ({
       id: ea.id,

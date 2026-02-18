@@ -56,6 +56,9 @@ type ExhibitionUpdateBody = {
   benchPositionX?: number
   benchPositionZ?: number
   benchRotationY?: number
+  // Wall & Ceiling
+  wallColor?: string
+  ceilingColor?: string
 }
 
 /* ------------------------ GET ------------------------ */
@@ -194,6 +197,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.benchRotationY !== undefined) {
       data.benchRotationY = ((body.benchRotationY % 360) + 360) % 360
     }
+    // Wall & Ceiling
+    if (body.wallColor !== undefined) data.wallColor = body.wallColor
+    if (body.ceilingColor !== undefined) data.ceilingColor = body.ceilingColor
 
     // --- Draft/Publish logic ---
     if (body.published === true) {

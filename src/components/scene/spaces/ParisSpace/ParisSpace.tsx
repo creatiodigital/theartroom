@@ -55,6 +55,14 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   // Ambient light for wall/ceiling tinting
   const { ambientColor, scale } = useAmbientLight()
 
+  // Independent wall & ceiling colors
+  const wallColor = useSelector(
+    (state: RootState) => state.exhibition.wallColor ?? '#ffffff',
+  )
+  const ceilingColor = useSelector(
+    (state: RootState) => state.exhibition.ceilingColor ?? '#ffffff',
+  )
+
   // Load external baked textures
   const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWall8.jpg')
   const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeiling9.jpg')
@@ -86,13 +94,13 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     })
   }, [ceilingTexture])
 
-  // Apply ambient light tinting
+  // Apply ambient light tinting + independent wall/ceiling color
   useEffect(() => {
-    const color = new Color(ambientColor)
-    color.multiplyScalar(scale)
-    wallMaterial.color = color
-    ceilingMaterial.color = color
-  }, [wallMaterial, ceilingMaterial, ambientColor, scale])
+    const ambientTint = new Color(ambientColor).multiplyScalar(scale)
+
+    wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+  }, [wallMaterial, ceilingMaterial, ambientColor, scale, wallColor, ceilingColor])
 
   // Arrays for iterating over indexed meshes
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
