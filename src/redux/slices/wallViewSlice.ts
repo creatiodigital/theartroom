@@ -58,7 +58,7 @@ const wallViewSlice = createSlice({
       const W = 3000 // wrapper size in px – matches the CSS
       const oldScale = state.scaleFactor
       const newScale =
-        direction === 'in' ? Math.min(oldScale + 0.02, 4) : Math.max(oldScale - 0.02, 0.64)
+        direction === 'in' ? Math.min(oldScale + 0.02, 6) : Math.max(oldScale - 0.02, 0.64)
 
       if (newScale === oldScale) return
 
