@@ -47,7 +47,6 @@ const Artwork = memo(
     const dispatch = useDispatch()
 
     const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
-    const isShiftKeyDown = useSelector((state: RootState) => state.wallView.isShiftKeyDown)
     const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
     const exhibitionArtworksById = useSelector(
       (state: RootState) => state.exhibition.exhibitionArtworksById,
@@ -83,8 +82,11 @@ const Artwork = memo(
     const handleArtworkClick = (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
 
-      if (isShiftKeyDown) {
-        // Shift+click: add to group (multi-select)
+      if (event.shiftKey) {
+        // Shift+click: add currently selected artwork AND clicked artwork to group
+        if (currentArtworkId) {
+          handleAddArtworkToGroup(currentArtworkId)
+        }
         handleAddArtworkToGroup(id)
       } else {
         // Regular click: select only this artwork and clear any group

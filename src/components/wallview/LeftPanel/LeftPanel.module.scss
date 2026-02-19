@@ -73,6 +73,9 @@
 }
 
 .artwork {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--color-text-primary);
   margin: 0 0 10px 0;
 }

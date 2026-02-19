@@ -186,11 +186,13 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const currentWidth = currentEdited.width2d
     const newX = x + (currentWidth - newWidth) / 2
 
+    const new3DCoordinate = convert2DTo3D(newX, currentEdited.posY2d, newWidth, currentEdited.height2d, boundingData)
+
     dispatch(pushToHistory()) // Save state before width change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
-        artworkPosition: { width2d: newWidth, posX2d: newX },
+        artworkPosition: { width2d: newWidth, posX2d: newX, ...new3DCoordinate },
       }),
     )
   }
@@ -204,11 +206,13 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const currentHeight = currentEdited.height2d
     const newY = y + (currentHeight - newHeight) / 2
 
+    const new3DCoordinate = convert2DTo3D(currentEdited.posX2d, newY, currentEdited.width2d, newHeight, boundingData)
+
     dispatch(pushToHistory()) // Save state before height change
     dispatch(
       updateArtworkPosition({
         artworkId: currentArtworkId,
-        artworkPosition: { height2d: newHeight, posY2d: newY },
+        artworkPosition: { height2d: newHeight, posY2d: newY, ...new3DCoordinate },
       }),
     )
   }

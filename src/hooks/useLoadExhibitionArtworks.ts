@@ -62,6 +62,7 @@ type ExhibitionArtworkResponse = {
   textAlign: string
   textVerticalAlign: string
   textPadding: number
+  textThickness: number
   // Sound styling (per-exhibition)
   soundIcon: string
   soundBackgroundColor: string | null
@@ -201,7 +202,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             textBackgroundColor: ea.textBackgroundColor ?? undefined,
             textAlign: ea.textAlign as 'left' | 'center' | 'right',
             textVerticalAlign: ea.textVerticalAlign as 'top' | 'center' | 'bottom',
-            textPadding: { label: String(ea.textPadding ?? 12), value: ea.textPadding ?? 12 },
+            textPadding: { label: String(ea.textPadding ?? 0), value: ea.textPadding ?? 0 },
+            textThickness: { label: String(ea.textThickness ?? 0), value: ea.textThickness ?? 0 },
             // Sound styling from ExhibitionArtwork (per-exhibition)
             soundIcon: ea.soundIcon ?? 'volume-2',
             soundBackgroundColor: ea.soundBackgroundColor ?? undefined,

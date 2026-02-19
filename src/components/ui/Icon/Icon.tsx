@@ -59,6 +59,7 @@ import Preview from '@/icons/preview.svg'
 import Reset from '@/icons/reset.svg'
 import TextCenter from '@/icons/text-center.svg'
 import TextLeft from '@/icons/text-left.svg'
+import TextJustify from '@/icons/text-justify.svg'
 import TextRight from '@/icons/text-right.svg'
 import TextVerticalBottom from '@/icons/text-vertical-bottom.svg'
 import TextVerticalCenter from '@/icons/text-vertical-center.svg'
@@ -136,6 +137,7 @@ const customIcons: Record<string, CustomSvgIcon> = {
   textLeft: TextLeft,
   textCenter: TextCenter,
   textRight: TextRight,
+  textJustify: TextJustify,
   textVerticalTop: TextVerticalTop,
   textVerticalCenter: TextVerticalCenter,
   textVerticalBottom: TextVerticalBottom,

@@ -100,7 +100,8 @@ export const CenterPanel = () => {
         onClick={handleDeselect}
         style={{
           transform: `translate(${panPosition.x}%, ${panPosition.y}%) scale(${scaleFactor || 1})`,
-        }}
+          '--scale-factor': String(scaleFactor || 1),
+        } as React.CSSProperties}
       >
         <Wall />
       </div>

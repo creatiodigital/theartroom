@@ -2,7 +2,7 @@
 
 .selectionBox {
   position: absolute;
-  border: 1px dashed var(--color-accent);
+  border: calc(1px / var(--scale-factor, 1)) dashed var(--color-accent);
   background-color: var(--borderBlueLight);
   opacity: 0.8;
   pointer-events: none;

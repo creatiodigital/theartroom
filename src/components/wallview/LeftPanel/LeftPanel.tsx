@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
@@ -384,6 +385,13 @@ export const LeftPanel = () => {
                   })}
                   style={{ cursor: 'pointer' }}
                 >
+                  <span style={{ flexShrink: 0, opacity: 0.5, display: 'inline-flex', width: 16, justifyContent: 'center' }}>
+                    <Icon
+                      name={artwork.artworkType === 'sound' ? 'volume-2' : artwork.artworkType === 'text' ? 'type' : 'image'}
+                      size={14}
+                      color="currentColor"
+                    />
+                  </span>
                   <Text as="span" font="dashboard" size="sm">
                     {artwork.artworkTitle || artwork.name}
                   </Text>

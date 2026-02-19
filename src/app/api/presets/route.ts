@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         textBackgroundColor: body.textBackgroundColor ?? null,
         textAlign: body.textAlign ?? 'left',
         textVerticalAlign: body.textVerticalAlign ?? 'top',
-        textPadding: body.textPadding != null ? Number(body.textPadding) : 12,
+        textPadding: body.textPadding != null ? Number(body.textPadding) : 0,
         textThickness: body.textThickness != null ? Number(body.textThickness) : 0,
       },
     })
