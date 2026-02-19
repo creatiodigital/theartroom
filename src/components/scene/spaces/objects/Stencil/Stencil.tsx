@@ -206,6 +206,7 @@ const Stencil = ({ artwork }: StencilProps) => {
   const getAnchorX = (align: typeof textAlign, planeW: number): number => {
     switch (align) {
       case 'left':
+      case 'justify':
         return -planeW / 2 + planeW - padding3D
       case 'right':
         return planeW / 2 - planeW + textWidth + padding3D
