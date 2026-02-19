@@ -62,8 +62,8 @@ export const Wall = () => {
   const alignedPairs = useSelector((state: RootState) => state.wallView.alignedPairs)
   const dispatch = useDispatch()
   const scaling = 100
-  const humanHeight = 180
-  const humanWidth = 70
+  const humanHeight = 170
+  const humanWidth = 66
 
   const wallRef = useRef<HTMLDivElement>(null!)
   const preventClick = useRef(false)

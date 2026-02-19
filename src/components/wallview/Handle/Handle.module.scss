@@ -2,35 +2,35 @@
 
 .handle {
   position: absolute;
-  width: var(--space-2);
-  height: var(--space-2);
+  width: calc(var(--space-2) / var(--scale-factor, 1));
+  height: calc(var(--space-2) / var(--scale-factor, 1));
   background-color: var(--color-white);
-  border: 1px solid var(--color-accent);
+  border: calc(1px / var(--scale-factor, 1)) solid var(--color-accent);
   cursor: default;
   z-index: 20;
 }
 
 // Corner handles
 .top-left {
-  top: -4px;
-  left: -4px;
+  top: calc(-4px / var(--scale-factor, 1));
+  left: calc(-4px / var(--scale-factor, 1));
   cursor: nwse-resize;
 }
 
 .top-right {
-  top: -4px;
-  right: -4px;
+  top: calc(-4px / var(--scale-factor, 1));
+  right: calc(-4px / var(--scale-factor, 1));
   cursor: nesw-resize;
 }
 
 .bottom-left {
-  bottom: -4px;
-  left: -4px;
+  bottom: calc(-4px / var(--scale-factor, 1));
+  left: calc(-4px / var(--scale-factor, 1));
   cursor: nesw-resize;
 }
 
 .bottom-right {
-  bottom: -4px;
-  right: -4px;
+  bottom: calc(-4px / var(--scale-factor, 1));
+  right: calc(-4px / var(--scale-factor, 1));
   cursor: nwse-resize;
 }

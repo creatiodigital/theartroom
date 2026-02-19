@@ -49,6 +49,9 @@ export const useMoveArtwork = (
     (event: MouseEvent, artworkId: string) => {
       if (isEditingArtwork || !wallRef.current || isArtworkVisible) return
 
+      // When Shift is held, skip drag start so onClick can handle group selection
+      if (event.shiftKey) return
+
       event.stopPropagation()
 
       const rect = wallRef.current.getBoundingClientRect()

@@ -45,7 +45,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       showSupport: false,
       textBackgroundColor: undefined,
       textVerticalAlign: 'top',
-      textPadding: { label: '12', value: 12 } as TOption<number>,
+      textPadding: { label: '0', value: 0 } as TOption<number>,
       textThickness: { label: '0', value: 0 } as TOption<number>,
       imageUrl: '',
       featured: false,

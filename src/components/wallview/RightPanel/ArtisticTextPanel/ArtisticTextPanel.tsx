@@ -80,7 +80,7 @@ const ArtisticText = () => {
     const exhibitionArtwork = exhibitionArtworksById[currentArtworkId]
     if (!exhibitionArtwork) return
 
-    const padding = textPadding?.value ?? 12
+    const padding = textPadding?.value ?? 0
     const fSize = fontSize?.value ?? 16
     const lHeight = lineHeight?.value ?? 1
     const lSpacing = letterSpacing?.value ?? 0
@@ -106,11 +106,16 @@ const ArtisticText = () => {
     measurer.style.letterSpacing = `${lSpacing}px`
     measurer.style.fontFamily = fontFamilyMap[fFamily] ?? fontFamilyMap.roboto
     measurer.style.fontWeight = fWeight === 'bold' ? '600' : '400'
-    measurer.innerText = textContent
+
+    // Use an inner span for tight bounding box measurement
+    // (block-level scrollHeight often includes trailing line-height space)
+    const span = document.createElement('span')
+    span.innerText = textContent
+    measurer.appendChild(span)
 
     document.body.appendChild(measurer)
 
-    const measuredHeight = measurer.scrollHeight
+    const measuredHeight = span.getBoundingClientRect().height
 
     document.body.removeChild(measurer)
 
@@ -162,7 +167,7 @@ const ArtisticText = () => {
       <div className={styles.section}>
         <div className={styles.subsection}>
           <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-            Horizontal Alignment
+            Text Align
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
@@ -189,9 +194,17 @@ const ArtisticText = () => {
                 onClick={() => handleEditArtworkText('textAlign', 'right')}
               />
             </div>
+            <div className={styles.item}>
+              <Button
+                size="small"
+                variant="secondary"
+                icon="textJustify"
+                onClick={() => handleEditArtworkText('textAlign', 'justify')}
+              />
+            </div>
           </div>
           <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-            Vertical Alignment
+            Vertical Align
           </Text>
           <div className={styles.row}>
             <div className={styles.item}>
@@ -239,7 +252,7 @@ const ArtisticText = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Font size
+              Size (cm)
             </Text>
             <Select<number>
               options={fontSizes}
@@ -305,7 +318,7 @@ const ArtisticText = () => {
             </Text>
             <Select<number>
               options={textPaddings}
-              value={textPadding?.value ?? 12}
+              value={textPadding?.value ?? 0}
               onChange={(val) =>
                 handleEditArtworkText('textPadding', { label: String(val), value: val })
               }

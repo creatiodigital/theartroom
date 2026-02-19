@@ -59,7 +59,7 @@ export type TArtwork = {
   lineHeight?: TOption<number>
   textColor?: string
   textBackgroundColor?: string
-  textAlign?: 'left' | 'right' | 'center'
+  textAlign?: 'left' | 'right' | 'center' | 'justify'
   textVerticalAlign?: 'top' | 'center' | 'bottom'
   textPadding?: TOption<number>
   textThickness?: TOption<number>

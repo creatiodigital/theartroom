@@ -1,4 +1,3 @@
-import { Handle } from '@/components/wallview/Handle'
 import type { ResizeHandler } from '@/types/wallView'
 
 import styles from './Handles.module.scss'
@@ -10,24 +9,6 @@ export type THandles = {
 
 const Handles = ({ artworkId, handleResize }: THandles) => (
   <>
-    {/* Corner handles (diagonal resize) - visible */}
-    <Handle
-      direction="top-left"
-      onMouseDown={(event) => handleResize(event, artworkId, 'top-left')}
-    />
-    <Handle
-      direction="top-right"
-      onMouseDown={(event) => handleResize(event, artworkId, 'top-right')}
-    />
-    <Handle
-      direction="bottom-left"
-      onMouseDown={(event) => handleResize(event, artworkId, 'bottom-left')}
-    />
-    <Handle
-      direction="bottom-right"
-      onMouseDown={(event) => handleResize(event, artworkId, 'bottom-right')}
-    />
-
     {/* Edge resize zones (invisible, but full edge is draggable like Figma) */}
     <div
       className={styles.edgeZone}
@@ -48,6 +29,28 @@ const Handles = ({ artworkId, handleResize }: THandles) => (
       className={styles.edgeZone}
       style={{ right: -4, top: 12, bottom: 12, width: 8, cursor: 'ew-resize' }}
       onMouseDown={(event) => handleResize(event, artworkId, 'right')}
+    />
+
+    {/* Corner resize zones (invisible, diagonal resize) */}
+    <div
+      className={styles.edgeZone}
+      style={{ top: -4, left: -4, width: 12, height: 12, cursor: 'nwse-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'top-left')}
+    />
+    <div
+      className={styles.edgeZone}
+      style={{ top: -4, right: -4, width: 12, height: 12, cursor: 'nesw-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'top-right')}
+    />
+    <div
+      className={styles.edgeZone}
+      style={{ bottom: -4, left: -4, width: 12, height: 12, cursor: 'nesw-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'bottom-left')}
+    />
+    <div
+      className={styles.edgeZone}
+      style={{ bottom: -4, right: -4, width: 12, height: 12, cursor: 'nwse-resize' }}
+      onMouseDown={(event) => handleResize(event, artworkId, 'bottom-right')}
     />
   </>
 )

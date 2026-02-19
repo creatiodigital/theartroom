@@ -18,6 +18,7 @@ import type { TArtwork } from '@/types/artwork'
 
 import DeletePresetsModal from './DeletePresetsModal'
 import SavePresetModal from './SavePresetModal'
+import UpdatePresetModal from './UpdatePresetModal'
 import styles from './PresetSection.module.scss'
 
 type PresetType = 'image' | 'text'
@@ -61,6 +62,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
   const dispatch = useDispatch()
   const [showModal, setShowModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [presets, setPresets] = useState<TPreset[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -308,6 +310,30 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     }
   }
 
+  // Update preset
+  const handleUpdatePreset = async (presetId: string) => {
+    const properties = collectCurrentProperties()
+    if (!properties) return
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/presets/${presetId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(properties),
+      })
+
+      if (response.ok) {
+        await fetchPresets()
+        setShowUpdateModal(false)
+      }
+    } catch (error) {
+      console.error('Failed to update preset:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Delete preset
   const handleDeletePreset = async (presetId: string) => {
     try {
@@ -335,7 +361,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
               font="dashboard"
               size="small"
               variant="secondary"
-              label="Save Preset"
+              label="Add"
               onClick={() => setShowModal(true)}
               fullWidth
             />
@@ -345,7 +371,18 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
               font="dashboard"
               size="small"
               variant="secondary"
-              label="Delete Presets"
+              label="Update"
+              onClick={() => setShowUpdateModal(true)}
+              disabled={presets.length === 0}
+              fullWidth
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              font="dashboard"
+              size="small"
+              variant="secondary"
+              label="Delete"
               onClick={() => setShowDeleteModal(true)}
               disabled={presets.length === 0}
               fullWidth
@@ -357,10 +394,13 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
             className={styles.item}
             style={presets.length === 0 ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
           >
+            <Text font="dashboard" as="label" size="xs" className={styles.applyLabel}>
+              Apply Preset
+            </Text>
             <Select<string>
               options={
                 presets.length > 0
-                  ? [{ label: 'Apply Preset', value: '' }, ...presetOptions]
+                  ? [{ label: '– Select –', value: '' }, ...presetOptions]
                   : [{ label: 'No presets yet', value: '' }]
               }
               value=""
@@ -388,6 +428,15 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
             await handleDeletePreset(presetId)
           }}
           onClose={() => setShowDeleteModal(false)}
+        />
+      )}
+
+      {showUpdateModal && (
+        <UpdatePresetModal
+          presets={presets}
+          onUpdate={handleUpdatePreset}
+          onClose={() => setShowUpdateModal(false)}
+          loading={loading}
         />
       )}
     </>

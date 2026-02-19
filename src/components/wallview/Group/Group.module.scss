@@ -1,5 +1,5 @@
 .group {
   position: absolute;
-  border: 1px solid var(--color-accent);
+  border: calc(1px / var(--scale-factor, 1)) solid var(--color-accent);
   z-index: 20;
 }
