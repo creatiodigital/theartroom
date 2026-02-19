@@ -9,7 +9,8 @@ function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[
 
 export const fontSizes = toOptions([
   0.5, 0.6, 0.7, 0.8, 0.9,
-  ...Array.from({ length: 50 }, (_, i) => i + 1), // 1–50 cm
+  1, 1.5, 2, 2.5, 3, 3.5,
+  ...Array.from({ length: 47 }, (_, i) => i + 4), // 4–50 cm
 ] as number[])
 
 export const lineHeights = toOptions(
