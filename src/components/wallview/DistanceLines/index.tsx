@@ -3,6 +3,7 @@
 import { useSelector } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
+import { getVisualBounds } from '@/components/wallview/utils'
 
 import styles from './DistanceLines.module.scss'
 
@@ -27,6 +28,7 @@ export const DistanceLines = () => {
   const allExhibitionArtworkIds = useSelector(
     (state: RootState) => state.exhibition.allExhibitionArtworkIds,
   )
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
 
   // Only show during drag operations (not resize)
   const shouldShow = currentArtworkId && isDragging
@@ -41,10 +43,12 @@ export const DistanceLines = () => {
     .map((id) => exhibitionArtworksById[id])
     .filter((a) => a && a.wallId === currentWallId && a.artworkId !== currentArtworkId)
 
-  const x = currentArtwork.posX2d
-  const y = currentArtwork.posY2d
-  const w = currentArtwork.width2d
-  const h = currentArtwork.height2d
+  // Use visual bounds (including frame + passepartout) for current artwork
+  const currentBounds = getVisualBounds(currentArtwork, artworksById[currentArtworkId])
+  const x = currentBounds.x
+  const y = currentBounds.y
+  const w = currentBounds.width
+  const h = currentBounds.height
 
   const distanceLines: DistanceLine[] = []
 
@@ -57,10 +61,12 @@ export const DistanceLines = () => {
 
   otherArtworks.forEach((other) => {
     if (!other) return
-    const ox = other.posX2d
-    const oy = other.posY2d
-    const ow = other.width2d
-    const oh = other.height2d
+    // Use visual bounds for other artworks too
+    const otherBounds = getVisualBounds(other, artworksById[other.artworkId])
+    const ox = otherBounds.x
+    const oy = otherBounds.y
+    const ow = otherBounds.width
+    const oh = otherBounds.height
 
     // Check for vertical overlap (Y-axis intersection)
     const verticalOverlapStart = Math.max(y, oy)
@@ -184,8 +190,8 @@ export const DistanceLines = () => {
     <svg className={styles.container}>
       {distanceLines.map((line, index) => {
         const labelText = `${(line.distance / 100).toFixed(2)} m`
-        const labelWidth = labelText.length * 6 + 8 // Approximate width
-        const labelHeight = 14
+        const labelWidth = labelText.length * 5 + 2 // Approximate width
+        const labelHeight = 11
 
         return (
           <g key={index}>

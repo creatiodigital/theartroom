@@ -1,5 +1,9 @@
 'use client'
 
+import { useSelector } from 'react-redux'
+
+import type { RootState } from '@/redux/store'
+
 import styles from './AlignedLine.module.scss'
 
 type LineRect = {
@@ -27,6 +31,7 @@ type AlignedLineProps = {
 }
 
 const AlignedLine: React.FC<AlignedLineProps> = ({ start, end, direction, color }) => {
+  const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
   const isHorizontal =
     direction === 'horizontal' ||
     direction === 'top' ||
@@ -63,11 +68,15 @@ const AlignedLine: React.FC<AlignedLineProps> = ({ start, end, direction, color 
     y: isHorizontal ? alignedY : Math.max(start.y + start.height, end.y + end.height),
   }
 
+  // Use 1px with inverse scale transform for crisp, consistent lines at any zoom
+  const inverseScale = 1 / (scaleFactor || 1)
+
   const style: React.CSSProperties = {
     width: isHorizontal ? `${lineEnd.x - lineStart.x}px` : '1px',
     height: isHorizontal ? '1px' : `${lineEnd.y - lineStart.y}px`,
     top: `${lineStart.y}px`,
     left: `${lineStart.x}px`,
+    transform: isHorizontal ? `scaleY(${inverseScale})` : `scaleX(${inverseScale})`,
     ...(color && { backgroundColor: color }),
   }
 

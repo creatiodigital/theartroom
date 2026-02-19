@@ -132,9 +132,12 @@ const Stencil = ({ artwork }: StencilProps) => {
     [handleSingleClick],
   )
 
+  // Font size maps directly to centimeters on the wall.
+  // fontSize 16 → 0.16 Three.js units → 16 cm tall text.
+  // (1 Three.js unit = 1 meter, so factor = 1/100 = cm-to-meters)
   const fontSizeFactor = 0.01
   // Convert textPadding (pixels) to 3D units using the same scale factor as fontSize
-  const textPaddingValue = textPadding?.value ?? 12
+  const textPaddingValue = textPadding?.value ?? 0
   const padding3D = textPaddingValue * fontSizeFactor
   const paddingOffset = padding3D * 2  // total padding on both sides
 

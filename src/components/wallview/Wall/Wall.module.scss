@@ -11,6 +11,7 @@
   border: 1px dashed var(--color-black);
   background: var(--color-white);
   box-sizing: border-box;
+  user-select: none;
 }
 
 .floorLine {

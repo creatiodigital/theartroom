@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
             textBackgroundColor: pos.textBackgroundColor ?? null,
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
-            textPadding: pos.textPadding ?? 12,
+            textPadding: pos.textPadding ?? 0,
             textThickness: pos.textThickness ?? 0,
             // Sound styling
             soundIcon: pos.soundIcon ?? 'volume-2',
@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
             textBackgroundColor: pos.textBackgroundColor ?? null,
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
-            textPadding: pos.textPadding ?? 12,
+            textPadding: pos.textPadding ?? 0,
             textThickness: pos.textThickness ?? 0,
             // Sound styling
             soundIcon: pos.soundIcon ?? 'volume-2',

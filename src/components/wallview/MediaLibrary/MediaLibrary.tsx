@@ -34,6 +34,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   // Use effectiveUser to get the impersonated artist's ID when admin is impersonating
   const { effectiveUser } = useEffectiveUser()
   const [artworks, setArtworks] = useState<Artwork[]>([])
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
   const [loading, setLoading] = useState(true)
 
   // Get artworks already in this exhibition to filter them out
@@ -59,7 +60,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   }, [effectiveUser?.id])
 
   // Filter out artworks already in this exhibition
-  const availableArtworks = artworks.filter((artwork) => !exhibitionArtworkIds.includes(artwork.id))
+  const availableArtworks = artworks
+    .filter((artwork) => !exhibitionArtworkIds.includes(artwork.id))
+    .filter((artwork) => typeFilter === 'all' || artwork.artworkType === typeFilter)
 
   const handleDragStart = (e: React.DragEvent, artwork: Artwork) => {
     e.dataTransfer.setData('existingArtworkId', artwork.id)
@@ -115,6 +118,18 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
         <button className={styles.closeButton} onClick={onClose}>
           <Icon name="close" size={18} />
         </button>
+      </div>
+
+      <div className={styles.tabs}>
+        {(['all', 'image', 'text', 'sound'] as const).map((type) => (
+          <button
+            key={type}
+            className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
+            onClick={() => setTypeFilter(type)}
+          >
+            {type === 'all' ? 'All' : type === 'image' ? 'Images' : type === 'text' ? 'Text' : 'Sound'}
+          </button>
+        ))}
       </div>
 
       {loading ? (

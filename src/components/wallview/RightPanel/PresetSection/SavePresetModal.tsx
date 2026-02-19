@@ -42,7 +42,7 @@ const SavePresetModal = ({
   return (
     <Modal onClose={onClose}>
       <Text font="dashboard" as="h3" size="sm" weight="bold" className={styles.title}>
-        Save Preset
+        Create Preset
       </Text>
       <form onSubmit={handleSubmit}>
         <div className={styles.inputGroup}>

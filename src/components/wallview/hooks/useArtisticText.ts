@@ -10,7 +10,7 @@ const DEFAULT_LINE_HEIGHT = 1.4
 const DEFAULT_FONT_FAMILY = 'roboto' as const
 const DEFAULT_FONT_WEIGHT = 'regular' as const
 const DEFAULT_LETTER_SPACING = 0
-const DEFAULT_TEXT_PADDING = 12
+const DEFAULT_TEXT_PADDING = 0
 
 export const useArtisticText = (artworkId: string) => {
   const dispatch = useDispatch()

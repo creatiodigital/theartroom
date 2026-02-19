@@ -14,9 +14,7 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isEditingArtwork) return
-
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !isEditingArtwork) {
         // Delete group if a group is selected and mouse is over the wall
         if (artworkGroupIds.length > 0 && isMouseOver) {
           artworkGroupIds.forEach((artworkId) => {
