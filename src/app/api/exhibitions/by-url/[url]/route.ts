@@ -85,7 +85,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       // Reconstruct the response shape from the snapshot
       const artworks = (snapshotArtworks || [])
         .map((ea) => ea.artwork as Record<string, unknown>)
-        .filter((artwork) => !artwork.hiddenFromExhibition)
+        .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
 
       return NextResponse.json({
         ...exhibition,
@@ -151,7 +151,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     // Legacy published exhibition (no snapshot) → return live data
     const artworks = exhibition.exhibitionArtworks
       .map((ea) => ea.artwork)
-      .filter((artwork) => !artwork.hiddenFromExhibition)
+      .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
 
     return NextResponse.json({
       ...exhibition,
