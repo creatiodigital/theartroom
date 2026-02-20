@@ -1,6 +1,78 @@
 .edgeZone {
   position: absolute;
-  z-index: 15;
-  // Invisible but interactive
   background: transparent;
+}
+
+/* Edge zones – span the full edge, sit below corners in z-order */
+.edgeTop {
+  z-index: 15;
+  top: calc(-4px / var(--scale-factor, 1));
+  left: 0;
+  right: 0;
+  height: calc(8px / var(--scale-factor, 1));
+  cursor: ns-resize;
+}
+
+.edgeBottom {
+  z-index: 15;
+  bottom: calc(-4px / var(--scale-factor, 1));
+  left: 0;
+  right: 0;
+  height: calc(8px / var(--scale-factor, 1));
+  cursor: ns-resize;
+}
+
+.edgeLeft {
+  z-index: 15;
+  left: calc(-4px / var(--scale-factor, 1));
+  top: 0;
+  bottom: 0;
+  width: calc(8px / var(--scale-factor, 1));
+  cursor: ew-resize;
+}
+
+.edgeRight {
+  z-index: 15;
+  right: calc(-4px / var(--scale-factor, 1));
+  top: 0;
+  bottom: 0;
+  width: calc(8px / var(--scale-factor, 1));
+  cursor: ew-resize;
+}
+
+/* Corner zones – higher z-index so they override edges in overlap */
+.cornerTopLeft {
+  z-index: 16;
+  top: calc(-4px / var(--scale-factor, 1));
+  left: calc(-4px / var(--scale-factor, 1));
+  width: calc(8px / var(--scale-factor, 1));
+  height: calc(8px / var(--scale-factor, 1));
+  cursor: nwse-resize;
+}
+
+.cornerTopRight {
+  z-index: 16;
+  top: calc(-4px / var(--scale-factor, 1));
+  right: calc(-4px / var(--scale-factor, 1));
+  width: calc(8px / var(--scale-factor, 1));
+  height: calc(8px / var(--scale-factor, 1));
+  cursor: nesw-resize;
+}
+
+.cornerBottomLeft {
+  z-index: 16;
+  bottom: calc(-4px / var(--scale-factor, 1));
+  left: calc(-4px / var(--scale-factor, 1));
+  width: calc(8px / var(--scale-factor, 1));
+  height: calc(8px / var(--scale-factor, 1));
+  cursor: nesw-resize;
+}
+
+.cornerBottomRight {
+  z-index: 16;
+  bottom: calc(-4px / var(--scale-factor, 1));
+  right: calc(-4px / var(--scale-factor, 1));
+  width: calc(8px / var(--scale-factor, 1));
+  height: calc(8px / var(--scale-factor, 1));
+  cursor: nwse-resize;
 }

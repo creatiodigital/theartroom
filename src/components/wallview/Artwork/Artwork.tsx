@@ -114,7 +114,7 @@ const Artwork = memo(
           width: `${containerWidth}px`,
           height: `${containerHeight}px`,
           zIndex: currentArtworkId === id ? 10 : 1,
-          cursor: 'grabbing',
+          cursor: 'grab',
         }}
         onMouseDown={(event) => {
           event.stopPropagation()

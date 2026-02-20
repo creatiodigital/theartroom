@@ -18,7 +18,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 2px;
+  height: calc(2px / var(--scale-factor, 1));
   background-color: var(--color-black);
   pointer-events: none;
   z-index: 1;
@@ -29,7 +29,7 @@
   left: 50%;
   top: 4px;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: calc(11px / var(--scale-factor, 1));
   color: var(--color-black);
   white-space: nowrap;
   text-transform: uppercase;
