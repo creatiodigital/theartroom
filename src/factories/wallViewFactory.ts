@@ -7,7 +7,7 @@ export const wallViewFactory = (): TWallView => ({
   editingArtworkId: null,
   currentWallCoordinates: { x: 0, y: 0, z: 0 },
   currentWallNormal: { x: 0, y: 0, z: 1 },
-  scaleFactor: 1,
+  scaleFactor: 0.30,
   panPosition: { x: -50, y: -50 },
   isHumanVisible: false,
   wallHeight: null,

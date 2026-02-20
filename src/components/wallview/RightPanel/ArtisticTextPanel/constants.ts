@@ -8,7 +8,6 @@ function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[
 }
 
 export const fontSizes = toOptions([
-  0.5, 0.6, 0.7, 0.8, 0.9,
   1, 1.5, 2, 2.5, 3, 3.5,
   ...Array.from({ length: 47 }, (_, i) => i + 4), // 4–50 cm
 ] as number[])
@@ -40,12 +39,14 @@ export const textPaddings = toOptions(Array.from({ length: 25 }, (_, i) => i) as
 // Z-depth options for text card thickness (0-5 cm)
 export const textThicknessOptions = [
   { label: '0', value: 0 },
-  { label: '0,5', value: 0.5 },
   { label: '1', value: 1 },
-  { label: '1,5', value: 1.5 },
   { label: '2', value: 2 },
-  { label: '2,5', value: 2.5 },
   { label: '3', value: 3 },
   { label: '4', value: 4 },
   { label: '5', value: 5 },
+  { label: '6', value: 6 },
+  { label: '7', value: 7 },
+  { label: '8', value: 8 },
+  { label: '9', value: 9 },
+  { label: '10', value: 10 },
 ]

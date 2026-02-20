@@ -2,6 +2,8 @@
 
 import { useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
+
 import type { RootState } from '@/redux/store'
 import { getVisualBounds } from '@/components/wallview/utils'
 
@@ -189,7 +191,7 @@ export const DistanceLines = () => {
   return (
     <svg className={styles.container}>
       {distanceLines.map((line, index) => {
-        const labelText = `${(line.distance / 100).toFixed(2)} m`
+        const labelText = `${(line.distance / WALL_SCALE).toFixed(2)} m`
         const labelWidth = labelText.length * 5 + 2 // Approximate width
         const labelHeight = 11
 

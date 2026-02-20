@@ -1,5 +1,7 @@
 import { useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
+
 import type { RootState } from '@/redux/store'
 
 export const useGroupDetails = () => {
@@ -9,9 +11,9 @@ export const useGroupDetails = () => {
 
   const { groupX, groupY, groupWidth, groupHeight } = groupProperties
 
-  // Wall dimensions in 2D scale (meters * 100)
-  const wallWidth2d = (wallWidth || 0) * 100
-  const wallHeight2d = (wallHeight || 0) * 100
+  // Wall dimensions in 2D scale (meters * WALL_SCALE)
+  const wallWidth2d = (wallWidth || 0) * WALL_SCALE
+  const wallHeight2d = (wallHeight || 0) * WALL_SCALE
 
   // Calculate group center position
   const centerX = groupX + groupWidth / 2

@@ -19,6 +19,7 @@ import { useSelectBox } from '@/components/wallview/hooks/useSelectBox'
 import { Human } from '@/components/wallview/Human'
 import { DistanceLines } from '@/components/wallview/DistanceLines'
 import { SelectionBox } from '@/components/wallview/SelectionBox'
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
@@ -61,9 +62,9 @@ export const Wall = () => {
 
   const alignedPairs = useSelector((state: RootState) => state.wallView.alignedPairs)
   const dispatch = useDispatch()
-  const scaling = 100
-  const humanHeight = 170
-  const humanWidth = 66
+  const scaling = WALL_SCALE
+  const humanHeight = 170 * (WALL_SCALE / 100)
+  const humanWidth = 66 * (WALL_SCALE / 100)
 
   const wallRef = useRef<HTMLDivElement>(null!)
   const preventClick = useRef(false)

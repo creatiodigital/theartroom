@@ -16,6 +16,8 @@ import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
+
 import styles from './ArtisticImage.module.scss'
 
 type ArtisticImageProps = {
@@ -150,7 +152,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         style={{
           border:
             showFrame && imageUrl
-              ? `${frameSize?.value ?? 3}px solid ${frameColor ?? '#000000'}`
+              ? `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px solid ${frameColor ?? '#000000'}`
               : undefined,
         }}
         onDoubleClick={handleDoubleClick}
@@ -164,7 +166,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
           style={{
             border:
               showPassepartout && imageUrl && passepartoutSize
-                ? `${passepartoutSize.value}px solid ${passepartoutColor}`
+                ? `${passepartoutSize.value * (WALL_SCALE / 100)}px solid ${passepartoutColor}`
                 : undefined,
           }}
         >

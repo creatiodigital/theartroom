@@ -1,5 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
+
 import { exhibitionFactory } from '@/factories/exhibitionFactory'
 import type { TArtworkPosition } from '@/types/artwork'
 import type { TExhibition } from '@/types/exhibition'
@@ -55,10 +57,10 @@ const exhibitionSlice = createSlice({
         // Auto-derive 3D dimensions when 2D dimensions change
         const derived: Partial<TArtworkPosition> = {}
         if (artworkPosition.width2d !== undefined) {
-          derived.width3d = artworkPosition.width2d / 100
+          derived.width3d = artworkPosition.width2d / WALL_SCALE
         }
         if (artworkPosition.height2d !== undefined) {
-          derived.height3d = artworkPosition.height2d / 100
+          derived.height3d = artworkPosition.height2d / WALL_SCALE
         }
 
         state.exhibitionArtworksById[artworkId] = {

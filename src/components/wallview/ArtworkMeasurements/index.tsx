@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { Text } from '@/components/ui/Typography'
 import type { RootState } from '@/redux/store'
 
@@ -20,9 +21,9 @@ const ArtworkMeasurements = memo(({ width2d, height2d }: ArtworkMeasurementsProp
   // Keep visible during resize so user can see size changes
   if (isDragging) return null
 
-  // Convert from 2D scale to meters (same as right panel: value / 100)
-  const widthMeters = (width2d / 100).toFixed(2)
-  const heightMeters = (height2d / 100).toFixed(2)
+  // Convert from 2D scale to meters (same as right panel: value / WALL_SCALE)
+  const widthMeters = (width2d / WALL_SCALE).toFixed(2)
+  const heightMeters = (height2d / WALL_SCALE).toFixed(2)
 
   return (
     <>

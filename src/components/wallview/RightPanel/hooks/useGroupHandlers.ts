@@ -1,4 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
+
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { Box3 } from 'three'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
@@ -55,7 +57,7 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
 
   // Handler for "from left" input - distance from left wall edge to group center
   const handleFromLeftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fromLeft = Number(e.target.value) * 100
+    const fromLeft = Number(e.target.value) * WALL_SCALE
     const groupCenterX = fromLeft
     const newGroupX = groupCenterX - artworkGroup.groupWidth / 2
     const deltaX = newGroupX - artworkGroup.groupX
@@ -67,8 +69,8 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
 
   // Handler for "from right" input - distance from right wall edge to group center
   const handleFromRightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fromRight = Number(e.target.value) * 100
-    const wallWidth2d = (wallWidth || 0) * 100
+    const fromRight = Number(e.target.value) * WALL_SCALE
+    const wallWidth2d = (wallWidth || 0) * WALL_SCALE
     const groupCenterX = wallWidth2d - fromRight
     const newGroupX = groupCenterX - artworkGroup.groupWidth / 2
     const deltaX = newGroupX - artworkGroup.groupX
@@ -80,7 +82,7 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
 
   // Handler for "from top" input - distance from top wall edge to group center
   const handleFromTopChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fromTop = Number(e.target.value) * 100
+    const fromTop = Number(e.target.value) * WALL_SCALE
     const groupCenterY = fromTop
     const newGroupY = groupCenterY - artworkGroup.groupHeight / 2
     const deltaY = newGroupY - artworkGroup.groupY
@@ -92,8 +94,8 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
 
   // Handler for "from bottom" input - distance from bottom wall edge to group center
   const handleFromBottomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fromBottom = Number(e.target.value) * 100
-    const wallHeight2d = (wallHeight || 0) * 100
+    const fromBottom = Number(e.target.value) * WALL_SCALE
+    const wallHeight2d = (wallHeight || 0) * WALL_SCALE
     const groupCenterY = wallHeight2d - fromBottom
     const newGroupY = groupCenterY - artworkGroup.groupHeight / 2
     const deltaY = newGroupY - artworkGroup.groupY
@@ -116,19 +118,19 @@ export const useGroupHandlers = (artworkGroupIds: string[], boundingData: TBound
         newGroupY = 0
         break
       case 'verticalCenter':
-        newGroupY = (wallHeight * 100) / 2 - artworkGroup.groupHeight / 2
+        newGroupY = (wallHeight * WALL_SCALE) / 2 - artworkGroup.groupHeight / 2
         break
       case 'verticalBottom':
-        newGroupY = wallHeight * 100 - artworkGroup.groupHeight
+        newGroupY = wallHeight * WALL_SCALE - artworkGroup.groupHeight
         break
       case 'horizontalLeft':
         newGroupX = 0
         break
       case 'horizontalCenter':
-        newGroupX = (wallWidth * 100) / 2 - artworkGroup.groupWidth / 2
+        newGroupX = (wallWidth * WALL_SCALE) / 2 - artworkGroup.groupWidth / 2
         break
       case 'horizontalRight':
-        newGroupX = wallWidth * 100 - artworkGroup.groupWidth
+        newGroupX = wallWidth * WALL_SCALE - artworkGroup.groupWidth
         break
       default:
         console.warn('Invalid alignment type:', alignment)

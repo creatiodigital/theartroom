@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { restoreArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
@@ -223,7 +224,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
 
           // Create position in exhibition slice
           // Compute width3d/height3d from 2D dimensions (scale factor is ~1/100)
-          // This matches the formula in convert2DTo3D: width3d = width2d / 100
+          // This matches the formula in convert2DTo3D: width3d = width2d / WALL_SCALE
           const position: TArtworkPosition = {
             id: ea.id,
             artworkId: ea.artworkId,
@@ -233,8 +234,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             posY2d: ea.posY2d,
             width2d: ea.width2d,
             height2d: ea.height2d,
-            width3d: ea.width2d / 100,
-            height3d: ea.height2d / 100,
+            width3d: ea.width2d / WALL_SCALE,
+            height3d: ea.height2d / WALL_SCALE,
             posX3d: ea.posX3d,
             posY3d: ea.posY3d,
             posZ3d: ea.posZ3d,
