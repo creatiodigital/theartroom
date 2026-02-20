@@ -349,7 +349,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
   const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
   // passepartoutThickness is for Z-depth, clamped 0.1-1.0
-  const passepartoutDepth = Math.min(5, Math.max(1, passepartoutThickness?.value ?? 2))
+  const passepartoutDepth = Math.min(3, Math.max(0.2, passepartoutThickness?.value ?? 0.4))
   // supportThickness is for Z-depth, clamped 0-10
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
 

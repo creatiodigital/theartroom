@@ -67,13 +67,17 @@ export const passepartoutSizeOptions = [
   { label: '20', value: 20 },
 ]
 
-// Z-depth options for passepartout (cardboard: 1 - 5 cm)
+// Z-depth options for passepartout (cardboard: 0.2 - 3 cm)
 export const passepartoutThicknessOptions = [
+  { label: '0.2', value: 0.2 },
+  { label: '0.4', value: 0.4 },
+  { label: '0.6', value: 0.6 },
+  { label: '0.8', value: 0.8 },
   { label: '1', value: 1 },
+  { label: '1.5', value: 1.5 },
   { label: '2', value: 2 },
+  { label: '2.5', value: 2.5 },
   { label: '3', value: 3 },
-  { label: '4', value: 4 },
-  { label: '5', value: 5 },
 ]
 
 // Z-depth options for support (canvas/panel: 0 - 10 cm)
