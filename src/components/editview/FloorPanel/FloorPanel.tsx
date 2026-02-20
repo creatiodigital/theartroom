@@ -26,6 +26,8 @@ const DEFAULT_FLOOR_TEXTURE_SCALE = 2.0
 
 const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
+  { value: 'patterned-concrete', label: 'Patterned Concrete' },
+  { value: 'worn-concrete', label: 'Worn Concrete' },
   { value: 'wood', label: 'Wood' },
   { value: 'marble', label: 'Marble' },
   { value: 'chevron', label: 'Chevron' },
@@ -51,7 +53,7 @@ const FloorPanel = () => {
   const rawFloorTextureScale = useSelector(
     (state: RootState) => state.exhibition.floorTextureScale ?? DEFAULT_FLOOR_TEXTURE_SCALE,
   )
-  const floorTextureScale = Math.max(0.5, Math.min(5.0, rawFloorTextureScale))
+  const floorTextureScale = Math.max(0.5, Math.min(8.0, rawFloorTextureScale))
 
   const floorTextureOffsetX = useSelector(
     (state: RootState) => state.exhibition.floorTextureOffsetX ?? 0,
@@ -78,7 +80,7 @@ const FloorPanel = () => {
 
   const handleTextureScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Invert: slider right = bigger tiles (lower repeat value internally)
-    const invertedValue = 5.5 - parseFloat(e.target.value)
+    const invertedValue = 8.5 - parseFloat(e.target.value)
     dispatch(setFloorTextureScale(invertedValue))
     setSaved(false)
   }
@@ -167,14 +169,14 @@ const FloorPanel = () => {
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
             <label className={styles.label}>Tile Scale</label>
-            <span className={styles.sliderValue}>{(5.5 - floorTextureScale).toFixed(2)}</span>
+            <span className={styles.sliderValue}>{(8.5 - floorTextureScale).toFixed(2)}</span>
           </div>
           <input
             type="range"
             min="0.5"
-            max="5"
+            max="8"
             step="0.01"
-            value={5.5 - floorTextureScale}
+            value={8.5 - floorTextureScale}
             onChange={handleTextureScaleChange}
             className={styles.slider}
           />

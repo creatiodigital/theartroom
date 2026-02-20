@@ -17,8 +17,6 @@ import {
   undo,
   redo,
   clearHistory,
-  updateArtworkPosition,
-  pushToHistory,
 } from '@/redux/slices/exhibitionSlice'
 import { showHuman, hideHuman, removeGroup } from '@/redux/slices/wallViewSlice'
 import {
@@ -44,7 +42,6 @@ export const LeftPanel = () => {
 
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
-  const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
 
@@ -115,80 +112,6 @@ export const LeftPanel = () => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [dispatch, canUndo, canRedo])
-
-  // Arrow key handlers for precision movement
-  useEffect(() => {
-    const handleArrowKeys = (e: KeyboardEvent) => {
-      // Only handle arrow keys
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        return
-      }
-
-      // Skip if typing in an input field or editing text content
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target instanceof HTMLElement && e.target.isContentEditable)
-      ) {
-        return
-      }
-
-      // Determine which artworks to move
-      const artworkIdsToMove: string[] = []
-
-      if (artworkGroupIds.length > 0) {
-        // Move all artworks in the group
-        artworkIdsToMove.push(...artworkGroupIds)
-      } else if (currentArtworkId) {
-        // Move single selected artwork
-        artworkIdsToMove.push(currentArtworkId)
-      }
-
-      if (artworkIdsToMove.length === 0) return
-
-      e.preventDefault()
-
-      // Calculate delta (1px movement)
-      let deltaX = 0
-      let deltaY = 0
-      switch (e.key) {
-        case 'ArrowUp':
-          deltaY = -1
-          break
-        case 'ArrowDown':
-          deltaY = 1
-          break
-        case 'ArrowLeft':
-          deltaX = -1
-          break
-        case 'ArrowRight':
-          deltaX = 1
-          break
-      }
-
-      // Push to history before first movement (for undo)
-      dispatch(pushToHistory())
-
-      // Update each artwork position
-      artworkIdsToMove.forEach((artworkId) => {
-        const currentPos = positionsById[artworkId]
-        if (!currentPos) return
-
-        dispatch(
-          updateArtworkPosition({
-            artworkId,
-            artworkPosition: {
-              posX2d: currentPos.posX2d + deltaX,
-              posY2d: currentPos.posY2d + deltaY,
-            },
-          }),
-        )
-      })
-    }
-
-    window.addEventListener('keydown', handleArrowKeys)
-    return () => window.removeEventListener('keydown', handleArrowKeys)
-  }, [dispatch, currentArtworkId, artworkGroupIds, positionsById])
 
   const handleSaveWallView = async () => {
     // Save to database first

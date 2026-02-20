@@ -78,8 +78,24 @@ const exhibitionSlice = createSlice({
       state.allExhibitionArtworkIds = state.allExhibitionArtworkIds.filter((id) => id !== artworkId)
     },
 
-    setExhibition: (_state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
-      return { ...action.payload, _snapshot: null, _history: [], _future: [] }
+    setExhibition: (state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
+      // Preserve existing artwork positions if they've been loaded
+      // (useLoadExhibitionArtworks manages these separately and they may
+      // contain updated positions from wall view that aren't yet in the API cache)
+      const preservePositions =
+        state.allExhibitionArtworkIds && state.allExhibitionArtworkIds.length > 0
+      return {
+        ...action.payload,
+        ...(preservePositions
+          ? {
+              exhibitionArtworksById: state.exhibitionArtworksById,
+              allExhibitionArtworkIds: state.allExhibitionArtworkIds,
+            }
+          : {}),
+        _snapshot: null,
+        _history: [],
+        _future: [],
+      }
     },
 
     setMainTitle: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
@@ -161,14 +177,14 @@ const exhibitionSlice = createSlice({
 
     setFloorMaterial: (
       state: TExhibitionWithHistory,
-      action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'>,
+      action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet' | 'patterned-concrete' | 'worn-concrete'>,
     ) => {
       state.floorMaterial = action.payload
     },
 
     setFloorTextureScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp scale between 0.5 and 5.0
-      state.floorTextureScale = Math.max(0.5, Math.min(5.0, action.payload))
+      // Clamp scale between 0.5 and 8.0
+      state.floorTextureScale = Math.max(0.5, Math.min(8.0, action.payload))
     },
 
     setFloorTextureOffsetX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {

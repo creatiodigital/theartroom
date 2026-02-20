@@ -44,13 +44,14 @@ const getTemperatureColor = (temperature: number): string => {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
-// Material configurations with file extensions (metallic, normal, and ao are optional - set to null if not available)
+// Material configurations with file extensions (optional maps set to null)
 const MATERIAL_CONFIG: Record<
   string,
   {
     diffuse: string
     normal: string | null
-    roughness: string
+    bump: string | null
+    roughness: string | null
     metallic: string | null
     ao: string | null
   }
@@ -58,6 +59,7 @@ const MATERIAL_CONFIG: Record<
   concrete: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
+    bump: null,
     roughness: 'roughness.jpg',
     metallic: 'metallic.jpg',
     ao: null,
@@ -65,6 +67,7 @@ const MATERIAL_CONFIG: Record<
   wood: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
+    bump: null,
     roughness: 'roughness.jpg',
     metallic: null,
     ao: 'ao.jpg',
@@ -72,6 +75,7 @@ const MATERIAL_CONFIG: Record<
   marble: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
+    bump: null,
     roughness: 'roughness.jpg',
     metallic: null,
     ao: null,
@@ -79,6 +83,7 @@ const MATERIAL_CONFIG: Record<
   chevron: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
+    bump: null,
     roughness: 'roughness.jpg',
     metallic: null,
     ao: 'ao.jpg',
@@ -86,8 +91,25 @@ const MATERIAL_CONFIG: Record<
   parquet: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
+    bump: null,
     roughness: 'roughness.jpg',
     metallic: null,
+    ao: 'ao.jpg',
+  },
+  'patterned-concrete': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
+  'worn-concrete': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.png',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: 'metallic.jpg',
     ao: 'ao.jpg',
   },
 }
@@ -98,9 +120,10 @@ Object.entries(MATERIAL_CONFIG).forEach(([material, config]) => {
   const basePath = `/assets/materials/${material}`
   const paths: Record<string, string> = {
     map: `${basePath}/${config.diffuse}`,
-    roughnessMap: `${basePath}/${config.roughness}`,
   }
+  if (config.roughness) paths.roughnessMap = `${basePath}/${config.roughness}`
   if (config.normal) paths.normalMap = `${basePath}/${config.normal}`
+  if (config.bump) paths.bumpMap = `${basePath}/${config.bump}`
   if (config.metallic) paths.metalnessMap = `${basePath}/${config.metallic}`
   if (config.ao) paths.aoMap = `${basePath}/${config.ao}`
   useTexture.preload(Object.values(paths))
@@ -150,7 +173,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   const floorColor = getTemperatureColor(floorTemperature)
 
   // Clamp scale for safety (0.5 = largest tiles, 5.0 = smallest)
-  const clampedScale = Math.max(0.5, Math.min(5.0, floorTextureScale))
+  const clampedScale = Math.max(0.5, Math.min(8.0, floorTextureScale))
 
   // Get material config for dynamic texture paths
   const materialConfig = MATERIAL_CONFIG[floorMaterial] || MATERIAL_CONFIG.concrete
@@ -161,10 +184,15 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   const texturePaths = useMemo(() => {
     const paths: Record<string, string> = {
       map: `${texturePath}/${materialConfig.diffuse}`,
-      roughnessMap: `${texturePath}/${materialConfig.roughness}`,
+    }
+    if (materialConfig.roughness) {
+      paths.roughnessMap = `${texturePath}/${materialConfig.roughness}`
     }
     if (materialConfig.normal) {
       paths.normalMap = `${texturePath}/${materialConfig.normal}`
+    }
+    if (materialConfig.bump) {
+      paths.bumpMap = `${texturePath}/${materialConfig.bump}`
     }
     if (materialConfig.metallic) {
       paths.metalnessMap = `${texturePath}/${materialConfig.metallic}`
@@ -233,6 +261,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           map={textures.map}
           normalMap={textures.normalMap}
           normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
+          bumpMap={textures.bumpMap}
+          bumpScale={floorNormalScale}
           roughnessMap={textures.roughnessMap}
           metalnessMap={textures.metalnessMap}
           aoMap={textures.aoMap}
@@ -245,6 +275,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           map={textures.map}
           normalMap={textures.normalMap}
           normalScale={normalScaleVec}
+          bumpMap={textures.bumpMap}
+          bumpScale={floorNormalScale}
           roughnessMap={textures.roughnessMap}
           metalnessMap={textures.metalnessMap}
           aoMap={textures.aoMap}
