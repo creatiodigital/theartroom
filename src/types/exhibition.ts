@@ -36,7 +36,7 @@ export type TExhibition = {
   windowTransparency?: boolean
   hdriRotation?: number
   floorReflectiveness?: number
-  floorMaterial?: 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'
+  floorMaterial?: 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet' | 'patterned-concrete' | 'worn-concrete'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number

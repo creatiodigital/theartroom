@@ -1,5 +1,7 @@
 import { useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
+
 import type { RootState } from '@/redux/store'
 import type { TOption } from '@/types/artwork'
 import type { TFontFamily, TFontWeight } from '@/types/fonts'
@@ -113,9 +115,9 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     soundUrl,
   } = artwork
 
-  // Wall dimensions in 2D scale (meters * 100)
-  const wallWidth2d = (wallWidth || 0) * 100
-  const wallHeight2d = (wallHeight || 0) * 100
+  // Wall dimensions in 2D scale (meters * WALL_SCALE)
+  const wallWidth2d = (wallWidth || 0) * WALL_SCALE
+  const wallHeight2d = (wallHeight || 0) * WALL_SCALE
 
   // Calculate artwork center position
   const centerX = posX2d + width2d / 2

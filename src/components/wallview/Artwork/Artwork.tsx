@@ -8,6 +8,7 @@ import { ArtisticImage } from '@/components/wallview/ArtisticImage'
 import { ArtisticSound } from '@/components/wallview/ArtisticSound'
 import { ArtisticText } from '@/components/wallview/ArtisticText'
 import { ArtworkMeasurements } from '@/components/wallview/ArtworkMeasurements'
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { Handles } from '@/components/wallview/Handles'
 import { useMoveArtwork } from '@/components/wallview/hooks/useMoveArtwork'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
@@ -57,9 +58,10 @@ const Artwork = memo(
 
     // Calculate how much frame + passepartout borders add around the image
     const { showFrame, frameSize, imageUrl, showPassepartout, passepartoutSize } = artwork
-    const frameBorderPx = showFrame && imageUrl && frameSize?.value ? frameSize.value : 0
+    const scaleMul = WALL_SCALE / 100
+    const frameBorderPx = showFrame && imageUrl && frameSize?.value ? frameSize.value * scaleMul : 0
     const ppBorderPx =
-      showPassepartout && imageUrl && passepartoutSize?.value ? passepartoutSize.value : 0
+      showPassepartout && imageUrl && passepartoutSize?.value ? passepartoutSize.value * scaleMul : 0
     const totalBorderEachSide = frameBorderPx + ppBorderPx
 
     // The container grows to include borders. With border-box, the CSS borders

@@ -1,5 +1,6 @@
 'use client'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { useGLTF } from '@react-three/drei'
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -133,7 +134,7 @@ const GroupPanel = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={fromTop / 100}
+              value={Math.round((fromTop / WALL_SCALE) * 100) / 100}
               icon="arrowTopFromLine"
               label="from top"
               min={0}
@@ -143,7 +144,7 @@ const GroupPanel = () => {
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={fromBottom / 100}
+              value={Math.round((fromBottom / WALL_SCALE) * 100) / 100}
               icon="arrowBottomFromLine"
               label="from bottom"
               min={0}
@@ -161,7 +162,7 @@ const GroupPanel = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={fromLeft / 100}
+              value={Math.round((fromLeft / WALL_SCALE) * 100) / 100}
               icon="arrowLeftFromLine"
               label="from left"
               min={0}
@@ -171,7 +172,7 @@ const GroupPanel = () => {
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={fromRight / 100}
+              value={Math.round((fromRight / WALL_SCALE) * 100) / 100}
               icon="arrowRightFromLine"
               label="from right"
               min={0}

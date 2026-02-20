@@ -13,7 +13,7 @@ export interface AlignmentResult {
   vertical: VerticalAlignment[]
 }
 
-const tolerance = 3
+const tolerance = 8
 
 export const areAligned = (
   artworkA: TAlignedArtwork,

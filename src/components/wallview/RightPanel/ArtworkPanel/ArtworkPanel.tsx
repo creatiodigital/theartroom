@@ -1,5 +1,6 @@
 'use client'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { useGLTF } from '@react-three/drei'
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -149,7 +150,7 @@ const ArtworkPanel = () => {
 
     const newWidthMeters = Number(e.target.value)
     const currentRatio = width / height
-    const newWidth2d = newWidthMeters * 100
+    const newWidth2d = newWidthMeters * WALL_SCALE
     const newHeight2d = newWidth2d / currentRatio
 
     dispatch(
@@ -171,7 +172,7 @@ const ArtworkPanel = () => {
 
     const newHeightMeters = Number(e.target.value)
     const currentRatio = width / height
-    const newHeight2d = newHeightMeters * 100
+    const newHeight2d = newHeightMeters * WALL_SCALE
     const newWidth2d = newHeight2d * currentRatio
 
     dispatch(
@@ -202,7 +203,7 @@ const ArtworkPanel = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={width / 100}
+              value={Math.round((width / WALL_SCALE) * 100) / 100}
               icon="moveHorizontal"
               label="horizontal"
               min={0.1}
@@ -212,7 +213,7 @@ const ArtworkPanel = () => {
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={height / 100}
+              value={Math.round((height / WALL_SCALE) * 100) / 100}
               icon="moveVertical"
               label="vertical"
               min={0.1}
@@ -308,7 +309,7 @@ const ArtworkPanel = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={fromTop / 100}
+              value={Math.round((fromTop / WALL_SCALE) * 100) / 100}
               icon="arrowTopFromLine"
               label="from top"
               min={0}
@@ -318,7 +319,7 @@ const ArtworkPanel = () => {
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={fromBottom / 100}
+              value={Math.round((fromBottom / WALL_SCALE) * 100) / 100}
               icon="arrowBottomFromLine"
               label="from bottom"
               min={0}
@@ -334,7 +335,7 @@ const ArtworkPanel = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <NumberInput
-              value={fromLeft / 100}
+              value={Math.round((fromLeft / WALL_SCALE) * 100) / 100}
               icon="arrowLeftFromLine"
               label="from left"
               min={0}
@@ -344,7 +345,7 @@ const ArtworkPanel = () => {
           </div>
           <div className={styles.item}>
             <NumberInput
-              value={fromRight / 100}
+              value={Math.round((fromRight / WALL_SCALE) * 100) / 100}
               icon="arrowRightFromLine"
               label="from right"
               min={0}

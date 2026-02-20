@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
@@ -60,8 +61,8 @@ export const useMoveGroupArtwork = (
       let y = scaledMouseY - offset.y
 
       // Check wall center alignment for the group
-      const wallWidth2d = boundingData.width * 100
-      const wallHeight2d = boundingData.height * 100
+      const wallWidth2d = boundingData.width * WALL_SCALE
+      const wallHeight2d = boundingData.height * WALL_SCALE
       const tolerance = 3
       const alignedPairs: TAlignmentPair[] = []
 

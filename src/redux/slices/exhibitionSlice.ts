@@ -1,5 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
+
 import { exhibitionFactory } from '@/factories/exhibitionFactory'
 import type { TArtworkPosition } from '@/types/artwork'
 import type { TExhibition } from '@/types/exhibition'
@@ -55,10 +57,10 @@ const exhibitionSlice = createSlice({
         // Auto-derive 3D dimensions when 2D dimensions change
         const derived: Partial<TArtworkPosition> = {}
         if (artworkPosition.width2d !== undefined) {
-          derived.width3d = artworkPosition.width2d / 100
+          derived.width3d = artworkPosition.width2d / WALL_SCALE
         }
         if (artworkPosition.height2d !== undefined) {
-          derived.height3d = artworkPosition.height2d / 100
+          derived.height3d = artworkPosition.height2d / WALL_SCALE
         }
 
         state.exhibitionArtworksById[artworkId] = {
@@ -78,8 +80,24 @@ const exhibitionSlice = createSlice({
       state.allExhibitionArtworkIds = state.allExhibitionArtworkIds.filter((id) => id !== artworkId)
     },
 
-    setExhibition: (_state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
-      return { ...action.payload, _snapshot: null, _history: [], _future: [] }
+    setExhibition: (state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
+      // Preserve existing artwork positions if they've been loaded
+      // (useLoadExhibitionArtworks manages these separately and they may
+      // contain updated positions from wall view that aren't yet in the API cache)
+      const preservePositions =
+        state.allExhibitionArtworkIds && state.allExhibitionArtworkIds.length > 0
+      return {
+        ...action.payload,
+        ...(preservePositions
+          ? {
+              exhibitionArtworksById: state.exhibitionArtworksById,
+              allExhibitionArtworkIds: state.allExhibitionArtworkIds,
+            }
+          : {}),
+        _snapshot: null,
+        _history: [],
+        _future: [],
+      }
     },
 
     setMainTitle: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
@@ -161,14 +179,14 @@ const exhibitionSlice = createSlice({
 
     setFloorMaterial: (
       state: TExhibitionWithHistory,
-      action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'>,
+      action: PayloadAction<'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet' | 'patterned-concrete' | 'worn-concrete'>,
     ) => {
       state.floorMaterial = action.payload
     },
 
     setFloorTextureScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp scale between 0.5 and 5.0
-      state.floorTextureScale = Math.max(0.5, Math.min(5.0, action.payload))
+      // Clamp scale between 0.5 and 8.0
+      state.floorTextureScale = Math.max(0.5, Math.min(8.0, action.payload))
     },
 
     setFloorTextureOffsetX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {

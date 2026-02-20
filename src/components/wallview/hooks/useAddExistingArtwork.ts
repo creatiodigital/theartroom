@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { restoreArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
@@ -17,7 +18,7 @@ import type { TDimensions } from '@/types/geometry'
 export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
   const dispatch = useDispatch()
 
-  const sizeForType = (type: string) => (type === 'sound' ? 40 : 100)
+  const sizeForType = (type: string) => (type === 'sound' ? 40 * (WALL_SCALE / 100) : WALL_SCALE)
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
@@ -52,8 +53,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       const artworkData = await response.json()
 
       const size = sizeForType(artworkData.artworkType)
-      const posX2d = (wallWidth * 100) / 2 - size / 2
-      const posY2d = (wallHeight * 100) / 2 - size / 2
+      const posX2d = (wallWidth * WALL_SCALE) / 2 - size / 2
+      const posY2d = (wallHeight * WALL_SCALE) / 2 - size / 2
 
       // Restore artwork to Redux with full data
       const artwork: TArtwork = {

@@ -66,16 +66,17 @@ export const CenterPanel = () => {
         return
       }
 
-      const scrollSpeedFactor = 0.4
+      const scrollSpeedFactor = 1.2
       const deltaX = e.deltaX * scrollSpeedFactor
       const deltaY = e.deltaY * scrollSpeedFactor
 
-      const { clientWidth, clientHeight } = el
+      // Normalize against wrapper size (50000px) so panning is consistent
+      const wrapperSize = 50000
 
       dispatch(
         setPanPosition({
-          deltaX: -deltaX / clientWidth,
-          deltaY: -deltaY / clientHeight,
+          deltaX: -deltaX / wrapperSize,
+          deltaY: -deltaY / wrapperSize,
         }),
       )
     }

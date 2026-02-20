@@ -1,4 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
+
+import { WALL_SCALE, getArtworkBorderPx } from '@/components/wallview/constants'
 import { Box3 } from 'three'
 
 import { convert2DTo3D } from '@/components/wallview/utils'
@@ -23,7 +25,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
 
   const sanitizeNumberInput = (value: number | string): number => {
-    const normalizedValue = Number(value) * 100
+    const normalizedValue = Number(value) * WALL_SCALE
     return normalizedValue
   }
 
@@ -37,6 +39,8 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     )
   }
 
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+
   const handleAlignChange = (alignment: TAlign, wallWidth: number, wallHeight: number) => {
     const currentEdited = exhibitionArtworksById[currentArtworkId]
     if (!currentEdited) return
@@ -45,29 +49,32 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const artworkHeight = currentEdited.height2d
     const artworkX = currentEdited.posX2d
     const artworkY = currentEdited.posY2d
-    const factor = 100
+
+    // Calculate frame + passepartout border in 2D pixels
+    const art = artworksById[currentArtworkId]
+    const borderOffset = getArtworkBorderPx(art)
 
     let newX = artworkX
     let newY = artworkY
 
     switch (alignment) {
       case 'horizontalLeft':
-        newX = 0
+        newX = borderOffset
         break
       case 'horizontalCenter':
-        newX = (wallWidth * factor) / 2 - artworkWidth / 2
+        newX = (wallWidth * WALL_SCALE) / 2 - artworkWidth / 2
         break
       case 'horizontalRight':
-        newX = wallWidth * factor - artworkWidth
+        newX = wallWidth * WALL_SCALE - artworkWidth - borderOffset
         break
       case 'verticalTop':
-        newY = 0
+        newY = borderOffset
         break
       case 'verticalCenter':
-        newY = (wallHeight * factor) / 2 - artworkHeight / 2
+        newY = (wallHeight * WALL_SCALE) / 2 - artworkHeight / 2
         break
       case 'verticalBottom':
-        newY = wallHeight * factor - artworkHeight
+        newY = wallHeight * WALL_SCALE - artworkHeight - borderOffset
         break
       default:
         break
@@ -116,7 +123,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const artworkWidth = currentEdited.width2d
     const artworkHeight = currentEdited.height2d
     const artworkY = currentEdited.posY2d
-    const wallWidth2d = (wallWidth || 0) * 100
+    const wallWidth2d = (wallWidth || 0) * WALL_SCALE
     // fromRight = wallWidth - centerX, so centerX = wallWidth - fromRight
     const centerX = wallWidth2d - fromRight
     const newX = centerX - artworkWidth / 2
@@ -162,7 +169,7 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const artworkWidth = currentEdited.width2d
     const artworkHeight = currentEdited.height2d
     const artworkX = currentEdited.posX2d
-    const wallHeight2d = (wallHeight || 0) * 100
+    const wallHeight2d = (wallHeight || 0) * WALL_SCALE
     // fromBottom = wallHeight - centerY, so centerY = wallHeight - fromBottom
     const centerY = wallHeight2d - fromBottom
     const newY = centerY - artworkHeight / 2
