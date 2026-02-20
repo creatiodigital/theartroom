@@ -35,10 +35,10 @@ const wallViewSlice = createSlice({
       state.currentArtworkId = action.payload
     },
     increaseScaleFactor: (state: TWallView) => {
-      state.scaleFactor = Math.min(state.scaleFactor + 0.02, 4)
+      state.scaleFactor = Math.min(state.scaleFactor + 0.03, 3)
     },
     decreaseScaleFactor: (state: TWallView) => {
-      state.scaleFactor = Math.max(state.scaleFactor - 0.02, 0.64)
+      state.scaleFactor = Math.max(state.scaleFactor - 0.03, 0.10)
     },
     // Zoom toward / away from the mouse cursor position
     zoomAtPoint: (
@@ -55,10 +55,10 @@ const wallViewSlice = createSlice({
     ) => {
       const { direction, cursorXRatio, cursorYRatio, containerWidth, containerHeight } =
         action.payload
-      const W = 3000 // wrapper size in px – matches the CSS
+      const W = 50000 // wrapper size in px – matches the CSS
       const oldScale = state.scaleFactor
       const newScale =
-        direction === 'in' ? Math.min(oldScale + 0.02, 6) : Math.max(oldScale - 0.02, 0.64)
+        direction === 'in' ? Math.min(oldScale + 0.01, 3) : Math.max(oldScale - 0.01, 0.10)
 
       if (newScale === oldScale) return
 
@@ -113,7 +113,7 @@ const wallViewSlice = createSlice({
     },
     resetPan: (state: TWallView) => {
       state.panPosition = { x: -50, y: -50 }
-      state.scaleFactor = 1
+      state.scaleFactor = 0.30
     },
     setWallDimensions: (state: TWallView, action: PayloadAction<TWallDimensions>) => {
       const { width, height } = action.payload

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { getArtworkBorderPx } from '@/components/wallview/constants'
 import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
@@ -14,7 +15,7 @@ import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TDirection, TAlignmentPair } from '@/types/wallView'
 
-const SNAP_TOLERANCE = 0.5 // Pixel-perfect alignment for proportional resize
+const SNAP_TOLERANCE = 5
 
 export const useResizeArtwork = (
   boundingData: TDimensions | null,
@@ -152,6 +153,9 @@ export const useResizeArtwork = (
           }
         } else {
           // Original non-proportional resize logic
+          // Get the dragged artwork's own border offset to compare visual edges
+          const artData = artworksById[artworkId]
+          const borderPx = artData ? getArtworkBorderPx(artData) : 0
 
           // Handle LEFT edge
           if (direction.includes('left')) {
@@ -162,10 +166,11 @@ export const useResizeArtwork = (
               newX = Math.round((newX - gridOffsetX) / gridSize) * gridSize + gridOffsetX
               newWidth = Math.max(5, initialWidth - (newX - initialX))
             } else {
-              // Snap left edge to other artworks' left edges
+              // Snap left edge to other artworks' left edges (compare visual edges)
+              const myVisualLeft = newX - borderPx
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
-                if (Math.abs(newX - otherVisual.x) <= SNAP_TOLERANCE) {
-                  newX = otherVisual.x
+                if (Math.abs(myVisualLeft - otherVisual.x) <= SNAP_TOLERANCE) {
+                  newX = otherVisual.x + borderPx
                   newWidth = Math.max(5, initialX + initialWidth - newX)
                   alignedPairs.push({
                     from: artworkId,
@@ -181,7 +186,7 @@ export const useResizeArtwork = (
           // Handle RIGHT edge
           if (direction.includes('right')) {
             newWidth = Math.max(5, initialWidth + deltaX)
-            const newRight = newX + newWidth
+            const myVisualRight = newX + newWidth + borderPx
 
             if (isGridVisible) {
               newWidth =
@@ -189,11 +194,11 @@ export const useResizeArtwork = (
                 newX +
                 gridOffsetX
             } else {
-              // Snap right edge to other artworks' right edges
+              // Snap right edge to other artworks' right edges (compare visual edges)
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
                 const otherRight = otherVisual.x + otherVisual.width
-                if (Math.abs(newRight - otherRight) <= SNAP_TOLERANCE) {
-                  newWidth = Math.max(5, otherRight - newX)
+                if (Math.abs(myVisualRight - otherRight) <= SNAP_TOLERANCE) {
+                  newWidth = Math.max(5, otherRight - borderPx - newX)
                   alignedPairs.push({
                     from: artworkId,
                     to: otherPos.artworkId,
@@ -214,10 +219,11 @@ export const useResizeArtwork = (
               newY = Math.round((newY - gridOffsetY) / gridSize) * gridSize + gridOffsetY
               newHeight = Math.max(5, initialHeight - (newY - initialY))
             } else {
-              // Snap top edge to other artworks' top edges
+              // Snap top edge to other artworks' top edges (compare visual edges)
+              const myVisualTop = newY - borderPx
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
-                if (Math.abs(newY - otherVisual.y) <= SNAP_TOLERANCE) {
-                  newY = otherVisual.y
+                if (Math.abs(myVisualTop - otherVisual.y) <= SNAP_TOLERANCE) {
+                  newY = otherVisual.y + borderPx
                   newHeight = Math.max(5, initialY + initialHeight - newY)
                   alignedPairs.push({
                     from: artworkId,
@@ -233,7 +239,7 @@ export const useResizeArtwork = (
           // Handle BOTTOM edge
           if (direction.includes('bottom')) {
             newHeight = Math.max(5, initialHeight + deltaY)
-            const newBottom = newY + newHeight
+            const myVisualBottom = newY + newHeight + borderPx
 
             if (isGridVisible) {
               newHeight =
@@ -241,11 +247,11 @@ export const useResizeArtwork = (
                 newY +
                 gridOffsetY
             } else {
-              // Snap bottom edge to other artworks' bottom edges
+              // Snap bottom edge to other artworks' bottom edges (compare visual edges)
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
                 const otherBottom = otherVisual.y + otherVisual.height
-                if (Math.abs(newBottom - otherBottom) <= SNAP_TOLERANCE) {
-                  newHeight = Math.max(5, otherBottom - newY)
+                if (Math.abs(myVisualBottom - otherBottom) <= SNAP_TOLERANCE) {
+                  newHeight = Math.max(5, otherBottom - borderPx - newY)
                   alignedPairs.push({
                     from: artworkId,
                     to: otherPos.artworkId,

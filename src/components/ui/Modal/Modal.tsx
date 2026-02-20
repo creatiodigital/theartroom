@@ -18,7 +18,7 @@ const Modal = ({ children, onClose }: ModalProps) => {
 
   return (
     <div className={styles.modal} onClick={handleBackdropClick}>
-      <div className={styles.content}>{children}</div>
+      <div className={styles.content} onMouseDown={(e) => e.stopPropagation()}>{children}</div>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { v4 as uuidv4 } from 'uuid'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { createArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
@@ -18,7 +19,7 @@ import type { TDimensions } from '@/types/geometry'
 export const useCreateArtwork = (boundingData: TDimensions) => {
   const dispatch = useDispatch()
 
-  const sizeForType = (type: TArtworkKind) => (type === 'sound' ? 40 : 100)
+  const sizeForType = (type: TArtworkKind) => (type === 'sound' ? 40 * (WALL_SCALE / 100) : WALL_SCALE)
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
@@ -29,8 +30,8 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
       if (!boundingData || !wallWidth || !wallHeight) return
 
       const size = sizeForType(artworkType)
-      const posX2d = (wallWidth * 100) / 2 - size / 2
-      const posY2d = (wallHeight * 100) / 2 - size / 2
+      const posX2d = (wallWidth * WALL_SCALE) / 2 - size / 2
+      const posY2d = (wallHeight * WALL_SCALE) / 2 - size / 2
 
       const artworkId = uuidv4()
 

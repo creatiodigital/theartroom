@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.floorMaterial !== undefined) data.floorMaterial = body.floorMaterial
     if (body.floorTextureScale !== undefined) {
       // Clamp scale between 0.5 and 5.0
-      data.floorTextureScale = Math.max(0.5, Math.min(5.0, body.floorTextureScale))
+      data.floorTextureScale = Math.max(0.5, Math.min(8.0, body.floorTextureScale))
     }
     if (body.floorTextureOffsetX !== undefined) data.floorTextureOffsetX = body.floorTextureOffsetX
     if (body.floorTextureOffsetY !== undefined) data.floorTextureOffsetY = body.floorTextureOffsetY

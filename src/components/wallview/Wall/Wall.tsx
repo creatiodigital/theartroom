@@ -19,9 +19,10 @@ import { useSelectBox } from '@/components/wallview/hooks/useSelectBox'
 import { Human } from '@/components/wallview/Human'
 import { DistanceLines } from '@/components/wallview/DistanceLines'
 import { SelectionBox } from '@/components/wallview/SelectionBox'
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import { setShiftKeyDown } from '@/redux/slices/wallViewSlice'
 import { setWallCoordinates, setWallDimensions } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
@@ -61,9 +62,9 @@ export const Wall = () => {
 
   const alignedPairs = useSelector((state: RootState) => state.wallView.alignedPairs)
   const dispatch = useDispatch()
-  const scaling = 100
-  const humanHeight = 170
-  const humanWidth = 66
+  const scaling = WALL_SCALE
+  const humanHeight = 170 * (WALL_SCALE / 100)
+  const humanWidth = 66 * (WALL_SCALE / 100)
 
   const wallRef = useRef<HTMLDivElement>(null!)
   const preventClick = useRef(false)
@@ -245,6 +246,66 @@ export const Wall = () => {
     },
     [preventClick, handleRemoveArtworkGroup, handleDeselect],
   )
+
+  // Arrow key handlers for precision movement (in Wall.tsx so boundingData is available for 3D conversion)
+  useEffect(() => {
+    const handleArrowKeys = (e: KeyboardEvent) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
+
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return
+      }
+
+      const artworkIdsToMove: string[] = []
+      if (artworkGroupIds.length > 0) {
+        artworkIdsToMove.push(...artworkGroupIds)
+      } else if (currentArtworkId) {
+        artworkIdsToMove.push(currentArtworkId)
+      }
+
+      if (artworkIdsToMove.length === 0) return
+
+      e.preventDefault()
+
+      let deltaX = 0
+      let deltaY = 0
+      switch (e.key) {
+        case 'ArrowUp': deltaY = -1; break
+        case 'ArrowDown': deltaY = 1; break
+        case 'ArrowLeft': deltaX = -1; break
+        case 'ArrowRight': deltaX = 1; break
+      }
+
+      dispatch(pushToHistory())
+
+      artworkIdsToMove.forEach((artworkId) => {
+        const currentPos = exhibitionArtworksById[artworkId]
+        if (!currentPos) return
+
+        const newX = currentPos.posX2d + deltaX
+        const newY = currentPos.posY2d + deltaY
+
+        // Compute 3D coordinates from new 2D position
+        const pos3d = boundingData
+          ? convert2DTo3D(newX, newY, currentPos.width2d, currentPos.height2d, boundingData)
+          : {}
+
+        dispatch(
+          updateArtworkPosition({
+            artworkId,
+            artworkPosition: { posX2d: newX, posY2d: newY, ...pos3d },
+          }),
+        )
+      })
+    }
+
+    window.addEventListener('keydown', handleArrowKeys)
+    return () => window.removeEventListener('keydown', handleArrowKeys)
+  }, [dispatch, currentArtworkId, artworkGroupIds, exhibitionArtworksById, boundingData])
 
   useKeyboardEvents(currentArtworkId, hoveredArtworkId === currentArtworkId)
 

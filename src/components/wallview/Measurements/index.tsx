@@ -1,6 +1,7 @@
 'use client'
 
 import { memo } from 'react'
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './Measurements.module.scss'
@@ -26,7 +27,7 @@ const Measurements = memo(({ width, height, floorOffset = 0 }: MeasurementsProps
         style={
           floorOffset > 0
             ? {
-                top: `calc(50% + ${(floorOffset * 100) / 2}px)`, // Shift down by half the offset to stay centered on total height
+                top: `calc(50% + ${(floorOffset * WALL_SCALE) / 2}px)`, // Shift down by half the offset to stay centered on total height
               }
             : undefined
         }

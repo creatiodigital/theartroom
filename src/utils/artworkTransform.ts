@@ -1,5 +1,6 @@
 import { Vector3, Quaternion } from 'three'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 
 export function getArtworkPosition3D(pos: TArtworkPosition): Vector3 {
@@ -12,8 +13,8 @@ export function getArtworkQuaternion(pos: TArtworkPosition): Quaternion {
 
 export function getArtworkDimensions3D(pos: TArtworkPosition) {
   return {
-    width: pos.width3d ?? pos.width2d ?? 1,
-    height: pos.height3d ?? pos.height2d ?? 1,
+    width: pos.width3d ?? (pos.width2d ? pos.width2d / WALL_SCALE : 1),
+    height: pos.height3d ?? (pos.height2d ? pos.height2d / WALL_SCALE : 1),
   }
 }
 

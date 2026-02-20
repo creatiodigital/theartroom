@@ -73,6 +73,25 @@ const useBlobTexture = (url: string): Texture | null => {
   return texture
 }
 
+// Apply "background-size: cover" style UV mapping to a texture.
+// Crops and centers the texture so it fills the plane without distortion.
+const applyCoverUVs = (texture: Texture, planeWidth: number, planeHeight: number) => {
+  const imgAspect = texture.image.width / texture.image.height
+  const planeAspect = planeWidth / planeHeight
+
+  if (imgAspect > planeAspect) {
+    // Image is wider than plane — crop sides
+    const scale = planeAspect / imgAspect
+    texture.repeat.set(scale, 1)
+    texture.offset.set((1 - scale) / 2, 0)
+  } else {
+    // Image is taller than plane — crop top/bottom
+    const scale = imgAspect / planeAspect
+    texture.repeat.set(1, scale)
+    texture.offset.set(0, (1 - scale) / 2)
+  }
+}
+
 // Component for blob URL images (uses custom loader)
 const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useBlobTexture(url)
@@ -81,6 +100,8 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   if (!texture) {
     return <ImagePlaceholder width={width} height={height} />
   }
+
+  applyCoverUVs(texture, width, height)
 
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
@@ -139,6 +160,8 @@ const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   if (!texture) {
     return <ImagePlaceholder width={width} height={height} />
   }
+
+  applyCoverUVs(texture, width, height)
 
   return (
     <mesh castShadow receiveShadow renderOrder={2}>
@@ -326,7 +349,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
   const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
   // passepartoutThickness is for Z-depth, clamped 0.1-1.0
-  const passepartoutDepth = Math.min(1.0, Math.max(0.1, passepartoutThickness?.value ?? 0.3))
+  const passepartoutDepth = Math.min(5, Math.max(1, passepartoutThickness?.value ?? 2))
   // supportThickness is for Z-depth, clamped 0-10
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
 

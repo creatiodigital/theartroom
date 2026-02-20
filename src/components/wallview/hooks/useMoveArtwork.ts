@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
@@ -189,9 +190,9 @@ export const useMoveArtwork = (
       })
 
       // Check wall center alignment
-      const wallWidth2d = boundingData.width * 100 // scaling factor
-      const wallHeight2d = boundingData.height * 100
-      const tolerance = 3
+      const wallWidth2d = boundingData.width * WALL_SCALE
+      const wallHeight2d = boundingData.height * WALL_SCALE
+      const tolerance = 8
       const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
 
       // Vertical center of wall (artwork visual center aligned with wall center)

@@ -1,5 +1,6 @@
 import { Vector3, Quaternion, Mesh, BufferGeometry, Box3 } from 'three'
 
+import { WALL_SCALE } from '@/components/wallview/constants'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 import type { TDimensions } from '@/types/geometry'
 
@@ -14,13 +15,14 @@ export const getVisualBounds = (
   pos: TArtworkPosition,
   artwork: TArtwork | undefined,
 ): { x: number; y: number; width: number; height: number } => {
+  const scaleMul = WALL_SCALE / 100
   const frameBorder =
     artwork?.showFrame && artwork?.imageUrl && artwork?.frameSize?.value
-      ? artwork.frameSize.value
+      ? artwork.frameSize.value * scaleMul
       : 0
   const ppBorder =
     artwork?.showPassepartout && artwork?.imageUrl && artwork?.passepartoutSize?.value
-      ? artwork.passepartoutSize.value
+      ? artwork.passepartoutSize.value * scaleMul
       : 0
   const totalBorder = frameBorder + ppBorder
 
@@ -124,8 +126,8 @@ export const convert2DTo3D = (
 ) => {
   const { boundingBox, normal, u, v, width, height } = boundingData
 
-  const xRatio = 0.5 - posX2d / (width * 100)
-  const yRatio = posY2d / (height * 100) - 0.5
+  const xRatio = 0.5 - posX2d / (width * WALL_SCALE)
+  const yRatio = posY2d / (height * WALL_SCALE) - 0.5
 
   const center3D = boundingBox.getCenter(new Vector3())
 
@@ -142,8 +144,8 @@ export const convert2DTo3D = (
   let posY3d = center3D.y + u.y * xRatio * width + v.y * yRatio * height
   let posZ3d = center3D.z + u.z * xRatio * width + v.z * yRatio * height
 
-  const adjustedWidth = (width2d / (width * 100)) * width
-  const adjustedHeight = (height2d / (height * 100)) * height
+  const adjustedWidth = (width2d / (width * WALL_SCALE)) * width
+  const adjustedHeight = (height2d / (height * WALL_SCALE)) * height
 
   posX3d -= u.x * (adjustedWidth / 2)
   posY3d -= u.y * (adjustedWidth / 2)

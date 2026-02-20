@@ -1,4 +1,5 @@
 import { Text } from '@react-three/drei'
+import { WALL_SCALE } from '@/components/wallview/constants'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ComponentRef } from 'react'
 import { DoubleSide, Vector3, Quaternion } from 'three'
@@ -132,10 +133,9 @@ const Stencil = ({ artwork }: StencilProps) => {
     [handleSingleClick],
   )
 
-  // Font size maps directly to centimeters on the wall.
-  // fontSize 16 → 0.16 Three.js units → 16 cm tall text.
-  // (1 Three.js unit = 1 meter, so factor = 1/100 = cm-to-meters)
-  const fontSizeFactor = 0.01
+  // Font size maps to pixels in the 2D wall view.
+  // At WALL_SCALE pixels per meter, fontSize N → N/WALL_SCALE meters.
+  const fontSizeFactor = 1 / WALL_SCALE
   // Convert textPadding (pixels) to 3D units using the same scale factor as fontSize
   const textPaddingValue = textPadding?.value ?? 0
   const padding3D = textPaddingValue * fontSizeFactor
@@ -243,7 +243,7 @@ const Stencil = ({ artwork }: StencilProps) => {
     >
       {/* Background - box with depth when textThickness > 0, flat plane otherwise */}
       {(textBackgroundColor || !textContent) && (() => {
-        const cardDepth = Math.min(5, Math.max(0, textThickness?.value ?? 0)) / 100
+        const cardDepth = Math.min(10, Math.max(0, textThickness?.value ?? 0)) / 100
         if (cardDepth > 0) {
           return (
             <mesh renderOrder={1} position={[0, 0, -cardDepth / 2]}>
