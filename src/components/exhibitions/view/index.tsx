@@ -374,6 +374,9 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         // Camera settings
         cameraFOV: exhibition.cameraFOV ?? undefined,
         cameraElevation: exhibition.cameraElevation ?? undefined,
+        // Wall & Ceiling
+        wallColor: exhibition.wallColor ?? undefined,
+        ceilingColor: exhibition.ceilingColor ?? undefined,
       }
       dispatch(setExhibition(exhibitionData))
     }

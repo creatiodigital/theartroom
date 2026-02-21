@@ -32,8 +32,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const body = await request.json()
 
     // Base update data (fields that definitely exist)
+    // Sync name with title so all consumers see the updated label
     const baseData = {
-      name: body.name,
+      name: body.title || body.name,
       artworkType: body.artworkType,
       title: body.title,
       author: body.author,

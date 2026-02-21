@@ -1,7 +1,7 @@
 'use client'
 
 import c from 'classnames'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
@@ -44,6 +44,7 @@ export const LeftPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
 
   // Undo/Redo state
   const historyLength = useSelector((state: RootState) => state.exhibition._history?.length ?? 0)
@@ -65,6 +66,11 @@ export const LeftPanel = () => {
       .filter((a): a is NonNullable<typeof a> => Boolean(a))
       .reverse()
   }, [allIds, artworksById, positionsById, currentWallId])
+
+  const filteredWallArtworks = useMemo(() => {
+    if (typeFilter === 'all') return wallArtworks
+    return wallArtworks.filter((a) => a.artworkType === typeFilter)
+  }, [wallArtworks, typeFilter])
 
   const handleZoomIn = () => dispatch(increaseScaleFactor())
   const handleZoomOut = () => dispatch(decreaseScaleFactor())
@@ -297,9 +303,20 @@ export const LeftPanel = () => {
       </div>
       {wallArtworks.length > 0 && (
         <div className={styles.section}>
+          <div className={styles.tabs}>
+            {(['all', 'image', 'text', 'sound'] as const).map((type) => (
+              <button
+                key={type}
+                className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
+                onClick={() => setTypeFilter(type)}
+              >
+                {type === 'all' ? 'All' : type === 'image' ? 'Images' : type === 'text' ? 'Text' : 'Sound'}
+              </button>
+            ))}
+          </div>
           <div className={styles.subsection}>
             <ul className={styles.artworks}>
-              {wallArtworks.map((artwork) => (
+              {filteredWallArtworks.map((artwork) => (
                 <li
                   key={artwork.id}
                   onClick={() => handleSelectArtwork(artwork.id)}

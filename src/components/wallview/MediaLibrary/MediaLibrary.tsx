@@ -14,6 +14,7 @@ import styles from './MediaLibrary.module.scss'
 type Artwork = {
   id: string
   name: string
+  title?: string | null
   artworkType: string
   imageUrl?: string | null
   textContent?: string | null
@@ -189,7 +190,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                   />
                 )}
               </div>
-              <span className={styles.name}>{artwork.name}</span>
+              <span className={styles.name}>{artwork.title || artwork.name}</span>
             </div>
           ))}
         </div>

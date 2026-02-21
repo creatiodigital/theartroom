@@ -267,6 +267,11 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
     }
 
     loadArtworks()
+
+    // Reset ref on unmount so re-entering this page re-fetches live data
+    return () => {
+      loadedExhibitionId.current = null
+    }
   }, [exhibitionId, dispatch])
 
   return {
