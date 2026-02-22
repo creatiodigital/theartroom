@@ -136,10 +136,14 @@ function MonogramOverlay({
   const clampedWidth = Math.min(monoWidth, width * 0.8)
   const clampedHeight = clampedWidth * (133 / 122)
 
-  // Vertical position: near the top or bottom edge
-  const yOffset = pos === 'top'
-    ? height / 2 - clampedHeight / 2 - offset
-    : -height / 2 + clampedHeight / 2 + offset
+  // Vertical position: near the top or bottom edge, clamped within card
+  const halfCard = height / 2
+  const halfMono = clampedHeight / 2
+  const maxOffset = halfCard - halfMono // maximum distance from center before clipping
+  const rawY = pos === 'top'
+    ? halfCard - halfMono - offset
+    : -halfCard + halfMono + offset
+  const yOffset = Math.max(-maxOffset, Math.min(maxOffset, rawY))
 
   return (
     <mesh renderOrder={3} position={[0, yOffset, 0.0005]}>
