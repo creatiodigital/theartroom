@@ -327,7 +327,7 @@ export const LeftPanel = () => {
                 >
                   <span style={{ flexShrink: 0, opacity: 0.5, display: 'inline-flex', width: 16, justifyContent: 'center' }}>
                     <Icon
-                      name={artwork.artworkType === 'sound' ? 'volume-2' : artwork.artworkType === 'text' ? 'type' : 'image'}
+                      name={artwork.artworkType === 'sound' ? 'volume-2' : artwork.artworkType === 'text' ? 'type' : artwork.artworkType === 'shape' ? 'shapes' : 'image'}
                       size={14}
                       color="currentColor"
                     />

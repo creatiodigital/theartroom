@@ -38,20 +38,20 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     textPadding,
   } = artisticText
 
-  const fontFamilyMap: Record<
-    'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display',
-    string
-  > = {
-    roboto: 'var(--font-wall1)',
-    lora: 'var(--font-wall2)',
-    lato: 'var(--font-sans)',
-    'eb-garamond': 'var(--font-serif)',
-    geist: 'var(--font-dashboard)',
-    'playfair-display': 'var(--font-playfair)',
+  const fontFamilyMap: Record<string, string> = {
+    roboto: 'var(--font-wall-roboto)',
+    lora: 'var(--font-wall-lora)',
+    alegreya: 'var(--font-wall-alegreya)',
+    manrope: 'var(--font-wall-manrope)',
+    'garamond-glc': 'var(--font-wall-garamond-glc)',
   }
-  const fontWeightMap: Record<'regular' | 'bold', number> = {
-    regular: 400,
-    bold: 600,
+
+  // Map font weight/style values to CSS properties
+  const fontStyleMap: Record<string, { weight: number; style: string }> = {
+    regular: { weight: 400, style: 'normal' },
+    italic: { weight: 400, style: 'italic' },
+    bold: { weight: 700, style: 'normal' },
+    'bold-italic': { weight: 700, style: 'italic' },
   }
 
   const verticalAlignMap: Record<'top' | 'center' | 'bottom', string> = {
@@ -61,7 +61,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
   }
 
   const fontFamilyVariable = fontFamilyMap[fontFamily] ?? fontFamilyMap.roboto
-  const fontWeightVariable = fontWeightMap[fontWeight]
+  const resolvedStyle = fontStyleMap[fontWeight] ?? fontStyleMap.regular
   // Only apply vertical alignment when there's actual text content
   const hasContent = !!textContent?.trim()
   const justifyContentValue = hasContent
@@ -116,7 +116,8 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
             textAlign,
             color: textColor,
             fontFamily: fontFamilyVariable,
-            fontWeight: fontWeightVariable,
+            fontWeight: resolvedStyle.weight,
+            fontStyle: resolvedStyle.style,
             fontSize,
             lineHeight,
             letterSpacing: `${letterSpacing}px`,

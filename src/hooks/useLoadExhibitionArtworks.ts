@@ -64,6 +64,7 @@ type ExhibitionArtworkResponse = {
   textVerticalAlign: string
   textPadding: number
   textThickness: number
+  textBackgroundTexture: string | null
   // Sound styling (per-exhibition)
   soundIcon: string
   soundBackgroundColor: string | null
@@ -72,6 +73,11 @@ type ExhibitionArtworkResponse = {
   soundPlayMode: string
   soundSpatial: boolean
   soundDistance: number
+  // Shape decoration
+  shapeType: string
+  shapeColor: string
+  shapeOpacity: number
+  rotation: number
 }
 
 /**
@@ -205,6 +211,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             textVerticalAlign: ea.textVerticalAlign as 'top' | 'center' | 'bottom',
             textPadding: { label: String(ea.textPadding ?? 0), value: ea.textPadding ?? 0 },
             textThickness: { label: String(ea.textThickness ?? 0), value: ea.textThickness ?? 0 },
+            textBackgroundTexture: ea.textBackgroundTexture ?? undefined,
             // Sound styling from ExhibitionArtwork (per-exhibition)
             soundIcon: ea.soundIcon ?? 'volume-2',
             soundBackgroundColor: ea.soundBackgroundColor ?? undefined,
@@ -213,6 +220,10 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             soundPlayMode: (ea.soundPlayMode ?? 'play-once') as 'loop' | 'play-once',
             soundSpatial: ea.soundSpatial ?? true,
             soundDistance: ea.soundDistance ?? 5,
+            // Shape decoration
+            shapeType: ea.shapeType ?? 'rectangle',
+            shapeColor: ea.shapeColor ?? '#000000',
+            shapeOpacity: ea.shapeOpacity ?? 1,
           }
 
           dispatch(restoreArtwork(artwork))
@@ -243,6 +254,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             quaternionY: ea.quaternionY,
             quaternionZ: ea.quaternionZ,
             quaternionW: ea.quaternionW,
+            rotation: ea.rotation ?? 0,
           }
 
           dispatch(createArtworkPosition({ artworkId: ea.artworkId, artworkPosition: position }))

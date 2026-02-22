@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Typography'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { editArtisticImage, editArtisticText } from '@/redux/slices/artworkSlice'
+import { editArtwork, editArtisticImage, editArtisticText } from '@/redux/slices/artworkSlice'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -21,7 +21,7 @@ import SavePresetModal from './SavePresetModal'
 import UpdatePresetModal from './UpdatePresetModal'
 import styles from './PresetSection.module.scss'
 
-type PresetType = 'image' | 'text'
+type PresetType = 'image' | 'text' | 'shape'
 
 type TPreset = {
   id: string
@@ -48,10 +48,15 @@ type TPreset = {
   lineHeight: number
   textColor: string
   textBackgroundColor: string | null
+  textBackgroundTexture: string | null
   textAlign: string
   textVerticalAlign: string
   textPadding: number
   textThickness: number
+  // Shape properties
+  shapeType: string
+  shapeColor: string
+  shapeOpacity: number
 }
 
 type PresetSectionProps = {
@@ -165,6 +170,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
           : (artwork.lineHeight ?? 1.4)
       props.textColor = artwork.textColor ?? '#000000'
       props.textBackgroundColor = artwork.textBackgroundColor ?? null
+      props.textBackgroundTexture = artwork.textBackgroundTexture ?? null
       props.textAlign = artwork.textAlign ?? 'left'
       props.textVerticalAlign = artwork.textVerticalAlign ?? 'top'
       props.textPadding =
@@ -175,6 +181,13 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
         typeof artwork.textThickness === 'object'
           ? (artwork.textThickness?.value ?? 0)
           : (artwork.textThickness ?? 0)
+    }
+
+    // Shape properties (only for shape presets)
+    if (presetType === 'shape') {
+      props.shapeType = artwork.shapeType ?? 'rectangle'
+      props.shapeColor = artwork.shapeColor ?? '#000000'
+      props.shapeOpacity = artwork.shapeOpacity ?? 1
     }
 
     return props
@@ -245,7 +258,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     }
 
     // Apply display properties via artworkSlice
-    const editAction = presetType === 'text' ? editArtisticText : editArtisticImage
+    const editAction = presetType === 'text' ? editArtisticText : presetType === 'shape' ? editArtwork : editArtisticImage
     const applyProp = <K extends keyof TArtwork>(property: K, value: TArtwork[K]) => {
       dispatch(editAction({ currentArtworkId, property, value }))
     }
@@ -300,6 +313,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       applyProp('lineHeight', { label: String(preset.lineHeight), value: preset.lineHeight })
       applyProp('textColor', preset.textColor)
       applyProp('textBackgroundColor', preset.textBackgroundColor ?? undefined)
+      applyProp('textBackgroundTexture', preset.textBackgroundTexture ?? undefined)
       applyProp('textAlign', preset.textAlign as TArtwork['textAlign'])
       applyProp('textVerticalAlign', preset.textVerticalAlign as TArtwork['textVerticalAlign'])
       applyProp('textPadding', { label: String(preset.textPadding), value: preset.textPadding })
@@ -307,6 +321,13 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
         label: String(preset.textThickness),
         value: preset.textThickness,
       })
+    }
+
+    // Shape properties (for shape presets)
+    if (presetType === 'shape') {
+      applyProp('shapeType', preset.shapeType)
+      applyProp('shapeColor', preset.shapeColor)
+      applyProp('shapeOpacity', preset.shapeOpacity)
     }
   }
 

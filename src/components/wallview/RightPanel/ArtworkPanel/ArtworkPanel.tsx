@@ -364,6 +364,37 @@ const ArtworkPanel = () => {
             label="Snap Align"
           />
         </div>
+
+        {/* Rotation slider - shapes only */}
+        {artwork?.artworkType === 'shape' && exhibitionArtwork && (
+          <div style={{ marginTop: 'var(--space-4)' }}>
+            <div className={styles.row} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                Rotation
+              </Text>
+              <Text font="dashboard" as="span" size="xs" style={{ fontFamily: 'monospace' }}>
+                {Math.round(exhibitionArtwork.rotation ?? 0)}°
+              </Text>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="360"
+              step="1"
+              value={exhibitionArtwork.rotation ?? 0}
+              onChange={(e) => {
+                if (!currentArtworkId) return
+                dispatch(
+                  updateArtworkPosition({
+                    artworkId: currentArtworkId,
+                    artworkPosition: { rotation: parseFloat(e.target.value) },
+                  }),
+                )
+              }}
+              className={styles.slider}
+            />
+          </div>
+        )}
       </div>
     </>
   )

@@ -3,7 +3,7 @@ export type { TFontFamily, TFontWeight, TTextAlign, TOption } from '@/types/font
 
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
-export type TArtworkKind = 'image' | 'text' | 'sound'
+export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape'
 
 export type TArtworkPosition = {
   id?: string
@@ -63,6 +63,7 @@ export type TArtwork = {
   textVerticalAlign?: 'top' | 'center' | 'bottom'
   textPadding?: TOption<number>
   textThickness?: TOption<number>
+  textBackgroundTexture?: string // e.g. 'paper', 'cardboard' — runtime only, no DB field yet
   featured?: boolean
   hiddenFromExhibition?: boolean
   hideShadow?: boolean
@@ -75,4 +76,8 @@ export type TArtwork = {
   soundBackgroundColor?: string | null // Background color of the sound object
   soundIconColor?: string // Icon color
   soundIconSize?: number // Icon size (px in 2D)
+  // Shape decoration properties (only when artworkType = 'shape')
+  shapeType?: string // 'rectangle' | 'circle'
+  shapeColor?: string
+  shapeOpacity?: number
 }

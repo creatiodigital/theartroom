@@ -56,7 +56,7 @@ const Select = <T extends string | number = string | number>({
       </div>
 
       {isOpen && (
-        <ul className={styles.dropdown}>
+        <ul className={styles.dropdown} onMouseDown={(e) => e.stopPropagation()}>
           {options.map((option) => (
             <li key={option.value} className={styles.option} onClick={(e) => handleSelect(option, e)}>
               {option.label}

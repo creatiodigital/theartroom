@@ -68,6 +68,11 @@ export async function POST(request: Request) {
         textVerticalAlign: body.textVerticalAlign ?? 'top',
         textPadding: body.textPadding != null ? Number(body.textPadding) : 0,
         textThickness: body.textThickness != null ? Number(body.textThickness) : 0,
+        textBackgroundTexture: body.textBackgroundTexture ?? null,
+        // Shape properties
+        shapeType: body.shapeType ?? 'rectangle',
+        shapeColor: body.shapeColor ?? '#000000',
+        shapeOpacity: body.shapeOpacity != null ? Number(body.shapeOpacity) : 1,
       },
     })
 

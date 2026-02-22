@@ -229,6 +229,12 @@ export const useSaveExhibition = () => {
             textVerticalAlign: artwork.textVerticalAlign ?? 'top',
             textPadding: artwork.textPadding?.value ?? 0,
             textThickness: artwork.textThickness?.value ?? 0,
+            textBackgroundTexture: artwork.textBackgroundTexture ?? null,
+            // Shape decoration properties
+            shapeType: artwork.shapeType ?? 'rectangle',
+            shapeColor: artwork.shapeColor ?? '#000000',
+            shapeOpacity: artwork.shapeOpacity ?? 1,
+            rotation: pos.rotation ?? 0,
             // Sound styling (per-exhibition)
             soundIcon: artwork.soundIcon ?? 'volume-2',
             soundBackgroundColor: artwork.soundBackgroundColor ?? null,

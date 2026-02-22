@@ -1,9 +1,10 @@
 import { Text } from '@react-three/drei'
 import { WALL_SCALE } from '@/components/wallview/constants'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { Suspense, useState, useRef, useEffect, useCallback } from 'react'
 import type { ComponentRef } from 'react'
-import { DoubleSide, Vector3, Quaternion } from 'three'
+import { DoubleSide, Vector2, Vector3, Quaternion } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
+import { usePaperTexture } from './usePaperTexture'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
@@ -15,10 +16,66 @@ type StencilProps = {
   artwork: RuntimeArtwork
 }
 
+
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
 const CLICK_MAX_DURATION = 300
 const DOUBLE_CLICK_DELAY = 250
+
+/**
+ * Inner component for paper-textured background.
+ * Separated because useTexture (drei) requires Suspense.
+ */
+function PaperBackground({
+  width,
+  height,
+  depth,
+  tintColor,
+}: {
+  width: number
+  height: number
+  depth: number
+  tintColor?: string | null
+}) {
+  const textures = usePaperTexture(/* textureRepeat */ 1)
+
+  if (depth > 0) {
+    return (
+      <mesh renderOrder={1} position={[0, 0, -depth / 2]}>
+        <boxGeometry args={[width, height, depth]} />
+        <meshStandardMaterial
+          map={textures.map}
+          normalMap={textures.normalMap}
+          normalScale={new Vector2(1.5, 1.5)}
+          roughnessMap={textures.roughnessMap}
+          roughness={0.85}
+          aoMap={textures.aoMap}
+          aoMapIntensity={0.5}
+          metalness={0}
+          color={tintColor ?? '#ffffff'}
+        />
+      </mesh>
+    )
+  }
+
+  return (
+    <mesh renderOrder={1}>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial
+        map={textures.map}
+        normalMap={textures.normalMap}
+        normalScale={new Vector2(1.5, 1.5)}
+        roughnessMap={textures.roughnessMap}
+        roughness={0.85}
+        aoMap={textures.aoMap}
+        aoMapIntensity={0.5}
+        metalness={0}
+        color={tintColor ?? '#ffffff'}
+        side={DoubleSide}
+      />
+    </mesh>
+  )
+}
 
 const Stencil = ({ artwork }: StencilProps) => {
   const {
@@ -40,6 +97,7 @@ const Stencil = ({ artwork }: StencilProps) => {
     textPadding,
     textThickness,
     showArtworkInformation,
+    textBackgroundTexture,
   } = artwork
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -141,36 +199,39 @@ const Stencil = ({ artwork }: StencilProps) => {
   const padding3D = textPaddingValue * fontSizeFactor
   const paddingOffset = padding3D * 2  // total padding on both sides
 
-  const fontMap = {
-    roboto: {
-      regular: '/fonts/roboto-regular.ttf',
-      bold: '/fonts/roboto-bold.ttf',
-    },
+  const fontMap: Record<string, Record<string, string>> = {
     lora: {
       regular: '/fonts/lora-regular.ttf',
+      italic: '/fonts/lora-italic.ttf',
       bold: '/fonts/lora-bold.ttf',
+      'bold-italic': '/fonts/lora-bold-italic.ttf',
     },
-    lato: {
-      regular: '/fonts/Lato-Regular.ttf',
-      bold: '/fonts/Lato-Bold.ttf',
+    alegreya: {
+      regular: '/fonts/alegreya-regular.ttf',
+      italic: '/fonts/alegreya-italic.ttf',
+      bold: '/fonts/alegreya-bold.ttf',
+      'bold-italic': '/fonts/alegreya-bold-italic.ttf',
     },
-    'eb-garamond': {
-      regular: '/fonts/EBGaramond-Regular.ttf',
-      bold: '/fonts/EBGaramond-Bold.ttf',
+    manrope: {
+      regular: '/fonts/manrope-regular.ttf',
+      bold: '/fonts/manrope-bold.ttf',
     },
-    geist: {
-      regular: '/fonts/Geist-Regular.ttf',
-      bold: '/fonts/Geist-Bold.ttf',
+    roboto: {
+      regular: '/fonts/roboto-regular.ttf',
+      italic: '/fonts/roboto-italic.ttf',
+      bold: '/fonts/roboto-bold.ttf',
+      'bold-italic': '/fonts/roboto-bold-italic.ttf',
     },
-    'playfair-display': {
-      regular: '/fonts/PlayfairDisplay-Regular.ttf',
-      bold: '/fonts/PlayfairDisplay-Bold.ttf',
+    'garamond-glc': {
+      regular: '/fonts/garamont-glc.ttf',
     },
-  } as const
+  }
 
   const resolvedFontFamily = fontFamily?.value ?? 'roboto'
   const resolvedFontWeight = fontWeight?.value ?? 'regular'
-  const fontUrl = fontMap[resolvedFontFamily]?.[resolvedFontWeight] ?? fontMap.roboto.regular
+  const fontUrl = fontMap[resolvedFontFamily]?.[resolvedFontWeight]
+    ?? fontMap[resolvedFontFamily]?.regular
+    ?? fontMap.roboto.regular
 
   const textRef = useRef<ComponentRef<typeof Text>>(null)
   const [textWidth, setTextWidth] = useState(0)
@@ -241,9 +302,26 @@ const Stencil = ({ artwork }: StencilProps) => {
       onPointerUp={handlePointerUp}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Background - box with depth when textThickness > 0, flat plane otherwise */}
-      {(textBackgroundColor || !textContent) && (() => {
+      {/* Background - paper texture (always on when flag set) or flat color */}
+      {(() => {
         const cardDepth = Math.min(10, Math.max(0, textThickness?.value ?? 0)) / 100
+
+        if (textBackgroundTexture) {
+          return (
+            <Suspense fallback={null}>
+              <PaperBackground
+                width={planeWidth}
+                height={planeHeight}
+                depth={cardDepth}
+                tintColor={textBackgroundColor}
+              />
+            </Suspense>
+          )
+        }
+
+        // Original flat-color background — only when background color is set or no text
+        if (!(textBackgroundColor || !textContent)) return null
+
         if (cardDepth > 0) {
           return (
             <mesh renderOrder={1} position={[0, 0, -cardDepth / 2]}>
@@ -284,7 +362,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             overflowWrap="break-word"
             onSync={calculateTextDimensions}
             sdfGlyphSize={512}
-            outlineWidth="1%"
+            outlineWidth="0.2%"
             outlineColor={textColor ?? 'black'}
           >
             {textContent}

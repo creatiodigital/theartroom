@@ -92,6 +92,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         textVerticalAlign: body.textVerticalAlign ?? preset.textVerticalAlign,
         textPadding: body.textPadding != null ? Number(body.textPadding) : preset.textPadding,
         textThickness: body.textThickness != null ? Number(body.textThickness) : preset.textThickness,
+        textBackgroundTexture: body.textBackgroundTexture !== undefined ? body.textBackgroundTexture : preset.textBackgroundTexture,
+        // Shape properties
+        shapeType: body.shapeType ?? preset.shapeType,
+        shapeColor: body.shapeColor ?? preset.shapeColor,
+        shapeOpacity: body.shapeOpacity != null ? Number(body.shapeOpacity) : preset.shapeOpacity,
       },
     })
 

@@ -42,5 +42,9 @@ export const createNewArtwork = ({
     featured: false,
     hiddenFromExhibition: false,
     hideShadow: false,
+    // Shape decoration defaults
+    shapeType: 'rectangle',
+    shapeColor: '#000000',
+    shapeOpacity: 1,
   }
 }

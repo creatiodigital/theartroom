@@ -7,6 +7,7 @@ import type { TDimensions } from '@/types/geometry'
 /**
  * Compute the visual bounding rect of an artwork, including its
  * frame and passepartout borders (which grow outward from the image).
+ * For rotated shapes, computes the axis-aligned bounding box (AABB).
  *
  * Returns { x, y, width, height } in 2D wall-view pixel units.
  * When no artwork metadata is available, falls back to the raw image rect.
@@ -26,12 +27,29 @@ export const getVisualBounds = (
       : 0
   const totalBorder = frameBorder + ppBorder
 
-  return {
-    x: pos.posX2d - totalBorder,
-    y: pos.posY2d - totalBorder,
-    width: pos.width2d + totalBorder * 2,
-    height: pos.height2d + totalBorder * 2,
+  let w = pos.width2d + totalBorder * 2
+  let h = pos.height2d + totalBorder * 2
+  let x = pos.posX2d - totalBorder
+  let y = pos.posY2d - totalBorder
+
+  // For rotated shapes, expand to AABB
+  const rotationDeg = artwork?.artworkType === 'shape' ? (pos.rotation ?? 0) : 0
+  if (rotationDeg !== 0) {
+    const rad = (rotationDeg * Math.PI) / 180
+    const cosA = Math.abs(Math.cos(rad))
+    const sinA = Math.abs(Math.sin(rad))
+    const aabbW = w * cosA + h * sinA
+    const aabbH = w * sinA + h * cosA
+    // Center stays the same, adjust x/y
+    const cx = x + w / 2
+    const cy = y + h / 2
+    x = cx - aabbW / 2
+    y = cy - aabbH / 2
+    w = aabbW
+    h = aabbH
   }
+
+  return { x, y, width: w, height: h }
 }
 
 export const calculateAverageNormal = (placeholder: Mesh<BufferGeometry>): Vector3 => {

@@ -1,4 +1,5 @@
 import type { TOption } from '@/types/artwork'
+import type { TFontFamily, TFontWeight } from '@/types/fonts'
 
 function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[] {
   return values.map((v) => ({
@@ -9,29 +10,28 @@ function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[
 
 export const fontSizes = toOptions([
   1, 1.5, 2, 2.5, 3, 3.5,
-  ...Array.from({ length: 47 }, (_, i) => i + 4), // 4–50 cm
+  ...Array.from({ length: 97 }, (_, i) => i + 4), // 4–100 cm
 ] as number[])
 
 export const lineHeights = toOptions(
-  Array.from({ length: 11 }, (_, i) => +(1 + i * 0.1).toFixed(1)),
+  [0.5, 0.6, 0.7, 0.8, 0.9, ...Array.from({ length: 11 }, (_, i) => +(1 + i * 0.1).toFixed(1))],
 )
 
 export const letterSpacings = toOptions([0, 0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 3.5, 4] as const)
 
-export const fontWeights: TOption<'regular' | 'bold'>[] = [
+export const fontWeights: TOption<TFontWeight>[] = [
   { value: 'regular', label: 'Regular' },
+  { value: 'italic', label: 'Regular Italic' },
   { value: 'bold', label: 'Bold' },
+  { value: 'bold-italic', label: 'Bold Italic' },
 ]
 
-export const fontFamilies: TOption<
-  'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display'
->[] = [
-  { value: 'roboto', label: 'Roboto' },
+export const fontFamilies: TOption<TFontFamily>[] = [
   { value: 'lora', label: 'Lora' },
-  { value: 'lato', label: 'Lato' },
-  { value: 'eb-garamond', label: 'EB Garamond' },
-  { value: 'geist', label: 'Geist' },
-  { value: 'playfair-display', label: 'Playfair Display' },
+  { value: 'alegreya', label: 'Alegreya' },
+  { value: 'manrope', label: 'Manrope' },
+  { value: 'roboto', label: 'Roboto' },
+  { value: 'garamond-glc', label: 'Garamond GLC' },
 ]
 
 export const textPaddings = toOptions(Array.from({ length: 25 }, (_, i) => i) as number[])

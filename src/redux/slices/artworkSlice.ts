@@ -21,6 +21,7 @@ const initialState: TArtworksState = {
     image: 0,
     text: 0,
     sound: 0,
+    shape: 0,
   },
   _snapshot: null,
 }

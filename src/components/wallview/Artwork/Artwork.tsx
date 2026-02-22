@@ -106,17 +106,40 @@ const Artwork = memo(
       handleArtworkDragMove(event.nativeEvent)
     }
 
+    // For shapes with rotation, compute the axis-aligned bounding box (AABB)
+    // so the dashed border encompasses the full rotated shape
+    const rotationDeg = artworkType === 'shape' ? (artworkPositions.rotation ?? 0) : 0
+    const rotationRad = (rotationDeg * Math.PI) / 180
+    const hasShapeRotation = artworkType === 'shape' && rotationDeg !== 0
+
+    let finalWidth = containerWidth
+    let finalHeight = containerHeight
+    let finalX = adjustedX
+    let finalY = adjustedY
+
+    if (hasShapeRotation) {
+      // AABB of rotated rectangle
+      const cosA = Math.abs(Math.cos(rotationRad))
+      const sinA = Math.abs(Math.sin(rotationRad))
+      finalWidth = containerWidth * cosA + containerHeight * sinA
+      finalHeight = containerWidth * sinA + containerHeight * cosA
+      // Adjust position to keep the center at the same place
+      finalX = adjustedX - (finalWidth - containerWidth) / 2
+      finalY = adjustedY - (finalHeight - containerHeight) / 2
+    }
+
     return (
       <div
         id={`artwork-${id}`}
         className={styles.artwork}
         style={{
-          top: `${adjustedY}px`,
-          left: `${adjustedX}px`,
-          width: `${containerWidth}px`,
-          height: `${containerHeight}px`,
+          top: `${finalY}px`,
+          left: `${finalX}px`,
+          width: `${finalWidth}px`,
+          height: `${finalHeight}px`,
           zIndex: currentArtworkId === id ? 10 : 1,
           cursor: 'grab',
+          overflow: artworkType === 'shape' ? 'visible' : undefined,
         }}
         onMouseDown={(event) => {
           event.stopPropagation()
@@ -129,7 +152,7 @@ const Artwork = memo(
         onMouseLeave={handleMouseLeave}
       >
         {currentArtworkId === id && (
-          <ArtworkMeasurements width2d={containerWidth} height2d={containerHeight} />
+          <ArtworkMeasurements width2d={finalWidth} height2d={finalHeight} />
         )}
         {currentArtworkId === id && artworkGroupIds.length <= 1 && (
           <Handles artworkId={id} handleResize={onHandleResize} />
@@ -137,6 +160,21 @@ const Artwork = memo(
         {artworkType === 'text' && <ArtisticText artworkId={id} />}
         {artworkType === 'image' && <ArtisticImage artwork={artwork} />}
         {artworkType === 'sound' && <ArtisticSound artworkId={id} />}
+        {artworkType === 'shape' && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: `${containerWidth}px`,
+              height: `${containerHeight}px`,
+              transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
+              backgroundColor: artwork.shapeColor ?? '#000000',
+              opacity: artwork.shapeOpacity ?? 1,
+              borderRadius: artwork.shapeType === 'circle' ? '50%' : 0,
+            }}
+          />
+        )}
       </div>
     )
   },

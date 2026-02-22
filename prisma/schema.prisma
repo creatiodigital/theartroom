@@ -84,17 +84,23 @@ model ArtworkPreset {
   hideShadow Boolean @default(false)
 
   // Text styling (used when presetType = "text")
-  fontFamily          String  @default("Montserrat")
-  fontSize            Float   @default(16)
-  fontWeight          String  @default("400")
-  letterSpacing       Float   @default(0)
-  lineHeight          Float   @default(1.4)
-  textColor           String  @default("#000000")
-  textBackgroundColor String?
-  textAlign           String  @default("left")
-  textVerticalAlign   String  @default("top")
-  textPadding         Float   @default(12)
-  textThickness       Float   @default(0) // Card depth in cm (0-5), only when background color is set
+  fontFamily            String  @default("Montserrat")
+  fontSize              Float   @default(16)
+  fontWeight            String  @default("400")
+  letterSpacing         Float   @default(0)
+  lineHeight            Float   @default(1.4)
+  textColor             String  @default("#000000")
+  textBackgroundColor   String?
+  textAlign             String  @default("left")
+  textVerticalAlign     String  @default("top")
+  textPadding           Float   @default(12)
+  textThickness         Float   @default(0) // Card depth in cm (0-5), only when background color is set
+  textBackgroundTexture String? // e.g. 'paper', 'cardboard'
+
+  // Shape decoration properties
+  shapeType    String @default("rectangle")
+  shapeColor   String @default("#000000")
+  shapeOpacity Float  @default(1.0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -237,17 +243,18 @@ model ExhibitionArtwork {
   hideShadow Boolean @default(false) // Whether to hide artwork shadow
 
   // Text styling (per-exhibition customization)
-  fontFamily          String  @default("Montserrat")
-  fontSize            Float   @default(16)
-  fontWeight          String  @default("400")
-  letterSpacing       Float   @default(0)
-  lineHeight          Float   @default(1.4)
-  textColor           String  @default("#000000")
-  textBackgroundColor String?
-  textAlign           String  @default("left")
-  textVerticalAlign   String  @default("top")
-  textPadding         Float   @default(12) // Padding in pixels
-  textThickness       Float   @default(0) // Card depth in cm (0-5), only when background color is set
+  fontFamily            String  @default("Montserrat")
+  fontSize              Float   @default(16)
+  fontWeight            String  @default("400")
+  letterSpacing         Float   @default(0)
+  lineHeight            Float   @default(1.4)
+  textColor             String  @default("#000000")
+  textBackgroundColor   String?
+  textAlign             String  @default("left")
+  textVerticalAlign     String  @default("top")
+  textPadding           Float   @default(12) // Padding in pixels
+  textThickness         Float   @default(0) // Card depth in cm (0-5), only when background color is set
+  textBackgroundTexture String? // e.g. 'paper', 'cardboard'
 
   // Sound styling (per-exhibition customization)
   soundIcon            String  @default("volume-2")
@@ -257,6 +264,14 @@ model ExhibitionArtwork {
   soundPlayMode        String  @default("play-once")
   soundSpatial         Boolean @default(true)
   soundDistance        Float   @default(5)
+
+  // Shape decoration properties (only used when artwork.artworkType = 'shape')
+  shapeType    String @default("rectangle") // rectangle | circle
+  shapeColor   String @default("#000000")
+  shapeOpacity Float  @default(1.0)
+
+  // Wall-normal rotation (degrees, 0-360, only used for shapes)
+  rotation Float @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

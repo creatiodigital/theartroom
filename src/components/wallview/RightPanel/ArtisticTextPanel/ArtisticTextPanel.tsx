@@ -1,11 +1,12 @@
 'use client'
 
 import { useGLTF } from '@react-three/drei'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
@@ -19,6 +20,7 @@ import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TFontFamily, TFontWeight } from '@/types/fonts'
+import { FONT_FAMILY_WEIGHTS } from '@/types/fonts'
 
 import {
   fontSizes,
@@ -32,12 +34,11 @@ import {
 
 /** Map font-family keys to the CSS custom properties used in the 2D wall view */
 const fontFamilyMap: Record<string, string> = {
-  roboto: 'var(--font-wall1)',
-  lora: 'var(--font-wall2)',
-  lato: 'var(--font-sans)',
-  'eb-garamond': 'var(--font-serif)',
-  geist: 'var(--font-dashboard)',
-  'playfair-display': 'var(--font-playfair)',
+  roboto: 'var(--font-wall-roboto)',
+  lora: 'var(--font-wall-lora)',
+  alegreya: 'var(--font-wall-alegreya)',
+  manrope: 'var(--font-wall-manrope)',
+  'garamond-glc': 'var(--font-wall-garamond-glc)',
 }
 
 const ArtisticText = () => {
@@ -67,7 +68,15 @@ const ArtisticText = () => {
     fontFamily,
     textPadding,
     textThickness,
+    textBackgroundTexture,
   } = useArtworkDetails(currentArtworkId!)
+
+  // Filter font weight options based on selected family's supported variants
+  const filteredWeights = useMemo(() => {
+    const family = (fontFamily?.value ?? 'roboto') as TFontFamily
+    const supported = FONT_FAMILY_WEIGHTS[family] ?? FONT_FAMILY_WEIGHTS.roboto
+    return fontWeights.filter((w) => supported.includes(w.value))
+  }, [fontFamily?.value])
 
   /**
    * Measure the text's natural (unconstrained) dimensions using an off-screen
@@ -280,13 +289,13 @@ const ArtisticText = () => {
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Font Weight
+              Font Style
             </Text>
             <Select<TFontWeight>
-              options={fontWeights}
-              value={fontWeight?.value}
-              onChange={(val) => handleEditArtworkText('fontWeight', { label: val, value: val })}
-            />
+                options={filteredWeights}
+                value={fontWeight?.value}
+                onChange={(val) => handleEditArtworkText('fontWeight', { label: val, value: val })}
+              />
           </div>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -374,6 +383,36 @@ const ArtisticText = () => {
                     value: val,
                   })
                 }
+              />
+            </div>
+          </div>
+        )}
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Checkbox
+              checked={!!textBackgroundTexture}
+              onChange={(e) => {
+                handleEditArtworkText(
+                  'textBackgroundTexture',
+                  e.target.checked ? 'paper' : undefined,
+                )
+              }}
+              label="Use Texture"
+            />
+          </div>
+        </div>
+        {textBackgroundTexture && (
+          <div className={styles.row}>
+            <div className={styles.item}>
+              <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                Texture
+              </Text>
+              <Select<string>
+                options={[
+                  { label: 'Plain Paper', value: 'paper' },
+                ]}
+                value={textBackgroundTexture}
+                onChange={(val) => handleEditArtworkText('textBackgroundTexture', val)}
               />
             </div>
           </div>
