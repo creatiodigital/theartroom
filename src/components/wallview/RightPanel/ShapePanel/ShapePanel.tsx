@@ -4,6 +4,7 @@ import { useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { ColorPicker } from '@/components/ui/ColorPicker'
+import { Section } from '@/components/ui/Section/Section'
 import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
 import { editArtwork } from '@/redux/slices/artworkSlice'
@@ -42,12 +43,8 @@ const ShapePanel = () => {
   const shapeOpacity = artwork.shapeOpacity ?? 1
 
   return (
-    <div className={styles.section}>
-      <Text font="dashboard" as="h3" size="sm" className={styles.title}>
-        Shape Properties
-      </Text>
-
-      <div className={styles.subsection}>
+    <>
+    <Section title="Properties">
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -94,12 +91,15 @@ const ShapePanel = () => {
             />
           </div>
         </div>
-      </div>
+    </Section>
 
+    <Section title="Presets">
       <PresetSection presetType="shape" />
-    </div>
+    </Section>
+    </>
   )
 }
 
 export { ShapePanel }
 export default ShapePanel
+

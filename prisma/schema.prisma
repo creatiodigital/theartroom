@@ -183,6 +183,7 @@ model Exhibition {
   trackLampMaterialColor String?  @default("#ffffff")
   trackLampAngle         Float?   @default(0.45)
   trackLampDistance      Float?   @default(5.0)
+  trackLampSettings      Json?
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)

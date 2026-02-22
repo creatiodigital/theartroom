@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
+import { Section } from '@/components/ui/Section/Section'
 import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -48,8 +49,7 @@ const ArtisticImage = () => {
 
   return (
     <>
-      {/* DISPLAY Section */}
-      <div className={styles.section}>
+      <Section title="Display">
         <Tooltip
           label="When enabled, visitors can double-click this artwork in the 3D exhibition to view its details"
           placement="left"
@@ -82,14 +82,11 @@ const ArtisticImage = () => {
             label="Hide shadow"
           />
         </Tooltip>
-      </div>
 
-      <div className={styles.section}>
         <PresetSection presetType="image" />
-      </div>
+      </Section>
 
-      {/* SUPPORT Section - on top */}
-      <div className={styles.section}>
+      <Section title="Presentation">
         <Tooltip
           label="Add the canvas or panel depth behind the artwork (stretcher bars, wood panel, etc.)"
           placement="left"
@@ -130,10 +127,7 @@ const ArtisticImage = () => {
             </div>
           </div>
         )}
-      </div>
 
-      {/* FRAME Section */}
-      <div className={styles.section}>
         <Tooltip
           label="Add a picture frame around this artwork, visible in the 3D exhibition"
           placement="left"
@@ -191,10 +185,7 @@ const ArtisticImage = () => {
             </div>
           </div>
         )}
-      </div>
 
-      {/* PASSEPARTOUT Section */}
-      <div className={styles.section}>
         <Tooltip
           label="Add a mat border between the artwork and frame, like traditional gallery framing"
           placement="left"
@@ -252,7 +243,7 @@ const ArtisticImage = () => {
             </div>
           </div>
         )}
-      </div>
+      </Section>
     </>
   )
 }

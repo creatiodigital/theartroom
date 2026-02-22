@@ -34,6 +34,7 @@ type ExhibitionUpdateBody = {
   trackLampMaterialColor?: string
   trackLampAngle?: number
   trackLampDistance?: number
+  trackLampSettings?: Record<string, { rotation: number; enabled: boolean }> | null
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
@@ -153,6 +154,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.trackLampAngle = Math.max(0.1, Math.min(1.2, body.trackLampAngle))
     if (body.trackLampDistance !== undefined)
       data.trackLampDistance = Math.max(1, Math.min(10, body.trackLampDistance))
+    if (body.trackLampSettings !== undefined)
+      data.trackLampSettings = body.trackLampSettings === null ? Prisma.JsonNull : body.trackLampSettings
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity

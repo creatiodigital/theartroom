@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { Text } from '@/components/ui/Typography'
+import { Section } from '@/components/ui/Section/Section'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
@@ -20,6 +20,8 @@ import {
   setTrackLampIntensity,
   setTrackLampAngle,
   setTrackLampDistance,
+  setTrackLampRotation,
+  setTrackLampEnabled,
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,
@@ -48,6 +50,7 @@ const DEFAULT_RECESSED_LAMP_INTENSITY = 4.0
 const DEFAULT_TRACK_LAMP_MATERIAL_COLOR = '#ffffff'
 const DEFAULT_TRACK_LAMP_ANGLE = 0.45
 const DEFAULT_TRACK_LAMP_DISTANCE = 5.0
+const TRACK_LAMP_COUNT = 14
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
 const DEFAULT_HDRI_ROTATION = 128
@@ -107,6 +110,9 @@ const LightingPanel = () => {
   )
   const trackLampDistance = useSelector(
     (state: RootState) => state.exhibition.trackLampDistance ?? DEFAULT_TRACK_LAMP_DISTANCE,
+  )
+  const trackLampSettings = useSelector(
+    (state: RootState) => state.exhibition.trackLampSettings,
   )
   const ceilingLightMode = useSelector(
     (state: RootState) => state.exhibition.ceilingLightMode ?? 'track-plafond',
@@ -220,6 +226,7 @@ const LightingPanel = () => {
           trackLampIntensity,
           trackLampAngle,
           trackLampDistance,
+          trackLampSettings: trackLampSettings ?? null,
           recessedLampColor,
           recessedLampIntensity,
           trackLampMaterialColor,
@@ -249,13 +256,9 @@ const LightingPanel = () => {
 
   return (
     <SettingsPanel title="Lighting" onClose={handleClose}>
-      {/* HDRI Environment Section */}
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Sky Light
-        </Text>
+      <Section title="Environment">
         <div className={styles.field}>
-          <label className={styles.label}>Type</label>
+          <label className={styles.label}>Sky Type</label>
           <select value={hdriEnvironment} onChange={handleHdriChange} className={styles.select}>
             {HDRI_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -267,7 +270,7 @@ const LightingPanel = () => {
 
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
-            <label className={styles.label}>Rotation</label>
+            <label className={styles.label}>Sky Rotation</label>
             <span className={styles.sliderValue}>{hdriRotation.toFixed(0)}°</span>
           </div>
           <input
@@ -280,16 +283,9 @@ const LightingPanel = () => {
             className={styles.slider}
           />
         </div>
-      </div>
-
-      {/* Ambient Light Section */}
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Ambient Light
-        </Text>
 
         <div className={styles.field}>
-          <label className={styles.label}>Color</label>
+          <label className={styles.label}>Ambient Color</label>
           <ColorPicker
             textColor={ambientColor}
             onColorSelect={(color) => {
@@ -301,7 +297,7 @@ const LightingPanel = () => {
 
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
-            <label className={styles.label}>Intensity</label>
+            <label className={styles.label}>Ambient Intensity</label>
             <span className={styles.sliderValue}>{ambientIntensity.toFixed(2)}</span>
           </div>
           <input
@@ -314,17 +310,14 @@ const LightingPanel = () => {
             className={styles.slider}
           />
         </div>
-      </div>
+      </Section>
 
-      {/* Ceiling Light Section - only for spaces with skylight */}
-      {hasSkylight && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Ceiling Light
-          </Text>
-
+      {(hasSkylight || hasLamps || hasTrackLamps) && (
+      <Section title="Ceiling">
+        {hasSkylight && (
+          <>
           <div className={styles.field}>
-            <label className={styles.label}>Color</label>
+            <label className={styles.label}>Ceiling Light Color</label>
             <ColorPicker
               textColor={skylightColor}
               onColorSelect={(color) => {
@@ -336,7 +329,7 @@ const LightingPanel = () => {
 
           <div className={styles.field}>
             <div className={styles.sliderHeader}>
-              <label className={styles.label}>Intensity</label>
+              <label className={styles.label}>Ceiling Light Intensity</label>
               <span className={styles.sliderValue}>{skylightIntensity.toFixed(2)}</span>
             </div>
             <input
@@ -349,18 +342,13 @@ const LightingPanel = () => {
               className={styles.slider}
             />
           </div>
-        </div>
-      )}
+          </>
+        )}
 
-      {/* Ceiling Lamps Section - only for spaces with lamps */}
-      {hasLamps && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Ceiling Lamps
-          </Text>
-
+        {hasLamps && (
+          <>
           <div className={styles.field}>
-            <label className={styles.label}>Color</label>
+            <label className={styles.label}>Lamp Color</label>
             <ColorPicker
               textColor={lampColor}
               onColorSelect={(color) => {
@@ -372,7 +360,7 @@ const LightingPanel = () => {
 
           <div className={styles.field}>
             <div className={styles.sliderHeader}>
-              <label className={styles.label}>Intensity</label>
+              <label className={styles.label}>Lamp Intensity</label>
               <span className={styles.sliderValue}>{lampIntensity.toFixed(2)}</span>
             </div>
             <input
@@ -385,17 +373,12 @@ const LightingPanel = () => {
               className={styles.slider}
             />
           </div>
-        </div>
-      )}
+          </>
+        )}
 
-      {/* Ceiling Light Mode Section - only for spaces with track lamps */}
-      {hasTrackLamps && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Ceiling Lights
-          </Text>
+        {hasTrackLamps && (
           <div className={styles.field}>
-            <label className={styles.label}>Type</label>
+            <label className={styles.label}>Ceiling Light Type</label>
             <select
               value={ceilingLightMode}
               onChange={handleCeilingLightModeChange}
@@ -408,16 +391,44 @@ const LightingPanel = () => {
               ))}
             </select>
           </div>
-        </div>
+        )}
+
+        {hasRecessedLamps &&
+          (ceilingLightMode === 'plafond' || ceilingLightMode === 'track-plafond') && (
+            <>
+            <div className={styles.field}>
+              <label className={styles.label}>Plafond Color</label>
+              <ColorPicker
+                textColor={recessedLampColor}
+                onColorSelect={(color) => {
+                  dispatch(setRecessedLampColor(color))
+                  setSaved(false)
+                }}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Plafond Intensity</label>
+                <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                value={recessedLampIntensity}
+                onChange={handleRecessedLampIntensityChange}
+                className={styles.slider}
+              />
+            </div>
+            </>
+          )}
+      </Section>
       )}
 
-      {/* Track Lamps Section - only when track lamps are visible */}
       {hasTrackLamps && (ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Track Lamps
-          </Text>
-
+      <Section title="Track Lamps">
           <div className={styles.field}>
             <label className={styles.label}>Color</label>
             <ColorPicker
@@ -476,18 +487,9 @@ const LightingPanel = () => {
               className={styles.slider}
             />
           </div>
-        </div>
-      )}
-
-      {/* Track Lamp Material Section - only when track lamps are visible */}
-      {hasTrackLamps && (ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Track Lamp Material
-          </Text>
 
           <div className={styles.field}>
-            <label className={styles.label}>Color</label>
+            <label className={styles.label}>Material Color</label>
             <ColorPicker
               textColor={trackLampMaterialColor}
               onColorSelect={(color) => {
@@ -496,53 +498,56 @@ const LightingPanel = () => {
               }}
             />
           </div>
-        </div>
+
+          {/* Individual lamp controls */}
+          {Array.from({ length: TRACK_LAMP_COUNT }).map((_, i) => {
+            const settings = trackLampSettings?.[String(i)]
+            const isEnabled = settings?.enabled ?? true
+            const rotation = settings?.rotation ?? 0
+
+            return (
+              <div key={`lamp-${i}`} className={styles.lampRow}>
+                <div className={styles.lampHeader}>
+                  <span className={styles.lampLabel}>Lamp {i + 1}</span>
+                  <label className={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => {
+                        dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
+                        setSaved(false)
+                      }}
+                    />
+                    <span className={styles.toggleSlider} />
+                  </label>
+                </div>
+                {isEnabled && (
+                  <div className={styles.lampSlider}>
+                    <input
+                      type="range"
+                      min="-180"
+                      max="180"
+                      step="1"
+                      value={rotation}
+                      onChange={(e) => {
+                        dispatch(setTrackLampRotation({ index: i, rotation: parseFloat(e.target.value) }))
+                        setSaved(false)
+                      }}
+                      className={styles.slider}
+                    />
+                    <span className={styles.sliderValue}>{rotation}°</span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+      </Section>
       )}
 
-      {/* Recessed / Plafond Lamps Section - only when plafond lamps are visible */}
-      {hasRecessedLamps &&
-        (ceilingLightMode === 'plafond' || ceilingLightMode === 'track-plafond') && (
-          <div className={styles.section}>
-            <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-              Plafond Lamps
-            </Text>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Color</label>
-              <ColorPicker
-                textColor={recessedLampColor}
-                onColorSelect={(color) => {
-                  dispatch(setRecessedLampColor(color))
-                  setSaved(false)
-                }}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Intensity</label>
-                <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.1"
-                value={recessedLampIntensity}
-                onChange={handleRecessedLampIntensityChange}
-                className={styles.slider}
-              />
-            </div>
-          </div>
-        )}
-
-      {/* Window Light Section - only for spaces with windows */}
       {hasWindows && (
-        <div className={styles.section}>
+      <Section title="Window">
           <div className={styles.sectionHeader}>
-            <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-              Transparent Window
-            </Text>
+            <label className={styles.label}>Transparent</label>
             <label className={styles.toggle}>
               <input
                 type="checkbox"
@@ -587,7 +592,7 @@ const LightingPanel = () => {
               </div>
             </>
           )}
-        </div>
+      </Section>
       )}
 
       {/* Actions */}
