@@ -575,7 +575,7 @@ const ArtisticText = () => {
               </div>
               <div className={styles.item}>
                 <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Offset (%)
+                  Offset (cm)
                 </Text>
                 <Select<number>
                   options={[
@@ -601,19 +601,20 @@ const ArtisticText = () => {
             <div className={styles.row}>
               <div className={styles.item}>
                 <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Size (%)
+                  Size (cm)
                 </Text>
                 <Select<number>
                   options={[
+                    { label: '1', value: 1 },
+                    { label: '2', value: 2 },
+                    { label: '3', value: 3 },
+                    { label: '4', value: 4 },
                     { label: '5', value: 5 },
+                    { label: '6', value: 6 },
+                    { label: '7', value: 7 },
                     { label: '8', value: 8 },
+                    { label: '9', value: 9 },
                     { label: '10', value: 10 },
-                    { label: '12', value: 12 },
-                    { label: '15', value: 15 },
-                    { label: '18', value: 18 },
-                    { label: '22', value: 22 },
-                    { label: '25', value: 25 },
-                    { label: '30', value: 30 },
                   ]}
                   value={monogramSize?.value ?? 4}
                   onChange={(val) =>
