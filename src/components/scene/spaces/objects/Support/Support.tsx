@@ -30,7 +30,10 @@ const Support: React.FC<SupportProps> = ({ width, height, depth, material }) => 
     const extrudeSettings = {
       steps: 1,
       depth: depth,
-      bevelEnabled: false,
+      bevelEnabled: true,
+      bevelThickness: 0.001,
+      bevelSize: 0.001,
+      bevelSegments: 1,
     }
 
     return new ExtrudeGeometry(shape, extrudeSettings)

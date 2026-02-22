@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux'
 import { Icon } from '@/components/ui/Icon'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtisticText } from '@/components/wallview/hooks/useArtisticText'
+import Monogram from '@/icons/monogram.svg'
 import { setEditingArtwork } from '@/redux/slices/dashboardSlice'
 
 import styles from './ArtisticText.module.scss'
@@ -35,23 +36,36 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     fontWeight,
     lineHeight,
     letterSpacing,
-    textPadding,
+    textPaddingTop,
+    textPaddingBottom,
+    textPaddingLeft,
+    textPaddingRight,
+    showMonogram,
+    monogramColor,
+    monogramOpacity,
+    monogramPosition,
+    monogramOffset,
+    monogramSize,
+    showTextBorder,
+    textBorderColor,
+    textBorderOffset,
   } = artisticText
 
-  const fontFamilyMap: Record<
-    'roboto' | 'lora' | 'lato' | 'eb-garamond' | 'geist' | 'playfair-display',
-    string
-  > = {
-    roboto: 'var(--font-wall1)',
-    lora: 'var(--font-wall2)',
-    lato: 'var(--font-sans)',
-    'eb-garamond': 'var(--font-serif)',
-    geist: 'var(--font-dashboard)',
-    'playfair-display': 'var(--font-playfair)',
+  const fontFamilyMap: Record<string, string> = {
+    roboto: 'var(--font-wall-roboto)',
+    lora: 'var(--font-wall-lora)',
+    alegreya: 'var(--font-wall-alegreya)',
+    manrope: 'var(--font-wall-manrope)',
+    'garamond-glc': 'var(--font-wall-garamond-glc)',
+    crimson: 'var(--font-wall-crimson)',
   }
-  const fontWeightMap: Record<'regular' | 'bold', number> = {
-    regular: 400,
-    bold: 600,
+
+  // Map font weight/style values to CSS properties
+  const fontStyleMap: Record<string, { weight: number; style: string }> = {
+    regular: { weight: 400, style: 'normal' },
+    italic: { weight: 400, style: 'italic' },
+    bold: { weight: 700, style: 'normal' },
+    'bold-italic': { weight: 700, style: 'italic' },
   }
 
   const verticalAlignMap: Record<'top' | 'center' | 'bottom', string> = {
@@ -61,7 +75,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
   }
 
   const fontFamilyVariable = fontFamilyMap[fontFamily] ?? fontFamilyMap.roboto
-  const fontWeightVariable = fontWeightMap[fontWeight]
+  const resolvedStyle = fontStyleMap[fontWeight] ?? fontStyleMap.regular
   // Only apply vertical alignment when there's actual text content
   const hasContent = !!textContent?.trim()
   const justifyContentValue = hasContent
@@ -99,6 +113,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: justifyContentValue,
+        position: 'relative',
       }}
     >
       {!hasContent && !isEditing ? (
@@ -116,11 +131,12 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
             textAlign,
             color: textColor,
             fontFamily: fontFamilyVariable,
-            fontWeight: fontWeightVariable,
+            fontWeight: resolvedStyle.weight,
+            fontStyle: resolvedStyle.style,
             fontSize,
             lineHeight,
             letterSpacing: `${letterSpacing}px`,
-            padding: `${textPadding}px`,
+            padding: `${textPaddingTop}px ${textPaddingRight}px ${textPaddingBottom}px ${textPaddingLeft}px`,
           }}
           className={`${styles.content} ${isEditing ? styles.editable : ''}`}
           contentEditable={isEditing}
@@ -128,6 +144,39 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
           onBlur={handleBlur}
         >
           {textContent}
+        </div>
+      )}
+      {showTextBorder && (() => {
+        const insetPx = `${textBorderOffset * 4}px` // 1cm = 4px (WALL_SCALE 400 / 100)
+        return (
+          <div
+            style={{
+              position: 'absolute',
+              top: insetPx,
+              left: insetPx,
+              right: insetPx,
+              bottom: insetPx,
+              border: `1px solid ${textBorderColor}`,
+              pointerEvents: 'none',
+            }}
+          />
+        )
+      })()}
+      {showMonogram && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            ...(monogramPosition === 'top'
+              ? { top: `${monogramOffset ?? 6}%` }
+              : { bottom: `${monogramOffset ?? 6}%` }),
+            width: `${monogramSize ?? 18}%`,
+            opacity: monogramOpacity ?? 1.0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Monogram style={{ width: '100%', height: 'auto', display: 'block', color: monogramColor ?? '#c0392b' }} />
         </div>
       )}
     </div>

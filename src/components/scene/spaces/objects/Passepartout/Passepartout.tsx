@@ -1,3 +1,4 @@
+import { RoundedBox } from '@react-three/drei'
 import { Material } from 'three'
 
 interface PassepartoutProps {
@@ -7,6 +8,8 @@ interface PassepartoutProps {
   depth?: number // Z-depth (how much it protrudes)
   material: Material
 }
+
+const BEVEL_RADIUS = 0.001
 
 const Passepartout: React.FC<PassepartoutProps> = ({
   width,
@@ -22,28 +25,52 @@ const Passepartout: React.FC<PassepartoutProps> = ({
   return (
     <group position={[0, 0, zOffset]}>
       {/* Left side */}
-      <mesh castShadow receiveShadow position={[-(width / 2 - thickness / 2), 0, 0]}>
-        <boxGeometry args={[thickness, height, depth]} />
+      <RoundedBox
+        args={[thickness, height, depth]}
+        radius={BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[-(width / 2 - thickness / 2), 0, 0]}
+      >
         <primitive attach="material" object={material} />
-      </mesh>
+      </RoundedBox>
 
       {/* Right side */}
-      <mesh castShadow receiveShadow position={[width / 2 - thickness / 2, 0, 0]}>
-        <boxGeometry args={[thickness, height, depth]} />
+      <RoundedBox
+        args={[thickness, height, depth]}
+        radius={BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[width / 2 - thickness / 2, 0, 0]}
+      >
         <primitive attach="material" object={material} />
-      </mesh>
+      </RoundedBox>
 
       {/* Top side */}
-      <mesh castShadow receiveShadow position={[0, height / 2 - thickness / 2, 0]}>
-        <boxGeometry args={[width, thickness, depth]} />
+      <RoundedBox
+        args={[width, thickness, depth]}
+        radius={BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[0, height / 2 - thickness / 2, 0]}
+      >
         <primitive attach="material" object={material} />
-      </mesh>
+      </RoundedBox>
 
       {/* Bottom side */}
-      <mesh castShadow receiveShadow position={[0, -(height / 2 - thickness / 2), 0]}>
-        <boxGeometry args={[width, thickness, depth]} />
+      <RoundedBox
+        args={[width, thickness, depth]}
+        radius={BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[0, -(height / 2 - thickness / 2), 0]}
+      >
         <primitive attach="material" object={material} />
-      </mesh>
+      </RoundedBox>
     </group>
   )
 }

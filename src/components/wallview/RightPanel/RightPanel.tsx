@@ -13,6 +13,7 @@ import { ArtisticSoundPanel } from './ArtisticSoundPanel'
 import { ArtisticTextPanel } from './ArtisticTextPanel'
 import { ArtworkPanel } from './ArtworkPanel'
 import { GroupPanel } from './GroupPanel'
+import { ShapePanel } from './ShapePanel/ShapePanel'
 import { useArtworkDetails } from './hooks/useArtworkDetails'
 import { useSaveExhibition } from '../hooks/useSaveExhibition'
 import styles from './RightPanel.module.scss'
@@ -76,23 +77,26 @@ const RightPanel = () => {
             {artworkType === 'image' && <ArtisticImagePanel />}
             {artworkType === 'text' && <ArtisticTextPanel />}
             {artworkType === 'sound' && <ArtisticSoundPanel />}
+            {artworkType === 'shape' && <ShapePanel />}
 
-            <div className={styles.editButtonWrapper}>
-              <Tooltip
-                label="Clicking will save any pending changes on the current selected artwork"
-                placement="top"
-                fullWidth
-              >
-                <Button
-                  font="dashboard"
-                  size="regular"
-                  variant="primary"
-                  label={getButtonLabel()}
-                  onClick={handleEditArtworkDetails}
-                  disabled={saving}
-                />
-              </Tooltip>
-            </div>
+            {artworkType !== 'shape' && (
+              <div className={styles.editButtonWrapper}>
+                <Tooltip
+                  label="Clicking will save any pending changes on the current selected artwork"
+                  placement="top"
+                  fullWidth
+                >
+                  <Button
+                    font="dashboard"
+                    size="regular"
+                    variant="primary"
+                    label={getButtonLabel()}
+                    onClick={handleEditArtworkDetails}
+                    disabled={saving}
+                  />
+                </Tooltip>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -137,7 +137,21 @@ export async function POST(request: NextRequest) {
         textAlign?: string
         textVerticalAlign?: string
         textPadding?: number
+        textPaddingTop?: number
+        textPaddingBottom?: number
+        textPaddingLeft?: number
+        textPaddingRight?: number
         textThickness?: number
+        textBackgroundTexture?: string | null
+        showTextBorder?: boolean
+        textBorderColor?: string
+        textBorderOffset?: number
+        showMonogram?: boolean
+        monogramColor?: string
+        monogramOpacity?: number
+        monogramPosition?: string
+        monogramOffset?: number
+        monogramSize?: number
         // Sound styling (per-exhibition)
         soundIcon?: string
         soundBackgroundColor?: string | null
@@ -146,6 +160,11 @@ export async function POST(request: NextRequest) {
         soundPlayMode?: string
         soundSpatial?: boolean
         soundDistance?: number
+        // Shape decoration
+        shapeType?: string
+        shapeColor?: string
+        shapeOpacity?: number
+        rotation?: number
       }>
     }
 
@@ -227,7 +246,21 @@ export async function POST(request: NextRequest) {
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 0,
+            textPaddingTop: pos.textPaddingTop ?? 0,
+            textPaddingBottom: pos.textPaddingBottom ?? 0,
+            textPaddingLeft: pos.textPaddingLeft ?? 0,
+            textPaddingRight: pos.textPaddingRight ?? 0,
             textThickness: pos.textThickness ?? 0,
+            textBackgroundTexture: pos.textBackgroundTexture ?? null,
+            showTextBorder: pos.showTextBorder ?? false,
+            textBorderColor: pos.textBorderColor ?? '#c9a96e',
+            textBorderOffset: pos.textBorderOffset ?? 1.2,
+            showMonogram: pos.showMonogram ?? false,
+            monogramColor: pos.monogramColor ?? '#c0392b',
+            monogramOpacity: pos.monogramOpacity ?? 1.0,
+            monogramPosition: pos.monogramPosition ?? 'bottom',
+            monogramOffset: pos.monogramOffset ?? 6,
+            monogramSize: pos.monogramSize ?? 18,
             // Sound styling
             soundIcon: pos.soundIcon ?? 'volume-2',
             soundBackgroundColor: pos.soundBackgroundColor ?? null,
@@ -236,6 +269,11 @@ export async function POST(request: NextRequest) {
             soundPlayMode: pos.soundPlayMode ?? 'play-once',
             soundSpatial: pos.soundSpatial ?? true,
             soundDistance: pos.soundDistance ?? 5,
+            // Shape decoration
+            shapeType: pos.shapeType ?? 'rectangle',
+            shapeColor: pos.shapeColor ?? '#000000',
+            shapeOpacity: pos.shapeOpacity ?? 1,
+            rotation: pos.rotation ?? 0,
           },
           update: {
             wallId: pos.wallId,
@@ -275,7 +313,21 @@ export async function POST(request: NextRequest) {
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 0,
+            textPaddingTop: pos.textPaddingTop ?? 0,
+            textPaddingBottom: pos.textPaddingBottom ?? 0,
+            textPaddingLeft: pos.textPaddingLeft ?? 0,
+            textPaddingRight: pos.textPaddingRight ?? 0,
             textThickness: pos.textThickness ?? 0,
+            textBackgroundTexture: pos.textBackgroundTexture ?? null,
+            showTextBorder: pos.showTextBorder ?? false,
+            textBorderColor: pos.textBorderColor ?? '#c9a96e',
+            textBorderOffset: pos.textBorderOffset ?? 1.2,
+            showMonogram: pos.showMonogram ?? false,
+            monogramColor: pos.monogramColor ?? '#c0392b',
+            monogramOpacity: pos.monogramOpacity ?? 1.0,
+            monogramPosition: pos.monogramPosition ?? 'bottom',
+            monogramOffset: pos.monogramOffset ?? 6,
+            monogramSize: pos.monogramSize ?? 18,
             // Sound styling
             soundIcon: pos.soundIcon ?? 'volume-2',
             soundBackgroundColor: pos.soundBackgroundColor ?? null,
@@ -284,6 +336,11 @@ export async function POST(request: NextRequest) {
             soundPlayMode: pos.soundPlayMode ?? 'play-once',
             soundSpatial: pos.soundSpatial ?? true,
             soundDistance: pos.soundDistance ?? 5,
+            // Shape decoration
+            shapeType: pos.shapeType ?? 'rectangle',
+            shapeColor: pos.shapeColor ?? '#000000',
+            shapeOpacity: pos.shapeOpacity ?? 1,
+            rotation: pos.rotation ?? 0,
           },
         }),
       ),
