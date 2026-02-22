@@ -129,12 +129,13 @@ function MonogramOverlay({
   const texture = useMonogramTexture(color, opacity)
 
   // Size the plane using absolute size (meters)
+  // Aspect ratio matches padded canvas: (VB_WIDTH + 2*PADDING) / (VB_HEIGHT + 2*PADDING) = 138/149
   const monoHeight = size
-  const monoWidth = monoHeight * (122 / 133) // match SVG aspect ratio
+  const monoWidth = monoHeight * (138 / 149)
 
   // Clamp so it doesn't overflow the card width
   const clampedWidth = Math.min(monoWidth, width * 0.8)
-  const clampedHeight = clampedWidth * (133 / 122)
+  const clampedHeight = clampedWidth * (149 / 138)
 
   // Vertical position: near the top or bottom edge, clamped within card
   const halfCard = height / 2

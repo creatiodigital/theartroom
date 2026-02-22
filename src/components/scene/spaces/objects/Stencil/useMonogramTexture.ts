@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import { CanvasTexture, SRGBColorSpace } from 'three'
 
-const CANVAS_SIZE = 512
-
 /**
  * The monogram SVG paths (viewBox 0 0 122 133) — filled, not stroked.
  */
@@ -16,10 +14,17 @@ const MONOGRAM_PATHS = [
 const VB_WIDTH = 122
 const VB_HEIGHT = 133
 
+// Add padding around SVG to prevent anti-alias clipping at edges
+const PADDING = 8
+const PADDED_WIDTH = VB_WIDTH + PADDING * 2
+const PADDED_HEIGHT = VB_HEIGHT + PADDING * 2
+
+const CANVAS_HEIGHT = 512
+const CANVAS_WIDTH = Math.round(CANVAS_HEIGHT * (PADDED_WIDTH / PADDED_HEIGHT))
+
 /**
  * Creates a CanvasTexture with the monogram drawn synchronously.
- * The monogram fills the canvas at maximum resolution — the plane size controls
- * how large it appears in the scene.
+ * Canvas includes padding around the SVG to prevent anti-alias clipping.
  */
 export function useMonogramTexture(
   color: string = '#c9a96e',
@@ -27,21 +32,20 @@ export function useMonogramTexture(
 ) {
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas')
-    canvas.width = CANVAS_SIZE
-    canvas.height = CANVAS_SIZE
+    canvas.width = CANVAS_WIDTH
+    canvas.height = CANVAS_HEIGHT
     const ctx = canvas.getContext('2d')!
 
     // Clear — fully transparent
-    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
 
-    // Scale the monogram to fill the canvas (fit height, center horizontally)
-    const scaleVal = CANVAS_SIZE / VB_HEIGHT
-    const scaledWidth = VB_WIDTH * scaleVal
-    const offsetX = (CANVAS_SIZE - scaledWidth) / 2
+    // Scale to fill canvas, with padding offset so SVG content is centered
+    const scaleX = CANVAS_WIDTH / PADDED_WIDTH
+    const scaleY = CANVAS_HEIGHT / PADDED_HEIGHT
 
     ctx.save()
-    ctx.translate(offsetX, 0)
-    ctx.scale(scaleVal, scaleVal)
+    ctx.scale(scaleX, scaleY)
+    ctx.translate(PADDING, PADDING)
     ctx.fillStyle = color
     ctx.globalAlpha = opacity
 
