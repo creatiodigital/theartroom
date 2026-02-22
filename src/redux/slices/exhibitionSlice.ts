@@ -161,6 +161,30 @@ const exhibitionSlice = createSlice({
       state.trackLampDistance = Math.max(1, Math.min(10, action.payload))
     },
 
+    setTrackLampRotation: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ index: number; rotation: number }>,
+    ) => {
+      const { index, rotation } = action.payload
+      if (!state.trackLampSettings) state.trackLampSettings = {}
+      if (!state.trackLampSettings[String(index)]) {
+        state.trackLampSettings[String(index)] = { rotation: 0, enabled: true }
+      }
+      state.trackLampSettings[String(index)].rotation = rotation
+    },
+
+    setTrackLampEnabled: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ index: number; enabled: boolean }>,
+    ) => {
+      const { index, enabled } = action.payload
+      if (!state.trackLampSettings) state.trackLampSettings = {}
+      if (!state.trackLampSettings[String(index)]) {
+        state.trackLampSettings[String(index)] = { rotation: 0, enabled: true }
+      }
+      state.trackLampSettings[String(index)].enabled = enabled
+    },
+
     setWindowLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.windowLightColor = action.payload
     },
@@ -345,6 +369,8 @@ export const {
   setTrackLampMaterialColor,
   setTrackLampAngle,
   setTrackLampDistance,
+  setTrackLampRotation,
+  setTrackLampEnabled,
   setWindowLightColor,
   setWindowLightIntensity,
   setWindowTransparency,

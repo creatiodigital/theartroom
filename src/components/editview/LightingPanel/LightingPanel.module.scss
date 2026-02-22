@@ -214,3 +214,42 @@
     border-color: var(--color-text-primary);
   }
 }
+
+.lampRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  border-top: 1px solid var(--color-border-light);
+
+  &:first-of-type {
+    margin-top: var(--space-2);
+  }
+}
+
+.lampHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lampLabel {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.lampSlider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  .slider {
+    flex: 1;
+  }
+
+  .sliderValue {
+    min-width: 36px;
+    text-align: right;
+  }
+}

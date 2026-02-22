@@ -1,0 +1,50 @@
+.section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-border-default);
+
+  &:first-of-type {
+    border-top: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+
+  &.nonCollapsible {
+    cursor: default;
+  }
+}
+
+.chevron {
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
+  &.open {
+    transform: rotate(90deg);
+  }
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-black);
+  margin: 0;
+  font-weight: 500;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}

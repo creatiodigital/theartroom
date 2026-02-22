@@ -42,7 +42,6 @@ export const CreatePanel = () => {
     artworkType: string
   }) => {
     handleAddExistingArtwork(artwork.id)
-    setShowMediaLibrary(false)
   }
 
   return (

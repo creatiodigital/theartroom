@@ -31,6 +31,7 @@ export type TExhibition = {
   trackLampMaterialColor?: string
   trackLampAngle?: number
   trackLampDistance?: number
+  trackLampSettings?: Record<string, { rotation: number; enabled: boolean }>
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean

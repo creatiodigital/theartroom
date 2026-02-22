@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
+import { Section } from '@/components/ui/Section/Section'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Select } from '@/components/ui/Select'
@@ -187,8 +188,7 @@ const ArtisticText = () => {
 
   return (
     <>
-      <div className={styles.section}>
-        <div className={styles.subsection}>
+      <Section title="Alignment">
           <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
             Text Align
           </Text>
@@ -264,14 +264,13 @@ const ArtisticText = () => {
               onClick={handleWrapAroundText}
             />
           </div>
-        </div>
-      </div>
+      </Section>
 
-      <div className={styles.section}>
+      <Section title="Presets">
         <PresetSection presetType="text" />
-      </div>
+      </Section>
 
-      <div className={styles.section}>
+      <Section title="Style">
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -388,9 +387,6 @@ const ArtisticText = () => {
             />
           </div>
         </div>
-      </div>
-
-      <div className={styles.section}>
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -471,6 +467,7 @@ const ArtisticText = () => {
             </div>
           </div>
         )}
+
         <div className={styles.row}>
           <div className={styles.item}>
             <Checkbox
@@ -513,6 +510,7 @@ const ArtisticText = () => {
             </div>
           </>
         )}
+
         <div className={styles.row}>
           <div className={styles.item}>
             <Checkbox
@@ -629,7 +627,7 @@ const ArtisticText = () => {
             </div>
           </>
         )}
-      </div>
+      </Section>
     </>
   )
 }
