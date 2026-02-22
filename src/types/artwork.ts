@@ -3,7 +3,7 @@ export type { TFontFamily, TFontWeight, TTextAlign, TOption } from '@/types/font
 
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
-export type TArtworkKind = 'image' | 'text' | 'sound'
+export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape'
 
 export type TArtworkPosition = {
   id?: string
@@ -62,7 +62,21 @@ export type TArtwork = {
   textAlign?: 'left' | 'right' | 'center' | 'justify'
   textVerticalAlign?: 'top' | 'center' | 'bottom'
   textPadding?: TOption<number>
+  textPaddingTop?: TOption<number>
+  textPaddingBottom?: TOption<number>
+  textPaddingLeft?: TOption<number>
+  textPaddingRight?: TOption<number>
   textThickness?: TOption<number>
+  textBackgroundTexture?: string // e.g. 'paper', 'cardboard' — runtime only, no DB field yet
+  showTextBorder?: boolean       // Decorative inset border toggle
+  textBorderColor?: string       // Border color (default gold #c9a96e)
+  textBorderOffset?: TOption<number> // Inset distance in cm
+  showMonogram?: boolean
+  monogramColor?: string
+  monogramOpacity?: TOption<number>
+  monogramPosition?: 'top' | 'bottom'
+  monogramOffset?: TOption<number>
+  monogramSize?: TOption<number>   // Distance from edge as % of card height
   featured?: boolean
   hiddenFromExhibition?: boolean
   hideShadow?: boolean
@@ -75,4 +89,8 @@ export type TArtwork = {
   soundBackgroundColor?: string | null // Background color of the sound object
   soundIconColor?: string // Icon color
   soundIconSize?: number // Icon size (px in 2D)
+  // Shape decoration properties (only when artworkType = 'shape')
+  shapeType?: string // 'rectangle' | 'circle'
+  shapeColor?: string
+  shapeOpacity?: number
 }

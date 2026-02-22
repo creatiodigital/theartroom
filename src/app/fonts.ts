@@ -1,4 +1,5 @@
-import { Lato, EB_Garamond, Geist, Roboto, Lora, Playfair_Display } from 'next/font/google'
+import { Lato, EB_Garamond, Geist, Roboto, Lora, Alegreya, Manrope } from 'next/font/google'
+import localFont from 'next/font/local'
 
 // =============================================================================
 // MAIN TYPOGRAPHY - Change these to swap fonts across the entire site
@@ -41,25 +42,53 @@ export const dashboardFont = Geist({
 })
 
 // =============================================================================
-// 3D WALL VIEW FONTS - Used only in the exhibition editor
+// 2D WALL VIEW FONTS - Used only in the exhibition editor 2D preview
 // =============================================================================
 
 export const wallFont1 = Roboto({
   subsets: ['latin'],
-  weight: '400',
-  variable: '--font-wall1',
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-wall-roboto',
   display: 'swap',
 })
 
 export const wallFont2 = Lora({
   subsets: ['latin'],
-  variable: '--font-wall2',
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-wall-lora',
   display: 'swap',
 })
 
-export const wallFont3 = Playfair_Display({
+export const wallFont3 = Alegreya({
   subsets: ['latin'],
   weight: ['400', '700'],
-  variable: '--font-playfair',
+  style: ['normal', 'italic'],
+  variable: '--font-wall-alegreya',
+  display: 'swap',
+})
+
+export const wallFont4 = Manrope({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-wall-manrope',
+  display: 'swap',
+})
+
+export const wallFont5 = localFont({
+  src: '../../public/fonts/garamont-glc.ttf',
+  variable: '--font-wall-garamond-glc',
+  display: 'swap',
+})
+
+export const wallFont6 = localFont({
+  src: [
+    { path: '../../public/fonts/crimson-regular.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/crimson-italic.ttf', weight: '400', style: 'italic' },
+    { path: '../../public/fonts/crimson-bold.ttf', weight: '700', style: 'normal' },
+    { path: '../../public/fonts/crimson-bold-italic.ttf', weight: '700', style: 'italic' },
+  ],
+  variable: '--font-wall-crimson',
   display: 'swap',
 })

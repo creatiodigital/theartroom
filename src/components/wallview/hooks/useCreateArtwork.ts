@@ -19,7 +19,7 @@ import type { TDimensions } from '@/types/geometry'
 export const useCreateArtwork = (boundingData: TDimensions) => {
   const dispatch = useDispatch()
 
-  const sizeForType = (type: TArtworkKind) => (type === 'sound' ? 40 * (WALL_SCALE / 100) : WALL_SCALE)
+  const sizeForType = (type: TArtworkKind) => (type === 'sound' ? WALL_SCALE * 0.1 : WALL_SCALE * 0.25)
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)

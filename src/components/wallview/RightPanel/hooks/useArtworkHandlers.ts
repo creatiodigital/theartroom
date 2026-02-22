@@ -54,27 +54,41 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const art = artworksById[currentArtworkId]
     const borderOffset = getArtworkBorderPx(art)
 
+    // For rotated shapes, compute the AABB offset so alignment respects the full rotated extent
+    const rotationDeg = art?.artworkType === 'shape' ? (currentEdited.rotation ?? 0) : 0
+    const rotationRad = (rotationDeg * Math.PI) / 180
+    let aabbOffsetX = 0
+    let aabbOffsetY = 0
+    if (rotationDeg !== 0) {
+      const cosA = Math.abs(Math.cos(rotationRad))
+      const sinA = Math.abs(Math.sin(rotationRad))
+      const aabbWidth = artworkWidth * cosA + artworkHeight * sinA
+      const aabbHeight = artworkWidth * sinA + artworkHeight * cosA
+      aabbOffsetX = (aabbWidth - artworkWidth) / 2
+      aabbOffsetY = (aabbHeight - artworkHeight) / 2
+    }
+
     let newX = artworkX
     let newY = artworkY
 
     switch (alignment) {
       case 'horizontalLeft':
-        newX = borderOffset
+        newX = borderOffset + aabbOffsetX
         break
       case 'horizontalCenter':
         newX = (wallWidth * WALL_SCALE) / 2 - artworkWidth / 2
         break
       case 'horizontalRight':
-        newX = wallWidth * WALL_SCALE - artworkWidth - borderOffset
+        newX = wallWidth * WALL_SCALE - artworkWidth - borderOffset - aabbOffsetX
         break
       case 'verticalTop':
-        newY = borderOffset
+        newY = borderOffset + aabbOffsetY
         break
       case 'verticalCenter':
         newY = (wallHeight * WALL_SCALE) / 2 - artworkHeight / 2
         break
       case 'verticalBottom':
-        newY = wallHeight * WALL_SCALE - artworkHeight - borderOffset
+        newY = wallHeight * WALL_SCALE - artworkHeight - borderOffset - aabbOffsetY
         break
       default:
         break

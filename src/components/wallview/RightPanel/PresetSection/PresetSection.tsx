@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Typography'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { convert2DTo3D } from '@/components/wallview/utils'
-import { editArtisticImage, editArtisticText } from '@/redux/slices/artworkSlice'
+import { editArtwork, editArtisticImage, editArtisticText } from '@/redux/slices/artworkSlice'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -21,7 +21,7 @@ import SavePresetModal from './SavePresetModal'
 import UpdatePresetModal from './UpdatePresetModal'
 import styles from './PresetSection.module.scss'
 
-type PresetType = 'image' | 'text'
+type PresetType = 'image' | 'text' | 'shape'
 
 type TPreset = {
   id: string
@@ -48,10 +48,28 @@ type TPreset = {
   lineHeight: number
   textColor: string
   textBackgroundColor: string | null
+  textBackgroundTexture: string | null
+  showTextBorder: boolean
+  textBorderColor: string
+  textBorderOffset: number
+  showMonogram: boolean
+  monogramColor: string
+  monogramOpacity: number
+  monogramPosition: string
+  monogramOffset: number
+  monogramSize: number
   textAlign: string
   textVerticalAlign: string
   textPadding: number
+  textPaddingTop: number
+  textPaddingBottom: number
+  textPaddingLeft: number
+  textPaddingRight: number
   textThickness: number
+  // Shape properties
+  shapeType: string
+  shapeColor: string
+  shapeOpacity: number
 }
 
 type PresetSectionProps = {
@@ -165,16 +183,37 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
           : (artwork.lineHeight ?? 1.4)
       props.textColor = artwork.textColor ?? '#000000'
       props.textBackgroundColor = artwork.textBackgroundColor ?? null
+      props.textBackgroundTexture = artwork.textBackgroundTexture ?? null
+      props.showTextBorder = artwork.showTextBorder ?? false
+      props.textBorderColor = artwork.textBorderColor ?? '#c9a96e'
+      props.textBorderOffset = artwork.textBorderOffset?.value ?? 1.2
+      props.showMonogram = artwork.showMonogram ?? false
+      props.monogramColor = artwork.monogramColor ?? '#c0392b'
+      props.monogramOpacity = artwork.monogramOpacity?.value ?? 1.0
+      props.monogramPosition = artwork.monogramPosition ?? 'bottom'
+      props.monogramOffset = artwork.monogramOffset?.value ?? 6
+      props.monogramSize = artwork.monogramSize?.value ?? 18
       props.textAlign = artwork.textAlign ?? 'left'
       props.textVerticalAlign = artwork.textVerticalAlign ?? 'top'
       props.textPadding =
-        typeof artwork.textPadding === 'object'
-          ? (artwork.textPadding?.value ?? 12)
-          : (artwork.textPadding ?? 12)
+        (artwork.textPadding && 'value' in artwork.textPadding
+          ? artwork.textPadding.value
+          : artwork.textPadding) ?? 0
+      props.textPaddingTop = artwork.textPaddingTop?.value ?? 0
+      props.textPaddingBottom = artwork.textPaddingBottom?.value ?? 0
+      props.textPaddingLeft = artwork.textPaddingLeft?.value ?? 0
+      props.textPaddingRight = artwork.textPaddingRight?.value ?? 0
       props.textThickness =
         typeof artwork.textThickness === 'object'
           ? (artwork.textThickness?.value ?? 0)
           : (artwork.textThickness ?? 0)
+    }
+
+    // Shape properties (only for shape presets)
+    if (presetType === 'shape') {
+      props.shapeType = artwork.shapeType ?? 'rectangle'
+      props.shapeColor = artwork.shapeColor ?? '#000000'
+      props.shapeOpacity = artwork.shapeOpacity ?? 1
     }
 
     return props
@@ -245,7 +284,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     }
 
     // Apply display properties via artworkSlice
-    const editAction = presetType === 'text' ? editArtisticText : editArtisticImage
+    const editAction = presetType === 'text' ? editArtisticText : presetType === 'shape' ? editArtwork : editArtisticImage
     const applyProp = <K extends keyof TArtwork>(property: K, value: TArtwork[K]) => {
       dispatch(editAction({ currentArtworkId, property, value }))
     }
@@ -300,13 +339,34 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       applyProp('lineHeight', { label: String(preset.lineHeight), value: preset.lineHeight })
       applyProp('textColor', preset.textColor)
       applyProp('textBackgroundColor', preset.textBackgroundColor ?? undefined)
+      applyProp('textBackgroundTexture', preset.textBackgroundTexture ?? undefined)
+      applyProp('showTextBorder', preset.showTextBorder ?? false)
+      applyProp('textBorderColor', preset.textBorderColor ?? '#c9a96e')
+      applyProp('textBorderOffset', { label: String(preset.textBorderOffset ?? 1.2), value: preset.textBorderOffset ?? 1.2 })
+      applyProp('showMonogram', preset.showMonogram ?? false)
+      applyProp('monogramColor', preset.monogramColor ?? '#c0392b')
+      applyProp('monogramOpacity', { label: String(preset.monogramOpacity ?? 1.0), value: preset.monogramOpacity ?? 1.0 })
+      applyProp('monogramPosition', (preset.monogramPosition ?? 'bottom') as 'top' | 'bottom')
+      applyProp('monogramOffset', { label: String(preset.monogramOffset ?? 6), value: preset.monogramOffset ?? 6 })
+      applyProp('monogramSize', { label: String(preset.monogramSize ?? 18), value: preset.monogramSize ?? 18 })
       applyProp('textAlign', preset.textAlign as TArtwork['textAlign'])
       applyProp('textVerticalAlign', preset.textVerticalAlign as TArtwork['textVerticalAlign'])
       applyProp('textPadding', { label: String(preset.textPadding), value: preset.textPadding })
+      applyProp('textPaddingTop', { label: String(preset.textPaddingTop ?? 0), value: preset.textPaddingTop ?? 0 })
+      applyProp('textPaddingBottom', { label: String(preset.textPaddingBottom ?? 0), value: preset.textPaddingBottom ?? 0 })
+      applyProp('textPaddingLeft', { label: String(preset.textPaddingLeft ?? 0), value: preset.textPaddingLeft ?? 0 })
+      applyProp('textPaddingRight', { label: String(preset.textPaddingRight ?? 0), value: preset.textPaddingRight ?? 0 })
       applyProp('textThickness', {
         label: String(preset.textThickness),
         value: preset.textThickness,
       })
+    }
+
+    // Shape properties (for shape presets)
+    if (presetType === 'shape') {
+      applyProp('shapeType', preset.shapeType)
+      applyProp('shapeColor', preset.shapeColor)
+      applyProp('shapeOpacity', preset.shapeOpacity)
     }
   }
 
