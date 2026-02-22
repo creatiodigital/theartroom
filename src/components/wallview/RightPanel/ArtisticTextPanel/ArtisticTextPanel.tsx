@@ -39,6 +39,7 @@ const fontFamilyMap: Record<string, string> = {
   alegreya: 'var(--font-wall-alegreya)',
   manrope: 'var(--font-wall-manrope)',
   'garamond-glc': 'var(--font-wall-garamond-glc)',
+  crimson: 'var(--font-wall-crimson)',
 }
 
 const ArtisticText = () => {

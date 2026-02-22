@@ -81,3 +81,14 @@ export const wallFont5 = localFont({
   variable: '--font-wall-garamond-glc',
   display: 'swap',
 })
+
+export const wallFont6 = localFont({
+  src: [
+    { path: '../../public/fonts/crimson-regular.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/crimson-italic.ttf', weight: '400', style: 'italic' },
+    { path: '../../public/fonts/crimson-bold.ttf', weight: '700', style: 'normal' },
+    { path: '../../public/fonts/crimson-bold-italic.ttf', weight: '700', style: 'italic' },
+  ],
+  variable: '--font-wall-crimson',
+  display: 'swap',
+})

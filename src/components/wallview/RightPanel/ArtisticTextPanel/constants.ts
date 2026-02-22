@@ -9,8 +9,8 @@ function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[
 }
 
 export const fontSizes = toOptions([
-  1, 1.5, 2, 2.5, 3, 3.5,
-  ...Array.from({ length: 97 }, (_, i) => i + 4), // 4–100 cm
+  1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5,
+  ...Array.from({ length: 96 }, (_, i) => i + 5), // 5–100 cm
 ] as number[])
 
 export const lineHeights = toOptions(
@@ -32,21 +32,32 @@ export const fontFamilies: TOption<TFontFamily>[] = [
   { value: 'manrope', label: 'Manrope' },
   { value: 'roboto', label: 'Roboto' },
   { value: 'garamond-glc', label: 'Garamond GLC' },
+  { value: 'crimson', label: 'Crimson' },
 ]
 
 export const textPaddings = toOptions(Array.from({ length: 25 }, (_, i) => i) as number[])
 
-// Z-depth options for text card thickness (0-5 cm)
+// Z-depth options for text card thickness (0-10 cm, with half steps)
 export const textThicknessOptions = [
   { label: '0', value: 0 },
+  { label: '0.5', value: 0.5 },
   { label: '1', value: 1 },
+  { label: '1.5', value: 1.5 },
   { label: '2', value: 2 },
+  { label: '2.5', value: 2.5 },
   { label: '3', value: 3 },
+  { label: '3.5', value: 3.5 },
   { label: '4', value: 4 },
+  { label: '4.5', value: 4.5 },
   { label: '5', value: 5 },
+  { label: '5.5', value: 5.5 },
   { label: '6', value: 6 },
+  { label: '6.5', value: 6.5 },
   { label: '7', value: 7 },
+  { label: '7.5', value: 7.5 },
   { label: '8', value: 8 },
+  { label: '8.5', value: 8.5 },
   { label: '9', value: 9 },
+  { label: '9.5', value: 9.5 },
   { label: '10', value: 10 },
 ]

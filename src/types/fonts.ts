@@ -1,4 +1,4 @@
-export const FONT_FAMILIES = ['lora', 'alegreya', 'manrope', 'roboto', 'garamond-glc'] as const
+export const FONT_FAMILIES = ['lora', 'alegreya', 'manrope', 'roboto', 'garamond-glc', 'crimson'] as const
 export type TFontFamily = (typeof FONT_FAMILIES)[number]
 
 export const FONT_WEIGHTS = ['regular', 'italic', 'bold', 'bold-italic'] as const
@@ -14,6 +14,7 @@ export const FONT_FAMILY_WEIGHTS: Record<TFontFamily, readonly TFontWeight[]> = 
   manrope: ['regular', 'bold'],
   roboto: ['regular', 'italic', 'bold', 'bold-italic'],
   'garamond-glc': ['regular'],
+  crimson: ['regular', 'italic', 'bold', 'bold-italic'],
 }
 
 export type TTextAlign = 'left' | 'center' | 'right'

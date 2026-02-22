@@ -1,13 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
 import Modal from '@/components/ui/Modal/Modal'
-import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
 
-import styles from './SavePresetModal.module.scss'
+import styles from './DeletePresetsModal.module.scss'
 
 type Preset = {
   id: string
@@ -22,41 +20,38 @@ type UpdatePresetModalProps = {
 }
 
 const UpdatePresetModal = ({ presets, onUpdate, onClose, loading }: UpdatePresetModalProps) => {
-  const [selectedId, setSelectedId] = useState(presets[0]?.id ?? '')
-
-  const options = presets.map((p) => ({ label: p.name, value: p.id }))
-
   return (
     <Modal onClose={onClose}>
-      <Text font="dashboard" as="h3" size="sm" weight="bold" className={styles.title}>
-        Update Preset
-      </Text>
-      <div className={styles.inputGroup}>
-        <Text font="dashboard" as="label" size="xs" className={styles.label}>
-          Choose preset to update
+      <div className={styles.header}>
+        <Text font="dashboard" as="h3" size="sm" weight="bold">
+          Update Preset
         </Text>
-        <Select<string>
-          options={options}
-          value={selectedId}
-          onChange={(val) => setSelectedId(val)}
-        />
+        <button className={styles.closeBtn} onClick={onClose} title="Close">
+          <Icon name="close" size={16} color="currentColor" />
+        </button>
       </div>
-      <div className={styles.actions}>
-        <Button
-          font="dashboard"
-          size="small"
-          variant="secondary"
-          label="Cancel"
-          onClick={onClose}
-        />
-        <Button
-          font="dashboard"
-          size="small"
-          variant="primary"
-          label={loading ? 'Updating...' : 'Update'}
-          onClick={() => selectedId && onUpdate(selectedId)}
-          disabled={!selectedId || loading}
-        />
+      <div className={styles.list}>
+        {presets.length === 0 ? (
+          <Text font="dashboard" as="p" size="xs" className={styles.empty}>
+            No presets to update.
+          </Text>
+        ) : (
+          presets.map((preset) => (
+            <div key={preset.id} className={styles.item}>
+              <Text font="dashboard" as="span" size="xs" className={styles.name}>
+                {preset.name}
+              </Text>
+              <Button
+                font="dashboard"
+                size="small"
+                variant="secondary"
+                label={loading ? 'Updating...' : 'Update'}
+                onClick={() => onUpdate(preset.id)}
+                disabled={loading}
+              />
+            </div>
+          ))
+        )}
       </div>
     </Modal>
   )

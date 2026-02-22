@@ -1,4 +1,4 @@
-import { Text } from '@react-three/drei'
+import { Text, RoundedBox } from '@react-three/drei'
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { Suspense, useState, useRef, useEffect, useCallback } from 'react'
 import type { ComponentRef } from 'react'
@@ -41,8 +41,7 @@ function PaperBackground({
 
   if (depth > 0) {
     return (
-      <mesh renderOrder={1} position={[0, 0, -depth / 2]}>
-        <boxGeometry args={[width, height, depth]} />
+      <RoundedBox args={[width, height, depth]} radius={0.003} smoothness={2} renderOrder={1} position={[0, 0, -depth / 2]}>
         <meshStandardMaterial
           map={textures.map}
           normalMap={textures.normalMap}
@@ -50,11 +49,11 @@ function PaperBackground({
           roughnessMap={textures.roughnessMap}
           roughness={0.85}
           aoMap={textures.aoMap}
-          aoMapIntensity={0.5}
+          aoMapIntensity={0.15}
           metalness={0}
           color={tintColor ?? '#ffffff'}
         />
-      </mesh>
+      </RoundedBox>
     )
   }
 
@@ -68,7 +67,7 @@ function PaperBackground({
         roughnessMap={textures.roughnessMap}
         roughness={0.85}
         aoMap={textures.aoMap}
-        aoMapIntensity={0.5}
+        aoMapIntensity={0.15}
         metalness={0}
         color={tintColor ?? '#ffffff'}
         side={DoubleSide}
@@ -225,6 +224,12 @@ const Stencil = ({ artwork }: StencilProps) => {
     'garamond-glc': {
       regular: '/fonts/garamont-glc.ttf',
     },
+    crimson: {
+      regular: '/fonts/crimson-regular.ttf',
+      italic: '/fonts/crimson-italic.ttf',
+      bold: '/fonts/crimson-bold.ttf',
+      'bold-italic': '/fonts/crimson-bold-italic.ttf',
+    },
   }
 
   const resolvedFontFamily = fontFamily?.value ?? 'roboto'
@@ -324,10 +329,9 @@ const Stencil = ({ artwork }: StencilProps) => {
 
         if (cardDepth > 0) {
           return (
-            <mesh renderOrder={1} position={[0, 0, -cardDepth / 2]}>
-              <boxGeometry args={[planeWidth, planeHeight, cardDepth]} />
+            <RoundedBox args={[planeWidth, planeHeight, cardDepth]} radius={0.003} smoothness={2} renderOrder={1} position={[0, 0, -cardDepth / 2]}>
               <meshStandardMaterial color={textBackgroundColor ?? 'white'} roughness={1.0} />
-            </mesh>
+            </RoundedBox>
           )
         }
         return (

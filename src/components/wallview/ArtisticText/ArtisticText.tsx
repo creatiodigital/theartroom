@@ -44,6 +44,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     alegreya: 'var(--font-wall-alegreya)',
     manrope: 'var(--font-wall-manrope)',
     'garamond-glc': 'var(--font-wall-garamond-glc)',
+    crimson: 'var(--font-wall-crimson)',
   }
 
   // Map font weight/style values to CSS properties
