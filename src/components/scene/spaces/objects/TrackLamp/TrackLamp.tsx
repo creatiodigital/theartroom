@@ -72,6 +72,8 @@ const TrackSpotlight: React.FC<{
  * Track lamp with arm, body, emissive bulb, and native Three.js SpotLight.
  * Iterates over indexed meshes: trackLampArm0, trackLampBody0, trackLampBulb0, etc.
  * SpotLights aim toward the wall using body→bulb geometry direction.
+ *
+ * Supports per-lamp rotation (Y-axis) and on/off toggle via trackLampSettings.
  */
 const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const materialColor = useSelector(
@@ -91,45 +93,70 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.trackLampDistance ?? 5.0,
   )
+
+  // Per-lamp settings (rotation + on/off)
+  const trackLampSettings = useSelector(
+    (state: RootState) => state.exhibition.trackLampSettings,
+  )
+
   const bulbEmissiveIntensity = 2
 
-  // Compute bulb center positions and aim directions from geometry
-  const { bulbPositions, aimDirections } = useMemo(() => {
-    const positions: Vector3[] = []
-    const directions: Vector3[] = []
+  // Compute arm pivot positions (where arm connects to the rail/ceiling)
+  // plus bulb positions and aim directions
+  const lampData = useMemo(() => {
+    const data: Array<{
+      armPivot: [number, number, number]
+      bulbPos: Vector3
+      aimDir: Vector3
+    }> = []
+
     for (let i = 0; i < count; i++) {
+      const armNode = nodes[`trackLampArm${i}`]
       const bulbNode = nodes[`trackLampBulb${i}`]
       const bodyNode = nodes[`trackLampBody${i}`]
+
+      // Arm pivot = arm geometry center (where it connects to ceiling rail)
+      let armPivot: [number, number, number] = [0, 0, 0]
+      if (armNode) {
+        const armBox = new Box3().setFromBufferAttribute(
+          armNode.geometry.attributes.position as BufferAttribute,
+        )
+        const armCenter = new Vector3()
+        armBox.getCenter(armCenter)
+        // Use the top of the arm bounding box as pivot (ceiling connection)
+        armPivot = [armCenter.x, armBox.max.y, armCenter.z]
+      }
+
+      let bulbPos = new Vector3()
+      let aimDir = new Vector3(0, -1, 0)
+
       if (bulbNode && bodyNode) {
         const bulbBox = new Box3().setFromBufferAttribute(
           bulbNode.geometry.attributes.position as BufferAttribute,
         )
         const bulbCenter = new Vector3()
         bulbBox.getCenter(bulbCenter)
-        positions.push(bulbCenter)
+        bulbPos = bulbCenter
 
-        // Direction: body center → bulb center (the bulb points toward the wall)
         const bodyBox = new Box3().setFromBufferAttribute(
           bodyNode.geometry.attributes.position as BufferAttribute,
         )
         const bodyCenter = new Vector3()
         bodyBox.getCenter(bodyCenter)
-        const dir = new Vector3().subVectors(bulbCenter, bodyCenter).normalize()
-        directions.push(dir)
+        aimDir = new Vector3().subVectors(bulbCenter, bodyCenter).normalize()
       } else if (bulbNode) {
         const bulbBox = new Box3().setFromBufferAttribute(
           bulbNode.geometry.attributes.position as BufferAttribute,
         )
         const bulbCenter = new Vector3()
         bulbBox.getCenter(bulbCenter)
-        positions.push(bulbCenter)
-        directions.push(new Vector3(0, -1, 0))
-      } else {
-        positions.push(new Vector3())
-        directions.push(new Vector3(0, -1, 0))
+        bulbPos = bulbCenter
       }
+
+      data.push({ armPivot, bulbPos, aimDir })
     }
-    return { bulbPositions: positions, aimDirections: directions }
+
+    return data
   }, [nodes, count])
 
   const lampsArray = useMemo(() => Array.from({ length: count }), [count])
@@ -140,61 +167,72 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
         const armNode = nodes[`trackLampArm${i}`]
         const bodyNode = nodes[`trackLampBody${i}`]
         const bulbNode = nodes[`trackLampBulb${i}`]
-        const bulbPos = bulbPositions[i]
-        const aimDir = aimDirections[i]
+        const { armPivot, bulbPos, aimDir } = lampData[i]
+
+        // Per-lamp settings
+        const settings = trackLampSettings?.[String(i)]
+        const isEnabled = settings?.enabled ?? true
+        const rotation = settings?.rotation ?? 0
+        const rotationRad = (rotation * Math.PI) / 180
 
         return (
-          <group key={`trackLamp-${i}`}>
-            {/* Arm */}
-            {armNode && (
-              <mesh
-                key={`trackLampArm-${i}-${materialColor}`}
-                name={`trackLampArm${i}`}
-                geometry={armNode.geometry}
-              >
-                <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
-              </mesh>
-            )}
+          <group
+            key={`trackLamp-${i}`}
+            position={armPivot}
+            rotation={[0, rotationRad, 0]}
+          >
+            <group position={[-armPivot[0], -armPivot[1], -armPivot[2]]}>
+              {/* Arm */}
+              {armNode && (
+                <mesh
+                  key={`trackLampArm-${i}-${materialColor}`}
+                  name={`trackLampArm${i}`}
+                  geometry={armNode.geometry}
+                >
+                  <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
+                </mesh>
+              )}
 
-            {/* Body */}
-            {bodyNode && (
-              <mesh
-                key={`trackLampBody-${i}-${materialColor}`}
-                name={`trackLampBody${i}`}
-                geometry={bodyNode.geometry}
-              >
-                <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
-              </mesh>
-            )}
+              {/* Body */}
+              {bodyNode && (
+                <mesh
+                  key={`trackLampBody-${i}-${materialColor}`}
+                  name={`trackLampBody${i}`}
+                  geometry={bodyNode.geometry}
+                >
+                  <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
+                </mesh>
+              )}
 
-            {/* Bulb (emissive) */}
-            {bulbNode && (
-              <mesh
-                key={`trackLampBulb-${i}-${lampColor}`}
-                name={`trackLampBulb${i}`}
-                geometry={bulbNode.geometry}
-              >
-                <meshStandardMaterial
-                  color="#000000"
-                  emissive={lampColor}
-                  emissiveIntensity={bulbEmissiveIntensity}
-                  toneMapped={false}
-                  side={DoubleSide}
+              {/* Bulb (emissive) — dim when disabled */}
+              {bulbNode && (
+                <mesh
+                  key={`trackLampBulb-${i}-${lampColor}-${isEnabled}`}
+                  name={`trackLampBulb${i}`}
+                  geometry={bulbNode.geometry}
+                >
+                  <meshStandardMaterial
+                    color="#000000"
+                    emissive={isEnabled ? lampColor : '#cccccc'}
+                    emissiveIntensity={isEnabled ? bulbEmissiveIntensity : 0.3}
+                    toneMapped={false}
+                    side={DoubleSide}
+                  />
+                </mesh>
+              )}
+
+              {/* Native Three.js spotlight — only when enabled */}
+              {isEnabled && bulbNode && aimDir && (
+                <TrackSpotlight
+                  position={bulbPos}
+                  aimDirection={aimDir}
+                  color={lampColor}
+                  intensity={lampIntensity * 2}
+                  angle={lampAngle}
+                  distance={lampDistance}
                 />
-              </mesh>
-            )}
-
-            {/* Native Three.js spotlight pointing toward wall */}
-            {bulbNode && aimDir && (
-              <TrackSpotlight
-                position={bulbPos}
-                aimDirection={aimDir}
-                color={lampColor}
-                intensity={lampIntensity * 2}
-                angle={lampAngle}
-                distance={lampDistance}
-              />
-            )}
+              )}
+            </group>
           </group>
         )
       })}

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { NumberInput } from '@/components/ui/NumberInput'
+import { Section } from '@/components/ui/Section/Section'
 import { Select } from '@/components/ui/Select'
 import { Text } from '@/components/ui/Typography'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
@@ -41,7 +42,7 @@ const ArtisticSoundPanel = () => {
   return (
     <>
       {/* Sound Settings */}
-      <div className={styles.section}>
+      <Section title="Playback">
 
         {/* Icon Selector */}
         <div className={styles.row}>
@@ -94,10 +95,10 @@ const ArtisticSoundPanel = () => {
             </div>
           </div>
         )}
-      </div>
+      </Section>
 
       {/* Appearance */}
-      <div className={styles.section}>
+      <Section title="Appearance">
 
         <div className={styles.row}>
           <div className={styles.item}>
@@ -141,7 +142,7 @@ const ArtisticSoundPanel = () => {
             />
           </div>
         </div>
-      </div>
+      </Section>
     </>
   )
 }

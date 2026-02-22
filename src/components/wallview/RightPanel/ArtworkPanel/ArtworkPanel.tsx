@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
+import { Section } from '@/components/ui/Section/Section'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Text } from '@/components/ui/Typography'
@@ -196,9 +197,9 @@ const ArtworkPanel = () => {
       </div>
 
       {/* SIZE Section */}
-      <div className={styles.section}>
+      <Section title="Dimensions">
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Dimensions (m)
+          Size (m)
         </Text>
         <div className={styles.row}>
           <div className={styles.item}>
@@ -243,13 +244,10 @@ const ArtworkPanel = () => {
             label="Lock proportions when resizing"
           />
         </div>
-      </div>
+      </Section>
 
-      {/* POSITION Section */}
-      <div className={styles.section}>
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Alignment
-        </Text>
+      <Section title="Position">
+
         <div className={styles.row}>
           <div className={styles.item}>
             <Button
@@ -395,7 +393,7 @@ const ArtworkPanel = () => {
             />
           </div>
         )}
-      </div>
+      </Section>
     </>
   )
 }
