@@ -1,10 +1,11 @@
-import { Text, RoundedBox } from '@react-three/drei'
+import { Text, RoundedBox, Line } from '@react-three/drei'
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { Suspense, useState, useRef, useEffect, useCallback } from 'react'
 import type { ComponentRef } from 'react'
 import { DoubleSide, Vector2, Vector3, Quaternion } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 import { usePaperTexture } from './usePaperTexture'
+import { useMonogramTexture } from './useMonogramTexture'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
@@ -76,6 +77,79 @@ function PaperBackground({
   )
 }
 
+/** Decorative inset border — thin rectangular outline on the card face */
+function InsetBorder({
+  width,
+  height,
+  inset = 0.012,
+  color = '#c9a96e',
+  lineWidth = 1,
+}: {
+  width: number
+  height: number
+  inset?: number
+  color?: string
+  lineWidth?: number
+}) {
+  const hw = width / 2 - inset
+  const hh = height / 2 - inset
+  const z = 0.0004 // just above the card face
+
+  const points: [number, number, number][] = [
+    [-hw, hh, z],
+    [hw, hh, z],
+    [hw, -hh, z],
+    [-hw, -hh, z],
+    [-hw, hh, z], // close the loop
+  ]
+
+  return <Line points={points} color={color} lineWidth={lineWidth} />
+}
+
+/** Monogram overlay — renders the AR monogram as a transparent textured plane */
+function MonogramOverlay({
+  width,
+  height,
+  color = '#c9a96e',
+  opacity = 1.0,
+  size = 0.25,
+  position: pos = 'bottom',
+  offset = 0.06,
+}: {
+  width: number
+  height: number
+  color?: string
+  opacity?: number
+  /** Fraction of card height for the monogram (0–1) */
+  size?: number
+  position?: 'top' | 'bottom'
+  /** Margin from edge as fraction of card height */
+  offset?: number
+}) {
+  const texture = useMonogramTexture(color, opacity)
+
+  // Size the plane based on card height
+  const monoHeight = height * size
+  const monoWidth = monoHeight * (122 / 133) // match SVG aspect ratio
+
+  // Clamp so it doesn't overflow the card width
+  const clampedWidth = Math.min(monoWidth, width * 0.8)
+  const clampedHeight = clampedWidth * (133 / 122)
+
+  // Vertical position: near the top or bottom edge
+  const margin = height * offset
+  const yOffset = pos === 'top'
+    ? height / 2 - clampedHeight / 2 - margin
+    : -height / 2 + clampedHeight / 2 + margin
+
+  return (
+    <mesh renderOrder={3} position={[0, yOffset, 0.0005]}>
+      <planeGeometry args={[clampedWidth, clampedHeight]} />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} />
+    </mesh>
+  )
+}
+
 const Stencil = ({ artwork }: StencilProps) => {
   const {
     id,
@@ -93,10 +167,22 @@ const Stencil = ({ artwork }: StencilProps) => {
     fontWeight,
     fontFamily,
     letterSpacing,
-    textPadding,
+    textPaddingTop,
+    textPaddingBottom,
+    textPaddingLeft,
+    textPaddingRight,
     textThickness,
     showArtworkInformation,
     textBackgroundTexture,
+    showTextBorder,
+    textBorderColor,
+    textBorderOffset,
+    showMonogram,
+    monogramColor,
+    monogramOpacity,
+    monogramPosition,
+    monogramOffset,
+    monogramSize,
   } = artwork
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -194,9 +280,11 @@ const Stencil = ({ artwork }: StencilProps) => {
   // At WALL_SCALE pixels per meter, fontSize N → N/WALL_SCALE meters.
   const fontSizeFactor = 1 / WALL_SCALE
   // Convert textPadding (pixels) to 3D units using the same scale factor as fontSize
-  const textPaddingValue = textPadding?.value ?? 0
-  const padding3D = textPaddingValue * fontSizeFactor
-  const paddingOffset = padding3D * 2  // total padding on both sides
+  const padTop3D = (textPaddingTop?.value ?? 0) * fontSizeFactor
+  const padBottom3D = (textPaddingBottom?.value ?? 0) * fontSizeFactor
+  const padLeft3D = (textPaddingLeft?.value ?? 0) * fontSizeFactor
+  const padRight3D = (textPaddingRight?.value ?? 0) * fontSizeFactor
+  const paddingOffsetH = padLeft3D + padRight3D  // total horizontal padding
 
   const fontMap: Record<string, Record<string, string>> = {
     lora: {
@@ -273,9 +361,9 @@ const Stencil = ({ artwork }: StencilProps) => {
     switch (align) {
       case 'left':
       case 'justify':
-        return -planeW / 2 + planeW - padding3D
+        return -planeW / 2 + planeW - padLeft3D
       case 'right':
-        return planeW / 2 - planeW + textWidth + padding3D
+        return planeW / 2 - planeW + textWidth + padRight3D
       case 'center':
         return textWidth / 2
       default:
@@ -289,13 +377,13 @@ const Stencil = ({ artwork }: StencilProps) => {
     const halfPlane = planeH / 2
     switch (vAlign) {
       case 'top':
-        return halfPlane - padding3D // Position at top of plane, inset by padding
+        return halfPlane - padTop3D
       case 'center':
-        return textHeight / 2 // Center based on actual text height
+        return textHeight / 2
       case 'bottom':
-        return -halfPlane + textHeight + padding3D // Position at bottom, inset by padding
+        return -halfPlane + textHeight + padBottom3D
       default:
-        return halfPlane - padding3D
+        return halfPlane - padTop3D
     }
   }
 
@@ -313,14 +401,35 @@ const Stencil = ({ artwork }: StencilProps) => {
 
         if (textBackgroundTexture) {
           return (
-            <Suspense fallback={null}>
-              <PaperBackground
-                width={planeWidth}
-                height={planeHeight}
-                depth={cardDepth}
-                tintColor={textBackgroundColor}
-              />
-            </Suspense>
+            <>
+              <Suspense fallback={null}>
+                <PaperBackground
+                  width={planeWidth}
+                  height={planeHeight}
+                  depth={cardDepth}
+                  tintColor={textBackgroundColor}
+                />
+              </Suspense>
+              {showTextBorder && (
+                <InsetBorder
+                  width={planeWidth}
+                  height={planeHeight}
+                  inset={(textBorderOffset?.value ?? 1.2) / 100}
+                  color={textBorderColor ?? '#c9a96e'}
+                />
+              )}
+              {showMonogram && (
+                <MonogramOverlay
+                  width={planeWidth}
+                  height={planeHeight}
+                  color={monogramColor ?? '#c0392b'}
+                  opacity={monogramOpacity?.value ?? 1.0}
+                  size={(monogramSize?.value ?? 18) / 100}
+                  position={monogramPosition ?? 'bottom'}
+                  offset={(monogramOffset?.value ?? 6) / 100}
+                />
+              )}
+            </>
           )
         }
 
@@ -346,7 +455,7 @@ const Stencil = ({ artwork }: StencilProps) => {
         <mesh
           key={id}
           renderOrder={2}
-          position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.001]}
+          position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.0003]}
           visible={fontReady}
         >
           <Text
@@ -360,7 +469,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             font={fontUrl}
             anchorX={getAnchorX(textAlign, width ?? 1)}
             anchorY="top"
-            maxWidth={(width ?? 0) - paddingOffset}
+            maxWidth={(width ?? 0) - paddingOffsetH}
             textAlign={textAlign ?? 'left'}
             whiteSpace="normal"
             overflowWrap="break-word"

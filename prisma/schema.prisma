@@ -93,9 +93,22 @@ model ArtworkPreset {
   textBackgroundColor   String?
   textAlign             String  @default("left")
   textVerticalAlign     String  @default("top")
-  textPadding           Float   @default(12)
+  textPadding           Float   @default(0)
+  textPaddingTop        Float   @default(0)
+  textPaddingBottom     Float   @default(0)
+  textPaddingLeft       Float   @default(0)
+  textPaddingRight      Float   @default(0)
   textThickness         Float   @default(0) // Card depth in cm (0-5), only when background color is set
   textBackgroundTexture String? // e.g. 'paper', 'cardboard'
+  showTextBorder        Boolean @default(false)
+  textBorderColor       String  @default("#c9a96e") // Decorative inset border color
+  textBorderOffset      Float   @default(1.2) // Inset distance in cm
+  showMonogram          Boolean @default(false)
+  monogramColor         String  @default("#c0392b")
+  monogramOpacity       Float   @default(1.0)
+  monogramPosition      String  @default("bottom") // 'top' or 'bottom'
+  monogramOffset        Float   @default(6)
+  monogramSize          Float   @default(18) // Distance from edge as % of card height
 
   // Shape decoration properties
   shapeType    String @default("rectangle")
@@ -252,9 +265,22 @@ model ExhibitionArtwork {
   textBackgroundColor   String?
   textAlign             String  @default("left")
   textVerticalAlign     String  @default("top")
-  textPadding           Float   @default(12) // Padding in pixels
+  textPadding           Float   @default(0) // Padding in pixels
+  textPaddingTop        Float   @default(0)
+  textPaddingBottom     Float   @default(0)
+  textPaddingLeft       Float   @default(0)
+  textPaddingRight      Float   @default(0)
   textThickness         Float   @default(0) // Card depth in cm (0-5), only when background color is set
   textBackgroundTexture String? // e.g. 'paper', 'cardboard'
+  showTextBorder        Boolean @default(false)
+  textBorderColor       String  @default("#c9a96e")
+  textBorderOffset      Float   @default(1.2)
+  showMonogram          Boolean @default(false)
+  monogramColor         String  @default("#c0392b")
+  monogramOpacity       Float   @default(1.0)
+  monogramPosition      String  @default("bottom")
+  monogramOffset        Float   @default(6)
+  monogramSize          Float   @default(18)
 
   // Sound styling (per-exhibition customization)
   soundIcon            String  @default("volume-2")

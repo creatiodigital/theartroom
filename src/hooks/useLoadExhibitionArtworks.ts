@@ -63,8 +63,21 @@ type ExhibitionArtworkResponse = {
   textAlign: string
   textVerticalAlign: string
   textPadding: number
+  textPaddingTop: number
+  textPaddingBottom: number
+  textPaddingLeft: number
+  textPaddingRight: number
   textThickness: number
   textBackgroundTexture: string | null
+  showTextBorder: boolean
+  textBorderColor: string
+  textBorderOffset: number
+  showMonogram: boolean
+  monogramColor: string
+  monogramOpacity: number
+  monogramPosition: string
+  monogramOffset: number
+  monogramSize: number
   // Sound styling (per-exhibition)
   soundIcon: string
   soundBackgroundColor: string | null
@@ -210,8 +223,21 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             textAlign: ea.textAlign as 'left' | 'center' | 'right',
             textVerticalAlign: ea.textVerticalAlign as 'top' | 'center' | 'bottom',
             textPadding: { label: String(ea.textPadding ?? 0), value: ea.textPadding ?? 0 },
+            textPaddingTop: { label: String(ea.textPaddingTop ?? 0), value: ea.textPaddingTop ?? 0 },
+            textPaddingBottom: { label: String(ea.textPaddingBottom ?? 0), value: ea.textPaddingBottom ?? 0 },
+            textPaddingLeft: { label: String(ea.textPaddingLeft ?? 0), value: ea.textPaddingLeft ?? 0 },
+            textPaddingRight: { label: String(ea.textPaddingRight ?? 0), value: ea.textPaddingRight ?? 0 },
             textThickness: { label: String(ea.textThickness ?? 0), value: ea.textThickness ?? 0 },
             textBackgroundTexture: ea.textBackgroundTexture ?? undefined,
+            showTextBorder: ea.showTextBorder ?? false,
+            textBorderColor: ea.textBorderColor ?? '#c9a96e',
+            textBorderOffset: { label: String(ea.textBorderOffset ?? 1.2), value: ea.textBorderOffset ?? 1.2 },
+            showMonogram: ea.showMonogram ?? false,
+            monogramColor: ea.monogramColor ?? '#c0392b',
+            monogramOpacity: { label: String(ea.monogramOpacity ?? 1.0), value: ea.monogramOpacity ?? 1.0 },
+            monogramPosition: (ea.monogramPosition ?? 'bottom') as 'top' | 'bottom',
+            monogramOffset: { label: String(ea.monogramOffset ?? 6), value: ea.monogramOffset ?? 6 },
+            monogramSize: { label: String(ea.monogramSize ?? 18), value: ea.monogramSize ?? 18 },
             // Sound styling from ExhibitionArtwork (per-exhibition)
             soundIcon: ea.soundIcon ?? 'volume-2',
             soundBackgroundColor: ea.soundBackgroundColor ?? undefined,

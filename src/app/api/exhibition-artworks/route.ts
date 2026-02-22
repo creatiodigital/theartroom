@@ -137,8 +137,21 @@ export async function POST(request: NextRequest) {
         textAlign?: string
         textVerticalAlign?: string
         textPadding?: number
+        textPaddingTop?: number
+        textPaddingBottom?: number
+        textPaddingLeft?: number
+        textPaddingRight?: number
         textThickness?: number
         textBackgroundTexture?: string | null
+        showTextBorder?: boolean
+        textBorderColor?: string
+        textBorderOffset?: number
+        showMonogram?: boolean
+        monogramColor?: string
+        monogramOpacity?: number
+        monogramPosition?: string
+        monogramOffset?: number
+        monogramSize?: number
         // Sound styling (per-exhibition)
         soundIcon?: string
         soundBackgroundColor?: string | null
@@ -233,8 +246,21 @@ export async function POST(request: NextRequest) {
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 0,
+            textPaddingTop: pos.textPaddingTop ?? 0,
+            textPaddingBottom: pos.textPaddingBottom ?? 0,
+            textPaddingLeft: pos.textPaddingLeft ?? 0,
+            textPaddingRight: pos.textPaddingRight ?? 0,
             textThickness: pos.textThickness ?? 0,
             textBackgroundTexture: pos.textBackgroundTexture ?? null,
+            showTextBorder: pos.showTextBorder ?? false,
+            textBorderColor: pos.textBorderColor ?? '#c9a96e',
+            textBorderOffset: pos.textBorderOffset ?? 1.2,
+            showMonogram: pos.showMonogram ?? false,
+            monogramColor: pos.monogramColor ?? '#c0392b',
+            monogramOpacity: pos.monogramOpacity ?? 1.0,
+            monogramPosition: pos.monogramPosition ?? 'bottom',
+            monogramOffset: pos.monogramOffset ?? 6,
+            monogramSize: pos.monogramSize ?? 18,
             // Sound styling
             soundIcon: pos.soundIcon ?? 'volume-2',
             soundBackgroundColor: pos.soundBackgroundColor ?? null,
@@ -287,8 +313,21 @@ export async function POST(request: NextRequest) {
             textAlign: pos.textAlign ?? 'left',
             textVerticalAlign: pos.textVerticalAlign ?? 'top',
             textPadding: pos.textPadding ?? 0,
+            textPaddingTop: pos.textPaddingTop ?? 0,
+            textPaddingBottom: pos.textPaddingBottom ?? 0,
+            textPaddingLeft: pos.textPaddingLeft ?? 0,
+            textPaddingRight: pos.textPaddingRight ?? 0,
             textThickness: pos.textThickness ?? 0,
             textBackgroundTexture: pos.textBackgroundTexture ?? null,
+            showTextBorder: pos.showTextBorder ?? false,
+            textBorderColor: pos.textBorderColor ?? '#c9a96e',
+            textBorderOffset: pos.textBorderOffset ?? 1.2,
+            showMonogram: pos.showMonogram ?? false,
+            monogramColor: pos.monogramColor ?? '#c0392b',
+            monogramOpacity: pos.monogramOpacity ?? 1.0,
+            monogramPosition: pos.monogramPosition ?? 'bottom',
+            monogramOffset: pos.monogramOffset ?? 6,
+            monogramSize: pos.monogramSize ?? 18,
             // Sound styling
             soundIcon: pos.soundIcon ?? 'volume-2',
             soundBackgroundColor: pos.soundBackgroundColor ?? null,
