@@ -112,24 +112,24 @@ function MonogramOverlay({
   height,
   color = '#c9a96e',
   opacity = 1.0,
-  size = 0.25,
+  size = 0.04,
   position: pos = 'bottom',
-  offset = 0.06,
+  offset = 0.02,
 }: {
   width: number
   height: number
   color?: string
   opacity?: number
-  /** Fraction of card height for the monogram (0–1) */
+  /** Absolute monogram height in meters */
   size?: number
   position?: 'top' | 'bottom'
-  /** Margin from edge as fraction of card height */
+  /** Margin from edge in meters */
   offset?: number
 }) {
   const texture = useMonogramTexture(color, opacity)
 
-  // Size the plane based on card height
-  const monoHeight = height * size
+  // Size the plane using absolute size (meters)
+  const monoHeight = size
   const monoWidth = monoHeight * (122 / 133) // match SVG aspect ratio
 
   // Clamp so it doesn't overflow the card width
@@ -137,10 +137,9 @@ function MonogramOverlay({
   const clampedHeight = clampedWidth * (133 / 122)
 
   // Vertical position: near the top or bottom edge
-  const margin = height * offset
   const yOffset = pos === 'top'
-    ? height / 2 - clampedHeight / 2 - margin
-    : -height / 2 + clampedHeight / 2 + margin
+    ? height / 2 - clampedHeight / 2 - offset
+    : -height / 2 + clampedHeight / 2 + offset
 
   return (
     <mesh renderOrder={3} position={[0, yOffset, 0.0005]}>
@@ -424,9 +423,9 @@ const Stencil = ({ artwork }: StencilProps) => {
                   height={planeHeight}
                   color={monogramColor ?? '#c0392b'}
                   opacity={monogramOpacity?.value ?? 1.0}
-                  size={(monogramSize?.value ?? 18) / 100}
+                  size={(monogramSize?.value ?? 4) / 100}
                   position={monogramPosition ?? 'bottom'}
-                  offset={(monogramOffset?.value ?? 6) / 100}
+                  offset={(monogramOffset?.value ?? 2) / 100}
                 />
               )}
             </>

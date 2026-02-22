@@ -231,6 +231,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  .toggle {
+    width: 24px;
+    height: 14px;
+
+    input:checked + .toggleSlider::before {
+      transform: translateX(10px);
+    }
+  }
+
+  .toggleSlider {
+    border-radius: 14px;
+
+    &::before {
+      height: 10px;
+      width: 10px;
+    }
+  }
 }
 
 .lampLabel {

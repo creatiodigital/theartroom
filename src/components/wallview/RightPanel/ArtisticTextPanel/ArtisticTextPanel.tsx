@@ -588,7 +588,7 @@ const ArtisticText = () => {
                     { label: '12', value: 12 },
                     { label: '15', value: 15 },
                   ]}
-                  value={monogramOffset?.value ?? 6}
+                  value={monogramOffset?.value ?? 2}
                   onChange={(val) =>
                     handleEditArtworkText('monogramOffset', {
                       label: String(val),
@@ -615,7 +615,7 @@ const ArtisticText = () => {
                     { label: '25', value: 25 },
                     { label: '30', value: 30 },
                   ]}
-                  value={monogramSize?.value ?? 18}
+                  value={monogramSize?.value ?? 4}
                   onChange={(val) =>
                     handleEditArtworkText('monogramSize', {
                       label: String(val),

@@ -521,23 +521,21 @@ const LightingPanel = () => {
                     <span className={styles.toggleSlider} />
                   </label>
                 </div>
-                {isEnabled && (
-                  <div className={styles.lampSlider}>
-                    <input
-                      type="range"
-                      min="-180"
-                      max="180"
-                      step="1"
-                      value={rotation}
-                      onChange={(e) => {
-                        dispatch(setTrackLampRotation({ index: i, rotation: parseFloat(e.target.value) }))
-                        setSaved(false)
-                      }}
-                      className={styles.slider}
-                    />
-                    <span className={styles.sliderValue}>{rotation}°</span>
-                  </div>
-                )}
+                <div className={styles.lampSlider}>
+                  <input
+                    type="range"
+                    min="-180"
+                    max="180"
+                    step="1"
+                    value={rotation}
+                    onChange={(e) => {
+                      dispatch(setTrackLampRotation({ index: i, rotation: parseFloat(e.target.value) }))
+                      setSaved(false)
+                    }}
+                    className={styles.slider}
+                  />
+                  <span className={styles.sliderValue}>{rotation}°</span>
+                </div>
               </div>
             )
           })}

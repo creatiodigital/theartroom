@@ -81,8 +81,8 @@ export const useArtisticText = (artworkId: string) => {
     monogramColor: monogramColor ?? '#c0392b',
     monogramOpacity: monogramOpacity?.value ?? 1.0,
     monogramPosition: (monogramPosition ?? 'bottom') as 'top' | 'bottom',
-    monogramOffset: monogramOffset?.value ?? 6,
-    monogramSize: monogramSize?.value ?? 18,
+    monogramOffset: monogramOffset?.value ?? 2,
+    monogramSize: monogramSize?.value ?? 4,
     handleArtisticTextChange,
   }
 }

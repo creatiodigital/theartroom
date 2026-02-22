@@ -169,9 +169,9 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
             left: '50%',
             transform: 'translateX(-50%)',
             ...(monogramPosition === 'top'
-              ? { top: `${monogramOffset ?? 6}%` }
-              : { bottom: `${monogramOffset ?? 6}%` }),
-            width: `${monogramSize ?? 18}%`,
+              ? { top: `${(monogramOffset ?? 2) * 4}px` }
+              : { bottom: `${(monogramOffset ?? 2) * 4}px` }),
+            width: `${(monogramSize ?? 4) * 4}px`,
             opacity: monogramOpacity ?? 1.0,
             pointerEvents: 'none',
           }}

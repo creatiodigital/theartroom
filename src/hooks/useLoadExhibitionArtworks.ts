@@ -236,8 +236,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             monogramColor: ea.monogramColor ?? '#c0392b',
             monogramOpacity: { label: String(ea.monogramOpacity ?? 1.0), value: ea.monogramOpacity ?? 1.0 },
             monogramPosition: (ea.monogramPosition ?? 'bottom') as 'top' | 'bottom',
-            monogramOffset: { label: String(ea.monogramOffset ?? 6), value: ea.monogramOffset ?? 6 },
-            monogramSize: { label: String(ea.monogramSize ?? 18), value: ea.monogramSize ?? 18 },
+            monogramOffset: { label: String(ea.monogramOffset ?? 2), value: ea.monogramOffset ?? 2 },
+            monogramSize: { label: String(ea.monogramSize ?? 4), value: ea.monogramSize ?? 4 },
             // Sound styling from ExhibitionArtwork (per-exhibition)
             soundIcon: ea.soundIcon ?? 'volume-2',
             soundBackgroundColor: ea.soundBackgroundColor ?? undefined,

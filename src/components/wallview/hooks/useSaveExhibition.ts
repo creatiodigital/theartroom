@@ -241,8 +241,8 @@ export const useSaveExhibition = () => {
             monogramColor: artwork.monogramColor ?? '#c0392b',
             monogramOpacity: artwork.monogramOpacity?.value ?? 1.0,
             monogramPosition: artwork.monogramPosition ?? 'bottom',
-            monogramOffset: artwork.monogramOffset?.value ?? 6,
-            monogramSize: artwork.monogramSize?.value ?? 18,
+            monogramOffset: artwork.monogramOffset?.value ?? 2,
+            monogramSize: artwork.monogramSize?.value ?? 4,
             // Shape decoration properties
             shapeType: artwork.shapeType ?? 'rectangle',
             shapeColor: artwork.shapeColor ?? '#000000',

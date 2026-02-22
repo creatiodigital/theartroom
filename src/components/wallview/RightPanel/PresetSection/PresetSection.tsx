@@ -191,8 +191,8 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       props.monogramColor = artwork.monogramColor ?? '#c0392b'
       props.monogramOpacity = artwork.monogramOpacity?.value ?? 1.0
       props.monogramPosition = artwork.monogramPosition ?? 'bottom'
-      props.monogramOffset = artwork.monogramOffset?.value ?? 6
-      props.monogramSize = artwork.monogramSize?.value ?? 18
+      props.monogramOffset = artwork.monogramOffset?.value ?? 2
+      props.monogramSize = artwork.monogramSize?.value ?? 4
       props.textAlign = artwork.textAlign ?? 'left'
       props.textVerticalAlign = artwork.textVerticalAlign ?? 'top'
       props.textPadding =
@@ -347,8 +347,8 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       applyProp('monogramColor', preset.monogramColor ?? '#c0392b')
       applyProp('monogramOpacity', { label: String(preset.monogramOpacity ?? 1.0), value: preset.monogramOpacity ?? 1.0 })
       applyProp('monogramPosition', (preset.monogramPosition ?? 'bottom') as 'top' | 'bottom')
-      applyProp('monogramOffset', { label: String(preset.monogramOffset ?? 6), value: preset.monogramOffset ?? 6 })
-      applyProp('monogramSize', { label: String(preset.monogramSize ?? 18), value: preset.monogramSize ?? 18 })
+      applyProp('monogramOffset', { label: String(preset.monogramOffset ?? 2), value: preset.monogramOffset ?? 2 })
+      applyProp('monogramSize', { label: String(preset.monogramSize ?? 4), value: preset.monogramSize ?? 4 })
       applyProp('textAlign', preset.textAlign as TArtwork['textAlign'])
       applyProp('textVerticalAlign', preset.textVerticalAlign as TArtwork['textVerticalAlign'])
       applyProp('textPadding', { label: String(preset.textPadding), value: preset.textPadding })
