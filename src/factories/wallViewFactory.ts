@@ -10,6 +10,7 @@ export const wallViewFactory = (): TWallView => ({
   scaleFactor: 0.30,
   panPosition: { x: -50, y: -50 },
   isHumanVisible: false,
+  isRulersVisible: false,
   wallHeight: null,
   wallWidth: null,
   isDragging: false,
@@ -27,5 +28,7 @@ export const wallViewFactory = (): TWallView => ({
   isGroupHovered: false,
   alignedPairs: [],
   isGridVisible: false,
-  snapEnabledById: {},
+  isSnapEnabled: true,
+  guides: [],
+  selectedGuideId: null,
 })

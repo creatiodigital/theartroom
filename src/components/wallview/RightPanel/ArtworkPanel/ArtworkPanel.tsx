@@ -15,7 +15,7 @@ import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
-import { setSizeLocked, setSnapEnabled } from '@/redux/slices/wallViewSlice'
+import { setSizeLocked } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
 
@@ -28,9 +28,6 @@ const ArtworkPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const sizeLocked = useSelector((state: RootState) =>
     currentArtworkId ? (state.wallView.sizeLockedById[currentArtworkId] ?? false) : false,
-  )
-  const snapEnabled = useSelector((state: RootState) =>
-    currentArtworkId ? (state.wallView.snapEnabledById[currentArtworkId] ?? true) : true,
   )
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
@@ -352,16 +349,7 @@ const ArtworkPanel = () => {
             />
           </div>
         </div>
-        <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
-          <Checkbox
-            checked={snapEnabled}
-            onChange={(e) =>
-              currentArtworkId &&
-              dispatch(setSnapEnabled({ artworkId: currentArtworkId, value: e.target.checked }))
-            }
-            label="Snap Align"
-          />
-        </div>
+
 
         {/* Rotation slider - shapes only */}
         {artwork?.artworkType === 'shape' && exhibitionArtwork && (

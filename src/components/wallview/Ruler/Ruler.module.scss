@@ -1,0 +1,47 @@
+.rulers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  background: #2a2a2a;
+  z-index: 2;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+}
+
+.horizontal {
+  position: absolute;
+  top: 0;
+  left: 24px;
+  width: calc(100% - 24px);
+  height: 24px;
+  z-index: 1;
+  pointer-events: auto;
+  cursor: s-resize;
+}
+
+.vertical {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  width: 24px;
+  height: calc(100% - 24px);
+  z-index: 1;
+  pointer-events: auto;
+  cursor: e-resize;
+}
+
+.previewGuide {
+  position: absolute;
+  background-color: #00dcff;
+  pointer-events: none;
+  z-index: 30;
+}

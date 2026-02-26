@@ -1,0 +1,56 @@
+.guidesContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.guide {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 5;
+  background-color: #00dcff;
+  transition: background-color 0.15s ease;
+
+  &.selected {
+    background-color: #00e6a0;
+  }
+
+  &.dragging {
+    opacity: 0.8;
+  }
+
+  &.vertical {
+    top: 0;
+    bottom: 0;
+    width: calc(1px / var(--scale-factor, 1));
+    cursor: ew-resize;
+
+    // Expand hit area for easier clicking
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(-3px / var(--scale-factor, 1));
+      right: calc(-3px / var(--scale-factor, 1));
+    }
+  }
+
+  &.horizontal {
+    left: 0;
+    right: 0;
+    height: calc(1px / var(--scale-factor, 1));
+    cursor: ns-resize;
+
+    // Expand hit area for easier clicking
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(-3px / var(--scale-factor, 1));
+      bottom: calc(-3px / var(--scale-factor, 1));
+    }
+  }
+}

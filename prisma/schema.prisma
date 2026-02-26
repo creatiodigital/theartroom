@@ -219,6 +219,7 @@ model Exhibition {
   ceilingColor           String?  @default("#ffffff")
 
   exhibitionArtworks ExhibitionArtwork[]
+  wallGuides         WallGuide[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -365,4 +366,18 @@ model PageContent {
   title     String
   content   String // HTML from TipTap
   updatedAt DateTime @updatedAt
+}
+
+model WallGuide {
+  id           String     @id @default(uuid())
+  exhibitionId String
+  exhibition   Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  wallId       String
+  orientation  String // "horizontal" | "vertical"
+  position     Float // position in metres from wall origin
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([exhibitionId, wallId])
 }

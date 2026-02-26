@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getArtworkBorderPx } from '@/components/wallview/constants'
+import { getArtworkBorderPx, WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
@@ -34,6 +34,9 @@ export const useResizeArtwork = (
   const isGridVisible = useSelector((state: RootState) => state.wallView.isGridVisible)
   const sizeLockedById = useSelector((state: RootState) => state.wallView.sizeLockedById)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
+  const guides = useSelector((state: RootState) => state.wallView.guides)
+  const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
   const gridSize = 20
 
   // Track if we're currently resizing
@@ -165,7 +168,7 @@ export const useResizeArtwork = (
             if (isGridVisible) {
               newX = Math.round((newX - gridOffsetX) / gridSize) * gridSize + gridOffsetX
               newWidth = Math.max(5, initialWidth - (newX - initialX))
-            } else {
+            } else if (isSnapEnabled) {
               // Snap left edge to other artworks' left edges (compare visual edges)
               const myVisualLeft = newX - borderPx
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
@@ -180,10 +183,26 @@ export const useResizeArtwork = (
                   break
                 }
               }
+              // Snap left edge to vertical guides
+              const wallHeight2d = (wallHeight ?? 3) * WALL_SCALE
+              for (const guide of guides) {
+                if (guide.orientation === 'vertical') {
+                  const guidePx = guide.position * WALL_SCALE
+                  if (Math.abs((newX - borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                    newX = guidePx + borderPx
+                    newWidth = Math.max(5, initialX + initialWidth - newX)
+                    break
+                  }
+                } else {
+                  const guidePx = wallHeight2d - guide.position * WALL_SCALE
+                  if (Math.abs((newY - borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                    // horizontal guide near top edge during left resize — skip, handled by top
+                  }
+                }
+              }
             }
           }
 
-          // Handle RIGHT edge
           if (direction.includes('right')) {
             newWidth = Math.max(5, initialWidth + deltaX)
             const myVisualRight = newX + newWidth + borderPx
@@ -193,7 +212,7 @@ export const useResizeArtwork = (
                 Math.round((newX + newWidth - gridOffsetX) / gridSize) * gridSize -
                 newX +
                 gridOffsetX
-            } else {
+            } else if (isSnapEnabled) {
               // Snap right edge to other artworks' right edges (compare visual edges)
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
                 const otherRight = otherVisual.x + otherVisual.width
@@ -207,10 +226,19 @@ export const useResizeArtwork = (
                   break
                 }
               }
+              // Snap right edge to vertical guides
+              for (const guide of guides) {
+                if (guide.orientation === 'vertical') {
+                  const guidePx = guide.position * WALL_SCALE
+                  if (Math.abs((newX + newWidth + borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                    newWidth = Math.max(5, guidePx - borderPx - newX)
+                    break
+                  }
+                }
+              }
             }
           }
 
-          // Handle TOP edge
           if (direction.includes('top')) {
             newHeight = Math.max(5, initialHeight - deltaY)
             newY = initialY + deltaY
@@ -218,7 +246,7 @@ export const useResizeArtwork = (
             if (isGridVisible) {
               newY = Math.round((newY - gridOffsetY) / gridSize) * gridSize + gridOffsetY
               newHeight = Math.max(5, initialHeight - (newY - initialY))
-            } else {
+            } else if (isSnapEnabled) {
               // Snap top edge to other artworks' top edges (compare visual edges)
               const myVisualTop = newY - borderPx
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
@@ -233,10 +261,21 @@ export const useResizeArtwork = (
                   break
                 }
               }
+              // Snap top edge to horizontal guides
+              const wallHeight2d = (wallHeight ?? 3) * WALL_SCALE
+              for (const guide of guides) {
+                if (guide.orientation === 'horizontal') {
+                  const guidePx = wallHeight2d - guide.position * WALL_SCALE
+                  if (Math.abs((newY - borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                    newY = guidePx + borderPx
+                    newHeight = Math.max(5, initialY + initialHeight - newY)
+                    break
+                  }
+                }
+              }
             }
           }
 
-          // Handle BOTTOM edge
           if (direction.includes('bottom')) {
             newHeight = Math.max(5, initialHeight + deltaY)
             const myVisualBottom = newY + newHeight + borderPx
@@ -246,7 +285,7 @@ export const useResizeArtwork = (
                 Math.round((newY + newHeight - gridOffsetY) / gridSize) * gridSize -
                 newY +
                 gridOffsetY
-            } else {
+            } else if (isSnapEnabled) {
               // Snap bottom edge to other artworks' bottom edges (compare visual edges)
               for (const { visual: otherVisual, pos: otherPos } of sameWallArtworks) {
                 const otherBottom = otherVisual.y + otherVisual.height
@@ -258,6 +297,17 @@ export const useResizeArtwork = (
                     direction: 'bottom',
                   })
                   break
+                }
+              }
+              // Snap bottom edge to horizontal guides
+              const wallHeight2d = (wallHeight ?? 3) * WALL_SCALE
+              for (const guide of guides) {
+                if (guide.orientation === 'horizontal') {
+                  const guidePx = wallHeight2d - guide.position * WALL_SCALE
+                  if (Math.abs((newY + newHeight + borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                    newHeight = Math.max(5, guidePx - borderPx - newY)
+                    break
+                  }
                 }
               }
             }
@@ -309,6 +359,9 @@ export const useResizeArtwork = (
       isGridVisible,
       sizeLockedById,
       artworksById,
+      isSnapEnabled,
+      guides,
+      wallHeight,
       boundingData,
       dispatch,
     ],
