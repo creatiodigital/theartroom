@@ -34,6 +34,7 @@ type TPreset = {
   frameSize: number
   frameThickness: number
   frameMaterial: string
+  frameCornerStyle: string
   frameTextureScale: number
   frameTextureOffsetX: number
   frameTextureOffsetY: number
@@ -145,6 +146,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
           ? (artwork.frameThickness?.value ?? 0.5)
           : (artwork.frameThickness ?? 0.5),
       frameMaterial: artwork.frameMaterial ?? 'plastic',
+      frameCornerStyle: artwork.frameCornerStyle ?? 'mitered',
       frameTextureScale: artwork.frameTextureScale ?? 2.0,
       frameTextureOffsetX: artwork.frameTextureOffsetX ?? 0,
       frameTextureOffsetY: artwork.frameTextureOffsetY ?? 0,
@@ -312,6 +314,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       value: preset.frameThickness,
     })
     applyProp('frameMaterial', preset.frameMaterial ?? 'plastic')
+    applyProp('frameCornerStyle', preset.frameCornerStyle ?? 'mitered')
     applyProp('frameTextureScale', preset.frameTextureScale ?? 2.0)
     applyProp('frameTextureOffsetX', preset.frameTextureOffsetX ?? 0)
     applyProp('frameTextureOffsetY', preset.frameTextureOffsetY ?? 0)

@@ -69,6 +69,7 @@ model ArtworkPreset {
   frameSize               Float   @default(5)
   frameThickness          Float   @default(0.5)
   frameMaterial           String  @default("plastic")
+  frameCornerStyle        String  @default("mitered")
   frameTextureScale       Float   @default(2.0)
   frameTextureOffsetX     Float   @default(0)
   frameTextureOffsetY     Float   @default(0)
@@ -251,6 +252,7 @@ model ExhibitionArtwork {
   frameSize               Float   @default(5) // Border width (XY)
   frameThickness          Float   @default(0.5) // Z-depth
   frameMaterial           String  @default("plastic")
+  frameCornerStyle        String  @default("mitered")
   frameTextureScale       Float   @default(2.0)
   frameTextureOffsetX     Float   @default(0)
   frameTextureOffsetY     Float   @default(0)

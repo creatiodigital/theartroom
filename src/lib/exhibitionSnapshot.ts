@@ -128,6 +128,7 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       frameSize: ea.frameSize,
       frameThickness: ea.frameThickness,
       frameMaterial: ea.frameMaterial,
+      frameCornerStyle: ea.frameCornerStyle,
       frameTextureScale: ea.frameTextureScale,
       frameTextureOffsetX: ea.frameTextureOffsetX,
       frameTextureOffsetY: ea.frameTextureOffsetY,

@@ -44,6 +44,7 @@ type ExhibitionArtworkResponse = {
   frameSize: number // Border width (XY)
   frameThickness: number // Z-depth
   frameMaterial: string
+  frameCornerStyle: string
   frameTextureScale: number
   frameTextureOffsetX: number
   frameTextureOffsetY: number
@@ -193,6 +194,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
               value: ea.frameThickness ?? 1,
             },
             frameMaterial: ea.frameMaterial ?? 'plastic',
+            frameCornerStyle: ea.frameCornerStyle ?? 'mitered',
             frameTextureScale: ea.frameTextureScale ?? 2.0,
             frameTextureOffsetX: ea.frameTextureOffsetX ?? 0,
             frameTextureOffsetY: ea.frameTextureOffsetY ?? 0,

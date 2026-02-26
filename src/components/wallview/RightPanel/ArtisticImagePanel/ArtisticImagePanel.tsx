@@ -37,6 +37,7 @@ const ArtisticImage = () => {
     frameSize,
     frameThickness,
     frameMaterial,
+    frameCornerStyle,
     frameTextureScale,
     frameTextureOffsetX,
     frameTextureOffsetY,
@@ -159,6 +160,19 @@ const ArtisticImage = () => {
                   ]}
                   value={frameMaterial ?? 'plastic'}
                   onChange={(value) => handleEditArtisticImage('frameMaterial', value)}
+                />
+              </div>
+              <div className={styles.item}>
+                <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                  Corner
+                </Text>
+                <Select<string>
+                  options={[
+                    { label: 'Mitered', value: 'mitered' },
+                    { label: 'Straight', value: 'straight' },
+                  ]}
+                  value={frameCornerStyle ?? 'mitered'}
+                  onChange={(value) => handleEditArtisticImage('frameCornerStyle', value)}
                 />
               </div>
             </div>

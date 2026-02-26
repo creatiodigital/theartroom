@@ -45,6 +45,7 @@ export type TArtwork = {
   frameSize?: TOption<number> // Border width (XY)
   frameThickness?: TOption<number> // Z-depth
   frameMaterial?: string
+  frameCornerStyle?: string
   frameTextureScale?: number
   frameTextureOffsetX?: number
   frameTextureOffsetY?: number

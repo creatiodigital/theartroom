@@ -212,6 +212,7 @@ const Display = ({ artwork }: DisplayProps) => {
     showSupport,
     hideShadow,
     frameMaterial,
+    frameCornerStyle,
     frameTextureScale,
     frameTextureOffsetX,
     frameTextureOffsetY,
@@ -395,9 +396,8 @@ const Display = ({ artwork }: DisplayProps) => {
         metalness: 0.05,
       })
     }
-    // Plastic: tinted by frameColor
+    // Plastic: use normal + roughness for subtle surface detail, but pure user color
     return new MeshStandardMaterial({
-      map: plasticTextures.diffuse,
       normalMap: plasticTextures.normal,
       roughnessMap: plasticTextures.roughnessMap,
       color: frameAmbientColor,
@@ -485,6 +485,7 @@ const Display = ({ artwork }: DisplayProps) => {
           thickness={frameBorder}
           depth={frameDepth / 100}
           material={frameMatObj}
+          cornerStyle={(frameCornerStyle as 'mitered' | 'straight') ?? 'mitered'}
         />
       )}
 
