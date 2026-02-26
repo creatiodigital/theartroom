@@ -211,6 +211,13 @@ const Display = ({ artwork }: DisplayProps) => {
     supportColor,
     showSupport,
     hideShadow,
+    frameMaterial,
+    frameTextureScale,
+    frameTextureOffsetX,
+    frameTextureOffsetY,
+    frameTextureRotation,
+    frameTextureRoughness,
+    frameTextureTemperature,
   } = artwork
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -319,14 +326,85 @@ const Display = ({ artwork }: DisplayProps) => {
   const planeWidth = width || 1
   const planeHeight = height || 1
 
-  // Frame material with ambient light applied - polished lacquered wood look
-  const frameMaterial = useMemo(() => {
-    return new MeshStandardMaterial({
-      color: frameAmbientColor,
-      roughness: 0.15, // Low roughness for glossy/polished finish
-      metalness: 0.2, // Slight metalness for subtle reflections
+  // Load PBR textures for both frame materials
+  const plasticTextures = useMemo(() => {
+    const loader = new TextureLoader()
+    const diffuse = loader.load('/assets/materials/plastic-frame/diffuse.jpg')
+    const normal = loader.load('/assets/materials/plastic-frame/normal.jpg')
+    const roughnessMap = loader.load('/assets/materials/plastic-frame/roughness.jpg')
+
+    ;[diffuse, normal, roughnessMap].forEach((tex) => {
+      tex.wrapS = tex.wrapT = 1000 // RepeatWrapping
+      tex.repeat.set(2, 2)
     })
-  }, [frameAmbientColor])
+
+    diffuse.colorSpace = SRGBColorSpace
+
+    return { diffuse, normal, roughnessMap }
+  }, [])
+
+  const woodTextures = useMemo(() => {
+    const loader = new TextureLoader()
+    const diffuse = loader.load('/assets/materials/wooden-frame/diffuse.png')
+    const normal = loader.load('/assets/materials/wooden-frame/normal.png')
+    const roughnessMap = loader.load('/assets/materials/wooden-frame/roughness.png')
+
+    ;[diffuse, normal, roughnessMap].forEach((tex) => {
+      tex.wrapS = tex.wrapT = 1000 // RepeatWrapping
+    })
+
+    diffuse.colorSpace = SRGBColorSpace
+
+    return { diffuse, normal, roughnessMap }
+  }, [])
+
+  // Apply wood texture control properties reactively
+  const texScale = frameTextureScale ?? 2.0
+  const texOffsetX = frameTextureOffsetX ?? 0
+  const texOffsetY = frameTextureOffsetY ?? 0
+  const texRotation = ((frameTextureRotation ?? 0) * Math.PI) / 180
+
+  useMemo(() => {
+    ;[woodTextures.diffuse, woodTextures.normal, woodTextures.roughnessMap].forEach((tex) => {
+      tex.repeat.set(texScale, texScale)
+      tex.offset.set(texOffsetX, texOffsetY)
+      tex.rotation = texRotation
+      tex.center.set(0.5, 0.5)
+      tex.needsUpdate = true
+    })
+  }, [woodTextures, texScale, texOffsetX, texOffsetY, texRotation])
+
+  // Temperature color shift helper (warm = orange tint, cool = blue tint)
+  const temperatureToColor = (temp: number): string => {
+    const r = Math.min(255, Math.round(255 + temp * 40))
+    const g = Math.min(255, Math.round(255 - Math.abs(temp) * 10))
+    const b = Math.min(255, Math.round(255 - temp * 50))
+    return `rgb(${r},${g},${b})`
+  }
+
+  // Frame material: plastic PBR or wood PBR based on dropdown
+  const frameMaterialType = frameMaterial ?? 'plastic'
+  const frameMatObj = useMemo(() => {
+    if (frameMaterialType === 'wood') {
+      return new MeshStandardMaterial({
+        map: woodTextures.diffuse,
+        normalMap: woodTextures.normal,
+        roughnessMap: woodTextures.roughnessMap,
+        color: temperatureToColor(frameTextureTemperature ?? 0),
+        roughness: frameTextureRoughness ?? 0.6,
+        metalness: 0.05,
+      })
+    }
+    // Plastic: tinted by frameColor
+    return new MeshStandardMaterial({
+      map: plasticTextures.diffuse,
+      normalMap: plasticTextures.normal,
+      roughnessMap: plasticTextures.roughnessMap,
+      color: frameAmbientColor,
+      roughness: frameTextureRoughness ?? 0.6,
+      metalness: 0.05,
+    })
+  }, [frameMaterialType, frameAmbientColor, woodTextures, plasticTextures, frameTextureRoughness, frameTextureTemperature])
 
   // Passepartout material with ambient light applied
   const passepartoutMaterial = useMemo(() => {
@@ -341,6 +419,10 @@ const Display = ({ artwork }: DisplayProps) => {
     return new MeshStandardMaterial({
       color: supportAmbientColor,
       roughness: 1.0, // Fully rough like canvas or wood
+      side: DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: 2,
+      polygonOffsetUnits: 2,
     })
   }, [supportAmbientColor])
 
@@ -402,7 +484,7 @@ const Display = ({ artwork }: DisplayProps) => {
           height={frameOuterH}
           thickness={frameBorder}
           depth={frameDepth / 100}
-          material={frameMaterial}
+          material={frameMatObj}
         />
       )}
 
@@ -421,7 +503,11 @@ const Display = ({ artwork }: DisplayProps) => {
 
       {/* Shadow blur - memoized component, size proportional to frame depth */}
       {!hideShadow && (
-        <ShadowDecal width={totalWidth} height={totalHeight} frameDepth={frameDepth / 100} />
+        <ShadowDecal
+          width={totalWidth}
+          height={totalHeight}
+          frameDepth={showFrame ? frameDepth / 100 : showSupport ? supportDepth / 100 : 0}
+        />
       )}
 
       {/* Support (canvas/panel depth) - fits inside frame, front at Z=0 */}

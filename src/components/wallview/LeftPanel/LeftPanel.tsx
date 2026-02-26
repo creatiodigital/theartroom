@@ -18,7 +18,7 @@ import {
   redo,
   clearHistory,
 } from '@/redux/slices/exhibitionSlice'
-import { showHuman, hideHuman, removeGroup } from '@/redux/slices/wallViewSlice'
+import { showHuman, hideHuman, showRulers, hideRulers, removeGroup, toggleSnap } from '@/redux/slices/wallViewSlice'
 import {
   increaseScaleFactor,
   decreaseScaleFactor,
@@ -44,6 +44,8 @@ export const LeftPanel = () => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const isWizardOpen = useSelector((state: RootState) => state.wizard.isWizardOpen)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
+  const isRulersVisible = useSelector((state: RootState) => state.wallView.isRulersVisible)
+  const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
 
   // Undo/Redo state
@@ -177,6 +179,18 @@ export const LeftPanel = () => {
     }
   }
 
+  const handleToggleRulers = () => {
+    if (isRulersVisible) {
+      dispatch(hideRulers())
+    } else {
+      dispatch(showRulers())
+    }
+  }
+
+  const handleToggleSnap = () => {
+    dispatch(toggleSnap())
+  }
+
   const handleSelectArtwork = (artworkId: string | null) => {
     if (currentArtworkId !== artworkId) {
       dispatch(chooseCurrentArtworkId(artworkId))
@@ -269,8 +283,6 @@ export const LeftPanel = () => {
                 />
               </Tooltip>
             </div>
-          </div>
-          <div className={styles.row}>
             <div className={styles.itemFlex}>
               <Tooltip label="Zoom out" placement="right" fullWidth>
                 <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
@@ -292,9 +304,29 @@ export const LeftPanel = () => {
               <Tooltip label="Show human height reference" placement="right" fullWidth>
                 <Button
                   size="regular"
-                  variant="secondary"
+                  variant={isHumanVisible ? 'primary' : 'secondary'}
                   icon="human-standing"
                   onClick={handleToggleHuman}
+                />
+              </Tooltip>
+            </div>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Show rulers & guides" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant={isRulersVisible ? 'primary' : 'secondary'}
+                  icon="ruler"
+                  onClick={handleToggleRulers}
+                />
+              </Tooltip>
+            </div>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Snap align" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant={isSnapEnabled ? 'primary' : 'secondary'}
+                  icon="magnet"
+                  onClick={handleToggleSnap}
                 />
               </Tooltip>
             </div>

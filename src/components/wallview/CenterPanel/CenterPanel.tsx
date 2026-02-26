@@ -5,8 +5,10 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwork'
 import { Wall } from '@/components/wallview/Wall/Wall'
+import { Ruler } from '@/components/wallview/Ruler/Ruler'
+import { Guides } from '@/components/wallview/Guides/Guides'
 import { Text } from '@/components/ui/Typography'
-import { zoomAtPoint, setPanPosition } from '@/redux/slices/wallViewSlice'
+import { zoomAtPoint, setPanPosition, deselectGuide } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
 import styles from './CenterPanel.module.scss'
@@ -90,6 +92,7 @@ export const CenterPanel = () => {
 
   return (
     <div ref={containerRef} className={styles.panel}>
+      <Ruler />
       <div className={styles.scaleIndicator}>
         <Text font="dashboard" as="span" size="sm">
           Zoom: {Math.round(scaleFactor * 100)}%
@@ -98,12 +101,13 @@ export const CenterPanel = () => {
       <div
         id="wallWrapper"
         className={styles.wrapper}
-        onClick={handleDeselect}
+        onClick={() => { handleDeselect(); dispatch(deselectGuide()) }}
         style={{
           transform: `translate(${panPosition.x}%, ${panPosition.y}%) scale(${scaleFactor || 1})`,
           '--scale-factor': String(scaleFactor || 1),
         } as React.CSSProperties}
       >
+        <Guides />
         <Wall />
       </div>
     </div>

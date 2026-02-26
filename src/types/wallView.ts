@@ -40,6 +40,13 @@ export type TArtworkGroup = {
   groupHeight: number
 }
 
+export type TGuide = {
+  id: string
+  wallId: string
+  orientation: 'horizontal' | 'vertical'
+  position: number // metres from wall origin
+}
+
 export type TWallView = {
   isWallView: boolean
   currentArtworkId: string | null
@@ -50,6 +57,7 @@ export type TWallView = {
   scaleFactor: number
   panPosition: TPanPosition
   isHumanVisible: boolean
+  isRulersVisible: boolean
   wallHeight: number | null
   wallWidth: number | null
   isDragging: boolean
@@ -62,7 +70,9 @@ export type TWallView = {
   isGroupHovered: boolean
   alignedPairs: TAlignmentPair[]
   isGridVisible: boolean
-  snapEnabledById: Record<string, boolean> // Snap align per artwork
+  isSnapEnabled: boolean
+  guides: TGuide[]
+  selectedGuideId: string | null
 }
 
 export type TDirection =
