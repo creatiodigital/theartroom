@@ -3,16 +3,15 @@
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { useGLTF } from '@react-three/drei'
 
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/Checkbox'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Text } from '@/components/ui/Typography'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
-import { setSnapEnabled } from '@/redux/slices/wallViewSlice'
+
 import type { RootState } from '@/redux/store'
 import type { TAlign, TDistributeAlign } from '@/types/wizard'
 
@@ -23,11 +22,8 @@ import { useGroupHandlers } from '../hooks/useGroupHandlers'
 import styles from '../RightPanel.module.scss'
 
 const GroupPanel = () => {
-  const dispatch = useDispatch()
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
-  const snapEnabledById = useSelector((state: RootState) => state.wallView.snapEnabledById)
-  // Snap is enabled if any artwork in the group has it enabled
-  const snapEnabled = artworkGroupIds.some((id) => snapEnabledById[id] ?? true)
+
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
@@ -181,17 +177,7 @@ const GroupPanel = () => {
             />
           </div>
         </div>
-        <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
-          <Checkbox
-            checked={snapEnabled}
-            onChange={(e) => {
-              artworkGroupIds.forEach((id) =>
-                dispatch(setSnapEnabled({ artworkId: id, value: e.target.checked })),
-              )
-            }}
-            label="Snap Align"
-          />
-        </div>
+
       </div>
 
       <div className={styles.section}>

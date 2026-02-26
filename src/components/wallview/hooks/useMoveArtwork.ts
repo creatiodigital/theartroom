@@ -40,7 +40,8 @@ export const useMoveArtwork = (
   const isEditingArtwork = useSelector((state: RootState) => state.dashboard.isEditingArtwork)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const snapEnabledById = useSelector((state: RootState) => state.wallView.snapEnabledById)
+  const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
+  const guides = useSelector((state: RootState) => state.wallView.guides)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const dispatch = useDispatch()
 
@@ -135,8 +136,7 @@ export const useMoveArtwork = (
         // Handle horizontal alignments (can be multiple)
         if (alignment.horizontal.length > 0) {
           // Use first alignment for snapping (only if snap enabled)
-          const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
-          if (snapEnabled) {
+          if (isSnapEnabled) {
             const firstH = alignment.horizontal[0]
             if (firstH === 'top') {
               snapY = otherVisual.y + draggedOffsetY
@@ -163,8 +163,7 @@ export const useMoveArtwork = (
         // Handle vertical alignments (can be multiple)
         if (alignment.vertical.length > 0) {
           // Use first alignment for snapping (only if snap enabled)
-          const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
-          if (snapEnabled) {
+          if (isSnapEnabled) {
             const firstV = alignment.vertical[0]
             if (firstV === 'left') {
               snapX = otherVisual.x + draggedOffsetX
@@ -193,13 +192,47 @@ export const useMoveArtwork = (
       const wallWidth2d = boundingData.width * WALL_SCALE
       const wallHeight2d = boundingData.height * WALL_SCALE
       const tolerance = 8
-      const snapEnabled = draggedArtworkId ? (snapEnabledById[draggedArtworkId] ?? true) : true
+
+      // ---- Guide snapping ----
+      if (isSnapEnabled) {
+        guides.forEach((guide) => {
+          if (guide.orientation === 'vertical') {
+            // Guide position is metres from wall left edge → convert to 2d px
+            const guidePx = guide.position * WALL_SCALE
+            // Check left edge, right edge, and center of artwork visual bounds
+            const artLeftPx = snapX - draggedOffsetX
+            const artRightPx = artLeftPx + draggedVisual.width
+            const artCenterX = artLeftPx + draggedVisual.width / 2
+            if (Math.abs(artLeftPx - guidePx) <= tolerance) {
+              snapX = guidePx + draggedOffsetX
+            } else if (Math.abs(artRightPx - guidePx) <= tolerance) {
+              snapX = guidePx - draggedVisual.width + draggedOffsetX
+            } else if (Math.abs(artCenterX - guidePx) <= tolerance) {
+              snapX = guidePx - draggedVisual.width / 2 + draggedOffsetX
+            }
+          } else {
+            // Guide position is metres from wall bottom edge (up is positive)
+            // In 2d canvas: top of wall is y=0, bottom is wallHeight2d
+            const guidePx = wallHeight2d - guide.position * WALL_SCALE
+            const artTopPx = snapY - draggedOffsetY
+            const artBottomPx = artTopPx + draggedVisual.height
+            const artCenterY = artTopPx + draggedVisual.height / 2
+            if (Math.abs(artTopPx - guidePx) <= tolerance) {
+              snapY = guidePx + draggedOffsetY
+            } else if (Math.abs(artBottomPx - guidePx) <= tolerance) {
+              snapY = guidePx - draggedVisual.height + draggedOffsetY
+            } else if (Math.abs(artCenterY - guidePx) <= tolerance) {
+              snapY = guidePx - draggedVisual.height / 2 + draggedOffsetY
+            }
+          }
+        })
+      }
 
       // Vertical center of wall (artwork visual center aligned with wall center)
       const artworkVisualCenterX = snapX - draggedOffsetX + draggedVisual.width / 2
       const wallCenterX = wallWidth2d / 2
       if (Math.abs(artworkVisualCenterX - wallCenterX) <= tolerance) {
-        if (snapEnabled) {
+        if (isSnapEnabled) {
           snapX = wallCenterX - draggedVisual.width / 2 + draggedOffsetX
         }
         alignedPairs.push({
@@ -213,7 +246,7 @@ export const useMoveArtwork = (
       const artworkVisualCenterY = snapY - draggedOffsetY + draggedVisual.height / 2
       const wallCenterY = wallHeight2d / 2
       if (Math.abs(artworkVisualCenterY - wallCenterY) <= tolerance) {
-        if (snapEnabled) {
+        if (isSnapEnabled) {
           snapY = wallCenterY - draggedVisual.height / 2 + draggedOffsetY
         }
         alignedPairs.push({
@@ -255,7 +288,8 @@ export const useMoveArtwork = (
       allExhibitionArtworkIds,
       exhibitionArtworksById,
       artworksById,
-      snapEnabledById,
+      isSnapEnabled,
+      guides,
       dispatch,
     ],
   )

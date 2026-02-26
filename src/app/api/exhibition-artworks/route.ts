@@ -117,6 +117,13 @@ export async function POST(request: NextRequest) {
         frameColor?: string
         frameSize?: number
         frameThickness?: number
+        frameMaterial?: string
+        frameTextureScale?: number
+        frameTextureOffsetX?: number
+        frameTextureOffsetY?: number
+        frameTextureRotation?: number
+        frameTextureRoughness?: number
+        frameTextureTemperature?: number
         showPassepartout?: boolean
         passepartoutColor?: string
         passepartoutSize?: number
@@ -226,6 +233,13 @@ export async function POST(request: NextRequest) {
             frameColor: pos.frameColor ?? '#000000',
             frameSize: pos.frameSize ?? 5,
             frameThickness: pos.frameThickness ?? 0.5,
+            frameMaterial: pos.frameMaterial ?? 'plastic',
+            frameTextureScale: pos.frameTextureScale ?? 2.0,
+            frameTextureOffsetX: pos.frameTextureOffsetX ?? 0,
+            frameTextureOffsetY: pos.frameTextureOffsetY ?? 0,
+            frameTextureRotation: pos.frameTextureRotation ?? 0,
+            frameTextureRoughness: pos.frameTextureRoughness ?? 0.6,
+            frameTextureTemperature: pos.frameTextureTemperature ?? 0,
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
             passepartoutSize: pos.passepartoutSize ?? 10,
@@ -293,6 +307,13 @@ export async function POST(request: NextRequest) {
             frameColor: pos.frameColor ?? '#000000',
             frameSize: pos.frameSize ?? 5,
             frameThickness: pos.frameThickness ?? 0.5,
+            frameMaterial: pos.frameMaterial ?? 'plastic',
+            frameTextureScale: pos.frameTextureScale ?? 2.0,
+            frameTextureOffsetX: pos.frameTextureOffsetX ?? 0,
+            frameTextureOffsetY: pos.frameTextureOffsetY ?? 0,
+            frameTextureRotation: pos.frameTextureRotation ?? 0,
+            frameTextureRoughness: pos.frameTextureRoughness ?? 0.6,
+            frameTextureTemperature: pos.frameTextureTemperature ?? 0,
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
             passepartoutSize: pos.passepartoutSize ?? 10,

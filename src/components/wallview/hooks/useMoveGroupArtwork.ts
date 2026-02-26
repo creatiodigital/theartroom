@@ -27,7 +27,8 @@ export const useMoveGroupArtwork = (
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
-  const snapEnabledById = useSelector((state: RootState) => state.wallView.snapEnabledById)
+  const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
+  const guides = useSelector((state: RootState) => state.wallView.guides)
 
   const [isDraggingGroup, setIsDraggingGroup] = useState(false)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -73,10 +74,10 @@ export const useMoveGroupArtwork = (
       const groupCenterX = x + groupWidth / 2
       const wallCenterX = wallWidth2d / 2
       // Snap is enabled if any artwork in the group has it enabled
-      const snapEnabled = artworkGroupIds.some((id) => snapEnabledById[id] ?? true)
+      const isSnap = isSnapEnabled
 
       if (Math.abs(groupCenterX - wallCenterX) <= tolerance) {
-        if (snapEnabled) {
+        if (isSnap) {
           x = wallCenterX - groupWidth / 2
         }
         alignedPairs.push({
@@ -90,7 +91,7 @@ export const useMoveGroupArtwork = (
       const groupCenterY = y + groupHeight / 2
       const wallCenterY = wallHeight2d / 2
       if (Math.abs(groupCenterY - wallCenterY) <= tolerance) {
-        if (snapEnabled) {
+        if (isSnap) {
           y = wallCenterY - groupHeight / 2
         }
         alignedPairs.push({
@@ -101,6 +102,38 @@ export const useMoveGroupArtwork = (
       }
 
       dispatch(setAlignedPairs(alignedPairs))
+
+      // ---- Guide snapping for group ----
+      if (isSnapEnabled) {
+        const wallHeight2dG = boundingData.height * WALL_SCALE
+        guides.forEach((guide) => {
+          if (guide.orientation === 'vertical') {
+            const guidePx = guide.position * WALL_SCALE
+            const gLeft = x
+            const gRight = x + groupWidth
+            const gCenterX = x + groupWidth / 2
+            if (Math.abs(gLeft - guidePx) <= tolerance) {
+              x = guidePx
+            } else if (Math.abs(gRight - guidePx) <= tolerance) {
+              x = guidePx - groupWidth
+            } else if (Math.abs(gCenterX - guidePx) <= tolerance) {
+              x = guidePx - groupWidth / 2
+            }
+          } else {
+            const guidePx = wallHeight2dG - guide.position * WALL_SCALE
+            const gTop = y
+            const gBottom = y + groupHeight
+            const gCenterY = y + groupHeight / 2
+            if (Math.abs(gTop - guidePx) <= tolerance) {
+              y = guidePx
+            } else if (Math.abs(gBottom - guidePx) <= tolerance) {
+              y = guidePx - groupHeight
+            } else if (Math.abs(gCenterY - guidePx) <= tolerance) {
+              y = guidePx - groupHeight / 2
+            }
+          }
+        })
+      }
 
       const deltaX = x - (artworkGroup.groupX ?? 0)
       const deltaY = y - (artworkGroup.groupY ?? 0)
@@ -135,7 +168,8 @@ export const useMoveGroupArtwork = (
       artworkGroup,
       artworkGroupIds,
       exhibitionArtworksById,
-      snapEnabledById,
+      isSnapEnabled,
+      guides,
       dispatch,
     ],
   )

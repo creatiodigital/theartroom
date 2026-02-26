@@ -44,6 +44,13 @@ export type TArtwork = {
   frameColor?: string
   frameSize?: TOption<number> // Border width (XY)
   frameThickness?: TOption<number> // Z-depth
+  frameMaterial?: string
+  frameTextureScale?: number
+  frameTextureOffsetX?: number
+  frameTextureOffsetY?: number
+  frameTextureRotation?: number
+  frameTextureRoughness?: number
+  frameTextureTemperature?: number
   showPassepartout?: boolean
   passepartoutColor?: string
   passepartoutSize?: TOption<number> // Border width (XY)

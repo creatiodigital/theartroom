@@ -43,6 +43,13 @@ type ExhibitionArtworkResponse = {
   frameColor: string
   frameSize: number // Border width (XY)
   frameThickness: number // Z-depth
+  frameMaterial: string
+  frameTextureScale: number
+  frameTextureOffsetX: number
+  frameTextureOffsetY: number
+  frameTextureRotation: number
+  frameTextureRoughness: number
+  frameTextureTemperature: number
   showPassepartout: boolean
   passepartoutColor: string
   passepartoutSize: number
@@ -185,6 +192,13 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
               label: String(ea.frameThickness ?? 1),
               value: ea.frameThickness ?? 1,
             },
+            frameMaterial: ea.frameMaterial ?? 'plastic',
+            frameTextureScale: ea.frameTextureScale ?? 2.0,
+            frameTextureOffsetX: ea.frameTextureOffsetX ?? 0,
+            frameTextureOffsetY: ea.frameTextureOffsetY ?? 0,
+            frameTextureRotation: ea.frameTextureRotation ?? 0,
+            frameTextureRoughness: ea.frameTextureRoughness ?? 0.6,
+            frameTextureTemperature: ea.frameTextureTemperature ?? 0,
             showPassepartout: ea.showPassepartout,
             passepartoutColor: ea.passepartoutColor,
             passepartoutSize: {

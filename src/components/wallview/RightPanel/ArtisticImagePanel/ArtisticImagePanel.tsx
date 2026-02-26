@@ -36,6 +36,13 @@ const ArtisticImage = () => {
     frameColor,
     frameSize,
     frameThickness,
+    frameMaterial,
+    frameTextureScale,
+    frameTextureOffsetX,
+    frameTextureOffsetY,
+    frameTextureRotation,
+    frameTextureRoughness,
+    frameTextureTemperature,
     showSupport,
     supportThickness,
     supportColor,
@@ -143,14 +150,123 @@ const ArtisticImage = () => {
             <div className={styles.row}>
               <div className={styles.item}>
                 <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Frame color
+                  Material
                 </Text>
-                <ColorPicker
-                  textColor={frameColor!}
-                  onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
+                <Select<string>
+                  options={[
+                    { label: 'Plastic', value: 'plastic' },
+                    { label: 'Wood', value: 'wood' },
+                  ]}
+                  value={frameMaterial ?? 'plastic'}
+                  onChange={(value) => handleEditArtisticImage('frameMaterial', value)}
                 />
               </div>
             </div>
+            {/* Plastic controls */}
+            {(frameMaterial ?? 'plastic') === 'plastic' && (
+              <>
+                <div className={styles.row}>
+                  <div className={styles.item}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                      Color
+                    </Text>
+                    <ColorPicker
+                      textColor={frameColor!}
+                      onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
+                    />
+                  </div>
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Reflections</Text>
+                    <span className={styles.sliderValue}>{(frameTextureRoughness ?? 0.6).toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.01"
+                    value={frameTextureRoughness ?? 0.6}
+                    onChange={(e) => handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+              </>
+            )}
+            {/* Wood controls */}
+            {frameMaterial === 'wood' && (
+              <>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Scale</Text>
+                    <span className={styles.sliderValue}>{(frameTextureScale ?? 2).toFixed(1)}</span>
+                  </div>
+                  <input
+                    type="range" min="0.5" max="8" step="0.1"
+                    value={frameTextureScale ?? 2}
+                    onChange={(e) => handleEditArtisticImage('frameTextureScale', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Offset X</Text>
+                    <span className={styles.sliderValue}>{(frameTextureOffsetX ?? 0).toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.01"
+                    value={frameTextureOffsetX ?? 0}
+                    onChange={(e) => handleEditArtisticImage('frameTextureOffsetX', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Offset Y</Text>
+                    <span className={styles.sliderValue}>{(frameTextureOffsetY ?? 0).toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.01"
+                    value={frameTextureOffsetY ?? 0}
+                    onChange={(e) => handleEditArtisticImage('frameTextureOffsetY', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Rotation</Text>
+                    <span className={styles.sliderValue}>{(frameTextureRotation ?? 0).toFixed(0)}°</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="360" step="1"
+                    value={frameTextureRotation ?? 0}
+                    onChange={(e) => handleEditArtisticImage('frameTextureRotation', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Temperature</Text>
+                    <span className={styles.sliderValue}>{(frameTextureTemperature ?? 0).toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="-1" max="1" step="0.05"
+                    value={frameTextureTemperature ?? 0}
+                    onChange={(e) => handleEditArtisticImage('frameTextureTemperature', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>Reflections</Text>
+                    <span className={styles.sliderValue}>{(frameTextureRoughness ?? 0.6).toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.01"
+                    value={frameTextureRoughness ?? 0.6}
+                    onChange={(e) => handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))}
+                    className={styles.slider}
+                  />
+                </div>
+              </>
+            )}
             <div className={styles.row}>
               <div className={styles.item}>
                 <Text font="dashboard" as="span" size="xs" className={styles.label}>

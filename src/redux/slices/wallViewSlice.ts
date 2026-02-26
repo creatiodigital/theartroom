@@ -7,6 +7,7 @@ import type {
   TWallDimensions,
   TArtworkGroup,
   TAlignmentPair,
+  TGuide,
 } from '@/types/wallView'
 
 const wallViewSlice = createSlice({
@@ -30,6 +31,12 @@ const wallViewSlice = createSlice({
     },
     hideHuman: (state: TWallView) => {
       state.isHumanVisible = false
+    },
+    showRulers: (state: TWallView) => {
+      state.isRulersVisible = true
+    },
+    hideRulers: (state: TWallView) => {
+      state.isRulersVisible = false
     },
     chooseCurrentArtworkId: (state: TWallView, action: PayloadAction<string | null>) => {
       state.currentArtworkId = action.payload
@@ -194,11 +201,32 @@ const wallViewSlice = createSlice({
     closeArtworkEditModal: (state: TWallView) => {
       state.editingArtworkId = null
     },
-    setSnapEnabled: (
+    toggleSnap: (state: TWallView) => {
+      state.isSnapEnabled = !state.isSnapEnabled
+    },
+    // ---------- Guides ----------
+    setGuides: (state: TWallView, action: PayloadAction<TGuide[]>) => {
+      state.guides = action.payload
+    },
+    addGuide: (state: TWallView, action: PayloadAction<TGuide>) => {
+      state.guides.push(action.payload)
+    },
+    updateGuidePosition: (
       state: TWallView,
-      action: PayloadAction<{ artworkId: string; value: boolean }>,
+      action: PayloadAction<{ id: string; position: number }>,
     ) => {
-      state.snapEnabledById[action.payload.artworkId] = action.payload.value
+      const guide = state.guides.find((g) => g.id === action.payload.id)
+      if (guide) guide.position = action.payload.position
+    },
+    removeGuide: (state: TWallView, action: PayloadAction<string>) => {
+      state.guides = state.guides.filter((g) => g.id !== action.payload)
+      if (state.selectedGuideId === action.payload) state.selectedGuideId = null
+    },
+    selectGuide: (state: TWallView, action: PayloadAction<string>) => {
+      state.selectedGuideId = action.payload
+    },
+    deselectGuide: (state: TWallView) => {
+      state.selectedGuideId = null
     },
   },
 })
@@ -209,6 +237,8 @@ export const {
   resetWallView,
   showHuman,
   hideHuman,
+  showRulers,
+  hideRulers,
   chooseCurrentArtworkId,
   increaseScaleFactor,
   decreaseScaleFactor,
@@ -236,7 +266,13 @@ export const {
   setGroupNotHovered,
   openArtworkEditModal,
   closeArtworkEditModal,
-  setSnapEnabled,
+  toggleSnap,
+  setGuides,
+  addGuide,
+  updateGuidePosition,
+  removeGuide,
+  selectGuide,
+  deselectGuide,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer

@@ -40,7 +40,7 @@ const fragmentShader = `
     // centered.y goes from -0.5 (bottom) to +0.5 (top)
     float verticalFade = mix(1.0, 0.1, smoothstep(-0.2, 0.2, centered.y));
     
-    gl_FragColor = vec4(0.0, 0.0, 0.0, alpha * 0.35 * verticalFade);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, alpha * 0.45 * verticalFade);
   }
 `
 
@@ -50,9 +50,9 @@ type ShadowDecalProps = {
   frameDepth?: number // Frame thickness in meters (0.01 to 0.20)
 }
 
-// Base blur size + subtle addition based on frame depth
-const BASE_BLUR = 0.1
-const DEPTH_MULTIPLIER = 0.5 // Very subtle - adds 50% of frame depth to blur
+// Base blur size + proportional addition based on protrusion depth
+const BASE_BLUR = 0.02
+const DEPTH_MULTIPLIER = 1.5 // Depth-driven — thin supports stay tight, thick frames spread more
 
 /**
  * Fake shadow decal component for artworks.

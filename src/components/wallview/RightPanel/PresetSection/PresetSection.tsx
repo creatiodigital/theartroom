@@ -33,6 +33,13 @@ type TPreset = {
   frameColor: string
   frameSize: number
   frameThickness: number
+  frameMaterial: string
+  frameTextureScale: number
+  frameTextureOffsetX: number
+  frameTextureOffsetY: number
+  frameTextureRotation: number
+  frameTextureRoughness: number
+  frameTextureTemperature: number
   showPassepartout: boolean
   passepartoutColor: string
   passepartoutSize: number
@@ -137,6 +144,13 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
         typeof artwork.frameThickness === 'object'
           ? (artwork.frameThickness?.value ?? 0.5)
           : (artwork.frameThickness ?? 0.5),
+      frameMaterial: artwork.frameMaterial ?? 'plastic',
+      frameTextureScale: artwork.frameTextureScale ?? 2.0,
+      frameTextureOffsetX: artwork.frameTextureOffsetX ?? 0,
+      frameTextureOffsetY: artwork.frameTextureOffsetY ?? 0,
+      frameTextureRotation: artwork.frameTextureRotation ?? 0,
+      frameTextureRoughness: artwork.frameTextureRoughness ?? 0.6,
+      frameTextureTemperature: artwork.frameTextureTemperature ?? 0,
       // Passepartout
       showPassepartout: artwork.showPassepartout ?? false,
       passepartoutColor: artwork.passepartoutColor ?? '#ffffff',
@@ -297,6 +311,13 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       label: String(preset.frameThickness),
       value: preset.frameThickness,
     })
+    applyProp('frameMaterial', preset.frameMaterial ?? 'plastic')
+    applyProp('frameTextureScale', preset.frameTextureScale ?? 2.0)
+    applyProp('frameTextureOffsetX', preset.frameTextureOffsetX ?? 0)
+    applyProp('frameTextureOffsetY', preset.frameTextureOffsetY ?? 0)
+    applyProp('frameTextureRotation', preset.frameTextureRotation ?? 0)
+    applyProp('frameTextureRoughness', preset.frameTextureRoughness ?? 0.6)
+    applyProp('frameTextureTemperature', preset.frameTextureTemperature ?? 0)
 
     // Passepartout
     applyProp('showPassepartout', preset.showPassepartout)
