@@ -43,6 +43,11 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     showFrame,
     frameColor,
     frameSize,
+    frameMaterial,
+    frameTextureScale,
+    frameTextureOffsetX,
+    frameTextureOffsetY,
+    frameTextureRotation,
     imageUrl,
     showPassepartout,
     passepartoutColor,
@@ -150,10 +155,15 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
       <div
         className={`${styles.frame} ${isDragOver ? styles.dragOver : ''}`}
         style={{
-          border:
-            showFrame && imageUrl
-              ? `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px solid ${frameColor ?? '#000000'}`
-              : undefined,
+          ...(showFrame && imageUrl && (frameMaterial ?? 'plastic') === 'plastic'
+            ? { border: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px solid ${frameColor ?? '#000000'}` }
+            : showFrame && imageUrl && frameMaterial === 'wood'
+              ? {
+                  padding: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px`,
+                  position: 'relative' as const,
+                  overflow: 'hidden' as const,
+                }
+              : {}),
         }}
         onDoubleClick={handleDoubleClick}
         onDragOver={handleDragOver}
@@ -161,6 +171,25 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        {/* Wood texture backdrop — rotatable, scalable, offset-able */}
+        {showFrame && imageUrl && frameMaterial === 'wood' && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: '-50%',
+              width: '200%',
+              height: '200%',
+              backgroundImage: `url('/assets/materials/wooden-frame/diffuse.png')`,
+              backgroundSize: `${100 / (frameTextureScale ?? 2)}%`,
+              backgroundPosition: `${(frameTextureOffsetX ?? 0) * 100}% ${(frameTextureOffsetY ?? 0) * 100}%`,
+              backgroundRepeat: 'repeat',
+              transform: `rotate(${frameTextureRotation ?? 0}deg)`,
+              transformOrigin: 'center center',
+              zIndex: 0,
+              pointerEvents: 'none' as const,
+            }}
+          />
+        )}
         <div
           className={styles.passepartout}
           style={{
@@ -168,6 +197,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
               showPassepartout && imageUrl && passepartoutSize
                 ? `${passepartoutSize.value * (WALL_SCALE / 100)}px solid ${passepartoutColor}`
                 : undefined,
+            ...(showFrame && frameMaterial === 'wood' ? { position: 'relative' as const, zIndex: 1 } : {}),
           }}
         >
           <div

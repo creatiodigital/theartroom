@@ -64,10 +64,17 @@ model ArtworkPreset {
   height2d Float @default(100)
 
   // Frame
-  showFrame      Boolean @default(false)
-  frameColor     String  @default("#000000")
-  frameSize      Float   @default(5)
-  frameThickness Float   @default(0.5)
+  showFrame               Boolean @default(false)
+  frameColor              String  @default("#000000")
+  frameSize               Float   @default(5)
+  frameThickness          Float   @default(0.5)
+  frameMaterial           String  @default("plastic")
+  frameTextureScale       Float   @default(2.0)
+  frameTextureOffsetX     Float   @default(0)
+  frameTextureOffsetY     Float   @default(0)
+  frameTextureRotation    Float   @default(0)
+  frameTextureRoughness   Float   @default(0.6)
+  frameTextureTemperature Float   @default(0)
 
   // Passepartout
   showPassepartout      Boolean @default(false)
@@ -238,15 +245,22 @@ model ExhibitionArtwork {
   quaternionW Float
 
   // Display properties (per-exhibition customization)
-  showFrame              Boolean @default(false)
-  frameColor             String  @default("#000000")
-  frameSize              Float   @default(5) // Border width (XY)
-  frameThickness         Float   @default(0.5) // Z-depth
-  showPassepartout       Boolean @default(false)
-  passepartoutColor      String  @default("#ffffff")
-  passepartoutSize       Float   @default(10) // Border width around artwork (XY)
-  passepartoutThickness  Float   @default(0.3) // Z-depth of passepartout in 3D
-  showArtworkInformation Boolean @default(false)
+  showFrame               Boolean @default(false)
+  frameColor              String  @default("#000000")
+  frameSize               Float   @default(5) // Border width (XY)
+  frameThickness          Float   @default(0.5) // Z-depth
+  frameMaterial           String  @default("plastic")
+  frameTextureScale       Float   @default(2.0)
+  frameTextureOffsetX     Float   @default(0)
+  frameTextureOffsetY     Float   @default(0)
+  frameTextureRotation    Float   @default(0)
+  frameTextureRoughness   Float   @default(0.6)
+  frameTextureTemperature Float   @default(0)
+  showPassepartout        Boolean @default(false)
+  passepartoutColor       String  @default("#ffffff")
+  passepartoutSize        Float   @default(10) // Border width around artwork (XY)
+  passepartoutThickness   Float   @default(0.3) // Z-depth of passepartout in 3D
+  showArtworkInformation  Boolean @default(false)
 
   // Support (canvas/panel depth) - rendering depth behind artwork
   showSupport      Boolean @default(false) // Whether support is visible

@@ -26,14 +26,11 @@ const Support: React.FC<SupportProps> = ({ width, height, depth, material }) => 
     shape.lineTo(-halfW, halfH)
     shape.closePath()
 
-    // Extrude backwards (negative Z)
+    // Extrude forward from Z=0
     const extrudeSettings = {
       steps: 1,
       depth: depth,
-      bevelEnabled: true,
-      bevelThickness: 0.001,
-      bevelSize: 0.001,
-      bevelSegments: 1,
+      bevelEnabled: false,
     }
 
     return new ExtrudeGeometry(shape, extrudeSettings)
