@@ -61,7 +61,9 @@ const Artwork = memo(
     const scaleMul = WALL_SCALE / 100
     const frameBorderPx = showFrame && imageUrl && frameSize?.value ? frameSize.value * scaleMul : 0
     const ppBorderPx =
-      showPassepartout && imageUrl && passepartoutSize?.value ? passepartoutSize.value * scaleMul : 0
+      showPassepartout && imageUrl && passepartoutSize?.value
+        ? passepartoutSize.value * scaleMul
+        : 0
     const totalBorderEachSide = frameBorderPx + ppBorderPx
 
     // The container grows to include borders. With border-box, the CSS borders

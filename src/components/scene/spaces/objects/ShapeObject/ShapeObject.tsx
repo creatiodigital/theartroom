@@ -5,7 +5,11 @@ import { useSelector, useDispatch } from 'react-redux'
 import { DoubleSide } from 'three'
 
 import type { RootState } from '@/redux/store'
-import { chooseCurrentArtworkId, addArtworkToGroup, removeGroup } from '@/redux/slices/wallViewSlice'
+import {
+  chooseCurrentArtworkId,
+  addArtworkToGroup,
+  removeGroup,
+} from '@/redux/slices/wallViewSlice'
 import { showWizard } from '@/redux/slices/wizardSlice'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 
@@ -20,43 +24,40 @@ const CLICK_MAX_DURATION = 300
 const ShapeObject = ({ artwork }: ShapeObjectProps) => {
   const dispatch = useDispatch()
 
-  const {
-    id,
-    width,
-    height,
-    position,
-    quaternion,
-    shapeType,
-    shapeColor,
-    shapeOpacity,
-  } = artwork
+  const { id, width, height, position, quaternion, shapeType, shapeColor, shapeOpacity } = artwork
 
   const isEditMode = useSelector((state: RootState) => state.dashboard.isEditMode)
   const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(null)
 
-  const handlePointerDown = useCallback((e: { stopPropagation: () => void; clientX: number; clientY: number }) => {
-    if (!isEditMode) return
-    e.stopPropagation()
-    pointerDownRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
-  }, [isEditMode])
+  const handlePointerDown = useCallback(
+    (e: { stopPropagation: () => void; clientX: number; clientY: number }) => {
+      if (!isEditMode) return
+      e.stopPropagation()
+      pointerDownRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+    },
+    [isEditMode],
+  )
 
-  const handlePointerUp = useCallback((e: { stopPropagation: () => void; clientX: number; clientY: number }) => {
-    if (!isEditMode || !pointerDownRef.current) return
-    e.stopPropagation()
+  const handlePointerUp = useCallback(
+    (e: { stopPropagation: () => void; clientX: number; clientY: number }) => {
+      if (!isEditMode || !pointerDownRef.current) return
+      e.stopPropagation()
 
-    const dx = e.clientX - pointerDownRef.current.x
-    const dy = e.clientY - pointerDownRef.current.y
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    const duration = Date.now() - pointerDownRef.current.time
-    pointerDownRef.current = null
+      const dx = e.clientX - pointerDownRef.current.x
+      const dy = e.clientY - pointerDownRef.current.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const duration = Date.now() - pointerDownRef.current.time
+      pointerDownRef.current = null
 
-    if (dist < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
-      dispatch(chooseCurrentArtworkId(id))
-      dispatch(removeGroup())
-      dispatch(addArtworkToGroup(id))
-      dispatch(showWizard())
-    }
-  }, [isEditMode, id, dispatch])
+      if (dist < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+        dispatch(chooseCurrentArtworkId(id))
+        dispatch(removeGroup())
+        dispatch(addArtworkToGroup(id))
+        dispatch(showWizard())
+      }
+    },
+    [isEditMode, id, dispatch],
+  )
 
   const color = shapeColor ?? '#000000'
   const opacity = shapeOpacity ?? 1

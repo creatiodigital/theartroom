@@ -23,8 +23,8 @@ const shapeTypes = [
 const ShapePanel = () => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
-  const artwork = useSelector(
-    (state: RootState) => (currentArtworkId ? state.artworks.byId[currentArtworkId] : null),
+  const artwork = useSelector((state: RootState) =>
+    currentArtworkId ? state.artworks.byId[currentArtworkId] : null,
   )
 
   const handleChange = useCallback(
@@ -44,7 +44,7 @@ const ShapePanel = () => {
 
   return (
     <>
-    <Section title="Properties">
+      <Section title="Properties">
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -76,9 +76,7 @@ const ShapePanel = () => {
               <Text font="dashboard" as="span" size="xs" className={styles.label}>
                 Opacity
               </Text>
-              <span className={styles.sliderValue}>
-                {Math.round(shapeOpacity * 100)}%
-              </span>
+              <span className={styles.sliderValue}>{Math.round(shapeOpacity * 100)}%</span>
             </div>
             <input
               type="range"
@@ -91,15 +89,14 @@ const ShapePanel = () => {
             />
           </div>
         </div>
-    </Section>
+      </Section>
 
-    <Section title="Presets">
-      <PresetSection presetType="shape" />
-    </Section>
+      <Section title="Presets">
+        <PresetSection presetType="shape" />
+      </Section>
     </>
   )
 }
 
 export { ShapePanel }
 export default ShapePanel
-

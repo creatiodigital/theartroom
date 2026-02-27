@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import crypto from 'crypto'
 
+import { escapeHtml } from '@/utils/escapeHtml'
 import prisma from '@/lib/prisma'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // For security, always return success even if user not found
     if (!user) {
-      console.log('Password reset requested for non-existent email:', email)
+      // Silent return — don't reveal whether email exists
       return NextResponse.json({ success: true })
     }
 
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
         <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">Reset Your Password</h2>
           
-          <p>Hi ${user.name},</p>
+          <p>Hi ${escapeHtml(user.name)},</p>
           
           <p>We received a request to reset your password. Click the button below to create a new password:</p>
           
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
       `,
     })
 
-    console.log('Password reset email sent to:', email)
+    // Password reset email sent
 
     return NextResponse.json({ success: true })
   } catch (error) {

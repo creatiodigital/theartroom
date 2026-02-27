@@ -1,4 +1,11 @@
-export const FONT_FAMILIES = ['lora', 'alegreya', 'manrope', 'roboto', 'garamond-glc', 'crimson'] as const
+export const FONT_FAMILIES = [
+  'lora',
+  'alegreya',
+  'manrope',
+  'roboto',
+  'garamond-glc',
+  'crimson',
+] as const
 export type TFontFamily = (typeof FONT_FAMILIES)[number]
 
 export const FONT_WEIGHTS = ['regular', 'italic', 'bold', 'bold-italic'] as const

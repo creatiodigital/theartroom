@@ -101,11 +101,16 @@ export const CenterPanel = () => {
       <div
         id="wallWrapper"
         className={styles.wrapper}
-        onClick={() => { handleDeselect(); dispatch(deselectGuide()) }}
-        style={{
-          transform: `translate(${panPosition.x}%, ${panPosition.y}%) scale(${scaleFactor || 1})`,
-          '--scale-factor': String(scaleFactor || 1),
-        } as React.CSSProperties}
+        onClick={() => {
+          handleDeselect()
+          dispatch(deselectGuide())
+        }}
+        style={
+          {
+            transform: `translate(${panPosition.x}%, ${panPosition.y}%) scale(${scaleFactor || 1})`,
+            '--scale-factor': String(scaleFactor || 1),
+          } as React.CSSProperties
+        }
       >
         <Guides />
         <Wall />

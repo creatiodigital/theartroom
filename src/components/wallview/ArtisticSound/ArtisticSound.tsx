@@ -14,8 +14,14 @@ interface ArtisticSoundProps {
 }
 
 const ALLOWED_AUDIO_TYPES = [
-  'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm',
-  'audio/wav', 'audio/x-wav', 'audio/aac', 'audio/flac',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/ogg',
+  'audio/webm',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/aac',
+  'audio/flac',
 ]
 const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 
@@ -113,11 +119,13 @@ const ArtisticSound = ({ artworkId }: ArtisticSoundProps) => {
         }
 
         const { url } = await res.json()
-        dispatch(editArtisticImage({
-          currentArtworkId: artworkId,
-          property: 'soundUrl',
-          value: url,
-        }))
+        dispatch(
+          editArtisticImage({
+            currentArtworkId: artworkId,
+            property: 'soundUrl',
+            value: url,
+          }),
+        )
       } catch {
         alert('Upload failed')
       } finally {

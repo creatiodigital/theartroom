@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 /* ------------------------ GET ------------------------ */
@@ -25,10 +26,20 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-/* ------------------------ POST ------------------------ */
+/* ------------------------ POST (requires auth + ownership) ------------------------ */
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
+
+    // Verify exhibition ownership
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+    if (!exhibition) return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
+
     const body = await req.json()
     const { wallId, orientation, position } = body as {
       wallId: string
@@ -37,7 +48,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     }
 
     if (!wallId || !orientation || position === undefined) {
-      return NextResponse.json({ error: 'wallId, orientation, and position are required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'wallId, orientation, and position are required' },
+        { status: 400 },
+      )
     }
 
     const guide = await prisma.wallGuide.create({
@@ -56,10 +70,20 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   }
 }
 
-/* ------------------------ PUT ------------------------ */
+/* ------------------------ PUT (requires auth + ownership) ------------------------ */
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
+
+    // Verify exhibition ownership
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+    if (!exhibition) return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
+
     const body = await req.json()
     const { guideId, position } = body as { guideId: string; position: number }
 
@@ -79,10 +103,20 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   }
 }
 
-/* ------------------------ DELETE ------------------------ */
+/* ------------------------ DELETE (requires auth + ownership) ------------------------ */
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
+
+    // Verify exhibition ownership
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+    if (!exhibition) return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
+
     const body = await req.json()
     const { guideId } = body as { guideId: string }
 

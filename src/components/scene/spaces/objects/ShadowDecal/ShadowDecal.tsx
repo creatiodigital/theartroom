@@ -14,6 +14,7 @@ const vertexShader = `
 const fragmentShader = `
   uniform vec2 uInnerSize;
   uniform vec2 uOuterSize;
+  uniform float uMaxOpacity;
   varying vec2 vUv;
   
   void main() {
@@ -40,7 +41,7 @@ const fragmentShader = `
     // centered.y goes from -0.5 (bottom) to +0.5 (top)
     float verticalFade = mix(1.0, 0.1, smoothstep(-0.2, 0.2, centered.y));
     
-    gl_FragColor = vec4(0.0, 0.0, 0.0, alpha * 0.45 * verticalFade);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, alpha * uMaxOpacity * verticalFade);
   }
 `
 
@@ -63,21 +64,24 @@ const DEPTH_MULTIPLIER = 1.5 // Depth-driven — thin supports stay tight, thick
 export function ShadowDecal({ width, height, frameDepth = 0.05 }: ShadowDecalProps) {
   const materialRef = useRef<ShaderMaterial>(null)
 
-  // No frame = no shadow
-  if (frameDepth <= 0) return null
-
   // Blur size: base + subtle proportion of frame depth
   const blurSize = BASE_BLUR + frameDepth * DEPTH_MULTIPLIER
 
   const outerWidth = width + blurSize
   const outerHeight = height + blurSize
 
+  // Scale opacity based on artwork size — small pieces get lighter shadows
+  const diagonal = Math.sqrt(width * width + height * height)
+  const maxOpacity = Math.min(0.25, Math.max(0.08, diagonal * 0.2))
+
   // Memoize the uniforms object to prevent recreation
   const uniforms = useMemo(
     () => ({
       uInnerSize: { value: new Vector2(width, height) },
       uOuterSize: { value: new Vector2(outerWidth, outerHeight) },
+      uMaxOpacity: { value: maxOpacity },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   ) // Empty deps - we'll update uniforms manually
 
@@ -86,8 +90,12 @@ export function ShadowDecal({ width, height, frameDepth = 0.05 }: ShadowDecalPro
     if (materialRef.current) {
       materialRef.current.uniforms.uInnerSize.value.set(width, height)
       materialRef.current.uniforms.uOuterSize.value.set(outerWidth, outerHeight)
+      materialRef.current.uniforms.uMaxOpacity.value = maxOpacity
     }
-  }, [width, height, outerWidth, outerHeight])
+  }, [width, height, outerWidth, outerHeight, maxOpacity])
+
+  // No frame = no shadow (after hooks to maintain consistent hook count)
+  if (frameDepth <= 0) return null
 
   return (
     <mesh position={[0, 0, 0.001]} renderOrder={0}>

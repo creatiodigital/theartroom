@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
+import { escapeHtml } from '@/utils/escapeHtml'
+
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -52,6 +54,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
+    // Sanitize inputs for HTML email templates
+    const safeFirstName = escapeHtml(firstName)
+    const safeLastName = escapeHtml(lastName)
+    const safeEmail = escapeHtml(email)
+    const safePhone = escapeHtml(phone)
+    const safeMessage = escapeHtml(message)
+    const safeArtworkTitle = escapeHtml(artworkTitle)
+    const safeArtworkArtist = escapeHtml(artworkArtist)
+    const safeArtworkId = escapeHtml(artworkId)
+
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
@@ -69,24 +81,24 @@ export async function POST(request: NextRequest) {
       from: `The Art Room <${fromEmail}>`,
       to: inquiryRecipients,
       replyTo: email,
-      subject: `New Inquiry: ${artworkTitle} by ${artworkArtist}`,
+      subject: `New Inquiry: ${safeArtworkTitle} by ${safeArtworkArtist}`,
       html: `
         <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">New Artwork Inquiry</h2>
           
           <div style="background-color: #f9f9f9; padding: 20px; margin-bottom: 24px;">
-            <p style="margin: 0 0 8px 0;"><strong>Artwork:</strong> ${artworkTitle}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Artist:</strong> ${artworkArtist}</p>
-            <p style="margin: 0;"><strong>Artwork ID:</strong> ${artworkId}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Artwork:</strong> ${safeArtworkTitle}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Artist:</strong> ${safeArtworkArtist}</p>
+            <p style="margin: 0;"><strong>Artwork ID:</strong> ${safeArtworkId}</p>
           </div>
           
           <h3 style="font-size: 18px; margin-bottom: 16px;">Contact Information</h3>
-          <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${firstName} ${lastName}</p>
-          <p style="margin: 0 0 8px 0;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          <p style="margin: 0 0 24px 0;"><strong>Phone:</strong> ${phone}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${safeFirstName} ${safeLastName}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+          <p style="margin: 0 0 24px 0;"><strong>Phone:</strong> ${safePhone}</p>
           
           <h3 style="font-size: 18px; margin-bottom: 16px;">Message</h3>
-          <div style="background-color: #f9f9f9; padding: 20px; white-space: pre-wrap;">${message}</div>
+          <div style="background-color: #f9f9f9; padding: 20px; white-space: pre-wrap;">${safeMessage}</div>
           
           <p style="margin-top: 32px; color: #666; font-size: 12px;">
             This inquiry was submitted via The Art Room website.
@@ -99,20 +111,20 @@ export async function POST(request: NextRequest) {
     await resend.emails.send({
       from: `The Art Room <${fromEmail}>`,
       to: email,
-      subject: `We received your inquiry about "${artworkTitle}"`,
+      subject: `We received your inquiry about "${safeArtworkTitle}"`,
       html: `
         <div style="font-family: Lato, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="font-size: 24px; margin-bottom: 24px;">Thank you for your inquiry</h2>
           
-          <p>Dear ${firstName},</p>
+          <p>Dear ${safeFirstName},</p>
           
-          <p>We have received your inquiry about <strong>${artworkTitle}</strong> by ${artworkArtist}.</p>
+          <p>We have received your inquiry about <strong>${safeArtworkTitle}</strong> by ${safeArtworkArtist}.</p>
           
           <p>Our team will review your message and get back to you as soon as possible.</p>
           
           <div style="background-color: #f9f9f9; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 8px 0;"><strong>Your message:</strong></p>
-            <p style="margin: 0; white-space: pre-wrap;">${message}</p>
+            <p style="margin: 0; white-space: pre-wrap;">${safeMessage}</p>
           </div>
           
           <p>Best regards,<br>The Art Room Team</p>
@@ -124,13 +136,6 @@ export async function POST(request: NextRequest) {
           </p>
         </div>
       `,
-    })
-
-    console.log('Inquiry sent successfully:', {
-      artworkId,
-      artworkTitle,
-      artworkArtist,
-      userEmail: email,
     })
 
     return NextResponse.json({ success: true })

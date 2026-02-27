@@ -8,6 +8,9 @@ import type { RootState } from '@/redux/store'
 // Floor reflections disabled for performance
 const ENABLE_REFLECTIONS = false
 
+// Bump this version when replacing floor texture files to bust Three.js cache
+const TEXTURE_VERSION = 3
+
 interface ReflectiveFloorProps {
   position?: Vector3Tuple
   width?: number
@@ -64,7 +67,7 @@ const MATERIAL_CONFIG: Record<
     metallic: 'metallic.jpg',
     ao: null,
   },
-  wood: {
+  'red-parquet': {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
     bump: null,
@@ -80,14 +83,7 @@ const MATERIAL_CONFIG: Record<
     metallic: null,
     ao: null,
   },
-  chevron: {
-    diffuse: 'diffuse.jpg',
-    normal: 'normal.jpg',
-    bump: null,
-    roughness: 'roughness.jpg',
-    metallic: null,
-    ao: 'ao.jpg',
-  },
+
   parquet: {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
@@ -112,20 +108,29 @@ const MATERIAL_CONFIG: Record<
     metallic: 'metallic.jpg',
     ao: 'ao.jpg',
   },
+  'wood-planks': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
 }
 
 // Preload all floor textures at module scope so useTexture doesn't trigger
 // loading manager state updates during render (fixes Loader setState warning)
 Object.entries(MATERIAL_CONFIG).forEach(([material, config]) => {
   const basePath = `/assets/materials/${material}`
+  const v = `?v=${TEXTURE_VERSION}`
   const paths: Record<string, string> = {
-    map: `${basePath}/${config.diffuse}`,
+    map: `${basePath}/${config.diffuse}${v}`,
   }
-  if (config.roughness) paths.roughnessMap = `${basePath}/${config.roughness}`
-  if (config.normal) paths.normalMap = `${basePath}/${config.normal}`
-  if (config.bump) paths.bumpMap = `${basePath}/${config.bump}`
-  if (config.metallic) paths.metalnessMap = `${basePath}/${config.metallic}`
-  if (config.ao) paths.aoMap = `${basePath}/${config.ao}`
+  if (config.roughness) paths.roughnessMap = `${basePath}/${config.roughness}${v}`
+  if (config.normal) paths.normalMap = `${basePath}/${config.normal}${v}`
+  if (config.bump) paths.bumpMap = `${basePath}/${config.bump}${v}`
+  if (config.metallic) paths.metalnessMap = `${basePath}/${config.metallic}${v}`
+  if (config.ao) paths.aoMap = `${basePath}/${config.ao}${v}`
   useTexture.preload(Object.values(paths))
 })
 
@@ -182,23 +187,24 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   // Build texture paths (metallic, normal, and ao are optional) — memoized to avoid
   // unstable references that cause useTexture to re-trigger loading on every render
   const texturePaths = useMemo(() => {
+    const v = `?v=${TEXTURE_VERSION}`
     const paths: Record<string, string> = {
-      map: `${texturePath}/${materialConfig.diffuse}`,
+      map: `${texturePath}/${materialConfig.diffuse}${v}`,
     }
     if (materialConfig.roughness) {
-      paths.roughnessMap = `${texturePath}/${materialConfig.roughness}`
+      paths.roughnessMap = `${texturePath}/${materialConfig.roughness}${v}`
     }
     if (materialConfig.normal) {
-      paths.normalMap = `${texturePath}/${materialConfig.normal}`
+      paths.normalMap = `${texturePath}/${materialConfig.normal}${v}`
     }
     if (materialConfig.bump) {
-      paths.bumpMap = `${texturePath}/${materialConfig.bump}`
+      paths.bumpMap = `${texturePath}/${materialConfig.bump}${v}`
     }
     if (materialConfig.metallic) {
-      paths.metalnessMap = `${texturePath}/${materialConfig.metallic}`
+      paths.metalnessMap = `${texturePath}/${materialConfig.metallic}${v}`
     }
     if (materialConfig.ao) {
-      paths.aoMap = `${texturePath}/${materialConfig.ao}`
+      paths.aoMap = `${texturePath}/${materialConfig.ao}${v}`
     }
     return paths
   }, [texturePath, materialConfig])
@@ -246,7 +252,15 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
       position={position}
       receiveShadow
     >
-      <planeGeometry args={[width, depth]} />
+      <planeGeometry
+        args={[width, depth]}
+        onUpdate={(geo) => {
+          // AO maps require uv2 (attribute index 1). PlaneGeometry only has uv.
+          if (!geo.attributes.uv2 && geo.attributes.uv) {
+            geo.setAttribute('uv2', geo.attributes.uv)
+          }
+        }}
+      />
       {ENABLE_REFLECTIONS ? (
         <MeshReflectorMaterial
           blur={[600, 400]} // Higher blur for maximum stability

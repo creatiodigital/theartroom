@@ -19,7 +19,8 @@ import type { TDimensions } from '@/types/geometry'
 export const useCreateArtwork = (boundingData: TDimensions) => {
   const dispatch = useDispatch()
 
-  const sizeForType = (type: TArtworkKind) => (type === 'sound' ? WALL_SCALE * 0.1 : WALL_SCALE * 0.25)
+  const sizeForType = (type: TArtworkKind) =>
+    type === 'sound' ? WALL_SCALE * 0.1 : WALL_SCALE * 0.25
 
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
@@ -77,13 +78,7 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
       dispatch(removeGroup())
       dispatch(addArtworkToGroup(artworkId))
 
-      const new3DCoordinate = convert2DTo3D(
-        adjustedX,
-        adjustedY,
-        size,
-        size,
-        boundingData,
-      )
+      const new3DCoordinate = convert2DTo3D(adjustedX, adjustedY, size, size, boundingData)
 
       const artworkPosition: TArtworkPosition = {
         id: artworkId,
@@ -109,4 +104,3 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
     [handleCreateArtwork, handleCreateArtworkDrag],
   )
 }
-

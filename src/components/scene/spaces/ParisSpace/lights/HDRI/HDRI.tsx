@@ -56,4 +56,3 @@ const HDRI = () => {
 }
 
 export default HDRI
-

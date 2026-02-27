@@ -1,0 +1,356 @@
+.container {
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e2e2e8;
+  padding: 2rem 3rem;
+  font-family: var(--font-dashboard), 'Inter', system-ui, sans-serif;
+}
+
+.header {
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #f0f0f5;
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: #6b6b80;
+  margin: 0;
+}
+
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #8888a0;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.statValue {
+  font-weight: 600;
+  color: #c0c0d0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Sections ---------- */
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #c8c8d8;
+  margin: 0 0 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+/* ---------- API Groups ---------- */
+
+.group {
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.groupName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #d0d0e0;
+  text-transform: capitalize;
+}
+
+.groupCount {
+  font-size: 0.7rem;
+  color: #6b6b80;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+}
+
+.routeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.routeItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 0.82rem;
+  transition: background 0.15s;
+}
+
+.routeItem:last-child {
+  border-bottom: none;
+}
+
+.routeItem:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.methods {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.method {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.methodGET {
+  composes: method;
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.methodPOST {
+  composes: method;
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
+}
+
+.methodPUT {
+  composes: method;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.methodDELETE {
+  composes: method;
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+.methodPATCH {
+  composes: method;
+  background: rgba(192, 132, 252, 0.12);
+  color: #c084fc;
+}
+
+.routePath {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8rem;
+  color: #a0a0b8;
+}
+
+.routePath span {
+  color: #818cf8;
+  font-weight: 500;
+}
+
+/* ---------- Schema Models ---------- */
+
+.modelGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 1rem;
+}
+
+.model {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.modelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.modelName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.modelMeta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.68rem;
+  color: #6b6b80;
+}
+
+.fieldList {
+  padding: 0.4rem 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 0.5rem;
+  padding: 0.3rem 1rem;
+  font-size: 0.78rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  align-items: baseline;
+  transition: background 0.15s;
+}
+
+.field:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.fieldName {
+  color: #d0d0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fieldNameId {
+  composes: fieldName;
+  color: #fbbf24;
+}
+
+.fieldNameRelation {
+  composes: fieldName;
+  color: #818cf8;
+}
+
+.fieldType {
+  color: #6b6b80;
+  white-space: nowrap;
+}
+
+.fieldDefault {
+  color: #4b4b60;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  text-align: right;
+}
+
+.fieldBadge {
+  font-size: 0.58rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 0.3rem;
+}
+
+.badgeId {
+  composes: fieldBadge;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.badgeUnique {
+  composes: fieldBadge;
+  background: rgba(192, 132, 252, 0.12);
+  color: #c084fc;
+}
+
+/* ---------- Enums ---------- */
+
+.enumGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.enum {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.enumHeader {
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f0abfc;
+}
+
+.enumValues {
+  padding: 0.5rem 1rem;
+}
+
+.enumValue {
+  display: block;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.78rem;
+  color: #a0a0b8;
+  padding: 0.2rem 0;
+}
+
+/* ---------- No Results ---------- */
+
+.noResults {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #4b4b60;
+  font-size: 0.85rem;
+}
+
+/* ---------- Back Link ---------- */
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #6b6b80;
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+  transition: color 0.15s;
+}
+
+.backLink:hover {
+  color: #a0a0b8;
+}

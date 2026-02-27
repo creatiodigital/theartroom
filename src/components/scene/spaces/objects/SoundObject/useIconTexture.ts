@@ -38,12 +38,7 @@ const ICON_DEFS: Record<string, IconDef> = {
  * Draws an icon onto the canvas context using Path2D with SVG path data.
  * Centers the icon based on its visual content bounds, not just the 24×24 viewBox.
  */
-function drawIcon(
-  ctx: CanvasRenderingContext2D,
-  iconName: string,
-  size: number,
-  offset: number,
-) {
+function drawIcon(ctx: CanvasRenderingContext2D, iconName: string, size: number, offset: number) {
   const def = ICON_DEFS[iconName] ?? ICON_DEFS['volume-2']
   const scale = size / 24
   const [minX, minY, maxX, maxY] = def.bounds

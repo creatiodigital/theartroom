@@ -2,14 +2,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { revalidateTag } from 'next/cache'
 
+import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
-// POST batch create artworks
+// POST batch create artworks (requires auth)
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication and get effective user ID
+    const { userId, error: authError } = await getEffectiveUserId()
+    if (authError) return authError
+
     const body = await request.json()
-    const { userId, artworks } = body as {
-      userId: string
+    const { artworks } = body as {
       artworks: Array<{
         id: string
         name: string
@@ -29,8 +33,8 @@ export async function POST(request: NextRequest) {
       }>
     }
 
-    if (!userId || !artworks || !Array.isArray(artworks)) {
-      return NextResponse.json({ error: 'userId and artworks array are required' }, { status: 400 })
+    if (!artworks || !Array.isArray(artworks)) {
+      return NextResponse.json({ error: 'artworks array is required' }, { status: 400 })
     }
 
     // Use upsert to avoid duplicates (if artwork already exists, update it)

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
+
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Text } from '@/components/ui/Typography'
 import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
@@ -37,7 +38,7 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
             </div>
             {artist.profileImageUrl && (
               <div className={styles.imageContainer}>
-                <Image
+                <ProtectedImage
                   src={artist.profileImageUrl}
                   alt={`${artist.name} ${artist.lastName}`}
                   width={100}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
+
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Text } from '@/components/ui/Typography'
 
@@ -25,7 +26,7 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
         <Link key={exhibition.id} href={exhibition.href} className={styles.card}>
           <div className={styles.imageWrapper}>
             {exhibition.featuredImageUrl ? (
-              <Image
+              <ProtectedImage
                 src={exhibition.featuredImageUrl}
                 alt={exhibition.mainTitle}
                 fill

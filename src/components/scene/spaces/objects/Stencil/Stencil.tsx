@@ -17,7 +17,6 @@ type StencilProps = {
   artwork: RuntimeArtwork
 }
 
-
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
 const CLICK_MAX_DURATION = 300
@@ -42,7 +41,13 @@ function PaperBackground({
 
   if (depth > 0) {
     return (
-      <RoundedBox args={[width, height, depth]} radius={0.003} smoothness={2} renderOrder={1} position={[0, 0, -depth / 2]}>
+      <RoundedBox
+        args={[width, height, depth]}
+        radius={0.003}
+        smoothness={2}
+        renderOrder={1}
+        position={[0, 0, -depth / 2]}
+      >
         <meshStandardMaterial
           map={textures.map}
           normalMap={textures.normalMap}
@@ -141,9 +146,7 @@ function MonogramOverlay({
   const halfCard = height / 2
   const halfMono = clampedHeight / 2
   const maxOffset = halfCard - halfMono // maximum distance from center before clipping
-  const rawY = pos === 'top'
-    ? halfCard - halfMono - offset
-    : -halfCard + halfMono + offset
+  const rawY = pos === 'top' ? halfCard - halfMono - offset : -halfCard + halfMono + offset
   const yOffset = Math.max(-maxOffset, Math.min(maxOffset, rawY))
 
   return (
@@ -288,7 +291,7 @@ const Stencil = ({ artwork }: StencilProps) => {
   const padBottom3D = (textPaddingBottom?.value ?? 0) * fontSizeFactor
   const padLeft3D = (textPaddingLeft?.value ?? 0) * fontSizeFactor
   const padRight3D = (textPaddingRight?.value ?? 0) * fontSizeFactor
-  const paddingOffsetH = padLeft3D + padRight3D  // total horizontal padding
+  const paddingOffsetH = padLeft3D + padRight3D // total horizontal padding
 
   const fontMap: Record<string, Record<string, string>> = {
     lora: {
@@ -326,9 +329,10 @@ const Stencil = ({ artwork }: StencilProps) => {
 
   const resolvedFontFamily = fontFamily?.value ?? 'roboto'
   const resolvedFontWeight = fontWeight?.value ?? 'regular'
-  const fontUrl = fontMap[resolvedFontFamily]?.[resolvedFontWeight]
-    ?? fontMap[resolvedFontFamily]?.regular
-    ?? fontMap.roboto.regular
+  const fontUrl =
+    fontMap[resolvedFontFamily]?.[resolvedFontWeight] ??
+    fontMap[resolvedFontFamily]?.regular ??
+    fontMap.roboto.regular
 
   const textRef = useRef<ComponentRef<typeof Text>>(null)
   const [textWidth, setTextWidth] = useState(0)
@@ -442,7 +446,13 @@ const Stencil = ({ artwork }: StencilProps) => {
 
         if (cardDepth > 0) {
           return (
-            <RoundedBox args={[planeWidth, planeHeight, cardDepth]} radius={0.003} smoothness={2} renderOrder={1} position={[0, 0, -cardDepth / 2]}>
+            <RoundedBox
+              args={[planeWidth, planeHeight, cardDepth]}
+              radius={0.003}
+              smoothness={2}
+              renderOrder={1}
+              position={[0, 0, -cardDepth / 2]}
+            >
               <meshStandardMaterial color={textBackgroundColor ?? 'white'} roughness={1.0} />
             </RoundedBox>
           )

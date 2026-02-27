@@ -42,19 +42,19 @@ export const Guides = () => {
 
     const fetchGuides = async () => {
       try {
-        const res = await fetch(
-          `/api/exhibitions/${exhibitionId}/guides?wallId=${currentWallId}`,
-        )
+        const res = await fetch(`/api/exhibitions/${exhibitionId}/guides?wallId=${currentWallId}`)
         if (res.ok) {
           const data = await res.json()
           dispatch(
             setGuides(
-              data.map((g: { id: string; wallId: string; orientation: string; position: number }) => ({
-                id: g.id,
-                wallId: g.wallId,
-                orientation: g.orientation as 'horizontal' | 'vertical',
-                position: g.position,
-              })),
+              data.map(
+                (g: { id: string; wallId: string; orientation: string; position: number }) => ({
+                  id: g.id,
+                  wallId: g.wallId,
+                  orientation: g.orientation as 'horizontal' | 'vertical',
+                  position: g.position,
+                }),
+              ),
             ),
           )
         }
@@ -130,9 +130,7 @@ export const Guides = () => {
       if (!guide) return
 
       const isH = guide.orientation === 'horizontal'
-      const deltaPx = isH
-        ? e.clientY - drag.startMousePx
-        : e.clientX - drag.startMousePx
+      const deltaPx = isH ? e.clientY - drag.startMousePx : e.clientX - drag.startMousePx
 
       // Convert screen delta to metres: deltaPx / (WALL_SCALE * scaleFactor)
       // For horizontal guides, positive screen delta = down = negative metres (because 0 is at bottom, up is positive)
@@ -168,8 +166,6 @@ export const Guides = () => {
       window.removeEventListener('mouseup', handleMouseUp)
     }
   }, [guides, scaleFactor, exhibitionId, dispatch])
-
-
 
   if (!isRulersVisible) return null
 

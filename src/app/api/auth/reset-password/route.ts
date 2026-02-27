@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log('Password reset successful for user:', user.email)
+    // Password reset successful
 
     return NextResponse.json({ success: true })
   } catch (error) {

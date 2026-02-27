@@ -87,17 +87,11 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.trackLampIntensity ?? 4.0,
   )
-  const lampAngle = useSelector(
-    (state: RootState) => state.exhibition.trackLampAngle ?? 0.45,
-  )
-  const lampDistance = useSelector(
-    (state: RootState) => state.exhibition.trackLampDistance ?? 5.0,
-  )
+  const lampAngle = useSelector((state: RootState) => state.exhibition.trackLampAngle ?? 0.45)
+  const lampDistance = useSelector((state: RootState) => state.exhibition.trackLampDistance ?? 5.0)
 
   // Per-lamp settings (rotation + on/off)
-  const trackLampSettings = useSelector(
-    (state: RootState) => state.exhibition.trackLampSettings,
-  )
+  const trackLampSettings = useSelector((state: RootState) => state.exhibition.trackLampSettings)
 
   const bulbEmissiveIntensity = 2
 
@@ -176,11 +170,7 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
         const rotationRad = (rotation * Math.PI) / 180
 
         return (
-          <group
-            key={`trackLamp-${i}`}
-            position={armPivot}
-            rotation={[0, rotationRad, 0]}
-          >
+          <group key={`trackLamp-${i}`} position={armPivot} rotation={[0, rotationRad, 0]}>
             <group position={[-armPivot[0], -armPivot[1], -armPivot[2]]}>
               {/* Arm */}
               {armNode && (

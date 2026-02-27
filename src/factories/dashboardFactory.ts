@@ -10,5 +10,5 @@ export const createDashboardState = (): TDashboardState => ({
   isFurniturePanelOpen: false,
   isWallCeilingPanelOpen: false,
   isEditingArtwork: false,
-  selectedSpace: { label: 'Classic', value: 'classic' },
+  selectedSpace: { label: 'Paris', value: 'paris' },
 })
