@@ -66,7 +66,11 @@ const RecessedSpotlight: React.FC<{
  * Bulb color/intensity controlled by recessedLampColor/recessedLampIntensity.
  * A spotlight is placed at each bulb position, pointing downward.
  */
-const RecessedLamp: React.FC<RecessedLampProps> = ({ nodes, count = 6, disableSpotlights = false }) => {
+const RecessedLamp: React.FC<RecessedLampProps> = ({
+  nodes,
+  count = 6,
+  disableSpotlights = false,
+}) => {
   const tintedPlastic = useAmbientLightColor('#ffffff')
 
   const lampColor = useSelector(

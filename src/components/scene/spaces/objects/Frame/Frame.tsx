@@ -20,11 +20,7 @@ const ROUNDED_BEVEL_RADIUS = 0.002
  * Create a mitered frame piece using Shape + ExtrudeGeometry.
  * The shape is a trapezoid (mitered at 45° on both ends).
  */
-function createMiteredPieceGeo(
-  length: number,
-  thickness: number,
-  depth: number,
-): ExtrudeGeometry {
+function createMiteredPieceGeo(length: number, thickness: number, depth: number): ExtrudeGeometry {
   const halfLen = length / 2
   const t = thickness
 
@@ -50,7 +46,10 @@ function createMiteredPieceGeo(
   // which is too small a range for the texture maps.
   const uvAttr = geo.getAttribute('uv')
   if (uvAttr) {
-    let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity
+    let minU = Infinity,
+      maxU = -Infinity,
+      minV = Infinity,
+      maxV = -Infinity
     for (let i = 0; i < uvAttr.count; i++) {
       const u = uvAttr.getX(i)
       const v = uvAttr.getY(i)
@@ -72,7 +71,13 @@ function createMiteredPieceGeo(
 }
 
 /** Mitered frame — 45° corner joints */
-const MiteredFrame = ({ width, height, thickness, depth, material }: Omit<FrameProps, 'cornerStyle'>) => {
+const MiteredFrame = ({
+  width,
+  height,
+  thickness,
+  depth,
+  material,
+}: Omit<FrameProps, 'cornerStyle'>) => {
   const d = depth!
 
   const { topGeo, leftGeo } = useMemo(() => {
@@ -83,42 +88,126 @@ const MiteredFrame = ({ width, height, thickness, depth, material }: Omit<FrameP
 
   return (
     <group position={[0, 0, d / 2]}>
-      <mesh geometry={topGeo} material={material} castShadow receiveShadow position={[0, height / 2, 0]} />
-      <mesh geometry={topGeo} material={material} castShadow receiveShadow position={[0, -height / 2, 0]} rotation={[0, 0, Math.PI]} />
-      <mesh geometry={leftGeo} material={material} castShadow receiveShadow position={[width / 2, 0, 0]} rotation={[0, 0, -Math.PI / 2]} />
-      <mesh geometry={leftGeo} material={material} castShadow receiveShadow position={[-width / 2, 0, 0]} rotation={[0, 0, Math.PI / 2]} />
+      <mesh
+        geometry={topGeo}
+        material={material}
+        castShadow
+        receiveShadow
+        position={[0, height / 2, 0]}
+      />
+      <mesh
+        geometry={topGeo}
+        material={material}
+        castShadow
+        receiveShadow
+        position={[0, -height / 2, 0]}
+        rotation={[0, 0, Math.PI]}
+      />
+      <mesh
+        geometry={leftGeo}
+        material={material}
+        castShadow
+        receiveShadow
+        position={[width / 2, 0, 0]}
+        rotation={[0, 0, -Math.PI / 2]}
+      />
+      <mesh
+        geometry={leftGeo}
+        material={material}
+        castShadow
+        receiveShadow
+        position={[-width / 2, 0, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+      />
     </group>
   )
 }
 
 /** Straight frame — butt joint corners (top/bottom fit between left/right) */
-const StraightFrame = ({ width, height, thickness, depth, material }: Omit<FrameProps, 'cornerStyle'>) => {
+const StraightFrame = ({
+  width,
+  height,
+  thickness,
+  depth,
+  material,
+}: Omit<FrameProps, 'cornerStyle'>) => {
   const d = depth!
   const innerWidth = width - thickness * 2
 
   return (
     <group position={[0, 0, d / 2]}>
-      <RoundedBox args={[thickness, height, d]} radius={ROUNDED_BEVEL_RADIUS} smoothness={2} castShadow receiveShadow position={[-(width / 2 - thickness / 2), 0, 0]}>
+      <RoundedBox
+        args={[thickness, height, d]}
+        radius={ROUNDED_BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[-(width / 2 - thickness / 2), 0, 0]}
+      >
         <primitive attach="material" object={material} />
       </RoundedBox>
-      <RoundedBox args={[thickness, height, d]} radius={ROUNDED_BEVEL_RADIUS} smoothness={2} castShadow receiveShadow position={[width / 2 - thickness / 2, 0, 0]}>
+      <RoundedBox
+        args={[thickness, height, d]}
+        radius={ROUNDED_BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[width / 2 - thickness / 2, 0, 0]}
+      >
         <primitive attach="material" object={material} />
       </RoundedBox>
-      <RoundedBox args={[innerWidth, thickness, d]} radius={ROUNDED_BEVEL_RADIUS} smoothness={2} castShadow receiveShadow position={[0, height / 2 - thickness / 2, 0]}>
+      <RoundedBox
+        args={[innerWidth, thickness, d]}
+        radius={ROUNDED_BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[0, height / 2 - thickness / 2, 0]}
+      >
         <primitive attach="material" object={material} />
       </RoundedBox>
-      <RoundedBox args={[innerWidth, thickness, d]} radius={ROUNDED_BEVEL_RADIUS} smoothness={2} castShadow receiveShadow position={[0, -(height / 2 - thickness / 2), 0]}>
+      <RoundedBox
+        args={[innerWidth, thickness, d]}
+        radius={ROUNDED_BEVEL_RADIUS}
+        smoothness={2}
+        castShadow
+        receiveShadow
+        position={[0, -(height / 2 - thickness / 2), 0]}
+      >
         <primitive attach="material" object={material} />
       </RoundedBox>
     </group>
   )
 }
 
-const Frame: React.FC<FrameProps> = ({ width, height, thickness, depth = 0.01, material, cornerStyle = 'mitered' }) => {
+const Frame: React.FC<FrameProps> = ({
+  width,
+  height,
+  thickness,
+  depth = 0.01,
+  material,
+  cornerStyle = 'mitered',
+}) => {
   if (cornerStyle === 'straight') {
-    return <StraightFrame width={width} height={height} thickness={thickness} depth={depth} material={material} />
+    return (
+      <StraightFrame
+        width={width}
+        height={height}
+        thickness={thickness}
+        depth={depth}
+        material={material}
+      />
+    )
   }
-  return <MiteredFrame width={width} height={height} thickness={thickness} depth={depth} material={material} />
+  return (
+    <MiteredFrame
+      width={width}
+      height={height}
+      thickness={thickness}
+      depth={depth}
+      material={material}
+    />
+  )
 }
 
 export default Frame

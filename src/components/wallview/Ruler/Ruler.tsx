@@ -4,7 +4,12 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '@/redux/store'
 import { WALL_SCALE } from '@/components/wallview/constants'
-import { addGuide, removeGuide, removeGroup, chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
+import {
+  addGuide,
+  removeGuide,
+  removeGroup,
+  chooseCurrentArtworkId,
+} from '@/redux/slices/wallViewSlice'
 
 import styles from './Ruler.module.scss'
 
@@ -24,12 +29,12 @@ const RULER_THICKNESS = 24 // px
  */
 function drawRuler(
   ctx: CanvasRenderingContext2D,
-  length: number,          // canvas dimension in px
+  length: number, // canvas dimension in px
   orientation: 'horizontal' | 'vertical',
   scaleFactor: number,
   canvasAtScreen0: number, // canvas-space coordinate at the ruler's left/top edge
-  originCanvasPx: number,  // canvas-space coordinate where ruler reads 0
-  flip: boolean,           // if true, positive direction is reversed (up instead of down)
+  originCanvasPx: number, // canvas-space coordinate where ruler reads 0
+  flip: boolean, // if true, positive direction is reversed (up instead of down)
 ) {
   const dpr = window.devicePixelRatio || 1
 
@@ -310,18 +315,36 @@ export const Ruler = () => {
 
         // Create guide
         const tempId = crypto.randomUUID()
-        dispatch(addGuide({ id: tempId, wallId: currentWallId, orientation: 'vertical', position: positionM }))
+        dispatch(
+          addGuide({
+            id: tempId,
+            wallId: currentWallId,
+            orientation: 'vertical',
+            position: positionM,
+          }),
+        )
 
         // Persist to DB and update with real ID
         fetch(`/api/exhibitions/${exhibitionId}/guides`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallId: currentWallId, orientation: 'vertical', position: positionM }),
+          body: JSON.stringify({
+            wallId: currentWallId,
+            orientation: 'vertical',
+            position: positionM,
+          }),
         })
           .then((res) => res.json())
           .then((data) => {
             // Replace temp guide with DB guide
-            dispatch(addGuide({ id: data.id, wallId: data.wallId, orientation: data.orientation, position: data.position }))
+            dispatch(
+              addGuide({
+                id: data.id,
+                wallId: data.wallId,
+                orientation: data.orientation,
+                position: data.position,
+              }),
+            )
             // Remove temp
             dispatch(removeGuide(tempId))
           })
@@ -336,16 +359,34 @@ export const Ruler = () => {
         const positionM = (wallBottom - canvasPx) / WALL_SCALE
 
         const tempId = crypto.randomUUID()
-        dispatch(addGuide({ id: tempId, wallId: currentWallId, orientation: 'horizontal', position: positionM }))
+        dispatch(
+          addGuide({
+            id: tempId,
+            wallId: currentWallId,
+            orientation: 'horizontal',
+            position: positionM,
+          }),
+        )
 
         fetch(`/api/exhibitions/${exhibitionId}/guides`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallId: currentWallId, orientation: 'horizontal', position: positionM }),
+          body: JSON.stringify({
+            wallId: currentWallId,
+            orientation: 'horizontal',
+            position: positionM,
+          }),
         })
           .then((res) => res.json())
           .then((data) => {
-            dispatch(addGuide({ id: data.id, wallId: data.wallId, orientation: data.orientation, position: data.position }))
+            dispatch(
+              addGuide({
+                id: data.id,
+                wallId: data.wallId,
+                orientation: data.orientation,
+                position: data.position,
+              }),
+            )
             dispatch(removeGuide(tempId))
           })
           .catch(console.error)
@@ -360,21 +401,31 @@ export const Ruler = () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [rulerDrag, panPosition, wallWidth, wallHeight, scaleFactor, currentWallId, exhibitionId, dispatch])
+  }, [
+    rulerDrag,
+    panPosition,
+    wallWidth,
+    wallHeight,
+    scaleFactor,
+    currentWallId,
+    exhibitionId,
+    dispatch,
+  ])
 
   // Compute preview guide position for rendering
-  const previewStyle = rulerDrag && containerRef.current
-    ? (() => {
-        const rect = containerRef.current.getBoundingClientRect()
-        if (rulerDrag.orientation === 'vertical') {
-          const x = rulerDrag.screenPos - rect.left
-          return { left: `${x}px`, top: 0, bottom: 0, width: '1px' } as React.CSSProperties
-        } else {
-          const y = rulerDrag.screenPos - rect.top
-          return { top: `${y}px`, left: 0, right: 0, height: '1px' } as React.CSSProperties
-        }
-      })()
-    : null
+  const previewStyle =
+    rulerDrag && containerRef.current
+      ? (() => {
+          const rect = containerRef.current.getBoundingClientRect()
+          if (rulerDrag.orientation === 'vertical') {
+            const x = rulerDrag.screenPos - rect.left
+            return { left: `${x}px`, top: 0, bottom: 0, width: '1px' } as React.CSSProperties
+          } else {
+            const y = rulerDrag.screenPos - rect.top
+            return { top: `${y}px`, left: 0, right: 0, height: '1px' } as React.CSSProperties
+          }
+        })()
+      : null
 
   return (
     <div
@@ -393,9 +444,7 @@ export const Ruler = () => {
         className={styles.vertical}
         onMouseDown={(e) => handleRulerMouseDown('vertical', e)}
       />
-      {rulerDrag && previewStyle && (
-        <div className={styles.previewGuide} style={previewStyle} />
-      )}
+      {rulerDrag && previewStyle && <div className={styles.previewGuide} style={previewStyle} />}
     </div>
   )
 }

@@ -4,7 +4,17 @@ import { useProgress } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info, Mouse, Touchpad, Volume2, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Info,
+  Mouse,
+  Touchpad,
+  Volume2,
+  X,
+} from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Monogram from '@/icons/monogram.svg'

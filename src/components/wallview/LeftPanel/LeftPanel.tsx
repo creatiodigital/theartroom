@@ -18,7 +18,14 @@ import {
   redo,
   clearHistory,
 } from '@/redux/slices/exhibitionSlice'
-import { showHuman, hideHuman, showRulers, hideRulers, removeGroup, toggleSnap } from '@/redux/slices/wallViewSlice'
+import {
+  showHuman,
+  hideHuman,
+  showRulers,
+  hideRulers,
+  removeGroup,
+  toggleSnap,
+} from '@/redux/slices/wallViewSlice'
 import {
   increaseScaleFactor,
   decreaseScaleFactor,
@@ -342,7 +349,13 @@ export const LeftPanel = () => {
                 className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
                 onClick={() => setTypeFilter(type)}
               >
-                {type === 'all' ? 'All' : type === 'image' ? 'Images' : type === 'text' ? 'Text' : 'Sound'}
+                {type === 'all'
+                  ? 'All'
+                  : type === 'image'
+                    ? 'Images'
+                    : type === 'text'
+                      ? 'Text'
+                      : 'Sound'}
               </button>
             ))}
           </div>
@@ -357,12 +370,40 @@ export const LeftPanel = () => {
                   })}
                   style={{ cursor: 'pointer' }}
                 >
-                  <span style={{ flexShrink: 0, opacity: 0.5, display: 'inline-flex', width: 16, justifyContent: 'center' }}>
-                    <Icon
-                      name={artwork.artworkType === 'sound' ? 'volume-2' : artwork.artworkType === 'text' ? 'type' : artwork.artworkType === 'shape' ? 'shapes' : 'image'}
-                      size={14}
-                      color="currentColor"
-                    />
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      display: 'inline-flex',
+                      width: 16,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {artwork.artworkType === 'image' && artwork.imageUrl ? (
+                      <img
+                        src={artwork.imageUrl}
+                        alt=""
+                        width={10}
+                        height={10}
+                        style={{ objectFit: 'cover', borderRadius: 1, display: 'block' }}
+                      />
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>
+                        <Icon
+                          name={
+                            artwork.artworkType === 'sound'
+                              ? 'volume-2'
+                              : artwork.artworkType === 'text'
+                                ? 'type'
+                                : artwork.artworkType === 'shape'
+                                  ? 'shapes'
+                                  : 'image'
+                          }
+                          size={14}
+                          color="currentColor"
+                        />
+                      </span>
+                    )}
                   </span>
                   <Text as="span" font="dashboard" size="sm">
                     {artwork.artworkTitle || artwork.name}

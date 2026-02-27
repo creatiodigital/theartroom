@@ -124,37 +124,56 @@ export const ArtworkEditForm = ({
   const [isDraggingSound, setIsDraggingSound] = useState(false)
   const [soundSizeError, setSoundSizeError] = useState<string | null>(null)
 
-  const ALLOWED_SOUND_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/wav', 'audio/x-wav', 'audio/aac', 'audio/flac']
+  const ALLOWED_SOUND_TYPES = [
+    'audio/mpeg',
+    'audio/mp4',
+    'audio/ogg',
+    'audio/webm',
+    'audio/wav',
+    'audio/x-wav',
+    'audio/aac',
+    'audio/flac',
+  ]
   const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 
-  const handleSoundFileSelect = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file && onSoundUpload) {
-      if (file.size > MAX_SOUND_SIZE) {
-        setSoundSizeError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 3MB.`)
-        if (soundInputRef.current) soundInputRef.current.value = ''
-        return
+  const handleSoundFileSelect = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (file && onSoundUpload) {
+        if (file.size > MAX_SOUND_SIZE) {
+          setSoundSizeError(
+            `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 3MB.`,
+          )
+          if (soundInputRef.current) soundInputRef.current.value = ''
+          return
+        }
+        setSoundSizeError(null)
+        await onSoundUpload(file)
       }
-      setSoundSizeError(null)
-      await onSoundUpload(file)
-    }
-    if (soundInputRef.current) soundInputRef.current.value = ''
-  }, [onSoundUpload])
+      if (soundInputRef.current) soundInputRef.current.value = ''
+    },
+    [onSoundUpload],
+  )
 
-  const handleSoundDrop = useCallback(async (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDraggingSound(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file && ALLOWED_SOUND_TYPES.includes(file.type) && onSoundUpload) {
-      if (file.size > MAX_SOUND_SIZE) {
-        setSoundSizeError(`File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 3MB.`)
-        return
+  const handleSoundDrop = useCallback(
+    async (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDraggingSound(false)
+      const file = e.dataTransfer.files?.[0]
+      if (file && ALLOWED_SOUND_TYPES.includes(file.type) && onSoundUpload) {
+        if (file.size > MAX_SOUND_SIZE) {
+          setSoundSizeError(
+            `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 3MB.`,
+          )
+          return
+        }
+        setSoundSizeError(null)
+        await onSoundUpload(file)
       }
-      setSoundSizeError(null)
-      await onSoundUpload(file)
-    }
-  }, [onSoundUpload])
+    },
+    [onSoundUpload],
+  )
 
   return (
     <>
@@ -220,8 +239,16 @@ export const ArtworkEditForm = ({
           ) : (
             <div
               className={`${styles.soundDropzone} ${isDraggingSound ? styles.dragging : ''}`}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingSound(true) }}
-              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingSound(false) }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setIsDraggingSound(true)
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setIsDraggingSound(false)
+              }}
               onDrop={handleSoundDrop}
               onClick={() => soundInputRef.current?.click()}
               role="button"
@@ -283,7 +310,13 @@ export const ArtworkEditForm = ({
             id="artworkType"
             type="text"
             size="medium"
-            value={formData.artworkType === 'image' ? 'Image' : formData.artworkType === 'sound' ? 'Sound' : 'Text'}
+            value={
+              formData.artworkType === 'image'
+                ? 'Image'
+                : formData.artworkType === 'sound'
+                  ? 'Sound'
+                  : 'Text'
+            }
             onChange={() => {}}
             variant="disabled"
           />

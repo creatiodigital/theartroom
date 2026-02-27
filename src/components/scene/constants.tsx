@@ -9,7 +9,7 @@ import type { SpaceConfig } from './spaces/types'
 /**
  * Available space keys. Add new spaces here.
  */
-export type SpaceKey = 'classic' | 'modern' | 'paris'
+export type SpaceKey = 'paris'
 
 /**
  * Configuration for each space including refs, metadata, and assets.
@@ -19,27 +19,6 @@ export type SpaceKey = 'classic' | 'modern' | 'paris'
  * 3. Add component to spaceComponents
  */
 export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
-  classic: {
-    displayName: 'Classic Gallery',
-    gltfPath: '/assets/spaces/classic.glb',
-    thumbnailUrl: '/assets/thumbnails/classic.jpg',
-    refs: {
-      walls: 1,
-      windows: 2,
-      glass: 2,
-    },
-    placeholders: 4,
-  },
-  modern: {
-    displayName: 'Modern Gallery',
-    gltfPath: '/assets/spaces/modern.glb',
-    thumbnailUrl: '/assets/thumbnails/modern.jpg',
-    refs: {
-      walls: 1,
-    },
-    placeholders: 4,
-  },
-
   paris: {
     displayName: 'Paris',
     gltfPath: '/assets/spaces/paris/paris10.glb?v=2',
@@ -58,9 +37,6 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
  * Each space is only loaded when needed.
  */
 export const spaceComponents = {
-  classic: dynamic(() => import('./spaces/ClassicSpace'), { ssr: false }),
-  modern: dynamic(() => import('./spaces/ModernSpace'), { ssr: false }),
-
   paris: dynamic(() => import('./spaces/ParisSpace'), { ssr: false }),
 }
 
@@ -69,11 +45,11 @@ export const spaceComponents = {
 // =============================================================================
 
 /**
- * Get space config by key, with fallback to 'classic'.
+ * Get space config by key, with fallback to 'paris'.
  */
 export const getSpaceConfig = (spaceId: string): SpaceConfig => {
   const key = spaceId as SpaceKey
-  return spaceConfigs[key] || spaceConfigs['classic']
+  return spaceConfigs[key] || spaceConfigs['paris']
 }
 
 /**

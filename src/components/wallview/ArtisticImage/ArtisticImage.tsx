@@ -156,7 +156,9 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         className={`${styles.frame} ${isDragOver ? styles.dragOver : ''}`}
         style={{
           ...(showFrame && imageUrl && (frameMaterial ?? 'plastic') === 'plastic'
-            ? { border: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px solid ${frameColor ?? '#000000'}` }
+            ? {
+                border: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px solid ${frameColor ?? '#000000'}`,
+              }
             : showFrame && imageUrl && frameMaterial === 'wood'
               ? {
                   padding: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px`,
@@ -197,7 +199,9 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
               showPassepartout && imageUrl && passepartoutSize
                 ? `${passepartoutSize.value * (WALL_SCALE / 100)}px solid ${passepartoutColor}`
                 : undefined,
-            ...(showFrame && frameMaterial === 'wood' ? { position: 'relative' as const, zIndex: 1 } : {}),
+            ...(showFrame && frameMaterial === 'wood'
+              ? { position: 'relative' as const, zIndex: 1 }
+              : {}),
           }}
         >
           <div

@@ -39,7 +39,21 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
   try {
     const { id } = await context.params
 
-    const user = await prisma.user.findUnique({ where: { id } })
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        lastName: true,
+        email: true,
+        handler: true,
+        biography: true,
+        userType: true,
+        isFeatured: true,
+        published: true,
+        profileImageUrl: true,
+      },
+    })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     return NextResponse.json(user)

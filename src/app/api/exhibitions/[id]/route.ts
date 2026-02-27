@@ -4,6 +4,7 @@ import { revalidateTag, revalidatePath } from 'next/cache'
 import { del } from '@vercel/blob'
 
 import { Prisma } from '@/generated/prisma'
+import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { buildExhibitionSnapshot } from '@/lib/exhibitionSnapshot'
 
@@ -92,10 +93,21 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
   }
 }
 
-/* ------------------------ PUT ------------------------ */
+/* ------------------------ PUT (requires auth + ownership) ------------------------ */
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
+
+    // Verify ownership before allowing update
+    const currentExhibition = await prisma.exhibition.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+    if (!currentExhibition)
+      return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    const { error: authError } = await requireOwnership(currentExhibition.userId)
+    if (authError) return authError
+
     const body = (await request.json()) as ExhibitionUpdateBody
 
     const data: Prisma.ExhibitionUpdateInput = {}
@@ -105,25 +117,19 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.url = newUrl
 
       // Check if another exhibition by this user already uses this URL
-      const current = await prisma.exhibition.findUnique({
-        where: { id },
-        select: { userId: true },
+      const conflict = await prisma.exhibition.findFirst({
+        where: {
+          userId: currentExhibition.userId,
+          url: newUrl,
+          id: { not: id },
+        },
+        select: { id: true },
       })
-      if (current) {
-        const conflict = await prisma.exhibition.findFirst({
-          where: {
-            userId: current.userId,
-            url: newUrl,
-            id: { not: id },
-          },
-          select: { id: true },
-        })
-        if (conflict) {
-          return NextResponse.json(
-            { error: 'An exhibition with this name already exists' },
-            { status: 409 },
-          )
-        }
+      if (conflict) {
+        return NextResponse.json(
+          { error: 'An exhibition with this name already exists' },
+          { status: 409 },
+        )
       }
     }
     if (body.description !== undefined) data.description = body.description
@@ -155,7 +161,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.trackLampDistance !== undefined)
       data.trackLampDistance = Math.max(1, Math.min(10, body.trackLampDistance))
     if (body.trackLampSettings !== undefined)
-      data.trackLampSettings = body.trackLampSettings === null ? Prisma.JsonNull : body.trackLampSettings
+      data.trackLampSettings =
+        body.trackLampSettings === null ? Prisma.JsonNull : body.trackLampSettings
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
@@ -248,18 +255,22 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
   }
 }
 
-/* ------------------------ DELETE ------------------------ */
+/* ------------------------ DELETE (requires auth + ownership) ------------------------ */
 export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
 
-    // Fetch the exhibition first to get the featuredImageUrl
+    // Fetch the exhibition to verify ownership and get the featuredImageUrl
     const exhibition = await prisma.exhibition.findUnique({
       where: { id },
-      select: { featuredImageUrl: true },
+      select: { userId: true, featuredImageUrl: true },
     })
 
-    // Delete featured image from Vercel Blob if it exists
+    if (!exhibition) return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+
+    // Verify ownership
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
     if (exhibition?.featuredImageUrl) {
       try {
         await del(exhibition.featuredImageUrl)

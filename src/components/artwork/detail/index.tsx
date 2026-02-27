@@ -84,7 +84,10 @@ export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPagePr
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+              CLOSE{' '}
+              <span className={styles.closeIcon}>
+                <Icon name="close" size={16} />
+              </span>
             </button>
           </header>
           <div className={styles.content}>
@@ -100,7 +103,10 @@ export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPagePr
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+              CLOSE{' '}
+              <span className={styles.closeIcon}>
+                <Icon name="close" size={16} />
+              </span>
             </button>
           </header>
           <div className={styles.content}>
@@ -116,7 +122,10 @@ export const ArtworkDetailPage = ({ artworkId, isInternal }: ArtworkDetailPagePr
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+              CLOSE{' '}
+              <span className={styles.closeIcon}>
+                <Icon name="close" size={16} />
+              </span>
             </button>
           </header>
 

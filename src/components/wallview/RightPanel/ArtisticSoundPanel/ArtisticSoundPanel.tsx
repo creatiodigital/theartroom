@@ -43,7 +43,6 @@ const ArtisticSoundPanel = () => {
     <>
       {/* Sound Settings */}
       <Section title="Playback">
-
         {/* Icon Selector */}
         <div className={styles.row}>
           <div className={styles.item}>
@@ -99,7 +98,6 @@ const ArtisticSoundPanel = () => {
 
       {/* Appearance */}
       <Section title="Appearance">
-
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>

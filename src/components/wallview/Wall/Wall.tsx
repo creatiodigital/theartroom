@@ -35,7 +35,8 @@ import styles from './Wall.module.scss'
 export const Wall = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const gltfPath =
+    spaceConfigs[spaceId || 'paris']?.gltfPath || '/assets/spaces/paris/paris10.glb?v=2'
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
@@ -130,7 +131,12 @@ export const Wall = () => {
           handleAddExistingArtworkDrag(existingArtworkId, x, y)
         }
         // Handle new artwork creation
-        else if (artworkType === 'image' || artworkType === 'text' || artworkType === 'sound' || artworkType === 'shape') {
+        else if (
+          artworkType === 'image' ||
+          artworkType === 'text' ||
+          artworkType === 'sound' ||
+          artworkType === 'shape'
+        ) {
           handleCreateArtworkDrag(artworkType, x, y)
         }
       }
@@ -274,10 +280,18 @@ export const Wall = () => {
       let deltaX = 0
       let deltaY = 0
       switch (e.key) {
-        case 'ArrowUp': deltaY = -1; break
-        case 'ArrowDown': deltaY = 1; break
-        case 'ArrowLeft': deltaX = -1; break
-        case 'ArrowRight': deltaX = 1; break
+        case 'ArrowUp':
+          deltaY = -1
+          break
+        case 'ArrowDown':
+          deltaY = 1
+          break
+        case 'ArrowLeft':
+          deltaX = -1
+          break
+        case 'ArrowRight':
+          deltaX = 1
+          break
       }
 
       dispatch(pushToHistory())

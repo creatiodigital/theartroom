@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       `,
     })
 
-    console.log('Invite email sent to:', user.email)
+    // Invite email sent successfully
 
     return NextResponse.json({ success: true })
   } catch (error) {

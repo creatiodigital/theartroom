@@ -28,7 +28,8 @@ const GroupPanel = () => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
 
-  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const gltfPath =
+    spaceConfigs[spaceId || 'paris']?.gltfPath || '/assets/spaces/paris/paris10.glb?v=2'
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
@@ -177,7 +178,6 @@ const GroupPanel = () => {
             />
           </div>
         </div>
-
       </div>
 
       <div className={styles.section}>

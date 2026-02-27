@@ -9,13 +9,25 @@ function toOptions<T extends string | number>(values: readonly T[]): TOption<T>[
 }
 
 export const fontSizes = toOptions([
-  1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5,
+  1,
+  1.5,
+  2,
+  2.5,
+  3,
+  3.5,
+  4,
+  4.5,
   ...Array.from({ length: 96 }, (_, i) => i + 5), // 5–100 cm
 ] as number[])
 
-export const lineHeights = toOptions(
-  [0.5, 0.6, 0.7, 0.8, 0.9, ...Array.from({ length: 11 }, (_, i) => +(1 + i * 0.1).toFixed(1))],
-)
+export const lineHeights = toOptions([
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  ...Array.from({ length: 11 }, (_, i) => +(1 + i * 0.1).toFixed(1)),
+])
 
 export const letterSpacings = toOptions([0, 0.25, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 3.5, 4] as const)
 

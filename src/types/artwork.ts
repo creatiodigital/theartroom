@@ -76,15 +76,15 @@ export type TArtwork = {
   textPaddingRight?: TOption<number>
   textThickness?: TOption<number>
   textBackgroundTexture?: string // e.g. 'paper', 'cardboard' — runtime only, no DB field yet
-  showTextBorder?: boolean       // Decorative inset border toggle
-  textBorderColor?: string       // Border color (default gold #c9a96e)
+  showTextBorder?: boolean // Decorative inset border toggle
+  textBorderColor?: string // Border color (default gold #c9a96e)
   textBorderOffset?: TOption<number> // Inset distance in cm
   showMonogram?: boolean
   monogramColor?: string
   monogramOpacity?: TOption<number>
   monogramPosition?: 'top' | 'bottom'
   monogramOffset?: TOption<number>
-  monogramSize?: TOption<number>   // Distance from edge as % of card height
+  monogramSize?: TOption<number> // Distance from edge as % of card height
   featured?: boolean
   hiddenFromExhibition?: boolean
   hideShadow?: boolean

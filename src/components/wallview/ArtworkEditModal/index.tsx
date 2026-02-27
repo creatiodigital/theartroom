@@ -230,31 +230,36 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
   }, [artworkId, imageUrl, dispatch])
 
   // Sound upload (immediate)
-  const handleSoundUpload = useCallback(async (file: File) => {
-    setSoundUploading(true)
-    setError('')
-    try {
-      const uploadFormData = new FormData()
-      uploadFormData.append('sound', file)
-      const response = await fetch(`/api/artworks/${artworkId}/sound`, {
-        method: 'POST',
-        body: uploadFormData,
-      })
-      if (!response.ok) {
+  const handleSoundUpload = useCallback(
+    async (file: File) => {
+      setSoundUploading(true)
+      setError('')
+      try {
+        const uploadFormData = new FormData()
+        uploadFormData.append('sound', file)
+        const response = await fetch(`/api/artworks/${artworkId}/sound`, {
+          method: 'POST',
+          body: uploadFormData,
+        })
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.error || 'Failed to upload sound')
+          return
+        }
         const data = await response.json()
-        setError(data.error || 'Failed to upload sound')
-        return
+        setSoundUrl(data.url)
+        // Sync with Redux so the 3D scene updates
+        dispatch(
+          editArtwork({ currentArtworkId: artworkId, property: 'soundUrl', value: data.url }),
+        )
+      } catch {
+        setError('Failed to upload sound')
+      } finally {
+        setSoundUploading(false)
       }
-      const data = await response.json()
-      setSoundUrl(data.url)
-      // Sync with Redux so the 3D scene updates
-      dispatch(editArtwork({ currentArtworkId: artworkId, property: 'soundUrl', value: data.url }))
-    } catch {
-      setError('Failed to upload sound')
-    } finally {
-      setSoundUploading(false)
-    }
-  }, [artworkId, dispatch])
+    },
+    [artworkId, dispatch],
+  )
 
   const handleSoundRemove = useCallback(async () => {
     setError('')
@@ -299,7 +304,10 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         <div className={styles.modal}>
           <header className={styles.header}>
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+              CLOSE{' '}
+              <span className={styles.closeIcon}>
+                <Icon name="close" size={16} />
+              </span>
             </button>
           </header>
           <div className={styles.content}>Loading...</div>
@@ -314,7 +322,10 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
         <div className={styles.modal}>
           <header className={styles.header}>
             <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+              CLOSE{' '}
+              <span className={styles.closeIcon}>
+                <Icon name="close" size={16} />
+              </span>
             </button>
           </header>
           <div className={styles.content}>
@@ -330,7 +341,10 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       <div className={styles.modal}>
         <header className={styles.header}>
           <button onClick={handleClose} className={styles.closeButton}>
-            CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+            CLOSE{' '}
+            <span className={styles.closeIcon}>
+              <Icon name="close" size={16} />
+            </span>
           </button>
         </header>
         <div className={styles.content}>
@@ -339,7 +353,9 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
             imageUrl={imageUrl}
             soundUrl={soundUrl}
             uploading={uploading || isRemoving || soundUploading}
-            loadingText={soundUploading ? 'Uploading sound...' : isRemoving ? 'Removing...' : 'Uploading...'}
+            loadingText={
+              soundUploading ? 'Uploading sound...' : isRemoving ? 'Removing...' : 'Uploading...'
+            }
             saving={saving}
             error={error}
             onFormChange={handleChange}

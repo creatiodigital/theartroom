@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuth } from '@/lib/authUtils'
+import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 // POST reorder artworks
 export async function POST(request: Request) {
   try {
-    // Require authenticated user
-    const { error: authError } = await requireAuth()
+    // Require authenticated user and get their ID
+    const { userId, error: authError } = await getEffectiveUserId()
     if (authError) return authError
 
     const body = await request.json()
@@ -15,6 +15,17 @@ export async function POST(request: Request) {
 
     if (!Array.isArray(artworkIds)) {
       return NextResponse.json({ error: 'artworkIds must be an array' }, { status: 400 })
+    }
+
+    // Verify all artworks belong to this user
+    const artworks = await prisma.artwork.findMany({
+      where: { id: { in: artworkIds } },
+      select: { id: true, userId: true },
+    })
+
+    const allOwned = artworks.every((a) => a.userId === userId)
+    if (!allOwned) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Update each artwork's order based on its position in the array

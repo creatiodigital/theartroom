@@ -229,7 +229,6 @@ const FloorPanel = () => {
       </Section>
 
       <Section title="Surface">
-
         <div className={styles.field}>
           <div className={styles.sliderHeader}>
             <label className={styles.label}>Reflectiveness</label>

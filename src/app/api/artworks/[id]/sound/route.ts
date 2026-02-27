@@ -11,14 +11,14 @@ const MAX_SOUND_SIZE = 3 * 1024 * 1024
 
 // Allowed audio MIME types (web-compatible)
 const ALLOWED_AUDIO_TYPES = new Set([
-  'audio/mpeg',       // .mp3
-  'audio/mp4',        // .m4a, .mp4 audio
-  'audio/ogg',        // .ogg
-  'audio/webm',       // .webm audio
-  'audio/wav',        // .wav
-  'audio/x-wav',      // .wav (alternate MIME)
-  'audio/aac',        // .aac
-  'audio/flac',       // .flac
+  'audio/mpeg', // .mp3
+  'audio/mp4', // .m4a, .mp4 audio
+  'audio/ogg', // .ogg
+  'audio/webm', // .webm audio
+  'audio/wav', // .wav
+  'audio/x-wav', // .wav (alternate MIME)
+  'audio/aac', // .aac
+  'audio/flac', // .flac
 ])
 
 // Map MIME types to file extensions
@@ -60,10 +60,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Check file size
     if (file.size > MAX_SOUND_SIZE) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 3MB.' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'File too large. Maximum size is 3MB.' }, { status: 400 })
     }
 
     // Validate audio type

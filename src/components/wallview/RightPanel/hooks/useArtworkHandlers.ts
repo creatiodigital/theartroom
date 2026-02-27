@@ -207,7 +207,13 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const currentWidth = currentEdited.width2d
     const newX = x + (currentWidth - newWidth) / 2
 
-    const new3DCoordinate = convert2DTo3D(newX, currentEdited.posY2d, newWidth, currentEdited.height2d, boundingData)
+    const new3DCoordinate = convert2DTo3D(
+      newX,
+      currentEdited.posY2d,
+      newWidth,
+      currentEdited.height2d,
+      boundingData,
+    )
 
     dispatch(pushToHistory()) // Save state before width change
     dispatch(
@@ -227,7 +233,13 @@ export const useArtworkHandlers = (currentArtworkId: string, boundingData: TBoun
     const currentHeight = currentEdited.height2d
     const newY = y + (currentHeight - newHeight) / 2
 
-    const new3DCoordinate = convert2DTo3D(currentEdited.posX2d, newY, currentEdited.width2d, newHeight, boundingData)
+    const new3DCoordinate = convert2DTo3D(
+      currentEdited.posX2d,
+      newY,
+      currentEdited.width2d,
+      newHeight,
+      boundingData,
+    )
 
     dispatch(pushToHistory()) // Save state before height change
     dispatch(

@@ -50,19 +50,14 @@ export const Section = ({
         <div className={`${styles.header} ${styles.nonCollapsible}`}>
           <span className={styles.title}>{title}</span>
         </div>
-        <div className={styles.content}>
-          {children}
-        </div>
+        <div className={styles.content}>{children}</div>
       </div>
     )
   }
 
   return (
     <div className={styles.section}>
-      <div
-        className={styles.header}
-        onClick={toggle}
-      >
+      <div className={styles.header} onClick={toggle}>
         <ChevronRight
           size={12}
           strokeWidth={ICON_STROKE_WIDTH}
@@ -70,11 +65,7 @@ export const Section = ({
         />
         <span className={styles.title}>{title}</span>
       </div>
-      {isOpen && (
-        <div className={styles.content}>
-          {children}
-        </div>
-      )}
+      {isOpen && <div className={styles.content}>{children}</div>}
     </div>
   )
 }

@@ -17,7 +17,7 @@ type SpaceProps = {
 
 export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) => {
   const sceneContext = useContext(SceneContext)
-  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'classic'
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
 
   const spaceKey = spaceId as SpaceKey
   const spaceConfig = getSpaceConfig(spaceId)
@@ -45,7 +45,7 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
   if (spaceConfig.refs.windows) windowRefs.current = windowRefArray
   if (spaceConfig.refs.glass) glassRefs.current = glassRefArray
 
-  const SpaceComponent = spaceComponents[spaceKey] || spaceComponents['classic']
+  const SpaceComponent = spaceComponents[spaceKey] || spaceComponents['paris']
   if (!SpaceComponent) return null
 
   return (

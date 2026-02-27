@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST batch create/update exhibition artworks (positions and display properties)
+// POST batch create/update exhibition artworks (requires auth + ownership)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -181,6 +182,15 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    // Verify exhibition ownership
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id: exhibitionId },
+      select: { userId: true },
+    })
+    if (!exhibition) return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    const { error: authError } = await requireOwnership(exhibition.userId)
+    if (authError) return authError
 
     // Get current artwork IDs in this exhibition
     const existingPositions = await prisma.exhibitionArtwork.findMany({
@@ -368,11 +378,11 @@ export async function POST(request: NextRequest) {
     )
 
     // If the exhibition is published, mark it as having pending changes
-    const exhibition = await prisma.exhibition.findUnique({
+    const exhibitionStatus = await prisma.exhibition.findUnique({
       where: { id: exhibitionId },
       select: { published: true },
     })
-    if (exhibition?.published) {
+    if (exhibitionStatus?.published) {
       await prisma.exhibition.update({
         where: { id: exhibitionId },
         data: { hasPendingChanges: true },

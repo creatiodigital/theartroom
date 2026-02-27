@@ -84,31 +84,34 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
     }
   }, [])
 
-  const handleTogglePlay = useCallback((artworkId: string, soundUrl: string) => {
-    // Same sound — stop it
-    if (audioRef.current && playingId === artworkId) {
-      audioRef.current.pause()
-      audioRef.current = null
-      setPlayingId(null)
-      return
-    }
+  const handleTogglePlay = useCallback(
+    (artworkId: string, soundUrl: string) => {
+      // Same sound — stop it
+      if (audioRef.current && playingId === artworkId) {
+        audioRef.current.pause()
+        audioRef.current = null
+        setPlayingId(null)
+        return
+      }
 
-    // Stop any current sound
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
+      // Stop any current sound
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
 
-    // Play new sound (no loop)
-    const audio = new Audio(soundUrl)
-    audio.addEventListener('ended', () => {
-      setPlayingId(null)
-      audioRef.current = null
-    })
-    audio.play()
-    audioRef.current = audio
-    setPlayingId(artworkId)
-  }, [playingId])
+      // Play new sound (no loop)
+      const audio = new Audio(soundUrl)
+      audio.addEventListener('ended', () => {
+        setPlayingId(null)
+        audioRef.current = null
+      })
+      audio.play()
+      audioRef.current = audio
+      setPlayingId(artworkId)
+    },
+    [playingId],
+  )
 
   return (
     <div className={styles.sidebar} data-no-deselect="true">
@@ -128,7 +131,13 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
             className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
             onClick={() => setTypeFilter(type)}
           >
-            {type === 'all' ? 'All' : type === 'image' ? 'Images' : type === 'text' ? 'Text' : 'Sound'}
+            {type === 'all'
+              ? 'All'
+              : type === 'image'
+                ? 'Images'
+                : type === 'text'
+                  ? 'Text'
+                  : 'Sound'}
           </button>
         ))}
       </div>
@@ -177,7 +186,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                     }}
                   >
                     <Icon
-                      name={playingId === artwork.id ? 'square' : artwork.soundUrl ? 'play' : 'volume-2'}
+                      name={
+                        playingId === artwork.id ? 'square' : artwork.soundUrl ? 'play' : 'volume-2'
+                      }
                       size={32}
                       color={playingId === artwork.id ? '#e53e3e' : '#333'}
                     />

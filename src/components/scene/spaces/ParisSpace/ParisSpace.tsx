@@ -56,12 +56,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   const { ambientColor, scale } = useAmbientLight()
 
   // Independent wall & ceiling colors
-  const wallColor = useSelector(
-    (state: RootState) => state.exhibition.wallColor ?? '#ffffff',
-  )
-  const ceilingColor = useSelector(
-    (state: RootState) => state.exhibition.ceilingColor ?? '#ffffff',
-  )
+  const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
+  const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
 
   // Load external baked textures
   const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWall8.jpg')
@@ -69,7 +65,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
 
   // Configure textures
   useMemo(() => {
-    wallTexture.colorSpace = SRGBColorSpace // TODO: remove
+    wallTexture.colorSpace = SRGBColorSpace
     wallTexture.flipY = false
     ceilingTexture.colorSpace = SRGBColorSpace
     ceilingTexture.flipY = false
@@ -159,7 +155,6 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         glassRefs={glassRefs}
       />
 
-
       {/* Door */}
       <Door nodes={nodes} doorFrameRef={wallRefs[1]} doorMainRef={wallRefs[2]} />
 
@@ -172,7 +167,9 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
       )}
 
       {/* Recessed Lamps - visible only in 'track-plafond' mode, spotlights disabled when track lamps present */}
-      {ceilingLightMode === 'track-plafond' && <RecessedLamp nodes={nodes} count={6} disableSpotlights />}
+      {ceilingLightMode === 'track-plafond' && (
+        <RecessedLamp nodes={nodes} count={6} disableSpotlights />
+      )}
 
       {/* Round Lamps - visible only in 'plafond' mode */}
       {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={15} />}
