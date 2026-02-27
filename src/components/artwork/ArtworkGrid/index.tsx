@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
+
 import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 
@@ -31,10 +33,12 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
           <div className={styles.imageWrapper}>
             {artwork.imageUrl ? (
               <Link href={`/artworks/${artwork.id}`} className={styles.viewDetailsLink}>
-                <img
+                <ProtectedImage
                   src={artwork.imageUrl}
                   alt={artwork.title || artwork.name || 'Artwork'}
                   className={styles.image}
+                  width={600}
+                  height={600}
                 />
               </Link>
             ) : (

@@ -1,6 +1,6 @@
 export type TSpaceOption = {
   label: string
-  value: 'classic' | 'modern'
+  value: 'paris' | string
 }
 
 export type TDashboardState = {

@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache'
 import type { NextRequest } from 'next/server'
 import { del } from '@vercel/blob'
 
+import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 // GET single artwork
@@ -25,10 +26,17 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
   }
 }
 
-// PUT update artwork
+// PUT update artwork (requires auth + ownership)
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
+
+    // Verify ownership
+    const existing = await prisma.artwork.findUnique({ where: { id }, select: { userId: true } })
+    if (!existing) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+    const { error: authError } = await requireOwnership(existing.userId)
+    if (authError) return authError
+
     const body = await request.json()
 
     // Base update data (fields that definitely exist)
@@ -80,12 +88,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
   }
 }
 
-// DELETE artwork
+// DELETE artwork (requires auth + ownership)
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
 
-    // Get artwork first to check for image
+    // Get artwork first to check for image and verify ownership
     const artwork = await prisma.artwork.findUnique({
       where: { id },
     })
@@ -93,6 +101,10 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     if (!artwork) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
     }
+
+    // Verify ownership
+    const { error: authError } = await requireOwnership(artwork.userId)
+    if (authError) return authError
 
     // Delete associated blob image if exists
     if (artwork.imageUrl) {

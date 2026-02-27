@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log('Password changed for user:', session.user.email)
+    // Password changed successfully
 
     return NextResponse.json({ success: true })
   } catch (error) {

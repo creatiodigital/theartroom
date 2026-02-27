@@ -61,7 +61,6 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
                 toneMapping: NoToneMapping,
               }}
             >
-
               <WebGLMonitor exhibitionUrl={exhibitionUrl} />
               <Suspense fallback={hideLoader ? null : <Loader />}>
                 <group>

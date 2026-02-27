@@ -75,7 +75,14 @@ type SortableArtworkCardProps = {
   onTogglePlay: (artworkId: string, soundUrl: string) => void
 }
 
-function SortableArtworkCard({ artwork, onEdit, onDelete, onUnlink, playingArtworkId, onTogglePlay }: SortableArtworkCardProps) {
+function SortableArtworkCard({
+  artwork,
+  onEdit,
+  onDelete,
+  onUnlink,
+  playingArtworkId,
+  onTogglePlay,
+}: SortableArtworkCardProps) {
   const isPlaying = playingArtworkId === artwork.id
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: artwork.id,
@@ -204,31 +211,34 @@ export const ArtworkLibraryPage = () => {
     }
   }, [])
 
-  const handleTogglePlay = useCallback((artworkId: string, soundUrl: string) => {
-    // If the same artwork is already playing, stop it
-    if (audioRef.current && playingArtworkId === artworkId) {
-      audioRef.current.pause()
-      audioRef.current = null
-      setPlayingArtworkId(null)
-      return
-    }
+  const handleTogglePlay = useCallback(
+    (artworkId: string, soundUrl: string) => {
+      // If the same artwork is already playing, stop it
+      if (audioRef.current && playingArtworkId === artworkId) {
+        audioRef.current.pause()
+        audioRef.current = null
+        setPlayingArtworkId(null)
+        return
+      }
 
-    // Stop any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
 
-    // Play the new sound
-    const audio = new Audio(soundUrl)
-    audio.addEventListener('ended', () => {
-      setPlayingArtworkId(null)
-      audioRef.current = null
-    })
-    audio.play()
-    audioRef.current = audio
-    setPlayingArtworkId(artworkId)
-  }, [playingArtworkId])
+      // Play the new sound
+      const audio = new Audio(soundUrl)
+      audio.addEventListener('ended', () => {
+        setPlayingArtworkId(null)
+        audioRef.current = null
+      })
+      audio.play()
+      audioRef.current = audio
+      setPlayingArtworkId(artworkId)
+    },
+    [playingArtworkId],
+  )
 
   // DnD sensors
   const sensors = useSensors(

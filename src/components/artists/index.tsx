@@ -1,8 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -61,7 +62,7 @@ export const ArtistsPage = () => {
                   </div>
                   {artist.profileImageUrl && (
                     <div className={styles.imageContainer}>
-                      <Image
+                      <ProtectedImage
                         src={artist.profileImageUrl}
                         alt={`${artist.name} ${artist.lastName}`}
                         width={200}

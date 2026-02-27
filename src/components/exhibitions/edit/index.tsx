@@ -53,9 +53,8 @@ export const ExhibitionEditPage = ({
       dispatch(resetArtworks())
       dispatch(resetWizard())
 
-      // Clear GLTF cache for all space types
-      useGLTF.clear('/assets/spaces/classic.glb')
-      useGLTF.clear('/assets/spaces/modern.glb')
+      // Clear GLTF cache for space types
+      useGLTF.clear('/assets/spaces/paris/paris10.glb?v=2')
 
       hasResetRef.current = exhibitionSlug
       // Reset restored state ref when exhibition changes

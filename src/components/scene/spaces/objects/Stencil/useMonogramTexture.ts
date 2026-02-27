@@ -26,10 +26,7 @@ const CANVAS_WIDTH = Math.round(CANVAS_HEIGHT * (PADDED_WIDTH / PADDED_HEIGHT))
  * Creates a CanvasTexture with the monogram drawn synchronously.
  * Canvas includes padding around the SVG to prevent anti-alias clipping.
  */
-export function useMonogramTexture(
-  color: string = '#c9a96e',
-  opacity: number = 0.35,
-) {
+export function useMonogramTexture(color: string = '#c9a96e', opacity: number = 0.35) {
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = CANVAS_WIDTH

@@ -58,7 +58,12 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
   // Bake icon into a canvas texture — icon size fraction maps from 2D px size
   const iconFraction = Math.min((soundIconSize / 100) * 3.6, 0.85)
   const displayColor = isPlaying ? '#e53e3e' : soundIconColor
-  const texture = useIconTexture(soundIcon, displayColor, soundBackgroundColor ?? undefined, iconFraction)
+  const texture = useIconTexture(
+    soundIcon,
+    displayColor,
+    soundBackgroundColor ?? undefined,
+    iconFraction,
+  )
 
   // Reference distance: spatial → user-defined, omnipresent → very large
   const refDistance = soundSpatial ? soundDistance : 10000
@@ -89,7 +94,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
         stop()
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Calculate the normal vector from artwork's quaternion
@@ -118,8 +123,15 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
       }
     }
   }, [
-    dispatch, id, position, quaternion, planeWidth, planeHeight,
-    isPlaceholdersShown, isArtworkPanelOpen, getNormalFromQuaternion,
+    dispatch,
+    id,
+    position,
+    quaternion,
+    planeWidth,
+    planeHeight,
+    isPlaceholdersShown,
+    isArtworkPanelOpen,
+    getNormalFromQuaternion,
   ])
 
   // Handle double click - play/stop sound

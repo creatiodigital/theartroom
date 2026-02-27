@@ -1,6 +1,16 @@
 import type { ReactNode } from 'react'
 
-import { bodyFont, headingFont, dashboardFont, wallFont1, wallFont2, wallFont3, wallFont4, wallFont5, wallFont6 } from '@/app/fonts'
+import {
+  bodyFont,
+  headingFont,
+  dashboardFont,
+  wallFont1,
+  wallFont2,
+  wallFont3,
+  wallFont4,
+  wallFont5,
+  wallFont6,
+} from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'

@@ -184,31 +184,34 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const displayImageUrl = pendingFile ? previewUrl : pendingImageRemoval ? null : originalImageUrl
 
   // Sound upload (immediate - no deferred save needed)
-  const handleSoundUpload = useCallback(async (file: File) => {
-    setSoundUploading(true)
-    try {
-      const uploadFormData = new FormData()
-      uploadFormData.append('sound', file)
+  const handleSoundUpload = useCallback(
+    async (file: File) => {
+      setSoundUploading(true)
+      try {
+        const uploadFormData = new FormData()
+        uploadFormData.append('sound', file)
 
-      const response = await fetch(`/api/artworks/${artworkId}/sound`, {
-        method: 'POST',
-        body: uploadFormData,
-      })
+        const response = await fetch(`/api/artworks/${artworkId}/sound`, {
+          method: 'POST',
+          body: uploadFormData,
+        })
 
-      if (!response.ok) {
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.error || 'Failed to upload sound')
+          return
+        }
+
         const data = await response.json()
-        setError(data.error || 'Failed to upload sound')
-        return
+        setSoundUrl(data.url)
+      } catch {
+        setError('Failed to upload sound')
+      } finally {
+        setSoundUploading(false)
       }
-
-      const data = await response.json()
-      setSoundUrl(data.url)
-    } catch {
-      setError('Failed to upload sound')
-    } finally {
-      setSoundUploading(false)
-    }
-  }, [artworkId])
+    },
+    [artworkId],
+  )
 
   const handleSoundRemove = useCallback(async () => {
     try {

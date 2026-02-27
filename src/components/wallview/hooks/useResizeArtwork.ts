@@ -188,14 +188,14 @@ export const useResizeArtwork = (
               for (const guide of guides) {
                 if (guide.orientation === 'vertical') {
                   const guidePx = guide.position * WALL_SCALE
-                  if (Math.abs((newX - borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                  if (Math.abs(newX - borderPx - guidePx) <= SNAP_TOLERANCE) {
                     newX = guidePx + borderPx
                     newWidth = Math.max(5, initialX + initialWidth - newX)
                     break
                   }
                 } else {
                   const guidePx = wallHeight2d - guide.position * WALL_SCALE
-                  if (Math.abs((newY - borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                  if (Math.abs(newY - borderPx - guidePx) <= SNAP_TOLERANCE) {
                     // horizontal guide near top edge during left resize — skip, handled by top
                   }
                 }
@@ -230,7 +230,7 @@ export const useResizeArtwork = (
               for (const guide of guides) {
                 if (guide.orientation === 'vertical') {
                   const guidePx = guide.position * WALL_SCALE
-                  if (Math.abs((newX + newWidth + borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                  if (Math.abs(newX + newWidth + borderPx - guidePx) <= SNAP_TOLERANCE) {
                     newWidth = Math.max(5, guidePx - borderPx - newX)
                     break
                   }
@@ -266,7 +266,7 @@ export const useResizeArtwork = (
               for (const guide of guides) {
                 if (guide.orientation === 'horizontal') {
                   const guidePx = wallHeight2d - guide.position * WALL_SCALE
-                  if (Math.abs((newY - borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                  if (Math.abs(newY - borderPx - guidePx) <= SNAP_TOLERANCE) {
                     newY = guidePx + borderPx
                     newHeight = Math.max(5, initialY + initialHeight - newY)
                     break
@@ -304,7 +304,7 @@ export const useResizeArtwork = (
               for (const guide of guides) {
                 if (guide.orientation === 'horizontal') {
                   const guidePx = wallHeight2d - guide.position * WALL_SCALE
-                  if (Math.abs((newY + newHeight + borderPx) - guidePx) <= SNAP_TOLERANCE) {
+                  if (Math.abs(newY + newHeight + borderPx - guidePx) <= SNAP_TOLERANCE) {
                     newHeight = Math.max(5, guidePx - borderPx - newY)
                     break
                   }

@@ -16,9 +16,12 @@ export async function GET(request: NextRequest) {
     // Base filter
     const where: Record<string, unknown> = featured === 'true' ? { isFeatured: true } : {}
 
-    // If user is admin (not superAdmin), hide other admins and superAdmins
+    // If user is admin (not superAdmin), show own account + non-admin users
     if (session?.user && !isSuperAdmin(session.user.userType)) {
-      where.userType = { notIn: ['admin', 'superAdmin'] }
+      where.OR = [
+        { id: session.user.id }, // Always include own account
+        { userType: { notIn: ['admin', 'superAdmin'] } }, // Plus all non-admin users
+      ]
     }
 
     const users = await prisma.user.findMany({

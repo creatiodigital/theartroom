@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -111,7 +112,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
 
     // Honeypot check - if filled, it's a bot
     if (honeypot) {
-      console.log('Bot detected via honeypot')
+      // Bot detected via honeypot — silently accept
       setSubmitStatus('success')
       setShowModal(true)
       onClose()
@@ -206,7 +207,10 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                 Send an inquiry
               </Text>
               <button onClick={onClose} className={styles.closeButton}>
-                CLOSE <span className={styles.closeIcon}><Icon name="close" size={16} /></span>
+                CLOSE{' '}
+                <span className={styles.closeIcon}>
+                  <Icon name="close" size={16} />
+                </span>
               </button>
             </div>
 
@@ -321,7 +325,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
 
                 <div className={styles.artworkPreview}>
                   <div className={styles.artworkImage}>
-                    <Image
+                    <ProtectedImage
                       src={artwork.imageUrl}
                       alt={artwork.title}
                       width={80}

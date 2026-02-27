@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { MoreVertical } from 'lucide-react'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -16,6 +17,7 @@ type Exhibition = {
   mainTitle: string
   url: string
   handler: string
+  spaceId: string
   status: string
   published: boolean
   hasPendingChanges: boolean
@@ -136,6 +138,7 @@ export const AdminExhibitions = () => {
             <tr>
               <th>Exhibition</th>
               <th>Artist</th>
+              <th>Space</th>
               <th>Status</th>
               <th>Visibility</th>
               <th>Review</th>
@@ -152,6 +155,9 @@ export const AdminExhibitions = () => {
                 </td>
                 <td>
                   {exhibition.user.name} {exhibition.user.lastName}
+                </td>
+                <td>
+                  {spaceConfigs[exhibition.spaceId as SpaceKey]?.displayName || exhibition.spaceId}
                 </td>
                 <td>
                   <Badge

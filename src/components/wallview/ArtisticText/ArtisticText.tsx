@@ -146,22 +146,23 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
           {textContent}
         </div>
       )}
-      {showTextBorder && (() => {
-        const insetPx = `${textBorderOffset * 4}px` // 1cm = 4px (WALL_SCALE 400 / 100)
-        return (
-          <div
-            style={{
-              position: 'absolute',
-              top: insetPx,
-              left: insetPx,
-              right: insetPx,
-              bottom: insetPx,
-              border: `1px solid ${textBorderColor}`,
-              pointerEvents: 'none',
-            }}
-          />
-        )
-      })()}
+      {showTextBorder &&
+        (() => {
+          const insetPx = `${textBorderOffset * 4}px` // 1cm = 4px (WALL_SCALE 400 / 100)
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                top: insetPx,
+                left: insetPx,
+                right: insetPx,
+                bottom: insetPx,
+                border: `1px solid ${textBorderColor}`,
+                pointerEvents: 'none',
+              }}
+            />
+          )
+        })()}
       {showMonogram && (
         <div
           style={{
@@ -176,7 +177,14 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
             pointerEvents: 'none',
           }}
         >
-          <Monogram style={{ width: '100%', height: 'auto', display: 'block', color: monogramColor ?? '#c0392b' }} />
+          <Monogram
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              color: monogramColor ?? '#c0392b',
+            }}
+          />
         </div>
       )}
     </div>

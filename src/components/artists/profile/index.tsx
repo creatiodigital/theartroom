@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
+
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -111,7 +112,7 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
         </div>
         {artist.profileImageUrl ? (
           <div className={styles.avatarWrapper}>
-            <Image
+            <ProtectedImage
               src={artist.profileImageUrl}
               alt={artistFullName}
               fill

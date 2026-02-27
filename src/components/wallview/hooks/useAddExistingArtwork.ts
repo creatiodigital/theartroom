@@ -95,14 +95,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
       return true
     },
-    [
-      boundingData,
-      wallWidth,
-      wallHeight,
-      dispatch,
-      currentWallId,
-      isArtworkInExhibition,
-    ],
+    [boundingData, wallWidth, wallHeight, dispatch, currentWallId, isArtworkInExhibition],
   )
 
   // Add existing artwork at specific position (for drag-drop)
@@ -151,13 +144,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       dispatch(removeGroup())
       dispatch(addArtworkToGroup(artworkId))
 
-      const new3DCoordinate = convert2DTo3D(
-        adjustedX,
-        adjustedY,
-        size,
-        size,
-        boundingData,
-      )
+      const new3DCoordinate = convert2DTo3D(adjustedX, adjustedY, size, size, boundingData)
 
       const artworkPosition: TArtworkPosition = {
         id: artworkId,
@@ -182,4 +169,3 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
     isArtworkInExhibition,
   }
 }
-

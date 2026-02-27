@@ -327,8 +327,14 @@ const Display = ({ artwork }: DisplayProps) => {
   const planeWidth = width || 1
   const planeHeight = height || 1
 
-  // Load PBR textures for both frame materials
-  const plasticTextures = useMemo(() => {
+  // Load PBR textures for both frame materials (via useEffect to avoid render-time state updates)
+  const [plasticTextures, setPlasticTextures] = useState<{
+    diffuse: Texture
+    normal: Texture
+    roughnessMap: Texture
+  } | null>(null)
+
+  useEffect(() => {
     const loader = new TextureLoader()
     const diffuse = loader.load('/assets/materials/plastic-frame/diffuse.jpg')
     const normal = loader.load('/assets/materials/plastic-frame/normal.jpg')
@@ -341,10 +347,22 @@ const Display = ({ artwork }: DisplayProps) => {
 
     diffuse.colorSpace = SRGBColorSpace
 
-    return { diffuse, normal, roughnessMap }
+    setPlasticTextures({ diffuse, normal, roughnessMap })
+
+    return () => {
+      diffuse.dispose()
+      normal.dispose()
+      roughnessMap.dispose()
+    }
   }, [])
 
-  const woodTextures = useMemo(() => {
+  const [woodTextures, setWoodTextures] = useState<{
+    diffuse: Texture
+    normal: Texture
+    roughnessMap: Texture
+  } | null>(null)
+
+  useEffect(() => {
     const loader = new TextureLoader()
     const diffuse = loader.load('/assets/materials/wooden-frame/diffuse.png')
     const normal = loader.load('/assets/materials/wooden-frame/normal.png')
@@ -356,7 +374,13 @@ const Display = ({ artwork }: DisplayProps) => {
 
     diffuse.colorSpace = SRGBColorSpace
 
-    return { diffuse, normal, roughnessMap }
+    setWoodTextures({ diffuse, normal, roughnessMap })
+
+    return () => {
+      diffuse.dispose()
+      normal.dispose()
+      roughnessMap.dispose()
+    }
   }, [])
 
   // Apply wood texture control properties reactively
@@ -366,6 +390,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const texRotation = ((frameTextureRotation ?? 0) * Math.PI) / 180
 
   useMemo(() => {
+    if (!woodTextures) return
     ;[woodTextures.diffuse, woodTextures.normal, woodTextures.roughnessMap].forEach((tex) => {
       tex.repeat.set(texScale, texScale)
       tex.offset.set(texOffsetX, texOffsetY)
@@ -386,7 +411,7 @@ const Display = ({ artwork }: DisplayProps) => {
   // Frame material: plastic PBR or wood PBR based on dropdown
   const frameMaterialType = frameMaterial ?? 'plastic'
   const frameMatObj = useMemo(() => {
-    if (frameMaterialType === 'wood') {
+    if (frameMaterialType === 'wood' && woodTextures) {
       return new MeshStandardMaterial({
         map: woodTextures.diffuse,
         normalMap: woodTextures.normal,
@@ -398,13 +423,20 @@ const Display = ({ artwork }: DisplayProps) => {
     }
     // Plastic: use normal + roughness for subtle surface detail, but pure user color
     return new MeshStandardMaterial({
-      normalMap: plasticTextures.normal,
-      roughnessMap: plasticTextures.roughnessMap,
+      normalMap: plasticTextures?.normal ?? null,
+      roughnessMap: plasticTextures?.roughnessMap ?? null,
       color: frameAmbientColor,
       roughness: frameTextureRoughness ?? 0.6,
       metalness: 0.05,
     })
-  }, [frameMaterialType, frameAmbientColor, woodTextures, plasticTextures, frameTextureRoughness, frameTextureTemperature])
+  }, [
+    frameMaterialType,
+    frameAmbientColor,
+    woodTextures,
+    plasticTextures,
+    frameTextureRoughness,
+    frameTextureTemperature,
+  ])
 
   // Passepartout material with ambient light applied
   const passepartoutMaterial = useMemo(() => {

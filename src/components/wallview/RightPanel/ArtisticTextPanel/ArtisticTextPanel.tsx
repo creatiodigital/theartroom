@@ -54,7 +54,8 @@ const ArtisticText = () => {
 
   // Bounding data for 2D→3D coordinate conversion
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const gltfPath =
+    spaceConfigs[spaceId || 'paris']?.gltfPath || '/assets/spaces/paris/paris10.glb?v=2'
   const { nodes } = useGLTF(gltfPath) as unknown as { nodes: Record<string, Mesh> }
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
@@ -157,7 +158,13 @@ const ArtisticText = () => {
 
     // Compute 3D coordinates (keep existing X and width)
     const coords3D = boundingData
-      ? convert2DTo3D(exhibitionArtwork.posX2d, newPosY2d, exhibitionArtwork.width2d, newHeight2d, boundingData)
+      ? convert2DTo3D(
+          exhibitionArtwork.posX2d,
+          newPosY2d,
+          exhibitionArtwork.width2d,
+          newHeight2d,
+          boundingData,
+        )
       : {}
 
     dispatch(pushToHistory())
@@ -189,81 +196,81 @@ const ArtisticText = () => {
   return (
     <>
       <Section title="Alignment">
-          <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-            Text Align
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textLeft"
-                onClick={() => handleEditArtworkText('textAlign', 'left')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textCenter"
-                onClick={() => handleEditArtworkText('textAlign', 'center')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textRight"
-                onClick={() => handleEditArtworkText('textAlign', 'right')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textJustify"
-                onClick={() => handleEditArtworkText('textAlign', 'justify')}
-              />
-            </div>
-          </div>
-          <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-            Vertical Align
-          </Text>
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textVerticalTop"
-                onClick={() => handleEditArtworkText('textVerticalAlign', 'top')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textVerticalCenter"
-                onClick={() => handleEditArtworkText('textVerticalAlign', 'center')}
-              />
-            </div>
-            <div className={styles.item}>
-              <Button
-                size="small"
-                variant="secondary"
-                icon="textVerticalBottom"
-                onClick={() => handleEditArtworkText('textVerticalAlign', 'bottom')}
-              />
-            </div>
-          </div>
-          <div style={{ marginTop: 'var(--space-2)' }}>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Text Align
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
             <Button
-              font="dashboard"
-              fullWidth
+              size="small"
               variant="secondary"
-              label="Wrap around text"
-              onClick={handleWrapAroundText}
+              icon="textLeft"
+              onClick={() => handleEditArtworkText('textAlign', 'left')}
             />
           </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant="secondary"
+              icon="textCenter"
+              onClick={() => handleEditArtworkText('textAlign', 'center')}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant="secondary"
+              icon="textRight"
+              onClick={() => handleEditArtworkText('textAlign', 'right')}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant="secondary"
+              icon="textJustify"
+              onClick={() => handleEditArtworkText('textAlign', 'justify')}
+            />
+          </div>
+        </div>
+        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
+          Vertical Align
+        </Text>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant="secondary"
+              icon="textVerticalTop"
+              onClick={() => handleEditArtworkText('textVerticalAlign', 'top')}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant="secondary"
+              icon="textVerticalCenter"
+              onClick={() => handleEditArtworkText('textVerticalAlign', 'center')}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              size="small"
+              variant="secondary"
+              icon="textVerticalBottom"
+              onClick={() => handleEditArtworkText('textVerticalAlign', 'bottom')}
+            />
+          </div>
+        </div>
+        <div style={{ marginTop: 'var(--space-2)' }}>
+          <Button
+            font="dashboard"
+            fullWidth
+            variant="secondary"
+            label="Wrap around text"
+            onClick={handleWrapAroundText}
+          />
+        </div>
       </Section>
 
       <Section title="Presets">
@@ -305,10 +312,10 @@ const ArtisticText = () => {
               Font Style
             </Text>
             <Select<TFontWeight>
-                options={filteredWeights}
-                value={fontWeight?.value}
-                onChange={(val) => handleEditArtworkText('fontWeight', { label: val, value: val })}
-              />
+              options={filteredWeights}
+              value={fontWeight?.value}
+              onChange={(val) => handleEditArtworkText('fontWeight', { label: val, value: val })}
+            />
           </div>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -458,9 +465,7 @@ const ArtisticText = () => {
                 Texture
               </Text>
               <Select<string>
-                options={[
-                  { label: 'Plain Paper', value: 'paper' },
-                ]}
+                options={[{ label: 'Plain Paper', value: 'paper' }]}
                 value={textBackgroundTexture}
                 onChange={(val) => handleEditArtworkText('textBackgroundTexture', val)}
               />
@@ -570,7 +575,9 @@ const ArtisticText = () => {
                     { label: 'Bottom Center', value: 'bottom' },
                   ]}
                   value={monogramPosition ?? 'bottom'}
-                  onChange={(val) => handleEditArtworkText('monogramPosition', val as 'top' | 'bottom')}
+                  onChange={(val) =>
+                    handleEditArtworkText('monogramPosition', val as 'top' | 'bottom')
+                  }
                 />
               </div>
               <div className={styles.item}>

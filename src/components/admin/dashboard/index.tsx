@@ -227,7 +227,14 @@ export const DashboardAdmin = () => {
                   {user.name} {user.lastName}
                 </td>
                 <td>{user.email || '-'}</td>
-                <td>{user.userType}</td>
+                <td>
+                  {{
+                    superAdmin: 'Super Admin',
+                    admin: 'Admin',
+                    artist: 'Artist',
+                    curator: 'Curator',
+                  }[user.userType ?? ''] || user.userType}
+                </td>
                 <td>
                   <Badge
                     label={user.published ? 'Published' : 'Unpublished'}

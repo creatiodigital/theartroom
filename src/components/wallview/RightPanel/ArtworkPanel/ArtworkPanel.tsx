@@ -32,7 +32,8 @@ const ArtworkPanel = () => {
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = spaceConfigs[spaceId || 'classic']?.gltfPath || '/assets/spaces/classic.glb'
+  const gltfPath =
+    spaceConfigs[spaceId || 'paris']?.gltfPath || '/assets/spaces/paris/paris10.glb?v=2'
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
@@ -244,7 +245,6 @@ const ArtworkPanel = () => {
       </Section>
 
       <Section title="Position">
-
         <div className={styles.row}>
           <div className={styles.item}>
             <Button
@@ -350,11 +350,13 @@ const ArtworkPanel = () => {
           </div>
         </div>
 
-
         {/* Rotation slider - shapes only */}
         {artwork?.artworkType === 'shape' && exhibitionArtwork && (
           <div style={{ marginTop: 'var(--space-4)' }}>
-            <div className={styles.row} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              className={styles.row}
+              style={{ justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <Text font="dashboard" as="span" size="xs" className={styles.label}>
                 Rotation
               </Text>

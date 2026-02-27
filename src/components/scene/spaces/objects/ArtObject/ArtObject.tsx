@@ -24,4 +24,3 @@ const ArtObject: React.FC<ArtObjectProps> = ({ artwork }) => {
 }
 
 export default ArtObject
-

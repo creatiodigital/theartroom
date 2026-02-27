@@ -6,6 +6,28 @@ import prisma from '@/lib/prisma'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Rate limiting - simple in-memory store (resets on redeploy)
+const rateLimitStore = new Map<string, { count: number; timestamp: number }>()
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
+const RATE_LIMIT_MAX = 5 // Max 5 login attempts per minute per IP
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const record = rateLimitStore.get(ip)
+
+  if (!record || now - record.timestamp > RATE_LIMIT_WINDOW) {
+    rateLimitStore.set(ip, { count: 1, timestamp: now })
+    return false
+  }
+
+  if (record.count >= RATE_LIMIT_MAX) {
+    return true
+  }
+
+  record.count++
+  return false
+}
+
 // Generate a random 6-digit code
 function generateLoginCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -15,6 +37,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, password } = body
+
+    // Rate limiting
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0] ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
+    if (isRateLimited(ip)) {
+      return NextResponse.json(
+        { error: 'Too many attempts. Please try again later.' },
+        { status: 429 },
+      )
+    }
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
@@ -90,7 +124,7 @@ export async function POST(request: NextRequest) {
       `,
     })
 
-    console.log('Login code sent to:', email)
+    // Login code sent successfully
 
     return NextResponse.json({ success: true })
   } catch (error) {
