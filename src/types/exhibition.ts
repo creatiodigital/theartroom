@@ -39,12 +39,12 @@ export type TExhibition = {
   floorReflectiveness?: number
   floorMaterial?:
     | 'concrete'
-    | 'wood'
+    | 'red-parquet'
     | 'marble'
-    | 'chevron'
     | 'parquet'
     | 'patterned-concrete'
     | 'worn-concrete'
+    | 'wood-planks'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number

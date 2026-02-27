@@ -205,12 +205,12 @@ const exhibitionSlice = createSlice({
       state: TExhibitionWithHistory,
       action: PayloadAction<
         | 'concrete'
-        | 'wood'
+        | 'red-parquet'
         | 'marble'
-        | 'chevron'
         | 'parquet'
         | 'patterned-concrete'
         | 'worn-concrete'
+        | 'wood-planks'
       >,
     ) => {
       state.floorMaterial = action.payload

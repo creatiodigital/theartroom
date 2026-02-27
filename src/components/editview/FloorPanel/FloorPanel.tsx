@@ -28,10 +28,10 @@ const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
   { value: 'patterned-concrete', label: 'Patterned Concrete' },
   { value: 'worn-concrete', label: 'Worn Concrete' },
-  { value: 'wood', label: 'Wood' },
+  { value: 'red-parquet', label: 'Red Parquet' },
   { value: 'marble', label: 'Marble' },
-  { value: 'chevron', label: 'Chevron' },
   { value: 'parquet', label: 'Parquet' },
+  { value: 'wood-planks', label: 'Wood Planks' },
 ] as const
 
 const FloorPanel = () => {
@@ -73,7 +73,16 @@ const FloorPanel = () => {
 
   const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      setFloorMaterial(e.target.value as 'concrete' | 'wood' | 'marble' | 'chevron' | 'parquet'),
+      setFloorMaterial(
+        e.target.value as
+          | 'concrete'
+          | 'red-parquet'
+          | 'marble'
+          | 'parquet'
+          | 'patterned-concrete'
+          | 'worn-concrete'
+          | 'wood-planks',
+      ),
     )
     setSaved(false)
   }

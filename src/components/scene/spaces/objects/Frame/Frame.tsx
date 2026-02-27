@@ -11,8 +11,6 @@ interface FrameProps {
   cornerStyle?: 'mitered' | 'straight' // 'mitered' = 45° angled, 'straight' = butt joint
 }
 
-const BEVEL_SIZE = 0.002
-const BEVEL_THICKNESS = 0.001
 const BEVEL_SEGMENTS = 2
 const ROUNDED_BEVEL_RADIUS = 0.002
 
@@ -24,6 +22,10 @@ function createMiteredPieceGeo(length: number, thickness: number, depth: number)
   const halfLen = length / 2
   const t = thickness
 
+  // Dynamic bevel: proportional to thickness, kept very small to avoid corner artifacts
+  const bevelSize = Math.min(thickness * 0.02, 0.0008)
+  const bevelThickness = Math.min(thickness * 0.01, 0.0004)
+
   const shape = new Shape()
   shape.moveTo(-halfLen, 0)
   shape.lineTo(halfLen, 0)
@@ -34,8 +36,8 @@ function createMiteredPieceGeo(length: number, thickness: number, depth: number)
   const geo = new ExtrudeGeometry(shape, {
     depth,
     bevelEnabled: true,
-    bevelSize: BEVEL_SIZE,
-    bevelThickness: BEVEL_THICKNESS,
+    bevelSize,
+    bevelThickness,
     bevelSegments: BEVEL_SEGMENTS,
   })
 
