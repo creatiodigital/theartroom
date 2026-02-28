@@ -389,16 +389,29 @@ const Display = ({ artwork }: DisplayProps) => {
   const texOffsetY = frameTextureOffsetY ?? 0
   const texRotation = ((frameTextureRotation ?? 0) * Math.PI) / 180
 
+  // Per-artwork seed offset so adjacent wood frames don't have identical grain patterns
+  const artworkSeedOffset = useMemo(() => {
+    const id = artwork.id || ''
+    let hash = 0
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash * 31 + id.charCodeAt(i)) | 0
+    }
+    return {
+      x: ((hash & 0xffff) / 0xffff),       // 0–1 range
+      y: (((hash >>> 16) & 0xffff) / 0xffff), // 0–1 range
+    }
+  }, [artwork.id])
+
   useMemo(() => {
     if (!woodTextures) return
     ;[woodTextures.diffuse, woodTextures.normal, woodTextures.roughnessMap].forEach((tex) => {
       tex.repeat.set(texScale, texScale)
-      tex.offset.set(texOffsetX, texOffsetY)
+      tex.offset.set(texOffsetX + artworkSeedOffset.x, texOffsetY + artworkSeedOffset.y)
       tex.rotation = texRotation
       tex.center.set(0.5, 0.5)
       tex.needsUpdate = true
     })
-  }, [woodTextures, texScale, texOffsetX, texOffsetY, texRotation])
+  }, [woodTextures, texScale, texOffsetX, texOffsetY, texRotation, artworkSeedOffset])
 
   // Temperature color shift helper (warm = orange tint, cool = blue tint)
   const temperatureToColor = (temp: number): string => {

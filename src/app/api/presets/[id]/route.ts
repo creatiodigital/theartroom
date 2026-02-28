@@ -70,6 +70,30 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         frameSize: body.frameSize != null ? Number(body.frameSize) : preset.frameSize,
         frameThickness:
           body.frameThickness != null ? Number(body.frameThickness) : preset.frameThickness,
+        frameMaterial: body.frameMaterial ?? preset.frameMaterial,
+        frameCornerStyle: body.frameCornerStyle ?? preset.frameCornerStyle,
+        frameTextureScale:
+          body.frameTextureScale != null ? Number(body.frameTextureScale) : preset.frameTextureScale,
+        frameTextureOffsetX:
+          body.frameTextureOffsetX != null
+            ? Number(body.frameTextureOffsetX)
+            : preset.frameTextureOffsetX,
+        frameTextureOffsetY:
+          body.frameTextureOffsetY != null
+            ? Number(body.frameTextureOffsetY)
+            : preset.frameTextureOffsetY,
+        frameTextureRotation:
+          body.frameTextureRotation != null
+            ? Number(body.frameTextureRotation)
+            : preset.frameTextureRotation,
+        frameTextureRoughness:
+          body.frameTextureRoughness != null
+            ? Number(body.frameTextureRoughness)
+            : preset.frameTextureRoughness,
+        frameTextureTemperature:
+          body.frameTextureTemperature != null
+            ? Number(body.frameTextureTemperature)
+            : preset.frameTextureTemperature,
         // Passepartout
         showPassepartout: body.showPassepartout ?? preset.showPassepartout,
         passepartoutColor: body.passepartoutColor ?? preset.passepartoutColor,

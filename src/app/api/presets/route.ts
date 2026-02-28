@@ -44,6 +44,19 @@ export async function POST(request: Request) {
         frameColor: body.frameColor ?? '#000000',
         frameSize: body.frameSize != null ? Number(body.frameSize) : 5,
         frameThickness: body.frameThickness != null ? Number(body.frameThickness) : 0.5,
+        frameMaterial: body.frameMaterial ?? 'plastic',
+        frameCornerStyle: body.frameCornerStyle ?? 'mitered',
+        frameTextureScale: body.frameTextureScale != null ? Number(body.frameTextureScale) : 2.0,
+        frameTextureOffsetX:
+          body.frameTextureOffsetX != null ? Number(body.frameTextureOffsetX) : 0,
+        frameTextureOffsetY:
+          body.frameTextureOffsetY != null ? Number(body.frameTextureOffsetY) : 0,
+        frameTextureRotation:
+          body.frameTextureRotation != null ? Number(body.frameTextureRotation) : 0,
+        frameTextureRoughness:
+          body.frameTextureRoughness != null ? Number(body.frameTextureRoughness) : 0.6,
+        frameTextureTemperature:
+          body.frameTextureTemperature != null ? Number(body.frameTextureTemperature) : 0,
         // Passepartout
         showPassepartout: body.showPassepartout ?? false,
         passepartoutColor: body.passepartoutColor ?? '#ffffff',

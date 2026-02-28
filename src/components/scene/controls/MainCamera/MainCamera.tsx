@@ -251,14 +251,13 @@ const MainCamera = () => {
     cam.updateProjectionMatrix()
 
     if (!initialPositionSet.current) {
-      if (spaceConfig.defaultCameraPosition) {
-        // Use space-specific camera start position
-        const [x, z] = spaceConfig.defaultCameraPosition
-        cam.position.set(x, cameraElevation, z)
-        cam.lookAt(new Vector3(x, cameraElevation, z - 5))
-        cam.updateProjectionMatrix()
-      } else if (wallCoordinates && wallNormal) {
-        // Position camera based on wall/placeholder coordinates
+      // Check if wallCoordinates have been updated from factory defaults
+      const isDefaultWallCoords =
+        wallCoordinates.x === 0 && wallCoordinates.y === 0 && wallCoordinates.z === 0 &&
+        wallNormal.x === 0 && wallNormal.y === 0 && wallNormal.z === 1
+
+      if (!isDefaultWallCoords && wallCoordinates && wallNormal) {
+        // Position camera based on wall/placeholder coordinates (e.g. returning from wall view)
         const lookAt = new Vector3(wallCoordinates.x, cameraElevation, wallCoordinates.z)
         const offsetDistance = 5
         const offset = new Vector3(wallNormal.x * offsetDistance, 0, wallNormal.z * offsetDistance)
@@ -266,6 +265,12 @@ const MainCamera = () => {
 
         cam.position.set(cameraPosition.x, cameraElevation, cameraPosition.z)
         cam.lookAt(lookAt)
+        cam.updateProjectionMatrix()
+      } else if (spaceConfig.defaultCameraPosition) {
+        // Use space-specific camera start position (first load)
+        const [x, z] = spaceConfig.defaultCameraPosition
+        cam.position.set(x, cameraElevation, z)
+        cam.lookAt(new Vector3(x, cameraElevation, z - 5))
         cam.updateProjectionMatrix()
       } else {
         // Default position: center of floor (0, cameraElevation, 0), looking forward
