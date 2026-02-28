@@ -79,4 +79,6 @@ export type SpaceConfig = {
   refs: SpaceRefsCount
   /** Number of placeholder positions */
   placeholders: number
+  /** Default camera start position [x, z] — camera will be placed at (x, cameraElevation, z) */
+  defaultCameraPosition?: [number, number]
 }

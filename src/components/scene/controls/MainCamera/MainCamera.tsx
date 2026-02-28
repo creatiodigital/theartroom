@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Vector3, PerspectiveCamera, Mesh, Raycaster } from 'three'
 
 import SceneContext from '@/contexts/SceneContext'
+import { getSpaceConfig } from '@/components/scene/constants'
 import { clearFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 
@@ -82,6 +83,8 @@ const MainCamera = () => {
   const wallCoordinates = useSelector((state: RootState) => state.wallView.currentWallCoordinates)
   const wallNormal = useSelector((state: RootState) => state.wallView.currentWallNormal)
   const focusTarget = useSelector((state: RootState) => state.scene.focusTarget)
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
+  const spaceConfig = getSpaceConfig(spaceId)
 
   // Handle focus target changes - start animation
   useEffect(() => {
@@ -248,7 +251,13 @@ const MainCamera = () => {
     cam.updateProjectionMatrix()
 
     if (!initialPositionSet.current) {
-      if (wallCoordinates && wallNormal) {
+      if (spaceConfig.defaultCameraPosition) {
+        // Use space-specific camera start position
+        const [x, z] = spaceConfig.defaultCameraPosition
+        cam.position.set(x, cameraElevation, z)
+        cam.lookAt(new Vector3(x, cameraElevation, z - 5))
+        cam.updateProjectionMatrix()
+      } else if (wallCoordinates && wallNormal) {
         // Position camera based on wall/placeholder coordinates
         const lookAt = new Vector3(wallCoordinates.x, cameraElevation, wallCoordinates.z)
         const offsetDistance = 5

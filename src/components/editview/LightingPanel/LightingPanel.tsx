@@ -139,6 +139,18 @@ const LightingPanel = () => {
   const hasRecessedLamps = spaceFeatures.hasRecessedLamps
   const hasWindows = spaceFeatures.hasWindows
 
+  // Filter ceiling light options based on space features
+  const availableCeilingLightOptions = CEILING_LIGHT_OPTIONS.filter((option) => {
+    if (!hasTrackLamps) return option.value === 'plafond'
+    return true
+  })
+
+  // If current mode is not available, fall back to the first available option
+  const effectiveCeilingLightMode =
+    availableCeilingLightOptions.some((o) => o.value === ceilingLightMode)
+      ? ceilingLightMode
+      : availableCeilingLightOptions[0]?.value ?? 'plafond'
+
   // Ambient light handlers
   const handleAmbientIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setAmbientLightIntensity(parseFloat(e.target.value)))
@@ -310,7 +322,7 @@ const LightingPanel = () => {
         </div>
       </Section>
 
-      {(hasSkylight || hasLamps || hasTrackLamps) && (
+      {(hasSkylight || hasLamps || hasTrackLamps || hasRecessedLamps) && (
         <Section title="Ceiling">
           {hasSkylight && (
             <>
@@ -374,15 +386,15 @@ const LightingPanel = () => {
             </>
           )}
 
-          {hasTrackLamps && (
+          {availableCeilingLightOptions.length > 0 && (
             <div className={styles.field}>
               <label className={styles.label}>Ceiling Light Type</label>
               <select
-                value={ceilingLightMode}
+                value={effectiveCeilingLightMode}
                 onChange={handleCeilingLightModeChange}
                 className={styles.select}
               >
-                {CEILING_LIGHT_OPTIONS.map((option) => (
+                {availableCeilingLightOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -392,7 +404,7 @@ const LightingPanel = () => {
           )}
 
           {hasRecessedLamps &&
-            (ceilingLightMode === 'plafond' || ceilingLightMode === 'track-plafond') && (
+            (effectiveCeilingLightMode === 'plafond' || effectiveCeilingLightMode === 'track-plafond') && (
               <>
                 <div className={styles.field}>
                   <label className={styles.label}>Plafond Color</label>
@@ -425,7 +437,7 @@ const LightingPanel = () => {
         </Section>
       )}
 
-      {hasTrackLamps && (ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
+      {hasTrackLamps && (effectiveCeilingLightMode === 'track' || effectiveCeilingLightMode === 'track-plafond') && (
         <Section title="Track Lamps">
           <div className={styles.field}>
             <label className={styles.label}>Color</label>

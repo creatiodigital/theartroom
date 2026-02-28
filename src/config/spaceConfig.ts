@@ -23,6 +23,14 @@ export const spaceConfig: Record<string, SpaceFeatures> = {
     hasWindows: true,
     hasReflectiveFloor: true,
   },
+  madrid: {
+    hasSkylight: false,
+    hasLamps: false,
+    hasTrackLamps: false,
+    hasRecessedLamps: true,
+    hasWindows: false,
+    hasReflectiveFloor: true,
+  },
 }
 
 /**
