@@ -9,7 +9,7 @@ import type { SpaceConfig } from './spaces/types'
 /**
  * Available space keys. Add new spaces here.
  */
-export type SpaceKey = 'paris'
+export type SpaceKey = 'paris' | 'madrid'
 
 /**
  * Configuration for each space including refs, metadata, and assets.
@@ -30,6 +30,18 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
     },
     placeholders: 4,
   },
+  madrid: {
+    displayName: 'Madrid',
+    gltfPath: '/assets/spaces/madrid/madrid.glb',
+    thumbnailUrl: '/assets/thumbnails/madrid.jpg',
+    refs: {
+      walls: 3, // wall0 + doorFrame0 + doorMain0
+      windows: 0,
+      glass: 0,
+    },
+    placeholders: 4,
+    defaultCameraPosition: [0, 0],
+  },
 }
 
 /**
@@ -38,6 +50,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
  */
 export const spaceComponents = {
   paris: dynamic(() => import('./spaces/ParisSpace'), { ssr: false }),
+  madrid: dynamic(() => import('./spaces/MadridSpace'), { ssr: false }),
 }
 
 // =============================================================================
