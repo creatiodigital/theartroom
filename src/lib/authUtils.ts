@@ -66,6 +66,11 @@ export async function requireOwnership(resourceUserId: string) {
     return { session: null, error }
   }
 
+  // SuperAdmins can operate on any resource
+  if (isSuperAdmin(session!.user.userType)) {
+    return { session, error: null }
+  }
+
   // Allow if user owns the resource OR is impersonating the owner
   const effectiveUserId = session!.impersonating?.id || session!.user.id
 
