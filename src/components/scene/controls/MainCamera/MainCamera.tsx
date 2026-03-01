@@ -1,7 +1,15 @@
 'use client'
 
-import { useFrame } from '@react-three/fiber'
-import { useContext, useEffect, useRef, useState, useCallback, type RefObject } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+  type RefObject,
+} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Vector3, PerspectiveCamera, Mesh, Raycaster } from 'three'
 
@@ -85,6 +93,27 @@ const MainCamera = () => {
   const focusTarget = useSelector((state: RootState) => state.scene.focusTarget)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
+
+  // Dynamic camera start from GLB initialPoint node (dispatched by space component)
+  const initialCameraPosition = useSelector((state: RootState) => state.scene.initialCameraPosition)
+  const initialCameraDirection = useSelector(
+    (state: RootState) => state.scene.initialCameraDirection,
+  )
+
+  // Get camera ref for immediate positioning before first paint
+  const camera = useThree((state) => state.camera) as PerspectiveCamera
+
+  // Set camera position immediately when GLB data arrives — before paint, no visible jump
+  useLayoutEffect(() => {
+    if (initialCameraPosition && initialCameraDirection && !initialPositionSet.current) {
+      const [px, pz] = initialCameraPosition
+      const [dx, dz] = initialCameraDirection
+      camera.position.set(px, cameraElevation, pz)
+      camera.lookAt(new Vector3(px + dx, cameraElevation, pz + dz))
+      camera.updateProjectionMatrix()
+      initialPositionSet.current = true
+    }
+  }, [initialCameraPosition, initialCameraDirection, camera, cameraElevation])
 
   // Handle focus target changes - start animation
   useEffect(() => {
@@ -253,8 +282,12 @@ const MainCamera = () => {
     if (!initialPositionSet.current) {
       // Check if wallCoordinates have been updated from factory defaults
       const isDefaultWallCoords =
-        wallCoordinates.x === 0 && wallCoordinates.y === 0 && wallCoordinates.z === 0 &&
-        wallNormal.x === 0 && wallNormal.y === 0 && wallNormal.z === 1
+        wallCoordinates.x === 0 &&
+        wallCoordinates.y === 0 &&
+        wallCoordinates.z === 0 &&
+        wallNormal.x === 0 &&
+        wallNormal.y === 0 &&
+        wallNormal.z === 1
 
       if (!isDefaultWallCoords && wallCoordinates && wallNormal) {
         // Position camera based on wall/placeholder coordinates (e.g. returning from wall view)
@@ -266,20 +299,25 @@ const MainCamera = () => {
         cam.position.set(cameraPosition.x, cameraElevation, cameraPosition.z)
         cam.lookAt(lookAt)
         cam.updateProjectionMatrix()
+        initialPositionSet.current = true
+      } else if (initialCameraPosition && initialCameraDirection) {
+        // GLB initialPoint data arrived — set position (also handled by useLayoutEffect)
+        const [px, pz] = initialCameraPosition
+        const [dx, dz] = initialCameraDirection
+        cam.position.set(px, cameraElevation, pz)
+        cam.lookAt(new Vector3(px + dx, cameraElevation, pz + dz))
+        cam.updateProjectionMatrix()
+        initialPositionSet.current = true
       } else if (spaceConfig.defaultCameraPosition) {
-        // Use space-specific camera start position (first load)
+        // Fallback: static space config
         const [x, z] = spaceConfig.defaultCameraPosition
         cam.position.set(x, cameraElevation, z)
         cam.lookAt(new Vector3(x, cameraElevation, z - 5))
         cam.updateProjectionMatrix()
-      } else {
-        // Default position: center of floor (0, cameraElevation, 0), looking forward
-        cam.position.set(0, cameraElevation, 0)
-        cam.lookAt(new Vector3(0, cameraElevation, -5))
-        cam.updateProjectionMatrix()
+        initialPositionSet.current = true
       }
-
-      initialPositionSet.current = true
+      // If none matched, skip — don't default to (0,0,0), wait for data
+      return
     }
 
     // Continuously update camera elevation (allows real-time adjustment)

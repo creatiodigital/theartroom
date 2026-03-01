@@ -17,6 +17,7 @@ import type { RootState } from '@/redux/store'
 interface RecessedLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
   count?: number
+  indices?: number[]
   disableSpotlights?: boolean
 }
 
@@ -65,10 +66,14 @@ const RecessedSpotlight: React.FC<{
  * Both body and bulb geometries are rendered flat using their baked geometry positions.
  * Bulb color/intensity controlled by recessedLampColor/recessedLampIntensity.
  * A spotlight is placed at each bulb position, pointing downward.
+ *
+ * Supports non-sequential indices via the `indices` prop (e.g., [0,1,2,3,4,5,6,7,14,15,16]).
+ * Falls back to sequential 0..count-1 when `indices` is not provided.
  */
 const RecessedLamp: React.FC<RecessedLampProps> = ({
   nodes,
   count = 6,
+  indices,
   disableSpotlights = false,
 }) => {
   const tintedPlastic = useAmbientLightColor('#ffffff')
@@ -81,10 +86,16 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   )
   const bulbEmissiveIntensity = 2
 
+  // Resolve which indices to render — explicit list or sequential fallback
+  const lampIndices = useMemo(
+    () => indices ?? Array.from({ length: count }, (_, i) => i),
+    [indices, count],
+  )
+
   // Compute the center position of each bulb geometry for spotlight placement
   const bulbPositions = useMemo(() => {
-    const positions: Vector3[] = []
-    for (let i = 0; i < count; i++) {
+    const posMap = new Map<number, Vector3>()
+    for (const i of lampIndices) {
       const bulbNode = nodes[`recessedLampBulb${i}`]
       if (bulbNode) {
         const box = new Box3().setFromBufferAttribute(
@@ -92,22 +103,20 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
         )
         const center = new Vector3()
         box.getCenter(center)
-        positions.push(center)
+        posMap.set(i, center)
       } else {
-        positions.push(new Vector3())
+        posMap.set(i, new Vector3())
       }
     }
-    return positions
-  }, [nodes, count])
-
-  const lampsArray = useMemo(() => Array.from({ length: count }), [count])
+    return posMap
+  }, [nodes, lampIndices])
 
   return (
     <>
-      {lampsArray.map((_, i) => {
+      {lampIndices.map((i) => {
         const bodyNode = nodes[`recessedLampBody${i}`]
         const bulbNode = nodes[`recessedLampBulb${i}`]
-        const bulbPos = bulbPositions[i]
+        const bulbPos = bulbPositions.get(i) ?? new Vector3()
 
         return (
           <group key={`recessedLamp-${i}`}>
