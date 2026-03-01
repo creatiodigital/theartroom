@@ -1,12 +1,12 @@
 import { useGLTF, useTexture, SoftShadows, BakeShadows, Preload } from '@react-three/drei'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh, BufferGeometry, MeshStandardMaterial, SRGBColorSpace, Color } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
-import { Door } from '@/components/scene/spaces/objects/Door'
+
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
@@ -20,11 +20,15 @@ import { Wall } from '@/components/scene/spaces/objects/Wall'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
 
 import { useAmbientLight } from '@/hooks/useAmbientLight'
-import { addWall } from '@/redux/slices/sceneSlice'
+import { addWall, setInitialCameraFromNode } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
 import { Lights } from './lights'
+
+// Preload baked textures at module scope to avoid Loader setState-during-render warnings
+useTexture.preload('/assets/spaces/paris/textures/bw1.jpg')
+useTexture.preload('/assets/spaces/paris/textures/bc1.jpg')
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -44,7 +48,7 @@ type ParisSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/paris10.glb?v=2') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris14.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -60,8 +64,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
 
   // Load external baked textures
-  const wallTexture = useTexture('/assets/spaces/paris/textures/bakedWall8.jpg')
-  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bakedCeiling9.jpg')
+  const wallTexture = useTexture('/assets/spaces/paris/textures/bw1.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bc1.jpg')
 
   // Configure textures
   useMemo(() => {
@@ -111,6 +115,37 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     })
   }, [nodes, dispatch, placeholdersArray])
 
+  // Extract initial camera position and direction from initialPoint0 node
+  // useLayoutEffect ensures dispatch fires before paint, preventing camera jump
+  useLayoutEffect(() => {
+    const initialNode = nodes.initialPoint0
+    if (initialNode && initialNode.geometry) {
+      // Transforms are baked into geometry vertices (node transform is identity)
+      // Extract position from geometry bounding box center
+      initialNode.geometry.computeBoundingBox()
+      const bb = initialNode.geometry.boundingBox!
+      const centerX = (bb.max.x + bb.min.x) / 2
+      const centerZ = (bb.max.z + bb.min.z) / 2
+      const pos: [number, number] = [centerX, centerZ]
+
+      // Extract direction from the geometry's face normal (first vertex normal)
+      const normalAttr = initialNode.geometry.attributes.normal
+      let dir: [number, number] = [0, -1] // Fallback: look along -Z
+      if (normalAttr && normalAttr.count > 0) {
+        // Negate: normal points away from the face, camera should look the opposite way (into the room)
+        const nx = -normalAttr.getX(0)
+        const nz = -normalAttr.getZ(0)
+        // Normalize the xz direction
+        const len = Math.sqrt(nx * nx + nz * nz)
+        if (len > 0.001) {
+          dir = [nx / len, nz / len]
+        }
+      }
+
+      dispatch(setInitialCameraFromNode({ position: pos, direction: dir }))
+    }
+  }, [nodes, dispatch])
+
   return (
     <group {...props} dispose={null}>
       <Lights />
@@ -123,14 +158,20 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         (() => {
           nodes.floor0.geometry.computeBoundingBox()
           const bb = nodes.floor0.geometry.boundingBox!
-          const floorSurfaceY = nodes.floor0.position.y + (bb.max.y ?? 0)
-          const floorWidth = bb.max.x - bb.min.x
-          const floorDepth = bb.max.z - bb.min.z
+          const sx = nodes.floor0.scale.x
+          const sy = nodes.floor0.scale.y
+          const sz = nodes.floor0.scale.z
+          // Use the geometry's bounding box center (not mesh origin) for correct positioning
+          const centerX = nodes.floor0.position.x + ((bb.max.x + bb.min.x) / 2) * sx
+          const centerZ = nodes.floor0.position.z + ((bb.max.z + bb.min.z) / 2) * sz
+          const floorSurfaceY = nodes.floor0.position.y + (bb.max.y ?? 0) * sy
+          const floorWidth = (bb.max.x - bb.min.x) * sx
+          const floorDepth = (bb.max.z - bb.min.z) * sz
           return (
             <>
               <primitive object={nodes.floor0} visible={false} />
               <ReflectiveFloor
-                position={[nodes.floor0.position.x, floorSurfaceY, nodes.floor0.position.z]}
+                position={[centerX, floorSurfaceY, centerZ]}
                 width={floorWidth}
                 depth={floorDepth}
               />
@@ -147,19 +188,10 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
       )}
 
       {/* Window */}
-      <ParisWindow
-        nodes={nodes}
-        frameCount={2}
-        handleCount={2}
-        windowRefs={windowRefs}
-        glassRefs={glassRefs}
-      />
-
-      {/* Door */}
-      <Door nodes={nodes} doorFrameRef={wallRefs[1]} doorMainRef={wallRefs[2]} />
+      <ParisWindow nodes={nodes} frameCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
 
       {/* Radiator */}
-      <Radiator nodes={nodes} radiatorRef={wallRefs[3]} />
+      <Radiator nodes={nodes} radiatorRef={wallRefs[1]} />
 
       {/* Track Lamps - visible in 'track' and 'track-plafond' modes */}
       {(ceilingLightMode === 'track' || ceilingLightMode === 'track-plafond') && (
@@ -168,11 +200,24 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
 
       {/* Recessed Lamps - visible only in 'track-plafond' mode, spotlights disabled when track lamps present */}
       {ceilingLightMode === 'track-plafond' && (
-        <RecessedLamp nodes={nodes} count={6} disableSpotlights />
+        <RecessedLamp
+          nodes={nodes}
+          indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]}
+          disableSpotlights
+        />
       )}
 
       {/* Round Lamps - visible only in 'plafond' mode */}
-      {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={15} />}
+      {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={14} />}
+
+      {/* Recessed Lamps - also visible in 'plafond' mode as supplemental ceiling lights */}
+      {ceilingLightMode === 'plafond' && (
+        <RecessedLamp
+          nodes={nodes}
+          indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]}
+          disableSpotlights
+        />
+      )}
 
       {/* Single Sockets */}
       <SingleSocket nodes={nodes} count={2} />
@@ -185,6 +230,22 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
 
       {/* Artworks */}
+      {/* Invisible Door (collision barrier — camera cannot pass through) */}
+      {nodes.invisibleDoor0 && (
+        <mesh
+          ref={wallRefs[2]}
+          name="invisibleDoor0"
+          geometry={nodes.invisibleDoor0.geometry}
+          position={nodes.invisibleDoor0.position}
+          rotation={nodes.invisibleDoor0.rotation}
+          scale={nodes.invisibleDoor0.scale}
+          visible={false}
+        />
+      )}
+
+      {/* Initial Point (reference position) */}
+      {nodes.initialPoint0 && <primitive object={nodes.initialPoint0} visible={false} />}
+
       <ArtObjects />
 
       <Preload all />

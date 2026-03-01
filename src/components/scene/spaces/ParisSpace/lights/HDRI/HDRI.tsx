@@ -1,4 +1,4 @@
-import { Environment } from '@react-three/drei'
+import { Environment, useEnvironment } from '@react-three/drei'
 import { Component, type ReactNode } from 'react'
 import { useSelector } from 'react-redux'
 
@@ -8,6 +8,9 @@ import type { RootState } from '@/redux/store'
 const ENABLE_HDRI = true
 const DEFAULT_HDRI_ROTATION = 128 // degrees
 const AVAILABLE_HDRIS = ['soil'] as const
+
+// Preload default HDRI at module scope to avoid Loader setState-during-render warnings
+useEnvironment.preload({ files: '/assets/hdri/soil.hdr' })
 
 // Error boundary to gracefully handle HDR load failures (e.g. on mobile Safari)
 class HDRIErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {

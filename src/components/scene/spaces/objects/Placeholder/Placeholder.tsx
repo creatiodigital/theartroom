@@ -60,7 +60,9 @@ const Placeholder: React.FC<PlaceholderProps> = ({ i, nodes }) => {
   }
 
   const meshKey = `placeholder${i}`
-  const geometry = nodes[meshKey].geometry
+  const node = nodes[meshKey]
+  if (!node) return null
+  const geometry = node.geometry
 
   return (
     <>

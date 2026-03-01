@@ -66,6 +66,14 @@ const sceneSlice = createSlice({
       // Return fresh initial state to prevent stale data between exhibitions
       return sceneFactory()
     },
+
+    setInitialCameraFromNode: (
+      state: TScene,
+      action: PayloadAction<{ position: [number, number]; direction: [number, number] }>,
+    ) => {
+      state.initialCameraPosition = action.payload.position
+      state.initialCameraDirection = action.payload.direction
+    },
   },
 })
 
@@ -83,6 +91,7 @@ export const {
   setFocusTarget,
   clearFocusTarget,
   resetScene,
+  setInitialCameraFromNode,
 } = sceneSlice.actions
 
 export default sceneSlice.reducer

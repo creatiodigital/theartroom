@@ -10,4 +10,6 @@ export const sceneFactory = (): TScene => ({
   currentArtworkId: null,
   walls: [],
   focusTarget: null,
+  initialCameraPosition: null,
+  initialCameraDirection: null,
 })
