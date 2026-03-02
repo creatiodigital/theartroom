@@ -21,7 +21,7 @@ export type SpaceKey = 'paris' | 'madrid'
 export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   paris: {
     displayName: 'Paris',
-    gltfPath: '/assets/spaces/paris/paris14.glb',
+    gltfPath: '/assets/spaces/paris/paris16.glb',
     thumbnailUrl: '/assets/thumbnails/paris.jpg',
     refs: {
       walls: 3, // wall0 + radiator0 + invisibleDoor0

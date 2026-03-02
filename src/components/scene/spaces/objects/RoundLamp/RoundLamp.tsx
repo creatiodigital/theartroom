@@ -61,9 +61,14 @@ const RoundSpotlight: React.FC<{
 /**
  * Round lamp with body and emissive bulb, plus downward spotlight.
  * In the GLB, meshes are named: roundLampBody0, roundLampBulb0, etc.
+ * Bulbs are children of bodies in the GLB hierarchy.
  * Reuses the recessed lamp color/intensity controls.
+ *
+ * Renders body and bulb as explicit <mesh geometry={...}> elements
+ * (matching the RecessedLamp pattern) so baked vertex positions are
+ * used directly without any stale scene-graph transforms.
  */
-const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
+const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
   const tintedPlastic = useAmbientLightColor('#ffffff')
 
   const lampColor = useSelector(
@@ -102,23 +107,21 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
         const bulbNode = nodes[`roundLampBulb${i}`]
         const bulbPos = bulbPositions[i]
 
+        if (!bodyNode) return null
+
         return (
           <group key={`roundLamp-${i}`}>
             {/* Body */}
-            {bodyNode && (
-              <mesh
-                key={`roundLampBody-${i}`}
-                name={`roundLampBody${i}`}
-                geometry={bodyNode.geometry}
-              >
-                <meshStandardMaterial color={tintedPlastic} roughness={0.4} metalness={0.0} />
-              </mesh>
-            )}
+            <mesh
+              name={`roundLampBody${i}`}
+              geometry={bodyNode.geometry}
+            >
+              <meshStandardMaterial color={tintedPlastic} roughness={0.4} metalness={0.0} />
+            </mesh>
 
             {/* Bulb (emissive) */}
             {bulbNode && (
               <mesh
-                key={`roundLampBulb-${i}-${lampColor}-${lampIntensity}`}
                 name={`roundLampBulb${i}`}
                 geometry={bulbNode.geometry}
               >
@@ -133,7 +136,7 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
             )}
 
             {/* Spotlight pointing downward (every other lamp for performance) */}
-            {bulbNode && i % 2 === 0 && (
+            {i % 2 === 0 && (
               <RoundSpotlight position={bulbPos} color={lampColor} intensity={lampIntensity * 2} />
             )}
           </group>
@@ -144,3 +147,4 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 15 }) => {
 }
 
 export default RoundLamp
+
