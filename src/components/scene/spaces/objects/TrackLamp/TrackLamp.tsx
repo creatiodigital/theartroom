@@ -12,6 +12,7 @@ import {
 } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
+import { getSpaceFeatures } from '@/config/spaceConfig'
 import type { RootState } from '@/redux/store'
 
 interface TrackLampProps {
@@ -76,6 +77,9 @@ const TrackSpotlight: React.FC<{
  * Supports per-lamp rotation (Y-axis) and on/off toggle via trackLampSettings.
  */
 const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
+  const spaceFeatures = getSpaceFeatures(spaceId)
+
   const materialColor = useSelector(
     (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_MATERIAL_COLOR,
   )
@@ -168,9 +172,18 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
         const isEnabled = settings?.enabled ?? true
         const rotation = settings?.rotation ?? 0
         const rotationRad = (rotation * Math.PI) / 180
+        const offset = settings?.offset ?? 0
+
+        // Apply position offset on the axis configured for this lamp
+        const axis = spaceFeatures.trackLampOffsetAxes?.[i] ?? 'x'
+        const offsetPivot: [number, number, number] = [
+          armPivot[0] + (axis === 'x' ? offset : 0),
+          armPivot[1],
+          armPivot[2] + (axis === 'z' ? offset : 0),
+        ]
 
         return (
-          <group key={`trackLamp-${i}`} position={armPivot} rotation={[0, rotationRad, 0]}>
+          <group key={`trackLamp-${i}`} position={offsetPivot} rotation={[0, rotationRad, 0]}>
             <group position={[-armPivot[0], -armPivot[1], -armPivot[2]]}>
               {/* Arm */}
               {armNode && (

@@ -12,6 +12,8 @@ export type SpaceFeatures = {
   hasRecessedLamps: boolean
   hasWindows: boolean
   hasReflectiveFloor: boolean
+  /** Per-lamp offset axis: 'x' or 'z'. Lamps not listed default to 'x'. */
+  trackLampOffsetAxes?: Record<number, 'x' | 'z'>
 }
 
 export const spaceConfig: Record<string, SpaceFeatures> = {
@@ -22,6 +24,11 @@ export const spaceConfig: Record<string, SpaceFeatures> = {
     hasRecessedLamps: true,
     hasWindows: true,
     hasReflectiveFloor: true,
+    // Lamps 0-7 face walls along Z, lamps 8-13 face walls along X
+    trackLampOffsetAxes: {
+      0: 'x', 1: 'x', 2: 'x', 3: 'x', 4: 'x', 5: 'x', 6: 'x', 7: 'x',
+      8: 'z', 9: 'z', 10: 'z', 11: 'z', 12: 'z', 13: 'z',
+    },
   },
   madrid: {
     hasSkylight: false,
