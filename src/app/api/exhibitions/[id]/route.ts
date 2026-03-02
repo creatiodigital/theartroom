@@ -35,7 +35,7 @@ type ExhibitionUpdateBody = {
   trackLampMaterialColor?: string
   trackLampAngle?: number
   trackLampDistance?: number
-  trackLampSettings?: Record<string, { rotation: number; enabled: boolean }> | null
+  trackLampSettings?: Record<string, { rotation: number; enabled: boolean; offset?: number }> | null
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean

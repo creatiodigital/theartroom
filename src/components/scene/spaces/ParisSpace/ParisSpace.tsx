@@ -27,8 +27,8 @@ import type { TArtwork } from '@/types/artwork'
 import { Lights } from './lights'
 
 // Preload baked textures at module scope to avoid Loader setState-during-render warnings
-useTexture.preload('/assets/spaces/paris/textures/bw1.jpg')
-useTexture.preload('/assets/spaces/paris/textures/bc1.jpg')
+useTexture.preload('/assets/spaces/paris/textures/bw2.jpg')
+useTexture.preload('/assets/spaces/paris/textures/bc2.jpg')
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -48,7 +48,7 @@ type ParisSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/paris14.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris16.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -64,8 +64,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
 
   // Load external baked textures
-  const wallTexture = useTexture('/assets/spaces/paris/textures/bw1.jpg')
-  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bc1.jpg')
+  const wallTexture = useTexture('/assets/spaces/paris/textures/bw2.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/paris/textures/bc2.jpg')
 
   // Configure textures
   useMemo(() => {
@@ -208,16 +208,9 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
       )}
 
       {/* Round Lamps - visible only in 'plafond' mode */}
-      {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={14} />}
+      {ceilingLightMode === 'plafond' && <RoundLamp nodes={nodes} count={17} />}
 
-      {/* Recessed Lamps - also visible in 'plafond' mode as supplemental ceiling lights */}
-      {ceilingLightMode === 'plafond' && (
-        <RecessedLamp
-          nodes={nodes}
-          indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]}
-          disableSpotlights
-        />
-      )}
+      {/* Recessed lamps are NOT rendered in 'plafond' mode — only round lamps */}
 
       {/* Single Sockets */}
       <SingleSocket nodes={nodes} count={2} />

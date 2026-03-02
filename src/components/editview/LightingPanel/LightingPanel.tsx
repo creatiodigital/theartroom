@@ -22,6 +22,7 @@ import {
   setTrackLampDistance,
   setTrackLampRotation,
   setTrackLampEnabled,
+  setTrackLampOffset,
   setRecessedLampColor,
   setRecessedLampIntensity,
   setTrackLampMaterialColor,
@@ -516,6 +517,7 @@ const LightingPanel = () => {
             const settings = trackLampSettings?.[String(i)]
             const isEnabled = settings?.enabled ?? true
             const rotation = settings?.rotation ?? 0
+            const offset = settings?.offset ?? 0
 
             return (
               <div key={`lamp-${i}`} className={styles.lampRow}>
@@ -549,6 +551,23 @@ const LightingPanel = () => {
                     className={styles.slider}
                   />
                   <span className={styles.sliderValue}>{rotation}°</span>
+                </div>
+                <div className={styles.lampSlider}>
+                  <input
+                    type="range"
+                    min="-2"
+                    max="2"
+                    step="0.01"
+                    value={offset}
+                    onChange={(e) => {
+                      dispatch(
+                        setTrackLampOffset({ index: i, offset: parseFloat(e.target.value) }),
+                      )
+                      setSaved(false)
+                    }}
+                    className={styles.slider}
+                  />
+                  <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
                 </div>
               </div>
             )
