@@ -39,7 +39,7 @@ type MadridSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/madrid/madrid.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/madrid/madrid4.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -135,11 +135,27 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
         })()}
 
       {/* Ceiling */}
-      {nodes.ceiling0 && <Ceiling geometry={nodes.ceiling0.geometry} material={ceilingMaterial} />}
+      {nodes.ceiling0 && (
+        <Ceiling
+          geometry={nodes.ceiling0.geometry}
+          material={ceilingMaterial}
+          position={nodes.ceiling0.position.toArray() as [number, number, number]}
+          rotation={[nodes.ceiling0.rotation.x, nodes.ceiling0.rotation.y, nodes.ceiling0.rotation.z]}
+          scale={nodes.ceiling0.scale.toArray() as [number, number, number]}
+        />
+      )}
 
       {/* Wall */}
       {nodes.wall0 && (
-        <Wall i={0} wallRef={wallRefs[0]} geometry={nodes.wall0.geometry} material={wallMaterial} />
+        <Wall
+          i={0}
+          wallRef={wallRefs[0]}
+          geometry={nodes.wall0.geometry}
+          material={wallMaterial}
+          position={nodes.wall0.position.toArray() as [number, number, number]}
+          rotation={[nodes.wall0.rotation.x, nodes.wall0.rotation.y, nodes.wall0.rotation.z]}
+          scale={nodes.wall0.scale.toArray() as [number, number, number]}
+        />
       )}
 
       {/* Door */}

@@ -48,7 +48,7 @@ type ParisSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/paris/paris16.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/paris/paris18.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -119,26 +119,23 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   // useLayoutEffect ensures dispatch fires before paint, preventing camera jump
   useLayoutEffect(() => {
     const initialNode = nodes.initialPoint0
-    if (initialNode && initialNode.geometry) {
-      // Transforms are baked into geometry vertices (node transform is identity)
-      // Extract position from geometry bounding box center
-      initialNode.geometry.computeBoundingBox()
-      const bb = initialNode.geometry.boundingBox!
-      const centerX = (bb.max.x + bb.min.x) / 2
-      const centerZ = (bb.max.z + bb.min.z) / 2
-      const pos: [number, number] = [centerX, centerZ]
+    if (initialNode) {
+      // Use the node's position (Blender origin) directly
+      const pos: [number, number] = [initialNode.position.x, initialNode.position.z]
 
       // Extract direction from the geometry's face normal (first vertex normal)
-      const normalAttr = initialNode.geometry.attributes.normal
       let dir: [number, number] = [0, -1] // Fallback: look along -Z
-      if (normalAttr && normalAttr.count > 0) {
-        // Negate: normal points away from the face, camera should look the opposite way (into the room)
-        const nx = -normalAttr.getX(0)
-        const nz = -normalAttr.getZ(0)
-        // Normalize the xz direction
-        const len = Math.sqrt(nx * nx + nz * nz)
-        if (len > 0.001) {
-          dir = [nx / len, nz / len]
+      if (initialNode.geometry) {
+        const normalAttr = initialNode.geometry.attributes.normal
+        if (normalAttr && normalAttr.count > 0) {
+          // Negate: normal points away from the face, camera should look the opposite way (into the room)
+          const nx = -normalAttr.getX(0)
+          const nz = -normalAttr.getZ(0)
+          // Normalize the xz direction
+          const len = Math.sqrt(nx * nx + nz * nz)
+          if (len > 0.001) {
+            dir = [nx / len, nz / len]
+          }
         }
       }
 
@@ -180,11 +177,23 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         })()}
 
       {/* Ceiling */}
-      {nodes.ceiling0 && <Ceiling geometry={nodes.ceiling0.geometry} material={ceilingMaterial} />}
+      {nodes.ceiling0 && (
+        <Ceiling
+          geometry={nodes.ceiling0.geometry}
+          material={ceilingMaterial}
+          position={[nodes.ceiling0.position.x, nodes.ceiling0.position.y, nodes.ceiling0.position.z]}
+        />
+      )}
 
       {/* Wall */}
       {nodes.wall0 && (
-        <Wall i={0} wallRef={wallRefs[0]} geometry={nodes.wall0.geometry} material={wallMaterial} />
+        <Wall
+          i={0}
+          wallRef={wallRefs[0]}
+          geometry={nodes.wall0.geometry}
+          material={wallMaterial}
+          position={[nodes.wall0.position.x, nodes.wall0.position.y, nodes.wall0.position.z]}
+        />
       )}
 
       {/* Window */}

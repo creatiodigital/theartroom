@@ -15,7 +15,7 @@ import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TDirection, TAlignmentPair } from '@/types/wallView'
 
-const SNAP_TOLERANCE = 5
+const BASE_SNAP_TOLERANCE = 2
 
 export const useResizeArtwork = (
   boundingData: TDimensions | null,
@@ -89,6 +89,9 @@ export const useResizeArtwork = (
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const deltaX = (moveEvent.clientX - startX) / scaleFactor
         const deltaY = (moveEvent.clientY - startY) / scaleFactor
+
+        // Snap tolerance scales inversely with zoom — tighter at high zoom
+        const SNAP_TOLERANCE = BASE_SNAP_TOLERANCE / scaleFactor
 
         let newWidth = initialWidth
         let newHeight = initialHeight

@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
-import { convert2DTo3D } from '@/components/wallview/utils'
+import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
 import {
   editArtworkGroup,
@@ -14,6 +14,8 @@ import {
 import type { RootState } from '@/redux/store'
 import type { TDimensions } from '@/types/geometry'
 import type { TAlignmentPair } from '@/types/wallView'
+
+import { areAligned } from './helpers'
 
 export const useMoveGroupArtwork = (
   wallRef: RefObject<HTMLDivElement | null>,
@@ -27,6 +29,11 @@ export const useMoveGroupArtwork = (
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const allExhibitionArtworkIds = useSelector(
+    (state: RootState) => state.exhibition.allExhibitionArtworkIds,
+  )
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
   const guides = useSelector((state: RootState) => state.wallView.guides)
 
@@ -61,23 +68,77 @@ export const useMoveGroupArtwork = (
       let x = scaledMouseX - offset.x
       let y = scaledMouseY - offset.y
 
-      // Check wall center alignment for the group
-      const wallWidth2d = boundingData.width * WALL_SCALE
-      const wallHeight2d = boundingData.height * WALL_SCALE
-      const tolerance = 3
+      // Snap tolerance scales inversely with zoom — tighter at high zoom
+      const tolerance = 2 / scaleFactor
       const alignedPairs: TAlignmentPair[] = []
 
       const groupWidth = artworkGroup.groupWidth ?? 0
       const groupHeight = artworkGroup.groupHeight ?? 0
 
+      // ---- Group-to-artwork alignment ----
+      // Treat the group bounding box as a virtual artwork and check against non-group artworks
+      const nonGroupArtworks = allExhibitionArtworkIds
+        .filter(
+          (id) =>
+            !artworkGroupIds.includes(id) &&
+            exhibitionArtworksById[id]?.wallId === currentWallId,
+        )
+        .map((id) => ({
+          pos: exhibitionArtworksById[id],
+          visual: getVisualBounds(
+            exhibitionArtworksById[id],
+            artworksById[exhibitionArtworksById[id].artworkId],
+          ),
+        }))
+
+      for (const { visual: otherVisual, pos: otherPos } of nonGroupArtworks) {
+        const alignment = areAligned(
+          { x, y, width: groupWidth, height: groupHeight },
+          { x: otherVisual.x, y: otherVisual.y, width: otherVisual.width, height: otherVisual.height },
+          tolerance,
+        )
+
+        if (alignment.horizontal.length > 0 && isSnapEnabled) {
+          const firstH = alignment.horizontal[0]
+          if (firstH === 'top') {
+            y = otherVisual.y
+          } else if (firstH === 'bottom') {
+            y = otherVisual.y + otherVisual.height - groupHeight
+          } else if (firstH === 'center-horizontal') {
+            y = otherVisual.y + otherVisual.height / 2 - groupHeight / 2
+          }
+        }
+
+        if (alignment.vertical.length > 0 && isSnapEnabled) {
+          const firstV = alignment.vertical[0]
+          if (firstV === 'left') {
+            x = otherVisual.x
+          } else if (firstV === 'right') {
+            x = otherVisual.x + otherVisual.width - groupWidth
+          } else if (firstV === 'center-vertical') {
+            x = otherVisual.x + otherVisual.width / 2 - groupWidth / 2
+          }
+        }
+
+        // Record alignment pairs for visual feedback
+        alignment.horizontal.forEach((dir) => {
+          alignedPairs.push({ from: '__group__', to: otherPos.artworkId, direction: dir })
+        })
+        alignment.vertical.forEach((dir) => {
+          alignedPairs.push({ from: '__group__', to: otherPos.artworkId, direction: dir })
+        })
+      }
+
+      // Check wall center alignment for the group
+      const wallWidth2d = boundingData.width * WALL_SCALE
+      const wallHeight2d = boundingData.height * WALL_SCALE
+
       // Vertical center (group centered horizontally with wall)
       const groupCenterX = x + groupWidth / 2
       const wallCenterX = wallWidth2d / 2
-      // Snap is enabled if any artwork in the group has it enabled
-      const isSnap = isSnapEnabled
 
       if (Math.abs(groupCenterX - wallCenterX) <= tolerance) {
-        if (isSnap) {
+        if (isSnapEnabled) {
           x = wallCenterX - groupWidth / 2
         }
         alignedPairs.push({
@@ -91,7 +152,7 @@ export const useMoveGroupArtwork = (
       const groupCenterY = y + groupHeight / 2
       const wallCenterY = wallHeight2d / 2
       if (Math.abs(groupCenterY - wallCenterY) <= tolerance) {
-        if (isSnap) {
+        if (isSnapEnabled) {
           y = wallCenterY - groupHeight / 2
         }
         alignedPairs.push({
@@ -167,7 +228,10 @@ export const useMoveGroupArtwork = (
       offset,
       artworkGroup,
       artworkGroupIds,
+      allExhibitionArtworkIds,
       exhibitionArtworksById,
+      artworksById,
+      currentWallId,
       isSnapEnabled,
       guides,
       dispatch,

@@ -73,10 +73,16 @@ const Placeholder: React.FC<PlaceholderProps> = ({ i, nodes }) => {
         onDoubleClick={() => handleOnPlaceholderClick(nodes[meshKey])}
         geometry={geometry}
         material={getPlaceholderMaterial()}
+        position={node.position}
+        rotation={node.rotation}
+        scale={node.scale}
       />
       <lineSegments
         geometry={new EdgesGeometry(geometry)}
         material={dashedLineMaterial}
+        position={node.position}
+        rotation={node.rotation}
+        scale={node.scale}
         onUpdate={(self) => self.computeLineDistances()}
       />
     </>

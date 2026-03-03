@@ -63,7 +63,12 @@ export const useBoundingData = (
       }
 
       if (currentWall.geometry.boundingBox) {
-        const boundingBox = currentWall.geometry.boundingBox as Box3
+        // Clone the geometry bounding box and translate it to world space
+        // (geometry is in local space; the mesh's position provides the world offset)
+        const localBB = currentWall.geometry.boundingBox as Box3
+        const boundingBox = localBB.clone()
+        currentWall.updateWorldMatrix(true, false)
+        boundingBox.applyMatrix4(currentWall.matrixWorld)
         const normal = calculateAverageNormal(currentWall)
         const dimensions = calculateDimensionsAndBasis(boundingBox, normal)
 
