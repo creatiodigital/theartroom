@@ -21,6 +21,7 @@ const wallViewSlice = createSlice({
     hideWallView: (state: TWallView) => {
       state.isWallView = false
       state.currentWallId = null
+      state.returnFromWallView = true
     },
     resetWallView: () => {
       // Return fresh initial state to prevent stale data between exhibitions
@@ -228,6 +229,9 @@ const wallViewSlice = createSlice({
     deselectGuide: (state: TWallView) => {
       state.selectedGuideId = null
     },
+    clearReturnFromWallView: (state: TWallView) => {
+      state.returnFromWallView = false
+    },
   },
 })
 
@@ -273,6 +277,7 @@ export const {
   removeGuide,
   selectGuide,
   deselectGuide,
+  clearReturnFromWallView,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer

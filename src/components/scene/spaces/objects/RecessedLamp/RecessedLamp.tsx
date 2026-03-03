@@ -5,10 +5,9 @@ import {
   BufferGeometry,
   DoubleSide,
   Vector3,
-  Box3,
   Object3D,
   SpotLight,
-  BufferAttribute,
+  MeshStandardMaterial,
 } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
@@ -61,14 +60,11 @@ const RecessedSpotlight: React.FC<{
 }
 
 /**
- * Recessed lamp with body, emissive bulb, and downward spotlight.
- * In the GLB, bulbs are nested inside body nodes (recessedLampBulb0 is child of recessedLampBody0).
- * Both body and bulb geometries are rendered flat using their baked geometry positions.
- * Bulb color/intensity controlled by recessedLampColor/recessedLampIntensity.
- * A spotlight is placed at each bulb position, pointing downward.
+ * Recessed lamp using <primitive> to preserve Blender hierarchy (body → bulb).
+ * Body position is the Blender origin. Bulb has a small local Y offset.
+ * Materials are applied imperatively.
  *
- * Supports non-sequential indices via the `indices` prop (e.g., [0,1,2,3,4,5,6,7,14,15,16]).
- * Falls back to sequential 0..count-1 when `indices` is not provided.
+ * Supports non-sequential indices via the `indices` prop.
  */
 const RecessedLamp: React.FC<RecessedLampProps> = ({
   nodes,
@@ -92,18 +88,46 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
     [indices, count],
   )
 
-  // Compute the center position of each bulb geometry for spotlight placement
+  // Apply materials imperatively (required when using <primitive>)
+  useEffect(() => {
+    for (const i of lampIndices) {
+      const bodyNode = nodes[`recessedLampBody${i}`]
+      const bulbNode = nodes[`recessedLampBulb${i}`]
+
+      if (bodyNode) {
+        bodyNode.material = new MeshStandardMaterial({
+          color: tintedPlastic,
+          roughness: 0.4,
+          metalness: 0.0,
+        })
+      }
+
+      if (bulbNode) {
+        bulbNode.material = new MeshStandardMaterial({
+          color: '#000000',
+          emissive: lampColor,
+          emissiveIntensity: bulbEmissiveIntensity,
+          toneMapped: false,
+          side: DoubleSide,
+        })
+      }
+    }
+  }, [nodes, lampIndices, tintedPlastic, lampColor, bulbEmissiveIntensity])
+
+  // Compute world-space bulb positions for spotlight placement
   const bulbPositions = useMemo(() => {
     const posMap = new Map<number, Vector3>()
     for (const i of lampIndices) {
+      const bodyNode = nodes[`recessedLampBody${i}`]
       const bulbNode = nodes[`recessedLampBulb${i}`]
-      if (bulbNode) {
-        const box = new Box3().setFromBufferAttribute(
-          bulbNode.geometry.attributes.position as BufferAttribute,
-        )
-        const center = new Vector3()
-        box.getCenter(center)
-        posMap.set(i, center)
+
+      if (bodyNode && bulbNode) {
+        bodyNode.updateWorldMatrix(true, true)
+        const worldPos = new Vector3()
+        bulbNode.getWorldPosition(worldPos)
+        posMap.set(i, worldPos)
+      } else if (bodyNode) {
+        posMap.set(i, new Vector3(bodyNode.position.x, bodyNode.position.y, bodyNode.position.z))
       } else {
         posMap.set(i, new Vector3())
       }
@@ -115,41 +139,17 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
     <>
       {lampIndices.map((i) => {
         const bodyNode = nodes[`recessedLampBody${i}`]
-        const bulbNode = nodes[`recessedLampBulb${i}`]
+        if (!bodyNode) return null
+
         const bulbPos = bulbPositions.get(i) ?? new Vector3()
 
         return (
           <group key={`recessedLamp-${i}`}>
-            {/* Body */}
-            {bodyNode && (
-              <mesh
-                key={`recessedLampBody-${i}`}
-                name={`recessedLampBody${i}`}
-                geometry={bodyNode.geometry}
-              >
-                <meshStandardMaterial color={tintedPlastic} roughness={0.4} metalness={0.0} />
-              </mesh>
-            )}
-
-            {/* Bulb (emissive) */}
-            {bulbNode && (
-              <mesh
-                key={`recessedLampBulb-${i}-${lampColor}-${lampIntensity}`}
-                name={`recessedLampBulb${i}`}
-                geometry={bulbNode.geometry}
-              >
-                <meshStandardMaterial
-                  color="#000000"
-                  emissive={lampColor}
-                  emissiveIntensity={bulbEmissiveIntensity}
-                  toneMapped={false}
-                  side={DoubleSide}
-                />
-              </mesh>
-            )}
+            {/* Primitive preserves: body (with position) → bulb (with local offset) */}
+            <primitive object={bodyNode} />
 
             {/* Spotlight pointing downward */}
-            {bulbNode && !disableSpotlights && (
+            {!disableSpotlights && (
               <RecessedSpotlight
                 position={bulbPos}
                 color={lampColor}

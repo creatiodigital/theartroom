@@ -53,6 +53,7 @@ export const Wall = () => {
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
+  const artworkGroup = useSelector((state: RootState) => state.wallView.artworkGroup)
   const [wallWidth, setWallWidth] = useState('')
   const [wallHeight, setWallHeight] = useState('')
   const [hoveredArtworkId, setHoveredArtworkId] = useState<string | null>(null)
@@ -434,11 +435,24 @@ export const Wall = () => {
             return null
           }
 
-          const fromPos = exhibitionArtworksById[pair.from]
-          const toPos = exhibitionArtworksById[pair.to]
-          if (!fromPos || !toPos) return null
+          // Resolve visual bounds for 'from' — either a real artwork or the group box
+          let fromVisual: { x: number; y: number; width: number; height: number }
+          if (pair.from === '__group__') {
+            const ag = artworkGroup
+            fromVisual = {
+              x: ag.groupX,
+              y: ag.groupY,
+              width: ag.groupWidth,
+              height: ag.groupHeight,
+            }
+          } else {
+            const fromPos = exhibitionArtworksById[pair.from]
+            if (!fromPos) return null
+            fromVisual = getVisualBounds(fromPos, artworksById[fromPos.artworkId])
+          }
 
-          const fromVisual = getVisualBounds(fromPos, artworksById[fromPos.artworkId])
+          const toPos = exhibitionArtworksById[pair.to]
+          if (!toPos) return null
           const toVisual = getVisualBounds(toPos, artworksById[toPos.artworkId])
 
           return (

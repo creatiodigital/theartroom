@@ -8,10 +8,13 @@ interface WallProps {
   wallRef: React.Ref<Mesh>
   geometry: BufferGeometry
   material: MeshStandardMaterial
+  position?: [number, number, number]
+  rotation?: [number, number, number]
+  scale?: [number, number, number]
 }
 
-const Wall: React.FC<WallProps> = ({ i, wallRef, geometry, material }) => {
-  const { ambientColor, scale } = useAmbientLight()
+const Wall: React.FC<WallProps> = ({ i, wallRef, geometry, material, position, rotation, scale }) => {
+  const { ambientColor, scale: ambientScale } = useAmbientLight()
 
   useMemo(() => {
     if (material?.map) {
@@ -23,10 +26,10 @@ const Wall: React.FC<WallProps> = ({ i, wallRef, geometry, material }) => {
   useEffect(() => {
     if (material) {
       const color = new Color(ambientColor)
-      color.multiplyScalar(scale)
+      color.multiplyScalar(ambientScale)
       material.color = color
     }
-  }, [material, ambientColor, scale])
+  }, [material, ambientColor, ambientScale])
 
   return (
     <mesh
@@ -36,6 +39,9 @@ const Wall: React.FC<WallProps> = ({ i, wallRef, geometry, material }) => {
       receiveShadow
       geometry={geometry}
       material={material}
+      position={position}
+      rotation={rotation}
+      scale={scale}
     />
   )
 }

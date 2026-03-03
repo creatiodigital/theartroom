@@ -13,11 +13,12 @@ export interface AlignmentResult {
   vertical: VerticalAlignment[]
 }
 
-const tolerance = 8
+const DEFAULT_TOLERANCE = 2
 
 export const areAligned = (
   artworkA: TAlignedArtwork,
   artworkB: TAlignedArtwork,
+  tolerance: number = DEFAULT_TOLERANCE,
 ): AlignmentResult => {
   const directions: AlignmentResult = {
     horizontal: [],

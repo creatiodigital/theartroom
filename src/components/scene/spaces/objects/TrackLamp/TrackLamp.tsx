@@ -5,10 +5,9 @@ import {
   BufferGeometry,
   DoubleSide,
   Vector3,
-  Box3,
   Object3D,
   SpotLight,
-  BufferAttribute,
+  MeshStandardMaterial,
 } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
@@ -25,7 +24,7 @@ const DEFAULT_MATERIAL_COLOR = '#ffffff'
 
 /**
  * Native Three.js spotlight for a track lamp.
- * Uses body→bulb direction to aim toward the wall.
+ * Position and target are in world space.
  */
 const TrackSpotlight: React.FC<{
   position: Vector3
@@ -70,11 +69,13 @@ const TrackSpotlight: React.FC<{
 }
 
 /**
- * Track lamp with arm, body, emissive bulb, and native Three.js SpotLight.
- * Iterates over indexed meshes: trackLampArm0, trackLampBody0, trackLampBulb0, etc.
- * SpotLights aim toward the wall using body→bulb geometry direction.
+ * Track lamp component using <primitive> to preserve Blender hierarchy.
  *
- * Supports per-lamp rotation (Y-axis) and on/off toggle via trackLampSettings.
+ * Scene graph: armNode (Y rotation at top) → bodyNode (tilt) → bulbNode
+ * The arm's position IS the Blender origin (pivot for Y-rotation).
+ * Materials are applied imperatively since <primitive> reuses original objects.
+ *
+ * Supports per-lamp Y-rotation, position offset, and on/off toggle.
  */
 const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
@@ -94,17 +95,54 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const lampAngle = useSelector((state: RootState) => state.exhibition.trackLampAngle ?? 0.45)
   const lampDistance = useSelector((state: RootState) => state.exhibition.trackLampDistance ?? 5.0)
 
-  // Per-lamp settings (rotation + on/off)
+  // Per-lamp settings (rotation + on/off + offset)
   const trackLampSettings = useSelector((state: RootState) => state.exhibition.trackLampSettings)
 
   const bulbEmissiveIntensity = 2
 
-  // Compute arm pivot positions (where arm connects to the rail/ceiling)
-  // plus bulb positions and aim directions
+  // Apply materials imperatively (required when using <primitive>)
+  useEffect(() => {
+    for (let i = 0; i < count; i++) {
+      const armNode = nodes[`trackLampArm${i}`]
+      const bodyNode = nodes[`trackLampBody${i}`]
+      const bulbNode = nodes[`trackLampBulb${i}`]
+
+      const settings = trackLampSettings?.[String(i)]
+      const isEnabled = settings?.enabled ?? true
+
+      if (armNode) {
+        armNode.material = new MeshStandardMaterial({
+          color: tintedMaterial,
+          roughness: 0.4,
+          metalness: 0.0,
+        })
+      }
+
+      if (bodyNode) {
+        bodyNode.material = new MeshStandardMaterial({
+          color: tintedMaterial,
+          roughness: 0.4,
+          metalness: 0.0,
+        })
+      }
+
+      if (bulbNode) {
+        bulbNode.material = new MeshStandardMaterial({
+          color: '#000000',
+          emissive: isEnabled ? lampColor : '#cccccc',
+          emissiveIntensity: isEnabled ? bulbEmissiveIntensity : 0.3,
+          toneMapped: false,
+          side: DoubleSide,
+        })
+      }
+    }
+  }, [nodes, count, tintedMaterial, lampColor, bulbEmissiveIntensity, trackLampSettings])
+
+  // Compute world-space bulb positions and aim directions using node transforms directly.
+  // We can't use getWorldPosition() because <primitive> re-parents nodes.
   const lampData = useMemo(() => {
     const data: Array<{
-      armPivot: [number, number, number]
-      bulbPos: Vector3
+      bulbWorldPos: Vector3
       aimDir: Vector3
     }> = []
 
@@ -113,45 +151,34 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
       const bulbNode = nodes[`trackLampBulb${i}`]
       const bodyNode = nodes[`trackLampBody${i}`]
 
-      // Arm pivot = arm geometry center (where it connects to ceiling rail)
-      let armPivot: [number, number, number] = [0, 0, 0]
-      if (armNode) {
-        const armBox = new Box3().setFromBufferAttribute(
-          armNode.geometry.attributes.position as BufferAttribute,
-        )
-        const armCenter = new Vector3()
-        armBox.getCenter(armCenter)
-        // Use the top of the arm bounding box as pivot (ceiling connection)
-        armPivot = [armCenter.x, armBox.max.y, armCenter.z]
-      }
-
-      let bulbPos = new Vector3()
+      let bulbWorldPos = new Vector3()
       let aimDir = new Vector3(0, -1, 0)
 
-      if (bulbNode && bodyNode) {
-        const bulbBox = new Box3().setFromBufferAttribute(
-          bulbNode.geometry.attributes.position as BufferAttribute,
-        )
-        const bulbCenter = new Vector3()
-        bulbBox.getCenter(bulbCenter)
-        bulbPos = bulbCenter
+      if (armNode && bodyNode && bulbNode) {
+        // Walk the transform chain manually: arm → body (with rotation) → bulb
+        // 1. Bulb position in body-local space, rotated by body quaternion
+        const bulbInBody = bulbNode.position.clone().applyQuaternion(bodyNode.quaternion)
+        // 2. Body position in arm-local space + rotated bulb offset
+        const bulbInArm = bodyNode.position.clone().add(bulbInBody)
+        // 3. World position = arm position + arm-local bulb position
+        bulbWorldPos = armNode.position.clone().add(bulbInArm)
 
-        const bodyBox = new Box3().setFromBufferAttribute(
-          bodyNode.geometry.attributes.position as BufferAttribute,
-        )
-        const bodyCenter = new Vector3()
-        bodyBox.getCenter(bodyCenter)
-        aimDir = new Vector3().subVectors(bulbCenter, bodyCenter).normalize()
-      } else if (bulbNode) {
-        const bulbBox = new Box3().setFromBufferAttribute(
-          bulbNode.geometry.attributes.position as BufferAttribute,
-        )
-        const bulbCenter = new Vector3()
-        bulbBox.getCenter(bulbCenter)
-        bulbPos = bulbCenter
+        // Aim direction: use the bulb's dominant horizontal axis (the wall-facing direction)
+        // in body-local space, then rotate by the body quaternion.
+        // This ignores the small off-center mounting offset that would skew the aim.
+        const bulbLocal = bulbNode.position
+        const absX = Math.abs(bulbLocal.x)
+        const absZ = Math.abs(bulbLocal.z)
+        let aimAxis: Vector3
+        if (absX > absZ) {
+          aimAxis = new Vector3(Math.sign(bulbLocal.x), 0, 0)
+        } else {
+          aimAxis = new Vector3(0, 0, Math.sign(bulbLocal.z))
+        }
+        aimDir = aimAxis.applyQuaternion(bodyNode.quaternion)
       }
 
-      data.push({ armPivot, bulbPos, aimDir })
+      data.push({ bulbWorldPos, aimDir })
     }
 
     return data
@@ -163,9 +190,9 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
     <>
       {lampsArray.map((_, i) => {
         const armNode = nodes[`trackLampArm${i}`]
-        const bodyNode = nodes[`trackLampBody${i}`]
-        const bulbNode = nodes[`trackLampBulb${i}`]
-        const { armPivot, bulbPos, aimDir } = lampData[i]
+        if (!armNode) return null
+
+        const { bulbWorldPos, aimDir } = lampData[i]
 
         // Per-lamp settings
         const settings = trackLampSettings?.[String(i)]
@@ -174,60 +201,27 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
         const rotationRad = (rotation * Math.PI) / 180
         const offset = settings?.offset ?? 0
 
+        // Arm position = Blender origin (top of arm, ceiling connection)
+        const armPos = armNode.position
+
         // Apply position offset on the axis configured for this lamp
         const axis = spaceFeatures.trackLampOffsetAxes?.[i] ?? 'x'
-        const offsetPivot: [number, number, number] = [
-          armPivot[0] + (axis === 'x' ? offset : 0),
-          armPivot[1],
-          armPivot[2] + (axis === 'z' ? offset : 0),
+        const offsetPos: [number, number, number] = [
+          armPos.x + (axis === 'x' ? offset : 0),
+          armPos.y,
+          armPos.z + (axis === 'z' ? offset : 0),
         ]
 
         return (
-          <group key={`trackLamp-${i}`} position={offsetPivot} rotation={[0, rotationRad, 0]}>
-            <group position={[-armPivot[0], -armPivot[1], -armPivot[2]]}>
-              {/* Arm */}
-              {armNode && (
-                <mesh
-                  key={`trackLampArm-${i}-${materialColor}`}
-                  name={`trackLampArm${i}`}
-                  geometry={armNode.geometry}
-                >
-                  <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
-                </mesh>
-              )}
+          <group key={`trackLamp-${i}`} position={offsetPos} rotation={[0, rotationRad, 0]}>
+            <group position={[-armPos.x, -armPos.y, -armPos.z]}>
+              {/* Primitive preserves: arm → body (with tilt rotation) → bulb */}
+              <primitive object={armNode} />
 
-              {/* Body */}
-              {bodyNode && (
-                <mesh
-                  key={`trackLampBody-${i}-${materialColor}`}
-                  name={`trackLampBody${i}`}
-                  geometry={bodyNode.geometry}
-                >
-                  <meshStandardMaterial color={tintedMaterial} roughness={0.4} metalness={0.0} />
-                </mesh>
-              )}
-
-              {/* Bulb (emissive) — dim when disabled */}
-              {bulbNode && (
-                <mesh
-                  key={`trackLampBulb-${i}-${lampColor}-${isEnabled}`}
-                  name={`trackLampBulb${i}`}
-                  geometry={bulbNode.geometry}
-                >
-                  <meshStandardMaterial
-                    color="#000000"
-                    emissive={isEnabled ? lampColor : '#cccccc'}
-                    emissiveIntensity={isEnabled ? bulbEmissiveIntensity : 0.3}
-                    toneMapped={false}
-                    side={DoubleSide}
-                  />
-                </mesh>
-              )}
-
-              {/* Native Three.js spotlight — only when enabled */}
-              {isEnabled && bulbNode && aimDir && (
+              {/* Spotlight — inside inner group so -armPos cancels with offsetPos */}
+              {isEnabled && (
                 <TrackSpotlight
-                  position={bulbPos}
+                  position={bulbWorldPos}
                   aimDirection={aimDir}
                   color={lampColor}
                   intensity={lampIntensity * 2}
