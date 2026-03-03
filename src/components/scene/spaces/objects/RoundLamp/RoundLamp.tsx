@@ -5,10 +5,9 @@ import {
   BufferGeometry,
   DoubleSide,
   Vector3,
-  Box3,
   Object3D,
   SpotLight,
-  BufferAttribute,
+  MeshStandardMaterial,
 } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
@@ -59,14 +58,10 @@ const RoundSpotlight: React.FC<{
 }
 
 /**
- * Round lamp with body and emissive bulb, plus downward spotlight.
- * In the GLB, meshes are named: roundLampBody0, roundLampBulb0, etc.
- * Bulbs are children of bodies in the GLB hierarchy.
+ * Round lamp using <primitive> to preserve Blender hierarchy (body → bulb).
+ * Body position is the Blender origin. Bulb has a small local Y offset.
+ * Materials are applied imperatively.
  * Reuses the recessed lamp color/intensity controls.
- *
- * Renders body and bulb as explicit <mesh geometry={...}> elements
- * (matching the RecessedLamp pattern) so baked vertex positions are
- * used directly without any stale scene-graph transforms.
  */
 const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
   const tintedPlastic = useAmbientLightColor('#ffffff')
@@ -79,18 +74,46 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
   )
   const bulbEmissiveIntensity = 2
 
-  // Compute the center position of each bulb geometry for spotlight placement
+  // Apply materials imperatively (required when using <primitive>)
+  useEffect(() => {
+    for (let i = 0; i < count; i++) {
+      const bodyNode = nodes[`roundLampBody${i}`]
+      const bulbNode = nodes[`roundLampBulb${i}`]
+
+      if (bodyNode) {
+        bodyNode.material = new MeshStandardMaterial({
+          color: tintedPlastic,
+          roughness: 0.4,
+          metalness: 0.0,
+        })
+      }
+
+      if (bulbNode) {
+        bulbNode.material = new MeshStandardMaterial({
+          color: '#000000',
+          emissive: lampColor,
+          emissiveIntensity: bulbEmissiveIntensity,
+          toneMapped: false,
+          side: DoubleSide,
+        })
+      }
+    }
+  }, [nodes, count, tintedPlastic, lampColor, bulbEmissiveIntensity])
+
+  // Compute world-space bulb positions for spotlight placement
   const bulbPositions = useMemo(() => {
     const positions: Vector3[] = []
     for (let i = 0; i < count; i++) {
+      const bodyNode = nodes[`roundLampBody${i}`]
       const bulbNode = nodes[`roundLampBulb${i}`]
-      if (bulbNode) {
-        const box = new Box3().setFromBufferAttribute(
-          bulbNode.geometry.attributes.position as BufferAttribute,
-        )
-        const center = new Vector3()
-        box.getCenter(center)
-        positions.push(center)
+
+      if (bodyNode && bulbNode) {
+        bodyNode.updateWorldMatrix(true, true)
+        const worldPos = new Vector3()
+        bulbNode.getWorldPosition(worldPos)
+        positions.push(worldPos)
+      } else if (bodyNode) {
+        positions.push(new Vector3(bodyNode.position.x, bodyNode.position.y, bodyNode.position.z))
       } else {
         positions.push(new Vector3())
       }
@@ -104,36 +127,14 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
     <>
       {lampsArray.map((_, i) => {
         const bodyNode = nodes[`roundLampBody${i}`]
-        const bulbNode = nodes[`roundLampBulb${i}`]
-        const bulbPos = bulbPositions[i]
-
         if (!bodyNode) return null
+
+        const bulbPos = bulbPositions[i]
 
         return (
           <group key={`roundLamp-${i}`}>
-            {/* Body */}
-            <mesh
-              name={`roundLampBody${i}`}
-              geometry={bodyNode.geometry}
-            >
-              <meshStandardMaterial color={tintedPlastic} roughness={0.4} metalness={0.0} />
-            </mesh>
-
-            {/* Bulb (emissive) */}
-            {bulbNode && (
-              <mesh
-                name={`roundLampBulb${i}`}
-                geometry={bulbNode.geometry}
-              >
-                <meshStandardMaterial
-                  color="#000000"
-                  emissive={lampColor}
-                  emissiveIntensity={bulbEmissiveIntensity}
-                  toneMapped={false}
-                  side={DoubleSide}
-                />
-              </mesh>
-            )}
+            {/* Primitive preserves: body (with position) → bulb (with local offset) */}
+            <primitive object={bodyNode} />
 
             {/* Spotlight pointing downward (every other lamp for performance) */}
             {i % 2 === 0 && (
@@ -147,4 +148,3 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
 }
 
 export default RoundLamp
-

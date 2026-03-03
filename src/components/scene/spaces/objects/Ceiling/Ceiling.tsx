@@ -6,13 +6,16 @@ import { useAmbientLight } from '@/hooks/useAmbientLight'
 interface CeilingProps {
   geometry: BufferGeometry
   material: MeshStandardMaterial
+  position?: [number, number, number]
+  rotation?: [number, number, number]
+  scale?: [number, number, number]
 }
 
 // Default ceiling material fallback
 const DEFAULT_CEILING_COLOR = '#f5f5f5'
 
-const Ceiling: React.FC<CeilingProps> = ({ geometry, material }) => {
-  const { ambientColor, scale } = useAmbientLight()
+const Ceiling: React.FC<CeilingProps> = ({ geometry, material, position, rotation, scale }) => {
+  const { ambientColor, scale: ambientScale } = useAmbientLight()
 
   // Ensure ceiling material is double-sided
   const ceilingMaterial = useMemo(() => {
@@ -36,13 +39,13 @@ const Ceiling: React.FC<CeilingProps> = ({ geometry, material }) => {
   useEffect(() => {
     if (ceilingMaterial) {
       const color = new Color(ambientColor)
-      color.multiplyScalar(scale)
+      color.multiplyScalar(ambientScale)
       ceilingMaterial.color = color
     }
-  }, [ceilingMaterial, ambientColor, scale])
+  }, [ceilingMaterial, ambientColor, ambientScale])
 
   return (
-    <mesh name="ceiling" castShadow receiveShadow geometry={geometry} material={ceilingMaterial} />
+    <mesh name="ceiling" castShadow receiveShadow geometry={geometry} material={ceilingMaterial} position={position} rotation={rotation} scale={scale} />
   )
 }
 

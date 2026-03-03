@@ -116,6 +116,9 @@ export const useMoveArtwork = (
 
       const alignedPairs: TAlignmentPair[] = []
 
+      // Snap tolerance scales inversely with zoom — tighter at high zoom
+      const tolerance = 2 / scaleFactor
+
       sameWallArtworks.forEach((otherArtwork) => {
         const otherVisual = getVisualBounds(otherArtwork, artworksById[otherArtwork.artworkId])
         const alignment = areAligned(
@@ -131,6 +134,7 @@ export const useMoveArtwork = (
             width: otherVisual.width,
             height: otherVisual.height,
           },
+          tolerance,
         )
 
         // Handle horizontal alignments (can be multiple)
@@ -191,7 +195,6 @@ export const useMoveArtwork = (
       // Check wall center alignment
       const wallWidth2d = boundingData.width * WALL_SCALE
       const wallHeight2d = boundingData.height * WALL_SCALE
-      const tolerance = 8
 
       // ---- Guide snapping ----
       if (isSnapEnabled) {

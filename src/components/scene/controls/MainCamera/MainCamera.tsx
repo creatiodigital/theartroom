@@ -16,6 +16,7 @@ import { Vector3, PerspectiveCamera, Mesh, Raycaster } from 'three'
 import SceneContext from '@/contexts/SceneContext'
 import { getSpaceConfig } from '@/components/scene/constants'
 import { clearFocusTarget } from '@/redux/slices/sceneSlice'
+import { clearReturnFromWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
 import {
@@ -90,6 +91,7 @@ const MainCamera = () => {
 
   const wallCoordinates = useSelector((state: RootState) => state.wallView.currentWallCoordinates)
   const wallNormal = useSelector((state: RootState) => state.wallView.currentWallNormal)
+  const returnFromWallView = useSelector((state: RootState) => state.wallView.returnFromWallView)
   const focusTarget = useSelector((state: RootState) => state.scene.focusTarget)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
@@ -278,6 +280,22 @@ const MainCamera = () => {
 
     cam.fov = cameraFOV
     cam.updateProjectionMatrix()
+
+    // Returning from wall view — position camera to face the edited wall
+    if (returnFromWallView) {
+      dispatch(clearReturnFromWallView())
+      if (wallCoordinates && wallNormal) {
+        const lookAt = new Vector3(wallCoordinates.x, cameraElevation, wallCoordinates.z)
+        const offsetDistance = 5
+        const offset = new Vector3(wallNormal.x * offsetDistance, 0, wallNormal.z * offsetDistance)
+        const cameraPosition = lookAt.clone().add(offset)
+        cam.position.set(cameraPosition.x, cameraElevation, cameraPosition.z)
+        cam.lookAt(lookAt)
+        cam.updateProjectionMatrix()
+        initialPositionSet.current = true
+      }
+      return
+    }
 
     if (!initialPositionSet.current) {
       // Check if wallCoordinates have been updated from factory defaults
