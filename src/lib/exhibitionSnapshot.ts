@@ -97,11 +97,7 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       // Camera
       cameraFOV: exhibitionData.cameraFOV,
       cameraElevation: exhibitionData.cameraElevation,
-      // Furniture
-      benchVisible: exhibitionData.benchVisible,
-      benchPositionX: exhibitionData.benchPositionX,
-      benchPositionZ: exhibitionData.benchPositionZ,
-      benchRotationY: exhibitionData.benchRotationY,
+
       // Wall & Ceiling
       wallColor: exhibitionData.wallColor,
       ceilingColor: exhibitionData.ceilingColor,

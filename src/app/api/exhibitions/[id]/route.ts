@@ -53,11 +53,7 @@ type ExhibitionUpdateBody = {
   cameraElevation?: number
   hdriEnvironment?: string
   ceilingLightMode?: string
-  // Furniture
-  benchVisible?: boolean
-  benchPositionX?: number
-  benchPositionZ?: number
-  benchRotationY?: number
+
   // Wall & Ceiling
   wallColor?: string
   ceilingColor?: string
@@ -200,13 +196,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     if (body.hdriEnvironment !== undefined) data.hdriEnvironment = body.hdriEnvironment
     if (body.ceilingLightMode !== undefined) data.ceilingLightMode = body.ceilingLightMode
-    // Furniture
-    if (body.benchVisible !== undefined) data.benchVisible = body.benchVisible
-    if (body.benchPositionX !== undefined) data.benchPositionX = body.benchPositionX
-    if (body.benchPositionZ !== undefined) data.benchPositionZ = body.benchPositionZ
-    if (body.benchRotationY !== undefined) {
-      data.benchRotationY = ((body.benchRotationY % 360) + 360) % 360
-    }
+
     // Wall & Ceiling
     if (body.wallColor !== undefined) data.wallColor = body.wallColor
     if (body.ceilingColor !== undefined) data.ceilingColor = body.ceilingColor

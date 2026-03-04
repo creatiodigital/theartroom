@@ -247,13 +247,20 @@ const Display = ({ artwork }: DisplayProps) => {
   const handleSingleClick = useCallback(() => {
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
+
+      // Calculate total display size (image + passepartout + frame)
+      const pBorder = (showPassepartout ? passepartoutSize?.value : 0) || 0
+      const fBorder = (showFrame ? frameSize?.value : 0) || 0
+      const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2) / 100
+      const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2) / 100
+
       dispatch(
         setFocusTarget({
           artworkId: artwork.id,
           position: { x: position.x, y: position.y, z: position.z },
           normal: { x: normal.x, y: normal.y, z: normal.z },
-          width: width || 1,
-          height: height || 1,
+          width: displayWidth,
+          height: displayHeight,
         }),
       )
 
@@ -272,6 +279,10 @@ const Display = ({ artwork }: DisplayProps) => {
     isPlaceholdersShown,
     isArtworkPanelOpen,
     getNormalFromQuaternion,
+    showPassepartout,
+    passepartoutSize,
+    showFrame,
+    frameSize,
   ])
 
   // Handle double click for info panel (existing behavior)
@@ -364,9 +375,9 @@ const Display = ({ artwork }: DisplayProps) => {
 
   useEffect(() => {
     const loader = new TextureLoader()
-    const diffuse = loader.load('/assets/materials/wooden-frame/diffuse.png')
-    const normal = loader.load('/assets/materials/wooden-frame/normal.png')
-    const roughnessMap = loader.load('/assets/materials/wooden-frame/roughness.png')
+    const diffuse = loader.load('/assets/materials/wooden-frame/diffuse.jpg')
+    const normal = loader.load('/assets/materials/wooden-frame/normal.jpg')
+    const roughnessMap = loader.load('/assets/materials/wooden-frame/roughness.jpg')
 
     ;[diffuse, normal, roughnessMap].forEach((tex) => {
       tex.wrapS = tex.wrapT = 1000 // RepeatWrapping

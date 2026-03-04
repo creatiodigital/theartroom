@@ -102,7 +102,7 @@ const MATERIAL_CONFIG: Record<
   },
   'worn-concrete': {
     diffuse: 'diffuse.jpg',
-    normal: 'normal.png',
+    normal: 'normal.jpg',
     bump: null,
     roughness: 'roughness.jpg',
     metallic: 'metallic.jpg',
