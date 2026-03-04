@@ -210,14 +210,10 @@ model Exhibition {
   // Camera settings
   cameraFOV              Float?   @default(50)
   cameraElevation        Float?   @default(1.6)
-  // Furniture
-  benchVisible           Boolean? @default(false)
-  benchPositionX         Float?   @default(0)
-  benchPositionZ         Float?   @default(0)
-  benchRotationY         Float?   @default(0)
+
   // Wall & Ceiling customization
-  wallColor              String?  @default("#ffffff")
-  ceilingColor           String?  @default("#ffffff")
+  wallColor    String? @default("#ffffff")
+  ceilingColor String? @default("#ffffff")
 
   exhibitionArtworks ExhibitionArtwork[]
   wallGuides         WallGuide[]

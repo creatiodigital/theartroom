@@ -13,8 +13,6 @@ import {
   hideCameraPanel,
   showHumanPanel,
   hideHumanPanel,
-  showFurniturePanel,
-  hideFurniturePanel,
   showWallCeilingPanel,
   hideWallCeilingPanel,
 } from '@/redux/slices/dashboardSlice'
@@ -32,9 +30,7 @@ export const Menu = () => {
   const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
   const isCameraPanelOpen = useSelector((state: RootState) => state.dashboard.isCameraPanelOpen)
   const isHumanPanelOpen = useSelector((state: RootState) => state.dashboard.isHumanPanelOpen)
-  const isFurniturePanelOpen = useSelector(
-    (state: RootState) => state.dashboard.isFurniturePanelOpen,
-  )
+
   const isWallCeilingPanelOpen = useSelector(
     (state: RootState) => state.dashboard.isWallCeilingPanelOpen,
   )
@@ -55,27 +51,12 @@ export const Menu = () => {
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
-      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showHumanPanel())
     }
   }
 
-  // @ts-ignore - temporarily unused while furniture button is hidden
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const toggleFurniturePanel = () => {
-    if (isFurniturePanelOpen) {
-      dispatch(hideFurniturePanel())
-    } else {
-      // Close other panels first
-      if (isLightingPanelOpen) dispatch(hideLightingPanel())
-      if (isFloorPanelOpen) dispatch(hideFloorPanel())
-      if (isCameraPanelOpen) dispatch(hideCameraPanel())
-      if (isHumanPanelOpen) dispatch(hideHumanPanel())
-      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
-      dispatch(showFurniturePanel())
-    }
-  }
 
   const toggleLightingPanel = () => {
     if (isLightingPanelOpen) {
@@ -85,7 +66,7 @@ export const Menu = () => {
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
-      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showLightingPanel())
     }
@@ -99,7 +80,7 @@ export const Menu = () => {
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
-      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showFloorPanel())
     }
@@ -113,7 +94,7 @@ export const Menu = () => {
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
-      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       dispatch(showCameraPanel())
     }
@@ -127,7 +108,7 @@ export const Menu = () => {
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isHumanPanelOpen) dispatch(hideHumanPanel())
-      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
+
       dispatch(showWallCeilingPanel())
     }
   }
@@ -166,11 +147,7 @@ export const Menu = () => {
       <Tooltip label="Lighting controls" placement="right">
         <Button size="regular" variant="secondary" icon="light" onClick={toggleLightingPanel} />
       </Tooltip>
-      {/* Furniture button - hidden until a suitable bench model is found
-      <Tooltip label="Furniture" placement="right">
-        <Button size="regular" variant="secondary" icon="armchair" onClick={toggleFurniturePanel} />
-      </Tooltip>
-      */}
+
       <Tooltip label="Walls and Ceiling" placement="right">
         <Button size="regular" variant="secondary" icon="house" onClick={toggleWallCeilingPanel} />
       </Tooltip>

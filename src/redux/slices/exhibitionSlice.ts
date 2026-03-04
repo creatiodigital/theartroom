@@ -287,22 +287,7 @@ const exhibitionSlice = createSlice({
       state.ceilingColor = action.payload
     },
 
-    // Furniture actions
-    setBenchVisible: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
-      state.benchVisible = action.payload
-    },
 
-    setBenchPositionX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.benchPositionX = action.payload
-    },
-
-    setBenchPositionZ: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.benchPositionZ = action.payload
-    },
-
-    setBenchRotationY: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.benchRotationY = action.payload
-    },
 
     // Snapshot actions for cancel functionality
     snapshotExhibition: (state: TExhibitionWithHistory) => {
@@ -410,10 +395,7 @@ export const {
   setCameraElevation,
   setWallColor,
   setCeilingColor,
-  setBenchVisible,
-  setBenchPositionX,
-  setBenchPositionZ,
-  setBenchRotationY,
+
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,
