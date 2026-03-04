@@ -394,12 +394,13 @@ const MainCamera = () => {
 
     const moveVector = calculateMovementVector(keysPressed, moveSpeed, cam)
 
-    // Add wheel-based forward/backward movement
+    // Add wheel-based forward/backward movement (clamped to prevent wall pass-through)
     if (mouseState.current?.wheelZ) {
       const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
       forward.y = 0
       forward.normalize()
-      moveVector.add(forward.clone().multiplyScalar(-mouseState.current.wheelZ))
+      const clampedWheel = Math.max(-0.15, Math.min(0.15, -mouseState.current.wheelZ))
+      moveVector.add(forward.clone().multiplyScalar(clampedWheel))
       mouseState.current.wheelZ = 0
     }
 
