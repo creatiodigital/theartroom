@@ -180,9 +180,16 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   // Clamp scale for safety (0.5 = largest tiles, 5.0 = smallest)
   const clampedScale = Math.max(0.5, Math.min(8.0, floorTextureScale))
 
+  // Resolve legacy/deleted material names to valid ones
+  const MATERIAL_ALIASES: Record<string, string> = {
+    chevron: 'parquet',
+  }
+  const resolvedMaterial = MATERIAL_ALIASES[floorMaterial] || floorMaterial
+  const validMaterial = MATERIAL_CONFIG[resolvedMaterial] ? resolvedMaterial : 'concrete'
+
   // Get material config for dynamic texture paths
-  const materialConfig = MATERIAL_CONFIG[floorMaterial] || MATERIAL_CONFIG.concrete
-  const texturePath = `/assets/materials/${floorMaterial}`
+  const materialConfig = MATERIAL_CONFIG[validMaterial]
+  const texturePath = `/assets/materials/${validMaterial}`
 
   // Build texture paths (metallic, normal, and ao are optional) — memoized to avoid
   // unstable references that cause useTexture to re-trigger loading on every render

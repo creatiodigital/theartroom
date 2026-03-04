@@ -82,7 +82,7 @@ const MainCamera = () => {
   const targetLookAt = useRef<Vector3 | null>(null)
 
   const dampingFactor = 0.6
-  const collisionDistance = 1
+  const collisionDistance = 0.5
   const moveSpeed = 0.03
 
   // Get camera settings from Redux
