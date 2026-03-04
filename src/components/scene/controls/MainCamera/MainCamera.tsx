@@ -57,8 +57,8 @@ function detectCollisions(
 // Animation constants
 const FOCUS_ANIMATION_SPEED = 3 // Higher = faster animation
 const FOCUS_THRESHOLD = 0.01 // Distance threshold to consider animation complete
-const FOCUS_PADDING = 1.2 // Padding factor to ensure artwork fits comfortably in view
-const FOCUS_MIN_DISTANCE = 1.0 // Minimum distance from artwork
+const FOCUS_PADDING = 1.1 // Padding factor to ensure artwork fits comfortably in view
+const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
 
 const MainCamera = () => {
   const [, setTick] = useState(0)
@@ -75,6 +75,7 @@ const MainCamera = () => {
   const mouseState: RefObject<MouseState> = useRef(createMouseState())
   const initialPositionSet = useRef(false)
   const rotationVelocity = useRef(0)
+  const isReturningToElevation = useRef(false)
 
   // Focus animation state
   const isAnimating = useRef(false)
@@ -127,16 +128,8 @@ const MainCamera = () => {
       const fovRad = (cameraFOV * Math.PI) / 180
       const halfFov = fovRad / 2
 
-      // Calculate vertical distance from camera to artwork extremes
-      const artworkTop = position.y + height / 2
-      const artworkBottom = position.y - height / 2
-
-      // How far above/below eye level are the artwork extremes?
-      const topOffset = artworkTop - cameraElevation
-      const bottomOffset = cameraElevation - artworkBottom
-
-      // The larger offset determines how far back we need to be
-      const maxVerticalOffset = Math.max(topOffset, bottomOffset)
+      // Since camera moves to artwork center Y, vertical offset is symmetric
+      const maxVerticalOffset = height / 2
 
       // Distance needed to see the most extreme vertical point
       // tan(halfFov) = verticalOffset / distance => distance = verticalOffset / tan(halfFov)
@@ -165,15 +158,16 @@ const MainCamera = () => {
       const cameraTargetPos = artworkPos
         .clone()
         .add(normalVec.clone().multiplyScalar(optimalDistance))
-      // Keep camera at eye height (no vertical tilt)
-      cameraTargetPos.y = cameraElevation
+      // Move camera to artwork center Y for perfect centering
+      cameraTargetPos.y = position.y
 
-      // Look straight ahead at the point on the wall at camera's eye height
-      const lookAtTarget = new Vector3(position.x, cameraElevation, position.z)
+      // Look straight at the artwork center
+      const lookAtTarget = new Vector3(position.x, position.y, position.z)
 
       targetPosition.current = cameraTargetPos
       targetLookAt.current = lookAtTarget
       isAnimating.current = true
+      isReturningToElevation.current = false
     }
   }, [focusTarget])
 
@@ -338,8 +332,24 @@ const MainCamera = () => {
       return
     }
 
-    // Continuously update camera elevation (allows real-time adjustment)
-    cam.position.y = cameraElevation
+    // Smoothly return to default elevation only on lateral movement (turning/strafing)
+    // Forward/backward movement keeps the focused elevation
+    const hasLateralInput =
+      keysPressed.current?.['a'] || keysPressed.current?.['d'] ||
+      keysPressed.current?.['arrowleft'] || keysPressed.current?.['arrowright'] ||
+      Math.abs(mouseState.current?.deltaX ?? 0) > 0.5
+
+    if (hasLateralInput && Math.abs(cam.position.y - cameraElevation) > 0.01) {
+      isReturningToElevation.current = true
+    }
+
+    if (isReturningToElevation.current) {
+      cam.position.y += (cameraElevation - cam.position.y) * 0.03
+      if (Math.abs(cam.position.y - cameraElevation) < 0.005) {
+        cam.position.y = cameraElevation
+        isReturningToElevation.current = false
+      }
+    }
 
     // Handle focus animation
     if (isAnimating.current && targetPosition.current && targetLookAt.current) {
