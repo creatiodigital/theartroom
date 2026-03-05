@@ -35,7 +35,7 @@ export const spaceConfig: Record<string, SpaceFeatures> = {
     hasLamps: false,
     hasTrackLamps: false,
     hasRecessedLamps: true,
-    hasWindows: false,
+    hasWindows: true,
     hasReflectiveFloor: true,
   },
 }

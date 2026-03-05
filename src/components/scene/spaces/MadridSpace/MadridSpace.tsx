@@ -1,25 +1,31 @@
 import { useGLTF, useTexture, SoftShadows, BakeShadows, Preload } from '@react-three/drei'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh, BufferGeometry, MeshStandardMaterial, SRGBColorSpace, Color } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
-import { Door } from '@/components/scene/spaces/objects/Door'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
+import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
-import { RecessedLamp } from '@/components/scene/spaces/objects/RecessedLamp'
+import { Radiator } from '@/components/scene/spaces/objects/Radiator'
+import RoundLamp from '@/components/scene/spaces/objects/RoundLamp/RoundLamp'
+import { SingleSocket } from '@/components/scene/spaces/objects/SingleSocket'
 import { Switch } from '@/components/scene/spaces/objects/Switch'
 import { Wall } from '@/components/scene/spaces/objects/Wall'
 import { Effects } from '@/components/scene/spaces/objects/Effects'
 
 import { useAmbientLight } from '@/hooks/useAmbientLight'
-import { addWall } from '@/redux/slices/sceneSlice'
+import { addWall, setInitialCameraFromNode } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
 import { Lights } from './lights'
+
+// Preload baked textures at module scope
+useTexture.preload('/assets/spaces/madrid/textures/mwall1.jpg')
+useTexture.preload('/assets/spaces/madrid/textures/mceiling1.jpg')
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -39,7 +45,7 @@ type MadridSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/madrid/madrid4.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/madrid/madrid7.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -53,8 +59,8 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
 
   // Load external baked textures (single suspension point)
   const [wallTexture, ceilingTexture] = useTexture([
-    '/assets/spaces/madrid/textures/madridWall.jpg',
-    '/assets/spaces/madrid/textures/madridCeiling.jpg',
+    '/assets/spaces/madrid/textures/mwall1.jpg',
+    '/assets/spaces/madrid/textures/mceiling1.jpg',
   ])
 
   // Configure textures
@@ -105,6 +111,29 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
     })
   }, [nodes, dispatch, placeholdersArray])
 
+  // Extract initial camera position and direction from initialPoint0 node
+  useLayoutEffect(() => {
+    const initialNode = nodes.initialPoint0
+    if (initialNode) {
+      const pos: [number, number] = [initialNode.position.x, initialNode.position.z]
+
+      let dir: [number, number] = [0, -1]
+      if (initialNode.geometry) {
+        const normalAttr = initialNode.geometry.attributes.normal
+        if (normalAttr && normalAttr.count > 0) {
+          const nx = -normalAttr.getX(0)
+          const nz = -normalAttr.getZ(0)
+          const len = Math.sqrt(nx * nx + nz * nz)
+          if (len > 0.001) {
+            dir = [nx / len, nz / len]
+          }
+        }
+      }
+
+      dispatch(setInitialCameraFromNode({ position: pos, direction: dir }))
+    }
+  }, [nodes, dispatch])
+
   return (
     <group {...props} dispose={null}>
       <Lights />
@@ -117,16 +146,19 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
         (() => {
           nodes.floor0.geometry.computeBoundingBox()
           const bb = nodes.floor0.geometry.boundingBox!
-          const floorSurfaceY = nodes.floor0.position.y + (bb.max.y ?? 0)
-          const floorWidth = bb.max.x - bb.min.x
-          const floorDepth = bb.max.z - bb.min.z
-          const floorCenterX = nodes.floor0.position.x + (bb.min.x + bb.max.x) / 2
-          const floorCenterZ = nodes.floor0.position.z + (bb.min.z + bb.max.z) / 2
+          const sx = nodes.floor0.scale.x
+          const sy = nodes.floor0.scale.y
+          const sz = nodes.floor0.scale.z
+          const centerX = nodes.floor0.position.x + ((bb.max.x + bb.min.x) / 2) * sx
+          const centerZ = nodes.floor0.position.z + ((bb.max.z + bb.min.z) / 2) * sz
+          const floorSurfaceY = nodes.floor0.position.y + (bb.max.y ?? 0) * sy
+          const floorWidth = (bb.max.x - bb.min.x) * sx
+          const floorDepth = (bb.max.z - bb.min.z) * sz
           return (
             <>
               <primitive object={nodes.floor0} visible={false} />
               <ReflectiveFloor
-                position={[floorCenterX, floorSurfaceY, floorCenterZ]}
+                position={[centerX, floorSurfaceY, centerZ]}
                 width={floorWidth}
                 depth={floorDepth}
               />
@@ -158,18 +190,40 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
         />
       )}
 
-      {/* Door */}
-      <Door nodes={nodes} doorFrameRef={wallRefs[1]} doorMainRef={wallRefs[2]} />
+      {/* Windows (2 windows: 4 frames, 2 glass panes) */}
+      <ParisWindow nodes={nodes} frameCount={4} glassCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
 
-      {/* Recessed Lamps — always active with spotlights */}
-      <RecessedLamp nodes={nodes} count={6} />
+      {/* Radiators */}
+      <Radiator nodes={nodes} count={2} />
+
+      {/* Round Lamps (17 lamps) */}
+      <RoundLamp nodes={nodes} count={17} />
 
       {/* Light Switch */}
       <Switch nodes={nodes} count={1} />
 
+      {/* Single Sockets */}
+      <SingleSocket nodes={nodes} count={2} />
+
+      {/* Invisible Door (collision barrier) */}
+      {nodes.invisibleDoor0 && (
+        <mesh
+          ref={wallRefs[1]}
+          name="invisibleDoor0"
+          geometry={nodes.invisibleDoor0.geometry}
+          position={nodes.invisibleDoor0.position}
+          rotation={nodes.invisibleDoor0.rotation}
+          scale={nodes.invisibleDoor0.scale}
+          visible={false}
+        />
+      )}
+
       {/* Placeholders */}
       {isPlaceholdersShown &&
         placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
+
+      {/* Initial Point (reference position) */}
+      {nodes.initialPoint0 && <primitive object={nodes.initialPoint0} visible={false} />}
 
       {/* Artworks */}
       <ArtObjects />
