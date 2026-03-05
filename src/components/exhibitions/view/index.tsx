@@ -390,6 +390,8 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         // Wall & Ceiling
         wallColor: exhibition.wallColor ?? undefined,
         ceilingColor: exhibition.ceilingColor ?? undefined,
+        // Autofocus groups
+        autofocusGroups: exhibition.autofocusGroups ?? undefined,
       }
       dispatch(setExhibition(exhibitionData))
     }
