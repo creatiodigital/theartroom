@@ -13,7 +13,15 @@ interface WallProps {
   scale?: [number, number, number]
 }
 
-const Wall: React.FC<WallProps> = ({ i, wallRef, geometry, material, position, rotation, scale }) => {
+const Wall: React.FC<WallProps> = ({
+  i,
+  wallRef,
+  geometry,
+  material,
+  position,
+  rotation,
+  scale,
+}) => {
   const { ambientColor, scale: ambientScale } = useAmbientLight()
 
   useMemo(() => {

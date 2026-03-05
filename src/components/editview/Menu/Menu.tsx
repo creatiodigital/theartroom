@@ -57,7 +57,6 @@ export const Menu = () => {
     }
   }
 
-
   const toggleLightingPanel = () => {
     if (isLightingPanelOpen) {
       dispatch(hideLightingPanel())

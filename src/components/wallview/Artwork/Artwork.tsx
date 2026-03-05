@@ -52,6 +52,17 @@ const Artwork = memo(
     const exhibitionArtworksById = useSelector(
       (state: RootState) => state.exhibition.exhibitionArtworksById,
     )
+    const activeAutofocusGroupId = useSelector(
+      (state: RootState) => state.wallView.activeAutofocusGroupId,
+    )
+    const autofocusGroups = useSelector(
+      (state: RootState) => state.exhibition.autofocusGroups ?? [],
+    )
+
+    // Check if this artwork is in the currently highlighted autofocus group
+    const isInActiveAutofocusGroup = activeAutofocusGroupId
+      ? autofocusGroups.some((g) => g.id === activeAutofocusGroupId && g.artworkIds.includes(id))
+      : false
 
     const artworkPositions = exhibitionArtworksById[id]
     const { posX2d, posY2d, height2d, width2d } = artworkPositions
@@ -174,6 +185,18 @@ const Artwork = memo(
               backgroundColor: artwork.shapeColor ?? '#000000',
               opacity: artwork.shapeOpacity ?? 1,
               borderRadius: artwork.shapeType === 'circle' ? '50%' : 0,
+            }}
+          />
+        )}
+        {isInActiveAutofocusGroup && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(255, 0, 0, 0.2)',
+              border: '2px solid rgba(255, 0, 0, 0.6)',
+              pointerEvents: 'none',
+              zIndex: 20,
             }}
           />
         )}

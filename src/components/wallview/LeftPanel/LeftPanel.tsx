@@ -3,9 +3,11 @@
 import c from 'classnames'
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { v4 as uuidv4 } from 'uuid'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
@@ -17,6 +19,8 @@ import {
   undo,
   redo,
   clearHistory,
+  addAutofocusGroup,
+  removeAutofocusGroup,
 } from '@/redux/slices/exhibitionSlice'
 import {
   showHuman,
@@ -25,6 +29,7 @@ import {
   hideRulers,
   removeGroup,
   toggleSnap,
+  setActiveAutofocusGroupId,
 } from '@/redux/slices/wallViewSlice'
 import {
   increaseScaleFactor,
@@ -54,6 +59,20 @@ export const LeftPanel = () => {
   const isRulersVisible = useSelector((state: RootState) => state.wallView.isRulersVisible)
   const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
+
+  // Autofocus Groups
+  const allAutofocusGroups = useSelector(
+    (state: RootState) => state.exhibition.autofocusGroups ?? [],
+  )
+  const wallAutofocusGroups = useMemo(
+    () => allAutofocusGroups.filter((g) => g.wallId === currentWallId),
+    [allAutofocusGroups, currentWallId],
+  )
+  const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
+  const activeGroupId = useSelector((state: RootState) => state.wallView.activeAutofocusGroupId)
+  const [groupWarning, setGroupWarning] = useState(false)
+
+  const canMakeGroup = artworkGroupIds.length >= 2
 
   // Undo/Redo state
   const historyLength = useSelector((state: RootState) => state.exhibition._history?.length ?? 0)
@@ -205,6 +224,43 @@ export const LeftPanel = () => {
     if (!isWizardOpen) {
       dispatch(showWizard())
     }
+  }
+
+  const handleMakeAutofocusGroup = () => {
+    if (!canMakeGroup || !currentWallId) return
+
+    // Check if any selected artwork already belongs to a group (any wall)
+    const conflicting = artworkGroupIds.find((id) =>
+      allAutofocusGroups.some((g) => g.artworkIds.includes(id)),
+    )
+    if (conflicting) {
+      setGroupWarning(true)
+      return
+    }
+
+    // Name is scoped per wall — find highest existing number to avoid duplicates after deletions
+    const maxNum = wallAutofocusGroups.reduce((max, g) => {
+      const match = g.name.match(/^Group (\d+)$/)
+      return match ? Math.max(max, parseInt(match[1], 10)) : max
+    }, 0)
+    const groupNumber = maxNum + 1
+    dispatch(
+      addAutofocusGroup({
+        id: uuidv4(),
+        name: `Group ${groupNumber}`,
+        wallId: currentWallId,
+        artworkIds: [...artworkGroupIds],
+      }),
+    )
+  }
+
+  const handleDeleteAutofocusGroup = (groupId: string) => {
+    dispatch(removeAutofocusGroup(groupId))
+    if (activeGroupId === groupId) dispatch(setActiveAutofocusGroupId(null))
+  }
+
+  const handleToggleGroupHighlight = (groupId: string) => {
+    dispatch(setActiveAutofocusGroupId(activeGroupId === groupId ? null : groupId))
   }
 
   return (
@@ -414,6 +470,89 @@ export const LeftPanel = () => {
           </div>
         </div>
       )}
+
+      {/* Autofocus Groups Section */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <Text font="dashboard" as="h3" className={styles.sectionTitle}>
+            Autofocus Groups
+          </Text>
+        </div>
+        <div className={styles.subsection}>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
+              <Tooltip
+                label={
+                  canMakeGroup
+                    ? 'Create autofocus group from selected artworks'
+                    : 'Select 2 or more artworks to create a group'
+                }
+                placement="bottom"
+                fullWidth
+              >
+                <Button
+                  size="regular"
+                  variant="secondary"
+                  font="dashboard"
+                  onClick={handleMakeAutofocusGroup}
+                  label="Make Autofocus Group"
+                  disabled={!canMakeGroup}
+                />
+              </Tooltip>
+            </div>
+          </div>
+          {groupWarning && (
+            <Modal onClose={() => setGroupWarning(false)}>
+              <div style={{ padding: 'var(--space-5)', textAlign: 'center' }}>
+                <Text as="p" font="dashboard" size="sm">
+                  This element already belongs to another autofocus group
+                </Text>
+                <div style={{ marginTop: 'var(--space-4)' }}>
+                  <Button
+                    size="regular"
+                    variant="secondary"
+                    font="dashboard"
+                    label="OK"
+                    onClick={() => setGroupWarning(false)}
+                  />
+                </div>
+              </div>
+            </Modal>
+          )}
+          {wallAutofocusGroups.map((group) => (
+            <div
+              key={group.id}
+              className={c(styles.groupRow, {
+                [styles.groupRowActive]: activeGroupId === group.id,
+              })}
+              onClick={() => handleToggleGroupHighlight(group.id)}
+            >
+              <Icon
+                name={activeGroupId === group.id ? 'eye' : 'eyeOff'}
+                size={14}
+                color="currentColor"
+              />
+              <Text as="span" font="dashboard" size="sm" className={styles.groupName}>
+                {group.name} ({group.artworkIds.length})
+              </Text>
+              <button
+                className={styles.groupDelete}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteAutofocusGroup(group.id)
+                }}
+              >
+                <Icon name="close" size={14} color="currentColor" />
+              </button>
+            </div>
+          ))}
+          {wallAutofocusGroups.length === 0 && (
+            <Text as="p" font="dashboard" size="sm" style={{ opacity: 0.5 }}>
+              No groups created
+            </Text>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

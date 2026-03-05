@@ -11,7 +11,7 @@ import {
   type RefObject,
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Vector3, PerspectiveCamera, Mesh, Raycaster } from 'three'
+import { Vector3, Quaternion, PerspectiveCamera, Mesh, Raycaster } from 'three'
 
 import SceneContext from '@/contexts/SceneContext'
 import { getSpaceConfig } from '@/components/scene/constants'
@@ -55,10 +55,12 @@ function detectCollisions(
 }
 
 // Animation constants
-const FOCUS_ANIMATION_SPEED = 3 // Higher = faster animation
-const FOCUS_THRESHOLD = 0.01 // Distance threshold to consider animation complete
+const FOCUS_DURATION = 1.2 // Animation duration in seconds
 const FOCUS_PADDING = 1.1 // Padding factor to ensure artwork fits comfortably in view
 const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
+
+// Ease-out cubic: smooth deceleration, reaches target exactly at t=1
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 
 const MainCamera = () => {
   const [, setTick] = useState(0)
@@ -81,6 +83,9 @@ const MainCamera = () => {
   const isAnimating = useRef(false)
   const targetPosition = useRef<Vector3 | null>(null)
   const targetLookAt = useRef<Vector3 | null>(null)
+  const startPosition = useRef<Vector3 | null>(null)
+  const startQuaternion = useRef<Quaternion | null>(null)
+  const animationProgress = useRef(0)
 
   const dampingFactor = 0.6
   const collisionDistance = 0.5
@@ -166,6 +171,10 @@ const MainCamera = () => {
 
       targetPosition.current = cameraTargetPos
       targetLookAt.current = lookAtTarget
+      // Capture start state for smooth interpolation
+      startPosition.current = camera.position.clone()
+      startQuaternion.current = camera.quaternion.clone()
+      animationProgress.current = 0
       isAnimating.current = true
       isReturningToElevation.current = false
     }
@@ -335,8 +344,10 @@ const MainCamera = () => {
     // Smoothly return to default elevation only on lateral movement (turning/strafing)
     // Forward/backward movement keeps the focused elevation
     const hasLateralInput =
-      keysPressed.current?.['a'] || keysPressed.current?.['d'] ||
-      keysPressed.current?.['arrowleft'] || keysPressed.current?.['arrowright'] ||
+      keysPressed.current?.['a'] ||
+      keysPressed.current?.['d'] ||
+      keysPressed.current?.['arrowleft'] ||
+      keysPressed.current?.['arrowright'] ||
       Math.abs(mouseState.current?.deltaX ?? 0) > 0.5
 
     if (hasLateralInput && Math.abs(cam.position.y - cameraElevation) > 0.01) {
@@ -352,24 +363,32 @@ const MainCamera = () => {
     }
 
     // Handle focus animation
-    if (isAnimating.current && targetPosition.current && targetLookAt.current) {
-      const lerpFactor = 1 - Math.exp(-FOCUS_ANIMATION_SPEED * delta)
+    if (
+      isAnimating.current &&
+      targetPosition.current &&
+      targetLookAt.current &&
+      startPosition.current &&
+      startQuaternion.current
+    ) {
+      // Advance progress based on real time
+      animationProgress.current = Math.min(1, animationProgress.current + delta / FOCUS_DURATION)
+      const t = easeOutCubic(animationProgress.current)
 
-      // Smoothly interpolate position
-      cam.position.lerp(targetPosition.current, lerpFactor)
+      // Smoothly interpolate position from start to target
+      cam.position.lerpVectors(startPosition.current, targetPosition.current, t)
 
-      // Smoothly interpolate rotation by looking at target
-      // Create a temporary camera to get target quaternion
-      const currentQuat = cam.quaternion.clone()
+      // Compute target quaternion (what the camera would look like at the target)
+      const tempCamPos = cam.position.clone()
+      cam.position.copy(targetPosition.current)
       cam.lookAt(targetLookAt.current)
       const targetQuat = cam.quaternion.clone()
-      cam.quaternion.copy(currentQuat)
-      cam.quaternion.slerp(targetQuat, lerpFactor)
+      cam.position.copy(tempCamPos)
+
+      // Smoothly interpolate rotation from start to target
+      cam.quaternion.slerpQuaternions(startQuaternion.current, targetQuat, t)
 
       // Check if animation is complete
-      const distanceToTarget = cam.position.distanceTo(targetPosition.current)
-      if (distanceToTarget < FOCUS_THRESHOLD) {
-        // Snap to final position
+      if (animationProgress.current >= 1) {
         cam.position.copy(targetPosition.current)
         cam.lookAt(targetLookAt.current)
 
@@ -377,6 +396,9 @@ const MainCamera = () => {
         isAnimating.current = false
         targetPosition.current = null
         targetLookAt.current = null
+        startPosition.current = null
+        startQuaternion.current = null
+        animationProgress.current = 0
         dispatch(clearFocusTarget())
       }
 

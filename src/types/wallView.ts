@@ -74,6 +74,7 @@ export type TWallView = {
   returnFromWallView: boolean
   guides: TGuide[]
   selectedGuideId: string | null
+  activeAutofocusGroupId: string | null
 }
 
 export type TDirection =

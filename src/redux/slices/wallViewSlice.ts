@@ -232,6 +232,9 @@ const wallViewSlice = createSlice({
     clearReturnFromWallView: (state: TWallView) => {
       state.returnFromWallView = false
     },
+    setActiveAutofocusGroupId: (state: TWallView, action: PayloadAction<string | null>) => {
+      state.activeAutofocusGroupId = action.payload
+    },
   },
 })
 
@@ -278,6 +281,7 @@ export const {
   selectGuide,
   deselectGuide,
   clearReturnFromWallView,
+  setActiveAutofocusGroupId,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer
