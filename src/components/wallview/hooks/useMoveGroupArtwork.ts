@@ -80,8 +80,7 @@ export const useMoveGroupArtwork = (
       const nonGroupArtworks = allExhibitionArtworkIds
         .filter(
           (id) =>
-            !artworkGroupIds.includes(id) &&
-            exhibitionArtworksById[id]?.wallId === currentWallId,
+            !artworkGroupIds.includes(id) && exhibitionArtworksById[id]?.wallId === currentWallId,
         )
         .map((id) => ({
           pos: exhibitionArtworksById[id],
@@ -94,7 +93,12 @@ export const useMoveGroupArtwork = (
       for (const { visual: otherVisual, pos: otherPos } of nonGroupArtworks) {
         const alignment = areAligned(
           { x, y, width: groupWidth, height: groupHeight },
-          { x: otherVisual.x, y: otherVisual.y, width: otherVisual.width, height: otherVisual.height },
+          {
+            x: otherVisual.x,
+            y: otherVisual.y,
+            width: otherVisual.width,
+            height: otherVisual.height,
+          },
           tolerance,
         )
 

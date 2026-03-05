@@ -11,6 +11,7 @@ const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
 interface ParisWindowProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
   frameCount?: number
+  glassCount?: number
   handleCount?: number
   windowRefs?: React.RefObject<Mesh | null>[]
   glassRefs?: React.RefObject<Mesh | null>[]
@@ -19,6 +20,7 @@ interface ParisWindowProps {
 const ParisWindow: React.FC<ParisWindowProps> = ({
   nodes,
   frameCount = 2,
+  glassCount = 1,
   handleCount = 2,
   windowRefs,
   glassRefs,
@@ -38,34 +40,39 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
   const tintedHandle = useAmbientLightColor('#8d8d8a')
 
   const framesArray = useMemo(() => Array.from({ length: frameCount }), [frameCount])
+  const glassArray = useMemo(() => Array.from({ length: glassCount }), [glassCount])
   const handlesArray = useMemo(() => Array.from({ length: handleCount }), [handleCount])
 
   return (
     <>
       {/* Window Glass - always render for collision, hide visually when transparent */}
-      {nodes.windowGlass0 && (
-        <mesh
-          ref={glassRefs?.[0]}
-          name="windowGlass0"
-          geometry={nodes.windowGlass0.geometry}
-          visible={!windowTransparency}
-          position={[
-            nodes.windowGlass0.position.x,
-            nodes.windowGlass0.position.y,
-            nodes.windowGlass0.position.z - 0.05, // Push back behind frames
-          ]}
-          rotation={nodes.windowGlass0.rotation}
-          scale={nodes.windowGlass0.scale}
-        >
-          {/* Opaque emissive mode: colored glowing glass */}
-          <meshStandardMaterial
-            color={windowLightColor}
-            emissive={windowLightColor}
-            emissiveIntensity={windowLightIntensity * 0.3}
-            envMapIntensity={0}
-          />
-        </mesh>
-      )}
+      {glassArray.map((_, i) => {
+        const glassNode = nodes[`windowGlass${i}`]
+        if (!glassNode) return null
+        return (
+          <mesh
+            key={`glass-${i}`}
+            ref={glassRefs?.[i]}
+            name={`windowGlass${i}`}
+            geometry={glassNode.geometry}
+            visible={!windowTransparency}
+            position={[
+              glassNode.position.x,
+              glassNode.position.y,
+              glassNode.position.z - 0.05, // Push back behind frames
+            ]}
+            rotation={glassNode.rotation}
+            scale={glassNode.scale}
+          >
+            <meshStandardMaterial
+              color={windowLightColor}
+              emissive={windowLightColor}
+              emissiveIntensity={windowLightIntensity * 0.3}
+              envMapIntensity={0}
+            />
+          </mesh>
+        )
+      })}
 
       {/* Window Frames */}
       {framesArray.map((_, i) => {

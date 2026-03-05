@@ -1,4 +1,5 @@
 import type { TArtworkPosition } from '@/types/artwork'
+import type { AutofocusGroup } from '@/types/autofocusGroup'
 
 export type TExhibition = {
   id: string
@@ -61,4 +62,7 @@ export type TExhibition = {
   // Wall & Ceiling customization
   wallColor?: string
   ceilingColor?: string
+
+  // Autofocus groups
+  autofocusGroups?: AutofocusGroup[]
 }

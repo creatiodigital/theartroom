@@ -181,7 +181,11 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         <Ceiling
           geometry={nodes.ceiling0.geometry}
           material={ceilingMaterial}
-          position={[nodes.ceiling0.position.x, nodes.ceiling0.position.y, nodes.ceiling0.position.z]}
+          position={[
+            nodes.ceiling0.position.x,
+            nodes.ceiling0.position.y,
+            nodes.ceiling0.position.z,
+          ]}
         />
       )}
 

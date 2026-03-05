@@ -67,7 +67,6 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
                   <Controls />
                   <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
                   <HumanReference />
-
                 </group>
               </Suspense>
             </Canvas>

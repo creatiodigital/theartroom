@@ -114,3 +114,66 @@
 .selected {
   color: var(--color-accent);
 }
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.sectionTitle {
+  margin: 0;
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+}
+
+.groupRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.groupRowActive {
+  color: var(--color-accent);
+}
+
+.groupName {
+  flex: 1;
+}
+
+.groupDelete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  transition: opacity 0.1s ease;
+
+  &:hover {
+    opacity: 1;
+    color: var(--color-danger);
+  }
+}
+
+.warning {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin-top: var(--space-1);
+  padding: var(--space-2);
+  background: rgba(255, 0, 0, 0.05);
+  border-radius: 4px;
+}

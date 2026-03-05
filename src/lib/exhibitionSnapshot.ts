@@ -101,6 +101,9 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       // Wall & Ceiling
       wallColor: exhibitionData.wallColor,
       ceilingColor: exhibitionData.ceilingColor,
+
+      // Autofocus groups
+      autofocusGroups: exhibitionData.autofocusGroups,
     },
     artworks: exhibitionArtworks.map((ea) => ({
       id: ea.id,

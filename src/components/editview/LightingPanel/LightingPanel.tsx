@@ -147,10 +147,11 @@ const LightingPanel = () => {
   })
 
   // If current mode is not available, fall back to the first available option
-  const effectiveCeilingLightMode =
-    availableCeilingLightOptions.some((o) => o.value === ceilingLightMode)
-      ? ceilingLightMode
-      : availableCeilingLightOptions[0]?.value ?? 'plafond'
+  const effectiveCeilingLightMode = availableCeilingLightOptions.some(
+    (o) => o.value === ceilingLightMode,
+  )
+    ? ceilingLightMode
+    : (availableCeilingLightOptions[0]?.value ?? 'plafond')
 
   // Ambient light handlers
   const handleAmbientIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -405,7 +406,8 @@ const LightingPanel = () => {
           )}
 
           {hasRecessedLamps &&
-            (effectiveCeilingLightMode === 'plafond' || effectiveCeilingLightMode === 'track-plafond') && (
+            (effectiveCeilingLightMode === 'plafond' ||
+              effectiveCeilingLightMode === 'track-plafond') && (
               <>
                 <div className={styles.field}>
                   <label className={styles.label}>Plafond Color</label>
@@ -438,142 +440,144 @@ const LightingPanel = () => {
         </Section>
       )}
 
-      {hasTrackLamps && (effectiveCeilingLightMode === 'track' || effectiveCeilingLightMode === 'track-plafond') && (
-        <Section title="Track Lamps">
-          <div className={styles.field}>
-            <label className={styles.label}>Color</label>
-            <ColorPicker
-              textColor={trackLampColor}
-              onColorSelect={(color) => {
-                dispatch(setTrackLampColor(color))
-                setSaved(false)
-              }}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{trackLampIntensity.toFixed(2)}</span>
+      {hasTrackLamps &&
+        (effectiveCeilingLightMode === 'track' ||
+          effectiveCeilingLightMode === 'track-plafond') && (
+          <Section title="Track Lamps">
+            <div className={styles.field}>
+              <label className={styles.label}>Color</label>
+              <ColorPicker
+                textColor={trackLampColor}
+                onColorSelect={(color) => {
+                  dispatch(setTrackLampColor(color))
+                  setSaved(false)
+                }}
+              />
             </div>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.1"
-              value={trackLampIntensity}
-              onChange={handleTrackLampIntensityChange}
-              className={styles.slider}
-            />
-          </div>
 
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Angle</label>
-              <span className={styles.sliderValue}>
-                {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
-              </span>
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Intensity</label>
+                <span className={styles.sliderValue}>{trackLampIntensity.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                value={trackLampIntensity}
+                onChange={handleTrackLampIntensityChange}
+                className={styles.slider}
+              />
             </div>
-            <input
-              type="range"
-              min="0.1"
-              max="1.2"
-              step="0.05"
-              value={trackLampAngle}
-              onChange={handleTrackLampAngleChange}
-              className={styles.slider}
-            />
-          </div>
 
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Distance</label>
-              <span className={styles.sliderValue}>{trackLampDistance.toFixed(1)}m</span>
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Angle</label>
+                <span className={styles.sliderValue}>
+                  {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.1"
+                max="1.2"
+                step="0.05"
+                value={trackLampAngle}
+                onChange={handleTrackLampAngleChange}
+                className={styles.slider}
+              />
             </div>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              step="0.5"
-              value={trackLampDistance}
-              onChange={handleTrackLampDistanceChange}
-              className={styles.slider}
-            />
-          </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>Material Color</label>
-            <ColorPicker
-              textColor={trackLampMaterialColor}
-              onColorSelect={(color) => {
-                dispatch(setTrackLampMaterialColor(color))
-                setSaved(false)
-              }}
-            />
-          </div>
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Distance</label>
+                <span className={styles.sliderValue}>{trackLampDistance.toFixed(1)}m</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="0.5"
+                value={trackLampDistance}
+                onChange={handleTrackLampDistanceChange}
+                className={styles.slider}
+              />
+            </div>
 
-          {/* Individual lamp controls */}
-          {Array.from({ length: TRACK_LAMP_COUNT }).map((_, i) => {
-            const settings = trackLampSettings?.[String(i)]
-            const isEnabled = settings?.enabled ?? true
-            const rotation = settings?.rotation ?? 0
-            const offset = settings?.offset ?? 0
+            <div className={styles.field}>
+              <label className={styles.label}>Material Color</label>
+              <ColorPicker
+                textColor={trackLampMaterialColor}
+                onColorSelect={(color) => {
+                  dispatch(setTrackLampMaterialColor(color))
+                  setSaved(false)
+                }}
+              />
+            </div>
 
-            return (
-              <div key={`lamp-${i}`} className={styles.lampRow}>
-                <div className={styles.lampHeader}>
-                  <span className={styles.lampLabel}>Lamp {i + 1}</span>
-                  <label className={styles.toggle}>
+            {/* Individual lamp controls */}
+            {Array.from({ length: TRACK_LAMP_COUNT }).map((_, i) => {
+              const settings = trackLampSettings?.[String(i)]
+              const isEnabled = settings?.enabled ?? true
+              const rotation = settings?.rotation ?? 0
+              const offset = settings?.offset ?? 0
+
+              return (
+                <div key={`lamp-${i}`} className={styles.lampRow}>
+                  <div className={styles.lampHeader}>
+                    <span className={styles.lampLabel}>Lamp {i + 1}</span>
+                    <label className={styles.toggle}>
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        onChange={() => {
+                          dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
+                          setSaved(false)
+                        }}
+                      />
+                      <span className={styles.toggleSlider} />
+                    </label>
+                  </div>
+                  <div className={styles.lampSlider}>
                     <input
-                      type="checkbox"
-                      checked={isEnabled}
-                      onChange={() => {
-                        dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
+                      type="range"
+                      min="-180"
+                      max="180"
+                      step="1"
+                      value={rotation}
+                      onChange={(e) => {
+                        dispatch(
+                          setTrackLampRotation({ index: i, rotation: parseFloat(e.target.value) }),
+                        )
                         setSaved(false)
                       }}
+                      className={styles.slider}
                     />
-                    <span className={styles.toggleSlider} />
-                  </label>
+                    <span className={styles.sliderValue}>{rotation}°</span>
+                  </div>
+                  <div className={styles.lampSlider}>
+                    <input
+                      type="range"
+                      min="-2"
+                      max="2"
+                      step="0.01"
+                      value={offset}
+                      onChange={(e) => {
+                        dispatch(
+                          setTrackLampOffset({ index: i, offset: parseFloat(e.target.value) }),
+                        )
+                        setSaved(false)
+                      }}
+                      className={styles.slider}
+                    />
+                    <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
+                  </div>
                 </div>
-                <div className={styles.lampSlider}>
-                  <input
-                    type="range"
-                    min="-180"
-                    max="180"
-                    step="1"
-                    value={rotation}
-                    onChange={(e) => {
-                      dispatch(
-                        setTrackLampRotation({ index: i, rotation: parseFloat(e.target.value) }),
-                      )
-                      setSaved(false)
-                    }}
-                    className={styles.slider}
-                  />
-                  <span className={styles.sliderValue}>{rotation}°</span>
-                </div>
-                <div className={styles.lampSlider}>
-                  <input
-                    type="range"
-                    min="-2"
-                    max="2"
-                    step="0.01"
-                    value={offset}
-                    onChange={(e) => {
-                      dispatch(
-                        setTrackLampOffset({ index: i, offset: parseFloat(e.target.value) }),
-                      )
-                      setSaved(false)
-                    }}
-                    className={styles.slider}
-                  />
-                  <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
-                </div>
-              </div>
-            )
-          })}
-        </Section>
-      )}
+              )
+            })}
+          </Section>
+        )}
 
       {hasWindows && (
         <Section title="Window">

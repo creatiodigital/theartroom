@@ -73,7 +73,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         frameMaterial: body.frameMaterial ?? preset.frameMaterial,
         frameCornerStyle: body.frameCornerStyle ?? preset.frameCornerStyle,
         frameTextureScale:
-          body.frameTextureScale != null ? Number(body.frameTextureScale) : preset.frameTextureScale,
+          body.frameTextureScale != null
+            ? Number(body.frameTextureScale)
+            : preset.frameTextureScale,
         frameTextureOffsetX:
           body.frameTextureOffsetX != null
             ? Number(body.frameTextureOffsetX)

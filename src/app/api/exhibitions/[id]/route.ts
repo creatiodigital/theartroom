@@ -57,6 +57,9 @@ type ExhibitionUpdateBody = {
   // Wall & Ceiling
   wallColor?: string
   ceilingColor?: string
+
+  // Autofocus groups
+  autofocusGroups?: Array<{ id: string; name: string; artworkIds: string[] }> | null
 }
 
 /* ------------------------ GET ------------------------ */
@@ -200,6 +203,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     // Wall & Ceiling
     if (body.wallColor !== undefined) data.wallColor = body.wallColor
     if (body.ceilingColor !== undefined) data.ceilingColor = body.ceilingColor
+
+    // Autofocus groups
+    if (body.autofocusGroups !== undefined)
+      data.autofocusGroups = body.autofocusGroups === null ? Prisma.JsonNull : body.autofocusGroups
 
     // --- Draft/Publish logic ---
     if (body.published === true) {

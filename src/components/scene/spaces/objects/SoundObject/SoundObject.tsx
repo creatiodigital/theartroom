@@ -41,6 +41,10 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const exhibitionArtworksById = useSelector(
+    (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
   const dispatch = useDispatch()
   const { playingId, play, stop } = useSceneAudio()
 
@@ -108,15 +112,59 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
   const handleSingleClick = useCallback(() => {
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
-      dispatch(
-        setFocusTarget({
-          artworkId: id,
-          position: { x: position.x, y: position.y, z: position.z },
-          normal: { x: normal.x, y: normal.y, z: normal.z },
-          width: planeWidth,
-          height: planeHeight,
-        }),
-      )
+
+      // Check if this artwork belongs to an autofocus group
+      const group = autofocusGroups.find((g) => g.artworkIds.includes(id))
+
+      if (group && group.artworkIds.length >= 2) {
+        // Compute group center from all member 3D positions
+        let minX = Infinity,
+          maxX = -Infinity
+        let minY = Infinity,
+          maxY = -Infinity
+        let minZ = Infinity,
+          maxZ = -Infinity
+
+        for (const memberId of group.artworkIds) {
+          const pos = exhibitionArtworksById[memberId]
+          if (!pos) continue
+          const halfW = (pos.width3d ?? pos.width2d / 100) / 2
+          const halfH = (pos.height3d ?? pos.height2d / 100) / 2
+          minX = Math.min(minX, pos.posX3d - halfW)
+          maxX = Math.max(maxX, pos.posX3d + halfW)
+          minY = Math.min(minY, pos.posY3d - halfH)
+          maxY = Math.max(maxY, pos.posY3d + halfH)
+          minZ = Math.min(minZ, pos.posZ3d - halfW)
+          maxZ = Math.max(maxZ, pos.posZ3d + halfW)
+        }
+
+        const centerX = (minX + maxX) / 2
+        const centerY = (minY + maxY) / 2
+        const centerZ = (minZ + maxZ) / 2
+        const groupWidth = maxX - minX
+        const groupHeight = maxY - minY
+
+        dispatch(
+          setFocusTarget({
+            artworkId: id,
+            position: { x: centerX, y: centerY, z: centerZ },
+            normal: { x: normal.x, y: normal.y, z: normal.z },
+            width: Math.max(groupWidth, 0.1),
+            height: Math.max(groupHeight, 0.1),
+          }),
+        )
+      } else {
+        // Individual artwork focus (default behavior)
+        dispatch(
+          setFocusTarget({
+            artworkId: id,
+            position: { x: position.x, y: position.y, z: position.z },
+            normal: { x: normal.x, y: normal.y, z: normal.z },
+            width: planeWidth,
+            height: planeHeight,
+          }),
+        )
+      }
 
       if (isArtworkPanelOpen) {
         dispatch(setCurrentArtwork(id))
@@ -132,6 +180,8 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
     isPlaceholdersShown,
     isArtworkPanelOpen,
     getNormalFromQuaternion,
+    autofocusGroups,
+    exhibitionArtworksById,
   ])
 
   // Handle double click - play/stop sound
