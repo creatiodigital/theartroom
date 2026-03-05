@@ -215,6 +215,9 @@ model Exhibition {
   wallColor    String? @default("#ffffff")
   ceilingColor String? @default("#ffffff")
 
+  // Autofocus groups (JSON array of { id, name, artworkIds })
+  autofocusGroups Json?
+
   exhibitionArtworks ExhibitionArtwork[]
   wallGuides         WallGuide[]
 

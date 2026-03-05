@@ -23,7 +23,14 @@ const Switch: React.FC<SwitchProps> = ({ nodes, count = 2 }) => {
         const switchNode = nodes[`doubleSwitch${i}`]
         if (!switchNode) return null
         return (
-          <mesh key={`doubleSwitch-${i}`} name={`doubleSwitch${i}`} geometry={switchNode.geometry} position={switchNode.position} rotation={switchNode.rotation} scale={switchNode.scale}>
+          <mesh
+            key={`doubleSwitch-${i}`}
+            name={`doubleSwitch${i}`}
+            geometry={switchNode.geometry}
+            position={switchNode.position}
+            rotation={switchNode.rotation}
+            scale={switchNode.scale}
+          >
             <meshStandardMaterial color={tintedPlastic} roughness={0.9} metalness={0.0} />
           </mesh>
         )

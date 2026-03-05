@@ -223,6 +223,10 @@ const Display = ({ artwork }: DisplayProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const exhibitionArtworksById = useSelector(
+    (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
   const dispatch = useDispatch()
 
   // Refs for click detection
@@ -248,21 +252,63 @@ const Display = ({ artwork }: DisplayProps) => {
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
 
-      // Calculate total display size (image + passepartout + frame)
-      const pBorder = (showPassepartout ? passepartoutSize?.value : 0) || 0
-      const fBorder = (showFrame ? frameSize?.value : 0) || 0
-      const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2) / 100
-      const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2) / 100
+      // Check if this artwork belongs to an autofocus group
+      const group = autofocusGroups.find((g) => g.artworkIds.includes(artwork.id))
 
-      dispatch(
-        setFocusTarget({
-          artworkId: artwork.id,
-          position: { x: position.x, y: position.y, z: position.z },
-          normal: { x: normal.x, y: normal.y, z: normal.z },
-          width: displayWidth,
-          height: displayHeight,
-        }),
-      )
+      if (group && group.artworkIds.length >= 2) {
+        // Compute group center from all member positions
+        let minX = Infinity,
+          maxX = -Infinity
+        let minY = Infinity,
+          maxY = -Infinity
+        let minZ = Infinity,
+          maxZ = -Infinity
+
+        for (const memberId of group.artworkIds) {
+          const pos = exhibitionArtworksById[memberId]
+          if (!pos) continue
+          const halfW = (pos.width3d ?? pos.width2d / 100) / 2
+          const halfH = (pos.height3d ?? pos.height2d / 100) / 2
+          minX = Math.min(minX, pos.posX3d - halfW)
+          maxX = Math.max(maxX, pos.posX3d + halfW)
+          minY = Math.min(minY, pos.posY3d - halfH)
+          maxY = Math.max(maxY, pos.posY3d + halfH)
+          minZ = Math.min(minZ, pos.posZ3d - halfW)
+          maxZ = Math.max(maxZ, pos.posZ3d + halfW)
+        }
+
+        const centerX = (minX + maxX) / 2
+        const centerY = (minY + maxY) / 2
+        const centerZ = (minZ + maxZ) / 2
+        const groupWidth = maxX - minX
+        const groupHeight = maxY - minY
+
+        dispatch(
+          setFocusTarget({
+            artworkId: artwork.id,
+            position: { x: centerX, y: centerY, z: centerZ },
+            normal: { x: normal.x, y: normal.y, z: normal.z },
+            width: Math.max(groupWidth, 0.1),
+            height: Math.max(groupHeight, 0.1),
+          }),
+        )
+      } else {
+        // Individual artwork focus (default behavior)
+        const pBorder = (showPassepartout ? passepartoutSize?.value : 0) || 0
+        const fBorder = (showFrame ? frameSize?.value : 0) || 0
+        const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2) / 100
+        const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2) / 100
+
+        dispatch(
+          setFocusTarget({
+            artworkId: artwork.id,
+            position: { x: position.x, y: position.y, z: position.z },
+            normal: { x: normal.x, y: normal.y, z: normal.z },
+            width: displayWidth,
+            height: displayHeight,
+          }),
+        )
+      }
 
       // If the panel is already open, also update the current artwork info
       if (isArtworkPanelOpen) {
@@ -283,6 +329,8 @@ const Display = ({ artwork }: DisplayProps) => {
     passepartoutSize,
     showFrame,
     frameSize,
+    autofocusGroups,
+    exhibitionArtworksById,
   ])
 
   // Handle double click for info panel (existing behavior)
@@ -408,8 +456,8 @@ const Display = ({ artwork }: DisplayProps) => {
       hash = (hash * 31 + id.charCodeAt(i)) | 0
     }
     return {
-      x: ((hash & 0xffff) / 0xffff),       // 0–1 range
-      y: (((hash >>> 16) & 0xffff) / 0xffff), // 0–1 range
+      x: (hash & 0xffff) / 0xffff, // 0–1 range
+      y: ((hash >>> 16) & 0xffff) / 0xffff, // 0–1 range
     }
   }, [artwork.id])
 

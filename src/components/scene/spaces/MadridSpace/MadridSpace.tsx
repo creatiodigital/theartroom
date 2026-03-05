@@ -172,7 +172,11 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
           geometry={nodes.ceiling0.geometry}
           material={ceilingMaterial}
           position={nodes.ceiling0.position.toArray() as [number, number, number]}
-          rotation={[nodes.ceiling0.rotation.x, nodes.ceiling0.rotation.y, nodes.ceiling0.rotation.z]}
+          rotation={[
+            nodes.ceiling0.rotation.x,
+            nodes.ceiling0.rotation.y,
+            nodes.ceiling0.rotation.z,
+          ]}
           scale={nodes.ceiling0.scale.toArray() as [number, number, number]}
         />
       )}
@@ -191,7 +195,13 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
       )}
 
       {/* Windows (2 windows: 4 frames, 2 glass panes) */}
-      <ParisWindow nodes={nodes} frameCount={4} glassCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
+      <ParisWindow
+        nodes={nodes}
+        frameCount={4}
+        glassCount={2}
+        windowRefs={windowRefs}
+        glassRefs={glassRefs}
+      />
 
       {/* Radiators */}
       <Radiator nodes={nodes} count={2} />

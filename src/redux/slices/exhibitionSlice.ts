@@ -4,6 +4,7 @@ import { WALL_SCALE } from '@/components/wallview/constants'
 
 import { exhibitionFactory } from '@/factories/exhibitionFactory'
 import type { TArtworkPosition } from '@/types/artwork'
+import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { TExhibition } from '@/types/exhibition'
 
 const HISTORY_LIMIT = 20
@@ -78,6 +79,13 @@ const exhibitionSlice = createSlice({
       const { artworkId } = action.payload
       delete state.exhibitionArtworksById[artworkId]
       state.allExhibitionArtworkIds = state.allExhibitionArtworkIds.filter((id) => id !== artworkId)
+
+      // Dissolve any autofocus group that contained this artwork
+      if (state.autofocusGroups) {
+        state.autofocusGroups = state.autofocusGroups.filter(
+          (g) => !g.artworkIds.includes(artworkId),
+        )
+      }
     },
 
     setExhibition: (state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
@@ -287,7 +295,52 @@ const exhibitionSlice = createSlice({
       state.ceilingColor = action.payload
     },
 
+    // Autofocus group actions
+    setAutofocusGroups: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<AutofocusGroup[]>,
+    ) => {
+      state.autofocusGroups = action.payload
+    },
 
+    addAutofocusGroup: (state: TExhibitionWithHistory, action: PayloadAction<AutofocusGroup>) => {
+      if (!state.autofocusGroups) state.autofocusGroups = []
+      state.autofocusGroups.push(action.payload)
+    },
+
+    removeAutofocusGroup: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
+      if (state.autofocusGroups) {
+        state.autofocusGroups = state.autofocusGroups.filter((g) => g.id !== action.payload)
+      }
+    },
+
+    addArtworkToAutofocusGroup: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ groupId: string; artworkId: string }>,
+    ) => {
+      // Enforce exclusivity: remove from any other group first
+      if (state.autofocusGroups) {
+        for (const g of state.autofocusGroups) {
+          if (g.id !== action.payload.groupId) {
+            g.artworkIds = g.artworkIds.filter((id) => id !== action.payload.artworkId)
+          }
+        }
+      }
+      const group = state.autofocusGroups?.find((g) => g.id === action.payload.groupId)
+      if (group && !group.artworkIds.includes(action.payload.artworkId)) {
+        group.artworkIds.push(action.payload.artworkId)
+      }
+    },
+
+    removeArtworkFromAutofocusGroup: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ groupId: string; artworkId: string }>,
+    ) => {
+      const group = state.autofocusGroups?.find((g) => g.id === action.payload.groupId)
+      if (group) {
+        group.artworkIds = group.artworkIds.filter((id) => id !== action.payload.artworkId)
+      }
+    },
 
     // Snapshot actions for cancel functionality
     snapshotExhibition: (state: TExhibitionWithHistory) => {
@@ -395,6 +448,11 @@ export const {
   setCameraElevation,
   setWallColor,
   setCeilingColor,
+  setAutofocusGroups,
+  addAutofocusGroup,
+  removeAutofocusGroup,
+  addArtworkToAutofocusGroup,
+  removeArtworkFromAutofocusGroup,
 
   snapshotExhibition,
   restoreSnapshot,

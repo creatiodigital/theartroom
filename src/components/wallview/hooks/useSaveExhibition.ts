@@ -16,6 +16,7 @@ export const useSaveExhibition = () => {
   const allArtworkIds = useSelector((state: RootState) => state.artworks.allIds)
   const positionsById = useSelector((state: RootState) => state.exhibition.exhibitionArtworksById)
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
 
   const saveToDatabase = useCallback(async () => {
     if (!effectiveUser?.id) {
@@ -283,6 +284,19 @@ export const useSaveExhibition = () => {
         }
       }
 
+      // 6. Save autofocus groups
+      const groupsResponse = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          autofocusGroups: autofocusGroups.length > 0 ? autofocusGroups : null,
+        }),
+      })
+
+      if (!groupsResponse.ok) {
+        console.warn('Failed to save autofocus groups')
+      }
+
       return true
     } catch (err) {
       console.error('Save error:', err)
@@ -291,7 +305,15 @@ export const useSaveExhibition = () => {
     } finally {
       setSaving(false)
     }
-  }, [effectiveUser?.id, exhibitionId, allArtworkIds, artworksById, positionsById, dispatch])
+  }, [
+    effectiveUser?.id,
+    exhibitionId,
+    allArtworkIds,
+    artworksById,
+    positionsById,
+    autofocusGroups,
+    dispatch,
+  ])
 
   return {
     saveToDatabase,
