@@ -227,6 +227,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const dispatch = useDispatch()
 
   // Refs for click detection
@@ -267,8 +268,20 @@ const Display = ({ artwork }: DisplayProps) => {
         for (const memberId of group.artworkIds) {
           const pos = exhibitionArtworksById[memberId]
           if (!pos) continue
-          const halfW = (pos.width3d ?? pos.width2d / 100) / 2
-          const halfH = (pos.height3d ?? pos.height2d / 100) / 2
+          let halfW = (pos.width3d ?? pos.width2d / 100) / 2
+          let halfH = (pos.height3d ?? pos.height2d / 100) / 2
+
+          // Add frame + passepartout borders (cm → meters)
+          const memberArt = artworksById[memberId]
+          if (memberArt?.showFrame && memberArt?.imageUrl && memberArt?.frameSize?.value) {
+            halfW += memberArt.frameSize.value / 100
+            halfH += memberArt.frameSize.value / 100
+          }
+          if (memberArt?.showPassepartout && memberArt?.imageUrl && memberArt?.passepartoutSize?.value) {
+            halfW += memberArt.passepartoutSize.value / 100
+            halfH += memberArt.passepartoutSize.value / 100
+          }
+
           minX = Math.min(minX, pos.posX3d - halfW)
           maxX = Math.max(maxX, pos.posX3d + halfW)
           minY = Math.min(minY, pos.posY3d - halfH)
@@ -331,6 +344,7 @@ const Display = ({ artwork }: DisplayProps) => {
     frameSize,
     autofocusGroups,
     exhibitionArtworksById,
+    artworksById,
   ])
 
   // Handle double click for info panel (existing behavior)
