@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+import { getCameraState } from '@/components/scene/controls/MainCamera/MainCamera'
 import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -42,6 +43,15 @@ const ArtworkPanel = () => {
 
   const handleViewDetails = () => {
     if (!selectedArtwork?.id) return
+    // Save the actual camera position so we can restore it on return
+    const cameraState = getCameraState()
+    if (cameraState) {
+      try {
+        sessionStorage.setItem('the-art-room:camera-state', JSON.stringify(cameraState))
+      } catch {
+        // sessionStorage not available, ignore
+      }
+    }
     router.push(`/artworks/${selectedArtwork.id}?ref=internal`)
   }
 
