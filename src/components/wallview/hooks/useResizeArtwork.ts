@@ -50,6 +50,9 @@ export const useResizeArtwork = (
 
       if (!artwork || !wallRef.current) return
 
+      // Block resize on locked artworks
+      if (artwork.locked) return
+
       const rect = wallRef.current.getBoundingClientRect()
 
       const gridOffsetX = (rect.width % gridSize) / 2

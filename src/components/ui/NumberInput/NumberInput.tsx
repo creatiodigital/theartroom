@@ -16,6 +16,7 @@ type NumberInputProps = {
   max?: number
   min?: number
   label?: string
+  disabled?: boolean
 }
 
 const NumberInput = ({
@@ -27,6 +28,7 @@ const NumberInput = ({
   max,
   min,
   label,
+  disabled,
 }: NumberInputProps) => {
   // Track the display value as a string to allow empty state and proper editing
   const [displayValue, setDisplayValue] = useState<string>(String(value))
@@ -99,7 +101,7 @@ const NumberInput = ({
   }, [displayValue, min])
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={disabled ? { opacity: 0.5 } : undefined}>
       {label && <span className={styles.label}>{label}</span>}
       <div className={styles.inputContainer}>
         <input
@@ -110,6 +112,7 @@ const NumberInput = ({
           onChange={handleChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          disabled={disabled}
         />
         {icon && (
           <div className={c(styles.icon, { [styles[`rotate${rotate}`]]: !!rotate })}>

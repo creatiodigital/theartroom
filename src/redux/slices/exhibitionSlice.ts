@@ -88,6 +88,17 @@ const exhibitionSlice = createSlice({
       }
     },
 
+    toggleArtworkLocked: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ artworkId: string }>,
+    ) => {
+      const { artworkId } = action.payload
+      if (state.exhibitionArtworksById[artworkId]) {
+        state.exhibitionArtworksById[artworkId].locked =
+          !state.exhibitionArtworksById[artworkId].locked
+      }
+    },
+
     setExhibition: (state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
       // Preserve existing artwork positions if they've been loaded
       // (useLoadExhibitionArtworks manages these separately and they may
@@ -411,6 +422,7 @@ export const {
   createArtworkPosition,
   updateArtworkPosition,
   deleteArtworkPosition,
+  toggleArtworkLocked,
   setExhibition,
   setMainTitle,
   setAmbientLightColor,

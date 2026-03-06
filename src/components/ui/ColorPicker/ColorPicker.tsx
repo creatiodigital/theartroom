@@ -8,9 +8,10 @@ import styles from './ColorPicker.module.scss'
 type ColorPickerProps = {
   textColor: string
   onColorSelect: (color: string) => void
+  disabled?: boolean
 }
 
-const ColorPicker = ({ textColor = '#000000', onColorSelect }: ColorPickerProps) => {
+const ColorPicker = ({ textColor = '#000000', onColorSelect, disabled }: ColorPickerProps) => {
   const [selectedColor, setSelectedColor] = useState(textColor)
 
   useEffect(() => {
@@ -24,8 +25,8 @@ const ColorPicker = ({ textColor = '#000000', onColorSelect }: ColorPickerProps)
   }
 
   return (
-    <div className={styles.picker}>
-      <input type="color" value={selectedColor} onChange={handleColorChange} />
+    <div className={styles.picker} style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+      <input type="color" value={selectedColor} onChange={handleColorChange} disabled={disabled} />
       <span className={styles.label}>{selectedColor}</span>
     </div>
   )

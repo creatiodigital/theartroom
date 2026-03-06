@@ -24,7 +24,7 @@ const playModeOptions = [
   { label: 'Loop', value: 'loop' },
 ]
 
-const ArtisticSoundPanel = () => {
+const ArtisticSoundPanel = ({ disabled }: { disabled?: boolean }) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
 
   const {
@@ -42,7 +42,7 @@ const ArtisticSoundPanel = () => {
   return (
     <>
       {/* Sound Settings */}
-      <Section title="Playback">
+      <Section title="Playback" disabled={disabled}>
         {/* Icon Selector */}
         <div className={styles.row}>
           <div className={styles.item}>
@@ -97,7 +97,7 @@ const ArtisticSoundPanel = () => {
       </Section>
 
       {/* Appearance */}
-      <Section title="Appearance">
+      <Section title="Appearance" disabled={disabled}>
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>

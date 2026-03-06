@@ -34,6 +34,12 @@ const RightPanel = () => {
   const { artworkType } = useArtworkDetails(currentArtworkId!)
   const { saveToDatabase, saving } = useSaveExhibition()
 
+  // Lock state for disabling type-specific panels
+  const exhibitionArtworksById = useSelector(
+    (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
+  const isLocked = currentArtworkId ? (exhibitionArtworksById[currentArtworkId]?.locked ?? false) : false
+
   const isGroupCreated = artworkGroupIds.length > 1
 
   // Save first, then open the edit modal
@@ -74,10 +80,10 @@ const RightPanel = () => {
         {!isGroupCreated && isWizardOpen && currentArtworkId && (
           <>
             <ArtworkPanel />
-            {artworkType === 'image' && <ArtisticImagePanel />}
-            {artworkType === 'text' && <ArtisticTextPanel />}
-            {artworkType === 'sound' && <ArtisticSoundPanel />}
-            {artworkType === 'shape' && <ShapePanel />}
+            {artworkType === 'image' && <ArtisticImagePanel disabled={isLocked} />}
+            {artworkType === 'text' && <ArtisticTextPanel disabled={isLocked} />}
+            {artworkType === 'sound' && <ArtisticSoundPanel disabled={isLocked} />}
+            {artworkType === 'shape' && <ShapePanel disabled={isLocked} />}
 
             {artworkType !== 'shape' && (
               <div className={styles.editButtonWrapper}>

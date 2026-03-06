@@ -316,6 +316,9 @@ model ExhibitionArtwork {
   // Wall-normal rotation (degrees, 0-360, only used for shapes)
   rotation Float @default(0)
 
+  // Lock protection (prevents move, resize, delete, preset, and grouping in wall view)
+  locked Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

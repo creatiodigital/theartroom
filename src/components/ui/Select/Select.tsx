@@ -17,6 +17,7 @@ export type SelectProps<T extends string | number = string | number> = {
   value: T | undefined
   onChange: (value: T) => void
   size?: 'small' | 'medium'
+  disabled?: boolean
 }
 
 const Select = <T extends string | number = string | number>({
@@ -24,6 +25,7 @@ const Select = <T extends string | number = string | number>({
   value,
   onChange,
   size = 'small',
+  disabled,
 }: SelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false)
   const selectRef = useRef<HTMLDivElement>(null)
@@ -49,8 +51,8 @@ const Select = <T extends string | number = string | number>({
   }, [])
 
   return (
-    <div className={c(styles.select, size && styles[size])} ref={selectRef}>
-      <div className={styles.input} onClick={() => setIsOpen(!isOpen)}>
+    <div className={c(styles.select, size && styles[size])} ref={selectRef} style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+      <div className={styles.input} onClick={() => !disabled && setIsOpen(!isOpen)}>
         {currentOption?.label ?? ''}
         <Icon name="chevronDown" size={size === 'medium' ? 20 : 16} color="#333333" />
       </div>
