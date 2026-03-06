@@ -154,7 +154,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
         const centerX = (minX + maxX) / 2
         const centerY = (minY + maxY) / 2
         const centerZ = (minZ + maxZ) / 2
-        const groupWidth = maxX - minX
+        const groupWidth = Math.max(maxX - minX, maxZ - minZ)
         const groupHeight = maxY - minY
 
         dispatch(
