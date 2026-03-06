@@ -99,8 +99,15 @@ const Artwork = memo(
 
       if (event.shiftKey) {
         // Shift+click: add currently selected artwork AND clicked artwork to group
+        // Skip locked artworks
+        const clickedPosition = exhibitionArtworksById[id]
+        if (clickedPosition?.locked) return
+
         if (currentArtworkId) {
-          handleAddArtworkToGroup(currentArtworkId)
+          const selectedPosition = exhibitionArtworksById[currentArtworkId]
+          if (!selectedPosition?.locked) {
+            handleAddArtworkToGroup(currentArtworkId)
+          }
         }
         handleAddArtworkToGroup(id)
       } else {
@@ -151,7 +158,7 @@ const Artwork = memo(
           width: `${finalWidth}px`,
           height: `${finalHeight}px`,
           zIndex: currentArtworkId === id ? 10 : 1,
-          cursor: 'grab',
+          cursor: artworkPositions.locked ? 'not-allowed' : 'grab',
           overflow: artworkType === 'shape' ? 'visible' : undefined,
         }}
         onMouseDown={(event) => {
@@ -167,27 +174,29 @@ const Artwork = memo(
         {currentArtworkId === id && (
           <ArtworkMeasurements width2d={finalWidth} height2d={finalHeight} />
         )}
-        {currentArtworkId === id && artworkGroupIds.length <= 1 && (
+        {currentArtworkId === id && artworkGroupIds.length <= 1 && !artworkPositions.locked && (
           <Handles artworkId={id} handleResize={onHandleResize} />
         )}
-        {artworkType === 'text' && <ArtisticText artworkId={id} />}
-        {artworkType === 'image' && <ArtisticImage artwork={artwork} />}
-        {artworkType === 'sound' && <ArtisticSound artworkId={id} />}
-        {artworkType === 'shape' && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: `${containerWidth}px`,
-              height: `${containerHeight}px`,
-              transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
-              backgroundColor: artwork.shapeColor ?? '#000000',
-              opacity: artwork.shapeOpacity ?? 1,
-              borderRadius: artwork.shapeType === 'circle' ? '50%' : 0,
-            }}
-          />
-        )}
+        <div style={artworkPositions.locked ? { pointerEvents: 'none' } : undefined}>
+          {artworkType === 'text' && <ArtisticText artworkId={id} />}
+          {artworkType === 'image' && <ArtisticImage artwork={artwork} />}
+          {artworkType === 'sound' && <ArtisticSound artworkId={id} />}
+          {artworkType === 'shape' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: `${containerWidth}px`,
+                height: `${containerHeight}px`,
+                transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
+                backgroundColor: artwork.shapeColor ?? '#000000',
+                opacity: artwork.shapeOpacity ?? 1,
+                borderRadius: artwork.shapeType === 'circle' ? '50%' : 0,
+              }}
+            />
+          )}
+        </div>
         {isInActiveAutofocusGroup && (
           <div
             style={{

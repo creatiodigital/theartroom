@@ -15,9 +15,11 @@ export const useGroupArtwork = () => {
 
   const handleAddArtworkToGroup = useCallback(
     (artworkId: string) => {
+      // Block locked artworks from being grouped
+      if (exhibitionArtworksById[artworkId]?.locked) return
       dispatch(addArtworkToGroup(artworkId))
     },
-    [dispatch],
+    [dispatch, exhibitionArtworksById],
   )
 
   const handleCreateArtworkGroup = useCallback(() => {

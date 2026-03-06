@@ -14,7 +14,7 @@ import { Text } from '@/components/ui/Typography'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
-import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { updateArtworkPosition, toggleArtworkLocked } from '@/redux/slices/exhibitionSlice'
 import { setSizeLocked } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
@@ -47,6 +47,7 @@ const ArtworkPanel = () => {
   )
   const artwork = currentArtworkId ? artworksById[currentArtworkId] : null
   const exhibitionArtwork = currentArtworkId ? exhibitionArtworksById[currentArtworkId] : null
+  const isLocked = exhibitionArtwork?.locked ?? false
 
   const { width, height, fromTop, fromBottom, fromLeft, fromRight } = useArtworkDetails(
     currentArtworkId!,
@@ -194,8 +195,21 @@ const ArtworkPanel = () => {
         </Text>
       </div>
 
+      {/* INTERACTION Section */}
+      <Section title="Interaction">
+        <Checkbox
+          checked={isLocked}
+          onChange={() =>
+            currentArtworkId && dispatch(toggleArtworkLocked({ artworkId: currentArtworkId }))
+          }
+          label="Lock artwork"
+        />
+      </Section>
+
+
+
       {/* SIZE Section */}
-      <Section title="Dimensions">
+      <Section title="Dimensions" disabled={isLocked}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
           Size (m)
         </Text>
@@ -208,6 +222,7 @@ const ArtworkPanel = () => {
               min={0.1}
               max={50}
               onChange={handleLockedWidthChange}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -218,6 +233,7 @@ const ArtworkPanel = () => {
               min={0.1}
               max={50}
               onChange={handleLockedHeightChange}
+              disabled={isLocked}
             />
           </div>
         </div>
@@ -229,6 +245,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               label="Use image proportions"
               onClick={handleUseImageProportions}
+              disabled={isLocked}
             />
           </div>
         )}
@@ -240,11 +257,12 @@ const ArtworkPanel = () => {
               dispatch(setSizeLocked({ artworkId: currentArtworkId, value: e.target.checked }))
             }
             label="Lock proportions when resizing"
+            disabled={isLocked}
           />
         </div>
       </Section>
 
-      <Section title="Position">
+      <Section title="Position" disabled={isLocked}>
         <div className={styles.row}>
           <div className={styles.item}>
             <Button
@@ -252,6 +270,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               icon="positionTop"
               onClick={() => handleAlign('verticalTop')}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -260,6 +279,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               icon="positionCenterV"
               onClick={() => handleAlign('verticalCenter')}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -268,6 +288,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               icon="positionBottom"
               onClick={() => handleAlign('verticalBottom')}
+              disabled={isLocked}
             />
           </div>
         </div>
@@ -278,6 +299,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               icon="positionLeft"
               onClick={() => handleAlign('horizontalLeft')}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -286,6 +308,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               icon="positionCenterH"
               onClick={() => handleAlign('horizontalCenter')}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -294,6 +317,7 @@ const ArtworkPanel = () => {
               variant="secondary"
               icon="positionRight"
               onClick={() => handleAlign('horizontalRight')}
+              disabled={isLocked}
             />
           </div>
         </div>
@@ -310,6 +334,7 @@ const ArtworkPanel = () => {
               min={0}
               max={1000}
               onChange={handleFromTopChange}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -320,6 +345,7 @@ const ArtworkPanel = () => {
               min={0}
               max={1000}
               onChange={handleFromBottomChange}
+              disabled={isLocked}
             />
           </div>
         </div>
@@ -336,6 +362,7 @@ const ArtworkPanel = () => {
               min={0}
               max={1000}
               onChange={handleFromLeftChange}
+              disabled={isLocked}
             />
           </div>
           <div className={styles.item}>
@@ -346,6 +373,7 @@ const ArtworkPanel = () => {
               min={0}
               max={1000}
               onChange={handleFromRightChange}
+              disabled={isLocked}
             />
           </div>
         </div>
@@ -380,10 +408,13 @@ const ArtworkPanel = () => {
                 )
               }}
               className={styles.slider}
+              disabled={isLocked}
             />
           </div>
         )}
       </Section>
+
+
     </>
   )
 }

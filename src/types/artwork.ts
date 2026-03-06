@@ -24,6 +24,7 @@ export type TArtworkPosition = {
   quaternionY: number
   quaternionZ: number
   quaternionW: number
+  locked?: boolean
 }
 
 export type TArtwork = {

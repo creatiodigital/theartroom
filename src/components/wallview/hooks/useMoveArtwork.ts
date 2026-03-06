@@ -60,6 +60,9 @@ export const useMoveArtwork = (
       const artwork = exhibitionArtworksById[artworkId]
       if (!artwork) return
 
+      // Block drag on locked artworks
+      if (artwork.locked) return
+
       const offsetX = (event.clientX - rect.left) / scaleFactor - artwork.posX2d
       const offsetY = (event.clientY - rect.top) / scaleFactor - artwork.posY2d
       setOffset({ x: offsetX, y: offsetY })

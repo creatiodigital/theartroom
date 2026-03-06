@@ -71,6 +71,7 @@ export type TWallView = {
   alignedPairs: TAlignmentPair[]
   isGridVisible: boolean
   isSnapEnabled: boolean
+  guidesLocked: boolean
   returnFromWallView: boolean
   guides: TGuide[]
   selectedGuideId: string | null

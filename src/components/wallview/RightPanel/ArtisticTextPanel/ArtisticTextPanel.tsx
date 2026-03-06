@@ -43,7 +43,7 @@ const fontFamilyMap: Record<string, string> = {
   crimson: 'var(--font-wall-crimson)',
 }
 
-const ArtisticText = () => {
+const ArtisticText = ({ disabled }: { disabled?: boolean }) => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
@@ -195,7 +195,7 @@ const ArtisticText = () => {
 
   return (
     <>
-      <Section title="Alignment">
+      <Section title="Alignment" disabled={disabled}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
           Text Align
         </Text>
@@ -273,11 +273,11 @@ const ArtisticText = () => {
         </div>
       </Section>
 
-      <Section title="Presets">
+      <Section title="Presets" disabled={disabled}>
         <PresetSection presetType="text" />
       </Section>
 
-      <Section title="Style">
+      <Section title="Style" disabled={disabled}>
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>

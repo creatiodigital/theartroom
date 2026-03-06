@@ -25,6 +25,7 @@ interface SectionProps {
   children: ReactNode
   defaultOpen?: boolean
   collapsible?: boolean
+  disabled?: boolean
 }
 
 export const Section = ({
@@ -32,6 +33,7 @@ export const Section = ({
   children,
   defaultOpen = false,
   collapsible = true,
+  disabled,
 }: SectionProps) => {
   const [isOpen, setIsOpen] = useState(() => getStoredState(title, defaultOpen))
 
@@ -43,6 +45,8 @@ export const Section = ({
     })
   }, [title])
 
+  const contentStyle = disabled ? { pointerEvents: 'none' as const, opacity: 0.5 } : undefined
+
   // For non-collapsible sections, always show content
   if (!collapsible) {
     return (
@@ -50,7 +54,7 @@ export const Section = ({
         <div className={`${styles.header} ${styles.nonCollapsible}`}>
           <span className={styles.title}>{title}</span>
         </div>
-        <div className={styles.content}>{children}</div>
+        <div className={styles.content} style={contentStyle}>{children}</div>
       </div>
     )
   }
@@ -65,7 +69,7 @@ export const Section = ({
         />
         <span className={styles.title}>{title}</span>
       </div>
-      {isOpen && <div className={styles.content}>{children}</div>}
+      {isOpen && <div className={styles.content} style={contentStyle}>{children}</div>}
     </div>
   )
 }

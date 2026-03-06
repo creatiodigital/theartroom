@@ -29,6 +29,7 @@ import {
   hideRulers,
   removeGroup,
   toggleSnap,
+  toggleGuidesLocked,
   setActiveAutofocusGroupId,
 } from '@/redux/slices/wallViewSlice'
 import {
@@ -58,6 +59,7 @@ export const LeftPanel = () => {
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
   const isRulersVisible = useSelector((state: RootState) => state.wallView.isRulersVisible)
   const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
+  const guidesLocked = useSelector((state: RootState) => state.wallView.guidesLocked)
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
 
   // Autofocus Groups
@@ -217,6 +219,10 @@ export const LeftPanel = () => {
     dispatch(toggleSnap())
   }
 
+  const handleToggleGuidesLocked = () => {
+    dispatch(toggleGuidesLocked())
+  }
+
   const handleSelectArtwork = (artworkId: string | null) => {
     if (currentArtworkId !== artworkId) {
       dispatch(chooseCurrentArtworkId(artworkId))
@@ -364,22 +370,23 @@ export const LeftPanel = () => {
               </Tooltip>
             </div>
             <div className={styles.itemFlex}>
-              <Tooltip label="Show human height reference" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant={isHumanVisible ? 'primary' : 'secondary'}
-                  icon="human-standing"
-                  onClick={handleToggleHuman}
-                />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
               <Tooltip label="Show rulers & guides" placement="right" fullWidth>
                 <Button
                   size="regular"
                   variant={isRulersVisible ? 'primary' : 'secondary'}
                   icon="ruler"
                   onClick={handleToggleRulers}
+                />
+              </Tooltip>
+            </div>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Lock Guides" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant={guidesLocked ? 'primary' : 'secondary'}
+                  icon="panel-bottom-dashed"
+                  onClick={handleToggleGuidesLocked}
+                  disabled={!isRulersVisible}
                 />
               </Tooltip>
             </div>
@@ -393,6 +400,21 @@ export const LeftPanel = () => {
                 />
               </Tooltip>
             </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.itemFlex}>
+              <Tooltip label="Show human height reference" placement="right" fullWidth>
+                <Button
+                  size="regular"
+                  variant={isHumanVisible ? 'primary' : 'secondary'}
+                  icon="human-standing"
+                  onClick={handleToggleHuman}
+                />
+              </Tooltip>
+            </div>
+            <div className={styles.itemFlex} />
+            <div className={styles.itemFlex} />
+            <div className={styles.itemFlex} />
           </div>
         </div>
       </div>
