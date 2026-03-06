@@ -56,7 +56,7 @@ function detectCollisions(
 
 // Animation constants
 const FOCUS_DURATION = 1.2 // Animation duration in seconds
-const FOCUS_PADDING = 1.1 // Padding factor to ensure artwork fits comfortably in view
+const FOCUS_PADDING = 1.03 // Padding factor to ensure artwork fits comfortably in view
 const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
 
 // Ease-out cubic: smooth deceleration, reaches target exactly at t=1
@@ -475,7 +475,12 @@ const MainCamera = () => {
     // Track camera state for save/restore on artwork detail navigation
     currentCameraState = {
       position: { x: cam.position.x, y: cam.position.y, z: cam.position.z },
-      quaternion: { x: cam.quaternion.x, y: cam.quaternion.y, z: cam.quaternion.z, w: cam.quaternion.w },
+      quaternion: {
+        x: cam.quaternion.x,
+        y: cam.quaternion.y,
+        z: cam.quaternion.z,
+        w: cam.quaternion.w,
+      },
     }
 
     if (mouseState.current) {
