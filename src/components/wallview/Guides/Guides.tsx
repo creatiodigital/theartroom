@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useCallback, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
@@ -27,6 +28,7 @@ export const Guides = () => {
   const guides = useSelector((state: RootState) => state.wallView.guides)
   const selectedGuideId = useSelector((state: RootState) => state.wallView.selectedGuideId)
   const isRulersVisible = useSelector((state: RootState) => state.wallView.isRulersVisible)
+  const guidesLocked = useSelector((state: RootState) => state.wallView.guidesLocked)
   const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
   const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
   const wallHeight = useSelector((state: RootState) => state.wallView.wallHeight)
@@ -34,6 +36,7 @@ export const Guides = () => {
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
 
   const dragRef = useRef<DragState | null>(null)
+  const mousePosRef = useRef<{ x: number; y: number } | null>(null)
   const [, forceRender] = useState(0)
 
   // ---- Fetch guides on wall change ----
@@ -80,6 +83,7 @@ export const Guides = () => {
       }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (guidesLocked) return
         e.preventDefault()
         const guideId = selectedGuideId
         dispatch(removeGuide(guideId))
@@ -97,13 +101,14 @@ export const Guides = () => {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedGuideId, exhibitionId, dispatch])
+  }, [selectedGuideId, exhibitionId, dispatch, guidesLocked])
 
   // ---- Drag-to-move ----
   const handleGuideMouseDown = useCallback(
     (e: React.MouseEvent, guideId: string, orientation: 'horizontal' | 'vertical') => {
       e.stopPropagation()
       e.preventDefault()
+      if (guidesLocked) return
       dispatch(removeGroup())
       dispatch(chooseCurrentArtworkId(null))
       dispatch(selectGuide(guideId))
@@ -118,7 +123,7 @@ export const Guides = () => {
       }
       forceRender((n) => n + 1) // trigger re-render for cursor
     },
-    [dispatch, guides],
+    [dispatch, guides, guidesLocked],
   )
 
   useEffect(() => {
@@ -139,6 +144,10 @@ export const Guides = () => {
       const newPosition = drag.startPositionM + (isH ? -deltaM : deltaM)
 
       dispatch(updateGuidePosition({ id: drag.guideId, position: newPosition }))
+
+      // Track mouse position for the floating label
+      mousePosRef.current = { x: e.clientX, y: e.clientY }
+      forceRender((n) => n + 1)
     }
 
     const handleMouseUp = () => {
@@ -147,6 +156,7 @@ export const Guides = () => {
 
       const guide = guides.find((g) => g.id === drag.guideId)
       dragRef.current = null
+      mousePosRef.current = null
       forceRender((n) => n + 1)
 
       // Persist to DB
@@ -182,6 +192,7 @@ export const Guides = () => {
   const wallBottom = ox + wallPxH / 2
 
   return (
+    <>
     <div className={styles.guidesContainer}>
       {guides.map((guide) => {
         const isSelected = guide.id === selectedGuideId
@@ -196,7 +207,7 @@ export const Guides = () => {
             <div
               key={guide.id}
               className={`${styles.guide} ${styles.vertical} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
-              style={{ left: `${canvasPx}px` }}
+              style={{ left: `${canvasPx}px`, ...(guidesLocked ? { pointerEvents: 'none' as const } : {}) }}
               onMouseDown={(e) => handleGuideMouseDown(e, guide.id, 'vertical')}
               onClick={(e) => {
                 e.stopPropagation()
@@ -212,7 +223,7 @@ export const Guides = () => {
             <div
               key={guide.id}
               className={`${styles.guide} ${styles.horizontal} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
-              style={{ top: `${canvasPx}px` }}
+              style={{ top: `${canvasPx}px`, ...(guidesLocked ? { pointerEvents: 'none' as const } : {}) }}
               onMouseDown={(e) => handleGuideMouseDown(e, guide.id, 'horizontal')}
               onClick={(e) => {
                 e.stopPropagation()
@@ -223,6 +234,40 @@ export const Guides = () => {
         }
       })}
     </div>
+
+    {/* Floating position label during drag — portal to escape CSS transforms */}
+    {dragRef.current && mousePosRef.current && (() => {
+      const draggingGuide = guides.find((g) => g.id === dragRef.current!.guideId)
+      if (!draggingGuide) return null
+      const isH = draggingGuide.orientation === 'horizontal'
+      const label = isH
+        ? `y: ${draggingGuide.position.toFixed(2)}`
+        : `x: ${draggingGuide.position.toFixed(2)}`
+      return createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            left: mousePosRef.current!.x + 16,
+            top: mousePosRef.current!.y - 12,
+            background: '#000',
+            color: '#fff',
+            padding: '3px 8px',
+            borderRadius: 4,
+            fontSize: 11,
+            fontFamily: 'monospace',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 99999,
+            letterSpacing: '0.5px',
+          }}
+        >
+          {label}
+        </div>,
+        document.body,
+      )
+    })()}
+    </>
   )
 }
 

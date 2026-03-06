@@ -256,6 +256,7 @@ export const useSaveExhibition = () => {
             shapeColor: artwork.shapeColor ?? '#000000',
             shapeOpacity: artwork.shapeOpacity ?? 1,
             rotation: pos.rotation ?? 0,
+            locked: pos.locked ?? false,
             // Sound styling (per-exhibition)
             soundIcon: artwork.soundIcon ?? 'volume-2',
             soundBackgroundColor: artwork.soundBackgroundColor ?? null,

@@ -22,7 +22,7 @@ import {
   supportThicknessOptions,
 } from './constants'
 
-const ArtisticImage = () => {
+const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
 
   const {
@@ -57,7 +57,7 @@ const ArtisticImage = () => {
 
   return (
     <>
-      <Section title="Display">
+      <Section title="Display" disabled={disabled}>
         <Tooltip
           label="When enabled, visitors can double-click this artwork in the 3D exhibition to view its details"
           placement="left"
@@ -66,6 +66,7 @@ const ArtisticImage = () => {
             checked={showArtworkInformation!}
             onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
             label="Show information in exhibition"
+            disabled={disabled}
           />
         </Tooltip>
 
@@ -77,6 +78,7 @@ const ArtisticImage = () => {
             checked={hiddenFromExhibition ?? false}
             onChange={(e) => handleEditArtisticImage('hiddenFromExhibition', e.target.checked)}
             label="Hide in exhibition page"
+            disabled={disabled}
           />
         </Tooltip>
 
@@ -88,13 +90,14 @@ const ArtisticImage = () => {
             checked={hideShadow ?? false}
             onChange={(e) => handleEditArtisticImage('hideShadow', e.target.checked)}
             label="Hide shadow"
+            disabled={disabled}
           />
         </Tooltip>
 
         <PresetSection presetType="image" />
       </Section>
 
-      <Section title="Presentation">
+      <Section title="Presentation" disabled={disabled}>
         <Tooltip
           label="Add the canvas or panel depth behind the artwork (stretcher bars, wood panel, etc.)"
           placement="left"
@@ -103,6 +106,7 @@ const ArtisticImage = () => {
             checked={showSupport!}
             onChange={(e) => handleEditArtisticImage('showSupport', e.target.checked)}
             label="Add Support"
+            disabled={disabled}
           />
         </Tooltip>
         {showSupport && (
@@ -115,6 +119,7 @@ const ArtisticImage = () => {
                 <ColorPicker
                   textColor={supportColor!}
                   onColorSelect={(value) => handleEditArtisticImage('supportColor', value)}
+                  disabled={disabled}
                 />
               </div>
               <div className={styles.item}>
@@ -130,6 +135,7 @@ const ArtisticImage = () => {
                       value: val,
                     })
                   }
+                  disabled={disabled}
                 />
               </div>
             </div>
@@ -144,6 +150,7 @@ const ArtisticImage = () => {
             checked={showFrame!}
             onChange={(e) => handleEditArtisticImage('showFrame', e.target.checked)}
             label="Add Frame"
+            disabled={disabled}
           />
         </Tooltip>
         {showFrame && (
@@ -160,6 +167,7 @@ const ArtisticImage = () => {
                   ]}
                   value={frameMaterial ?? 'plastic'}
                   onChange={(value) => handleEditArtisticImage('frameMaterial', value)}
+                  disabled={disabled}
                 />
               </div>
               <div className={styles.item}>
@@ -173,6 +181,7 @@ const ArtisticImage = () => {
                   ]}
                   value={frameCornerStyle ?? 'mitered'}
                   onChange={(value) => handleEditArtisticImage('frameCornerStyle', value)}
+                  disabled={disabled}
                 />
               </div>
             </div>
@@ -187,6 +196,7 @@ const ArtisticImage = () => {
                     <ColorPicker
                       textColor={frameColor!}
                       onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
+                      disabled={disabled}
                     />
                   </div>
                 </div>
@@ -209,6 +219,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
               </>
@@ -235,6 +247,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureScale', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
                 <div className={styles.item}>
@@ -256,6 +270,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureOffsetX', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
                 <div className={styles.item}>
@@ -277,6 +293,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureOffsetY', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
                 <div className={styles.item}>
@@ -298,6 +316,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureRotation', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
                 <div className={styles.item}>
@@ -319,6 +339,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureTemperature', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
                 <div className={styles.item}>
@@ -340,6 +362,8 @@ const ArtisticImage = () => {
                       handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))
                     }
                     className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
                   />
                 </div>
               </>
@@ -387,6 +411,7 @@ const ArtisticImage = () => {
             checked={showPassepartout!}
             onChange={(e) => handleEditArtisticImage('showPassepartout', e.target.checked)}
             label="Add Passepartout"
+            disabled={disabled}
           />
         </Tooltip>
         {showPassepartout && (
@@ -399,6 +424,7 @@ const ArtisticImage = () => {
                 <ColorPicker
                   textColor={passepartoutColor!}
                   onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}
+                  disabled={disabled}
                 />
               </div>
             </div>

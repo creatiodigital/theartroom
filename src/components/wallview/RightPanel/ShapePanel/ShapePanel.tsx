@@ -20,7 +20,7 @@ const shapeTypes = [
   { value: 'circle', label: 'Circle' },
 ]
 
-const ShapePanel = () => {
+const ShapePanel = ({ disabled }: { disabled?: boolean }) => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const artwork = useSelector((state: RootState) =>
@@ -44,7 +44,7 @@ const ShapePanel = () => {
 
   return (
     <>
-      <Section title="Properties">
+      <Section title="Properties" disabled={disabled}>
         <div className={styles.row}>
           <div className={styles.item}>
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
@@ -91,7 +91,7 @@ const ShapePanel = () => {
         </div>
       </Section>
 
-      <Section title="Presets">
+      <Section title="Presets" disabled={disabled}>
         <PresetSection presetType="shape" />
       </Section>
     </>

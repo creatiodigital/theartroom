@@ -173,6 +173,7 @@ export async function POST(request: NextRequest) {
         shapeColor?: string
         shapeOpacity?: number
         rotation?: number
+        locked?: boolean
       }>
     }
 
@@ -298,6 +299,7 @@ export async function POST(request: NextRequest) {
             shapeColor: pos.shapeColor ?? '#000000',
             shapeOpacity: pos.shapeOpacity ?? 1,
             rotation: pos.rotation ?? 0,
+            locked: pos.locked ?? false,
           },
           update: {
             wallId: pos.wallId,
@@ -372,6 +374,7 @@ export async function POST(request: NextRequest) {
             shapeColor: pos.shapeColor ?? '#000000',
             shapeOpacity: pos.shapeOpacity ?? 1,
             rotation: pos.rotation ?? 0,
+            locked: pos.locked ?? false,
           },
         }),
       ),

@@ -205,6 +205,9 @@ const wallViewSlice = createSlice({
     toggleSnap: (state: TWallView) => {
       state.isSnapEnabled = !state.isSnapEnabled
     },
+    toggleGuidesLocked: (state: TWallView) => {
+      state.guidesLocked = !state.guidesLocked
+    },
     // ---------- Guides ----------
     setGuides: (state: TWallView, action: PayloadAction<TGuide[]>) => {
       state.guides = action.payload
@@ -274,6 +277,7 @@ export const {
   openArtworkEditModal,
   closeArtworkEditModal,
   toggleSnap,
+  toggleGuidesLocked,
   setGuides,
   addGuide,
   updateGuidePosition,

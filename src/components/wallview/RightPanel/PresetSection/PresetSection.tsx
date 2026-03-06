@@ -265,6 +265,9 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     const preset = presets.find((p) => p.id === presetId)
     if (!preset || !currentArtworkId) return
 
+    // Block applying presets on locked artworks
+    if (exhibitionArtwork?.locked) return
+
     dispatch(pushToHistory())
 
     // Apply dimensions via exhibitionSlice, recomputing full 3D transform

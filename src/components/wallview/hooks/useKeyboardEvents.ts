@@ -11,6 +11,9 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
   const dispatch = useDispatch()
   const isEditingArtwork = useSelector((state: RootState) => state.dashboard.isEditingArtwork)
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
+  const exhibitionArtworksById = useSelector(
+    (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -18,6 +21,8 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
         // Delete group if a group is selected and mouse is over the wall
         if (artworkGroupIds.length > 0 && isMouseOver) {
           artworkGroupIds.forEach((artworkId) => {
+            // Skip locked artworks
+            if (exhibitionArtworksById[artworkId]?.locked) return
             dispatch(deleteArtwork({ artworkId }))
             dispatch(deleteArtworkPosition({ artworkId }))
           })
@@ -27,6 +32,8 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
         }
         // Delete single artwork if selected and mouse is over the wall (and no group)
         else if (currentArtworkId && isMouseOver && artworkGroupIds.length === 0) {
+          // Skip if locked
+          if (exhibitionArtworksById[currentArtworkId]?.locked) return
           dispatch(deleteArtwork({ artworkId: currentArtworkId }))
           dispatch(deleteArtworkPosition({ artworkId: currentArtworkId }))
           dispatch(removeGroup())
@@ -60,5 +67,5 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
     }
-  }, [currentArtworkId, isMouseOver, isEditingArtwork, artworkGroupIds, dispatch])
+  }, [currentArtworkId, isMouseOver, isEditingArtwork, artworkGroupIds, exhibitionArtworksById, dispatch])
 }

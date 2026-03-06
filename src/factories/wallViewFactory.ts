@@ -29,6 +29,7 @@ export const wallViewFactory = (): TWallView => ({
   alignedPairs: [],
   isGridVisible: false,
   isSnapEnabled: true,
+  guidesLocked: false,
   returnFromWallView: false,
   guides: [],
   selectedGuideId: null,
