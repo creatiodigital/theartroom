@@ -177,7 +177,13 @@ const Artwork = memo(
         {currentArtworkId === id && artworkGroupIds.length <= 1 && !artworkPositions.locked && (
           <Handles artworkId={id} handleResize={onHandleResize} />
         )}
-        <div style={{ position: 'absolute', inset: 0, ...(artworkPositions.locked ? { pointerEvents: 'none' } : undefined) }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            ...(artworkPositions.locked ? { pointerEvents: 'none' } : undefined),
+          }}
+        >
           {artworkType === 'text' && <ArtisticText artworkId={id} />}
           {artworkType === 'image' && <ArtisticImage artwork={artwork} />}
           {artworkType === 'sound' && <ArtisticSound artworkId={id} />}

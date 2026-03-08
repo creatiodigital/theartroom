@@ -224,6 +224,10 @@ const Display = ({ artwork }: DisplayProps) => {
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const shadowBlur = useSelector((state: RootState) => state.exhibition.shadowBlur ?? 0.025)
+  const shadowSpread = useSelector((state: RootState) => state.exhibition.shadowSpread ?? 1.2)
+  const shadowOpacity = useSelector((state: RootState) => state.exhibition.shadowOpacity ?? 0.25)
+  const shadowDirection = useSelector((state: RootState) => state.exhibition.shadowDirection ?? 0.2)
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
@@ -277,7 +281,11 @@ const Display = ({ artwork }: DisplayProps) => {
             halfW += memberArt.frameSize.value / 100
             halfH += memberArt.frameSize.value / 100
           }
-          if (memberArt?.showPassepartout && memberArt?.imageUrl && memberArt?.passepartoutSize?.value) {
+          if (
+            memberArt?.showPassepartout &&
+            memberArt?.imageUrl &&
+            memberArt?.passepartoutSize?.value
+          ) {
             halfW += memberArt.passepartoutSize.value / 100
             halfH += memberArt.passepartoutSize.value / 100
           }
@@ -436,10 +444,18 @@ const Display = ({ artwork }: DisplayProps) => {
   } | null>(null)
 
   useEffect(() => {
+    // Determine which wood folder to load based on frameMaterial
+    const woodFolder = frameMaterial?.startsWith('wood') ? frameMaterial : 'wood-dark'
     const loader = new TextureLoader()
-    const diffuse = loader.load('/assets/materials/wooden-frame/diffuse.jpg')
-    const normal = loader.load('/assets/materials/wooden-frame/normal.jpg')
-    const roughnessMap = loader.load('/assets/materials/wooden-frame/roughness.jpg')
+    const diffuse = loader.load(
+      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/diffuse.jpg`,
+    )
+    const normal = loader.load(
+      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/normal.jpg`,
+    )
+    const roughnessMap = loader.load(
+      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/roughness.jpg`,
+    )
 
     ;[diffuse, normal, roughnessMap].forEach((tex) => {
       tex.wrapS = tex.wrapT = 1000 // RepeatWrapping
@@ -454,7 +470,7 @@ const Display = ({ artwork }: DisplayProps) => {
       normal.dispose()
       roughnessMap.dispose()
     }
-  }, [])
+  }, [frameMaterial])
 
   // Apply wood texture control properties reactively
   const texScale = frameTextureScale ?? 2.0
@@ -486,23 +502,18 @@ const Display = ({ artwork }: DisplayProps) => {
     })
   }, [woodTextures, texScale, texOffsetX, texOffsetY, texRotation, artworkSeedOffset])
 
-  // Temperature color shift helper (warm = orange tint, cool = blue tint)
-  const temperatureToColor = (temp: number): string => {
-    const r = Math.min(255, Math.round(255 + temp * 40))
-    const g = Math.min(255, Math.round(255 - Math.abs(temp) * 10))
-    const b = Math.min(255, Math.round(255 - temp * 50))
-    return `rgb(${r},${g},${b})`
-  }
-
   // Frame material: plastic PBR or wood PBR based on dropdown
   const frameMaterialType = frameMaterial ?? 'plastic'
   const frameMatObj = useMemo(() => {
-    if (frameMaterialType === 'wood' && woodTextures) {
+    if (frameMaterialType.startsWith('wood') && woodTextures) {
+      // Combine user tint color with temperature shift
+      // frameColor acts as paint/stain: #ffffff = natural wood, other colors = tinted
+      const tintColor = frameColor ?? '#ffffff'
       return new MeshStandardMaterial({
         map: woodTextures.diffuse,
         normalMap: woodTextures.normal,
         roughnessMap: woodTextures.roughnessMap,
-        color: temperatureToColor(frameTextureTemperature ?? 0),
+        color: tintColor,
         roughness: frameTextureRoughness ?? 0.6,
         metalness: 0.05,
       })
@@ -518,6 +529,7 @@ const Display = ({ artwork }: DisplayProps) => {
   }, [
     frameMaterialType,
     frameAmbientColor,
+    frameColor,
     woodTextures,
     plasticTextures,
     frameTextureRoughness,
@@ -626,6 +638,10 @@ const Display = ({ artwork }: DisplayProps) => {
           width={totalWidth}
           height={totalHeight}
           frameDepth={showFrame ? frameDepth / 100 : showSupport ? supportDepth / 100 : 0}
+          blur={shadowBlur}
+          spread={shadowSpread}
+          opacity={shadowOpacity}
+          direction={shadowDirection}
         />
       )}
 

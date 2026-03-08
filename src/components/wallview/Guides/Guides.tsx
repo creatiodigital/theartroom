@@ -193,80 +193,88 @@ export const Guides = () => {
 
   return (
     <>
-    <div className={styles.guidesContainer}>
-      {guides.map((guide) => {
-        const isSelected = guide.id === selectedGuideId
-        const isDragging = dragRef.current?.guideId === guide.id
+      <div className={styles.guidesContainer}>
+        {guides.map((guide) => {
+          const isSelected = guide.id === selectedGuideId
+          const isDragging = dragRef.current?.guideId === guide.id
 
-        // Convert metres to canvas-space px
-        if (guide.orientation === 'vertical') {
-          // Vertical guide: position is metres from left wall edge
-          const canvasPx = wallLeft + guide.position * WALL_SCALE
-          return (
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-            <div
-              key={guide.id}
-              className={`${styles.guide} ${styles.vertical} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
-              style={{ left: `${canvasPx}px`, ...(guidesLocked ? { pointerEvents: 'none' as const } : {}) }}
-              onMouseDown={(e) => handleGuideMouseDown(e, guide.id, 'vertical')}
-              onClick={(e) => {
-                e.stopPropagation()
-                dispatch(selectGuide(guide.id))
-              }}
-            />
-          )
-        } else {
-          // Horizontal guide: position is metres from bottom wall edge (up is positive)
-          const canvasPx = wallBottom - guide.position * WALL_SCALE
-          return (
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-            <div
-              key={guide.id}
-              className={`${styles.guide} ${styles.horizontal} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
-              style={{ top: `${canvasPx}px`, ...(guidesLocked ? { pointerEvents: 'none' as const } : {}) }}
-              onMouseDown={(e) => handleGuideMouseDown(e, guide.id, 'horizontal')}
-              onClick={(e) => {
-                e.stopPropagation()
-                dispatch(selectGuide(guide.id))
-              }}
-            />
-          )
-        }
-      })}
-    </div>
+          // Convert metres to canvas-space px
+          if (guide.orientation === 'vertical') {
+            // Vertical guide: position is metres from left wall edge
+            const canvasPx = wallLeft + guide.position * WALL_SCALE
+            return (
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+              <div
+                key={guide.id}
+                className={`${styles.guide} ${styles.vertical} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
+                style={{
+                  left: `${canvasPx}px`,
+                  ...(guidesLocked ? { pointerEvents: 'none' as const } : {}),
+                }}
+                onMouseDown={(e) => handleGuideMouseDown(e, guide.id, 'vertical')}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  dispatch(selectGuide(guide.id))
+                }}
+              />
+            )
+          } else {
+            // Horizontal guide: position is metres from bottom wall edge (up is positive)
+            const canvasPx = wallBottom - guide.position * WALL_SCALE
+            return (
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+              <div
+                key={guide.id}
+                className={`${styles.guide} ${styles.horizontal} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
+                style={{
+                  top: `${canvasPx}px`,
+                  ...(guidesLocked ? { pointerEvents: 'none' as const } : {}),
+                }}
+                onMouseDown={(e) => handleGuideMouseDown(e, guide.id, 'horizontal')}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  dispatch(selectGuide(guide.id))
+                }}
+              />
+            )
+          }
+        })}
+      </div>
 
-    {/* Floating position label during drag — portal to escape CSS transforms */}
-    {dragRef.current && mousePosRef.current && (() => {
-      const draggingGuide = guides.find((g) => g.id === dragRef.current!.guideId)
-      if (!draggingGuide) return null
-      const isH = draggingGuide.orientation === 'horizontal'
-      const label = isH
-        ? `y: ${draggingGuide.position.toFixed(2)}`
-        : `x: ${draggingGuide.position.toFixed(2)}`
-      return createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            left: mousePosRef.current!.x + 16,
-            top: mousePosRef.current!.y - 12,
-            background: '#000',
-            color: '#fff',
-            padding: '3px 8px',
-            borderRadius: 4,
-            fontSize: 11,
-            fontFamily: 'monospace',
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none',
-            zIndex: 99999,
-            letterSpacing: '0.5px',
-          }}
-        >
-          {label}
-        </div>,
-        document.body,
-      )
-    })()}
+      {/* Floating position label during drag — portal to escape CSS transforms */}
+      {dragRef.current &&
+        mousePosRef.current &&
+        (() => {
+          const draggingGuide = guides.find((g) => g.id === dragRef.current!.guideId)
+          if (!draggingGuide) return null
+          const isH = draggingGuide.orientation === 'horizontal'
+          const label = isH
+            ? `y: ${draggingGuide.position.toFixed(2)}`
+            : `x: ${draggingGuide.position.toFixed(2)}`
+          return createPortal(
+            <div
+              style={{
+                position: 'fixed',
+                left: mousePosRef.current!.x + 16,
+                top: mousePosRef.current!.y - 12,
+                background: '#000',
+                color: '#fff',
+                padding: '3px 8px',
+                borderRadius: 4,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                zIndex: 99999,
+                letterSpacing: '0.5px',
+              }}
+            >
+              {label}
+            </div>,
+            document.body,
+          )
+        })()}
     </>
   )
 }

@@ -54,7 +54,9 @@ export const Section = ({
         <div className={`${styles.header} ${styles.nonCollapsible}`}>
           <span className={styles.title}>{title}</span>
         </div>
-        <div className={styles.content} style={contentStyle}>{children}</div>
+        <div className={styles.content} style={contentStyle}>
+          {children}
+        </div>
       </div>
     )
   }
@@ -69,7 +71,11 @@ export const Section = ({
         />
         <span className={styles.title}>{title}</span>
       </div>
-      {isOpen && <div className={styles.content} style={contentStyle}>{children}</div>}
+      {isOpen && (
+        <div className={styles.content} style={contentStyle}>
+          {children}
+        </div>
+      )}
     </div>
   )
 }

@@ -104,6 +104,12 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
 
       // Autofocus groups
       autofocusGroups: exhibitionData.autofocusGroups,
+
+      // Shadow decal controls
+      shadowBlur: exhibitionData.shadowBlur,
+      shadowSpread: exhibitionData.shadowSpread,
+      shadowOpacity: exhibitionData.shadowOpacity,
+      shadowDirection: exhibitionData.shadowDirection,
     },
     artworks: exhibitionArtworks.map((ea) => ({
       id: ea.id,

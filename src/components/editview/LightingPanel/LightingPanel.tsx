@@ -32,6 +32,10 @@ import {
   setHdriEnvironment,
   setHdriRotation,
   setCeilingLightMode,
+  setShadowBlur,
+  setShadowSpread,
+  setShadowOpacity,
+  setShadowDirection,
 } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
@@ -55,6 +59,10 @@ const TRACK_LAMP_COUNT = 14
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
 const DEFAULT_HDRI_ROTATION = 128
+const DEFAULT_SHADOW_BLUR = 0.025
+const DEFAULT_SHADOW_SPREAD = 1.2
+const DEFAULT_SHADOW_OPACITY = 0.25
+const DEFAULT_SHADOW_DIRECTION = 0.2
 
 const HDRI_OPTIONS = [{ value: 'soil', label: 'Soil' }] as const
 
@@ -130,6 +138,18 @@ const LightingPanel = () => {
   )
   const hdriRotation = useSelector(
     (state: RootState) => state.exhibition.hdriRotation ?? DEFAULT_HDRI_ROTATION,
+  )
+  const shadowBlur = useSelector(
+    (state: RootState) => state.exhibition.shadowBlur ?? DEFAULT_SHADOW_BLUR,
+  )
+  const shadowSpread = useSelector(
+    (state: RootState) => state.exhibition.shadowSpread ?? DEFAULT_SHADOW_SPREAD,
+  )
+  const shadowOpacity = useSelector(
+    (state: RootState) => state.exhibition.shadowOpacity ?? DEFAULT_SHADOW_OPACITY,
+  )
+  const shadowDirection = useSelector(
+    (state: RootState) => state.exhibition.shadowDirection ?? DEFAULT_SHADOW_DIRECTION,
   )
 
   // Get features from space config
@@ -248,6 +268,10 @@ const LightingPanel = () => {
           hdriEnvironment,
           hdriRotation,
           ceilingLightMode,
+          shadowBlur,
+          shadowSpread,
+          shadowOpacity,
+          shadowDirection,
           // Note: floorReflectiveness is in FloorPanel
         }),
       })
@@ -629,6 +653,84 @@ const LightingPanel = () => {
           )}
         </Section>
       )}
+
+      <Section title="Shadows">
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Blur</label>
+            <span className={styles.sliderValue}>{shadowBlur.toFixed(3)}</span>
+          </div>
+          <input
+            type="range"
+            min="0.01"
+            max="0.08"
+            step="0.005"
+            value={shadowBlur}
+            onChange={(e) => {
+              dispatch(setShadowBlur(parseFloat(e.target.value)))
+              setSaved(false)
+            }}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Spread</label>
+            <span className={styles.sliderValue}>{shadowSpread.toFixed(1)}</span>
+          </div>
+          <input
+            type="range"
+            min="0.5"
+            max="3.0"
+            step="0.1"
+            value={shadowSpread}
+            onChange={(e) => {
+              dispatch(setShadowSpread(parseFloat(e.target.value)))
+              setSaved(false)
+            }}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Tightness</label>
+            <span className={styles.sliderValue}>{shadowOpacity.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min="0.05"
+            max="0.80"
+            step="0.01"
+            value={shadowOpacity}
+            onChange={(e) => {
+              dispatch(setShadowOpacity(parseFloat(e.target.value)))
+              setSaved(false)
+            }}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Direction</label>
+            <span className={styles.sliderValue}>{shadowDirection.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min="0.0"
+            max="1.0"
+            step="0.05"
+            value={shadowDirection}
+            onChange={(e) => {
+              dispatch(setShadowDirection(parseFloat(e.target.value)))
+              setSaved(false)
+            }}
+            className={styles.slider}
+          />
+        </div>
+      </Section>
 
       {/* Actions */}
       <div className={styles.actions}>

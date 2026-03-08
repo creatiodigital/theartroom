@@ -38,7 +38,9 @@ const RightPanel = () => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
-  const isLocked = currentArtworkId ? (exhibitionArtworksById[currentArtworkId]?.locked ?? false) : false
+  const isLocked = currentArtworkId
+    ? (exhibitionArtworksById[currentArtworkId]?.locked ?? false)
+    : false
 
   const isGroupCreated = artworkGroupIds.length > 1
 
