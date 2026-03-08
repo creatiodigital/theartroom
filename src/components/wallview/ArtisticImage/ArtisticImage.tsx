@@ -159,7 +159,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
             ? {
                 border: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px solid ${frameColor ?? '#000000'}`,
               }
-            : showFrame && imageUrl && frameMaterial === 'wood'
+            : showFrame && imageUrl && frameMaterial?.startsWith('wood')
               ? {
                   padding: `${(frameSize?.value ?? 3) * (WALL_SCALE / 100)}px`,
                   position: 'relative' as const,
@@ -174,23 +174,38 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         onDrop={handleDrop}
       >
         {/* Wood texture backdrop — rotatable, scalable, offset-able */}
-        {showFrame && imageUrl && frameMaterial === 'wood' && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: '-50%',
-              width: '200%',
-              height: '200%',
-              backgroundImage: `url('/assets/materials/wooden-frame/diffuse.png')`,
-              backgroundSize: `${100 / (frameTextureScale ?? 2)}%`,
-              backgroundPosition: `${(frameTextureOffsetX ?? 0) * 100}% ${(frameTextureOffsetY ?? 0) * 100}%`,
-              backgroundRepeat: 'repeat',
-              transform: `rotate(${frameTextureRotation ?? 0}deg)`,
-              transformOrigin: 'center center',
-              zIndex: 0,
-              pointerEvents: 'none' as const,
-            }}
-          />
+        {showFrame && imageUrl && frameMaterial?.startsWith('wood') && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                inset: '-50%',
+                width: '200%',
+                height: '200%',
+                backgroundImage: `url('/assets/materials/wooden-frame-${(frameMaterial === 'wood' ? 'wood-dark' : (frameMaterial ?? 'wood-dark')).replace('wood-', '')}/diffuse.jpg')`,
+                backgroundSize: `${100 / (frameTextureScale ?? 2)}%`,
+                backgroundPosition: `${(frameTextureOffsetX ?? 0) * 100}% ${(frameTextureOffsetY ?? 0) * 100}%`,
+                backgroundRepeat: 'repeat',
+                transform: `rotate(${frameTextureRotation ?? 0}deg)`,
+                transformOrigin: 'center center',
+                zIndex: 0,
+                pointerEvents: 'none' as const,
+              }}
+            />
+            {/* Paint tint overlay — mimics Three.js color × texture multiply */}
+            {frameColor && frameColor !== '#ffffff' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: frameColor,
+                  mixBlendMode: 'multiply',
+                  zIndex: 0,
+                  pointerEvents: 'none' as const,
+                }}
+              />
+            )}
+          </>
         )}
         <div
           className={styles.passepartout}
@@ -199,7 +214,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
               showPassepartout && imageUrl && passepartoutSize
                 ? `${passepartoutSize.value * (WALL_SCALE / 100)}px solid ${passepartoutColor}`
                 : undefined,
-            ...(showFrame && frameMaterial === 'wood'
+            ...(showFrame && frameMaterial?.startsWith('wood')
               ? { position: 'relative' as const, zIndex: 1 }
               : {}),
           }}

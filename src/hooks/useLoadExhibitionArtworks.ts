@@ -193,7 +193,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
               label: String(ea.frameThickness ?? 1),
               value: ea.frameThickness ?? 1,
             },
-            frameMaterial: ea.frameMaterial ?? 'plastic',
+            frameMaterial:
+              ea.frameMaterial === 'wood' ? 'wood-dark' : (ea.frameMaterial ?? 'plastic'),
             frameCornerStyle: ea.frameCornerStyle ?? 'mitered',
             frameTextureScale: ea.frameTextureScale ?? 2.0,
             frameTextureOffsetX: ea.frameTextureOffsetX ?? 0,

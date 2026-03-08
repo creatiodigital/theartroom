@@ -316,7 +316,7 @@ const exhibitionSlice = createSlice({
     },
 
     setShadowOpacity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.shadowOpacity = Math.max(0.05, Math.min(0.80, action.payload))
+      state.shadowOpacity = Math.max(0.05, Math.min(0.8, action.payload))
     },
 
     setShadowDirection: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {

@@ -220,7 +220,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.shadowSpread !== undefined)
       data.shadowSpread = Math.max(0.5, Math.min(3.0, body.shadowSpread))
     if (body.shadowOpacity !== undefined)
-      data.shadowOpacity = Math.max(0.05, Math.min(0.80, body.shadowOpacity))
+      data.shadowOpacity = Math.max(0.05, Math.min(0.8, body.shadowOpacity))
     if (body.shadowDirection !== undefined)
       data.shadowDirection = Math.max(0.0, Math.min(1.0, body.shadowDirection))
 

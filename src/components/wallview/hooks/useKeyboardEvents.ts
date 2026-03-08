@@ -67,5 +67,12 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
     }
-  }, [currentArtworkId, isMouseOver, isEditingArtwork, artworkGroupIds, exhibitionArtworksById, dispatch])
+  }, [
+    currentArtworkId,
+    isMouseOver,
+    isEditingArtwork,
+    artworkGroupIds,
+    exhibitionArtworksById,
+    dispatch,
+  ])
 }

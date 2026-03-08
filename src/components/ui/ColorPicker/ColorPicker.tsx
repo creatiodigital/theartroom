@@ -25,7 +25,10 @@ const ColorPicker = ({ textColor = '#000000', onColorSelect, disabled }: ColorPi
   }
 
   return (
-    <div className={styles.picker} style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+    <div
+      className={styles.picker}
+      style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+    >
       <input type="color" value={selectedColor} onChange={handleColorChange} disabled={disabled} />
       <span className={styles.label}>{selectedColor}</span>
     </div>

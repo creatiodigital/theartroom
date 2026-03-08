@@ -138,7 +138,11 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
             halfW += memberArt.frameSize.value / 100
             halfH += memberArt.frameSize.value / 100
           }
-          if (memberArt?.showPassepartout && memberArt?.imageUrl && memberArt?.passepartoutSize?.value) {
+          if (
+            memberArt?.showPassepartout &&
+            memberArt?.imageUrl &&
+            memberArt?.passepartoutSize?.value
+          ) {
             halfW += memberArt.passepartoutSize.value / 100
             halfH += memberArt.passepartoutSize.value / 100
           }
