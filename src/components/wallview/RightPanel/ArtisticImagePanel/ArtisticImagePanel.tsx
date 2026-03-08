@@ -163,7 +163,9 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
                 <Select<string>
                   options={[
                     { label: 'Plastic', value: 'plastic' },
-                    { label: 'Wood', value: 'wood' },
+                    { label: 'Light Wood', value: 'wood-light' },
+                    { label: 'Medium Wood', value: 'wood-medium' },
+                    { label: 'Dark Wood', value: 'wood-dark' },
                   ]}
                   value={frameMaterial ?? 'plastic'}
                   onChange={(value) => handleEditArtisticImage('frameMaterial', value)}
@@ -226,8 +228,37 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
               </>
             )}
             {/* Wood controls */}
-            {frameMaterial === 'wood' && (
+            {frameMaterial?.startsWith('wood') && (
               <>
+                <div className={styles.row}>
+                  <div className={styles.item}>
+                    <Checkbox
+                      checked={!!frameColor && frameColor !== '#ffffff'}
+                      onChange={(e) =>
+                        handleEditArtisticImage(
+                          'frameColor',
+                          e.target.checked ? '#000000' : '#ffffff',
+                        )
+                      }
+                      label="Paint"
+                      disabled={disabled}
+                    />
+                  </div>
+                </div>
+                {frameColor && frameColor !== '#ffffff' && (
+                  <div className={styles.row}>
+                    <div className={styles.item}>
+                      <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                        Wood Color
+                      </Text>
+                      <ColorPicker
+                        textColor={frameColor}
+                        onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
+                        disabled={disabled}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className={styles.item}>
                   <div className={styles.sliderHeader}>
                     <Text font="dashboard" as="span" size="xs" className={styles.label}>

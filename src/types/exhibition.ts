@@ -63,6 +63,12 @@ export type TExhibition = {
   wallColor?: string
   ceilingColor?: string
 
+  // Shadow decal controls
+  shadowBlur?: number
+  shadowSpread?: number
+  shadowOpacity?: number
+  shadowDirection?: number
+
   // Autofocus groups
   autofocusGroups?: AutofocusGroup[]
 }

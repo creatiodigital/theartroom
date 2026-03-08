@@ -51,7 +51,11 @@ const Select = <T extends string | number = string | number>({
   }, [])
 
   return (
-    <div className={c(styles.select, size && styles[size])} ref={selectRef} style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+    <div
+      className={c(styles.select, size && styles[size])}
+      ref={selectRef}
+      style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+    >
       <div className={styles.input} onClick={() => !disabled && setIsOpen(!isOpen)}>
         {currentOption?.label ?? ''}
         <Icon name="chevronDown" size={size === 'medium' ? 20 : 16} color="#333333" />

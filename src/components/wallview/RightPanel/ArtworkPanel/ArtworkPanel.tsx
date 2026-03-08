@@ -206,8 +206,6 @@ const ArtworkPanel = () => {
         />
       </Section>
 
-
-
       {/* SIZE Section */}
       <Section title="Dimensions" disabled={isLocked}>
         <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
@@ -413,8 +411,6 @@ const ArtworkPanel = () => {
           </div>
         )}
       </Section>
-
-
     </>
   )
 }
