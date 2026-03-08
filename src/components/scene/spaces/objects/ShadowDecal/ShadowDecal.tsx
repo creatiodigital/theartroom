@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect } from 'react'
-import { ShaderMaterial, Vector2 } from 'three'
+import { ShaderMaterial, Vector2, NormalBlending } from 'three'
 
 // Shared vertex shader
 const vertexShader = `
@@ -37,9 +37,9 @@ const fragmentShader = `
     float blurWidth = (outerHalf.x - innerHalf.x);
     float alpha = 1.0 - smoothstep(0.0, blurWidth, dist);
     
-    // Vertical gradient: top nearly invisible (overhead light), bottom stronger
+    // Vertical gradient: top lighter (overhead light), bottom stronger
     // centered.y goes from -0.5 (bottom) to +0.5 (top)
-    float verticalFade = mix(1.0, 0.1, smoothstep(-0.2, 0.2, centered.y));
+    float verticalFade = mix(1.0, 0.2, smoothstep(-0.2, 0.2, centered.y));
     
     gl_FragColor = vec4(0.0, 0.0, 0.0, alpha * uMaxOpacity * verticalFade);
   }
@@ -52,8 +52,8 @@ type ShadowDecalProps = {
 }
 
 // Base blur size + proportional addition based on protrusion depth
-const BASE_BLUR = 0.02
-const DEPTH_MULTIPLIER = 1.5 // Depth-driven — thin supports stay tight, thick frames spread more
+const BASE_BLUR = 0.025
+const DEPTH_MULTIPLIER = 1.2 // Depth-driven — thin supports stay tight, thick frames spread more
 
 /**
  * Fake shadow decal component for artworks.
@@ -72,7 +72,7 @@ export function ShadowDecal({ width, height, frameDepth = 0.05 }: ShadowDecalPro
 
   // Scale opacity based on artwork size — small pieces get lighter shadows
   const diagonal = Math.sqrt(width * width + height * height)
-  const maxOpacity = Math.min(0.25, Math.max(0.08, diagonal * 0.2))
+  const maxOpacity = Math.min(0.35, Math.max(0.12, diagonal * 0.25))
 
   // Memoize the uniforms object to prevent recreation
   const uniforms = useMemo(
@@ -104,6 +104,7 @@ export function ShadowDecal({ width, height, frameDepth = 0.05 }: ShadowDecalPro
         ref={materialRef}
         transparent
         depthWrite={false}
+        blending={NormalBlending}
         uniforms={uniforms}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}

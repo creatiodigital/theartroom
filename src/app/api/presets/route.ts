@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         // Text styling
         fontFamily: body.fontFamily ?? 'Montserrat',
         fontSize: Number(body.fontSize) || 16,
-        fontWeight: body.fontWeight ?? '400',
+        fontWeight: body.fontWeight ?? 'regular',
         letterSpacing: body.letterSpacing != null ? Number(body.letterSpacing) : 0,
         lineHeight: Number(body.lineHeight) || 1.4,
         textColor: body.textColor ?? '#000000',

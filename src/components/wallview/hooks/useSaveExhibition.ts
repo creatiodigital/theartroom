@@ -228,7 +228,7 @@ export const useSaveExhibition = () => {
             // Text styling (per-exhibition)
             fontFamily: artwork.fontFamily?.value ?? 'Montserrat',
             fontSize: artwork.fontSize?.value ?? 16,
-            fontWeight: String(artwork.fontWeight?.value ?? '400'),
+            fontWeight: artwork.fontWeight?.value ?? 'regular',
             letterSpacing: artwork.letterSpacing?.value ?? 0,
             lineHeight: artwork.lineHeight?.value ?? 1.4,
             textColor: artwork.textColor ?? '#000000',

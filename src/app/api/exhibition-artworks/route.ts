@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
             fontSize: pos.fontSize ?? 16,
-            fontWeight: pos.fontWeight ?? '400',
+            fontWeight: pos.fontWeight ?? 'regular',
             letterSpacing: pos.letterSpacing ?? 0,
             lineHeight: pos.lineHeight ?? 1.4,
             textColor: pos.textColor ?? '#000000',
@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
             fontSize: pos.fontSize ?? 16,
-            fontWeight: pos.fontWeight ?? '400',
+            fontWeight: pos.fontWeight ?? 'regular',
             letterSpacing: pos.letterSpacing ?? 0,
             lineHeight: pos.lineHeight ?? 1.4,
             textColor: pos.textColor ?? '#000000',

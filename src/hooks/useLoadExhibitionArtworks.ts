@@ -228,10 +228,27 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
               value: ea.fontFamily.toLowerCase() as 'roboto' | 'lora',
             },
             fontSize: { label: String(ea.fontSize), value: ea.fontSize },
-            fontWeight: {
-              label: ea.fontWeight,
-              value: ea.fontWeight === '700' ? 'bold' : 'regular',
-            },
+            fontWeight: (() => {
+              // Map from DB string back to TFontWeight
+              // The DB stores the TFontWeight value directly ('regular', 'italic', 'bold', 'bold-italic')
+              // or legacy numeric values ('400', '700')
+              const WEIGHT_MAP: Record<string, 'regular' | 'italic' | 'bold' | 'bold-italic'> = {
+                regular: 'regular',
+                italic: 'italic',
+                bold: 'bold',
+                'bold-italic': 'bold-italic',
+                '400': 'regular',
+                '700': 'bold',
+              }
+              const mapped = WEIGHT_MAP[ea.fontWeight] ?? 'regular'
+              const LABEL_MAP: Record<string, string> = {
+                regular: 'Regular',
+                italic: 'Regular Italic',
+                bold: 'Bold',
+                'bold-italic': 'Bold Italic',
+              }
+              return { label: LABEL_MAP[mapped] ?? 'Regular', value: mapped }
+            })(),
             letterSpacing: { label: String(ea.letterSpacing), value: ea.letterSpacing },
             lineHeight: { label: String(ea.lineHeight), value: ea.lineHeight },
             textColor: ea.textColor,
