@@ -502,14 +502,6 @@ const Display = ({ artwork }: DisplayProps) => {
     })
   }, [woodTextures, texScale, texOffsetX, texOffsetY, texRotation, artworkSeedOffset])
 
-  // Temperature color shift helper (warm = orange tint, cool = blue tint)
-  const temperatureToColor = (temp: number): string => {
-    const r = Math.min(255, Math.round(255 + temp * 40))
-    const g = Math.min(255, Math.round(255 - Math.abs(temp) * 10))
-    const b = Math.min(255, Math.round(255 - temp * 50))
-    return `rgb(${r},${g},${b})`
-  }
-
   // Frame material: plastic PBR or wood PBR based on dropdown
   const frameMaterialType = frameMaterial ?? 'plastic'
   const frameMatObj = useMemo(() => {
