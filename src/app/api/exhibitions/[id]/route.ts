@@ -60,6 +60,12 @@ type ExhibitionUpdateBody = {
 
   // Autofocus groups
   autofocusGroups?: Array<{ id: string; name: string; artworkIds: string[] }> | null
+
+  // Shadow decal controls
+  shadowBlur?: number
+  shadowSpread?: number
+  shadowOpacity?: number
+  shadowDirection?: number
 }
 
 /* ------------------------ GET ------------------------ */
@@ -207,6 +213,16 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     // Autofocus groups
     if (body.autofocusGroups !== undefined)
       data.autofocusGroups = body.autofocusGroups === null ? Prisma.JsonNull : body.autofocusGroups
+
+    // Shadow decal controls
+    if (body.shadowBlur !== undefined)
+      data.shadowBlur = Math.max(0.01, Math.min(0.08, body.shadowBlur))
+    if (body.shadowSpread !== undefined)
+      data.shadowSpread = Math.max(0.5, Math.min(3.0, body.shadowSpread))
+    if (body.shadowOpacity !== undefined)
+      data.shadowOpacity = Math.max(0.05, Math.min(0.80, body.shadowOpacity))
+    if (body.shadowDirection !== undefined)
+      data.shadowDirection = Math.max(0.0, Math.min(1.0, body.shadowDirection))
 
     // --- Draft/Publish logic ---
     if (body.published === true) {

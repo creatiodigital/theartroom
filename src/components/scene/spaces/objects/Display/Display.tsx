@@ -224,6 +224,12 @@ const Display = ({ artwork }: DisplayProps) => {
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const shadowBlur = useSelector((state: RootState) => state.exhibition.shadowBlur ?? 0.025)
+  const shadowSpread = useSelector((state: RootState) => state.exhibition.shadowSpread ?? 1.2)
+  const shadowOpacity = useSelector((state: RootState) => state.exhibition.shadowOpacity ?? 0.25)
+  const shadowDirection = useSelector(
+    (state: RootState) => state.exhibition.shadowDirection ?? 0.2,
+  )
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
@@ -626,6 +632,10 @@ const Display = ({ artwork }: DisplayProps) => {
           width={totalWidth}
           height={totalHeight}
           frameDepth={showFrame ? frameDepth / 100 : showSupport ? supportDepth / 100 : 0}
+          blur={shadowBlur}
+          spread={shadowSpread}
+          opacity={shadowOpacity}
+          direction={shadowDirection}
         />
       )}
 

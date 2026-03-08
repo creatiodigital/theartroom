@@ -215,6 +215,12 @@ model Exhibition {
   wallColor    String? @default("#ffffff")
   ceilingColor String? @default("#ffffff")
 
+  // Shadow decal controls
+  shadowBlur      Float? @default(0.025)
+  shadowSpread    Float? @default(1.2)
+  shadowOpacity   Float? @default(0.25)
+  shadowDirection Float? @default(0.2)
+
   // Autofocus groups (JSON array of { id, name, artworkIds })
   autofocusGroups Json?
 

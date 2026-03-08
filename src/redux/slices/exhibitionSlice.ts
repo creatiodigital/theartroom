@@ -306,6 +306,23 @@ const exhibitionSlice = createSlice({
       state.ceilingColor = action.payload
     },
 
+    // Shadow decal controls
+    setShadowBlur: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.shadowBlur = Math.max(0.01, Math.min(0.08, action.payload))
+    },
+
+    setShadowSpread: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.shadowSpread = Math.max(0.5, Math.min(3.0, action.payload))
+    },
+
+    setShadowOpacity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.shadowOpacity = Math.max(0.05, Math.min(0.80, action.payload))
+    },
+
+    setShadowDirection: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.shadowDirection = Math.max(0.0, Math.min(1.0, action.payload))
+    },
+
     // Autofocus group actions
     setAutofocusGroups: (
       state: TExhibitionWithHistory,
@@ -460,6 +477,10 @@ export const {
   setCameraElevation,
   setWallColor,
   setCeilingColor,
+  setShadowBlur,
+  setShadowSpread,
+  setShadowOpacity,
+  setShadowDirection,
   setAutofocusGroups,
   addAutofocusGroup,
   removeAutofocusGroup,
