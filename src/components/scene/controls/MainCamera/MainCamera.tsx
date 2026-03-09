@@ -56,7 +56,7 @@ function detectCollisions(
 
 // Animation constants
 const FOCUS_DURATION = 1.2 // Animation duration in seconds
-const FOCUS_PADDING = 1.03 // Padding factor to ensure artwork fits comfortably in view
+const FOCUS_PADDING = 1.08 // Padding factor to ensure artwork fits comfortably in view
 const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
 
 // Ease-out cubic: smooth deceleration, reaches target exactly at t=1
@@ -158,24 +158,23 @@ const MainCamera = () => {
       const { position, normal, width, height } = focusTarget
 
       // Calculate optimal viewing distance based on artwork size and camera FOV
-      // Must account for artwork position relative to fixed camera eye height
+      // Use the camera's real aspect ratio so the calculation adapts to any window shape
       const fovRad = (cameraFOV * Math.PI) / 180
       const halfFov = fovRad / 2
+      const aspectRatio = camera.aspect // actual viewport width / height
 
-      // Since camera moves to artwork center Y, vertical offset is symmetric
-      const maxVerticalOffset = height / 2
-
-      // Distance needed to see the most extreme vertical point
-      // tan(halfFov) = verticalOffset / distance => distance = verticalOffset / tan(halfFov)
+      // Distance needed so the artwork height fits in view
       const distanceForVertical =
-        maxVerticalOffset > 0
-          ? (maxVerticalOffset * FOCUS_PADDING) / Math.tan(halfFov)
+        height / 2 > 0
+          ? ((height / 2) * FOCUS_PADDING) / Math.tan(halfFov)
           : FOCUS_MIN_DISTANCE
 
-      // Also check horizontal fit (use aspect ratio approximation)
-      const aspectRatio = 16 / 9 // Approximate viewport aspect ratio
-      const horizontalFov = 2 * Math.atan(Math.tan(halfFov) * aspectRatio)
-      const distanceForHorizontal = (width * FOCUS_PADDING) / (2 * Math.tan(horizontalFov / 2))
+      // Distance needed so the artwork width fits in view
+      const horizontalHalfFov = Math.atan(Math.tan(halfFov) * aspectRatio)
+      const distanceForHorizontal =
+        width / 2 > 0
+          ? ((width / 2) * FOCUS_PADDING) / Math.tan(horizontalHalfFov)
+          : FOCUS_MIN_DISTANCE
 
       // Use the larger distance to ensure artwork fits both horizontally and vertically
       const optimalDistance = Math.max(
@@ -207,6 +206,7 @@ const MainCamera = () => {
       isAnimating.current = true
       isReturningToElevation.current = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusTarget])
 
   const onMouseMove = useCallback(
