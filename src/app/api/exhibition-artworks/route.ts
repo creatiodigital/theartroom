@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
         frameSize?: number
         frameThickness?: number
         frameMaterial?: string
+        frameCornerStyle?: string
         frameTextureScale?: number
         frameTextureRotation?: number
         frameTextureRoughness?: number
@@ -243,6 +244,7 @@ export async function POST(request: NextRequest) {
             frameSize: pos.frameSize ?? 5,
             frameThickness: pos.frameThickness ?? 0.5,
             frameMaterial: pos.frameMaterial ?? 'plastic',
+            frameCornerStyle: pos.frameCornerStyle ?? 'mitered',
             frameTextureScale: pos.frameTextureScale ?? 2.0,
             frameTextureRotation: pos.frameTextureRotation ?? 0,
             frameTextureRoughness: pos.frameTextureRoughness ?? 0.6,
@@ -316,6 +318,7 @@ export async function POST(request: NextRequest) {
             frameSize: pos.frameSize ?? 5,
             frameThickness: pos.frameThickness ?? 0.5,
             frameMaterial: pos.frameMaterial ?? 'plastic',
+            frameCornerStyle: pos.frameCornerStyle ?? 'mitered',
             frameTextureScale: pos.frameTextureScale ?? 2.0,
             frameTextureRotation: pos.frameTextureRotation ?? 0,
             frameTextureRoughness: pos.frameTextureRoughness ?? 0.6,

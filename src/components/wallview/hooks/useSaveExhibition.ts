@@ -210,6 +210,7 @@ export const useSaveExhibition = () => {
             frameSize: artwork.frameSize?.value ?? 5,
             frameThickness: artwork.frameThickness?.value ?? 0.5,
             frameMaterial: artwork.frameMaterial ?? 'plastic',
+            frameCornerStyle: artwork.frameCornerStyle ?? 'mitered',
             frameTextureScale: artwork.frameTextureScale ?? 2.0,
             frameTextureRotation: artwork.frameTextureRotation ?? 0,
             frameTextureRoughness: artwork.frameTextureRoughness ?? 0.6,

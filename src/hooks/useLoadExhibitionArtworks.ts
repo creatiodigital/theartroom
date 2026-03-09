@@ -97,6 +97,7 @@ type ExhibitionArtworkResponse = {
   shapeColor: string
   shapeOpacity: number
   rotation: number
+  locked: boolean
 }
 
 /**
@@ -332,6 +333,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             quaternionZ: ea.quaternionZ,
             quaternionW: ea.quaternionW,
             rotation: ea.rotation ?? 0,
+            locked: ea.locked ?? false,
           }
 
           dispatch(createArtworkPosition({ artworkId: ea.artworkId, artworkPosition: position }))
