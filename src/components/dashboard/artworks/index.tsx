@@ -3,23 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
@@ -66,7 +49,7 @@ type Artwork = {
   exhibitionArtworks: ExhibitionArtwork[]
 }
 
-type SortableArtworkCardProps = {
+type ArtworkCardProps = {
   artwork: Artwork
   onEdit: (id: string) => void
   onDelete: (id: string, name: string) => void
@@ -75,31 +58,18 @@ type SortableArtworkCardProps = {
   onTogglePlay: (artworkId: string, soundUrl: string) => void
 }
 
-function SortableArtworkCard({
+function ArtworkCard({
   artwork,
   onEdit,
   onDelete,
   onUnlink,
   playingArtworkId,
   onTogglePlay,
-}: SortableArtworkCardProps) {
+}: ArtworkCardProps) {
   const isPlaying = playingArtworkId === artwork.id
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: artwork.id,
-  })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
 
   return (
-    <div ref={setNodeRef} style={style} className={styles.card}>
-      {/* Drag Handle */}
-      <div className={styles.dragHandle} {...attributes} {...listeners}>
-        <span className={styles.dragIcon}>⠿</span>
-      </div>
+    <div className={styles.card}>
 
       {/* Thumbnail / Text Preview */}
       <div className={styles.cardThumbnail}>
@@ -196,6 +166,7 @@ export const ArtworkLibraryPage = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Sound preview playback
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -240,13 +211,7 @@ export const ArtworkLibraryPage = () => {
     [playingArtworkId],
   )
 
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
+
 
   // Debounce search input
   useEffect(() => {
@@ -274,6 +239,13 @@ export const ArtworkLibraryPage = () => {
     return true
   })
 
+  // Sort filtered artworks alphabetically by title
+  const sortedArtworks = [...filteredArtworks].sort((a, b) => {
+    const titleA = (a.title || a.name || '').toLowerCase()
+    const titleB = (b.title || b.name || '').toLowerCase()
+    return sortOrder === 'asc' ? titleA.localeCompare(titleB) : titleB.localeCompare(titleA)
+  })
+
   // Fetch artworks
   const fetchArtworks = useCallback(async () => {
     if (!effectiveUser?.id) return
@@ -281,11 +253,7 @@ export const ArtworkLibraryPage = () => {
     try {
       const response = await fetch(`/api/artworks?userId=${effectiveUser.id}`)
       const data = await response.json()
-      // Sort by order field
-      const sorted = Array.isArray(data)
-        ? data.sort((a: Artwork, b: Artwork) => (a.order ?? 0) - (b.order ?? 0))
-        : []
-      setArtworks(sorted)
+      setArtworks(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch artworks:', error)
     } finally {
@@ -360,31 +328,7 @@ export const ArtworkLibraryPage = () => {
     }
   }, [unlinkTarget, fetchArtworks])
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = artworks.findIndex((a) => a.id === active.id)
-      const newIndex = artworks.findIndex((a) => a.id === over.id)
-      const newArtworks = arrayMove(artworks, oldIndex, newIndex)
-      setArtworks(newArtworks)
-
-      // Persist new order to the API
-      try {
-        await fetch('/api/artworks/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            artworkIds: newArtworks.map((a) => a.id),
-          }),
-        })
-      } catch (error) {
-        console.error('Error reordering artworks:', error)
-        // Refetch to restore server state on error
-        fetchArtworks()
-      }
-    }
-  }
 
   if (loading) {
     return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
@@ -438,6 +382,12 @@ export const ArtworkLibraryPage = () => {
           />
           <Button
             font="dashboard"
+            variant="secondary"
+            label={sortOrder === 'asc' ? 'A → Z' : 'Z → A'}
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          />
+          <Button
+            font="dashboard"
             variant="primary"
             label="Add Artwork"
             onClick={() => setShowAddModal(true)}
@@ -445,7 +395,7 @@ export const ArtworkLibraryPage = () => {
         </div>
       </div>
 
-      {filteredArtworks.length === 0 ? (
+      {sortedArtworks.length === 0 ? (
         <div className={styles.empty}>
           <Text font="dashboard" as="p">
             {artworks.length === 0
@@ -454,26 +404,19 @@ export const ArtworkLibraryPage = () => {
           </Text>
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={filteredArtworks.map((a) => a.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className={styles.list}>
-              {filteredArtworks.map((artwork) => (
-                <SortableArtworkCard
-                  key={artwork.id}
-                  artwork={artwork}
-                  onEdit={(id) => router.push(`/dashboard/artworks/${id}/edit`)}
-                  onDelete={handleDeleteClick}
-                  onUnlink={handleUnlinkClick}
-                  playingArtworkId={playingArtworkId}
-                  onTogglePlay={handleTogglePlay}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <div className={styles.list}>
+          {sortedArtworks.map((artwork) => (
+            <ArtworkCard
+              key={artwork.id}
+              artwork={artwork}
+              onEdit={(id: string) => router.push(`/dashboard/artworks/${id}/edit`)}
+              onDelete={handleDeleteClick}
+              onUnlink={handleUnlinkClick}
+              playingArtworkId={playingArtworkId}
+              onTogglePlay={handleTogglePlay}
+            />
+          ))}
+        </div>
       )}
 
       {showAddModal && (

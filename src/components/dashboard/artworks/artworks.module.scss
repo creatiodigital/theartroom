@@ -129,27 +129,7 @@
   }
 }
 
-.dragHandle {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--space-6);
-  height: var(--space-10);
-  cursor: grab;
-  color: var(--color-border-strong);
-  user-select: none;
-  touch-action: none;
 
-  &:active {
-    cursor: grabbing;
-  }
-}
-
-.dragIcon {
-  font-size: var(--text-lg);
-  line-height: 1;
-}
 
 .cardThumbnail {
   flex-shrink: 0;
