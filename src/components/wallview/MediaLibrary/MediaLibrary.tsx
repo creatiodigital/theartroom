@@ -36,6 +36,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   const { effectiveUser } = useEffectiveUser()
   const [artworks, setArtworks] = useState<Artwork[]>([])
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
   // Get artworks already in this exhibition to filter them out
@@ -64,6 +65,15 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   const availableArtworks = artworks
     .filter((artwork) => !exhibitionArtworkIds.includes(artwork.id))
     .filter((artwork) => typeFilter === 'all' || artwork.artworkType === typeFilter)
+    .filter((artwork) => {
+      if (!searchQuery.trim()) return true
+      const q = searchQuery.toLowerCase()
+      return (
+        artwork.title?.toLowerCase().includes(q) ||
+        artwork.name.toLowerCase().includes(q) ||
+        artwork.textContent?.toLowerCase().includes(q)
+      )
+    })
 
   const handleDragStart = (e: React.DragEvent, artwork: Artwork) => {
     e.dataTransfer.setData('existingArtworkId', artwork.id)
@@ -140,6 +150,16 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                   : 'Sound'}
           </button>
         ))}
+      </div>
+
+      <div className={styles.searchWrapper}>
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder="Search artworks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
       {loading ? (

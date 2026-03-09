@@ -3,7 +3,7 @@
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { useGLTF } from '@react-three/drei'
 
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
 
 import { Button } from '@/components/ui/Button'
@@ -13,6 +13,7 @@ import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 
 import type { RootState } from '@/redux/store'
+import { toggleArtworkLocked } from '@/redux/slices/exhibitionSlice'
 import type { TAlign, TDistributeAlign } from '@/types/wizard'
 
 import { useAlignGroup } from '../hooks/useAlignGroup'
@@ -23,6 +24,7 @@ import styles from '../RightPanel.module.scss'
 
 const GroupPanel = () => {
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
+  const dispatch = useDispatch()
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
@@ -260,6 +262,20 @@ const GroupPanel = () => {
             />
           </div>
         </div>
+      </div>
+
+      <div className={styles.section}>
+        <Button
+          size="small"
+          variant="secondary"
+          icon="lock"
+          label="Lock All"
+          onClick={() => {
+            artworkGroupIds.forEach((id) => {
+              dispatch(toggleArtworkLocked({ artworkId: id }))
+            })
+          }}
+        />
       </div>
     </>
   )

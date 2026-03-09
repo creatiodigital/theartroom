@@ -262,11 +262,14 @@ export const ArtworkLibraryPage = () => {
     if (typeFilter !== 'all' && artwork.artworkType !== typeFilter) {
       return false
     }
-    // Search filter (case-insensitive, matches title)
+    // Search filter (case-insensitive, matches title, name, and text content)
     if (debouncedSearch) {
       const searchLower = debouncedSearch.toLowerCase()
-      const titleMatch = artwork.title?.toLowerCase().includes(searchLower)
-      return titleMatch
+      return (
+        artwork.title?.toLowerCase().includes(searchLower) ||
+        artwork.name.toLowerCase().includes(searchLower) ||
+        artwork.textContent?.toLowerCase().includes(searchLower)
+      )
     }
     return true
   })
@@ -429,7 +432,7 @@ export const ArtworkLibraryPage = () => {
             id="artwork-search"
             type="text"
             variant="search"
-            placeholder="Search by title..."
+            placeholder="Search by title or content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
