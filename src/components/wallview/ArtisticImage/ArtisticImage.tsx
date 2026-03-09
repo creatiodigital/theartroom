@@ -45,8 +45,6 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     frameSize,
     frameMaterial,
     frameTextureScale,
-    frameTextureOffsetX,
-    frameTextureOffsetY,
     frameTextureRotation,
     imageUrl,
     showPassepartout,
@@ -173,7 +171,7 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Wood texture backdrop — rotatable, scalable, offset-able */}
+        {/* Wood frame backdrop: always show texture, paint overlays with opacity */}
         {showFrame && imageUrl && frameMaterial?.startsWith('wood') && (
           <>
             <div
@@ -183,8 +181,8 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
                 width: '200%',
                 height: '200%',
                 backgroundImage: `url('/assets/materials/wooden-frame-${(frameMaterial === 'wood' ? 'wood-dark' : (frameMaterial ?? 'wood-dark')).replace('wood-', '')}/diffuse.jpg')`,
-                backgroundSize: `${100 / (frameTextureScale ?? 2)}%`,
-                backgroundPosition: `${(frameTextureOffsetX ?? 0) * 100}% ${(frameTextureOffsetY ?? 0) * 100}%`,
+                backgroundSize: `${(frameTextureScale ?? 2) * 25}%`,
+                backgroundPosition: '50% 50%',
                 backgroundRepeat: 'repeat',
                 transform: `rotate(${frameTextureRotation ?? 0}deg)`,
                 transformOrigin: 'center center',
@@ -192,14 +190,14 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
                 pointerEvents: 'none' as const,
               }}
             />
-            {/* Paint tint overlay — mimics Three.js color × texture multiply */}
+            {/* Paint overlay — uses opacity so ALL colors (incl. white) work */}
             {frameColor && frameColor !== '#ffffff' && (
               <div
                 style={{
                   position: 'absolute',
                   inset: 0,
                   backgroundColor: frameColor,
-                  mixBlendMode: 'multiply',
+                  opacity: 0.75,
                   zIndex: 0,
                   pointerEvents: 'none' as const,
                 }}

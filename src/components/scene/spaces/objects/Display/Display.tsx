@@ -5,6 +5,7 @@ import {
   MeshStandardMaterial,
   SRGBColorSpace,
   Vector3,
+  Vector2,
   Quaternion,
   TextureLoader,
   Texture,
@@ -214,11 +215,9 @@ const Display = ({ artwork }: DisplayProps) => {
     frameMaterial,
     frameCornerStyle,
     frameTextureScale,
-    frameTextureOffsetX,
-    frameTextureOffsetY,
     frameTextureRotation,
     frameTextureRoughness,
-    frameTextureTemperature,
+    frameTextureNormalScale,
   } = artwork
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -448,13 +447,13 @@ const Display = ({ artwork }: DisplayProps) => {
     const woodFolder = frameMaterial?.startsWith('wood') ? frameMaterial : 'wood-dark'
     const loader = new TextureLoader()
     const diffuse = loader.load(
-      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/diffuse.jpg`,
+      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/diffuse.jpg?v=2`,
     )
     const normal = loader.load(
-      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/normal.jpg`,
+      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/normal.jpg?v=2`,
     )
     const roughnessMap = loader.load(
-      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/roughness.jpg`,
+      `/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}/roughness.jpg?v=2`,
     )
 
     ;[diffuse, normal, roughnessMap].forEach((tex) => {
@@ -474,8 +473,6 @@ const Display = ({ artwork }: DisplayProps) => {
 
   // Apply wood texture control properties reactively
   const texScale = frameTextureScale ?? 2.0
-  const texOffsetX = frameTextureOffsetX ?? 0
-  const texOffsetY = frameTextureOffsetY ?? 0
   const texRotation = ((frameTextureRotation ?? 0) * Math.PI) / 180
 
   // Per-artwork seed offset so adjacent wood frames don't have identical grain patterns
@@ -494,24 +491,26 @@ const Display = ({ artwork }: DisplayProps) => {
   useMemo(() => {
     if (!woodTextures) return
     ;[woodTextures.diffuse, woodTextures.normal, woodTextures.roughnessMap].forEach((tex) => {
-      tex.repeat.set(texScale, texScale)
-      tex.offset.set(texOffsetX + artworkSeedOffset.x, texOffsetY + artworkSeedOffset.y)
+      tex.repeat.set(1 / texScale, 1 / texScale)
+      tex.offset.set(artworkSeedOffset.x, artworkSeedOffset.y)
       tex.rotation = texRotation
       tex.center.set(0.5, 0.5)
       tex.needsUpdate = true
     })
-  }, [woodTextures, texScale, texOffsetX, texOffsetY, texRotation, artworkSeedOffset])
+  }, [woodTextures, texScale, texRotation, artworkSeedOffset])
 
   // Frame material: plastic PBR or wood PBR based on dropdown
   const frameMaterialType = frameMaterial ?? 'plastic'
   const frameMatObj = useMemo(() => {
     if (frameMaterialType.startsWith('wood') && woodTextures) {
-      // Combine user tint color with temperature shift
-      // frameColor acts as paint/stain: #ffffff = natural wood, other colors = tinted
       const tintColor = frameColor ?? '#ffffff'
+      const isPainted = tintColor !== '#ffffff'
       return new MeshStandardMaterial({
-        map: woodTextures.diffuse,
+        // When painted: drop diffuse, paint color IS the base; normal+roughness keep grain detail
+        // When natural: diffuse provides the wood color
+        map: isPainted ? null : woodTextures.diffuse,
         normalMap: woodTextures.normal,
+        normalScale: new Vector2(frameTextureNormalScale ?? 0.5, frameTextureNormalScale ?? 0.5),
         roughnessMap: woodTextures.roughnessMap,
         color: tintColor,
         roughness: frameTextureRoughness ?? 0.6,
@@ -533,7 +532,7 @@ const Display = ({ artwork }: DisplayProps) => {
     woodTextures,
     plasticTextures,
     frameTextureRoughness,
-    frameTextureTemperature,
+    frameTextureNormalScale,
   ])
 
   // Passepartout material with ambient light applied

@@ -76,14 +76,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           body.frameTextureScale != null
             ? Number(body.frameTextureScale)
             : preset.frameTextureScale,
-        frameTextureOffsetX:
-          body.frameTextureOffsetX != null
-            ? Number(body.frameTextureOffsetX)
-            : preset.frameTextureOffsetX,
-        frameTextureOffsetY:
-          body.frameTextureOffsetY != null
-            ? Number(body.frameTextureOffsetY)
-            : preset.frameTextureOffsetY,
         frameTextureRotation:
           body.frameTextureRotation != null
             ? Number(body.frameTextureRotation)
@@ -92,10 +84,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           body.frameTextureRoughness != null
             ? Number(body.frameTextureRoughness)
             : preset.frameTextureRoughness,
-        frameTextureTemperature:
-          body.frameTextureTemperature != null
-            ? Number(body.frameTextureTemperature)
-            : preset.frameTextureTemperature,
+        frameTextureNormalScale:
+          body.frameTextureNormalScale != null
+            ? Number(body.frameTextureNormalScale)
+            : preset.frameTextureNormalScale,
         // Passepartout
         showPassepartout: body.showPassepartout ?? preset.showPassepartout,
         passepartoutColor: body.passepartoutColor ?? preset.passepartoutColor,

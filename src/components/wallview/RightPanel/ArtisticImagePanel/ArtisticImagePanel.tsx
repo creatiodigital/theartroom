@@ -39,11 +39,9 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
     frameMaterial,
     frameCornerStyle,
     frameTextureScale,
-    frameTextureOffsetX,
-    frameTextureOffsetY,
     frameTextureRotation,
     frameTextureRoughness,
-    frameTextureTemperature,
+    frameTextureNormalScale,
     showSupport,
     supportThickness,
     supportColor,
@@ -193,7 +191,7 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
                 <div className={styles.row}>
                   <div className={styles.item}>
                     <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Color
+                      Plastic Color
                     </Text>
                     <ColorPicker
                       textColor={frameColor!}
@@ -270,58 +268,12 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
                   </div>
                   <input
                     type="range"
-                    min="0.5"
+                    min="0.1"
                     max="8"
                     step="0.1"
                     value={frameTextureScale ?? 2}
                     onChange={(e) =>
                       handleEditArtisticImage('frameTextureScale', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Offset X
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureOffsetX ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={frameTextureOffsetX ?? 0}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureOffsetX', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Offset Y
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureOffsetY ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={frameTextureOffsetY ?? 0}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureOffsetY', parseFloat(e.target.value))
                     }
                     className={styles.slider}
                     disabled={disabled}
@@ -354,29 +306,6 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
                 <div className={styles.item}>
                   <div className={styles.sliderHeader}>
                     <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Temperature
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureTemperature ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-1"
-                    max="1"
-                    step="0.05"
-                    value={frameTextureTemperature ?? 0}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureTemperature', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
                       Reflections
                     </Text>
                     <span className={styles.sliderValue}>
@@ -391,6 +320,29 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
                     value={frameTextureRoughness ?? 0.6}
                     onChange={(e) =>
                       handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))
+                    }
+                    className={styles.slider}
+                    disabled={disabled}
+                    style={disabled ? { opacity: 0.5 } : undefined}
+                  />
+                </div>
+                <div className={styles.item}>
+                  <div className={styles.sliderHeader}>
+                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                      Details
+                    </Text>
+                    <span className={styles.sliderValue}>
+                      {(frameTextureNormalScale ?? 0.5).toFixed(2)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.01"
+                    value={frameTextureNormalScale ?? 0.5}
+                    onChange={(e) =>
+                      handleEditArtisticImage('frameTextureNormalScale', parseFloat(e.target.value))
                     }
                     className={styles.slider}
                     disabled={disabled}

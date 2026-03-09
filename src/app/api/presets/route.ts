@@ -47,16 +47,12 @@ export async function POST(request: Request) {
         frameMaterial: body.frameMaterial ?? 'plastic',
         frameCornerStyle: body.frameCornerStyle ?? 'mitered',
         frameTextureScale: body.frameTextureScale != null ? Number(body.frameTextureScale) : 2.0,
-        frameTextureOffsetX:
-          body.frameTextureOffsetX != null ? Number(body.frameTextureOffsetX) : 0,
-        frameTextureOffsetY:
-          body.frameTextureOffsetY != null ? Number(body.frameTextureOffsetY) : 0,
         frameTextureRotation:
           body.frameTextureRotation != null ? Number(body.frameTextureRotation) : 0,
         frameTextureRoughness:
           body.frameTextureRoughness != null ? Number(body.frameTextureRoughness) : 0.6,
-        frameTextureTemperature:
-          body.frameTextureTemperature != null ? Number(body.frameTextureTemperature) : 0,
+        frameTextureNormalScale:
+          body.frameTextureNormalScale != null ? Number(body.frameTextureNormalScale) : 0.5,
         // Passepartout
         showPassepartout: body.showPassepartout ?? false,
         passepartoutColor: body.passepartoutColor ?? '#ffffff',

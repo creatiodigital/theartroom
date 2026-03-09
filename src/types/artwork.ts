@@ -48,11 +48,9 @@ export type TArtwork = {
   frameMaterial?: string
   frameCornerStyle?: string
   frameTextureScale?: number
-  frameTextureOffsetX?: number
-  frameTextureOffsetY?: number
   frameTextureRotation?: number
   frameTextureRoughness?: number
-  frameTextureTemperature?: number
+  frameTextureNormalScale?: number
   showPassepartout?: boolean
   passepartoutColor?: string
   passepartoutSize?: TOption<number> // Border width (XY)
