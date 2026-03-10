@@ -29,6 +29,7 @@ import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
+import Tooltip from '@/components/ui/Tooltip/Tooltip'
 import styles from './ExhibitionView.module.scss'
 
 interface NavigationButtonProps {
@@ -50,9 +51,13 @@ const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps)
   }
 
   return (
-    <button className={styles.navigationButton} onClick={handleClick} aria-label="Close exhibition">
-      <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
-    </button>
+    <div className={styles.navigationButtonWrapper}>
+      <Tooltip label="Leave Exhibition" placement="left">
+        <button className={styles.navigationButton} onClick={handleClick} aria-label="Leave Exhibition">
+          <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+        </button>
+      </Tooltip>
+    </div>
   )
 }
 

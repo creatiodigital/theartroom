@@ -73,7 +73,7 @@ const Tooltip = ({
         setPosition(calculatePosition())
         setIsVisible(true)
       }
-    }, 1000)
+    }, 400)
   }
 
   const hideTooltip = () => {

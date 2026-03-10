@@ -3,6 +3,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { Component, type ReactNode } from 'react'
 
+import styles from './SceneErrorBoundary.module.scss'
+
 interface Props {
   children: ReactNode
   exhibitionId?: string
@@ -62,45 +64,29 @@ export class SceneErrorBoundary extends Component<Props, State> {
     return 'unknown'
   }
 
+  private isNetworkBlockedError(): boolean {
+    const msg = this.state.error?.message?.toLowerCase() || ''
+    return msg.includes('403') || msg.includes('forbidden') || msg.includes('blocked')
+  }
+
   render() {
     if (this.state.hasError) {
+      const isNetworkBlocked = this.isNetworkBlockedError()
+
       return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            width: '100%',
-            backgroundColor: '#1a1a1a',
-            color: '#ffffff',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            padding: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: 500 }}>
-            The 3D exhibition couldn&apos;t load
+        <div className={styles.container}>
+          <h2 className={styles.title}>
+            {isNetworkBlocked
+              ? 'The exhibition could not be loaded'
+              : "The 3D exhibition couldn't load"}
           </h2>
-          <p style={{ color: '#999', fontSize: '0.875rem', maxWidth: '400px', lineHeight: 1.5 }}>
-            Something went wrong while rendering the exhibition. This has been reported and
-            we&apos;re looking into it.
+          <p className={styles.message}>
+            {isNetworkBlocked
+              ? 'Your network appears to be blocking files required for the 3D exhibition. This can happen on corporate or restricted networks. Please try again from a different network or device.'
+              : "Something went wrong while rendering the exhibition. This has been reported and we're looking into it."}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: '1.5rem',
-              padding: '0.625rem 1.5rem',
-              backgroundColor: '#333',
-              color: '#fff',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            Reload page
+          <button className={styles.retryButton} onClick={() => window.location.reload()}>
+            {isNetworkBlocked ? 'Try again' : 'Reload page'}
           </button>
         </div>
       )
