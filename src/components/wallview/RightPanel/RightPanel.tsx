@@ -11,6 +11,7 @@ import type { RootState } from '@/redux/store'
 import { ArtisticImagePanel } from './ArtisticImagePanel'
 import { ArtisticSoundPanel } from './ArtisticSoundPanel'
 import { ArtisticTextPanel } from './ArtisticTextPanel'
+import ArtisticVideoPanel from './ArtisticVideoPanel/ArtisticVideoPanel'
 import { ArtworkPanel } from './ArtworkPanel'
 import { GroupPanel } from './GroupPanel'
 import { ShapePanel } from './ShapePanel/ShapePanel'
@@ -85,6 +86,8 @@ const RightPanel = () => {
             {artworkType === 'image' && <ArtisticImagePanel disabled={isLocked} />}
             {artworkType === 'text' && <ArtisticTextPanel disabled={isLocked} />}
             {artworkType === 'sound' && <ArtisticSoundPanel disabled={isLocked} />}
+            {artworkType === 'video' && <ArtisticImagePanel disabled={isLocked} />}
+            {artworkType === 'video' && <ArtisticVideoPanel disabled={isLocked} />}
             {artworkType === 'shape' && <ShapePanel disabled={isLocked} />}
 
             {artworkType !== 'shape' && (

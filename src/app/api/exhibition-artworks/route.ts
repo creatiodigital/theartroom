@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
                 imageUrl: live.imageUrl,
                 textContent: live.textContent,
                 soundUrl: live.soundUrl,
+                videoUrl: live.videoUrl,
                 originalWidth: live.originalWidth,
                 originalHeight: live.originalHeight,
               },
@@ -167,6 +168,9 @@ export async function POST(request: NextRequest) {
         soundPlayMode?: string
         soundSpatial?: boolean
         soundDistance?: number
+        // Video playback (per-exhibition)
+        videoPlayMode?: string
+        videoProximityDistance?: number
         // Shape decoration
         shapeType?: string
         shapeColor?: string
@@ -292,6 +296,9 @@ export async function POST(request: NextRequest) {
             soundPlayMode: pos.soundPlayMode ?? 'play-once',
             soundSpatial: pos.soundSpatial ?? true,
             soundDistance: pos.soundDistance ?? 5,
+            // Video playback
+            videoPlayMode: pos.videoPlayMode ?? 'play-once',
+            videoProximityDistance: pos.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: pos.shapeType ?? 'rectangle',
             shapeColor: pos.shapeColor ?? '#000000',
@@ -366,6 +373,9 @@ export async function POST(request: NextRequest) {
             soundPlayMode: pos.soundPlayMode ?? 'play-once',
             soundSpatial: pos.soundSpatial ?? true,
             soundDistance: pos.soundDistance ?? 5,
+            // Video playback
+            videoPlayMode: pos.videoPlayMode ?? 'play-once',
+            videoProximityDistance: pos.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: pos.shapeType ?? 'rectangle',
             shapeColor: pos.shapeColor ?? '#000000',

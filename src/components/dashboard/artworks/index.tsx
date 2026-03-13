@@ -42,11 +42,69 @@ type Artwork = {
   year: string | null
   technique: string | null
   imageUrl: string | null
+  videoUrl: string | null
   textContent: string | null
   soundUrl: string | null
   createdAt: string
   order?: number
   exhibitionArtworks: ExhibitionArtwork[]
+}
+
+// Extracts first frame from a video URL and renders it as a thumbnail
+function VideoThumbnail({ videoUrl, alt }: { videoUrl: string; alt: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const video = document.createElement('video')
+    video.crossOrigin = 'anonymous'
+    video.muted = true
+    video.playsInline = true
+    video.preload = 'auto'
+    video.src = videoUrl
+
+    const handleLoadedData = () => {
+      video.currentTime = 0
+    }
+
+    const handleSeeked = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(video, 0, 0)
+        setReady(true)
+      }
+      video.removeAttribute('src')
+      video.load()
+    }
+
+    video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('seeked', handleSeeked)
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('seeked', handleSeeked)
+      video.removeAttribute('src')
+      video.load()
+    }
+  }, [videoUrl])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-label={alt}
+      style={{
+        width: 60,
+        height: 60,
+        objectFit: 'cover',
+        borderRadius: 'var(--radius-sm)',
+        display: ready ? 'block' : 'none',
+      }}
+    />
+  )
 }
 
 type ArtworkCardProps = {
@@ -73,7 +131,7 @@ function ArtworkCard({
 
       {/* Thumbnail / Text Preview */}
       <div className={styles.cardThumbnail}>
-        {artwork.artworkType === 'image' && artwork.imageUrl ? (
+        {(artwork.artworkType === 'image' || artwork.artworkType === 'video') && artwork.imageUrl ? (
           <Image
             src={artwork.imageUrl}
             alt={artwork.title || 'Artwork'}
@@ -81,6 +139,8 @@ function ArtworkCard({
             height={60}
             className={styles.thumbnail}
           />
+        ) : artwork.artworkType === 'video' && artwork.videoUrl ? (
+          <VideoThumbnail videoUrl={artwork.videoUrl} alt={artwork.title || 'Video'} />
         ) : artwork.artworkType === 'text' && artwork.textContent ? (
           <div className={styles.textPreview}>{truncateText(artwork.textContent, 100)}</div>
         ) : artwork.artworkType === 'sound' ? (
@@ -104,7 +164,7 @@ function ArtworkCard({
         ) : (
           <div className={styles.placeholder}>
             <Icon
-              name={artwork.artworkType === 'image' ? 'image' : 'type'}
+              name={artwork.artworkType === 'image' ? 'image' : artwork.artworkType === 'video' ? 'video' : 'type'}
               size={32}
               color="#666"
             />
@@ -163,7 +223,7 @@ export const ArtworkLibraryPage = () => {
     exhibitionTitle: string
   } | null>(null)
   const [unlinking, setUnlinking] = useState(false)
-  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound' | 'video'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -369,6 +429,13 @@ export const ArtworkLibraryPage = () => {
             onClick={() => setTypeFilter('sound')}
           >
             Sound
+          </button>
+          <button
+            type="button"
+            className={`${styles.filterTag} ${typeFilter === 'video' ? styles.active : ''}`}
+            onClick={() => setTypeFilter('video')}
+          >
+            Video
           </button>
         </div>
         <div className={styles.searchRow}>

@@ -46,5 +46,9 @@ export const createNewArtwork = ({
     shapeType: 'rectangle',
     shapeColor: '#000000',
     shapeOpacity: 1,
+    // Video defaults
+    videoUrl: '',
+    videoPlayMode: 'play-once',
+    videoProximityDistance: 3,
   }
 }

@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ArtisticImage } from '@/components/wallview/ArtisticImage'
 import { ArtisticSound } from '@/components/wallview/ArtisticSound'
 import { ArtisticText } from '@/components/wallview/ArtisticText'
+import ArtisticVideo from '@/components/wallview/ArtisticVideo/ArtisticVideo'
 import { ArtworkMeasurements } from '@/components/wallview/ArtworkMeasurements'
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { Handles } from '@/components/wallview/Handles'
@@ -187,6 +188,7 @@ const Artwork = memo(
           {artworkType === 'text' && <ArtisticText artworkId={id} />}
           {artworkType === 'image' && <ArtisticImage artwork={artwork} />}
           {artworkType === 'sound' && <ArtisticSound artworkId={id} />}
+          {artworkType === 'video' && <ArtisticVideo artwork={artwork} />}
           {artworkType === 'shape' && (
             <div
               style={{

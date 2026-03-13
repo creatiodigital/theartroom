@@ -60,7 +60,7 @@ export const LeftPanel = () => {
   const isRulersVisible = useSelector((state: RootState) => state.wallView.isRulersVisible)
   const isSnapEnabled = useSelector((state: RootState) => state.wallView.isSnapEnabled)
   const guidesLocked = useSelector((state: RootState) => state.wallView.guidesLocked)
-  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound' | 'video'>('all')
 
   // Autofocus Groups
   const allAutofocusGroups = useSelector(
@@ -421,7 +421,7 @@ export const LeftPanel = () => {
       {wallArtworks.length > 0 && (
         <div className={styles.section}>
           <div className={styles.tabs}>
-            {(['all', 'image', 'text', 'sound'] as const).map((type) => (
+            {(['all', 'image', 'text', 'video', 'sound'] as const).map((type) => (
               <button
                 key={type}
                 className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
@@ -433,7 +433,9 @@ export const LeftPanel = () => {
                     ? 'Images'
                     : type === 'text'
                       ? 'Text'
-                      : 'Sound'}
+                      : type === 'video'
+                        ? 'Video'
+                        : 'Sound'}
               </button>
             ))}
           </div>
@@ -457,7 +459,7 @@ export const LeftPanel = () => {
                       alignItems: 'center',
                     }}
                   >
-                    {artwork.artworkType === 'image' && artwork.imageUrl ? (
+                    {(artwork.artworkType === 'image' || artwork.artworkType === 'video') && artwork.imageUrl ? (
                       <img
                         src={artwork.imageUrl}
                         alt=""
@@ -475,7 +477,9 @@ export const LeftPanel = () => {
                                 ? 'type'
                                 : artwork.artworkType === 'shape'
                                   ? 'shapes'
-                                  : 'image'
+                                  : artwork.artworkType === 'video'
+                                    ? 'video'
+                                    : 'image'
                           }
                           size={14}
                           color="currentColor"

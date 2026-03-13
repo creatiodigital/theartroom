@@ -136,7 +136,8 @@ export const Wall = () => {
           artworkType === 'image' ||
           artworkType === 'text' ||
           artworkType === 'sound' ||
-          artworkType === 'shape'
+          artworkType === 'shape' ||
+          artworkType === 'video'
         ) {
           handleCreateArtworkDrag(artworkType, x, y)
         }
