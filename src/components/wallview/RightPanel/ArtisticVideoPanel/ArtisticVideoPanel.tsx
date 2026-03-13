@@ -12,8 +12,9 @@ import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
 
 const playModeOptions = [
-  { label: 'Play Once', value: 'play-once' },
-  { label: 'Loop', value: 'loop' },
+  { label: 'Play on Proximity', value: 'proximity' },
+  { label: 'Always Play', value: 'always' },
+  { label: 'Play on Click', value: 'click' },
 ]
 
 const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
@@ -39,7 +40,7 @@ const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
             <Select<string>
               options={playModeOptions}
               value={videoPlayMode}
-              onChange={(val) => handleEditVideo('videoPlayMode', val as 'loop' | 'play-once')}
+              onChange={(val) => handleEditVideo('videoPlayMode', val as 'proximity' | 'always' | 'click')}
             />
           </div>
         </div>

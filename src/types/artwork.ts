@@ -98,7 +98,7 @@ export type TArtwork = {
   soundIconSize?: number // Icon size (px in 2D)
   // Video artwork settings (exhibition-level)
   videoUrl?: string // URL of the video file
-  videoPlayMode?: 'loop' | 'play-once' // Playback mode
+  videoPlayMode?: 'proximity' | 'always' | 'click' // Playback mode
   videoProximityDistance?: number // Distance in meters to trigger playback
   // Shape decoration properties (only when artworkType = 'shape')
   shapeType?: string // 'rectangle' | 'circle'

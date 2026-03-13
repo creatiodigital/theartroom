@@ -300,7 +300,7 @@ export const useSaveExhibition = () => {
             soundSpatial: artwork.soundSpatial ?? true,
             soundDistance: artwork.soundDistance ?? 5,
             // Video properties (per-exhibition)
-            videoPlayMode: artwork.videoPlayMode ?? 'play-once',
+            videoPlayMode: artwork.videoPlayMode ?? 'proximity',
             videoProximityDistance: artwork.videoProximityDistance ?? 3,
           }
         })

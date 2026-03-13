@@ -35,6 +35,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     width,
     height,
     videoUrl,
+    videoPlayMode,
     videoProximityDistance,
     showFrame,
     frameColor,
@@ -50,6 +51,8 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     hideShadow,
     frameCornerStyle,
   } = artwork
+
+  const playMode = videoPlayMode ?? 'proximity'
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
@@ -78,11 +81,23 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     return vid
   })
 
-  // Proximity state
+  // Play state
   const isPlayingRef = useRef(false)
   // Minimum 4m, default 5m
   const proximityDistance = Math.max(4, videoProximityDistance ?? 5)
 
+  // 'always' mode: auto-play on mount
+  useEffect(() => {
+    if (!video || playMode !== 'always') return
+    video.muted = false
+    video.play().catch(() => {})
+    isPlayingRef.current = true
+    return () => {
+      video.pause()
+      video.muted = true
+      isPlayingRef.current = false
+    }
+  }, [video, playMode])
 
   // Clean up video element on unmount — only pause, don't destroy src
   useEffect(() => {
@@ -98,8 +113,9 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const passepartoutAmbientColor = useAmbientLightColor(passepartoutColor ?? '#ffffff')
   const supportAmbientColor = useAmbientLightColor(supportColor ?? '#ffffff')
 
-  // ── Proximity: play on enter, pause on exit ──
+  // ── Proximity mode: play on enter, pause on exit ──
   useFrame(({ camera }) => {
+    if (playMode !== 'proximity') return
     if (!position || !video || !videoUrl) return
 
     const artworkPos = new Vector3(position.x, position.y, position.z)
@@ -112,9 +128,11 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         video.src = videoUrl
         video.load()
       }
+      video.muted = false
       video.play().catch(() => {})
     } else if (distance > proximityDistance && isPlayingRef.current) {
       isPlayingRef.current = false
+      video.muted = true
       video.pause()
     }
   })
@@ -126,8 +144,27 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     return normal
   }, [])
 
-  // Handle single click for focus
+  // Handle single click — in 'click' mode toggles video, otherwise focuses camera
   const handleSingleClick = useCallback(() => {
+    // Click-to-play mode: toggle video
+    if (playMode === 'click' && video) {
+      if (isPlayingRef.current) {
+        isPlayingRef.current = false
+        video.muted = true
+        video.pause()
+      } else {
+        isPlayingRef.current = true
+        if (!video.src || video.readyState === 0) {
+          video.src = videoUrl!
+          video.load()
+        }
+        video.muted = false
+        video.play().catch(() => {})
+      }
+      return
+    }
+
+    // Default: focus camera on artwork
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
 
@@ -151,6 +188,9 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       }
     }
   }, [
+    playMode,
+    video,
+    videoUrl,
     dispatch,
     artwork.id,
     position,
@@ -270,7 +310,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         {video ? (
           <mesh castShadow receiveShadow renderOrder={2}>
             <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshStandardMaterial color="black" emissive="white" toneMapped={false} side={DoubleSide}>
+            <meshStandardMaterial color="black" emissive="white" emissiveIntensity={0.6} toneMapped={false} side={DoubleSide}>
               <videoTexture attach="emissiveMap" args={[video]} />
             </meshStandardMaterial>
           </mesh>

@@ -304,7 +304,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             soundSpatial: ea.soundSpatial ?? true,
             soundDistance: ea.soundDistance ?? 5,
             // Video styling from ExhibitionArtwork (per-exhibition)
-            videoPlayMode: (ea.videoPlayMode ?? 'play-once') as 'loop' | 'play-once',
+            videoPlayMode: (ea.videoPlayMode ?? 'proximity') as 'proximity' | 'always' | 'click',
             videoProximityDistance: ea.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: ea.shapeType ?? 'rectangle',

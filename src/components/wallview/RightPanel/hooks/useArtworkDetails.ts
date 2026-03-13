@@ -81,7 +81,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       soundIconSize: 24,
       soundUrl: '',
       videoUrl: '',
-      videoPlayMode: 'play-once' as const,
+      videoPlayMode: 'proximity' as const,
       videoProximityDistance: 3,
       width: 0,
       height: 0,

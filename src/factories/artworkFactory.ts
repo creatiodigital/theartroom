@@ -48,7 +48,7 @@ export const createNewArtwork = ({
     shapeOpacity: 1,
     // Video defaults
     videoUrl: '',
-    videoPlayMode: 'play-once',
+    videoPlayMode: 'proximity',
     videoProximityDistance: 3,
   }
 }
