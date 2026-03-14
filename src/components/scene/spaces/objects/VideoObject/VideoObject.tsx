@@ -101,7 +101,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   }, [video, videoLoop])
 
   // ── Manually managed video texture for throttled updates ──
-  const videoTextureRef = useRef<ThreeVideoTexture | null>(null)
+  const [videoTexture, setVideoTexture] = useState<ThreeVideoTexture | null>(null)
   const frameCountRef = useRef(0)
   const meshRef = useRef<any>(null)
   // Reusable objects for frustum culling (avoid per-frame GC)
@@ -115,10 +115,10 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     tex.colorSpace = SRGBColorSpace
     // Disable automatic per-frame updates — we control this manually
     tex.generateMipmaps = false
-    videoTextureRef.current = tex
+    setVideoTexture(tex)
     return () => {
       tex.dispose()
-      videoTextureRef.current = null
+      setVideoTexture(null)
     }
   }, [video])
 
@@ -305,7 +305,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     }
 
     // ── Distance-based texture throttling + frustum culling ──
-    if (videoTextureRef.current && video && position) {
+    if (videoTexture && video && position) {
       frameCountRef.current++
 
       const artworkPos = new Vector3(position.x, position.y, position.z)
@@ -330,7 +330,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
 
       // Only update texture when interval allows AND mesh is in view
       if (inView && frameCountRef.current % updateInterval === 0) {
-        videoTextureRef.current.needsUpdate = true
+        videoTexture.needsUpdate = true
       }
     }
   })
@@ -498,10 +498,10 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
 
       {/* Artwork plane — video as self-lit screen */}
       <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
-        {video && videoTextureRef.current ? (
+        {video && videoTexture ? (
           <mesh ref={meshRef} castShadow receiveShadow renderOrder={2}>
             <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshStandardMaterial color="black" emissive="white" emissiveMap={videoTextureRef.current} emissiveIntensity={0.6} toneMapped={false} side={DoubleSide} />
+            <meshStandardMaterial color="black" emissive="white" emissiveMap={videoTexture} emissiveIntensity={0.6} toneMapped={false} side={DoubleSide} />
           </mesh>
         ) : (
           <mesh renderOrder={2}>
