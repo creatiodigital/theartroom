@@ -2,9 +2,13 @@ import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   DoubleSide,
+  Frustum,
+  Matrix4,
   MeshStandardMaterial,
+  SRGBColorSpace,
   Vector3,
   Quaternion,
+  VideoTexture as ThreeVideoTexture,
 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -95,6 +99,28 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   useEffect(() => {
     if (video) video.loop = videoLoop ?? true
   }, [video, videoLoop])
+
+  // ── Manually managed video texture for throttled updates ──
+  const videoTextureRef = useRef<ThreeVideoTexture | null>(null)
+  const frameCountRef = useRef(0)
+  const meshRef = useRef<any>(null)
+  // Reusable objects for frustum culling (avoid per-frame GC)
+  const frustumRef = useRef(new Frustum())
+  const projMatrixRef = useRef(new Matrix4())
+
+  // Create texture once from video element
+  useEffect(() => {
+    if (!video) return
+    const tex = new ThreeVideoTexture(video)
+    tex.colorSpace = SRGBColorSpace
+    // Disable automatic per-frame updates — we control this manually
+    tex.generateMipmaps = false
+    videoTextureRef.current = tex
+    return () => {
+      tex.dispose()
+      videoTextureRef.current = null
+    }
+  }, [video])
 
   // ── Spatial audio via Web Audio API ──
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -277,6 +303,36 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         listener.upZ.value = up.z
       }
     }
+
+    // ── Distance-based texture throttling + frustum culling ──
+    if (videoTextureRef.current && video && position) {
+      frameCountRef.current++
+
+      const artworkPos = new Vector3(position.x, position.y, position.z)
+      const dist = camera.position.distanceTo(artworkPos)
+
+      // Determine update interval based on distance
+      //   ≤ 5m  → every frame (full quality)
+      //   ≤ 15m → every 3 frames
+      //   ≤ 30m → every 10 frames
+      //   > 30m → every 30 frames
+      let updateInterval: number
+      if (dist <= 5) updateInterval = 1
+      else if (dist <= 15) updateInterval = 3
+      else if (dist <= 30) updateInterval = 10
+      else updateInterval = 30
+
+      // Frustum check — skip texture update if mesh is behind the camera
+      const projMat = projMatrixRef.current
+      projMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+      frustumRef.current.setFromProjectionMatrix(projMat)
+      const inView = frustumRef.current.containsPoint(artworkPos)
+
+      // Only update texture when interval allows AND mesh is in view
+      if (inView && frameCountRef.current % updateInterval === 0) {
+        videoTextureRef.current.needsUpdate = true
+      }
+    }
   })
 
   // Calculate the normal vector from artwork's quaternion
@@ -442,12 +498,10 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
 
       {/* Artwork plane — video as self-lit screen */}
       <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
-        {video ? (
-          <mesh castShadow receiveShadow renderOrder={2}>
+        {video && videoTextureRef.current ? (
+          <mesh ref={meshRef} castShadow receiveShadow renderOrder={2}>
             <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshStandardMaterial color="black" emissive="white" emissiveIntensity={0.6} toneMapped={false} side={DoubleSide}>
-              <videoTexture attach="emissiveMap" args={[video]} />
-            </meshStandardMaterial>
+            <meshStandardMaterial color="black" emissive="white" emissiveMap={videoTextureRef.current} emissiveIntensity={0.6} toneMapped={false} side={DoubleSide} />
           </mesh>
         ) : (
           <mesh renderOrder={2}>
