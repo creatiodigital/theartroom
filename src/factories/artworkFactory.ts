@@ -49,6 +49,8 @@ export const createNewArtwork = ({
     // Video defaults
     videoUrl: '',
     videoPlayMode: 'proximity',
+    videoLoop: true,
+    videoVolume: 1.0,
     videoProximityDistance: 3,
   }
 }

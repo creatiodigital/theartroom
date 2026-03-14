@@ -95,6 +95,8 @@ type ExhibitionArtworkResponse = {
   soundDistance: number
   // Video styling (per-exhibition)
   videoPlayMode: string
+  videoLoop: boolean
+  videoVolume: number
   videoProximityDistance: number
   // Shape decoration
   shapeType: string
@@ -305,6 +307,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             soundDistance: ea.soundDistance ?? 5,
             // Video styling from ExhibitionArtwork (per-exhibition)
             videoPlayMode: (ea.videoPlayMode ?? 'proximity') as 'proximity' | 'always' | 'click',
+            videoLoop: ea.videoLoop ?? true,
+            videoVolume: ea.videoVolume ?? 1.0,
             videoProximityDistance: ea.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: ea.shapeType ?? 'rectangle',

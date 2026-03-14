@@ -86,7 +86,6 @@ const RightPanel = () => {
             {artworkType === 'image' && <ArtisticImagePanel disabled={isLocked} />}
             {artworkType === 'text' && <ArtisticTextPanel disabled={isLocked} />}
             {artworkType === 'sound' && <ArtisticSoundPanel disabled={isLocked} />}
-            {artworkType === 'video' && <ArtisticImagePanel disabled={isLocked} />}
             {artworkType === 'video' && <ArtisticVideoPanel disabled={isLocked} />}
             {artworkType === 'shape' && <ShapePanel disabled={isLocked} />}
 

@@ -36,6 +36,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     height,
     videoUrl,
     videoPlayMode,
+    videoLoop,
     videoProximityDistance,
     showFrame,
     frameColor,
@@ -50,12 +51,16 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     showSupport,
     hideShadow,
     frameCornerStyle,
+    soundSpatial,
+    soundDistance,
+    videoVolume,
   } = artwork
 
   const playMode = videoPlayMode ?? 'proximity'
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const focusTarget = useSelector((state: RootState) => state.scene.focusTarget)
   const shadowBlur = useSelector((state: RootState) => state.exhibition.shadowBlur ?? 0.025)
   const shadowSpread = useSelector((state: RootState) => state.exhibition.shadowSpread ?? 1.2)
   const shadowOpacity = useSelector((state: RootState) => state.exhibition.shadowOpacity ?? 0.25)
@@ -73,7 +78,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     const vid = document.createElement('video')
     vid.src = videoUrl
     vid.crossOrigin = 'Anonymous'
-    vid.loop = true
+    vid.loop = videoLoop ?? true
     vid.muted = true
     vid.playsInline = true
     vid.preload = 'auto'
@@ -85,6 +90,102 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const isPlayingRef = useRef(false)
   // Minimum 4m, default 5m
   const proximityDistance = Math.max(4, videoProximityDistance ?? 5)
+
+  // Dynamically sync loop prop ↔ video element
+  useEffect(() => {
+    if (video) video.loop = videoLoop ?? true
+  }, [video, videoLoop])
+
+  // ── Spatial audio via Web Audio API ──
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const pannerRef = useRef<PannerNode | null>(null)
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const gainRef = useRef<GainNode | null>(null)
+  const spatialEnabledRef = useRef(soundSpatial ?? true)
+
+  // Setup Web Audio graph once video starts playing
+  useEffect(() => {
+    if (!video) return
+
+    const setupAudio = () => {
+      // Only create once
+      if (audioCtxRef.current) return
+
+      const ctx = new AudioContext()
+      audioCtxRef.current = ctx
+
+      const source = ctx.createMediaElementSource(video)
+      sourceRef.current = source
+
+      const gain = ctx.createGain()
+      gain.gain.value = videoVolume ?? 1.0
+      gainRef.current = gain
+
+      const panner = ctx.createPanner()
+      panner.panningModel = 'HRTF'
+      panner.distanceModel = 'inverse'
+      panner.refDistance = soundDistance ?? 5
+      panner.maxDistance = 100
+      panner.rolloffFactor = 1
+      pannerRef.current = panner
+
+      if (soundSpatial ?? true) {
+        source.connect(panner).connect(gain).connect(ctx.destination)
+      } else {
+        source.connect(gain).connect(ctx.destination)
+      }
+    }
+
+    // Try to set up on first play event
+    video.addEventListener('play', setupAudio, { once: true })
+
+    return () => {
+      video.removeEventListener('play', setupAudio)
+    }
+  }, [video, soundDistance, soundSpatial])
+
+  // Update panner refDistance when soundDistance changes
+  useEffect(() => {
+    if (pannerRef.current) {
+      pannerRef.current.refDistance = soundDistance ?? 5
+    }
+  }, [soundDistance])
+
+  // Sync gain with videoVolume prop
+  useEffect(() => {
+    if (gainRef.current) {
+      gainRef.current.gain.value = videoVolume ?? 1.0
+    }
+  }, [videoVolume])
+
+  // Reconnect graph when spatial toggle changes
+  useEffect(() => {
+    const ctx = audioCtxRef.current
+    const source = sourceRef.current
+    const panner = pannerRef.current
+    const gain = gainRef.current
+    if (!ctx || !source || !panner || !gain) return
+
+    const wasSpatial = spatialEnabledRef.current
+    const nowSpatial = soundSpatial ?? true
+    if (wasSpatial === nowSpatial) return
+
+    spatialEnabledRef.current = nowSpatial
+
+    // Disconnect everything and reconnect
+    source.disconnect()
+    panner.disconnect()
+    gain.disconnect()
+
+    if (nowSpatial) {
+      source.connect(panner).connect(gain).connect(ctx.destination)
+    } else {
+      source.connect(gain).connect(ctx.destination)
+    }
+  }, [soundSpatial])
+
+  // Click mode: track when waiting for autofocus to complete before playing
+  const waitingForFocusRef = useRef(false)
 
   // 'always' mode: auto-play on mount
   useEffect(() => {
@@ -98,6 +199,21 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       isPlayingRef.current = false
     }
   }, [video, playMode])
+
+  // Click mode: start video when autofocus completes (focusTarget clears)
+  useEffect(() => {
+    if (playMode !== 'click' || !video) return
+    if (!focusTarget && waitingForFocusRef.current) {
+      waitingForFocusRef.current = false
+      if (!video.src || video.readyState === 0) {
+        video.src = videoUrl!
+        video.load()
+      }
+      video.muted = false
+      video.play().catch(() => {})
+      isPlayingRef.current = true
+    }
+  }, [focusTarget, playMode, video, videoUrl])
 
   // Clean up video element on unmount — only pause, don't destroy src
   useEffect(() => {
@@ -115,25 +231,51 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
 
   // ── Proximity mode: play on enter, pause on exit ──
   useFrame(({ camera }) => {
-    if (playMode !== 'proximity') return
-    if (!position || !video || !videoUrl) return
+    if (playMode === 'proximity') {
+      if (!position || !video || !videoUrl) return
 
-    const artworkPos = new Vector3(position.x, position.y, position.z)
-    const distance = camera.position.distanceTo(artworkPos)
+      const artworkPos = new Vector3(position.x, position.y, position.z)
+      const distance = camera.position.distanceTo(artworkPos)
 
-    if (distance <= proximityDistance && !isPlayingRef.current) {
-      isPlayingRef.current = true
-      // Defensive: restore src if cleared by HMR
-      if (!video.src || video.readyState === 0) {
-        video.src = videoUrl
-        video.load()
+      if (distance <= proximityDistance && !isPlayingRef.current) {
+        isPlayingRef.current = true
+        // Defensive: restore src if cleared by HMR
+        if (!video.src || video.readyState === 0) {
+          video.src = videoUrl
+          video.load()
+        }
+        video.muted = false
+        video.play().catch(() => {})
+      } else if (distance > proximityDistance && isPlayingRef.current) {
+        isPlayingRef.current = false
+        video.muted = true
+        video.pause()
       }
-      video.muted = false
-      video.play().catch(() => {})
-    } else if (distance > proximityDistance && isPlayingRef.current) {
-      isPlayingRef.current = false
-      video.muted = true
-      video.pause()
+    }
+
+    // Update panner position for spatial audio (runs every frame, all modes)
+    if (pannerRef.current && position) {
+      pannerRef.current.positionX.value = position.x
+      pannerRef.current.positionY.value = position.y
+      pannerRef.current.positionZ.value = position.z
+
+      // Sync AudioListener position with camera
+      const listener = audioCtxRef.current?.listener
+      if (listener) {
+        listener.positionX.value = camera.position.x
+        listener.positionY.value = camera.position.y
+        listener.positionZ.value = camera.position.z
+
+        // Forward direction
+        const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+        const up = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+        listener.forwardX.value = forward.x
+        listener.forwardY.value = forward.y
+        listener.forwardZ.value = forward.z
+        listener.upX.value = up.x
+        listener.upY.value = up.y
+        listener.upZ.value = up.z
+      }
     }
   })
 
@@ -144,27 +286,8 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     return normal
   }, [])
 
-  // Handle single click — in 'click' mode toggles video, otherwise focuses camera
+  // Handle single click — in 'click' mode: focus then play. Otherwise: just focus.
   const handleSingleClick = useCallback(() => {
-    // Click-to-play mode: toggle video
-    if (playMode === 'click' && video) {
-      if (isPlayingRef.current) {
-        isPlayingRef.current = false
-        video.muted = true
-        video.pause()
-      } else {
-        isPlayingRef.current = true
-        if (!video.src || video.readyState === 0) {
-          video.src = videoUrl!
-          video.load()
-        }
-        video.muted = false
-        video.play().catch(() => {})
-      }
-      return
-    }
-
-    // Default: focus camera on artwork
     if (!isPlaceholdersShown && quaternion && position) {
       const normal = getNormalFromQuaternion(quaternion)
 
@@ -173,6 +296,19 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2) / 100
       const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2) / 100
 
+      // Click mode: if playing, pause. If not, focus then play.
+      if (playMode === 'click' && video) {
+        if (isPlayingRef.current) {
+          isPlayingRef.current = false
+          video.muted = true
+          video.pause()
+          return
+        }
+        // Set flag — video will start when focusTarget clears
+        waitingForFocusRef.current = true
+      }
+
+      // Dispatch focus target (camera autofocus)
       dispatch(
         setFocusTarget({
           artworkId: artwork.id,
@@ -190,7 +326,6 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   }, [
     playMode,
     video,
-    videoUrl,
     dispatch,
     artwork.id,
     position,

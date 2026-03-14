@@ -298,6 +298,8 @@ export async function POST(request: NextRequest) {
             soundDistance: pos.soundDistance ?? 5,
             // Video playback
             videoPlayMode: pos.videoPlayMode ?? 'proximity',
+            videoLoop: pos.videoLoop ?? true,
+            videoVolume: pos.videoVolume ?? 1.0,
             videoProximityDistance: pos.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: pos.shapeType ?? 'rectangle',
@@ -375,6 +377,8 @@ export async function POST(request: NextRequest) {
             soundDistance: pos.soundDistance ?? 5,
             // Video playback
             videoPlayMode: pos.videoPlayMode ?? 'proximity',
+            videoLoop: pos.videoLoop ?? true,
+            videoVolume: pos.videoVolume ?? 1.0,
             videoProximityDistance: pos.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: pos.shapeType ?? 'rectangle',

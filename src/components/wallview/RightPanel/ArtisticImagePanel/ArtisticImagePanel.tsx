@@ -3,24 +3,13 @@
 import { useSelector } from 'react-redux'
 
 import { Checkbox } from '@/components/ui/Checkbox'
-import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Section } from '@/components/ui/Section/Section'
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
+import PresentationSection from '@/components/wallview/RightPanel/PresentationSection/PresentationSection'
 import PresetSection from '@/components/wallview/RightPanel/PresetSection/PresetSection'
-import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
-
-import {
-  frameSizeOptions,
-  frameThicknessOptions,
-  passepartoutSizeOptions,
-  passepartoutThicknessOptions,
-  supportThicknessOptions,
-} from './constants'
 
 const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -95,357 +84,29 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
         <PresetSection presetType="image" />
       </Section>
 
-      <Section title="Presentation" disabled={disabled}>
-        <Tooltip
-          label="Add the canvas or panel depth behind the artwork (stretcher bars, wood panel, etc.)"
-          placement="left"
-        >
-          <Checkbox
-            checked={showSupport!}
-            onChange={(e) => handleEditArtisticImage('showSupport', e.target.checked)}
-            label="Add Support"
-            disabled={disabled}
-          />
-        </Tooltip>
-        {showSupport && (
-          <div className={styles.controlGroup}>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Support color
-                </Text>
-                <ColorPicker
-                  textColor={supportColor!}
-                  onColorSelect={(value) => handleEditArtisticImage('supportColor', value)}
-                  disabled={disabled}
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Thickness (cm)
-                </Text>
-                <Select<number>
-                  options={supportThicknessOptions}
-                  value={supportThickness?.value}
-                  onChange={(val) =>
-                    handleEditArtisticImage('supportThickness', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <Tooltip
-          label="Add a picture frame around this artwork, visible in the 3D exhibition"
-          placement="left"
-        >
-          <Checkbox
-            checked={showFrame!}
-            onChange={(e) => handleEditArtisticImage('showFrame', e.target.checked)}
-            label="Add Frame"
-            disabled={disabled}
-          />
-        </Tooltip>
-        {showFrame && (
-          <div className={styles.controlGroup}>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Material
-                </Text>
-                <Select<string>
-                  options={[
-                    { label: 'Plastic', value: 'plastic' },
-                    { label: 'Light Wood', value: 'wood-light' },
-                    { label: 'Medium Wood', value: 'wood-medium' },
-                    { label: 'Dark Wood', value: 'wood-dark' },
-                  ]}
-                  value={frameMaterial ?? 'plastic'}
-                  onChange={(value) => handleEditArtisticImage('frameMaterial', value)}
-                  disabled={disabled}
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Corner
-                </Text>
-                <Select<string>
-                  options={[
-                    { label: 'Mitered', value: 'mitered' },
-                    { label: 'Straight', value: 'straight' },
-                  ]}
-                  value={frameCornerStyle ?? 'mitered'}
-                  onChange={(value) => handleEditArtisticImage('frameCornerStyle', value)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-            {/* Plastic controls */}
-            {(frameMaterial ?? 'plastic') === 'plastic' && (
-              <>
-                <div className={styles.row}>
-                  <div className={styles.item}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Plastic Color
-                    </Text>
-                    <ColorPicker
-                      textColor={frameColor!}
-                      onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
-                      disabled={disabled}
-                    />
-                  </div>
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Reflections
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureRoughness ?? 0.6).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={frameTextureRoughness ?? 0.6}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-              </>
-            )}
-            {/* Wood controls */}
-            {frameMaterial?.startsWith('wood') && (
-              <>
-                <div className={styles.row}>
-                  <div className={styles.item}>
-                    <Checkbox
-                      checked={!!frameColor && frameColor !== '#ffffff'}
-                      onChange={(e) =>
-                        handleEditArtisticImage(
-                          'frameColor',
-                          e.target.checked ? '#000000' : '#ffffff',
-                        )
-                      }
-                      label="Paint"
-                      disabled={disabled}
-                    />
-                  </div>
-                </div>
-                {frameColor && frameColor !== '#ffffff' && (
-                  <div className={styles.row}>
-                    <div className={styles.item}>
-                      <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                        Wood Color
-                      </Text>
-                      <ColorPicker
-                        textColor={frameColor}
-                        onColorSelect={(value) => handleEditArtisticImage('frameColor', value)}
-                        disabled={disabled}
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Scale
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureScale ?? 2).toFixed(1)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="8"
-                    step="0.1"
-                    value={frameTextureScale ?? 2}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureScale', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Rotation
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureRotation ?? 0).toFixed(0)}°
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="360"
-                    step="1"
-                    value={frameTextureRotation ?? 0}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureRotation', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Reflections
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureRoughness ?? 0.6).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={frameTextureRoughness ?? 0.6}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureRoughness', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-                <div className={styles.item}>
-                  <div className={styles.sliderHeader}>
-                    <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                      Details
-                    </Text>
-                    <span className={styles.sliderValue}>
-                      {(frameTextureNormalScale ?? 0.5).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1"
-                    step="0.01"
-                    value={frameTextureNormalScale ?? 0.5}
-                    onChange={(e) =>
-                      handleEditArtisticImage('frameTextureNormalScale', parseFloat(e.target.value))
-                    }
-                    className={styles.slider}
-                    disabled={disabled}
-                    style={disabled ? { opacity: 0.5 } : undefined}
-                  />
-                </div>
-              </>
-            )}
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Size (cm)
-                </Text>
-                <Select<number>
-                  options={frameSizeOptions}
-                  value={frameSize?.value}
-                  onChange={(val) =>
-                    handleEditArtisticImage('frameSize', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Thickness (cm)
-                </Text>
-                <Select<number>
-                  options={frameThicknessOptions}
-                  value={frameThickness?.value}
-                  onChange={(val) =>
-                    handleEditArtisticImage('frameThickness', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <Tooltip
-          label="Add a mat border between the artwork and frame, like traditional gallery framing"
-          placement="left"
-        >
-          <Checkbox
-            checked={showPassepartout!}
-            onChange={(e) => handleEditArtisticImage('showPassepartout', e.target.checked)}
-            label="Add Passepartout"
-            disabled={disabled}
-          />
-        </Tooltip>
-        {showPassepartout && (
-          <div className={styles.controlGroup}>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Passepartout color
-                </Text>
-                <ColorPicker
-                  textColor={passepartoutColor!}
-                  onColorSelect={(value) => handleEditArtisticImage('passepartoutColor', value)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Size (cm)
-                </Text>
-                <Select<number>
-                  options={passepartoutSizeOptions}
-                  value={passepartoutSize?.value}
-                  onChange={(val) =>
-                    handleEditArtisticImage('passepartoutSize', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Thickness (cm)
-                </Text>
-                <Select<number>
-                  options={passepartoutThicknessOptions}
-                  value={passepartoutThickness?.value}
-                  onChange={(val) =>
-                    handleEditArtisticImage('passepartoutThickness', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </Section>
+      <PresentationSection
+        disabled={disabled}
+        showSupport={showSupport!}
+        supportColor={supportColor!}
+        supportThickness={supportThickness}
+        showFrame={showFrame!}
+        frameColor={frameColor!}
+        frameSize={frameSize}
+        frameThickness={frameThickness}
+        frameMaterial={frameMaterial}
+        frameCornerStyle={frameCornerStyle}
+        frameTextureScale={frameTextureScale}
+        frameTextureRotation={frameTextureRotation}
+        frameTextureRoughness={frameTextureRoughness}
+        frameTextureNormalScale={frameTextureNormalScale}
+        showPassepartout={showPassepartout!}
+        passepartoutColor={passepartoutColor!}
+        passepartoutSize={passepartoutSize}
+        passepartoutThickness={passepartoutThickness}
+        hideShadow={hideShadow}
+        onEdit={handleEditArtisticImage}
+        showShadowControl={false}
+      />
     </>
   )
 }

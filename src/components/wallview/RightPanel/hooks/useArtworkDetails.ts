@@ -82,6 +82,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       soundUrl: '',
       videoUrl: '',
       videoPlayMode: 'proximity' as const,
+      videoLoop: true,
       videoProximityDistance: 3,
       width: 0,
       height: 0,
@@ -158,6 +159,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     soundUrl,
     videoUrl,
     videoPlayMode,
+    videoLoop,
+    videoVolume,
     videoProximityDistance,
   } = artwork
 
@@ -245,7 +248,9 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     soundIconSize: soundIconSize ?? 24,
     soundUrl: soundUrl ?? '',
     videoUrl: videoUrl ?? '',
-    videoPlayMode: videoPlayMode ?? 'play-once',
+    videoPlayMode: videoPlayMode ?? 'proximity',
+    videoLoop: videoLoop ?? true,
+    videoVolume: videoVolume ?? 1.0,
     videoProximityDistance: videoProximityDistance ?? 3,
   }
 }

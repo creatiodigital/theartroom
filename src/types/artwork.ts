@@ -99,6 +99,8 @@ export type TArtwork = {
   // Video artwork settings (exhibition-level)
   videoUrl?: string // URL of the video file
   videoPlayMode?: 'proximity' | 'always' | 'click' // Playback mode
+  videoLoop?: boolean // Whether video loops
+  videoVolume?: number // Volume level 0-1
   videoProximityDistance?: number // Distance in meters to trigger playback
   // Shape decoration properties (only when artworkType = 'shape')
   shapeType?: string // 'rectangle' | 'circle'
