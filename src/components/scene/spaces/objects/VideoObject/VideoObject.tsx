@@ -2,6 +2,7 @@ import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   CanvasTexture,
+  DefaultLoadingManager,
   DoubleSide,
   Frustum,
   Matrix4,
@@ -86,6 +87,19 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     vid.muted = true
     vid.playsInline = true
     vid.preload = 'auto'
+
+    // Hook into Three.js loading manager so the Loader progress bar
+    // waits for video data before the scene is considered ready
+    const loadingUrl = `video:${videoUrl}`
+    DefaultLoadingManager.itemStart(loadingUrl)
+    vid.addEventListener('canplaythrough', () => {
+      DefaultLoadingManager.itemEnd(loadingUrl)
+    }, { once: true })
+    // Handle load errors gracefully so the loader doesn't hang forever
+    vid.addEventListener('error', () => {
+      DefaultLoadingManager.itemEnd(loadingUrl)
+    }, { once: true })
+
     vid.load() // Force browser to start buffering
     return vid
   })
