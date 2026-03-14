@@ -146,7 +146,30 @@ export const ArtworkEditForm = ({
   const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 
   const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
-  const MAX_VIDEO_SIZE = 20 * 1024 * 1024 // 20MB
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
+  const MAX_VIDEO_RESOLUTION = 1080 // Max height in pixels (1080p)
+
+  const validateVideoResolution = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file)
+      const vid = document.createElement('video')
+      vid.preload = 'metadata'
+      vid.onloadedmetadata = () => {
+        URL.revokeObjectURL(url)
+        const { videoWidth, videoHeight } = vid
+        if (videoHeight > MAX_VIDEO_RESOLUTION || videoWidth > MAX_VIDEO_RESOLUTION * (16 / 9)) {
+          reject(`Video resolution (${videoWidth}×${videoHeight}) exceeds the maximum of 1080p (1920×1080). Please resize your video before uploading.`)
+        } else {
+          resolve(file)
+        }
+      }
+      vid.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject('Unable to read video metadata. The file may be corrupted.')
+      }
+      vid.src = url
+    })
+  }
 
   const handleSoundFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
@@ -193,8 +216,15 @@ export const ArtworkEditForm = ({
       if (file && onVideoUpload) {
         if (file.size > MAX_VIDEO_SIZE) {
           setVideoSizeError(
-            `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 20MB.`,
+            `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 50MB.`,
           )
+          if (videoInputRef.current) videoInputRef.current.value = ''
+          return
+        }
+        try {
+          await validateVideoResolution(file)
+        } catch (errorMsg) {
+          setVideoSizeError(errorMsg as string)
           if (videoInputRef.current) videoInputRef.current.value = ''
           return
         }
@@ -215,8 +245,14 @@ export const ArtworkEditForm = ({
       if (file && ALLOWED_VIDEO_TYPES.includes(file.type) && onVideoUpload) {
         if (file.size > MAX_VIDEO_SIZE) {
           setVideoSizeError(
-            `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 20MB.`,
+            `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 50MB.`,
           )
+          return
+        }
+        try {
+          await validateVideoResolution(file)
+        } catch (errorMsg) {
+          setVideoSizeError(errorMsg as string)
           return
         }
         setVideoSizeError(null)
@@ -306,7 +342,7 @@ export const ArtworkEditForm = ({
 
           {videoSizeError && <div className={styles.sizeError}>{videoSizeError}</div>}
           <span className={dashboardStyles.hint}>
-            Accepted: MP4, WebM (max 20MB).
+            Accepted: MP4, WebM (max 50MB, 1080p max resolution).
           </span>
         </div>
       )}
