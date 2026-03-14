@@ -28,36 +28,9 @@ const MAX_IMAGE_SIZE_MB = 1
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
 const MAX_VIDEO_SIZE_MB = 50
 const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024
-const MAX_VIDEO_RESOLUTION = 1080 // Max height in pixels (1080p)
 
 const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const allowedVideoTypes = ['video/mp4', 'video/webm']
-
-/**
- * Validates video resolution by loading metadata.
- * Resolves with the file if valid, rejects with an error message if too large.
- */
-const validateVideoResolution = (file: File): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const vid = document.createElement('video')
-    vid.preload = 'metadata'
-    vid.onloadedmetadata = () => {
-      URL.revokeObjectURL(url)
-      const { videoWidth, videoHeight } = vid
-      if (videoHeight > MAX_VIDEO_RESOLUTION || videoWidth > MAX_VIDEO_RESOLUTION * (16 / 9)) {
-        reject(`Video resolution (${videoWidth}×${videoHeight}) exceeds the maximum of 1080p (1920×1080). Please resize your video before uploading.`)
-      } else {
-        resolve(file)
-      }
-    }
-    vid.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject('Unable to read video metadata. The file may be corrupted.')
-    }
-    vid.src = url
-  })
-}
 
 const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -196,8 +169,20 @@ const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
     img.src = fileUrl
   }
 
+  const processVideoFile = (file: File) => {
+    const fileUrl = URL.createObjectURL(file)
+    addPendingUpload(`${artwork.id}_video`, file, fileUrl, 0, 0)
+    dispatch(
+      editArtisticImage({
+        currentArtworkId: artwork.id,
+        property: 'videoUrl',
+        value: fileUrl,
+      }),
+    )
+  }
+
   // --- Video file handling ---
-  const handleVideoFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -217,31 +202,7 @@ const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
       return
     }
 
-    // Validate resolution before accepting
-    try {
-      await validateVideoResolution(file)
-    } catch (errorMsg) {
-      showError('Video Resolution Too High', errorMsg as string)
-      event.target.value = ''
-      return
-    }
-
-    // For video files, we create a blob URL for preview
-    // The actual upload happens on save (similar to images)
-    const fileUrl = URL.createObjectURL(file)
-
-    // Store pending video upload using the same pending upload system
-    // We use a separate key to differentiate from image uploads
-    addPendingUpload(`${artwork.id}_video`, file, fileUrl, 0, 0)
-
-    dispatch(
-      editArtisticImage({
-        currentArtworkId: artwork.id,
-        property: 'videoUrl',
-        value: fileUrl,
-      }),
-    )
-
+    processVideoFile(file)
     event.target.value = ''
   }
 
@@ -255,7 +216,7 @@ const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
     setIsDragOver(false)
   }
 
-  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDragOver(false)
     const file = event.dataTransfer.files[0]
@@ -287,23 +248,7 @@ const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
         return
       }
 
-      // Validate resolution
-      try {
-        await validateVideoResolution(file)
-      } catch (errorMsg) {
-        showError('Video Resolution Too High', errorMsg as string)
-        return
-      }
-
-      const fileUrl = URL.createObjectURL(file)
-      addPendingUpload(`${artwork.id}_video`, file, fileUrl, 0, 0)
-      dispatch(
-        editArtisticImage({
-          currentArtworkId: artwork.id,
-          property: 'videoUrl',
-          value: fileUrl,
-        }),
-      )
+      processVideoFile(file)
     } else {
       showError('Invalid File', 'Drop an image (JPG, PNG, WebP, GIF) or a video (MP4, WebM).')
     }

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
+  CanvasTexture,
   DoubleSide,
   Frustum,
   Matrix4,
@@ -8,7 +9,6 @@ import {
   SRGBColorSpace,
   Vector3,
   Quaternion,
-  VideoTexture as ThreeVideoTexture,
 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -100,25 +100,72 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     if (video) video.loop = videoLoop ?? true
   }, [video, videoLoop])
 
-  // ── Manually managed video texture for throttled updates ──
-  const [videoTexture, setVideoTexture] = useState<ThreeVideoTexture | null>(null)
+  // ── Manually managed texture with resolution cap ──
+  const MAX_TEXTURE_HEIGHT = 1080
+  const MAX_TEXTURE_WIDTH = 1920
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasCtxRef = useRef<CanvasRenderingContext2D | null>(null)
+  const [videoTexture, setVideoTexture] = useState<CanvasTexture | null>(null)
   const frameCountRef = useRef(0)
   const meshRef = useRef<any>(null)
+  const videoReadyRef = useRef(false)
   // Reusable objects for frustum culling (avoid per-frame GC)
   const frustumRef = useRef(new Frustum())
   const projMatrixRef = useRef(new Matrix4())
 
-  // Create texture once from video element
+  // Create offscreen canvas + texture once the video metadata is available
   useEffect(() => {
     if (!video) return
-    const tex = new ThreeVideoTexture(video)
-    tex.colorSpace = SRGBColorSpace
-    // Disable automatic per-frame updates — we control this manually
-    tex.generateMipmaps = false
-    setVideoTexture(tex)
+
+    const setupCanvas = () => {
+      const vw = video.videoWidth
+      const vh = video.videoHeight
+      if (!vw || !vh) return // metadata not loaded yet
+
+      // Calculate downscaled dimensions (preserve aspect ratio)
+      let canvasW = vw
+      let canvasH = vh
+      if (vh > MAX_TEXTURE_HEIGHT || vw > MAX_TEXTURE_WIDTH) {
+        const scale = Math.min(MAX_TEXTURE_WIDTH / vw, MAX_TEXTURE_HEIGHT / vh)
+        canvasW = Math.round(vw * scale)
+        canvasH = Math.round(vh * scale)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = canvasW
+      canvas.height = canvasH
+      const ctx = canvas.getContext('2d')!
+      // Draw initial black frame
+      ctx.fillStyle = '#000'
+      ctx.fillRect(0, 0, canvasW, canvasH)
+
+      canvasRef.current = canvas
+      canvasCtxRef.current = ctx
+      videoReadyRef.current = true
+
+      const tex = new CanvasTexture(canvas)
+      tex.colorSpace = SRGBColorSpace
+      tex.generateMipmaps = false
+      setVideoTexture(tex)
+    }
+
+    // If metadata is already loaded, set up immediately
+    if (video.readyState >= 1) {
+      setupCanvas()
+    } else {
+      video.addEventListener('loadedmetadata', setupCanvas, { once: true })
+    }
+
     return () => {
-      tex.dispose()
-      setVideoTexture(null)
+      video.removeEventListener('loadedmetadata', setupCanvas)
+      canvasRef.current = null
+      canvasCtxRef.current = null
+      videoReadyRef.current = false
+      setVideoTexture((prev) => {
+        prev?.dispose()
+        return null
+      })
     }
   }, [video])
 
@@ -305,17 +352,13 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     }
 
     // ── Distance-based texture throttling + frustum culling ──
-    if (videoTexture && video && position) {
+    if (videoTexture && video && position && videoReadyRef.current) {
       frameCountRef.current++
 
       const artworkPos = new Vector3(position.x, position.y, position.z)
       const dist = camera.position.distanceTo(artworkPos)
 
       // Determine update interval based on distance
-      //   ≤ 5m  → every frame (full quality)
-      //   ≤ 15m → every 3 frames
-      //   ≤ 30m → every 10 frames
-      //   > 30m → every 30 frames
       let updateInterval: number
       if (dist <= 5) updateInterval = 1
       else if (dist <= 15) updateInterval = 3
@@ -328,9 +371,14 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       frustumRef.current.setFromProjectionMatrix(projMat)
       const inView = frustumRef.current.containsPoint(artworkPos)
 
-      // Only update texture when interval allows AND mesh is in view
+      // Draw video frame to offscreen canvas (auto-downscaled) and update texture
       if (inView && frameCountRef.current % updateInterval === 0) {
-        videoTexture.needsUpdate = true
+        const ctx = canvasCtxRef.current
+        const canvas = canvasRef.current
+        if (ctx && canvas) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          videoTexture.needsUpdate = true
+        }
       }
     }
   })
