@@ -273,9 +273,7 @@ export const AdminExhibitions = () => {
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
-                              if (exhibition.published) {
-                                handlePublishAction(exhibition.id, 'publish')
-                              } else if (exhibition.previewEnabled && exhibition.hasPendingChanges) {
+                              if (exhibition.hasPendingChanges && !exhibition.published) {
                                 handleUpdatePreviewExhibition(exhibition.id)
                               } else {
                                 handlePublishAction(exhibition.id, 'publish')
@@ -283,10 +281,7 @@ export const AdminExhibitions = () => {
                             }}
                             disabled={!exhibition.published && !exhibition.previewEnabled && !exhibition.user.published}
                           >
-                            {(exhibition.published && exhibition.hasPendingChanges) ||
-                             (!exhibition.published && exhibition.previewEnabled && exhibition.hasPendingChanges)
-                              ? 'Update Exhibition'
-                              : 'Publish'}
+                            {exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
                           </button>
                         )}
                         {/* Unpublish — always available when published */}
