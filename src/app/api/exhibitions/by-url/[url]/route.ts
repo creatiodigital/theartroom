@@ -63,14 +63,17 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    // If exhibition is not published, check permissions
+    // If exhibition is not published, check permissions or preview mode
     if (!exhibition.published) {
-      const session = await auth()
-      const isOwner = session?.user?.id === exhibition.userId
-      const userType = session?.user?.userType
-      const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
-      if (!isOwner && !isAdminOrAbove) {
-        return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+      // Allow public access if preview is enabled (for visit page / 3D preview)
+      if (!exhibition.previewEnabled) {
+        const session = await auth()
+        const isOwner = session?.user?.id === exhibition.userId
+        const userType = session?.user?.userType
+        const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
+        if (!isOwner && !isAdminOrAbove) {
+          return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+        }
       }
     }
 

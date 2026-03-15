@@ -174,6 +174,7 @@ model Exhibition {
   publishedAt       DateTime? // When last published/updated
   publishedSnapshot Json? // Full snapshot at publish time
   hasPendingChanges Boolean   @default(false) // True when draft differs from published
+  previewEnabled    Boolean   @default(false) // When true, visit route is accessible even if unpublished
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")

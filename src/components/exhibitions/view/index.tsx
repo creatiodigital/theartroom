@@ -459,6 +459,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         status: exhibition.status,
         published: exhibition.published ?? false,
         hasPendingChanges: exhibition.hasPendingChanges ?? false,
+        previewEnabled: exhibition.previewEnabled ?? false,
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
         skylightColor: exhibition.skylightColor ?? undefined,

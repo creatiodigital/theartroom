@@ -21,6 +21,7 @@ type Exhibition = {
   status: string
   published: boolean
   hasPendingChanges: boolean
+  previewEnabled: boolean
   user: {
     id: string
     name: string
@@ -100,6 +101,21 @@ export const AdminExhibitions = () => {
     }
   }
 
+  const handleTogglePreview = async (exhibitionId: string, currentlyEnabled: boolean) => {
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ previewEnabled: !currentlyEnabled }),
+      })
+      if (response.ok) {
+        fetchExhibitions()
+      }
+    } catch (error) {
+      console.error('Failed to toggle preview:', error)
+    }
+  }
+
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
 
@@ -141,6 +157,7 @@ export const AdminExhibitions = () => {
               <th>Space</th>
               <th>Status</th>
               <th>Visibility</th>
+              <th>Preview</th>
               <th>Review</th>
               <th>Actions</th>
             </tr>
@@ -170,6 +187,14 @@ export const AdminExhibitions = () => {
                     label={exhibition.published ? 'Published' : 'Unpublished'}
                     variant={exhibition.published ? 'published' : 'unpublished'}
                   />
+                </td>
+                <td>
+                  {!exhibition.published && (
+                    <Badge
+                      label={exhibition.previewEnabled ? 'Active' : '—'}
+                      variant={exhibition.previewEnabled ? 'published' : 'unpublished'}
+                    />
+                  )}
                 </td>
                 <td>
                   {exhibition.published && (
@@ -229,6 +254,20 @@ export const AdminExhibitions = () => {
                             }}
                           >
                             Unpublish
+                          </button>
+                        )}
+                        {/* Publish / Unpublish 3D Preview — only for unpublished exhibitions */}
+                        {!exhibition.published && (
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleTogglePreview(exhibition.id, exhibition.previewEnabled)
+                            }}
+                          >
+                            {exhibition.previewEnabled
+                              ? 'Unpublish Preview'
+                              : 'Publish Preview'}
                           </button>
                         )}
                         <button

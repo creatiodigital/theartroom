@@ -16,6 +16,7 @@ type ExhibitionUpdateBody = {
   shortDescription?: string
   status?: string // 'current' | 'past'
   published?: boolean
+  previewEnabled?: boolean
   thumbnailUrl?: string
   bannerUrl?: string
   startDate?: string
@@ -223,6 +224,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.shadowOpacity = Math.max(0.05, Math.min(0.8, body.shadowOpacity))
     if (body.shadowDirection !== undefined)
       data.shadowDirection = Math.max(0.0, Math.min(1.0, body.shadowDirection))
+
+    // Preview toggle (only meaningful when unpublished)
+    if (body.previewEnabled !== undefined) data.previewEnabled = body.previewEnabled
 
     // --- Draft/Publish logic ---
     if (body.published === true) {
