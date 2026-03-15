@@ -416,6 +416,8 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
 export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef(false)
+  const searchParams = useSearchParams()
+  const previewToken = searchParams.get('preview') || undefined
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
 
   const {
@@ -423,7 +425,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     isLoading: isApiLoading,
     error,
   } = useGetExhibitionByUrlQuery(
-    { url: exhibitionSlug },
+    { url: exhibitionSlug, ...(previewToken && { preview: previewToken }) },
     {
       skip: !exhibitionSlug,
     },
@@ -459,6 +461,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         status: exhibition.status,
         published: exhibition.published ?? false,
         hasPendingChanges: exhibition.hasPendingChanges ?? false,
+        previewEnabled: exhibition.previewEnabled ?? false,
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
         skylightColor: exhibition.skylightColor ?? undefined,

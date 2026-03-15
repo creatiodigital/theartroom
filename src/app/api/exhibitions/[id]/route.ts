@@ -16,6 +16,8 @@ type ExhibitionUpdateBody = {
   shortDescription?: string
   status?: string // 'current' | 'past'
   published?: boolean
+  previewEnabled?: boolean
+  hasPendingChanges?: boolean
   thumbnailUrl?: string
   bannerUrl?: string
   startDate?: string
@@ -224,6 +226,18 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.shadowDirection !== undefined)
       data.shadowDirection = Math.max(0.0, Math.min(1.0, body.shadowDirection))
 
+    // Preview toggle (only meaningful when unpublished)
+    if (body.previewEnabled !== undefined) {
+      data.previewEnabled = body.previewEnabled
+      if (body.previewEnabled) {
+        // Generate a unique preview token when enabling
+        data.previewToken = crypto.randomUUID()
+      } else {
+        // Clear token when disabling preview
+        data.previewToken = null
+      }
+    }
+
     // --- Draft/Publish logic ---
     if (body.published === true) {
       // Publishing or re-publishing: build snapshot from current state
@@ -238,13 +252,16 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.publishedSnapshot = Prisma.JsonNull
       data.publishedAt = null
       data.hasPendingChanges = false
+    } else if (body.hasPendingChanges === false) {
+      // Explicit clear of pending changes (e.g. "Update Exhibition" for preview)
+      data.hasPendingChanges = false
     } else {
-      // Any other edit on a published exhibition → mark as having pending changes
+      // Any other edit on a published or preview-enabled exhibition → mark as having pending changes
       const exhibition = await prisma.exhibition.findUnique({
         where: { id },
-        select: { published: true },
+        select: { published: true, previewEnabled: true },
       })
-      if (exhibition?.published) {
+      if (exhibition?.published || exhibition?.previewEnabled) {
         data.hasPendingChanges = true
       }
     }

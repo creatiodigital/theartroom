@@ -16,4 +16,5 @@ export const exhibitionFactory = (): TExhibition => ({
   status: '',
   published: false,
   hasPendingChanges: false,
+  previewEnabled: false,
 })
