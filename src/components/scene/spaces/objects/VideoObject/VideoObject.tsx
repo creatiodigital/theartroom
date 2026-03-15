@@ -18,6 +18,7 @@ import { Frame } from '@/components/scene/spaces/objects/Frame'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
 import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
 import { Support } from '@/components/scene/spaces/objects/Support'
+import { useSceneAudioActions } from '@/contexts/SceneAudioContext'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
@@ -71,6 +72,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const shadowOpacity = useSelector((state: RootState) => state.exhibition.shadowOpacity ?? 0.25)
   const shadowDirection = useSelector((state: RootState) => state.exhibition.shadowDirection ?? 0.2)
   const dispatch = useDispatch()
+  const { registerVideoAudio, unregisterVideoAudio } = useSceneAudioActions()
 
   // Refs for click detection
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
@@ -212,8 +214,9 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       const source = ctx.createMediaElementSource(video)
       sourceRef.current = source
 
+      const vol = videoVolume ?? 1.0
       const gain = ctx.createGain()
-      gain.gain.value = videoVolume ?? 1.0
+      gain.gain.value = vol
       gainRef.current = gain
 
       const panner = ctx.createPanner()
@@ -229,6 +232,9 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       } else {
         source.connect(gain).connect(ctx.destination)
       }
+
+      // Register with global audio context for mute control
+      registerVideoAudio(artwork.id, gain, vol)
     }
 
     // Try to set up on first play event
@@ -249,9 +255,12 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   // Sync gain with videoVolume prop
   useEffect(() => {
     if (gainRef.current) {
-      gainRef.current.gain.value = videoVolume ?? 1.0
+      const vol = videoVolume ?? 1.0
+      gainRef.current.gain.value = vol
+      // Update the registered original volume
+      registerVideoAudio(artwork.id, gainRef.current, vol)
     }
-  }, [videoVolume])
+  }, [videoVolume, artwork.id, registerVideoAudio])
 
   // Reconnect graph when spatial toggle changes
   useEffect(() => {
@@ -285,10 +294,24 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   // 'always' mode: auto-play on mount
   useEffect(() => {
     if (!video || playMode !== 'always') return
-    video.muted = false
+
+    // Start muted so browser autoplay policy allows it.
+    // Unmute on first user interaction (e.g. dismissing the help modal).
+    video.muted = true
     video.play().catch(() => {})
     isPlayingRef.current = true
+
+    const unmute = () => {
+      video.muted = false
+      // Resume AudioContext if it was created in suspended state
+      if (audioCtxRef.current?.state === 'suspended') {
+        audioCtxRef.current.resume()
+      }
+    }
+    document.addEventListener('click', unmute, { once: true })
+
     return () => {
+      document.removeEventListener('click', unmute)
       video.pause()
       video.muted = true
       isPlayingRef.current = false
@@ -318,6 +341,10 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       }
     }
   }, [video])
+
+  // Unregister video audio on unmount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => unregisterVideoAudio(artwork.id), [])
 
   // Ambient light colors
   const frameAmbientColor = useAmbientLightColor(frameColor ?? '#000000')

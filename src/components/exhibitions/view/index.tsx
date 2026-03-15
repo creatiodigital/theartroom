@@ -1,7 +1,7 @@
 'use client'
 
 import { useProgress } from '@react-three/drei'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -13,6 +13,7 @@ import {
   Mouse,
   Touchpad,
   Volume2,
+  VolumeX,
   X,
 } from 'lucide-react'
 
@@ -116,59 +117,88 @@ const MobileOverlay = () => {
 }
 
 const NAVIGATION_HELP_STORAGE_KEY = 'the-art-room:navigation-help-dismissed'
+const MEDIA_NOTICE_STORAGE_KEY = 'the-art-room:media-notice-dismissed'
 
 interface NavigationHelpModalProps {
   hidden?: boolean
 }
 
+type ModalStep = 'none' | 'help' | 'media'
+
 const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [alreadyDismissed, setAlreadyDismissed] = useState(false)
+  const [currentStep, setCurrentStep] = useState<ModalStep>('none')
+  const [helpDismissed, setHelpDismissed] = useState(false)
+  const [mediaDismissed, setMediaDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
 
-  // Check localStorage on mount and auto-open if not dismissed (desktop only)
+  // Detect if exhibition has video or sound artworks
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  const hasMediaArtworks = useMemo(() => {
+    return Object.values(artworksById).some((artwork) => artwork.soundUrl || artwork.videoUrl)
+  }, [artworksById])
+
+  // Auto-show on mount: help first, then media
   useEffect(() => {
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
 
-    // Don't show on mobile - controls are disabled anyway
     const isMobile = window.innerWidth < 1024
     if (isMobile) return
 
     try {
-      const dismissed = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY)
-      if (dismissed === 'true') {
-        setAlreadyDismissed(true)
-      } else {
-        // Small delay to let the scene load first
-        const timer = setTimeout(() => setIsOpen(true), 500)
+      const helpDone = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY) === 'true'
+      const mediaDone = localStorage.getItem(MEDIA_NOTICE_STORAGE_KEY) === 'true'
+
+      if (helpDone) setHelpDismissed(true)
+      if (mediaDone) setMediaDismissed(true)
+
+      if (!helpDone) {
+        const timer = setTimeout(() => setCurrentStep('help'), 500)
+        return () => clearTimeout(timer)
+      } else if (!mediaDone && hasMediaArtworks) {
+        const timer = setTimeout(() => setCurrentStep('media'), 500)
         return () => clearTimeout(timer)
       }
     } catch {
-      // localStorage not available, show modal anyway
-      setIsOpen(true)
+      setCurrentStep('help')
     }
-  }, [])
+  }, [hasMediaArtworks])
 
-  const handleClose = () => {
-    setIsOpen(false)
+  // Track if the current flow was manually triggered (info button)
+  const manualTriggerRef = useRef(false)
+
+  const handleCloseHelp = () => {
+    setCurrentStep('none')
+    // After help closes, show media notice if exhibition has media
+    if (hasMediaArtworks && (manualTriggerRef.current || !mediaDismissed)) {
+      setTimeout(() => setCurrentStep('media'), 300)
+    }
+    manualTriggerRef.current = false
+  }
+
+  const handleCloseMedia = () => {
+    setCurrentStep('none')
+    manualTriggerRef.current = false
+  }
+
+  const handleInfoClick = () => {
+    manualTriggerRef.current = true
+    setCurrentStep('help')
   }
 
   if (hidden) return null
 
   return (
     <>
-      <button
-        className={styles.infoButton}
-        onClick={() => setIsOpen(true)}
-        aria-label="Navigation help"
-      >
+      <button className={styles.infoButton} onClick={handleInfoClick} aria-label="Navigation help">
         <Info size={20} strokeWidth={ICON_STROKE_WIDTH} />
       </button>
-      {isOpen && (
-        <div className={styles.infoOverlay} onClick={handleClose}>
+
+      {/* Help Modal */}
+      {currentStep === 'help' && (
+        <div className={styles.infoOverlay} onClick={handleCloseHelp}>
           <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.infoPanelClose} onClick={handleClose} aria-label="Close">
+            <button className={styles.infoPanelClose} onClick={handleCloseHelp} aria-label="Close">
               <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
             </button>
             <div className={styles.welcomeSection}>
@@ -292,7 +322,7 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
               <Info size={12} strokeWidth={ICON_STROKE_WIDTH} style={{ verticalAlign: 'middle' }} />{' '}
               icon in the bottom-right corner.
             </Text>
-            {!alreadyDismissed && (
+            {!helpDismissed && (
               <Button
                 variant="primary"
                 size="regularSquared"
@@ -304,8 +334,75 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                   } catch {
                     // localStorage not available, ignore
                   }
-                  setAlreadyDismissed(true)
-                  setIsOpen(false)
+                  setHelpDismissed(true)
+                  handleCloseHelp()
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Media Notice Modal */}
+      {currentStep === 'media' && (
+        <div className={styles.infoOverlay} onClick={handleCloseMedia}>
+          <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.infoPanelClose} onClick={handleCloseMedia} aria-label="Close">
+              <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
+            </button>
+            <div className={styles.welcomeSection}>
+              <Volume2
+                size={32}
+                strokeWidth={ICON_STROKE_WIDTH}
+                style={{ margin: '0 auto var(--space-4)', display: 'block' }}
+              />
+              <Text as="h2" size="lg" font="sans" className={styles.welcomeTitle}>
+                Sound & Video
+              </Text>
+              <Text as="p" size="sm" className={styles.welcomeText}>
+                This exhibition contains artworks with audio and video. Make sure your volume is
+                turned on for the full experience. You can mute all sounds at any time using the
+                volume icon in the bottom-right corner.
+              </Text>
+            </div>
+            <div className={styles.infoPanelContent}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">
+                    Click
+                  </Text>
+                </span>
+                <Text as="span" size="sm">
+                  Mute
+                </Text>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoKeyWide}>
+                  <VolumeX size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                  <Text as="span" size="sm">
+                    Click
+                  </Text>
+                </span>
+                <Text as="span" size="sm">
+                  Unmute
+                </Text>
+              </div>
+            </div>
+            {!mediaDismissed && (
+              <Button
+                variant="primary"
+                size="regularSquared"
+                label="Don't show this again"
+                className={styles.dismissButton}
+                onClick={() => {
+                  try {
+                    localStorage.setItem(MEDIA_NOTICE_STORAGE_KEY, 'true')
+                  } catch {
+                    // localStorage not available, ignore
+                  }
+                  setMediaDismissed(true)
+                  handleCloseMedia()
                 }}
               />
             )}

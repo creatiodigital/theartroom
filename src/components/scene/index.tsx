@@ -5,10 +5,11 @@ import { Canvas } from '@react-three/fiber'
 import { useRef, Suspense } from 'react'
 import { NoToneMapping, Mesh } from 'three'
 import { useSelector } from 'react-redux'
+import { Volume2, VolumeX } from 'lucide-react'
 
-import { Icon } from '@/components/ui/Icon'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { Loader } from '@/components/ui/Loader'
-import { SceneAudioProvider, useSceneAudio } from '@/contexts/SceneAudioContext'
+import { SceneAudioProvider, useSceneAudioState, useSceneAudioActions } from '@/contexts/SceneAudioContext'
 import SceneContext from '@/contexts/SceneContext'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -25,14 +26,23 @@ interface SceneProps {
   hideLoader?: boolean
 }
 
-const FloatingStopButton = () => {
-  const { playingId, stop } = useSceneAudio()
+const FloatingMuteButton = () => {
+  const { hasActiveAudio, isMuted } = useSceneAudioState()
+  const { toggleMute } = useSceneAudioActions()
 
-  if (!playingId) return null
+  if (!hasActiveAudio) return null
 
   return (
-    <button className={styles.stopButton} onClick={stop} title="Stop sound">
-      <Icon name="square" size={14} color="#000000" />
+    <button
+      className={styles.stopButton}
+      onClick={toggleMute}
+      title={isMuted ? 'Unmute sound' : 'Mute sound'}
+    >
+      {isMuted ? (
+        <VolumeX size={20} strokeWidth={ICON_STROKE_WIDTH} />
+      ) : (
+        <Volume2 size={20} strokeWidth={ICON_STROKE_WIDTH} />
+      )}
     </button>
   )
 }
@@ -71,7 +81,7 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
               </Suspense>
             </Canvas>
           </SceneErrorBoundary>
-          <FloatingStopButton />
+          {hideLoader && <FloatingMuteButton />}
         </div>
       </SceneContext.Provider>
     </SceneAudioProvider>
