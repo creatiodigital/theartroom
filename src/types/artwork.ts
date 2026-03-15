@@ -3,7 +3,7 @@ export type { TFontFamily, TFontWeight, TTextAlign, TOption } from '@/types/font
 
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
-export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape'
+export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video'
 
 export type TArtworkPosition = {
   id?: string
@@ -96,6 +96,12 @@ export type TArtwork = {
   soundBackgroundColor?: string | null // Background color of the sound object
   soundIconColor?: string // Icon color
   soundIconSize?: number // Icon size (px in 2D)
+  // Video artwork settings (exhibition-level)
+  videoUrl?: string // URL of the video file
+  videoPlayMode?: 'proximity' | 'always' | 'click' // Playback mode
+  videoLoop?: boolean // Whether video loops
+  videoVolume?: number // Volume level 0-1
+  videoProximityDistance?: number // Distance in meters to trigger playback
   // Shape decoration properties (only when artworkType = 'shape')
   shapeType?: string // 'rectangle' | 'circle'
   shapeColor?: string

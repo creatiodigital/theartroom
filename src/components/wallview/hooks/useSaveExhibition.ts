@@ -127,7 +127,42 @@ export const useSaveExhibition = () => {
         }
       }
 
-      // Clear pending uploads after successful upload
+      // Clear pending image uploads after successful upload
+      clearAllPendingUploads()
+
+      // 1b. Upload pending video files (keyed as `${artworkId}_video`)
+      const pendingVideoUploads = getAllPendingUploads()
+      const uploadedVideoUrls = new Map<string, string>()
+
+      for (const [key, uploadData] of pendingVideoUploads) {
+        if (!key.endsWith('_video')) continue
+        const artworkId = key.replace('_video', '')
+
+        const formData = new FormData()
+        formData.append('video', uploadData.file)
+
+        const uploadResponse = await fetch(`/api/artworks/${artworkId}/video`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (uploadResponse.ok) {
+          const uploadResponseData = await uploadResponse.json()
+          uploadedVideoUrls.set(artworkId, uploadResponseData.url)
+
+          dispatch(
+            editArtisticImage({
+              currentArtworkId: artworkId,
+              property: 'videoUrl',
+              value: uploadResponseData.url,
+            }),
+          )
+        } else {
+          console.warn(`Failed to upload video for artwork ${artworkId}`)
+        }
+      }
+
+      // Clear pending video uploads
       clearAllPendingUploads()
 
       const artworks = allArtworkIds
@@ -264,6 +299,11 @@ export const useSaveExhibition = () => {
             soundPlayMode: artwork.soundPlayMode ?? 'play-once',
             soundSpatial: artwork.soundSpatial ?? true,
             soundDistance: artwork.soundDistance ?? 5,
+            // Video properties (per-exhibition)
+            videoPlayMode: artwork.videoPlayMode ?? 'proximity',
+            videoLoop: artwork.videoLoop ?? true,
+            videoVolume: artwork.videoVolume ?? 1.0,
+            videoProximityDistance: artwork.videoProximityDistance ?? 3,
           }
         })
 

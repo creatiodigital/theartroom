@@ -80,6 +80,10 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       soundIconColor: '#000000',
       soundIconSize: 24,
       soundUrl: '',
+      videoUrl: '',
+      videoPlayMode: 'proximity' as const,
+      videoLoop: true,
+      videoProximityDistance: 3,
       width: 0,
       height: 0,
       fromTop: 0,
@@ -153,6 +157,11 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     soundIconColor,
     soundIconSize,
     soundUrl,
+    videoUrl,
+    videoPlayMode,
+    videoLoop,
+    videoVolume,
+    videoProximityDistance,
   } = artwork
 
   // Wall dimensions in 2D scale (meters * WALL_SCALE)
@@ -238,5 +247,10 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     soundIconColor: soundIconColor ?? '#000000',
     soundIconSize: soundIconSize ?? 24,
     soundUrl: soundUrl ?? '',
+    videoUrl: videoUrl ?? '',
+    videoPlayMode: videoPlayMode ?? 'proximity',
+    videoLoop: videoLoop ?? true,
+    videoVolume: videoVolume ?? 1.0,
+    videoProximityDistance: videoProximityDistance ?? 3,
   }
 }

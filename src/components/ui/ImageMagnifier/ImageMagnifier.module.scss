@@ -1,6 +1,9 @@
 .wrapper {
   position: relative;
   display: inline-block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .image {
@@ -10,6 +13,10 @@
   max-height: 70vh;
   display: block;
   transition: opacity 0.4s ease;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 
   &.hidden {
     opacity: 0;

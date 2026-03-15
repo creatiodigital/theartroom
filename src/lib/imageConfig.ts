@@ -3,9 +3,9 @@ export const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 1MB
 
 // Processing settings for stored image (high-quality source for Vercel optimization)
 export const STORED_IMAGE = {
-  MAX_DIMENSION: 4096,
-  WEBP_QUALITY: 90,
-  MAX_FILE_SIZE: 2 * 1024 * 1024, // 2MB target
+  MAX_DIMENSION: 2048, // Covers magnifier (2048px) and 3D scene (1536px)
+  WEBP_QUALITY: 85,
+  MAX_FILE_SIZE: 1 * 1024 * 1024, // 1MB target for stored WebP
   MIN_QUALITY: 70,
 }
 

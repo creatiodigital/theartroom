@@ -60,7 +60,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       const artwork: TArtwork = {
         id: artworkData.id,
         name: artworkData.name,
-        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound',
+        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound' | 'video',
         artworkTitle: artworkData.title || undefined,
         author: artworkData.author || undefined,
         artworkYear: artworkData.year || undefined,
@@ -71,6 +71,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         textContent: artworkData.textContent || undefined,
         // Sound-specific
         soundUrl: artworkData.soundUrl || undefined,
+        // Video-specific
+        videoUrl: artworkData.videoUrl || undefined,
       }
 
       dispatch(restoreArtwork(artwork))
@@ -125,7 +127,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       const artwork: TArtwork = {
         id: artworkData.id,
         name: artworkData.name,
-        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound',
+        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound' | 'video',
         artworkTitle: artworkData.title || undefined,
         author: artworkData.author || undefined,
         artworkYear: artworkData.year || undefined,
@@ -136,6 +138,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         textContent: artworkData.textContent || undefined,
         // Sound-specific
         soundUrl: artworkData.soundUrl || undefined,
+        // Video-specific
+        videoUrl: artworkData.videoUrl || undefined,
       }
 
       dispatch(restoreArtwork(artwork))

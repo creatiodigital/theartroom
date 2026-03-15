@@ -41,6 +41,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const [soundUrl, setSoundUrl] = useState<string | null>(null)
   const [soundUploading, setSoundUploading] = useState(false)
 
+  // Video state (video uploads are immediate, not deferred)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoUploading, setVideoUploading] = useState(false)
+
   // Cleanup preview URL when component unmounts or file changes
   useEffect(() => {
     return () => {
@@ -72,6 +76,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         setArtwork(data)
         setOriginalImageUrl(data.imageUrl)
         setSoundUrl(data.soundUrl || null)
+        setVideoUrl(data.videoUrl || null)
         setFormData(populateFormData(data))
       } catch {
         setError('Failed to load artwork')
@@ -231,6 +236,54 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId])
 
+  // Video upload (immediate - no deferred save needed)
+  const handleVideoUpload = useCallback(
+    async (file: File) => {
+      setVideoUploading(true)
+      try {
+        const uploadFormData = new FormData()
+        uploadFormData.append('video', file)
+
+        const response = await fetch(`/api/artworks/${artworkId}/video`, {
+          method: 'POST',
+          body: uploadFormData,
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.error || 'Failed to upload video')
+          return
+        }
+
+        const data = await response.json()
+        setVideoUrl(data.url)
+      } catch {
+        setError('Failed to upload video')
+      } finally {
+        setVideoUploading(false)
+      }
+    },
+    [artworkId],
+  )
+
+  const handleVideoRemove = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/artworks/${artworkId}/video`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'Failed to remove video')
+        return
+      }
+
+      setVideoUrl(null)
+    } catch {
+      setError('Failed to remove video')
+    }
+  }, [artworkId])
+
   if (loading) {
     return (
       <DashboardLayout backLink={backLink} backLabel="← Back to Library">
@@ -253,8 +306,9 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         formData={formData}
         imageUrl={displayImageUrl}
         soundUrl={soundUrl}
-        uploading={soundUploading}
-        loadingText="Uploading sound..."
+        videoUrl={videoUrl}
+        uploading={soundUploading || videoUploading}
+        loadingText={videoUploading ? 'Uploading video...' : 'Uploading sound...'}
         saving={saving}
         error={error}
         onFormChange={handleChange}
@@ -262,6 +316,8 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         onImageRemove={handleRemoveImage}
         onSoundUpload={handleSoundUpload}
         onSoundRemove={handleSoundRemove}
+        onVideoUpload={handleVideoUpload}
+        onVideoRemove={handleVideoRemove}
         onSubmit={handleSubmit}
         onCancel={() => router.push(backLink)}
       />

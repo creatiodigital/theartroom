@@ -26,7 +26,7 @@ export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
   const { users, loading, error, refetch } = useUsers()
-  const { startImpersonation } = useEffectiveUser()
+  const { startImpersonation, isImpersonating } = useEffectiveUser()
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
@@ -301,12 +301,20 @@ export const DashboardAdmin = () => {
                             (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
                             <button
                               className={dashboardStyles.kebabMenuItem}
+                              disabled={isImpersonating && session?.impersonating?.id === user.id}
+                              style={
+                                isImpersonating && session?.impersonating?.id === user.id
+                                  ? { opacity: 0.5, cursor: 'default' }
+                                  : undefined
+                              }
                               onClick={() => {
                                 setOpenMenuId(null)
                                 handleImpersonate(user)
                               }}
                             >
-                              Impersonate
+                              {isImpersonating && session?.impersonating?.id === user.id
+                                ? 'Impersonating'
+                                : 'Impersonate'}
                             </button>
                           )}
                         {/* Delete - superAdmin only */}

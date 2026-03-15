@@ -143,6 +143,7 @@ model Artwork {
   originalHeight       Int? // Original image height in pixels
   textContent          String? // Fixed text content for stencil/text artworks
   soundUrl             String? // Audio file URL for sound artworks
+  videoUrl             String? // Video file URL for video artworks
   featured             Boolean @default(false)
   hiddenFromExhibition Boolean @default(false)
   order                Int     @default(0)
@@ -314,6 +315,12 @@ model ExhibitionArtwork {
   shapeType    String @default("rectangle") // rectangle | circle
   shapeColor   String @default("#000000")
   shapeOpacity Float  @default(1.0)
+
+  // Video playback (per-exhibition)
+  videoPlayMode         String  @default("proximity") // 'proximity' | 'always' | 'click'
+  videoLoop             Boolean @default(true)        // Whether video loops
+  videoVolume           Float   @default(1.0)         // Volume level 0-1
+  videoProximityDistance Float   @default(3)           // Distance in meters to trigger play
 
   // Wall-normal rotation (degrees, 0-360, only used for shapes)
   rotation Float @default(0)

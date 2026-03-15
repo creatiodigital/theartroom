@@ -2,6 +2,7 @@ import { Display } from '@/components/scene/spaces/objects/Display'
 import ShapeObject from '@/components/scene/spaces/objects/ShapeObject/ShapeObject'
 import { SoundObject } from '@/components/scene/spaces/objects/SoundObject'
 import { Stencil } from '@/components/scene/spaces/objects/Stencil'
+import VideoObject from '@/components/scene/spaces/objects/VideoObject/VideoObject'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 
 interface ArtObjectProps {
@@ -18,6 +19,8 @@ const ArtObject: React.FC<ArtObjectProps> = ({ artwork }) => {
       return <SoundObject artwork={artwork} />
     case 'shape':
       return <ShapeObject artwork={artwork} />
+    case 'video':
+      return <VideoObject artwork={artwork} />
     default:
       return null
   }
