@@ -170,6 +170,8 @@ export async function POST(request: NextRequest) {
         soundDistance?: number
         // Video playback (per-exhibition)
         videoPlayMode?: string
+        videoLoop?: boolean
+        videoVolume?: number
         videoProximityDistance?: number
         // Shape decoration
         shapeType?: string
