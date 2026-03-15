@@ -251,7 +251,12 @@ export const ArtworkEditForm = ({
             <div className={styles.soundPreview}>
               <div className={styles.soundInfo}>
                 <Icon name="video" size={24} color="#333" />
-                <video controls src={videoUrl} className={styles.videoPlayer}>
+                <video
+                  controls
+                  controlsList="nodownload"
+                  src={videoUrl}
+                  className={styles.videoPlayer}
+                >
                   Your browser does not support the video element.
                 </video>
               </div>

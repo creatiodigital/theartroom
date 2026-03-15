@@ -9,6 +9,7 @@ import {
   Quaternion,
   TextureLoader,
   Texture,
+  LinearMipmapLinearFilter,
 } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -55,6 +56,9 @@ const useBlobTexture = (url: string): Texture | null => {
       url,
       (loadedTexture) => {
         loadedTexture.colorSpace = SRGBColorSpace
+        loadedTexture.anisotropy = 4
+        loadedTexture.minFilter = LinearMipmapLinearFilter
+        loadedTexture.generateMipmaps = true
         setTexture(loadedTexture)
       },
       undefined,
@@ -130,6 +134,9 @@ const useRegularTexture = (url: string): Texture | null => {
       (loadedTexture) => {
         if (!disposed) {
           loadedTexture.colorSpace = SRGBColorSpace
+          loadedTexture.anisotropy = 4
+          loadedTexture.minFilter = LinearMipmapLinearFilter
+          loadedTexture.generateMipmaps = true
           setTexture(loadedTexture)
         }
       },
