@@ -502,9 +502,9 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const planeWidth = width || 1
   const planeHeight = height || 1
 
-  const frameS = (showFrame ? frameSize?.value : 0) || 0
+  const frameS = showFrame ? (frameSize?.value ?? 3) : 0
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
-  const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
+  const passepartoutS = showPassepartout ? (passepartoutSize?.value ?? 5) : 0
   const passepartoutDepth = Math.min(3, Math.max(0.2, passepartoutThickness?.value ?? 0.4))
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
 
@@ -574,7 +574,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       </group>
 
       {/* Frame */}
-      {showFrame && frameSize?.value && (
+      {showFrame && (
         <Frame
           width={frameOuterW}
           height={frameOuterH}
@@ -586,7 +586,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       )}
 
       {/* Passepartout */}
-      {showPassepartout && passepartoutSize?.value && (
+      {showPassepartout && (
         <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
           <Passepartout
             width={passepartoutOuterW}
