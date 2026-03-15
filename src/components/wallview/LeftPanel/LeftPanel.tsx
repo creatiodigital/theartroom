@@ -459,7 +459,8 @@ export const LeftPanel = () => {
                       alignItems: 'center',
                     }}
                   >
-                    {(artwork.artworkType === 'image' || artwork.artworkType === 'video') && artwork.imageUrl ? (
+                    {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
+                    artwork.imageUrl ? (
                       <img
                         src={artwork.imageUrl}
                         alt=""

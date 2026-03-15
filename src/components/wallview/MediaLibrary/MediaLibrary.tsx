@@ -250,7 +250,8 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                 draggable
                 onDragStart={(e) => handleDragStart(e, artwork)}
                 style={
-                  (artwork.artworkType === 'image' || artwork.artworkType === 'video') && artwork.imageUrl
+                  (artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
+                  artwork.imageUrl
                     ? {
                         backgroundImage: `url(${artwork.imageUrl})`,
                         backgroundSize: 'cover',
@@ -287,7 +288,13 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                   </div>
                 ) : (
                   <Icon
-                    name={artwork.artworkType === 'image' ? 'image' : artwork.artworkType === 'video' ? 'video' : 'type'}
+                    name={
+                      artwork.artworkType === 'image'
+                        ? 'image'
+                        : artwork.artworkType === 'video'
+                          ? 'video'
+                          : 'type'
+                    }
                     size={32}
                     color="#333"
                   />

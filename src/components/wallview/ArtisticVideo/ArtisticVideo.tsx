@@ -74,7 +74,9 @@ const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
     video.preload = 'auto'
     video.src = videoUrl
 
-    const handleLoadedData = () => { video.currentTime = 0 }
+    const handleLoadedData = () => {
+      video.currentTime = 0
+    }
     const handleSeeked = () => {
       const canvas = document.createElement('canvas')
       canvas.width = video.videoWidth
@@ -129,7 +131,10 @@ const ArtisticVideo = ({ artwork }: ArtisticVideoProps) => {
     if (!file) return
 
     if (!allowedImageTypes.includes(file.type)) {
-      showError('Invalid File', 'Only JPG, PNG, WebP, or GIF files are allowed for the poster image.')
+      showError(
+        'Invalid File',
+        'Only JPG, PNG, WebP, or GIF files are allowed for the poster image.',
+      )
       event.target.value = ''
       return
     }

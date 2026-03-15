@@ -53,7 +53,11 @@ const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps)
   return (
     <div className={styles.navigationButtonWrapper}>
       <Tooltip label="Leave Exhibition" placement="left">
-        <button className={styles.navigationButton} onClick={handleClick} aria-label="Leave Exhibition">
+        <button
+          className={styles.navigationButton}
+          onClick={handleClick}
+          aria-label="Leave Exhibition"
+        >
           <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
         </button>
       </Tooltip>

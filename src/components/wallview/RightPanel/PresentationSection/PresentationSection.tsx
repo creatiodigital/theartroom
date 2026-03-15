@@ -186,9 +186,7 @@ const PresentationSection = ({
                   max="1"
                   step="0.01"
                   value={frameTextureRoughness ?? 0.6}
-                  onChange={(e) =>
-                    onEdit('frameTextureRoughness', parseFloat(e.target.value))
-                  }
+                  onChange={(e) => onEdit('frameTextureRoughness', parseFloat(e.target.value))}
                   className={styles.slider}
                   disabled={disabled}
                   style={disabled ? { opacity: 0.5 } : undefined}
@@ -203,12 +201,7 @@ const PresentationSection = ({
                 <div className={styles.item}>
                   <Checkbox
                     checked={!!frameColor && frameColor !== '#ffffff'}
-                    onChange={(e) =>
-                      onEdit(
-                        'frameColor',
-                        e.target.checked ? '#000000' : '#ffffff',
-                      )
-                    }
+                    onChange={(e) => onEdit('frameColor', e.target.checked ? '#000000' : '#ffffff')}
                     label="Paint"
                     disabled={disabled}
                   />
@@ -233,9 +226,7 @@ const PresentationSection = ({
                   <Text font="dashboard" as="span" size="xs" className={styles.label}>
                     Scale
                   </Text>
-                  <span className={styles.sliderValue}>
-                    {(frameTextureScale ?? 2).toFixed(1)}
-                  </span>
+                  <span className={styles.sliderValue}>{(frameTextureScale ?? 2).toFixed(1)}</span>
                 </div>
                 <input
                   type="range"
@@ -243,9 +234,7 @@ const PresentationSection = ({
                   max="8"
                   step="0.1"
                   value={frameTextureScale ?? 2}
-                  onChange={(e) =>
-                    onEdit('frameTextureScale', parseFloat(e.target.value))
-                  }
+                  onChange={(e) => onEdit('frameTextureScale', parseFloat(e.target.value))}
                   className={styles.slider}
                   disabled={disabled}
                   style={disabled ? { opacity: 0.5 } : undefined}
@@ -266,9 +255,7 @@ const PresentationSection = ({
                   max="360"
                   step="1"
                   value={frameTextureRotation ?? 0}
-                  onChange={(e) =>
-                    onEdit('frameTextureRotation', parseFloat(e.target.value))
-                  }
+                  onChange={(e) => onEdit('frameTextureRotation', parseFloat(e.target.value))}
                   className={styles.slider}
                   disabled={disabled}
                   style={disabled ? { opacity: 0.5 } : undefined}
@@ -289,9 +276,7 @@ const PresentationSection = ({
                   max="1"
                   step="0.01"
                   value={frameTextureRoughness ?? 0.6}
-                  onChange={(e) =>
-                    onEdit('frameTextureRoughness', parseFloat(e.target.value))
-                  }
+                  onChange={(e) => onEdit('frameTextureRoughness', parseFloat(e.target.value))}
                   className={styles.slider}
                   disabled={disabled}
                   style={disabled ? { opacity: 0.5 } : undefined}
@@ -312,9 +297,7 @@ const PresentationSection = ({
                   max="1"
                   step="0.01"
                   value={frameTextureNormalScale ?? 0.5}
-                  onChange={(e) =>
-                    onEdit('frameTextureNormalScale', parseFloat(e.target.value))
-                  }
+                  onChange={(e) => onEdit('frameTextureNormalScale', parseFloat(e.target.value))}
                   className={styles.slider}
                   disabled={disabled}
                   style={disabled ? { opacity: 0.5 } : undefined}

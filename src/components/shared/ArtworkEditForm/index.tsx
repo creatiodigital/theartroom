@@ -458,7 +458,8 @@ export const ArtworkEditForm = ({
             variant="disabled"
           />
           <span className={dashboardStyles.hint}>
-            Image for visual artworks, Text for written content, Sound for audio, Video for video artworks.
+            Image for visual artworks, Text for written content, Sound for audio, Video for video
+            artworks.
           </span>
         </div>
 

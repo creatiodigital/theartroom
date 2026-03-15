@@ -92,13 +92,21 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     // waits for video data before the scene is considered ready
     const loadingUrl = `video:${videoUrl}`
     DefaultLoadingManager.itemStart(loadingUrl)
-    vid.addEventListener('canplaythrough', () => {
-      DefaultLoadingManager.itemEnd(loadingUrl)
-    }, { once: true })
+    vid.addEventListener(
+      'canplaythrough',
+      () => {
+        DefaultLoadingManager.itemEnd(loadingUrl)
+      },
+      { once: true },
+    )
     // Handle load errors gracefully so the loader doesn't hang forever
-    vid.addEventListener('error', () => {
-      DefaultLoadingManager.itemEnd(loadingUrl)
-    }, { once: true })
+    vid.addEventListener(
+      'error',
+      () => {
+        DefaultLoadingManager.itemEnd(loadingUrl)
+      },
+      { once: true },
+    )
 
     vid.load() // Force browser to start buffering
     return vid
@@ -563,7 +571,14 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         {video && videoTexture ? (
           <mesh ref={meshRef} castShadow receiveShadow renderOrder={2}>
             <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshStandardMaterial color="black" emissive="white" emissiveMap={videoTexture} emissiveIntensity={0.6} toneMapped={false} side={DoubleSide} />
+            <meshStandardMaterial
+              color="black"
+              emissive="white"
+              emissiveMap={videoTexture}
+              emissiveIntensity={0.6}
+              toneMapped={false}
+              side={DoubleSide}
+            />
           </mesh>
         ) : (
           <mesh renderOrder={2}>

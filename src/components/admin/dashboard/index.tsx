@@ -302,13 +302,19 @@ export const DashboardAdmin = () => {
                             <button
                               className={dashboardStyles.kebabMenuItem}
                               disabled={isImpersonating && session?.impersonating?.id === user.id}
-                              style={isImpersonating && session?.impersonating?.id === user.id ? { opacity: 0.5, cursor: 'default' } : undefined}
+                              style={
+                                isImpersonating && session?.impersonating?.id === user.id
+                                  ? { opacity: 0.5, cursor: 'default' }
+                                  : undefined
+                              }
                               onClick={() => {
                                 setOpenMenuId(null)
                                 handleImpersonate(user)
                               }}
                             >
-                              {isImpersonating && session?.impersonating?.id === user.id ? 'Impersonating' : 'Impersonate'}
+                              {isImpersonating && session?.impersonating?.id === user.id
+                                ? 'Impersonating'
+                                : 'Impersonate'}
                             </button>
                           )}
                         {/* Delete - superAdmin only */}

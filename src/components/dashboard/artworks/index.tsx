@@ -128,10 +128,10 @@ function ArtworkCard({
 
   return (
     <div className={styles.card}>
-
       {/* Thumbnail / Text Preview */}
       <div className={styles.cardThumbnail}>
-        {(artwork.artworkType === 'image' || artwork.artworkType === 'video') && artwork.imageUrl ? (
+        {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
+        artwork.imageUrl ? (
           <Image
             src={artwork.imageUrl}
             alt={artwork.title || 'Artwork'}
@@ -164,7 +164,13 @@ function ArtworkCard({
         ) : (
           <div className={styles.placeholder}>
             <Icon
-              name={artwork.artworkType === 'image' ? 'image' : artwork.artworkType === 'video' ? 'video' : 'type'}
+              name={
+                artwork.artworkType === 'image'
+                  ? 'image'
+                  : artwork.artworkType === 'video'
+                    ? 'video'
+                    : 'type'
+              }
               size={32}
               color="#666"
             />
@@ -270,8 +276,6 @@ export const ArtworkLibraryPage = () => {
     },
     [playingArtworkId],
   )
-
-
 
   // Debounce search input
   useEffect(() => {
@@ -387,8 +391,6 @@ export const ArtworkLibraryPage = () => {
       setUnlinking(false)
     }
   }, [unlinkTarget, fetchArtworks])
-
-
 
   if (loading) {
     return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>

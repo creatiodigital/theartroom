@@ -77,7 +77,11 @@ const artworkSlice = createSlice({
       const { currentArtworkId, property, value } = action.payload
       const artwork = state.byId[currentArtworkId]
 
-      if (artwork?.artworkType === 'image' || artwork?.artworkType === 'sound' || artwork?.artworkType === 'video') {
+      if (
+        artwork?.artworkType === 'image' ||
+        artwork?.artworkType === 'sound' ||
+        artwork?.artworkType === 'video'
+      ) {
         artwork[property] = value
       }
     },

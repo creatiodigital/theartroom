@@ -65,7 +65,9 @@ const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
             <Select<string>
               options={playModeOptions}
               value={videoPlayMode}
-              onChange={(val) => handleEditVideo('videoPlayMode', val as 'proximity' | 'always' | 'click')}
+              onChange={(val) =>
+                handleEditVideo('videoPlayMode', val as 'proximity' | 'always' | 'click')
+              }
             />
           </div>
         </div>
@@ -83,9 +85,7 @@ const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
             <Text font="dashboard" as="span" size="xs" className={styles.label}>
               Volume
             </Text>
-            <span className={styles.sliderValue}>
-              {Math.round((videoVolume ?? 1) * 100)}%
-            </span>
+            <span className={styles.sliderValue}>{Math.round((videoVolume ?? 1) * 100)}%</span>
           </div>
           <input
             type="range"

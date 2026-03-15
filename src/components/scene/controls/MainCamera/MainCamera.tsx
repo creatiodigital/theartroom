@@ -165,9 +165,7 @@ const MainCamera = () => {
 
       // Distance needed so the artwork height fits in view
       const distanceForVertical =
-        height / 2 > 0
-          ? ((height / 2) * FOCUS_PADDING) / Math.tan(halfFov)
-          : FOCUS_MIN_DISTANCE
+        height / 2 > 0 ? ((height / 2) * FOCUS_PADDING) / Math.tan(halfFov) : FOCUS_MIN_DISTANCE
 
       // Distance needed so the artwork width fits in view
       const horizontalHalfFov = Math.atan(Math.tan(halfFov) * aspectRatio)
