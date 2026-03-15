@@ -22,6 +22,7 @@ const initialState: TArtworksState = {
     text: 0,
     sound: 0,
     shape: 0,
+    video: 0,
   },
   _snapshot: null,
 }
@@ -76,7 +77,11 @@ const artworkSlice = createSlice({
       const { currentArtworkId, property, value } = action.payload
       const artwork = state.byId[currentArtworkId]
 
-      if (artwork?.artworkType === 'image' || artwork?.artworkType === 'sound') {
+      if (
+        artwork?.artworkType === 'image' ||
+        artwork?.artworkType === 'sound' ||
+        artwork?.artworkType === 'video'
+      ) {
         artwork[property] = value
       }
     },

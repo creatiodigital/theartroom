@@ -106,7 +106,14 @@ export const ImageMagnifier = ({
   if (isMobile) {
     return (
       <div className={`${styles.wrapper} ${className}`}>
-        <img src={src} alt={alt} className={styles.image} />
+        <img
+          src={src}
+          alt={alt}
+          className={styles.image}
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+          draggable={false}
+        />
       </div>
     )
   }
@@ -120,6 +127,9 @@ export const ImageMagnifier = ({
         alt={alt}
         className={`${styles.image} ${isHovering ? styles.hidden : ''}`}
         onLoad={handleImageLoad}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        draggable={false}
       />
 
       {/* Expanded zoom container - appears on hover */}
@@ -139,6 +149,9 @@ export const ImageMagnifier = ({
             src={zoomedSrc}
             alt=""
             className={styles.zoomImg}
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            draggable={false}
             style={{
               width: `${zoomedWidth}px`,
               height: `${zoomedHeight}px`,

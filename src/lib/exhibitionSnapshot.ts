@@ -181,6 +181,11 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       soundPlayMode: ea.soundPlayMode,
       soundSpatial: ea.soundSpatial,
       soundDistance: ea.soundDistance,
+      // Video playback
+      videoPlayMode: ea.videoPlayMode ?? 'proximity',
+      videoLoop: ea.videoLoop ?? true,
+      videoVolume: ea.videoVolume ?? 1.0,
+      videoProximityDistance: ea.videoProximityDistance ?? 3,
       // Shape decoration
       shapeType: ea.shapeType,
       shapeColor: ea.shapeColor,

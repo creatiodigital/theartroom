@@ -11,6 +11,73 @@ import type { RootState } from '@/redux/store'
 
 import styles from './MediaLibrary.module.scss'
 
+// Extracts first frame from a video and applies it as the background of a div
+function useVideoThumbnail(videoUrl: string | null | undefined) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!videoUrl) return
+
+    const video = document.createElement('video')
+    video.crossOrigin = 'anonymous'
+    video.muted = true
+    video.playsInline = true
+    video.preload = 'auto'
+    video.src = videoUrl
+
+    const handleLoadedData = () => {
+      video.currentTime = 0
+    }
+
+    const handleSeeked = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(video, 0, 0)
+        setDataUrl(canvas.toDataURL('image/jpeg', 0.7))
+      }
+      video.removeAttribute('src')
+      video.load()
+    }
+
+    video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('seeked', handleSeeked)
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('seeked', handleSeeked)
+      video.removeAttribute('src')
+      video.load()
+    }
+  }, [videoUrl])
+
+  return dataUrl
+}
+
+// Component that renders a video first-frame as a full-cover background overlay
+function VideoThumbnailOverlay({ videoUrl }: { videoUrl: string }) {
+  const dataUrl = useVideoThumbnail(videoUrl)
+
+  if (!dataUrl) {
+    return <Icon name="video" size={32} color="#333" />
+  }
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `url(${dataUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        borderRadius: 'inherit',
+      }}
+    />
+  )
+}
+
 type Artwork = {
   id: string
   name: string
@@ -19,6 +86,7 @@ type Artwork = {
   imageUrl?: string | null
   textContent?: string | null
   soundUrl?: string | null
+  videoUrl?: string | null
 }
 
 const truncateText = (text: string, maxLength: number) => {
@@ -35,7 +103,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
   // Use effectiveUser to get the impersonated artist's ID when admin is impersonating
   const { effectiveUser } = useEffectiveUser()
   const [artworks, setArtworks] = useState<Artwork[]>([])
-  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound' | 'video'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -135,7 +203,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
       </div>
 
       <div className={styles.tabs}>
-        {(['all', 'image', 'text', 'sound'] as const).map((type) => (
+        {(['all', 'image', 'text', 'sound', 'video'] as const).map((type) => (
           <button
             key={type}
             className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
@@ -147,7 +215,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                 ? 'Images'
                 : type === 'text'
                   ? 'Text'
-                  : 'Sound'}
+                  : type === 'sound'
+                    ? 'Sound'
+                    : 'Video'}
           </button>
         ))}
       </div>
@@ -180,7 +250,8 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                 draggable
                 onDragStart={(e) => handleDragStart(e, artwork)}
                 style={
-                  artwork.artworkType === 'image' && artwork.imageUrl
+                  (artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
+                  artwork.imageUrl
                     ? {
                         backgroundImage: `url(${artwork.imageUrl})`,
                         backgroundSize: 'cover',
@@ -190,8 +261,10 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                 }
               >
                 {/* Show image, text preview, or icon */}
-                {artwork.artworkType === 'image' &&
-                artwork.imageUrl ? null : artwork.artworkType === 'text' && artwork.textContent ? (
+                {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
+                artwork.imageUrl ? null : artwork.artworkType === 'video' && artwork.videoUrl ? (
+                  <VideoThumbnailOverlay videoUrl={artwork.videoUrl} />
+                ) : artwork.artworkType === 'text' && artwork.textContent ? (
                   <span className={styles.textPreview}>
                     {truncateText(artwork.textContent, 50)}
                   </span>
@@ -215,7 +288,13 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
                   </div>
                 ) : (
                   <Icon
-                    name={artwork.artworkType === 'image' ? 'image' : 'type'}
+                    name={
+                      artwork.artworkType === 'image'
+                        ? 'image'
+                        : artwork.artworkType === 'video'
+                          ? 'video'
+                          : 'type'
+                    }
                     size={32}
                     color="#333"
                   />

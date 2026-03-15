@@ -9,6 +9,7 @@ import {
   Quaternion,
   TextureLoader,
   Texture,
+  LinearMipmapLinearFilter,
 } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -55,6 +56,9 @@ const useBlobTexture = (url: string): Texture | null => {
       url,
       (loadedTexture) => {
         loadedTexture.colorSpace = SRGBColorSpace
+        loadedTexture.anisotropy = 4
+        loadedTexture.minFilter = LinearMipmapLinearFilter
+        loadedTexture.generateMipmaps = true
         setTexture(loadedTexture)
       },
       undefined,
@@ -130,6 +134,9 @@ const useRegularTexture = (url: string): Texture | null => {
       (loadedTexture) => {
         if (!disposed) {
           loadedTexture.colorSpace = SRGBColorSpace
+          loadedTexture.anisotropy = 4
+          loadedTexture.minFilter = LinearMipmapLinearFilter
+          loadedTexture.generateMipmaps = true
           setTexture(loadedTexture)
         }
       },
@@ -555,10 +562,10 @@ const Display = ({ artwork }: DisplayProps) => {
     })
   }, [supportAmbientColor])
 
-  const frameS = (showFrame ? frameSize?.value : 0) || 0
+  const frameS = showFrame ? (frameSize?.value ?? 3) : 0
   // frameThickness is for Z-depth, range 1-20
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
-  const passepartoutS = (showPassepartout ? passepartoutSize?.value : 0) || 0
+  const passepartoutS = showPassepartout ? (passepartoutSize?.value ?? 5) : 0
   // passepartoutThickness is for Z-depth, clamped 0.1-1.0
   const passepartoutDepth = Math.min(3, Math.max(0.2, passepartoutThickness?.value ?? 0.4))
   // supportThickness is for Z-depth, clamped 0-10
@@ -607,7 +614,7 @@ const Display = ({ artwork }: DisplayProps) => {
       </group>
 
       {/* Frame extends backward from Z=0 by frameDepth — outermost layer */}
-      {showFrame && frameSize?.value && (
+      {showFrame && (
         <Frame
           width={frameOuterW}
           height={frameOuterH}
@@ -619,7 +626,7 @@ const Display = ({ artwork }: DisplayProps) => {
       )}
 
       {/* Passepartout sits ON TOP of support surface — between frame and image */}
-      {showPassepartout && passepartoutSize?.value && (
+      {showPassepartout && (
         <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
           <Passepartout
             width={passepartoutOuterW}

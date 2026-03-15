@@ -65,6 +65,7 @@
 }
 
 .item {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -75,6 +76,7 @@
   border-radius: 0;
   cursor: pointer;
   transition: all 0.2s;
+  overflow: hidden;
 
   &:hover {
     background: var(--color-surface-disabled);

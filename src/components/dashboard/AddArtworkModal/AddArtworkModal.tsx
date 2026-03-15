@@ -16,6 +16,7 @@ const artworkTypeOptions = [
   { value: 'image', label: 'Image' },
   { value: 'text', label: 'Text' },
   { value: 'sound', label: 'Sound' },
+  { value: 'video', label: 'Video' },
 ]
 
 type AddArtworkModalProps = {
@@ -109,7 +110,8 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             size="medium"
           />
           <span className={dashboardStyles.hint}>
-            Image for visual artworks, Text for written content, Sound for audio.
+            Image for visual artworks, Text for written content, Sound for audio, Video for video
+            artworks.
           </span>
         </div>
 

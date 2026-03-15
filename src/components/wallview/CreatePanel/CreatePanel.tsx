@@ -92,6 +92,20 @@ export const CreatePanel = () => {
             />
           </Tooltip>
           <Tooltip
+            label="Click to create video in the middle of the wall, or drag and drop anywhere on the wall"
+            placement="top"
+            offset={16}
+          >
+            <Button
+              size="big"
+              icon="video"
+              variant="secondary"
+              onClick={() => handleCreateArtwork('video')}
+              draggable
+              onDragStart={(e) => handleArtworkDragStart(e, 'video')}
+            />
+          </Tooltip>
+          <Tooltip
             label="Click to create sound in the middle of the wall, or drag and drop anywhere on the wall"
             placement="top"
             offset={16}

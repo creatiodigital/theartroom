@@ -1,22 +1,3 @@
-import 'react'
-import 'react/jsx-runtime'
-
-type ThreeEls = import('@react-three/fiber').ThreeElements
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeEls {}
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeEls {}
-  }
-}
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeEls {}
-  }
-}
+// @react-three/fiber 9.5+ registers ThreeElements on JSX.IntrinsicElements
+// automatically via its own three-types.d.ts, so no manual augmentation needed.
+import '@react-three/fiber'

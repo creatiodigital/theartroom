@@ -23,6 +23,7 @@ type ExhibitionArtworkResponse = {
     imageUrl: string | null
     textContent: string | null // Fixed text content
     soundUrl: string | null
+    videoUrl: string | null
     originalWidth: number | null
     originalHeight: number | null
   }
@@ -92,6 +93,11 @@ type ExhibitionArtworkResponse = {
   soundPlayMode: string
   soundSpatial: boolean
   soundDistance: number
+  // Video styling (per-exhibition)
+  videoPlayMode: string
+  videoLoop: boolean
+  videoVolume: number
+  videoProximityDistance: number
   // Shape decoration
   shapeType: string
   shapeColor: string
@@ -172,7 +178,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
           const artwork: TArtwork = {
             id: ea.artworkId,
             name: ea.artwork.name,
-            artworkType: ea.artwork.artworkType as 'image' | 'text' | 'sound',
+            artworkType: ea.artwork.artworkType as 'image' | 'text' | 'sound' | 'video',
             artworkTitle: ea.artwork.title || undefined,
             author: ea.artwork.author || undefined,
             artworkYear: ea.artwork.year || undefined,
@@ -184,6 +190,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             originalHeight: ea.artwork.originalHeight ?? undefined,
             textContent: ea.artwork.textContent || undefined, // Fixed content from Artwork
             soundUrl: ea.artwork.soundUrl || undefined,
+            videoUrl: ea.artwork.videoUrl || undefined,
             // Display properties from ExhibitionArtwork (per-exhibition)
             showFrame: ea.showFrame,
             frameColor: ea.frameColor,
@@ -298,6 +305,11 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
             soundPlayMode: (ea.soundPlayMode ?? 'play-once') as 'loop' | 'play-once',
             soundSpatial: ea.soundSpatial ?? true,
             soundDistance: ea.soundDistance ?? 5,
+            // Video styling from ExhibitionArtwork (per-exhibition)
+            videoPlayMode: (ea.videoPlayMode ?? 'proximity') as 'proximity' | 'always' | 'click',
+            videoLoop: ea.videoLoop ?? true,
+            videoVolume: ea.videoVolume ?? 1.0,
+            videoProximityDistance: ea.videoProximityDistance ?? 3,
             // Shape decoration
             shapeType: ea.shapeType ?? 'rectangle',
             shapeColor: ea.shapeColor ?? '#000000',

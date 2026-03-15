@@ -58,7 +58,15 @@ export const ImageLightbox = ({ imageUrl, alt, caption, onClose }: ImageLightbox
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
-      <img src={imageUrl} alt={alt} className={styles.image} />
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={styles.image}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        draggable={false}
+        style={{ userSelect: 'none', WebkitTouchCallout: 'none' }}
+      />
       {caption && (
         <Text as="p" className={styles.caption}>
           {caption}

@@ -29,6 +29,7 @@ import {
   Square,
   Type,
   Undo2,
+  Video,
   Volume1,
   Volume2,
   X,
@@ -112,6 +113,7 @@ const lucideIcons: Record<string, LucideIcon> = {
   square: Square,
   type: Type,
   undo: Undo2,
+  video: Video,
   'volume-1': Volume1,
   'volume-2': Volume2,
 }

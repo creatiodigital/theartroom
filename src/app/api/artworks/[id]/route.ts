@@ -125,6 +125,15 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       }
     }
 
+    // Delete associated video blob if exists
+    if (artwork.videoUrl) {
+      try {
+        await del(artwork.videoUrl)
+      } catch (error) {
+        console.warn('Failed to delete video blob:', error)
+      }
+    }
+
     // Delete artwork record
     await prisma.artwork.delete({
       where: { id },
