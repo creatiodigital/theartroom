@@ -93,6 +93,7 @@ export const ExhibitionEditPage = ({
         status: exhibition.status,
         published: exhibition.published ?? false,
         hasPendingChanges: exhibition.hasPendingChanges ?? false,
+        previewEnabled: exhibition.previewEnabled ?? false,
         // Lighting customization
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,

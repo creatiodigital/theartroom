@@ -10,7 +10,6 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
     "check-format": "prettier --check .",
-    "compress-glb": "node scripts/compress-glb-ktx2.mjs",
     "db:push": "npx prisma db push --config prisma/prisma.config.ts",
     "db:push:prod": "dotenv -e .env.db.prod -- npx prisma db push --config prisma/prisma.config.ts",
     "db:push:dev": "dotenv -e .env.db.dev -- npx prisma db push --config prisma/prisma.config.ts",

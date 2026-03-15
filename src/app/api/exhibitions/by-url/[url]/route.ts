@@ -63,14 +63,31 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    // If exhibition is not published, check permissions
+    // If exhibition is not published, check permissions or preview mode
     if (!exhibition.published) {
-      const session = await auth()
-      const isOwner = session?.user?.id === exhibition.userId
-      const userType = session?.user?.userType
-      const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
-      if (!isOwner && !isAdminOrAbove) {
-        return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+      const previewParam = _req.nextUrl.searchParams.get('preview')
+      let isValidPreview = false
+
+      if (previewParam) {
+        // Fresh DB read for access control — never trust the cache for this
+        const fresh = await prisma.exhibition.findUnique({
+          where: { url },
+          select: { previewEnabled: true, previewToken: true },
+        })
+        isValidPreview =
+          !!fresh?.previewEnabled &&
+          !!fresh?.previewToken &&
+          previewParam === fresh.previewToken
+      }
+
+      if (!isValidPreview) {
+        const session = await auth()
+        const isOwner = session?.user?.id === exhibition.userId
+        const userType = session?.user?.userType
+        const isAdminOrAbove = userType === 'admin' || userType === 'superAdmin'
+        if (!isOwner && !isAdminOrAbove) {
+          return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+        }
       }
     }
 

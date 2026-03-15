@@ -17,6 +17,7 @@ export type TExhibition = {
   status: string
   published: boolean
   hasPendingChanges: boolean
+  previewEnabled: boolean
   // Lighting customization
   ambientLightColor?: string
   ambientLightIntensity?: number
