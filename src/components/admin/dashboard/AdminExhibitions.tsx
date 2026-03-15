@@ -22,6 +22,7 @@ type Exhibition = {
   published: boolean
   hasPendingChanges: boolean
   previewEnabled: boolean
+  previewToken: string | null
   user: {
     id: string
     name: string
@@ -101,6 +102,21 @@ export const AdminExhibitions = () => {
     }
   }
 
+  const handleUpdatePreviewExhibition = async (exhibitionId: string) => {
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hasPendingChanges: false }),
+      })
+      if (response.ok) {
+        fetchExhibitions()
+      }
+    } catch (error) {
+      console.error('Failed to update preview exhibition:', error)
+    }
+  }
+
   const handleTogglePreview = async (exhibitionId: string, currentlyEnabled: boolean) => {
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
@@ -113,6 +129,28 @@ export const AdminExhibitions = () => {
       }
     } catch (error) {
       console.error('Failed to toggle preview:', error)
+    }
+  }
+
+  const handleCopyPreviewLink = (exhibition: Exhibition) => {
+    const baseUrl = window.location.origin
+    const visitUrl = `${baseUrl}/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit?preview=${exhibition.previewToken}`
+    navigator.clipboard.writeText(visitUrl)
+  }
+
+  const handleUpdatePreviewLink = async (exhibitionId: string) => {
+    try {
+      // Re-enable preview to generate a new token (old link becomes invalid)
+      const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ previewEnabled: true }),
+      })
+      if (response.ok) {
+        fetchExhibitions()
+      }
+    } catch (error) {
+      console.error('Failed to update preview link:', error)
     }
   }
 
@@ -197,7 +235,7 @@ export const AdminExhibitions = () => {
                   )}
                 </td>
                 <td>
-                  {exhibition.published && (
+                  {(exhibition.published || exhibition.previewEnabled) && (
                     <Badge
                       label={exhibition.hasPendingChanges ? 'Needs Review' : 'Up to date'}
                       variant={exhibition.hasPendingChanges ? 'current' : 'published'}
@@ -235,11 +273,18 @@ export const AdminExhibitions = () => {
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
-                              handlePublishAction(exhibition.id, 'publish')
+                              if (exhibition.published) {
+                                handlePublishAction(exhibition.id, 'publish')
+                              } else if (exhibition.previewEnabled && exhibition.hasPendingChanges) {
+                                handleUpdatePreviewExhibition(exhibition.id)
+                              } else {
+                                handlePublishAction(exhibition.id, 'publish')
+                              }
                             }}
-                            disabled={!exhibition.published && !exhibition.user.published}
+                            disabled={!exhibition.published && !exhibition.previewEnabled && !exhibition.user.published}
                           >
-                            {exhibition.published && exhibition.hasPendingChanges
+                            {(exhibition.published && exhibition.hasPendingChanges) ||
+                             (!exhibition.published && exhibition.previewEnabled && exhibition.hasPendingChanges)
                               ? 'Update Exhibition'
                               : 'Publish'}
                           </button>
@@ -256,7 +301,7 @@ export const AdminExhibitions = () => {
                             Unpublish
                           </button>
                         )}
-                        {/* Publish / Unpublish 3D Preview — only for unpublished exhibitions */}
+                        {/* Publish / Unpublish Preview — only for unpublished exhibitions */}
                         {!exhibition.published && (
                           <button
                             className={dashboardStyles.kebabMenuItem}
@@ -268,6 +313,30 @@ export const AdminExhibitions = () => {
                             {exhibition.previewEnabled
                               ? 'Unpublish Preview'
                               : 'Publish Preview'}
+                          </button>
+                        )}
+                        {/* Copy Preview Link — only when preview is active */}
+                        {!exhibition.published && exhibition.previewEnabled && exhibition.previewToken && (
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleCopyPreviewLink(exhibition)
+                            }}
+                          >
+                            Copy Preview Link
+                          </button>
+                        )}
+                        {/* Update Preview Link — regenerate token (old link becomes invalid) */}
+                        {!exhibition.published && exhibition.previewEnabled && exhibition.previewToken && (
+                          <button
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handleUpdatePreviewLink(exhibition.id)
+                            }}
+                          >
+                            Update Preview Link
                           </button>
                         )}
                         <button

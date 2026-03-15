@@ -65,8 +65,15 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
     // If exhibition is not published, check permissions or preview mode
     if (!exhibition.published) {
-      // Allow public access if preview is enabled (for visit page / 3D preview)
-      if (!exhibition.previewEnabled) {
+      const previewParam = _req.nextUrl.searchParams.get('preview')
+
+      // Allow public access only if preview is enabled AND token matches
+      const isValidPreview =
+        exhibition.previewEnabled &&
+        !!exhibition.previewToken &&
+        previewParam === exhibition.previewToken
+
+      if (!isValidPreview) {
         const session = await auth()
         const isOwner = session?.user?.id === exhibition.userId
         const userType = session?.user?.userType

@@ -393,12 +393,12 @@ export async function POST(request: NextRequest) {
       ),
     )
 
-    // If the exhibition is published, mark it as having pending changes
+    // If the exhibition is published or has preview enabled, mark it as having pending changes
     const exhibitionStatus = await prisma.exhibition.findUnique({
       where: { id: exhibitionId },
-      select: { published: true },
+      select: { published: true, previewEnabled: true },
     })
-    if (exhibitionStatus?.published) {
+    if (exhibitionStatus?.published || exhibitionStatus?.previewEnabled) {
       await prisma.exhibition.update({
         where: { id: exhibitionId },
         data: { hasPendingChanges: true },
