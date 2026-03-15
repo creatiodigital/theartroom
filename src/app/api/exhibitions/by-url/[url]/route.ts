@@ -66,12 +66,19 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     // If exhibition is not published, check permissions or preview mode
     if (!exhibition.published) {
       const previewParam = _req.nextUrl.searchParams.get('preview')
+      let isValidPreview = false
 
-      // Allow public access only if preview is enabled AND token matches
-      const isValidPreview =
-        exhibition.previewEnabled &&
-        !!exhibition.previewToken &&
-        previewParam === exhibition.previewToken
+      if (previewParam) {
+        // Fresh DB read for access control — never trust the cache for this
+        const fresh = await prisma.exhibition.findUnique({
+          where: { url },
+          select: { previewEnabled: true, previewToken: true },
+        })
+        isValidPreview =
+          !!fresh?.previewEnabled &&
+          !!fresh?.previewToken &&
+          previewParam === fresh.previewToken
+      }
 
       if (!isValidPreview) {
         const session = await auth()
