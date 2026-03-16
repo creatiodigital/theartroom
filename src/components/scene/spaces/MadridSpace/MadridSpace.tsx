@@ -6,6 +6,7 @@ import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
+
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
@@ -23,9 +24,9 @@ import type { TArtwork } from '@/types/artwork'
 
 import { Lights } from './lights'
 
-// Preload baked textures at module scope
-useTexture.preload('/assets/spaces/madrid/textures/mwall1.jpg')
-useTexture.preload('/assets/spaces/madrid/textures/mceiling1.jpg')
+// Preload baked textures at module scope to avoid Loader setState-during-render warnings
+useTexture.preload('/assets/spaces/madrid/textures/mwall2.jpg')
+useTexture.preload('/assets/spaces/madrid/textures/mceiling2.jpg')
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -45,7 +46,7 @@ type MadridSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF('/assets/spaces/madrid/madrid7.glb') as unknown as GLTFResult
+  const { nodes } = useGLTF('/assets/spaces/madrid/madrid9.glb') as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -57,11 +58,9 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
   const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
 
-  // Load external baked textures (single suspension point)
-  const [wallTexture, ceilingTexture] = useTexture([
-    '/assets/spaces/madrid/textures/mwall1.jpg',
-    '/assets/spaces/madrid/textures/mceiling1.jpg',
-  ])
+  // Load external baked textures
+  const wallTexture = useTexture('/assets/spaces/madrid/textures/mwall2.jpg')
+  const ceilingTexture = useTexture('/assets/spaces/madrid/textures/mceiling2.jpg')
 
   // Configure textures
   useMemo(() => {
@@ -112,17 +111,22 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
   }, [nodes, dispatch, placeholdersArray])
 
   // Extract initial camera position and direction from initialPoint0 node
+  // useLayoutEffect ensures dispatch fires before paint, preventing camera jump
   useLayoutEffect(() => {
     const initialNode = nodes.initialPoint0
     if (initialNode) {
+      // Use the node's position (Blender origin) directly
       const pos: [number, number] = [initialNode.position.x, initialNode.position.z]
 
-      let dir: [number, number] = [0, -1]
+      // Extract direction from the geometry's face normal (first vertex normal)
+      let dir: [number, number] = [0, -1] // Fallback: look along -Z
       if (initialNode.geometry) {
         const normalAttr = initialNode.geometry.attributes.normal
         if (normalAttr && normalAttr.count > 0) {
+          // Negate: normal points away from the face, camera should look the opposite way (into the room)
           const nx = -normalAttr.getX(0)
           const nz = -normalAttr.getZ(0)
+          // Normalize the xz direction
           const len = Math.sqrt(nx * nx + nz * nz)
           if (len > 0.001) {
             dir = [nx / len, nz / len]
@@ -149,6 +153,7 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
           const sx = nodes.floor0.scale.x
           const sy = nodes.floor0.scale.y
           const sz = nodes.floor0.scale.z
+          // Use the geometry's bounding box center (not mesh origin) for correct positioning
           const centerX = nodes.floor0.position.x + ((bb.max.x + bb.min.x) / 2) * sx
           const centerZ = nodes.floor0.position.z + ((bb.max.z + bb.min.z) / 2) * sz
           const floorSurfaceY = nodes.floor0.position.y + (bb.max.y ?? 0) * sy
@@ -171,13 +176,11 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
         <Ceiling
           geometry={nodes.ceiling0.geometry}
           material={ceilingMaterial}
-          position={nodes.ceiling0.position.toArray() as [number, number, number]}
-          rotation={[
-            nodes.ceiling0.rotation.x,
-            nodes.ceiling0.rotation.y,
-            nodes.ceiling0.rotation.z,
+          position={[
+            nodes.ceiling0.position.x,
+            nodes.ceiling0.position.y,
+            nodes.ceiling0.position.z,
           ]}
-          scale={nodes.ceiling0.scale.toArray() as [number, number, number]}
         />
       )}
 
@@ -188,34 +191,30 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
           wallRef={wallRefs[0]}
           geometry={nodes.wall0.geometry}
           material={wallMaterial}
-          position={nodes.wall0.position.toArray() as [number, number, number]}
-          rotation={[nodes.wall0.rotation.x, nodes.wall0.rotation.y, nodes.wall0.rotation.z]}
-          scale={nodes.wall0.scale.toArray() as [number, number, number]}
+          position={[nodes.wall0.position.x, nodes.wall0.position.y, nodes.wall0.position.z]}
         />
       )}
 
-      {/* Windows (2 windows: 4 frames, 2 glass panes) */}
-      <ParisWindow
-        nodes={nodes}
-        frameCount={4}
-        glassCount={2}
-        windowRefs={windowRefs}
-        glassRefs={glassRefs}
-      />
+      {/* Windows */}
+      <ParisWindow nodes={nodes} frameCount={2} glassCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
 
       {/* Radiators */}
       <Radiator nodes={nodes} count={2} />
 
-      {/* Round Lamps (17 lamps) */}
+      {/* Round Lamps */}
       <RoundLamp nodes={nodes} count={17} />
 
-      {/* Light Switch */}
+      {/* Switches */}
       <Switch nodes={nodes} count={1} />
 
       {/* Single Sockets */}
       <SingleSocket nodes={nodes} count={2} />
 
-      {/* Invisible Door (collision barrier) */}
+      {/* Placeholders */}
+      {isPlaceholdersShown &&
+        placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
+
+      {/* Invisible Door (collision barrier — camera cannot pass through) */}
       {nodes.invisibleDoor0 && (
         <mesh
           ref={wallRefs[1]}
@@ -228,14 +227,9 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
         />
       )}
 
-      {/* Placeholders */}
-      {isPlaceholdersShown &&
-        placeholdersArray.map((_, i) => <Placeholder key={i} i={i} nodes={nodes} />)}
-
       {/* Initial Point (reference position) */}
       {nodes.initialPoint0 && <primitive object={nodes.initialPoint0} visible={false} />}
 
-      {/* Artworks */}
       <ArtObjects />
 
       <Preload all />
