@@ -236,29 +236,23 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId])
 
-  // Video upload (immediate - no deferred save needed)
+  // Video upload (client-side direct upload to bypass Vercel function size limit)
   const handleVideoUpload = useCallback(
     async (file: File) => {
       setVideoUploading(true)
       try {
-        const uploadFormData = new FormData()
-        uploadFormData.append('video', file)
+        const { upload } = await import('@vercel/blob/client')
+        const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
+        const ext = file.type === 'video/webm' ? 'webm' : 'mp4'
 
-        const response = await fetch(`/api/artworks/${artworkId}/video`, {
-          method: 'POST',
-          body: uploadFormData,
+        const blob = await upload(`${env}/videos/${artworkId}.${ext}`, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload/video',
         })
 
-        if (!response.ok) {
-          const data = await response.json()
-          setError(data.error || 'Failed to upload video')
-          return
-        }
-
-        const data = await response.json()
-        setVideoUrl(data.url)
-      } catch {
-        setError('Failed to upload video')
+        setVideoUrl(blob.url)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to upload video')
       } finally {
         setVideoUploading(false)
       }
