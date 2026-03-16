@@ -232,9 +232,14 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       if (body.previewEnabled) {
         // Generate a unique preview token when enabling
         data.previewToken = crypto.randomUUID()
+        // Build a snapshot so the preview link serves frozen data
+        const snapshot = await buildExhibitionSnapshot(id)
+        data.publishedSnapshot = snapshot
+        data.hasPendingChanges = false
       } else {
-        // Clear token when disabling preview
+        // Clear token and snapshot when disabling preview
         data.previewToken = null
+        data.publishedSnapshot = Prisma.JsonNull
       }
     }
 
@@ -255,6 +260,15 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     } else if (body.hasPendingChanges === false) {
       // Explicit clear of pending changes (e.g. "Update Exhibition" for preview)
       data.hasPendingChanges = false
+      // Rebuild snapshot so the preview link reflects the latest state
+      const exhibition = await prisma.exhibition.findUnique({
+        where: { id },
+        select: { previewEnabled: true },
+      })
+      if (exhibition?.previewEnabled) {
+        const snapshot = await buildExhibitionSnapshot(id)
+        data.publishedSnapshot = snapshot
+      }
     } else {
       // Any other edit on a published or preview-enabled exhibition → mark as having pending changes
       const exhibition = await prisma.exhibition.findUnique({

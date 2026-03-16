@@ -23,10 +23,13 @@ export async function GET(request: NextRequest) {
     if (mode !== 'edit') {
       const exhibition = await prisma.exhibition.findUnique({
         where: { id: exhibitionId },
-        select: { published: true, publishedSnapshot: true },
+        select: { published: true, previewEnabled: true, publishedSnapshot: true },
       })
 
-      if (exhibition?.published && exhibition.publishedSnapshot) {
+      // Serve snapshot for published or preview-enabled exhibitions
+      const hasSnapshot = !!exhibition?.publishedSnapshot
+      const shouldServeSnapshot = hasSnapshot && (exhibition?.published || exhibition?.previewEnabled)
+      if (shouldServeSnapshot) {
         const snapshot = exhibition.publishedSnapshot as Record<string, unknown>
         const snapshotArtworks = (snapshot.artworks ?? []) as Array<Record<string, unknown>>
 

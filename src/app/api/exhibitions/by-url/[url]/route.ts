@@ -94,8 +94,10 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     // --- Draft/Publish logic ---
     const snapshot = exhibition.publishedSnapshot as Record<string, unknown> | null
 
-    if (exhibition.published && snapshot) {
-      // Public visitor viewing a published exhibition → return snapshot data
+    // Serve snapshot for published exhibitions OR valid preview requests
+    const isValidPreviewRequest = !exhibition.published && _req.nextUrl.searchParams.get('preview')
+    if ((exhibition.published || isValidPreviewRequest) && snapshot) {
+      // Frozen snapshot data → return snapshot (same for published and preview)
       const snapshotExhibition = snapshot.exhibition as Record<string, unknown>
       const snapshotArtworks = snapshot.artworks as Array<Record<string, unknown>>
 
