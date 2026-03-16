@@ -32,7 +32,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   },
   madrid: {
     displayName: 'Madrid',
-    gltfPath: '/assets/spaces/madrid/madrid7.glb',
+    gltfPath: '/assets/spaces/madrid/madrid9.glb',
     thumbnailUrl: '/assets/thumbnails/madrid.jpg',
     refs: {
       walls: 2, // wall0 + invisibleDoor0
@@ -40,7 +40,6 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
       glass: 2,
     },
     placeholders: 4,
-    defaultCameraPosition: [0, 0],
   },
 }
 
