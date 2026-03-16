@@ -84,6 +84,13 @@ export const DashboardPage = () => {
     }
   }, [exhibitionsData, dispatch])
 
+  // Refetch exhibitions when switching users (e.g. after admin deletes then impersonates)
+  useEffect(() => {
+    if (userId) {
+      refetchExhibitions()
+    }
+  }, [userId, refetchExhibitions])
+
   const handleSelectSpace = useCallback(
     (option: TOption<string>) => {
       dispatch(selectSpace(option as TSpaceOption))
@@ -291,15 +298,17 @@ export const DashboardPage = () => {
                           >
                             Edit 3D Space
                           </button>
-                          <button
-                            className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleDeleteClick(ex.id, ex.mainTitle)
-                            }}
-                          >
-                            Delete
-                          </button>
+                          {isAdminOrSuperAdmin && (
+                            <button
+                              className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                handleDeleteClick(ex.id, ex.mainTitle)
+                              }}
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
