@@ -42,16 +42,49 @@ function detectCollisions(
 ): boolean {
   if (movementVector.lengthSq() === 0) return false
 
-  const direction = movementVector.clone().normalize()
-  const raycaster = new Raycaster(camera.position, direction, 0, 3)
-
   const meshes = [...wallRefs, ...windowRefs, ...glassRefs]
     .map((ref) => ref.current)
     .filter(Boolean) as Mesh[]
 
-  const hits = raycaster.intersectObjects(meshes, true)
+  if (meshes.length === 0) return false
 
-  return hits.some((hit) => hit.distance <= collisionDistance)
+  const raycaster = new Raycaster()
+
+  // 1. Forward ray: check movement direction
+  const direction = movementVector.clone().normalize()
+  raycaster.set(camera.position, direction)
+  raycaster.far = collisionDistance
+  raycaster.near = 0
+  if (raycaster.intersectObjects(meshes, true).length > 0) return true
+
+  // 2. Lateral feeler rays: prevent drifting into walls from the side.
+  //    These fire regardless of movement direction so the camera can never
+  //    be within collisionDistance of any wall surface.
+  const cameraForward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+  cameraForward.y = 0
+  cameraForward.normalize()
+  const cameraRight = new Vector3(1, 0, 0).applyQuaternion(camera.quaternion)
+  cameraRight.y = 0
+  cameraRight.normalize()
+
+  const feelers = [
+    cameraRight,                                              // right
+    cameraRight.clone().negate(),                              // left
+    cameraForward.clone().add(cameraRight).normalize(),        // front-right
+    cameraForward.clone().sub(cameraRight).normalize(),        // front-left
+  ]
+
+  for (const feeler of feelers) {
+    raycaster.set(camera.position, feeler)
+    raycaster.far = collisionDistance
+    const hits = raycaster.intersectObjects(meshes, true)
+    if (hits.length > 0) {
+      // Only block if the movement has a component toward the nearby wall
+      if (movementVector.dot(feeler) > 0) return true
+    }
+  }
+
+  return false
 }
 
 // Animation constants
@@ -97,7 +130,7 @@ const MainCamera = () => {
   const animationProgress = useRef(0)
 
   const dampingFactor = 0.6
-  const collisionDistance = 0.5
+  const collisionDistance = 0.7
   const moveSpeed = 0.03
 
   // Get camera settings from Redux
