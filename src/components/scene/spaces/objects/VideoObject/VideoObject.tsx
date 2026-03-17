@@ -377,26 +377,37 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
 
     // Update panner position for spatial audio (runs every frame, all modes)
     if (pannerRef.current && position) {
-      pannerRef.current.positionX.value = position.x
-      pannerRef.current.positionY.value = position.y
-      pannerRef.current.positionZ.value = position.z
+      // Firefox doesn't support positionX as AudioParam — fall back to deprecated setPosition()
+      if (pannerRef.current.positionX) {
+        pannerRef.current.positionX.value = position.x
+        pannerRef.current.positionY.value = position.y
+        pannerRef.current.positionZ.value = position.z
+      } else {
+        pannerRef.current.setPosition(position.x, position.y, position.z)
+      }
 
       // Sync AudioListener position with camera
       const listener = audioCtxRef.current?.listener
       if (listener) {
-        listener.positionX.value = camera.position.x
-        listener.positionY.value = camera.position.y
-        listener.positionZ.value = camera.position.z
-
-        // Forward direction
-        const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
-        const up = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
-        listener.forwardX.value = forward.x
-        listener.forwardY.value = forward.y
-        listener.forwardZ.value = forward.z
-        listener.upX.value = up.x
-        listener.upY.value = up.y
-        listener.upZ.value = up.z
+        if (listener.positionX) {
+          listener.positionX.value = camera.position.x
+          listener.positionY.value = camera.position.y
+          listener.positionZ.value = camera.position.z
+          const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+          const up = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+          listener.forwardX.value = forward.x
+          listener.forwardY.value = forward.y
+          listener.forwardZ.value = forward.z
+          listener.upX.value = up.x
+          listener.upY.value = up.y
+          listener.upZ.value = up.z
+        } else {
+          // Firefox fallback: use deprecated setPosition/setOrientation
+          listener.setPosition(camera.position.x, camera.position.y, camera.position.z)
+          const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+          const up = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+          listener.setOrientation(forward.x, forward.y, forward.z, up.x, up.y, up.z)
+        }
       }
     }
 
