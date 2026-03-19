@@ -69,7 +69,6 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
         <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
           <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
             <Canvas
-              frameloop="demand"
               shadows={false}
               dpr={[1, 2]}
               gl={{
