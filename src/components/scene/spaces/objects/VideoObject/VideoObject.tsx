@@ -137,6 +137,10 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   // Reusable objects for frustum culling (avoid per-frame GC)
   const frustumRef = useRef(new Frustum())
   const projMatrixRef = useRef(new Matrix4())
+  // Pre-allocated Vector3 objects reused every frame (avoid GC pressure)
+  const _artworkPosRef = useRef(new Vector3())
+  const _forwardRef = useRef(new Vector3())
+  const _upRef = useRef(new Vector3())
 
   // Create offscreen canvas + texture once the video metadata is available
   useEffect(() => {
@@ -352,11 +356,11 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const supportAmbientColor = useAmbientLightColor(supportColor ?? '#ffffff')
 
   // ── Proximity mode: play on enter, pause on exit ──
-  useFrame(({ camera }) => {
+  useFrame(({ camera, invalidate }) => {
     if (playMode === 'proximity') {
       if (!position || !video || !videoUrl) return
 
-      const artworkPos = new Vector3(position.x, position.y, position.z)
+      const artworkPos = _artworkPosRef.current.set(position.x, position.y, position.z)
       const distance = camera.position.distanceTo(artworkPos)
 
       if (distance <= proximityDistance && !isPlayingRef.current) {
@@ -393,8 +397,8 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
           listener.positionX.value = camera.position.x
           listener.positionY.value = camera.position.y
           listener.positionZ.value = camera.position.z
-          const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
-          const up = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+          const forward = _forwardRef.current.set(0, 0, -1).applyQuaternion(camera.quaternion)
+          const up = _upRef.current.set(0, 1, 0).applyQuaternion(camera.quaternion)
           listener.forwardX.value = forward.x
           listener.forwardY.value = forward.y
           listener.forwardZ.value = forward.z
@@ -404,8 +408,8 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         } else {
           // Firefox fallback: use deprecated setPosition/setOrientation
           listener.setPosition(camera.position.x, camera.position.y, camera.position.z)
-          const forward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
-          const up = new Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+          const forward = _forwardRef.current.set(0, 0, -1).applyQuaternion(camera.quaternion)
+          const up = _upRef.current.set(0, 1, 0).applyQuaternion(camera.quaternion)
           listener.setOrientation(forward.x, forward.y, forward.z, up.x, up.y, up.z)
         }
       }
@@ -415,7 +419,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     if (videoTexture && video && position && videoReadyRef.current) {
       frameCountRef.current++
 
-      const artworkPos = new Vector3(position.x, position.y, position.z)
+      const artworkPos = _artworkPosRef.current.set(position.x, position.y, position.z)
       const dist = camera.position.distanceTo(artworkPos)
 
       // Determine update interval based on distance
@@ -438,8 +442,15 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         if (ctx && canvas) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
           videoTexture.needsUpdate = true
+          // Request next frame for video texture updates (frameloop="demand")
+          invalidate()
         }
       }
+    }
+
+    // Keep rendering while video is playing (frameloop="demand")
+    if (isPlayingRef.current) {
+      invalidate()
     }
   })
 

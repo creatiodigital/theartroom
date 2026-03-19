@@ -3,13 +3,17 @@
 import { Canvas } from '@react-three/fiber'
 
 import { useRef, Suspense } from 'react'
-import { NoToneMapping, Mesh } from 'three'
+import { ACESFilmicToneMapping, Mesh } from 'three'
 import { useSelector } from 'react-redux'
 import { Volume2, VolumeX } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { Loader } from '@/components/ui/Loader'
-import { SceneAudioProvider, useSceneAudioState, useSceneAudioActions } from '@/contexts/SceneAudioContext'
+import {
+  SceneAudioProvider,
+  useSceneAudioState,
+  useSceneAudioActions,
+} from '@/contexts/SceneAudioContext'
 import SceneContext from '@/contexts/SceneContext'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -65,10 +69,14 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
         <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
           <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
             <Canvas
+              frameloop="demand"
               shadows={false}
+              dpr={[1, 2]}
               gl={{
-                antialias: false,
-                toneMapping: NoToneMapping,
+                antialias: true,
+                toneMapping: ACESFilmicToneMapping,
+                toneMappingExposure: 1.0,
+                powerPreference: 'high-performance',
               }}
             >
               <WebGLMonitor exhibitionUrl={exhibitionUrl} />

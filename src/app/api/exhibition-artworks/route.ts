@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
 
       // Serve snapshot for published or preview-enabled exhibitions
       const hasSnapshot = !!exhibition?.publishedSnapshot
-      const shouldServeSnapshot = hasSnapshot && (exhibition?.published || exhibition?.previewEnabled)
+      const shouldServeSnapshot =
+        hasSnapshot && (exhibition?.published || exhibition?.previewEnabled)
       if (shouldServeSnapshot) {
         const snapshot = exhibition.publishedSnapshot as Record<string, unknown>
         const snapshotArtworks = (snapshot.artworks ?? []) as Array<Record<string, unknown>>

@@ -34,7 +34,10 @@ export const exhibitionApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
     }),
-    getExhibitionByUrl: builder.query<TExhibition, { url: string; mode?: 'edit'; preview?: string }>({
+    getExhibitionByUrl: builder.query<
+      TExhibition,
+      { url: string; mode?: 'edit'; preview?: string }
+    >({
       query: ({ url, mode, preview }) => {
         const params = new URLSearchParams()
         if (mode) params.set('mode', mode)

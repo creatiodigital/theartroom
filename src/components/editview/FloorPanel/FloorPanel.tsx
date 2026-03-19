@@ -28,10 +28,13 @@ const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
   { value: 'patterned-concrete', label: 'Patterned Concrete' },
   { value: 'worn-concrete', label: 'Worn Concrete' },
+  { value: 'concrete-tiles', label: 'Concrete Tiles' },
   { value: 'red-parquet', label: 'Red Parquet' },
   { value: 'marble', label: 'Marble' },
   { value: 'parquet', label: 'Parquet' },
+  { value: 'parquet-light', label: 'Parquet Light' },
   { value: 'wood-planks', label: 'Wood Planks' },
+  { value: 'terrazzo', label: 'Terrazzo' },
 ] as const
 
 const FloorPanel = () => {
@@ -81,7 +84,10 @@ const FloorPanel = () => {
           | 'parquet'
           | 'patterned-concrete'
           | 'worn-concrete'
-          | 'wood-planks',
+          | 'wood-planks'
+          | 'terrazzo'
+          | 'parquet-light'
+          | 'concrete-tiles',
       ),
     )
     setSaved(false)

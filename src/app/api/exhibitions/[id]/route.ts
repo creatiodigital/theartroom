@@ -34,6 +34,8 @@ type ExhibitionUpdateBody = {
   trackLampsVisible?: boolean
   recessedLampColor?: string
   recessedLampIntensity?: number
+  recessedLampAngle?: number
+  recessedLampDistance?: number
   trackLampMaterialColor?: string
   trackLampAngle?: number
   trackLampDistance?: number
@@ -59,6 +61,7 @@ type ExhibitionUpdateBody = {
   // Wall & Ceiling
   wallColor?: string
   ceilingColor?: string
+  wallBrightness?: number
 
   // Autofocus groups
   autofocusGroups?: Array<{ id: string; name: string; artworkIds: string[] }> | null
@@ -161,6 +164,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.recessedLampColor !== undefined) data.recessedLampColor = body.recessedLampColor
     if (body.recessedLampIntensity !== undefined)
       data.recessedLampIntensity = body.recessedLampIntensity
+    if (body.recessedLampAngle !== undefined)
+      data.recessedLampAngle = Math.max(0.1, Math.min(1.2, body.recessedLampAngle))
+    if (body.recessedLampDistance !== undefined)
+      data.recessedLampDistance = Math.max(1, Math.min(20, body.recessedLampDistance))
     if (body.trackLampMaterialColor !== undefined)
       data.trackLampMaterialColor = body.trackLampMaterialColor
     if (body.trackLampAngle !== undefined)
@@ -211,6 +218,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     // Wall & Ceiling
     if (body.wallColor !== undefined) data.wallColor = body.wallColor
     if (body.ceilingColor !== undefined) data.ceilingColor = body.ceilingColor
+    if (body.wallBrightness !== undefined)
+      data.wallBrightness = Math.max(1.0, Math.min(5.0, body.wallBrightness))
 
     // Autofocus groups
     if (body.autofocusGroups !== undefined)
@@ -287,7 +296,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     // Revalidate caches
     revalidateTag(`exhibition-${updated.url}`, 'default')
-    if (body.published !== undefined || body.mainTitle !== undefined) {
+    if (
+      body.published !== undefined ||
+      body.mainTitle !== undefined ||
+      data.hasPendingChanges !== undefined
+    ) {
       revalidateTag('exhibitions', 'default')
       revalidatePath('/')
     }

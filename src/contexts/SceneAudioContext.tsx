@@ -154,9 +154,7 @@ export const SceneAudioProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <SceneAudioActionsContext.Provider value={actions}>
-      <SceneAudioStateContext.Provider value={state}>
-        {children}
-      </SceneAudioStateContext.Provider>
+      <SceneAudioStateContext.Provider value={state}>{children}</SceneAudioStateContext.Provider>
     </SceneAudioActionsContext.Provider>
   )
 }
