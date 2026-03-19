@@ -116,6 +116,22 @@ const MATERIAL_CONFIG: Record<
     metallic: null,
     ao: 'ao.jpg',
   },
+  'wood-checkered': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
+  'wood-diagonal': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
 }
 
 // Preload all floor textures at module scope so useTexture doesn't trigger

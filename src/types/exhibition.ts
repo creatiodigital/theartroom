@@ -47,6 +47,8 @@ export type TExhibition = {
     | 'patterned-concrete'
     | 'worn-concrete'
     | 'wood-planks'
+    | 'wood-checkered'
+    | 'wood-diagonal'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number

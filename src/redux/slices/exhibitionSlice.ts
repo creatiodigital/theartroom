@@ -242,6 +242,8 @@ const exhibitionSlice = createSlice({
         | 'patterned-concrete'
         | 'worn-concrete'
         | 'wood-planks'
+        | 'wood-checkered'
+        | 'wood-diagonal'
       >,
     ) => {
       state.floorMaterial = action.payload
