@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { useGLTF } from '@react-three/drei'
 
@@ -14,17 +15,34 @@ import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 
 import type { RootState } from '@/redux/store'
 import { toggleArtworkLocked } from '@/redux/slices/exhibitionSlice'
+import type { PresetType } from '../PresetSection/applyPresetToArtwork'
 import type { TAlign, TDistributeAlign } from '@/types/wizard'
 
 import { useAlignGroup } from '../hooks/useAlignGroup'
 import { useDistributeGroup } from '../hooks/useDistributeGroup'
 import { useGroupDetails } from '../hooks/useGroupDetails'
 import { useGroupHandlers } from '../hooks/useGroupHandlers'
+import GroupPresetApply from './GroupPresetApply'
 import styles from '../RightPanel.module.scss'
 
 const GroupPanel = () => {
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const dispatch = useDispatch()
+
+  // Determine if ALL grouped artworks share the same type
+  const uniformType = useMemo((): PresetType | null => {
+    if (artworkGroupIds.length < 2) return null
+    const types = artworkGroupIds.map((id) => artworksById[id]?.artworkType || 'image')
+    const allSame = types.every((t) => t === types[0])
+    if (!allSame) return null
+    // Map artwork kinds to preset types (image/text/shape are directly supported)
+    const kind = types[0] as string
+    if (kind === 'image' || kind === 'text' || kind === 'shape') return kind
+    // sound and video artworks use image presets (frame/support/shadow properties)
+    if (kind === 'sound' || kind === 'video') return 'image'
+    return null
+  }, [artworkGroupIds, artworksById])
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
@@ -277,6 +295,12 @@ const GroupPanel = () => {
           }}
         />
       </div>
+
+      {uniformType && (
+        <div className={styles.section}>
+          <GroupPresetApply artworkIds={artworkGroupIds} uniformType={uniformType} />
+        </div>
+      )}
     </>
   )
 }
