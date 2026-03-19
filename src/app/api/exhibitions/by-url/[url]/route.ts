@@ -75,9 +75,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
           select: { previewEnabled: true, previewToken: true },
         })
         isValidPreview =
-          !!fresh?.previewEnabled &&
-          !!fresh?.previewToken &&
-          previewParam === fresh.previewToken
+          !!fresh?.previewEnabled && !!fresh?.previewToken && previewParam === fresh.previewToken
       }
 
       if (!isValidPreview) {

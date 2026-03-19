@@ -1,5 +1,12 @@
 import { useEffect, useMemo } from 'react'
-import { SRGBColorSpace, Mesh, BufferGeometry, MeshStandardMaterial, MeshLambertMaterial, Color } from 'three'
+import {
+  SRGBColorSpace,
+  Mesh,
+  BufferGeometry,
+  MeshStandardMaterial,
+  MeshLambertMaterial,
+  Color,
+} from 'three'
 
 import { useAmbientLight } from '@/hooks/useAmbientLight'
 

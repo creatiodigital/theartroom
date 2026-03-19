@@ -12,7 +12,11 @@ import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState, AppDispatch } from '@/redux/store'
 
-import { applyPresetToArtwork, type TPreset, type PresetType } from '../PresetSection/applyPresetToArtwork'
+import {
+  applyPresetToArtwork,
+  type TPreset,
+  type PresetType,
+} from '../PresetSection/applyPresetToArtwork'
 import styles from '../PresetSection/PresetSection.module.scss'
 
 type GroupPresetApplyProps = {

@@ -28,9 +28,7 @@ const WallCeilingPanel = () => {
   const ceilingColor = useSelector(
     (state: RootState) => state.exhibition.ceilingColor ?? DEFAULT_CEILING_COLOR,
   )
-  const wallBrightness = useSelector(
-    (state: RootState) => state.exhibition.wallBrightness ?? 1.8,
-  )
+  const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
 
   const handleSave = async () => {
     if (!exhibitionId) return

@@ -96,7 +96,16 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
     wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
     ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
-  }, [wallMaterial, ceilingMaterial, ambientColor, scale, wallColor, ceilingColor, wallBrightness, invalidate])
+  }, [
+    wallMaterial,
+    ceilingMaterial,
+    ambientColor,
+    scale,
+    wallColor,
+    ceilingColor,
+    wallBrightness,
+    invalidate,
+  ])
 
   // Arrays for iterating over indexed meshes
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
@@ -197,7 +206,13 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
       )}
 
       {/* Windows */}
-      <ParisWindow nodes={nodes} frameCount={2} glassCount={2} windowRefs={windowRefs} glassRefs={glassRefs} />
+      <ParisWindow
+        nodes={nodes}
+        frameCount={2}
+        glassCount={2}
+        windowRefs={windowRefs}
+        glassRefs={glassRefs}
+      />
 
       {/* Radiators */}
       <Radiator nodes={nodes} count={2} />

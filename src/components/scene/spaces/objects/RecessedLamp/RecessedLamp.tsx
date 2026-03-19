@@ -1,13 +1,6 @@
 import { useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import {
-  Mesh,
-  BufferGeometry,
-  DoubleSide,
-  Vector3,
-  SpotLight,
-  MeshStandardMaterial,
-} from 'three'
+import { Mesh, BufferGeometry, DoubleSide, Vector3, SpotLight, MeshStandardMaterial } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import type { RootState } from '@/redux/store'
@@ -21,7 +14,6 @@ interface RecessedLampProps {
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
 const DEFAULT_LAMP_INTENSITY = 4.0
-
 
 /**
  * Recessed lamp using <primitive> to preserve Blender hierarchy (body → bulb).
@@ -45,9 +37,7 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
   const bulbEmissiveIntensity = disableSpotlights ? lampIntensity : 2
-  const lampAngle = useSelector(
-    (state: RootState) => state.exhibition.recessedLampAngle ?? 0.45,
-  )
+  const lampAngle = useSelector((state: RootState) => state.exhibition.recessedLampAngle ?? 0.45)
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
   )
@@ -59,19 +49,27 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   )
 
   // Shared materials — all recessed lamps use the same body and bulb instance
-  const bodyMaterial = useMemo(() => new MeshStandardMaterial({
-    color: tintedPlastic,
-    roughness: 0.4,
-    metalness: 0.0,
-  }), [tintedPlastic])
+  const bodyMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: tintedPlastic,
+        roughness: 0.4,
+        metalness: 0.0,
+      }),
+    [tintedPlastic],
+  )
 
-  const bulbMaterial = useMemo(() => new MeshStandardMaterial({
-    color: '#000000',
-    emissive: lampColor,
-    emissiveIntensity: bulbEmissiveIntensity,
-    toneMapped: false,
-    side: DoubleSide,
-  }), [lampColor, bulbEmissiveIntensity])
+  const bulbMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#000000',
+        emissive: lampColor,
+        emissiveIntensity: bulbEmissiveIntensity,
+        toneMapped: false,
+        side: DoubleSide,
+      }),
+    [lampColor, bulbEmissiveIntensity],
+  )
 
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
@@ -145,14 +143,17 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
             {/* Spotlight pointing downward — inline to avoid component overhead */}
             {!disableSpotlights && (
               <>
-                <object3D position={[bulbPos.x, bulbPos.y - 5, bulbPos.z]} ref={(obj) => {
-                  if (obj) {
-                    const light = obj.parent?.children.find(
-                      (c) => c.type === 'SpotLight'
-                    ) as SpotLight | undefined
-                    if (light) light.target = obj
-                  }
-                }} />
+                <object3D
+                  position={[bulbPos.x, bulbPos.y - 5, bulbPos.z]}
+                  ref={(obj) => {
+                    if (obj) {
+                      const light = obj.parent?.children.find((c) => c.type === 'SpotLight') as
+                        | SpotLight
+                        | undefined
+                      if (light) light.target = obj
+                    }
+                  }}
+                />
                 <spotLight
                   position={[bulbPos.x, bulbPos.y, bulbPos.z]}
                   color={lampColor}
@@ -173,14 +174,17 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
       {disableSpotlights &&
         fillLightPositions.map((pos, i) => (
           <group key={`plafond-fill-${i}`}>
-            <object3D position={[pos.x, pos.y - 10, pos.z]} ref={(obj) => {
-              if (obj) {
-                const light = obj.parent?.children.find(
-                  (c) => c.type === 'SpotLight'
-                ) as SpotLight | undefined
-                if (light) light.target = obj
-              }
-            }} />
+            <object3D
+              position={[pos.x, pos.y - 10, pos.z]}
+              ref={(obj) => {
+                if (obj) {
+                  const light = obj.parent?.children.find((c) => c.type === 'SpotLight') as
+                    | SpotLight
+                    | undefined
+                  if (light) light.target = obj
+                }
+              }}
+            />
             <spotLight
               position={[pos.x, pos.y, pos.z]}
               color={lampColor}

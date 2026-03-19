@@ -68,10 +68,10 @@ function detectCollisions(
   cameraRight.normalize()
 
   const feelers = [
-    cameraRight,                                              // right
-    cameraRight.clone().negate(),                              // left
-    cameraForward.clone().add(cameraRight).normalize(),        // front-right
-    cameraForward.clone().sub(cameraRight).normalize(),        // front-left
+    cameraRight, // right
+    cameraRight.clone().negate(), // left
+    cameraForward.clone().add(cameraRight).normalize(), // front-right
+    cameraForward.clone().sub(cameraRight).normalize(), // front-left
   ]
 
   for (const feeler of feelers) {

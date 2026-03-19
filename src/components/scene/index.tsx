@@ -3,13 +3,17 @@
 import { Canvas } from '@react-three/fiber'
 
 import { useRef, Suspense } from 'react'
-import { NoToneMapping, Mesh } from 'three'
+import { ACESFilmicToneMapping, Mesh } from 'three'
 import { useSelector } from 'react-redux'
 import { Volume2, VolumeX } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { Loader } from '@/components/ui/Loader'
-import { SceneAudioProvider, useSceneAudioState, useSceneAudioActions } from '@/contexts/SceneAudioContext'
+import {
+  SceneAudioProvider,
+  useSceneAudioState,
+  useSceneAudioActions,
+} from '@/contexts/SceneAudioContext'
 import SceneContext from '@/contexts/SceneContext'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -18,7 +22,6 @@ import Controls from './controls'
 
 import HumanReference from './objects/HumanReference/HumanReference'
 import { SceneErrorBoundary } from './SceneErrorBoundary'
-import { FpsCounter } from './FpsCounter'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
 import { WebGLMonitor } from './WebGLMonitor'
@@ -70,12 +73,12 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
               shadows={false}
               dpr={[1, 2]}
               gl={{
-                antialias: false,
-                toneMapping: NoToneMapping,
+                antialias: true,
+                toneMapping: ACESFilmicToneMapping,
+                toneMappingExposure: 1.0,
                 powerPreference: 'high-performance',
               }}
             >
-              <FpsCounter />
               <WebGLMonitor exhibitionUrl={exhibitionUrl} />
               <Suspense fallback={hideLoader ? null : <Loader />}>
                 <group>

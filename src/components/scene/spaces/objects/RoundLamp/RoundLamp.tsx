@@ -1,13 +1,6 @@
 import { useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import {
-  Mesh,
-  BufferGeometry,
-  DoubleSide,
-  Vector3,
-  SpotLight,
-  MeshStandardMaterial,
-} from 'three'
+import { Mesh, BufferGeometry, DoubleSide, Vector3, SpotLight, MeshStandardMaterial } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import type { RootState } from '@/redux/store'
@@ -19,7 +12,6 @@ interface RoundLampProps {
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
 const DEFAULT_LAMP_INTENSITY = 4.0
-
 
 /**
  * Round lamp using <primitive> to preserve Blender hierarchy (body → bulb).
@@ -37,27 +29,33 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
   const bulbEmissiveIntensity = lampIntensity
-  const lampAngle = useSelector(
-    (state: RootState) => state.exhibition.recessedLampAngle ?? 0.45,
-  )
+  const lampAngle = useSelector((state: RootState) => state.exhibition.recessedLampAngle ?? 0.45)
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
   )
 
   // Shared materials — all 17 lamps use the same body and bulb material
-  const bodyMaterial = useMemo(() => new MeshStandardMaterial({
-    color: tintedPlastic,
-    roughness: 0.4,
-    metalness: 0.0,
-  }), [tintedPlastic])
+  const bodyMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: tintedPlastic,
+        roughness: 0.4,
+        metalness: 0.0,
+      }),
+    [tintedPlastic],
+  )
 
-  const bulbMaterial = useMemo(() => new MeshStandardMaterial({
-    color: '#000000',
-    emissive: lampColor,
-    emissiveIntensity: bulbEmissiveIntensity,
-    toneMapped: false,
-    side: DoubleSide,
-  }), [lampColor, bulbEmissiveIntensity])
+  const bulbMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#000000',
+        emissive: lampColor,
+        emissiveIntensity: bulbEmissiveIntensity,
+        toneMapped: false,
+        side: DoubleSide,
+      }),
+    [lampColor, bulbEmissiveIntensity],
+  )
 
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
@@ -92,7 +90,6 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
 
   const lampsArray = useMemo(() => Array.from({ length: count }), [count])
 
-
   return (
     <>
       {lampsArray.map((_, i) => {
@@ -107,14 +104,17 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
             <primitive object={bodyNode} />
 
             {/* Per-lamp downward spotlight — no track lamps in plafond-only mode */}
-            <object3D position={[bulbPos.x, bulbPos.y - 10, bulbPos.z]} ref={(obj) => {
-              if (obj) {
-                const light = obj.parent?.children.find(
-                  (c) => c.type === 'SpotLight'
-                ) as SpotLight | undefined
-                if (light) light.target = obj
-              }
-            }} />
+            <object3D
+              position={[bulbPos.x, bulbPos.y - 10, bulbPos.z]}
+              ref={(obj) => {
+                if (obj) {
+                  const light = obj.parent?.children.find((c) => c.type === 'SpotLight') as
+                    | SpotLight
+                    | undefined
+                  if (light) light.target = obj
+                }
+              }}
+            />
             <spotLight
               position={[bulbPos.x, bulbPos.y, bulbPos.z]}
               color={lampColor}

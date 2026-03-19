@@ -279,7 +279,11 @@ export const AdminExhibitions = () => {
                                 handlePublishAction(exhibition.id, 'publish')
                               }
                             }}
-                            disabled={!exhibition.published && !exhibition.previewEnabled && !exhibition.user.published}
+                            disabled={
+                              !exhibition.published &&
+                              !exhibition.previewEnabled &&
+                              !exhibition.user.published
+                            }
                           >
                             {exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
                           </button>
@@ -305,35 +309,37 @@ export const AdminExhibitions = () => {
                               handleTogglePreview(exhibition.id, exhibition.previewEnabled)
                             }}
                           >
-                            {exhibition.previewEnabled
-                              ? 'Unpublish Preview'
-                              : 'Publish Preview'}
+                            {exhibition.previewEnabled ? 'Unpublish Preview' : 'Publish Preview'}
                           </button>
                         )}
                         {/* Copy Preview Link — only when preview is active */}
-                        {!exhibition.published && exhibition.previewEnabled && exhibition.previewToken && (
-                          <button
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleCopyPreviewLink(exhibition)
-                            }}
-                          >
-                            Copy Preview Link
-                          </button>
-                        )}
+                        {!exhibition.published &&
+                          exhibition.previewEnabled &&
+                          exhibition.previewToken && (
+                            <button
+                              className={dashboardStyles.kebabMenuItem}
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                handleCopyPreviewLink(exhibition)
+                              }}
+                            >
+                              Copy Preview Link
+                            </button>
+                          )}
                         {/* Update Preview Link — regenerate token (old link becomes invalid) */}
-                        {!exhibition.published && exhibition.previewEnabled && exhibition.previewToken && (
-                          <button
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleUpdatePreviewLink(exhibition.id)
-                            }}
-                          >
-                            Update Preview Link
-                          </button>
-                        )}
+                        {!exhibition.published &&
+                          exhibition.previewEnabled &&
+                          exhibition.previewToken && (
+                            <button
+                              className={dashboardStyles.kebabMenuItem}
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                handleUpdatePreviewLink(exhibition.id)
+                              }}
+                            >
+                              Update Preview Link
+                            </button>
+                          )}
                         <button
                           className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                           onClick={() => {

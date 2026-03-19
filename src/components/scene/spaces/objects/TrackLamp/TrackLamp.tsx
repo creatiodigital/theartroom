@@ -101,27 +101,39 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
   const bulbEmissiveIntensity = 2
 
   // Shared materials — all track lamps reuse the same instances
-  const armBodyMaterial = useMemo(() => new MeshStandardMaterial({
-    color: tintedMaterial,
-    roughness: 0.4,
-    metalness: 0.0,
-  }), [tintedMaterial])
+  const armBodyMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: tintedMaterial,
+        roughness: 0.4,
+        metalness: 0.0,
+      }),
+    [tintedMaterial],
+  )
 
-  const bulbOnMaterial = useMemo(() => new MeshStandardMaterial({
-    color: '#000000',
-    emissive: lampColor,
-    emissiveIntensity: bulbEmissiveIntensity,
-    toneMapped: false,
-    side: DoubleSide,
-  }), [lampColor, bulbEmissiveIntensity])
+  const bulbOnMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#000000',
+        emissive: lampColor,
+        emissiveIntensity: bulbEmissiveIntensity,
+        toneMapped: false,
+        side: DoubleSide,
+      }),
+    [lampColor, bulbEmissiveIntensity],
+  )
 
-  const bulbOffMaterial = useMemo(() => new MeshStandardMaterial({
-    color: '#000000',
-    emissive: '#cccccc',
-    emissiveIntensity: 0.3,
-    toneMapped: false,
-    side: DoubleSide,
-  }), [])
+  const bulbOffMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#cccccc',
+        emissiveIntensity: 0.3,
+        toneMapped: false,
+        side: DoubleSide,
+      }),
+    [],
+  )
 
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {

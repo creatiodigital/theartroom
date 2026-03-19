@@ -102,7 +102,16 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
     ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
-  }, [wallMaterial, ceilingMaterial, ambientColor, scale, wallColor, ceilingColor, wallBrightness, invalidate])
+  }, [
+    wallMaterial,
+    ceilingMaterial,
+    ambientColor,
+    scale,
+    wallColor,
+    ceilingColor,
+    wallBrightness,
+    invalidate,
+  ])
 
   // Arrays for iterating over indexed meshes
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
@@ -215,10 +224,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
 
       {/* Recessed Lamps - visible in 'track-plafond' mode with per-lamp spotlights */}
       {ceilingLightMode === 'track-plafond' && (
-        <RecessedLamp
-          nodes={nodes}
-          indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]}
-        />
+        <RecessedLamp nodes={nodes} indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]} />
       )}
 
       {/* Round Lamps - visible only in 'plafond' mode */}
