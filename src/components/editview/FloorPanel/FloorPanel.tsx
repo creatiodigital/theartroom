@@ -32,8 +32,6 @@ const FLOOR_MATERIALS = [
   { value: 'marble', label: 'Marble' },
   { value: 'parquet', label: 'Parquet' },
   { value: 'wood-planks', label: 'Wood Planks' },
-  { value: 'wood-checkered', label: 'Wood Checkered' },
-  { value: 'wood-diagonal', label: 'Wood Diagonal' },
 ] as const
 
 const FloorPanel = () => {
@@ -83,9 +81,7 @@ const FloorPanel = () => {
           | 'parquet'
           | 'patterned-concrete'
           | 'worn-concrete'
-          | 'wood-planks'
-          | 'wood-checkered'
-          | 'wood-diagonal',
+          | 'wood-planks',
       ),
     )
     setSaved(false)
