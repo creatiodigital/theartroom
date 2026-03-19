@@ -317,6 +317,11 @@ const exhibitionSlice = createSlice({
       state.ceilingColor = action.payload
     },
 
+    // Wall brightness compensation
+    setWallBrightness: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.wallBrightness = action.payload
+    },
+
     // Shadow decal controls
     setShadowBlur: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
       state.shadowBlur = Math.max(0.01, Math.min(0.08, action.payload))
@@ -490,6 +495,7 @@ export const {
   setCameraElevation,
   setWallColor,
   setCeilingColor,
+  setWallBrightness,
   setShadowBlur,
   setShadowSpread,
   setShadowOpacity,

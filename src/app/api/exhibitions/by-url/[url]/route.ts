@@ -158,6 +158,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         // Wall & Ceiling
         wallColor: snapshotExhibition.wallColor,
         ceilingColor: snapshotExhibition.ceilingColor,
+        wallBrightness: snapshotExhibition.wallBrightness,
         // Autofocus groups
         autofocusGroups: snapshotExhibition.autofocusGroups,
         // Artworks from snapshot

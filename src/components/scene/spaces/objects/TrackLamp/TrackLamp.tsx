@@ -100,7 +100,30 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
 
   const bulbEmissiveIntensity = 2
 
-  // Apply materials imperatively (required when using <primitive>)
+  // Shared materials — all track lamps reuse the same instances
+  const armBodyMaterial = useMemo(() => new MeshStandardMaterial({
+    color: tintedMaterial,
+    roughness: 0.4,
+    metalness: 0.0,
+  }), [tintedMaterial])
+
+  const bulbOnMaterial = useMemo(() => new MeshStandardMaterial({
+    color: '#000000',
+    emissive: lampColor,
+    emissiveIntensity: bulbEmissiveIntensity,
+    toneMapped: false,
+    side: DoubleSide,
+  }), [lampColor, bulbEmissiveIntensity])
+
+  const bulbOffMaterial = useMemo(() => new MeshStandardMaterial({
+    color: '#000000',
+    emissive: '#cccccc',
+    emissiveIntensity: 0.3,
+    toneMapped: false,
+    side: DoubleSide,
+  }), [])
+
+  // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
     for (let i = 0; i < count; i++) {
       const armNode = nodes[`trackLampArm${i}`]
@@ -110,33 +133,11 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count = 14 }) => {
       const settings = trackLampSettings?.[String(i)]
       const isEnabled = settings?.enabled ?? true
 
-      if (armNode) {
-        armNode.material = new MeshStandardMaterial({
-          color: tintedMaterial,
-          roughness: 0.4,
-          metalness: 0.0,
-        })
-      }
-
-      if (bodyNode) {
-        bodyNode.material = new MeshStandardMaterial({
-          color: tintedMaterial,
-          roughness: 0.4,
-          metalness: 0.0,
-        })
-      }
-
-      if (bulbNode) {
-        bulbNode.material = new MeshStandardMaterial({
-          color: '#000000',
-          emissive: isEnabled ? lampColor : '#cccccc',
-          emissiveIntensity: isEnabled ? bulbEmissiveIntensity : 0.3,
-          toneMapped: false,
-          side: DoubleSide,
-        })
-      }
+      if (armNode) armNode.material = armBodyMaterial
+      if (bodyNode) bodyNode.material = armBodyMaterial
+      if (bulbNode) bulbNode.material = isEnabled ? bulbOnMaterial : bulbOffMaterial
     }
-  }, [nodes, count, tintedMaterial, lampColor, bulbEmissiveIntensity, trackLampSettings])
+  }, [nodes, count, armBodyMaterial, bulbOnMaterial, bulbOffMaterial, trackLampSettings])
 
   // Compute world-space bulb positions and aim directions using node transforms directly.
   // We can't use getWorldPosition() because <primitive> re-parents nodes.

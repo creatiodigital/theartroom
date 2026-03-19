@@ -103,6 +103,7 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       // Wall & Ceiling
       wallColor: exhibitionData.wallColor,
       ceilingColor: exhibitionData.ceilingColor,
+      wallBrightness: exhibitionData.wallBrightness,
 
       // Autofocus groups
       autofocusGroups: exhibitionData.autofocusGroups,

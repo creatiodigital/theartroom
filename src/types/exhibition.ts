@@ -68,6 +68,7 @@ export type TExhibition = {
   // Wall & Ceiling customization
   wallColor?: string
   ceilingColor?: string
+  wallBrightness?: number
 
   // Shadow decal controls
   shadowBlur?: number

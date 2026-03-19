@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from 'react'
-import { SRGBColorSpace, MeshStandardMaterial, BufferGeometry, Color } from 'three'
+import { SRGBColorSpace, MeshLambertMaterial, BufferGeometry, Color } from 'three'
 
 import { useAmbientLight } from '@/hooks/useAmbientLight'
 
 interface CeilingProps {
   geometry: BufferGeometry
-  material: MeshStandardMaterial
+  material?: MeshLambertMaterial
   position?: [number, number, number]
   rotation?: [number, number, number]
   scale?: [number, number, number]
@@ -26,11 +26,9 @@ const Ceiling: React.FC<CeilingProps> = ({ geometry, material, position, rotatio
       }
       return material
     }
-    // Fallback: create a default ceiling material
-    return new MeshStandardMaterial({
+    // Fallback: create a default ceiling material (Lambert for cheaper lighting)
+    return new MeshLambertMaterial({
       color: new Color(DEFAULT_CEILING_COLOR),
-      roughness: 0.9,
-      metalness: 0,
       side: 2, // DoubleSide
     })
   }, [material])
@@ -47,8 +45,6 @@ const Ceiling: React.FC<CeilingProps> = ({ geometry, material, position, rotatio
   return (
     <mesh
       name="ceiling"
-      castShadow
-      receiveShadow
       geometry={geometry}
       material={ceilingMaterial}
       position={position}

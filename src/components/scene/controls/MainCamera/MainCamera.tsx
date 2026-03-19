@@ -345,7 +345,7 @@ const MainCamera = () => {
     }
   }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, onWheel])
 
-  useFrame(({ camera }, delta) => {
+  useFrame(({ camera, invalidate }, delta) => {
     const cam = camera as PerspectiveCamera
 
     cam.fov = cameraFOV
@@ -523,6 +523,16 @@ const MainCamera = () => {
 
     if (mouseState.current) {
       mouseState.current.deltaX = 0
+    }
+
+    // Request next frame when there's active movement (frameloop="demand")
+    const hasMovement =
+      moveVector.lengthSq() > 0.00001 ||
+      Math.abs(rotationVelocity.current) > 0.0001 ||
+      isAnimating.current ||
+      isReturningToElevation.current
+    if (hasMovement) {
+      invalidate()
     }
   })
 

@@ -1,7 +1,6 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { Stats } from '@react-three/drei'
 
 import { useRef, Suspense } from 'react'
 import { NoToneMapping, Mesh } from 'three'
@@ -19,6 +18,7 @@ import Controls from './controls'
 
 import HumanReference from './objects/HumanReference/HumanReference'
 import { SceneErrorBoundary } from './SceneErrorBoundary'
+import { FpsCounter } from './FpsCounter'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
 import { WebGLMonitor } from './WebGLMonitor'
@@ -66,15 +66,16 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
         <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
           <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
             <Canvas
+              frameloop="demand"
               shadows={false}
-              dpr={[1, 1.5]}
+              dpr={[1, 2]}
               gl={{
                 antialias: false,
                 toneMapping: NoToneMapping,
                 powerPreference: 'high-performance',
               }}
             >
-              <Stats />
+              <FpsCounter />
               <WebGLMonitor exhibitionUrl={exhibitionUrl} />
               <Suspense fallback={hideLoader ? null : <Loader />}>
                 <group>

@@ -1,5 +1,5 @@
 import { useTexture } from '@react-three/drei'
-import { Mesh, BufferGeometry, RepeatWrapping, SRGBColorSpace, Vector2, DoubleSide } from 'three'
+import { Mesh, BufferGeometry, RepeatWrapping, SRGBColorSpace, DoubleSide } from 'three'
 
 interface PlasterWallProps {
   i: number
@@ -10,7 +10,9 @@ interface PlasterWallProps {
 }
 
 /**
- * Wall with PBR plaster material.
+ * Wall with plaster texture — uses MeshLambertMaterial for cheaper lighting.
+ * Lambert still reacts to spotlights (visible light cones) but uses per-vertex
+ * diffuse lighting instead of per-pixel PBR, saving significant GPU cost.
  */
 const PlasterWall: React.FC<PlasterWallProps> = ({
   i,
@@ -19,12 +21,9 @@ const PlasterWall: React.FC<PlasterWallProps> = ({
   texturePath = '/assets/materials/plaster',
   textureRepeat = 2,
 }) => {
-  // Load PBR textures
+  // Load textures (diffuse + AO for visual depth)
   const textures = useTexture({
     map: `${texturePath}/diffuse.jpg`,
-    normalMap: `${texturePath}/normal.png`,
-    roughnessMap: `${texturePath}/roughness.jpg`,
-    metalnessMap: `${texturePath}/metallic.jpg`,
     aoMap: `${texturePath}/ao.jpg`,
   })
 
@@ -37,18 +36,11 @@ const PlasterWall: React.FC<PlasterWallProps> = ({
   textures.map.colorSpace = SRGBColorSpace
 
   return (
-    <mesh ref={wallRef} name={`wall${i}`} geometry={geometry} castShadow receiveShadow>
-      <meshStandardMaterial
+    <mesh ref={wallRef} name={`wall${i}`} geometry={geometry}>
+      <meshLambertMaterial
         map={textures.map}
-        normalMap={textures.normalMap}
-        normalScale={new Vector2(0.1, 0.1)}
-        roughnessMap={textures.roughnessMap}
-        roughness={1.0}
-        metalnessMap={textures.metalnessMap}
-        metalness={0}
         aoMap={textures.aoMap}
         aoMapIntensity={0.8}
-        envMapIntensity={0}
         side={DoubleSide}
       />
     </mesh>

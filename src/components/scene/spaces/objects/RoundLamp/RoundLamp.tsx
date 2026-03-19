@@ -44,31 +44,30 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
   )
 
-  // Apply materials imperatively (required when using <primitive>)
+  // Shared materials — all 17 lamps use the same body and bulb material
+  const bodyMaterial = useMemo(() => new MeshStandardMaterial({
+    color: tintedPlastic,
+    roughness: 0.4,
+    metalness: 0.0,
+  }), [tintedPlastic])
+
+  const bulbMaterial = useMemo(() => new MeshStandardMaterial({
+    color: '#000000',
+    emissive: lampColor,
+    emissiveIntensity: bulbEmissiveIntensity,
+    toneMapped: false,
+    side: DoubleSide,
+  }), [lampColor, bulbEmissiveIntensity])
+
+  // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
     for (let i = 0; i < count; i++) {
       const bodyNode = nodes[`roundLampBody${i}`]
       const bulbNode = nodes[`roundLampBulb${i}`]
-
-      if (bodyNode) {
-        bodyNode.material = new MeshStandardMaterial({
-          color: tintedPlastic,
-          roughness: 0.4,
-          metalness: 0.0,
-        })
-      }
-
-      if (bulbNode) {
-        bulbNode.material = new MeshStandardMaterial({
-          color: '#000000',
-          emissive: lampColor,
-          emissiveIntensity: bulbEmissiveIntensity,
-          toneMapped: false,
-          side: DoubleSide,
-        })
-      }
+      if (bodyNode) bodyNode.material = bodyMaterial
+      if (bulbNode) bulbNode.material = bulbMaterial
     }
-  }, [nodes, count, tintedPlastic, lampColor, bulbEmissiveIntensity])
+  }, [nodes, count, bodyMaterial, bulbMaterial])
 
   // Compute world-space bulb positions for spotlight placement
   const bulbPositions = useMemo(() => {

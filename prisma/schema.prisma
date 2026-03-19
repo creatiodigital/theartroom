@@ -215,8 +215,9 @@ model Exhibition {
   cameraElevation        Float?   @default(1.6)
 
   // Wall & Ceiling customization
-  wallColor    String? @default("#ffffff")
-  ceilingColor String? @default("#ffffff")
+  wallColor       String? @default("#ffffff")
+  ceilingColor    String? @default("#ffffff")
+  wallBrightness  Float?  @default(1.8)
 
   // Shadow decal controls
   shadowBlur      Float? @default(0.025)

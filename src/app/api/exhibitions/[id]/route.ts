@@ -61,6 +61,7 @@ type ExhibitionUpdateBody = {
   // Wall & Ceiling
   wallColor?: string
   ceilingColor?: string
+  wallBrightness?: number
 
   // Autofocus groups
   autofocusGroups?: Array<{ id: string; name: string; artworkIds: string[] }> | null
@@ -217,6 +218,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     // Wall & Ceiling
     if (body.wallColor !== undefined) data.wallColor = body.wallColor
     if (body.ceilingColor !== undefined) data.ceilingColor = body.ceilingColor
+    if (body.wallBrightness !== undefined) data.wallBrightness = Math.max(1.0, Math.min(5.0, body.wallBrightness))
 
     // Autofocus groups
     if (body.autofocusGroups !== undefined)
