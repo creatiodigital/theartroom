@@ -116,6 +116,30 @@ const MATERIAL_CONFIG: Record<
     metallic: null,
     ao: 'ao.jpg',
   },
+  terrazzo: {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: null,
+  },
+  'parquet-light': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: null,
+  },
+  'concrete-tiles': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
 }
 
 // Preload all floor textures at module scope so useTexture doesn't trigger

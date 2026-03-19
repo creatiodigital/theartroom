@@ -74,6 +74,8 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
       trackLampsVisible: exhibitionData.trackLampsVisible,
       recessedLampColor: exhibitionData.recessedLampColor,
       recessedLampIntensity: exhibitionData.recessedLampIntensity,
+      recessedLampAngle: exhibitionData.recessedLampAngle,
+      recessedLampDistance: exhibitionData.recessedLampDistance,
       trackLampMaterialColor: exhibitionData.trackLampMaterialColor,
       trackLampAngle: exhibitionData.trackLampAngle,
       trackLampDistance: exhibitionData.trackLampDistance,

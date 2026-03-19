@@ -25,6 +25,8 @@ import {
   setTrackLampOffset,
   setRecessedLampColor,
   setRecessedLampIntensity,
+  setRecessedLampAngle,
+  setRecessedLampDistance,
   setTrackLampMaterialColor,
   setWindowLightColor,
   setWindowLightIntensity,
@@ -52,6 +54,8 @@ const DEFAULT_TRACK_LAMP_COLOR = '#ffffff'
 const DEFAULT_TRACK_LAMP_INTENSITY = 4.0
 const DEFAULT_RECESSED_LAMP_COLOR = '#ffffff'
 const DEFAULT_RECESSED_LAMP_INTENSITY = 4.0
+const DEFAULT_RECESSED_LAMP_ANGLE = 0.45
+const DEFAULT_RECESSED_LAMP_DISTANCE = 15.0
 const DEFAULT_TRACK_LAMP_MATERIAL_COLOR = '#ffffff'
 const DEFAULT_TRACK_LAMP_ANGLE = 0.45
 const DEFAULT_TRACK_LAMP_DISTANCE = 5.0
@@ -109,6 +113,12 @@ const LightingPanel = () => {
   )
   const recessedLampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_RECESSED_LAMP_INTENSITY,
+  )
+  const recessedLampAngle = useSelector(
+    (state: RootState) => state.exhibition.recessedLampAngle ?? DEFAULT_RECESSED_LAMP_ANGLE,
+  )
+  const recessedLampDistance = useSelector(
+    (state: RootState) => state.exhibition.recessedLampDistance ?? DEFAULT_RECESSED_LAMP_DISTANCE,
   )
   const trackLampMaterialColor = useSelector(
     (state: RootState) =>
@@ -213,6 +223,16 @@ const LightingPanel = () => {
     setSaved(false)
   }
 
+  const handleRecessedLampAngleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setRecessedLampAngle(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
+  const handleRecessedLampDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setRecessedLampDistance(parseFloat(e.target.value)))
+    setSaved(false)
+  }
+
   // Window light handlers
   const handleWindowIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setWindowLightIntensity(parseFloat(e.target.value)))
@@ -261,6 +281,8 @@ const LightingPanel = () => {
           trackLampSettings: trackLampSettings ?? null,
           recessedLampColor,
           recessedLampIntensity,
+          recessedLampAngle,
+          recessedLampDistance,
           trackLampMaterialColor,
           windowLightColor: windowColor,
           windowLightIntensity: windowIntensity,
@@ -456,6 +478,40 @@ const LightingPanel = () => {
                     step="0.1"
                     value={recessedLampIntensity}
                     onChange={handleRecessedLampIntensityChange}
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <div className={styles.sliderHeader}>
+                    <label className={styles.label}>Plafond Angle</label>
+                    <span className={styles.sliderValue}>
+                      {(recessedLampAngle * (180 / Math.PI)).toFixed(0)}°
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="1.2"
+                    step="0.05"
+                    value={recessedLampAngle}
+                    onChange={handleRecessedLampAngleChange}
+                    className={styles.slider}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <div className={styles.sliderHeader}>
+                    <label className={styles.label}>Plafond Distance</label>
+                    <span className={styles.sliderValue}>{recessedLampDistance.toFixed(1)}m</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    step="0.5"
+                    value={recessedLampDistance}
+                    onChange={handleRecessedLampDistanceChange}
                     className={styles.slider}
                   />
                 </div>

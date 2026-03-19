@@ -80,7 +80,13 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
-  const bulbEmissiveIntensity = 2
+  const bulbEmissiveIntensity = disableSpotlights ? lampIntensity : 2
+  const lampAngle = useSelector(
+    (state: RootState) => state.exhibition.recessedLampAngle ?? 0.45,
+  )
+  const lampDistance = useSelector(
+    (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
+  )
 
   // Resolve which indices to render — explicit list or sequential fallback
   const lampIndices = useMemo(
@@ -135,6 +141,31 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
     return posMap
   }, [nodes, lampIndices])
 
+  // When spotlights are disabled, compute a small number of averaged
+  // positions for lightweight fill lights (4 spotlights vs 11 individual ones)
+  const fillLightPositions = useMemo(() => {
+    if (!disableSpotlights) return []
+    const allPositions = Array.from(bulbPositions.values()).filter(
+      (p) => p.x !== 0 || p.y !== 0 || p.z !== 0,
+    )
+    if (allPositions.length === 0) return []
+
+    // Split into 4 groups and average each for even distribution
+    const groupCount = 4
+    const groupSize = Math.ceil(allPositions.length / groupCount)
+    const groups: Vector3[][] = []
+    for (let i = 0; i < allPositions.length; i += groupSize) {
+      groups.push(allPositions.slice(i, i + groupSize))
+    }
+
+    return groups.map((group) => {
+      const avg = new Vector3()
+      group.forEach((p) => avg.add(p))
+      avg.divideScalar(group.length)
+      return avg
+    })
+  }, [disableSpotlights, bulbPositions])
+
   return (
     <>
       {lampIndices.map((i) => {
@@ -159,6 +190,31 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
           </group>
         )
       })}
+
+      {/* Lightweight downward-only fill lights when individual spotlights are disabled */}
+      {disableSpotlights &&
+        fillLightPositions.map((pos, i) => (
+          <group key={`plafond-fill-${i}`}>
+            <object3D position={[pos.x, pos.y - 10, pos.z]} ref={(obj) => {
+              if (obj) {
+                const light = obj.parent?.children.find(
+                  (c) => c.type === 'SpotLight'
+                ) as SpotLight | undefined
+                if (light) light.target = obj
+              }
+            }} />
+            <spotLight
+              position={[pos.x, pos.y, pos.z]}
+              color={lampColor}
+              intensity={lampIntensity * 3}
+              angle={lampAngle}
+              penumbra={1}
+              distance={lampDistance}
+              decay={2}
+              castShadow={false}
+            />
+          </group>
+        ))}
     </>
   )
 }

@@ -110,6 +110,8 @@ export const ExhibitionEditPage = ({
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,
+        recessedLampAngle: exhibition.recessedLampAngle ?? undefined,
+        recessedLampDistance: exhibition.recessedLampDistance ?? undefined,
         trackLampMaterialColor: exhibition.trackLampMaterialColor ?? undefined,
         windowLightColor: exhibition.windowLightColor ?? undefined,
         windowLightIntensity: exhibition.windowLightIntensity ?? undefined,

@@ -1,11 +1,10 @@
-import { useMemo, useRef, useEffect } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import {
   Mesh,
   BufferGeometry,
   DoubleSide,
   Vector3,
-  Object3D,
   SpotLight,
   MeshStandardMaterial,
 } from 'three'
@@ -21,41 +20,6 @@ interface RoundLampProps {
 const DEFAULT_LAMP_COLOR = '#ffffff'
 const DEFAULT_LAMP_INTENSITY = 4.0
 
-/**
- * Individual spotlight component for a round lamp.
- * Uses an Object3D target positioned below the bulb.
- */
-const RoundSpotlight: React.FC<{
-  position: Vector3
-  color: string
-  intensity: number
-}> = ({ position, color, intensity }) => {
-  const lightRef = useRef<SpotLight>(null)
-  const targetRef = useRef<Object3D>(null)
-
-  useEffect(() => {
-    if (lightRef.current && targetRef.current) {
-      lightRef.current.target = targetRef.current
-    }
-  }, [])
-
-  return (
-    <>
-      <object3D ref={targetRef} position={[position.x, position.y - 5, position.z]} />
-      <spotLight
-        ref={lightRef}
-        position={[position.x, position.y, position.z]}
-        color={color}
-        intensity={intensity}
-        angle={Math.PI / 4}
-        penumbra={0.8}
-        distance={8}
-        decay={2}
-        castShadow={false}
-      />
-    </>
-  )
-}
 
 /**
  * Round lamp using <primitive> to preserve Blender hierarchy (body → bulb).
@@ -72,7 +36,13 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
-  const bulbEmissiveIntensity = 2
+  const bulbEmissiveIntensity = lampIntensity
+  const lampAngle = useSelector(
+    (state: RootState) => state.exhibition.recessedLampAngle ?? 0.45,
+  )
+  const lampDistance = useSelector(
+    (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
+  )
 
   // Apply materials imperatively (required when using <primitive>)
   useEffect(() => {
@@ -123,6 +93,7 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
 
   const lampsArray = useMemo(() => Array.from({ length: count }), [count])
 
+
   return (
     <>
       {lampsArray.map((_, i) => {
@@ -136,10 +107,25 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count = 17 }) => {
             {/* Primitive preserves: body (with position) → bulb (with local offset) */}
             <primitive object={bodyNode} />
 
-            {/* Spotlight pointing downward (every other lamp for performance) */}
-            {i % 2 === 0 && (
-              <RoundSpotlight position={bulbPos} color={lampColor} intensity={lampIntensity * 2} />
-            )}
+            {/* Per-lamp downward spotlight — no track lamps in plafond-only mode */}
+            <object3D position={[bulbPos.x, bulbPos.y - 10, bulbPos.z]} ref={(obj) => {
+              if (obj) {
+                const light = obj.parent?.children.find(
+                  (c) => c.type === 'SpotLight'
+                ) as SpotLight | undefined
+                if (light) light.target = obj
+              }
+            }} />
+            <spotLight
+              position={[bulbPos.x, bulbPos.y, bulbPos.z]}
+              color={lampColor}
+              intensity={lampIntensity * 2}
+              angle={lampAngle}
+              penumbra={1}
+              distance={lampDistance}
+              decay={2}
+              castShadow={false}
+            />
           </group>
         )
       })}

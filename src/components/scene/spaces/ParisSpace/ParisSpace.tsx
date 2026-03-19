@@ -211,7 +211,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         <TrackLamp nodes={nodes} count={14} />
       )}
 
-      {/* Recessed Lamps - visible only in 'track-plafond' mode, spotlights disabled when track lamps present */}
+      {/* Recessed Lamps - visible only in 'track-plafond' mode, spotlights disabled for performance */}
       {ceilingLightMode === 'track-plafond' && (
         <RecessedLamp
           nodes={nodes}

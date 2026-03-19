@@ -168,6 +168,14 @@ const exhibitionSlice = createSlice({
       state.recessedLampIntensity = action.payload
     },
 
+    setRecessedLampAngle: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.recessedLampAngle = Math.max(0.1, Math.min(1.2, action.payload))
+    },
+
+    setRecessedLampDistance: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
+      state.recessedLampDistance = Math.max(1, Math.min(20, action.payload))
+    },
+
     setTrackLampMaterialColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       state.trackLampMaterialColor = action.payload
     },
@@ -242,6 +250,9 @@ const exhibitionSlice = createSlice({
         | 'patterned-concrete'
         | 'worn-concrete'
         | 'wood-planks'
+        | 'terrazzo'
+        | 'parquet-light'
+        | 'concrete-tiles'
       >,
     ) => {
       state.floorMaterial = action.payload
@@ -453,6 +464,8 @@ export const {
   setTrackLampsVisible,
   setRecessedLampColor,
   setRecessedLampIntensity,
+  setRecessedLampAngle,
+  setRecessedLampDistance,
   setTrackLampMaterialColor,
   setTrackLampAngle,
   setTrackLampDistance,

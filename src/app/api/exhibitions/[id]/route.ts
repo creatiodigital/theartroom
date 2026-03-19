@@ -34,6 +34,8 @@ type ExhibitionUpdateBody = {
   trackLampsVisible?: boolean
   recessedLampColor?: string
   recessedLampIntensity?: number
+  recessedLampAngle?: number
+  recessedLampDistance?: number
   trackLampMaterialColor?: string
   trackLampAngle?: number
   trackLampDistance?: number
@@ -161,6 +163,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.recessedLampColor !== undefined) data.recessedLampColor = body.recessedLampColor
     if (body.recessedLampIntensity !== undefined)
       data.recessedLampIntensity = body.recessedLampIntensity
+    if (body.recessedLampAngle !== undefined)
+      data.recessedLampAngle = Math.max(0.1, Math.min(1.2, body.recessedLampAngle))
+    if (body.recessedLampDistance !== undefined)
+      data.recessedLampDistance = Math.max(1, Math.min(20, body.recessedLampDistance))
     if (body.trackLampMaterialColor !== undefined)
       data.trackLampMaterialColor = body.trackLampMaterialColor
     if (body.trackLampAngle !== undefined)
@@ -287,7 +293,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     // Revalidate caches
     revalidateTag(`exhibition-${updated.url}`, 'default')
-    if (body.published !== undefined || body.mainTitle !== undefined) {
+    if (
+      body.published !== undefined ||
+      body.mainTitle !== undefined ||
+      data.hasPendingChanges !== undefined
+    ) {
       revalidateTag('exhibitions', 'default')
       revalidatePath('/')
     }

@@ -30,6 +30,8 @@ export type TExhibition = {
   trackLampsVisible?: boolean
   recessedLampColor?: string
   recessedLampIntensity?: number
+  recessedLampAngle?: number
+  recessedLampDistance?: number
   trackLampMaterialColor?: string
   trackLampAngle?: number
   trackLampDistance?: number
@@ -47,6 +49,9 @@ export type TExhibition = {
     | 'patterned-concrete'
     | 'worn-concrete'
     | 'wood-planks'
+    | 'terrazzo'
+    | 'parquet-light'
+    | 'concrete-tiles'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number

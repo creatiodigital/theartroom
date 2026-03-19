@@ -185,6 +185,13 @@ const MainCamera = () => {
     }
   }, [initialCameraPosition, initialCameraDirection, camera, cameraElevation])
 
+  // When cameraElevation changes (e.g. Eye Level slider), smoothly transition the camera
+  useEffect(() => {
+    if (initialPositionSet.current) {
+      isReturningToElevation.current = true
+    }
+  }, [cameraElevation])
+
   // Handle focus target changes - start animation
   useEffect(() => {
     if (focusTarget) {
