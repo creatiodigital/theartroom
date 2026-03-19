@@ -10,10 +10,7 @@ import prisma from '@/lib/prisma'
 // 20MB max for video files
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024
 
-const ALLOWED_VIDEO_TYPES = [
-  'video/mp4',
-  'video/webm',
-]
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
 
 /**
  * Client-side upload handler for videos.

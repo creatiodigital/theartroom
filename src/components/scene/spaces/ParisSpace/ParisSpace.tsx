@@ -1,7 +1,8 @@
 import { useGLTF, useTexture, SoftShadows, BakeShadows, Preload } from '@react-three/drei'
 import { useEffect, useLayoutEffect, useMemo } from 'react'
+import { useThree } from '@react-three/fiber'
 import { useSelector, useDispatch } from 'react-redux'
-import { Mesh, BufferGeometry, MeshStandardMaterial, SRGBColorSpace, Color } from 'three'
+import { Mesh, BufferGeometry, MeshLambertMaterial, SRGBColorSpace, Color } from 'three'
 import type { GLTF } from 'three-stdlib'
 
 import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
@@ -32,9 +33,9 @@ useTexture.preload('/assets/spaces/paris/textures/bc2.jpg')
 
 type GLTFResult = GLTF & {
   nodes: {
-    floor0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
-    ceiling0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
-    wall0: Mesh & { geometry: BufferGeometry; material: MeshStandardMaterial }
+    floor0: Mesh & { geometry: BufferGeometry; material: MeshLambertMaterial }
+    ceiling0: Mesh & { geometry: BufferGeometry; material: MeshLambertMaterial }
+    wall0: Mesh & { geometry: BufferGeometry; material: MeshLambertMaterial }
     [key: string]: Mesh
   }
 }
@@ -75,32 +76,42 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     ceilingTexture.flipY = false
   }, [wallTexture, ceilingTexture])
 
-  // Create materials with baked textures
+  // Create materials with baked textures (Lambert for cheaper per-vertex lighting)
   const wallMaterial = useMemo(() => {
-    return new MeshStandardMaterial({
+    return new MeshLambertMaterial({
       map: wallTexture,
-      roughness: 0.9,
-      metalness: 0,
       side: 2,
     })
   }, [wallTexture])
 
   const ceilingMaterial = useMemo(() => {
-    return new MeshStandardMaterial({
+    return new MeshLambertMaterial({
       map: ceilingTexture,
-      roughness: 0.9,
-      metalness: 0,
       side: 2,
     })
   }, [ceilingTexture])
 
   // Apply ambient light tinting + independent wall/ceiling color
+  // Lambert compensation: Lambert lacks PBR specular, so walls appear dimmer.
+  // Boost wall/ceiling brightness so artworks aren't over-lit by cranking ambient.
+  const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
+  const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
-    const ambientTint = new Color(ambientColor).multiplyScalar(scale)
+    const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
 
     wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
     ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
-  }, [wallMaterial, ceilingMaterial, ambientColor, scale, wallColor, ceilingColor])
+    invalidate()
+  }, [
+    wallMaterial,
+    ceilingMaterial,
+    ambientColor,
+    scale,
+    wallColor,
+    ceilingColor,
+    wallBrightness,
+    invalidate,
+  ])
 
   // Arrays for iterating over indexed meshes
   const placeholdersArray = useMemo(() => Array.from({ length: 4 }), [])
@@ -211,13 +222,9 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
         <TrackLamp nodes={nodes} count={14} />
       )}
 
-      {/* Recessed Lamps - visible only in 'track-plafond' mode, spotlights disabled when track lamps present */}
+      {/* Recessed Lamps - visible in 'track-plafond' mode with per-lamp spotlights */}
       {ceilingLightMode === 'track-plafond' && (
-        <RecessedLamp
-          nodes={nodes}
-          indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]}
-          disableSpotlights
-        />
+        <RecessedLamp nodes={nodes} indices={[0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16]} />
       )}
 
       {/* Round Lamps - visible only in 'plafond' mode */}

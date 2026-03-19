@@ -68,10 +68,10 @@ function detectCollisions(
   cameraRight.normalize()
 
   const feelers = [
-    cameraRight,                                              // right
-    cameraRight.clone().negate(),                              // left
-    cameraForward.clone().add(cameraRight).normalize(),        // front-right
-    cameraForward.clone().sub(cameraRight).normalize(),        // front-left
+    cameraRight, // right
+    cameraRight.clone().negate(), // left
+    cameraForward.clone().add(cameraRight).normalize(), // front-right
+    cameraForward.clone().sub(cameraRight).normalize(), // front-left
   ]
 
   for (const feeler of feelers) {
@@ -184,6 +184,13 @@ const MainCamera = () => {
       initialPositionSet.current = true
     }
   }, [initialCameraPosition, initialCameraDirection, camera, cameraElevation])
+
+  // When cameraElevation changes (e.g. Eye Level slider), smoothly transition the camera
+  useEffect(() => {
+    if (initialPositionSet.current) {
+      isReturningToElevation.current = true
+    }
+  }, [cameraElevation])
 
   // Handle focus target changes - start animation
   useEffect(() => {
@@ -338,7 +345,7 @@ const MainCamera = () => {
     }
   }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, onWheel])
 
-  useFrame(({ camera }, delta) => {
+  useFrame(({ camera, invalidate }, delta) => {
     const cam = camera as PerspectiveCamera
 
     cam.fov = cameraFOV
@@ -516,6 +523,16 @@ const MainCamera = () => {
 
     if (mouseState.current) {
       mouseState.current.deltaX = 0
+    }
+
+    // Request next frame when there's active movement (frameloop="demand")
+    const hasMovement =
+      moveVector.lengthSq() > 0.00001 ||
+      Math.abs(rotationVelocity.current) > 0.0001 ||
+      isAnimating.current ||
+      isReturningToElevation.current
+    if (hasMovement) {
+      invalidate()
     }
   })
 

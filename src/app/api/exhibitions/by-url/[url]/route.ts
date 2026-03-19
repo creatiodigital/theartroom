@@ -75,9 +75,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
           select: { previewEnabled: true, previewToken: true },
         })
         isValidPreview =
-          !!fresh?.previewEnabled &&
-          !!fresh?.previewToken &&
-          previewParam === fresh.previewToken
+          !!fresh?.previewEnabled && !!fresh?.previewToken && previewParam === fresh.previewToken
       }
 
       if (!isValidPreview) {
@@ -158,6 +156,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         // Wall & Ceiling
         wallColor: snapshotExhibition.wallColor,
         ceilingColor: snapshotExhibition.ceilingColor,
+        wallBrightness: snapshotExhibition.wallBrightness,
         // Autofocus groups
         autofocusGroups: snapshotExhibition.autofocusGroups,
         // Artworks from snapshot

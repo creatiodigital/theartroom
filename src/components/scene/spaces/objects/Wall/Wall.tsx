@@ -1,5 +1,12 @@
 import { useEffect, useMemo } from 'react'
-import { SRGBColorSpace, Mesh, BufferGeometry, MeshStandardMaterial, Color } from 'three'
+import {
+  SRGBColorSpace,
+  Mesh,
+  BufferGeometry,
+  MeshStandardMaterial,
+  MeshLambertMaterial,
+  Color,
+} from 'three'
 
 import { useAmbientLight } from '@/hooks/useAmbientLight'
 
@@ -7,7 +14,7 @@ interface WallProps {
   i: number
   wallRef: React.Ref<Mesh>
   geometry: BufferGeometry
-  material: MeshStandardMaterial
+  material: MeshStandardMaterial | MeshLambertMaterial
   position?: [number, number, number]
   rotation?: [number, number, number]
   scale?: [number, number, number]

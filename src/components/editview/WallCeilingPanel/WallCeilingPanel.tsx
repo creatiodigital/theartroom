@@ -8,7 +8,7 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideWallCeilingPanel } from '@/redux/slices/dashboardSlice'
-import { setWallColor, setCeilingColor } from '@/redux/slices/exhibitionSlice'
+import { setWallColor, setCeilingColor, setWallBrightness } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
 import styles from '../LightingPanel/LightingPanel.module.scss'
@@ -28,6 +28,7 @@ const WallCeilingPanel = () => {
   const ceilingColor = useSelector(
     (state: RootState) => state.exhibition.ceilingColor ?? DEFAULT_CEILING_COLOR,
   )
+  const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
 
   const handleSave = async () => {
     if (!exhibitionId) return
@@ -40,6 +41,7 @@ const WallCeilingPanel = () => {
         body: JSON.stringify({
           wallColor,
           ceilingColor,
+          wallBrightness,
         }),
       })
 
@@ -91,6 +93,28 @@ const WallCeilingPanel = () => {
               dispatch(setCeilingColor(color))
               setSaved(false)
             }}
+          />
+        </div>
+      </div>
+
+      {/* Temporary: Lambert Brightness Boost */}
+      <div className={styles.section}>
+        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+          Wall Brightness
+        </Text>
+        <div className={styles.field}>
+          <div className={styles.sliderHeader}>
+            <label className={styles.label}>Brightness</label>
+            <span className={styles.sliderValue}>{wallBrightness.toFixed(2)}</span>
+          </div>
+          <input
+            type="range"
+            min="1.0"
+            max="5.0"
+            step="0.05"
+            value={wallBrightness}
+            onChange={(e) => dispatch(setWallBrightness(parseFloat(e.target.value)))}
+            className={styles.slider}
           />
         </div>
       </div>
