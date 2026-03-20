@@ -1,8 +1,9 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
+import { PerformanceMonitor } from '@react-three/drei'
 
-import { useRef, Suspense } from 'react'
+import { useRef, useState, useCallback, Suspense } from 'react'
 import { Mesh } from 'three'
 import { useSelector } from 'react-redux'
 import { Volume2, VolumeX } from 'lucide-react'
@@ -63,6 +64,16 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
 
   const artworks: TArtwork[] = []
 
+  const [dpr, setDpr] = useState<[number, number]>([1, 2])
+
+  const handlePerformanceDecline = useCallback(() => {
+    setDpr([1, 1.5])
+  }, [])
+
+  const handlePerformanceIncline = useCallback(() => {
+    setDpr([1, 2])
+  }, [])
+
   return (
     <SceneAudioProvider>
       <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
@@ -70,12 +81,16 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
           <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
             <Canvas
               shadows={false}
-              dpr={[1, 2]}
+              dpr={dpr}
               gl={{
                 antialias: false,
                 powerPreference: 'high-performance',
               }}
             >
+              <PerformanceMonitor
+                onDecline={handlePerformanceDecline}
+                onIncline={handlePerformanceIncline}
+              />
               <WebGLMonitor exhibitionUrl={exhibitionUrl} />
               <Suspense fallback={hideLoader ? null : <Loader />}>
                 <group>
