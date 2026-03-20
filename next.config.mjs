@@ -15,6 +15,12 @@ const nextConfig = {
         hostname: 'assets.theartroom.gallery',
         pathname: '/**',
       },
+      {
+        // Legacy: dev DB still has old Vercel Blob URLs
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/**',
+      },
     ],
   },
 
