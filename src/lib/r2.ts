@@ -114,7 +114,7 @@ export async function getPresignedUploadUrl(
 
 export async function buildArtworkImageKey(userId: string, artworkId: string): Promise<string> {
   const handler = await getArtistHandler(userId)
-  return `${getEnvPrefix()}/${handler}/${artworkId}-${randomSuffix()}.webp`
+  return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.webp`
 }
 
 export async function buildArtworkVideoKey(
@@ -123,7 +123,7 @@ export async function buildArtworkVideoKey(
   ext: string,
 ): Promise<string> {
   const handler = await getArtistHandler(userId)
-  return `${getEnvPrefix()}/${handler}/${artworkId}-${randomSuffix()}.${ext}`
+  return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.${ext}`
 }
 
 export async function buildArtworkSoundKey(
@@ -132,7 +132,7 @@ export async function buildArtworkSoundKey(
   ext: string,
 ): Promise<string> {
   const handler = await getArtistHandler(userId)
-  return `${getEnvPrefix()}/${handler}/${artworkId}-${randomSuffix()}.${ext}`
+  return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.${ext}`
 }
 
 export async function buildProfileImageKey(userId: string): Promise<string> {
