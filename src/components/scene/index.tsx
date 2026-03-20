@@ -3,7 +3,7 @@
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 
-import { useRef, useState, useCallback, useMemo, Suspense } from 'react'
+import { useRef, useState, useCallback, Suspense } from 'react'
 import { Mesh } from 'three'
 import { useSelector } from 'react-redux'
 import { Volume2, VolumeX } from 'lucide-react'
@@ -66,16 +66,6 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
 
   const [dpr, setDpr] = useState<[number, number]>([1, 2])
 
-  // Detect device capability for antialias (can't change after context creation)
-  // Conservative: only enable on devices we're SURE can handle it
-  const antialias = useMemo(() => {
-    if (typeof window === 'undefined') return false
-    const nav = navigator as unknown as { deviceMemory?: number }
-    // Only enable antialias on devices with ≥8GB memory
-    // Unknown memory (Safari, Firefox) → OFF (safe default)
-    return (nav.deviceMemory ?? 0) >= 8
-  }, [])
-
   const handlePerformanceDecline = useCallback(() => {
     setDpr([1, 1.5])
   }, [])
@@ -93,7 +83,7 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
               shadows={false}
               dpr={dpr}
               gl={{
-                antialias,
+                antialias: false,
                 powerPreference: 'high-performance',
               }}
             >
