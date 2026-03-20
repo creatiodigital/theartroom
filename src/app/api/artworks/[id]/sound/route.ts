@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { put, del } from '@vercel/blob'
 
 import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { uploadToR2, deleteFromR2, buildArtworkSoundKey } from '@/lib/r2'
 
 // 3MB max for audio files
 const MAX_SOUND_SIZE = 3 * 1024 * 1024
@@ -81,25 +81,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Delete old sound if exists
     if (artwork.soundUrl) {
       try {
-        await del(artwork.soundUrl)
+        await deleteFromR2(artwork.soundUrl)
       } catch (error) {
         console.warn('Failed to delete old sound:', error)
       }
     }
 
-    // Upload to Vercel Blob
-    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const blob = await put(`${env}/${artwork.userId}/sounds/${id}.${ext}`, buffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: file.type,
-    })
+    // Upload to Cloudflare R2
+    const key = await buildArtworkSoundKey(artwork.userId, id, ext)
+    const url = await uploadToR2(key, buffer, file.type)
 
     // Update artwork with new sound URL
     await prisma.artwork.update({
       where: { id },
       data: {
-        soundUrl: blob.url,
+        soundUrl: url,
       },
     })
 
@@ -107,7 +103,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     revalidateTag(`artwork-${id}`, 'default')
 
     return NextResponse.json({
-      url: blob.url,
+      url,
       size: buffer.length,
     })
   } catch (error) {
@@ -140,9 +136,9 @@ export async function DELETE(
       return NextResponse.json({ message: 'No sound to delete' })
     }
 
-    // Delete from Vercel Blob
+    // Delete from R2 (handles legacy Vercel Blob URLs gracefully)
     try {
-      await del(artwork.soundUrl)
+      await deleteFromR2(artwork.soundUrl)
     } catch (error) {
       console.warn('Failed to delete sound blob:', error)
     }

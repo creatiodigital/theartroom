@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { put, del } from '@vercel/blob'
 
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import prisma from '@/lib/prisma'
+import { uploadToR2, deleteFromR2, buildSlideImageKey } from '@/lib/r2'
 
 const MAX_FILE_SIZE = MAX_UPLOAD_SIZE
 
@@ -41,29 +41,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const processedBuffer = await processImage(buffer)
 
-    // Delete old image if it's a blob URL
-    if (slide.imageUrl && slide.imageUrl.includes('blob.vercel-storage.com')) {
+    // Delete old image if it's hosted on R2 or Vercel Blob
+    if (slide.imageUrl) {
       try {
-        await del(slide.imageUrl)
+        await deleteFromR2(slide.imageUrl)
       } catch (error) {
         console.warn('Failed to delete old slide image:', error)
       }
     }
 
-    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const blob = await put(`${env}/slides/${id}/image.webp`, processedBuffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: 'image/webp',
-    })
+    // Upload to Cloudflare R2
+    const key = await buildSlideImageKey(id)
+    const url = await uploadToR2(key, processedBuffer, 'image/webp')
 
     // Update slide with new image URL
     await prisma.slide.update({
       where: { id },
-      data: { imageUrl: blob.url },
+      data: { imageUrl: url },
     })
 
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json({ url })
   } catch (error) {
     console.error('[POST /api/slides/[id]/image] error:', error)
     return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })

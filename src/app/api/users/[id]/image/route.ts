@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { put, del } from '@vercel/blob'
 
 import { requireOwnership } from '@/lib/authUtils'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import prisma from '@/lib/prisma'
+import { uploadToR2, deleteFromR2, buildProfileImageKey } from '@/lib/r2'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB for profile images
 
@@ -51,27 +51,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Delete old image if exists
     if (user.profileImageUrl) {
       try {
-        await del(user.profileImageUrl)
+        await deleteFromR2(user.profileImageUrl)
       } catch (error) {
         console.warn('Failed to delete old profile image:', error)
       }
     }
 
-    // Upload to Vercel Blob - organize by environment and user ID
-    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const blob = await put(`${env}/profiles/${id}/avatar.webp`, processedBuffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: 'image/webp',
-    })
+    // Upload to Cloudflare R2
+    const key = await buildProfileImageKey(id)
+    const url = await uploadToR2(key, processedBuffer, 'image/webp')
 
     // Update user with new image URL
     await prisma.user.update({
       where: { id },
-      data: { profileImageUrl: blob.url },
+      data: { profileImageUrl: url },
     })
 
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json({ url })
   } catch (error) {
     console.error('[POST /api/users/[id]/image] error:', error)
     return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })
@@ -103,7 +99,7 @@ export async function DELETE(
     }
 
     try {
-      await del(user.profileImageUrl)
+      await deleteFromR2(user.profileImageUrl)
     } catch (error) {
       console.warn('Failed to delete blob:', error)
     }
