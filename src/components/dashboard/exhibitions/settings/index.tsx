@@ -49,6 +49,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [urlError, setUrlError] = useState('')
   const [editingName, setEditingName] = useState(false)
   const [savingName, setSavingName] = useState(false)
+  const [customUrl, setCustomUrl] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Fetch exhibition data
@@ -63,6 +64,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         const data = await response.json()
         setExhibition(data)
         setMainTitle(data.mainTitle || '')
+        setCustomUrl(data.url || '')
         setDescription(data.description || '')
         setShortDescription(data.shortDescription || '')
       } catch {
@@ -80,7 +82,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const handleSaveName = useCallback(async () => {
     if (!exhibition || !mainTitle.trim()) return
 
-    const newUrl = slugify(mainTitle)
+    const newUrl = customUrl.trim() ? slugify(customUrl) : slugify(mainTitle)
     // Skip check if URL hasn't changed
     if (newUrl !== exhibition.url) {
       // Check uniqueness
@@ -107,7 +109,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mainTitle }),
+        body: JSON.stringify({ mainTitle, url: customUrl.trim() || undefined }),
       })
 
       if (!response.ok) {
@@ -121,7 +123,9 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       }
 
       // Update local exhibition state with new name/url
-      setExhibition((prev) => (prev ? { ...prev, mainTitle, url: slugify(mainTitle) } : prev))
+      const finalUrl = customUrl.trim() ? slugify(customUrl) : slugify(mainTitle)
+      setExhibition((prev) => (prev ? { ...prev, mainTitle, url: finalUrl } : prev))
+      setCustomUrl(finalUrl)
       setEditingName(false)
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -130,10 +134,11 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     } finally {
       setSavingName(false)
     }
-  }, [exhibition, mainTitle])
+  }, [exhibition, mainTitle, customUrl])
 
   const handleCancelEditName = useCallback(() => {
     setMainTitle(exhibition?.mainTitle || '')
+    setCustomUrl(exhibition?.url || '')
     setUrlError('')
     setEditingName(false)
   }, [exhibition])
@@ -298,8 +303,26 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           )}
         </div>
         {urlError && <ErrorText>{urlError}</ErrorText>}
+        {editingName && (
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <label className={dashboardStyles.sectionDescription} style={{ display: 'block', marginBottom: 'var(--space-1)' }}>
+              Custom URL slug (optional)
+            </label>
+            <input
+              type="text"
+              value={customUrl}
+              onChange={(e) => setCustomUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              placeholder={slugify(mainTitle)}
+              className={styles.titleInput}
+              style={{ fontSize: '0.9rem' }}
+            />
+            <span className={dashboardStyles.hint}>
+              Leave empty to auto-generate from title. Only lowercase letters, numbers, and dashes.
+            </span>
+          </div>
+        )}
         <span className={dashboardStyles.hint}>
-          URL: {exhibition.user?.handler || 'artist'}/{slugify(mainTitle) || exhibition.url}
+          URL: {exhibition.user?.handler || 'artist'}/{customUrl || slugify(mainTitle) || exhibition.url}
         </span>
       </div>
 

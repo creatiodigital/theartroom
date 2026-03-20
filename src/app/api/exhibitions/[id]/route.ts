@@ -12,6 +12,7 @@ import { slugify } from '@/utils/slugify'
 
 type ExhibitionUpdateBody = {
   mainTitle?: string
+  url?: string
   description?: string
   shortDescription?: string
   status?: string // 'current' | 'past'
@@ -123,7 +124,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const data: Prisma.ExhibitionUpdateInput = {}
     if (body.mainTitle !== undefined) {
       data.mainTitle = body.mainTitle
-      const newUrl = slugify(body.mainTitle)
+      // Use custom URL if provided, otherwise auto-generate from title
+      const newUrl = body.url ? slugify(body.url) : slugify(body.mainTitle)
       data.url = newUrl
 
       // Check if another exhibition by this user already uses this URL

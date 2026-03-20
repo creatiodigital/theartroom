@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import type { TExhibition } from '@/types/exhibition'
+import { slugify } from '@/utils/slugify'
 
 type CreateTExhibition = {
   mainTitle: string
@@ -15,14 +16,6 @@ export function useCreateExhibition() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [createdExhibition, setCreatedExhibition] = useState<TExhibition | null>(null)
-
-  const slugify = (str: string): string =>
-    str
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .trim()
 
   const createExhibition = async ({
     mainTitle,
