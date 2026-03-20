@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { put, del } from '@vercel/blob'
 
 import { requireOwnership } from '@/lib/authUtils'
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import prisma from '@/lib/prisma'
+import { uploadToR2, deleteFromR2, buildArtworkImageKey } from '@/lib/r2'
 
 const MAX_FILE_SIZE = MAX_UPLOAD_SIZE // 5MB from centralized config
 
@@ -59,26 +59,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Delete old image if exists
     if (artwork.imageUrl) {
       try {
-        await del(artwork.imageUrl)
+        await deleteFromR2(artwork.imageUrl)
       } catch (error) {
         console.warn('Failed to delete old image:', error)
         // Continue anyway - old image might not exist
       }
     }
 
-    // Upload to Vercel Blob - organize by environment and user ID (immutable)
-    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const blob = await put(`${env}/${artwork.userId}/${id}.webp`, processedBuffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: 'image/webp',
-    })
+    // Upload to Cloudflare R2
+    const key = await buildArtworkImageKey(artwork.userId, id)
+    const url = await uploadToR2(key, processedBuffer, 'image/webp')
 
     // Update artwork with new image URL
     await prisma.artwork.update({
       where: { id },
       data: {
-        imageUrl: blob.url,
+        imageUrl: url,
       },
     })
 
@@ -86,7 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     revalidateTag(`artwork-${id}`, 'default')
 
     return NextResponse.json({
-      url: blob.url,
+      url,
       size: processedBuffer.length,
     })
   } catch (error) {
@@ -119,9 +115,9 @@ export async function DELETE(
       return NextResponse.json({ message: 'No image to delete' })
     }
 
-    // Delete from Vercel Blob
+    // Delete from R2 (handles legacy Vercel Blob URLs gracefully)
     try {
-      await del(artwork.imageUrl)
+      await deleteFromR2(artwork.imageUrl)
     } catch (error) {
       console.warn('Failed to delete blob:', error)
     }

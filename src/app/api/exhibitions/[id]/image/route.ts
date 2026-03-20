@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { put, del } from '@vercel/blob'
 
 import { requireOwnership } from '@/lib/authUtils'
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import prisma from '@/lib/prisma'
+import { uploadToR2, deleteFromR2, buildExhibitionImageKey } from '@/lib/r2'
 
 const MAX_FILE_SIZE = MAX_UPLOAD_SIZE
 
@@ -58,28 +58,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Delete old image if exists
     if (exhibition.featuredImageUrl) {
       try {
-        await del(exhibition.featuredImageUrl)
+        await deleteFromR2(exhibition.featuredImageUrl)
       } catch (error) {
         console.warn('Failed to delete old image:', error)
       }
     }
 
-    // Upload to Vercel Blob
-    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const blob = await put(`${env}/exhibitions/${id}/featured.webp`, processedBuffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: 'image/webp',
-    })
+    // Upload to Cloudflare R2
+    const key = await buildExhibitionImageKey(id)
+    const url = await uploadToR2(key, processedBuffer, 'image/webp')
 
     // Update exhibition with new image URL
     await prisma.exhibition.update({
       where: { id },
-      data: { featuredImageUrl: blob.url },
+      data: { featuredImageUrl: url },
     })
 
     return NextResponse.json({
-      url: blob.url,
+      url,
       size: processedBuffer.length,
     })
   } catch (error) {
@@ -112,9 +108,9 @@ export async function DELETE(
       return NextResponse.json({ message: 'No image to delete' })
     }
 
-    // Delete from Vercel Blob
+    // Delete from R2 (handles legacy Vercel Blob URLs gracefully)
     try {
-      await del(exhibition.featuredImageUrl)
+      await deleteFromR2(exhibition.featuredImageUrl)
     } catch (error) {
       console.warn('Failed to delete blob:', error)
     }

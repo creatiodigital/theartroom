@@ -72,7 +72,7 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
               shadows={false}
               dpr={[1, 2]}
               gl={{
-                antialias: true,
+                antialias: false,
                 toneMapping: ACESFilmicToneMapping,
                 toneMappingExposure: 1.0,
                 powerPreference: 'high-performance',
