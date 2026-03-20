@@ -66,7 +66,7 @@ export async function uploadToR2(key: string, body: Buffer, contentType: string)
 
 /**
  * Delete a file from R2 by its public URL.
- * Also handles legacy Vercel Blob URLs gracefully (skips them).
+ * Handles multiple URL formats: custom domain, r2.dev, and legacy Vercel Blob.
  */
 export async function deleteFromR2(url: string): Promise<void> {
   // Skip Vercel Blob URLs — they can't be deleted via R2
@@ -75,7 +75,12 @@ export async function deleteFromR2(url: string): Promise<void> {
     return
   }
 
-  const key = url.replace(`${PUBLIC_URL}/`, '')
+  // Extract the R2 object key by stripping any known URL prefix.
+  // Handles both the custom domain and the r2.dev development URL.
+  const key = url
+    .replace(`${PUBLIC_URL}/`, '')
+    .replace(/^https?:\/\/pub-[a-f0-9]+\.r2\.dev\//, '')
+    .replace(/^https?:\/\/assets\.theartroom\.gallery\//, '')
   await r2.send(
     new DeleteObjectCommand({
       Bucket: BUCKET,
