@@ -537,7 +537,7 @@ const Stencil = ({ artwork }: StencilProps) => {
         <mesh
           key={id}
           renderOrder={2}
-          position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.001]}
+          position={[0, getTextYOffset(textVerticalAlign, planeHeight), 0.0003]}
           visible={fontReady}
         >
           <Text
@@ -557,7 +557,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             overflowWrap="break-word"
             onSync={calculateTextDimensions}
             sdfGlyphSize={512}
-            outlineWidth="0.5%"
+            outlineWidth="0.2%"
             outlineColor={textColor ?? 'black'}
           >
             {textContent}
