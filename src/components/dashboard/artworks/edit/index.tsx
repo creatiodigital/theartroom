@@ -236,21 +236,58 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId])
 
-  // Video upload (client-side direct upload to bypass Vercel function size limit)
+  // Video upload (client-side direct upload to R2 via presigned URL)
   const handleVideoUpload = useCallback(
     async (file: File) => {
       setVideoUploading(true)
       try {
-        const { upload } = await import('@vercel/blob/client')
-        const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-        const ext = file.type === 'video/webm' ? 'webm' : 'mp4'
-
-        const blob = await upload(`${env}/videos/${artworkId}.${ext}`, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload/video',
+        // Step 1: Get presigned upload URL from the server
+        const response = await fetch('/api/upload/video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'request-upload',
+            artworkId,
+            contentType: file.type,
+            fileSize: file.size,
+          }),
         })
 
-        setVideoUrl(blob.url)
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Failed to get upload URL')
+        }
+
+        const { presignedUrl, publicUrl } = await response.json()
+
+        // Step 2: Upload file directly to R2
+        const uploadResponse = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type },
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload video to storage')
+        }
+
+        // Step 3: Finalize — update artwork record with the new URL
+        const finalizeResponse = await fetch('/api/upload/video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'complete',
+            artworkId,
+            url: publicUrl,
+          }),
+        })
+
+        if (!finalizeResponse.ok) {
+          const data = await finalizeResponse.json()
+          throw new Error(data.error || 'Failed to finalize upload')
+        }
+
+        setVideoUrl(publicUrl)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to upload video')
       } finally {

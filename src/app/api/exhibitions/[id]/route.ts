@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { revalidateTag, revalidatePath } from 'next/cache'
-import { del } from '@vercel/blob'
+import { deleteFromR2 } from '@/lib/r2'
 
 import { Prisma } from '@/generated/prisma'
 import { requireOwnership } from '@/lib/authUtils'
@@ -330,7 +330,7 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     if (authError) return authError
     if (exhibition?.featuredImageUrl) {
       try {
-        await del(exhibition.featuredImageUrl)
+        await deleteFromR2(exhibition.featuredImageUrl)
       } catch (error) {
         console.warn('Failed to delete featured image blob:', error)
         // Continue anyway - the blob might not exist

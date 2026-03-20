@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import type { NextRequest } from 'next/server'
-import { del } from '@vercel/blob'
+import { deleteFromR2 } from '@/lib/r2'
 
 import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
@@ -109,7 +109,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     // Delete associated blob image if exists
     if (artwork.imageUrl) {
       try {
-        await del(artwork.imageUrl)
+        await deleteFromR2(artwork.imageUrl)
       } catch (error) {
         console.warn('Failed to delete image blob:', error)
         // Continue anyway - blob might not exist
@@ -119,7 +119,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     // Delete associated sound blob if exists
     if (artwork.soundUrl) {
       try {
-        await del(artwork.soundUrl)
+        await deleteFromR2(artwork.soundUrl)
       } catch (error) {
         console.warn('Failed to delete sound blob:', error)
       }
@@ -128,7 +128,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     // Delete associated video blob if exists
     if (artwork.videoUrl) {
       try {
-        await del(artwork.videoUrl)
+        await deleteFromR2(artwork.videoUrl)
       } catch (error) {
         console.warn('Failed to delete video blob:', error)
       }

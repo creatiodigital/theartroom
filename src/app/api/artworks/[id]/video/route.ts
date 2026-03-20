@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { put, del } from '@vercel/blob'
 
 import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { uploadToR2, deleteFromR2, buildArtworkVideoKey } from '@/lib/r2'
 
 // 20MB max for video files
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024
@@ -69,25 +69,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Delete old video if exists
     if (artwork.videoUrl) {
       try {
-        await del(artwork.videoUrl)
+        await deleteFromR2(artwork.videoUrl)
       } catch (error) {
         console.warn('Failed to delete old video:', error)
       }
     }
 
-    // Upload to Vercel Blob
-    const env = process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    const blob = await put(`${env}/${artwork.userId}/videos/${id}.${ext}`, buffer, {
-      access: 'public',
-      addRandomSuffix: true,
-      contentType: file.type,
-    })
+    // Upload to Cloudflare R2
+    const key = await buildArtworkVideoKey(artwork.userId, id, ext)
+    const url = await uploadToR2(key, buffer, file.type)
 
     // Update artwork with new video URL
     await prisma.artwork.update({
       where: { id },
       data: {
-        videoUrl: blob.url,
+        videoUrl: url,
       },
     })
 
@@ -95,7 +91,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     revalidateTag(`artwork-${id}`, 'default')
 
     return NextResponse.json({
-      url: blob.url,
+      url,
       size: buffer.length,
     })
   } catch (error) {
@@ -128,9 +124,9 @@ export async function DELETE(
       return NextResponse.json({ message: 'No video to delete' })
     }
 
-    // Delete from Vercel Blob
+    // Delete from R2 (handles legacy Vercel Blob URLs gracefully)
     try {
-      await del(artwork.videoUrl)
+      await deleteFromR2(artwork.videoUrl)
     } catch (error) {
       console.warn('Failed to delete video blob:', error)
     }
