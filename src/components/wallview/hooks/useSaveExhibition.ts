@@ -54,7 +54,7 @@ export const useSaveExhibition = () => {
         return true
       }
 
-      // 1. Upload pending images to Vercel Blob
+      // 1. Upload pending images to R2
       const pendingUploads = getAllPendingUploads()
       const uploadedUrls = new Map<string, string>()
       const originalDimensions = new Map<string, { width: number; height: number }>()

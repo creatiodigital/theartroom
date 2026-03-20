@@ -23,7 +23,7 @@ function getEnvPrefix(): string {
   return process.env.NODE_ENV === 'production' ? 'production' : 'development'
 }
 
-// ── Random suffix (replaces Vercel Blob's addRandomSuffix) ───────────────────
+// ── Random suffix ────────────────────────────────────────────────────────────
 
 function randomSuffix(): string {
   return Math.random().toString(36).substring(2, 10)
@@ -66,7 +66,7 @@ export async function uploadToR2(key: string, body: Buffer, contentType: string)
 
 /**
  * Delete a file from R2 by its public URL.
- * Handles multiple URL formats: custom domain, r2.dev, and legacy Vercel Blob.
+ * Handles multiple URL formats: custom domain, r2.dev, and legacy URLs.
  */
 export async function deleteFromR2(url: string): Promise<void> {
   // Skip Vercel Blob URLs — they can't be deleted via R2

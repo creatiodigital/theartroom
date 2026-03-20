@@ -7,7 +7,7 @@
  * 3. Store original image dimensions for aspect ratio restoration
  *
  * On Save button:
- * 1. Upload all pending files to Vercel Blob
+ * 1. Upload all pending files to R2
  * 2. Update artwork imageUrls with cloud URLs
  * 3. Clear pending files
  */

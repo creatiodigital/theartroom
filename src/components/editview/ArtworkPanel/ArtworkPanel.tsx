@@ -38,7 +38,7 @@ const ArtworkPanel = () => {
 
   const { name, artworkTitle, artworkYear, artworkDimensions, imageUrl } = selectedArtwork || {}
 
-  // Use original URLs - Next.js image optimization has issues with Vercel Blob URLs in production
+  // Use original URLs - Next.js image optimization has issues with R2 URLs in production
   const thumbnailUrl = imageUrl || null
 
   const handleViewDetails = () => {

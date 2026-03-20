@@ -6,7 +6,7 @@ type Preset = keyof typeof IMAGE_PRESETS
  * Generate a Vercel-optimized image URL for different viewing contexts.
  * Uses Vercel's Image Optimization API for on-demand transformations.
  *
- * @param originalUrl - The original blob URL
+ * @param originalUrl - The original image URL
  * @param preset - 'gallery3D' (small/fast), 'isolated' (high quality), or 'thumbnail'
  * @returns Optimized URL via /_next/image endpoint
  */

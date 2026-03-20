@@ -106,17 +106,17 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     const { error: authError } = await requireOwnership(artwork.userId)
     if (authError) return authError
 
-    // Delete associated blob image if exists
+    // Delete associated image from R2 if exists
     if (artwork.imageUrl) {
       try {
         await deleteFromR2(artwork.imageUrl)
       } catch (error) {
         console.warn('Failed to delete image blob:', error)
-        // Continue anyway - blob might not exist
+        // Continue anyway - file might not exist
       }
     }
 
-    // Delete associated sound blob if exists
+    // Delete associated sound from R2 if exists
     if (artwork.soundUrl) {
       try {
         await deleteFromR2(artwork.soundUrl)
@@ -125,7 +125,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       }
     }
 
-    // Delete associated video blob if exists
+    // Delete associated video from R2 if exists
     if (artwork.videoUrl) {
       try {
         await deleteFromR2(artwork.videoUrl)
