@@ -48,6 +48,21 @@ const nextConfig = {
         source: '/draco/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
+      // Visit routes - revalidate on each visit (exhibition data may change after publish)
+      {
+        source: '/exhibitions/:artistSlug/:exhibitionSlug/visit',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
+      // Exhibition profile pages - revalidate (snapshot data may update)
+      {
+        source: '/exhibitions/:artistSlug/:exhibitionSlug',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
+      // Exhibition API routes - revalidate
+      {
+        source: '/api/exhibitions/:path*',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
       // Edit routes - never cache (artists need real-time updates)
       {
         source: '/exhibitions/:artistSlug/:exhibitionSlug/edit',
