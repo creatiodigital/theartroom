@@ -3,7 +3,7 @@
 import { Canvas } from '@react-three/fiber'
 
 import { useRef, Suspense } from 'react'
-import { ACESFilmicToneMapping, Mesh } from 'three'
+import { Mesh } from 'three'
 import { useSelector } from 'react-redux'
 import { Volume2, VolumeX } from 'lucide-react'
 
@@ -73,8 +73,6 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
               dpr={[1, 2]}
               gl={{
                 antialias: false,
-                toneMapping: ACESFilmicToneMapping,
-                toneMappingExposure: 1.0,
                 powerPreference: 'high-performance',
               }}
             >
