@@ -7,16 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section/Section'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideFloorPanel } from '@/redux/slices/dashboardSlice'
-import {
-  setFloorReflectiveness,
-  setFloorMaterial,
-  setFloorTextureScale,
-  setFloorTextureOffsetX,
-  setFloorTextureOffsetY,
-  setFloorTemperature,
-  setFloorNormalScale,
-  setFloorRotation,
-} from '@/redux/slices/exhibitionSlice'
+import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
+import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
 
 import styles from './FloorPanel.module.scss'
@@ -41,6 +33,11 @@ const FloorPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
+    dispatch(setExhibitionField({ field, value }))
+    setSaved(false)
+  }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
 
@@ -73,62 +70,6 @@ const FloorPanel = () => {
   )
 
   const floorRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
-
-  const handleMaterialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(
-      setFloorMaterial(
-        e.target.value as
-          | 'concrete'
-          | 'red-parquet'
-          | 'marble'
-          | 'parquet'
-          | 'patterned-concrete'
-          | 'worn-concrete'
-          | 'wood-planks'
-          | 'terrazzo'
-          | 'parquet-light'
-          | 'concrete-tiles',
-      ),
-    )
-    setSaved(false)
-  }
-
-  const handleTextureScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Invert: slider right = bigger tiles (lower repeat value internally)
-    const invertedValue = 8.5 - parseFloat(e.target.value)
-    dispatch(setFloorTextureScale(invertedValue))
-    setSaved(false)
-  }
-
-  const handleOffsetXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFloorTextureOffsetX(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleOffsetYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFloorTextureOffsetY(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleReflectivenessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFloorReflectiveness(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleTemperatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFloorTemperature(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleNormalScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFloorNormalScale(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setFloorRotation(parseFloat(e.target.value)))
-    setSaved(false)
-  }
 
   const handleSave = async () => {
     if (!exhibitionId) return
@@ -169,7 +110,11 @@ const FloorPanel = () => {
       <Section title="Material">
         <div className={styles.field}>
           <label className={styles.label}>Type</label>
-          <select value={floorMaterial} onChange={handleMaterialChange} className={styles.select}>
+          <select
+            value={floorMaterial}
+            onChange={(e) => set('floorMaterial', e.target.value)}
+            className={styles.select}
+          >
             {FLOOR_MATERIALS.map((material) => (
               <option key={material.value} value={material.value}>
                 {material.label}
@@ -189,7 +134,7 @@ const FloorPanel = () => {
             max="8"
             step="0.01"
             value={8.5 - floorTextureScale}
-            onChange={handleTextureScaleChange}
+            onChange={(e) => set('floorTextureScale', 8.5 - parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -205,7 +150,7 @@ const FloorPanel = () => {
             max="1"
             step="0.01"
             value={floorTextureOffsetX}
-            onChange={handleOffsetXChange}
+            onChange={(e) => set('floorTextureOffsetX', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -221,7 +166,7 @@ const FloorPanel = () => {
             max="1"
             step="0.01"
             value={floorTextureOffsetY}
-            onChange={handleOffsetYChange}
+            onChange={(e) => set('floorTextureOffsetY', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -237,7 +182,7 @@ const FloorPanel = () => {
             max="360"
             step="1"
             value={floorRotation}
-            onChange={handleRotationChange}
+            onChange={(e) => set('floorRotation', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -255,7 +200,7 @@ const FloorPanel = () => {
             max="1"
             step="0.01"
             value={floorReflectiveness}
-            onChange={handleReflectivenessChange}
+            onChange={(e) => set('floorReflectiveness', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -271,7 +216,7 @@ const FloorPanel = () => {
             max="5"
             step="0.1"
             value={floorNormalScale}
-            onChange={handleNormalScaleChange}
+            onChange={(e) => set('floorNormalScale', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -287,7 +232,7 @@ const FloorPanel = () => {
             max="1"
             step="0.05"
             value={floorTemperature}
-            onChange={handleTemperatureChange}
+            onChange={(e) => set('floorTemperature', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>

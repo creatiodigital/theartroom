@@ -29,6 +29,31 @@ const extractExhibitionData = (state: TExhibitionWithHistory): TExhibition => {
   return exhibition as TExhibition
 }
 
+// ── Field validators ────────────────────────────────────────────────────────
+// Maps field names to value transforms (clamping, normalization, etc.)
+// Fields NOT listed here accept the value as-is.
+
+type FieldValidator = (v: number) => number
+
+const FIELD_VALIDATORS: Record<string, FieldValidator> = {
+  recessedLampAngle: (v) => Math.max(0.1, Math.min(1.2, v)),
+  recessedLampDistance: (v) => Math.max(1, Math.min(20, v)),
+  trackLampAngle: (v) => Math.max(0.1, Math.min(1.2, v)),
+  trackLampDistance: (v) => Math.max(1, Math.min(10, v)),
+  floorTextureScale: (v) => Math.max(0.5, Math.min(8.0, v)),
+  floorTemperature: (v) => Math.max(-1, Math.min(1, v)),
+  floorNormalScale: (v) => Math.max(0, Math.min(5.0, v)),
+  floorRotation: (v) => ((v % 360) + 360) % 360,
+  cameraFOV: (v) => Math.max(40, Math.min(60, v)),
+  cameraElevation: (v) => Math.max(1.5, Math.min(1.7, v)),
+  shadowBlur: (v) => Math.max(0.01, Math.min(0.08, v)),
+  shadowSpread: (v) => Math.max(0.5, Math.min(3.0, v)),
+  shadowOpacity: (v) => Math.max(0.05, Math.min(0.8, v)),
+  shadowDirection: (v) => Math.max(0.0, Math.min(1.0, v)),
+}
+
+// ── Slice ───────────────────────────────────────────────────────────────────
+
 const exhibitionSlice = createSlice({
   name: 'exhibition',
   initialState: createInitialState(),
@@ -101,8 +126,6 @@ const exhibitionSlice = createSlice({
 
     setExhibition: (state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
       // Preserve existing artwork positions if they've been loaded
-      // (useLoadExhibitionArtworks manages these separately and they may
-      // contain updated positions from wall view that aren't yet in the API cache)
       const preservePositions =
         state.allExhibitionArtworkIds && state.allExhibitionArtworkIds.length > 0
       return {
@@ -119,74 +142,21 @@ const exhibitionSlice = createSlice({
       }
     },
 
-    setMainTitle: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.mainTitle = action.payload
+    // ── Generic field setter ──────────────────────────────────────────────
+    // Replaces ~40 individual setters. Applies clamping/normalization via
+    // FIELD_VALIDATORS when the field has one defined.
+    setExhibitionField: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ field: keyof TExhibition; value: TExhibition[keyof TExhibition] }>,
+    ) => {
+      const { field, value } = action.payload
+      const validator = FIELD_VALIDATORS[field as string]
+      ;(state as Record<string, unknown>)[field as string] = validator
+        ? validator(value as number)
+        : value
     },
 
-    // Lighting customization actions
-    setAmbientLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.ambientLightColor = action.payload
-    },
-
-    setAmbientLightIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.ambientLightIntensity = action.payload
-    },
-
-    setSkylightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.skylightColor = action.payload
-    },
-
-    setSkylightIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.skylightIntensity = action.payload
-    },
-
-    setCeilingLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.ceilingLampColor = action.payload
-    },
-
-    setCeilingLampIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.ceilingLampIntensity = action.payload
-    },
-
-    setTrackLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.trackLampColor = action.payload
-    },
-
-    setTrackLampIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.trackLampIntensity = action.payload
-    },
-
-    setTrackLampsVisible: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
-      state.trackLampsVisible = action.payload
-    },
-
-    setRecessedLampColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.recessedLampColor = action.payload
-    },
-
-    setRecessedLampIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.recessedLampIntensity = action.payload
-    },
-
-    setRecessedLampAngle: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.recessedLampAngle = Math.max(0.1, Math.min(1.2, action.payload))
-    },
-
-    setRecessedLampDistance: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.recessedLampDistance = Math.max(1, Math.min(20, action.payload))
-    },
-
-    setTrackLampMaterialColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.trackLampMaterialColor = action.payload
-    },
-
-    setTrackLampAngle: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.trackLampAngle = Math.max(0.1, Math.min(1.2, action.payload))
-    },
-
-    setTrackLampDistance: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.trackLampDistance = Math.max(1, Math.min(10, action.payload))
-    },
+    // ── Track lamp per-index setters (complex, kept as-is) ────────────────
 
     setTrackLampRotation: (
       state: TExhibitionWithHistory,
@@ -224,122 +194,8 @@ const exhibitionSlice = createSlice({
       state.trackLampSettings[String(index)].offset = Math.max(-2, Math.min(2, offset))
     },
 
-    setWindowLightColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.windowLightColor = action.payload
-    },
+    // ── Autofocus group actions ────────────────────────────────────────────
 
-    setWindowLightIntensity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.windowLightIntensity = action.payload
-    },
-
-    setWindowTransparency: (state: TExhibitionWithHistory, action: PayloadAction<boolean>) => {
-      state.windowTransparency = action.payload
-    },
-
-    setFloorReflectiveness: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.floorReflectiveness = action.payload
-    },
-
-    setFloorMaterial: (
-      state: TExhibitionWithHistory,
-      action: PayloadAction<
-        | 'concrete'
-        | 'red-parquet'
-        | 'marble'
-        | 'parquet'
-        | 'patterned-concrete'
-        | 'worn-concrete'
-        | 'wood-planks'
-        | 'terrazzo'
-        | 'parquet-light'
-        | 'concrete-tiles'
-      >,
-    ) => {
-      state.floorMaterial = action.payload
-    },
-
-    setFloorTextureScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp scale between 0.5 and 8.0
-      state.floorTextureScale = Math.max(0.5, Math.min(8.0, action.payload))
-    },
-
-    setFloorTextureOffsetX: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.floorTextureOffsetX = action.payload
-    },
-
-    setFloorTextureOffsetY: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.floorTextureOffsetY = action.payload
-    },
-
-    setFloorTemperature: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp temperature between -1 (cool) and 1 (warm)
-      state.floorTemperature = Math.max(-1, Math.min(1, action.payload))
-    },
-
-    setFloorNormalScale: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp normal scale between 0 and 5.0
-      state.floorNormalScale = Math.max(0, Math.min(5.0, action.payload))
-    },
-
-    setFloorRotation: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Normalize rotation to 0-360 range
-      state.floorRotation = ((action.payload % 360) + 360) % 360
-    },
-
-    setHdriEnvironment: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.hdriEnvironment = action.payload
-    },
-
-    setHdriRotation: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.hdriRotation = action.payload
-    },
-
-    setCeilingLightMode: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.ceilingLightMode = action.payload
-    },
-
-    setCameraFOV: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp FOV between 40 and 60
-      state.cameraFOV = Math.max(40, Math.min(60, action.payload))
-    },
-
-    setCameraElevation: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      // Clamp elevation between 1.5 and 1.7 meters
-      state.cameraElevation = Math.max(1.5, Math.min(1.7, action.payload))
-    },
-
-    // Wall & Ceiling customization
-    setWallColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.wallColor = action.payload
-    },
-
-    setCeilingColor: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
-      state.ceilingColor = action.payload
-    },
-
-    // Wall brightness compensation
-    setWallBrightness: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.wallBrightness = action.payload
-    },
-
-    // Shadow decal controls
-    setShadowBlur: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.shadowBlur = Math.max(0.01, Math.min(0.08, action.payload))
-    },
-
-    setShadowSpread: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.shadowSpread = Math.max(0.5, Math.min(3.0, action.payload))
-    },
-
-    setShadowOpacity: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.shadowOpacity = Math.max(0.05, Math.min(0.8, action.payload))
-    },
-
-    setShadowDirection: (state: TExhibitionWithHistory, action: PayloadAction<number>) => {
-      state.shadowDirection = Math.max(0.0, Math.min(1.0, action.payload))
-    },
-
-    // Autofocus group actions
     setAutofocusGroups: (
       state: TExhibitionWithHistory,
       action: PayloadAction<AutofocusGroup[]>,
@@ -362,7 +218,6 @@ const exhibitionSlice = createSlice({
       state: TExhibitionWithHistory,
       action: PayloadAction<{ groupId: string; artworkId: string }>,
     ) => {
-      // Enforce exclusivity: remove from any other group first
       if (state.autofocusGroups) {
         for (const g of state.autofocusGroups) {
           if (g.id !== action.payload.groupId) {
@@ -386,7 +241,8 @@ const exhibitionSlice = createSlice({
       }
     },
 
-    // Snapshot actions for cancel functionality
+    // ── Snapshot actions ──────────────────────────────────────────────────
+
     snapshotExhibition: (state: TExhibitionWithHistory) => {
       state._snapshot = extractExhibitionData(state)
     },
@@ -405,41 +261,29 @@ const exhibitionSlice = createSlice({
       state._snapshot = null
     },
 
-    // Undo/Redo history actions
+    // ── Undo/Redo ─────────────────────────────────────────────────────────
+
     pushToHistory: (state: TExhibitionWithHistory) => {
-      // Save current state to history before making changes
       const currentState = extractExhibitionData(state)
       state._history.push(JSON.parse(JSON.stringify(currentState)))
-
-      // Limit history size
       if (state._history.length > HISTORY_LIMIT) {
         state._history.shift()
       }
-
-      // Clear future on new action (can't redo after new action)
       state._future = []
     },
 
     undo: (state: TExhibitionWithHistory) => {
       if (state._history.length === 0) return
-
-      // Save current state to future for redo
       const currentState = extractExhibitionData(state)
       state._future.push(JSON.parse(JSON.stringify(currentState)))
-
-      // Pop last state from history and restore it
       const previousState = state._history.pop()!
       Object.assign(state, previousState)
     },
 
     redo: (state: TExhibitionWithHistory) => {
       if (state._future.length === 0) return
-
-      // Save current state to history for undo
       const currentState = extractExhibitionData(state)
       state._history.push(JSON.parse(JSON.stringify(currentState)))
-
-      // Pop last state from future and restore it
       const nextState = state._future.pop()!
       Object.assign(state, nextState)
     },
@@ -457,55 +301,15 @@ export const {
   deleteArtworkPosition,
   toggleArtworkLocked,
   setExhibition,
-  setMainTitle,
-  setAmbientLightColor,
-  setAmbientLightIntensity,
-  setSkylightColor,
-  setSkylightIntensity,
-  setCeilingLampColor,
-  setCeilingLampIntensity,
-  setTrackLampColor,
-  setTrackLampIntensity,
-  setTrackLampsVisible,
-  setRecessedLampColor,
-  setRecessedLampIntensity,
-  setRecessedLampAngle,
-  setRecessedLampDistance,
-  setTrackLampMaterialColor,
-  setTrackLampAngle,
-  setTrackLampDistance,
+  setExhibitionField,
   setTrackLampRotation,
   setTrackLampEnabled,
   setTrackLampOffset,
-  setWindowLightColor,
-  setWindowLightIntensity,
-  setWindowTransparency,
-  setFloorReflectiveness,
-  setFloorMaterial,
-  setFloorTextureScale,
-  setFloorTextureOffsetX,
-  setFloorTextureOffsetY,
-  setFloorTemperature,
-  setFloorNormalScale,
-  setFloorRotation,
-  setHdriEnvironment,
-  setHdriRotation,
-  setCeilingLightMode,
-  setCameraFOV,
-  setCameraElevation,
-  setWallColor,
-  setCeilingColor,
-  setWallBrightness,
-  setShadowBlur,
-  setShadowSpread,
-  setShadowOpacity,
-  setShadowDirection,
   setAutofocusGroups,
   addAutofocusGroup,
   removeAutofocusGroup,
   addArtworkToAutofocusGroup,
   removeArtworkFromAutofocusGroup,
-
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,

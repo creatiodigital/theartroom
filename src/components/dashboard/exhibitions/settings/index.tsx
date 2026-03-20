@@ -305,13 +305,18 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         {urlError && <ErrorText>{urlError}</ErrorText>}
         {editingName && (
           <div style={{ marginTop: 'var(--space-3)' }}>
-            <label className={dashboardStyles.sectionDescription} style={{ display: 'block', marginBottom: 'var(--space-1)' }}>
+            <label
+              className={dashboardStyles.sectionDescription}
+              style={{ display: 'block', marginBottom: 'var(--space-1)' }}
+            >
               Custom URL slug (optional)
             </label>
             <input
               type="text"
               value={customUrl}
-              onChange={(e) => setCustomUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              onChange={(e) =>
+                setCustomUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+              }
               placeholder={slugify(mainTitle)}
               className={styles.titleInput}
               style={{ fontSize: '0.9rem' }}
@@ -322,7 +327,8 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           </div>
         )}
         <span className={dashboardStyles.hint}>
-          URL: {exhibition.user?.handler || 'artist'}/{customUrl || slugify(mainTitle) || exhibition.url}
+          URL: {exhibition.user?.handler || 'artist'}/
+          {customUrl || slugify(mainTitle) || exhibition.url}
         </span>
       </div>
 

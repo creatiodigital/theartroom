@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
+import { isSafeImageSrc } from '@/lib/imageSafety'
+
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
@@ -131,7 +133,8 @@ function ArtworkCard({
       {/* Thumbnail / Text Preview */}
       <div className={styles.cardThumbnail}>
         {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
-        artwork.imageUrl ? (
+        artwork.imageUrl &&
+        isSafeImageSrc(artwork.imageUrl) ? (
           <Image
             src={artwork.imageUrl}
             alt={artwork.title || 'Artwork'}

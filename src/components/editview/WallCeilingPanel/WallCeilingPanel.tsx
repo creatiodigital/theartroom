@@ -8,7 +8,8 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideWallCeilingPanel } from '@/redux/slices/dashboardSlice'
-import { setWallColor, setCeilingColor, setWallBrightness } from '@/redux/slices/exhibitionSlice'
+import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
+import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
 
 import styles from '../LightingPanel/LightingPanel.module.scss'
@@ -20,6 +21,11 @@ const WallCeilingPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
+    dispatch(setExhibitionField({ field, value }))
+    setSaved(false)
+  }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const wallColor = useSelector(
@@ -69,13 +75,7 @@ const WallCeilingPanel = () => {
 
         <div className={styles.field}>
           <label className={styles.label}>Color</label>
-          <ColorPicker
-            textColor={wallColor}
-            onColorSelect={(color) => {
-              dispatch(setWallColor(color))
-              setSaved(false)
-            }}
-          />
+          <ColorPicker textColor={wallColor} onColorSelect={(color) => set('wallColor', color)} />
         </div>
       </div>
 
@@ -89,10 +89,7 @@ const WallCeilingPanel = () => {
           <label className={styles.label}>Color</label>
           <ColorPicker
             textColor={ceilingColor}
-            onColorSelect={(color) => {
-              dispatch(setCeilingColor(color))
-              setSaved(false)
-            }}
+            onColorSelect={(color) => set('ceilingColor', color)}
           />
         </div>
       </div>
@@ -113,7 +110,7 @@ const WallCeilingPanel = () => {
             max="5.0"
             step="0.05"
             value={wallBrightness}
-            onChange={(e) => dispatch(setWallBrightness(parseFloat(e.target.value)))}
+            onChange={(e) => set('wallBrightness', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
