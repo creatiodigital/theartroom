@@ -133,7 +133,8 @@ function ArtworkCard({
       {/* Thumbnail / Text Preview */}
       <div className={styles.cardThumbnail}>
         {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
-        artwork.imageUrl && isSafeImageSrc(artwork.imageUrl) ? (
+        artwork.imageUrl &&
+        isSafeImageSrc(artwork.imageUrl) ? (
           <Image
             src={artwork.imageUrl}
             alt={artwork.title || 'Artwork'}

@@ -200,7 +200,10 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
     textBackgroundTexture: ea.textBackgroundTexture ?? undefined,
     showTextBorder: ea.showTextBorder ?? false,
     textBorderColor: ea.textBorderColor ?? '#c9a96e',
-    textBorderOffset: { label: String(ea.textBorderOffset ?? 1.2), value: ea.textBorderOffset ?? 1.2 },
+    textBorderOffset: {
+      label: String(ea.textBorderOffset ?? 1.2),
+      value: ea.textBorderOffset ?? 1.2,
+    },
     showMonogram: ea.showMonogram ?? false,
     monogramColor: ea.monogramColor ?? '#c0392b',
     monogramOpacity: { label: String(ea.monogramOpacity ?? 1.0), value: ea.monogramOpacity ?? 1.0 },

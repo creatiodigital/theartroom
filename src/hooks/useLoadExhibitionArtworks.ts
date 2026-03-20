@@ -127,4 +127,3 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
     isReady: !loading && !imagesLoading,
   }
 }
-

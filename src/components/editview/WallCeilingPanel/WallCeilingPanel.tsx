@@ -75,10 +75,7 @@ const WallCeilingPanel = () => {
 
         <div className={styles.field}>
           <label className={styles.label}>Color</label>
-          <ColorPicker
-            textColor={wallColor}
-            onColorSelect={(color) => set('wallColor', color)}
-          />
+          <ColorPicker textColor={wallColor} onColorSelect={(color) => set('wallColor', color)} />
         </div>
       </div>
 
