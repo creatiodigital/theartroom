@@ -117,7 +117,7 @@ export async function buildArtworkImageKey(userId: string, artworkId: string): P
   return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.webp`
 }
 
-export async function buildArtworkVideoKey(
+export async function buildArtworkMediaKey(
   userId: string,
   artworkId: string,
   ext: string,
@@ -126,14 +126,9 @@ export async function buildArtworkVideoKey(
   return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.${ext}`
 }
 
-export async function buildArtworkSoundKey(
-  userId: string,
-  artworkId: string,
-  ext: string,
-): Promise<string> {
-  const handler = await getArtistHandler(userId)
-  return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.${ext}`
-}
+// Aliases — kept for call-site clarity (video vs sound context)
+export const buildArtworkVideoKey = buildArtworkMediaKey
+export const buildArtworkSoundKey = buildArtworkMediaKey
 
 export async function buildProfileImageKey(userId: string): Promise<string> {
   const handler = await getArtistHandler(userId)
