@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideCameraPanel } from '@/redux/slices/dashboardSlice'
-import { setCameraFOV, setCameraElevation } from '@/redux/slices/exhibitionSlice'
+import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
+import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
 
 import styles from './CameraPanel.module.scss'
@@ -20,6 +21,11 @@ const CameraPanel = () => {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
+    dispatch(setExhibitionField({ field, value }))
+    setSaved(false)
+  }
+
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
 
   const cameraFOV = useSelector(
@@ -29,16 +35,6 @@ const CameraPanel = () => {
   const cameraElevation = useSelector(
     (state: RootState) => state.exhibition.cameraElevation ?? DEFAULT_CAMERA_ELEVATION,
   )
-
-  const handleFOVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setCameraFOV(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleElevationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setCameraElevation(parseFloat(e.target.value)))
-    setSaved(false)
-  }
 
   const handleSave = async () => {
     if (!exhibitionId) return
@@ -86,7 +82,7 @@ const CameraPanel = () => {
             max="60"
             step="1"
             value={cameraFOV}
-            onChange={handleFOVChange}
+            onChange={(e) => set('cameraFOV', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -102,7 +98,7 @@ const CameraPanel = () => {
             max="1.7"
             step="0.01"
             value={cameraElevation}
-            onChange={handleElevationChange}
+            onChange={(e) => set('cameraElevation', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>

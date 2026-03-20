@@ -70,34 +70,6 @@ const artworkSlice = createSlice({
       }
     },
 
-    editArtisticImage: <K extends keyof TArtwork>(
-      state: TArtworksState,
-      action: PayloadAction<{ currentArtworkId: string; property: K; value: TArtwork[K] }>,
-    ) => {
-      const { currentArtworkId, property, value } = action.payload
-      const artwork = state.byId[currentArtworkId]
-
-      if (
-        artwork?.artworkType === 'image' ||
-        artwork?.artworkType === 'sound' ||
-        artwork?.artworkType === 'video'
-      ) {
-        artwork[property] = value
-      }
-    },
-
-    editArtisticText: <K extends keyof TArtwork>(
-      state: TArtworksState,
-      action: PayloadAction<{ currentArtworkId: string; property: K; value: TArtwork[K] }>,
-    ) => {
-      const { currentArtworkId, property, value } = action.payload
-      const artwork = state.byId[currentArtworkId]
-
-      if (artwork?.artworkType === 'text') {
-        artwork[property] = value
-      }
-    },
-
     deleteArtwork: (state, action: PayloadAction<{ artworkId: string }>) => {
       const { artworkId } = action.payload
       delete state.byId[artworkId]
@@ -120,7 +92,6 @@ const artworkSlice = createSlice({
 
     restoreArtworksSnapshot: (state) => {
       if (state._snapshot) {
-        // Return a new state object to ensure Immer properly updates
         return {
           byId: state._snapshot.byId,
           allIds: state._snapshot.allIds,
@@ -140,13 +111,16 @@ export const {
   createArtwork,
   restoreArtwork,
   editArtwork,
-  editArtisticImage,
-  editArtisticText,
   deleteArtwork,
   resetArtworks,
   snapshotArtworks,
   restoreArtworksSnapshot,
   clearArtworksSnapshot,
 } = artworkSlice.actions
+
+// Backward-compatible aliases — these were previously separate reducers with
+// type guards, but all callers already operate on the correct artwork type.
+export const editArtisticImage = editArtwork
+export const editArtisticText = editArtwork
 
 export default artworkSlice.reducer

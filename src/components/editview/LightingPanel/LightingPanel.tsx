@@ -10,35 +10,12 @@ import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
 import {
-  setAmbientLightColor,
-  setAmbientLightIntensity,
-  setSkylightColor,
-  setSkylightIntensity,
-  setCeilingLampColor,
-  setCeilingLampIntensity,
-  setTrackLampColor,
-  setTrackLampIntensity,
-  setTrackLampAngle,
-  setTrackLampDistance,
+  setExhibitionField,
   setTrackLampRotation,
   setTrackLampEnabled,
   setTrackLampOffset,
-  setRecessedLampColor,
-  setRecessedLampIntensity,
-  setRecessedLampAngle,
-  setRecessedLampDistance,
-  setTrackLampMaterialColor,
-  setWindowLightColor,
-  setWindowLightIntensity,
-  setWindowTransparency,
-  setHdriEnvironment,
-  setHdriRotation,
-  setCeilingLightMode,
-  setShadowBlur,
-  setShadowSpread,
-  setShadowOpacity,
-  setShadowDirection,
 } from '@/redux/slices/exhibitionSlice'
+import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
 
 import styles from './LightingPanel.module.scss'
@@ -80,6 +57,11 @@ const LightingPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
+    dispatch(setExhibitionField({ field, value }))
+    setSaved(false)
+  }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
@@ -183,82 +165,6 @@ const LightingPanel = () => {
     ? ceilingLightMode
     : (availableCeilingLightOptions[0]?.value ?? 'plafond')
 
-  // Ambient light handlers
-  const handleAmbientIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setAmbientLightIntensity(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  // Skylight handlers
-  const handleSkylightIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSkylightIntensity(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  // Ceiling lamp handlers
-  const handleLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setCeilingLampIntensity(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  // Track lamp handlers
-  const handleTrackLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setTrackLampIntensity(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleTrackLampAngleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setTrackLampAngle(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleTrackLampDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setTrackLampDistance(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  // Recessed lamp handlers
-  const handleRecessedLampIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setRecessedLampIntensity(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleRecessedLampAngleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setRecessedLampAngle(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleRecessedLampDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setRecessedLampDistance(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  // Window light handlers
-  const handleWindowIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setWindowLightIntensity(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleWindowTransparencyChange = () => {
-    dispatch(setWindowTransparency(!windowTransparency))
-    setSaved(false)
-  }
-
-  const handleHdriChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setHdriEnvironment(e.target.value))
-    setSaved(false)
-  }
-
-  const handleHdriRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setHdriRotation(parseFloat(e.target.value)))
-    setSaved(false)
-  }
-
-  const handleCeilingLightModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setCeilingLightMode(e.target.value))
-    setSaved(false)
-  }
-
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -294,7 +200,6 @@ const LightingPanel = () => {
           shadowSpread,
           shadowOpacity,
           shadowDirection,
-          // Note: floorReflectiveness is in FloorPanel
         }),
       })
 
@@ -317,7 +222,11 @@ const LightingPanel = () => {
       <Section title="Environment">
         <div className={styles.field}>
           <label className={styles.label}>Sky Type</label>
-          <select value={hdriEnvironment} onChange={handleHdriChange} className={styles.select}>
+          <select
+            value={hdriEnvironment}
+            onChange={(e) => set('hdriEnvironment', e.target.value)}
+            className={styles.select}
+          >
             {HDRI_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -337,7 +246,7 @@ const LightingPanel = () => {
             max="360"
             step="1"
             value={hdriRotation}
-            onChange={handleHdriRotationChange}
+            onChange={(e) => set('hdriRotation', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -346,10 +255,7 @@ const LightingPanel = () => {
           <label className={styles.label}>Ambient Color</label>
           <ColorPicker
             textColor={ambientColor}
-            onColorSelect={(color) => {
-              dispatch(setAmbientLightColor(color))
-              setSaved(false)
-            }}
+            onColorSelect={(color) => set('ambientLightColor', color)}
           />
         </div>
 
@@ -364,7 +270,7 @@ const LightingPanel = () => {
             max="1"
             step="0.01"
             value={ambientIntensity}
-            onChange={handleAmbientIntensityChange}
+            onChange={(e) => set('ambientLightIntensity', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -378,10 +284,7 @@ const LightingPanel = () => {
                 <label className={styles.label}>Ceiling Light Color</label>
                 <ColorPicker
                   textColor={skylightColor}
-                  onColorSelect={(color) => {
-                    dispatch(setSkylightColor(color))
-                    setSaved(false)
-                  }}
+                  onColorSelect={(color) => set('skylightColor', color)}
                 />
               </div>
 
@@ -396,7 +299,7 @@ const LightingPanel = () => {
                   max="10"
                   step="0.1"
                   value={skylightIntensity}
-                  onChange={handleSkylightIntensityChange}
+                  onChange={(e) => set('skylightIntensity', parseFloat(e.target.value))}
                   className={styles.slider}
                 />
               </div>
@@ -409,10 +312,7 @@ const LightingPanel = () => {
                 <label className={styles.label}>Lamp Color</label>
                 <ColorPicker
                   textColor={lampColor}
-                  onColorSelect={(color) => {
-                    dispatch(setCeilingLampColor(color))
-                    setSaved(false)
-                  }}
+                  onColorSelect={(color) => set('ceilingLampColor', color)}
                 />
               </div>
 
@@ -427,7 +327,7 @@ const LightingPanel = () => {
                   max="10"
                   step="0.1"
                   value={lampIntensity}
-                  onChange={handleLampIntensityChange}
+                  onChange={(e) => set('ceilingLampIntensity', parseFloat(e.target.value))}
                   className={styles.slider}
                 />
               </div>
@@ -439,7 +339,7 @@ const LightingPanel = () => {
               <label className={styles.label}>Ceiling Light Type</label>
               <select
                 value={effectiveCeilingLightMode}
-                onChange={handleCeilingLightModeChange}
+                onChange={(e) => set('ceilingLightMode', e.target.value)}
                 className={styles.select}
               >
                 {availableCeilingLightOptions.map((option) => (
@@ -459,10 +359,7 @@ const LightingPanel = () => {
                   <label className={styles.label}>Plafond Color</label>
                   <ColorPicker
                     textColor={recessedLampColor}
-                    onColorSelect={(color) => {
-                      dispatch(setRecessedLampColor(color))
-                      setSaved(false)
-                    }}
+                    onColorSelect={(color) => set('recessedLampColor', color)}
                   />
                 </div>
 
@@ -477,7 +374,7 @@ const LightingPanel = () => {
                     max="10"
                     step="0.1"
                     value={recessedLampIntensity}
-                    onChange={handleRecessedLampIntensityChange}
+                    onChange={(e) => set('recessedLampIntensity', parseFloat(e.target.value))}
                     className={styles.slider}
                   />
                 </div>
@@ -495,7 +392,7 @@ const LightingPanel = () => {
                     max="1.2"
                     step="0.05"
                     value={recessedLampAngle}
-                    onChange={handleRecessedLampAngleChange}
+                    onChange={(e) => set('recessedLampAngle', parseFloat(e.target.value))}
                     className={styles.slider}
                   />
                 </div>
@@ -511,7 +408,7 @@ const LightingPanel = () => {
                     max="20"
                     step="0.5"
                     value={recessedLampDistance}
-                    onChange={handleRecessedLampDistanceChange}
+                    onChange={(e) => set('recessedLampDistance', parseFloat(e.target.value))}
                     className={styles.slider}
                   />
                 </div>
@@ -528,10 +425,7 @@ const LightingPanel = () => {
               <label className={styles.label}>Color</label>
               <ColorPicker
                 textColor={trackLampColor}
-                onColorSelect={(color) => {
-                  dispatch(setTrackLampColor(color))
-                  setSaved(false)
-                }}
+                onColorSelect={(color) => set('trackLampColor', color)}
               />
             </div>
 
@@ -546,7 +440,7 @@ const LightingPanel = () => {
                 max="10"
                 step="0.1"
                 value={trackLampIntensity}
-                onChange={handleTrackLampIntensityChange}
+                onChange={(e) => set('trackLampIntensity', parseFloat(e.target.value))}
                 className={styles.slider}
               />
             </div>
@@ -564,7 +458,7 @@ const LightingPanel = () => {
                 max="1.2"
                 step="0.05"
                 value={trackLampAngle}
-                onChange={handleTrackLampAngleChange}
+                onChange={(e) => set('trackLampAngle', parseFloat(e.target.value))}
                 className={styles.slider}
               />
             </div>
@@ -580,7 +474,7 @@ const LightingPanel = () => {
                 max="10"
                 step="0.5"
                 value={trackLampDistance}
-                onChange={handleTrackLampDistanceChange}
+                onChange={(e) => set('trackLampDistance', parseFloat(e.target.value))}
                 className={styles.slider}
               />
             </div>
@@ -589,10 +483,7 @@ const LightingPanel = () => {
               <label className={styles.label}>Material Color</label>
               <ColorPicker
                 textColor={trackLampMaterialColor}
-                onColorSelect={(color) => {
-                  dispatch(setTrackLampMaterialColor(color))
-                  setSaved(false)
-                }}
+                onColorSelect={(color) => set('trackLampMaterialColor', color)}
               />
             </div>
 
@@ -667,7 +558,7 @@ const LightingPanel = () => {
               <input
                 type="checkbox"
                 checked={windowTransparency}
-                onChange={handleWindowTransparencyChange}
+                onChange={() => set('windowTransparency', !windowTransparency)}
               />
               <span className={styles.toggleSlider} />
             </label>
@@ -683,10 +574,7 @@ const LightingPanel = () => {
                 <label className={styles.label}>Color</label>
                 <ColorPicker
                   textColor={windowColor}
-                  onColorSelect={(color) => {
-                    dispatch(setWindowLightColor(color))
-                    setSaved(false)
-                  }}
+                  onColorSelect={(color) => set('windowLightColor', color)}
                 />
               </div>
 
@@ -701,7 +589,7 @@ const LightingPanel = () => {
                   max="10"
                   step="0.1"
                   value={windowIntensity}
-                  onChange={handleWindowIntensityChange}
+                  onChange={(e) => set('windowLightIntensity', parseFloat(e.target.value))}
                   className={styles.slider}
                 />
               </div>
@@ -722,10 +610,7 @@ const LightingPanel = () => {
             max="0.08"
             step="0.005"
             value={shadowBlur}
-            onChange={(e) => {
-              dispatch(setShadowBlur(parseFloat(e.target.value)))
-              setSaved(false)
-            }}
+            onChange={(e) => set('shadowBlur', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -741,10 +626,7 @@ const LightingPanel = () => {
             max="3.0"
             step="0.1"
             value={shadowSpread}
-            onChange={(e) => {
-              dispatch(setShadowSpread(parseFloat(e.target.value)))
-              setSaved(false)
-            }}
+            onChange={(e) => set('shadowSpread', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -760,10 +642,7 @@ const LightingPanel = () => {
             max="0.80"
             step="0.01"
             value={shadowOpacity}
-            onChange={(e) => {
-              dispatch(setShadowOpacity(parseFloat(e.target.value)))
-              setSaved(false)
-            }}
+            onChange={(e) => set('shadowOpacity', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>
@@ -779,10 +658,7 @@ const LightingPanel = () => {
             max="1.0"
             step="0.05"
             value={shadowDirection}
-            onChange={(e) => {
-              dispatch(setShadowDirection(parseFloat(e.target.value)))
-              setSaved(false)
-            }}
+            onChange={(e) => set('shadowDirection', parseFloat(e.target.value))}
             className={styles.slider}
           />
         </div>

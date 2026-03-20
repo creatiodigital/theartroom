@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
+import { isSafeImageSrc } from '@/lib/imageSafety'
+
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
@@ -31,7 +33,7 @@ const ExhibitionCard = ({ exhibition }: { exhibition: Exhibition }) => (
       className={styles.exhibitionLink}
     >
       <div className={styles.imageWrapper}>
-        {exhibition.featuredImageUrl ? (
+        {exhibition.featuredImageUrl && isSafeImageSrc(exhibition.featuredImageUrl) ? (
           <Image
             src={exhibition.featuredImageUrl}
             alt={exhibition.mainTitle}
