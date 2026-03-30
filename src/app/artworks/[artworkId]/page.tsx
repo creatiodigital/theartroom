@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
       title: tabTitle,
       description,
       ...(artwork.imageUrl && {
-        images: [{ url: artwork.imageUrl, alt: title }],
+        images: [{ url: artwork.imageUrl, alt: tabTitle }],
       }),
     },
   }
