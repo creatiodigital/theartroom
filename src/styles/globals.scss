@@ -12,13 +12,14 @@
   box-sizing: border-box;
 }
 
-// Remove Chrome's blue focus outline globally
+// Remove default focus outline but provide a visible focus-visible indicator
 *:focus {
   outline: none;
 }
 
 *:focus-visible {
-  outline: none;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 html {
@@ -213,6 +214,58 @@ img {
 
   // Prevent touch callout on mobile (Safari)
   -webkit-touch-callout: none;
+}
+
+/* =============================================================================
+   Accessibility Utilities
+   ============================================================================= */
+
+// Visually hidden but accessible to screen readers
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Skip-to-content link — visible only on focus
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: 10000;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+
+  &:focus {
+    top: var(--space-2);
+  }
+}
+
+/* =============================================================================
+   Reduced Motion
+
+   Disables animations and transitions for users who prefer reduced motion.
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 // Re-enable for dashboard/admin areas
