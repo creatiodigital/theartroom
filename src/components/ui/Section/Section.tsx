@@ -63,14 +63,19 @@ export const Section = ({
 
   return (
     <div className={styles.section}>
-      <div className={styles.header} onClick={toggle}>
+      <button
+        type="button"
+        className={styles.header}
+        onClick={toggle}
+        aria-expanded={isOpen}
+      >
         <ChevronRight
           size={12}
           strokeWidth={ICON_STROKE_WIDTH}
           className={`${styles.chevron} ${isOpen ? styles.open : ''}`}
         />
         <span className={styles.title}>{title}</span>
-      </div>
+      </button>
       {isOpen && (
         <div className={styles.content} style={contentStyle}>
           {children}

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { unstable_cache } from 'next/cache'
 
 import { Header } from '@/components/ui/Header'
@@ -11,6 +12,12 @@ import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
+
+export const metadata: Metadata = {
+  title: { absolute: 'The Art Room' },
+  description:
+    'Explore curated virtual exhibitions in immersive 3D gallery spaces. Discover contemporary art beyond immediacy.',
+}
 
 const getSlides = unstable_cache(
   async () => {
@@ -93,7 +100,7 @@ export default async function Home() {
   const featuredArtists = await getFeaturedArtists()
 
   return (
-    <main className={styles.home}>
+    <main id="main-content" className={styles.home}>
       <Header />
 
       <Text as="h1" className={styles.srOnly}>
