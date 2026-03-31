@@ -44,7 +44,7 @@ export const ImageLightbox = ({ imageUrl, alt, caption, onClose }: ImageLightbox
   }
 
   return (
-    <div className={styles.overlay} onClick={handleBackdropClick}>
+    <div className={styles.overlay} role="dialog" aria-label={alt} onClick={handleBackdropClick}>
       <button className={styles.closeButton} onClick={onClose} aria-label="Close lightbox">
         <svg
           width="24"
