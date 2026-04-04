@@ -26,6 +26,7 @@ const getCachedExhibition = (url: string) =>
               artwork: {
                 select: {
                   id: true,
+                  slug: true,
                   name: true,
                   title: true,
                   author: true,
@@ -100,9 +101,23 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       const snapshotArtworks = snapshot.artworks as Array<Record<string, unknown>>
 
       // Reconstruct the response shape from the snapshot
-      const artworks = (snapshotArtworks || [])
+      // Enrich snapshot artworks with live slug (snapshots pre-date the slug field)
+      const snapshotArtworkObjects = (snapshotArtworks || [])
         .map((ea) => ea.artwork as Record<string, unknown>)
         .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
+
+      const artworkIds = snapshotArtworkObjects.map((a) => a.id as string).filter(Boolean)
+
+      const liveSlugs = await prisma.artwork.findMany({
+        where: { id: { in: artworkIds } },
+        select: { id: true, slug: true },
+      })
+      const slugById = Object.fromEntries(liveSlugs.map((a) => [a.id, a.slug]))
+
+      const artworks = snapshotArtworkObjects.map((artwork) => ({
+        ...artwork,
+        slug: slugById[artwork.id as string] ?? artwork.slug,
+      }))
 
       return NextResponse.json({
         ...exhibition,
@@ -199,6 +214,7 @@ async function getEditModeResponse(url: string) {
           artwork: {
             select: {
               id: true,
+              slug: true,
               name: true,
               title: true,
               author: true,

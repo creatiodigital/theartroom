@@ -54,9 +54,9 @@
 .content {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: minmax(160px, 0.25fr) 1fr;
   gap: var(--space-10);
-  padding: 0 var(--space-10) var(--space-10);
+  padding: var(--space-10) var(--space-10) var(--space-10);
   max-width: var(--content-max-width);
   margin: 0 auto;
   width: 100%;
@@ -71,14 +71,14 @@
 
 .standaloneContent {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: minmax(180px, 0.3fr) 1fr;
   gap: var(--space-10);
-  padding: var(--space-16) 0;
+  padding: 0;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: var(--space-4);
-    padding: var(--space-4) 0;
+    padding: var(--space-4) 0 0;
   }
 }
 
@@ -86,10 +86,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  align-self: center;
+  align-self: start;
+  padding-top: 200px;
 
   @media (max-width: 768px) {
     order: 3;
+    padding-top: 0;
   }
 }
 
@@ -128,10 +130,10 @@
 }
 
 .image {
-  width: auto;
+  width: 100%;
   height: auto;
-  max-width: 100%;
-  max-height: 70vh;
+  max-height: calc(100vh - 160px);
+  object-fit: contain;
 }
 
 .description {
@@ -141,4 +143,8 @@
 .inquireButton {
   margin-top: var(--space-4);
   align-self: flex-start;
+}
+
+.share {
+  margin-top: var(--space-10);
 }

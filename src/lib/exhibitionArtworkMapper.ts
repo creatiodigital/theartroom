@@ -10,6 +10,7 @@ export type ExhibitionArtworkResponse = {
   artworkId: string
   artwork: {
     id: string
+    slug: string
     name: string
     artworkType: string
     title: string | null
@@ -138,6 +139,7 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
 
   return {
     id: ea.artworkId,
+    slug: ea.artwork.slug,
     name: ea.artwork.name,
     artworkType: ea.artwork.artworkType as 'image' | 'text' | 'sound' | 'video',
     artworkTitle: ea.artwork.title || undefined,

@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server'
 import { auth } from '@/auth'
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { generateUniqueSlug } from '@/lib/slugify'
 
 export const dynamic = 'force-dynamic'
 
@@ -115,10 +116,13 @@ export async function POST(request: NextRequest) {
       finalTitle = `Untitled ${count + 1}`
     }
 
+    const slug = await generateUniqueSlug(finalTitle)
+
     const artwork = await prisma.artwork.create({
       data: {
         userId,
         name: finalTitle, // Use title as name for backwards compatibility
+        slug,
         artworkType: artworkType || 'image',
         title: finalTitle,
         author: author || null,

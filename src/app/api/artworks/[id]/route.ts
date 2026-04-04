@@ -5,6 +5,7 @@ import { deleteFromR2 } from '@/lib/r2'
 
 import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { generateUniqueSlug } from '@/lib/slugify'
 
 // GET single artwork
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -32,12 +33,19 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const { id } = await context.params
 
     // Verify ownership
-    const existing = await prisma.artwork.findUnique({ where: { id }, select: { userId: true } })
+    const existing = await prisma.artwork.findUnique({
+      where: { id },
+      select: { userId: true, title: true },
+    })
     if (!existing) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
     const { error: authError } = await requireOwnership(existing.userId)
     if (authError) return authError
 
     const body = await request.json()
+
+    // Regenerate slug if title changed
+    const titleChanged = body.title && body.title !== existing.title
+    const slug = titleChanged ? await generateUniqueSlug(body.title) : undefined
 
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
@@ -45,6 +53,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       name: body.title || body.name,
       artworkType: body.artworkType,
       title: body.title,
+      ...(slug && { slug }),
       author: body.author,
       year: body.year,
       technique: body.technique,

@@ -31,7 +31,8 @@ export async function generateMetadata({ params }: ExhibitionProfileProps): Prom
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
   const tabTitle = `${artistName} | ${exhibition.mainTitle} | The Art Room`
   const description =
-    exhibition.shortDescription || `Explore "${exhibition.mainTitle}" by ${artistName} at The Art Room.`
+    exhibition.shortDescription ||
+    `Explore "${exhibition.mainTitle}" by ${artistName} at The Art Room.`
 
   return {
     title: { absolute: tabTitle },

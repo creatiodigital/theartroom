@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
@@ -37,10 +39,10 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
               <div className={styles.imagePlaceholder} />
             )}
           </div>
-          <Text as="span" size="xs" className={styles.label}>
+          <Text as="h2" size="xl" className={styles.author}>
             {exhibition.artistLabel}
           </Text>
-          <Text as="span" font="serif" size="2xl" className={styles.title}>
+          <Text as="h1" font="serif" size="2xl" className={styles.title}>
             {exhibition.mainTitle}
           </Text>
           {exhibition.shortDescription && (
@@ -48,6 +50,10 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
               {exhibition.shortDescription}
             </Text>
           )}
+          <span className={styles.visitLink}>
+            <ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />
+            <span>Visit exhibition</span>
+          </span>
         </Link>
       ))}
     </div>

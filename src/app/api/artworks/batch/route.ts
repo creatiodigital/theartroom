@@ -4,6 +4,7 @@ import { revalidateTag } from 'next/cache'
 
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { generateUniqueSlug } from '@/lib/slugify'
 
 // POST batch create artworks (requires auth)
 export async function POST(request: NextRequest) {
@@ -39,13 +40,15 @@ export async function POST(request: NextRequest) {
 
     // Use upsert to avoid duplicates (if artwork already exists, update it)
     const results = await Promise.all(
-      artworks.map((artwork) =>
-        prisma.artwork.upsert({
+      artworks.map(async (artwork) => {
+        const slug = await generateUniqueSlug(artwork.title || artwork.name || 'Untitled')
+        return prisma.artwork.upsert({
           where: { id: artwork.id },
           create: {
             id: artwork.id,
             userId,
             name: artwork.name,
+            slug,
             artworkType: artwork.artworkType || 'image',
             title: artwork.title || undefined,
             author: artwork.author || undefined,
@@ -76,8 +79,8 @@ export async function POST(request: NextRequest) {
             originalWidth: artwork.originalWidth ?? undefined,
             originalHeight: artwork.originalHeight ?? undefined,
           },
-        }),
-      ),
+        })
+      }),
     )
 
     // Bust detail page caches for each upserted artwork

@@ -4,15 +4,15 @@ import { ArtworkDetailPage } from '@/components/artwork/detail'
 import prisma from '@/lib/prisma'
 
 interface ArtworkPageProps {
-  params: Promise<{ artworkId: string }>
+  params: Promise<{ slug: string }>
   searchParams: Promise<{ ref?: string }>
 }
 
 export async function generateMetadata({ params }: ArtworkPageProps): Promise<Metadata> {
-  const { artworkId } = await params
+  const { slug } = await params
 
   const artwork = await prisma.artwork.findUnique({
-    where: { id: artworkId },
+    where: { slug },
     select: {
       title: true,
       description: true,
@@ -43,11 +43,11 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
 }
 
 const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
-  const { artworkId } = await params
+  const { slug } = await params
   const { ref } = await searchParams
   const isInternal = ref === 'internal'
 
-  return <ArtworkDetailPage artworkId={artworkId} isInternal={isInternal} />
+  return <ArtworkDetailPage slug={slug} isInternal={isInternal} />
 }
 
 export default ArtworkPage
