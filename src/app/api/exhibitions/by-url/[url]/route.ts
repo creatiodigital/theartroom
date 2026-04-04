@@ -101,23 +101,53 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       const snapshotArtworks = snapshot.artworks as Array<Record<string, unknown>>
 
       // Reconstruct the response shape from the snapshot
-      // Enrich snapshot artworks with live slug (snapshots pre-date the slug field)
+      // Enrich snapshot artworks with live metadata (title, slug, etc.)
+      // so artwork edits reflect immediately without re-publishing
       const snapshotArtworkObjects = (snapshotArtworks || [])
         .map((ea) => ea.artwork as Record<string, unknown>)
         .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
 
       const artworkIds = snapshotArtworkObjects.map((a) => a.id as string).filter(Boolean)
 
-      const liveSlugs = await prisma.artwork.findMany({
+      const liveArtworks = await prisma.artwork.findMany({
         where: { id: { in: artworkIds } },
-        select: { id: true, slug: true },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          title: true,
+          author: true,
+          year: true,
+          technique: true,
+          dimensions: true,
+          description: true,
+          imageUrl: true,
+          hiddenFromExhibition: true,
+        },
       })
-      const slugById = Object.fromEntries(liveSlugs.map((a) => [a.id, a.slug]))
+      const liveById = Object.fromEntries(liveArtworks.map((a) => [a.id, a]))
 
-      const artworks = snapshotArtworkObjects.map((artwork) => ({
-        ...artwork,
-        slug: slugById[artwork.id as string] ?? artwork.slug,
-      }))
+      const artworks = snapshotArtworkObjects
+        .map((artwork) => {
+          const live = liveById[artwork.id as string]
+          if (!live) return artwork
+          return {
+            ...artwork,
+            slug: live.slug,
+            name: live.name,
+            title: live.title,
+            author: live.author,
+            year: live.year,
+            technique: live.technique,
+            dimensions: live.dimensions,
+            description: live.description,
+            imageUrl: live.imageUrl,
+          }
+        })
+        .filter((artwork) => {
+          const live = liveById[artwork.id as string]
+          return !live?.hiddenFromExhibition
+        })
 
       return NextResponse.json({
         ...exhibition,
