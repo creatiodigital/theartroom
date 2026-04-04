@@ -1,0 +1,39 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  padding: 0;
+
+  &:hover span {
+    text-decoration: underline;
+  }
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+
+  &:hover span {
+    text-decoration: underline;
+  }
+}

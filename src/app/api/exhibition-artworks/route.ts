@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
               artwork: {
                 ...art,
                 // Override with live metadata
+                slug: live.slug,
                 name: live.name,
                 artworkType: live.artworkType,
                 title: live.title,

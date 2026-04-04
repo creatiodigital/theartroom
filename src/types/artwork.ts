@@ -29,6 +29,7 @@ export type TArtworkPosition = {
 
 export type TArtwork = {
   id: string
+  slug?: string
   name: string
   artworkType?: TArtworkKind
   artworkTitle?: string

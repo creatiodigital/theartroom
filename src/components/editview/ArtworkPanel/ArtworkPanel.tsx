@@ -52,7 +52,7 @@ const ArtworkPanel = () => {
         // sessionStorage not available, ignore
       }
     }
-    router.push(`/artworks/${selectedArtwork.id}?ref=internal`)
+    router.push(`/artworks/${selectedArtwork.slug}?ref=internal`)
   }
 
   return (

@@ -11,6 +11,7 @@ import styles from './ArtworkGrid.module.scss'
 
 type Artwork = {
   id: string
+  slug: string
   name: string
   title?: string
   author?: string
@@ -32,7 +33,7 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
         <div key={artwork.id} className={styles.card}>
           <div className={styles.imageWrapper}>
             {artwork.imageUrl ? (
-              <Link href={`/artworks/${artwork.id}`} className={styles.viewDetailsLink}>
+              <Link href={`/artworks/${artwork.slug}`} className={styles.viewDetailsLink}>
                 <ProtectedImage
                   src={artwork.imageUrl}
                   alt={artwork.title || artwork.name || 'Artwork'}
@@ -50,10 +51,10 @@ export const ArtworkGrid = ({ artworks, artistName }: ArtworkGridProps) => {
             )}
           </div>
           <div className={styles.info}>
-            <Text as="p" font="sans" size="sm" className={styles.artist}>
+            <Text as="h2" font="sans" size="md" className={styles.artist}>
               {artwork.author || artistName || ''}
             </Text>
-            <Text as="p" font="sans" className={styles.title}>
+            <Text as="h1" font="sans" size="lg" className={styles.title}>
               <em>{artwork.title || artwork.name}</em>
               {artwork.year && <span>, {artwork.year}</span>}
             </Text>
