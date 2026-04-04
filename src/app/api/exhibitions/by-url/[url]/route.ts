@@ -152,17 +152,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({
         ...exhibition,
         // Override live data with snapshot data for public display
-        mainTitle: snapshotExhibition.mainTitle,
-        description: snapshotExhibition.description,
-        shortDescription: snapshotExhibition.shortDescription,
+        // Exhibition content comes from live DB (via ...exhibition spread above)
+        // Only 3D scene settings come from the snapshot
         spaceId: snapshotExhibition.spaceId,
-        thumbnailUrl: snapshotExhibition.thumbnailUrl,
-        bannerUrl: snapshotExhibition.bannerUrl,
-        featuredImageUrl: snapshotExhibition.featuredImageUrl,
-        startDate: snapshotExhibition.startDate,
-        endDate: snapshotExhibition.endDate,
-        status: snapshotExhibition.status,
-        user: snapshotExhibition.user,
         // Lighting
         ambientLightColor: snapshotExhibition.ambientLightColor,
         ambientLightIntensity: snapshotExhibition.ambientLightIntensity,
