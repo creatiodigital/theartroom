@@ -86,11 +86,7 @@ const Select = <T extends string | number = string | number>({
       </div>
 
       {isOpen && (
-        <ul
-          className={styles.dropdown}
-          role="listbox"
-          onMouseDown={(e) => e.stopPropagation()}
-        >
+        <ul className={styles.dropdown} role="listbox" onMouseDown={(e) => e.stopPropagation()}>
           {options.map((option) => (
             <li
               key={option.value}

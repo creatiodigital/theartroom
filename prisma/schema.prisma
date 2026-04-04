@@ -131,6 +131,7 @@ model Artwork {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   name                 String
+  slug                 String  @unique
   artworkType          String  @default("image")
   title                String  @default("Untitled")
   author               String?

@@ -34,6 +34,7 @@ type Exhibition = {
 
 type Artwork = {
   id: string
+  slug: string
   name: string
   title?: string
   author?: string

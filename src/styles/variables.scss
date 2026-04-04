@@ -128,10 +128,10 @@
   --text-huge: 60px;
 
   // Mobile text sizes (2px smaller, maintaining proportions)
-  --text-xs-mobile: 10px;
-  --text-sm-mobile: 12px;
-  --text-md-mobile: 14px;
-  --text-lg-mobile: 16px;
+  --text-xs-mobile: 12px;
+  --text-sm-mobile: 14px;
+  --text-md-mobile: 16px;
+  --text-lg-mobile: 18px;
   --text-xl-mobile: 22px;
   --text-2xl-mobile: 28px;
   --text-3xl-mobile: 42px;
@@ -155,6 +155,7 @@
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --space-7: 28px;
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
@@ -166,7 +167,7 @@
   --site-padding: var(--space-12);
 
   --header-max-width: 1660px;
-  --content-max-width: 1580px;
+  --content-max-width: 1660px;
 
   --radius-sm: 4px;
   --radius-md: 8px;

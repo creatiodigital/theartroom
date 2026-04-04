@@ -63,12 +63,7 @@ export const Section = ({
 
   return (
     <div className={styles.section}>
-      <button
-        type="button"
-        className={styles.header}
-        onClick={toggle}
-        aria-expanded={isOpen}
-      >
+      <button type="button" className={styles.header} onClick={toggle} aria-expanded={isOpen}>
         <ChevronRight
           size={12}
           strokeWidth={ICON_STROKE_WIDTH}

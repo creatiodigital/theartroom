@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { RichText } from '@/components/ui/RichText'
+import { Share } from '@/components/ui/Share'
 import { Text } from '@/components/ui/Typography'
 import { isRichTextEmpty } from '@/lib/textUtils'
 
@@ -16,6 +18,7 @@ import styles from './ExhibitionProfile.module.scss'
 
 type Artwork = {
   id: string
+  slug: string
   name: string
   title?: string
   author?: string
@@ -52,6 +55,7 @@ export const ExhibitionProfilePage = ({
   artistSlug,
   exhibitionSlug,
 }: ExhibitionProfilePageProps) => {
+  const pathname = usePathname()
   const [exhibition, setExhibition] = useState<Exhibition | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -88,6 +92,7 @@ export const ExhibitionProfilePage = ({
     )
   }
 
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}${pathname}` : ''
   const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit?ref=internal`
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
 
@@ -116,10 +121,15 @@ export const ExhibitionProfilePage = ({
             <Button
               variant="primary"
               size="regularSquared"
-              label="Enter Exhibition"
+              label="Enter Virtual Exhibition"
               href={visitUrl}
               iconLeft={<ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />}
               className={styles.button}
+            />
+            <Share
+              title={`${exhibition.mainTitle} — ${artistName}`}
+              url={shareUrl}
+              className={styles.share}
             />
           </div>
 
@@ -141,11 +151,7 @@ export const ExhibitionProfilePage = ({
         )}
 
         {!isRichTextEmpty(exhibition.description) && (
-          <RichText
-            content={exhibition.description!}
-            variant="compact"
-            className={styles.description}
-          />
+          <RichText content={exhibition.description!} className={styles.description} />
         )}
 
         {exhibition.artworks && exhibition.artworks.length > 0 && (
