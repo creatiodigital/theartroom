@@ -26,13 +26,11 @@ export const ContactPage = () => {
         <Text as="span" size="xs" className={styles.label}>
           LOCATION
         </Text>
-        <Text as="p" size="md" className={styles.value}>
-          Madrid, Spain
-        </Text>
+        <Text className={styles.value}>Madrid, Spain</Text>
       </div>
 
       <div className={styles.footer}>
-        <Text as="p" size="sm" className={styles.note}>
+        <Text as="p" size="md" className={styles.note}>
           Submissions and proposals are by invitation only. For institutional partnerships and
           curatorial inquiries, please direct correspondence to the email address above.
         </Text>
