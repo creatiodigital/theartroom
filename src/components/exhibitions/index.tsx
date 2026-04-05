@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
 
@@ -52,6 +54,10 @@ const ExhibitionCard = ({ exhibition }: { exhibition: Exhibition }) => (
         <Text as="span" font="serif" size="xl" className={styles.artistName}>
           {exhibition.user.name} {exhibition.user.lastName}
         </Text>
+        <span className={styles.visitLink}>
+          <ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />
+          <span>Visit exhibition</span>
+        </span>
       </div>
     </Link>
   </li>
