@@ -30,14 +30,14 @@
 .artistInfo {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-1);
 }
 
 .index {
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: var(--text-sm);
   font-style: italic;
-  color: #7a7a7a;
+  color: var(--color-text-secondary);
   min-width: 36px;
 }
 
@@ -48,7 +48,7 @@
 
 .biography {
   font-size: var(--text-xs);
-  color: #7a7a7a;
+  color: var(--color-text-secondary);
   margin-top: var(--space-1);
 }
 

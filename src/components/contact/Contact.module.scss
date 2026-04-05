@@ -48,8 +48,14 @@
 }
 
 .value {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl-mobile);
   color: var(--color-text-primary);
+  text-decoration: none;
+
+  @include breakpoint(lg) {
+    font-size: var(--text-2xl);
+  }
 }
 
 .footer {
@@ -60,5 +66,4 @@
 
 .note {
   color: var(--color-text-primary);
-  line-height: 1.7;
 }

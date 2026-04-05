@@ -101,8 +101,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       const snapshotArtworks = snapshot.artworks as Array<Record<string, unknown>>
 
       // Reconstruct the response shape from the snapshot
-      // Enrich snapshot artworks with live metadata (title, slug, etc.)
-      // so artwork edits reflect immediately without re-publishing
+      // Enrich snapshot artworks with live metadata so edits reflect immediately
       const snapshotArtworkObjects = (snapshotArtworks || [])
         .map((ea) => ea.artwork as Record<string, unknown>)
         .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
@@ -151,7 +150,6 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
       return NextResponse.json({
         ...exhibition,
-        // Override live data with snapshot data for public display
         // Exhibition content comes from live DB (via ...exhibition spread above)
         // Only 3D scene settings come from the snapshot
         spaceId: snapshotExhibition.spaceId,
