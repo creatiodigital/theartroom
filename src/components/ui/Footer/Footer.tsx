@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Logo from '@/icons/logo.svg'
 import Monogram from '@/icons/monogram.svg'
 
+import { Text } from '@/components/ui/Typography'
+
 import styles from './Footer.module.scss'
 
 export const Footer = () => {
@@ -27,6 +29,9 @@ export const Footer = () => {
           <Link href="/accessibility-policy">Accessibility Policy</Link>
         </nav>
       </div>
+      <Text as="p" size="sm" font="serif" className={styles.copyright}>
+        &copy; <em>{new Date().getFullYear()} The Art Room</em>
+      </Text>
     </footer>
   )
 }

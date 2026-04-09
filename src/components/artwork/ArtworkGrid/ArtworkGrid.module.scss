@@ -40,8 +40,8 @@
 .image {
   width: 100%;
   height: auto;
-  max-height: 500px;
   object-fit: contain;
+  max-height: 600px;
 }
 
 .placeholder {
@@ -59,6 +59,7 @@
   padding-top: var(--space-5);
   border-top: 1px solid var(--color-border-default);
   width: 100%;
+  min-height: 200px;
 }
 
 .artist {
