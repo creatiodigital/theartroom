@@ -18,21 +18,12 @@
   }
 }
 
-.logoRow {
+.monogramRow {
   display: flex;
+  justify-content: center;
   margin-bottom: var(--space-6);
 
   @include breakpoint(lg) {
-    display: none;
-  }
-}
-
-.monogramRow {
-  display: none;
-
-  @include breakpoint(lg) {
-    display: flex;
-    justify-content: center;
     margin-bottom: var(--space-8);
   }
 }
@@ -55,7 +46,7 @@
 .footerInner {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-6);
 
   @include breakpoint(lg) {
@@ -66,25 +57,11 @@
   }
 }
 
-.logoLink {
-  display: flex;
-  align-items: center;
-
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
-.logo {
-  width: 180px;
-  height: auto;
-  color: var(--color-brand);
-  overflow: visible;
-}
-
 .links {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: var(--space-5);
 
   @include breakpoint(lg) {

@@ -1,10 +1,11 @@
 'use client'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination } from 'swiper/modules'
+import { Autoplay, EffectFade, Pagination } from 'swiper/modules'
 import Link from 'next/link'
 import { Text } from '@/components/ui/Typography'
 import 'swiper/css'
+import 'swiper/css/effect-fade'
 import 'swiper/css/pagination'
 
 import styles from './Slideshow.module.scss'
@@ -26,7 +27,9 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
   return (
     <div className={styles.slideshow}>
       <Swiper
-        modules={[Autoplay, Pagination]}
+        modules={[Autoplay, EffectFade, Pagination]}
+        effect="fade"
+        fadeEffect={{ crossFade: true }}
         spaceBetween={0}
         slidesPerView={1}
         loop={false}
