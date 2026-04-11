@@ -3,6 +3,7 @@
 import { useProgress } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowDown,
@@ -96,9 +97,13 @@ const LoadingOverlay = () => {
   )
 }
 
-const MobileOverlay = () => {
-  const router = useRouter()
-
+const MobileExhibitionView = ({
+  artistSlug,
+  exhibitionSlug,
+}: {
+  artistSlug: string
+  exhibitionSlug: string
+}) => {
   return (
     <div className={styles.mobileOverlay}>
       <div className={styles.mobileOverlayContent}>
@@ -108,9 +113,12 @@ const MobileOverlay = () => {
         <Text as="p" size="md" className={styles.mobileOverlayText}>
           Visit this page on a laptop or desktop to explore the full 3D exhibition experience.
         </Text>
-        <button className={styles.mobileOverlayButton} onClick={() => router.back()}>
-          Go Back
-        </button>
+        <Link
+          href={`/exhibitions/${artistSlug}/${exhibitionSlug}`}
+          className={styles.mobileOverlayButton}
+        >
+          Go to Exhibition Page
+        </Link>
       </div>
     </div>
   )
@@ -413,12 +421,27 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
   )
 }
 
+const useIsMobile = (breakpoint = 1024) => {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < breakpoint
+  )
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint)
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [breakpoint])
+
+  return isMobile
+}
+
 export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef(false)
   const searchParams = useSearchParams()
   const previewToken = searchParams.get('preview') || undefined
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const isMobile = useIsMobile()
 
   const {
     data: exhibition,
@@ -518,6 +541,10 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     return <div className={styles.emptyState}>Exhibition not found</div>
   }
 
+  if (isMobile) {
+    return <MobileExhibitionView artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
+  }
+
   return (
     <>
       {!isArtworkPanelOpen && (
@@ -525,7 +552,6 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       )}
       <NavigationHelpModal hidden={isArtworkPanelOpen} />
       <LoadingOverlay />
-      <MobileOverlay />
       {exhibition && <Scene hideLoader />}
       {isArtworkPanelOpen && <ArtworkPanel />}
     </>
