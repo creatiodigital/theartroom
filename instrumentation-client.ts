@@ -39,10 +39,7 @@ Sentry.init({
     }
 
     // WebGL context loss on mobile — device GPU limitation, not a code bug
-    if (
-      message.includes('getProgramInfoLog') ||
-      message.includes('getShaderInfoLog')
-    ) {
+    if (message.includes('getProgramInfoLog') || message.includes('getShaderInfoLog')) {
       return null
     }
 

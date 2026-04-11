@@ -25,7 +25,7 @@ const NumberInput = ({
   onChange,
   icon,
   rotate,
-  max,
+  _max,
   min,
   label,
   disabled,

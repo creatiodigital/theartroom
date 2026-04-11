@@ -41,15 +41,20 @@ interface NavigationButtonProps {
 
 const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps) => {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const isInternal = searchParams.get('ref') === 'internal'
 
   const handleClick = () => {
-    if (isInternal) {
-      router.push(`/exhibitions/${artistSlug}/${exhibitionSlug}`)
-    } else {
-      router.push('/')
-    }
+    try {
+      const nav = sessionStorage.getItem('the-art-room:internal-nav')
+      if (nav) {
+        const { returnUrl } = JSON.parse(nav)
+        sessionStorage.removeItem('the-art-room:internal-nav')
+        if (returnUrl) {
+          router.push(returnUrl)
+          return
+        }
+      }
+    } catch {}
+    router.push(`/exhibitions/${artistSlug}/${exhibitionSlug}`)
   }
 
   return (
@@ -423,7 +428,7 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
 
 const useIsMobile = (breakpoint = 1024) => {
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < breakpoint
+    () => typeof window !== 'undefined' && window.innerWidth < breakpoint,
   )
 
   useEffect(() => {

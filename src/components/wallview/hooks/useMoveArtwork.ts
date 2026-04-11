@@ -96,8 +96,8 @@ export const useMoveArtwork = (
       const scaledMouseX = (event.clientX - rect.left) / scaleFactor
       const scaledMouseY = (event.clientY - rect.top) / scaleFactor
 
-      let x = scaledMouseX - offset.x
-      let y = scaledMouseY - offset.y
+      const x = scaledMouseX - offset.x
+      const y = scaledMouseY - offset.y
 
       const artwork = exhibitionArtworksById[draggedArtworkId]
       if (!artwork) return

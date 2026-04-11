@@ -107,6 +107,21 @@ type ArtworkEditFormProps = {
   onCancel: () => void
 }
 
+const ALLOWED_SOUND_TYPES = [
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/ogg',
+  'audio/webm',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/aac',
+  'audio/flac',
+]
+const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
+
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
+
 export const ArtworkEditForm = ({
   formData,
   imageUrl,
@@ -132,21 +147,6 @@ export const ArtworkEditForm = ({
   const [isDraggingVideo, setIsDraggingVideo] = useState(false)
   const [soundSizeError, setSoundSizeError] = useState<string | null>(null)
   const [videoSizeError, setVideoSizeError] = useState<string | null>(null)
-
-  const ALLOWED_SOUND_TYPES = [
-    'audio/mpeg',
-    'audio/mp4',
-    'audio/ogg',
-    'audio/webm',
-    'audio/wav',
-    'audio/x-wav',
-    'audio/aac',
-    'audio/flac',
-  ]
-  const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
-
-  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
-  const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
   const handleSoundFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {

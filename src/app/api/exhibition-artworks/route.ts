@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
                 videoUrl: live.videoUrl,
                 originalWidth: live.originalWidth,
                 originalHeight: live.originalHeight,
+                featured: live.featured,
               },
             }
           }

@@ -38,10 +38,19 @@ type Artwork = {
 
 interface ArtworkDetailPageProps {
   slug: string
-  isInternal: boolean
 }
 
-export const ArtworkDetailPage = ({ slug, isInternal }: ArtworkDetailPageProps) => {
+export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
+  const [isInternal, setIsInternal] = useState(false)
+
+  useEffect(() => {
+    try {
+      const nav = sessionStorage.getItem('the-art-room:internal-nav')
+      if (nav) {
+        setIsInternal(true)
+      }
+    } catch {}
+  }, [])
   const router = useRouter()
   const pathname = usePathname()
   const [artwork, setArtwork] = useState<Artwork | null>(null)
@@ -75,6 +84,9 @@ export const ArtworkDetailPage = ({ slug, isInternal }: ArtworkDetailPageProps) 
   }, [slug])
 
   const handleClose = () => {
+    try {
+      sessionStorage.removeItem('the-art-room:internal-nav')
+    } catch {}
     router.back()
   }
 
@@ -203,7 +215,7 @@ export const ArtworkDetailPage = ({ slug, isInternal }: ArtworkDetailPageProps) 
           isOpen={isInquireOpen}
           onClose={() => setIsInquireOpen(false)}
           artwork={{
-            id: artwork.id,
+            slug: artwork.slug,
             title: displayTitle || '',
             year: artwork.year ? parseInt(artwork.year) : undefined,
             artistName: displayAuthor || '',
@@ -298,7 +310,7 @@ export const ArtworkDetailPage = ({ slug, isInternal }: ArtworkDetailPageProps) 
         isOpen={isInquireOpen}
         onClose={() => setIsInquireOpen(false)}
         artwork={{
-          id: artwork.id,
+          slug: artwork.slug,
           title: displayTitle || '',
           year: artwork.year ? parseInt(artwork.year) : undefined,
           artistName: displayAuthor || '',

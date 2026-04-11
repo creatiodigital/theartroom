@@ -31,7 +31,7 @@ interface ExhibitionEditPageProps {
 }
 
 export const ExhibitionEditPage = ({
-  artistSlug,
+  _artistSlug,
   exhibitionSlug,
   initialWallId,
   initialArtworkId,
