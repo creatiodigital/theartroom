@@ -132,7 +132,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const canvasCtxRef = useRef<CanvasRenderingContext2D | null>(null)
   const [videoTexture, setVideoTexture] = useState<CanvasTexture | null>(null)
   const frameCountRef = useRef(0)
-  const meshRef = useRef<any>(null)
+  const meshRef = useRef<unknown>(null)
   const videoReadyRef = useRef(false)
   // Reusable objects for frustum culling (avoid per-frame GC)
   const frustumRef = useRef(new Frustum())
@@ -247,6 +247,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     return () => {
       video.removeEventListener('play', setupAudio)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [video, soundDistance, soundSpatial])
 
   // Update panner refDistance when soundDistance changes

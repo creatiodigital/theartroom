@@ -87,19 +87,6 @@ export const detachMouseHandlers =
       window.removeEventListener('mousemove', onMouseMove)
     }
   }
-;(onTouchMove: (event: TouchEvent) => void, mouseState: RefObject<MouseState>) =>
-  (event: TouchEvent) => {
-    if (event.touches.length >= 2 && mouseState.current) {
-      const firstTouch = event.touches[0]
-      if (!firstTouch) return
-
-      mouseState.current.isTouchActive = true
-      mouseState.current.lastTouchX = firstTouch.clientX
-      mouseState.current.deltaX = 0
-
-      window.addEventListener('touchmove', onTouchMove)
-    }
-  }
 
 export const detachTouchHandlers =
   (onTouchMove: (event: TouchEvent) => void, mouseState: RefObject<MouseState>) => () => {

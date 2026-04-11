@@ -5,7 +5,6 @@ import prisma from '@/lib/prisma'
 
 interface ArtworkPageProps {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ ref?: string }>
 }
 
 export async function generateMetadata({ params }: ArtworkPageProps): Promise<Metadata> {
@@ -42,12 +41,9 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
   }
 }
 
-const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
+const ArtworkPage = async ({ params }: ArtworkPageProps) => {
   const { slug } = await params
-  const { ref } = await searchParams
-  const isInternal = ref === 'internal'
-
-  return <ArtworkDetailPage slug={slug} isInternal={isInternal} />
+  return <ArtworkDetailPage slug={slug} />
 }
 
 export default ArtworkPage

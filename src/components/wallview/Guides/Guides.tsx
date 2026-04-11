@@ -203,7 +203,6 @@ export const Guides = () => {
             // Vertical guide: position is metres from left wall edge
             const canvasPx = wallLeft + guide.position * WALL_SCALE
             return (
-              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
               <div
                 key={guide.id}
                 className={`${styles.guide} ${styles.vertical} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}
@@ -222,7 +221,6 @@ export const Guides = () => {
             // Horizontal guide: position is metres from bottom wall edge (up is positive)
             const canvasPx = wallBottom - guide.position * WALL_SCALE
             return (
-              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
               <div
                 key={guide.id}
                 className={`${styles.guide} ${styles.horizontal} ${isSelected ? styles.selected : ''} ${isDragging ? styles.dragging : ''}`}

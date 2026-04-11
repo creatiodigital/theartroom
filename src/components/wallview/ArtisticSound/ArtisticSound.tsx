@@ -84,7 +84,7 @@ const ArtisticSound = ({ artworkId }: ArtisticSoundProps) => {
         fileInputRef.current?.click()
       }
     },
-    [artwork?.soundUrl, isPlaying],
+    [artwork?.soundUrl, isPlaying, artworkId],
   )
 
   const handleFileChange = useCallback(

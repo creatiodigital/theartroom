@@ -93,7 +93,7 @@ export const ExhibitionProfilePage = ({
   }
 
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}${pathname}` : ''
-  const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit?ref=internal`
+  const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
 
   const formatDate = (dateStr?: string) => {
@@ -118,14 +118,28 @@ export const ExhibitionProfilePage = ({
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
-            <Button
-              variant="primary"
-              size="regularSquared"
-              label="Enter Virtual Exhibition"
-              href={visitUrl}
-              iconLeft={<ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />}
-              className={styles.button}
-            />
+            <div
+              onClick={() => {
+                try {
+                  sessionStorage.setItem(
+                    'the-art-room:internal-nav',
+                    JSON.stringify({
+                      from: 'exhibition',
+                      returnUrl: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
+                    }),
+                  )
+                } catch {}
+              }}
+            >
+              <Button
+                variant="primary"
+                size="regularSquared"
+                label="Enter Virtual Exhibition"
+                href={visitUrl}
+                iconLeft={<ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />}
+                className={styles.button}
+              />
+            </div>
             <Share
               title={`${exhibition.mainTitle} — ${artistName}`}
               url={shareUrl}

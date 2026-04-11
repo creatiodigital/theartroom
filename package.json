@@ -1,6 +1,6 @@
 {
   "name": "the-art-room",
-  "version": "3.5.4",
+  "version": "3.5.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,7 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
     "check-format": "prettier --check .",
+    "typecheck": "tsc --noEmit",
     "db:push": "npx prisma db push --config prisma/prisma.config.ts",
     "db:push:prod": "dotenv -e .env.db.prod -- npx prisma db push --config prisma/prisma.config.ts",
     "db:push:dev": "dotenv -e .env.db.dev -- npx prisma db push --config prisma/prisma.config.ts",
@@ -40,6 +41,7 @@
     "@tiptap/pm": "^3.20.1",
     "@tiptap/react": "^3.20.1",
     "@tiptap/starter-kit": "^3.20.1",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "classnames": "^2.5.1",
     "dompurify": "^3.3.3",
@@ -60,9 +62,11 @@
     "uuid": "^11.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@gltf-transform/core": "^4.3.0",
     "@gltf-transform/extensions": "^4.3.0",
     "@gltf-transform/functions": "^4.3.0",
+    "@next/eslint-plugin-next": "^16.2.3",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.2.14",
@@ -75,16 +79,19 @@
     "dotenv-cli": "^11.0.0",
     "draco3dgltf": "^1.5.7",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.0.3",
+    "eslint-config-next": "16.2.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "pg": "^8.20.0",
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
     "prisma": "^7.5.0",
     "sass": "^1.98.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.58.1"
   }
 }

@@ -52,7 +52,10 @@ const ArtworkPanel = () => {
         // sessionStorage not available, ignore
       }
     }
-    router.push(`/artworks/${selectedArtwork.slug}?ref=internal`)
+    try {
+      sessionStorage.setItem('the-art-room:internal-nav', JSON.stringify({ from: 'exhibition' }))
+    } catch {}
+    router.push(`/artworks/${selectedArtwork.slug}`)
   }
 
   return (

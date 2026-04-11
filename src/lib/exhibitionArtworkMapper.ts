@@ -25,6 +25,7 @@ export type ExhibitionArtworkResponse = {
     videoUrl: string | null
     originalWidth: number | null
     originalHeight: number | null
+    featured: boolean
   }
   wallId: string
   posX2d: number
@@ -141,6 +142,7 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
     id: ea.artworkId,
     slug: ea.artwork.slug,
     name: ea.artwork.name,
+    featured: ea.artwork.featured ?? false,
     artworkType: ea.artwork.artworkType as 'image' | 'text' | 'sound' | 'video',
     artworkTitle: ea.artwork.title || undefined,
     author: ea.artwork.author || undefined,

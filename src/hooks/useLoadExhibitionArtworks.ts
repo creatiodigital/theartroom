@@ -117,7 +117,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
     return () => {
       loadedExhibitionId.current = null
     }
-  }, [exhibitionId, dispatch])
+  }, [exhibitionId, dispatch, mode])
 
   return {
     loading,

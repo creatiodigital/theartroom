@@ -26,6 +26,7 @@ const getCachedArtworkBySlug = (slug: string) =>
       return {
         artwork: {
           id: artwork.id,
+          slug: artwork.slug,
           name: artwork.name,
           title: artwork.title,
           author: artwork.author,
