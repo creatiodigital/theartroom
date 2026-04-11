@@ -15,6 +15,7 @@ import {
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'
+import { Analytics } from '@vercel/analytics/next'
 import '@/styles/globals.scss'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             {children}
           </StoreProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   )

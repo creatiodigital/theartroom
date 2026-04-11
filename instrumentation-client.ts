@@ -19,9 +19,17 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
   replaysSessionSampleRate: 0,
 
-  // Filter out noise from browser extensions (e.g. Google Translate)
+  // Filter out noise from bots, browser extensions, and unactionable WebGL errors
   beforeSend(event) {
+    // Ignore errors from bots/crawlers — they can't run WebGL
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    if (/bot|crawl|spider|Google-Read-Aloud|Googlebot|Bingbot|Slurp/i.test(ua)) {
+      return null
+    }
+
     const message = event.exception?.values?.[0]?.value || ''
+
+    // Browser extensions (e.g. Google Translate) manipulating the DOM
     if (
       message.includes('removeChild') ||
       message.includes('insertBefore') ||
@@ -29,6 +37,14 @@ Sentry.init({
     ) {
       return null
     }
+
+    // WebGL context loss on mobile — device GPU limitation, not a code bug
+    if (message.includes('getProgramInfoLog') || message.includes('getShaderInfoLog')) {
+      return null
+    }
+
     return event
   },
 })
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart

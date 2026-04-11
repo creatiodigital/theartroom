@@ -180,7 +180,7 @@ export const Wall = () => {
       dispatch(setWallDimensions({ width, height }))
       dispatch(setWallCoordinates({ coordinates: wallCoordinates, normal: wallNormal }))
     }
-  }, [boundingData, dispatch])
+  }, [boundingData, dispatch, scaling])
 
   // Recalculate 3D positions for all artworks on this wall when boundingData loads.
   // This fixes stale posZ3d values from the database by recomputing from 2D coordinates.

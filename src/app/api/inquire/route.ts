@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    const { firstName, lastName, email, phone, message, artworkId, artworkTitle, artworkArtist } =
+    const { firstName, lastName, email, phone, message, artworkSlug, artworkTitle, artworkArtist } =
       body
 
     // Validate required fields
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const safeMessage = escapeHtml(message)
     const safeArtworkTitle = escapeHtml(artworkTitle)
     const safeArtworkArtist = escapeHtml(artworkArtist)
-    const safeArtworkId = escapeHtml(artworkId)
+    const safeArtworkSlug = escapeHtml(artworkSlug)
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
           <div style="background-color: #f9f9f9; padding: 20px; margin-bottom: 24px;">
             <p style="margin: 0 0 8px 0;"><strong>Artwork:</strong> ${safeArtworkTitle}</p>
             <p style="margin: 0 0 8px 0;"><strong>Artist:</strong> ${safeArtworkArtist}</p>
-            <p style="margin: 0;"><strong>Artwork ID:</strong> ${safeArtworkId}</p>
+            <p style="margin: 0;"><strong>Artwork Ref:</strong> ${safeArtworkSlug}</p>
           </div>
           
           <h3 style="font-size: 18px; margin-bottom: 16px;">Contact Information</h3>

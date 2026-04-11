@@ -16,7 +16,7 @@ type InquireSidebarProps = {
   isOpen: boolean
   onClose: () => void
   artwork: {
-    id: string
+    slug: string
     title: string
     year?: number
     artistName: string
@@ -142,7 +142,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
           email,
           phone,
           message,
-          artworkId: artwork.id,
+          artworkSlug: artwork.slug,
           artworkTitle: artwork.title,
           artworkArtist: artwork.artistName,
         }),

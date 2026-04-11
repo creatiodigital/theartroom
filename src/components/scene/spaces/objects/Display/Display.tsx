@@ -73,6 +73,7 @@ const useBlobTexture = (url: string): Texture | null => {
         texture.dispose()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url])
 
   return texture
@@ -155,6 +156,7 @@ const useRegularTexture = (url: string): Texture | null => {
         texture.dispose()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url])
 
   return texture

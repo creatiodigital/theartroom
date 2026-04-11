@@ -94,8 +94,9 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
 
   // Stop audio when this SoundObject unmounts
   useEffect(() => {
+    const audio = audioRef.current
     return () => {
-      if (audioRef.current?.isPlaying) {
+      if (audio?.isPlaying) {
         stop()
       }
     }

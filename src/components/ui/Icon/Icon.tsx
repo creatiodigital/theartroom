@@ -159,9 +159,9 @@ const customIcons: Record<string, CustomSvgIcon> = {
 }
 
 // Merge both registries for type inference
-const allIcons = { ...lucideIcons, ...customIcons }
+const _allIcons = { ...lucideIcons, ...customIcons }
 
-export type IconName = keyof typeof allIcons
+export type IconName = keyof typeof _allIcons
 
 export type IconProps = {
   name: IconName

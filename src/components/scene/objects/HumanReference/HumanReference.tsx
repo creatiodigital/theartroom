@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+
 import { useGLTF } from '@react-three/drei'
 import { useSelector } from 'react-redux'
 
@@ -13,12 +15,13 @@ const HumanReference = () => {
   const humanPositionZ = useSelector((state: RootState) => state.scene.humanPositionZ)
   const humanRotationY = useSelector((state: RootState) => state.scene.humanRotationY)
   const { scene } = useGLTF(HUMAN_MODEL_PATH)
+  const clonedScene = useMemo(() => scene.clone(), [scene])
 
   if (!isHumanVisible) return null
 
   return (
     <primitive
-      object={scene.clone()}
+      object={clonedScene}
       position={[humanPositionX, 0, humanPositionZ]}
       rotation={[0, (humanRotationY * Math.PI) / 180, 0]}
       scale={1}
