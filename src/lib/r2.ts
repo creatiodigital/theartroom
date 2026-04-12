@@ -20,7 +20,7 @@ const PUBLIC_URL = process.env.R2_PUBLIC_URL!
 // ── Environment prefix ───────────────────────────────────────────────────────
 
 function getEnvPrefix(): string {
-  return process.env.NODE_ENV === 'production' ? 'production' : 'development'
+  return process.env.NEXT_PUBLIC_APP_ENV === 'production' ? 'production' : 'staging'
 }
 
 // ── Random suffix ────────────────────────────────────────────────────────────
