@@ -1,6 +1,7 @@
 import {
   Armchair,
   ArrowDownFromLine,
+  ArrowLeft,
   ArrowLeftFromLine,
   ArrowRightFromLine,
   ArrowUpFromLine,
@@ -14,6 +15,7 @@ import {
   House,
   Image,
   LampCeiling,
+  LoaderCircle,
   Lock,
   Magnet,
   MoveHorizontal,
@@ -83,6 +85,7 @@ type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 // Lucide icons registry (add Lucide icons here as needed)
 const lucideIcons: Record<string, LucideIcon> = {
   armchair: Armchair,
+  arrowLeft: ArrowLeft,
   arrowRight: ArrowRight,
   arrowTopFromLine: ArrowUpFromLine,
   arrowBottomFromLine: ArrowDownFromLine,
@@ -99,6 +102,7 @@ const lucideIcons: Record<string, LucideIcon> = {
   'human-standing': PersonStanding,
   image: Image,
   light: LampCeiling,
+  loaderCircle: LoaderCircle,
   lock: Lock,
   magnet: Magnet,
   moveHorizontal: MoveHorizontal,

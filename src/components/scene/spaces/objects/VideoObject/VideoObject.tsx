@@ -247,7 +247,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     return () => {
       video.removeEventListener('play', setupAudio)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [video, soundDistance, soundSpatial])
 
   // Update panner refDistance when soundDistance changes

@@ -188,10 +188,10 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
               )}
               <Button
                 variant="secondary"
-                label="Inquire"
+                label="Buy Printable"
                 icon="arrowRight"
                 size="bigSquared"
-                onClick={() => setIsInquireOpen(true)}
+                onClick={() => router.push(`/artworks/${artwork.slug}/print`)}
                 className={styles.inquireButton}
               />
               <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
@@ -283,10 +283,10 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
             )}
             <Button
               variant="secondary"
-              label="Inquire"
+              label="Buy Printable"
               icon="arrowRight"
               size="bigSquared"
-              onClick={() => setIsInquireOpen(true)}
+              onClick={() => router.push(`/artworks/${artwork.slug}/print`)}
               className={styles.inquireButton}
             />
             <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
