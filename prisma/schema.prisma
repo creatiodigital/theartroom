@@ -44,11 +44,19 @@ model User {
   loginCode       String?
   loginCodeExpiry DateTime?
 
+  // Stripe Connect (Express) — the artist's connected Stripe account.
+  // `onboardingComplete` flips true once `account.updated` arrives with
+  // charges_enabled + payouts_enabled. We never trust the client-side
+  // return from the onboarding redirect on its own.
+  stripeAccountId          String?
+  stripeOnboardingComplete Boolean @default(false)
+
   exhibitions Exhibition[]
   artworks    Artwork[]
   presets     ArtworkPreset[]
   accounts    Account[]
   sessions    Session[]
+  printOrders PrintOrder[]
 }
 
 model ArtworkPreset {
@@ -149,10 +157,66 @@ model Artwork {
   hiddenFromExhibition Boolean @default(false)
   order                Int     @default(0)
 
+  // Print sales (Prodigi fulfillment). `printEnabled` gates the "Buy
+  // Printable" CTA + the /print wizard; when false the artwork page
+  // shows "Inquire" instead. `printPriceCents` is the artist's cut
+  // per print (the gallery markup + Prodigi cost stack on top at
+  // checkout time). Nullable so we can distinguish "not set yet"
+  // from a deliberate zero.
+  printEnabled    Boolean @default(false)
+  printPriceCents Int?
+
   exhibitionArtworks ExhibitionArtwork[]
+  printOrders        PrintOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PrintOrder {
+  id              String @id @default(uuid())
+  paymentIntentId String @unique
+
+  artworkId    String
+  artwork      Artwork @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  artistUserId String
+  artistUser   User    @relation(fields: [artistUserId], references: [id], onDelete: Restrict)
+
+  buyerEmail      String
+  buyerName       String
+  shippingAddress Json // ShippingAddress snapshot at checkout time
+  printConfig     Json // PrintConfig snapshot at checkout time
+  country         String
+
+  // All amounts in minor units (cents) for the given currency.
+  totalCents           Int
+  artistCents          Int
+  galleryCents         Int
+  prodigiItemCents     Int
+  prodigiShippingCents Int
+  customerVatCents     Int
+  currency             String @default("eur")
+
+  // 'processing' | 'succeeded' | 'failed' | 'refunded'
+  paymentStatus String @default("processing")
+
+  // Prodigi fulfillment state (null until we submit the order).
+  prodigiOrderId String?
+  prodigiStage   String? // 'Draft' | 'InProgress' | 'Complete' | 'Cancelled'
+  trackingUrl    String?
+  shippedAt      DateTime?
+
+  // Stripe Connect transfer to the artist (null until admin releases payout).
+  // 'pending' | 'paid' | 'reversed'
+  transferId     String?
+  transferStatus String?
+  paidOutAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([artistUserId])
+  @@index([paymentStatus, prodigiStage, transferStatus])
 }
 
 model Exhibition {
@@ -176,7 +240,7 @@ model Exhibition {
   publishedSnapshot Json? // Full snapshot at publish time
   hasPendingChanges Boolean   @default(false) // True when draft differs from published
   previewEnabled    Boolean   @default(false) // When true, visit route is accessible even if unpublished
-  previewToken      String?                   // UUID token required in ?preview= param
+  previewToken      String? // UUID token required in ?preview= param
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")
@@ -191,7 +255,7 @@ model Exhibition {
   recessedLampColor      String?  @default("#ffffff")
   recessedLampIntensity  Float?   @default(4.0)
   recessedLampAngle      Float?   @default(0.45)
-  recessedLampDistance    Float?   @default(15.0)
+  recessedLampDistance   Float?   @default(15.0)
   trackLampMaterialColor String?  @default("#ffffff")
   trackLampAngle         Float?   @default(0.45)
   trackLampDistance      Float?   @default(5.0)
@@ -216,9 +280,9 @@ model Exhibition {
   cameraElevation        Float?   @default(1.6)
 
   // Wall & Ceiling customization
-  wallColor       String? @default("#ffffff")
-  ceilingColor    String? @default("#ffffff")
-  wallBrightness  Float?  @default(1.8)
+  wallColor      String? @default("#ffffff")
+  ceilingColor   String? @default("#ffffff")
+  wallBrightness Float?  @default(1.8)
 
   // Shadow decal controls
   shadowBlur      Float? @default(0.025)
@@ -323,10 +387,10 @@ model ExhibitionArtwork {
   shapeOpacity Float  @default(1.0)
 
   // Video playback (per-exhibition)
-  videoPlayMode         String  @default("proximity") // 'proximity' | 'always' | 'click'
-  videoLoop             Boolean @default(true)        // Whether video loops
-  videoVolume           Float   @default(1.0)         // Volume level 0-1
-  videoProximityDistance Float   @default(3)           // Distance in meters to trigger play
+  videoPlayMode          String  @default("proximity") // 'proximity' | 'always' | 'click'
+  videoLoop              Boolean @default(true) // Whether video loops
+  videoVolume            Float   @default(1.0) // Volume level 0-1
+  videoProximityDistance Float   @default(3) // Distance in meters to trigger play
 
   // Wall-normal rotation (degrees, 0-360, only used for shapes)
   rotation Float @default(0)

@@ -42,7 +42,7 @@ export const SummaryPanel = ({
   const frameColor = getFrameColor(config.frameColorId)
   const mount = getMount(config.mountId)
 
-  const price = computePrice(config, { artistPriceCents: artwork.artistPriceCents })
+  const price = computePrice(config, { printPriceCents: artwork.printPriceCents })
 
   // Display unit for the schema + measurements. Local to the summary —
   // doesn't touch the PrintConfig or trigger re-quotes.

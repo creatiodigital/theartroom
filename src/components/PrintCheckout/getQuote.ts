@@ -69,7 +69,6 @@ export async function getProdigiQuote(
       },
     }
   } catch (err) {
-     
     console.warn(`[getProdigiQuote] ${sku} → ${countryCode} failed:`, err)
     const body =
       err && typeof err === 'object' && 'body' in err

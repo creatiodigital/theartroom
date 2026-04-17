@@ -130,11 +130,20 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         }
       }
 
-      // Step 3: Update artwork metadata
+      // Step 3: Update artwork metadata. Transform the euros-string the UI
+      // tracks back into the cents-integer the DB uses.
+      const { printPriceEuros, ...rest } = formData
+      const parsed = Number(printPriceEuros)
+      const printPriceCents =
+        printPriceEuros.trim() === '' || !Number.isFinite(parsed) || parsed < 0
+          ? null
+          : Math.round(parsed * 100)
+      const payload = { ...rest, printPriceCents }
+
       const response = await fetch(`/api/artworks/${artworkId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {

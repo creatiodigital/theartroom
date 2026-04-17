@@ -1,18 +1,18 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
-import { PrintCheckout } from '@/components/PrintCheckout'
+import { PrintPayment } from '@/components/PrintPayment'
 import { normalizePrintConfig } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
 import prisma from '@/lib/prisma'
 
-interface CheckoutPageProps {
+interface PaymentPageProps {
   params: Promise<{ slug: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 export const metadata: Metadata = {
-  title: { absolute: 'Checkout — The Art Room' },
+  title: { absolute: 'Payment — The Art Room' },
   robots: { index: false, follow: false },
 }
 
@@ -21,11 +21,6 @@ function pickString(v: string | string[] | undefined): string | undefined {
   return v
 }
 
-/**
- * Rebuild a PrintConfig from URL search params — this is the wizard's
- * handoff into checkout. Unknown/missing ids are repaired by
- * `normalizePrintConfig`, so a stale or hand-edited URL can't crash us.
- */
 function readConfigFromParams(sp: Record<string, string | string[] | undefined>): PrintConfig {
   return normalizePrintConfig({
     paperId: (pickString(sp.paper) ?? 'museum-cotton-rag') as PrintConfig['paperId'],
@@ -37,7 +32,7 @@ function readConfigFromParams(sp: Record<string, string | string[] | undefined>)
   })
 }
 
-const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
+const PaymentPage = async ({ params, searchParams }: PaymentPageProps) => {
   const { slug } = await params
   const sp = await searchParams
 
@@ -56,7 +51,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`
 
   return (
-    <PrintCheckout
+    <PrintPayment
       artwork={{
         slug: artwork.slug ?? slug,
         title: artwork.title ?? artwork.name,
@@ -73,4 +68,4 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
   )
 }
 
-export default CheckoutPage
+export default PaymentPage

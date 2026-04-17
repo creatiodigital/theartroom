@@ -37,6 +37,12 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   if (!artwork || !artwork.imageUrl) {
     notFound()
   }
+  // Print flow is gated per-artwork. If the artist hasn't enabled prints
+  // (or hasn't set a price) a direct link to /print should 404 — the
+  // public page already hides the "Buy Printable" CTA.
+  if (!artwork.printEnabled || !artwork.printPriceCents) {
+    notFound()
+  }
 
   // Fall back to 1:1 if we don't have original pixel dimensions for some reason.
   const originalWidthPx = artwork.originalWidth ?? 1000
@@ -54,6 +60,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         imageUrl: artwork.imageUrl,
         originalWidthPx,
         originalHeightPx,
+        printPriceCents: artwork.printPriceCents,
       }}
     />
   )

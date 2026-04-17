@@ -43,6 +43,8 @@ export type Artwork = {
   soundUrl: string | null
   featured: boolean
   hiddenFromExhibition: boolean
+  printEnabled?: boolean
+  printPriceCents?: number | null
 }
 
 export type ArtworkFormData = {
@@ -57,6 +59,9 @@ export type ArtworkFormData = {
   textContent: string
   featured: boolean
   hiddenFromExhibition: boolean
+  printEnabled: boolean
+  /** Euros as a string for the input field; converted to cents at submit. */
+  printPriceEuros: string
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -71,6 +76,8 @@ export const getInitialFormData = (): ArtworkFormData => ({
   textContent: '',
   featured: false,
   hiddenFromExhibition: false,
+  printEnabled: false,
+  printPriceEuros: '',
 })
 
 export const populateFormData = (data: Artwork): ArtworkFormData => ({
@@ -85,6 +92,9 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   textContent: stripHtml(data.textContent || ''),
   featured: data.featured ?? false,
   hiddenFromExhibition: data.hiddenFromExhibition ?? false,
+  printEnabled: data.printEnabled ?? false,
+  printPriceEuros:
+    typeof data.printPriceCents === 'number' ? (data.printPriceCents / 100).toString() : '',
 })
 
 type ArtworkEditFormProps = {
@@ -578,6 +588,44 @@ export const ArtworkEditForm = ({
             />
             <span className={dashboardStyles.hint}>
               Featured artworks appear prominently in your profile&apos;s artwork grid.
+            </span>
+          </div>
+        )}
+
+        {/* Print Sales (image artworks only — other types aren't Prodigi-printable) */}
+        {formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Print Sales</h3>
+            <p className={dashboardStyles.sectionDescription}>
+              Let buyers order a physical print of this artwork. We&apos;ll show a &quot;Buy
+              Printable&quot; button next to &quot;Inquire&quot; on the public page.
+            </p>
+            <Checkbox
+              checked={formData.printEnabled}
+              onChange={(e) => onFormChange('printEnabled', e.target.checked)}
+              label="Ready for print"
+            />
+            <div
+              className={dashboardStyles.field}
+              style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
+            >
+              <label htmlFor="printPriceEuros">Print price (€)</label>
+              <Input
+                id="printPriceEuros"
+                type="text"
+                size="medium"
+                value={formData.printPriceEuros}
+                onChange={(e) =>
+                  // Accept digits + optional decimal; reject letters/signs so the
+                  // submit-time parse can't ever see garbage.
+                  onFormChange('printPriceEuros', e.target.value.replace(/[^0-9.]/g, ''))
+                }
+                placeholder="100"
+              />
+            </div>
+            <span className={dashboardStyles.hint}>
+              Your cut per print sale. The gallery fee, Prodigi cost and VAT are added on top at
+              checkout.
             </span>
           </div>
         )}

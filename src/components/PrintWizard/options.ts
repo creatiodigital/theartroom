@@ -142,7 +142,6 @@ function resolve<T extends { id: string }>(list: T[], id: string, kind: string):
   const fallback = list[0]
   if (!fallback) throw new Error(`[PrintWizard] Empty catalog for ${kind}`)
   if (process.env.NODE_ENV !== 'production') {
-     
     console.warn(`[PrintWizard] Unknown ${kind} id "${id}" — falling back to "${fallback.id}"`)
   }
   return fallback
@@ -327,8 +326,6 @@ export function estimateProdigiCostCents(config: PrintConfig): number | null {
 
 export const GALLERY_MARKUP_RATE = 0.45 // 45% of artist price
 export const VAT_RATE = 0.21 // Spain standard
-/** Fallback artist price applied to every artwork until per-artwork pricing ships. */
-export const DEFAULT_ARTIST_PRICE_CENTS = 10000 // €100
 
 export type PriceBreakdown = {
   prodigiCostCents: number
@@ -343,10 +340,10 @@ export type PriceBreakdown = {
 
 export function computePrice(
   config: PrintConfig,
-  opts: { artistPriceCents?: number; vatRate?: number } = {},
+  opts: { printPriceCents: number; vatRate?: number },
 ): PriceBreakdown {
   const prodigi = estimateProdigiCostCents(config) ?? 0
-  const artist = opts.artistPriceCents ?? DEFAULT_ARTIST_PRICE_CENTS
+  const artist = opts.printPriceCents
   const gallery = Math.round(artist * GALLERY_MARKUP_RATE)
   const subtotal = prodigi + artist + gallery
   const vatRate = opts.vatRate ?? VAT_RATE

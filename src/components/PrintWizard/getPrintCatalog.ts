@@ -74,7 +74,7 @@ export async function getPrintCatalog(): Promise<CatalogResult> {
 
 async function loadCatalog(): Promise<CatalogResult> {
   const skus = enumerateSkus()
-   
+
   console.info(`[getPrintCatalog] fetching ${skus.length} SKUs (concurrency=${CONCURRENCY})`)
 
   const ok: SkuData[] = []
@@ -105,17 +105,15 @@ async function loadCatalog(): Promise<CatalogResult> {
         return
       }
       errors++
-       
+
       console.warn(`[getPrintCatalog] ${sku} failed:`, r.reason)
     })
   }
 
-   
   console.info(
     `[getPrintCatalog] done — ok=${ok.length}, skipped=${skipped.length}, errors=${errors}`,
   )
   if (skipped.length > 0) {
-     
     console.info(
       `[getPrintCatalog] skipped SKUs:`,
       skipped.map((s) => `${s.sku}(${s.status})`).join(', '),

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
 import {
-  DEFAULT_ARTIST_PRICE_CENTS,
   GALLERY_MARKUP_RATE,
   formatEuro,
   formatSize,
@@ -20,6 +19,7 @@ import {
 } from '@/components/PrintWizard/options'
 import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
 
+import { createPaymentIntent } from './createPaymentIntent'
 import { getProdigiQuote } from './getQuote'
 import type { ProdigiQuoteResult } from './getQuote'
 
@@ -56,6 +56,8 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
   const [quote, setQuote] = useState<ProdigiQuoteResult | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quoteError, setQuoteError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   // Form validity is tracked separately because inputs are uncontrolled
   // (so Chrome autofill works without React re-renders clobbering values).
   // We poll the native HTML5 validity on every form input event.
@@ -65,8 +67,26 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
   // under each field. Keeps empty fields from flashing red on page load.
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
+  // Persist the shipping form to sessionStorage so navigating back to the
+  // wizard and returning doesn't wipe out what the user (or Chrome
+  // autofill) already typed. Keyed by artwork slug so different items
+  // don't collide.
+  const storageKey = `print-address:${artwork.slug}`
+
   const handleFormInput = () => {
-    setFormValid(formRef.current?.checkValidity() ?? false)
+    const form = formRef.current
+    if (!form) return
+    setFormValid(form.checkValidity())
+    try {
+      const fd = new FormData(form)
+      const snapshot: Record<string, string> = {}
+      fd.forEach((v, k) => {
+        snapshot[k] = String(v ?? '')
+      })
+      sessionStorage.setItem(storageKey, JSON.stringify(snapshot))
+    } catch {
+      // sessionStorage can be disabled/full — non-fatal, we just lose persistence.
+    }
   }
 
   const handleBlur = (e: React.FocusEvent<HTMLFormElement>) => {
@@ -109,6 +129,29 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       }, ms),
     )
     return () => checks.forEach(clearTimeout)
+  }, [])
+
+  // Restore previously entered shipping details (e.g. after bouncing back
+  // from the wizard). Inputs are uncontrolled so we hydrate them by name
+  // directly — no re-render, no interference with Chrome autofill.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(storageKey)
+      if (!raw) return
+      const saved = JSON.parse(raw) as Record<string, string>
+      const form = formRef.current
+      if (!form) return
+      for (const [name, value] of Object.entries(saved)) {
+        const el = form.elements.namedItem(name)
+        if (el instanceof HTMLInputElement && !el.value) {
+          el.value = value
+        }
+      }
+      setFormValid(form.checkValidity())
+    } catch {
+      // Stored blob was unreadable — ignore.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const paper = getPaper(config.paperId)
@@ -172,7 +215,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
     'SE',
   ]).has(country)
 
-  const artistCents = artwork.artistPriceCents ?? DEFAULT_ARTIST_PRICE_CENTS
+  const artistCents = artwork.printPriceCents
   const galleryCents = Math.round(artistCents * GALLERY_MARKUP_RATE)
   const prodigiCents = quote ? quote.itemCents + quote.shippingCents : 0
   const preTaxCents = artistCents + galleryCents + prodigiCents
@@ -181,7 +224,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
 
   const canSubmit = !!quote && !quoteLoading && formValid
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const form = formRef.current
     if (!form) return
@@ -201,14 +244,44 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       postalCode: String(fd.get('postalCode') ?? '').trim(),
     }
 
-    // Payment step comes next. For now just log so we can verify the payload.
-     
-    console.info('[PrintCheckout] Ready to charge:', {
-      artwork: artwork.slug,
-      config,
-      address: submitted,
-      totals: { prodigiCents, artistCents, galleryCents, customerVatCents, totalCents },
-    })
+    setSubmitError(null)
+    setSubmitting(true)
+    try {
+      const res = await createPaymentIntent({
+        artworkSlug: artwork.slug,
+        config,
+        address: submitted,
+      })
+      if (!res.ok) {
+        setSubmitError(res.error)
+        return
+      }
+      // Stash what the payment page needs. The clientSecret is scoped to
+      // this browser session; the address + totals are just so the
+      // payment screen can render a summary without re-fetching.
+      sessionStorage.setItem(
+        `print-payment:${artwork.slug}`,
+        JSON.stringify({
+          clientSecret: res.clientSecret,
+          paymentIntentId: res.paymentIntentId,
+          totals: res.totals,
+          address: submitted,
+          config,
+          country,
+        }),
+      )
+      const params = new URLSearchParams({
+        paper: config.paperId,
+        format: config.formatId,
+        size: config.sizeId,
+        color: config.frameColorId,
+        mount: config.mountId,
+        country,
+      })
+      router.push(`/artworks/${artwork.slug}/print/payment?${params.toString()}`)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!country) return null
@@ -466,15 +539,16 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
           </div>
 
           {quoteError && <p className={styles.quoteNote}>{quoteError}</p>}
+          {submitError && <p className={styles.quoteNote}>{submitError}</p>}
 
           <button
             type="button"
             className={styles.ctaButton}
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             style={{ marginTop: 'var(--space-4)' }}
           >
-            Continue to payment
+            {submitting ? 'Preparing payment…' : 'Continue to payment'}
           </button>
         </aside>
       </main>

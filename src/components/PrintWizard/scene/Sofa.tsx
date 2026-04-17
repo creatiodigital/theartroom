@@ -38,7 +38,7 @@ export const Sofa = ({
     if (process.env.NODE_ENV === 'production') return
     const box = new Box3().setFromObject(clone)
     const size = box.getSize(new Vector3())
-     
+
     console.info(
       `[Sofa] native dimensions (m): width=${size.x.toFixed(2)}  depth=${size.z.toFixed(2)}  height=${size.y.toFixed(2)}`,
     )

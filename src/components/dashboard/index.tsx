@@ -196,6 +196,22 @@ export const DashboardPage = () => {
         </p>
       </div>
 
+      {/* Payouts Section */}
+      <div className={dashboardStyles.section}>
+        <div className={dashboardStyles.sectionHeader}>
+          <h2 className={dashboardStyles.sectionTitle}>Payouts</h2>
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="Set up payouts"
+            onClick={() => router.push('/dashboard/payouts')}
+          />
+        </div>
+        <p className={dashboardStyles.sectionDescription}>
+          Connect a bank account with Stripe so we can send you your share when your prints sell.
+        </p>
+      </div>
+
       {/* Artwork Library Section */}
       <div className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>

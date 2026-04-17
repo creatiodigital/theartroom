@@ -80,6 +80,6 @@ export type WizardArtwork = {
   /** Pixel dimensions of the source image — used for aspect-ratio filtering. */
   originalWidthPx: number
   originalHeightPx: number
-  /** Optional base price (in cents) the artist charges per sale. */
-  artistPriceCents?: number
+  /** The artist's cut (in cents) per print sale. Set per-artwork by the artist. */
+  printPriceCents: number
 }
