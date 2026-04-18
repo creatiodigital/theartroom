@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/Button'
@@ -34,10 +35,14 @@ export const ConfirmModal = ({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) => {
+  const titleId = useId()
+
   return (
-    <Modal onClose={busy ? () => {} : onCancel}>
+    <Modal onClose={busy ? () => {} : onCancel} titleId={titleId}>
       <div className={styles.body}>
-        <h2 className={styles.title}>{title}</h2>
+        <h2 id={titleId} className={styles.title}>
+          {title}
+        </h2>
         <div className={styles.message}>{message}</div>
         {warning && <div className={styles.warning}>{warning}</div>}
         <div className={styles.actions}>

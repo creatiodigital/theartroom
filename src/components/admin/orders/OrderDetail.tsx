@@ -371,6 +371,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                 )}
 
                 <label
+                  htmlFor="refund-reason"
                   style={{
                     display: 'block',
                     fontSize: 12,
@@ -383,6 +384,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                   Reason (internal, for audit log)
                 </label>
                 <textarea
+                  id="refund-reason"
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
                   rows={3}
