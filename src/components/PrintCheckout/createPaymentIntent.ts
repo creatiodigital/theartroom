@@ -4,6 +4,7 @@ import crypto from 'node:crypto'
 
 import type { PrintConfig } from '@/components/PrintWizard/types'
 import { GALLERY_MARKUP_RATE } from '@/components/PrintWizard/options'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
@@ -195,6 +196,21 @@ export async function createPaymentIntent(
     }
   } catch (err) {
     console.error('[createPaymentIntent] Stripe failed:', err)
+    // Checkout blocker — buyer sees a generic "please try again" but we
+    // need to see exactly what Stripe said so we can fix config/tax/etc.
+    captureError(err, {
+      flow: 'payment',
+      stage: 'create-payment-intent',
+      extra: {
+        artworkId: artwork.id,
+        artistUserId: artwork.userId,
+        country: address.countryCode,
+        totalCents,
+        currency,
+      },
+      level: 'error',
+      fingerprint: ['payment:create-intent-failed'],
+    })
     return {
       ok: false,
       error: 'Payment could not be initialized. Please try again.',

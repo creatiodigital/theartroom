@@ -1,9 +1,12 @@
+import { timingSafeEqual } from 'node:crypto'
+
 import { NextRequest, NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
 import type { ProdigiOrder } from '@/lib/prodigi/types'
 import { cancelOrder as cancelProdigiOrder } from '@/lib/prodigi/client'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
+import { captureError } from '@/lib/observability/captureError'
 import { stripe } from '@/lib/stripe/client'
 
 export const runtime = 'nodejs'
@@ -12,10 +15,31 @@ export const dynamic = 'force-dynamic'
 const webhookSecret = process.env.PRODIGI_WEBHOOK_SECRET
 
 /**
- * Prodigi doesn't HMAC-sign its callbacks, so we gate the endpoint on a
- * shared secret in the querystring (`?key=...`) or `X-Prodigi-Secret`
- * header. Configure the URL in the Prodigi dashboard as:
+ * Constant-time comparison so an attacker can't recover the webhook
+ * secret byte-by-byte from response-timing differences. `timingSafeEqual`
+ * requires equal-length inputs, so we length-check first — falling
+ * through to `false` when the lengths differ.
+ */
+function secretsMatch(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided)
+  const b = Buffer.from(expected)
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
+}
+
+/**
+ * Prodigi doesn't HMAC-sign its callbacks and its API v4 callback config
+ * only accepts a plain URL string — no custom headers, no signatures.
+ * We gate on a shared secret that Prodigi can send either as a
+ * querystring param (`?key=...`) or as an `X-Prodigi-Secret` header,
+ * and compare it in constant time.
+ *
+ * Configure the URL in the Prodigi dashboard as:
  *   https://theartroom.gallery/api/webhooks/prodigi?key=<PRODIGI_WEBHOOK_SECRET>
+ *
+ * Operational note: rotate PRODIGI_WEBHOOK_SECRET periodically (it
+ * lives in Prodigi's logs and retry records), and keep it long + random
+ * (>= 32 hex chars from `openssl rand -hex 32`).
  *
  * Payload shape is the full Order object (same as GET /orders/{id}).
  */
@@ -26,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   const provided = req.nextUrl.searchParams.get('key') ?? req.headers.get('x-prodigi-secret') ?? ''
-  if (provided !== webhookSecret) {
+  if (!provided || !secretsMatch(provided, webhookSecret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -120,6 +144,21 @@ export async function POST(req: NextRequest) {
           message: 'Stripe capture failed after Prodigi production allocation',
           payload: { error: err instanceof Error ? err.message : String(err) },
         })
+        // CRITICAL: Prodigi is producing but we couldn't collect from
+        // the buyer. Needs an operator immediately — either capture
+        // failed for a recoverable reason (retry manually) or we need
+        // to cancel Prodigi before they ship.
+        captureError(err, {
+          flow: 'payment',
+          stage: 'capture-failed',
+          extra: {
+            orderId: existing.id,
+            paymentIntentId: existing.paymentIntentId,
+            prodigiOrderId: order.id,
+          },
+          level: 'fatal',
+          fingerprint: ['payment:capture-failed'],
+        })
         try {
           await cancelProdigiOrder(order.id)
         } catch (cancelErr) {
@@ -127,6 +166,19 @@ export async function POST(req: NextRequest) {
             `[prodigi-webhook] failed to cancel Prodigi order=${order.id} after capture failure:`,
             cancelErr,
           )
+          // Compounding failure: capture AND cancel both failed. We may
+          // be on the hook to Prodigi for a print we can't charge for.
+          captureError(cancelErr, {
+            flow: 'prodigi',
+            stage: 'cancel-after-capture-fail',
+            extra: {
+              orderId: existing.id,
+              paymentIntentId: existing.paymentIntentId,
+              prodigiOrderId: order.id,
+            },
+            level: 'fatal',
+            fingerprint: ['prodigi:cancel-after-capture-fail'],
+          })
         }
         await prisma.printOrder.update({
           where: { id: existing.id },
@@ -136,6 +188,12 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('[prodigi-webhook] update failed:', err)
+    captureError(err, {
+      flow: 'webhook',
+      stage: 'prodigi-handler-threw',
+      extra: { prodigiOrderId: order.id, stage: order.status?.stage },
+      level: 'error',
+    })
   }
 
   return NextResponse.json({ received: true })

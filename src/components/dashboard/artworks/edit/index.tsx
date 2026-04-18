@@ -147,7 +147,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           return
         }
 
-        const { presignedUrl, originalUrl } = await requestRes.json()
+        const { presignedUrl, originalKey } = await requestRes.json()
 
         // 1b. Upload original directly to R2
         const uploadRes = await fetch(presignedUrl, {
@@ -162,14 +162,17 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           return
         }
 
-        // 1c. Finalize — server generates web-optimized version
+        // 1c. Finalize — server rebuilds the public URL from the key it
+        // already issued in step 1a, then generates the web-optimized
+        // version. We deliberately send the opaque key (not a URL) so
+        // the complete step can never be pointed at an external host.
         const completeRes = await fetch('/api/upload/image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'complete',
             artworkId,
-            originalUrl,
+            originalKey,
           }),
         })
 

@@ -1,5 +1,6 @@
 'use server'
 
+import { captureError } from '@/lib/observability/captureError'
 import { stripe } from '@/lib/stripe/client'
 
 export type TaxEstimateInput = {
@@ -97,6 +98,18 @@ export async function getTaxEstimate(input: TaxEstimateInput): Promise<TaxEstima
     }
   } catch (err) {
     console.error('[getTaxEstimate] Stripe Tax failed:', err)
+    captureError(err, {
+      flow: 'payment',
+      stage: 'tax-calc',
+      extra: {
+        countryCode: input.countryCode,
+        postalCode: input.postalCode,
+        preTaxCents: input.preTaxCents,
+        currency: input.currency,
+      },
+      level: 'warning',
+      fingerprint: ['payment:tax-calc-failed'],
+    })
     return {
       ok: false,
       error: 'Could not calculate tax.',

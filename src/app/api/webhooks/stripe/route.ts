@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { createPrintOrderFromPaymentIntent } from '@/lib/orders/createPrintOrderFromPaymentIntent'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
@@ -30,6 +31,15 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
   } catch (err) {
     console.warn('[stripe-webhook] Signature verification failed:', err)
+    // Could be a misconfigured endpoint (secret mismatch between Stripe
+    // dashboard and our env), or someone probing. Capture as warning —
+    // a legitimate misconfig after a redeploy would show up as a spike.
+    captureError(err, {
+      flow: 'webhook',
+      stage: 'stripe-sig-verify',
+      level: 'warning',
+      fingerprint: ['webhook:stripe-sig-verify'],
+    })
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
   }
 
@@ -105,6 +115,15 @@ export async function POST(req: NextRequest) {
     // so we can investigate manually. Business-level retry happens via
     // admin actions in /admin/orders.
     console.error(`[stripe-webhook] ${event.type} handler threw:`, err)
+    // But DO surface to Sentry — a silently swallowed webhook handler is
+    // how orders go missing. Include event.id for idempotent retries.
+    captureError(err, {
+      flow: 'webhook',
+      stage: 'stripe-handler-threw',
+      extra: { eventType: event.type, eventId: event.id },
+      level: 'error',
+      fingerprint: ['webhook:stripe-handler-threw', event.type],
+    })
   }
 
   return NextResponse.json({ received: true })

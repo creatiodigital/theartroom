@@ -1,5 +1,6 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 
+import { captureError } from '@/lib/observability/captureError'
 import { buildCertificateKey, uploadToR2 } from '@/lib/r2'
 
 import { CertificateTemplate } from './CertificateTemplate'
@@ -43,6 +44,17 @@ export async function generateAndUploadCertificate(
     const url = await uploadToR2(key, buffer, 'application/pdf')
     return { ok: true, url }
   } catch (err) {
+    // Caller (createPrintOrderFromPaymentIntent) also captures this with
+    // order context; here we capture at the generation site so operators
+    // see which stage failed — PDF render vs R2 upload vs signature
+    // fetch — without needing to reproduce.
+    captureError(err, {
+      flow: 'cert',
+      stage: 'render-or-upload',
+      extra: { orderId: args.orderId, hasSignature: !!args.signatureImageUrl },
+      level: 'warning',
+      fingerprint: ['cert:render-or-upload'],
+    })
     return {
       ok: false,
       error: err instanceof Error ? err.message : String(err),

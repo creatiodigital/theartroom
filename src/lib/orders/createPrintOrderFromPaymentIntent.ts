@@ -4,6 +4,7 @@ import { resolveSku } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
 import { generateAndUploadCertificate } from '@/lib/certificates/generateAndUploadCertificate'
 import { sendOrderPlacedEmail } from '@/lib/emails/orderPlaced'
+import { captureError } from '@/lib/observability/captureError'
 import { logOrderEvent } from './logOrderEvent'
 
 type StripePaymentIntent = {
@@ -65,9 +66,31 @@ export async function createPrintOrderFromPaymentIntent(
       user: { select: { name: true, lastName: true, signatureUrl: true } },
     },
   })
-  if (!artwork) return { ok: false, error: `Artwork ${artworkId} not found.` }
+  if (!artwork) {
+    // Shouldn't happen in normal flow — either a DB inconsistency or
+    // someone has tampered with the PI metadata. Either way we need eyes.
+    captureError(new Error(`Artwork ${artworkId} not found during order creation`), {
+      flow: 'order',
+      stage: 'artwork-not-found',
+      extra: { artworkId, artistUserId, paymentIntentId: pi.id },
+      level: 'warning',
+    })
+    return { ok: false, error: `Artwork ${artworkId} not found.` }
+  }
   // Guard against cross-artist metadata tampering.
   if (artwork.userId !== artistUserId) {
+    captureError(new Error('Artwork/artist mismatch on PaymentIntent'), {
+      flow: 'order',
+      stage: 'artwork-artist-mismatch',
+      extra: {
+        artworkId,
+        metadataArtistUserId: artistUserId,
+        actualArtistUserId: artwork.userId,
+        paymentIntentId: pi.id,
+      },
+      level: 'error',
+      fingerprint: ['order:artwork-artist-mismatch'],
+    })
     return { ok: false, error: 'Artwork/artist mismatch on PaymentIntent.' }
   }
 
@@ -148,6 +171,15 @@ export async function createPrintOrderFromPaymentIntent(
         ? { to: order.buyerEmail, resendId: emailRes.id }
         : { to: order.buyerEmail, error: emailRes.error },
     })
+    if (!emailRes.ok) {
+      captureError(new Error(`Order-placed email failed: ${emailRes.error}`), {
+        flow: 'email',
+        stage: 'order-placed-send',
+        extra: { orderId: order.id, to: order.buyerEmail, error: emailRes.error },
+        level: 'warning',
+        fingerprint: ['email:order-placed-failed'],
+      })
+    }
   }
 
   if (order.prodigiOrderId) {
@@ -197,6 +229,13 @@ export async function createPrintOrderFromPaymentIntent(
         actor: 'system',
         message: 'Certificate generation failed (order continues without insert)',
         payload: { error: certRes.error },
+      })
+      captureError(new Error(`Certificate generation failed: ${certRes.error}`), {
+        flow: 'cert',
+        stage: 'generate-and-upload',
+        extra: { orderId: order.id, error: certRes.error },
+        level: 'warning',
+        fingerprint: ['cert:generate-failed'],
       })
     }
   }
@@ -306,6 +345,23 @@ export async function createPrintOrderFromPaymentIntent(
         status: err instanceof ProdigiError ? err.status : undefined,
         body: err instanceof ProdigiError ? err.body : undefined,
       },
+    })
+    // Critical: buyer's card is authed but Prodigi refused the submit —
+    // the order is now stuck in limbo until admin intervenes. Surface
+    // loudly to Sentry so we can fix/cancel before auth expiry.
+    captureError(err, {
+      flow: 'order',
+      stage: 'prodigi-submit-failed',
+      extra: {
+        orderId: order.id,
+        paymentIntentId: order.paymentIntentId,
+        artworkId: artwork.id,
+        sku,
+        prodigiStatus: err instanceof ProdigiError ? err.status : undefined,
+        prodigiBody: err instanceof ProdigiError ? err.body : undefined,
+      },
+      level: 'error',
+      fingerprint: ['order:prodigi-submit-failed'],
     })
     return { ok: false, error: `Prodigi submission failed: ${detail}` }
   }
