@@ -11,6 +11,7 @@ const contentPages = [
   { label: 'Landing Page', route: '/admin/content/landing' },
   { label: 'About Us', route: '/admin/content/about' },
   { label: 'Terms and Conditions', route: '/admin/content/terms' },
+  { label: 'Online Terms of Sale', route: '/admin/content/sale-terms' },
   { label: 'Privacy Policy', route: '/admin/content/privacy' },
   { label: 'Accessibility Policy', route: '/admin/content/accessibility' },
 ]

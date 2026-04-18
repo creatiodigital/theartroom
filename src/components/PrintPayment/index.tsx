@@ -122,6 +122,13 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
             All payments are processed securely by Stripe. Your card details never touch our
             servers. We&apos;ll hold your card now and charge it once your print enters production.
           </p>
+          <p className={styles.sectionHelp}>
+            By placing your order you agree to our{' '}
+            <a href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
+              Online Terms of Sale
+            </a>
+            .
+          </p>
 
           {hydrating && <p className={styles.hydrating}>Preparing secure payment…</p>}
 

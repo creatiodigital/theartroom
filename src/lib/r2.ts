@@ -144,6 +144,19 @@ export async function buildProfileImageKey(userId: string): Promise<string> {
   return `${getEnvPrefix()}/profiles/${handler}/avatar-${randomSuffix()}.webp`
 }
 
+// Artist signature stored as a transparent PNG alongside the profile
+// image. Used to sign certificates of authenticity on printed orders.
+export async function buildSignatureImageKey(userId: string): Promise<string> {
+  const handler = await getArtistHandler(userId)
+  return `${getEnvPrefix()}/profiles/${handler}/signature-${randomSuffix()}.png`
+}
+
+// Certificate of authenticity PDF for a specific print order. One cert
+// per order — purchase date is unique per transaction.
+export function buildCertificateKey(orderId: string): string {
+  return `${getEnvPrefix()}/certificates/${orderId}.pdf`
+}
+
 export async function buildExhibitionImageKey(exhibitionId: string): Promise<string> {
   // Look up exhibition URL slug for a readable path
   const exhibition = await prisma.exhibition.findUnique({

@@ -98,6 +98,19 @@ export type ProdigiOrderItem = {
   recipientCost?: ProdigiMoney
 }
 
+export type ProdigiBrandingAsset = { url: string }
+
+export type ProdigiBranding = {
+  postcard?: ProdigiBrandingAsset
+  flyer?: ProdigiBrandingAsset
+  packing_slip_bw?: ProdigiBrandingAsset
+  packing_slip_color?: ProdigiBrandingAsset
+  sticker_exterior_round?: ProdigiBrandingAsset
+  sticker_exterior_rectangle?: ProdigiBrandingAsset
+  sticker_interior_round?: ProdigiBrandingAsset
+  sticker_interior_rectangle?: ProdigiBrandingAsset
+}
+
 export type ProdigiOrderRequest = {
   merchantReference?: string
   shippingMethod: 'Budget' | 'Standard' | 'Express' | 'Overnight'
@@ -105,6 +118,7 @@ export type ProdigiOrderRequest = {
   items: ProdigiOrderItem[]
   idempotencyKey?: string
   callbackUrl?: string
+  branding?: ProdigiBranding
 }
 
 export type ProdigiOrderStatus = {

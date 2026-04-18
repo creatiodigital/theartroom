@@ -75,6 +75,7 @@ function formatSlugToTitle(slug: string): string {
     terms: 'Terms and Conditions',
     privacy: 'Privacy Policy',
     accessibility: 'Accessibility Policy',
+    'sale-terms': 'Online Terms of Sale',
   }
   return titles[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
 }

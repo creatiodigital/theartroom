@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
+import { ENQUIRE_ENABLED, PRINT_BUY_ENABLED } from '@/lib/features'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import Logo from '@/icons/logo.svg'
 
@@ -188,15 +189,17 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
                   className={styles.description}
                 />
               )}
-              <Button
-                variant="secondary"
-                label="Inquire"
-                icon="arrowRight"
-                size="bigSquared"
-                onClick={() => setIsInquireOpen(true)}
-                className={styles.inquireButton}
-              />
-              {artwork.printEnabled && artwork.printPriceCents ? (
+              {ENQUIRE_ENABLED && (
+                <Button
+                  variant="secondary"
+                  label="Inquire"
+                  icon="arrowRight"
+                  size="bigSquared"
+                  onClick={() => setIsInquireOpen(true)}
+                  className={styles.inquireButton}
+                />
+              )}
+              {PRINT_BUY_ENABLED && artwork.printEnabled && artwork.printPriceCents ? (
                 <Button
                   variant="secondary"
                   label="Buy Printable"

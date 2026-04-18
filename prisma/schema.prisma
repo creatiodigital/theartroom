@@ -29,6 +29,10 @@ model User {
   password           String?
   mustChangePassword Boolean  @default(false)
   profileImageUrl    String?
+  // Transparent-PNG signature used on certificates of authenticity for
+  // printed works by this artist. Nullable — certificates fall back to
+  // the printed artist name when this is not yet set.
+  signatureUrl       String?
   isFeatured         Boolean  @default(false)
   published          Boolean  @default(false)
 
@@ -209,6 +213,11 @@ model PrintOrder {
   prodigiStage   String? // 'Draft' | 'InProgress' | 'Complete' | 'Cancelled'
   trackingUrl    String?
   shippedAt      DateTime?
+
+  // Public R2 URL of the generated certificate of authenticity PDF that
+  // ships with this order. Null until the cert has been rendered and
+  // uploaded (at Prodigi submission time).
+  certificateUrl String?
 
   // Stripe Connect transfer to the artist (null until admin releases payout).
   // 'pending' | 'paid' | 'reversed'

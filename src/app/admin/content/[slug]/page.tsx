@@ -24,6 +24,7 @@ const slugLabels: Record<string, string> = {
   terms: 'Terms and Conditions',
   privacy: 'Privacy Policy',
   accessibility: 'Accessibility Policy',
+  'sale-terms': 'Online Terms of Sale',
 }
 
 type PageProps = {

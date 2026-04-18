@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { ProdigiError, createOrder, getProduct } from '@/lib/prodigi/client'
 import { resolveSku } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
+import { generateAndUploadCertificate } from '@/lib/certificates/generateAndUploadCertificate'
 import { sendOrderPlacedEmail } from '@/lib/emails/orderPlaced'
 import { logOrderEvent } from './logOrderEvent'
 
@@ -61,7 +62,7 @@ export async function createPrintOrderFromPaymentIntent(
       originalWidth: true,
       originalHeight: true,
       userId: true,
-      user: { select: { name: true, lastName: true } },
+      user: { select: { name: true, lastName: true, signatureUrl: true } },
     },
   })
   if (!artwork) return { ok: false, error: `Artwork ${artworkId} not found.` }
@@ -158,6 +159,48 @@ export async function createPrintOrderFromPaymentIntent(
     return { ok: false, error: 'Artwork has no image; cannot submit to Prodigi.' }
   }
 
+  // Generate the certificate of authenticity PDF, upload to R2, and
+  // include the public URL in the Prodigi order as a `branding.flyer`
+  // asset (A5 insert shipped with the print). Idempotent via the event
+  // log — if the webhook retries after a successful cert upload we reuse
+  // the stored URL instead of re-rendering.
+  let certificateUrl = order.certificateUrl
+  if (!certificateUrl) {
+    const artistName = [artwork.user?.name, artwork.user?.lastName].filter(Boolean).join(' ').trim()
+    const certRes = await generateAndUploadCertificate({
+      orderId: order.id,
+      artworkTitle: artwork.title ?? '',
+      artistName,
+      signatureImageUrl: artwork.user?.signatureUrl ?? null,
+      purchaseDate: order.createdAt,
+    })
+    if (certRes.ok) {
+      certificateUrl = certRes.url
+      await prisma.printOrder.update({
+        where: { id: order.id },
+        data: { certificateUrl: certRes.url },
+      })
+      await logOrderEvent({
+        orderId: order.id,
+        kind: 'note',
+        actor: 'system',
+        message: 'Certificate of authenticity generated',
+        payload: { url: certRes.url },
+      })
+    } else {
+      // Non-fatal: log and continue without the certificate. We'd rather
+      // submit the order to Prodigi and ship the print than block on a
+      // cert generation glitch.
+      await logOrderEvent({
+        orderId: order.id,
+        kind: 'note',
+        actor: 'system',
+        message: 'Certificate generation failed (order continues without insert)',
+        payload: { error: certRes.error },
+      })
+    }
+  }
+
   const { sku, attributes } = resolveSku(config)
 
   // If the buyer's chosen orientation matches the image's natural orientation,
@@ -188,6 +231,7 @@ export async function createPrintOrderFromPaymentIntent(
       shippingMethod: 'Standard',
       idempotencyKey: order.id,
       callbackUrl,
+      branding: certificateUrl ? { flyer: { url: certificateUrl } } : undefined,
       recipient: {
         name: buyerName || 'Recipient',
         email: order.buyerEmail || undefined,
