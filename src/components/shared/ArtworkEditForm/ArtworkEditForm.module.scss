@@ -367,3 +367,80 @@
   font-size: var(--text-sm);
   color: var(--color-error-text);
 }
+
+// ── Printing restrictions (artist-side advanced panel) ────────
+// Sits flush inside the Print Sales section — no nested card, no
+// background, no extra border. Just a hairline rule above to separate
+// it from the price input.
+.printRestrictions {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.printRestrictionsSummary {
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.72);
+  user-select: none;
+  padding: 2px 0;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+  &::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 4px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.printRestrictions[open] .printRestrictionsSummary::before {
+  transform: rotate(90deg);
+}
+
+.printRestrictionsIntro {
+  margin: var(--space-3) 0 var(--space-4) 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(0, 0, 0, 0.6);
+  max-width: 620px;
+}
+
+.printRestrictionGroup {
+  margin-top: var(--space-4);
+
+  &:first-of-type {
+    margin-top: var(--space-2);
+  }
+}
+
+.printRestrictionGroupTitle {
+  margin: 0 0 var(--space-2) 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.printRestrictionChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}

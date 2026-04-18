@@ -205,6 +205,7 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
           countryCode={countryCode}
           onCountryChange={setCountryCode}
           catalogStatus={catalog}
+          printOptions={artwork.printOptions ?? null}
         />
         <Scene
           imageUrl={artwork.imageUrl}

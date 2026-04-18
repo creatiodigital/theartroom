@@ -2,8 +2,11 @@
 
 import crypto from 'node:crypto'
 
-import type { PrintConfig } from '@/components/PrintWizard/types'
-import { GALLERY_MARKUP_RATE } from '@/components/PrintWizard/options'
+import type { PrintConfig, PrintOptions } from '@/components/PrintWizard/types'
+import {
+  GALLERY_MARKUP_RATE,
+  configRespectsArtworkRestrictions,
+} from '@/components/PrintWizard/options'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
@@ -70,6 +73,7 @@ export async function createPaymentIntent(
       userId: true,
       printEnabled: true,
       printPriceCents: true,
+      printOptions: true,
     },
   })
   if (!artwork) {
@@ -77,6 +81,18 @@ export async function createPaymentIntent(
   }
   if (!artwork.printEnabled || !artwork.printPriceCents) {
     return { ok: false, error: 'This artwork is not currently available as a print.' }
+  }
+
+  // Defend against a wizard that had stale restrictions: if the artist
+  // narrowed what's allowed while the buyer was configuring, reject the
+  // now-disallowed config here rather than submitting it to Prodigi.
+  const restrictions = (artwork.printOptions as PrintOptions | null) ?? null
+  if (!configRespectsArtworkRestrictions(config, restrictions)) {
+    return {
+      ok: false,
+      error:
+        'This configuration is no longer available for this artwork. Please reopen the print options and pick again.',
+    }
   }
 
   const quote = await getProdigiQuote(config, address.countryCode)

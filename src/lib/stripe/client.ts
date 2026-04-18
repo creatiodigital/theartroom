@@ -6,7 +6,7 @@ import Stripe from 'stripe'
  * browser uses to mount Stripe Elements.
  *
  * We pin an explicit API version so silent Stripe changes don't alter
- * behaviour without us noticing. Bump deliberately when we want new
+ * behavior without us noticing. Bump deliberately when we want new
  * features.
  */
 const secret = process.env.STRIPE_SECRET_KEY

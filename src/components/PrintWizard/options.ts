@@ -5,29 +5,41 @@ import type {
   Orientation,
   PaperOption,
   PrintConfig,
+  PrintOptions,
   SizeId,
   SizeOption,
   SizeUnit,
 } from './types'
 
 // ── Papers ───────────────────────────────────────────────────
-// Two tiers. Tier names are customer-facing; Prodigi codes stay internal.
+// Two tiers. Labels use the technical name + weight — that's what pros
+// expect to see everywhere (wizard dropdown, artist restrictions, the
+// Certificate of Authenticity). "Fine Art Matte" / "Museum Cotton Rag"
+// as category blurbs live in the `description` instead.
 export const PAPERS: PaperOption[] = [
   {
     id: 'fine-art-matte',
-    label: 'Fine Art Matte',
+    label: 'Enhanced Matte Art 200 gsm',
     description:
-      'Enhanced matte art paper, 200gsm. Smooth satin finish with excellent colour depth — our everyday fine-art standard.',
+      'Fine art matte paper, 200 gsm. Smooth satin finish with excellent color depth — our everyday fine-art standard.',
     prodigiUnframedPrefix: 'GLOBAL-FAP',
     prodigiFramedToken: 'EMA',
   },
   {
     id: 'museum-cotton-rag',
-    label: 'Museum Cotton Rag',
+    label: 'Hahnemühle Photo Rag 308 gsm',
     description:
-      'Hahnemühle Photo Rag 308gsm. 100% cotton, archival, museum-grade. The collector choice.',
+      '100% cotton, archival museum cotton rag. Smooth matte surface with deep blacks and accurate color — the collector choice for photography and fine-art reproduction.',
     prodigiUnframedPrefix: 'GLOBAL-HPR',
     prodigiFramedToken: 'HPR',
+  },
+  {
+    id: 'german-etching',
+    label: 'Hahnemühle German Etching 310 gsm',
+    description:
+      'Heavily textured mould-made fine-art paper with pronounced tooth and warm-white tone. Favoured for black-and-white and painterly work where surface character matters.',
+    prodigiUnframedPrefix: 'GLOBAL-HGE',
+    prodigiFramedToken: 'HGE',
   },
 ]
 
@@ -53,7 +65,7 @@ export const FORMATS: FormatOption[] = [
   },
 ]
 
-// ── Frame colours ────────────────────────────────────────────
+// ── Frame colors ────────────────────────────────────────────
 export const FRAME_COLORS: FrameColorOption[] = [
   { id: 'black', label: 'Black', prodigiColor: 'black', hex: '#0b0b0b', roughness: 0.35 },
   { id: 'white', label: 'White', prodigiColor: 'white', hex: '#f2f2f2', roughness: 0.55 },
@@ -150,9 +162,73 @@ function resolve<T extends { id: string }>(list: T[], id: string, kind: string):
 
 export const getPaper = (id: string) => resolve(PAPERS, id, 'paper')
 export const getFormat = (id: string) => resolve(FORMATS, id, 'format')
-export const getFrameColor = (id: string) => resolve(FRAME_COLORS, id, 'frame colour')
+export const getFrameColor = (id: string) => resolve(FRAME_COLORS, id, 'frame color')
 export const getMount = (id: string) => resolve(MOUNTS, id, 'mount')
 export const getSize = (id: string) => resolve(SIZES, id, 'size')
+
+// ── Per-artwork restriction filters ──────────────────────────
+// Each returns the input list unchanged when the artwork has no
+// restriction for that dimension, or the allow-list intersected with
+// the input when a non-empty list is set. An empty allow-list means
+// "artist disallowed everything" — we treat that as no restriction
+// (defense against artists accidentally locking out all buyers).
+
+function filterByAllowlist<T extends { id: string }>(
+  list: T[],
+  allowed: readonly string[] | undefined,
+): T[] {
+  if (!allowed || allowed.length === 0) return list
+  const set = new Set(allowed)
+  const filtered = list.filter((item) => set.has(item.id))
+  return filtered.length === 0 ? list : filtered
+}
+
+export function filterPapersForArtwork(opts: PrintOptions | null | undefined) {
+  return filterByAllowlist(PAPERS, opts?.allowedPaperIds)
+}
+
+export function filterFormatsForArtwork(opts: PrintOptions | null | undefined) {
+  return filterByAllowlist(FORMATS, opts?.allowedFormatIds)
+}
+
+export function filterSizesForArtwork(list: SizeOption[], opts: PrintOptions | null | undefined) {
+  return filterByAllowlist(list, opts?.allowedSizeIds)
+}
+
+export function filterFrameColorsForArtwork(opts: PrintOptions | null | undefined) {
+  return filterByAllowlist(FRAME_COLORS, opts?.allowedFrameColorIds)
+}
+
+export function filterMountsForArtwork(opts: PrintOptions | null | undefined) {
+  return filterByAllowlist(MOUNTS, opts?.allowedMountIds)
+}
+
+/**
+ * Server-side validation: is this chosen PrintConfig permitted by the
+ * artwork's restrictions? Used at PaymentIntent creation time to defend
+ * against a buyer who had the wizard open while the artist tightened
+ * restrictions. Returns true when allowed, false when a chosen value
+ * is no longer in the artist's allow-list.
+ */
+export function configRespectsArtworkRestrictions(
+  config: PrintConfig,
+  opts: PrintOptions | null | undefined,
+): boolean {
+  if (!opts) return true
+  const inAllowlist = (allowed: readonly string[] | undefined, value: string) =>
+    !allowed || allowed.length === 0 || allowed.includes(value)
+  if (!inAllowlist(opts.allowedPaperIds, config.paperId)) return false
+  if (!inAllowlist(opts.allowedFormatIds, config.formatId)) return false
+  if (!inAllowlist(opts.allowedSizeIds, config.sizeId)) return false
+  // Frame color + mount are only meaningful on framed formats, so we
+  // only enforce them when the chosen format is framed.
+  const format = FORMATS.find((f) => f.id === config.formatId)
+  if (format?.framed) {
+    if (!inAllowlist(opts.allowedFrameColorIds, config.frameColorId)) return false
+    if (!inAllowlist(opts.allowedMountIds, config.mountId)) return false
+  }
+  return true
+}
 
 // ── Aspect-ratio size filter ─────────────────────────────────
 // Tier 1 ≤ 2% off → "perfect". Tier 2 ≤ 5% off → "close fit". Beyond that
@@ -195,15 +271,21 @@ export function getCompatibleSizes(imageRatio: number): {
 
 // ── SKU derivation ───────────────────────────────────────────
 // Resolves a PrintConfig to the concrete Prodigi SKU and the runtime
-// attributes (colour, mount colour) that must be sent with the order.
+// attributes (color, mount color, paper type) that must be sent with
+// the order.
 //
-// Three families are in play:
-//   - Unframed:                 GLOBAL-<PAPER>-<INCH_SIZE>
-//   - Classic framed + EMA:     GLOBAL-CFP[M]-<INCH_SIZE>
-//   - Classic/Box framed HPR:   FRA-<FRAME>-<PAPER>-<MOUNT>-ACRY-<CM_SIZE>
-//   - Box framed + EMA:         FRA-BOX-EMA-<MOUNT>-ACRY-<CM_SIZE>
+// SKU families in play (verified against live Prodigi, Apr 2026):
+//   - Unframed:                  GLOBAL-<PAPER_PREFIX>-<INCH_SIZE>
+//   - Classic framed + EMA:      GLOBAL-CFP[M]-<INCH_SIZE>
+//   - Classic framed + other:    FRA-CLA-<PAPER>-<MOUNT>-ACRY-<CM_SIZE>
+//   - Box framed (any paper):    GLOBAL-BOX-<INCH_SIZE>  — paper, mount,
+//                                glaze are variant ATTRIBUTES on this
+//                                SKU family (not tokens in the SKU).
+//                                Prodigi Box Frames ship with EMA 200gsm
+//                                internally regardless of what the buyer
+//                                saw in the wizard.
 //
-// Glazing is always Perspex (ACRY) by spec. Frame colour and mount colour
+// Glazing is always Perspex (ACRY) by spec. Frame color and mount color
 // are runtime attributes on the variant, not part of the SKU itself.
 export type ResolvedSku = {
   sku: string
@@ -243,9 +325,14 @@ export function resolveSku(config: PrintConfig): ResolvedSku {
     }
   }
 
-  // Box framed (any paper) → FRA-BOX family.
+  // Box framed → GLOBAL-BOX-<inch> family. This is a standalone Prodigi
+  // product with paperType / substrateWeight / mount / glaze exposed as
+  // variant attributes on the SKU rather than encoded in the SKU string.
+  // We only pass `color` (frame color) explicitly; the order-submission
+  // path in createPrintOrderFromPaymentIntent already fills missing
+  // attributes from the first available value on the product response.
   return {
-    sku: `FRA-BOX-${paper.prodigiFramedToken}-${mount.prodigiToken}-ACRY-${size.cmToken}`,
+    sku: `GLOBAL-BOX-${size.inchToken}`,
     attributes,
   }
 }
@@ -526,7 +613,7 @@ export function firstShippableConfig(
  * are no longer available (so dropdowns never show a selected value that
  * isn't actually in their filtered option list).
  *
- * Ties are broken by preferring to change, in order: frame colour, mount,
+ * Ties are broken by preferring to change, in order: frame color, mount,
  * size (fit-grouped), format, paper — i.e. we try to keep the structural
  * decisions and adjust the superficial ones first.
  */

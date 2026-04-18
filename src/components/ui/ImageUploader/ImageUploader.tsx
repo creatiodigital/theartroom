@@ -216,12 +216,8 @@ export const ImageUploader = ({
   // When `fill` is set, drop the aspect-ratio constraint and rely on
   // the parent flex container to dictate height. A min-height keeps the
   // dropzone usable even if the parent collapses to a small size.
-  const boxStyle = fill
-    ? ({ flex: 1, minHeight: 220 } as const)
-    : ({ aspectRatio } as const)
-  const containerClass = fill
-    ? `${styles.container} ${styles.containerFill}`
-    : styles.container
+  const boxStyle = fill ? ({ flex: 1, minHeight: 220 } as const) : ({ aspectRatio } as const)
+  const containerClass = fill ? `${styles.container} ${styles.containerFill}` : styles.container
 
   return (
     <div className={containerClass}>

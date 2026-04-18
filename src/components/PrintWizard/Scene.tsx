@@ -23,7 +23,7 @@ interface SceneProps {
 /**
  * Wizard preview canvas. Camera is roughly at gallery eye-level (y≈0) and
  * tilted slightly down so the parquet floor reads underfoot. Artwork is
- * centred at the origin on a warm-grey back wall.
+ * centered at the origin on a warm-grey back wall.
  */
 export const Scene = ({ imageUrl, config, imageAspectRatio, configReady }: SceneProps) => {
   return (

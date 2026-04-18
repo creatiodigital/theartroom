@@ -4,8 +4,52 @@ import type { NextRequest } from 'next/server'
 import { deleteFromR2 } from '@/lib/r2'
 
 import { requireOwnership } from '@/lib/authUtils'
+import { FORMATS, FRAME_COLORS, MOUNTS, PAPERS, SIZES } from '@/components/PrintWizard/options'
+import type { PrintOptions } from '@/components/PrintWizard/types'
+import { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
+
+// Defense-in-depth: only persist printOptions whose shape matches what
+// the wizard understands. Any unknown keys or unknown ids get dropped.
+// Empty/all-covering dimensions are stripped — null stands for "no
+// restrictions" throughout the stack.
+function sanitizePrintOptions(raw: unknown): PrintOptions | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+
+  const clean = (arr: unknown, universe: readonly { id: string }[]): string[] | undefined => {
+    if (!Array.isArray(arr)) return undefined
+    const universeIds = new Set(universe.map((u) => u.id))
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const item of arr) {
+      if (typeof item !== 'string') continue
+      if (!universeIds.has(item)) continue
+      if (seen.has(item)) continue
+      seen.add(item)
+      out.push(item)
+    }
+    // An array that covers the whole universe or nothing at all is
+    // equivalent to "no restriction" — return undefined so it's dropped.
+    if (out.length === 0 || out.length === universe.length) return undefined
+    return out
+  }
+
+  const next: PrintOptions = {}
+  const paperIds = clean(obj.allowedPaperIds, PAPERS)
+  const formatIds = clean(obj.allowedFormatIds, FORMATS)
+  const sizeIds = clean(obj.allowedSizeIds, SIZES)
+  const frameColorIds = clean(obj.allowedFrameColorIds, FRAME_COLORS)
+  const mountIds = clean(obj.allowedMountIds, MOUNTS)
+  if (paperIds) next.allowedPaperIds = paperIds as PrintOptions['allowedPaperIds']
+  if (formatIds) next.allowedFormatIds = formatIds as PrintOptions['allowedFormatIds']
+  if (sizeIds) next.allowedSizeIds = sizeIds as PrintOptions['allowedSizeIds']
+  if (frameColorIds)
+    next.allowedFrameColorIds = frameColorIds as PrintOptions['allowedFrameColorIds']
+  if (mountIds) next.allowedMountIds = mountIds as PrintOptions['allowedMountIds']
+  return Object.keys(next).length === 0 ? null : next
+}
 
 // GET single artwork
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -63,6 +107,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         ? Math.round(parsedPrice)
         : null
 
+    // Sanitize artist-set printing restrictions. Absent or non-object
+    // input resets to null (no restrictions).
+    const printOptions = sanitizePrintOptions(body.printOptions)
+
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
     const baseData = {
@@ -79,6 +127,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       featured: body.featured === true || body.featured === 'true',
       printEnabled: body.printEnabled === true || body.printEnabled === 'true',
       printPriceCents,
+      // Prisma's nullable-Json update slot doesn't accept a bare `null`
+      // — the DB NULL value is signalled via Prisma.DbNull sentinel.
+      printOptions:
+        printOptions === null ? Prisma.DbNull : (printOptions as unknown as Prisma.InputJsonValue),
     }
 
     // Try with new fields first
