@@ -4,6 +4,20 @@
   width: calc(50% - 7px);
 }
 
+.imageRow {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+
+    .imageSection {
+      width: 100%;
+    }
+  }
+}
+
 .row {
   display: flex;
   gap: var(--space-4);

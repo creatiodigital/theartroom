@@ -241,43 +241,44 @@ export const DashboardProfilePage = () => {
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Edit Profile</h1>
 
-      {/* Profile Image Section */}
-      <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
-        <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
-        <p className={dashboardStyles.sectionDescription}>
-          Upload a photo to personalize your artist profile. This will be displayed on your public
-          page.
-        </p>
-        <ImageUploader
-          imageUrl={user?.profileImageUrl}
-          onUpload={handleImageUpload}
-          onRemove={handleRemoveImage}
-          uploading={uploading}
-          aspectRatio="16 / 10"
-        />
-        <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
-      </div>
+      {/* Profile Image + Signature — side by side on desktop, stacked on mobile */}
+      <div className={styles.imageRow}>
+        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+          <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Upload a photo to personalize your artist profile. This will be displayed on your
+            public page.
+          </p>
+          <ImageUploader
+            imageUrl={user?.profileImageUrl}
+            onUpload={handleImageUpload}
+            onRemove={handleRemoveImage}
+            uploading={uploading}
+            aspectRatio="16 / 10"
+          />
+          <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
+        </div>
 
-      {/* Signature Section */}
-      <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
-        <h3 className={dashboardStyles.sectionTitle}>Signature</h3>
-        <p className={dashboardStyles.sectionDescription}>
-          Upload a scan or photo of your handwritten signature. We print this on the{' '}
-          <strong>Certificate of Authenticity</strong> that ships with every printed copy of your
-          artwork — it reassures the buyer the piece is genuine, and keeps your work traceable back
-          to you.
-        </p>
-        <ImageUploader
-          imageUrl={user?.signatureUrl}
-          onUpload={handleSignatureUpload}
-          onRemove={handleRemoveSignature}
-          uploading={uploadingSignature}
-          aspectRatio="3 / 1"
-        />
-        <span className={dashboardStyles.hint}>
-          Transparent PNG only. Minimum 600×200 pixels. Keep the background fully transparent — your
-          signature should float over the certificate, not sit in a white box.
-        </span>
+        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+          <h3 className={dashboardStyles.sectionTitle}>Artist Signature</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Upload a scan or photo of your handwritten signature. We print this on the{' '}
+            <strong>Certificate of Authenticity</strong> that ships with every printed copy of
+            your artwork — it reassures the buyer the piece is genuine, and keeps your work
+            traceable back to you.
+          </p>
+          <ImageUploader
+            imageUrl={user?.signatureUrl}
+            onUpload={handleSignatureUpload}
+            onRemove={handleRemoveSignature}
+            uploading={uploadingSignature}
+            aspectRatio="3 / 1"
+          />
+          <span className={dashboardStyles.hint}>
+            Transparent PNG only. Minimum 600×200 pixels. Keep the background fully transparent —
+            your signature should float over the certificate, not sit in a white box.
+          </span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
