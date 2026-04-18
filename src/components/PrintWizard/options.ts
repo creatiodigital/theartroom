@@ -573,21 +573,35 @@ export function canSwap(
  *
  * Size iteration respects the artwork's aspect ratio (perfect fits
  * first) so the user doesn't land on a visibly wrong shape.
+ *
+ * `printOptions` narrows the search to artist-allowed values — we never
+ * auto-pick a banned paper/size/format to satisfy shipping. If the
+ * intersection of (shippable) and (artist-allowed) is empty, returns
+ * null so the wizard can show an "unavailable for this destination"
+ * message rather than silently drifting into a config that'll get
+ * rejected server-side.
  */
 export function firstShippableConfig(
   country: string,
   catalog: SkuDataLite[],
   aspectRatio: number,
+  printOptions?: PrintOptions | null,
 ): PrintConfig | null {
   const groups = getCompatibleSizes(aspectRatio)
   const sizes = [...groups.perfect, ...groups.close, ...groups.mismatch]
 
+  const allowedPapers = filterPapersForArtwork(printOptions)
+  const allowedFormats = filterFormatsForArtwork(printOptions)
+  const allowedSizes = filterSizesForArtwork(sizes, printOptions)
+  const allowedFrames = filterFrameColorsForArtwork(printOptions)
+  const allowedMounts = filterMountsForArtwork(printOptions)
+
   const orientation = deriveOrientation(aspectRatio)
-  for (const paper of PAPERS) {
-    for (const format of FORMATS) {
-      for (const size of sizes) {
-        for (const frame of FRAME_COLORS) {
-          for (const mount of MOUNTS) {
+  for (const paper of allowedPapers) {
+    for (const format of allowedFormats) {
+      for (const size of allowedSizes) {
+        for (const frame of allowedFrames) {
+          for (const mount of allowedMounts) {
             const c: PrintConfig = {
               paperId: paper.id,
               formatId: format.id,
@@ -616,25 +630,38 @@ export function firstShippableConfig(
  * Ties are broken by preferring to change, in order: frame color, mount,
  * size (fit-grouped), format, paper — i.e. we try to keep the structural
  * decisions and adjust the superficial ones first.
+ *
+ * `printOptions` restricts the search to artist-allowed values so we
+ * never silently drift into a paper/format/size the artist banned for
+ * this artwork. If no combination satisfies both shipping AND
+ * restrictions, returns null — the wizard treats that as "unavailable
+ * for this destination".
  */
 export function findShippableConfig(
   preferred: PrintConfig,
   country: string,
   catalog: SkuDataLite[],
   aspectRatio: number,
+  printOptions?: PrintOptions | null,
 ): PrintConfig | null {
   const groups = getCompatibleSizes(aspectRatio)
   const sizes = [...groups.perfect, ...groups.close, ...groups.mismatch]
+
+  const allowedPapers = filterPapersForArtwork(printOptions)
+  const allowedFormats = filterFormatsForArtwork(printOptions)
+  const allowedSizes = filterSizesForArtwork(sizes, printOptions)
+  const allowedFrames = filterFrameColorsForArtwork(printOptions)
+  const allowedMounts = filterMountsForArtwork(printOptions)
 
   const DIM_WEIGHT = { paper: 16, format: 8, size: 4, mount: 2, frame: 1 }
 
   let best: { config: PrintConfig; cost: number } | null = null
 
-  for (const paper of PAPERS) {
-    for (const format of FORMATS) {
-      for (const size of sizes) {
-        for (const frame of FRAME_COLORS) {
-          for (const mount of MOUNTS) {
+  for (const paper of allowedPapers) {
+    for (const format of allowedFormats) {
+      for (const size of allowedSizes) {
+        for (const frame of allowedFrames) {
+          for (const mount of allowedMounts) {
             const c: PrintConfig = {
               paperId: paper.id,
               formatId: format.id,

@@ -40,6 +40,12 @@ interface StepsPanelProps {
   catalogStatus: CatalogStatus
   /** Artist-set restrictions for this artwork. null/undefined = no restrictions. */
   printOptions: PrintOptions | null
+  /**
+   * True when no combination of (ships-to-country) × (artist-allowed)
+   * is available for the current selection. Parent flips this when both
+   * `firstShippableConfig` and `findShippableConfig` return null.
+   */
+  noViableCombo: boolean
 }
 
 type StepKey = 'paper' | 'format' | 'size' | 'frame' | 'mount'
@@ -60,6 +66,7 @@ export const StepsPanel = ({
   onCountryChange,
   catalogStatus,
   printOptions,
+  noViableCombo,
 }: StepsPanelProps) => {
   const [openStep, setOpenStep] = useState<StepKey>('paper')
 
@@ -215,8 +222,20 @@ export const StepsPanel = ({
             Pick a destination to continue.
           </p>
         )}
+
+        {/* No config satisfies both shipping AND artist's restrictions
+            for this destination. Show a clear message and stop — the
+            Continue button is already disabled upstream via canContinue. */}
+        {catalogStatus.kind === 'ready' && countryCode && noViableCombo && (
+          <p className={styles.destinationNotice}>
+            Sorry — this artwork isn&apos;t currently available for shipping to{' '}
+            {countryName(countryCode)}. Try a different destination.
+          </p>
+        )}
       </div>
 
+      {!noViableCombo && (
+      <>
       <div className={styles.orientationBlock}>
         <div className={styles.destinationHeader}>
           <span className={styles.destinationTitle}>Orientation</span>
@@ -316,6 +335,8 @@ export const StepsPanel = ({
             />
           </div>
         </CollapsibleSection>
+      )}
+      </>
       )}
     </aside>
   )

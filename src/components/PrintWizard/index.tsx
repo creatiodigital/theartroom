@@ -138,10 +138,17 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
   // an unwanted first-pick reset on top of the user's existing config.
   const prevCountryRef = useRef(urlCountry)
 
+  // Whether any config at all satisfies (ships-to-country) AND
+  // (artist's restrictions). When this is false for the selected
+  // country, the wizard shows an "unavailable for this destination"
+  // message rather than drifting into a banned-but-shipping config.
+  const [noViableCombo, setNoViableCombo] = useState(false)
+
   useEffect(() => {
     if (catalog.kind !== 'ready') return
     if (!countryCode) {
       prevCountryRef.current = ''
+      setNoViableCombo(false)
       return
     }
     const firstPick = prevCountryRef.current === ''
@@ -150,20 +157,49 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     if (firstPick) {
       // No hardcoded defaults — we don't yet know what's actually in the
       // catalog for this destination, so seed from the first shippable
-      // combo the catalog exposes (respecting aspect-ratio fit).
-      const initial = firstShippableConfig(countryCode, catalog.catalog, aspectRatio)
-      if (initial) setConfig(initial)
+      // combo the catalog exposes (respecting aspect-ratio fit AND the
+      // artist's per-artwork restrictions).
+      const initial = firstShippableConfig(
+        countryCode,
+        catalog.catalog,
+        aspectRatio,
+        artwork.printOptions ?? null,
+      )
+      if (initial) {
+        setConfig(initial)
+        setNoViableCombo(false)
+      } else {
+        // Nothing this artwork allows ships to the chosen country.
+        setNoViableCombo(true)
+      }
       return
     }
 
     // Country changed. Preserve as many of the user's existing picks as
-    // still ship to the new destination; silently adjust the rest.
-    if (shipsCurrent) return
-    const fixed = findShippableConfig(config, countryCode, catalog.catalog, aspectRatio)
-    if (fixed) setConfig(fixed)
-  }, [catalog, countryCode, shipsCurrent, config, aspectRatio])
+    // still ship to the new destination AND remain allowed by the
+    // artist; silently adjust the rest. If nothing works, flag as
+    // no-viable-combo so the UI can explain.
+    if (shipsCurrent) {
+      setNoViableCombo(false)
+      return
+    }
+    const fixed = findShippableConfig(
+      config,
+      countryCode,
+      catalog.catalog,
+      aspectRatio,
+      artwork.printOptions ?? null,
+    )
+    if (fixed) {
+      setConfig(fixed)
+      setNoViableCombo(false)
+    } else {
+      setNoViableCombo(true)
+    }
+  }, [catalog, countryCode, shipsCurrent, config, aspectRatio, artwork.printOptions])
 
-  const canContinue = catalog.kind === 'ready' && !!countryCode && shipsCurrent
+  const canContinue =
+    catalog.kind === 'ready' && !!countryCode && shipsCurrent && !noViableCombo
 
   const handleAddToCart = () => {
     if (!canContinue) return
@@ -206,6 +242,7 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
           onCountryChange={setCountryCode}
           catalogStatus={catalog}
           printOptions={artwork.printOptions ?? null}
+          noViableCombo={noViableCombo}
         />
         <Scene
           imageUrl={artwork.imageUrl}
