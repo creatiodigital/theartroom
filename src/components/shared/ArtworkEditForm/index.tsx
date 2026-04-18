@@ -200,6 +200,22 @@ function isPrintEligible(meta: ImageMeta | null): boolean {
 }
 
 /**
+ * SIZES filtered to only those the current image can physically render
+ * at 300 DPI. Used to scope the artist's restriction UI — it doesn't
+ * make sense to offer a checkbox for a size the image can't fulfil.
+ * If we have no meta yet, return everything so the UI isn't empty
+ * while the image measures.
+ */
+function getEligibleSizes(meta: ImageMeta | null) {
+  if (!meta) return SIZES
+  return SIZES.filter((size) => {
+    const requiredWidth = Math.ceil((size.widthCm / 2.54) * MIN_DPI)
+    const requiredHeight = Math.ceil((size.heightCm / 2.54) * MIN_DPI)
+    return meta.width >= requiredWidth && meta.height >= requiredHeight
+  })
+}
+
+/**
  * Toggle membership of `id` in the allow-list for one dimension of
  * `PrintOptions`. The UI convention: all-checked means "no restriction"
  * so we drop the allow-list entirely when that dimension ends up matching
@@ -342,6 +358,9 @@ export const ArtworkEditForm = ({
   const printEligible = isPrintEligible(imageMeta)
   const printSizes = getPrintSizeEligibility(imageMeta)
   const eligibleSizes = printSizes.filter((s) => s.eligible)
+  // Actual SizeOption entries the image can physically print at — used
+  // to scope the artist's restriction checkboxes for the Sizes group.
+  const eligibleSizeOptions = getEligibleSizes(imageMeta)
 
   const handleImageMetaChange = useCallback((meta: ImageMeta | null) => {
     if (meta && meta.width > 0) {
@@ -721,11 +740,11 @@ export const ArtworkEditForm = ({
             />
             <PrintRestrictionGroup
               title="Sizes"
-              all={SIZES.map((s) => ({ id: s.id, label: s.label }))}
+              all={eligibleSizeOptions.map((s) => ({ id: s.id, label: s.label }))}
               dimensionKey="allowedSizeIds"
               options={formData.printOptions}
               onChange={onPrintOptionsChange}
-              allIds={SIZES.map((s) => s.id)}
+              allIds={eligibleSizeOptions.map((s) => s.id)}
             />
             <PrintRestrictionGroup
               title="Frame colors"
