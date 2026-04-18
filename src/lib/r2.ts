@@ -117,6 +117,15 @@ export async function buildArtworkImageKey(userId: string, artworkId: string): P
   return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.webp`
 }
 
+export async function buildOriginalImageKey(
+  userId: string,
+  artworkId: string,
+  ext: string,
+): Promise<string> {
+  const handler = await getArtistHandler(userId)
+  return `artworks-original/${getEnvPrefix()}/${handler}/${artworkId}-${randomSuffix()}.${ext}`
+}
+
 export async function buildArtworkMediaKey(
   userId: string,
   artworkId: string,

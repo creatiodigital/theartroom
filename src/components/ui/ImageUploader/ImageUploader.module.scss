@@ -94,6 +94,28 @@
   color: var(--color-text-primary);
 }
 
+.imageMetaLabel {
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+.imageMeta {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+
+  span {
+    &:not(:last-child)::after {
+      content: '·';
+      margin-left: var(--space-3);
+      color: var(--color-border-default);
+    }
+  }
+}
+
 .sizeError {
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
