@@ -34,6 +34,13 @@ type ImageUploaderProps = {
   maxSizeBytes?: number
   minWidth?: number
   minHeight?: number
+  /**
+   * When true, the preview/dropzone ignores aspectRatio and stretches to
+   * fill whatever vertical space its parent gives it (via flex-grow).
+   * Use from layouts where two uploaders need to visually match height
+   * regardless of their parents' description lengths.
+   */
+  fill?: boolean
 }
 
 function formatFileSize(bytes: number): string {
@@ -75,6 +82,7 @@ export const ImageUploader = ({
   maxSizeBytes = MAX_UPLOAD_SIZE,
   minWidth = MIN_IMAGE_WIDTH,
   minHeight = MIN_IMAGE_HEIGHT,
+  fill = false,
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -205,8 +213,18 @@ export const ImageUploader = ({
     [onRemove],
   )
 
+  // When `fill` is set, drop the aspect-ratio constraint and rely on
+  // the parent flex container to dictate height. A min-height keeps the
+  // dropzone usable even if the parent collapses to a small size.
+  const boxStyle = fill
+    ? ({ flex: 1, minHeight: 220 } as const)
+    : ({ aspectRatio } as const)
+  const containerClass = fill
+    ? `${styles.container} ${styles.containerFill}`
+    : styles.container
+
   return (
-    <div className={styles.container}>
+    <div className={containerClass}>
       <input
         ref={fileInputRef}
         type="file"
@@ -217,7 +235,7 @@ export const ImageUploader = ({
 
       {imageUrl ? (
         // Image preview state
-        <div className={styles.preview} style={{ aspectRatio }}>
+        <div className={styles.preview} style={boxStyle}>
           <Image src={imageUrl} alt="Uploaded image" fill style={{ objectFit }} />
           {onRemove && (
             <button
@@ -240,7 +258,7 @@ export const ImageUploader = ({
         // Dropzone state
         <div
           className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
-          style={{ aspectRatio }}
+          style={boxStyle}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}

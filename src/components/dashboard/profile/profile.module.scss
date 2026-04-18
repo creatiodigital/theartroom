@@ -2,6 +2,20 @@
 
 .imageSection {
   width: calc(50% - 7px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 360px;
+
+  // Flex `gap` handles vertical spacing between h3, description, the
+  // ImageUploader (which flex-grows via `fill`), and the trailing hint.
+  // Zero out any default margins on the direct children so gap stays
+  // the only source of truth for spacing.
+  > h3,
+  > p,
+  > span {
+    margin: 0;
+  }
 }
 
 .imageRow {

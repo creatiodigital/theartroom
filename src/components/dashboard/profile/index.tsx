@@ -254,7 +254,7 @@ export const DashboardProfilePage = () => {
             onUpload={handleImageUpload}
             onRemove={handleRemoveImage}
             uploading={uploading}
-            aspectRatio="16 / 10"
+            fill
           />
           <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
         </div>
@@ -272,7 +272,7 @@ export const DashboardProfilePage = () => {
             onUpload={handleSignatureUpload}
             onRemove={handleRemoveSignature}
             uploading={uploadingSignature}
-            aspectRatio="3 / 1"
+            fill
           />
           <span className={dashboardStyles.hint}>
             Transparent PNG only. Minimum 600×200 pixels. Keep the background fully transparent —
