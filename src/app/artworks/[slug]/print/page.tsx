@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { PrintWizard } from '@/components/PrintWizard'
+import type { PrintOptions } from '@/components/PrintWizard/types'
 import prisma from '@/lib/prisma'
 
 interface PrintWizardPageProps {
@@ -61,6 +62,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         originalWidthPx,
         originalHeightPx,
         printPriceCents: artwork.printPriceCents,
+        printOptions: (artwork.printOptions as PrintOptions | null) ?? null,
       }}
     />
   )

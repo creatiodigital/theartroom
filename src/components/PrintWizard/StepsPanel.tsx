@@ -9,13 +9,15 @@ import type { SelectOption } from '@/components/ui/SelectDropdown'
 
 import type { CatalogStatus } from './index'
 import {
-  FORMATS,
-  FRAME_COLORS,
-  MOUNTS,
-  PAPERS,
   canSwap,
+  filterFormatsForArtwork,
+  filterFrameColorsForArtwork,
+  filterMountsForArtwork,
+  filterPapersForArtwork,
+  filterSizesForArtwork,
   getCompatibleSizes,
   getFormat,
+  isSizePrintEligible,
 } from './options'
 import type {
   FormatId,
@@ -24,7 +26,9 @@ import type {
   Orientation,
   PaperId,
   PrintConfig,
+  PrintOptions,
   SizeId,
+  SizeOption,
 } from './types'
 
 import styles from './PrintWizard.module.scss'
@@ -32,10 +36,22 @@ import styles from './PrintWizard.module.scss'
 interface StepsPanelProps {
   config: PrintConfig
   aspectRatio: number
+  /** Pixel dimensions of the artwork's source image. Used to hide sizes
+   *  the image physically can't print at 300 DPI. */
+  originalWidthPx: number
+  originalHeightPx: number
   onChange: (patch: Partial<PrintConfig>) => void
   countryCode: string
   onCountryChange: (code: string) => void
   catalogStatus: CatalogStatus
+  /** Artist-set restrictions for this artwork. null/undefined = no restrictions. */
+  printOptions: PrintOptions | null
+  /**
+   * True when no combination of (ships-to-country) × (artist-allowed)
+   * is available for the current selection. Parent flips this when both
+   * `firstShippableConfig` and `findShippableConfig` return null.
+   */
+  noViableCombo: boolean
 }
 
 type StepKey = 'paper' | 'format' | 'size' | 'frame' | 'mount'
@@ -51,10 +67,14 @@ const sortCountries = (codes: string[]) =>
 export const StepsPanel = ({
   config,
   aspectRatio,
+  originalWidthPx,
+  originalHeightPx,
   onChange,
   countryCode,
   onCountryChange,
   catalogStatus,
+  printOptions,
+  noViableCombo,
 }: StepsPanelProps) => {
   const [openStep, setOpenStep] = useState<StepKey>('paper')
 
@@ -67,6 +87,16 @@ export const StepsPanel = ({
   // Filter sizes by aspect ratio, ordered best-fit first. The "will crop or
   // pad" suffix on mismatched ratios is enough hint — no toggle needed.
   const sizeGroups = useMemo(() => getCompatibleSizes(aspectRatio), [aspectRatio])
+
+  // Per-artwork restrictions come before the Prodigi-availability filter:
+  // whatever the artist banned is just gone, no grey-out, no surprise.
+  const allowedPapers = useMemo(() => filterPapersForArtwork(printOptions), [printOptions])
+  const allowedFormats = useMemo(() => filterFormatsForArtwork(printOptions), [printOptions])
+  const allowedFrameColors = useMemo(
+    () => filterFrameColorsForArtwork(printOptions),
+    [printOptions],
+  )
+  const allowedMounts = useMemo(() => filterMountsForArtwork(printOptions), [printOptions])
 
   const catalog = catalogStatus.kind === 'ready' ? catalogStatus.catalog : null
 
@@ -85,49 +115,65 @@ export const StepsPanel = ({
 
   const paperOptions: SelectOption<PaperId>[] = useMemo(
     () =>
-      PAPERS.filter((p) => keepAvail('paper', p.id)).map((p) => ({
-        value: p.id,
-        label: p.label,
-        description: p.description,
-      })),
+      allowedPapers
+        .filter((p) => keepAvail('paper', p.id))
+        .map((p) => ({
+          value: p.id,
+          label: p.label,
+          description: p.description,
+        })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog],
+    [config, countryCode, catalog, allowedPapers],
   )
   const formatOptions: SelectOption<FormatId>[] = useMemo(
     () =>
-      FORMATS.filter((f) => keepAvail('format', f.id)).map((f) => ({
-        value: f.id,
-        label: f.label,
-        description: f.description,
-      })),
+      allowedFormats
+        .filter((f) => keepAvail('format', f.id))
+        .map((f) => ({
+          value: f.id,
+          label: f.label,
+          description: f.description,
+        })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog],
+    [config, countryCode, catalog, allowedFormats],
   )
   const frameColorOptions: SelectOption<FrameColorId>[] = useMemo(
     () =>
-      FRAME_COLORS.filter((c) => keepAvail('frame', c.id)).map((c) => ({
-        value: c.id,
-        label: c.label,
-      })),
+      allowedFrameColors
+        .filter((c) => keepAvail('frame', c.id))
+        .map((c) => ({
+          value: c.id,
+          label: c.label,
+        })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog],
+    [config, countryCode, catalog, allowedFrameColors],
   )
   const mountOptions: SelectOption<MountId>[] = useMemo(
     () =>
-      MOUNTS.filter((m) => keepAvail('mount', m.id)).map((m) => ({ value: m.id, label: m.label })),
+      allowedMounts
+        .filter((m) => keepAvail('mount', m.id))
+        .map((m) => ({ value: m.id, label: m.label })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog],
+    [config, countryCode, catalog, allowedMounts],
   )
   const sizeOptions: SelectOption<SizeId>[] = useMemo(() => {
+    // Drop sizes the image physically can't print at 300 DPI — the
+    // buyer shouldn't see an option that would yield an under-resolved
+    // print, regardless of aspect fit or country coverage.
+    const eligible = (s: SizeOption) =>
+      isSizePrintEligible(s, originalWidthPx, originalHeightPx)
+    const perfect = filterSizesForArtwork(sizeGroups.perfect, printOptions).filter(eligible)
+    const close = filterSizesForArtwork(sizeGroups.close, printOptions).filter(eligible)
+    const mismatch = filterSizesForArtwork(sizeGroups.mismatch, printOptions).filter(eligible)
     const allSizes: SelectOption<SizeId>[] = []
-    for (const s of sizeGroups.perfect) allSizes.push({ value: s.id, label: s.label })
-    for (const s of sizeGroups.close) allSizes.push({ value: s.id, label: s.label })
-    for (const s of sizeGroups.mismatch) {
+    for (const s of perfect) allSizes.push({ value: s.id, label: s.label })
+    for (const s of close) allSizes.push({ value: s.id, label: s.label })
+    for (const s of mismatch) {
       allSizes.push({ value: s.id, label: `${s.label} — will crop or pad` })
     }
     return allSizes.filter((opt) => keepAvail('size', opt.value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sizeGroups, config, countryCode, catalog])
+  }, [sizeGroups, config, countryCode, catalog, printOptions, originalWidthPx, originalHeightPx])
 
   const countryOptions: SelectOption<string>[] = useMemo(() => {
     const available = catalogStatus.kind === 'ready' ? catalogStatus.countries : []
@@ -189,8 +235,20 @@ export const StepsPanel = ({
             Pick a destination to continue.
           </p>
         )}
+
+        {/* No config satisfies both shipping AND artist's restrictions
+            for this destination. Show a clear message and stop — the
+            Continue button is already disabled upstream via canContinue. */}
+        {catalogStatus.kind === 'ready' && countryCode && noViableCombo && (
+          <p className={styles.destinationNotice}>
+            Sorry — this artwork isn&apos;t currently available for shipping to{' '}
+            {countryName(countryCode)}. Try a different destination.
+          </p>
+        )}
       </div>
 
+      {!noViableCombo && (
+      <>
       <div className={styles.orientationBlock}>
         <div className={styles.destinationHeader}>
           <span className={styles.destinationTitle}>Orientation</span>
@@ -290,6 +348,8 @@ export const StepsPanel = ({
             />
           </div>
         </CollapsibleSection>
+      )}
+      </>
       )}
     </aside>
   )

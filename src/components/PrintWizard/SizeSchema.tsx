@@ -7,8 +7,8 @@ import styles from './PrintWizard.module.scss'
 interface SizeSchemaProps {
   printWidthCm: number
   printHeightCm: number
-  mouldingWidthCm: number
-  mouldingColorHex: string
+  moldingWidthCm: number
+  moldingColorHex: string
   mattingBorderCm: number
   mattingColorHex: string
   showFrame: boolean
@@ -23,15 +23,15 @@ interface SizeSchemaProps {
 export const SizeSchema = ({
   printWidthCm,
   printHeightCm,
-  mouldingWidthCm,
-  mouldingColorHex,
+  moldingWidthCm,
+  moldingColorHex,
   mattingBorderCm,
   mattingColorHex,
   showFrame,
   unit,
 }: SizeSchemaProps) => {
   const effectiveMatting = showFrame ? mattingBorderCm : 0
-  const effectiveFrame = showFrame ? mouldingWidthCm : 0
+  const effectiveFrame = showFrame ? moldingWidthCm : 0
 
   const matWidthCm = printWidthCm + effectiveMatting * 2
   const matHeightCm = printHeightCm + effectiveMatting * 2
@@ -72,19 +72,19 @@ export const SizeSchema = ({
         className={styles.schemaSvg}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Frame — rendered in the selected moulding colour. */}
+        {/* Frame — rendered in the selected molding color. */}
         {showFrame && (
           <rect
             x={outerX}
             y={outerY}
             width={outerW}
             height={outerH}
-            fill={mouldingColorHex}
+            fill={moldingColorHex}
             rx={1}
           />
         )}
 
-        {/* Mat — rendered in the selected mat colour. */}
+        {/* Mat — rendered in the selected mat color. */}
         {showFrame && effectiveMatting > 0 && (
           <rect x={matX} y={matY} width={matW} height={matH} fill={mattingColorHex} />
         )}

@@ -52,7 +52,7 @@ export const SummaryPanel = ({
     displayUnit === 'inches' ? `${Math.round(cm / 2.54)} in` : `${cm.toFixed(0)} cm`
 
   const showFrame = format.framed
-  const mouldingWidthCm = showFrame ? 2.0 : 0 // Prodigi Classic moulding width
+  const moldingWidthCm = showFrame ? 2.0 : 0 // Prodigi Classic molding width
   const mattingBorderCm = showFrame ? mount.borderCm : 0
 
   // SIZES are declared portrait. Swap when the artwork is landscape so the
@@ -62,8 +62,8 @@ export const SummaryPanel = ({
   const printHeightCm = isLandscape ? size.widthCm : size.heightCm
   const matWidthCm = printWidthCm + mattingBorderCm * 2
   const matHeightCm = printHeightCm + mattingBorderCm * 2
-  const overallWidthCm = matWidthCm + mouldingWidthCm * 2
-  const overallHeightCm = matHeightCm + mouldingWidthCm * 2
+  const overallWidthCm = matWidthCm + moldingWidthCm * 2
+  const overallHeightCm = matHeightCm + moldingWidthCm * 2
 
   if (!configReady) {
     return (
@@ -114,8 +114,8 @@ export const SummaryPanel = ({
         <SizeSchema
           printWidthCm={printWidthCm}
           printHeightCm={printHeightCm}
-          mouldingWidthCm={mouldingWidthCm}
-          mouldingColorHex={frameColor.hex}
+          moldingWidthCm={moldingWidthCm}
+          moldingColorHex={frameColor.hex}
           mattingBorderCm={mattingBorderCm}
           mattingColorHex="#f6f3ec"
           showFrame={showFrame}

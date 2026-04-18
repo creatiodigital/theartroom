@@ -12,6 +12,7 @@ import {
   populateFormData,
 } from '@/components/shared/ArtworkEditForm'
 import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
+import type { PrintOptions } from '@/components/PrintWizard/types'
 
 type ArtworkEditPageProps = {
   artworkId: string
@@ -118,6 +119,10 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
 
   const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handlePrintOptionsChange = (next: PrintOptions | null) => {
+    setFormData((prev) => ({ ...prev, printOptions: next }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -440,6 +445,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         saving={saving}
         error={error}
         onFormChange={handleChange}
+        onPrintOptionsChange={handlePrintOptionsChange}
         onImageUpload={handleImageUpload}
         onImageRemove={handleRemoveImage}
         onSoundUpload={handleSoundUpload}

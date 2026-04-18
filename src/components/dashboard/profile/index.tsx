@@ -246,8 +246,8 @@ export const DashboardProfilePage = () => {
         <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
           <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
           <p className={dashboardStyles.sectionDescription}>
-            Upload a photo to personalize your artist profile. This will be displayed on your
-            public page.
+            Upload a photo to personalize your artist profile. This will be displayed on your public
+            page.
           </p>
           <ImageUploader
             imageUrl={user?.profileImageUrl}
@@ -263,9 +263,9 @@ export const DashboardProfilePage = () => {
           <h3 className={dashboardStyles.sectionTitle}>Artist Signature</h3>
           <p className={dashboardStyles.sectionDescription}>
             Upload a scan or photo of your handwritten signature. We print this on the{' '}
-            <strong>Certificate of Authenticity</strong> that ships with every printed copy of
-            your artwork — it reassures the buyer the piece is genuine, and keeps your work
-            traceable back to you.
+            <strong>Certificate of Authenticity</strong> that ships with every printed copy of your
+            artwork — it reassures the buyer the piece is genuine, and keeps your work traceable
+            back to you.
           </p>
           <ImageUploader
             imageUrl={user?.signatureUrl}

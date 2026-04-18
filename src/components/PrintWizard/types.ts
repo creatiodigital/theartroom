@@ -1,4 +1,4 @@
-export type PaperId = 'fine-art-matte' | 'museum-cotton-rag'
+export type PaperId = 'fine-art-matte' | 'museum-cotton-rag' | 'german-etching'
 
 export type FormatId = 'unframed' | 'classic-framed' | 'box-framed'
 
@@ -27,7 +27,13 @@ export type PrintConfig = {
 
 export type PaperOption = {
   id: PaperId
+  /**
+   * Technical paper name + weight. Used consistently in the wizard,
+   * the artist's restrictions UI, and the Certificate of Authenticity
+   * — pro photographers recognise these, not marketing labels.
+   */
   label: string
+  /** Full paragraph shown next to the wizard option. */
   description: string
   /** Prefix for the unframed SKU family (uses inch size tokens). */
   prodigiUnframedPrefix: string
@@ -75,6 +81,24 @@ export type SizeOption = {
   label: string
 }
 
+/**
+ * Artist-controlled restrictions on which print options a buyer sees in
+ * the wizard for one specific artwork. Every field is optional and an
+ * `undefined` / missing field means "all values allowed" (current
+ * default behavior). A non-empty array is an allow-list.
+ *
+ * Stored as JSON on `Artwork.printOptions`. Buyers never see this
+ * object — the wizard just renders a filtered option list. Server-side
+ * re-check in `createPaymentIntent` defends against stale wizard state.
+ */
+export type PrintOptions = {
+  allowedPaperIds?: PaperId[]
+  allowedFormatIds?: FormatId[]
+  allowedSizeIds?: SizeId[]
+  allowedFrameColorIds?: FrameColorId[]
+  allowedMountIds?: MountId[]
+}
+
 export type WizardArtwork = {
   slug: string
   title: string
@@ -86,4 +110,6 @@ export type WizardArtwork = {
   originalHeightPx: number
   /** The artist's cut (in cents) per print sale. Set per-artwork by the artist. */
   printPriceCents: number
+  /** Artist-chosen restrictions on which papers/formats/sizes/etc this artwork is sold with. */
+  printOptions?: PrintOptions | null
 }

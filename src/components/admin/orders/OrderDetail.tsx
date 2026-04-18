@@ -69,7 +69,7 @@ const prodigiDot = (stage: string | null): DotColor => {
   return 'grey'
 }
 
-// Pick a colour for an event kind so the timeline is scannable.
+// Pick a color for an event kind so the timeline is scannable.
 const eventDot = (kind: string): DotColor => {
   if (kind.endsWith('_failed') || kind === 'prodigi_cancelled' || kind === 'auth_canceled')
     return 'red'

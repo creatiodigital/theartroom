@@ -2,14 +2,38 @@
 
 import crypto from 'node:crypto'
 
-import type { PrintConfig } from '@/components/PrintWizard/types'
-import { GALLERY_MARKUP_RATE } from '@/components/PrintWizard/options'
+import type { PrintConfig, PrintOptions } from '@/components/PrintWizard/types'
+import {
+  FORMATS,
+  GALLERY_MARKUP_RATE,
+  configRespectsArtworkRestrictions,
+} from '@/components/PrintWizard/options'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
 import { getProdigiQuote } from './getQuote'
 import { getTaxEstimate } from './getTaxEstimate'
+
+/**
+ * When a config clashes with the artwork's restrictions, identify the
+ * first dimension the buyer can usefully change. Keeps the error
+ * message specific (e.g. "the paper you chose isn't available…")
+ * instead of generic.
+ */
+function describeRestrictionClash(config: PrintConfig, opts: PrintOptions | null): string {
+  const hit = (allowed: readonly string[] | undefined, value: string) =>
+    allowed && allowed.length > 0 && !allowed.includes(value)
+  if (hit(opts?.allowedPaperIds, config.paperId)) return 'paper'
+  if (hit(opts?.allowedFormatIds, config.formatId)) return 'format'
+  if (hit(opts?.allowedSizeIds, config.sizeId)) return 'size'
+  const format = FORMATS.find((f) => f.id === config.formatId)
+  if (format?.framed) {
+    if (hit(opts?.allowedFrameColorIds, config.frameColorId)) return 'frame color'
+    if (hit(opts?.allowedMountIds, config.mountId)) return 'mount option'
+  }
+  return 'configuration'
+}
 
 export type ShippingAddress = {
   fullName: string
@@ -70,6 +94,7 @@ export async function createPaymentIntent(
       userId: true,
       printEnabled: true,
       printPriceCents: true,
+      printOptions: true,
     },
   })
   if (!artwork) {
@@ -77,6 +102,22 @@ export async function createPaymentIntent(
   }
   if (!artwork.printEnabled || !artwork.printPriceCents) {
     return { ok: false, error: 'This artwork is not currently available as a print.' }
+  }
+
+  // Defend against a wizard that had stale restrictions: if the artist
+  // narrowed what's allowed while the buyer was configuring, reject the
+  // now-disallowed config here rather than submitting it to Prodigi.
+  // Error message names which dimension clashed so the buyer knows
+  // what to change instead of seeing a vague "no longer available".
+  const restrictions = (artwork.printOptions as PrintOptions | null) ?? null
+  if (!configRespectsArtworkRestrictions(config, restrictions)) {
+    const reason = describeRestrictionClash(config, restrictions)
+    return {
+      ok: false,
+      error:
+        `The ${reason} you chose isn't available for this artwork any more. ` +
+        'Please go back to the print options and pick a different one.',
+    }
   }
 
   const quote = await getProdigiQuote(config, address.countryCode)

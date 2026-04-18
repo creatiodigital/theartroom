@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal/Modal'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
-import { SIZES } from '@/components/PrintWizard/options'
+import { FORMATS, FRAME_COLORS, MOUNTS, PAPERS, SIZES } from '@/components/PrintWizard/options'
+import type { PrintOptions } from '@/components/PrintWizard/types'
 import {
   MAX_ARTWORK_UPLOAD_SIZE,
   MIN_ARTWORK_IMAGE_WIDTH,
@@ -58,6 +59,7 @@ export type Artwork = {
   hiddenFromExhibition: boolean
   printEnabled?: boolean
   printPriceCents?: number | null
+  printOptions?: PrintOptions | null
 }
 
 export type ArtworkFormData = {
@@ -75,6 +77,8 @@ export type ArtworkFormData = {
   printEnabled: boolean
   /** Euros as a string for the input field; converted to cents at submit. */
   printPriceEuros: string
+  /** Artist-set restrictions. null = no restrictions (all options offered). */
+  printOptions: PrintOptions | null
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -91,6 +95,7 @@ export const getInitialFormData = (): ArtworkFormData => ({
   hiddenFromExhibition: false,
   printEnabled: false,
   printPriceEuros: '',
+  printOptions: null,
 })
 
 export const populateFormData = (data: Artwork): ArtworkFormData => ({
@@ -108,6 +113,7 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   printEnabled: data.printEnabled ?? false,
   printPriceEuros:
     typeof data.printPriceCents === 'number' ? (data.printPriceCents / 100).toString() : '',
+  printOptions: data.printOptions ?? null,
 })
 
 type ArtworkEditFormProps = {
@@ -126,6 +132,8 @@ type ArtworkEditFormProps = {
   saving: boolean
   error: string
   onFormChange: (field: string, value: string | boolean) => void
+  /** Replace the whole printOptions object. Called as the artist (un)checks boxes. */
+  onPrintOptionsChange?: (next: PrintOptions | null) => void
   onImageUpload: (file: File) => Promise<void>
   onImageRemove: () => void | Promise<void>
   onSoundUpload?: (file: File) => Promise<void>
@@ -191,6 +199,110 @@ function isPrintEligible(meta: ImageMeta | null): boolean {
   return getPrintSizeEligibility(meta).some((s) => s.eligible)
 }
 
+/**
+ * SIZES filtered to only those the current image can physically render
+ * at 300 DPI. Used to scope the artist's restriction UI — it doesn't
+ * make sense to offer a checkbox for a size the image can't fulfil.
+ * If we have no meta yet, return everything so the UI isn't empty
+ * while the image measures.
+ */
+function getEligibleSizes(meta: ImageMeta | null) {
+  if (!meta) return SIZES
+  return SIZES.filter((size) => {
+    const requiredWidth = Math.ceil((size.widthCm / 2.54) * MIN_DPI)
+    const requiredHeight = Math.ceil((size.heightCm / 2.54) * MIN_DPI)
+    return meta.width >= requiredWidth && meta.height >= requiredHeight
+  })
+}
+
+/**
+ * Toggle membership of `id` in the allow-list for one dimension of
+ * `PrintOptions`. The UI convention: all-checked means "no restriction"
+ * so we drop the allow-list entirely when that dimension ends up matching
+ * every id in `all`. Mirror inverse: leaving zero checked reinstates all.
+ */
+function togglePrintOptionId<K extends keyof PrintOptions>(
+  current: PrintOptions | null,
+  key: K,
+  id: string,
+  all: readonly string[],
+): PrintOptions | null {
+  const currentList = current?.[key] as readonly string[] | undefined
+  const effective = currentList && currentList.length > 0 ? [...currentList] : [...all]
+  const idx = effective.indexOf(id)
+  const next = idx === -1 ? [...effective, id] : effective.filter((x) => x !== id)
+
+  // Artist has re-checked everything or unchecked everything: drop the
+  // allow-list so the field reverts to "no restriction" (buyers see all).
+  // Zero-length would otherwise mean "nothing allowed" which we treat as
+  // the same as "no restriction" to prevent accidental total lockouts.
+  const reachesAll = next.length === all.length
+  const isEmpty = next.length === 0
+  const shouldClearDimension = reachesAll || isEmpty
+
+  const base: PrintOptions = { ...(current ?? {}) }
+  if (shouldClearDimension) {
+    delete base[key]
+  } else {
+    ;(base as Record<string, unknown>)[key as string] = next
+  }
+
+  // Drop the whole printOptions object when nothing remains restricted.
+  const anyRestriction = Object.values(base).some(
+    (v) => Array.isArray(v) && v.length > 0 && v.length < all.length,
+  )
+  return Object.keys(base).length === 0 ? null : anyRestriction ? base : null
+}
+
+function isDimensionChecked<K extends keyof PrintOptions>(
+  opts: PrintOptions | null,
+  key: K,
+  id: string,
+): boolean {
+  const list = opts?.[key] as readonly string[] | undefined
+  // No allow-list set → all options allowed → every checkbox is checked.
+  if (!list || list.length === 0) return true
+  return list.includes(id)
+}
+
+type PrintRestrictionGroupProps<K extends keyof PrintOptions> = {
+  title: string
+  all: Array<{ id: string; label: string }>
+  allIds: readonly string[]
+  dimensionKey: K
+  options: PrintOptions | null
+  onChange?: (next: PrintOptions | null) => void
+}
+
+const PrintRestrictionGroup = <K extends keyof PrintOptions>({
+  title,
+  all,
+  allIds,
+  dimensionKey,
+  options,
+  onChange,
+}: PrintRestrictionGroupProps<K>) => {
+  const handleToggle = (id: string) => {
+    if (!onChange) return
+    onChange(togglePrintOptionId(options, dimensionKey, id, allIds))
+  }
+  return (
+    <div className={styles.printRestrictionGroup}>
+      <h4 className={styles.printRestrictionGroupTitle}>{title}</h4>
+      <div className={styles.printRestrictionChoices}>
+        {all.map((item) => (
+          <Checkbox
+            key={item.id}
+            checked={isDimensionChecked(options, dimensionKey, item.id)}
+            onChange={() => handleToggle(item.id)}
+            label={item.label}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export const ArtworkEditForm = ({
   formData,
   imageUrl,
@@ -207,6 +319,7 @@ export const ArtworkEditForm = ({
   saving,
   error,
   onFormChange,
+  onPrintOptionsChange,
   onImageUpload,
   onImageRemove,
   onSoundUpload,
@@ -245,6 +358,9 @@ export const ArtworkEditForm = ({
   const printEligible = isPrintEligible(imageMeta)
   const printSizes = getPrintSizeEligibility(imageMeta)
   const eligibleSizes = printSizes.filter((s) => s.eligible)
+  // Actual SizeOption entries the image can physically print at — used
+  // to scope the artist's restriction checkboxes for the Sizes group.
+  const eligibleSizeOptions = getEligibleSizes(imageMeta)
 
   const handleImageMetaChange = useCallback((meta: ImageMeta | null) => {
     if (meta && meta.width > 0) {
@@ -583,6 +699,70 @@ export const ArtworkEditForm = ({
             This is the amount you earn per print sold. Production, shipping, gallery fee and VAT
             are added separately at checkout.
           </span>
+        </div>
+      )}
+
+      {/* Per-artwork printing restrictions — separate section so the
+          parent's hint break-out doesn't visually collide with this block. */}
+      {formData.artworkType === 'image' && formData.printEnabled && (
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Printing restrictions</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Advanced — you don&apos;t need to touch this unless you have very specific reasons not
+            to offer a particular paper, format, size or frame for this artwork.
+          </p>
+
+          <details className={styles.printRestrictions}>
+            <summary className={styles.printRestrictionsSummary}>Show options</summary>
+
+            <p className={styles.printRestrictionsIntro}>
+              We already offer the best print quality we can — museum-grade papers, archival inks,
+              and gallery-tested framing. The options listed below are the ones our printing service
+              supports for this kind of artwork. Uncheck anything you&apos;d rather we not offer;
+              everything that stays checked remains available to buyers.
+            </p>
+
+            <PrintRestrictionGroup
+              title="Papers"
+              all={PAPERS.map((p) => ({ id: p.id, label: p.label }))}
+              dimensionKey="allowedPaperIds"
+              options={formData.printOptions}
+              onChange={onPrintOptionsChange}
+              allIds={PAPERS.map((p) => p.id)}
+            />
+            <PrintRestrictionGroup
+              title="Formats"
+              all={FORMATS.map((f) => ({ id: f.id, label: f.label }))}
+              dimensionKey="allowedFormatIds"
+              options={formData.printOptions}
+              onChange={onPrintOptionsChange}
+              allIds={FORMATS.map((f) => f.id)}
+            />
+            <PrintRestrictionGroup
+              title="Sizes"
+              all={eligibleSizeOptions.map((s) => ({ id: s.id, label: s.label }))}
+              dimensionKey="allowedSizeIds"
+              options={formData.printOptions}
+              onChange={onPrintOptionsChange}
+              allIds={eligibleSizeOptions.map((s) => s.id)}
+            />
+            <PrintRestrictionGroup
+              title="Frame colors"
+              all={FRAME_COLORS.map((c) => ({ id: c.id, label: c.label }))}
+              dimensionKey="allowedFrameColorIds"
+              options={formData.printOptions}
+              onChange={onPrintOptionsChange}
+              allIds={FRAME_COLORS.map((c) => c.id)}
+            />
+            <PrintRestrictionGroup
+              title="Mounts"
+              all={MOUNTS.map((m) => ({ id: m.id, label: m.label }))}
+              dimensionKey="allowedMountIds"
+              options={formData.printOptions}
+              onChange={onPrintOptionsChange}
+              allIds={MOUNTS.map((m) => m.id)}
+            />
+          </details>
         </div>
       )}
 
