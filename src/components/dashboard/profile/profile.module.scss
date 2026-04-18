@@ -4,17 +4,13 @@
   width: calc(50% - 7px);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
   min-height: 360px;
 
-  // Flex `gap` handles vertical spacing between h3, description, the
-  // ImageUploader (which flex-grows via `fill`), and the trailing hint.
-  // Zero out any default margins on the direct children so gap stays
-  // the only source of truth for spacing.
-  > h3,
-  > p,
-  > span {
-    margin: 0;
+  // Hint helper is the last child; pad above it so the dropzone never
+  // butts up against the text, and pin it to the bottom of the card
+  // regardless of how much empty space the flex-grown dropzone leaves.
+  > span:last-child {
+    margin-top: var(--space-4);
   }
 }
 
