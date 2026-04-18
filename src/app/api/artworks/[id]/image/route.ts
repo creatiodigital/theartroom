@@ -115,17 +115,34 @@ export async function DELETE(
       return NextResponse.json({ message: 'No image to delete' })
     }
 
-    // Delete from R2 (handles legacy Vercel Blob URLs gracefully)
+    // Delete web-optimized image from R2
     try {
       await deleteFromR2(artwork.imageUrl)
     } catch (error) {
-      console.warn('Failed to delete blob:', error)
+      console.warn('Failed to delete web image:', error)
     }
 
-    // Update artwork
+    // Delete original image from R2 if it exists
+    if (artwork.originalImageUrl) {
+      try {
+        await deleteFromR2(artwork.originalImageUrl)
+      } catch (error) {
+        console.warn('Failed to delete original image:', error)
+      }
+    }
+
+    // Clear all image data
     await prisma.artwork.update({
       where: { id },
-      data: { imageUrl: null },
+      data: {
+        imageUrl: null,
+        originalImageUrl: null,
+        originalWidth: null,
+        originalHeight: null,
+        originalDpi: null,
+        originalFormat: null,
+        originalSizeBytes: null,
+      },
     })
 
     // Bust detail page cache

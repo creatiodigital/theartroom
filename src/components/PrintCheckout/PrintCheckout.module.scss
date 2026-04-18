@@ -1,0 +1,398 @@
+.checkout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--color-white, #fff);
+  color: var(--color-text-primary, #111);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  @media (min-width: 768px) {
+    padding: var(--space-5) var(--space-8);
+  }
+}
+
+.logo {
+  width: 180px;
+  height: auto;
+  color: var(--color-brand);
+  overflow: visible;
+}
+
+.headerTitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+}
+
+// ── Body ────────────────────────────────────────────────────
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  min-height: 0;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr 380px;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Form (left) ─────────────────────────────────────────────
+.formPanel {
+  padding: var(--space-8) var(--space-8);
+  overflow-y: auto;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+
+  @media (max-width: 900px) {
+    padding: var(--space-6);
+  }
+}
+
+.formSectionTitle {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl, 1.4rem);
+  margin: 0 0 var(--space-2) 0;
+  color: var(--color-text-primary);
+}
+
+.formSectionHelp {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.fieldLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+// Per-field error text. Only rendered when `.field[data-touched="true"]`
+// and the input inside is invalid — avoids flashing red on initial load.
+.fieldError {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: rgba(180, 30, 30, 0.9);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.field[data-touched='true'] .fieldInput:invalid {
+  border-color: rgba(180, 30, 30, 0.6);
+}
+
+.field[data-touched='true'] .fieldInput:invalid ~ .fieldError {
+  display: block;
+}
+
+.fieldInput,
+.fieldSelect {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.4);
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-text-primary, #111);
+  }
+}
+
+.fieldSelect {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23111' d='M6 8 0 0h12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right var(--space-4) center;
+  padding-right: var(--space-6);
+}
+
+// ── Summary (right, sticky) ─────────────────────────────────
+.summaryPanel {
+  padding: var(--space-6);
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  background: #faf9f5;
+  min-height: 100vh;
+
+  @media (max-width: 900px) {
+    border-left: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    min-height: 0;
+  }
+}
+
+.summaryHeader {
+  display: flex;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.summaryThumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.summaryMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.summaryEyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.summaryTitle {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg, 1.2rem);
+  margin: 0;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.specList {
+  list-style: none;
+  margin: var(--space-4) 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.specList li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.priceList {
+  margin: 0;
+  padding: var(--space-4) 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.75);
+  margin: 0;
+}
+
+.priceRowMuted {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.priceRowDim {
+  color: rgba(0, 0, 0, 0.35);
+  font-style: italic;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-serif);
+  font-size: var(--text-xl, 1.4rem);
+  padding: var(--space-4) 0;
+  color: var(--color-text-primary);
+}
+
+.totalValue {
+  font-weight: 500;
+}
+
+.ctaButton {
+  display: block;
+  width: 100%;
+  padding: var(--space-4);
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: #000;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.ctaButtonPlaceholder {
+  margin-top: var(--space-4);
+}
+
+.editButtonRow {
+  margin-top: var(--space-8);
+}
+
+.quoteNote {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.5);
+  margin: var(--space-2) 0 0 0;
+  line-height: 1.4;
+}
+
+.priceCalculating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.priceSpinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: priceSpinnerRotate 1s linear infinite;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+@keyframes priceSpinnerRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.destinationLock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin: 0 0 var(--space-5) 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.destinationLockLine {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.destinationLockLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.destinationLockValue {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.destinationLockChange {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.9);
+  }
+}

@@ -186,12 +186,20 @@ export const DashboardAdmin = () => {
   return (
     <DashboardLayout
       headerActions={
-        <Button
-          font="dashboard"
-          variant="secondary"
-          label="Test Dashboard"
-          onClick={() => router.push('/dashboard')}
-        />
+        <>
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="Orders"
+            onClick={() => router.push('/admin/orders')}
+          />
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label="Test Dashboard"
+            onClick={() => router.push('/dashboard')}
+          />
+        </>
       }
     >
       {/* Page Title */}

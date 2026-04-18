@@ -22,6 +22,7 @@ type User = {
   biography: string
   email: string | null
   profileImageUrl: string | null
+  signatureUrl: string | null
 }
 
 export const DashboardProfilePage = () => {
@@ -31,6 +32,7 @@ export const DashboardProfilePage = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadingSignature, setUploadingSignature] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -144,6 +146,66 @@ export const DashboardProfilePage = () => {
     [effectiveUser?.id],
   )
 
+  const handleSignatureUpload = useCallback(
+    async (file: File) => {
+      if (!effectiveUser?.id) return
+
+      setUploadingSignature(true)
+      setError('')
+
+      try {
+        const body = new FormData()
+        body.append('image', file)
+
+        const response = await fetch(`/api/users/${effectiveUser.id}/signature`, {
+          method: 'POST',
+          body,
+        })
+
+        const data = await response.json()
+        if (!response.ok) {
+          setError(data.error || 'Failed to upload signature')
+          setUploadingSignature(false)
+          return
+        }
+
+        setUser((prev) => (prev ? { ...prev, signatureUrl: data.url } : prev))
+        setSuccess('Signature updated!')
+      } catch {
+        setError('Failed to upload signature')
+      } finally {
+        setUploadingSignature(false)
+      }
+    },
+    [effectiveUser?.id],
+  )
+
+  const handleRemoveSignature = useCallback(async () => {
+    if (!user?.signatureUrl || !effectiveUser?.id) return
+
+    setUploadingSignature(true)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/users/${effectiveUser.id}/signature`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        setError('Failed to remove signature')
+        setUploadingSignature(false)
+        return
+      }
+
+      setUser((prev) => (prev ? { ...prev, signatureUrl: null } : prev))
+      setSuccess('Signature removed!')
+    } catch {
+      setError('Failed to remove signature')
+    } finally {
+      setUploadingSignature(false)
+    }
+  }, [user?.signatureUrl, effectiveUser?.id])
+
   const handleRemoveImage = useCallback(async () => {
     if (!user?.profileImageUrl || !effectiveUser?.id) return
 
@@ -179,21 +241,44 @@ export const DashboardProfilePage = () => {
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Edit Profile</h1>
 
-      {/* Profile Image Section */}
-      <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
-        <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
-        <p className={dashboardStyles.sectionDescription}>
-          Upload a photo to personalize your artist profile. This will be displayed on your public
-          page.
-        </p>
-        <ImageUploader
-          imageUrl={user?.profileImageUrl}
-          onUpload={handleImageUpload}
-          onRemove={handleRemoveImage}
-          uploading={uploading}
-          aspectRatio="16 / 10"
-        />
-        <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
+      {/* Profile Image + Signature — side by side on desktop, stacked on mobile */}
+      <div className={styles.imageRow}>
+        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+          <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Upload a photo to personalize your artist profile. This will be displayed on your
+            public page.
+          </p>
+          <ImageUploader
+            imageUrl={user?.profileImageUrl}
+            onUpload={handleImageUpload}
+            onRemove={handleRemoveImage}
+            uploading={uploading}
+            fill
+          />
+          <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
+        </div>
+
+        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+          <h3 className={dashboardStyles.sectionTitle}>Artist Signature</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Upload a scan or photo of your handwritten signature. We print this on the{' '}
+            <strong>Certificate of Authenticity</strong> that ships with every printed copy of
+            your artwork — it reassures the buyer the piece is genuine, and keeps your work
+            traceable back to you.
+          </p>
+          <ImageUploader
+            imageUrl={user?.signatureUrl}
+            onUpload={handleSignatureUpload}
+            onRemove={handleRemoveSignature}
+            uploading={uploadingSignature}
+            fill
+          />
+          <span className={dashboardStyles.hint}>
+            Transparent PNG only. Minimum 600×200 pixels. Keep the background fully transparent —
+            your signature should float over the certificate, not sit in a white box.
+          </span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>

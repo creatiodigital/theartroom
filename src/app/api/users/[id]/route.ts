@@ -52,6 +52,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         isFeatured: true,
         published: true,
         profileImageUrl: true,
+        signatureUrl: true,
       },
     })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })

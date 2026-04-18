@@ -1,0 +1,62 @@
+'use client'
+
+import type { ReactNode } from 'react'
+
+import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+
+import styles from './ConfirmModal.module.scss'
+
+type ConfirmModalProps = {
+  title: string
+  /** The explanation shown in the body. Can be a string or richer JSX. */
+  message: ReactNode
+  /** Extra warning banner rendered above the buttons (e.g. "Artist already paid"). */
+  warning?: ReactNode
+  confirmLabel: string
+  cancelLabel?: string
+  /** Show the confirm button as destructive (red-ish treatment). */
+  destructive?: boolean
+  /** Hide the confirm button while the action is running so it can't fire twice. */
+  busy?: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+export const ConfirmModal = ({
+  title,
+  message,
+  warning,
+  confirmLabel,
+  cancelLabel = 'Cancel',
+  destructive = false,
+  busy = false,
+  onConfirm,
+  onCancel,
+}: ConfirmModalProps) => {
+  return (
+    <Modal onClose={busy ? () => {} : onCancel}>
+      <div className={styles.body}>
+        <h2 className={styles.title}>{title}</h2>
+        <div className={styles.message}>{message}</div>
+        {warning && <div className={styles.warning}>{warning}</div>}
+        <div className={styles.actions}>
+          <Button
+            font="dashboard"
+            variant="secondary"
+            label={cancelLabel}
+            onClick={onCancel}
+            disabled={busy}
+          />
+          <Button
+            font="dashboard"
+            variant={destructive ? 'danger' : 'primary'}
+            label={busy ? 'Working…' : confirmLabel}
+            onClick={onConfirm}
+            disabled={busy}
+          />
+        </div>
+      </div>
+    </Modal>
+  )
+}

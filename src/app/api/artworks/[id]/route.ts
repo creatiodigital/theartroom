@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     // Verify ownership
     const existing = await prisma.artwork.findUnique({
       where: { id },
-      select: { userId: true, title: true },
+      select: { userId: true, title: true, slug: true },
     })
     if (!existing) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
     const { error: authError } = await requireOwnership(existing.userId)
@@ -46,6 +46,22 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     // Regenerate slug if title changed
     const titleChanged = body.title && body.title !== existing.title
     const slug = titleChanged ? await generateUniqueSlug(body.title) : undefined
+
+    // Tags for cache busting below — by-id + by-slug (old + new if slug changed).
+    const slugTags = [existing.slug, slug].filter(
+      (s): s is string => typeof s === 'string' && s.length > 0,
+    )
+
+    // Normalize print-sales inputs. `printPriceCents` is an integer in
+    // minor units (cents); null means "price not set". `printEnabled`
+    // without a price still persists — the checkout gate checks for both.
+    const rawPrice = body.printPriceCents
+    const parsedPrice =
+      rawPrice === null || rawPrice === undefined || rawPrice === '' ? null : Number(rawPrice)
+    const printPriceCents =
+      parsedPrice !== null && Number.isFinite(parsedPrice) && parsedPrice >= 0
+        ? Math.round(parsedPrice)
+        : null
 
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
@@ -61,6 +77,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       description: body.description,
       textContent: body.textContent,
       featured: body.featured === true || body.featured === 'true',
+      printEnabled: body.printEnabled === true || body.printEnabled === 'true',
+      printPriceCents,
     }
 
     // Try with new fields first
@@ -76,6 +94,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
       // Bust caches that include this artwork's data
       revalidateTag(`artwork-${id}`, 'default')
+      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, 'default')
 
       return NextResponse.json(artwork)
     } catch (innerError) {
@@ -88,6 +107,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
       // Bust caches that include this artwork's data
       revalidateTag(`artwork-${id}`, 'default')
+      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, 'default')
 
       return NextResponse.json(artwork)
     }

@@ -1,0 +1,115 @@
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fafaf7;
+}
+
+.header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: #fff;
+}
+
+.logoLink {
+  display: inline-flex;
+}
+
+.logo {
+  width: 180px;
+  height: auto;
+  color: var(--color-brand);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-5);
+}
+
+.card {
+  max-width: 480px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.thumb {
+  border-radius: 4px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.headline {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  margin: 0;
+}
+
+.bodyText {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.65);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.orderMeta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: var(--space-4);
+  margin-top: var(--space-2);
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+    text-align: left;
+    font-family: var(--font-sans);
+    font-size: 12px;
+
+    span {
+      color: rgba(0, 0, 0, 0.5);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    strong {
+      font-family: var(--font-mono, monospace);
+      font-weight: 400;
+      word-break: break-all;
+    }
+  }
+}
+
+.primaryLink {
+  display: inline-block;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-text-primary, #111);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  &:hover {
+    opacity: 0.88;
+  }
+}

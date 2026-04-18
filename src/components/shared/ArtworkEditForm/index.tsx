@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useMemo } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 
 import { Button } from '@/components/ui/Button'
@@ -8,8 +8,19 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Icon } from '@/components/ui/Icon'
 import { ImageUploader } from '@/components/ui/ImageUploader'
+import type { ImageMeta } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal/Modal'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { Text } from '@/components/ui/Typography'
+import { SIZES } from '@/components/PrintWizard/options'
+import {
+  MAX_ARTWORK_UPLOAD_SIZE,
+  MIN_ARTWORK_IMAGE_WIDTH,
+  MIN_ARTWORK_IMAGE_HEIGHT,
+  MIN_PRINT_WIDTH,
+  MIN_PRINT_HEIGHT,
+} from '@/lib/imageConfig'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import styles from './ArtworkEditForm.module.scss'
@@ -39,10 +50,14 @@ export type Artwork = {
   dimensions: string | null
   description: string | null
   imageUrl: string | null
+  originalImageUrl: string | null
+  originalDpi: number | null
   textContent: string | null
   soundUrl: string | null
   featured: boolean
   hiddenFromExhibition: boolean
+  printEnabled?: boolean
+  printPriceCents?: number | null
 }
 
 export type ArtworkFormData = {
@@ -57,6 +72,9 @@ export type ArtworkFormData = {
   textContent: string
   featured: boolean
   hiddenFromExhibition: boolean
+  printEnabled: boolean
+  /** Euros as a string for the input field; converted to cents at submit. */
+  printPriceEuros: string
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -71,6 +89,8 @@ export const getInitialFormData = (): ArtworkFormData => ({
   textContent: '',
   featured: false,
   hiddenFromExhibition: false,
+  printEnabled: false,
+  printPriceEuros: '',
 })
 
 export const populateFormData = (data: Artwork): ArtworkFormData => ({
@@ -85,11 +105,20 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   textContent: stripHtml(data.textContent || ''),
   featured: data.featured ?? false,
   hiddenFromExhibition: data.hiddenFromExhibition ?? false,
+  printEnabled: data.printEnabled ?? false,
+  printPriceEuros:
+    typeof data.printPriceCents === 'number' ? (data.printPriceCents / 100).toString() : '',
 })
 
 type ArtworkEditFormProps = {
   formData: ArtworkFormData
   imageUrl: string | null
+  imageDpi?: number | null
+  originalWidth?: number | null
+  originalHeight?: number | null
+  originalImageUrl?: string | null
+  originalFormat?: string | null
+  originalSizeBytes?: number | null
   soundUrl?: string | null
   videoUrl?: string | null
   uploading: boolean
@@ -122,9 +151,55 @@ const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
+const MIN_DPI = 300
+
+type PrintSizeEligibility = {
+  label: string
+  widthCm: number
+  heightCm: number
+  requiredWidth: number
+  requiredHeight: number
+  eligible: boolean
+  effectiveDpiW: number
+  effectiveDpiH: number
+}
+
+function getPrintSizeEligibility(meta: ImageMeta | null): PrintSizeEligibility[] {
+  return SIZES.map((size) => {
+    const requiredWidth = Math.ceil((size.widthCm / 2.54) * MIN_DPI)
+    const requiredHeight = Math.ceil((size.heightCm / 2.54) * MIN_DPI)
+    const printWidthInches = size.widthCm / 2.54
+    const printHeightInches = size.heightCm / 2.54
+    const effectiveDpiW = meta ? Math.round(meta.width / printWidthInches) : 0
+    const effectiveDpiH = meta ? Math.round(meta.height / printHeightInches) : 0
+    const eligible = meta ? meta.width >= requiredWidth && meta.height >= requiredHeight : false
+    return {
+      label: size.label,
+      widthCm: size.widthCm,
+      heightCm: size.heightCm,
+      requiredWidth,
+      requiredHeight,
+      eligible,
+      effectiveDpiW,
+      effectiveDpiH,
+    }
+  })
+}
+
+function isPrintEligible(meta: ImageMeta | null): boolean {
+  if (!meta) return false
+  return getPrintSizeEligibility(meta).some((s) => s.eligible)
+}
+
 export const ArtworkEditForm = ({
   formData,
   imageUrl,
+  imageDpi,
+  originalWidth,
+  originalHeight,
+  originalImageUrl,
+  originalFormat,
+  originalSizeBytes,
   soundUrl,
   videoUrl,
   uploading,
@@ -147,6 +222,37 @@ export const ArtworkEditForm = ({
   const [isDraggingVideo, setIsDraggingVideo] = useState(false)
   const [soundSizeError, setSoundSizeError] = useState<string | null>(null)
   const [videoSizeError, setVideoSizeError] = useState<string | null>(null)
+  // If server has original file info, use that directly instead of reading from CDN image
+  const serverMeta = useMemo<ImageMeta | null>(() => {
+    if (originalWidth && originalHeight) {
+      return {
+        width: originalWidth,
+        height: originalHeight,
+        format: originalFormat ?? 'Image',
+        sizeBytes: originalSizeBytes ?? 0,
+        dpi: imageDpi ?? undefined,
+      }
+    }
+    return null
+  }, [originalWidth, originalHeight, originalFormat, originalSizeBytes, imageDpi])
+
+  const [clientMeta, setClientMeta] = useState<ImageMeta | null>(null)
+  const [showPrintInfoModal, setShowPrintInfoModal] = useState(false)
+
+  // Server meta takes priority over client-detected meta
+  const imageMeta = serverMeta ?? clientMeta
+
+  const printEligible = isPrintEligible(imageMeta)
+  const printSizes = getPrintSizeEligibility(imageMeta)
+  const eligibleSizes = printSizes.filter((s) => s.eligible)
+
+  const handleImageMetaChange = useCallback((meta: ImageMeta | null) => {
+    if (meta && meta.width > 0) {
+      setClientMeta(meta)
+    } else if (meta === null) {
+      setClientMeta(null)
+    }
+  }, [])
 
   const handleSoundFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
@@ -233,7 +339,7 @@ export const ArtworkEditForm = ({
 
       {/* Video File Upload Section - only for video type */}
       {formData.artworkType === 'video' && (
-        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+        <div className={`${dashboardStyles.section} ${styles.imageSectionHalf}`}>
           <h3 className={dashboardStyles.sectionTitle}>Video File</h3>
           <p className={dashboardStyles.sectionDescription}>
             Upload the video file. This will be played in exhibitions.
@@ -318,7 +424,9 @@ export const ArtworkEditForm = ({
 
       {/* Image Upload Section - for image and video types (poster for video) */}
       {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+        <div
+          className={`${dashboardStyles.section} ${formData.artworkType === 'image' ? styles.imageSection : styles.imageSectionHalf}`}
+        >
           <h3 className={dashboardStyles.sectionTitle}>
             {formData.artworkType === 'video' ? 'Video Poster' : 'Artwork Image'}
           </h3>
@@ -327,24 +435,160 @@ export const ArtworkEditForm = ({
               ? 'Optional. Upload a poster image for this video. If not provided, the first frame of the video will be used.'
               : 'Upload the artwork image. This will be displayed in exhibitions and on your profile.'}
           </p>
-          <ImageUploader
-            imageUrl={imageUrl}
-            onUpload={onImageUpload}
-            onRemove={onImageRemove}
-            uploading={uploading}
-            loadingText={loadingText}
-            aspectRatio="1 / 1"
-            objectFit="contain"
-          />
+
+          <div className={styles.imageRow}>
+            <div className={styles.imageUploaderCol}>
+              <ImageUploader
+                imageUrl={imageUrl}
+                onUpload={onImageUpload}
+                onRemove={onImageRemove}
+                onMetaChange={handleImageMetaChange}
+                displayMeta={serverMeta}
+                uploading={uploading}
+                loadingText={loadingText}
+                aspectRatio="1 / 1"
+                objectFit="contain"
+                maxSizeBytes={MAX_ARTWORK_UPLOAD_SIZE}
+                minWidth={MIN_ARTWORK_IMAGE_WIDTH}
+                minHeight={MIN_ARTWORK_IMAGE_HEIGHT}
+              />
+            </div>
+
+            {/* Print requirements info — only for image artworks */}
+            {formData.artworkType === 'image' && (
+              <div className={styles.printInfoCol}>
+                <div className={styles.printInfoCard}>
+                  <h4 className={styles.printInfoTitle}>
+                    <Icon name="printer" size={16} />
+                    Sell as print
+                  </h4>
+                  <p className={styles.printInfoText}>
+                    You can sell physical prints of your artwork through our print-on-demand
+                    service. This is completely optional — your artwork will always be displayed in
+                    exhibitions regardless of image resolution.
+                  </p>
+                  <p className={styles.printInfoText}>
+                    To enable print sales, your image needs to be high resolution (at least{' '}
+                    {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px). The larger the image, the more print
+                    sizes will be available to buyers.
+                  </p>
+
+                  {/* Per-size eligibility checklist */}
+                  {imageUrl && imageMeta ? (
+                    <>
+                      <p
+                        className={styles.printInfoText}
+                        style={{ marginBottom: 'var(--space-1)' }}
+                      >
+                        <strong>Print size eligibility:</strong>
+                      </p>
+                      <ul className={styles.printSizeChecklist}>
+                        {printSizes.map((s) => (
+                          <li
+                            key={s.label}
+                            className={
+                              s.eligible ? styles.printSizeEligible : styles.printSizeIneligible
+                            }
+                          >
+                            <Icon name={s.eligible ? 'check-circle' : 'alert-circle'} size={14} />
+                            <span>{s.label}</span>
+                            <span className={styles.printSizeDpi}>
+                              {Math.min(s.effectiveDpiW, s.effectiveDpiH)} DPI
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {eligibleSizes.length === 0 && (
+                        <div className={styles.printStatusNotReady}>
+                          <Icon name="alert-circle" size={16} />
+                          <span>
+                            This image is {imageMeta.width} × {imageMeta.height} px — below the
+                            minimum for any print size. Upload a higher resolution version to enable
+                            print sales.
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : imageUrl ? (
+                    <p className={styles.printInfoTextMuted}>Loading image info...</p>
+                  ) : (
+                    <p className={styles.printInfoTextMuted}>
+                      Upload an image to check print eligibility.
+                    </p>
+                  )}
+
+                  <div style={{ marginTop: 'var(--space-3)' }}>
+                    <Button
+                      font="dashboard"
+                      variant="primary"
+                      label="More info on print sizes"
+                      onClick={() => setShowPrintInfoModal(true)}
+                      type="button"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <span className={dashboardStyles.hint}>
-            Accepted: JPG, PNG, WebP, GIF (max 1MB). Images are automatically optimized.
+            Accepted: JPG, PNG, WebP, GIF (max 200MB). Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH}{' '}
+            × {MIN_ARTWORK_IMAGE_HEIGHT} px. For print sales, upload the highest resolution
+            available. Images are automatically optimized for the web.
+          </span>
+        </div>
+      )}
+
+      {/* Print Sales — right after the image uploader, image artworks only */}
+      {formData.artworkType === 'image' && (
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Print Sales</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Let buyers order a physical print of this artwork. We&apos;ll show a &quot;Buy
+            Printable&quot; button next to &quot;Inquire&quot; on the public page.
+          </p>
+          <Checkbox
+            checked={formData.printEnabled}
+            onChange={(e) => {
+              if (printEligible || !e.target.checked) {
+                onFormChange('printEnabled', e.target.checked)
+              }
+            }}
+            label="Enable this artwork for print sales"
+            disabled={!printEligible}
+          />
+          {!printEligible && (
+            <p className={styles.printDisabledHint}>
+              Upload an image with at least {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px to enable
+              print sales.
+            </p>
+          )}
+          <div
+            className={dashboardStyles.field}
+            style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
+          >
+            <label htmlFor="printPriceEuros">Your price per print (&euro;)</label>
+            <Input
+              id="printPriceEuros"
+              type="text"
+              size="medium"
+              value={formData.printPriceEuros}
+              onChange={(e) =>
+                onFormChange('printPriceEuros', e.target.value.replace(/[^0-9.]/g, ''))
+              }
+              placeholder="100"
+            />
+          </div>
+          <span className={dashboardStyles.hint}>
+            This is the amount you earn per print sold. Production, shipping, gallery fee and VAT
+            are added separately at checkout.
           </span>
         </div>
       )}
 
       {/* Sound Upload Section - only for sound type */}
       {formData.artworkType === 'sound' && (
-        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
+        <div className={`${dashboardStyles.section} ${styles.imageSectionHalf}`}>
           <h3 className={dashboardStyles.sectionTitle}>Audio File</h3>
           <p className={dashboardStyles.sectionDescription}>
             Upload an audio file. This sound will be playable in exhibitions.
@@ -600,6 +844,79 @@ export const ArtworkEditForm = ({
           />
         </div>
       </form>
+
+      {/* Print sizes info modal */}
+      {showPrintInfoModal && (
+        <Modal onClose={() => setShowPrintInfoModal(false)}>
+          <div className={styles.printModal}>
+            <Text as="h3" font="dashboard" size="lg" weight="medium">
+              Print Size Requirements
+            </Text>
+            <p className={styles.printModalDescription}>
+              Each print size requires a minimum image resolution at 300 DPI. The table below shows
+              the minimum pixel dimensions needed for each size we offer.
+            </p>
+            <table className={styles.printModalTable}>
+              <thead>
+                <tr>
+                  <th>Print Size</th>
+                  <th>Min. Resolution</th>
+                  {imageMeta && <th>Your DPI</th>}
+                  {imageMeta && <th>Status</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {printSizes.map((size) => (
+                  <tr key={size.label}>
+                    <td>{size.label}</td>
+                    <td>
+                      {size.requiredWidth} × {size.requiredHeight} px
+                    </td>
+                    {imageMeta && (
+                      <td>
+                        <span
+                          className={size.eligible ? styles.statusReady : styles.statusNotReady}
+                        >
+                          {Math.min(size.effectiveDpiW, size.effectiveDpiH)} DPI
+                        </span>
+                      </td>
+                    )}
+                    {imageMeta && (
+                      <td>
+                        {size.eligible ? (
+                          <span className={styles.statusReady}>
+                            <Icon name="check-circle" size={14} /> Ready
+                          </span>
+                        ) : (
+                          <span className={styles.statusNotReady}>
+                            <Icon name="alert-circle" size={14} /> Too small
+                          </span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {imageMeta && (
+              <p className={styles.printModalCurrentRes}>
+                Your image: {imageMeta.width} × {imageMeta.height} px
+              </p>
+            )}
+            <div
+              style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-4)' }}
+            >
+              <Button
+                font="dashboard"
+                variant="primary"
+                label="Got it"
+                onClick={() => setShowPrintInfoModal(false)}
+                type="button"
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

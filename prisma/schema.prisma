@@ -29,6 +29,10 @@ model User {
   password           String?
   mustChangePassword Boolean  @default(false)
   profileImageUrl    String?
+  // Transparent-PNG signature used on certificates of authenticity for
+  // printed works by this artist. Nullable — certificates fall back to
+  // the printed artist name when this is not yet set.
+  signatureUrl       String?
   isFeatured         Boolean  @default(false)
   published          Boolean  @default(false)
 
@@ -44,11 +48,19 @@ model User {
   loginCode       String?
   loginCodeExpiry DateTime?
 
+  // Stripe Connect (Express) — the artist's connected Stripe account.
+  // `onboardingComplete` flips true once `account.updated` arrives with
+  // charges_enabled + payouts_enabled. We never trust the client-side
+  // return from the onboarding redirect on its own.
+  stripeAccountId          String?
+  stripeOnboardingComplete Boolean @default(false)
+
   exhibitions Exhibition[]
   artworks    Artwork[]
   presets     ArtworkPreset[]
   accounts    Account[]
   sessions    Session[]
+  printOrders PrintOrder[]
 }
 
 model ArtworkPreset {
@@ -139,9 +151,13 @@ model Artwork {
   technique            String?
   dimensions           String?
   description          String?
-  imageUrl             String?
+  imageUrl             String? // Web-optimized image (CDN)
+  originalImageUrl     String? // High-res original for print fulfillment (no CDN)
   originalWidth        Int? // Original image width in pixels
   originalHeight       Int? // Original image height in pixels
+  originalDpi          Int? // Image DPI from EXIF metadata
+  originalFormat       String? // Original file format (JPEG, PNG, etc.)
+  originalSizeBytes    Int? // Original file size in bytes
   textContent          String? // Fixed text content for stencil/text artworks
   soundUrl             String? // Audio file URL for sound artworks
   videoUrl             String? // Video file URL for video artworks
@@ -149,10 +165,101 @@ model Artwork {
   hiddenFromExhibition Boolean @default(false)
   order                Int     @default(0)
 
+  // Print sales (Prodigi fulfillment). `printEnabled` gates the "Buy
+  // Printable" CTA + the /print wizard; when false the artwork page
+  // shows "Inquire" instead. `printPriceCents` is the artist's cut
+  // per print (the gallery markup + Prodigi cost stack on top at
+  // checkout time). Nullable so we can distinguish "not set yet"
+  // from a deliberate zero.
+  printEnabled    Boolean @default(false)
+  printPriceCents Int?
+
   exhibitionArtworks ExhibitionArtwork[]
+  printOrders        PrintOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PrintOrder {
+  id              String @id @default(uuid())
+  paymentIntentId String @unique
+
+  artworkId    String
+  artwork      Artwork @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  artistUserId String
+  artistUser   User    @relation(fields: [artistUserId], references: [id], onDelete: Restrict)
+
+  buyerEmail      String
+  buyerName       String
+  shippingAddress Json // ShippingAddress snapshot at checkout time
+  printConfig     Json // PrintConfig snapshot at checkout time
+  country         String
+
+  // All amounts in minor units (cents) for the given currency.
+  totalCents           Int
+  artistCents          Int
+  galleryCents         Int
+  prodigiItemCents     Int
+  prodigiShippingCents Int
+  customerVatCents     Int
+  currency             String @default("eur")
+
+  // 'processing' | 'succeeded' | 'failed' | 'refunded'
+  paymentStatus String @default("processing")
+
+  // Prodigi fulfillment state (null until we submit the order).
+  prodigiOrderId String?
+  prodigiStage   String? // 'Draft' | 'InProgress' | 'Complete' | 'Cancelled'
+  trackingUrl    String?
+  shippedAt      DateTime?
+
+  // Public R2 URL of the generated certificate of authenticity PDF that
+  // ships with this order. Null until the cert has been rendered and
+  // uploaded (at Prodigi submission time).
+  certificateUrl String?
+
+  // Stripe Connect transfer to the artist (null until admin releases payout).
+  // 'pending' | 'paid' | 'reversed'
+  transferId     String?
+  transferStatus String?
+  paidOutAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events PrintOrderEvent[]
+
+  @@index([artistUserId])
+  @@index([paymentStatus, prodigiStage, transferStatus])
+}
+
+// Append-only audit trail for everything that happens to a PrintOrder.
+// Every webhook, every API call we make, every admin action emits a row.
+// Used for debugging, incident review, and rendering the order timeline
+// in the admin UI. Never update or delete rows in this table.
+model PrintOrderEvent {
+  id      String     @id @default(uuid())
+  orderId String
+  order   PrintOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  at      DateTime   @default(now())
+
+  // e.g. 'auth_received', 'prodigi_submitted', 'prodigi_submit_failed',
+  // 'prodigi_status_changed', 'captured', 'capture_failed',
+  // 'prodigi_cancelled', 'email_sent', 'admin_action'.
+  kind String
+
+  // 'stripe' | 'prodigi' | 'system' | 'admin:<userId>'
+  actor String
+
+  // Raw webhook/API payload. JSON so we can store whatever the source gave us.
+  payload Json?
+
+  // Short human-readable summary for the timeline view.
+  message String?
+
+  @@index([orderId, at])
+  @@index([kind, at])
 }
 
 model Exhibition {
@@ -176,7 +283,7 @@ model Exhibition {
   publishedSnapshot Json? // Full snapshot at publish time
   hasPendingChanges Boolean   @default(false) // True when draft differs from published
   previewEnabled    Boolean   @default(false) // When true, visit route is accessible even if unpublished
-  previewToken      String?                   // UUID token required in ?preview= param
+  previewToken      String? // UUID token required in ?preview= param
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")
@@ -191,7 +298,7 @@ model Exhibition {
   recessedLampColor      String?  @default("#ffffff")
   recessedLampIntensity  Float?   @default(4.0)
   recessedLampAngle      Float?   @default(0.45)
-  recessedLampDistance    Float?   @default(15.0)
+  recessedLampDistance   Float?   @default(15.0)
   trackLampMaterialColor String?  @default("#ffffff")
   trackLampAngle         Float?   @default(0.45)
   trackLampDistance      Float?   @default(5.0)
@@ -216,9 +323,9 @@ model Exhibition {
   cameraElevation        Float?   @default(1.6)
 
   // Wall & Ceiling customization
-  wallColor       String? @default("#ffffff")
-  ceilingColor    String? @default("#ffffff")
-  wallBrightness  Float?  @default(1.8)
+  wallColor      String? @default("#ffffff")
+  ceilingColor   String? @default("#ffffff")
+  wallBrightness Float?  @default(1.8)
 
   // Shadow decal controls
   shadowBlur      Float? @default(0.025)
@@ -323,10 +430,10 @@ model ExhibitionArtwork {
   shapeOpacity Float  @default(1.0)
 
   // Video playback (per-exhibition)
-  videoPlayMode         String  @default("proximity") // 'proximity' | 'always' | 'click'
-  videoLoop             Boolean @default(true)        // Whether video loops
-  videoVolume           Float   @default(1.0)         // Volume level 0-1
-  videoProximityDistance Float   @default(3)           // Distance in meters to trigger play
+  videoPlayMode          String  @default("proximity") // 'proximity' | 'always' | 'click'
+  videoLoop              Boolean @default(true) // Whether video loops
+  videoVolume            Float   @default(1.0) // Volume level 0-1
+  videoProximityDistance Float   @default(3) // Distance in meters to trigger play
 
   // Wall-normal rotation (degrees, 0-360, only used for shapes)
   rotation Float @default(0)

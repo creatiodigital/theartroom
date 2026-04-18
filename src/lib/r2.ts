@@ -20,7 +20,7 @@ const PUBLIC_URL = process.env.R2_PUBLIC_URL!
 // ── Environment prefix ───────────────────────────────────────────────────────
 
 function getEnvPrefix(): string {
-  return process.env.NODE_ENV === 'production' ? 'production' : 'development'
+  return process.env.NEXT_PUBLIC_APP_ENV === 'production' ? 'production' : 'staging'
 }
 
 // ── Random suffix ────────────────────────────────────────────────────────────
@@ -117,6 +117,15 @@ export async function buildArtworkImageKey(userId: string, artworkId: string): P
   return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.webp`
 }
 
+export async function buildOriginalImageKey(
+  userId: string,
+  artworkId: string,
+  ext: string,
+): Promise<string> {
+  const handler = await getArtistHandler(userId)
+  return `artworks-original/${getEnvPrefix()}/${handler}/${artworkId}-${randomSuffix()}.${ext}`
+}
+
 export async function buildArtworkMediaKey(
   userId: string,
   artworkId: string,
@@ -133,6 +142,19 @@ export const buildArtworkSoundKey = buildArtworkMediaKey
 export async function buildProfileImageKey(userId: string): Promise<string> {
   const handler = await getArtistHandler(userId)
   return `${getEnvPrefix()}/profiles/${handler}/avatar-${randomSuffix()}.webp`
+}
+
+// Artist signature stored as a transparent PNG alongside the profile
+// image. Used to sign certificates of authenticity on printed orders.
+export async function buildSignatureImageKey(userId: string): Promise<string> {
+  const handler = await getArtistHandler(userId)
+  return `${getEnvPrefix()}/profiles/${handler}/signature-${randomSuffix()}.png`
+}
+
+// Certificate of authenticity PDF for a specific print order. One cert
+// per order — purchase date is unique per transaction.
+export function buildCertificateKey(orderId: string): string {
+  return `${getEnvPrefix()}/certificates/${orderId}.pdf`
 }
 
 export async function buildExhibitionImageKey(exhibitionId: string): Promise<string> {

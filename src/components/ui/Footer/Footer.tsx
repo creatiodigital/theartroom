@@ -19,6 +19,7 @@ export const Footer = () => {
       <div className={styles.footerInner}>
         <nav className={styles.links}>
           <Link href="/terms-and-conditions">Terms and Conditions</Link>
+          <Link href="/terms-of-sale">Online Terms of Sale</Link>
           <Link href="/privacy-policy">Privacy Policy</Link>
           <Link href="/accessibility-policy">Accessibility Policy</Link>
         </nav>

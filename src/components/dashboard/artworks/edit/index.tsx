@@ -37,6 +37,16 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   // Track if user wants to remove the original image (only delete on save)
   const [pendingImageRemoval, setPendingImageRemoval] = useState(false)
 
+  // Original image info from server
+  const [imageDpi, setImageDpi] = useState<number | null>(null)
+  const [originalInfo, setOriginalInfo] = useState<{
+    width: number | null
+    height: number | null
+    originalImageUrl: string | null
+    format: string | null
+    sizeBytes: number | null
+  }>({ width: null, height: null, originalImageUrl: null, format: null, sizeBytes: null })
+
   // Sound state (sound uploads are immediate, not deferred)
   const [soundUrl, setSoundUrl] = useState<string | null>(null)
   const [soundUploading, setSoundUploading] = useState(false)
@@ -73,8 +83,24 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           return
         }
 
+        console.log('[ArtworkEdit] fetched artwork original info:', {
+          originalWidth: data.originalWidth,
+          originalHeight: data.originalHeight,
+          originalDpi: data.originalDpi,
+          originalFormat: data.originalFormat,
+          originalSizeBytes: data.originalSizeBytes,
+          originalImageUrl: data.originalImageUrl,
+        })
         setArtwork(data)
         setOriginalImageUrl(data.imageUrl)
+        setImageDpi(data.originalDpi ?? null)
+        setOriginalInfo({
+          width: data.originalWidth ?? null,
+          height: data.originalHeight ?? null,
+          originalImageUrl: data.originalImageUrl ?? null,
+          format: data.originalFormat ?? null,
+          sizeBytes: data.originalSizeBytes ?? null,
+        })
         setSoundUrl(data.soundUrl || null)
         setVideoUrl(data.videoUrl || null)
         setFormData(populateFormData(data))
@@ -100,21 +126,74 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     setError('')
 
     try {
-      // Step 1: If there's a pending file, upload it
+      // Step 1: If there's a pending file, upload via presigned URL
       if (pendingFile) {
-        const uploadFormData = new FormData()
-        uploadFormData.append('image', pendingFile)
-
-        const uploadResponse = await fetch(`/api/artworks/${artworkId}/image`, {
+        // 1a. Get presigned URL for the original
+        const requestRes = await fetch('/api/upload/image', {
           method: 'POST',
-          body: uploadFormData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'request-upload',
+            artworkId,
+            contentType: pendingFile.type,
+            fileSize: pendingFile.size,
+          }),
         })
 
-        if (!uploadResponse.ok) {
-          const data = await uploadResponse.json()
-          setError(data.error || 'Failed to upload image')
+        if (!requestRes.ok) {
+          const data = await requestRes.json()
+          setError(data.error || 'Failed to prepare upload')
           setSaving(false)
           return
+        }
+
+        const { presignedUrl, originalUrl } = await requestRes.json()
+
+        // 1b. Upload original directly to R2
+        const uploadRes = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: pendingFile,
+          headers: { 'Content-Type': pendingFile.type },
+        })
+
+        if (!uploadRes.ok) {
+          setError('Failed to upload image to storage')
+          setSaving(false)
+          return
+        }
+
+        // 1c. Finalize — server generates web-optimized version
+        const completeRes = await fetch('/api/upload/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'complete',
+            artworkId,
+            originalUrl,
+          }),
+        })
+
+        const result = await completeRes.json()
+        if (!completeRes.ok) {
+          setError(result.error || 'Failed to process image')
+          setSaving(false)
+          return
+        }
+
+        // Update local state with server-processed original metadata
+        setOriginalImageUrl(result.imageUrl)
+        setImageDpi(result.originalDpi ?? null)
+        setOriginalInfo({
+          width: result.originalWidth ?? null,
+          height: result.originalHeight ?? null,
+          originalImageUrl: result.originalImageUrl ?? null,
+          format: result.originalFormat ?? null,
+          sizeBytes: result.originalSizeBytes ?? null,
+        })
+        setPendingFile(null)
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl)
+          setPreviewUrl(null)
         }
       }
       // Step 2: If image was marked for removal (and no new file), delete it
@@ -130,11 +209,20 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         }
       }
 
-      // Step 3: Update artwork metadata
+      // Step 3: Update artwork metadata. Transform the euros-string the UI
+      // tracks back into the cents-integer the DB uses.
+      const { printPriceEuros, ...rest } = formData
+      const parsed = Number(printPriceEuros)
+      const printPriceCents =
+        printPriceEuros.trim() === '' || !Number.isFinite(parsed) || parsed < 0
+          ? null
+          : Math.round(parsed * 100)
+      const payload = { ...rest, printPriceCents }
+
       const response = await fetch(`/api/artworks/${artworkId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -336,6 +424,12 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
       <ArtworkEditForm
         formData={formData}
         imageUrl={displayImageUrl}
+        imageDpi={imageDpi}
+        originalWidth={originalInfo.width}
+        originalHeight={originalInfo.height}
+        originalImageUrl={originalInfo.originalImageUrl}
+        originalFormat={originalInfo.format}
+        originalSizeBytes={originalInfo.sizeBytes}
         soundUrl={soundUrl}
         videoUrl={videoUrl}
         uploading={soundUploading || videoUploading}
