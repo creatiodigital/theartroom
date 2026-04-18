@@ -4,6 +4,7 @@ import { revalidateTag } from 'next/cache'
 
 import { auth } from '@/auth'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import {
   uploadToR2,
@@ -240,6 +241,12 @@ export async function POST(request: NextRequest) {
     // ECONNREFUSED with port info, etc. would turn this endpoint into a
     // network oracle. Log the full detail server-side only.
     console.error('[POST /api/upload/image] error:', error)
+    captureError(error, {
+      flow: 'upload',
+      stage: 'artwork-image',
+      level: 'error',
+      fingerprint: ['upload:artwork-image-failed'],
+    })
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }

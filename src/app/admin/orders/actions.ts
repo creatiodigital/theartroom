@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { isAdminOrAbove } from '@/lib/authUtils'
 import { sendArtistPayoutEmail } from '@/lib/emails/artistPayout'
 import { sendRefundIssuedEmail } from '@/lib/emails/refundIssued'
+import { captureError } from '@/lib/observability/captureError'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
 import { PAYOUT_HOLD_DAYS, payoutEligibleAt } from '@/lib/orders/payoutPolicy'
 import prisma from '@/lib/prisma'
@@ -366,6 +367,18 @@ export async function releasePayout(
     return { ok: true, transferId: transfer.id }
   } catch (err) {
     console.error(`[releasePayout] order=${order.id} failed:`, err)
+    captureError(err, {
+      flow: 'admin',
+      stage: 'release-payout',
+      extra: {
+        orderId: order.id,
+        artistUserId: order.artistUserId,
+        artistAccountId,
+        amountCents: order.artistCents,
+      },
+      level: 'error',
+      fingerprint: ['admin:release-payout-failed'],
+    })
     return { ok: false, error: 'Stripe transfer failed. Check server logs.' }
   }
 }
@@ -461,6 +474,19 @@ export async function refundOrder(
     return { ok: true }
   } catch (err) {
     console.error(`[refundOrder] order=${orderId} failed:`, err)
+    captureError(err, {
+      flow: 'admin',
+      stage: 'refund-order',
+      extra: {
+        orderId,
+        paymentIntentId: order.paymentIntentId,
+        paymentStatus: order.paymentStatus,
+        amountCents: order.totalCents,
+        reason,
+      },
+      level: 'error',
+      fingerprint: ['admin:refund-failed'],
+    })
     return {
       ok: false,
       error: err instanceof Error ? err.message : 'Refund failed. Check server logs.',

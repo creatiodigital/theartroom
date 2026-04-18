@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import sharp from 'sharp'
 
 import { requireOwnership } from '@/lib/authUtils'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { buildSignatureImageKey, deleteFromR2, uploadToR2 } from '@/lib/r2'
 
@@ -85,6 +86,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ url })
   } catch (err) {
     console.error('[POST /api/users/[id]/signature] error:', err)
+    captureError(err, {
+      flow: 'upload',
+      stage: 'signature',
+      level: 'error',
+      fingerprint: ['upload:signature-failed'],
+    })
     return NextResponse.json({ error: 'Failed to upload signature' }, { status: 500 })
   }
 }

@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'
 import type { ProdigiOrder } from '@/lib/prodigi/types'
 import { cancelOrder as cancelProdigiOrder } from '@/lib/prodigi/client'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
+import { captureError } from '@/lib/observability/captureError'
 import { stripe } from '@/lib/stripe/client'
 
 export const runtime = 'nodejs'
@@ -143,6 +144,21 @@ export async function POST(req: NextRequest) {
           message: 'Stripe capture failed after Prodigi production allocation',
           payload: { error: err instanceof Error ? err.message : String(err) },
         })
+        // CRITICAL: Prodigi is producing but we couldn't collect from
+        // the buyer. Needs an operator immediately — either capture
+        // failed for a recoverable reason (retry manually) or we need
+        // to cancel Prodigi before they ship.
+        captureError(err, {
+          flow: 'payment',
+          stage: 'capture-failed',
+          extra: {
+            orderId: existing.id,
+            paymentIntentId: existing.paymentIntentId,
+            prodigiOrderId: order.id,
+          },
+          level: 'fatal',
+          fingerprint: ['payment:capture-failed'],
+        })
         try {
           await cancelProdigiOrder(order.id)
         } catch (cancelErr) {
@@ -150,6 +166,19 @@ export async function POST(req: NextRequest) {
             `[prodigi-webhook] failed to cancel Prodigi order=${order.id} after capture failure:`,
             cancelErr,
           )
+          // Compounding failure: capture AND cancel both failed. We may
+          // be on the hook to Prodigi for a print we can't charge for.
+          captureError(cancelErr, {
+            flow: 'prodigi',
+            stage: 'cancel-after-capture-fail',
+            extra: {
+              orderId: existing.id,
+              paymentIntentId: existing.paymentIntentId,
+              prodigiOrderId: order.id,
+            },
+            level: 'fatal',
+            fingerprint: ['prodigi:cancel-after-capture-fail'],
+          })
         }
         await prisma.printOrder.update({
           where: { id: existing.id },
@@ -159,6 +188,12 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('[prodigi-webhook] update failed:', err)
+    captureError(err, {
+      flow: 'webhook',
+      stage: 'prodigi-handler-threw',
+      extra: { prodigiOrderId: order.id, stage: order.status?.stage },
+      level: 'error',
+    })
   }
 
   return NextResponse.json({ received: true })
