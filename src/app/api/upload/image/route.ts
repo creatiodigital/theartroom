@@ -27,12 +27,37 @@ const MIME_TO_EXT: Record<string, string> = {
  *
  * Flow:
  *  1. Client POSTs { type: 'request-upload', artworkId, contentType, fileSize }
- *     → returns presigned URL for the original + the original's public URL
+ *     → returns presigned URL for the original + the R2 key for the original
  *  2. Client uploads the original directly to R2 using the presigned URL
- *  3. Client POSTs { type: 'complete', artworkId, originalUrl, contentType }
- *     → server downloads the original from R2, generates web-optimized WebP,
+ *  3. Client POSTs { type: 'complete', artworkId, originalKey }
+ *     → server rebuilds the public URL server-side from originalKey,
+ *       downloads the original, generates web-optimized WebP,
  *       uploads that to CDN path, updates DB with both URLs + dimensions
+ *
+ * Security note: the `complete` step deliberately does NOT accept an
+ * arbitrary `originalUrl`. That would be an SSRF primitive (server
+ * fetches attacker-controlled URL) and an image-substitution vector
+ * (attacker uploads a clean preview to R2, then points originalKey at
+ * external content that Prodigi later fetches for printing). Instead we
+ * validate `originalKey` is a well-formed R2 key under our own bucket
+ * prefix, rebuild the URL from it, and only fetch our own bucket.
  */
+
+// Valid R2 keys for artwork originals match exactly:
+//   artworks-original/<envPrefix>/<handler>/<artworkId>-<suffix>.<ext>
+// Extension is restricted to the mime map above.
+const ORIGINAL_KEY_RE =
+  /^artworks-original\/[a-z0-9-]+\/[a-z0-9-]+\/[a-zA-Z0-9_-]+-[a-zA-Z0-9]+\.(jpg|png|webp|gif)$/
+
+function isSafeOriginalKey(key: unknown, artworkId: string): key is string {
+  if (typeof key !== 'string' || key.length === 0 || key.length > 256) return false
+  if (key.includes('..') || key.includes('//')) return false
+  if (!ORIGINAL_KEY_RE.test(key)) return false
+  // The key must reference this specific artwork — stops one artist from
+  // reusing another's upload URL, even with a valid key shape.
+  if (!key.includes(`/${artworkId}-`)) return false
+  return true
+}
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -86,10 +111,14 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Finalize — download original from R2, generate web version, update DB
     if (body.type === 'complete') {
-      const { artworkId, originalUrl } = body
+      const { artworkId, originalKey } = body
 
-      if (!artworkId || !originalUrl) {
-        return NextResponse.json({ error: 'Missing artworkId or originalUrl' }, { status: 400 })
+      if (!artworkId || !originalKey) {
+        return NextResponse.json({ error: 'Missing artworkId or originalKey' }, { status: 400 })
+      }
+
+      if (!isSafeOriginalKey(originalKey, artworkId)) {
+        return NextResponse.json({ error: 'Invalid originalKey' }, { status: 400 })
       }
 
       const artwork = await prisma.artwork.findUnique({
@@ -106,6 +135,16 @@ export async function POST(request: NextRequest) {
       if (artwork.userId !== session.user.id && !isAdminOrAbove) {
         return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
       }
+
+      // Rebuild the public URL from the validated key — we never use a
+      // URL supplied by the client, so no SSRF / host substitution is
+      // possible.
+      const r2PublicUrl = process.env.R2_PUBLIC_URL
+      if (!r2PublicUrl) {
+        console.error('[POST /api/upload/image] R2_PUBLIC_URL is not configured')
+        return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+      }
+      const originalUrl = `${r2PublicUrl}/${originalKey}`
 
       // Download the original from R2 to process it
       const originalResponse = await fetch(originalUrl)
@@ -197,10 +236,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid request type' }, { status: 400 })
   } catch (error) {
+    // Never leak raw error messages to the client — DNS failures,
+    // ECONNREFUSED with port info, etc. would turn this endpoint into a
+    // network oracle. Log the full detail server-side only.
     console.error('[POST /api/upload/image] error:', error)
-    return NextResponse.json(
-      { error: (error as Error).message || 'Upload failed' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }
