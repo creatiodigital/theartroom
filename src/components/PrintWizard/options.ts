@@ -269,6 +269,34 @@ export function getCompatibleSizes(imageRatio: number): {
   return { perfect, close, mismatch }
 }
 
+/**
+ * Minimum DPI we print at. Mirrors MIN_DPI in the artwork edit form —
+ * kept here too so the wizard can filter sizes without importing
+ * dashboard-only constants.
+ */
+const MIN_PRINT_DPI = 300
+const CM_PER_INCH_CONST = 2.54
+
+/**
+ * True when an image with `widthPx × heightPx` pixels can physically
+ * print at `size` at or above MIN_PRINT_DPI. If dimensions are missing
+ * (zero or negative), we treat every size as eligible — preserves the
+ * existing UX flow while measured dimensions are loading.
+ */
+export function isSizePrintEligible(
+  size: SizeOption,
+  widthPx: number,
+  heightPx: number,
+): boolean {
+  if (widthPx <= 0 || heightPx <= 0) return true
+  const requiredW = Math.ceil((size.widthCm / CM_PER_INCH_CONST) * MIN_PRINT_DPI)
+  const requiredH = Math.ceil((size.heightCm / CM_PER_INCH_CONST) * MIN_PRINT_DPI)
+  // Either orientation counts — the image may be rotated to fit.
+  const fitsPortrait = widthPx >= requiredW && heightPx >= requiredH
+  const fitsLandscape = widthPx >= requiredH && heightPx >= requiredW
+  return fitsPortrait || fitsLandscape
+}
+
 // ── SKU derivation ───────────────────────────────────────────
 // Resolves a PrintConfig to the concrete Prodigi SKU and the runtime
 // attributes (color, mount color, paper type) that must be sent with

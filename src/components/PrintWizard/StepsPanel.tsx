@@ -17,6 +17,7 @@ import {
   filterSizesForArtwork,
   getCompatibleSizes,
   getFormat,
+  isSizePrintEligible,
 } from './options'
 import type {
   FormatId,
@@ -27,6 +28,7 @@ import type {
   PrintConfig,
   PrintOptions,
   SizeId,
+  SizeOption,
 } from './types'
 
 import styles from './PrintWizard.module.scss'
@@ -34,6 +36,10 @@ import styles from './PrintWizard.module.scss'
 interface StepsPanelProps {
   config: PrintConfig
   aspectRatio: number
+  /** Pixel dimensions of the artwork's source image. Used to hide sizes
+   *  the image physically can't print at 300 DPI. */
+  originalWidthPx: number
+  originalHeightPx: number
   onChange: (patch: Partial<PrintConfig>) => void
   countryCode: string
   onCountryChange: (code: string) => void
@@ -61,6 +67,8 @@ const sortCountries = (codes: string[]) =>
 export const StepsPanel = ({
   config,
   aspectRatio,
+  originalWidthPx,
+  originalHeightPx,
   onChange,
   countryCode,
   onCountryChange,
@@ -149,10 +157,15 @@ export const StepsPanel = ({
     [config, countryCode, catalog, allowedMounts],
   )
   const sizeOptions: SelectOption<SizeId>[] = useMemo(() => {
+    // Drop sizes the image physically can't print at 300 DPI — the
+    // buyer shouldn't see an option that would yield an under-resolved
+    // print, regardless of aspect fit or country coverage.
+    const eligible = (s: SizeOption) =>
+      isSizePrintEligible(s, originalWidthPx, originalHeightPx)
+    const perfect = filterSizesForArtwork(sizeGroups.perfect, printOptions).filter(eligible)
+    const close = filterSizesForArtwork(sizeGroups.close, printOptions).filter(eligible)
+    const mismatch = filterSizesForArtwork(sizeGroups.mismatch, printOptions).filter(eligible)
     const allSizes: SelectOption<SizeId>[] = []
-    const perfect = filterSizesForArtwork(sizeGroups.perfect, printOptions)
-    const close = filterSizesForArtwork(sizeGroups.close, printOptions)
-    const mismatch = filterSizesForArtwork(sizeGroups.mismatch, printOptions)
     for (const s of perfect) allSizes.push({ value: s.id, label: s.label })
     for (const s of close) allSizes.push({ value: s.id, label: s.label })
     for (const s of mismatch) {
@@ -160,7 +173,7 @@ export const StepsPanel = ({
     }
     return allSizes.filter((opt) => keepAvail('size', opt.value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sizeGroups, config, countryCode, catalog, printOptions])
+  }, [sizeGroups, config, countryCode, catalog, printOptions, originalWidthPx, originalHeightPx])
 
   const countryOptions: SelectOption<string>[] = useMemo(() => {
     const available = catalogStatus.kind === 'ready' ? catalogStatus.countries : []

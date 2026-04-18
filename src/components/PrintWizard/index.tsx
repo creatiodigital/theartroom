@@ -237,6 +237,8 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
         <StepsPanel
           config={config}
           aspectRatio={aspectRatio}
+          originalWidthPx={artwork.originalWidthPx}
+          originalHeightPx={artwork.originalHeightPx}
           onChange={updateConfig}
           countryCode={countryCode}
           onCountryChange={setCountryCode}
