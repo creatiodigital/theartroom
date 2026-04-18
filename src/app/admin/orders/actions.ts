@@ -5,22 +5,9 @@ import { isAdminOrAbove } from '@/lib/authUtils'
 import { sendArtistPayoutEmail } from '@/lib/emails/artistPayout'
 import { sendRefundIssuedEmail } from '@/lib/emails/refundIssued'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
+import { PAYOUT_HOLD_DAYS, payoutEligibleAt } from '@/lib/orders/payoutPolicy'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
-
-/**
- * Days we hold after Prodigi reports `Complete` (shipment dispatched)
- * before the artist's payout button becomes eligible. Covers the
- * delivery + typical buyer-complaint window while matching our written
- * agreement with artists.
- */
-export const PAYOUT_HOLD_DAYS = 14
-
-export function payoutEligibleAt(shippedAt: Date | string | null): Date | null {
-  if (!shippedAt) return null
-  const ms = typeof shippedAt === 'string' ? Date.parse(shippedAt) : shippedAt.getTime()
-  return new Date(ms + PAYOUT_HOLD_DAYS * 24 * 60 * 60 * 1000)
-}
 
 export type AdminOrderRow = {
   id: string
