@@ -12,8 +12,14 @@ import Stripe from 'stripe'
 const secret = process.env.STRIPE_SECRET_KEY
 const isPlaceholder = !secret || secret.startsWith('sk_test_REPLACE_ME')
 
+// Gate hard-fail on NEXT_PUBLIC_APP_ENV, not NODE_ENV. Vercel sets
+// NODE_ENV=production for both Production and Preview builds, which
+// would otherwise crash any preview missing the live secret at module
+// evaluation time (during `next build` page-data collection). Same
+// reason we key R2 env prefix off NEXT_PUBLIC_APP_ENV — see
+// `840400e fix: key R2 env prefix off NEXT_PUBLIC_APP_ENV`.
 if (isPlaceholder) {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NEXT_PUBLIC_APP_ENV === 'production') {
     throw new Error('[stripe] STRIPE_SECRET_KEY is not configured.')
   }
   console.warn(
