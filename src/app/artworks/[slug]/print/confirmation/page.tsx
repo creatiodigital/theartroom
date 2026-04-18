@@ -21,10 +21,11 @@ function pickString(v: string | string[] | undefined): string | undefined {
 }
 
 // Stripe's PI status → the three UI states the confirmation component
-// knows about. Anything we don't recognise becomes 'failed' so the user
-// sees an explicit "didn't complete" message rather than a false success.
+// knows about. `requires_capture` means the buyer's card is authorized
+// (funds held) — from the buyer's perspective the order is placed, we
+// just haven't captured yet. Treat it as success for the UI.
 function mapStatus(status: string | undefined): 'succeeded' | 'processing' | 'failed' {
-  if (status === 'succeeded') return 'succeeded'
+  if (status === 'succeeded' || status === 'requires_capture') return 'succeeded'
   if (status === 'processing') return 'processing'
   return 'failed'
 }

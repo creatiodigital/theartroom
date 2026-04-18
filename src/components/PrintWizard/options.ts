@@ -2,6 +2,7 @@ import type {
   FormatOption,
   FrameColorOption,
   MountOption,
+  Orientation,
   PaperOption,
   PrintConfig,
   SizeId,
@@ -371,13 +372,23 @@ export function formatEuro(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`
 }
 
-export function formatSize(size: SizeOption, unit: SizeUnit): string {
+export function formatSize(size: SizeOption, unit: SizeUnit, orientation?: Orientation): string {
+  // SIZES are stored portrait (height >= width). Landscape orientation swaps
+  // the two so the label matches how the print will actually hang.
+  const isLandscape = orientation === 'landscape'
+  const wCm = isLandscape ? size.heightCm : size.widthCm
+  const hCm = isLandscape ? size.widthCm : size.heightCm
   if (unit === 'inches') {
-    const w = cmToInches(size.widthCm).toFixed(1)
-    const h = cmToInches(size.heightCm).toFixed(1)
+    const w = cmToInches(wCm).toFixed(1)
+    const h = cmToInches(hCm).toFixed(1)
     return `${w}″ × ${h}″`
   }
-  return `${size.widthCm} × ${size.heightCm} cm`
+  return `${wCm} × ${hCm} cm`
+}
+
+/** Portrait when the image is taller than wide; landscape otherwise. Square → landscape. */
+export function deriveOrientation(aspectRatio: number): Orientation {
+  return aspectRatio < 1 ? 'portrait' : 'landscape'
 }
 
 // ── Default + normalization ──────────────────────────────────
@@ -389,11 +400,13 @@ export function buildDefaultConfig(
   // otherwise fall back to the first perfect-fit size, then first close-fit,
   // then 30×40 unconditionally.
   let preferredSizeId: SizeId = '30x40'
+  let orientation: Orientation = 'portrait'
   if (originalWidthPx && originalHeightPx) {
     const ratio = originalWidthPx / originalHeightPx
     const fits = getCompatibleSizes(ratio)
     const pick = fits.perfect[0] ?? fits.close[0]
     if (pick) preferredSizeId = pick.id
+    orientation = deriveOrientation(ratio)
   }
   return normalizePrintConfig({
     paperId: 'museum-cotton-rag',
@@ -402,6 +415,7 @@ export function buildDefaultConfig(
     frameColorId: 'oak',
     mountId: 'snow-white',
     unit: 'cm',
+    orientation,
   })
 }
 
@@ -481,6 +495,7 @@ export function firstShippableConfig(
   const groups = getCompatibleSizes(aspectRatio)
   const sizes = [...groups.perfect, ...groups.close, ...groups.mismatch]
 
+  const orientation = deriveOrientation(aspectRatio)
   for (const paper of PAPERS) {
     for (const format of FORMATS) {
       for (const size of sizes) {
@@ -493,6 +508,7 @@ export function firstShippableConfig(
               frameColorId: frame.id,
               mountId: format.framed ? mount.id : 'none',
               unit: 'cm',
+              orientation,
             }
             if (configShipsTo(c, country, catalog)) return c
           }
@@ -539,6 +555,7 @@ export function findShippableConfig(
               frameColorId: frame.id,
               mountId: format.framed ? mount.id : 'none',
               unit: preferred.unit,
+              orientation: preferred.orientation,
             }
             if (!configShipsTo(c, country, catalog)) continue
             const cost =
@@ -580,6 +597,7 @@ export function enumerateSkus(): string[] {
             frameColorId: FRAME_COLORS[0].id,
             mountId: 'none',
             unit: 'cm',
+            orientation: 'portrait',
           })
           set.add(sku)
           continue
@@ -592,6 +610,7 @@ export function enumerateSkus(): string[] {
             frameColorId: FRAME_COLORS[0].id,
             mountId: mount.id,
             unit: 'cm',
+            orientation: 'portrait',
           })
           set.add(sku)
         }
@@ -613,5 +632,6 @@ export function normalizePrintConfig(config: PrintConfig): PrintConfig {
     FRAME_COLORS.find((c) => c.id === config.frameColorId)?.id ?? FRAME_COLORS[0].id
   const mountId = MOUNTS.find((m) => m.id === config.mountId)?.id ?? MOUNTS[0].id
   const unit: SizeUnit = config.unit === 'inches' ? 'inches' : 'cm'
-  return { paperId, formatId, sizeId, frameColorId, mountId, unit }
+  const orientation: Orientation = config.orientation === 'landscape' ? 'landscape' : 'portrait'
+  return { paperId, formatId, sizeId, frameColorId, mountId, unit, orientation }
 }

@@ -50,6 +50,9 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
       | PrintConfig['frameColorId']
       | undefined,
     mountId: (searchParams.get('mount') ?? undefined) as PrintConfig['mountId'] | undefined,
+    orientation: (searchParams.get('orientation') ?? undefined) as
+      | PrintConfig['orientation']
+      | undefined,
   }
   const hasUrlConfig = Object.values(urlConfigSeed).some((v) => v !== undefined)
 
@@ -170,6 +173,7 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
       size: config.sizeId,
       color: config.frameColorId,
       mount: config.mountId,
+      orientation: config.orientation,
       country: countryCode,
     })
     router.push(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)

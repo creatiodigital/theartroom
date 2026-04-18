@@ -131,6 +131,10 @@ export async function createPaymentIntent(
         amount: totalCents,
         currency,
         automatic_payment_methods: { enabled: true },
+        // Manual capture — we authorize now, capture only when Prodigi
+        // confirms the order has been allocated for production. See
+        // memory/project_payment_auth_capture.md for the full flow.
+        capture_method: 'manual',
         receipt_email: address.email || undefined,
         description: `Print: ${artwork.title ?? artwork.slug}`,
         shipping: {
@@ -154,6 +158,7 @@ export async function createPaymentIntent(
           sizeId: config.sizeId,
           frameColorId: config.frameColorId,
           mountId: config.mountId,
+          orientation: config.orientation,
           countryCode: address.countryCode,
           customerEmail: address.email,
           prodigiItemCents: String(quote.data.itemCents),

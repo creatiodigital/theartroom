@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
 import type { ProdigiOrder } from '@/lib/prodigi/types'
+import { cancelOrder as cancelProdigiOrder } from '@/lib/prodigi/client'
+import { logOrderEvent } from '@/lib/orders/logOrderEvent'
+import { stripe } from '@/lib/stripe/client'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -48,16 +51,88 @@ export async function POST(req: NextRequest) {
     const trackingUrl = shipment?.tracking?.url ?? null
     const shippedAt = shipment?.dispatchDate ? new Date(shipment.dispatchDate) : null
 
-    const res = await prisma.printOrder.updateMany({
+    const existing = await prisma.printOrder.findFirst({
       where: { prodigiOrderId: order.id },
-      data: {
-        prodigiStage: stage,
-        trackingUrl,
-        shippedAt,
-      },
+      select: { id: true, paymentIntentId: true, paymentStatus: true, prodigiStage: true },
     })
-    if (res.count === 0) {
+    if (!existing) {
       console.warn(`[prodigi-webhook] No PrintOrder found for prodigiOrderId=${order.id}`)
+      return NextResponse.json({ received: true })
+    }
+
+    await prisma.printOrder.update({
+      where: { id: existing.id },
+      data: { prodigiStage: stage, trackingUrl, shippedAt },
+    })
+
+    const stageChanged = stage !== existing.prodigiStage
+    if (stageChanged) {
+      await logOrderEvent({
+        orderId: existing.id,
+        kind: stage === 'Cancelled' ? 'prodigi_cancelled' : 'prodigi_status_changed',
+        actor: 'prodigi',
+        message: `Prodigi stage: ${existing.prodigiStage ?? '∅'} → ${stage ?? '∅'}`,
+        payload: { stage, details: order.status?.details, issues: order.status?.issues },
+      })
+    }
+
+    // Surface any non-empty issues as their own event so they're easy to
+    // spot in the admin timeline without trawling payloads.
+    if ((order.status?.issues?.length ?? 0) > 0) {
+      await logOrderEvent({
+        orderId: existing.id,
+        kind: 'prodigi_issue',
+        actor: 'prodigi',
+        message: `Prodigi reported ${order.status?.issues.length} issue(s)`,
+        payload: { issues: order.status?.issues },
+      })
+    }
+
+    // Capture the buyer's authorized payment once Prodigi has committed
+    // to producing the order. `allocateProductionLocation === 'Complete'`
+    // means a lab has been assigned and production is imminent (or has
+    // already started), which is when Prodigi will also charge our
+    // company card on their side.
+    if (
+      existing.paymentStatus === 'authorized' &&
+      order.status?.details?.allocateProductionLocation === 'Complete' &&
+      (order.status.issues?.length ?? 0) === 0
+    ) {
+      try {
+        await stripe.paymentIntents.capture(existing.paymentIntentId)
+        console.log(
+          `[prodigi-webhook] captured payment for order=${existing.id} pi=${existing.paymentIntentId}`,
+        )
+        // The `captured` event is logged by the Stripe webhook when the
+        // payment_intent.succeeded event arrives next. No event here to
+        // avoid double-logging.
+      } catch (err) {
+        // Capture failed after Prodigi committed to production. Cancel the
+        // Prodigi order so they don't ship something we won't be paid for.
+        console.error(
+          `[prodigi-webhook] capture failed for order=${existing.id} pi=${existing.paymentIntentId}:`,
+          err,
+        )
+        await logOrderEvent({
+          orderId: existing.id,
+          kind: 'capture_failed',
+          actor: 'system',
+          message: 'Stripe capture failed after Prodigi production allocation',
+          payload: { error: err instanceof Error ? err.message : String(err) },
+        })
+        try {
+          await cancelProdigiOrder(order.id)
+        } catch (cancelErr) {
+          console.error(
+            `[prodigi-webhook] failed to cancel Prodigi order=${order.id} after capture failure:`,
+            cancelErr,
+          )
+        }
+        await prisma.printOrder.update({
+          where: { id: existing.id },
+          data: { paymentStatus: 'failed' },
+        })
+      }
     }
   } catch (err) {
     console.error('[prodigi-webhook] update failed:', err)

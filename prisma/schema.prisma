@@ -147,9 +147,13 @@ model Artwork {
   technique            String?
   dimensions           String?
   description          String?
-  imageUrl             String?
+  imageUrl             String? // Web-optimized image (CDN)
+  originalImageUrl     String? // High-res original for print fulfillment (no CDN)
   originalWidth        Int? // Original image width in pixels
   originalHeight       Int? // Original image height in pixels
+  originalDpi          Int? // Image DPI from EXIF metadata
+  originalFormat       String? // Original file format (JPEG, PNG, etc.)
+  originalSizeBytes    Int? // Original file size in bytes
   textContent          String? // Fixed text content for stencil/text artworks
   soundUrl             String? // Audio file URL for sound artworks
   videoUrl             String? // Video file URL for video artworks
@@ -215,8 +219,38 @@ model PrintOrder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  events PrintOrderEvent[]
+
   @@index([artistUserId])
   @@index([paymentStatus, prodigiStage, transferStatus])
+}
+
+// Append-only audit trail for everything that happens to a PrintOrder.
+// Every webhook, every API call we make, every admin action emits a row.
+// Used for debugging, incident review, and rendering the order timeline
+// in the admin UI. Never update or delete rows in this table.
+model PrintOrderEvent {
+  id      String     @id @default(uuid())
+  orderId String
+  order   PrintOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  at      DateTime   @default(now())
+
+  // e.g. 'auth_received', 'prodigi_submitted', 'prodigi_submit_failed',
+  // 'prodigi_status_changed', 'captured', 'capture_failed',
+  // 'prodigi_cancelled', 'email_sent', 'admin_action'.
+  kind String
+
+  // 'stripe' | 'prodigi' | 'system' | 'admin:<userId>'
+  actor String
+
+  // Raw webhook/API payload. JSON so we can store whatever the source gave us.
+  payload Json?
+
+  // Short human-readable summary for the timeline view.
+  message String?
+
+  @@index([orderId, at])
+  @@index([kind, at])
 }
 
 model Exhibition {

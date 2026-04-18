@@ -120,7 +120,7 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
           <h2 className={styles.sectionTitle}>Pay with card</h2>
           <p className={styles.sectionHelp}>
             All payments are processed securely by Stripe. Your card details never touch our
-            servers.
+            servers. We&apos;ll hold your card now and charge it once your print enters production.
           </p>
 
           {hydrating && <p className={styles.hydrating}>Preparing secure payment…</p>}

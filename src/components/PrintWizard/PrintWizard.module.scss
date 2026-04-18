@@ -130,6 +130,65 @@
   margin: 0 0 var(--space-3) 0;
 }
 
+// ── Orientation block ─────────────────────────────────────────
+.orientationBlock {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  background: var(--color-white, #fff);
+}
+
+.orientationChoices {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.orientationChoice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+.orientationChoiceSelected {
+  border-color: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.orientationIcon {
+  width: 18px;
+  height: 26px;
+  border: 1.5px solid rgba(0, 0, 0, 0.75);
+  border-radius: 2px;
+}
+
+.orientationIconLandscape {
+  width: 26px;
+  height: 18px;
+}
+
+.orientationLabel {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .destinationNotice {
   font-family: var(--font-sans);
   font-size: 12px;

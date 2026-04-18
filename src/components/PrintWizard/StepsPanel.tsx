@@ -17,7 +17,15 @@ import {
   getCompatibleSizes,
   getFormat,
 } from './options'
-import type { FormatId, FrameColorId, MountId, PaperId, PrintConfig, SizeId } from './types'
+import type {
+  FormatId,
+  FrameColorId,
+  MountId,
+  Orientation,
+  PaperId,
+  PrintConfig,
+  SizeId,
+} from './types'
 
 import styles from './PrintWizard.module.scss'
 
@@ -181,6 +189,43 @@ export const StepsPanel = ({
             Pick a destination to continue.
           </p>
         )}
+      </div>
+
+      <div className={styles.orientationBlock}>
+        <div className={styles.destinationHeader}>
+          <span className={styles.destinationTitle}>Orientation</span>
+        </div>
+        <p className={styles.destinationHelp}>
+          How the print will be hung. Defaulted to match your artwork — you can flip it if you want
+          a different hang.
+        </p>
+        <div className={styles.orientationChoices} role="radiogroup" aria-label="Orientation">
+          {(['portrait', 'landscape'] as Orientation[]).map((value) => {
+            const selected = config.orientation === value
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                className={`${styles.orientationChoice} ${
+                  selected ? styles.orientationChoiceSelected : ''
+                }`}
+                onClick={() => onChange({ orientation: value })}
+              >
+                <span
+                  className={`${styles.orientationIcon} ${
+                    value === 'landscape' ? styles.orientationIconLandscape : ''
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className={styles.orientationLabel}>
+                  {value === 'portrait' ? 'Portrait' : 'Landscape'}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <CollapsibleSection title="Paper" open={openStep === 'paper'} onToggle={toggle('paper')}>

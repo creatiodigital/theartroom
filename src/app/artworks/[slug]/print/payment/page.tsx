@@ -29,6 +29,7 @@ function readConfigFromParams(sp: Record<string, string | string[] | undefined>)
     frameColorId: (pickString(sp.color) ?? 'oak') as PrintConfig['frameColorId'],
     mountId: (pickString(sp.mount) ?? 'snow-white') as PrintConfig['mountId'],
     unit: 'cm',
+    orientation: (pickString(sp.orientation) ?? 'portrait') as PrintConfig['orientation'],
   })
 }
 

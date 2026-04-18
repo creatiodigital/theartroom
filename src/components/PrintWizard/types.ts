@@ -10,6 +10,8 @@ export type SizeId = '20x25' | '20x30' | '28x36' | '30x40' | '40x50' | '50x70' |
 
 export type SizeUnit = 'cm' | 'inches'
 
+export type Orientation = 'portrait' | 'landscape'
+
 export type PrintConfig = {
   paperId: PaperId
   formatId: FormatId
@@ -19,6 +21,8 @@ export type PrintConfig = {
   /** Only relevant when formatId is a framed variant. */
   mountId: MountId
   unit: SizeUnit
+  /** How the print will be hung. Defaults to the image's natural orientation. */
+  orientation: Orientation
 }
 
 export type PaperOption = {

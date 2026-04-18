@@ -104,6 +104,7 @@ export type ProdigiOrderRequest = {
   recipient: ProdigiRecipient
   items: ProdigiOrderItem[]
   idempotencyKey?: string
+  callbackUrl?: string
 }
 
 export type ProdigiOrderStatus = {

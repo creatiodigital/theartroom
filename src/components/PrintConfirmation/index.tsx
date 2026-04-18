@@ -50,7 +50,7 @@ export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintCon
 
   const body =
     status === 'succeeded'
-      ? `We\u2019ve received your payment and will send a confirmation email shortly. Your print will be produced and shipped to the address you provided.`
+      ? `We\u2019ve placed a hold on your card and your order is now being prepared. We\u2019ll charge your card once your print enters production, and send a confirmation email with tracking details as soon as it ships.`
       : status === 'processing'
         ? `We\u2019ll email you as soon as the payment is fully cleared. You don\u2019t need to do anything else.`
         : status === 'unknown'

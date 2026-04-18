@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma'
 import { ProdigiError, createOrder, getProduct } from '@/lib/prodigi/client'
 import { resolveSku } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
+import { sendOrderPlacedEmail } from '@/lib/emails/orderPlaced'
+import { logOrderEvent } from './logOrderEvent'
 
 type StripePaymentIntent = {
   id: string
@@ -22,9 +24,13 @@ type StripePaymentIntent = {
 }
 
 /**
- * Called from the `payment_intent.succeeded` webhook. Creates (or finds)
- * the local PrintOrder row and submits the order to Prodigi if it hasn't
- * been submitted yet.
+ * Called from the `payment_intent.amount_capturable_updated` webhook once
+ * the buyer's card is authorized (funds held, not captured). Creates (or
+ * finds) the local PrintOrder row and submits the order to Prodigi.
+ *
+ * The buyer's card is captured later, from the Prodigi callback, once
+ * Prodigi has allocated the order for production. See
+ * memory/project_payment_auth_capture.md for the full flow.
  *
  * Idempotency: the PrintOrder row is keyed on paymentIntentId. If a
  * Stripe webhook retries we'll find the existing row. Prodigi order
@@ -46,7 +52,17 @@ export async function createPrintOrderFromPaymentIntent(
 
   const artwork = await prisma.artwork.findUnique({
     where: { id: artworkId },
-    select: { id: true, slug: true, title: true, imageUrl: true, userId: true },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      imageUrl: true,
+      originalImageUrl: true,
+      originalWidth: true,
+      originalHeight: true,
+      userId: true,
+      user: { select: { name: true, lastName: true } },
+    },
   })
   if (!artwork) return { ok: false, error: `Artwork ${artworkId} not found.` }
   // Guard against cross-artist metadata tampering.
@@ -61,6 +77,7 @@ export async function createPrintOrderFromPaymentIntent(
     frameColorId: md.frameColorId as PrintConfig['frameColorId'],
     mountId: md.mountId as PrintConfig['mountId'],
     unit: 'cm',
+    orientation: (md.orientation as PrintConfig['orientation']) ?? 'portrait',
   }
 
   const buyerName = pi.shipping?.name ?? ''
@@ -97,20 +114,61 @@ export async function createPrintOrderFromPaymentIntent(
       prodigiShippingCents: Number(md.prodigiShippingCents ?? 0),
       customerVatCents: Number(md.customerVatCents ?? 0),
       currency: 'eur',
-      paymentStatus: 'succeeded',
+      paymentStatus: 'authorized',
     },
-    update: { paymentStatus: 'succeeded' },
+    // Don't downgrade — if we're already 'succeeded' (captured) keep it.
+    update: {},
   })
+
+  // Buyer confirmation email — sent the first time we see this order.
+  // The event log is the idempotency gate: if the webhook retries, we
+  // find the prior email_sent event and skip.
+  const alreadyEmailed = await prisma.printOrderEvent.findFirst({
+    where: { orderId: order.id, kind: 'email_sent', message: 'order_placed' },
+    select: { id: true },
+  })
+  if (!alreadyEmailed && order.buyerEmail) {
+    const artistName = [artwork.user?.name, artwork.user?.lastName].filter(Boolean).join(' ').trim()
+    const emailRes = await sendOrderPlacedEmail({
+      to: order.buyerEmail,
+      buyerName: order.buyerName,
+      orderId: order.id,
+      artworkTitle: artwork.title ?? '',
+      artistName,
+      totalCents: order.totalCents,
+      currency: order.currency,
+    })
+    await logOrderEvent({
+      orderId: order.id,
+      kind: emailRes.ok ? 'email_sent' : 'email_failed',
+      actor: 'system',
+      message: 'order_placed',
+      payload: emailRes.ok
+        ? { to: order.buyerEmail, resendId: emailRes.id }
+        : { to: order.buyerEmail, error: emailRes.error },
+    })
+  }
 
   if (order.prodigiOrderId) {
     return { ok: true, orderId: order.id, prodigiOrderId: order.prodigiOrderId }
   }
 
-  if (!artwork.imageUrl) {
-    return { ok: false, error: 'Artwork has no imageUrl; cannot submit to Prodigi.' }
+  const printImageUrl = artwork.originalImageUrl ?? artwork.imageUrl
+  if (!printImageUrl) {
+    return { ok: false, error: 'Artwork has no image; cannot submit to Prodigi.' }
   }
 
   const { sku, attributes } = resolveSku(config)
+
+  // If the buyer's chosen orientation matches the image's natural orientation,
+  // crop to fill the print area (gallery look). If they forced the opposite
+  // orientation, fit with whitespace so the artwork isn't heavily cropped or
+  // rotated by Prodigi's auto-rotation.
+  const imgW = artwork.originalWidth ?? 0
+  const imgH = artwork.originalHeight ?? 0
+  const imageIsLandscape = imgW > 0 && imgH > 0 ? imgW >= imgH : true
+  const chosenIsLandscape = config.orientation === 'landscape'
+  const sizing = imageIsLandscape === chosenIsLandscape ? 'fillPrintArea' : 'fitPrintArea'
 
   try {
     const product = await getProduct(sku)
@@ -119,10 +177,17 @@ export async function createPrintOrderFromPaymentIntent(
       allAttrs[name] = attributes[name] ?? values[0]
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
+    const prodigiSecret = process.env.PRODIGI_WEBHOOK_SECRET ?? ''
+    const callbackUrl = prodigiSecret
+      ? `${siteUrl}/api/webhooks/prodigi?key=${encodeURIComponent(prodigiSecret)}`
+      : undefined
+
     const prodigiRes = await createOrder({
       merchantReference: order.id,
       shippingMethod: 'Standard',
       idempotencyKey: order.id,
+      callbackUrl,
       recipient: {
         name: buyerName || 'Recipient',
         email: order.buyerEmail || undefined,
@@ -140,10 +205,11 @@ export async function createPrintOrderFromPaymentIntent(
         {
           sku,
           copies: 1,
+          sizing,
           attributes: allAttrs,
           assets: Object.keys(product.product.printAreas).map((pa) => ({
             printArea: pa,
-            url: artwork.imageUrl!,
+            url: printImageUrl,
           })),
         },
       ],
@@ -154,6 +220,19 @@ export async function createPrintOrderFromPaymentIntent(
       data: {
         prodigiOrderId: prodigiRes.order.id,
         prodigiStage: prodigiRes.order.status.stage,
+      },
+    })
+
+    await logOrderEvent({
+      orderId: order.id,
+      kind: 'prodigi_submitted',
+      actor: 'system',
+      message: `Prodigi order created: ${prodigiRes.order.id} (${prodigiRes.outcome})`,
+      payload: {
+        prodigiOrderId: prodigiRes.order.id,
+        outcome: prodigiRes.outcome,
+        stage: prodigiRes.order.status.stage,
+        issues: prodigiRes.order.status.issues,
       },
     })
 
@@ -173,6 +252,17 @@ export async function createPrintOrderFromPaymentIntent(
       `[createPrintOrderFromPaymentIntent] Prodigi createOrder failed for order ${order.id}:`,
       detail,
     )
+    await logOrderEvent({
+      orderId: order.id,
+      kind: 'prodigi_submit_failed',
+      actor: 'system',
+      message: 'Prodigi createOrder threw',
+      payload: {
+        error: detail,
+        status: err instanceof ProdigiError ? err.status : undefined,
+        body: err instanceof ProdigiError ? err.body : undefined,
+      },
+    })
     return { ok: false, error: `Prodigi submission failed: ${detail}` }
   }
 }

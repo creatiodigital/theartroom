@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { createPrintOrderFromPaymentIntent } from '@/lib/orders/createPrintOrderFromPaymentIntent'
+import { logOrderEvent } from '@/lib/orders/logOrderEvent'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
@@ -37,21 +38,63 @@ export async function POST(req: NextRequest) {
       case 'account.updated':
         await handleAccountUpdated(event.data.object as AccountLike)
         break
-      case 'payment_intent.succeeded':
-        await handlePaymentIntentSucceeded(event.data.object as PaymentIntentLike)
+      // Auth succeeded — funds held, not captured. This is our signal to
+      // submit the order to Prodigi. Capture happens later from the
+      // Prodigi callback once production is allocated.
+      case 'payment_intent.amount_capturable_updated':
+        await handlePaymentIntentAuthorized(event.data.object as PaymentIntentLike)
         break
-      case 'payment_intent.processing':
-      case 'payment_intent.payment_failed': {
+      // Fires AFTER we call paymentIntents.capture() from the Prodigi
+      // callback. Just confirms the charge actually went through.
+      case 'payment_intent.succeeded':
+        await handlePaymentIntentCaptured(event.data.object as PaymentIntentLike)
+        break
+      case 'payment_intent.canceled': {
         const pi = event.data.object as PaymentIntentLike
+        const order = await prisma.printOrder.findUnique({
+          where: { paymentIntentId: pi.id },
+          select: { id: true },
+        })
         await prisma.printOrder
           .updateMany({
             where: { paymentIntentId: pi.id },
-            data: {
-              paymentStatus:
-                event.type === 'payment_intent.payment_failed' ? 'failed' : 'processing',
-            },
+            data: { paymentStatus: 'canceled' },
           })
           .catch((err) => console.warn('[stripe-webhook] update paymentStatus failed:', err))
+        if (order) {
+          await logOrderEvent({
+            orderId: order.id,
+            kind: 'auth_canceled',
+            actor: 'stripe',
+            message: 'PaymentIntent canceled — auth released',
+            payload: { paymentIntentId: pi.id },
+          })
+        }
+        break
+      }
+      case 'payment_intent.processing':
+      case 'payment_intent.payment_failed': {
+        const pi = event.data.object as PaymentIntentLike
+        const order = await prisma.printOrder.findUnique({
+          where: { paymentIntentId: pi.id },
+          select: { id: true },
+        })
+        const failed = event.type === 'payment_intent.payment_failed'
+        await prisma.printOrder
+          .updateMany({
+            where: { paymentIntentId: pi.id },
+            data: { paymentStatus: failed ? 'failed' : 'processing' },
+          })
+          .catch((err) => console.warn('[stripe-webhook] update paymentStatus failed:', err))
+        if (order) {
+          await logOrderEvent({
+            orderId: order.id,
+            kind: failed ? 'payment_failed' : 'payment_processing',
+            actor: 'stripe',
+            message: failed ? 'PaymentIntent payment_failed' : 'PaymentIntent processing',
+            payload: { paymentIntentId: pi.id },
+          })
+        }
         break
       }
       default:
@@ -104,15 +147,44 @@ async function handleAccountUpdated(account: AccountLike) {
   }
 }
 
-async function handlePaymentIntentSucceeded(pi: PaymentIntentLike) {
+async function handlePaymentIntentAuthorized(pi: PaymentIntentLike) {
   const res = await createPrintOrderFromPaymentIntent(pi)
   if (!res.ok) {
     console.error(
-      `[stripe-webhook] payment_intent.succeeded pi=${pi.id} → order creation failed: ${res.error}`,
+      `[stripe-webhook] amount_capturable_updated pi=${pi.id} → order creation failed: ${res.error}`,
     )
     return
   }
+  await logOrderEvent({
+    orderId: res.orderId,
+    kind: 'auth_received',
+    actor: 'stripe',
+    message: 'Buyer card authorized',
+    payload: { paymentIntentId: pi.id },
+  })
   console.log(
-    `[stripe-webhook] payment_intent.succeeded pi=${pi.id} → order=${res.orderId} prodigi=${res.prodigiOrderId ?? '(pending/skipped)'}`,
+    `[stripe-webhook] amount_capturable_updated pi=${pi.id} → order=${res.orderId} prodigi=${res.prodigiOrderId ?? '(pending/skipped)'}`,
   )
+}
+
+async function handlePaymentIntentCaptured(pi: PaymentIntentLike) {
+  const order = await prisma.printOrder.findUnique({
+    where: { paymentIntentId: pi.id },
+    select: { id: true },
+  })
+  if (!order) {
+    console.warn(`[stripe-webhook] payment_intent.succeeded pi=${pi.id} → no PrintOrder found`)
+    return
+  }
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: { paymentStatus: 'succeeded' },
+  })
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'captured',
+    actor: 'stripe',
+    message: 'Buyer card captured',
+    payload: { paymentIntentId: pi.id },
+  })
 }
