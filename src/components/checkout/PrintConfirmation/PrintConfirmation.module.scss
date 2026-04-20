@@ -45,8 +45,11 @@
 
 .thumb {
   border-radius: 4px;
-  object-fit: cover;
-  background: rgba(0, 0, 0, 0.04);
+  object-fit: contain;
+}
+
+.thumbRotated {
+  transform: rotate(90deg);
 }
 
 .headline {

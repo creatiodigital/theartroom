@@ -1,5 +1,5 @@
 import type { PrintConfig } from '@/components/PrintWizard/types'
-import type { ShippingAddress } from '@/components/PrintCheckout/createPaymentIntent'
+import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
 export type StashedPayment = {
   clientSecret: string

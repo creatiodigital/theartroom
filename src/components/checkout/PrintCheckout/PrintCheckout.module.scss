@@ -195,9 +195,19 @@
 .summaryThumb {
   width: 72px;
   height: 72px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 4px;
   flex-shrink: 0;
+}
+
+.summaryThumbRotated {
+  transform: rotate(90deg);
+}
+
+.summaryYear {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .summaryMeta {

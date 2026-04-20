@@ -30,14 +30,23 @@ export const PreviewArtwork = ({ imageUrl, config, imageAspectRatio }: PreviewAr
   const mount = getMount(config.mountId)
   const paper = getPaper(config.paperId)
 
-  // SIZES are declared portrait (width < height). If the artwork is
-  // landscape, flip so the rendered plane matches the printed orientation.
-  const isLandscape = imageAspectRatio > 1
-  const widthM = (isLandscape ? size.heightCm : size.widthCm) / 100
-  const heightM = (isLandscape ? size.widthCm : size.heightCm) / 100
+  // SIZES are declared portrait (width < height). The frame follows the
+  // *buyer's chosen orientation* — when they flip to landscape we swap
+  // width/height so the preview matches how the print will be hung. This
+  // is the same flip the SKU size expresses at checkout (Prodigi's product
+  // area rotates with the sizing/orientation pair).
+  const displayIsLandscape = config.orientation === 'landscape'
+  const widthM = (displayIsLandscape ? size.heightCm : size.widthCm) / 100
+  const heightM = (displayIsLandscape ? size.widthCm : size.heightCm) / 100
   const matBorderM = format.framed ? mount.borderCm / 100 : 0
   const matWidthM = widthM + matBorderM * 2
   const matHeightM = heightM + matBorderM * 2
+
+  // If the image's natural orientation doesn't match the chosen orientation,
+  // rotate the texture 90° so it fills the plane without being stretched —
+  // mirrors Prodigi's auto-rotation at fulfilment time.
+  const imageIsLandscape = imageAspectRatio > 1
+  const textureNeedsRotation = imageIsLandscape !== displayIsLandscape
 
   const texture = useLoader(TextureLoader, imageUrl)
   useMemo(() => {
@@ -45,7 +54,10 @@ export const PreviewArtwork = ({ imageUrl, config, imageAspectRatio }: PreviewAr
     texture.wrapS = RepeatWrapping
     texture.wrapT = RepeatWrapping
     texture.anisotropy = 8
-  }, [texture])
+    texture.center.set(0.5, 0.5)
+    texture.rotation = textureNeedsRotation ? Math.PI / 2 : 0
+    texture.needsUpdate = true
+  }, [texture, textureNeedsRotation])
 
   const frameMaterial = useMemo(() => {
     return new MeshStandardMaterial({

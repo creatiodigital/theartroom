@@ -80,6 +80,8 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
       size: config.sizeId,
       color: config.frameColorId,
       mount: config.mountId,
+      orientation: config.orientation,
+      unit: config.unit,
       country,
     })
     router.replace(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
@@ -151,12 +153,18 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
                 alt={artwork.title}
                 width={72}
                 height={72}
-                className={styles.summaryThumb}
+                className={`${styles.summaryThumb}${
+                  (config.orientation === 'landscape') !==
+                  artwork.originalWidthPx >= artwork.originalHeightPx
+                    ? ` ${styles.summaryThumbRotated}`
+                    : ''
+                }`}
               />
             )}
             <div className={styles.summaryMeta}>
               <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
               <h2 className={styles.summaryTitle}>{artwork.title}</h2>
+              {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
             </div>
           </div>
 
@@ -171,7 +179,7 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
             </li>
             <li>
               <span>Size</span>
-              <span>{formatSize(size, 'cm')}</span>
+              <span>{formatSize(size, config.unit, config.orientation)}</span>
             </li>
             {format.framed && (
               <>

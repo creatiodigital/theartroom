@@ -190,8 +190,17 @@
 
 .summaryThumb {
   border-radius: 4px;
-  object-fit: cover;
-  background: rgba(0, 0, 0, 0.04);
+  object-fit: contain;
+}
+
+.summaryThumbRotated {
+  transform: rotate(90deg);
+}
+
+.summaryYear {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .summaryMeta {

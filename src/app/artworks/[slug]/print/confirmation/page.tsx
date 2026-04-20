@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
-import { PrintConfirmation } from '@/components/PrintConfirmation'
+import { PrintConfirmation } from '@/components/checkout/PrintConfirmation'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
