@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
-import { PrintCheckout } from '@/components/PrintCheckout'
+import { PrintCheckout } from '@/components/checkout/PrintCheckout'
 import { normalizePrintConfig } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
 import prisma from '@/lib/prisma'
@@ -30,10 +30,10 @@ function readConfigFromParams(sp: Record<string, string | string[] | undefined>)
   return normalizePrintConfig({
     paperId: (pickString(sp.paper) ?? 'museum-cotton-rag') as PrintConfig['paperId'],
     formatId: (pickString(sp.format) ?? 'classic-framed') as PrintConfig['formatId'],
-    sizeId: (pickString(sp.size) ?? '30x40') as PrintConfig['sizeId'],
-    frameColorId: (pickString(sp.color) ?? 'oak') as PrintConfig['frameColorId'],
+    sizeId: (pickString(sp.size) ?? '60x80') as PrintConfig['sizeId'],
+    frameColorId: (pickString(sp.color) ?? 'black') as PrintConfig['frameColorId'],
     mountId: (pickString(sp.mount) ?? 'snow-white') as PrintConfig['mountId'],
-    unit: 'cm',
+    unit: (pickString(sp.unit) ?? 'cm') as PrintConfig['unit'],
     orientation: (pickString(sp.orientation) ?? 'portrait') as PrintConfig['orientation'],
   })
 }

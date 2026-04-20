@@ -132,31 +132,13 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    // For public listings (published=true without a userId filter = browsing),
-    // overlay snapshot metadata so the public card shows the published version
-    const isPublicListing = published === 'true' && !userId
-    if (isPublicListing) {
-      const mapped = exhibitions.map((ex) => {
-        const snapshot = ex.publishedSnapshot as Record<string, unknown> | null
-        if (snapshot) {
-          const snapExhibition = snapshot.exhibition as Record<string, unknown>
-          return {
-            ...ex,
-            mainTitle: snapExhibition.mainTitle ?? ex.mainTitle,
-            shortDescription: snapExhibition.shortDescription ?? ex.shortDescription,
-            featuredImageUrl: snapExhibition.featuredImageUrl ?? ex.featuredImageUrl,
-            thumbnailUrl: snapExhibition.thumbnailUrl ?? ex.thumbnailUrl,
-            bannerUrl: snapExhibition.bannerUrl ?? ex.bannerUrl,
-            startDate: snapExhibition.startDate ?? ex.startDate,
-            endDate: snapExhibition.endDate ?? ex.endDate,
-            status: snapExhibition.status ?? ex.status,
-          }
-        }
-        return ex
-      })
-      return NextResponse.json(mapped)
-    }
-
+    // Public listing cards show text metadata only (title, artist,
+    // featured image) — the snapshot is for frozen 3D scene state, not
+    // for gating textual edits. Return live DB values directly so
+    // renaming an exhibition reflects on the listing without requiring
+    // the artist to re-publish. (The profile page already reads live
+    // `...exhibition` via /api/exhibitions/by-url, so this keeps both
+    // surfaces consistent.)
     return NextResponse.json(exhibitions)
   } catch (error) {
     console.error('[GET /api/exhibitions] error:', error)

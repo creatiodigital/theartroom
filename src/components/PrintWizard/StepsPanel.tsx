@@ -15,6 +15,7 @@ import {
   filterMountsForArtwork,
   filterPapersForArtwork,
   filterSizesForArtwork,
+  formatSize,
   getCompatibleSizes,
   getFormat,
   isSizePrintEligible,
@@ -44,6 +45,13 @@ interface StepsPanelProps {
   countryCode: string
   onCountryChange: (code: string) => void
   catalogStatus: CatalogStatus
+  /**
+   * Countries list from localStorage (previous session). Used to populate
+   * the destinations dropdown *while the full catalog is still loading*,
+   * so a returning buyer sees a usable country picker instantly instead
+   * of "Loading available destinations…".
+   */
+  fallbackCountries: string[] | null
   /** Artist-set restrictions for this artwork. null/undefined = no restrictions. */
   printOptions: PrintOptions | null
   /**
@@ -54,7 +62,7 @@ interface StepsPanelProps {
   noViableCombo: boolean
 }
 
-type StepKey = 'paper' | 'format' | 'size' | 'frame' | 'mount'
+type StepKey = 'orientation' | 'paper' | 'format' | 'size' | 'frame' | 'mount'
 
 const regionNames =
   typeof Intl !== 'undefined' && 'DisplayNames' in Intl
@@ -73,13 +81,22 @@ export const StepsPanel = ({
   countryCode,
   onCountryChange,
   catalogStatus,
+  fallbackCountries,
   printOptions,
   noViableCombo,
 }: StepsPanelProps) => {
-  const [openStep, setOpenStep] = useState<StepKey>('paper')
+  // Independent open/closed state per section — the buyer can have any
+  // combination open. All sections start closed so the panel is compact on
+  // first render; the user opens whichever step they want to adjust.
+  const [openSteps, setOpenSteps] = useState<Set<StepKey>>(() => new Set())
 
   const toggle = (key: StepKey) => (open: boolean) => {
-    if (open) setOpenStep(key)
+    setOpenSteps((prev) => {
+      const next = new Set(prev)
+      if (open) next.add(key)
+      else next.delete(key)
+      return next
+    })
   }
 
   const isFramed = getFormat(config.formatId).framed
@@ -160,42 +177,54 @@ export const StepsPanel = ({
     // Drop sizes the image physically can't print at 300 DPI — the
     // buyer shouldn't see an option that would yield an under-resolved
     // print, regardless of aspect fit or country coverage.
-    const eligible = (s: SizeOption) =>
-      isSizePrintEligible(s, originalWidthPx, originalHeightPx)
+    const eligible = (s: SizeOption) => isSizePrintEligible(s, originalWidthPx, originalHeightPx)
     const perfect = filterSizesForArtwork(sizeGroups.perfect, printOptions).filter(eligible)
     const close = filterSizesForArtwork(sizeGroups.close, printOptions).filter(eligible)
     const mismatch = filterSizesForArtwork(sizeGroups.mismatch, printOptions).filter(eligible)
+    // Labels follow the buyer's chosen orientation so "40×50 cm" flips
+    // to "50×40 cm" when the print hangs landscape.
+    const formatLabel = (s: SizeOption) => {
+      const cm = formatSize(s, 'cm', config.orientation)
+      const inches = formatSize(s, 'inches', config.orientation)
+      return `${cm} (${inches})`
+    }
     const allSizes: SelectOption<SizeId>[] = []
-    for (const s of perfect) allSizes.push({ value: s.id, label: s.label })
-    for (const s of close) allSizes.push({ value: s.id, label: s.label })
+    for (const s of perfect) allSizes.push({ value: s.id, label: formatLabel(s) })
+    for (const s of close) allSizes.push({ value: s.id, label: formatLabel(s) })
     for (const s of mismatch) {
-      allSizes.push({ value: s.id, label: `${s.label} — will crop or pad` })
+      allSizes.push({ value: s.id, label: `${formatLabel(s)} — will crop or pad` })
     }
     return allSizes.filter((opt) => keepAvail('size', opt.value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sizeGroups, config, countryCode, catalog, printOptions, originalWidthPx, originalHeightPx])
 
   const countryOptions: SelectOption<string>[] = useMemo(() => {
-    const available = catalogStatus.kind === 'ready' ? catalogStatus.countries : []
+    // Prefer the live catalog's countries; fall back to the persisted
+    // list from a previous session so the dropdown is usable immediately
+    // on a cold-cache deep-link.
+    const available =
+      catalogStatus.kind === 'ready' ? catalogStatus.countries : (fallbackCountries ?? [])
     return sortCountries(available).map((code) => ({
       value: code,
       label: countryName(code),
     }))
-  }, [catalogStatus])
+  }, [catalogStatus, fallbackCountries])
+
+  const showCountryDropdown =
+    catalogStatus.kind === 'ready' || (fallbackCountries && fallbackCountries.length > 0)
 
   return (
     <aside className={styles.stepsPanel}>
       <div className={styles.destinationBlock}>
         <div className={styles.destinationHeader}>
           <span className={styles.destinationTitle}>Shipping destination</span>
-          <span className={styles.destinationRequired}>Required</span>
         </div>
         <p className={styles.destinationHelp}>
           Pick your destination first. The options below will only show what we can actually ship to
-          that country — so anything you see is available for you.
+          that country.
         </p>
 
-        {catalogStatus.kind === 'loading' && (
+        {catalogStatus.kind === 'loading' && !showCountryDropdown && (
           <p
             className={
               styles.destinationNotice +
@@ -218,7 +247,7 @@ export const StepsPanel = ({
           </p>
         )}
 
-        {catalogStatus.kind === 'ready' && (
+        {showCountryDropdown && (
           <div className={styles.stepField}>
             <SelectDropdown<string>
               label="Country"
@@ -230,7 +259,7 @@ export const StepsPanel = ({
           </div>
         )}
 
-        {catalogStatus.kind === 'ready' && !countryCode && (
+        {showCountryDropdown && !countryCode && (
           <p className={styles.destinationNotice + ' ' + styles.destinationNoticeInfo}>
             Pick a destination to continue.
           </p>
@@ -248,108 +277,136 @@ export const StepsPanel = ({
       </div>
 
       {!noViableCombo && (
-      <>
-      <div className={styles.orientationBlock}>
-        <div className={styles.destinationHeader}>
-          <span className={styles.destinationTitle}>Orientation</span>
-        </div>
-        <p className={styles.destinationHelp}>
-          How the print will be hung. Defaulted to match your artwork — you can flip it if you want
-          a different hang.
-        </p>
-        <div className={styles.orientationChoices} role="radiogroup" aria-label="Orientation">
-          {(['portrait', 'landscape'] as Orientation[]).map((value) => {
-            const selected = config.orientation === value
-            return (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                className={`${styles.orientationChoice} ${
-                  selected ? styles.orientationChoiceSelected : ''
-                }`}
-                onClick={() => onChange({ orientation: value })}
-              >
-                <span
-                  className={`${styles.orientationIcon} ${
-                    value === 'landscape' ? styles.orientationIconLandscape : ''
-                  }`}
-                  aria-hidden="true"
+        <>
+          <CollapsibleSection title="Size" open={openSteps.has('size')} onToggle={toggle('size')}>
+            <div className={styles.stepField}>
+              <SelectDropdown<SizeId>
+                label="Size"
+                options={sizeOptions}
+                value={config.sizeId}
+                onChange={(v) => onChange({ sizeId: v })}
+                disabled={optionsLocked}
+              />
+              {sizeOptions.some((o) => o.label.includes('crop or pad')) && (
+                <p className={styles.destinationHelp}>
+                  Sizes marked <em>&ldquo;will crop or pad&rdquo;</em> don&apos;t match your
+                  artwork&apos;s aspect ratio. To fit them we either trim the edges (crop) or add a
+                  white border (pad). Pick one of the unmarked sizes to print the whole image
+                  without either.
+                </p>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Paper"
+            open={openSteps.has('paper')}
+            onToggle={toggle('paper')}
+          >
+            <div className={styles.stepField}>
+              <SelectDropdown<PaperId>
+                label="Paper tier"
+                options={paperOptions}
+                value={config.paperId}
+                onChange={(v) => onChange({ paperId: v })}
+                disabled={optionsLocked}
+              />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Format"
+            open={openSteps.has('format')}
+            onToggle={toggle('format')}
+          >
+            <div className={styles.stepField}>
+              <SelectDropdown<FormatId>
+                label="Format"
+                options={formatOptions}
+                value={config.formatId}
+                onChange={(v) => onChange({ formatId: v })}
+                disabled={optionsLocked}
+              />
+            </div>
+          </CollapsibleSection>
+
+          {isFramed && (
+            <CollapsibleSection
+              title="Frame"
+              open={openSteps.has('frame')}
+              onToggle={toggle('frame')}
+            >
+              <div className={styles.stepField}>
+                <SelectDropdown<FrameColorId>
+                  label="Frame color"
+                  options={frameColorOptions}
+                  value={config.frameColorId}
+                  onChange={(v) => onChange({ frameColorId: v })}
+                  disabled={optionsLocked}
                 />
-                <span className={styles.orientationLabel}>
-                  {value === 'portrait' ? 'Portrait' : 'Landscape'}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+              </div>
+            </CollapsibleSection>
+          )}
 
-      <CollapsibleSection title="Paper" open={openStep === 'paper'} onToggle={toggle('paper')}>
-        <div className={styles.stepField}>
-          <SelectDropdown<PaperId>
-            label="Paper tier"
-            options={paperOptions}
-            value={config.paperId}
-            onChange={(v) => onChange({ paperId: v })}
-            disabled={optionsLocked}
-          />
-        </div>
-      </CollapsibleSection>
+          {isFramed && (
+            <CollapsibleSection
+              title="Mount"
+              open={openSteps.has('mount')}
+              onToggle={toggle('mount')}
+            >
+              <div className={styles.stepField}>
+                <SelectDropdown<MountId>
+                  label="Passepartout"
+                  options={mountOptions}
+                  value={config.mountId}
+                  onChange={(v) => onChange({ mountId: v })}
+                  disabled={optionsLocked}
+                />
+              </div>
+            </CollapsibleSection>
+          )}
 
-      <CollapsibleSection title="Format" open={openStep === 'format'} onToggle={toggle('format')}>
-        <div className={styles.stepField}>
-          <SelectDropdown<FormatId>
-            label="Format"
-            options={formatOptions}
-            value={config.formatId}
-            onChange={(v) => onChange({ formatId: v })}
-            disabled={optionsLocked}
-          />
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Size" open={openStep === 'size'} onToggle={toggle('size')}>
-        <div className={styles.stepField}>
-          <SelectDropdown<SizeId>
-            label="Size"
-            options={sizeOptions}
-            value={config.sizeId}
-            onChange={(v) => onChange({ sizeId: v })}
-            disabled={optionsLocked}
-          />
-        </div>
-      </CollapsibleSection>
-
-      {isFramed && (
-        <CollapsibleSection title="Frame" open={openStep === 'frame'} onToggle={toggle('frame')}>
-          <div className={styles.stepField}>
-            <SelectDropdown<FrameColorId>
-              label="Frame color"
-              options={frameColorOptions}
-              value={config.frameColorId}
-              onChange={(v) => onChange({ frameColorId: v })}
-              disabled={optionsLocked}
-            />
-          </div>
-        </CollapsibleSection>
-      )}
-
-      {isFramed && (
-        <CollapsibleSection title="Mount" open={openStep === 'mount'} onToggle={toggle('mount')}>
-          <div className={styles.stepField}>
-            <SelectDropdown<MountId>
-              label="Passepartout"
-              options={mountOptions}
-              value={config.mountId}
-              onChange={(v) => onChange({ mountId: v })}
-              disabled={optionsLocked}
-            />
-          </div>
-        </CollapsibleSection>
-      )}
-      </>
+          <CollapsibleSection
+            title="Orientation"
+            open={openSteps.has('orientation')}
+            onToggle={toggle('orientation')}
+          >
+            <div className={styles.stepField}>
+              <p className={styles.destinationHelp}>
+                How the print will be hung. Defaulted to match your artwork — you can flip it if you
+                want a different hang.
+              </p>
+              <div className={styles.orientationChoices} role="radiogroup" aria-label="Orientation">
+                {(['portrait', 'landscape'] as Orientation[]).map((value) => {
+                  const selected = config.orientation === value
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={optionsLocked}
+                      className={`${styles.orientationChoice} ${
+                        selected ? styles.orientationChoiceSelected : ''
+                      } ${optionsLocked ? styles.orientationChoiceDisabled : ''}`}
+                      onClick={() => onChange({ orientation: value })}
+                    >
+                      <span
+                        className={`${styles.orientationIcon} ${
+                          value === 'landscape' ? styles.orientationIconLandscape : ''
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.orientationLabel}>
+                        {value === 'portrait' ? 'Portrait' : 'Landscape'}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </CollapsibleSection>
+        </>
       )}
     </aside>
   )

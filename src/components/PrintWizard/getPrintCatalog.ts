@@ -1,5 +1,7 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
+
 import { ProdigiError, getProduct } from '@/lib/prodigi/client'
 import { enumerateSkus } from './options'
 
@@ -15,15 +17,15 @@ export type SkuData = {
 
 export type CatalogResult = { ok: true; skus: SkuData[] } | { ok: false; error: string }
 
+// Cache tag used by unstable_cache below. Call revalidateTag with this
+// string from anywhere (admin action, cron, etc.) to force a refresh.
+const PRODIGI_CATALOG_TAG = 'prodigi-catalog'
+
 const CONCURRENCY = 8
 const PER_REQUEST_TIMEOUT_MS = 8000
-const CATALOG_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
-// Process-level cache. Prodigi's catalog barely changes within a dev
-// session, and hitting 70 product endpoints on every wizard mount is
-// both slow for the user and rude to Prodigi. Shared across requests in
-// the same server process; resets on dev hot-reload (which is fine).
-let cached: { at: number; result: CatalogResult } | null = null
+// In-process dedup for concurrent callers within the same serverless
+// invocation. unstable_cache handles the cross-invocation persistence.
 let inflight: Promise<CatalogResult> | null = null
 
 /**
@@ -53,20 +55,34 @@ async function fetchWithTimeout(sku: string) {
  * Other failures are logged; the user still gets a partial-but-usable
  * catalog as long as at least one SKU succeeds.
  *
- * Results are cached for CATALOG_TTL_MS at the process level. Concurrent
- * callers (user opens the wizard twice in parallel tabs) share a single
- * in-flight promise so we never fire duplicate batches.
+ * Wrapped in unstable_cache so the result persists across serverless
+ * invocations (24h). To force a refresh (e.g. Prodigi added a new
+ * country we want immediately), call revalidateTag(PRODIGI_CATALOG_TAG).
+ * We only cache *successful* loads — failures throw past the cache layer
+ * so the next call retries instead of serving a broken catalog for 24h.
  */
-export async function getPrintCatalog(): Promise<CatalogResult> {
-  if (cached && Date.now() - cached.at < CATALOG_TTL_MS && cached.result.ok) {
-    return cached.result
-  }
-  if (inflight) return inflight
-  inflight = loadCatalog()
-  try {
-    const result = await inflight
-    if (result.ok) cached = { at: Date.now(), result }
+const loadCatalogCached = unstable_cache(
+  async () => {
+    const result = await loadCatalog()
+    if (!result.ok) throw new Error(result.error)
     return result
+  },
+  ['prodigi-catalog-v1'],
+  { tags: [PRODIGI_CATALOG_TAG], revalidate: 86400 },
+)
+
+export async function getPrintCatalog(): Promise<CatalogResult> {
+  if (inflight) return inflight
+  inflight = (async () => {
+    try {
+      return await loadCatalogCached()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not load print catalog.'
+      return { ok: false, error: message }
+    }
+  })()
+  try {
+    return await inflight
   } finally {
     inflight = null
   }

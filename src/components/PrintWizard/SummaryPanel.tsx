@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import type { ProdigiQuoteResult } from '@/components/checkout/PrintCheckout/getQuote'
 
 import {
-  computePrice,
+  computeQuotedTotals,
   formatEuro,
   formatSize,
   getFormat,
@@ -26,6 +26,13 @@ interface SummaryPanelProps {
   canContinue: boolean
   /** Hide all config-specific content (schema/specs/price) until true. */
   configReady: boolean
+  /** Update the parent config — used by the cm/in display toggle. */
+  onUnitChange: (unit: SizeUnit) => void
+  /** Destination country — needed to apply EU VAT on top of the quote. */
+  countryCode: string
+  /** Live Prodigi quote for (config, country). Null while loading/unavailable. */
+  quote: ProdigiQuoteResult | null
+  quoteLoading: boolean
 }
 
 export const SummaryPanel = ({
@@ -35,6 +42,10 @@ export const SummaryPanel = ({
   onAddToCart,
   canContinue,
   configReady,
+  onUnitChange,
+  countryCode,
+  quote,
+  quoteLoading,
 }: SummaryPanelProps) => {
   const paper = getPaper(config.paperId)
   const format = getFormat(config.formatId)
@@ -42,11 +53,19 @@ export const SummaryPanel = ({
   const frameColor = getFrameColor(config.frameColorId)
   const mount = getMount(config.mountId)
 
-  const price = computePrice(config, { printPriceCents: artwork.printPriceCents })
+  const totals = quote
+    ? computeQuotedTotals({
+        printPriceCents: artwork.printPriceCents,
+        prodigiItemCents: quote.itemCents,
+        prodigiShippingCents: quote.shippingCents,
+        countryCode,
+      })
+    : null
 
-  // Display unit for the schema + measurements. Local to the summary —
-  // doesn't touch the PrintConfig or trigger re-quotes.
-  const [displayUnit, setDisplayUnit] = useState<SizeUnit>('cm')
+  // Display unit lives on PrintConfig so it propagates to checkout via the
+  // URL — otherwise the buyer toggles inches here and the next step still
+  // shows cm, which reads like a bug.
+  const displayUnit = config.unit
 
   const formatDim = (cm: number) =>
     displayUnit === 'inches' ? `${Math.round(cm / 2.54)} in` : `${cm.toFixed(0)} cm`
@@ -55,9 +74,9 @@ export const SummaryPanel = ({
   const moldingWidthCm = showFrame ? 2.0 : 0 // Prodigi Classic molding width
   const mattingBorderCm = showFrame ? mount.borderCm : 0
 
-  // SIZES are declared portrait. Swap when the artwork is landscape so the
-  // schema + measurements reflect the printed orientation.
-  const isLandscape = imageAspectRatio > 1
+  // SIZES are declared portrait. Swap when the buyer chose landscape so the
+  // schema + measurements match the 3D preview and the printed orientation.
+  const isLandscape = config.orientation === 'landscape'
   const printWidthCm = isLandscape ? size.heightCm : size.widthCm
   const printHeightCm = isLandscape ? size.widthCm : size.heightCm
   const matWidthCm = printWidthCm + mattingBorderCm * 2
@@ -71,12 +90,10 @@ export const SummaryPanel = ({
         <div className={styles.summaryHeader}>
           <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
           <h2 className={styles.summaryTitle}>{artwork.title}</h2>
+          {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
         </div>
-        <p className={styles.shippingNote}>
-          Pick a shipping destination to see the preview, size details and price for your print.
-        </p>
         <button type="button" className={styles.ctaButton} onClick={onAddToCart} disabled>
-          Continue to checkout
+          Add shipping address
         </button>
       </aside>
     )
@@ -87,6 +104,7 @@ export const SummaryPanel = ({
       <div className={styles.summaryHeader}>
         <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
         <h2 className={styles.summaryTitle}>{artwork.title}</h2>
+        {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
       </div>
 
       <div className={styles.schemaSection}>
@@ -94,7 +112,7 @@ export const SummaryPanel = ({
           <button
             type="button"
             className={`${styles.unitToggleOption} ${displayUnit === 'cm' ? styles.unitToggleOptionActive : ''}`}
-            onClick={() => setDisplayUnit('cm')}
+            onClick={() => onUnitChange('cm')}
             aria-pressed={displayUnit === 'cm'}
           >
             cm
@@ -105,7 +123,7 @@ export const SummaryPanel = ({
           <button
             type="button"
             className={`${styles.unitToggleOption} ${displayUnit === 'inches' ? styles.unitToggleOptionActive : ''}`}
-            onClick={() => setDisplayUnit('inches')}
+            onClick={() => onUnitChange('inches')}
             aria-pressed={displayUnit === 'inches'}
           >
             in
@@ -158,7 +176,7 @@ export const SummaryPanel = ({
         </div>
         <div>
           <dt>Size</dt>
-          <dd>{formatSize(size, displayUnit)}</dd>
+          <dd>{formatSize(size, displayUnit, config.orientation)}</dd>
         </div>
         {showFrame && (
           <>
@@ -174,14 +192,37 @@ export const SummaryPanel = ({
         )}
       </dl>
 
-      <p className={styles.shippingNote}>
-        Shipping and taxes calculated at checkout based on your delivery address.
-      </p>
-
-      <div className={styles.totalRow}>
-        <span>Price</span>
-        <span className={styles.totalValue}>{formatEuro(price.subtotalCents)}</span>
-      </div>
+      {totals ? (
+        <>
+          <dl className={styles.priceList}>
+            <div className={styles.priceRow}>
+              <dt>Artwork</dt>
+              <dd>
+                {formatEuro(totals.artistCents + totals.galleryCents + totals.prodigiItemCents)}
+              </dd>
+            </div>
+            <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
+              <dt>Shipping</dt>
+              <dd>{formatEuro(totals.prodigiShippingCents)}</dd>
+            </div>
+            {totals.customerVatCents > 0 && (
+              <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
+                <dt>VAT (21%)</dt>
+                <dd>{formatEuro(totals.customerVatCents)}</dd>
+              </div>
+            )}
+          </dl>
+          <div className={styles.totalRow}>
+            <span>Total</span>
+            <span className={styles.totalValue}>{formatEuro(totals.totalCents)}</span>
+          </div>
+        </>
+      ) : (
+        <div className={styles.totalRow}>
+          <span>Total</span>
+          <span className={styles.totalValue}>{quoteLoading ? 'Calculating…' : '—'}</span>
+        </div>
+      )}
 
       <button
         type="button"
@@ -189,7 +230,7 @@ export const SummaryPanel = ({
         onClick={onAddToCart}
         disabled={!canContinue}
       >
-        Continue to checkout
+        Add shipping address
       </button>
     </aside>
   )

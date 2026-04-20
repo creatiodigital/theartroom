@@ -1,18 +1,29 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
 
-import { getCachedCatalog, setCachedCatalog } from './catalogClientCache'
+import { getProdigiQuote } from '@/components/checkout/PrintCheckout/getQuote'
+import type { ProdigiQuoteResult } from '@/components/checkout/PrintCheckout/getQuote'
+
+import {
+  getCachedCatalog,
+  getCachedCountries,
+  hydrateCountriesFromStorage,
+  setCachedCatalog,
+  setCachedCountries,
+} from './catalogClientCache'
 import { getPrintCatalog } from './getPrintCatalog'
 import type { SkuData } from './getPrintCatalog'
 import {
   buildDefaultConfig,
   collectAllCountries,
   configShipsTo,
+  deriveOrientation,
   findShippableConfig,
   firstShippableConfig,
   normalizePrintConfig,
@@ -32,6 +43,8 @@ export type CatalogStatus =
   | { kind: 'loading' }
   | { kind: 'ready'; catalog: SkuData[]; countries: string[] }
   | { kind: 'error' }
+
+const UNIT_STORAGE_KEY = 'artroom:print-unit'
 
 export const PrintWizard = ({ artwork }: PrintWizardProps) => {
   const router = useRouter()
@@ -53,6 +66,7 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     orientation: (searchParams.get('orientation') ?? undefined) as
       | PrintConfig['orientation']
       | undefined,
+    unit: (searchParams.get('unit') ?? undefined) as PrintConfig['unit'] | undefined,
   }
   const hasUrlConfig = Object.values(urlConfigSeed).some((v) => v !== undefined)
 
@@ -78,8 +92,53 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     return normalizePrintConfig({ ...base, ...urlConfigSeed })
   })
 
-  const updateConfig = (patch: Partial<PrintConfig>) =>
+  // Keep the orientation default in sync with the real image ratio. DB
+  // dimensions can be missing on older artworks, in which case buildDefaultConfig
+  // fell back to 'portrait' regardless of the actual image. Once the
+  // client-side measurement lands, flip orientation to match — unless the
+  // user has already picked one explicitly (URL seed or manual toggle).
+  const [orientationTouched, setOrientationTouched] = useState(
+    urlConfigSeed.orientation !== undefined,
+  )
+  useEffect(() => {
+    if (orientationTouched || measuredAspect === null) return
+    const derived = deriveOrientation(measuredAspect)
+    setConfig((prev) =>
+      prev.orientation === derived ? prev : normalizePrintConfig({ ...prev, orientation: derived }),
+    )
+  }, [measuredAspect, orientationTouched])
+
+  const updateConfig = (patch: Partial<PrintConfig>) => {
+    if (patch.orientation !== undefined) setOrientationTouched(true)
     setConfig((prev) => normalizePrintConfig({ ...prev, ...patch }))
+  }
+
+  // Unit preference persists across visits via localStorage so returning
+  // buyers keep their previous cm/in choice. URL seed (e.g. returning from
+  // checkout) always wins over storage. Reading localStorage must happen
+  // in an effect to avoid SSR/client hydration mismatch.
+  useEffect(() => {
+    if (urlConfigSeed.unit !== undefined) return
+    try {
+      const saved = window.localStorage.getItem(UNIT_STORAGE_KEY)
+      if (saved === 'cm' || saved === 'inches') {
+        setConfig((prev) => (prev.unit === saved ? prev : { ...prev, unit: saved }))
+      }
+    } catch {
+      // localStorage unavailable (private mode, quota, etc.) — fall back
+      // silently to whatever default buildDefaultConfig set.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleUnitChange = (unit: PrintConfig['unit']) => {
+    updateConfig({ unit })
+    try {
+      window.localStorage.setItem(UNIT_STORAGE_KEY, unit)
+    } catch {
+      // See note above — persistence failure is non-critical.
+    }
+  }
 
   // Country is picked by the user — never defaulted. Restored from the URL
   // if the user came back from checkout; otherwise empty until chosen.
@@ -101,6 +160,17 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     return { kind: 'loading' }
   })
 
+  // Persisted countries list (localStorage). Stays null until the
+  // useEffect below hydrates it — doing so during render would break
+  // SSR/client hydration parity.
+  const [fallbackCountries, setFallbackCountries] = useState<string[] | null>(null)
+
+  useEffect(() => {
+    hydrateCountriesFromStorage()
+    const cached = getCachedCountries()
+    if (cached) setFallbackCountries(cached)
+  }, [])
+
   useEffect(() => {
     if (catalog.kind === 'ready') return
     let cancelled = false
@@ -110,11 +180,14 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
         setCatalog({ kind: 'error' })
         return
       }
+      const countries = collectAllCountries(res.skus)
       setCachedCatalog(res.skus)
+      setCachedCountries(countries)
+      setFallbackCountries(countries)
       setCatalog({
         kind: 'ready',
         catalog: res.skus,
-        countries: collectAllCountries(res.skus),
+        countries,
       })
     })
     return () => {
@@ -198,11 +271,51 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     }
   }, [catalog, countryCode, shipsCurrent, config, aspectRatio, artwork.printOptions])
 
-  const canContinue =
-    catalog.kind === 'ready' && !!countryCode && shipsCurrent && !noViableCombo
+  const canContinue = catalog.kind === 'ready' && !!countryCode && shipsCurrent && !noViableCombo
+
+  // Fetch a real Prodigi quote so the summary shows the final total (incl.
+  // shipping + VAT) before the user advances to checkout. Prodigi's quote
+  // is country-deterministic — no address required — so this matches what
+  // the checkout page will show. Fetched eagerly on every config/country
+  // change so the displayed total always reflects the current selection;
+  // in-flight quotes are cancelled via the `cancelled` flag.
+  const [quote, setQuote] = useState<ProdigiQuoteResult | null>(null)
+  const [quoteLoading, setQuoteLoading] = useState(false)
+  useEffect(() => {
+    if (!canContinue) {
+      setQuote(null)
+      setQuoteLoading(false)
+      return
+    }
+    let cancelled = false
+    setQuote(null)
+    setQuoteLoading(true)
+    getProdigiQuote(config, countryCode).then((res) => {
+      if (cancelled) return
+      setQuote(res.ok ? res.data : null)
+      setQuoteLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [canContinue, config, countryCode])
 
   const handleAddToCart = () => {
     if (!canContinue) return
+    // Hand the checkout the quote we already fetched here so it doesn't
+    // have to round-trip Prodigi again. Stashed against the exact
+    // (config, country) it was quoted for — the checkout re-validates
+    // before using, and falls back to its own fetch on mismatch.
+    if (quote) {
+      try {
+        sessionStorage.setItem(
+          `print-quote:${artwork.slug}`,
+          JSON.stringify({ config, country: countryCode, quote }),
+        )
+      } catch {
+        // Non-fatal — checkout will just re-fetch.
+      }
+    }
     const params = new URLSearchParams({
       paper: config.paperId,
       format: config.formatId,
@@ -210,6 +323,7 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
       color: config.frameColorId,
       mount: config.mountId,
       orientation: config.orientation,
+      unit: config.unit,
       country: countryCode,
     })
     router.push(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
@@ -218,11 +332,13 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
   return (
     <div className={styles.wizard}>
       <header className={styles.header}>
-        <Logo className={styles.logo} />
-        <span className={styles.headerTitle}>Order a print</span>
+        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
+          <Logo className={styles.logo} />
+        </Link>
+        <span />
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => router.push('/prints')}
           className={styles.closeButton}
           aria-label="Close wizard"
         >
@@ -243,6 +359,7 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
           countryCode={countryCode}
           onCountryChange={setCountryCode}
           catalogStatus={catalog}
+          fallbackCountries={fallbackCountries}
           printOptions={artwork.printOptions ?? null}
           noViableCombo={noViableCombo}
         />
@@ -259,6 +376,10 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
           onAddToCart={handleAddToCart}
           canContinue={canContinue}
           configReady={canContinue}
+          onUnitChange={handleUnitChange}
+          countryCode={countryCode}
+          quote={quote}
+          quoteLoading={quoteLoading}
         />
       </main>
     </div>

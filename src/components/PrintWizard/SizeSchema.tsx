@@ -41,13 +41,17 @@ export const SizeSchema = ({
   const formatDim = (cm: number) =>
     unit === 'inches' ? `${Math.round(cm / 2.54)} in` : `${cm.toFixed(0)} cm`
 
-  // Scale so the widest side fits the viewBox nicely, leaving room for dim lines.
+  // Square viewBox so portrait and landscape renders get the same visual
+  // budget. Scaling by the *longest* side means a 30×20 print looks the
+  // same physical size whether hung portrait or landscape — flipping only
+  // rotates the rectangle, never shrinks it.
   const VIEWBOX_W = 280
-  const VIEWBOX_H = 210
+  const VIEWBOX_H = 280
   const PADDING = 32
   const availableW = VIEWBOX_W - PADDING * 2
   const availableH = VIEWBOX_H - PADDING * 2
-  const scale = Math.min(availableW / overallWidthCm, availableH / overallHeightCm)
+  const longestCm = Math.max(overallWidthCm, overallHeightCm)
+  const scale = Math.min(availableW, availableH) / longestCm
 
   const outerW = overallWidthCm * scale
   const outerH = overallHeightCm * scale

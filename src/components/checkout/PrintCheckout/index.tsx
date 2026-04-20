@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
 import {
-  GALLERY_MARKUP_RATE,
+  computeQuotedTotals,
   formatEuro,
   formatSize,
   getFormat,
@@ -107,6 +107,8 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       size: config.sizeId,
       color: config.frameColorId,
       mount: config.mountId,
+      orientation: config.orientation,
+      unit: config.unit,
       country,
     })
     router.push(`/artworks/${artwork.slug}/print?${params.toString()}`)
@@ -162,8 +164,38 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
 
   // Quote is fetched once for the wizard-chosen country; it won't change on
   // this page. (If the user wants a different destination they go back.)
+  // First try the stash the wizard left behind — saves a Prodigi round-trip
+  // on every advance. The stash is only trusted if it was cut against the
+  // exact (config, country) we're rendering for.
   useEffect(() => {
     if (!country) return
+    try {
+      const raw = sessionStorage.getItem(`print-quote:${artwork.slug}`)
+      if (raw) {
+        const stashed = JSON.parse(raw) as {
+          config: PrintConfig
+          country: string
+          quote: ProdigiQuoteResult
+        }
+        const same =
+          stashed.country === country &&
+          stashed.config.paperId === config.paperId &&
+          stashed.config.formatId === config.formatId &&
+          stashed.config.sizeId === config.sizeId &&
+          stashed.config.frameColorId === config.frameColorId &&
+          stashed.config.mountId === config.mountId &&
+          stashed.config.orientation === config.orientation
+        if (same) {
+          setQuote(stashed.quote)
+          setQuoteLoading(false)
+          setQuoteError(null)
+          return
+        }
+      }
+    } catch {
+      // Unreadable stash — ignore and fall through to a live fetch.
+    }
+
     let cancelled = false
     setQuoteLoading(true)
     setQuoteError(null)
@@ -171,6 +203,14 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       if (cancelled) return
       if (res.ok) {
         setQuote(res.data)
+        try {
+          sessionStorage.setItem(
+            `print-quote:${artwork.slug}`,
+            JSON.stringify({ config, country, quote: res.data }),
+          )
+        } catch {
+          // Non-fatal; stashing is a perf optimisation only.
+        }
       } else {
         setQuote(null)
         setQuoteError(`SKU ${res.sku} — ${res.error}`)
@@ -180,47 +220,20 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
     return () => {
       cancelled = true
     }
-  }, [config, country])
+  }, [config, country, artwork.slug])
 
-  // Derive the final price the buyer will pay. Prodigi's quote already
-  // includes their VAT (charged to us); we layer the artist + gallery cut
-  // on top, then the customer VAT only for EU destinations.
-  const isEU = new Set([
-    'AT',
-    'BE',
-    'BG',
-    'HR',
-    'CY',
-    'CZ',
-    'DK',
-    'EE',
-    'FI',
-    'FR',
-    'DE',
-    'GR',
-    'HU',
-    'IE',
-    'IT',
-    'LV',
-    'LT',
-    'LU',
-    'MT',
-    'NL',
-    'PL',
-    'PT',
-    'RO',
-    'SK',
-    'SI',
-    'ES',
-    'SE',
-  ]).has(country)
-
+  const totals = quote
+    ? computeQuotedTotals({
+        printPriceCents: artwork.printPriceCents,
+        prodigiItemCents: quote.itemCents,
+        prodigiShippingCents: quote.shippingCents,
+        countryCode: country,
+      })
+    : null
+  const customerVatCents = totals?.customerVatCents ?? 0
+  const totalCents = totals?.totalCents ?? 0
   const artistCents = artwork.printPriceCents
-  const galleryCents = Math.round(artistCents * GALLERY_MARKUP_RATE)
-  const prodigiCents = quote ? quote.itemCents + quote.shippingCents : 0
-  const preTaxCents = artistCents + galleryCents + prodigiCents
-  const customerVatCents = isEU ? Math.round(preTaxCents * 0.21) : 0
-  const totalCents = preTaxCents + customerVatCents
+  const galleryCents = totals?.galleryCents ?? 0
 
   const canSubmit = !!quote && !quoteLoading && formValid
 
@@ -276,6 +289,8 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
         size: config.sizeId,
         color: config.frameColorId,
         mount: config.mountId,
+        orientation: config.orientation,
+        unit: config.unit,
         country,
       })
       router.push(`/artworks/${artwork.slug}/print/payment?${params.toString()}`)
@@ -467,12 +482,18 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
                 alt={artwork.title}
                 width={72}
                 height={72}
-                className={styles.summaryThumb}
+                className={`${styles.summaryThumb}${
+                  (config.orientation === 'landscape') !==
+                  artwork.originalWidthPx >= artwork.originalHeightPx
+                    ? ` ${styles.summaryThumbRotated}`
+                    : ''
+                }`}
               />
             )}
             <div className={styles.summaryMeta}>
               <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
               <h2 className={styles.summaryTitle}>{artwork.title}</h2>
+              {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
             </div>
           </div>
 
@@ -487,7 +508,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
             </li>
             <li>
               <span>Size</span>
-              <span>{formatSize(size, 'cm')}</span>
+              <span>{formatSize(size, config.unit, config.orientation)}</span>
             </li>
             {format.framed && (
               <>
@@ -505,7 +526,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
 
           <dl className={styles.priceList}>
             <div className={styles.priceRow}>
-              <dt>Print</dt>
+              <dt>Artwork</dt>
               <dd>
                 {quoteLoading && !quote ? (
                   <span className={styles.priceCalculating}>
@@ -525,7 +546,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
               <dt>Shipping</dt>
               <dd>{quoteLoading ? '…' : quote ? formatEuro(quote.shippingCents) : '—'}</dd>
             </div>
-            {isEU && quote && (
+            {customerVatCents > 0 && quote && (
               <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
                 <dt>VAT (21%)</dt>
                 <dd>{formatEuro(customerVatCents)}</dd>

@@ -41,6 +41,12 @@ type ImageUploaderProps = {
    * regardless of their parents' description lengths.
    */
   fill?: boolean
+  /**
+   * External error (e.g. from a failed server-side upload). Rendered
+   * inline right below the dropzone in the same style as the built-in
+   * size/resolution errors, so users see feedback where they are.
+   */
+  error?: string | null
 }
 
 function formatFileSize(bytes: number): string {
@@ -83,6 +89,7 @@ export const ImageUploader = ({
   minWidth = MIN_IMAGE_WIDTH,
   minHeight = MIN_IMAGE_HEIGHT,
   fill = false,
+  error,
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -301,6 +308,7 @@ export const ImageUploader = ({
 
       {sizeError && <div className={styles.sizeError}>{sizeError}</div>}
       {resolutionError && <div className={styles.sizeError}>{resolutionError}</div>}
+      {error && <div className={styles.sizeError}>{error}</div>}
     </div>
   )
 }

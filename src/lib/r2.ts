@@ -170,3 +170,8 @@ export async function buildExhibitionImageKey(exhibitionId: string): Promise<str
 export async function buildSlideImageKey(slideId: string): Promise<string> {
   return `${getEnvPrefix()}/slides/${slideId}/image-${randomSuffix()}.webp`
 }
+
+// Banner image for a CMS PageContent row (currently only /prints).
+export function buildPageBannerImageKey(slug: string): string {
+  return `${getEnvPrefix()}/pages/${slug}/banner-${randomSuffix()}.webp`
+}

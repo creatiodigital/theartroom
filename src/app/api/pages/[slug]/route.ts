@@ -76,6 +76,7 @@ function formatSlugToTitle(slug: string): string {
     privacy: 'Privacy Policy',
     accessibility: 'Accessibility Policy',
     'sale-terms': 'Online Terms of Sale',
+    prints: 'Prints',
   }
   return titles[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
 }

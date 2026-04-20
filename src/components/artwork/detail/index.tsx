@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
+import { PrintCatalogPrefetcher } from '@/components/PrintWizard/PrintCatalogPrefetcher'
 import { Share } from '@/components/ui/Share'
 import { ENQUIRE_ENABLED, PRINT_BUY_ENABLED } from '@/lib/features'
 import { isRichTextEmpty } from '@/lib/textUtils'
@@ -201,7 +202,7 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
               )}
               {PRINT_BUY_ENABLED && artwork.printEnabled && artwork.printPriceCents ? (
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   label="Buy Printable"
                   icon="arrowRight"
                   size="bigSquared"
@@ -257,6 +258,7 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
 
   return (
     <>
+      {artwork.printEnabled && artwork.printPriceCents ? <PrintCatalogPrefetcher /> : null}
       <PageLayout>
         <div className={styles.standaloneContent}>
           <div className={styles.metadata}>
@@ -306,7 +308,7 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
             />
             {artwork.printEnabled && artwork.printPriceCents ? (
               <Button
-                variant="secondary"
+                variant="primary"
                 label="Buy Printable"
                 icon="arrowRight"
                 size="bigSquared"

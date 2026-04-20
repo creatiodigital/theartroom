@@ -34,6 +34,8 @@ export const DashboardProfilePage = () => {
   const [uploading, setUploading] = useState(false)
   const [uploadingSignature, setUploadingSignature] = useState(false)
   const [error, setError] = useState('')
+  const [profileImageError, setProfileImageError] = useState('')
+  const [signatureError, setSignatureError] = useState('')
   const [success, setSuccess] = useState('')
 
   const [formData, setFormData] = useState({
@@ -116,7 +118,7 @@ export const DashboardProfilePage = () => {
       if (!effectiveUser?.id) return
 
       setUploading(true)
-      setError('')
+      setProfileImageError('')
 
       try {
         const formData = new FormData()
@@ -129,7 +131,7 @@ export const DashboardProfilePage = () => {
 
         if (!response.ok) {
           const data = await response.json()
-          setError(data.error || 'Failed to upload image')
+          setProfileImageError(data.error || 'Failed to upload image')
           setUploading(false)
           return
         }
@@ -138,7 +140,7 @@ export const DashboardProfilePage = () => {
         setUser((prev) => (prev ? { ...prev, profileImageUrl: data.url } : prev))
         setSuccess('Profile image updated!')
       } catch {
-        setError('Failed to upload image')
+        setProfileImageError('Failed to upload image')
       } finally {
         setUploading(false)
       }
@@ -151,7 +153,7 @@ export const DashboardProfilePage = () => {
       if (!effectiveUser?.id) return
 
       setUploadingSignature(true)
-      setError('')
+      setSignatureError('')
 
       try {
         const body = new FormData()
@@ -164,7 +166,7 @@ export const DashboardProfilePage = () => {
 
         const data = await response.json()
         if (!response.ok) {
-          setError(data.error || 'Failed to upload signature')
+          setSignatureError(data.error || 'Failed to upload signature')
           setUploadingSignature(false)
           return
         }
@@ -172,7 +174,7 @@ export const DashboardProfilePage = () => {
         setUser((prev) => (prev ? { ...prev, signatureUrl: data.url } : prev))
         setSuccess('Signature updated!')
       } catch {
-        setError('Failed to upload signature')
+        setSignatureError('Failed to upload signature')
       } finally {
         setUploadingSignature(false)
       }
@@ -184,7 +186,7 @@ export const DashboardProfilePage = () => {
     if (!user?.signatureUrl || !effectiveUser?.id) return
 
     setUploadingSignature(true)
-    setError('')
+    setSignatureError('')
 
     try {
       const response = await fetch(`/api/users/${effectiveUser.id}/signature`, {
@@ -192,7 +194,7 @@ export const DashboardProfilePage = () => {
       })
 
       if (!response.ok) {
-        setError('Failed to remove signature')
+        setSignatureError('Failed to remove signature')
         setUploadingSignature(false)
         return
       }
@@ -200,7 +202,7 @@ export const DashboardProfilePage = () => {
       setUser((prev) => (prev ? { ...prev, signatureUrl: null } : prev))
       setSuccess('Signature removed!')
     } catch {
-      setError('Failed to remove signature')
+      setSignatureError('Failed to remove signature')
     } finally {
       setUploadingSignature(false)
     }
@@ -210,7 +212,7 @@ export const DashboardProfilePage = () => {
     if (!user?.profileImageUrl || !effectiveUser?.id) return
 
     setUploading(true)
-    setError('')
+    setProfileImageError('')
 
     try {
       const response = await fetch(`/api/users/${effectiveUser.id}/image`, {
@@ -218,7 +220,7 @@ export const DashboardProfilePage = () => {
       })
 
       if (!response.ok) {
-        setError('Failed to remove image')
+        setProfileImageError('Failed to remove image')
         setUploading(false)
         return
       }
@@ -226,7 +228,7 @@ export const DashboardProfilePage = () => {
       setUser((prev) => (prev ? { ...prev, profileImageUrl: null } : prev))
       setSuccess('Profile image removed!')
     } catch {
-      setError('Failed to remove image')
+      setProfileImageError('Failed to remove image')
     } finally {
       setUploading(false)
     }
@@ -254,6 +256,7 @@ export const DashboardProfilePage = () => {
             onUpload={handleImageUpload}
             onRemove={handleRemoveImage}
             uploading={uploading}
+            error={profileImageError}
             fill
           />
           <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
@@ -272,6 +275,7 @@ export const DashboardProfilePage = () => {
             onUpload={handleSignatureUpload}
             onRemove={handleRemoveSignature}
             uploading={uploadingSignature}
+            error={signatureError}
             fill
           />
           <span className={dashboardStyles.hint}>

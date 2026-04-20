@@ -29,6 +29,13 @@ export const Scene = ({ imageUrl, config, imageAspectRatio, configReady }: Scene
   return (
     <div className={styles.sceneWrapper}>
       <div className={styles.sceneCanvas}>
+        {!configReady && (
+          <div className={styles.scenePrompt}>
+            <p className={styles.scenePromptText}>
+              Pick a shipping destination to see the preview, size details and price for your print.
+            </p>
+          </div>
+        )}
         <Canvas
           shadows
           dpr={[1, 2]}
@@ -41,20 +48,24 @@ export const Scene = ({ imageUrl, config, imageAspectRatio, configReady }: Scene
         >
           <color attach="background" args={['#f7f5ef']} />
 
-          <ambientLight intensity={0.95} />
+          <ambientLight intensity={1.25} />
           <directionalLight
             position={[1.5, 2, 2]}
-            intensity={1.2}
+            intensity={1.5}
             castShadow
             shadow-mapSize={[1024, 1024]}
           />
-          <directionalLight position={[-1.5, 1, 1]} intensity={0.45} />
-          <hemisphereLight args={['#ffffff', '#e6e0d2', 0.35]} />
+          <directionalLight position={[-1.5, 1, 1]} intensity={0.65} />
+          <hemisphereLight args={['#ffffff', '#efeae0', 0.55]} />
+
+          {/* Room + Floor sit OUTSIDE the Suspense: if we wrapped them
+              together with PreviewArtwork, the null fallback would blank
+              the whole scene every time the artwork texture reloads. */}
+          <Room />
+          <Floor />
+          {/* <Sofa /> — hidden for now; Sofa.tsx kept in scene/ */}
 
           <Suspense fallback={null}>
-            <Room />
-            <Floor />
-            {/* <Sofa /> — hidden for now; Sofa.tsx kept in scene/ */}
             {configReady && (
               <PreviewArtwork
                 imageUrl={imageUrl}

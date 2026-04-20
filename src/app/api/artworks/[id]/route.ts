@@ -51,6 +51,21 @@ function sanitizePrintOptions(raw: unknown): PrintOptions | null {
   return Object.keys(next).length === 0 ? null : next
 }
 
+// The exhibition profile API (/api/exhibitions/by-url/[url]) caches its
+// merged snapshot+live response under `exhibition-${url}` with a 1-hour
+// revalidate window. Artwork edits (title, image, etc.) would otherwise
+// stay invisible on the public page until that window expired — bust
+// every exhibition tag that currently includes this artwork.
+async function revalidateLinkedExhibitions(artworkId: string) {
+  const linked = await prisma.exhibitionArtwork.findMany({
+    where: { artworkId },
+    select: { exhibition: { select: { url: true } } },
+  })
+  for (const { exhibition } of linked) {
+    if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, 'default')
+  }
+}
+
 // GET single artwork
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -147,6 +162,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // Bust caches that include this artwork's data
       revalidateTag(`artwork-${id}`, 'default')
       for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, 'default')
+      await revalidateLinkedExhibitions(id)
 
       return NextResponse.json(artwork)
     } catch (innerError) {
@@ -160,6 +176,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // Bust caches that include this artwork's data
       revalidateTag(`artwork-${id}`, 'default')
       for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, 'default')
+      await revalidateLinkedExhibitions(id)
 
       return NextResponse.json(artwork)
     }
@@ -186,6 +203,14 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     // Verify ownership
     const { error: authError } = await requireOwnership(artwork.userId)
     if (authError) return authError
+
+    // Snapshot linked exhibition urls before the cascade wipes the
+    // ExhibitionArtwork join rows — we need them to bust caches after
+    // the delete completes.
+    const linkedExhibitions = await prisma.exhibitionArtwork.findMany({
+      where: { artworkId: id },
+      select: { exhibition: { select: { url: true } } },
+    })
 
     // Delete associated image from R2 if exists
     if (artwork.imageUrl) {
@@ -220,8 +245,11 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       where: { id },
     })
 
-    // Bust detail page cache
+    // Bust detail page cache + any exhibition pages that showed it
     revalidateTag(`artwork-${id}`, 'default')
+    for (const { exhibition } of linkedExhibitions) {
+      if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, 'default')
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

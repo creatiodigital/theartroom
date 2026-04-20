@@ -283,11 +283,7 @@ const CM_PER_INCH_CONST = 2.54
  * (zero or negative), we treat every size as eligible — preserves the
  * existing UX flow while measured dimensions are loading.
  */
-export function isSizePrintEligible(
-  size: SizeOption,
-  widthPx: number,
-  heightPx: number,
-): boolean {
+export function isSizePrintEligible(size: SizeOption, widthPx: number, heightPx: number): boolean {
   if (widthPx <= 0 || heightPx <= 0) return true
   const requiredW = Math.ceil((size.widthCm / CM_PER_INCH_CONST) * MIN_PRINT_DPI)
   const requiredH = Math.ceil((size.heightCm / CM_PER_INCH_CONST) * MIN_PRINT_DPI)
@@ -443,6 +439,86 @@ export function estimateProdigiCostCents(config: PrintConfig): number | null {
 export const GALLERY_MARKUP_RATE = 0.45 // 45% of artist price
 export const VAT_RATE = 0.21 // Spain standard
 
+// EU countries where we layer 21% customer VAT on top of the Prodigi-quoted
+// subtotal. Outside the EU the Prodigi quote already includes whatever
+// destination-side tax applies, so we don't add a second layer.
+//
+// TODO (pre-launch, needs accountant): two issues with the current model —
+//   1. VAT-on-VAT: Prodigi's quote is already VAT-inclusive (their UK VAT,
+//      charged to us B2B). Layering our 21% on top compounds tax on tax.
+//   2. Flat 21%: once past the OSS threshold, EU B2C should use the buyer's
+//      country rate, not Spain's flat 21%.
+// Decide with accountant before launching the print flow; may need a per-
+// country rate map and/or a net-of-Prodigi-VAT base.
+export const EU_COUNTRY_CODES: ReadonlySet<string> = new Set([
+  'AT',
+  'BE',
+  'BG',
+  'HR',
+  'CY',
+  'CZ',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'DE',
+  'GR',
+  'HU',
+  'IE',
+  'IT',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'PL',
+  'PT',
+  'RO',
+  'SK',
+  'SI',
+  'ES',
+  'SE',
+])
+
+export type QuotedTotals = {
+  artistCents: number
+  galleryCents: number
+  prodigiItemCents: number
+  prodigiShippingCents: number
+  preTaxCents: number
+  customerVatCents: number
+  totalCents: number
+}
+
+/**
+ * Compute the buyer-facing total from a Prodigi quote + artwork price +
+ * destination. Prodigi's quote is country-deterministic (no address
+ * required), so this is safe to show on the wizard step before the user
+ * fills in shipping details.
+ */
+export function computeQuotedTotals(opts: {
+  printPriceCents: number
+  prodigiItemCents: number
+  prodigiShippingCents: number
+  countryCode: string
+}): QuotedTotals {
+  const artistCents = opts.printPriceCents
+  const galleryCents = Math.round(artistCents * GALLERY_MARKUP_RATE)
+  const preTaxCents = artistCents + galleryCents + opts.prodigiItemCents + opts.prodigiShippingCents
+  const customerVatCents = EU_COUNTRY_CODES.has(opts.countryCode)
+    ? Math.round(preTaxCents * VAT_RATE)
+    : 0
+  return {
+    artistCents,
+    galleryCents,
+    prodigiItemCents: opts.prodigiItemCents,
+    prodigiShippingCents: opts.prodigiShippingCents,
+    preTaxCents,
+    customerVatCents,
+    totalCents: preTaxCents + customerVatCents,
+  }
+}
+
 export type PriceBreakdown = {
   prodigiCostCents: number
   artistPriceCents: number
@@ -511,15 +587,15 @@ export function buildDefaultConfig(
   originalWidthPx?: number,
   originalHeightPx?: number,
 ): PrintConfig {
-  // Pick the best-fitting 30×40 if the artwork's aspect ratio matches;
-  // otherwise fall back to the first perfect-fit size, then first close-fit,
-  // then 30×40 unconditionally.
-  let preferredSizeId: SizeId = '30x40'
+  // Default to the biggest size (60×80) and prefer the biggest
+  // aspect-compatible size when ratio data is available — falling back to
+  // 60×80 unconditionally if nothing fits.
+  let preferredSizeId: SizeId = '60x80'
   let orientation: Orientation = 'portrait'
   if (originalWidthPx && originalHeightPx) {
     const ratio = originalWidthPx / originalHeightPx
     const fits = getCompatibleSizes(ratio)
-    const pick = fits.perfect[0] ?? fits.close[0]
+    const pick = fits.perfect[fits.perfect.length - 1] ?? fits.close[fits.close.length - 1]
     if (pick) preferredSizeId = pick.id
     orientation = deriveOrientation(ratio)
   }
@@ -527,7 +603,7 @@ export function buildDefaultConfig(
     paperId: 'museum-cotton-rag',
     formatId: 'classic-framed',
     sizeId: preferredSizeId,
-    frameColorId: 'oak',
+    frameColorId: 'black',
     mountId: 'snow-white',
     unit: 'cm',
     orientation,
@@ -616,7 +692,14 @@ export function firstShippableConfig(
   printOptions?: PrintOptions | null,
 ): PrintConfig | null {
   const groups = getCompatibleSizes(aspectRatio)
-  const sizes = [...groups.perfect, ...groups.close, ...groups.mismatch]
+  // Bias toward biggest within each aspect-fit bucket so the first shippable
+  // combo we pick is the largest option the catalog exposes for this
+  // destination — matches the buildDefaultConfig preference.
+  const sizes = [
+    ...groups.perfect.slice().reverse(),
+    ...groups.close.slice().reverse(),
+    ...groups.mismatch.slice().reverse(),
+  ]
 
   const allowedPapers = filterPapersForArtwork(printOptions)
   const allowedFormats = filterFormatsForArtwork(printOptions)
@@ -624,9 +707,15 @@ export function firstShippableConfig(
   const allowedFrames = filterFrameColorsForArtwork(printOptions)
   const allowedMounts = filterMountsForArtwork(printOptions)
 
+  // Prefer framed formats first so the seeded default is a framed print —
+  // otherwise the iteration picks `unframed`, where frame color never
+  // applies, and the black-frame preference is never visible to the user.
+  // Stable sort keeps classic-framed ahead of box-framed (catalog order).
+  const orderedFormats = [...allowedFormats].sort((a, b) => Number(b.framed) - Number(a.framed))
+
   const orientation = deriveOrientation(aspectRatio)
   for (const paper of allowedPapers) {
-    for (const format of allowedFormats) {
+    for (const format of orderedFormats) {
       for (const size of allowedSizes) {
         for (const frame of allowedFrames) {
           for (const mount of allowedMounts) {
@@ -769,7 +858,7 @@ export function enumerateSkus(): string[] {
 export function normalizePrintConfig(config: PrintConfig): PrintConfig {
   const paperId = PAPERS.find((p) => p.id === config.paperId)?.id ?? PAPERS[0].id
   const formatId = FORMATS.find((f) => f.id === config.formatId)?.id ?? FORMATS[0].id
-  const sizeId = SIZES.find((s) => s.id === config.sizeId)?.id ?? SIZES[3].id // 30x40 default
+  const sizeId = SIZES.find((s) => s.id === config.sizeId)?.id ?? SIZES[SIZES.length - 1].id // biggest (60x80) default
   const frameColorId =
     FRAME_COLORS.find((c) => c.id === config.frameColorId)?.id ?? FRAME_COLORS[0].id
   const mountId = MOUNTS.find((m) => m.id === config.mountId)?.id ?? MOUNTS[0].id

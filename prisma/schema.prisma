@@ -497,9 +497,12 @@ model Slide {
 
 model PageContent {
   id        String   @id @default(uuid())
-  slug      String   @unique // "about", "terms", "privacy", "accessibility"
+  slug      String   @unique // "about", "terms", "privacy", "accessibility", "prints"
   title     String
   content   String // HTML from TipTap
+  // Top banner image. Currently only used by the "prints" page; other
+  // pages leave it null. Stored as an R2 public URL.
+  bannerImageUrl String?
   updatedAt DateTime @updatedAt
 }
 

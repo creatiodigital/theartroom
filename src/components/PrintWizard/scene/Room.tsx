@@ -9,7 +9,7 @@ export const Room = () => {
     // Wider/shorter wall, bottom-aligned to the floor (y = -1.5).
     <mesh position={[0, 0, 0]} receiveShadow>
       <planeGeometry args={[5, 3]} />
-      <meshStandardMaterial color="#ebe8e2" roughness={0.95} />
+      <meshStandardMaterial color="#f5f2ec" roughness={0.95} />
     </mesh>
   )
 }
