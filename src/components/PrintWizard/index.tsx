@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Icon } from '@/components/ui/Icon'
@@ -331,11 +332,13 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
   return (
     <div className={styles.wizard}>
       <header className={styles.header}>
-        <Logo className={styles.logo} />
+        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
+          <Logo className={styles.logo} />
+        </Link>
         <span />
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => router.push('/prints')}
           className={styles.closeButton}
           aria-label="Close wizard"
         >
