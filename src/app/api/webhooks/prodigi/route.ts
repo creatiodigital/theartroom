@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
 import type { ProdigiOrder } from '@/lib/prodigi/types'
-import { cancelOrder as cancelProdigiOrder } from '@/lib/prodigi/client'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
 import { captureError } from '@/lib/observability/captureError'
 import { stripe } from '@/lib/stripe/client'
@@ -159,27 +158,19 @@ export async function POST(req: NextRequest) {
           level: 'fatal',
           fingerprint: ['payment:capture-failed'],
         })
-        try {
-          await cancelProdigiOrder(order.id)
-        } catch (cancelErr) {
-          console.error(
-            `[prodigi-webhook] failed to cancel Prodigi order=${order.id} after capture failure:`,
-            cancelErr,
-          )
-          // Compounding failure: capture AND cancel both failed. We may
-          // be on the hook to Prodigi for a print we can't charge for.
-          captureError(cancelErr, {
-            flow: 'prodigi',
-            stage: 'cancel-after-capture-fail',
-            extra: {
-              orderId: existing.id,
-              paymentIntentId: existing.paymentIntentId,
-              prodigiOrderId: order.id,
-            },
-            level: 'fatal',
-            fingerprint: ['prodigi:cancel-after-capture-fail'],
-          })
-        }
+        // MANUAL FULFILLMENT MODE (2026-04-24): auto-cancel to Prodigi is
+        // disabled. In practice this branch won't fire — we aren't
+        // submitting orders to Prodigi, so Prodigi will never webhook us
+        // about a capture-failed-during-production case. Left as a
+        // tripwire: if it ever does fire, admin must cancel manually in
+        // the Prodigi dashboard.
+        await logOrderEvent({
+          orderId: existing.id,
+          kind: 'note',
+          actor: 'system',
+          message: 'MANUAL ACTION REQUIRED: cancel Prodigi order in dashboard (auto-cancel disabled)',
+          payload: { prodigiOrderId: order.id },
+        })
         await prisma.printOrder.update({
           where: { id: existing.id },
           data: { paymentStatus: 'failed' },

@@ -1,5 +1,4 @@
 import prisma from '@/lib/prisma'
-import { ProdigiError, createOrder, getProduct } from '@/lib/prodigi/client'
 import { resolveSku } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
 import { generateAndUploadCertificate } from '@/lib/certificates/generateAndUploadCertificate'
@@ -28,16 +27,17 @@ type StripePaymentIntent = {
 /**
  * Called from the `payment_intent.amount_capturable_updated` webhook once
  * the buyer's card is authorized (funds held, not captured). Creates (or
- * finds) the local PrintOrder row and submits the order to Prodigi.
+ * finds) the local PrintOrder row so the gallery admin can place the
+ * order in the Prodigi dashboard by hand.
  *
- * The buyer's card is captured later, from the Prodigi callback, once
- * Prodigi has allocated the order for production. See
- * memory/project_payment_auth_capture.md for the full flow.
+ * MANUAL FULFILLMENT MODE (2026-04-24): auto-submit to Prodigi is disabled.
+ * Buyer's card stays authorized; the admin captures manually from Stripe
+ * when they place the Prodigi order. See
+ * memory/project_manual_fulfillment_launch.md. To restore auto-submit,
+ * pull the try/catch from commit f02fa81.
  *
  * Idempotency: the PrintOrder row is keyed on paymentIntentId. If a
- * Stripe webhook retries we'll find the existing row. Prodigi order
- * submission is gated on `prodigiOrderId == null` so we never
- * double-submit.
+ * Stripe webhook retries we'll find the existing row.
  */
 export async function createPrintOrderFromPaymentIntent(
   pi: StripePaymentIntent,
@@ -242,127 +242,17 @@ export async function createPrintOrderFromPaymentIntent(
 
   const { sku, attributes } = resolveSku(config)
 
-  // If the buyer's chosen orientation matches the image's natural orientation,
-  // crop to fill the print area (gallery look). If they forced the opposite
-  // orientation, fit with whitespace so the artwork isn't heavily cropped or
-  // rotated by Prodigi's auto-rotation.
-  const imgW = artwork.originalWidth ?? 0
-  const imgH = artwork.originalHeight ?? 0
-  const imageIsLandscape = imgW > 0 && imgH > 0 ? imgW >= imgH : true
-  const chosenIsLandscape = config.orientation === 'landscape'
-  const sizing = imageIsLandscape === chosenIsLandscape ? 'fillPrintArea' : 'fitPrintArea'
-
-  try {
-    const product = await getProduct(sku)
-    const allAttrs: Record<string, string> = {}
-    for (const [name, values] of Object.entries(product.product.attributes)) {
-      allAttrs[name] = attributes[name] ?? values[0]
-    }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
-    const prodigiSecret = process.env.PRODIGI_WEBHOOK_SECRET ?? ''
-    const callbackUrl = prodigiSecret
-      ? `${siteUrl}/api/webhooks/prodigi?key=${encodeURIComponent(prodigiSecret)}`
-      : undefined
-
-    const prodigiRes = await createOrder({
-      merchantReference: order.id,
-      shippingMethod: 'Standard',
-      idempotencyKey: order.id,
-      callbackUrl,
-      branding: certificateUrl ? { flyer: { url: certificateUrl } } : undefined,
-      recipient: {
-        name: buyerName || 'Recipient',
-        email: order.buyerEmail || undefined,
-        phoneNumber: pi.shipping?.phone || undefined,
-        address: {
-          line1: addr.line1 ?? '',
-          line2: addr.line2 ?? undefined,
-          townOrCity: addr.city ?? '',
-          stateOrCounty: addr.state ?? undefined,
-          postalOrZipCode: addr.postal_code ?? '',
-          countryCode: addr.country ?? country,
-        },
-      },
-      items: [
-        {
-          sku,
-          copies: 1,
-          sizing,
-          attributes: allAttrs,
-          assets: Object.keys(product.product.printAreas).map((pa) => ({
-            printArea: pa,
-            url: printImageUrl,
-          })),
-        },
-      ],
-    })
-
-    await prisma.printOrder.update({
-      where: { id: order.id },
-      data: {
-        prodigiOrderId: prodigiRes.order.id,
-        prodigiStage: prodigiRes.order.status.stage,
-      },
-    })
-
-    await logOrderEvent({
-      orderId: order.id,
-      kind: 'prodigi_submitted',
-      actor: 'system',
-      message: `Prodigi order created: ${prodigiRes.order.id} (${prodigiRes.outcome})`,
-      payload: {
-        prodigiOrderId: prodigiRes.order.id,
-        outcome: prodigiRes.outcome,
-        stage: prodigiRes.order.status.stage,
-        issues: prodigiRes.order.status.issues,
-      },
-    })
-
-    return {
-      ok: true,
-      orderId: order.id,
-      prodigiOrderId: prodigiRes.order.id,
-    }
-  } catch (err) {
-    const detail =
-      err instanceof ProdigiError
-        ? JSON.stringify(err.body)
-        : err instanceof Error
-          ? err.message
-          : String(err)
-    console.error(
-      `[createPrintOrderFromPaymentIntent] Prodigi createOrder failed for order ${order.id}:`,
-      detail,
-    )
-    await logOrderEvent({
-      orderId: order.id,
-      kind: 'prodigi_submit_failed',
-      actor: 'system',
-      message: 'Prodigi createOrder threw',
-      payload: {
-        error: detail,
-        status: err instanceof ProdigiError ? err.status : undefined,
-        body: err instanceof ProdigiError ? err.body : undefined,
-      },
-    })
-    // Critical: buyer's card is authed but Prodigi refused the submit —
-    // the order is now stuck in limbo until admin intervenes. Surface
-    // loudly to Sentry so we can fix/cancel before auth expiry.
-    captureError(err, {
-      flow: 'order',
-      stage: 'prodigi-submit-failed',
-      extra: {
-        orderId: order.id,
-        paymentIntentId: order.paymentIntentId,
-        artworkId: artwork.id,
-        sku,
-        prodigiStatus: err instanceof ProdigiError ? err.status : undefined,
-        prodigiBody: err instanceof ProdigiError ? err.body : undefined,
-      },
-      level: 'error',
-      fingerprint: ['order:prodigi-submit-failed'],
-    })
-    return { ok: false, error: `Prodigi submission failed: ${detail}` }
-  }
+  // MANUAL FULFILLMENT MODE (2026-04-24): auto-submit to Prodigi is disabled.
+  // Orders are placed by hand by the gallery admin via the Prodigi dashboard
+  // using the data surfaced in /admin/orders. See
+  // memory/project_manual_fulfillment_launch.md. To restore auto-submit,
+  // pull the try/catch block from commit f02fa81.
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'note',
+    actor: 'system',
+    message: 'Prodigi auto-submit skipped (manual fulfillment mode)',
+    payload: { sku, attributes, assetUrl: printImageUrl, certificateUrl },
+  })
+  return { ok: true, orderId: order.id, prodigiOrderId: null }
 }
