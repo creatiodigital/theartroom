@@ -28,7 +28,6 @@ function readConfigFromParams(sp: Record<string, string | string[] | undefined>)
     sizeId: (pickString(sp.size) ?? '60x80') as PrintConfig['sizeId'],
     frameColorId: (pickString(sp.color) ?? 'black') as PrintConfig['frameColorId'],
     mountId: (pickString(sp.mount) ?? 'snow-white') as PrintConfig['mountId'],
-    unit: (pickString(sp.unit) ?? 'cm') as PrintConfig['unit'],
     orientation: (pickString(sp.orientation) ?? 'portrait') as PrintConfig['orientation'],
   })
 }

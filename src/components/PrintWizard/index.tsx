@@ -44,8 +44,6 @@ export type CatalogStatus =
   | { kind: 'ready'; catalog: SkuData[]; countries: string[] }
   | { kind: 'error' }
 
-const UNIT_STORAGE_KEY = 'artroom:print-unit'
-
 export const PrintWizard = ({ artwork }: PrintWizardProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -66,7 +64,6 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     orientation: (searchParams.get('orientation') ?? undefined) as
       | PrintConfig['orientation']
       | undefined,
-    unit: (searchParams.get('unit') ?? undefined) as PrintConfig['unit'] | undefined,
   }
   const hasUrlConfig = Object.values(urlConfigSeed).some((v) => v !== undefined)
 
@@ -111,33 +108,6 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
   const updateConfig = (patch: Partial<PrintConfig>) => {
     if (patch.orientation !== undefined) setOrientationTouched(true)
     setConfig((prev) => normalizePrintConfig({ ...prev, ...patch }))
-  }
-
-  // Unit preference persists across visits via localStorage so returning
-  // buyers keep their previous cm/in choice. URL seed (e.g. returning from
-  // checkout) always wins over storage. Reading localStorage must happen
-  // in an effect to avoid SSR/client hydration mismatch.
-  useEffect(() => {
-    if (urlConfigSeed.unit !== undefined) return
-    try {
-      const saved = window.localStorage.getItem(UNIT_STORAGE_KEY)
-      if (saved === 'cm' || saved === 'inches') {
-        setConfig((prev) => (prev.unit === saved ? prev : { ...prev, unit: saved }))
-      }
-    } catch {
-      // localStorage unavailable (private mode, quota, etc.) — fall back
-      // silently to whatever default buildDefaultConfig set.
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const handleUnitChange = (unit: PrintConfig['unit']) => {
-    updateConfig({ unit })
-    try {
-      window.localStorage.setItem(UNIT_STORAGE_KEY, unit)
-    } catch {
-      // See note above — persistence failure is non-critical.
-    }
   }
 
   // Country is picked by the user — never defaulted. Restored from the URL
@@ -323,7 +293,6 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
       color: config.frameColorId,
       mount: config.mountId,
       orientation: config.orientation,
-      unit: config.unit,
       country: countryCode,
     })
     router.push(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
@@ -376,7 +345,6 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
           onAddToCart={handleAddToCart}
           canContinue={canContinue}
           configReady={canContinue}
-          onUnitChange={handleUnitChange}
           countryCode={countryCode}
           quote={quote}
           quoteLoading={quoteLoading}

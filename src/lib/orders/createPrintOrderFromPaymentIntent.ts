@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import { resolveSku } from '@/components/PrintWizard/options'
 import type { PrintConfig } from '@/components/PrintWizard/types'
 import { generateAndUploadCertificate } from '@/lib/certificates/generateAndUploadCertificate'
+import { sendAdminOrderNotification } from '@/lib/emails/adminOrderNotification'
 import { sendOrderPlacedEmail } from '@/lib/emails/orderPlaced'
 import { captureError } from '@/lib/observability/captureError'
 import { logOrderEvent } from './logOrderEvent'
@@ -100,7 +101,6 @@ export async function createPrintOrderFromPaymentIntent(
     sizeId: md.sizeId as PrintConfig['sizeId'],
     frameColorId: md.frameColorId as PrintConfig['frameColorId'],
     mountId: md.mountId as PrintConfig['mountId'],
-    unit: 'cm',
     orientation: (md.orientation as PrintConfig['orientation']) ?? 'portrait',
   }
 
@@ -161,6 +161,7 @@ export async function createPrintOrderFromPaymentIntent(
       artistName,
       totalCents: order.totalCents,
       currency: order.currency,
+      shippingCountryCode: addr.country ?? country,
     })
     await logOrderEvent({
       orderId: order.id,
@@ -241,6 +242,60 @@ export async function createPrintOrderFromPaymentIntent(
   }
 
   const { sku, attributes } = resolveSku(config)
+
+  // Admin order-notification email — idempotent via event log, same
+  // pattern as the buyer email. Tells the gallery admin a new order is
+  // ready to be placed by hand in the Prodigi dashboard; surfaces every
+  // field needed to recreate the exact order.
+  const alreadyNotifiedAdmin = await prisma.printOrderEvent.findFirst({
+    where: { orderId: order.id, kind: 'email_sent', message: 'admin_order_notification' },
+    select: { id: true },
+  })
+  if (!alreadyNotifiedAdmin) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
+    const artistName = [artwork.user?.name, artwork.user?.lastName].filter(Boolean).join(' ').trim()
+    const adminRes = await sendAdminOrderNotification({
+      orderId: order.id,
+      artworkTitle: artwork.title ?? '',
+      artistName,
+      buyerName: order.buyerName,
+      buyerEmail: order.buyerEmail,
+      shippingAddress: {
+        line1: addr.line1 ?? '',
+        line2: addr.line2 ?? '',
+        city: addr.city ?? '',
+        state: addr.state ?? '',
+        postalCode: addr.postal_code ?? '',
+        country: addr.country ?? country,
+        phone: pi.shipping?.phone ?? '',
+      },
+      totalCents: order.totalCents,
+      currency: order.currency,
+      sku,
+      skuAttributes: attributes,
+      assetUrl: printImageUrl,
+      certificateUrl,
+      adminOrderUrl: `${siteUrl}/admin/orders/${order.id}`,
+    })
+    await logOrderEvent({
+      orderId: order.id,
+      kind: adminRes.ok ? 'email_sent' : 'email_failed',
+      actor: 'system',
+      message: 'admin_order_notification',
+      payload: adminRes.ok
+        ? { resendId: adminRes.id }
+        : { error: adminRes.error },
+    })
+    if (!adminRes.ok) {
+      captureError(new Error(`Admin order-notification email failed: ${adminRes.error}`), {
+        flow: 'email',
+        stage: 'admin-order-notification-send',
+        extra: { orderId: order.id, error: adminRes.error },
+        level: 'warning',
+        fingerprint: ['email:admin-order-notification-failed'],
+      })
+    }
+  }
 
   // MANUAL FULFILLMENT MODE (2026-04-24): auto-submit to Prodigi is disabled.
   // Orders are placed by hand by the gallery admin via the Prodigi dashboard

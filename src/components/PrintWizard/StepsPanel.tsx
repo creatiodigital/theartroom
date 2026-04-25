@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import Image from 'next/image'
 
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { Icon } from '@/components/ui/Icon'
@@ -62,7 +63,52 @@ interface StepsPanelProps {
   noViableCombo: boolean
 }
 
-type StepKey = 'orientation' | 'paper' | 'format' | 'size' | 'frame' | 'mount'
+type StepKey = 'destination' | 'orientation' | 'paper' | 'format' | 'size' | 'frame' | 'mount'
+
+const FORMAT_TOOLTIP_IMAGES: Partial<Record<FormatId, ReactNode>> = {
+  'classic-framed': (
+    <Image src="/assets/helpers/classic-frame.png" alt="" width={220} height={220} />
+  ),
+  'box-framed': <Image src="/assets/helpers/box-frame.png" alt="" width={220} height={220} />,
+}
+
+const FORMAT_TOOLTIPS: Record<FormatId, ReactNode> = {
+  unframed: (
+    <>
+      <p>
+        <strong>Unframed print</strong>
+      </p>
+      <p>
+        Just the print on its own — no mount or frame. Delivered rolled in a protective tube so
+        you can frame it locally or display it as-is.
+      </p>
+    </>
+  ),
+  'classic-framed': (
+    <>
+      <p>
+        <strong>Classic frame</strong>
+      </p>
+      <p>
+        A slim, flush wooden moulding with Perspex glazing — ready to hang. The print sits behind
+        the glass for a clean, gallery-ready finish that suits any interior.
+      </p>
+    </>
+  ),
+  'box-framed': (
+    <>
+      <p>
+        <strong>Box frame</strong>
+      </p>
+      <p>
+        Crafted from solid, hand-stained wood and finished with a premium fine art print, our box
+        framed prints measure 20mm on the front face, with a 33mm depth from the wall for a
+        clean, contemporary shadow-line look. A specialist wax finish brings out the natural
+        grain and warmth of the wood.
+      </p>
+    </>
+  ),
+}
 
 const regionNames =
   typeof Intl !== 'undefined' && 'DisplayNames' in Intl
@@ -130,17 +176,26 @@ export const StepsPanel = ({
     value: V,
   ) => !catalog || !countryCode || canSwap(config, dimension, value, countryCode, catalog)
 
-  const paperOptions: SelectOption<PaperId>[] = useMemo(
-    () =>
-      allowedPapers
-        .filter((p) => keepAvail('paper', p.id))
-        .map((p) => ({
-          value: p.id,
-          label: p.label,
-          description: p.description,
-        })),
+  const availablePapers = useMemo(
+    () => allowedPapers.filter((p) => keepAvail('paper', p.id)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config, countryCode, catalog, allowedPapers],
+  )
+  const paperOptions: SelectOption<PaperId>[] = useMemo(
+    () =>
+      availablePapers.map((p) => ({
+        value: p.id,
+        label: p.label,
+        tooltip: (
+          <>
+            <p>
+              <strong>{p.label}</strong>
+            </p>
+            <p>{p.description}</p>
+          </>
+        ),
+      })),
+    [availablePapers],
   )
   const formatOptions: SelectOption<FormatId>[] = useMemo(
     () =>
@@ -149,7 +204,8 @@ export const StepsPanel = ({
         .map((f) => ({
           value: f.id,
           label: f.label,
-          description: f.description,
+          tooltip: FORMAT_TOOLTIPS[f.id],
+          tooltipImage: FORMAT_TOOLTIP_IMAGES[f.id],
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config, countryCode, catalog, allowedFormats],
@@ -182,17 +238,27 @@ export const StepsPanel = ({
     const close = filterSizesForArtwork(sizeGroups.close, printOptions).filter(eligible)
     const mismatch = filterSizesForArtwork(sizeGroups.mismatch, printOptions).filter(eligible)
     // Labels follow the buyer's chosen orientation so "40×50 cm" flips
-    // to "50×40 cm" when the print hangs landscape.
-    const formatLabel = (s: SizeOption) => {
-      const cm = formatSize(s, 'cm', config.orientation)
-      const inches = formatSize(s, 'inches', config.orientation)
-      return `${cm} (${inches})`
-    }
+    // to "50×40 cm" when the print hangs landscape. formatSize returns
+    // the dual "cm (in)" format — no extra wrapping needed.
+    const formatLabel = (s: SizeOption) => formatSize(s, config.orientation)
+    const fitTooltip = (
+      <p>This size matches your artwork&apos;s aspect ratio — the whole image prints without cropping or padding.</p>
+    )
+    const cropPadTooltip = (
+      <p>
+        This size doesn&apos;t match your artwork&apos;s aspect ratio. To fit it we either trim the
+        edges (crop) or add a white border (pad).
+      </p>
+    )
     const allSizes: SelectOption<SizeId>[] = []
-    for (const s of perfect) allSizes.push({ value: s.id, label: formatLabel(s) })
-    for (const s of close) allSizes.push({ value: s.id, label: formatLabel(s) })
+    for (const s of perfect) {
+      allSizes.push({ value: s.id, label: formatLabel(s), tooltip: fitTooltip })
+    }
+    for (const s of close) {
+      allSizes.push({ value: s.id, label: formatLabel(s), tooltip: fitTooltip })
+    }
     for (const s of mismatch) {
-      allSizes.push({ value: s.id, label: `${formatLabel(s)} — will crop or pad` })
+      allSizes.push({ value: s.id, label: formatLabel(s), tooltip: cropPadTooltip })
     }
     return allSizes.filter((opt) => keepAvail('size', opt.value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,40 +281,41 @@ export const StepsPanel = ({
 
   return (
     <aside className={styles.stepsPanel}>
-      <div className={styles.destinationBlock}>
-        <div className={styles.destinationHeader}>
-          <span className={styles.destinationTitle}>Shipping destination</span>
-        </div>
-        <p className={styles.destinationHelp}>
-          Pick your destination first. The options below will only show what we can actually ship to
-          that country.
-        </p>
-
-        {catalogStatus.kind === 'loading' && !showCountryDropdown && (
-          <p
-            className={
-              styles.destinationNotice +
-              ' ' +
-              styles.destinationNoticeInfo +
-              ' ' +
-              styles.destinationNoticeWithSpinner
-            }
-          >
-            <span>Loading available destinations…</span>
-            <span className={styles.spinner} aria-hidden="true">
-              <Icon name="loaderCircle" size={16} />
-            </span>
+      <CollapsibleSection
+        title="Destination"
+        open={openSteps.has('destination')}
+        onToggle={toggle('destination')}
+      >
+        <div className={styles.stepField}>
+          <p className={styles.destinationHelp}>
+            Pick your destination first. The options below will only show what we can actually ship
+            to that country.
           </p>
-        )}
 
-        {catalogStatus.kind === 'error' && (
-          <p className={styles.destinationNotice}>
-            Couldn&apos;t load destinations right now. Please try again in a moment.
-          </p>
-        )}
+          {catalogStatus.kind === 'loading' && !showCountryDropdown && (
+            <p
+              className={
+                styles.destinationNotice +
+                ' ' +
+                styles.destinationNoticeInfo +
+                ' ' +
+                styles.destinationNoticeWithSpinner
+              }
+            >
+              <span>Loading available destinations…</span>
+              <span className={styles.spinner} aria-hidden="true">
+                <Icon name="loaderCircle" size={16} />
+              </span>
+            </p>
+          )}
 
-        {showCountryDropdown && (
-          <div className={styles.stepField}>
+          {catalogStatus.kind === 'error' && (
+            <p className={styles.destinationNotice}>
+              Couldn&apos;t load destinations right now. Please try again in a moment.
+            </p>
+          )}
+
+          {showCountryDropdown && (
             <SelectDropdown<string>
               label="Country"
               options={countryOptions}
@@ -256,45 +323,37 @@ export const StepsPanel = ({
               onChange={onCountryChange}
               placeholder="Choose a country…"
             />
-          </div>
-        )}
+          )}
 
-        {showCountryDropdown && !countryCode && (
-          <p className={styles.destinationNotice + ' ' + styles.destinationNoticeInfo}>
-            Pick a destination to continue.
-          </p>
-        )}
+          {showCountryDropdown && !countryCode && (
+            <p className={styles.destinationNotice + ' ' + styles.destinationNoticeInfo}>
+              Pick a destination to continue.
+            </p>
+          )}
 
-        {/* No config satisfies both shipping AND artist's restrictions
-            for this destination. Show a clear message and stop — the
-            Continue button is already disabled upstream via canContinue. */}
-        {catalogStatus.kind === 'ready' && countryCode && noViableCombo && (
-          <p className={styles.destinationNotice}>
-            Sorry — this artwork isn&apos;t currently available for shipping to{' '}
-            {countryName(countryCode)}. Try a different destination.
-          </p>
-        )}
-      </div>
+          {/* No config satisfies both shipping AND artist's restrictions
+              for this destination. Show a clear message and stop — the
+              Continue button is already disabled upstream via canContinue. */}
+          {catalogStatus.kind === 'ready' && countryCode && noViableCombo && (
+            <p className={styles.destinationNotice}>
+              Sorry — this artwork isn&apos;t currently available for shipping to{' '}
+              {countryName(countryCode)}. Try a different destination.
+            </p>
+          )}
+        </div>
+      </CollapsibleSection>
 
       {!noViableCombo && (
         <>
           <CollapsibleSection title="Size" open={openSteps.has('size')} onToggle={toggle('size')}>
             <div className={styles.stepField}>
               <SelectDropdown<SizeId>
-                label="Size"
+                label="Artwork size"
                 options={sizeOptions}
                 value={config.sizeId}
                 onChange={(v) => onChange({ sizeId: v })}
                 disabled={optionsLocked}
               />
-              {sizeOptions.some((o) => o.label.includes('crop or pad')) && (
-                <p className={styles.destinationHelp}>
-                  Sizes marked <em>&ldquo;will crop or pad&rdquo;</em> don&apos;t match your
-                  artwork&apos;s aspect ratio. To fit them we either trim the edges (crop) or add a
-                  white border (pad). Pick one of the unmarked sizes to print the whole image
-                  without either.
-                </p>
-              )}
             </div>
           </CollapsibleSection>
 

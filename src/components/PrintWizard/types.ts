@@ -8,8 +8,6 @@ export type MountId = 'none' | 'snow-white'
 
 export type SizeId = '20x25' | '20x30' | '28x36' | '30x40' | '40x50' | '50x70' | '60x80'
 
-export type SizeUnit = 'cm' | 'inches'
-
 export type Orientation = 'portrait' | 'landscape'
 
 export type PrintConfig = {
@@ -20,7 +18,6 @@ export type PrintConfig = {
   frameColorId: FrameColorId
   /** Only relevant when formatId is a framed variant. */
   mountId: MountId
-  unit: SizeUnit
   /** How the print will be hung. Defaults to the image's natural orientation. */
   orientation: Orientation
 }

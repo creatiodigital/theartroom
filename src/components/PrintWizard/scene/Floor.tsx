@@ -25,7 +25,7 @@ interface FloorProps {
   tilesY?: number
 }
 
-export const Floor = ({ y = -1.5, width = 5, depth = 3, tilesX = 3, tilesY = 2 }: FloorProps) => {
+export const Floor = ({ y = -1.5, width = 16, depth = 6, tilesX = 10, tilesY = 4 }: FloorProps) => {
   const textures = useTexture({
     map: `${BASE}/diffuse.jpg`,
     normalMap: `${BASE}/normal.jpg`,

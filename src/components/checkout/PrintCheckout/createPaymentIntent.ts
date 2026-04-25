@@ -151,9 +151,12 @@ export async function createPaymentIntent(
   const taxCalculationId = taxRes.data.calculationId
   const totalCents = taxRes.data.totalCents
 
-  // Stable idempotency key so a double-click on "Continue to payment"
-  // returns the same PaymentIntent instead of creating duplicates. Any
-  // change to inputs (config, address, total) produces a new key.
+  // Idempotency key guards against double-submits. Client-side we already
+  // disable the button while `submitting` is true; this is the server-side
+  // belt-and-braces. taxCalculationId is included because each call to
+  // Stripe Tax produces a fresh id — on retry we want a new key (and a
+  // new PaymentIntent linked to the new tax calc) rather than colliding
+  // with the cached params from the previous attempt.
   const idempotencyKey = crypto
     .createHash('sha256')
     .update(
@@ -163,6 +166,7 @@ export async function createPaymentIntent(
         address,
         totalCents,
         currency,
+        taxCalculationId,
       }),
     )
     .digest('hex')

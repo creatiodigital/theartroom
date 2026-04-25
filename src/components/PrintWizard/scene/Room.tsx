@@ -6,9 +6,10 @@
  */
 export const Room = () => {
   return (
-    // Wider/shorter wall, bottom-aligned to the floor (y = -1.5).
+    // Oversized wall so wide/ultrawide canvases (when the wizard's center
+    // column fills the viewport) never show past the plane's edges.
     <mesh position={[0, 0, 0]} receiveShadow>
-      <planeGeometry args={[5, 3]} />
+      <planeGeometry args={[16, 6]} />
       <meshStandardMaterial color="#f5f2ec" roughness={0.95} />
     </mesh>
   )

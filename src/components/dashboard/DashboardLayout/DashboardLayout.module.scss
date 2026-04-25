@@ -1,6 +1,19 @@
 .page {
   min-height: 100vh;
   background: rgb(250, 250, 250);
+
+  // The dashboard is a utilitarian admin UI, not the gallery face. Override
+  // the global serif heading rule so inline <h1>/<h2>/<h3> elements inside
+  // the dashboard don't read as editorial — keep everything in the sans
+  // dashboard font for scannability.
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  }
 }
 
 /* Impersonation Banner */

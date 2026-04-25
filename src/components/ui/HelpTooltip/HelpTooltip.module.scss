@@ -1,0 +1,128 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.panel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  // Text-only tooltips (Paper, Size, Unframed) stay narrow; image panels
+  // widen to host the larger illustration + matching text column.
+  width: 320px;
+  max-width: calc(100vw - 32px);
+
+  &:has(.image) {
+    width: 540px;
+  }
+  padding: var(--space-4) var(--space-5);
+  background: #fff;
+  color: var(--color-text-primary);
+  border-radius: 8px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  z-index: 9999;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+  }
+}
+
+.image {
+  flex: 0 0 auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f5f5f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  > * {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  p {
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  p + p {
+    margin-top: var(--space-2);
+  }
+}
+
+// Arrow + transforms: panel is positioned by its edge and nudged via
+// transform so the arrow can point back to the trigger center.
+
+// Arrow points down (panel above trigger).
+.top {
+  transform: translate(-50%, -100%);
+
+  &::after {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: #fff;
+    border-bottom: none;
+  }
+}
+
+// Arrow points up (panel below trigger).
+.bottom {
+  transform: translate(-50%, 0);
+
+  &::after {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: #fff;
+    border-top: none;
+  }
+}
+
+// Arrow points right (panel to left of trigger).
+.left {
+  transform: translate(-100%, -50%);
+
+  &::after {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: #fff;
+    border-right: none;
+  }
+}
+
+// Arrow points left (panel to right of trigger). This is the default
+// placement for our help panels — trigger sits to the left of the label
+// row, panel opens alongside.
+.right {
+  transform: translate(0, -50%);
+
+  &::after {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: #fff;
+    border-left: none;
+  }
+}

@@ -143,3 +143,10 @@
   line-height: 1.4;
   font-style: italic;
 }
+
+// HelpTooltip wrapping an option <button> needs to stretch to the row so
+// the button keeps its full-row hit area (default wrapper is inline-flex).
+.tooltipWrapper {
+  display: block;
+  width: 100%;
+}

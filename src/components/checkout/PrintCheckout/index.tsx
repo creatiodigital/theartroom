@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
@@ -108,7 +109,6 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       color: config.frameColorId,
       mount: config.mountId,
       orientation: config.orientation,
-      unit: config.unit,
       country,
     })
     router.push(`/artworks/${artwork.slug}/print?${params.toString()}`)
@@ -230,8 +230,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
         countryCode: country,
       })
     : null
-  const customerVatCents = totals?.customerVatCents ?? 0
-  const totalCents = totals?.totalCents ?? 0
+  const preTaxCents = totals?.preTaxCents ?? 0
   const artistCents = artwork.printPriceCents
   const galleryCents = totals?.galleryCents ?? 0
 
@@ -290,7 +289,6 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
         color: config.frameColorId,
         mount: config.mountId,
         orientation: config.orientation,
-        unit: config.unit,
         country,
       })
       router.push(`/artworks/${artwork.slug}/print/payment?${params.toString()}`)
@@ -304,17 +302,10 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
   return (
     <div className={styles.checkout}>
       <header className={styles.header}>
-        <Logo className={styles.logo} />
+        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
+          <Logo className={styles.logo} />
+        </Link>
         <span className={styles.headerTitle}>Checkout</span>
-        <button
-          type="button"
-          onClick={backToWizard}
-          className={styles.backButton}
-          aria-label="Back to configure"
-        >
-          <Icon name="arrowLeft" size={16} />
-          BACK
-        </button>
       </header>
 
       <main className={styles.body}>
@@ -508,7 +499,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
             </li>
             <li>
               <span>Size</span>
-              <span>{formatSize(size, config.unit, config.orientation)}</span>
+              <span>{formatSize(size, config.orientation)}</span>
             </li>
             {format.framed && (
               <>
@@ -546,17 +537,11 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
               <dt>Shipping</dt>
               <dd>{quoteLoading ? '…' : quote ? formatEuro(quote.shippingCents) : '—'}</dd>
             </div>
-            {customerVatCents > 0 && quote && (
-              <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
-                <dt>VAT (21%)</dt>
-                <dd>{formatEuro(customerVatCents)}</dd>
-              </div>
-            )}
           </dl>
 
           <div className={styles.totalRow}>
-            <span>Total</span>
-            <span className={styles.totalValue}>{quote ? formatEuro(totalCents) : '—'}</span>
+            <span>Total (before taxes)</span>
+            <span className={styles.totalValue}>{quote ? formatEuro(preTaxCents) : '—'}</span>
           </div>
 
           {quoteError && <p className={styles.quoteNote}>{quoteError}</p>}

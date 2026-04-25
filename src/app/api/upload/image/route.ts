@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { revalidateTag } from 'next/cache'
 
 import { auth } from '@/auth'
+import { MAX_ARTWORK_UPLOAD_SIZE } from '@/lib/imageConfig'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
@@ -83,8 +84,11 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (fileSize && fileSize > 200 * 1024 * 1024) {
-        return NextResponse.json({ error: 'File too large. Maximum is 200MB.' }, { status: 400 })
+      if (fileSize && fileSize > MAX_ARTWORK_UPLOAD_SIZE) {
+        return NextResponse.json(
+          { error: `File too large. Maximum is ${MAX_ARTWORK_UPLOAD_SIZE / (1024 * 1024)}MB.` },
+          { status: 400 },
+        )
       }
 
       const artwork = await prisma.artwork.findUnique({

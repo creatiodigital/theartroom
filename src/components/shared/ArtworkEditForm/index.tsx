@@ -648,9 +648,9 @@ export const ArtworkEditForm = ({
           </div>
 
           <span className={dashboardStyles.hint}>
-            Accepted: JPG, PNG, WebP, GIF (max 200MB). Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH}{' '}
-            × {MIN_ARTWORK_IMAGE_HEIGHT} px. For print sales, upload the highest resolution
-            available. Images are automatically optimized for the web.
+            Accepted: JPG, PNG, WebP, GIF (max 1MB). Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH} ×{' '}
+            {MIN_ARTWORK_IMAGE_HEIGHT} px. Print masters live in The Print Space — only the web
+            preview is uploaded here. Images are automatically optimized for the web.
           </span>
         </div>
       )}

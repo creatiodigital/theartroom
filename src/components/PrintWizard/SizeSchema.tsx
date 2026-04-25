@@ -1,7 +1,5 @@
 'use client'
 
-import type { SizeUnit } from './types'
-
 import styles from './PrintWizard.module.scss'
 
 interface SizeSchemaProps {
@@ -12,13 +10,12 @@ interface SizeSchemaProps {
   mattingBorderCm: number
   mattingColorHex: string
   showFrame: boolean
-  unit: SizeUnit
 }
 
 /**
  * Live SVG diagram that mirrors theprintspace-style "print + mat + frame"
- * measurements panel. All values come in cm; we render mm in the labels
- * because theprintspace shows mm and buyers understand both after scanning.
+ * measurements panel. Axis labels show cm only — the dual-format
+ * "cm (in)" spell-out lives in the measurement list beside the diagram.
  */
 export const SizeSchema = ({
   printWidthCm,
@@ -28,7 +25,6 @@ export const SizeSchema = ({
   mattingBorderCm,
   mattingColorHex,
   showFrame,
-  unit,
 }: SizeSchemaProps) => {
   const effectiveMatting = showFrame ? mattingBorderCm : 0
   const effectiveFrame = showFrame ? moldingWidthCm : 0
@@ -38,8 +34,7 @@ export const SizeSchema = ({
   const overallWidthCm = matWidthCm + effectiveFrame * 2
   const overallHeightCm = matHeightCm + effectiveFrame * 2
 
-  const formatDim = (cm: number) =>
-    unit === 'inches' ? `${Math.round(cm / 2.54)} in` : `${cm.toFixed(0)} cm`
+  const formatDim = (cm: number) => `${cm.toFixed(0)} cm`
 
   // Square viewBox so portrait and landscape renders get the same visual
   // budget. Scaling by the *longest* side means a 30×20 print looks the
@@ -50,24 +45,40 @@ export const SizeSchema = ({
   const PADDING = 32
   const availableW = VIEWBOX_W - PADDING * 2
   const availableH = VIEWBOX_H - PADDING * 2
-  const longestCm = Math.max(overallWidthCm, overallHeightCm)
-  const scale = Math.min(availableW, availableH) / longestCm
 
-  const outerW = overallWidthCm * scale
-  const outerH = overallHeightCm * scale
-  const matW = matWidthCm * scale
-  const matH = matHeightCm * scale
-  const printW = printWidthCm * scale
-  const printH = printHeightCm * scale
-  const frameW = effectiveFrame * scale
+  // Enforce a minimum *visual* thickness for the frame/mat so the outer
+  // and inner arrows never look the same length. A 2 cm frame on a large
+  // print scales to ~6 px — indistinguishable from no frame at all.
+  // Labels keep the real measurements; only the diagram is exaggerated.
+  const MIN_FRAME_PX = 14
+  const MIN_MAT_PX = 10
+  const rawScale =
+    Math.min(availableW, availableH) / Math.max(overallWidthCm, overallHeightCm)
+  const frameW =
+    effectiveFrame > 0 ? Math.max(effectiveFrame * rawScale, MIN_FRAME_PX) : 0
+  const matBorderW =
+    effectiveMatting > 0 ? Math.max(effectiveMatting * rawScale, MIN_MAT_PX) : 0
+
+  // Re-fit the print so the exaggerated borders still leave room inside
+  // the viewBox. The print itself stays proportional to real dimensions.
+  const borderPx = (frameW + matBorderW) * 2
+  const longestPrintCm = Math.max(printWidthCm, printHeightCm)
+  const printScale =
+    (Math.min(availableW, availableH) - borderPx) / longestPrintCm
+  const printW = printWidthCm * printScale
+  const printH = printHeightCm * printScale
+  const matW = printW + matBorderW * 2
+  const matH = printH + matBorderW * 2
+  const outerW = matW + frameW * 2
+  const outerH = matH + frameW * 2
 
   // Center everything
   const outerX = (VIEWBOX_W - outerW) / 2
   const outerY = (VIEWBOX_H - outerH) / 2
   const matX = outerX + frameW
   const matY = outerY + frameW
-  const printX = outerX + frameW + effectiveMatting * scale
-  const printY = outerY + frameW + effectiveMatting * scale
+  const printX = matX + matBorderW
+  const printY = matY + matBorderW
 
   return (
     <div className={styles.schemaWrapper}>

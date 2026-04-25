@@ -8,7 +8,6 @@ import type {
   PrintOptions,
   SizeId,
   SizeOption,
-  SizeUnit,
 } from './types'
 
 // ── Papers ───────────────────────────────────────────────────
@@ -563,18 +562,23 @@ export function formatEuro(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`
 }
 
-export function formatSize(size: SizeOption, unit: SizeUnit, orientation?: Orientation): string {
+/**
+ * Dual-unit pair label, e.g. `20 × 30 cm (7.9″ × 11.8″)`. One format
+ * used everywhere so buyers never have to toggle a unit preference.
+ */
+export function formatDualDimensions(wCm: number, hCm: number): string {
+  const wIn = cmToInches(wCm).toFixed(1)
+  const hIn = cmToInches(hCm).toFixed(1)
+  return `${wCm} × ${hCm} cm (${wIn}″ × ${hIn}″)`
+}
+
+export function formatSize(size: SizeOption, orientation?: Orientation): string {
   // SIZES are stored portrait (height >= width). Landscape orientation swaps
   // the two so the label matches how the print will actually hang.
   const isLandscape = orientation === 'landscape'
   const wCm = isLandscape ? size.heightCm : size.widthCm
   const hCm = isLandscape ? size.widthCm : size.heightCm
-  if (unit === 'inches') {
-    const w = cmToInches(wCm).toFixed(1)
-    const h = cmToInches(hCm).toFixed(1)
-    return `${w}″ × ${h}″`
-  }
-  return `${wCm} × ${hCm} cm`
+  return formatDualDimensions(wCm, hCm)
 }
 
 /** Portrait when the image is taller than wide; landscape otherwise. Square → landscape. */
@@ -605,7 +609,6 @@ export function buildDefaultConfig(
     sizeId: preferredSizeId,
     frameColorId: 'black',
     mountId: 'snow-white',
-    unit: 'cm',
     orientation,
   })
 }
@@ -725,7 +728,6 @@ export function firstShippableConfig(
               sizeId: size.id,
               frameColorId: frame.id,
               mountId: format.framed ? mount.id : 'none',
-              unit: 'cm',
               orientation,
             }
             if (configShipsTo(c, country, catalog)) return c
@@ -785,7 +787,6 @@ export function findShippableConfig(
               sizeId: size.id,
               frameColorId: frame.id,
               mountId: format.framed ? mount.id : 'none',
-              unit: preferred.unit,
               orientation: preferred.orientation,
             }
             if (!configShipsTo(c, country, catalog)) continue
@@ -827,7 +828,6 @@ export function enumerateSkus(): string[] {
             sizeId: size.id,
             frameColorId: FRAME_COLORS[0].id,
             mountId: 'none',
-            unit: 'cm',
             orientation: 'portrait',
           })
           set.add(sku)
@@ -840,7 +840,6 @@ export function enumerateSkus(): string[] {
             sizeId: size.id,
             frameColorId: FRAME_COLORS[0].id,
             mountId: mount.id,
-            unit: 'cm',
             orientation: 'portrait',
           })
           set.add(sku)
@@ -862,7 +861,6 @@ export function normalizePrintConfig(config: PrintConfig): PrintConfig {
   const frameColorId =
     FRAME_COLORS.find((c) => c.id === config.frameColorId)?.id ?? FRAME_COLORS[0].id
   const mountId = MOUNTS.find((m) => m.id === config.mountId)?.id ?? MOUNTS[0].id
-  const unit: SizeUnit = config.unit === 'inches' ? 'inches' : 'cm'
   const orientation: Orientation = config.orientation === 'landscape' ? 'landscape' : 'portrait'
-  return { paperId, formatId, sizeId, frameColorId, mountId, unit, orientation }
+  return { paperId, formatId, sizeId, frameColorId, mountId, orientation }
 }
