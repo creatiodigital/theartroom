@@ -207,13 +207,6 @@ export async function POST(request: NextRequest) {
       const webUrl = await uploadToR2(webKey, processedBuffer, 'image/webp')
 
       // Update artwork with both URLs + dimensions
-      console.log('[upload/image complete] saving original metadata:', {
-        originalWidth,
-        originalHeight,
-        originalDpi,
-        originalFormat,
-        originalSizeBytes,
-      })
       await prisma.artwork.update({
         where: { id: artworkId },
         data: {

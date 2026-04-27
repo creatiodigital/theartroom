@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ExhibitionProfilePage } from '@/components/exhibitions/profile'
@@ -49,6 +50,20 @@ export async function generateMetadata({ params }: ExhibitionProfileProps): Prom
 
 const ExhibitionProfile = async ({ params }: ExhibitionProfileProps) => {
   const { artistSlug, exhibitionSlug } = await params
+
+  // 404 at the server boundary on missing or unpublished exhibitions
+  // (or when the slug doesn't belong to the named artist). Mirrors
+  // the where clause used in generateMetadata.
+  const exhibition = await prisma.exhibition.findFirst({
+    where: {
+      url: exhibitionSlug,
+      user: { handler: artistSlug },
+      published: true,
+    },
+    select: { id: true },
+  })
+  if (!exhibition) notFound()
+
   return <ExhibitionProfilePage artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
 }
 

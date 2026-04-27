@@ -171,7 +171,7 @@ export const ImageUploader = ({
 
       return true
     },
-    [maxSizeBytes],
+    [maxSizeBytes, minWidth, minHeight, onMetaChange],
   )
 
   const handleFileSelect = useCallback(
@@ -231,7 +231,7 @@ export const ImageUploader = ({
         onMetaChange?.(null)
       }
     },
-    [onRemove],
+    [onRemove, onMetaChange],
   )
 
   // When `fill` is set, drop the aspect-ratio constraint and rely on

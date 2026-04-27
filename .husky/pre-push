@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Run the e2e suite before pushing so we don't ship a regression.
+# Playwright reuses an already-running `pnpm dev`; if no dev server is
+# up it'll start one on port 3001 just for the run.
+#
+# Skip with: git push --no-verify
+echo "🎭 Running Playwright e2e suite before push…"
+pnpm test:e2e

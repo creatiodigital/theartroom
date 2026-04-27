@@ -426,18 +426,23 @@ const CustomSizeInputs = ({
   disabled,
   onChange,
 }: CustomSizeInputsProps) => {
+  // Hooks must be called unconditionally on every render. We don't
+  // bail out on `!custom` until after they've been declared, so the
+  // hook order stays stable when the dimension switches between
+  // custom-size and preset-size variants.
   const { custom } = dimension
-  if (!custom) return null
-
+  const widthCm = customSize?.widthCm ?? 0
+  const heightCm = customSize?.heightCm ?? 0
   // Local string state so the user can type/clear freely without
   // each keystroke clamping mid-input. We commit (and clamp) on blur
   // or when the input parses to a valid in-range number — at which
   // point the partner field auto-updates from the locked aspect.
-  const widthCm = customSize?.widthCm ?? 0
-  const heightCm = customSize?.heightCm ?? 0
-  const [widthInput, setWidthInput] = useState<string>(formatCm(widthCm, custom.stepCm))
-  const [heightInput, setHeightInput] = useState<string>(formatCm(heightCm, custom.stepCm))
+  const stepCmForInit = custom?.stepCm ?? 1
+  const [widthInput, setWidthInput] = useState<string>(formatCm(widthCm, stepCmForInit))
+  const [heightInput, setHeightInput] = useState<string>(formatCm(heightCm, stepCmForInit))
   const [editing, setEditing] = useState<'width' | 'height' | null>(null)
+
+  if (!custom) return null
 
   // Sync local input with external customSize updates when the user
   // isn't actively typing in either field.

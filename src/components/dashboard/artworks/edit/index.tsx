@@ -85,14 +85,6 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           return
         }
 
-        console.log('[ArtworkEdit] fetched artwork original info:', {
-          originalWidth: data.originalWidth,
-          originalHeight: data.originalHeight,
-          originalDpi: data.originalDpi,
-          originalFormat: data.originalFormat,
-          originalSizeBytes: data.originalSizeBytes,
-          originalImageUrl: data.originalImageUrl,
-        })
         setArtwork(data)
         setOriginalImageUrl(data.imageUrl)
         setImageDpi(data.originalDpi ?? null)

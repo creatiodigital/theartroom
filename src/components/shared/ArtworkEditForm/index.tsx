@@ -550,7 +550,6 @@ export const ArtworkEditForm = ({
   imageDpi,
   originalWidth,
   originalHeight,
-  originalImageUrl,
   originalFormat,
   originalSizeBytes,
   soundUrl,

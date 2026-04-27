@@ -864,8 +864,7 @@ export async function deleteOrder(
     if (order.paymentStatus === 'succeeded') {
       return {
         ok: false,
-        error:
-          'Payment was captured. Refund the buyer first; only then can the order be deleted.',
+        error: 'Payment was captured. Refund the buyer first; only then can the order be deleted.',
       }
     }
 

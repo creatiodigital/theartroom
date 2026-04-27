@@ -10,16 +10,21 @@ const adapter = new PrismaNeon({ connectionString })
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  const user = await prisma.user.create({
+  // Generic seed user — uses the project's standard "John Doe"
+  // placeholder so it can't be confused with any real artist. The
+  // created row is the side-effect we care about; the return value
+  // is unused, hence the underscore prefix.
+  const _user = await prisma.user.create({
     data: {
-      name: 'Mathias',
-      lastName: 'Heizmann',
-      handler: 'mathias-heizmann',
-      biography: 'A simple biography',
-      email: 'edoplaza@gmail.com',
+      name: 'John',
+      lastName: 'Doe',
+      handler: 'john-doe',
+      biography: 'Placeholder seed user.',
+      email: 'john-doe@example.com',
       userType: 'artist',
     },
   })
+  void _user
 }
 
 main()
