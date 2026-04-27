@@ -79,6 +79,8 @@ export type BorderDimension = DimensionBase & {
   stepCm: number
   /** Default per-side value (cm) when the buyer hasn't touched anything. */
   defaultCm: number
+  /** Optional helper text shown under the step. */
+  helpText?: string
 }
 
 // ── Options ──────────────────────────────────────────────────────
@@ -92,6 +94,13 @@ export type Option = {
   tooltipImageUrl?: string
   /** Hide this option until the parent dimension has one of these values. */
   visibleWhen?: { dimensionId: string; valueIn: string[] }
+  /**
+   * Marks the preferred starting option for this dimension. When set,
+   * `buildInitialConfig` picks this over array order. If the marked
+   * option is restricted (artist-vetoed) the first allowed option is
+   * used instead.
+   */
+  isDefault?: boolean
   /**
    * Visual hints used by the 3D preview. Adapters set the keys their
    * options need; the preview reads what it can find. Unknown keys are

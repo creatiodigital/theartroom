@@ -1241,7 +1241,7 @@ export const ArtworkEditForm = ({
                 allIds={TPS_FRAME_TYPES.map((f) => f.id)}
               />
               <TpsRestrictionGroup
-                title="Window mount (passepartout)"
+                title="Mount (Passepartout)"
                 all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
                 dimensionId="windowMount"
                 restrictions={formData.printOptions as PrintRestrictions | null}

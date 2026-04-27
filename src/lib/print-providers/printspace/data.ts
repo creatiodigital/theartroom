@@ -647,9 +647,10 @@ export const TPS_SIZE_BOUNDS = {
 //
 // Per-side border in cm. Distinct from passepartout (which is a
 // separate mat). Common artist preference is 0–5 cm; we cap at 10 cm.
+// Integer cm — sub-cm precision isn't meaningful for a paper border.
 export const TPS_BORDER_BOUNDS = {
   minCm: 0,
   maxCm: 10,
-  stepCm: 0.1,
+  stepCm: 1,
   defaultCm: 0,
 }

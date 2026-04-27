@@ -94,10 +94,6 @@ export const StepsPanel = ({
         onToggle={toggle('destination')}
       >
         <div className={styles.stepField}>
-          <p className={styles.destinationHelp}>
-            Pick your destination first. The options below will only show what we can actually ship
-            to that country.
-          </p>
           <SelectDropdown<string>
             label="Country"
             options={countryOptions}
@@ -105,11 +101,6 @@ export const StepsPanel = ({
             onChange={onCountryChange}
             placeholder="Choose a country…"
           />
-          {!countryCode && (
-            <p className={`${styles.destinationNotice} ${styles.destinationNoticeInfo}`}>
-              Pick a destination to continue.
-            </p>
-          )}
           {countryCode && noViableCombo && (
             <p className={styles.destinationNotice}>
               Sorry — this artwork isn&apos;t currently available for shipping to{' '}
@@ -119,11 +110,12 @@ export const StepsPanel = ({
         </div>
       </CollapsibleSection>
 
-      {!noViableCombo &&
+      {countryCode && !noViableCombo &&
         catalog.dimensions.map((dim) => (
           <DimensionSection
             key={dim.id}
             dimension={dim}
+            catalog={catalog}
             config={config}
             aspectRatio={aspectRatio}
             countryCode={countryCode}
@@ -145,6 +137,7 @@ export const StepsPanel = ({
 
 interface DimensionSectionProps {
   dimension: Dimension
+  catalog: Catalog
   config: WizardConfig
   aspectRatio: number
   countryCode: string
@@ -160,6 +153,7 @@ interface DimensionSectionProps {
 
 const DimensionSection = ({
   dimension,
+  catalog,
   config,
   aspectRatio,
   countryCode,
@@ -173,7 +167,7 @@ const DimensionSection = ({
   onBorderChange,
 }: DimensionSectionProps) => {
   const aspectRatioForChild = aspectRatio
-  if (!isDimensionVisible(dimension, config)) return null
+  if (!isDimensionVisible(dimension, config, catalog)) return null
 
   if (dimension.kind === 'orientation') {
     return (
@@ -267,7 +261,7 @@ const DimensionSection = ({
 
 interface EnumSectionProps extends Omit<
   DimensionSectionProps,
-  'dimension' | 'aspectRatio' | 'onCustomSizeChange' | 'onBorderChange'
+  'dimension' | 'catalog' | 'aspectRatio' | 'onCustomSizeChange' | 'onBorderChange'
 > {
   dimension: EnumDimension
 }
@@ -327,7 +321,7 @@ const EnumDimensionSection = ({
 
 // ── Size dimension ───────────────────────────────────────────────
 
-interface SizeSectionProps extends Omit<DimensionSectionProps, 'dimension' | 'onBorderChange'> {
+interface SizeSectionProps extends Omit<DimensionSectionProps, 'dimension' | 'catalog' | 'onBorderChange'> {
   dimension: SizeDimension
 }
 
@@ -550,40 +544,36 @@ const BorderDimensionSection = ({
   onBorderChange,
 }: BorderSectionProps) => {
   const value = config.borders?.[dimension.id]?.allCm ?? dimension.defaultCm
-  const [input, setInput] = useState(formatCm(value, dimension.stepCm))
-  const [editing, setEditing] = useState(false)
-  if (!editing) {
-    const next = formatCm(value, dimension.stepCm)
-    if (next !== input) setInput(next)
-  }
-  const handleChange = (raw: string) => {
-    setInput(raw)
-    const parsed = Number(raw.replace(',', '.'))
-    if (!Number.isFinite(parsed)) return
-    onBorderChange(
-      dimension.id,
-      clampCm(parsed, dimension.minCm, dimension.maxCm, dimension.stepCm),
-    )
-  }
+  const decimals = dimension.stepCm >= 1 ? 0 : Math.ceil(-Math.log10(dimension.stepCm))
+  // Strip trailing zeros so 0 → "0", 1.0 → "1", 0.3 stays "0.3".
+  const displayed = parseFloat(value.toFixed(decimals)).toString()
   return (
     <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
       <div className={styles.stepField}>
-        <p className={styles.destinationHelp}>
-          Adds a white border around the printed image on the same paper. Same size on every side —
-          no asymmetric borders. Distinct from the passepartout.
-        </p>
-        <label className={styles.customSizeField}>
-          <span>Border (cm)</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={input}
-            disabled={optionsLocked}
-            onFocus={() => setEditing(true)}
-            onBlur={() => setEditing(false)}
-            onChange={(e) => handleChange(e.target.value)}
-          />
-        </label>
+        {dimension.helpText && (
+          <p className={styles.destinationHelp}>{dimension.helpText}</p>
+        )}
+        <p className={styles.sliderValue}>{displayed} cm</p>
+        <input
+          type="range"
+          className={styles.slider}
+          min={dimension.minCm}
+          max={dimension.maxCm}
+          step={dimension.stepCm}
+          value={value}
+          disabled={optionsLocked}
+          onChange={(e) =>
+            onBorderChange(
+              dimension.id,
+              clampCm(
+                Number(e.target.value),
+                dimension.minCm,
+                dimension.maxCm,
+                dimension.stepCm,
+              ),
+            )
+          }
+        />
       </div>
     </CollapsibleSection>
   )

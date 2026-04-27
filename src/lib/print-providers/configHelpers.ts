@@ -33,8 +33,24 @@ function passesVisibility(
   return rule.valueIn.includes(current)
 }
 
-export function isDimensionVisible(dim: Dimension, config: WizardConfig): boolean {
-  return passesVisibility(dim.visibleWhen, config)
+/**
+ * A dimension is visible when its own `visibleWhen` passes AND — if a
+ * catalog is provided — the parent dimension it depends on is itself
+ * visible. Without the transitive check, stale values persist across
+ * choices (e.g. switching format=framing → print-only leaves a mount
+ * colour set, so `windowMountSize` would otherwise stay visible).
+ */
+export function isDimensionVisible(
+  dim: Dimension,
+  config: WizardConfig,
+  catalog?: Catalog,
+): boolean {
+  if (!passesVisibility(dim.visibleWhen, config)) return false
+  if (catalog && dim.visibleWhen) {
+    const parent = catalog.dimensions.find((d) => d.id === dim.visibleWhen!.dimensionId)
+    if (parent && !isDimensionVisible(parent, config, catalog)) return false
+  }
+  return true
 }
 
 export function isOptionVisible(option: Option, config: WizardConfig): boolean {
@@ -168,7 +184,7 @@ export function collectVisualHints(
   const merged: import('./types').VisualHints = {}
   for (const dim of catalog.dimensions) {
     if (dim.kind !== 'enum') continue
-    if (!isDimensionVisible(dim, config)) continue
+    if (!isDimensionVisible(dim, config, catalog)) continue
     const value = config.values[dim.id]
     if (!value) continue
     const option = dim.options.find((o) => o.id === value)
@@ -238,7 +254,7 @@ function pickInitialOption(
   restrictions: PrintRestrictions | null | undefined,
 ): Option | undefined {
   const allowed = dim.options.filter((o) => isOptionAllowed(o.id, dim.id, restrictions))
-  return allowed[0] ?? dim.options[0]
+  return allowed.find((o) => o.isDefault) ?? allowed[0] ?? dim.options[0]
 }
 
 function pickInitialSize(
@@ -280,7 +296,7 @@ export function configShipsTo(
   for (const dim of catalog.dimensions) {
     if (dim.kind === 'orientation') continue
     if (dim.kind === 'border') continue
-    if (!isDimensionVisible(dim, config)) continue
+    if (!isDimensionVisible(dim, config, catalog)) continue
     if (dim.kind === 'size') {
       // Size is satisfied either by a preset or by customSize. The
       // adapter's availability check is keyed by preset id; when in
@@ -329,7 +345,7 @@ export function findShippableConfig(
       return
     }
     const dim = dims[idx]
-    if (!isDimensionVisible(dim, working)) {
+    if (!isDimensionVisible(dim, working, catalog)) {
       // Dimension hidden under current values → carry through.
       recurse(idx + 1, working)
       return

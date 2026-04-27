@@ -10,7 +10,7 @@ export const Room = () => {
     // column fills the viewport) never show past the plane's edges.
     <mesh position={[0, 0, 0]} receiveShadow>
       <planeGeometry args={[16, 6]} />
-      <meshStandardMaterial color="#f5f2ec" roughness={0.95} />
+      <meshStandardMaterial color="#dcd5c8" roughness={0.95} />
     </mesh>
   )
 }

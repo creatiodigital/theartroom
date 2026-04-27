@@ -13,6 +13,7 @@ import type {
   EnumDimension,
   Option,
   SizeDimension,
+  VisualHints,
 } from '../types'
 import {
   TPS_BORDER_BOUNDS,
@@ -26,6 +27,7 @@ import {
   TPS_PRINT_TYPES,
   TPS_SIZE_BOUNDS,
   TPS_WINDOW_MOUNTS,
+  type TpsFrameTypeId,
 } from './data'
 import { TPS_SUPPORTED_COUNTRIES } from './pricing'
 
@@ -56,14 +58,23 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
     id: f.id,
     label: f.label,
     description: f.description,
+    isDefault: f.id === 'framing',
     visual: { framed: f.framed },
   }))
 
   // ── Frame Type (only visible when Format = Framing) ─────────
+  // Per-type moulding silhouette so the 3D preview reads differently
+  // for Standard / Box / Floating without needing bespoke geometry.
+  const FRAME_TYPE_VISUALS: Record<TpsFrameTypeId, VisualHints> = {
+    standard: { mouldingWidthCm: 2.0, mouldingDepthCm: 2.2 },
+    box: { mouldingWidthCm: 2.0, mouldingDepthCm: 5.5 },
+    floating: { mouldingWidthCm: 1.4, mouldingDepthCm: 3.2 },
+  }
   const frameTypeOptions: Option[] = TPS_FRAME_TYPES.map((t) => ({
     id: t.id,
     label: t.label,
     description: t.description,
+    visual: FRAME_TYPE_VISUALS[t.id],
   }))
 
   // ── Moulding (visible when framing; options cascade on frameType) ─
@@ -71,6 +82,7 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
     id: m.id,
     label: m.label,
     visibleWhen: { dimensionId: 'frameType', valueIn: [m.frameType] },
+    isDefault: m.id === 'std-black-thin',
     visual: { frameColorHex: m.hex, frameRoughness: m.roughness },
   }))
 
@@ -138,6 +150,8 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
       maxCm: TPS_BORDER_BOUNDS.maxCm,
       stepCm: TPS_BORDER_BOUNDS.stepCm,
       defaultCm: TPS_BORDER_BOUNDS.defaultCm,
+      helpText:
+        'Extra white space printed on the paper around the image — same paper, same size on every side. This is not a passepartout (separate mat board); it just makes the printed sheet larger than the image.',
     } satisfies BorderDimension,
     {
       kind: 'enum',
@@ -183,7 +197,7 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
     {
       kind: 'enum',
       id: 'windowMount',
-      label: 'Window mount (passepartout)',
+      label: 'Mount (Passepartout)',
       options: windowMountOptions,
       visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
     } satisfies EnumDimension,
@@ -192,7 +206,7 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
     {
       kind: 'border',
       id: 'windowMountSize',
-      label: 'Mount board size',
+      label: 'Mount (Passepartout) Size',
       minCm: TPS_MOUNT_BOARD_BOUNDS.minCm,
       maxCm: TPS_MOUNT_BOARD_BOUNDS.maxCm,
       stepCm: TPS_MOUNT_BOARD_BOUNDS.stepCm,

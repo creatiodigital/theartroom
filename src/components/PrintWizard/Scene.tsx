@@ -41,7 +41,7 @@ export const Scene = ({ imageUrl, catalog, config, imageAspectRatio, configReady
           }}
           gl={{ antialias: true }}
         >
-          <color attach="background" args={['#f7f5ef']} />
+          <color attach="background" args={['#e2dccf']} />
 
           <ambientLight intensity={1.25} />
           <directionalLight
