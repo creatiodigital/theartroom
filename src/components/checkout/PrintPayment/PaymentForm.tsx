@@ -1,31 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import {
-  formatEuro,
-  formatSize,
-  getFormat,
-  getFrameColor,
-  getMount,
-  getPaper,
-  getSize,
-} from '@/components/PrintWizard/options'
+import { formatEuro } from '@/components/PrintWizard/options'
 import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+
+import { OrderSummary } from '../OrderSummary'
 
 import type { StashedPayment } from './types'
 
 import styles from './PrintPayment.module.scss'
-
-const regionNames =
-  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
-    ? new Intl.DisplayNames(['en'], { type: 'region' })
-    : null
-const countryName = (code: string) => regionNames?.of(code) ?? code
 
 interface PaymentFormProps {
   stashed: StashedPayment
@@ -52,12 +39,6 @@ export const PaymentForm = ({
   const elements = useElements()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const paper = getPaper(config.paperId)
-  const format = getFormat(config.formatId)
-  const size = getSize(config.sizeId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
 
   const { totalCents, customerVatCents } = stashed.totals
   const subtotalCents = totalCents - customerVatCents
@@ -167,82 +148,22 @@ export const PaymentForm = ({
         </div>
       </section>
 
-      <aside className={styles.summaryPanel}>
-        <div className={styles.summaryHeader}>
-          {artwork.imageUrl && (
-            <Image
-              src={artwork.imageUrl}
-              alt={artwork.title}
-              width={72}
-              height={72}
-              className={`${styles.summaryThumb}${
-                (config.orientation === 'landscape') !==
-                artwork.originalWidthPx >= artwork.originalHeightPx
-                  ? ` ${styles.summaryThumbRotated}`
-                  : ''
-              }`}
-            />
-          )}
-          <div className={styles.summaryMeta}>
-            <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
-            <h2 className={styles.summaryTitle}>{artwork.title}</h2>
-            {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
-          </div>
-        </div>
-
-        <ul className={styles.specList}>
-          <li>
-            <span>Paper</span>
-            <span>{paper.label}</span>
-          </li>
-          <li>
-            <span>Format</span>
-            <span>{format.label}</span>
-          </li>
-          <li>
-            <span>Size</span>
-            <span>{formatSize(size, config.orientation)}</span>
-          </li>
-          {format.framed && (
-            <>
-              <li>
-                <span>Frame</span>
-                <span>{frameColor.label}</span>
-              </li>
-              <li>
-                <span>Mount</span>
-                <span>{mount.label}</span>
-              </li>
-            </>
-          )}
-        </ul>
-
-        <div className={styles.destinationLine}>
-          <span>Shipping to</span>
-          <strong>{countryName(country)}</strong>
-        </div>
-        <div className={styles.priceRow}>
-          <span>Subtotal</span>
-          <span>{formatEuro(subtotalCents)}</span>
-        </div>
-        <div className={styles.priceRow}>
-          <span>{vatLabel}</span>
-          <span>{formatEuro(customerVatCents)}</span>
-        </div>
-        <div className={styles.totalRow}>
-          <span>Total</span>
-          <span className={styles.totalValue}>{formatEuro(totalCents)}</span>
-        </div>
-
-        <button
-          type="submit"
-          form={FORM_ID}
-          className={styles.ctaButton}
-          disabled={!stripe || !elements || submitting}
-        >
-          {submitting ? 'Processing…' : `Pay ${formatEuro(totalCents)}`}
-        </button>
-      </aside>
+      <OrderSummary
+        artwork={artwork}
+        config={config}
+        country={country}
+        priceLines={[
+          { label: 'Subtotal', value: formatEuro(subtotalCents) },
+          { label: vatLabel, value: formatEuro(customerVatCents) },
+        ]}
+        total={{ label: 'Total', value: formatEuro(totalCents) }}
+        cta={{
+          kind: 'submit',
+          label: submitting ? 'Processing…' : `Pay ${formatEuro(totalCents)}`,
+          form: FORM_ID,
+          disabled: !stripe || !elements || submitting,
+        }}
+      />
     </>
   )
 }

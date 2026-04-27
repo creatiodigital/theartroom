@@ -63,8 +63,13 @@ export const StepsPanel = ({
 }: StepsPanelProps) => {
   // Per-step open/closed state. Keyed by dimension id (plus 'destination'
   // for the always-on country picker). Independent — buyer can have any
-  // combination open.
-  const [openSteps, setOpenSteps] = useState<Set<string>>(() => new Set())
+  // combination open. Destination auto-opens when no country has been
+  // picked yet so the buyer's first click reveals the country dropdown
+  // directly (otherwise they'd have to click "Destination" first to
+  // expose it, which read as broken).
+  const [openSteps, setOpenSteps] = useState<Set<string>>(
+    () => new Set(countryCode ? [] : ['destination']),
+  )
   const toggle = (key: string) => (open: boolean) => {
     setOpenSteps((prev) => {
       const next = new Set(prev)

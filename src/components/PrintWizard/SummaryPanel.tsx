@@ -8,8 +8,6 @@ import {
   type Quote,
   type WizardConfig,
   collectVisualHints,
-  estimateDelivery,
-  formatDeliveryEstimate,
   formatDualDimensions,
   formatEuro,
   getEffectiveBorderCm,
@@ -28,7 +26,6 @@ interface SummaryPanelProps {
   artwork: WizardArtwork
   catalog: Catalog
   config: WizardConfig
-  countryCode: string
   quote: Quote | null
   quoteLoading: boolean
   canContinue: boolean
@@ -40,7 +37,6 @@ export const SummaryPanel = ({
   artwork,
   catalog,
   config,
-  countryCode,
   quote,
   quoteLoading,
   canContinue,
@@ -60,14 +56,6 @@ export const SummaryPanel = ({
 
   const borderCm = getEffectiveBorderCm(config, 'border')
   const matCm = getEffectiveMatCm(catalog, config)
-
-  // End-to-end delivery estimate (calendar days). Provider-aware:
-  // TPS framing takes ~3 weeks, Prodigi ~2 weeks. Empty when no
-  // country picked yet.
-  const deliveryLabel = useMemo(() => {
-    if (!countryCode) return ''
-    return formatDeliveryEstimate(estimateDelivery(catalog, config, countryCode))
-  }, [catalog, config, countryCode])
 
   const showFrame = visuals.framed === true
   const moldingWidthCm = showFrame ? (visuals.mouldingWidthCm ?? 2.0) : 0
@@ -128,15 +116,13 @@ export const SummaryPanel = ({
 
       <dl className={styles.specList}>
         {catalog.dimensions
-          .filter((dim) => dim.kind !== 'orientation')
-          .filter((dim) => isDimensionVisible(dim, config))
+          .filter((dim) => dim.id === 'paper' || dim.id === 'size' || dim.id === 'format')
           .map((dim) => {
-            const label = dim.label
             const display = renderDimensionValue(dim, config, orientation)
             if (!display) return null
             return (
               <div key={dim.id}>
-                <dt>{label}</dt>
+                <dt>{dim.label}</dt>
                 <dd>{display}</dd>
               </div>
             )
@@ -168,12 +154,6 @@ export const SummaryPanel = ({
         </div>
       )}
 
-      {deliveryLabel && (
-        <p className={styles.deliveryEstimate}>
-          Estimated delivery: <strong>{deliveryLabel}</strong>
-        </p>
-      )}
-
       <button
         type="button"
         className={styles.ctaButton}
@@ -187,6 +167,9 @@ export const SummaryPanel = ({
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
+
+const SUMMARY_DIMENSION_IDS = new Set(['paper', 'size', 'format'])
+
 
 function renderDimensionValue(
   dim: Dimension,

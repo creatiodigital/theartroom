@@ -20,15 +20,14 @@ test('print wizard: paper + size dimensions visible', async ({ page }) => {
   const response = await page.goto(routes.printWizard())
   expect(response?.status(), 'print wizard should respond 2xx').toBeLessThan(400)
 
-  // Wizard requires a destination before quoting prices, so we don't
-  // assert on a price here. We assert on the catalog shell — the
-  // CollapsibleSection titles for Paper and Size are rendered up
-  // front by the wizard regardless of country selection. If the
-  // catalog builder fails (all-vetoed, missing provider, bad
-  // restrictions JSON, etc.), neither will appear.
-  // Provider-agnostic match: Prodigi labels the section "Paper" /
-  // "Size", TPS labels them "Paper" / "Print size". Both are rendered
-  // as <button>s by CollapsibleSection.
+  // The wizard hides every option section until a destination is
+  // chosen — pick one so the catalog shell renders. Provider-agnostic
+  // match: Prodigi labels the sections "Paper"/"Size", TPS labels them
+  // "Paper"/"Print size". Both are rendered as <button>s by
+  // CollapsibleSection.
+  await page.getByRole('button', { name: /choose a country/i }).click()
+  await page.getByRole('option', { name: /belgium/i }).click()
+
   await expect(
     page.getByRole('button', { name: /paper/i }).first(),
     'wizard should expose a Paper dimension',

@@ -1,24 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
-import {
-  computeQuotedTotals,
-  formatEuro,
-  formatSize,
-  getFormat,
-  getFrameColor,
-  getMount,
-  getPaper,
-  getSize,
-} from '@/components/PrintWizard/options'
+import { computeQuotedTotals, formatEuro } from '@/components/PrintWizard/options'
 import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+
+import { OrderSummary } from '../OrderSummary'
 
 import { createPaymentIntent } from './createPaymentIntent'
 import { getProdigiQuote } from './getQuote'
@@ -156,12 +148,6 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const paper = getPaper(config.paperId)
-  const format = getFormat(config.formatId)
-  const size = getSize(config.sizeId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
-
   // Quote is fetched once for the wizard-chosen country; it won't change on
   // this page. (If the user wants a different destination they go back.)
   // First try the stash the wizard left behind — saves a Prodigi round-trip
@@ -236,8 +222,8 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
 
   const canSubmit = !!quote && !quoteLoading && formValid
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     const form = formRef.current
     if (!form) return
 
@@ -465,61 +451,15 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
           </div>
         </form>
 
-        <aside className={styles.summaryPanel}>
-          <div className={styles.summaryHeader}>
-            {artwork.imageUrl && (
-              <Image
-                src={artwork.imageUrl}
-                alt={artwork.title}
-                width={72}
-                height={72}
-                className={`${styles.summaryThumb}${
-                  (config.orientation === 'landscape') !==
-                  artwork.originalWidthPx >= artwork.originalHeightPx
-                    ? ` ${styles.summaryThumbRotated}`
-                    : ''
-                }`}
-              />
-            )}
-            <div className={styles.summaryMeta}>
-              <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
-              <h2 className={styles.summaryTitle}>{artwork.title}</h2>
-              {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
-            </div>
-          </div>
-
-          <ul className={styles.specList}>
-            <li>
-              <span>Paper</span>
-              <span>{paper.label}</span>
-            </li>
-            <li>
-              <span>Format</span>
-              <span>{format.label}</span>
-            </li>
-            <li>
-              <span>Size</span>
-              <span>{formatSize(size, config.orientation)}</span>
-            </li>
-            {format.framed && (
-              <>
-                <li>
-                  <span>Frame</span>
-                  <span>{frameColor.label}</span>
-                </li>
-                <li>
-                  <span>Mount</span>
-                  <span>{mount.label}</span>
-                </li>
-              </>
-            )}
-          </ul>
-
-          <dl className={styles.priceList}>
-            <div className={styles.priceRow}>
-              <dt>Artwork</dt>
-              <dd>
-                {quoteLoading && !quote ? (
+        <OrderSummary
+          artwork={artwork}
+          config={config}
+          country={country}
+          priceLines={[
+            {
+              label: 'Artwork',
+              value:
+                quoteLoading && !quote ? (
                   <span className={styles.priceCalculating}>
                     Calculating…
                     <span className={styles.priceSpinner} aria-hidden="true">
@@ -530,33 +470,28 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
                   formatEuro(quote.itemCents + artistCents + galleryCents)
                 ) : (
                   '—'
-                )}
-              </dd>
-            </div>
-            <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
-              <dt>Shipping</dt>
-              <dd>{quoteLoading ? '…' : quote ? formatEuro(quote.shippingCents) : '—'}</dd>
-            </div>
-          </dl>
-
-          <div className={styles.totalRow}>
-            <span>Total (before taxes)</span>
-            <span className={styles.totalValue}>{quote ? formatEuro(preTaxCents) : '—'}</span>
-          </div>
-
-          {quoteError && <p className={styles.quoteNote}>{quoteError}</p>}
-          {submitError && <p className={styles.quoteNote}>{submitError}</p>}
-
-          <button
-            type="button"
-            className={styles.ctaButton}
-            onClick={handleSubmit}
-            disabled={!canSubmit || submitting}
-            style={{ marginTop: 'var(--space-4)' }}
-          >
-            {submitting ? 'Preparing payment…' : 'Continue to payment'}
-          </button>
-        </aside>
+                ),
+            },
+            {
+              label: 'Shipping',
+              value: quoteLoading ? '…' : quote ? formatEuro(quote.shippingCents) : '—',
+              muted: true,
+            },
+          ]}
+          total={{
+            label: 'Total (before taxes)',
+            value: quote ? formatEuro(preTaxCents) : '—',
+          }}
+          notes={[quoteError, submitError].filter((n): n is string => Boolean(n))}
+          cta={{
+            kind: 'button',
+            label: submitting ? 'Preparing payment…' : 'Continue to payment',
+            onClick: () => {
+              void handleSubmit()
+            },
+            disabled: !canSubmit || submitting,
+          }}
+        />
       </main>
     </div>
   )

@@ -80,7 +80,10 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
   const [config, setConfig] = useState<WizardConfig>(() => {
     const fresh = buildInitialConfig(catalog, aspectRatio, restrictions)
     if (Object.keys(urlSeed).length === 0) return fresh
-    return { values: { ...fresh.values, ...urlSeed } }
+    return {
+      ...fresh,
+      values: { ...fresh.values, ...urlSeed },
+    }
   })
 
   // Once the client-side image measurement lands, snap orientation to
@@ -270,7 +273,6 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
           artwork={artwork}
           catalog={catalog}
           config={config}
-          countryCode={countryCode}
           quote={quote}
           quoteLoading={quoteLoading}
           canContinue={canContinue}
@@ -283,16 +285,28 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
 }
 
 /**
- * Reconstruct a partial config from URL params. We accept any param
- * whose name matches one of the catalog's dimension ids — anything
- * else is ignored. Sanitizing happens later inside the wizard.
+ * Reconstruct a partial config from URL params. Accept a param only
+ * when its key matches a catalog dimension id AND its value is a
+ * valid option for that dimension (or 'portrait'/'landscape' for the
+ * orientation dim). This protects against stale URLs from a different
+ * provider that happen to share dim ids — e.g. a Prodigi-style
+ * `size=60x80` getting merged into a TPS catalog where size is
+ * custom-only and `60x80` resolves to nothing.
  */
 function readConfigFromParams(catalog: Catalog, params: URLSearchParams): Record<string, string> {
   const out: Record<string, string> = {}
-  const known = new Set(catalog.dimensions.map((d) => d.id))
+  const dimsById = new Map(catalog.dimensions.map((d) => [d.id, d]))
   params.forEach((value, key) => {
     if (key === 'country') return
-    if (known.has(key)) out[key] = value
+    const dim = dimsById.get(key)
+    if (!dim) return
+    if (dim.kind === 'enum') {
+      if (dim.options.some((o) => o.id === value)) out[key] = value
+    } else if (dim.kind === 'size') {
+      if (dim.options.some((o) => o.id === value)) out[key] = value
+    } else if (dim.kind === 'orientation') {
+      if (value === 'portrait' || value === 'landscape') out[key] = value
+    }
   })
   return out
 }

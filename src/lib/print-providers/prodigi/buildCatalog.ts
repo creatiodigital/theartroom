@@ -40,6 +40,7 @@ export function buildProdigiCatalog({ skus, imageWidthPx, imageHeightPx }: Build
     label: f.label,
     description: f.description,
     tooltipImageUrl: f.tooltipImageUrl,
+    isDefault: f.id === 'classic-framed',
     visual: {
       framed: f.framed,
       mouldingWidthCm: f.framed ? PRODIGI_CLASSIC_MOULDING_CM.width : 0,
@@ -54,6 +55,7 @@ export function buildProdigiCatalog({ skus, imageWidthPx, imageHeightPx }: Build
   const frameColorOptions: Option[] = PRODIGI_FRAME_COLORS.map((c) => ({
     id: c.id,
     label: c.label,
+    isDefault: c.id === 'black',
     visual: { frameColorHex: c.hex, frameRoughness: c.roughness },
   }))
 
