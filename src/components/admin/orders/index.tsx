@@ -171,8 +171,8 @@ export const AdminOrders = () => {
             }}
           >
             <span style={{ flex: 1 }}>
-              <strong>Dev tools</strong> — create a fake Prodigi sandbox order to exercise the
-              full sync + email pipeline without spending money. Hidden in production.
+              <strong>Dev tools</strong> — create a fake Prodigi sandbox order to exercise the full
+              sync + email pipeline without spending money. Hidden in production.
             </span>
             <Button
               font="dashboard"
@@ -258,9 +258,7 @@ export const AdminOrders = () => {
                           </>
                         )
                       }
-                      const eligibleAt = o.payoutEligibleAt
-                        ? new Date(o.payoutEligibleAt)
-                        : null
+                      const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
                       const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
                       const label =
                         o.prodigiStage !== 'Complete'
@@ -282,9 +280,7 @@ export const AdminOrders = () => {
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {(() => {
-                      const eligibleAt = o.payoutEligibleAt
-                        ? new Date(o.payoutEligibleAt)
-                        : null
+                      const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
                       const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
                       const canRelease =
                         !o.transferId &&

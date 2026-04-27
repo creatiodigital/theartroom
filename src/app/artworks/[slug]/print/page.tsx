@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { PrintWizard } from '@/components/PrintWizard'
-import type { PrintOptions } from '@/components/PrintWizard/types'
+import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import { prodigiToWizardRestrictions, type PrintOptions } from '@/lib/print-providers/prodigi'
+import type { PrintRestrictions, ProviderId } from '@/lib/print-providers'
 import prisma from '@/lib/prisma'
 
 interface PrintWizardPageProps {
@@ -38,18 +40,24 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   if (!artwork || !artwork.imageUrl) {
     notFound()
   }
-  // Print flow is gated per-artwork. If the artist hasn't enabled prints
-  // (or hasn't set a price) a direct link to /print should 404 — the
-  // public page already hides the "Buy Printable" CTA.
   if (!artwork.printEnabled || !artwork.printPriceCents) {
     notFound()
   }
 
-  // Fall back to 1:1 if we don't have original pixel dimensions for some reason.
   const originalWidthPx = artwork.originalWidth ?? 1000
   const originalHeightPx = artwork.originalHeight ?? 1000
-
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`
+
+  // The artwork's chosen provider drives every adapter call. Pre-
+  // migration, the column is absent → fallback to Prodigi.
+  const providerId: ProviderId = artwork.printProvider === 'PRINTSPACE' ? 'printspace' : 'prodigi'
+
+  const catalog = await loadProviderCatalog(providerId, {
+    imageWidthPx: originalWidthPx,
+    imageHeightPx: originalHeightPx,
+  })
+
+  const restrictions = readRestrictions(providerId, artwork.printOptions)
 
   return (
     <PrintWizard
@@ -62,10 +70,21 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         originalWidthPx,
         originalHeightPx,
         printPriceCents: artwork.printPriceCents,
-        printOptions: (artwork.printOptions as PrintOptions | null) ?? null,
       }}
+      catalog={catalog}
+      restrictions={restrictions}
     />
   )
 }
 
 export default PrintWizardPage
+
+function readRestrictions(providerId: ProviderId, raw: unknown): PrintRestrictions | null {
+  if (!raw) return null
+  if (providerId === 'prodigi') {
+    return prodigiToWizardRestrictions(raw as PrintOptions)
+  }
+  // TPS-shaped restrictions arrive in the agnostic `PrintRestrictions`
+  // shape directly; just pass through.
+  return raw as PrintRestrictions
+}

@@ -1,72 +1,93 @@
 'use client'
 
-import type { ProdigiQuoteResult } from '@/components/checkout/PrintCheckout/getQuote'
+import { useMemo } from 'react'
 
 import {
-  computeQuotedTotals,
+  type Catalog,
+  type Dimension,
+  type Quote,
+  type WizardConfig,
+  collectVisualHints,
+  estimateDelivery,
+  formatDeliveryEstimate,
+  formatDualDimensions,
   formatEuro,
-  formatSize,
-  getFormat,
-  getFrameColor,
-  getMount,
-  getPaper,
-  getSize,
-} from './options'
+  getEffectiveBorderCm,
+  getEffectiveMatCm,
+  getEffectiveSizeCm,
+  isDimensionVisible,
+  sizeOptionLabel,
+} from '@/lib/print-providers'
+
 import { SizeSchema } from './SizeSchema'
-import type { PrintConfig, WizardArtwork } from './types'
+import type { WizardArtwork } from './index'
 
 import styles from './PrintWizard.module.scss'
 
 interface SummaryPanelProps {
   artwork: WizardArtwork
-  config: PrintConfig
-  /** Pixel aspect ratio of the artwork. > 1 = landscape → dimensions swap. */
-  imageAspectRatio: number
-  onAddToCart: () => void
-  canContinue: boolean
-  /** Hide all config-specific content (schema/specs/price) until true. */
-  configReady: boolean
-  /** Destination country — needed to apply EU VAT on top of the quote. */
+  catalog: Catalog
+  config: WizardConfig
   countryCode: string
-  /** Live Prodigi quote for (config, country). Null while loading/unavailable. */
-  quote: ProdigiQuoteResult | null
+  quote: Quote | null
   quoteLoading: boolean
+  canContinue: boolean
+  configReady: boolean
+  onAddToCart: () => void
 }
 
 export const SummaryPanel = ({
   artwork,
+  catalog,
   config,
-  onAddToCart,
-  canContinue,
-  configReady,
   countryCode,
   quote,
   quoteLoading,
+  canContinue,
+  configReady,
+  onAddToCart,
 }: SummaryPanelProps) => {
-  const paper = getPaper(config.paperId)
-  const format = getFormat(config.formatId)
-  const size = getSize(config.sizeId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
+  const orientation: 'portrait' | 'landscape' =
+    config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
 
-  const totals = quote
-    ? computeQuotedTotals({
-        printPriceCents: artwork.printPriceCents,
-        prodigiItemCents: quote.itemCents,
-        prodigiShippingCents: quote.shippingCents,
-        countryCode,
-      })
-    : null
+  // Effective print size — preset OR custom (TPS). Drives schema + label.
+  const effectiveSize = useMemo(() => getEffectiveSizeCm(catalog, config), [catalog, config])
 
-  const showFrame = format.framed
-  const moldingWidthCm = showFrame ? 2.0 : 0 // Prodigi Classic molding width
-  const mattingBorderCm = showFrame ? mount.borderCm : 0
+  // Merged visual hints from every selected enum option. Both Prodigi
+  // (`color` dim) and TPS (`moulding` dim) write into `frameColorHex`
+  // — the merge picks whichever is set.
+  const visuals = useMemo(() => collectVisualHints(catalog, config), [catalog, config])
 
-  // SIZES are declared portrait. Swap when the buyer chose landscape so the
-  // schema matches the 3D preview and the printed orientation.
-  const isLandscape = config.orientation === 'landscape'
-  const printWidthCm = isLandscape ? size.heightCm : size.widthCm
-  const printHeightCm = isLandscape ? size.widthCm : size.heightCm
+  const borderCm = getEffectiveBorderCm(config, 'border')
+  const matCm = getEffectiveMatCm(catalog, config)
+
+  // End-to-end delivery estimate (calendar days). Provider-aware:
+  // TPS framing takes ~3 weeks, Prodigi ~2 weeks. Empty when no
+  // country picked yet.
+  const deliveryLabel = useMemo(() => {
+    if (!countryCode) return ''
+    return formatDeliveryEstimate(estimateDelivery(catalog, config, countryCode))
+  }, [catalog, config, countryCode])
+
+  const showFrame = visuals.framed === true
+  const moldingWidthCm = showFrame ? (visuals.mouldingWidthCm ?? 2.0) : 0
+  const mattingBorderCm = showFrame ? matCm : 0
+  const moldingColorHex = visuals.frameColorHex ?? '#0b0b0b'
+  const mattingColorHex = visuals.matColorHex ?? '#f6f3ec'
+
+  // Sizes are stored portrait. Landscape orientation swaps width/height
+  // so the schema and label match how the print will be hung.
+  const isLandscape = orientation === 'landscape'
+  const printWidthCm = effectiveSize
+    ? isLandscape
+      ? effectiveSize.heightCm
+      : effectiveSize.widthCm
+    : 0
+  const printHeightCm = effectiveSize
+    ? isLandscape
+      ? effectiveSize.widthCm
+      : effectiveSize.heightCm
+    : 0
 
   if (!configReady) {
     return (
@@ -91,62 +112,53 @@ export const SummaryPanel = ({
         {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
       </div>
 
-      <div className={styles.schemaSection}>
-        <SizeSchema
-          printWidthCm={printWidthCm}
-          printHeightCm={printHeightCm}
-          moldingWidthCm={moldingWidthCm}
-          moldingColorHex={frameColor.hex}
-          mattingBorderCm={mattingBorderCm}
-          mattingColorHex="#f6f3ec"
-          showFrame={showFrame}
-        />
-      </div>
+      {effectiveSize && (
+        <div className={styles.schemaSection}>
+          <SizeSchema
+            printWidthCm={printWidthCm}
+            printHeightCm={printHeightCm}
+            moldingWidthCm={moldingWidthCm}
+            moldingColorHex={moldingColorHex}
+            mattingBorderCm={mattingBorderCm + borderCm}
+            mattingColorHex={borderCm > 0 ? '#ffffff' : mattingColorHex}
+            showFrame={showFrame || borderCm > 0}
+          />
+        </div>
+      )}
 
       <dl className={styles.specList}>
-        <div>
-          <dt>Paper</dt>
-          <dd>{paper.label}</dd>
-        </div>
-        <div>
-          <dt>Format</dt>
-          <dd>{format.label}</dd>
-        </div>
-        <div>
-          <dt>Size</dt>
-          <dd>{formatSize(size, config.orientation)}</dd>
-        </div>
-        {showFrame && (
-          <>
-            <div>
-              <dt>Frame</dt>
-              <dd>{frameColor.label}</dd>
-            </div>
-            <div>
-              <dt>Mount</dt>
-              <dd>{mount.label}</dd>
-            </div>
-          </>
-        )}
+        {catalog.dimensions
+          .filter((dim) => dim.kind !== 'orientation')
+          .filter((dim) => isDimensionVisible(dim, config))
+          .map((dim) => {
+            const label = dim.label
+            const display = renderDimensionValue(dim, config, orientation)
+            if (!display) return null
+            return (
+              <div key={dim.id}>
+                <dt>{label}</dt>
+                <dd>{display}</dd>
+              </div>
+            )
+          })}
       </dl>
 
-      {totals ? (
+      {quote ? (
         <>
           <dl className={styles.priceList}>
-            <div className={styles.priceRow}>
-              <dt>Artwork</dt>
-              <dd>
-                {formatEuro(totals.artistCents + totals.galleryCents + totals.prodigiItemCents)}
-              </dd>
-            </div>
-            <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
-              <dt>Shipping</dt>
-              <dd>{formatEuro(totals.prodigiShippingCents)}</dd>
-            </div>
+            {quote.lines.map((line) => (
+              <div
+                key={line.id}
+                className={`${styles.priceRow} ${line.muted ? styles.priceRowMuted : ''}`}
+              >
+                <dt>{line.label}</dt>
+                <dd>{formatEuro(line.amountCents)}</dd>
+              </div>
+            ))}
           </dl>
           <div className={styles.totalRow}>
             <span>Total (before taxes)</span>
-            <span className={styles.totalValue}>{formatEuro(totals.preTaxCents)}</span>
+            <span className={styles.totalValue}>{formatEuro(quote.subtotalCents)}</span>
           </div>
         </>
       ) : (
@@ -154,6 +166,12 @@ export const SummaryPanel = ({
           <span>Total</span>
           <span className={styles.totalValue}>{quoteLoading ? 'Calculating…' : '—'}</span>
         </div>
+      )}
+
+      {deliveryLabel && (
+        <p className={styles.deliveryEstimate}>
+          Estimated delivery: <strong>{deliveryLabel}</strong>
+        </p>
       )}
 
       <button
@@ -166,4 +184,37 @@ export const SummaryPanel = ({
       </button>
     </aside>
   )
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+function renderDimensionValue(
+  dim: Dimension,
+  config: WizardConfig,
+  orientation: 'portrait' | 'landscape',
+): string | null {
+  if (dim.kind === 'enum') {
+    const value = config.values[dim.id]
+    if (!value) return null
+    return dim.options.find((o) => o.id === value)?.label ?? null
+  }
+  if (dim.kind === 'size') {
+    const value = config.values[dim.id]
+    if (value) {
+      const size = dim.options.find((o) => o.id === value)
+      if (size) return sizeOptionLabel(size, orientation)
+    }
+    if (config.customSize) {
+      const isLandscape = orientation === 'landscape'
+      const wCm = isLandscape ? config.customSize.heightCm : config.customSize.widthCm
+      const hCm = isLandscape ? config.customSize.widthCm : config.customSize.heightCm
+      return formatDualDimensions(wCm, hCm)
+    }
+    return null
+  }
+  if (dim.kind === 'border') {
+    const value = config.borders?.[dim.id]?.allCm ?? 0
+    return value > 0 ? `${value} cm on every side` : 'None'
+  }
+  return null
 }

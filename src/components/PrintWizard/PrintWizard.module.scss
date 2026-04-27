@@ -106,6 +106,65 @@
   }
 }
 
+.customSizeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.customSizeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1 1 0;
+  min-width: 100px;
+
+  span {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  input {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: var(--radius-sm);
+    background: white;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-text-primary);
+
+    &:focus {
+      outline: none;
+      border-color: rgba(0, 0, 0, 0.55);
+    }
+
+    &:disabled {
+      background: rgba(0, 0, 0, 0.04);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.customSizeSeparator {
+  align-self: center;
+  padding-bottom: var(--space-2);
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.customSizeHint {
+  flex-basis: 100%;
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.4;
+}
+
 .stepFieldLabel {
   display: flex;
   align-items: center;
@@ -572,6 +631,20 @@
   color: rgba(0, 0, 0, 0.55);
   margin: 0;
   line-height: 1.4;
+}
+
+.deliveryEstimate {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.65);
+  text-align: center;
+
+  strong {
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 600;
+  }
 }
 
 .ctaButton {

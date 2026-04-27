@@ -15,13 +15,15 @@ import {
   buildOriginalImageKey,
 } from '@/lib/r2'
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+// Restricted to formats both print providers accept. The Print Space
+// only takes JPEG, PNG and TIFF — Prodigi accepts a superset, so this
+// is the safe intersection for the artwork-image pipeline.
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/tiff']
 
 const MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
+  'image/tiff': 'tif',
 }
 
 /**
@@ -49,7 +51,7 @@ const MIME_TO_EXT: Record<string, string> = {
 //   artworks-original/<envPrefix>/<handler>/<artworkId>-<suffix>.<ext>
 // Extension is restricted to the mime map above.
 const ORIGINAL_KEY_RE =
-  /^artworks-original\/[a-z0-9-]+\/[a-z0-9-]+\/[a-zA-Z0-9_-]+-[a-zA-Z0-9]+\.(jpg|png|webp|gif)$/
+  /^artworks-original\/[a-z0-9-]+\/[a-z0-9-]+\/[a-zA-Z0-9_-]+-[a-zA-Z0-9]+\.(jpg|png|tif)$/
 
 function isSafeOriginalKey(key: unknown, artworkId: string): key is string {
   if (typeof key !== 'string' || key.length === 0 || key.length > 256) return false
@@ -79,7 +81,7 @@ export async function POST(request: NextRequest) {
 
       if (!ALLOWED_IMAGE_TYPES.includes(contentType)) {
         return NextResponse.json(
-          { error: 'Invalid file type. Accepted: JPG, PNG, WebP, GIF.' },
+          { error: 'Invalid file type. Accepted: JPG, PNG, TIFF.' },
           { status: 400 },
         )
       }
@@ -161,7 +163,7 @@ export async function POST(request: NextRequest) {
 
       if (!isValidImageType(originalBuffer)) {
         return NextResponse.json(
-          { error: 'Invalid file type. Please upload a JPG, PNG, WebP, or GIF image.' },
+          { error: 'Invalid file type. Please upload a JPG, PNG, or TIFF image.' },
           { status: 400 },
         )
       }
@@ -175,8 +177,7 @@ export async function POST(request: NextRequest) {
       const formatMap: Record<string, string> = {
         jpeg: 'JPEG',
         png: 'PNG',
-        webp: 'WebP',
-        gif: 'GIF',
+        tiff: 'TIFF',
       }
       const originalFormat =
         formatMap[metadata.format ?? ''] ?? metadata.format?.toUpperCase() ?? null

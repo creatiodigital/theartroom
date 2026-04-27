@@ -2,39 +2,31 @@
 
 import { useEffect } from 'react'
 
-import { getCachedCatalog, setCachedCatalog, setCachedCountries } from './catalogClientCache'
-import { getPrintCatalog } from './getPrintCatalog'
-import { collectAllCountries } from './options'
+import { getProdigiCatalog } from '@/lib/print-providers/prodigi/loadCatalog'
 
 /**
- * Invisible prefetcher for the Prodigi catalog. Mount on pages that
+ * Invisible prefetcher for the Prodigi SKU catalog. Mount on pages that
  * funnel users toward the print wizard (home, /prints, artwork detail)
  * so the ~70-SKU round-trip happens in the background — by the time the
- * buyer opens the wizard, both the server cache and the client cache
- * are warm and the countries dropdown renders instantly.
+ * buyer opens the wizard, the server-side `unstable_cache` is warm and
+ * the page renders without paying the cold-cache cost.
  *
- * We deliberately do NOT abort the fetch on unmount. The point is to
- * warm the cache for future pages — if the user navigates home → prints
- * mid-flight, the result should still land in cache so the /prints
- * prefetcher (or the wizard itself) picks it up. Module-level `inflight`
- * dedupes concurrent mounts so we never fire the 70-SKU batch twice.
+ * Module-level `inflight` dedupes concurrent mounts so we never fire
+ * the batch twice within the same session.
+ *
+ * Provider-specific by design: the home/prints/detail pages don't yet
+ * know which artwork (and which provider) the visitor will click into.
+ * We pre-warm Prodigi here as the most common provider; TPS catalogs
+ * are static (hardcoded data) so they don't need a prefetch.
  */
-let inflight: Promise<void> | null = null
+let inflight: Promise<unknown> | null = null
 
 export const PrintCatalogPrefetcher = () => {
   useEffect(() => {
-    if (getCachedCatalog()) return
     if (inflight) return
-    inflight = getPrintCatalog()
-      .then((res) => {
-        if (res.ok) {
-          setCachedCatalog(res.skus)
-          setCachedCountries(collectAllCountries(res.skus))
-        }
-      })
-      .finally(() => {
-        inflight = null
-      })
+    inflight = getProdigiCatalog().finally(() => {
+      inflight = null
+    })
   }, [])
   return null
 }

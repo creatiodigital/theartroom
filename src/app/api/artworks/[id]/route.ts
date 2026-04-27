@@ -6,6 +6,8 @@ import { deleteFromR2 } from '@/lib/r2'
 import { requireOwnership } from '@/lib/authUtils'
 import { FORMATS, FRAME_COLORS, MOUNTS, PAPERS, SIZES } from '@/components/PrintWizard/options'
 import type { PrintOptions } from '@/components/PrintWizard/types'
+import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
+import type { PrintRestrictions } from '@/lib/print-providers'
 import { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
@@ -14,34 +16,36 @@ import { generateUniqueSlug } from '@/lib/slugify'
 // the wizard understands. Any unknown keys or unknown ids get dropped.
 // Empty/all-covering dimensions are stripped — null stands for "no
 // restrictions" throughout the stack.
-function sanitizePrintOptions(raw: unknown): PrintOptions | null {
+//
+// Shape depends on the artwork's chosen `printProvider`:
+//   - PRODIGI:    typed `PrintOptions` (allowedPaperIds, …)
+//   - PRINTSPACE: canonical `PrintRestrictions` ({ allowed: { dimId: ids[] } })
+function cleanIds(arr: unknown, universe: readonly { id: string }[]): string[] | undefined {
+  if (!Array.isArray(arr)) return undefined
+  const universeIds = new Set(universe.map((u) => u.id))
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of arr) {
+    if (typeof item !== 'string') continue
+    if (!universeIds.has(item)) continue
+    if (seen.has(item)) continue
+    seen.add(item)
+    out.push(item)
+  }
+  // Whole-universe-or-empty ≡ no restriction → drop.
+  if (out.length === 0 || out.length === universe.length) return undefined
+  return out
+}
+
+function sanitizeProdigiPrintOptions(raw: unknown): PrintOptions | null {
   if (!raw || typeof raw !== 'object') return null
   const obj = raw as Record<string, unknown>
-
-  const clean = (arr: unknown, universe: readonly { id: string }[]): string[] | undefined => {
-    if (!Array.isArray(arr)) return undefined
-    const universeIds = new Set(universe.map((u) => u.id))
-    const seen = new Set<string>()
-    const out: string[] = []
-    for (const item of arr) {
-      if (typeof item !== 'string') continue
-      if (!universeIds.has(item)) continue
-      if (seen.has(item)) continue
-      seen.add(item)
-      out.push(item)
-    }
-    // An array that covers the whole universe or nothing at all is
-    // equivalent to "no restriction" — return undefined so it's dropped.
-    if (out.length === 0 || out.length === universe.length) return undefined
-    return out
-  }
-
   const next: PrintOptions = {}
-  const paperIds = clean(obj.allowedPaperIds, PAPERS)
-  const formatIds = clean(obj.allowedFormatIds, FORMATS)
-  const sizeIds = clean(obj.allowedSizeIds, SIZES)
-  const frameColorIds = clean(obj.allowedFrameColorIds, FRAME_COLORS)
-  const mountIds = clean(obj.allowedMountIds, MOUNTS)
+  const paperIds = cleanIds(obj.allowedPaperIds, PAPERS)
+  const formatIds = cleanIds(obj.allowedFormatIds, FORMATS)
+  const sizeIds = cleanIds(obj.allowedSizeIds, SIZES)
+  const frameColorIds = cleanIds(obj.allowedFrameColorIds, FRAME_COLORS)
+  const mountIds = cleanIds(obj.allowedMountIds, MOUNTS)
   if (paperIds) next.allowedPaperIds = paperIds as PrintOptions['allowedPaperIds']
   if (formatIds) next.allowedFormatIds = formatIds as PrintOptions['allowedFormatIds']
   if (sizeIds) next.allowedSizeIds = sizeIds as PrintOptions['allowedSizeIds']
@@ -49,6 +53,29 @@ function sanitizePrintOptions(raw: unknown): PrintOptions | null {
     next.allowedFrameColorIds = frameColorIds as PrintOptions['allowedFrameColorIds']
   if (mountIds) next.allowedMountIds = mountIds as PrintOptions['allowedMountIds']
   return Object.keys(next).length === 0 ? null : next
+}
+
+function sanitizeTpsPrintOptions(raw: unknown): PrintRestrictions | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+  const inner =
+    obj.allowed && typeof obj.allowed === 'object' ? (obj.allowed as Record<string, unknown>) : null
+  if (!inner) return null
+  const next: Record<string, string[]> = {}
+  const paperIds = cleanIds(inner.paper, TPS_PAPERS)
+  const frameTypeIds = cleanIds(inner.frameType, TPS_FRAME_TYPES)
+  const windowMountIds = cleanIds(inner.windowMount, TPS_WINDOW_MOUNTS)
+  if (paperIds) next.paper = paperIds
+  if (frameTypeIds) next.frameType = frameTypeIds
+  if (windowMountIds) next.windowMount = windowMountIds
+  return Object.keys(next).length === 0 ? null : { allowed: next }
+}
+
+function sanitizePrintOptions(
+  raw: unknown,
+  provider: 'PRODIGI' | 'PRINTSPACE',
+): PrintOptions | PrintRestrictions | null {
+  return provider === 'PRINTSPACE' ? sanitizeTpsPrintOptions(raw) : sanitizeProdigiPrintOptions(raw)
 }
 
 // The exhibition profile API (/api/exhibitions/by-url/[url]) caches its
@@ -122,9 +149,14 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         ? Math.round(parsedPrice)
         : null
 
-    // Sanitize artist-set printing restrictions. Absent or non-object
-    // input resets to null (no restrictions).
-    const printOptions = sanitizePrintOptions(body.printOptions)
+    // Print fulfillment provider. Only the two known enum values are
+    // accepted; anything else falls back to PRODIGI (the default).
+    const printProvider: 'PRODIGI' | 'PRINTSPACE' =
+      body.printProvider === 'PRINTSPACE' ? 'PRINTSPACE' : 'PRODIGI'
+
+    // Sanitize artist-set printing restrictions. Shape depends on the
+    // chosen provider — see sanitizePrintOptions.
+    const printOptions = sanitizePrintOptions(body.printOptions, printProvider)
 
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
@@ -142,6 +174,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       featured: body.featured === true || body.featured === 'true',
       printEnabled: body.printEnabled === true || body.printEnabled === 'true',
       printPriceCents,
+      printProvider,
       // Prisma's nullable-Json update slot doesn't accept a bare `null`
       // — the DB NULL value is signalled via Prisma.DbNull sentinel.
       printOptions:

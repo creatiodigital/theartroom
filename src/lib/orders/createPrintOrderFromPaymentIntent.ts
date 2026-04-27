@@ -282,9 +282,7 @@ export async function createPrintOrderFromPaymentIntent(
       kind: adminRes.ok ? 'email_sent' : 'email_failed',
       actor: 'system',
       message: 'admin_order_notification',
-      payload: adminRes.ok
-        ? { resendId: adminRes.id }
-        : { error: adminRes.error },
+      payload: adminRes.ok ? { resendId: adminRes.id } : { error: adminRes.error },
     })
     if (!adminRes.ok) {
       captureError(new Error(`Admin order-notification email failed: ${adminRes.error}`), {

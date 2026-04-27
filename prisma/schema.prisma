@@ -18,6 +18,16 @@ enum UserType {
   general
 }
 
+// Fulfillment service for an artwork's prints. Drives which adapter
+// the wizard, checkout, and admin order-placement screen pull data
+// from. PRODIGI = automated catalog, real-time quotes, fixed sizes.
+// PRINTSPACE = hardcoded approximate prices, custom sizes, more
+// papers/frames; admin places orders manually on TPS's portal.
+enum PrintProvider {
+  PRODIGI
+  PRINTSPACE
+}
+
 model User {
   id                 String   @id @default(uuid())
   name               String
@@ -174,12 +184,21 @@ model Artwork {
   printEnabled    Boolean @default(false)
   printPriceCents Int?
 
-  // Per-artwork printing restrictions set by the artist. Shape:
-  //   { allowedPaperIds?, allowedFormatIds?, allowedSizeIds?,
-  //     allowedFrameColorIds?, allowedMountIds? }
-  // When null / missing / field missing, all options from the wizard's
-  // curated lists are offered. When present, the wizard's checkout UI
-  // filters down to the allow-list. Each dimension is validated server-
+  // Which fulfillment service this artwork's prints are routed to.
+  // The wizard is provider-agnostic; the page route reads this field
+  // and loads the matching adapter. Once an order ships, admin places
+  // it manually on the chosen provider's portal (no auto-submit at
+  // launch — see project_manual_fulfillment_launch).
+  printProvider   PrintProvider @default(PRODIGI)
+
+  // Per-artwork printing restrictions set by the artist. Shape depends
+  // on `printProvider`:
+  //   - PRODIGI:    { allowedPaperIds?, allowedFormatIds?, allowedSizeIds?,
+  //                   allowedFrameColorIds?, allowedMountIds? }
+  //   - PRINTSPACE: provider-canonical PrintRestrictions shape
+  //                 ({ allowed: { dimensionId: ids[] } }).
+  // When null / missing / field missing, all options from the chosen
+  // provider's catalog are offered. Each dimension is validated server-
   // side at PaymentIntent creation.
   printOptions    Json?
 

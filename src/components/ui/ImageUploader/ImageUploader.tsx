@@ -55,12 +55,18 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
+// Whitelist of MIME types both print providers accept. The Print Space
+// only takes JPEG, PNG and TIFF; Prodigi accepts a superset, so this is
+// the safe intersection.
+const ACCEPTED_MIME_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/tiff'])
+
+const ACCEPT_ATTR = 'image/jpeg,image/png,image/tiff'
+
 function formatFromMime(mime: string): string {
   const map: Record<string, string> = {
     'image/jpeg': 'JPEG',
     'image/png': 'PNG',
-    'image/webp': 'WebP',
-    'image/gif': 'GIF',
+    'image/tiff': 'TIFF',
   }
   return map[mime] || mime.replace('image/', '').toUpperCase()
 }
@@ -124,6 +130,14 @@ export const ImageUploader = ({
     async (file: File): Promise<boolean> => {
       setSizeError(null)
       setResolutionError(null)
+
+      // Check MIME type. The browser's `accept` attribute is a hint, not
+      // a hard gate — drag-and-drop bypasses it entirely. Reject anything
+      // outside the print-provider intersection here too.
+      if (file.type && !ACCEPTED_MIME_TYPES.has(file.type)) {
+        setSizeError('Invalid file type. Accepted: JPG, PNG, TIFF.')
+        return false
+      }
 
       // Check file size
       if (file.size > maxSizeBytes) {
@@ -231,7 +245,7 @@ export const ImageUploader = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept={ACCEPT_ATTR}
         onChange={handleFileSelect}
         className={styles.hiddenInput}
       />

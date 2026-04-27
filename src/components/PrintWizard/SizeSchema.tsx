@@ -52,19 +52,15 @@ export const SizeSchema = ({
   // Labels keep the real measurements; only the diagram is exaggerated.
   const MIN_FRAME_PX = 14
   const MIN_MAT_PX = 10
-  const rawScale =
-    Math.min(availableW, availableH) / Math.max(overallWidthCm, overallHeightCm)
-  const frameW =
-    effectiveFrame > 0 ? Math.max(effectiveFrame * rawScale, MIN_FRAME_PX) : 0
-  const matBorderW =
-    effectiveMatting > 0 ? Math.max(effectiveMatting * rawScale, MIN_MAT_PX) : 0
+  const rawScale = Math.min(availableW, availableH) / Math.max(overallWidthCm, overallHeightCm)
+  const frameW = effectiveFrame > 0 ? Math.max(effectiveFrame * rawScale, MIN_FRAME_PX) : 0
+  const matBorderW = effectiveMatting > 0 ? Math.max(effectiveMatting * rawScale, MIN_MAT_PX) : 0
 
   // Re-fit the print so the exaggerated borders still leave room inside
   // the viewBox. The print itself stays proportional to real dimensions.
   const borderPx = (frameW + matBorderW) * 2
   const longestPrintCm = Math.max(printWidthCm, printHeightCm)
-  const printScale =
-    (Math.min(availableW, availableH) - borderPx) / longestPrintCm
+  const printScale = (Math.min(availableW, availableH) - borderPx) / longestPrintCm
   const printW = printWidthCm * printScale
   const printH = printHeightCm * printScale
   const matW = printW + matBorderW * 2

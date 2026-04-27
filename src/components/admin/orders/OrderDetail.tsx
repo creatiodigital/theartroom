@@ -515,13 +515,11 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               lineHeight: 1.55,
             }}
           >
-            <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>
-              💸 Refund needed
-            </p>
+            <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>💸 Refund needed</p>
             <p style={{ margin: '0 0 8px 0' }}>
               This order is cancelled but the buyer&apos;s card was already charged{' '}
-              <strong>{formatEuro(order.totalCents)}</strong>. Use the{' '}
-              <strong>Refund buyer</strong> button below to return the money.
+              <strong>{formatEuro(order.totalCents)}</strong>. Use the <strong>Refund buyer</strong>{' '}
+              button below to return the money.
             </p>
           </div>
         </div>
@@ -577,9 +575,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
           <h2 style={{ margin: 0, fontSize: 16 }}>Fulfillment</h2>
           <Dot color={prodigiDot(stage)} />
           <Badge label={prodigiStageLabel(stage)} variant="current" />
-          {syncing && (
-            <span style={{ fontSize: 12, opacity: 0.6 }}>Syncing with Prodigi…</span>
-          )}
+          {syncing && <span style={{ fontSize: 12, opacity: 0.6 }}>Syncing with Prodigi…</span>}
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -837,8 +833,8 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
           >
             <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
               <strong>Mark this order as placed in Prodigi</strong> — enter the Prodigi order ID
-              (from their dashboard). This will capture the buyer&apos;s Stripe payment
-              ({formatEuro(order.totalCents)}) and link the two orders for status syncing.
+              (from their dashboard). This will capture the buyer&apos;s Stripe payment (
+              {formatEuro(order.totalCents)}) and link the two orders for status syncing.
             </p>
             <label
               htmlFor="prodigi-order-id"

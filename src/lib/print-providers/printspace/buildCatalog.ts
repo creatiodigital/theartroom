@@ -1,0 +1,229 @@
+/**
+ * Convert The Print Space's hardcoded data into the canonical
+ * provider-agnostic `Catalog` shape consumed by the wizard.
+ *
+ * Built up incrementally — only dimensions whose data has been
+ * supplied by the artist appear here. Missing dimensions simply
+ * aren't rendered.
+ */
+import type {
+  AvailabilityCheck,
+  BorderDimension,
+  Catalog,
+  EnumDimension,
+  Option,
+  SizeDimension,
+} from '../types'
+import {
+  TPS_BORDER_BOUNDS,
+  TPS_FORMATS,
+  TPS_FRAME_TYPES,
+  TPS_GLASS_OPTIONS,
+  TPS_HANGING_OPTIONS,
+  TPS_MOULDINGS,
+  TPS_MOUNT_BOARD_BOUNDS,
+  TPS_PAPERS,
+  TPS_PRINT_TYPES,
+  TPS_SIZE_BOUNDS,
+  TPS_WINDOW_MOUNTS,
+} from './data'
+import { TPS_SUPPORTED_COUNTRIES } from './pricing'
+
+type BuildInput = {
+  imageWidthPx: number
+  imageHeightPx: number
+}
+
+export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
+  // ── Print type ──────────────────────────────────────────────
+  const printTypeOptions: Option[] = TPS_PRINT_TYPES.map((t) => ({
+    id: t.id,
+    label: t.label,
+    description: t.description,
+  }))
+
+  // ── Paper (cascades on print type via Option.visibleWhen) ──
+  const paperOptions: Option[] = TPS_PAPERS.map((p) => ({
+    id: p.id,
+    label: p.label,
+    description: p.description,
+    visibleWhen: { dimensionId: 'printType', valueIn: [p.printType] },
+    visual: { paperRoughness: p.paperRoughness },
+  }))
+
+  // ── Format (Print Only vs Framing) ──────────────────────────
+  const formatOptions: Option[] = TPS_FORMATS.map((f) => ({
+    id: f.id,
+    label: f.label,
+    description: f.description,
+    visual: { framed: f.framed },
+  }))
+
+  // ── Frame Type (only visible when Format = Framing) ─────────
+  const frameTypeOptions: Option[] = TPS_FRAME_TYPES.map((t) => ({
+    id: t.id,
+    label: t.label,
+    description: t.description,
+  }))
+
+  // ── Moulding (visible when framing; options cascade on frameType) ─
+  const mouldingOptions: Option[] = TPS_MOULDINGS.map((m) => ({
+    id: m.id,
+    label: m.label,
+    visibleWhen: { dimensionId: 'frameType', valueIn: [m.frameType] },
+    visual: { frameColorHex: m.hex, frameRoughness: m.roughness },
+  }))
+
+  // ── Glass (visible when framing; same 3 options across all frame types) ─
+  const glassOptions: Option[] = TPS_GLASS_OPTIONS.map((g) => ({
+    id: g.id,
+    label: g.label,
+    description: g.description,
+  }))
+
+  // ── Hanging (visible when framing; same 4 options across frame types) ─
+  const hangingOptions: Option[] = TPS_HANGING_OPTIONS.map((h) => ({
+    id: h.id,
+    label: h.label,
+    description: h.description,
+  }))
+
+  // ── Window Mount / Passepartout colour (visible when framing) ─
+  const windowMountOptions: Option[] = TPS_WINDOW_MOUNTS.map((w) => ({
+    id: w.id,
+    label: w.label,
+    visual: w.id === 'none' ? undefined : { matColorHex: w.hex },
+  }))
+
+  // Visibility list for "anything except 'none'" — used to gate the
+  // mount-board-size input so it only appears when a colour is picked.
+  const windowMountColourIds = TPS_WINDOW_MOUNTS.filter((w) => w.id !== 'none').map((w) => w.id)
+
+  // Dimension order mirrors TPS's "Order Prints" flow: paper-type
+  // first, then print size + paper border, then mounting/framing
+  // and all its sub-options, then orientation.
+  const dimensions: Catalog['dimensions'] = [
+    {
+      kind: 'enum',
+      id: 'printType',
+      label: 'Print type',
+      options: printTypeOptions,
+    } satisfies EnumDimension,
+    {
+      kind: 'enum',
+      id: 'paper',
+      label: 'Paper',
+      options: paperOptions,
+    } satisfies EnumDimension,
+    // TPS sells custom-only sizes — no presets, aspect ratio locked
+    // to the artwork's so the buyer never gets a crop or pad.
+    {
+      kind: 'size',
+      id: 'size',
+      label: 'Print size',
+      options: [],
+      custom: {
+        minCm: TPS_SIZE_BOUNDS.minCm,
+        maxCm: TPS_SIZE_BOUNDS.maxCm,
+        stepCm: TPS_SIZE_BOUNDS.stepCm,
+        aspectLocked: true,
+      },
+    } satisfies SizeDimension,
+    // Paper border — uniform on all four sides (no asymmetric).
+    {
+      kind: 'border',
+      id: 'border',
+      label: 'Paper border',
+      minCm: TPS_BORDER_BOUNDS.minCm,
+      maxCm: TPS_BORDER_BOUNDS.maxCm,
+      stepCm: TPS_BORDER_BOUNDS.stepCm,
+      defaultCm: TPS_BORDER_BOUNDS.defaultCm,
+    } satisfies BorderDimension,
+    {
+      kind: 'enum',
+      id: 'format',
+      label: 'Mounting / Framing',
+      options: formatOptions,
+    } satisfies EnumDimension,
+    // Frame Type — only visible when format=framing.
+    {
+      kind: 'enum',
+      id: 'frameType',
+      label: 'Frame type',
+      options: frameTypeOptions,
+      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+    } satisfies EnumDimension,
+    // Moulding — visible when framing; options cascade by frameType.
+    {
+      kind: 'enum',
+      id: 'moulding',
+      label: 'Moulding',
+      options: mouldingOptions,
+      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+    } satisfies EnumDimension,
+    // Glass — visible when framing.
+    {
+      kind: 'enum',
+      id: 'glass',
+      label: 'Glass',
+      options: glassOptions,
+      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+    } satisfies EnumDimension,
+    // Hanging — visible when framing.
+    {
+      kind: 'enum',
+      id: 'hanging',
+      label: 'Hanging',
+      options: hangingOptions,
+      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+    } satisfies EnumDimension,
+    // Window Mount (passepartout) — visible when framing. Buyer
+    // picks a colour first; the size input below appears only after
+    // they pick a non-'none' colour.
+    {
+      kind: 'enum',
+      id: 'windowMount',
+      label: 'Window mount (passepartout)',
+      options: windowMountOptions,
+      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+    } satisfies EnumDimension,
+    // Mount board size — uniform width of the passepartout in cm.
+    // Visible only when a window-mount colour is chosen (not 'none').
+    {
+      kind: 'border',
+      id: 'windowMountSize',
+      label: 'Mount board size',
+      minCm: TPS_MOUNT_BOARD_BOUNDS.minCm,
+      maxCm: TPS_MOUNT_BOARD_BOUNDS.maxCm,
+      stepCm: TPS_MOUNT_BOARD_BOUNDS.stepCm,
+      defaultCm: TPS_MOUNT_BOARD_BOUNDS.defaultCm,
+      visibleWhen: { dimensionId: 'windowMount', valueIn: windowMountColourIds },
+    } satisfies BorderDimension,
+    // No orientation dimension — TPS sells custom W × H. Whether the
+    // print is portrait or landscape is implicit in the buyer's typed
+    // dimensions (W < H = portrait; W > H = landscape). Confirmed
+    // against TPS's "Order Prints" help doc + cart spec strings,
+    // 2026-04-27. Prodigi keeps orientation because its preset SKUs
+    // are aspect-fixed but rotation-free.
+  ]
+
+  return {
+    providerId: 'printspace',
+    currency: 'EUR',
+    dimensions,
+    // ISO codes from the TPS shipping rate card (UK, EU + Germany,
+    // Nordic, US, Canada, AU/NZ) plus a curated ROW set for the major
+    // markets we'll ship to.
+    supportedCountries: TPS_SUPPORTED_COUNTRIES,
+  }
+}
+
+/**
+ * Synchronous availability check for TPS. Currently a no-op: as long
+ * as the option's `visibleWhen` rule passes (handled upstream by the
+ * generic config helpers) it's available. Once we wire shipping
+ * regions, country-specific filtering layers on top.
+ */
+export function buildPrintspaceAvailability(): AvailabilityCheck {
+  return () => true
+}

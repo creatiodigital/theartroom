@@ -921,9 +921,7 @@ export async function markRejected(
  */
 export async function syncOrderFromProdigi(
   orderId: string,
-): Promise<
-  { ok: true; changed: boolean; stage: string | null } | { ok: false; error: string }
-> {
+): Promise<{ ok: true; changed: boolean; stage: string | null } | { ok: false; error: string }> {
   const guard = await requireAdminSession()
   if (!guard.ok) return guard
   return syncOrderFromProdigiCore(orderId)
@@ -937,9 +935,7 @@ export async function syncOrderFromProdigi(
  */
 export async function syncOrderFromProdigiCore(
   orderId: string,
-): Promise<
-  { ok: true; changed: boolean; stage: string | null } | { ok: false; error: string }
-> {
+): Promise<{ ok: true; changed: boolean; stage: string | null } | { ok: false; error: string }> {
   const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
   if (!order) return { ok: false, error: 'Order not found.' }
   if (!order.prodigiOrderId) {
@@ -1032,11 +1028,7 @@ async function maybeSendBuyerTransitionEmail(
   newStage: string,
   opts: { trackingUrl: string | null; source?: 'prodigi-sync' | 'admin' },
 ): Promise<void> {
-  if (
-    newStage !== STAGE_STARTED &&
-    newStage !== STAGE_SHIPPED &&
-    newStage !== STAGE_REJECTED
-  ) {
+  if (newStage !== STAGE_STARTED && newStage !== STAGE_SHIPPED && newStage !== STAGE_REJECTED) {
     return
   }
 
@@ -1142,9 +1134,7 @@ async function maybeSendBuyerTransitionEmail(
         kind: adminRes.ok ? 'email_sent' : 'email_failed',
         actor: 'system',
         message: 'admin_order_cancelled',
-        payload: adminRes.ok
-          ? { resendId: adminRes.id }
-          : { error: adminRes.error },
+        payload: adminRes.ok ? { resendId: adminRes.id } : { error: adminRes.error },
       })
       if (!adminRes.ok) {
         captureError(new Error(`Admin cancellation alert failed: ${adminRes.error}`), {

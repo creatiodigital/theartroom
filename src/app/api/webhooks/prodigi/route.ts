@@ -168,7 +168,8 @@ export async function POST(req: NextRequest) {
           orderId: existing.id,
           kind: 'note',
           actor: 'system',
-          message: 'MANUAL ACTION REQUIRED: cancel Prodigi order in dashboard (auto-cancel disabled)',
+          message:
+            'MANUAL ACTION REQUIRED: cancel Prodigi order in dashboard (auto-cancel disabled)',
           payload: { prodigiOrderId: order.id },
         })
         await prisma.printOrder.update({

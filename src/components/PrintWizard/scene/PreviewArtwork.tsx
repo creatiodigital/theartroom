@@ -6,45 +6,74 @@ import { useLoader } from '@react-three/fiber'
 
 import Frame from '@/components/scene/spaces/objects/Frame/Frame'
 
-import { getFormat, getFrameColor, getMount, getPaper, getSize } from '../options'
-import type { PrintConfig } from '../types'
+import {
+  type Catalog,
+  type WizardConfig,
+  collectVisualHints,
+  getEffectiveBorderCm,
+  getEffectiveMatCm,
+  getEffectiveSizeCm,
+} from '@/lib/print-providers'
 
 interface PreviewArtworkProps {
   imageUrl: string
-  config: PrintConfig
+  catalog: Catalog
+  config: WizardConfig
   /** Pixel aspect ratio of the artwork. > 1 = landscape → size swaps. */
   imageAspectRatio: number
 }
 
 const ARTWORK_Z = 0.012
 
-// Physical dimensions of the Prodigi Classic frame moulding. Box frame gets
-// an extra depth bump. Keep these in sync with the real product if it changes.
-const CLASSIC_MOULDING_CM = { width: 2.0, depth: 2.2 }
-const BOX_EXTRA_DEPTH_CM = 2.5
+// Sane fallbacks if the catalog's option visuals don't carry a hint.
+const DEFAULT_MOULDING_WIDTH_CM = 2.0
+const DEFAULT_MOULDING_DEPTH_CM = 2.2
+const DEFAULT_FRAME_HEX = '#0b0b0b'
+const DEFAULT_FRAME_ROUGHNESS = 0.4
+const DEFAULT_PAPER_ROUGHNESS = 0.7
+const DEFAULT_MAT_HEX = '#f6f3ec'
 
-export const PreviewArtwork = ({ imageUrl, config, imageAspectRatio }: PreviewArtworkProps) => {
-  const size = getSize(config.sizeId)
-  const format = getFormat(config.formatId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
-  const paper = getPaper(config.paperId)
+export const PreviewArtwork = ({
+  imageUrl,
+  catalog,
+  config,
+  imageAspectRatio,
+}: PreviewArtworkProps) => {
+  const effectiveSize = getEffectiveSizeCm(catalog, config)
+  if (!effectiveSize) return null
 
-  // SIZES are declared portrait (width < height). The frame follows the
-  // *buyer's chosen orientation* — when they flip to landscape we swap
-  // width/height so the preview matches how the print will be hung. This
-  // is the same flip the SKU size expresses at checkout (Prodigi's product
-  // area rotates with the sizing/orientation pair).
-  const displayIsLandscape = config.orientation === 'landscape'
-  const widthM = (displayIsLandscape ? size.heightCm : size.widthCm) / 100
-  const heightM = (displayIsLandscape ? size.widthCm : size.heightCm) / 100
-  const matBorderM = format.framed ? mount.borderCm / 100 : 0
-  const matWidthM = widthM + matBorderM * 2
-  const matHeightM = heightM + matBorderM * 2
+  const visuals = collectVisualHints(catalog, config)
+  const borderCm = getEffectiveBorderCm(config, 'border')
+  const matCm = getEffectiveMatCm(catalog, config)
 
-  // If the image's natural orientation doesn't match the chosen orientation,
-  // rotate the texture 90° so it fills the plane without being stretched —
-  // mirrors Prodigi's auto-rotation at fulfilment time.
+  const framed = visuals.framed === true
+  const matBorderM = framed && matCm > 0 ? matCm / 100 : 0
+  const paperBorderM = borderCm / 100
+  const mouldingWidthM = (visuals.mouldingWidthCm ?? DEFAULT_MOULDING_WIDTH_CM) / 100
+  const mouldingDepthM = (visuals.mouldingDepthCm ?? DEFAULT_MOULDING_DEPTH_CM) / 100
+  const frameHex = visuals.frameColorHex ?? DEFAULT_FRAME_HEX
+  const frameRoughness = visuals.frameRoughness ?? DEFAULT_FRAME_ROUGHNESS
+  const paperRoughness = visuals.paperRoughness ?? DEFAULT_PAPER_ROUGHNESS
+  const matHex = visuals.matColorHex ?? DEFAULT_MAT_HEX
+
+  // Sizes are declared portrait. The frame follows the buyer's chosen
+  // orientation — flip width/height when they pick landscape.
+  const displayIsLandscape = config.values.orientation === 'landscape'
+  const widthM = (displayIsLandscape ? effectiveSize.heightCm : effectiveSize.widthCm) / 100
+  const heightM = (displayIsLandscape ? effectiveSize.widthCm : effectiveSize.heightCm) / 100
+
+  // White paper border (TPS) wraps the printed image on the same
+  // sheet — sits behind the print and reads as paper, not mat.
+  const paperWidthM = widthM + paperBorderM * 2
+  const paperHeightM = heightM + paperBorderM * 2
+
+  // Passepartout (mount) sits between the paper and the frame.
+  const matWidthM = paperWidthM + matBorderM * 2
+  const matHeightM = paperHeightM + matBorderM * 2
+
+  // Rotate the texture 90° when the image's natural orientation
+  // doesn't match the chosen orientation — mirrors auto-rotation at
+  // fulfilment time.
   const imageIsLandscape = imageAspectRatio > 1
   const textureNeedsRotation = imageIsLandscape !== displayIsLandscape
 
@@ -59,26 +88,29 @@ export const PreviewArtwork = ({ imageUrl, config, imageAspectRatio }: PreviewAr
     texture.needsUpdate = true
   }, [texture, textureNeedsRotation])
 
-  const frameMaterial = useMemo(() => {
-    return new MeshStandardMaterial({
-      color: frameColor.hex,
-      roughness: frameColor.roughness,
-      metalness: 0.05,
-    })
-  }, [frameColor.hex, frameColor.roughness])
-
-  // Matte cotton for Museum Cotton Rag, slightly less so for Fine Art Matte.
-  const paperRoughness = paper.id === 'museum-cotton-rag' ? 0.85 : 0.7
-
-  const frameDepthM =
-    (CLASSIC_MOULDING_CM.depth + (config.formatId === 'box-framed' ? BOX_EXTRA_DEPTH_CM : 0)) / 100
+  const frameMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: frameHex,
+        roughness: frameRoughness,
+        metalness: 0.05,
+      }),
+    [frameHex, frameRoughness],
+  )
 
   return (
     <group position={[0, 0, ARTWORK_Z]}>
-      {format.framed && matBorderM > 0 && (
-        <mesh position={[0, 0, -0.001]}>
+      {framed && matBorderM > 0 && (
+        <mesh position={[0, 0, -0.0015]}>
           <planeGeometry args={[matWidthM, matHeightM]} />
-          <meshStandardMaterial color="#f6f3ec" roughness={0.95} />
+          <meshStandardMaterial color={matHex} roughness={0.95} />
+        </mesh>
+      )}
+
+      {paperBorderM > 0 && (
+        <mesh position={[0, 0, -0.001]}>
+          <planeGeometry args={[paperWidthM, paperHeightM]} />
+          <meshStandardMaterial color="#ffffff" roughness={paperRoughness} />
         </mesh>
       )}
 
@@ -87,13 +119,13 @@ export const PreviewArtwork = ({ imageUrl, config, imageAspectRatio }: PreviewAr
         <meshStandardMaterial map={texture} roughness={paperRoughness} />
       </mesh>
 
-      {format.framed && (
+      {framed && (
         <group position={[0, 0, -0.002]}>
           <Frame
-            width={matWidthM + (CLASSIC_MOULDING_CM.width / 100) * 2}
-            height={matHeightM + (CLASSIC_MOULDING_CM.width / 100) * 2}
-            thickness={CLASSIC_MOULDING_CM.width / 100}
-            depth={frameDepthM}
+            width={matWidthM + mouldingWidthM * 2}
+            height={matHeightM + mouldingWidthM * 2}
+            thickness={mouldingWidthM}
+            depth={mouldingDepthM}
             material={frameMaterial}
             cornerStyle="mitered"
           />
