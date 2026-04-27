@@ -64,6 +64,7 @@ export async function createPrintOrderFromPaymentIntent(
       originalWidth: true,
       originalHeight: true,
       userId: true,
+      printProvider: true,
       user: { select: { name: true, lastName: true, signatureUrl: true } },
     },
   })
@@ -139,6 +140,10 @@ export async function createPrintOrderFromPaymentIntent(
       customerVatCents: Number(md.customerVatCents ?? 0),
       currency: 'eur',
       paymentStatus: 'authorized',
+      // Snapshot the artwork's provider at order time. If the artist
+      // later switches their artwork to the other service, this order
+      // remains pinned to whichever provider actually handled it.
+      printProvider: artwork.printProvider,
     },
     // Don't downgrade — if we're already 'succeeded' (captured) keep it.
     update: {},

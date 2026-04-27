@@ -17,10 +17,15 @@ import {
   getOrderDetail,
   markPlacedInProdigi,
   markRejected,
+  markTpsDelivered,
+  markTpsPlaced,
+  markTpsShipped,
+  markTpsStarted,
   refundOrder,
   syncOrderFromProdigi,
   type AdminOrderDetail as Detail,
 } from '@/app/admin/orders/actions'
+import { getProviderInfo } from '@/app/admin/orders/providerInfo'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
@@ -157,6 +162,18 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  // ── TPS manual-fulfillment state ─────────────────────────────────
+  // For providers without an automated webhook (currently The Print
+  // Space) the admin advances each stage by hand. One in-flight flag
+  // per CTA + a shared error string so we can disable everything during
+  // the transition and surface failures inline.
+  const [tpsBusy, setTpsBusy] = useState<'placed' | 'started' | 'shipped' | 'delivered' | null>(
+    null,
+  )
+  const [tpsError, setTpsError] = useState<string | null>(null)
+  const [tpsShipOpen, setTpsShipOpen] = useState(false)
+  const [tpsTrackingUrl, setTpsTrackingUrl] = useState('')
+
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
       router.push('/')
@@ -278,6 +295,64 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
     }
     router.push('/admin/orders')
   }, [order, router])
+
+  // ── TPS manual stage handlers ────────────────────────────────────
+  // Each one drives a separate server action; the shared `tpsBusy`
+  // flag plus inline `tpsError` keep the UI honest while in flight.
+  // Buyer transition emails fire from the server action itself.
+  const handleTpsPlaced = useCallback(async () => {
+    if (!order) return
+    setTpsBusy('placed')
+    setTpsError(null)
+    const res = await markTpsPlaced(order.id)
+    setTpsBusy(null)
+    if (!res.ok) {
+      setTpsError(res.error)
+      return
+    }
+    await load()
+  }, [order, load])
+
+  const handleTpsStarted = useCallback(async () => {
+    if (!order) return
+    setTpsBusy('started')
+    setTpsError(null)
+    const res = await markTpsStarted(order.id)
+    setTpsBusy(null)
+    if (!res.ok) {
+      setTpsError(res.error)
+      return
+    }
+    await load()
+  }, [order, load])
+
+  const handleTpsShipped = useCallback(async () => {
+    if (!order) return
+    setTpsBusy('shipped')
+    setTpsError(null)
+    const res = await markTpsShipped(order.id, tpsTrackingUrl || null)
+    setTpsBusy(null)
+    if (!res.ok) {
+      setTpsError(res.error)
+      return
+    }
+    setTpsShipOpen(false)
+    setTpsTrackingUrl('')
+    await load()
+  }, [order, tpsTrackingUrl, load])
+
+  const handleTpsDelivered = useCallback(async () => {
+    if (!order) return
+    setTpsBusy('delivered')
+    setTpsError(null)
+    const res = await markTpsDelivered(order.id)
+    setTpsBusy(null)
+    if (!res.ok) {
+      setTpsError(res.error)
+      return
+    }
+    await load()
+  }, [order, load])
 
   if (loading) {
     return (
@@ -525,102 +600,292 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         </div>
       )}
 
-      {(issues.length > 0 || erroredPhases.length > 0) && (
-        <div className={dashboardStyles.section}>
-          <div
-            style={{
-              padding: '12px 16px',
-              background: '#fdecea',
-              border: '1px solid #f5a5a0',
-              borderRadius: 4,
-              fontSize: 13,
-              lineHeight: 1.55,
-            }}
-          >
-            <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>
-              ⚠️ Prodigi reported an issue on this order
-            </p>
-            {erroredPhases.length > 0 && (
-              <p style={{ margin: '0 0 8px 0' }}>
-                Phases in <code>Error</code> state:{' '}
-                {erroredPhases.map(([k], i) => (
-                  <span key={k}>
-                    {i > 0 ? ', ' : ''}
-                    <code>{k}</code>
-                  </span>
-                ))}
-                . Common cause: <code>downloadAssets</code> = Error means Prodigi couldn&apos;t
-                fetch the asset URL (check that the R2 URL is still reachable).
+      {(issues.length > 0 || erroredPhases.length > 0) &&
+        getProviderInfo(order.printProvider).fulfillment === 'auto' && (
+          <div className={dashboardStyles.section}>
+            <div
+              style={{
+                padding: '12px 16px',
+                background: '#fdecea',
+                border: '1px solid #f5a5a0',
+                borderRadius: 4,
+                fontSize: 13,
+                lineHeight: 1.55,
+              }}
+            >
+              <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>
+                ⚠️ Prodigi reported an issue on this order
               </p>
-            )}
-            {issues.length > 0 && (
-              <ul style={{ margin: '0 0 0 18px', padding: 0 }}>
-                {issues.map((i) => (
-                  <li key={`${i.errorCode}:${i.description}`}>
-                    <strong>{i.errorCode}</strong> — {i.description}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p style={{ margin: '8px 0 0 0', fontSize: 12, opacity: 0.75 }}>
-              Click &ldquo;Refresh from Prodigi&rdquo; below after you&apos;ve fixed it on their
-              side, or &ldquo;Mark rejected&rdquo; to cancel the order.
-            </p>
+              {erroredPhases.length > 0 && (
+                <p style={{ margin: '0 0 8px 0' }}>
+                  Phases in <code>Error</code> state:{' '}
+                  {erroredPhases.map(([k], i) => (
+                    <span key={k}>
+                      {i > 0 ? ', ' : ''}
+                      <code>{k}</code>
+                    </span>
+                  ))}
+                  . Common cause: <code>downloadAssets</code> = Error means Prodigi couldn&apos;t
+                  fetch the asset URL (check that the R2 URL is still reachable).
+                </p>
+              )}
+              {issues.length > 0 && (
+                <ul style={{ margin: '0 0 0 18px', padding: 0 }}>
+                  {issues.map((i) => (
+                    <li key={`${i.errorCode}:${i.description}`}>
+                      <strong>{i.errorCode}</strong> — {i.description}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p style={{ margin: '8px 0 0 0', fontSize: 12, opacity: 0.75 }}>
+                Click &ldquo;Refresh from Prodigi&rdquo; below after you&apos;ve fixed it on their
+                side, or &ldquo;Mark rejected&rdquo; to cancel the order.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <div className={dashboardStyles.section}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 12,
+            flexWrap: 'wrap',
+          }}
+        >
           <h2 style={{ margin: 0, fontSize: 16 }}>Fulfillment</h2>
           <Dot color={prodigiDot(stage)} />
           <Badge label={prodigiStageLabel(stage)} variant="current" />
+          {(() => {
+            // Provider badge — surfaces "Prodigi" vs "TPS" so the admin
+            // immediately knows whether to expect auto-sync or to drive
+            // the order by hand. `getProviderInfo` falls through safely
+            // for unknown / removed providers.
+            const info = getProviderInfo(order.printProvider)
+            return (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 12,
+                  padding: '2px 10px',
+                  borderRadius: 999,
+                  border: `1px solid ${info.color}`,
+                  color: info.color,
+                  fontWeight: 500,
+                }}
+                title={
+                  info.fulfillment === 'auto'
+                    ? `${info.longLabel} — status updates automatically via webhook`
+                    : `${info.longLabel} — status managed manually from this page`
+                }
+              >
+                {info.longLabel}
+                <span style={{ opacity: 0.6 }}>
+                  · {info.fulfillment === 'auto' ? 'auto' : 'manual'}
+                </span>
+              </span>
+            )
+          })()}
           {syncing && <span style={{ fontSize: 12, opacity: 0.6 }}>Syncing with Prodigi…</span>}
         </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {canMarkPlaced && (
-            <Button
-              font="dashboard"
-              variant="primary"
-              label="Mark placed in Prodigi"
-              onClick={() => {
-                setPlaceError(null)
-                setPlaceOpen(true)
+        {getProviderInfo(order.printProvider).fulfillment === 'auto' ? (
+          // Provider auto-syncs (currently Prodigi). Existing controls
+          // unchanged — webhook + manual refresh do the heavy lifting.
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {canMarkPlaced && (
+              <Button
+                font="dashboard"
+                variant="primary"
+                label="Mark placed in Prodigi"
+                onClick={() => {
+                  setPlaceError(null)
+                  setPlaceOpen(true)
+                }}
+              />
+            )}
+            {canSync && (
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label={syncing ? 'Refreshing…' : 'Refresh from Prodigi'}
+                onClick={() => handleSync(false)}
+                disabled={syncing}
+              />
+            )}
+            {canReject && (
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label="Mark rejected"
+                onClick={() => {
+                  setRejectError(null)
+                  setRejectOpen(true)
+                }}
+              />
+            )}
+            {stage === null && order.paymentStatus !== 'authorized' && (
+              <span style={{ fontSize: 12, opacity: 0.6 }}>
+                Waiting for payment to authorize before you can place in Prodigi.
+              </span>
+            )}
+          </div>
+        ) : (
+          // Manual provider (TPS). Each transition is a single click;
+          // the underlying server action captures payment / sets stage
+          // / fires the matching buyer email. Buttons stay enabled
+          // outside their natural sequence so admin can recover from
+          // out-of-order TPS notifications (e.g. mark Delivered without
+          // having clicked Shipped first if the order skipped a stage).
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div
+              style={{
+                padding: '8px 12px',
+                background: '#f3f0ff',
+                border: '1px solid #c4b5fd',
+                borderRadius: 4,
+                fontSize: 12,
+                lineHeight: 1.5,
               }}
-            />
-          )}
-          {canSync && (
-            <Button
-              font="dashboard"
-              variant="secondary"
-              label={syncing ? 'Refreshing…' : 'Refresh from Prodigi'}
-              onClick={() => handleSync(false)}
-              disabled={syncing}
-            />
-          )}
-          {canReject && (
-            <Button
-              font="dashboard"
-              variant="secondary"
-              label="Mark rejected"
-              onClick={() => {
-                setRejectError(null)
-                setRejectOpen(true)
-              }}
-            />
-          )}
-          {stage === null && order.paymentStatus !== 'authorized' && (
-            <span style={{ fontSize: 12, opacity: 0.6 }}>
-              Waiting for payment to authorize before you can place in Prodigi.
-            </span>
-          )}
-          {isTerminal && (
-            <span style={{ fontSize: 12, opacity: 0.6 }}>
-              Terminal stage — no further fulfillment action.
-            </span>
-          )}
-        </div>
+            >
+              <strong>Manual fulfillment.</strong> The Print Space doesn&apos;t expose status via
+              API, so advance the stage here as you get updates from them. Each click sends the
+              corresponding buyer email automatically.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {stage === null && order.paymentStatus === 'authorized' && (
+                <Button
+                  font="dashboard"
+                  variant="primary"
+                  label={tpsBusy === 'placed' ? 'Capturing…' : 'Capture payment & mark placed'}
+                  onClick={handleTpsPlaced}
+                  disabled={tpsBusy !== null}
+                />
+              )}
+              {stage !== null && !isTerminal && (
+                <>
+                  <Button
+                    font="dashboard"
+                    variant="secondary"
+                    label={tpsBusy === 'started' ? 'Marking…' : 'Mark in production (notify buyer)'}
+                    onClick={handleTpsStarted}
+                    disabled={tpsBusy !== null || stage === 'Started'}
+                  />
+                  <Button
+                    font="dashboard"
+                    variant="secondary"
+                    label={tpsBusy === 'shipped' ? 'Marking…' : 'Mark shipped (notify buyer)'}
+                    onClick={() => {
+                      setTpsError(null)
+                      setTpsTrackingUrl(order.trackingUrl ?? '')
+                      setTpsShipOpen(true)
+                    }}
+                    disabled={tpsBusy !== null || stage === 'Shipped'}
+                  />
+                  <Button
+                    font="dashboard"
+                    variant="secondary"
+                    label={tpsBusy === 'delivered' ? 'Marking…' : 'Mark delivered (notify buyer)'}
+                    onClick={handleTpsDelivered}
+                    disabled={tpsBusy !== null}
+                  />
+                  <Button
+                    font="dashboard"
+                    variant="secondary"
+                    label="Mark rejected"
+                    onClick={() => {
+                      setRejectError(null)
+                      setRejectOpen(true)
+                    }}
+                    disabled={tpsBusy !== null}
+                  />
+                </>
+              )}
+              {stage === null && order.paymentStatus !== 'authorized' && (
+                <span style={{ fontSize: 12, opacity: 0.6 }}>
+                  Waiting for payment to authorize before you can capture & mark placed.
+                </span>
+              )}
+            </div>
+            {tpsError && <p style={{ margin: 0, color: '#b91c1c', fontSize: 13 }}>⚠️ {tpsError}</p>}
+            {tpsShipOpen && (
+              <div
+                style={{
+                  padding: 16,
+                  border: '1px solid rgba(0,0,0,0.15)',
+                  borderRadius: 4,
+                  background: '#fafafa',
+                }}
+              >
+                <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
+                  <strong>Mark this order as shipped.</strong> Paste the tracking URL TPS provided
+                  so the buyer&apos;s email can link straight to it. Leave blank if you don&apos;t
+                  have one yet.
+                </p>
+                <label
+                  htmlFor="tps-tracking-url"
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    marginBottom: 6,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    opacity: 0.7,
+                  }}
+                >
+                  Tracking URL (optional)
+                </label>
+                <input
+                  id="tps-tracking-url"
+                  type="url"
+                  value={tpsTrackingUrl}
+                  onChange={(e) => setTpsTrackingUrl(e.target.value)}
+                  placeholder="https://tracking.example.com/..."
+                  style={{
+                    width: '100%',
+                    padding: 8,
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    borderRadius: 4,
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <Button
+                    font="dashboard"
+                    variant="primary"
+                    label={tpsBusy === 'shipped' ? 'Marking…' : 'Mark shipped'}
+                    onClick={handleTpsShipped}
+                    disabled={tpsBusy !== null}
+                  />
+                  <Button
+                    font="dashboard"
+                    variant="secondary"
+                    label="Cancel"
+                    onClick={() => {
+                      setTpsShipOpen(false)
+                      setTpsTrackingUrl('')
+                      setTpsError(null)
+                    }}
+                    disabled={tpsBusy !== null}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isTerminal && (
+          <p style={{ margin: '12px 0 0 0', fontSize: 12, opacity: 0.6 }}>
+            Terminal stage — no further fulfillment action.
+          </p>
+        )}
 
         {syncMessage && (
           <p style={{ margin: '12px 0 0 0', fontSize: 13, opacity: 0.8 }}>{syncMessage}</p>

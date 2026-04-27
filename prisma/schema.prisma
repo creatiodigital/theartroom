@@ -236,6 +236,14 @@ model PrintOrder {
   // 'processing' | 'succeeded' | 'failed' | 'refunded'
   paymentStatus String @default("processing")
 
+  // Snapshotted from `artwork.printProvider` at order-creation time so
+  // orders survive provider changes on the artwork. Without this, an
+  // artist switching their artwork from Prodigi to TPS would
+  // retroactively flip every existing order's provider in the admin
+  // UI. Nullable for legacy rows from before this column existed —
+  // admin reads fall back to `artwork.printProvider` when null.
+  printProvider PrintProvider?
+
   // Prodigi fulfillment state (null until we submit the order).
   prodigiOrderId String?
   prodigiStage   String? // 'Draft' | 'InProgress' | 'Complete' | 'Cancelled'

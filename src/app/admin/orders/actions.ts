@@ -5,6 +5,7 @@ import { isAdminOrAbove } from '@/lib/authUtils'
 import { sendAdminOrderCancelledAlert } from '@/lib/emails/adminOrderCancelled'
 import { sendArtistPayoutEmail } from '@/lib/emails/artistPayout'
 import { sendOrderCancelledEmail } from '@/lib/emails/orderCancelled'
+import { sendOrderDeliveredEmail } from '@/lib/emails/orderDelivered'
 import { sendOrderInProductionEmail } from '@/lib/emails/orderInProduction'
 import { sendOrderShippedEmail } from '@/lib/emails/orderShipped'
 import { sendRefundIssuedEmail } from '@/lib/emails/refundIssued'
@@ -19,6 +20,13 @@ export type AdminOrderRow = {
   paymentIntentId: string
   createdAt: string
   artwork: { id: string; slug: string | null; title: string | null }
+  /**
+   * Which fulfillment service this order was placed against, copied from
+   * the artwork at fetch time. May be null on legacy rows or if the
+   * provider has been removed from the schema — admin UI must treat
+   * unknown values as "manual / no auto sync" via getProviderInfo().
+   */
+  printProvider: string | null
   artist: {
     id: string
     name: string
@@ -62,7 +70,10 @@ export async function listOrders(): Promise<
     orderBy: { createdAt: 'desc' },
     take: 200,
     include: {
-      artwork: { select: { id: true, slug: true, title: true } },
+      // We select the artwork's `printProvider` only as a fallback for
+      // legacy orders created before PrintOrder.printProvider existed.
+      // New orders should always read from the snapshotted column.
+      artwork: { select: { id: true, slug: true, title: true, printProvider: true } },
       artistUser: {
         select: {
           id: true,
@@ -89,6 +100,11 @@ export async function listOrders(): Promise<
       slug: r.artwork.slug,
       title: r.artwork.title,
     },
+    // Prefer the snapshot on the order row. Fall back to the artwork's
+    // current provider only for legacy rows where the snapshot is null.
+    // This stops the admin UI from "flipping" an order's provider when
+    // the artist later changes their artwork's print service.
+    printProvider: r.printProvider ?? r.artwork.printProvider ?? null,
     artist: {
       id: r.artistUser.id,
       name: `${r.artistUser.name} ${r.artistUser.lastName}`.trim(),
@@ -206,6 +222,7 @@ export async function getOrderDetail(
           title: true,
           imageUrl: true,
           originalImageUrl: true,
+          printProvider: true,
         },
       },
       artistUser: {
@@ -227,6 +244,9 @@ export async function getOrderDetail(
     paymentIntentId: r.paymentIntentId,
     createdAt: r.createdAt.toISOString(),
     artwork: { id: r.artwork.id, slug: r.artwork.slug, title: r.artwork.title },
+    // Snapshot first, artwork fallback for legacy rows. Same rule as
+    // listOrders — see comment there.
+    printProvider: r.printProvider ?? r.artwork.printProvider ?? null,
     artist: {
       id: r.artistUser.id,
       name: `${r.artistUser.name} ${r.artistUser.lastName}`.trim(),
@@ -545,6 +565,18 @@ export async function createSandboxTestOrder(): Promise<
     }
   }
 
+  // Pick a Prodigi-compatible artwork. Without this filter, the most
+  // recent artwork might be set to TPS — the sandbox API call would
+  // still succeed (it always hits Prodigi sandbox regardless of
+  // artwork provider) but the resulting order would render with a TPS
+  // badge in the admin UI, since `printProvider` is derived from the
+  // artwork. We accept null providers too for legacy rows from before
+  // the column existed.
+  // Test fixture: use any artwork with an image as the visual stand-in.
+  // The artwork's `printProvider` is irrelevant — we snapshot the
+  // order's provider as PRODIGI directly on the order row below, so
+  // the resulting order renders with the correct badge regardless of
+  // the artwork's current provider setting.
   const artwork = await prisma.artwork.findFirst({
     where: { OR: [{ imageUrl: { not: null } }, { originalImageUrl: { not: null } }] },
     select: {
@@ -621,6 +653,10 @@ export async function createSandboxTestOrder(): Promise<
       customerVatCents: 0,
       currency: 'eur',
       paymentStatus: 'succeeded',
+      // Snapshot — this order is being placed against Prodigi sandbox,
+      // independent of whether the artwork's current provider is later
+      // switched.
+      printProvider: 'PRODIGI',
     },
   })
 
@@ -687,6 +723,107 @@ export async function createSandboxTestOrder(): Promise<
 }
 
 /**
+ * Dev-only: create a fake local PrintOrder against an artwork whose
+ * printProvider is PRINTSPACE. Doesn't call any external API — TPS has
+ * no sandbox. Starts the order at paymentStatus='authorized' and
+ * stage=null so the admin can exercise the full manual flow on the
+ * detail page (Capture & mark placed → Mark in production → Mark
+ * shipped → Mark delivered) and verify the four buyer emails.
+ *
+ * Disabled in production. Refuses if no TPS artwork exists yet.
+ */
+export async function createTpsTestOrder(): Promise<
+  { ok: true; orderId: string } | { ok: false; error: string }
+> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  if (process.env.NODE_ENV === 'production') {
+    return { ok: false, error: 'Test orders are disabled in production.' }
+  }
+
+  // Same as the Prodigi sandbox test: use any artwork with an image.
+  // We snapshot the order's `printProvider` as PRINTSPACE on the row
+  // itself, so the artwork's actual provider is irrelevant.
+  const artwork = await prisma.artwork.findFirst({
+    where: { OR: [{ imageUrl: { not: null } }, { originalImageUrl: { not: null } }] },
+    select: {
+      id: true,
+      title: true,
+      userId: true,
+      user: { select: { name: true, lastName: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (!artwork) {
+    return { ok: false, error: 'No artworks available to use as a test item. Upload one first.' }
+  }
+
+  // Synthetic Stripe PI id — the manual `markTpsPlaced` flow expects an
+  // authorized PI it can capture, but for dev-only test orders we skip
+  // the real Stripe interaction. Admin who clicks "Capture & mark
+  // placed" on this row will see the Stripe error inline; that's
+  // acceptable for QA of the manual flow itself.
+  const pi = `pi_tps_test_${Date.now()}`
+  const buyerEmail = guard.session.user.email ?? 'tps-test@theartroom.gallery'
+  const buyerName = guard.session.user.name ?? 'TPS Test Buyer'
+
+  const order = await prisma.printOrder.create({
+    data: {
+      paymentIntentId: pi,
+      artworkId: artwork.id,
+      artistUserId: artwork.userId,
+      buyerEmail,
+      buyerName,
+      shippingAddress: {
+        line1: '221B Baker Street',
+        line2: '',
+        city: 'London',
+        state: '',
+        postalCode: 'NW1 6XE',
+        country: 'GB',
+        phone: '',
+      },
+      // Plausible TPS shape — the wizard writes provider-specific
+      // configs, so we mirror that. Exact values aren't load-bearing
+      // for the manual flow QA.
+      printConfig: {
+        paperId: 'hahnemuhle-german-etching',
+        printTypeId: 'giclee',
+        widthCm: 40,
+        heightCm: 30,
+        formatId: 'unframed',
+        orientation: 'landscape',
+      },
+      country: 'GB',
+      totalCents: 6500,
+      artistCents: 1500,
+      galleryCents: 1500,
+      prodigiItemCents: 3000,
+      prodigiShippingCents: 500,
+      customerVatCents: 0,
+      currency: 'eur',
+      // 'authorized' so the admin starts the manual flow from the
+      // beginning: "Capture payment & mark placed" is the first CTA.
+      paymentStatus: 'authorized',
+      // Snapshot — locks this fixture to TPS regardless of whether the
+      // backing artwork's provider is later switched.
+      printProvider: 'PRINTSPACE',
+    },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: 'TPS test order created (dev fixture)',
+    payload: { provider: 'PRINTSPACE' },
+  })
+
+  return { ok: true, orderId: order.id }
+}
+
+/**
  * Hard-delete an order from the DB, with safety guards. Intended for
  * cleaning up test/mistaken orders pre-launch. Refuses to delete any
  * order that has captured money we haven't returned yet, or where the
@@ -706,35 +843,49 @@ export async function deleteOrder(
   const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
   if (!order) return { ok: false, error: 'Order not found.' }
 
-  if (order.transferId) {
-    return {
-      ok: false,
-      error: 'Artist payout already released — cannot delete. Recover funds from the artist first.',
-    }
-  }
-  if (order.paymentStatus === 'succeeded') {
-    return {
-      ok: false,
-      error: 'Payment was captured. Refund the buyer first; only then can the order be deleted.',
-    }
-  }
+  // Test orders carry synthetic Stripe PI ids that Stripe never issued
+  // (`pi_sandbox_test_*` for Prodigi sandbox, `pi_tps_test_*` for the
+  // local TPS fixture). They have no real money attached, so we skip
+  // the captured-payment / payout-released guards and the Stripe
+  // cancel call. Production-like orders still have to be refunded
+  // before deletion.
+  const isTestOrder =
+    order.paymentIntentId.startsWith('pi_sandbox_test_') ||
+    order.paymentIntentId.startsWith('pi_tps_test_')
 
-  // Release the Stripe hold before removing the order row — otherwise
-  // the auth sits on the buyer's card until Stripe expires it (~7 days).
-  if (order.paymentStatus === 'authorized') {
-    try {
-      await stripe.paymentIntents.cancel(order.paymentIntentId)
-    } catch (err) {
-      captureError(err, {
-        flow: 'admin',
-        stage: 'delete-order-cancel-pi',
-        extra: { orderId, paymentIntentId: order.paymentIntentId },
-        level: 'error',
-        fingerprint: ['admin:delete-cancel-pi-failed'],
-      })
+  if (!isTestOrder) {
+    if (order.transferId) {
       return {
         ok: false,
-        error: `Stripe cancel failed: ${err instanceof Error ? err.message : String(err)}. Order not deleted.`,
+        error:
+          'Artist payout already released — cannot delete. Recover funds from the artist first.',
+      }
+    }
+    if (order.paymentStatus === 'succeeded') {
+      return {
+        ok: false,
+        error:
+          'Payment was captured. Refund the buyer first; only then can the order be deleted.',
+      }
+    }
+
+    // Release the Stripe hold before removing the order row — otherwise
+    // the auth sits on the buyer's card until Stripe expires it (~7 days).
+    if (order.paymentStatus === 'authorized') {
+      try {
+        await stripe.paymentIntents.cancel(order.paymentIntentId)
+      } catch (err) {
+        captureError(err, {
+          flow: 'admin',
+          stage: 'delete-order-cancel-pi',
+          extra: { orderId, paymentIntentId: order.paymentIntentId },
+          level: 'error',
+          fingerprint: ['admin:delete-cancel-pi-failed'],
+        })
+        return {
+          ok: false,
+          error: `Stripe cancel failed: ${err instanceof Error ? err.message : String(err)}. Order not deleted.`,
+        }
       }
     }
   }
@@ -909,6 +1060,177 @@ export async function markRejected(
   return { ok: true, needsRefund }
 }
 
+// ── Manual TPS fulfillment actions ────────────────────────────────
+// The Print Space has no usable status API, so admin advances each
+// order's stage by hand from the detail page. Each action mirrors the
+// shape of the Prodigi flow (validate → capture/cancel if needed →
+// update DB → log event → fire buyer email) so the admin/payouts
+// surface and event log treat both providers identically downstream.
+
+/**
+ * Admin CTA (TPS): we just placed the order in The Print Space's
+ * dashboard by hand. Captures the Stripe auth so the buyer is charged
+ * and advances stage to Placed. Equivalent of `markPlacedInProdigi`
+ * minus the prodigiOrderId field — TPS doesn't expose a stable order
+ * ID we can store. No buyer email at this stage (Placed is internal).
+ */
+export async function markTpsPlaced(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+  if (order.prodigiStage !== STAGE_PENDING) {
+    return { ok: false, error: `Already advanced past pending (stage: ${order.prodigiStage}).` }
+  }
+  if (order.paymentStatus !== 'authorized') {
+    return {
+      ok: false,
+      error: `Payment must be authorized to capture (current: ${order.paymentStatus}).`,
+    }
+  }
+
+  try {
+    await stripe.paymentIntents.capture(order.paymentIntentId)
+  } catch (err) {
+    captureError(err, {
+      flow: 'admin',
+      stage: 'mark-tps-placed-capture',
+      extra: { orderId, paymentIntentId: order.paymentIntentId },
+      level: 'error',
+      fingerprint: ['admin:mark-tps-placed-capture-failed'],
+    })
+    return {
+      ok: false,
+      error: `Stripe capture failed: ${err instanceof Error ? err.message : String(err)}`,
+    }
+  }
+
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: { prodigiStage: STAGE_PLACED, paymentStatus: 'succeeded' },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: 'Marked placed in The Print Space (payment captured)',
+    payload: {},
+  })
+
+  return { ok: true }
+}
+
+/**
+ * Admin CTA (TPS): TPS has accepted the order and started production.
+ * Sets stage to Started and fires the buyer's "order accepted" email.
+ */
+export async function markTpsStarted(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return advanceTpsStage(orderId, STAGE_STARTED, {
+    logMessage: 'Marked in production (TPS accepted the order)',
+  })
+}
+
+/**
+ * Admin CTA (TPS): TPS shipped the print. Stamps trackingUrl (if
+ * provided) so the "Your artwork is on its way" email links to it.
+ * shippedAt is intentionally left for STAGE_COMPLETE — the column name
+ * is historical, it really means "payout clock start" and we want that
+ * tied to delivery, not pickup.
+ */
+export async function markTpsShipped(
+  orderId: string,
+  trackingUrl: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const trimmedTracking = trackingUrl?.trim() || null
+  return advanceTpsStage(orderId, STAGE_SHIPPED, {
+    logMessage: trimmedTracking
+      ? 'Marked shipped (tracking URL recorded)'
+      : 'Marked shipped (no tracking URL)',
+    trackingUrl: trimmedTracking,
+  })
+}
+
+/**
+ * Admin CTA (TPS): the buyer has received the print. Stamps the
+ * payout-clock start (`shippedAt`) and fires the "Your artwork has
+ * arrived" email.
+ */
+export async function markTpsDelivered(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return advanceTpsStage(orderId, STAGE_COMPLETE, {
+    logMessage: 'Marked delivered',
+    setShippedAtNow: true,
+  })
+}
+
+/**
+ * Shared core for the TPS stage-advance CTAs. Validates the transition
+ * (no advancing past terminal states), updates the row, logs an event,
+ * and fires the buyer email if the new stage is one of the four
+ * critical transitions covered by maybeSendBuyerTransitionEmail.
+ */
+async function advanceTpsStage(
+  orderId: string,
+  newStage: string,
+  opts: {
+    logMessage: string
+    trackingUrl?: string | null
+    setShippedAtNow?: boolean
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+  if (order.prodigiStage === STAGE_COMPLETE || order.prodigiStage === STAGE_REJECTED) {
+    return {
+      ok: false,
+      error: `Cannot advance from terminal stage "${order.prodigiStage}".`,
+    }
+  }
+
+  // Tracking URL passed for shipment emails; falls through from existing
+  // value when caller didn't override (mark-shipped after a stale value).
+  const effectiveTrackingUrl =
+    typeof opts.trackingUrl === 'string' ? opts.trackingUrl : (order.trackingUrl ?? null)
+
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: {
+      prodigiStage: newStage,
+      ...(opts.trackingUrl !== undefined ? { trackingUrl: opts.trackingUrl } : {}),
+      ...(opts.setShippedAtNow ? { shippedAt: new Date() } : {}),
+    },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: opts.logMessage,
+    payload: {
+      previousStage: order.prodigiStage,
+      newStage,
+      trackingUrl: effectiveTrackingUrl,
+    },
+  })
+
+  await maybeSendBuyerTransitionEmail(order.id, newStage, {
+    trackingUrl: effectiveTrackingUrl,
+    source: 'admin',
+  })
+
+  return { ok: true }
+}
+
 /**
  * Fetches the latest state from Prodigi (`GET /orders/{id}`), maps it
  * into our stage vocabulary, and updates the PrintOrder row if anything
@@ -1028,7 +1350,16 @@ async function maybeSendBuyerTransitionEmail(
   newStage: string,
   opts: { trackingUrl: string | null; source?: 'prodigi-sync' | 'admin' },
 ): Promise<void> {
-  if (newStage !== STAGE_STARTED && newStage !== STAGE_SHIPPED && newStage !== STAGE_REJECTED) {
+  // Critical buyer-facing transitions only — these are the moments where
+  // the buyer would otherwise wonder where their order is. We
+  // intentionally don't email on Placed (admin-side) or in-between
+  // sub-stages.
+  if (
+    newStage !== STAGE_STARTED &&
+    newStage !== STAGE_SHIPPED &&
+    newStage !== STAGE_COMPLETE &&
+    newStage !== STAGE_REJECTED
+  ) {
     return
   }
 
@@ -1037,7 +1368,9 @@ async function maybeSendBuyerTransitionEmail(
       ? 'order_in_production'
       : newStage === STAGE_SHIPPED
         ? 'order_shipped'
-        : 'order_cancelled'
+        : newStage === STAGE_COMPLETE
+          ? 'order_delivered'
+          : 'order_cancelled'
 
   const alreadySent = await prisma.printOrderEvent.findFirst({
     where: { orderId, kind: 'email_sent', message: emailMessageKey },
@@ -1077,14 +1410,22 @@ async function maybeSendBuyerTransitionEmail(
             artistName,
             trackingUrl: opts.trackingUrl,
           })
-        : await sendOrderCancelledEmail({
-            to: order.buyerEmail,
-            buyerName: order.buyerName,
-            orderId: order.id,
-            artworkTitle: order.artwork.title ?? '',
-            artistName,
-            paymentStatus: order.paymentStatus,
-          })
+        : newStage === STAGE_COMPLETE
+          ? await sendOrderDeliveredEmail({
+              to: order.buyerEmail,
+              buyerName: order.buyerName,
+              orderId: order.id,
+              artworkTitle: order.artwork.title ?? '',
+              artistName,
+            })
+          : await sendOrderCancelledEmail({
+              to: order.buyerEmail,
+              buyerName: order.buyerName,
+              orderId: order.id,
+              artworkTitle: order.artwork.title ?? '',
+              artistName,
+              paymentStatus: order.paymentStatus,
+            })
 
   await logOrderEvent({
     orderId: order.id,

@@ -16,10 +16,12 @@ import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLay
 
 import {
   createSandboxTestOrder,
+  createTpsTestOrder,
   listOrders,
   releasePayout,
   type AdminOrderRow,
 } from '@/app/admin/orders/actions'
+import { getProviderInfo, listProviders, type ProviderId } from '@/app/admin/orders/providerInfo'
 
 const formatDate = (iso: string | null) => {
   if (!iso) return '—'
@@ -102,6 +104,11 @@ export const AdminOrders = () => {
   const [releasingId, setReleasingId] = useState<string | null>(null)
   const [confirmPayoutId, setConfirmPayoutId] = useState<string | null>(null)
   const [creatingTestOrder, setCreatingTestOrder] = useState(false)
+  const [creatingTpsTestOrder, setCreatingTpsTestOrder] = useState(false)
+  // 'all' = no filter; otherwise the provider id we want to show.
+  // Driven from the provider registry — adding/removing a provider in
+  // providerInfo.ts updates the tabs automatically.
+  const [providerFilter, setProviderFilter] = useState<'all' | ProviderId>('all')
 
   // Redirect non-admins (same guard used by other admin pages).
   useEffect(() => {
@@ -130,6 +137,18 @@ export const AdminOrders = () => {
     setError(null)
     const res = await createSandboxTestOrder()
     setCreatingTestOrder(false)
+    if (!res.ok) {
+      setError(res.error)
+      return
+    }
+    router.push(`/admin/orders/${res.orderId}`)
+  }, [router])
+
+  const handleCreateTpsTestOrder = useCallback(async () => {
+    setCreatingTpsTestOrder(true)
+    setError(null)
+    const res = await createTpsTestOrder()
+    setCreatingTpsTestOrder(false)
     if (!res.ok) {
       setError(res.error)
       return
@@ -168,19 +187,34 @@ export const AdminOrders = () => {
               border: '1px dashed #6366f1',
               borderRadius: 4,
               fontSize: 13,
+              flexWrap: 'wrap',
             }}
           >
-            <span style={{ flex: 1 }}>
-              <strong>Dev tools</strong> — create a fake Prodigi sandbox order to exercise the full
-              sync + email pipeline without spending money. Hidden in production.
+            <span style={{ flex: 1, minWidth: 240 }}>
+              <strong>Dev tools</strong> — quickly spin up fake orders to exercise the full
+              fulfillment + email pipelines without spending money. Hidden in production.
+              <br />
+              <span style={{ opacity: 0.75 }}>
+                Prodigi: real sandbox order with auto-sync. TPS: local row only, exercises the
+                manual stage CTAs.
+              </span>
             </span>
-            <Button
-              font="dashboard"
-              variant="secondary"
-              label={creatingTestOrder ? 'Creating…' : 'Create sandbox test order'}
-              onClick={handleCreateTestOrder}
-              disabled={creatingTestOrder}
-            />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label={creatingTestOrder ? 'Creating…' : 'Create a Prodigi Sandbox test order'}
+                onClick={handleCreateTestOrder}
+                disabled={creatingTestOrder || creatingTpsTestOrder}
+              />
+              <Button
+                font="dashboard"
+                variant="secondary"
+                label={creatingTpsTestOrder ? 'Creating…' : 'Create a TPS test order'}
+                onClick={handleCreateTpsTestOrder}
+                disabled={creatingTestOrder || creatingTpsTestOrder}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -191,129 +225,221 @@ export const AdminOrders = () => {
         </div>
       )}
 
+      {!loading && orders.length > 0 && (
+        <div className={dashboardStyles.section} style={{ paddingBottom: 0 }}>
+          <div
+            role="tablist"
+            aria-label="Filter orders by fulfillment provider"
+            style={{
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              borderBottom: '1px solid var(--color-border-subtle)',
+              paddingBottom: 8,
+            }}
+          >
+            {(
+              [
+                { id: 'all' as const, label: 'All', count: orders.length },
+                ...listProviders().map((p) => ({
+                  id: p.id,
+                  label: p.label,
+                  count: orders.filter((o) => o.printProvider === p.id).length,
+                })),
+              ] satisfies Array<{ id: 'all' | ProviderId; label: string; count: number }>
+            ).map((tab) => {
+              const active = providerFilter === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setProviderFilter(tab.id)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    padding: '6px 10px',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: active ? 600 : 500,
+                    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                    borderBottom: active
+                      ? '2px solid var(--color-text-primary)'
+                      : '2px solid transparent',
+                    marginBottom: -9,
+                  }}
+                >
+                  {tab.label}
+                  <span style={{ marginLeft: 6, opacity: 0.6, fontWeight: 400 }}>{tab.count}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className={dashboardStyles.section}>
-        {loading ? (
-          <p className={dashboardStyles.sectionDescription}>Loading…</p>
-        ) : orders.length === 0 ? (
-          <EmptyState message="No print orders yet." />
-        ) : (
-          <table className={dashboardStyles.table}>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Order</th>
-                <th>Buyer</th>
-                <th>Total</th>
-                <th>Fulfillment</th>
-                <th>Artist payout</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o.id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{formatDate(o.createdAt)}</td>
-                  <td>
-                    <div>{o.artwork.title ?? o.artwork.slug ?? o.artwork.id}</div>
-                    <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
-                      {o.artist.name}
-                    </div>
-                  </td>
-                  <td>
-                    <div>{o.buyerName}</div>
-                    <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
-                      {o.buyerEmail}
-                    </div>
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    <div>{formatEuro(o.totalCents)}</div>
-                    <div
-                      style={{
-                        fontSize: 'var(--text-xs)',
-                        opacity: 0.7,
-                        marginTop: 2,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      <Dot color={paymentDot(o.paymentStatus)} />
-                      {paymentLabel(o.paymentStatus)}
-                    </div>
-                  </td>
-                  <td>
-                    <Dot color={prodigiDot(o.prodigiStage)} />
-                    <Badge
-                      label={prodigiStageLabel(o.prodigiStage)}
-                      variant={o.prodigiStage === 'Complete' ? 'published' : 'neutral'}
-                    />
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    {(() => {
-                      if (o.transferId) {
+        {(() => {
+          if (loading) {
+            return <p className={dashboardStyles.sectionDescription}>Loading…</p>
+          }
+          if (orders.length === 0) {
+            return <EmptyState message="No print orders yet." />
+          }
+          const visibleOrders =
+            providerFilter === 'all'
+              ? orders
+              : orders.filter((o) => o.printProvider === providerFilter)
+          if (visibleOrders.length === 0) {
+            // Empty state per tab — keeps the page useful even when one
+            // provider has no orders (or has been removed entirely).
+            return (
+              <EmptyState message={`No ${getProviderInfo(providerFilter).label} orders yet.`} />
+            )
+          }
+          return (
+            <table className={dashboardStyles.table}>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Order</th>
+                  <th>Provider</th>
+                  <th>Buyer</th>
+                  <th>Total</th>
+                  <th>Fulfillment</th>
+                  <th>Artist payout</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleOrders.map((o) => (
+                  <tr key={o.id}>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(o.createdAt)}</td>
+                    <td>
+                      <div>{o.artwork.title ?? o.artwork.slug ?? o.artwork.id}</div>
+                      <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
+                        {o.artist.name}
+                      </div>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {(() => {
+                        const info = getProviderInfo(o.printProvider)
+                        return (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              fontSize: 'var(--text-xs)',
+                              padding: '2px 8px',
+                              borderRadius: 999,
+                              border: `1px solid ${info.color}`,
+                              color: info.color,
+                              fontWeight: 500,
+                            }}
+                          >
+                            {info.label}
+                          </span>
+                        )
+                      })()}
+                    </td>
+                    <td>
+                      <div>{o.buyerName}</div>
+                      <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
+                        {o.buyerEmail}
+                      </div>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <div>{formatEuro(o.totalCents)}</div>
+                      <div
+                        style={{
+                          fontSize: 'var(--text-xs)',
+                          opacity: 0.7,
+                          marginTop: 2,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <Dot color={paymentDot(o.paymentStatus)} />
+                        {paymentLabel(o.paymentStatus)}
+                      </div>
+                    </td>
+                    <td>
+                      <Dot color={prodigiDot(o.prodigiStage)} />
+                      <Badge
+                        label={prodigiStageLabel(o.prodigiStage)}
+                        variant={o.prodigiStage === 'Complete' ? 'published' : 'neutral'}
+                      />
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {(() => {
+                        if (o.transferId) {
+                          return (
+                            <>
+                              <Dot color="green" />
+                              <span style={{ fontSize: 'var(--text-xs)' }}>
+                                {formatEuro(o.artistCents)} paid · {formatDate(o.paidOutAt)}
+                              </span>
+                            </>
+                          )
+                        }
+                        const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
+                        const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
+                        const label =
+                          o.prodigiStage !== 'Complete'
+                            ? 'Awaiting shipment'
+                            : eligible
+                              ? 'Ready to release'
+                              : `Ready ${eligibleAt ? formatDate(eligibleAt.toISOString()) : 'soon'}`
+                        const color: keyof typeof DOT_COLORS =
+                          o.prodigiStage !== 'Complete' ? 'grey' : eligible ? 'amber' : 'blue'
                         return (
                           <>
-                            <Dot color="green" />
+                            <Dot color={color} />
                             <span style={{ fontSize: 'var(--text-xs)' }}>
-                              {formatEuro(o.artistCents)} paid · {formatDate(o.paidOutAt)}
+                              {formatEuro(o.artistCents)} · {label}
                             </span>
                           </>
                         )
-                      }
-                      const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
-                      const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
-                      const label =
-                        o.prodigiStage !== 'Complete'
-                          ? 'Awaiting shipment'
-                          : eligible
-                            ? 'Ready to release'
-                            : `Ready ${eligibleAt ? formatDate(eligibleAt.toISOString()) : 'soon'}`
-                      const color: keyof typeof DOT_COLORS =
-                        o.prodigiStage !== 'Complete' ? 'grey' : eligible ? 'amber' : 'blue'
-                      return (
-                        <>
-                          <Dot color={color} />
-                          <span style={{ fontSize: 'var(--text-xs)' }}>
-                            {formatEuro(o.artistCents)} · {label}
-                          </span>
-                        </>
-                      )
-                    })()}
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    {(() => {
-                      const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
-                      const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
-                      const canRelease =
-                        !o.transferId &&
-                        o.prodigiStage === 'Complete' &&
-                        o.paymentStatus === 'succeeded' &&
-                        o.artist.stripeOnboardingComplete &&
-                        eligible
-                      return (
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <Link
-                            href={`/admin/orders/${o.id}`}
-                            style={{ fontSize: 'var(--text-xs)', textDecoration: 'underline' }}
-                          >
-                            View details
-                          </Link>
-                          {canRelease && (
-                            <Button
-                              font="dashboard"
-                              variant="primary"
-                              label={releasingId === o.id ? 'Releasing…' : 'Release payout'}
-                              onClick={() => setConfirmPayoutId(o.id)}
-                              disabled={releasingId !== null}
-                            />
-                          )}
-                        </div>
-                      )
-                    })()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                      })()}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {(() => {
+                        const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
+                        const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
+                        const canRelease =
+                          !o.transferId &&
+                          o.prodigiStage === 'Complete' &&
+                          o.paymentStatus === 'succeeded' &&
+                          o.artist.stripeOnboardingComplete &&
+                          eligible
+                        return (
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <Link
+                              href={`/admin/orders/${o.id}`}
+                              style={{ fontSize: 'var(--text-xs)', textDecoration: 'underline' }}
+                            >
+                              View details
+                            </Link>
+                            {canRelease && (
+                              <Button
+                                font="dashboard"
+                                variant="primary"
+                                label={releasingId === o.id ? 'Releasing…' : 'Release payout'}
+                                onClick={() => setConfirmPayoutId(o.id)}
+                                disabled={releasingId !== null}
+                              />
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        })()}
       </div>
 
       {confirmingOrder && (
