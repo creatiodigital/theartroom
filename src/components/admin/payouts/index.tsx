@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { formatEuro } from '@/components/PrintWizard/options'
+import { formatEuro } from '@/lib/print-providers/format'
 
 import { listArtistPayouts, type AdminPayoutRow } from '@/app/admin/orders/actions'
 

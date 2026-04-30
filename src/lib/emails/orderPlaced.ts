@@ -9,8 +9,8 @@ function formatAmount(cents: number, currency: string): string {
   return `${symbol}${(cents / 100).toFixed(2)}`
 }
 
-// EU member states (2026) — destinations where Prodigi's NL/EU labs
-// fulfill intra-EU and no import duty applies for the buyer.
+// EU member states (2026) — destinations where flat 21% VAT applies
+// at checkout via OSS, so no import duty greets the buyer.
 const EU_ISO_CODES = new Set([
   'AT',
   'BE',
@@ -43,9 +43,8 @@ const EU_ISO_CODES = new Set([
 
 /**
  * Rough end-to-end delivery window by destination (production + shipping
- * on Prodigi's Standard tier). From the "Printing and Production" and
- * "Shipping" sections of Prodigi's help center — these are indicative,
- * not guaranteed. Framed/canvas orders can push the upper bound.
+ * on theprintspace's Standard tier). Indicative, not guaranteed —
+ * framed orders can push the upper bound.
  */
 function estimateDeliveryWindow(countryCode: string): { minDays: number; maxDays: number } {
   const cc = countryCode.toUpperCase()
@@ -58,12 +57,10 @@ function estimateDeliveryWindow(countryCode: string): { minDays: number; maxDays
 
 /**
  * True when the destination is likely to hit cross-border customs on
- * delivery, based on Prodigi's lab network. Prodigi fulfills EU orders
- * from NL, UK orders from UK, US orders from US — those stay domestic
- * and typically don't hit customs. Anywhere else, the shipment crosses
- * a border and the buyer may owe local tax/duty. We disclose it upfront
- * so there's no surprise at the door. See Prodigi's Taxation help
- * section on IOSS + customs charge rules.
+ * delivery. the print provider ships from the UK; UK domestic and IOSS-covered
+ * EU orders stay clean. Anywhere else, the shipment crosses a border
+ * and the buyer may owe local tax/duty. We disclose it upfront so
+ * there's no surprise at the door.
  */
 function mayOweImportDuty(countryCode: string): boolean {
   const cc = countryCode.toUpperCase()

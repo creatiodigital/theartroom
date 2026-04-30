@@ -49,13 +49,14 @@ export async function POST(req: NextRequest) {
         await handleAccountUpdated(event.data.object as AccountLike)
         break
       // Auth succeeded — funds held, not captured. This is our signal to
-      // submit the order to Prodigi. Capture happens later from the
-      // Prodigi callback once production is allocated.
+      // create the local PrintOrder so the admin can place it at TPS by
+      // hand. Capture happens later when the admin clicks "Capture &
+      // mark placed" on the admin order detail page.
       case 'payment_intent.amount_capturable_updated':
         await handlePaymentIntentAuthorized(event.data.object as PaymentIntentLike)
         break
-      // Fires AFTER we call paymentIntents.capture() from the Prodigi
-      // callback. Just confirms the charge actually went through.
+      // Fires AFTER the admin clicks Capture from the order detail
+      // page. Just confirms the charge actually went through.
       case 'payment_intent.succeeded':
         await handlePaymentIntentCaptured(event.data.object as PaymentIntentLike)
         break
@@ -181,9 +182,7 @@ async function handlePaymentIntentAuthorized(pi: PaymentIntentLike) {
     message: 'Buyer card authorized',
     payload: { paymentIntentId: pi.id },
   })
-  console.log(
-    `[stripe-webhook] amount_capturable_updated pi=${pi.id} → order=${res.orderId} prodigi=${res.prodigiOrderId ?? '(pending/skipped)'}`,
-  )
+  console.log(`[stripe-webhook] amount_capturable_updated pi=${pi.id} → order=${res.orderId}`)
 }
 
 async function handlePaymentIntentCaptured(pi: PaymentIntentLike) {

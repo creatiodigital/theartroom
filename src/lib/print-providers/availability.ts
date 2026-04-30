@@ -8,13 +8,10 @@
  * picks the right one.
  */
 import type { AvailabilityCheck, Catalog } from './types'
-import { buildProdigiAvailability, readProdigiProviderData } from './prodigi/buildCatalog'
 import { buildPrintspaceAvailability } from './printspace/buildCatalog'
 
 export function buildAvailability(catalog: Catalog): AvailabilityCheck {
   switch (catalog.providerId) {
-    case 'prodigi':
-      return buildProdigiAvailability(readProdigiProviderData(catalog).skus)
     case 'printspace':
       return buildPrintspaceAvailability()
     default:

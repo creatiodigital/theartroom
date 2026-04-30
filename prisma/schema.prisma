@@ -18,16 +18,6 @@ enum UserType {
   general
 }
 
-// Fulfillment service for an artwork's prints. Drives which adapter
-// the wizard, checkout, and admin order-placement screen pull data
-// from. PRODIGI = automated catalog, real-time quotes, fixed sizes.
-// PRINTSPACE = hardcoded approximate prices, custom sizes, more
-// papers/frames; admin places orders manually on TPS's portal.
-enum PrintProvider {
-  PRODIGI
-  PRINTSPACE
-}
-
 model User {
   id                 String   @id @default(uuid())
   name               String
@@ -175,31 +165,20 @@ model Artwork {
   hiddenFromExhibition Boolean @default(false)
   order                Int     @default(0)
 
-  // Print sales (Prodigi fulfillment). `printEnabled` gates the "Buy
-  // Printable" CTA + the /print wizard; when false the artwork page
+  // Print sales (theprintspace fulfillment). `printEnabled` gates the
+  // "Buy Printable" CTA + the /print wizard; when false the artwork page
   // shows "Inquire" instead. `printPriceCents` is the artist's cut
-  // per print (the gallery markup + Prodigi cost stack on top at
+  // per print (the gallery markup + TPS cost stack on top at
   // checkout time). Nullable so we can distinguish "not set yet"
   // from a deliberate zero.
   printEnabled    Boolean @default(false)
   printPriceCents Int?
 
-  // Which fulfillment service this artwork's prints are routed to.
-  // The wizard is provider-agnostic; the page route reads this field
-  // and loads the matching adapter. Once an order ships, admin places
-  // it manually on the chosen provider's portal (no auto-submit at
-  // launch — see project_manual_fulfillment_launch).
-  printProvider   PrintProvider @default(PRODIGI)
-
-  // Per-artwork printing restrictions set by the artist. Shape depends
-  // on `printProvider`:
-  //   - PRODIGI:    { allowedPaperIds?, allowedFormatIds?, allowedSizeIds?,
-  //                   allowedFrameColorIds?, allowedMountIds? }
-  //   - PRINTSPACE: provider-canonical PrintRestrictions shape
-  //                 ({ allowed: { dimensionId: ids[] } }).
-  // When null / missing / field missing, all options from the chosen
-  // provider's catalog are offered. Each dimension is validated server-
-  // side at PaymentIntent creation.
+  // Per-artwork printing restrictions set by the artist. Canonical
+  // PrintRestrictions shape: { allowed: { dimensionId: ids[] } }.
+  // When null / missing / field missing, all options from the catalog
+  // are offered. Each dimension is validated server-side at
+  // PaymentIntent creation.
   printOptions    Json?
 
   exhibitionArtworks ExhibitionArtwork[]
@@ -225,34 +204,31 @@ model PrintOrder {
   country         String
 
   // All amounts in minor units (cents) for the given currency.
-  totalCents           Int
-  artistCents          Int
-  galleryCents         Int
-  prodigiItemCents     Int
-  prodigiShippingCents Int
-  customerVatCents     Int
-  currency             String @default("eur")
+  totalCents              Int
+  artistCents             Int
+  galleryCents            Int
+  // The two production-cost columns predate the TPS-only switch and
+  // were originally named after the previous provider. Mapped to keep
+  // their data in place; the Prisma field uses the neutral name.
+  productionCents         Int    @map("prodigiItemCents")
+  productionShippingCents Int    @map("prodigiShippingCents")
+  customerVatCents        Int
+  currency                String @default("eur")
 
   // 'processing' | 'succeeded' | 'failed' | 'refunded'
   paymentStatus String @default("processing")
 
-  // Snapshotted from `artwork.printProvider` at order-creation time so
-  // orders survive provider changes on the artwork. Without this, an
-  // artist switching their artwork from Prodigi to TPS would
-  // retroactively flip every existing order's provider in the admin
-  // UI. Nullable for legacy rows from before this column existed —
-  // admin reads fall back to `artwork.printProvider` when null.
-  printProvider PrintProvider?
-
-  // Prodigi fulfillment state (null until we submit the order).
-  prodigiOrderId String?
-  prodigiStage   String? // 'Draft' | 'InProgress' | 'Complete' | 'Cancelled'
-  trackingUrl    String?
-  shippedAt      DateTime?
+  // Manual TPS fulfillment stage. Admin advances by hand from
+  // /admin/orders after placing the order on theprintspace's portal.
+  // Values: null (pending placement) | 'Placed' | 'Started' | 'Shipped'
+  // | 'Complete' | 'Rejected'.
+  fulfillmentStatus String?
+  trackingUrl       String?
+  shippedAt         DateTime?
 
   // Public R2 URL of the generated certificate of authenticity PDF that
   // ships with this order. Null until the cert has been rendered and
-  // uploaded (at Prodigi submission time).
+  // uploaded.
   certificateUrl String?
 
   // Stripe Connect transfer to the artist (null until admin releases payout).
@@ -267,7 +243,7 @@ model PrintOrder {
   events PrintOrderEvent[]
 
   @@index([artistUserId])
-  @@index([paymentStatus, prodigiStage, transferStatus])
+  @@index([paymentStatus, fulfillmentStatus, transferStatus])
 }
 
 // Append-only audit trail for everything that happens to a PrintOrder.
@@ -280,12 +256,11 @@ model PrintOrderEvent {
   order   PrintOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   at      DateTime   @default(now())
 
-  // e.g. 'auth_received', 'prodigi_submitted', 'prodigi_submit_failed',
-  // 'prodigi_status_changed', 'captured', 'capture_failed',
-  // 'prodigi_cancelled', 'email_sent', 'admin_action'.
+  // e.g. 'auth_received', 'captured', 'capture_failed', 'shipped',
+  // 'email_sent', 'admin_action'.
   kind String
 
-  // 'stripe' | 'prodigi' | 'system' | 'admin:<userId>'
+  // 'stripe' | 'system' | 'admin:<userId>'
   actor String
 
   // Raw webhook/API payload. JSON so we can store whatever the source gave us.

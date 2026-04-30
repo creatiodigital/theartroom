@@ -20,6 +20,6 @@ export const fixtures = {
 export const routes = {
   artistProfile: () => `/artists/${fixtures.artistSlug}`,
   exhibition: () => `/exhibitions/${fixtures.artistSlug}/${fixtures.exhibitionSlug}`,
-  artwork: () => `/artworks/${fixtures.artworkSlug}`,
-  printWizard: () => `/artworks/${fixtures.artworkSlug}/print`,
+  artwork: (slug: string = fixtures.artworkSlug) => `/artworks/${slug}`,
+  printWizard: (slug: string = fixtures.artworkSlug) => `/artworks/${slug}/print`,
 }

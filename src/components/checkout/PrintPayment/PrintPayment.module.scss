@@ -36,7 +36,7 @@
   text-align: center;
 }
 
-.backButton {
+.closeButton {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -48,6 +48,11 @@
   letter-spacing: 0.12em;
   color: var(--color-text-primary);
   text-transform: uppercase;
+}
+
+.closeIcon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .body {
@@ -160,4 +165,3 @@
 .backRow {
   margin-top: var(--space-8);
 }
-

@@ -31,17 +31,16 @@ type AdminOrderNotificationArgs = {
   shippingAddress: ShippingAddress
   totalCents: number
   currency: string
-  sku: string
+  /** Spec rows (Print type / Paper / Frame / etc.) the admin pastes
+   *  into theprintspace's "Order Prints" form. */
   skuAttributes: Record<string, string>
-  assetUrl: string
-  certificateUrl: string | null
   adminOrderUrl: string
 }
 
 /**
  * Sent to the gallery admin every time a buyer's card authorization
  * succeeds. Surfaces every field needed to place the order in the
- * Prodigi dashboard by hand (manual fulfillment mode).
+ * theprintspace's portal by hand (manual fulfillment mode).
  *
  * Resolves with `{ ok: false }` on failure rather than throwing, so the
  * caller can log + continue without aborting the webhook.
@@ -57,9 +56,6 @@ export async function sendAdminOrderNotification(
   const safeBuyerEmail = escapeHtml(args.buyerEmail || '—')
   const safeOrderIdShort = escapeHtml(args.orderId.slice(0, 8))
   const safeOrderIdFull = escapeHtml(args.orderId)
-  const safeSku = escapeHtml(args.sku)
-  const safeAssetUrl = escapeHtml(args.assetUrl)
-  const safeCertUrl = args.certificateUrl ? escapeHtml(args.certificateUrl) : null
   const safeAdminUrl = escapeHtml(args.adminOrderUrl)
   const total = formatAmount(args.totalCents, args.currency)
 
@@ -83,10 +79,10 @@ export async function sendAdminOrderNotification(
       from: `The Art Room Orders <${fromEmail}>`,
       to: ADMIN_ORDER_NOTIFICATION_TO,
       cc: ADMIN_ORDER_NOTIFICATION_CC,
-      subject: `New order #${args.orderId.slice(0, 8)} — ${args.artworkTitle} — needs placement in Prodigi`,
+      subject: `New order #${args.orderId.slice(0, 8)} — ${args.artworkTitle} — needs placement at TPS`,
       html: `
         <div style="font-family: Lato, sans-serif; max-width: 640px; margin: 0 auto; color: #111;">
-          <h2 style="font-size: 20px; margin: 0 0 8px 0;">New order — needs placement in Prodigi</h2>
+          <h2 style="font-size: 20px; margin: 0 0 8px 0;">New order — needs placement at TPS</h2>
           <p style="margin: 0 0 20px 0; color:#666;">Order #${safeOrderIdShort} · ${total}</p>
 
           <p style="margin: 0 0 20px 0;">
@@ -96,20 +92,13 @@ export async function sendAdminOrderNotification(
           <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin:24px 0 8px 0;">Artwork</h3>
           <p style="margin:0 0 4px 0;"><strong>${safeArtwork}</strong> — ${safeArtist}</p>
 
-          <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin:24px 0 8px 0;">Prodigi SKU</h3>
-          <p style="margin:0 0 8px 0;font-family:monospace;background:#f6f6f6;padding:8px 12px;">${safeSku}</p>
+          <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin:24px 0 8px 0;">Specs</h3>
           <table style="border-collapse:collapse;font-size:14px;">${attrRows}</table>
 
-          <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin:24px 0 8px 0;">Print asset</h3>
-          <p style="margin:0 0 4px 0;font-family:monospace;font-size:13px;word-break:break-all;">
-            <a href="${safeAssetUrl}">${safeAssetUrl}</a>
+          <p style="margin:20px 0 0 0;font-size:13px;color:#666;">
+            Print asset and certificate are available in the admin order page above. They are
+            never linked from email — the original artwork is sale-sensitive content.
           </p>
-          ${
-            safeCertUrl
-              ? `<p style="margin:8px 0 0 0;font-size:13px;">Certificate of authenticity:
-            <a href="${safeCertUrl}" style="font-family:monospace;word-break:break-all;">${safeCertUrl}</a></p>`
-              : ''
-          }
 
           <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin:24px 0 8px 0;">Recipient</h3>
           <p style="margin:0 0 2px 0;">${safeBuyerName}</p>

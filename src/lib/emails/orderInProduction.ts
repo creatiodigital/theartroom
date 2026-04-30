@@ -13,7 +13,7 @@ type OrderInProductionArgs = {
 }
 
 /**
- * Sent to the buyer once Prodigi has started producing the print
+ * Sent to the buyer once production starts on the print
  * (stage transitions to `Started`). Bridge between the initial "order
  * received" email and the shipping notification.
  *

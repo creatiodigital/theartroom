@@ -14,9 +14,9 @@ type OrderShippedArgs = {
 }
 
 /**
- * Sent to the buyer once Prodigi has handed the package to the carrier
+ * Sent to the buyer once the print enters the carrier
  * (a shipment's status transitions to `Shipped`). Includes the tracking
- * URL if Prodigi provided one — most shipments do.
+ * URL if production provided one — most shipments do.
  *
  * Resolves `{ ok: false }` on failure rather than throwing, so the
  * caller can log + continue without aborting the sync.

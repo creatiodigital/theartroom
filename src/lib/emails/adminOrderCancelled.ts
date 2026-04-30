@@ -14,7 +14,6 @@ function formatAmount(cents: number, currency: string): string {
 
 type AdminOrderCancelledArgs = {
   orderId: string
-  prodigiOrderId: string | null
   artworkTitle: string
   artistName: string
   buyerName: string
@@ -23,15 +22,12 @@ type AdminOrderCancelledArgs = {
   totalCents: number
   currency: string
   adminOrderUrl: string
-  /** 'prodigi-sync' if Prodigi cancelled on their side; 'admin' if admin clicked Mark rejected. */
-  source: 'prodigi-sync' | 'admin'
 }
 
 /**
- * Alert the gallery admin when an order is cancelled. Fires on both
- * admin-initiated rejections (confirmation) and Prodigi-side
- * cancellations picked up via sync (which admin wouldn't otherwise
- * notice until opening the dashboard).
+ * Alert the gallery admin when an order is cancelled. Fires on
+ * admin-initiated rejections — TPS doesn't expose a sync API, so
+ * admin owns the cancellation flow.
  *
  * Key signal: whether a refund is still owed to the buyer.
  */
@@ -45,14 +41,10 @@ export async function sendAdminOrderCancelledAlert(
   const safeBuyerName = escapeHtml(args.buyerName || '—')
   const safeBuyerEmail = escapeHtml(args.buyerEmail || '—')
   const safeOrderIdShort = escapeHtml(args.orderId.slice(0, 8))
-  const safeProdigiId = escapeHtml(args.prodigiOrderId ?? '—')
   const safeAdminUrl = escapeHtml(args.adminOrderUrl)
   const total = formatAmount(args.totalCents, args.currency)
 
-  const sourceLine =
-    args.source === 'prodigi-sync'
-      ? 'Prodigi cancelled this order on their side (picked up by our sync).'
-      : 'You cancelled this order from the admin dashboard.'
+  const sourceLine = 'You cancelled this order from the admin dashboard.'
 
   const refundNeeded = args.paymentStatus === 'succeeded'
   const moneyLine = refundNeeded
@@ -90,7 +82,6 @@ export async function sendAdminOrderCancelledAlert(
           <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin:24px 0 8px 0;">Order</h3>
           <p style="margin:0 0 4px 0;"><strong>${safeArtwork}</strong> — ${safeArtist}</p>
           <p style="margin:0 0 4px 0;">Buyer: ${safeBuyerName} · ${safeBuyerEmail}</p>
-          <p style="margin:0 0 4px 0;">Prodigi order ID: <code>${safeProdigiId}</code></p>
         </div>
       `,
     })

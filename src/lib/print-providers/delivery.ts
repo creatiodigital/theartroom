@@ -8,7 +8,6 @@
  * never from server-only quote/loadCatalog.
  */
 import type { Catalog, DeliveryEstimate, WizardConfig } from './types'
-import { estimateProdigiDelivery } from './prodigi/delivery'
 import { estimateTpsDelivery } from './printspace/delivery'
 
 export function estimateDelivery(
@@ -18,8 +17,6 @@ export function estimateDelivery(
 ): DeliveryEstimate {
   if (!country) return { minDays: 0, maxDays: 0 }
   switch (catalog.providerId) {
-    case 'prodigi':
-      return estimateProdigiDelivery(config, country)
     case 'printspace':
       return estimateTpsDelivery(config, country)
     default:

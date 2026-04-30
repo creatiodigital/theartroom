@@ -81,10 +81,12 @@ export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintCon
 
           <div className={styles.orderMeta}>
             <div>
-              <span>Artwork</span>
-              <strong>
-                {artwork.title} — {artwork.artistName}
-              </strong>
+              <span>Title</span>
+              <strong>{artwork.title}</strong>
+            </div>
+            <div>
+              <span>Author</span>
+              <strong>{artwork.artistName}</strong>
             </div>
             {paymentIntentId && (
               <div>
@@ -95,7 +97,7 @@ export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintCon
           </div>
 
           <Link href={`/artworks/${artwork.slug}`} className={styles.primaryLink}>
-            Back to the artwork
+            Back to the Artwork Page
           </Link>
         </section>
       </main>

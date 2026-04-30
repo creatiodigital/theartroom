@@ -13,8 +13,6 @@ import { Input } from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal/Modal'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
-import { FORMATS, FRAME_COLORS, MOUNTS, PAPERS, SIZES } from '@/components/PrintWizard/options'
-import type { PrintOptions } from '@/components/PrintWizard/types'
 import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
 import type { PrintRestrictions } from '@/lib/print-providers'
 import {
@@ -62,20 +60,12 @@ export type Artwork = {
   printEnabled?: boolean
   printPriceCents?: number | null
   /**
-   * Which fulfillment service this artwork's prints route to. Stored
-   * as the Prisma enum (PRODIGI | PRINTSPACE). Defaults to PRODIGI on
-   * the server side so existing rows behave unchanged.
-   */
-  printProvider?: 'PRODIGI' | 'PRINTSPACE' | null
-  /**
-   * Artist-set veto/allow-list for printing options. Shape depends on
-   * `printProvider`:
-   *   - PRODIGI:    typed `PrintOptions` (allowedPaperIds, …)
-   *   - PRINTSPACE: canonical `PrintRestrictions` ({ allowed: { dimId: ids[] } })
+   * Artist-set veto/allow-list for printing options. Canonical
+   * `PrintRestrictions` shape: `{ allowed: { dimensionId: ids[] } }`.
    * Stored as JSON; the page route + payment-intent re-check both
-   * branch on provider before interpreting.
+   * read it.
    */
-  printOptions?: PrintOptions | PrintRestrictions | null
+  printOptions?: PrintRestrictions | null
 }
 
 export type ArtworkFormData = {
@@ -93,15 +83,11 @@ export type ArtworkFormData = {
   printEnabled: boolean
   /** Euros as a string for the input field; converted to cents at submit. */
   printPriceEuros: string
-  /** Fulfillment service this artwork's prints route to. */
-  printProvider: 'PRODIGI' | 'PRINTSPACE'
   /**
-   * Artist-set restrictions. Shape varies with `printProvider`:
-   *   - PRODIGI:    PrintOptions (allowedPaperIds, …)
-   *   - PRINTSPACE: PrintRestrictions ({ allowed: { dimId: ids[] } })
+   * Artist-set restrictions in canonical PrintRestrictions shape.
    * `null` = no restrictions (all options offered).
    */
-  printOptions: PrintOptions | PrintRestrictions | null
+  printOptions: PrintRestrictions | null
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -118,7 +104,6 @@ export const getInitialFormData = (): ArtworkFormData => ({
   hiddenFromExhibition: false,
   printEnabled: false,
   printPriceEuros: '',
-  printProvider: 'PRODIGI',
   printOptions: null,
 })
 
@@ -137,7 +122,6 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   printEnabled: data.printEnabled ?? false,
   printPriceEuros:
     typeof data.printPriceCents === 'number' ? (data.printPriceCents / 100).toString() : '',
-  printProvider: data.printProvider ?? 'PRODIGI',
   printOptions: data.printOptions ?? null,
 })
 
@@ -158,7 +142,7 @@ type ArtworkEditFormProps = {
   error: string
   onFormChange: (field: string, value: string | boolean) => void
   /** Replace the whole printOptions object. Called as the artist (un)checks boxes. */
-  onPrintOptionsChange?: (next: PrintOptions | PrintRestrictions | null) => void
+  onPrintOptionsChange?: (next: PrintRestrictions | null) => void
   onImageUpload: (file: File) => Promise<void>
   onImageRemove: () => void | Promise<void>
   onSoundUpload?: (file: File) => Promise<void>
@@ -184,68 +168,21 @@ const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
-// Unified minimum DPI for print quality across providers. We hold a
-// single bar — 300 DPI, the conventional fine-art-print threshold — so
-// the artist's eligibility experience doesn't change when they switch
-// service. The only meaningful difference between providers stays the
-// supported file format (TPS: +TIFF).
+// Minimum DPI for print eligibility — 300 DPI, the conventional
+// fine-art-print threshold.
 const MIN_DPI = 300
 
-// Per-provider accepted image formats. Prodigi: JPG/PNG (PDF too, but
-// our display pipeline doesn't render PDFs as artwork previews so we
-// don't expose it here). TPS: JPG/PNG/TIFF.
-//
-// Intersection (works for both): JPG, PNG.
-// TIFF is TPS-only — uploading TIFF locks the artist into TPS until
-// they re-upload. The form warns when the picked provider can't print
-// the current image's format so they can either switch back or upload
-// a compatible file.
-const PROVIDER_ACCEPTED_FORMATS: Record<'PRODIGI' | 'PRINTSPACE', readonly string[]> = {
-  PRODIGI: ['JPEG', 'PNG'],
-  PRINTSPACE: ['JPEG', 'PNG', 'TIFF'],
-}
+// TPS accepted image formats. Used to gate the print-sales toggle for
+// legacy uploads (e.g. WebP) where the file can't be sent to TPS.
+const TPS_ACCEPTED_FORMATS: readonly string[] = ['JPEG', 'PNG', 'TIFF']
 
-const PROVIDER_DISPLAY_NAME: Record<'PRODIGI' | 'PRINTSPACE', string> = {
-  PRODIGI: 'Prodigi',
-  PRINTSPACE: 'The Print Space',
-}
-
-function isImageFormatCompatible(
-  format: string | undefined | null,
-  provider: 'PRODIGI' | 'PRINTSPACE',
-): boolean {
-  if (!format) return true
-  const upper = format.toUpperCase()
-  // Skip the placeholder fallback used when we don't have a real
-  // format on hand (e.g. legacy artworks pre-format-tracking) — we'd
-  // rather miss a warning than show a false one.
-  if (upper === 'IMAGE') return true
-  return PROVIDER_ACCEPTED_FORMATS[provider].includes(upper)
-}
-
-// Gate-level check used before the artist has picked a provider: is
-// this format printable by *any* provider? Mainly catches legacy
-// artworks uploaded before the JPG/PNG/TIFF restriction (e.g. WebP)
-// where neither provider can fulfil orders.
 function isImageFormatPrintable(format: string | undefined | null): boolean {
   if (!format) return true
   const upper = format.toUpperCase()
+  // Skip the placeholder fallback used when we don't have a real
+  // format on hand (e.g. legacy artworks pre-format-tracking).
   if (upper === 'IMAGE') return true
-  return (
-    PROVIDER_ACCEPTED_FORMATS.PRODIGI.includes(upper) ||
-    PROVIDER_ACCEPTED_FORMATS.PRINTSPACE.includes(upper)
-  )
-}
-
-type PrintSizeEligibility = {
-  label: string
-  widthCm: number
-  heightCm: number
-  requiredWidth: number
-  requiredHeight: number
-  eligible: boolean
-  effectiveDpiW: number
-  effectiveDpiH: number
+  return TPS_ACCEPTED_FORMATS.includes(upper)
 }
 
 // Output is height × width (art-gallery convention). Args still take
@@ -254,49 +191,6 @@ function cmToInchLabel(widthCm: number, heightCm: number): string {
   const w = (widthCm / 2.54).toFixed(1)
   const h = (heightCm / 2.54).toFixed(1)
   return `${h}×${w} in`
-}
-
-function getPrintSizeEligibility(meta: ImageMeta | null, minDpi: number): PrintSizeEligibility[] {
-  return SIZES.map((size) => {
-    const requiredWidth = Math.ceil((size.widthCm / 2.54) * minDpi)
-    const requiredHeight = Math.ceil((size.heightCm / 2.54) * minDpi)
-    const printWidthInches = size.widthCm / 2.54
-    const printHeightInches = size.heightCm / 2.54
-    const effectiveDpiW = meta ? Math.round(meta.width / printWidthInches) : 0
-    const effectiveDpiH = meta ? Math.round(meta.height / printHeightInches) : 0
-    const eligible = meta ? meta.width >= requiredWidth && meta.height >= requiredHeight : false
-    return {
-      label: size.label,
-      widthCm: size.widthCm,
-      heightCm: size.heightCm,
-      requiredWidth,
-      requiredHeight,
-      eligible,
-      effectiveDpiW,
-      effectiveDpiH,
-    }
-  })
-}
-
-function isPrintEligible(meta: ImageMeta | null, minDpi: number): boolean {
-  if (!meta) return false
-  return getPrintSizeEligibility(meta, minDpi).some((s) => s.eligible)
-}
-
-/**
- * SIZES filtered to only those the current image can physically render
- * at the unified minimum DPI. Used to scope the Prodigi artist
- * restriction UI — it doesn't make sense to offer a checkbox for a
- * size the image can't fulfil. (TPS has no preset sizes, so this list
- * is Prodigi-specific.)
- */
-function getEligibleSizes(meta: ImageMeta | null) {
-  if (!meta) return SIZES
-  return SIZES.filter((size) => {
-    const requiredWidth = Math.ceil((size.widthCm / 2.54) * MIN_DPI)
-    const requiredHeight = Math.ceil((size.heightCm / 2.54) * MIN_DPI)
-    return meta.width >= requiredWidth && meta.height >= requiredHeight
-  })
 }
 
 /**
@@ -343,98 +237,6 @@ function getTpsSizeSamples(meta: ImageMeta | null): TpsSizeSample[] {
   })
 }
 
-/**
- * Acceptable aspect-ratio error margin between the artwork and a
- * Prodigi preset before we consider the preset unsuitable.
- *
- * 5% is a deliberate ceiling — beyond this, the visible edge crop is
- * perceptible (a few mm shaved off either dimension). Within 5% the
- * crop is sub-millimetre on most prints and visually indistinguishable
- * from a perfect fit. We stop showing presets past this threshold
- * because the gallery's promise is "no crop, no pad — ever".
- *
- * Tighten to e.g. 2% if you want only literal-perfect fits; loosen
- * past 5% would be visible cropping (not acceptable).
- */
-const PRODIGI_ASPECT_FIT_TOLERANCE = 0.05
-
-/**
- * True when at least one Prodigi preset size both fits within the
- * tolerance above AND has enough resolution for this image. When
- * false, the artwork can't be sold via Prodigi — the artist UI
- * surfaces a banner nudging them toward TPS (which supports custom
- * sizes that always fit).
- */
-function hasProdigiAspectFit(meta: ImageMeta | null): boolean {
-  if (!meta || meta.width <= 0 || meta.height <= 0) return true
-  const imageRatio = meta.width / meta.height
-  const eligible = getEligibleSizes(meta)
-  return eligible.some((size) => {
-    // Compare both orientations — Prodigi's classic frame SKUs are
-    // orientation-agnostic, so a portrait image fits a landscape
-    // preset and vice-versa.
-    const sizeRatioA = size.widthCm / size.heightCm
-    const sizeRatioB = size.heightCm / size.widthCm
-    const diffA = Math.abs(sizeRatioA - imageRatio) / imageRatio
-    const diffB = Math.abs(sizeRatioB - imageRatio) / imageRatio
-    return Math.min(diffA, diffB) <= PRODIGI_ASPECT_FIT_TOLERANCE
-  })
-}
-
-/**
- * Toggle membership of `id` in the allow-list for one dimension of
- * `PrintOptions`. The UI convention: all-checked means "no restriction"
- * so we drop the allow-list entirely when that dimension ends up matching
- * every id in `all`. Mirror inverse: leaving zero checked reinstates all.
- */
-function togglePrintOptionId<K extends keyof PrintOptions>(
-  current: PrintOptions | null,
-  key: K,
-  id: string,
-  all: readonly string[],
-): PrintOptions | null {
-  const currentList = current?.[key] as readonly string[] | undefined
-  const effective = currentList && currentList.length > 0 ? [...currentList] : [...all]
-  const idx = effective.indexOf(id)
-  const next = idx === -1 ? [...effective, id] : effective.filter((x) => x !== id)
-
-  // Artist has re-checked everything or unchecked everything: drop the
-  // allow-list so the field reverts to "no restriction" (buyers see all).
-  // Zero-length would otherwise mean "nothing allowed" which we treat as
-  // the same as "no restriction" to prevent accidental total lockouts.
-  const reachesAll = next.length === all.length
-  const isEmpty = next.length === 0
-  const shouldClearDimension = reachesAll || isEmpty
-
-  const base: PrintOptions = { ...(current ?? {}) }
-  if (shouldClearDimension) {
-    delete base[key]
-  } else {
-    ;(base as Record<string, unknown>)[key as string] = next
-  }
-
-  // Drop the whole printOptions object when nothing remains restricted.
-  const anyRestriction = Object.values(base).some(
-    (v) => Array.isArray(v) && v.length > 0 && v.length < all.length,
-  )
-  return Object.keys(base).length === 0 ? null : anyRestriction ? base : null
-}
-
-function isDimensionChecked<K extends keyof PrintOptions>(
-  opts: PrintOptions | null,
-  key: K,
-  id: string,
-): boolean {
-  const list = opts?.[key] as readonly string[] | undefined
-  // No allow-list set → all options allowed → every checkbox is checked.
-  if (!list || list.length === 0) return true
-  return list.includes(id)
-}
-
-// ── TPS variants of the same helpers ────────────────────────────
-// TPS uses the canonical `PrintRestrictions` shape (`{ allowed: {
-// dimensionId: ids[] } }`) rather than Prodigi's flat typed fields.
-
 function toggleTpsRestrictionId(
   current: PrintRestrictions | null,
   dimensionId: string,
@@ -466,44 +268,6 @@ function isTpsDimensionChecked(
   const list = restrictions?.allowed?.[dimensionId]
   if (!list || list.length === 0) return true
   return list.includes(id)
-}
-
-type PrintRestrictionGroupProps<K extends keyof PrintOptions> = {
-  title: string
-  all: Array<{ id: string; label: string }>
-  allIds: readonly string[]
-  dimensionKey: K
-  options: PrintOptions | null
-  onChange?: (next: PrintOptions | null) => void
-}
-
-const PrintRestrictionGroup = <K extends keyof PrintOptions>({
-  title,
-  all,
-  allIds,
-  dimensionKey,
-  options,
-  onChange,
-}: PrintRestrictionGroupProps<K>) => {
-  const handleToggle = (id: string) => {
-    if (!onChange) return
-    onChange(togglePrintOptionId(options, dimensionKey, id, allIds))
-  }
-  return (
-    <div className={styles.printRestrictionGroup}>
-      <h4 className={styles.printRestrictionGroupTitle}>{title}</h4>
-      <div className={styles.printRestrictionChoices}>
-        {all.map((item) => (
-          <Checkbox
-            key={item.id}
-            checked={isDimensionChecked(options, dimensionKey, item.id)}
-            onChange={() => handleToggle(item.id)}
-            label={item.label}
-          />
-        ))}
-      </div>
-    </div>
-  )
 }
 
 type TpsRestrictionGroupProps = {
@@ -595,29 +359,14 @@ export const ArtworkEditForm = ({
   // Server meta takes priority over client-detected meta
   const imageMeta = serverMeta ?? clientMeta
 
-  // Unified DPI threshold for both providers — see MIN_DPI definition.
-  const printEligible = isPrintEligible(imageMeta, MIN_DPI)
-  const printSizes = getPrintSizeEligibility(imageMeta, MIN_DPI)
-  const eligibleSizes = printSizes.filter((s) => s.eligible)
-  // Actual SizeOption entries the image can physically print at — used
-  // to scope the artist's restriction checkboxes for the Sizes group.
-  const eligibleSizeOptions = getEligibleSizes(imageMeta)
+  // TPS supports custom sizes (aspect-locked), so eligibility is
+  // sample-based: walk a series of long-edge values, find any that
+  // hit 300 DPI. If at least one passes, the artist can sell prints.
+  const tpsSizeSamples = imageMeta ? getTpsSizeSamples(imageMeta) : []
+  const printEligible = tpsSizeSamples.some((s) => s.eligible)
 
-  // Prodigi only sells presets that match the artwork's aspect ratio
-  // (no crop / no pad). When none qualify, the artist needs TPS instead.
-  const prodigiFits = hasProdigiAspectFit(imageMeta)
-
-  // Whether the uploaded image's file format is supported by the
-  // currently-selected provider (Prodigi: JPG/PNG, TPS: JPG/PNG/TIFF).
-  // Drives the provider-section warning and the per-button disabled
-  // state once the artist has opted in to print sales.
-  const formatCompatible = isImageFormatCompatible(imageMeta?.format, formData.printProvider)
-
-  // Gate-level format check: is the image format printable by *any*
-  // provider? Used to disable the "Enable print sales" toggle for
-  // legacy artworks (e.g. WebP from before the JPG/PNG/TIFF restriction)
-  // where no provider can fulfil orders. New uploads always pass since
-  // the upload pipeline rejects anything outside the union.
+  // Format check: TPS accepts JPG/PNG/TIFF. Disables the
+  // "Enable print sales" toggle for legacy uploads (e.g. WebP).
   const printableFormat = isImageFormatPrintable(imageMeta?.format)
 
   const handleImageMetaChange = useCallback((meta: ImageMeta | null) => {
@@ -759,113 +508,6 @@ export const ArtworkEditForm = ({
 
           {formData.printEnabled && (
             <>
-              {!prodigiFits && formData.printProvider === 'PRODIGI' && imageMeta && (
-                <div className={styles.providerNudge}>
-                  <strong>
-                    This artwork&apos;s aspect ratio doesn&apos;t match any Prodigi preset.
-                  </strong>
-                  <p>
-                    Prodigi only sells fixed sizes — to keep our &quot;no crop, no pad&quot; promise
-                    we hide presets that wouldn&apos;t fit. Switch to <em>The Print Space</em> below
-                    and this artwork will be offered at custom sizes that always match its
-                    proportions.
-                  </p>
-                </div>
-              )}
-
-              {!formatCompatible && imageMeta && (
-                <div className={styles.providerNudge}>
-                  <strong>
-                    Your current image ({imageMeta.format}) isn&apos;t supported by{' '}
-                    {PROVIDER_DISPLAY_NAME[formData.printProvider]}.
-                  </strong>
-                  <p>
-                    {PROVIDER_DISPLAY_NAME[formData.printProvider]} only accepts{' '}
-                    {PROVIDER_ACCEPTED_FORMATS[formData.printProvider].join(', ')}. To use this
-                    service, remove the image above and upload a new one in a supported format.
-                  </p>
-                </div>
-              )}
-
-              <div
-                className={styles.printProviderField}
-                role="radiogroup"
-                aria-label="Print fulfillment service"
-              >
-                <span className={styles.printProviderLabel}>Print service</span>
-                <div className={styles.printProviderChoices}>
-                  {(
-                    [
-                      {
-                        value: 'PRODIGI',
-                        label: 'Prodigi',
-                        hint: 'Faster delivery, better prices. Standard sizes only, fewer paper & frame options.',
-                      },
-                      {
-                        value: 'PRINTSPACE',
-                        label: 'The Print Space',
-                        hint: 'Premium quality, hand-made frames, fully custom sizes. Higher prices, longer turnaround.',
-                      },
-                    ] as const
-                  ).map((opt) => {
-                    const selected = formData.printProvider === opt.value
-                    const compatible = isImageFormatCompatible(imageMeta?.format, opt.value)
-                    // Only disable when the option ISN'T currently selected —
-                    // a "disabled but selected" radio is an invalid display
-                    // state. The warning banner above covers the rare case
-                    // where the active selection becomes incompatible.
-                    const disabled = !compatible && !selected
-                    const optHint = compatible
-                      ? opt.hint
-                      : `Doesn't support ${imageMeta?.format} — remove this image and upload a ${PROVIDER_ACCEPTED_FORMATS[
-                          opt.value
-                        ].join(' or ')} to use ${opt.label}.`
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        aria-disabled={disabled}
-                        disabled={disabled}
-                        className={styles.printProviderChoice}
-                        onClick={() => {
-                          if (!disabled) onFormChange('printProvider', opt.value)
-                        }}
-                      >
-                        <span
-                          className={`${styles.printProviderChoiceCheck} ${
-                            selected ? styles.printProviderChoiceCheckSelected : ''
-                          }`}
-                          aria-hidden="true"
-                        >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </span>
-                        <span className={styles.printProviderChoiceBody}>
-                          <span className={styles.printProviderChoiceTitle}>{opt.label}</span>
-                          <span className={styles.printProviderChoiceHint}>{optHint}</span>
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-                <p className={styles.printProviderHint}>
-                  Switching service resets the advanced restrictions below — each service has its
-                  own papers, frames and sizes.
-                </p>
-              </div>
-
               <div
                 className={dashboardStyles.field}
                 style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
@@ -1032,49 +674,12 @@ export const ArtworkEditForm = ({
                     sizes will be available to buyers.
                   </p>
 
-                  {/* Per-size eligibility — provider-aware:
-                      Prodigi has fixed presets; show the eligibility list.
-                      TPS supports any custom W×H (aspect-locked); show
-                      the maximum size achievable at 200 DPI instead. */}
-                  {imageUrl && imageMeta && formData.printProvider === 'PRODIGI' ? (
-                    <>
-                      <p
-                        className={styles.printInfoText}
-                        style={{ marginBottom: 'var(--space-1)' }}
-                      >
-                        <strong>Print size eligibility:</strong>
-                      </p>
-                      <ul className={styles.printSizeChecklist}>
-                        {printSizes.map((s) => (
-                          <li
-                            key={s.label}
-                            className={
-                              s.eligible ? styles.printSizeEligible : styles.printSizeIneligible
-                            }
-                          >
-                            <Icon name={s.eligible ? 'check-circle' : 'alert-circle'} size={14} />
-                            <span>{s.label}</span>
-                            <span className={styles.printSizeDpi}>
-                              {Math.min(s.effectiveDpiW, s.effectiveDpiH)} DPI
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      {eligibleSizes.length === 0 && (
-                        <div className={styles.printStatusNotReady}>
-                          <Icon name="alert-circle" size={16} />
-                          <span>
-                            This image is {imageMeta.width} × {imageMeta.height} px — below the
-                            minimum for any print size. Upload a higher resolution version to enable
-                            print sales.
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  ) : imageUrl && imageMeta && formData.printProvider === 'PRINTSPACE' ? (
+                  {/* Per-size eligibility — TPS supports any custom W×H
+                      (aspect-locked); show the maximum size achievable at
+                      300 DPI as reference points, not exact dimensions. */}
+                  {imageUrl && imageMeta ? (
                     (() => {
-                      const samples = getTpsSizeSamples(imageMeta)
-                      const anyEligible = samples.some((s) => s.eligible)
+                      const anyEligible = tpsSizeSamples.some((s) => s.eligible)
                       return (
                         <>
                           <p
@@ -1084,14 +689,13 @@ export const ArtworkEditForm = ({
                             <strong>Print size eligibility:</strong>
                           </p>
                           <p className={styles.printInfoTextMuted}>
-                            The Print Space supports custom sizes — every print respects the
-                            original proportions of your file. The values below are reference
-                            points, not exact dimensions; buyers can pick any width or height within
-                            range, and the other side auto-locks to your artwork&apos;s aspect
-                            ratio.
+                            Prints are sold at custom sizes — every print respects the original
+                            proportions of your file. The values below are reference points, not
+                            exact dimensions; buyers can pick any width or height within range, and
+                            the other side auto-locks to your artwork&apos;s aspect ratio.
                           </p>
                           <ul className={styles.printSizeChecklist}>
-                            {samples.map((s) => (
+                            {tpsSizeSamples.map((s) => (
                               <li
                                 key={s.label}
                                 className={
@@ -1112,16 +716,14 @@ export const ArtworkEditForm = ({
                               <Icon name="alert-circle" size={16} />
                               <span>
                                 This image is {imageMeta.width} × {imageMeta.height} px — below the
-                                200 DPI threshold for any sellable size. Upload a higher resolution
-                                version to enable print sales.
+                                {MIN_DPI} DPI threshold for any sellable size. Upload a higher
+                                resolution version to enable print sales.
                               </span>
                             </div>
                           )}
                         </>
                       )
                     })()
-                  ) : imageUrl ? (
-                    <p className={styles.printInfoTextMuted}>Loading image info...</p>
                   ) : (
                     <p className={styles.printInfoTextMuted}>
                       Upload an image to check print eligibility.
@@ -1149,107 +751,50 @@ export const ArtworkEditForm = ({
         </div>
       )}
 
-      {/* Per-artwork printing restrictions — separate section so the
-          parent's hint break-out doesn't visually collide with this block.
-          Restrictions are provider-scoped: each service has its own
-          papers/frames/sizes vocabulary, so only one set is editable
-          at a time. */}
+      {/* Per-artwork printing restrictions. Stored in canonical
+          PrintRestrictions shape (`{ allowed: { dimId: ids[] } }`). */}
       {formData.artworkType === 'image' && formData.printEnabled && (
         <div className={dashboardStyles.section}>
           <h3 className={dashboardStyles.sectionTitle}>Printing restrictions</h3>
           <p className={dashboardStyles.sectionDescription}>
             Advanced — you don&apos;t need to touch this unless you have very specific reasons not
-            to offer a particular paper, format, size or frame for this artwork.
+            to offer a particular paper, frame type or passepartout for this artwork.
           </p>
 
-          {formData.printProvider === 'PRODIGI' ? (
-            <details className={styles.printRestrictions}>
-              <summary className={styles.printRestrictionsSummary}>Show options</summary>
+          <details className={styles.printRestrictions}>
+            <summary className={styles.printRestrictionsSummary}>Show options</summary>
 
-              <p className={styles.printRestrictionsIntro}>
-                We already offer the best print quality we can — museum-grade papers, archival inks,
-                and gallery-tested framing. The options listed below are the ones our printing
-                service supports for this kind of artwork. Uncheck anything you&apos;d rather we not
-                offer; everything that stays checked remains available to buyers.
-              </p>
+            <p className={styles.printRestrictionsIntro}>
+              We offer many printing options — to keep this simple we only let you veto the three
+              that matter most for editorial control: papers, frame types and the passepartout.
+              Everything that stays checked remains available to buyers.
+            </p>
 
-              <PrintRestrictionGroup
-                title="Papers"
-                all={PAPERS.map((p) => ({ id: p.id, label: p.label }))}
-                dimensionKey="allowedPaperIds"
-                options={formData.printOptions as PrintOptions | null}
-                onChange={onPrintOptionsChange}
-                allIds={PAPERS.map((p) => p.id)}
-              />
-              <PrintRestrictionGroup
-                title="Formats"
-                all={FORMATS.map((f) => ({ id: f.id, label: f.label }))}
-                dimensionKey="allowedFormatIds"
-                options={formData.printOptions as PrintOptions | null}
-                onChange={onPrintOptionsChange}
-                allIds={FORMATS.map((f) => f.id)}
-              />
-              <PrintRestrictionGroup
-                title="Sizes"
-                all={eligibleSizeOptions.map((s) => ({ id: s.id, label: s.label }))}
-                dimensionKey="allowedSizeIds"
-                options={formData.printOptions as PrintOptions | null}
-                onChange={onPrintOptionsChange}
-                allIds={eligibleSizeOptions.map((s) => s.id)}
-              />
-              <PrintRestrictionGroup
-                title="Frame colors"
-                all={FRAME_COLORS.map((c) => ({ id: c.id, label: c.label }))}
-                dimensionKey="allowedFrameColorIds"
-                options={formData.printOptions as PrintOptions | null}
-                onChange={onPrintOptionsChange}
-                allIds={FRAME_COLORS.map((c) => c.id)}
-              />
-              <PrintRestrictionGroup
-                title="Mounts"
-                all={MOUNTS.map((m) => ({ id: m.id, label: m.label }))}
-                dimensionKey="allowedMountIds"
-                options={formData.printOptions as PrintOptions | null}
-                onChange={onPrintOptionsChange}
-                allIds={MOUNTS.map((m) => m.id)}
-              />
-            </details>
-          ) : (
-            <details className={styles.printRestrictions}>
-              <summary className={styles.printRestrictionsSummary}>Show options</summary>
-
-              <p className={styles.printRestrictionsIntro}>
-                The Print Space offers many options — to keep this simple we only let you veto the
-                three that matter most for editorial control: papers, frame types and the
-                passepartout. Everything that stays checked remains available to buyers.
-              </p>
-
-              <TpsRestrictionGroup
-                title="Papers"
-                all={TPS_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
-                dimensionId="paper"
-                restrictions={formData.printOptions as PrintRestrictions | null}
-                onChange={onPrintOptionsChange}
-                allIds={TPS_PAPERS.map((p) => p.id)}
-              />
-              <TpsRestrictionGroup
-                title="Frame types"
-                all={TPS_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
-                dimensionId="frameType"
-                restrictions={formData.printOptions as PrintRestrictions | null}
-                onChange={onPrintOptionsChange}
-                allIds={TPS_FRAME_TYPES.map((f) => f.id)}
-              />
-              <TpsRestrictionGroup
-                title="Mount (Passepartout)"
-                all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
-                dimensionId="windowMount"
-                restrictions={formData.printOptions as PrintRestrictions | null}
-                onChange={onPrintOptionsChange}
-                allIds={TPS_WINDOW_MOUNTS.map((w) => w.id)}
-              />
-            </details>
-          )}
+            <TpsRestrictionGroup
+              title="Papers"
+              all={TPS_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
+              dimensionId="paper"
+              restrictions={formData.printOptions ?? null}
+              onChange={onPrintOptionsChange}
+              allIds={TPS_PAPERS.map((p) => p.id)}
+            />
+            <TpsRestrictionGroup
+              title="Frame types"
+              all={TPS_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
+              dimensionId="frameType"
+              restrictions={formData.printOptions ?? null}
+              onChange={onPrintOptionsChange}
+              allIds={TPS_FRAME_TYPES.map((f) => f.id)}
+            />
+            <TpsRestrictionGroup
+              title="Mount (Passepartout)"
+              all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
+              dimensionId="windowMount"
+              restrictions={formData.printOptions ?? null}
+              onChange={onPrintOptionsChange}
+              allIds={TPS_WINDOW_MOUNTS.map((w) => w.id)}
+            />
+          </details>
         </div>
       )}
 
@@ -1502,31 +1047,29 @@ export const ArtworkEditForm = ({
               Print Size Requirements
             </Text>
             <p className={styles.printModalDescription}>
-              Each print size requires a minimum image resolution at {MIN_DPI} DPI. The table below
-              shows the minimum pixel dimensions needed for each size we offer.
+              Prints are sold at custom sizes (aspect-locked to your file). Every long-edge value
+              below assumes the buyer picks that as the longest side; the short side follows from
+              your image&apos;s aspect ratio. Effective DPI must hit {MIN_DPI} for the print to
+              ship.
             </p>
             <table className={styles.printModalTable}>
               <thead>
                 <tr>
                   <th>Print Size</th>
-                  <th>Min. Resolution</th>
                   {imageMeta && <th>Your DPI</th>}
                   {imageMeta && <th>Status</th>}
                 </tr>
               </thead>
               <tbody>
-                {printSizes.map((size) => (
+                {tpsSizeSamples.map((size) => (
                   <tr key={size.label}>
                     <td>{size.label}</td>
-                    <td>
-                      {size.requiredWidth} × {size.requiredHeight} px
-                    </td>
                     {imageMeta && (
                       <td>
                         <span
                           className={size.eligible ? styles.statusReady : styles.statusNotReady}
                         >
-                          {Math.min(size.effectiveDpiW, size.effectiveDpiH)} DPI
+                          {size.effectiveDpi} DPI
                         </span>
                       </td>
                     )}

@@ -150,7 +150,7 @@ export function getEffectiveSizeCm(
 /**
  * Uniform border value (cm) for the given border-dimension id.
  * Returns 0 when not set. The default id matches the first border
- * dimension declared by Prodigi/TPS (the paper border).
+ * dimension declared by the catalog (e.g. paper border).
  */
 export function getEffectiveBorderCm(config: WizardConfig, dimensionId = 'border'): number {
   return config.borders?.[dimensionId]?.allCm ?? 0
@@ -160,7 +160,7 @@ export function getEffectiveBorderCm(config: WizardConfig, dimensionId = 'border
  * Effective passepartout (mat) width in cm. Reads from the
  * `windowMountSize` border dim when present (TPS), else falls back
  * to the visual hint `matBorderCm` from the currently-selected
- * options (Prodigi mount option carries this).
+ * options (catalog visual hints).
  */
 export function getEffectiveMatCm(catalog: Catalog, config: WizardConfig): number {
   const explicit = config.borders?.['windowMountSize']?.allCm
@@ -173,7 +173,7 @@ export function getEffectiveMatCm(catalog: Catalog, config: WizardConfig): numbe
  * Merge `visual` hints from every currently-selected enum option in
  * the catalog. Lets the 3D preview and size schema read frame /
  * paper / mat properties without knowing which provider's dimensions
- * supplied them — Prodigi's `color` dimension and TPS's `moulding`
+ * supplied them — the catalog's enum dimensions can carry
  * dimension both produce `frameColorHex` and the merge picks
  * whichever is set. Later dimensions override earlier ones.
  */

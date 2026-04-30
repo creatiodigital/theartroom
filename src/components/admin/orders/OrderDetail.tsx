@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -9,23 +9,19 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { formatEuro, resolveSku } from '@/components/PrintWizard/options'
-import type { PrintConfig } from '@/components/PrintWizard/types'
+import { formatEuro } from '@/lib/print-providers/format'
 
 import {
   deleteOrder,
   getOrderDetail,
-  markPlacedInProdigi,
+  markDelivered,
+  markPlaced,
   markRejected,
-  markTpsDelivered,
-  markTpsPlaced,
-  markTpsShipped,
-  markTpsStarted,
+  markShipped,
+  markStarted,
   refundOrder,
-  syncOrderFromProdigi,
   type AdminOrderDetail as Detail,
 } from '@/app/admin/orders/actions'
-import { getProviderInfo } from '@/app/admin/orders/providerInfo'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
@@ -72,26 +68,25 @@ const paymentDot = (status: string): DotColor => {
   return 'grey'
 }
 
-const prodigiDot = (stage: string | null): DotColor => {
+const fulfillmentDot = (stage: string | null): DotColor => {
   if (stage === 'Complete') return 'green'
-  if (stage === 'Rejected' || stage === 'Cancelled') return 'red'
+  if (stage === 'Rejected') return 'red'
   if (stage === 'Shipped') return 'blue'
-  if (stage === 'Started' || stage === 'InProgress') return 'amber'
-  if (stage === 'Placed') return 'amber'
+  if (stage === 'Started' || stage === 'Placed') return 'amber'
   return 'grey'
 }
 
-const prodigiStageLabel = (stage: string | null): string => {
+const fulfillmentLabel = (stage: string | null): string => {
   if (!stage) return 'Pending placement'
-  if (stage === 'Placed') return 'Placed in Prodigi'
+  if (stage === 'Placed') return 'Placed at TPS'
   if (stage === 'Started') return 'In production'
   if (stage === 'Shipped') return 'Shipped'
-  if (stage === 'Complete') return 'Complete'
+  if (stage === 'Complete') return 'Delivered'
   if (stage === 'Rejected') return 'Rejected'
   return stage
 }
 
-const TERMINAL_STAGES = new Set(['Complete', 'Rejected', 'Cancelled'])
+const TERMINAL_STAGES = new Set(['Complete', 'Rejected'])
 
 const CopyButton = ({ value, label }: { value: string; label?: string }) => {
   const [copied, setCopied] = useState(false)
@@ -118,13 +113,10 @@ const CopyButton = ({ value, label }: { value: string; label?: string }) => {
   )
 }
 
-// Pick a color for an event kind so the timeline is scannable.
 const eventDot = (kind: string): DotColor => {
-  if (kind.endsWith('_failed') || kind === 'prodigi_cancelled' || kind === 'auth_canceled')
-    return 'red'
+  if (kind.endsWith('_failed') || kind === 'auth_canceled') return 'red'
   if (kind === 'captured' || kind === 'auth_received' || kind === 'email_sent') return 'green'
-  if (kind === 'prodigi_issue') return 'amber'
-  if (kind.startsWith('prodigi_')) return 'blue'
+  if (kind === 'admin_action') return 'blue'
   return 'grey'
 }
 
@@ -144,35 +136,19 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
   const [refundError, setRefundError] = useState<string | null>(null)
   const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
 
-  const [placeOpen, setPlaceOpen] = useState(false)
-  const [prodigiOrderIdInput, setProdigiOrderIdInput] = useState('')
-  const [placing, setPlacing] = useState(false)
-  const [placeError, setPlaceError] = useState<string | null>(null)
-
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [rejectError, setRejectError] = useState<string | null>(null)
 
-  const [syncing, setSyncing] = useState(false)
-  const [syncMessage, setSyncMessage] = useState<string | null>(null)
-  const autoSyncedRef = useRef(false)
-
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  // ── TPS manual-fulfillment state ─────────────────────────────────
-  // For providers without an automated webhook (currently The Print
-  // Space) the admin advances each stage by hand. One in-flight flag
-  // per CTA + a shared error string so we can disable everything during
-  // the transition and surface failures inline.
-  const [tpsBusy, setTpsBusy] = useState<'placed' | 'started' | 'shipped' | 'delivered' | null>(
-    null,
-  )
-  const [tpsError, setTpsError] = useState<string | null>(null)
-  const [tpsShipOpen, setTpsShipOpen] = useState(false)
-  const [tpsTrackingUrl, setTpsTrackingUrl] = useState('')
+  const [busy, setBusy] = useState<'placed' | 'started' | 'shipped' | 'delivered' | null>(null)
+  const [busyError, setBusyError] = useState<string | null>(null)
+  const [shipOpen, setShipOpen] = useState(false)
+  const [trackingUrlInput, setTrackingUrlInput] = useState('')
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -213,57 +189,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
     await load()
   }, [order, refundReason, load])
 
-  const handleSync = useCallback(
-    async (silent = false) => {
-      if (!order?.prodigiOrderId) return
-      if (order.prodigiStage && TERMINAL_STAGES.has(order.prodigiStage)) return
-      setSyncing(true)
-      if (!silent) setSyncMessage('Syncing with Prodigi…')
-      const res = await syncOrderFromProdigi(order.id)
-      setSyncing(false)
-      if (res.ok) {
-        setSyncMessage(
-          res.changed
-            ? `Updated — stage is now ${prodigiStageLabel(res.stage)}.`
-            : silent
-              ? null
-              : 'No changes from Prodigi.',
-        )
-        if (res.changed) await load()
-      } else {
-        setSyncMessage(`⚠️ ${res.error}`)
-      }
-    },
-    [order, load],
-  )
-
-  // Auto-sync once per page load, after the order is first loaded. If
-  // there's a live Prodigi order ID and we're not terminal, pull the
-  // latest status so what admin sees is fresh.
-  useEffect(() => {
-    if (!order) return
-    if (autoSyncedRef.current) return
-    if (!order.prodigiOrderId) return
-    if (order.prodigiStage && TERMINAL_STAGES.has(order.prodigiStage)) return
-    autoSyncedRef.current = true
-    void handleSync(true)
-  }, [order, handleSync])
-
-  const handleMarkPlaced = useCallback(async () => {
-    if (!order) return
-    setPlacing(true)
-    setPlaceError(null)
-    const res = await markPlacedInProdigi(order.id, prodigiOrderIdInput)
-    setPlacing(false)
-    if (!res.ok) {
-      setPlaceError(res.error)
-      return
-    }
-    setPlaceOpen(false)
-    setProdigiOrderIdInput('')
-    await load()
-  }, [order, prodigiOrderIdInput, load])
-
   const handleMarkRejected = useCallback(async () => {
     if (!order) return
     setRejecting(true)
@@ -277,9 +202,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
     setRejectOpen(false)
     setRejectReason('')
     await load()
-    if (res.needsRefund) {
-      setRefundOpen(true)
-    }
+    if (res.needsRefund) setRefundOpen(true)
   }, [order, rejectReason, load])
 
   const handleDelete = useCallback(async () => {
@@ -296,59 +219,55 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
     router.push('/admin/orders')
   }, [order, router])
 
-  // ── TPS manual stage handlers ────────────────────────────────────
-  // Each one drives a separate server action; the shared `tpsBusy`
-  // flag plus inline `tpsError` keep the UI honest while in flight.
-  // Buyer transition emails fire from the server action itself.
-  const handleTpsPlaced = useCallback(async () => {
+  const handlePlaced = useCallback(async () => {
     if (!order) return
-    setTpsBusy('placed')
-    setTpsError(null)
-    const res = await markTpsPlaced(order.id)
-    setTpsBusy(null)
+    setBusy('placed')
+    setBusyError(null)
+    const res = await markPlaced(order.id)
+    setBusy(null)
     if (!res.ok) {
-      setTpsError(res.error)
+      setBusyError(res.error)
       return
     }
     await load()
   }, [order, load])
 
-  const handleTpsStarted = useCallback(async () => {
+  const handleStarted = useCallback(async () => {
     if (!order) return
-    setTpsBusy('started')
-    setTpsError(null)
-    const res = await markTpsStarted(order.id)
-    setTpsBusy(null)
+    setBusy('started')
+    setBusyError(null)
+    const res = await markStarted(order.id)
+    setBusy(null)
     if (!res.ok) {
-      setTpsError(res.error)
+      setBusyError(res.error)
       return
     }
     await load()
   }, [order, load])
 
-  const handleTpsShipped = useCallback(async () => {
+  const handleShipped = useCallback(async () => {
     if (!order) return
-    setTpsBusy('shipped')
-    setTpsError(null)
-    const res = await markTpsShipped(order.id, tpsTrackingUrl || null)
-    setTpsBusy(null)
+    setBusy('shipped')
+    setBusyError(null)
+    const res = await markShipped(order.id, trackingUrlInput || null)
+    setBusy(null)
     if (!res.ok) {
-      setTpsError(res.error)
+      setBusyError(res.error)
       return
     }
-    setTpsShipOpen(false)
-    setTpsTrackingUrl('')
+    setShipOpen(false)
+    setTrackingUrlInput('')
     await load()
-  }, [order, tpsTrackingUrl, load])
+  }, [order, trackingUrlInput, load])
 
-  const handleTpsDelivered = useCallback(async () => {
+  const handleDelivered = useCallback(async () => {
     if (!order) return
-    setTpsBusy('delivered')
-    setTpsError(null)
-    const res = await markTpsDelivered(order.id)
-    setTpsBusy(null)
+    setBusy('delivered')
+    setBusyError(null)
+    const res = await markDelivered(order.id)
+    setBusy(null)
     if (!res.ok) {
-      setTpsError(res.error)
+      setBusyError(res.error)
       return
     }
     await load()
@@ -380,15 +299,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
       country?: string
       phone?: string
     }) ?? {}
-  const config =
-    (order.printConfig as {
-      paperId?: string
-      formatId?: string
-      sizeId?: string
-      frameColorId?: string
-      mountId?: string
-      orientation?: string
-    }) ?? {}
 
   const sections: Section[] = [
     {
@@ -417,7 +327,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
       ],
     },
     {
-      title: 'Artwork & Config',
+      title: 'Artwork',
       rows: [
         [
           'Artwork',
@@ -427,12 +337,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
             <span style={{ opacity: 0.7 }}>{order.artist.name}</span>
           </>,
         ],
-        ['Paper', config.paperId ?? '—'],
-        ['Format', config.formatId ?? '—'],
-        ['Size', config.sizeId ?? '—'],
-        ['Frame color', config.frameColorId ?? '—'],
-        ['Mount', config.mountId ?? '—'],
-        ['Orientation', config.orientation ?? '—'],
       ],
     },
     {
@@ -441,8 +345,8 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         ['Total paid by buyer', formatEuro(order.totalCents)],
         ['Artist cut', formatEuro(order.artistCents)],
         ['Gallery cut', formatEuro(order.galleryCents)],
-        ['Prodigi item', formatEuro(order.prodigiItemCents)],
-        ['Prodigi shipping', formatEuro(order.prodigiShippingCents)],
+        ['Production cost', formatEuro(order.productionCents)],
+        ['Production shipping', formatEuro(order.productionShippingCents)],
         ['Customer VAT', formatEuro(order.customerVatCents)],
         ['Currency', order.currency.toUpperCase()],
       ],
@@ -460,23 +364,9 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         [
           'Fulfillment',
           <span key="pr">
-            <Dot color={prodigiDot(order.prodigiStage)} />
-            <Badge label={prodigiStageLabel(order.prodigiStage)} variant="current" />
+            <Dot color={fulfillmentDot(order.fulfillmentStatus)} />
+            <Badge label={fulfillmentLabel(order.fulfillmentStatus)} variant="current" />
           </span>,
-        ],
-        [
-          'Prodigi order ID',
-          order.prodigiOrderId ? (
-            <a
-              href={`https://dashboard.prodigi.com/orders/${order.prodigiOrderId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {order.prodigiOrderId}
-            </a>
-          ) : (
-            '—'
-          ),
         ],
         [
           'Stripe PaymentIntent',
@@ -525,27 +415,9 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
     },
   ]
 
-  const stage = order.prodigiStage
+  const stage = order.fulfillmentStatus
   const isTerminal = stage ? TERMINAL_STAGES.has(stage) : false
-  const canMarkPlaced = stage === null && order.paymentStatus === 'authorized'
-  const canSync = !!order.prodigiOrderId && !isTerminal
-  const canReject = stage !== null && !isTerminal
-
-  // Pick up the latest Prodigi sync event and check for issues / Error
-  // states in the per-phase details. Surfaces blockers that would
-  // otherwise sit buried in the event log payload.
-  const latestSync = order.events.find((e) => e.kind === 'prodigi_status_changed')
-  const latestSyncPayload =
-    latestSync?.payload && typeof latestSync.payload === 'object'
-      ? (latestSync.payload as {
-          issues?: Array<{ errorCode: string; description: string }>
-          details?: Record<string, string>
-        })
-      : null
-  const issues = latestSyncPayload?.issues ?? []
-  const erroredPhases = Object.entries(latestSyncPayload?.details ?? {}).filter(
-    ([, v]) => v === 'Error',
-  )
+  const canReject = !isTerminal
 
   return (
     <DashboardLayout backLink="/admin/orders" backLabel="← Back to Orders">
@@ -578,7 +450,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         </div>
       </div>
 
-      {order.prodigiStage === 'Rejected' && order.paymentStatus === 'succeeded' && (
+      {order.fulfillmentStatus === 'Rejected' && order.paymentStatus === 'succeeded' && (
         <div className={dashboardStyles.section}>
           <div
             style={{
@@ -600,52 +472,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         </div>
       )}
 
-      {(issues.length > 0 || erroredPhases.length > 0) &&
-        getProviderInfo(order.printProvider).fulfillment === 'auto' && (
-          <div className={dashboardStyles.section}>
-            <div
-              style={{
-                padding: '12px 16px',
-                background: '#fdecea',
-                border: '1px solid #f5a5a0',
-                borderRadius: 4,
-                fontSize: 13,
-                lineHeight: 1.55,
-              }}
-            >
-              <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>
-                ⚠️ Prodigi reported an issue on this order
-              </p>
-              {erroredPhases.length > 0 && (
-                <p style={{ margin: '0 0 8px 0' }}>
-                  Phases in <code>Error</code> state:{' '}
-                  {erroredPhases.map(([k], i) => (
-                    <span key={k}>
-                      {i > 0 ? ', ' : ''}
-                      <code>{k}</code>
-                    </span>
-                  ))}
-                  . Common cause: <code>downloadAssets</code> = Error means Prodigi couldn&apos;t
-                  fetch the asset URL (check that the R2 URL is still reachable).
-                </p>
-              )}
-              {issues.length > 0 && (
-                <ul style={{ margin: '0 0 0 18px', padding: 0 }}>
-                  {issues.map((i) => (
-                    <li key={`${i.errorCode}:${i.description}`}>
-                      <strong>{i.errorCode}</strong> — {i.description}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p style={{ margin: '8px 0 0 0', fontSize: 12, opacity: 0.75 }}>
-                Click &ldquo;Refresh from Prodigi&rdquo; below after you&apos;ve fixed it on their
-                side, or &ldquo;Mark rejected&rdquo; to cancel the order.
-              </p>
-            </div>
-          </div>
-        )}
-
       <div className={dashboardStyles.section}>
         <div
           style={{
@@ -657,66 +483,63 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
           }}
         >
           <h2 style={{ margin: 0, fontSize: 16 }}>Fulfillment</h2>
-          <Dot color={prodigiDot(stage)} />
-          <Badge label={prodigiStageLabel(stage)} variant="current" />
-          {(() => {
-            // Provider badge — surfaces "Prodigi" vs "TPS" so the admin
-            // immediately knows whether to expect auto-sync or to drive
-            // the order by hand. `getProviderInfo` falls through safely
-            // for unknown / removed providers.
-            const info = getProviderInfo(order.printProvider)
-            return (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 12,
-                  padding: '2px 10px',
-                  borderRadius: 999,
-                  border: `1px solid ${info.color}`,
-                  color: info.color,
-                  fontWeight: 500,
-                }}
-                title={
-                  info.fulfillment === 'auto'
-                    ? `${info.longLabel} — status updates automatically via webhook`
-                    : `${info.longLabel} — status managed manually from this page`
-                }
-              >
-                {info.longLabel}
-                <span style={{ opacity: 0.6 }}>
-                  · {info.fulfillment === 'auto' ? 'auto' : 'manual'}
-                </span>
-              </span>
-            )
-          })()}
-          {syncing && <span style={{ fontSize: 12, opacity: 0.6 }}>Syncing with Prodigi…</span>}
+          <Dot color={fulfillmentDot(stage)} />
+          <Badge label={fulfillmentLabel(stage)} variant="current" />
         </div>
 
-        {getProviderInfo(order.printProvider).fulfillment === 'auto' ? (
-          // Provider auto-syncs (currently Prodigi). Existing controls
-          // unchanged — webhook + manual refresh do the heavy lifting.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div
+            style={{
+              padding: '8px 12px',
+              background: '#f3f0ff',
+              border: '1px solid #c4b5fd',
+              borderRadius: 4,
+              fontSize: 12,
+              lineHeight: 1.5,
+            }}
+          >
+            <strong>Manual fulfillment.</strong> Place each order on theprintspace&apos;s portal by
+            hand, then advance the stage here as you get updates from them. Each click sends the
+            corresponding buyer email automatically.
+          </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {canMarkPlaced && (
+            {stage === null && order.paymentStatus === 'authorized' && (
               <Button
                 font="dashboard"
                 variant="primary"
-                label="Mark placed in Prodigi"
-                onClick={() => {
-                  setPlaceError(null)
-                  setPlaceOpen(true)
-                }}
+                label={busy === 'placed' ? 'Capturing…' : 'Capture payment & mark placed'}
+                onClick={handlePlaced}
+                disabled={busy !== null}
               />
             )}
-            {canSync && (
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label={syncing ? 'Refreshing…' : 'Refresh from Prodigi'}
-                onClick={() => handleSync(false)}
-                disabled={syncing}
-              />
+            {stage !== null && !isTerminal && (
+              <>
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label={busy === 'started' ? 'Marking…' : 'Mark in production (notify buyer)'}
+                  onClick={handleStarted}
+                  disabled={busy !== null || stage === 'Started'}
+                />
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label={busy === 'shipped' ? 'Marking…' : 'Mark shipped (notify buyer)'}
+                  onClick={() => {
+                    setBusyError(null)
+                    setTrackingUrlInput(order.trackingUrl ?? '')
+                    setShipOpen(true)
+                  }}
+                  disabled={busy !== null || stage === 'Shipped'}
+                />
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label={busy === 'delivered' ? 'Marking…' : 'Mark delivered (notify buyer)'}
+                  onClick={handleDelivered}
+                  disabled={busy !== null}
+                />
+              </>
             )}
             {canReject && (
               <Button
@@ -727,436 +550,216 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                   setRejectError(null)
                   setRejectOpen(true)
                 }}
+                disabled={busy !== null}
               />
             )}
             {stage === null && order.paymentStatus !== 'authorized' && (
               <span style={{ fontSize: 12, opacity: 0.6 }}>
-                Waiting for payment to authorize before you can place in Prodigi.
+                Waiting for payment to authorize before you can capture & mark placed.
               </span>
             )}
           </div>
-        ) : (
-          // Manual provider (TPS). Each transition is a single click;
-          // the underlying server action captures payment / sets stage
-          // / fires the matching buyer email. Buttons stay enabled
-          // outside their natural sequence so admin can recover from
-          // out-of-order TPS notifications (e.g. mark Delivered without
-          // having clicked Shipped first if the order skipped a stage).
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {busyError && <p style={{ margin: 0, color: '#b91c1c', fontSize: 13 }}>⚠️ {busyError}</p>}
+          {shipOpen && (
             <div
               style={{
-                padding: '8px 12px',
-                background: '#f3f0ff',
-                border: '1px solid #c4b5fd',
+                padding: 16,
+                border: '1px solid rgba(0,0,0,0.15)',
                 borderRadius: 4,
-                fontSize: 12,
-                lineHeight: 1.5,
+                background: '#fafafa',
               }}
             >
-              <strong>Manual fulfillment.</strong> The Print Space doesn&apos;t expose status via
-              API, so advance the stage here as you get updates from them. Each click sends the
-              corresponding buyer email automatically.
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {stage === null && order.paymentStatus === 'authorized' && (
+              <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
+                <strong>Mark this order as shipped.</strong> Paste the tracking URL TPS provided so
+                the buyer&apos;s email can link straight to it. Leave blank if you don&apos;t have
+                one yet.
+              </p>
+              <label
+                htmlFor="tracking-url"
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  marginBottom: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  opacity: 0.7,
+                }}
+              >
+                Tracking URL (optional)
+              </label>
+              <input
+                id="tracking-url"
+                type="url"
+                value={trackingUrlInput}
+                onChange={(e) => setTrackingUrlInput(e.target.value)}
+                placeholder="https://tracking.example.com/..."
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  border: '1px solid rgba(0,0,0,0.2)',
+                  borderRadius: 4,
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <Button
                   font="dashboard"
                   variant="primary"
-                  label={tpsBusy === 'placed' ? 'Capturing…' : 'Capture payment & mark placed'}
-                  onClick={handleTpsPlaced}
-                  disabled={tpsBusy !== null}
+                  label={busy === 'shipped' ? 'Marking…' : 'Mark shipped'}
+                  onClick={handleShipped}
+                  disabled={busy !== null}
                 />
-              )}
-              {stage !== null && !isTerminal && (
-                <>
-                  <Button
-                    font="dashboard"
-                    variant="secondary"
-                    label={tpsBusy === 'started' ? 'Marking…' : 'Mark in production (notify buyer)'}
-                    onClick={handleTpsStarted}
-                    disabled={tpsBusy !== null || stage === 'Started'}
-                  />
-                  <Button
-                    font="dashboard"
-                    variant="secondary"
-                    label={tpsBusy === 'shipped' ? 'Marking…' : 'Mark shipped (notify buyer)'}
-                    onClick={() => {
-                      setTpsError(null)
-                      setTpsTrackingUrl(order.trackingUrl ?? '')
-                      setTpsShipOpen(true)
-                    }}
-                    disabled={tpsBusy !== null || stage === 'Shipped'}
-                  />
-                  <Button
-                    font="dashboard"
-                    variant="secondary"
-                    label={tpsBusy === 'delivered' ? 'Marking…' : 'Mark delivered (notify buyer)'}
-                    onClick={handleTpsDelivered}
-                    disabled={tpsBusy !== null}
-                  />
-                  <Button
-                    font="dashboard"
-                    variant="secondary"
-                    label="Mark rejected"
-                    onClick={() => {
-                      setRejectError(null)
-                      setRejectOpen(true)
-                    }}
-                    disabled={tpsBusy !== null}
-                  />
-                </>
-              )}
-              {stage === null && order.paymentStatus !== 'authorized' && (
-                <span style={{ fontSize: 12, opacity: 0.6 }}>
-                  Waiting for payment to authorize before you can capture & mark placed.
-                </span>
-              )}
-            </div>
-            {tpsError && <p style={{ margin: 0, color: '#b91c1c', fontSize: 13 }}>⚠️ {tpsError}</p>}
-            {tpsShipOpen && (
-              <div
-                style={{
-                  padding: 16,
-                  border: '1px solid rgba(0,0,0,0.15)',
-                  borderRadius: 4,
-                  background: '#fafafa',
-                }}
-              >
-                <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
-                  <strong>Mark this order as shipped.</strong> Paste the tracking URL TPS provided
-                  so the buyer&apos;s email can link straight to it. Leave blank if you don&apos;t
-                  have one yet.
-                </p>
-                <label
-                  htmlFor="tps-tracking-url"
-                  style={{
-                    display: 'block',
-                    fontSize: 12,
-                    marginBottom: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    opacity: 0.7,
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label="Cancel"
+                  onClick={() => {
+                    setShipOpen(false)
+                    setTrackingUrlInput('')
+                    setBusyError(null)
                   }}
-                >
-                  Tracking URL (optional)
-                </label>
-                <input
-                  id="tps-tracking-url"
-                  type="url"
-                  value={tpsTrackingUrl}
-                  onChange={(e) => setTpsTrackingUrl(e.target.value)}
-                  placeholder="https://tracking.example.com/..."
-                  style={{
-                    width: '100%',
-                    padding: 8,
-                    border: '1px solid rgba(0,0,0,0.2)',
-                    borderRadius: 4,
-                    fontFamily: 'monospace',
-                    fontSize: 13,
-                    boxSizing: 'border-box',
-                  }}
+                  disabled={busy !== null}
                 />
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <Button
-                    font="dashboard"
-                    variant="primary"
-                    label={tpsBusy === 'shipped' ? 'Marking…' : 'Mark shipped'}
-                    onClick={handleTpsShipped}
-                    disabled={tpsBusy !== null}
-                  />
-                  <Button
-                    font="dashboard"
-                    variant="secondary"
-                    label="Cancel"
-                    onClick={() => {
-                      setTpsShipOpen(false)
-                      setTpsTrackingUrl('')
-                      setTpsError(null)
-                    }}
-                    disabled={tpsBusy !== null}
-                  />
-                </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {isTerminal && (
           <p style={{ margin: '12px 0 0 0', fontSize: 12, opacity: 0.6 }}>
             Terminal stage — no further fulfillment action.
           </p>
         )}
-
-        {syncMessage && (
-          <p style={{ margin: '12px 0 0 0', fontSize: 13, opacity: 0.8 }}>{syncMessage}</p>
-        )}
       </div>
 
-      {(() => {
-        let sku: string | null = null
-        let skuAttributes: Record<string, string> = {}
-        try {
-          const resolved = resolveSku(order.printConfig as PrintConfig)
-          sku = resolved.sku
-          skuAttributes = resolved.attributes
-        } catch {
-          // Config doesn't map to a known SKU — show nothing rather than crash.
-        }
-        return (
-          <div className={dashboardStyles.section}>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: 16 }}>For Prodigi placement</h2>
-            <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
-              Paste these into Prodigi&rsquo;s order form.
-            </p>
+      <div className={dashboardStyles.section}>
+        <h2 style={{ margin: '0 0 4px 0', fontSize: 16 }}>For TPS placement</h2>
+        <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
+          Paste these into theprintspace&apos;s &ldquo;Order Prints&rdquo; form.
+        </p>
 
-            {sku ? (
-              <>
-                <div style={{ marginBottom: 16 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      opacity: 0.6,
-                      marginBottom: 4,
-                    }}
-                  >
-                    SKU
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <code
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: 14,
-                        background: '#f6f6f6',
-                        padding: '6px 10px',
-                        borderRadius: 3,
-                      }}
-                    >
-                      {sku}
-                    </code>
-                    <CopyButton value={sku} label="Copy SKU" />
-                  </div>
-                </div>
-
-                {Object.keys(skuAttributes).length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        opacity: 0.6,
-                        marginBottom: 4,
-                      }}
-                    >
-                      Attributes
-                    </div>
-                    <table style={{ fontSize: 13 }}>
-                      <tbody>
-                        {Object.entries(skuAttributes).map(([k, v]) => (
-                          <tr key={k}>
-                            <td style={{ padding: '2px 16px 2px 0', opacity: 0.7 }}>{k}</td>
-                            <td style={{ padding: '2px 0', fontFamily: 'monospace' }}>{v}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p style={{ margin: 0, fontSize: 13, opacity: 0.7 }}>
-                Could not resolve SKU from this order&rsquo;s config. Check the admin notification
-                email for the exact SKU.
-              </p>
-            )}
-
-            <div style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  opacity: 0.6,
-                  marginBottom: 4,
-                }}
-              >
-                Shipping method
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <code
-                  style={{
-                    fontFamily: 'monospace',
-                    fontSize: 13,
-                    background: '#f6f6f6',
-                    padding: '4px 8px',
-                    borderRadius: 3,
-                  }}
-                >
-                  Standard
-                </code>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  opacity: 0.6,
-                  marginBottom: 4,
-                }}
-              >
-                Recipient
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-                  {order.buyerName}
-                  <br />
-                  {addr.line1}
-                  {addr.line2 ? `, ${addr.line2}` : ''}
-                  <br />
-                  {[addr.city, addr.state, addr.postalCode].filter(Boolean).join(', ')}
-                  <br />
-                  {addr.country}
-                  {addr.phone ? (
-                    <>
-                      <br />
-                      {addr.phone}
-                    </>
-                  ) : null}
-                </div>
-                <CopyButton
-                  value={[
-                    order.buyerName,
-                    [addr.line1, addr.line2].filter(Boolean).join(', '),
-                    [addr.city, addr.state, addr.postalCode].filter(Boolean).join(', '),
-                    addr.country,
-                    addr.phone,
-                  ]
-                    .filter(Boolean)
-                    .join('\n')}
-                  label="Copy address"
-                />
-              </div>
-            </div>
-            {order.assetUrl && (
-              <div style={{ marginBottom: 4 }}>
-                <div
-                  style={{
-                    fontSize: 11,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    opacity: 0.6,
-                    marginBottom: 4,
-                  }}
-                >
-                  Print asset URL
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <code
-                    style={{
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                      background: '#f6f6f6',
-                      padding: '4px 8px',
-                      borderRadius: 3,
-                      wordBreak: 'break-all',
-                      flex: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    {order.assetUrl}
-                  </code>
-                  <CopyButton value={order.assetUrl} label="Copy URL" />
-                  <a
-                    href={order.assetUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontSize: 12 }}
-                  >
-                    Open
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
-        )
-      })()}
-
-      {placeOpen && (
-        <div className={dashboardStyles.section}>
-          <div
-            style={{
-              padding: 16,
-              border: '1px solid rgba(0,0,0,0.15)',
-              borderRadius: 4,
-              background: '#fafafa',
-            }}
-          >
-            <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
-              <strong>Mark this order as placed in Prodigi</strong> — enter the Prodigi order ID
-              (from their dashboard). This will capture the buyer&apos;s Stripe payment (
-              {formatEuro(order.totalCents)}) and link the two orders for status syncing.
-            </p>
-            <label
-              htmlFor="prodigi-order-id"
+        {order.specs.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div
               style={{
-                display: 'block',
-                fontSize: 12,
-                marginBottom: 6,
+                fontSize: 11,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                opacity: 0.7,
+                opacity: 0.6,
+                marginBottom: 4,
               }}
             >
-              Prodigi order ID
-            </label>
-            <input
-              id="prodigi-order-id"
-              value={prodigiOrderIdInput}
-              onChange={(e) => setProdigiOrderIdInput(e.target.value)}
-              placeholder="ord_xxxxxxxxxxxxxxxx"
-              style={{
-                width: '100%',
-                padding: 8,
-                border: '1px solid rgba(0,0,0,0.2)',
-                borderRadius: 4,
-                fontFamily: 'monospace',
-                fontSize: 13,
-                boxSizing: 'border-box',
-              }}
-            />
-            {placeError && (
-              <p style={{ margin: '12px 0 0 0', color: '#b91c1c', fontSize: 13 }}>
-                ⚠️ {placeError}
-              </p>
-            )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={placing ? 'Capturing…' : 'Capture payment & mark placed'}
-                onClick={handleMarkPlaced}
-                disabled={placing || prodigiOrderIdInput.trim().length === 0}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => {
-                  setPlaceOpen(false)
-                  setProdigiOrderIdInput('')
-                  setPlaceError(null)
-                }}
-                disabled={placing}
-              />
+              Specs
             </div>
+            <table style={{ fontSize: 13 }}>
+              <tbody>
+                {order.specs.map((s) => (
+                  <tr key={s.label}>
+                    <td style={{ padding: '2px 16px 2px 0', opacity: 0.7 }}>{s.label}</td>
+                    <td style={{ padding: '2px 0', fontFamily: 'monospace' }}>{s.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              opacity: 0.6,
+              marginBottom: 4,
+            }}
+          >
+            Recipient
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+              {order.buyerName}
+              <br />
+              {addr.line1}
+              {addr.line2 ? `, ${addr.line2}` : ''}
+              <br />
+              {[addr.city, addr.state, addr.postalCode].filter(Boolean).join(', ')}
+              <br />
+              {addr.country}
+              {addr.phone ? (
+                <>
+                  <br />
+                  {addr.phone}
+                </>
+              ) : null}
+            </div>
+            <CopyButton
+              value={[
+                order.buyerName,
+                [addr.line1, addr.line2].filter(Boolean).join(', '),
+                [addr.city, addr.state, addr.postalCode].filter(Boolean).join(', '),
+                addr.country,
+                addr.phone,
+              ]
+                .filter(Boolean)
+                .join('\n')}
+              label="Copy address"
+            />
           </div>
         </div>
-      )}
+
+        {order.assetUrl && (
+          <div style={{ marginBottom: 4 }}>
+            <div
+              style={{
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                opacity: 0.6,
+                marginBottom: 4,
+              }}
+            >
+              Print asset
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <a
+                href={order.assetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12 }}
+              >
+                Open original
+              </a>
+            </div>
+          </div>
+        )}
+
+        {order.certificateUrl && (
+          <div style={{ marginTop: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                opacity: 0.6,
+                marginBottom: 4,
+              }}
+            >
+              Certificate of authenticity
+            </div>
+            <a
+              href={order.certificateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 12 }}
+            >
+              Open PDF
+            </a>
+          </div>
+        )}
+      </div>
 
       {rejectOpen && (
         <div className={dashboardStyles.section}>
@@ -1176,24 +779,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                   ? ' — the payment was already captured; after marking rejected you’ll need to issue a refund separately.'
                   : '.'}
             </p>
-            {(order.prodigiStage === 'Started' || order.prodigiStage === 'Shipped') && (
-              <p
-                style={{
-                  margin: '0 0 12px 0',
-                  padding: 10,
-                  background: '#fff4cc',
-                  border: '1px solid #e9c46a',
-                  borderRadius: 4,
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                ⚠️ <strong>Prodigi has already started production.</strong> Per their cancellation
-                policy, if you cancel this order on Prodigi&apos;s side now they will keep the
-                production cost and only refund unused shipping. The buyer-side refund is separate
-                (full amount) — you&apos;ll eat the difference.
-              </p>
-            )}
             <label
               htmlFor="reject-reason"
               style={{
@@ -1212,7 +797,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
-              placeholder="e.g. Prodigi rejected the file for low resolution."
+              placeholder="e.g. TPS rejected the file for low resolution."
               style={{
                 width: '100%',
                 padding: 8,

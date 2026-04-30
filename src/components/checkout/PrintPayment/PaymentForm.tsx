@@ -5,9 +5,9 @@ import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import { formatEuro } from '@/components/PrintWizard/options'
-import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+import { formatEuro } from '@/lib/print-providers'
 
+import type { CheckoutArtwork } from '../PrintCheckout'
 import { OrderSummary } from '../OrderSummary'
 
 import type { StashedPayment } from './types'
@@ -16,8 +16,7 @@ import styles from './PrintPayment.module.scss'
 
 interface PaymentFormProps {
   stashed: StashedPayment
-  artwork: WizardArtwork
-  config: PrintConfig
+  artwork: CheckoutArtwork
   country: string
   artworkSlug: string
   onBack: () => void
@@ -30,7 +29,6 @@ const FORM_ID = 'print-payment-form'
 export const PaymentForm = ({
   stashed,
   artwork,
-  config,
   country,
   artworkSlug,
   onBack,
@@ -46,6 +44,9 @@ export const PaymentForm = ({
     customerVatCents > 0 && subtotalCents > 0
       ? `VAT (${Math.round((customerVatCents * 100) / subtotalCents)}%)`
       : 'VAT'
+
+  const orientation: 'portrait' | 'landscape' =
+    stashed.config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -149,8 +150,16 @@ export const PaymentForm = ({
       </section>
 
       <OrderSummary
-        artwork={artwork}
-        config={config}
+        artwork={{
+          title: artwork.title,
+          artistName: artwork.artistName,
+          year: artwork.year,
+          imageUrl: artwork.imageUrl,
+          originalWidthPx: artwork.originalWidthPx,
+          originalHeightPx: artwork.originalHeightPx,
+        }}
+        specs={stashed.specs}
+        orientation={orientation}
         country={country}
         priceLines={[
           { label: 'Subtotal', value: formatEuro(subtotalCents) },

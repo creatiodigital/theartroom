@@ -12,7 +12,6 @@ import {
   populateFormData,
 } from '@/components/shared/ArtworkEditForm'
 import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
-import type { PrintOptions } from '@/components/PrintWizard/types'
 import type { PrintRestrictions } from '@/lib/print-providers'
 
 type ArtworkEditPageProps = {
@@ -114,7 +113,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handlePrintOptionsChange = (next: PrintOptions | PrintRestrictions | null) => {
+  const handlePrintOptionsChange = (next: PrintRestrictions | null) => {
     setFormData((prev) => ({ ...prev, printOptions: next }))
   }
 

@@ -13,8 +13,8 @@ type OrderDeliveredArgs = {
 }
 
 /**
- * Sent to the buyer once the carrier confirms delivery (Prodigi marks
- * the shipment `Complete`, or admin manually advances a TPS order to
+ * Sent to the buyer once the buyer receives delivery (admin marks
+ * the shipment `Complete`, or admin manually advances an order to
  * the equivalent stage). Closes the loop on the long, multi-week print
  * journey so the buyer doesn't keep wondering whether the package is
  * still in transit.

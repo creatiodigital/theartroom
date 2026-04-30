@@ -366,11 +366,16 @@ export function workingToCalendar(workingDays: number): number {
 
 // ── Supported countries ─────────────────────────────────────────
 //
-// Every ISO code the rate card explicitly handles, plus a curated
-// ROW list for major markets we'll ship to. Expand as needed.
+// Strictly the explicit rows on TPS's published shipping rate card —
+// UK, EU 27, Nordic non-EU (Norway / Iceland / Liechtenstein /
+// Switzerland), US, Canada, Australia + NZ. Other ISO codes are not
+// offered to buyers (TPS's rate card has a "ROW" row but per gallery
+// policy 2026-04-28 we don't ship outside these regions until we can
+// validate transit + customs handling for each market).
 export const TPS_SUPPORTED_COUNTRIES: string[] = [
-  // UK + EU + Nordic
+  // UK
   'GB',
+  // EU 27
   'AT',
   'BE',
   'BG',
@@ -398,6 +403,7 @@ export const TPS_SUPPORTED_COUNTRIES: string[] = [
   'SE',
   'SI',
   'SK',
+  // Nordic non-EU + Switzerland + Liechtenstein
   'NO',
   'IS',
   'LI',
@@ -408,28 +414,50 @@ export const TPS_SUPPORTED_COUNTRIES: string[] = [
   // Australia / New Zealand
   'AU',
   'NZ',
-  // Curated ROW — major shipping markets (expand as needed)
+  // Curated additions — high-GDP markets with reliable shipping that
+  // fall under TPS's ROW shipping rate (no Africa, no Latin America
+  // for now per gallery policy 2026-04-28).
   'JP',
   'KR',
-  'SG',
-  'HK',
-  'TW',
-  'AE',
-  'IL',
-  'BR',
-  'MX',
-  'CL',
-  'AR',
-  'ZA',
-  'IN',
 ]
 
-// ── VAT (mirrors Prodigi for now) ───────────────────────────────
-import { PRODIGI_EU_COUNTRIES } from '../prodigi/data'
+// ── VAT ─────────────────────────────────────────────────────────
 
 export const TPS_VAT_RATE = 0.21
 export const TPS_GALLERY_MARKUP_RATE = 0.45
 
+// EU member states (2026) — destinations where flat 21% VAT applies on
+// the buyer-facing total. Pre-launch accountant review pending.
+const TPS_EU_COUNTRIES = new Set([
+  'AT',
+  'BE',
+  'BG',
+  'HR',
+  'CY',
+  'CZ',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'DE',
+  'GR',
+  'HU',
+  'IE',
+  'IT',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'PL',
+  'PT',
+  'RO',
+  'SK',
+  'SI',
+  'ES',
+  'SE',
+])
+
 export function isEuVatCountry(countryCode: string): boolean {
-  return PRODIGI_EU_COUNTRIES.has(countryCode)
+  return TPS_EU_COUNTRIES.has(countryCode)
 }

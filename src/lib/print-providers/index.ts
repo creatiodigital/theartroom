@@ -30,7 +30,6 @@ export type {
 } from './types'
 
 export {
-  cmToInches,
   formatDualDimensions,
   formatEuro,
   formatSizeForOrientation,
@@ -60,3 +59,9 @@ export {
 } from './configHelpers'
 
 export type { FilterContext } from './configHelpers'
+
+export { summarizeConfig } from './specs'
+export type { SpecsSummary } from './specs'
+
+export { findConfigRestrictionClash } from './checkConfigRestrictions'
+export type { RestrictionClash } from './checkConfigRestrictions'

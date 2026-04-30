@@ -75,6 +75,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, mustChangePassword: true })
     }
 
+    // Local-dev escape hatch: SKIP_LOGIN_OTP=true (only honoured outside
+    // production) bypasses the verification step entirely. Returns the
+    // same shape as `mustChangePassword`-flow so the login UI signs in
+    // directly, no 6-digit prompt. Staging/production ignore this flag
+    // because their NODE_ENV is "production".
+    const skipOtp = process.env.NODE_ENV !== 'production' && process.env.SKIP_LOGIN_OTP === 'true'
+    if (skipOtp) {
+      // Clear any stale code so subsequent normal logins start fresh.
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { loginCode: null, loginCodeExpiry: null },
+      })
+      return NextResponse.json({ success: true, skipOtp: true })
+    }
+
     // Generate 6-digit code with 10-minute expiry
     const loginCode = generateLoginCode()
     const loginCodeExpiry = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes

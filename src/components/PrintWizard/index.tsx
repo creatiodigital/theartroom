@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Icon } from '@/components/ui/Icon'
+import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import Logo from '@/icons/logo.svg'
 
 import {
@@ -16,6 +17,7 @@ import {
   buildInitialConfig,
   configShipsTo,
   findShippableConfig,
+  summarizeConfig,
 } from '@/lib/print-providers'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 
@@ -79,16 +81,24 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
 
   const [config, setConfig] = useState<WizardConfig>(() => {
     const fresh = buildInitialConfig(catalog, aspectRatio, restrictions)
-    if (Object.keys(urlSeed).length === 0) return fresh
+    const hasSeed =
+      Object.keys(urlSeed.values).length > 0 ||
+      urlSeed.customSize !== undefined ||
+      urlSeed.borders !== undefined
+    if (!hasSeed) return fresh
     return {
       ...fresh,
-      values: { ...fresh.values, ...urlSeed },
+      values: { ...fresh.values, ...urlSeed.values },
+      customSize: urlSeed.customSize ?? fresh.customSize,
+      borders: urlSeed.borders ?? fresh.borders,
     }
   })
 
   // Once the client-side image measurement lands, snap orientation to
   // match — unless the user has touched it (URL seed or manual toggle).
-  const [orientationTouched, setOrientationTouched] = useState(urlSeed.orientation !== undefined)
+  const [orientationTouched, setOrientationTouched] = useState(
+    urlSeed.values.orientation !== undefined,
+  )
   useEffect(() => {
     if (orientationTouched || measuredAspect === null) return
     const derived = measuredAspect < 1 ? 'portrait' : 'landscape'
@@ -210,11 +220,24 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
 
   const handleAddToCart = () => {
     if (!canContinue) return
+    // Stash everything downstream needs so checkout/payment don't have
+    // to re-fetch the catalog or re-quote on every render. The blob is
+    // provider-agnostic — `providerId` lets the server-side payment
+    // handler dispatch quotes through the right adapter; `specs` are
+    // pre-computed labels so the OrderSummary stays decoupled from
+    // either provider's option vocabulary.
+    const specs = summarizeConfig(catalog, config)
     if (quote) {
       try {
         sessionStorage.setItem(
           `print-quote:${artwork.slug}`,
-          JSON.stringify({ config, country: countryCode, quote }),
+          JSON.stringify({
+            providerId: catalog.providerId,
+            config,
+            country: countryCode,
+            quote,
+            specs,
+          }),
         )
       } catch {
         // Non-fatal — checkout will re-fetch.
@@ -224,7 +247,16 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
     for (const [key, value] of Object.entries(config.values)) {
       params.set(key, value)
     }
+    if (config.customSize) {
+      params.set('customSize', `${config.customSize.widthCm}x${config.customSize.heightCm}`)
+    }
+    if (config.borders) {
+      for (const [borderId, b] of Object.entries(config.borders)) {
+        params.set(borderId, String(b.allCm))
+      }
+    }
     params.set('country', countryCode)
+    params.set('provider', catalog.providerId)
     router.push(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
   }
 
@@ -237,7 +269,10 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
         <span />
         <button
           type="button"
-          onClick={() => router.push('/prints')}
+          onClick={() => {
+            clearPrintSession(artwork.slug)
+            router.push('/prints')
+          }}
           className={styles.closeButton}
           aria-label="Close wizard"
         >
@@ -289,24 +324,55 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
  * when its key matches a catalog dimension id AND its value is a
  * valid option for that dimension (or 'portrait'/'landscape' for the
  * orientation dim). This protects against stale URLs from a different
- * provider that happen to share dim ids — e.g. a Prodigi-style
- * `size=60x80` getting merged into a TPS catalog where size is
+ * config that doesn't fit the current catalog — e.g. a stale URL
+ * `size=60x80` getting merged into a new catalog where size is
  * custom-only and `60x80` resolves to nothing.
+ *
+ * Also parses `customSize=WxH` (custom W×H in cm) and any border-
+ * kind dimension's numeric value, so the buyer's full configuration
+ * survives a back-and-forth through the URL — not just enum picks.
  */
-function readConfigFromParams(catalog: Catalog, params: URLSearchParams): Record<string, string> {
-  const out: Record<string, string> = {}
+function readConfigFromParams(
+  catalog: Catalog,
+  params: URLSearchParams,
+): {
+  values: Record<string, string>
+  customSize?: { widthCm: number; heightCm: number }
+  borders?: Record<string, { allCm: number }>
+} {
+  const values: Record<string, string> = {}
+  const borders: Record<string, { allCm: number }> = {}
+  let customSize: { widthCm: number; heightCm: number } | undefined
   const dimsById = new Map(catalog.dimensions.map((d) => [d.id, d]))
   params.forEach((value, key) => {
-    if (key === 'country') return
+    if (key === 'country' || key === 'provider') return
+    if (key === 'customSize') {
+      const m = /^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)$/i.exec(value)
+      if (m) {
+        const w = Number(m[1])
+        const h = Number(m[2])
+        if (w > 0 && h > 0) customSize = { widthCm: w, heightCm: h }
+      }
+      return
+    }
     const dim = dimsById.get(key)
     if (!dim) return
     if (dim.kind === 'enum') {
-      if (dim.options.some((o) => o.id === value)) out[key] = value
+      if (dim.options.some((o) => o.id === value)) values[key] = value
     } else if (dim.kind === 'size') {
-      if (dim.options.some((o) => o.id === value)) out[key] = value
+      if (dim.options.some((o) => o.id === value)) values[key] = value
     } else if (dim.kind === 'orientation') {
-      if (value === 'portrait' || value === 'landscape') out[key] = value
+      if (value === 'portrait' || value === 'landscape') values[key] = value
+    } else if (dim.kind === 'border') {
+      const cm = Number(value)
+      if (Number.isFinite(cm) && cm >= dim.minCm && cm <= dim.maxCm) {
+        borders[key] = { allCm: cm }
+      }
     }
   })
-  return out
+  return {
+    values,
+    customSize,
+    borders: Object.keys(borders).length > 0 ? borders : undefined,
+  }
 }

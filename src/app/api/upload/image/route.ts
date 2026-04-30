@@ -16,7 +16,7 @@ import {
 } from '@/lib/r2'
 
 // Restricted to formats both print providers accept. The Print Space
-// only takes JPEG, PNG and TIFF — Prodigi accepts a superset, so this
+// only takes JPEG, PNG and TIFF, matching theprintspace's
 // is the safe intersection for the artwork-image pipeline.
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/tiff']
 
@@ -42,7 +42,7 @@ const MIME_TO_EXT: Record<string, string> = {
  * arbitrary `originalUrl`. That would be an SSRF primitive (server
  * fetches attacker-controlled URL) and an image-substitution vector
  * (attacker uploads a clean preview to R2, then points originalKey at
- * external content that Prodigi later fetches for printing). Instead we
+ * external content that the print provider later fetches for printing). Instead we
  * validate `originalKey` is a well-formed R2 key under our own bucket
  * prefix, rebuild the URL from it, and only fetch our own bucket.
  */

@@ -18,7 +18,7 @@ type OrderCancelledArgs = {
 
 /**
  * Sent to the buyer when an order transitions to our `Rejected` stage,
- * whether via admin action or Prodigi-side cancellation. Copy adapts to
+ * by admin action. Copy adapts to
  * the current Stripe payment state so we never promise money that isn't
  * actually moving.
  */

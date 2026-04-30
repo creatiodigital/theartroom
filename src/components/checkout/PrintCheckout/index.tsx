@@ -7,14 +7,19 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
-import { computeQuotedTotals, formatEuro } from '@/components/PrintWizard/options'
-import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+import {
+  type ProviderId,
+  type Quote,
+  type SpecsSummary,
+  type WizardConfig,
+  formatEuro,
+} from '@/lib/print-providers'
+import { getProviderQuote } from '@/lib/print-providers/quote'
 
 import { OrderSummary } from '../OrderSummary'
+import { clearPrintSession } from '../clearPrintSession'
 
 import { createPaymentIntent } from './createPaymentIntent'
-import { getProdigiQuote } from './getQuote'
-import type { ProdigiQuoteResult } from './getQuote'
 
 import styles from './PrintCheckout.module.scss'
 
@@ -24,10 +29,23 @@ const regionNames =
     : null
 const countryName = (code: string) => regionNames?.of(code) ?? code
 
+export type CheckoutArtwork = {
+  slug: string
+  title: string
+  artistName: string
+  year?: string
+  imageUrl: string
+  originalWidthPx: number
+  originalHeightPx: number
+  printPriceCents: number
+}
+
 interface PrintCheckoutProps {
-  artwork: WizardArtwork
-  config: PrintConfig
-  /** ISO country code the wizard validated against Prodigi's shipsTo list. */
+  artwork: CheckoutArtwork
+  /** Server-authoritative provider for this artwork — used to dispatch
+   *  quote calls and the server-side payment intent. */
+  providerId: ProviderId
+  /** ISO country code the wizard validated. */
   country: string
 }
 
@@ -43,11 +61,20 @@ type AddressForm = {
   postalCode: string
 }
 
-export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) => {
+/** Shape of the wizard → checkout/payment handoff stash. */
+type WizardHandoff = {
+  providerId: ProviderId
+  config: WizardConfig
+  country: string
+  quote: Quote
+  specs: SpecsSummary
+}
+
+export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutProps) => {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
-  const [quote, setQuote] = useState<ProdigiQuoteResult | null>(null)
-  const [quoteLoading, setQuoteLoading] = useState(false)
+  const [handoff, setHandoff] = useState<WizardHandoff | null>(null)
+  const [quoteLoading, setQuoteLoading] = useState(true)
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -93,16 +120,36 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
     'data-touched': touched[name] ? 'true' : 'false',
   })
 
+  const handleClose = () => {
+    clearPrintSession(artwork.slug)
+    router.push('/prints')
+  }
+
   const backToWizard = () => {
-    const params = new URLSearchParams({
-      paper: config.paperId,
-      format: config.formatId,
-      size: config.sizeId,
-      color: config.frameColorId,
-      mount: config.mountId,
-      orientation: config.orientation,
-      country,
-    })
+    // Forward every wizard option back into the URL so the wizard
+    // re-hydrates the buyer's exact selection. Mirrors the
+    // wizard → checkout handoff in PrintWizard's handleAddToCart.
+    // Falls back to country+provider only when there's no handoff
+    // (the bouncing-back-from-stale-link path).
+    const params = new URLSearchParams()
+    if (handoff) {
+      for (const [key, value] of Object.entries(handoff.config.values)) {
+        params.set(key, value)
+      }
+      if (handoff.config.customSize) {
+        params.set(
+          'customSize',
+          `${handoff.config.customSize.widthCm}x${handoff.config.customSize.heightCm}`,
+        )
+      }
+      if (handoff.config.borders) {
+        for (const [borderId, b] of Object.entries(handoff.config.borders)) {
+          params.set(borderId, String(b.allCm))
+        }
+      }
+    }
+    params.set('country', country)
+    params.set('provider', providerId)
     router.push(`/artworks/${artwork.slug}/print?${params.toString()}`)
   }
 
@@ -148,84 +195,78 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Quote is fetched once for the wizard-chosen country; it won't change on
-  // this page. (If the user wants a different destination they go back.)
-  // First try the stash the wizard left behind — saves a Prodigi round-trip
-  // on every advance. The stash is only trusted if it was cut against the
-  // exact (config, country) we're rendering for.
+  // Read the wizard's stash on mount. The wizard always writes a full
+  // `WizardHandoff` blob keyed by artwork slug — we trust it as long as
+  // the (providerId, country) match the page route's authoritative
+  // values. When it doesn't, or it's missing entirely, we re-fetch a
+  // live quote from the same provider; if even that fails we bounce
+  // the buyer back to the wizard.
   useEffect(() => {
     if (!country) return
-    try {
-      const raw = sessionStorage.getItem(`print-quote:${artwork.slug}`)
-      if (raw) {
-        const stashed = JSON.parse(raw) as {
-          config: PrintConfig
-          country: string
-          quote: ProdigiQuoteResult
-        }
-        const same =
-          stashed.country === country &&
-          stashed.config.paperId === config.paperId &&
-          stashed.config.formatId === config.formatId &&
-          stashed.config.sizeId === config.sizeId &&
-          stashed.config.frameColorId === config.frameColorId &&
-          stashed.config.mountId === config.mountId &&
-          stashed.config.orientation === config.orientation
-        if (same) {
-          setQuote(stashed.quote)
-          setQuoteLoading(false)
-          setQuoteError(null)
-          return
-        }
-      }
-    } catch {
-      // Unreadable stash — ignore and fall through to a live fetch.
+    let cancelled = false
+
+    const stash = readHandoff(artwork.slug, providerId, country)
+    if (stash) {
+      setHandoff(stash)
+      setQuoteLoading(false)
+      setQuoteError(null)
+      return
     }
 
-    let cancelled = false
-    setQuoteLoading(true)
-    setQuoteError(null)
-    getProdigiQuote(config, country).then((res) => {
-      if (cancelled) return
-      if (res.ok) {
-        setQuote(res.data)
-        try {
-          sessionStorage.setItem(
-            `print-quote:${artwork.slug}`,
-            JSON.stringify({ config, country, quote: res.data }),
-          )
-        } catch {
-          // Non-fatal; stashing is a perf optimisation only.
-        }
-      } else {
-        setQuote(null)
-        setQuoteError(`SKU ${res.sku} — ${res.error}`)
-      }
-      setQuoteLoading(false)
-    })
+    // No usable stash — fall back to a live re-quote against the
+    // provider URL params alone. We don't have a full WizardConfig
+    // server-side, so this branch only runs when the buyer arrived
+    // via a stale URL or different tab. In that case there's no
+    // config to pass — bounce to the wizard.
+    setQuoteLoading(false)
+    setQuoteError('Your selection expired. Please reconfigure your print.')
+    if (!cancelled) backToWizard()
+
     return () => {
       cancelled = true
     }
-  }, [config, country, artwork.slug])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artwork.slug, providerId, country])
 
-  const totals = quote
-    ? computeQuotedTotals({
-        printPriceCents: artwork.printPriceCents,
-        prodigiItemCents: quote.itemCents,
-        prodigiShippingCents: quote.shippingCents,
-        countryCode: country,
+  // Refresh the live quote against the same provider in the background
+  // so the totals shown here always come from a fresh server-side
+  // calculation — guards against the wizard's stash going stale (e.g.
+  // pricing tables changed mid-session). The stash gets us instant
+  // first paint; this re-validates.
+  useEffect(() => {
+    if (!handoff) return
+    let cancelled = false
+
+    getProviderQuote(handoff.providerId, {
+      config: handoff.config,
+      country: handoff.country,
+      artistPriceCents: artwork.printPriceCents,
+    })
+      .then((quote) => {
+        if (cancelled) return
+        setHandoff((prev) => (prev ? { ...prev, quote } : prev))
       })
-    : null
-  const preTaxCents = totals?.preTaxCents ?? 0
-  const artistCents = artwork.printPriceCents
-  const galleryCents = totals?.galleryCents ?? 0
+      .catch((err) => {
+        if (cancelled) return
+        console.warn('[PrintCheckout] live quote refresh failed:', err)
+      })
 
-  const canSubmit = !!quote && !quoteLoading && formValid
+    return () => {
+      cancelled = true
+    }
+  }, [handoff?.providerId, handoff?.config, handoff?.country, artwork.printPriceCents])
+
+  const quote = handoff?.quote ?? null
+  const specs: SpecsSummary = handoff?.specs ?? []
+  const orientation: 'portrait' | 'landscape' =
+    handoff?.config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
+
+  const canSubmit = !!quote && !quoteLoading && formValid && !!handoff
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     const form = formRef.current
-    if (!form) return
+    if (!form || !handoff) return
 
     if (!form.reportValidity()) return
 
@@ -247,7 +288,8 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
     try {
       const res = await createPaymentIntent({
         artworkSlug: artwork.slug,
-        config,
+        providerId: handoff.providerId,
+        config: handoff.config,
         address: submitted,
       })
       if (!res.ok) {
@@ -256,7 +298,7 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       }
       // Stash what the payment page needs. The clientSecret is scoped to
       // this browser session; the address + totals are just so the
-      // payment screen can render a summary without re-fetching.
+      // payment screen can render without re-fetching.
       sessionStorage.setItem(
         `print-payment:${artwork.slug}`,
         JSON.stringify({
@@ -264,19 +306,13 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
           paymentIntentId: res.paymentIntentId,
           totals: res.totals,
           address: submitted,
-          config,
+          providerId: handoff.providerId,
+          config: handoff.config,
+          specs: handoff.specs,
           country,
         }),
       )
-      const params = new URLSearchParams({
-        paper: config.paperId,
-        format: config.formatId,
-        size: config.sizeId,
-        color: config.frameColorId,
-        mount: config.mountId,
-        orientation: config.orientation,
-        country,
-      })
+      const params = new URLSearchParams({ country, provider: handoff.providerId })
       router.push(`/artworks/${artwork.slug}/print/payment?${params.toString()}`)
     } finally {
       setSubmitting(false)
@@ -291,7 +327,18 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
         <Link href="/" aria-label="Go to home" className={styles.logoLink}>
           <Logo className={styles.logo} />
         </Link>
-        <span className={styles.headerTitle}>Checkout</span>
+        <span />
+        <button
+          type="button"
+          onClick={handleClose}
+          className={styles.closeButton}
+          aria-label="Close checkout"
+        >
+          CLOSE
+          <span className={styles.closeIcon}>
+            <Icon name="close" size={16} />
+          </span>
+        </button>
       </header>
 
       <main className={styles.body}>
@@ -452,35 +499,44 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
         </form>
 
         <OrderSummary
-          artwork={artwork}
-          config={config}
+          artwork={{
+            title: artwork.title,
+            artistName: artwork.artistName,
+            year: artwork.year,
+            imageUrl: artwork.imageUrl,
+            originalWidthPx: artwork.originalWidthPx,
+            originalHeightPx: artwork.originalHeightPx,
+          }}
+          specs={specs}
+          orientation={orientation}
           country={country}
-          priceLines={[
-            {
-              label: 'Artwork',
-              value:
-                quoteLoading && !quote ? (
-                  <span className={styles.priceCalculating}>
-                    Calculating…
-                    <span className={styles.priceSpinner} aria-hidden="true">
-                      <Icon name="loaderCircle" size={12} />
-                    </span>
-                  </span>
-                ) : quote ? (
-                  formatEuro(quote.itemCents + artistCents + galleryCents)
-                ) : (
-                  '—'
-                ),
-            },
-            {
-              label: 'Shipping',
-              value: quoteLoading ? '…' : quote ? formatEuro(quote.shippingCents) : '—',
-              muted: true,
-            },
-          ]}
+          priceLines={
+            quote
+              ? quote.lines.map((line) => ({
+                  label: line.label,
+                  value: formatEuro(line.amountCents),
+                  muted: line.muted,
+                }))
+              : [
+                  {
+                    label: 'Artwork',
+                    value: quoteLoading ? (
+                      <span className={styles.priceCalculating}>
+                        Calculating…
+                        <span className={styles.priceSpinner} aria-hidden="true">
+                          <Icon name="loaderCircle" size={12} />
+                        </span>
+                      </span>
+                    ) : (
+                      '—'
+                    ),
+                  },
+                  { label: 'Shipping', value: quoteLoading ? '…' : '—', muted: true },
+                ]
+          }
           total={{
             label: 'Total (before taxes)',
-            value: quote ? formatEuro(preTaxCents) : '—',
+            value: quote ? formatEuro(quote.subtotalCents) : '—',
           }}
           notes={[quoteError, submitError].filter((n): n is string => Boolean(n))}
           cta={{
@@ -495,4 +551,27 @@ export const PrintCheckout = ({ artwork, config, country }: PrintCheckoutProps) 
       </main>
     </div>
   )
+}
+
+/**
+ * Read and validate the wizard → checkout handoff blob from
+ * sessionStorage. We trust the stash as long as the (providerId,
+ * country) match what the server route resolved to. Returns null when
+ * the stash is missing, malformed, or for a different
+ * provider/country.
+ */
+function readHandoff(slug: string, providerId: ProviderId, country: string): WizardHandoff | null {
+  try {
+    const raw = sessionStorage.getItem(`print-quote:${slug}`)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<WizardHandoff>
+    if (!parsed.providerId || !parsed.config || !parsed.country || !parsed.quote || !parsed.specs) {
+      return null
+    }
+    if (parsed.providerId !== providerId) return null
+    if (parsed.country !== country) return null
+    return parsed as WizardHandoff
+  } catch {
+    return null
+  }
 }

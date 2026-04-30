@@ -3,8 +3,7 @@ import type { Metadata } from 'next'
 
 import { PrintWizard } from '@/components/PrintWizard'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { prodigiToWizardRestrictions, type PrintOptions } from '@/lib/print-providers/prodigi'
-import type { PrintRestrictions, ProviderId } from '@/lib/print-providers'
+import type { PrintRestrictions } from '@/lib/print-providers'
 import prisma from '@/lib/prisma'
 
 interface PrintWizardPageProps {
@@ -48,16 +47,12 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   const originalHeightPx = artwork.originalHeight ?? 1000
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`
 
-  // The artwork's chosen provider drives every adapter call. Pre-
-  // migration, the column is absent → fallback to Prodigi.
-  const providerId: ProviderId = artwork.printProvider === 'PRINTSPACE' ? 'printspace' : 'prodigi'
-
-  const catalog = await loadProviderCatalog(providerId, {
+  const catalog = await loadProviderCatalog('printspace', {
     imageWidthPx: originalWidthPx,
     imageHeightPx: originalHeightPx,
   })
 
-  const restrictions = readRestrictions(providerId, artwork.printOptions)
+  const restrictions = (artwork.printOptions as PrintRestrictions | null) ?? null
 
   return (
     <PrintWizard
@@ -78,13 +73,3 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
 }
 
 export default PrintWizardPage
-
-function readRestrictions(providerId: ProviderId, raw: unknown): PrintRestrictions | null {
-  if (!raw) return null
-  if (providerId === 'prodigi') {
-    return prodigiToWizardRestrictions(raw as PrintOptions)
-  }
-  // TPS-shaped restrictions arrive in the agnostic `PrintRestrictions`
-  // shape directly; just pass through.
-  return raw as PrintRestrictions
-}

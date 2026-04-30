@@ -3,16 +3,9 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 
-import {
-  formatSize,
-  getFormat,
-  getFrameColor,
-  getMount,
-  getPaper,
-  getSize,
-} from '@/components/PrintWizard/options'
-import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+import type { SpecsSummary } from '@/lib/print-providers'
 
+import { SpecList } from '../../print/SpecList/SpecList'
 import styles from './OrderSummary.module.scss'
 
 const regionNames =
@@ -20,6 +13,16 @@ const regionNames =
     ? new Intl.DisplayNames(['en'], { type: 'region' })
     : null
 const countryName = (code: string) => regionNames?.of(code) ?? code
+
+export type ArtworkSummary = {
+  title: string
+  artistName: string
+  year?: string
+  imageUrl: string
+  /** Used to decide whether to rotate the thumb to match the buyer's chosen orientation. */
+  originalWidthPx: number
+  originalHeightPx: number
+}
 
 export type PriceLine = {
   label: string
@@ -32,8 +35,12 @@ type CtaProps =
   | { kind: 'submit'; label: string; form: string; disabled?: boolean }
 
 interface OrderSummaryProps {
-  artwork: WizardArtwork
-  config: PrintConfig
+  artwork: ArtworkSummary
+  /** Pre-computed display labels. Provider-agnostic — the wizard builds
+   *  these from the live catalog; downstream surfaces just render them. */
+  specs: SpecsSummary
+  /** Buyer's chosen orientation — drives thumb rotation. */
+  orientation: 'portrait' | 'landscape'
   /** When set, renders a "Shipping to <country>" line above price rows. */
   country?: string
   priceLines: PriceLine[]
@@ -45,24 +52,16 @@ interface OrderSummaryProps {
 
 export const OrderSummary = ({
   artwork,
-  config,
+  specs,
+  orientation,
   country,
   priceLines,
   total,
   cta,
   notes,
 }: OrderSummaryProps) => {
-  const paper = getPaper(config.paperId)
-  const format = getFormat(config.formatId)
-  const size = getSize(config.sizeId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
-
-  // The thumbnail's natural orientation may not match the buyer's chosen
-  // orientation — rotate the thumb by 90° in that case so it reads right.
   const thumbRotated =
-    (config.orientation === 'landscape') !==
-    artwork.originalWidthPx >= artwork.originalHeightPx
+    (orientation === 'landscape') !== artwork.originalWidthPx >= artwork.originalHeightPx
 
   return (
     <aside className={styles.summaryPanel}>
@@ -83,32 +82,7 @@ export const OrderSummary = ({
         </div>
       </div>
 
-      <ul className={styles.specList}>
-        <li>
-          <span>Paper</span>
-          <span>{paper.label}</span>
-        </li>
-        <li>
-          <span>Format</span>
-          <span>{format.label}</span>
-        </li>
-        <li>
-          <span>Size</span>
-          <span>{formatSize(size, config.orientation)}</span>
-        </li>
-        {format.framed && (
-          <>
-            <li>
-              <span>Frame</span>
-              <span>{frameColor.label}</span>
-            </li>
-            <li>
-              <span>Mount</span>
-              <span>{mount.label}</span>
-            </li>
-          </>
-        )}
-      </ul>
+      <SpecList specs={specs} />
 
       <div className={styles.priceList}>
         {country && (
@@ -149,12 +123,7 @@ export const OrderSummary = ({
           {cta.label}
         </button>
       ) : (
-        <button
-          type="submit"
-          form={cta.form}
-          className={styles.ctaButton}
-          disabled={cta.disabled}
-        >
+        <button type="submit" form={cta.form} className={styles.ctaButton} disabled={cta.disabled}>
           {cta.label}
         </button>
       )}

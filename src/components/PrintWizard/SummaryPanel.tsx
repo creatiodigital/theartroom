@@ -4,19 +4,17 @@ import { useMemo } from 'react'
 
 import {
   type Catalog,
-  type Dimension,
   type Quote,
   type WizardConfig,
   collectVisualHints,
-  formatDualDimensions,
   formatEuro,
   getEffectiveBorderCm,
   getEffectiveMatCm,
   getEffectiveSizeCm,
-  isDimensionVisible,
-  sizeOptionLabel,
+  summarizeConfig,
 } from '@/lib/print-providers'
 
+import { SpecList } from '../print/SpecList/SpecList'
 import { SizeSchema } from './SizeSchema'
 import type { WizardArtwork } from './index'
 
@@ -46,10 +44,10 @@ export const SummaryPanel = ({
   const orientation: 'portrait' | 'landscape' =
     config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
 
-  // Effective print size — preset OR custom (TPS). Drives schema + label.
+  // Effective print size — preset OR custom. Drives schema + label.
   const effectiveSize = useMemo(() => getEffectiveSizeCm(catalog, config), [catalog, config])
 
-  // Merged visual hints from every selected enum option. Both Prodigi
+  // Merged visual hints from every selected enum option. The TPS
   // (`color` dim) and TPS (`moulding` dim) write into `frameColorHex`
   // — the merge picks whichever is set.
   const visuals = useMemo(() => collectVisualHints(catalog, config), [catalog, config])
@@ -114,20 +112,7 @@ export const SummaryPanel = ({
         </div>
       )}
 
-      <dl className={styles.specList}>
-        {catalog.dimensions
-          .filter((dim) => dim.id === 'paper' || dim.id === 'size' || dim.id === 'format')
-          .map((dim) => {
-            const display = renderDimensionValue(dim, config, orientation)
-            if (!display) return null
-            return (
-              <div key={dim.id}>
-                <dt>{dim.label}</dt>
-                <dd>{display}</dd>
-              </div>
-            )
-          })}
-      </dl>
+      <SpecList specs={summarizeConfig(catalog, config)} />
 
       {quote ? (
         <>
@@ -164,40 +149,4 @@ export const SummaryPanel = ({
       </button>
     </aside>
   )
-}
-
-// ── Helpers ──────────────────────────────────────────────────────
-
-const SUMMARY_DIMENSION_IDS = new Set(['paper', 'size', 'format'])
-
-
-function renderDimensionValue(
-  dim: Dimension,
-  config: WizardConfig,
-  orientation: 'portrait' | 'landscape',
-): string | null {
-  if (dim.kind === 'enum') {
-    const value = config.values[dim.id]
-    if (!value) return null
-    return dim.options.find((o) => o.id === value)?.label ?? null
-  }
-  if (dim.kind === 'size') {
-    const value = config.values[dim.id]
-    if (value) {
-      const size = dim.options.find((o) => o.id === value)
-      if (size) return sizeOptionLabel(size, orientation)
-    }
-    if (config.customSize) {
-      const isLandscape = orientation === 'landscape'
-      const wCm = isLandscape ? config.customSize.heightCm : config.customSize.widthCm
-      const hCm = isLandscape ? config.customSize.widthCm : config.customSize.heightCm
-      return formatDualDimensions(wCm, hCm)
-    }
-    return null
-  }
-  if (dim.kind === 'border') {
-    const value = config.borders?.[dim.id]?.allCm ?? 0
-    return value > 0 ? `${value} cm on every side` : 'None'
-  }
-  return null
 }

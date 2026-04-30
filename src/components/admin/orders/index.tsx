@@ -10,18 +10,16 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { formatEuro } from '@/components/PrintWizard/options'
+import { formatEuro } from '@/lib/print-providers/format'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import {
-  createSandboxTestOrder,
-  createTpsTestOrder,
+  createTestOrder,
   listOrders,
   releasePayout,
   type AdminOrderRow,
 } from '@/app/admin/orders/actions'
-import { getProviderInfo, listProviders, type ProviderId } from '@/app/admin/orders/providerInfo'
 
 const formatDate = (iso: string | null) => {
   if (!iso) return '—'
@@ -61,20 +59,20 @@ const paymentLabel = (status: string): string => {
   return status
 }
 
-const prodigiDot = (stage: string | null): keyof typeof DOT_COLORS => {
+const fulfillmentDot = (stage: string | null): keyof typeof DOT_COLORS => {
   if (stage === 'Complete') return 'green'
-  if (stage === 'Rejected' || stage === 'Cancelled') return 'red'
+  if (stage === 'Rejected') return 'red'
   if (stage === 'Shipped') return 'blue'
-  if (stage === 'Started' || stage === 'Placed' || stage === 'InProgress') return 'amber'
+  if (stage === 'Started' || stage === 'Placed') return 'amber'
   return 'grey'
 }
 
-const prodigiStageLabel = (stage: string | null): string => {
+const fulfillmentLabel = (stage: string | null): string => {
   if (!stage) return 'Pending placement'
   if (stage === 'Placed') return 'Placed'
   if (stage === 'Started') return 'In production'
   if (stage === 'Shipped') return 'Shipped'
-  if (stage === 'Complete') return 'Complete'
+  if (stage === 'Complete') return 'Delivered'
   if (stage === 'Rejected') return 'Rejected'
   return stage
 }
@@ -104,13 +102,7 @@ export const AdminOrders = () => {
   const [releasingId, setReleasingId] = useState<string | null>(null)
   const [confirmPayoutId, setConfirmPayoutId] = useState<string | null>(null)
   const [creatingTestOrder, setCreatingTestOrder] = useState(false)
-  const [creatingTpsTestOrder, setCreatingTpsTestOrder] = useState(false)
-  // 'all' = no filter; otherwise the provider id we want to show.
-  // Driven from the provider registry — adding/removing a provider in
-  // providerInfo.ts updates the tabs automatically.
-  const [providerFilter, setProviderFilter] = useState<'all' | ProviderId>('all')
 
-  // Redirect non-admins (same guard used by other admin pages).
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
       router.push('/')
@@ -135,20 +127,8 @@ export const AdminOrders = () => {
   const handleCreateTestOrder = useCallback(async () => {
     setCreatingTestOrder(true)
     setError(null)
-    const res = await createSandboxTestOrder()
+    const res = await createTestOrder()
     setCreatingTestOrder(false)
-    if (!res.ok) {
-      setError(res.error)
-      return
-    }
-    router.push(`/admin/orders/${res.orderId}`)
-  }, [router])
-
-  const handleCreateTpsTestOrder = useCallback(async () => {
-    setCreatingTpsTestOrder(true)
-    setError(null)
-    const res = await createTpsTestOrder()
-    setCreatingTpsTestOrder(false)
     if (!res.ok) {
       setError(res.error)
       return
@@ -191,30 +171,16 @@ export const AdminOrders = () => {
             }}
           >
             <span style={{ flex: 1, minWidth: 240 }}>
-              <strong>Dev tools</strong> — quickly spin up fake orders to exercise the full
+              <strong>Dev tools</strong> — spin up a fake local order to exercise the manual
               fulfillment + email pipelines without spending money. Hidden in production.
-              <br />
-              <span style={{ opacity: 0.75 }}>
-                Prodigi: real sandbox order with auto-sync. TPS: local row only, exercises the
-                manual stage CTAs.
-              </span>
             </span>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label={creatingTestOrder ? 'Creating…' : 'Create a Prodigi Sandbox test order'}
-                onClick={handleCreateTestOrder}
-                disabled={creatingTestOrder || creatingTpsTestOrder}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label={creatingTpsTestOrder ? 'Creating…' : 'Create a TPS test order'}
-                onClick={handleCreateTpsTestOrder}
-                disabled={creatingTestOrder || creatingTpsTestOrder}
-              />
-            </div>
+            <Button
+              font="dashboard"
+              variant="secondary"
+              label={creatingTestOrder ? 'Creating…' : 'Create a test order'}
+              onClick={handleCreateTestOrder}
+              disabled={creatingTestOrder}
+            />
           </div>
         </div>
       )}
@@ -222,60 +188,6 @@ export const AdminOrders = () => {
       {error && (
         <div className={dashboardStyles.section}>
           <p className={dashboardStyles.sectionDescription}>⚠️ {error}</p>
-        </div>
-      )}
-
-      {!loading && orders.length > 0 && (
-        <div className={dashboardStyles.section} style={{ paddingBottom: 0 }}>
-          <div
-            role="tablist"
-            aria-label="Filter orders by fulfillment provider"
-            style={{
-              display: 'flex',
-              gap: 8,
-              flexWrap: 'wrap',
-              borderBottom: '1px solid var(--color-border-subtle)',
-              paddingBottom: 8,
-            }}
-          >
-            {(
-              [
-                { id: 'all' as const, label: 'All', count: orders.length },
-                ...listProviders().map((p) => ({
-                  id: p.id,
-                  label: p.label,
-                  count: orders.filter((o) => o.printProvider === p.id).length,
-                })),
-              ] satisfies Array<{ id: 'all' | ProviderId; label: string; count: number }>
-            ).map((tab) => {
-              const active = providerFilter === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setProviderFilter(tab.id)}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '6px 10px',
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    fontWeight: active ? 600 : 500,
-                    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                    borderBottom: active
-                      ? '2px solid var(--color-text-primary)'
-                      : '2px solid transparent',
-                    marginBottom: -9,
-                  }}
-                >
-                  {tab.label}
-                  <span style={{ marginLeft: 6, opacity: 0.6, fontWeight: 400 }}>{tab.count}</span>
-                </button>
-              )
-            })}
-          </div>
         </div>
       )}
 
@@ -287,24 +199,12 @@ export const AdminOrders = () => {
           if (orders.length === 0) {
             return <EmptyState message="No print orders yet." />
           }
-          const visibleOrders =
-            providerFilter === 'all'
-              ? orders
-              : orders.filter((o) => o.printProvider === providerFilter)
-          if (visibleOrders.length === 0) {
-            // Empty state per tab — keeps the page useful even when one
-            // provider has no orders (or has been removed entirely).
-            return (
-              <EmptyState message={`No ${getProviderInfo(providerFilter).label} orders yet.`} />
-            )
-          }
           return (
             <table className={dashboardStyles.table}>
               <thead>
                 <tr>
                   <th>Date</th>
                   <th>Order</th>
-                  <th>Provider</th>
                   <th>Buyer</th>
                   <th>Total</th>
                   <th>Fulfillment</th>
@@ -313,7 +213,7 @@ export const AdminOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {visibleOrders.map((o) => (
+                {orders.map((o) => (
                   <tr key={o.id}>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(o.createdAt)}</td>
                     <td>
@@ -321,28 +221,6 @@ export const AdminOrders = () => {
                       <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
                         {o.artist.name}
                       </div>
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {(() => {
-                        const info = getProviderInfo(o.printProvider)
-                        return (
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              fontSize: 'var(--text-xs)',
-                              padding: '2px 8px',
-                              borderRadius: 999,
-                              border: `1px solid ${info.color}`,
-                              color: info.color,
-                              fontWeight: 500,
-                            }}
-                          >
-                            {info.label}
-                          </span>
-                        )
-                      })()}
                     </td>
                     <td>
                       <div>{o.buyerName}</div>
@@ -365,10 +243,10 @@ export const AdminOrders = () => {
                       </div>
                     </td>
                     <td>
-                      <Dot color={prodigiDot(o.prodigiStage)} />
+                      <Dot color={fulfillmentDot(o.fulfillmentStatus)} />
                       <Badge
-                        label={prodigiStageLabel(o.prodigiStage)}
-                        variant={o.prodigiStage === 'Complete' ? 'published' : 'neutral'}
+                        label={fulfillmentLabel(o.fulfillmentStatus)}
+                        variant={o.fulfillmentStatus === 'Complete' ? 'published' : 'neutral'}
                       />
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
@@ -386,19 +264,17 @@ export const AdminOrders = () => {
                         const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
                         const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
                         const label =
-                          o.prodigiStage !== 'Complete'
-                            ? 'Awaiting shipment'
+                          o.fulfillmentStatus !== 'Complete'
+                            ? 'Awaiting delivery'
                             : eligible
                               ? 'Ready to release'
                               : `Ready ${eligibleAt ? formatDate(eligibleAt.toISOString()) : 'soon'}`
                         const color: keyof typeof DOT_COLORS =
-                          o.prodigiStage !== 'Complete' ? 'grey' : eligible ? 'amber' : 'blue'
+                          o.fulfillmentStatus !== 'Complete' ? 'grey' : eligible ? 'amber' : 'blue'
                         return (
                           <>
                             <Dot color={color} />
-                            <span style={{ fontSize: 'var(--text-xs)' }}>
-                              {formatEuro(o.artistCents)} · {label}
-                            </span>
+                            <span style={{ fontSize: 'var(--text-xs)' }}>{label}</span>
                           </>
                         )
                       })()}
@@ -409,7 +285,7 @@ export const AdminOrders = () => {
                         const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
                         const canRelease =
                           !o.transferId &&
-                          o.prodigiStage === 'Complete' &&
+                          o.fulfillmentStatus === 'Complete' &&
                           o.paymentStatus === 'succeeded' &&
                           o.artist.stripeOnboardingComplete &&
                           eligible

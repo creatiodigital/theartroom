@@ -54,19 +54,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
 
-        // Normal flow: require login code
-        if (!loginCode) {
-          return null
-        }
+        // Local-dev escape hatch: when SKIP_LOGIN_OTP=true outside
+        // production, password-only login is enough. Mirrors the same
+        // flag in /api/auth/send-login-code. Staging + production
+        // ignore this because NODE_ENV is "production".
+        const skipOtp =
+          process.env.NODE_ENV !== 'production' && process.env.SKIP_LOGIN_OTP === 'true'
 
-        // Verify login code
-        if (!user.loginCode || user.loginCode !== loginCode) {
-          return null
-        }
+        if (!skipOtp) {
+          // Normal flow: require login code
+          if (!loginCode) {
+            return null
+          }
 
-        // Check if code has expired
-        if (!user.loginCodeExpiry || new Date() > user.loginCodeExpiry) {
-          return null
+          // Verify login code
+          if (!user.loginCode || user.loginCode !== loginCode) {
+            return null
+          }
+
+          // Check if code has expired
+          if (!user.loginCodeExpiry || new Date() > user.loginCodeExpiry) {
+            return null
+          }
         }
 
         // Clear the login code after successful authentication

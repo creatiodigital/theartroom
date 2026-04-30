@@ -2,38 +2,21 @@
 
 import crypto from 'node:crypto'
 
-import type { PrintConfig, PrintOptions } from '@/components/PrintWizard/types'
 import {
-  FORMATS,
-  GALLERY_MARKUP_RATE,
-  configRespectsArtworkRestrictions,
-} from '@/components/PrintWizard/options'
+  type ProviderId,
+  type WizardConfig,
+  buildAvailability,
+  configShipsTo,
+  findConfigRestrictionClash,
+} from '@/lib/print-providers'
+import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import { getProviderQuote } from '@/lib/print-providers/quote'
+import type { PrintRestrictions } from '@/lib/print-providers/types'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
-import { getProdigiQuote } from './getQuote'
 import { getTaxEstimate } from './getTaxEstimate'
-
-/**
- * When a config clashes with the artwork's restrictions, identify the
- * first dimension the buyer can usefully change. Keeps the error
- * message specific (e.g. "the paper you chose isn't available…")
- * instead of generic.
- */
-function describeRestrictionClash(config: PrintConfig, opts: PrintOptions | null): string {
-  const hit = (allowed: readonly string[] | undefined, value: string) =>
-    allowed && allowed.length > 0 && !allowed.includes(value)
-  if (hit(opts?.allowedPaperIds, config.paperId)) return 'paper'
-  if (hit(opts?.allowedFormatIds, config.formatId)) return 'format'
-  if (hit(opts?.allowedSizeIds, config.sizeId)) return 'size'
-  const format = FORMATS.find((f) => f.id === config.formatId)
-  if (format?.framed) {
-    if (hit(opts?.allowedFrameColorIds, config.frameColorId)) return 'frame color'
-    if (hit(opts?.allowedMountIds, config.mountId)) return 'mount option'
-  }
-  return 'configuration'
-}
 
 export type ShippingAddress = {
   fullName: string
@@ -49,7 +32,11 @@ export type ShippingAddress = {
 
 export type CreatePaymentIntentInput = {
   artworkSlug: string
-  config: PrintConfig
+  /** Server-resolved provider for this artwork. Client passes it back
+   *  so we can dispatch quotes against the correct adapter. */
+  providerId: ProviderId
+  /** Provider-agnostic buyer config (the wizard's full state). */
+  config: WizardConfig
   address: ShippingAddress
 }
 
@@ -59,7 +46,7 @@ export type CreatePaymentIntentResult =
       clientSecret: string
       paymentIntentId: string
       totals: {
-        itemCents: number
+        productionCents: number
         shippingCents: number
         artistCents: number
         galleryCents: number
@@ -70,20 +57,100 @@ export type CreatePaymentIntentResult =
     }
   | { ok: false; error: string }
 
+const GALLERY_MARKUP_RATE = 0.45
+
 /**
- * Server-authoritative payment setup. Re-fetches a Prodigi quote for the
- * user's config + country (so we don't trust the number the client saw),
- * stacks our artist + gallery cuts + EU VAT on top, then opens a Stripe
- * PaymentIntent for the final total.
+ * Hard ceiling on the buyer-facing total. Any computed total above this
+ * is treated as a config-tamper signal — we'd rather reject than charge
+ * an absurd amount on the customer's card while we figure out why our
+ * pricing produced it. €10,000 is well above any plausible single-print
+ * order (largest TPS framed prints land ≈ €1,500).
+ */
+const MAX_TOTAL_CENTS = 1_000_000
+
+/** Defensive validation — confirms the wizard config is well-formed
+ *  before we trust it for pricing. Guards against tampered POSTs that
+ *  bypass the wizard's client-side validation. */
+function validateConfigShape(config: unknown): config is WizardConfig {
+  if (!config || typeof config !== 'object') return false
+  const c = config as Record<string, unknown>
+  if (!c.values || typeof c.values !== 'object') return false
+  for (const [, v] of Object.entries(c.values as Record<string, unknown>)) {
+    if (typeof v !== 'string') return false
+  }
+  if (c.customSize !== undefined) {
+    const cs = c.customSize as Record<string, unknown>
+    if (
+      typeof cs.widthCm !== 'number' ||
+      typeof cs.heightCm !== 'number' ||
+      cs.widthCm <= 0 ||
+      cs.heightCm <= 0 ||
+      cs.widthCm > 500 ||
+      cs.heightCm > 500
+    ) {
+      return false
+    }
+  }
+  if (c.borders !== undefined) {
+    const bs = c.borders as Record<string, unknown>
+    for (const [, b] of Object.entries(bs)) {
+      const bb = b as Record<string, unknown>
+      if (typeof bb?.allCm !== 'number' || bb.allCm < 0 || bb.allCm > 50) return false
+    }
+  }
+  return true
+}
+
+/** Whitelist `providerId` to known literals — guards the dispatch from
+ *  unknown values being passed through if the abstraction grows. */
+function isKnownProvider(id: unknown): id is ProviderId {
+  return id === 'printspace'
+}
+
+/**
+ * Server-authoritative payment setup. Quotes the order against TPS so we
+ * don't trust the number the client saw, then opens a Stripe
+ * PaymentIntent for the final total Stripe Tax computed.
  *
- * Metadata carries everything we need to fulfill the order after the
- * payment succeeds — when we wire Prodigi order creation in the next
- * phase, the webhook handler reads this back.
+ * Metadata carries everything the post-payment webhook needs to create
+ * the local PrintOrder row: the `wizardConfig` JSON blob (so we can
+ * reconstruct the buyer's exact selection), the buyer's address, and
+ * the per-line cents breakdown for the admin order page.
  */
 export async function createPaymentIntent(
   input: CreatePaymentIntentInput,
 ): Promise<CreatePaymentIntentResult> {
-  const { artworkSlug, config, address } = input
+  const { artworkSlug, providerId, config, address } = input
+
+  // ── Defensive input validation ──────────────────────────────
+  // These run BEFORE we hit the DB / catalog / Stripe. A malformed
+  // payload is a tamper signal, not user error — we return a generic
+  // message rather than exposing which check tripped.
+  if (!isKnownProvider(providerId)) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
+  if (!validateConfigShape(config)) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
+  if (!address?.countryCode || address.countryCode.length !== 2) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
+  // Address strings have hard caps to keep the Stripe payload bounded
+  // and reject obvious junk. Stripe enforces its own limits but we cap
+  // earlier so we can treat oversized inputs as tamper signals.
+  const stringFields = [
+    address.fullName,
+    address.email,
+    address.phone,
+    address.address1,
+    address.address2,
+    address.city,
+    address.stateOrRegion,
+    address.postalCode,
+  ]
+  if (stringFields.some((s) => typeof s !== 'string' || s.length > 200)) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
 
   const artwork = await prisma.artwork.findUnique({
     where: { slug: artworkSlug },
@@ -95,6 +162,8 @@ export async function createPaymentIntent(
       printEnabled: true,
       printPriceCents: true,
       printOptions: true,
+      originalWidth: true,
+      originalHeight: true,
     },
   })
   if (!artwork) {
@@ -106,38 +175,70 @@ export async function createPaymentIntent(
 
   // Defend against a wizard that had stale restrictions: if the artist
   // narrowed what's allowed while the buyer was configuring, reject the
-  // now-disallowed config here rather than submitting it to Prodigi.
-  // Error message names which dimension clashed so the buyer knows
-  // what to change instead of seeing a vague "no longer available".
-  const restrictions = (artwork.printOptions as PrintOptions | null) ?? null
-  if (!configRespectsArtworkRestrictions(config, restrictions)) {
-    const reason = describeRestrictionClash(config, restrictions)
+  // now-disallowed config here rather than submitting it to the
+  // provider. We need the catalog to evaluate dimension visibility
+  // (transitive rules), so load it first.
+  const catalog = await loadProviderCatalog(providerId, {
+    imageWidthPx: artwork.originalWidth ?? 1000,
+    imageHeightPx: artwork.originalHeight ?? 1000,
+  })
+
+  // Reject destinations the resolved provider doesn't actually ship to.
+  if (!catalog.supportedCountries.includes(address.countryCode)) {
     return {
       ok: false,
-      error:
-        `The ${reason} you chose isn't available for this artwork any more. ` +
-        'Please go back to the print options and pick a different one.',
+      error: "We can't ship this artwork to your destination. Please choose another country.",
     }
   }
 
-  const quote = await getProdigiQuote(config, address.countryCode)
-  if (!quote.ok) {
+  // Reject configs that don't ship as a coherent (config × country)
+  // combination — catches stale URLs where the wizard's selection no
+  // longer satisfies the provider's per-SKU shipsTo rules.
+  const availability = buildAvailability(catalog)
+  if (!configShipsTo(catalog, config, address.countryCode, availability)) {
     return {
       ok: false,
-      error: `Couldn't price this configuration right now. (${quote.error})`,
+      error:
+        "Your configuration can't be shipped to this destination. " +
+        'Please go back and adjust your selection.',
+    }
+  }
+
+  const restrictions = (artwork.printOptions as PrintRestrictions | null) ?? null
+  const clash = findConfigRestrictionClash(catalog, config, restrictions)
+  if (clash) {
+    return {
+      ok: false,
+      error:
+        `The ${clash.dimensionLabel.toLowerCase()} you chose isn't available for this artwork any more. ` +
+        'Please go back to the print options and pick a different one.',
     }
   }
 
   const artistCents = artwork.printPriceCents
   const galleryCents = Math.round(artistCents * GALLERY_MARKUP_RATE)
-  const prodigiCents = quote.data.itemCents + quote.data.shippingCents
-  const preTaxCents = artistCents + galleryCents + prodigiCents
-  const currency = 'eur'
 
-  // Stripe Tax is the source of truth for the rate + amount. It picks the
-  // destination country's rate (21% Spain, 19% Germany, 20% France, …) and
-  // handles OSS reporting downstream via the TaxTransaction we create in
-  // the payment_intent.succeeded webhook.
+  const quote = await getProviderQuote(providerId, {
+    config,
+    country: address.countryCode,
+    artistPriceCents: artistCents,
+  })
+
+  // Provider Quote.lines layout: [{id:'artwork', amount}, {id:'shipping', amount}]
+  // The 'artwork' line bundles artist + gallery + production cost
+  // together; we split them out for the order metadata so the admin
+  // page can show the breakdown without recomputing.
+  const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
+  const shippingCents = quote.lines.find((l) => l.id === 'shipping')?.amountCents ?? 0
+  const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
+  const preTaxCents = quote.subtotalCents
+  const currency = quote.currency.toLowerCase()
+
+  // Stripe Tax is the source of truth for the rate + amount — overrides
+  // whatever the provider's adapter computed (TPS guesses 21% flat, but
+  // Stripe knows the destination's actual rate). It picks the correct
+  // EU rate by destination and handles OSS reporting downstream via the
+  // TaxTransaction we create in the payment_intent.succeeded webhook.
   const taxRes = await getTaxEstimate({
     countryCode: address.countryCode,
     postalCode: address.postalCode,
@@ -151,6 +252,19 @@ export async function createPaymentIntent(
   const taxCalculationId = taxRes.data.calculationId
   const totalCents = taxRes.data.totalCents
 
+  // Final sanity check — anything above the ceiling is treated as a
+  // pricing-tamper signal and refused. Logged so we can investigate.
+  if (totalCents <= 0 || totalCents > MAX_TOTAL_CENTS) {
+    captureError(new Error(`Implausible total ${totalCents} cents — refused`), {
+      flow: 'payment',
+      stage: 'create-payment-intent',
+      extra: { artworkId: artwork.id, providerId, totalCents, country: address.countryCode },
+      level: 'warning',
+      fingerprint: ['payment:total-out-of-range'],
+    })
+    return { ok: false, error: 'Could not finalize this order. Please try again or contact us.' }
+  }
+
   // Idempotency key guards against double-submits. Client-side we already
   // disable the button while `submitting` is true; this is the server-side
   // belt-and-braces. taxCalculationId is included because each call to
@@ -162,6 +276,7 @@ export async function createPaymentIntent(
     .update(
       JSON.stringify({
         artworkId: artwork.id,
+        providerId,
         config,
         address,
         totalCents,
@@ -177,9 +292,9 @@ export async function createPaymentIntent(
         amount: totalCents,
         currency,
         automatic_payment_methods: { enabled: true },
-        // Manual capture — we authorize now, capture only when Prodigi
-        // confirms the order has been allocated for production. See
-        // memory/project_payment_auth_capture.md for the full flow.
+        // Manual capture — we authorize now, capture only when the
+        // provider confirms the order has been allocated for production.
+        // See memory/project_payment_auth_capture.md for the full flow.
         capture_method: 'manual',
         receipt_email: address.email || undefined,
         description: `Print: ${artwork.title ?? artwork.slug}`,
@@ -199,16 +314,18 @@ export async function createPaymentIntent(
           artworkSlug: artwork.slug ?? artworkSlug,
           artworkId: artwork.id,
           artistUserId: artwork.userId,
-          paperId: config.paperId,
-          formatId: config.formatId,
-          sizeId: config.sizeId,
-          frameColorId: config.frameColorId,
-          mountId: config.mountId,
-          orientation: config.orientation,
+          providerId,
+          // Wizard config as a JSON blob — provider-agnostic. Stripe
+          // metadata values are strings up to 500 chars; a typical
+          // WizardConfig is ~200–400 chars (a dozen short ids + a
+          // small customSize/borders shape), so it fits comfortably.
+          wizardConfig: JSON.stringify(config),
           countryCode: address.countryCode,
           customerEmail: address.email,
-          prodigiItemCents: String(quote.data.itemCents),
-          prodigiShippingCents: String(quote.data.shippingCents),
+          // Per-line breakdown for the admin order page. "Production"
+          // is the TPS print-base + frame + glass + mount cost.
+          productionCents: String(productionCents),
+          shippingCents: String(shippingCents),
           artistCents: String(artistCents),
           galleryCents: String(galleryCents),
           customerVatCents: String(customerVatCents),
@@ -230,8 +347,8 @@ export async function createPaymentIntent(
       clientSecret: pi.client_secret,
       paymentIntentId: pi.id,
       totals: {
-        itemCents: quote.data.itemCents,
-        shippingCents: quote.data.shippingCents,
+        productionCents,
+        shippingCents,
         artistCents,
         galleryCents,
         customerVatCents,
@@ -241,14 +358,13 @@ export async function createPaymentIntent(
     }
   } catch (err) {
     console.error('[createPaymentIntent] Stripe failed:', err)
-    // Checkout blocker — buyer sees a generic "please try again" but we
-    // need to see exactly what Stripe said so we can fix config/tax/etc.
     captureError(err, {
       flow: 'payment',
       stage: 'create-payment-intent',
       extra: {
         artworkId: artwork.id,
         artistUserId: artwork.userId,
+        providerId,
         country: address.countryCode,
         totalCents,
         currency,

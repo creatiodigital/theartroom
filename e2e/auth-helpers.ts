@@ -87,13 +87,26 @@ export async function signInThroughUi(
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: /^continue$/i }).click()
 
-  // Step 2: read the freshly-issued 6-digit code from the DB and
-  // submit it. The UI auto-advances to the verification step on
-  // successful POST to /api/auth/send-login-code.
-  await expect(page.locator('#loginCode')).toBeVisible({ timeout: 10_000 })
-  const code = await readLoginCodeFromDb(email)
-  await page.locator('#loginCode').fill(code)
-  await page.getByRole('button', { name: /^sign in$/i }).click()
+  // Step 2: handle both auth modes. When `SKIP_LOGIN_OTP=true` is set
+  // (local dev convenience), the API returns `{ skipOtp: true }` and
+  // the LoginPage signs in directly — no 6-digit prompt, the page
+  // navigates straight to the dashboard. When the flag is unset
+  // (default, prod parity), the UI advances to the verification step
+  // and we read the freshly-issued code from the DB.
+  const codeField = page.locator('#loginCode')
+  await Promise.race([
+    codeField.waitFor({ state: 'visible', timeout: 10_000 }),
+    page.waitForURL(/\/(admin\/)?dashboard/, { timeout: 10_000 }),
+  ]).catch(() => {
+    // Both raced timed out — let the assertion below produce a
+    // useful error rather than a generic "racing rejected".
+  })
+
+  if (await codeField.isVisible()) {
+    const code = await readLoginCodeFromDb(email)
+    await codeField.fill(code)
+    await page.getByRole('button', { name: /^sign in$/i }).click()
+  }
 
   // Wait for NextAuth to resolve and the client-side redirect to
   // run. We're agnostic about which dashboard URL we land on — the

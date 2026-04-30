@@ -3,7 +3,7 @@
  * contract. Built up incrementally as the user supplies catalog data
  * (papers, frames, sizes, substrates, hangings) and the price tables.
  *
- * Like Prodigi, the wizard never imports from this folder. Page route
+ * The wizard never imports from this folder directly. Page route
  * dispatches via `getProvider('printspace')` (see ../registry / the
  * loadProviderCatalog dispatcher).
  */

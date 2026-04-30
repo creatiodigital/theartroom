@@ -6,8 +6,12 @@ import { useRouter } from 'next/navigation'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
+import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
-import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+import type { ProviderId } from '@/lib/print-providers'
+
+import type { CheckoutArtwork } from '../PrintCheckout'
+import { clearPrintSession } from '../clearPrintSession'
 
 import { PaymentForm } from './PaymentForm'
 import type { StashedPayment } from './types'
@@ -15,8 +19,9 @@ import type { StashedPayment } from './types'
 import styles from './PrintPayment.module.scss'
 
 interface PrintPaymentProps {
-  artwork: WizardArtwork
-  config: PrintConfig
+  artwork: CheckoutArtwork
+  /** Server-resolved provider — bounce-back URL preserves it. */
+  providerId: ProviderId
   country: string
 }
 
@@ -27,7 +32,7 @@ const stripePromise: Promise<Stripe | null> =
     ? Promise.resolve(null)
     : loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '')
 
-export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) => {
+export const PrintPayment = ({ artwork, providerId, country }: PrintPaymentProps) => {
   const router = useRouter()
   const [stashed, setStashed] = useState<StashedPayment | null>(null)
   const [hydrating, setHydrating] = useState(true)
@@ -44,7 +49,14 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
         return
       }
       const parsed = JSON.parse(raw) as StashedPayment
-      if (!parsed.clientSecret) {
+      if (!parsed.clientSecret || !parsed.providerId || !parsed.specs || !parsed.config) {
+        bounceBackToCheckout()
+        return
+      }
+      // Defensive: never trust a stash from a different provider for
+      // the artwork the URL says we're rendering. (A stale tab could
+      // is stale across artworks.)
+      if (parsed.providerId !== providerId) {
         bounceBackToCheckout()
         return
       }
@@ -55,18 +67,15 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
       setHydrating(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artwork.slug])
+  }, [artwork.slug, providerId])
+
+  const handleClose = () => {
+    clearPrintSession(artwork.slug)
+    router.push('/prints')
+  }
 
   const bounceBackToCheckout = () => {
-    const params = new URLSearchParams({
-      paper: config.paperId,
-      format: config.formatId,
-      size: config.sizeId,
-      color: config.frameColorId,
-      mount: config.mountId,
-      orientation: config.orientation,
-      country,
-    })
+    const params = new URLSearchParams({ country, provider: providerId })
     router.replace(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
   }
 
@@ -84,7 +93,18 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
         <Link href="/" aria-label="Go to home" className={styles.logoLink}>
           <Logo className={styles.logo} />
         </Link>
-        <span className={styles.headerTitle}>Payment</span>
+        <span />
+        <button
+          type="button"
+          onClick={handleClose}
+          className={styles.closeButton}
+          aria-label="Close payment"
+        >
+          CLOSE
+          <span className={styles.closeIcon}>
+            <Icon name="close" size={16} />
+          </span>
+        </button>
       </header>
 
       <main className={styles.body}>
@@ -95,7 +115,6 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
             <PaymentForm
               stashed={stashed}
               artwork={artwork}
-              config={config}
               country={country}
               artworkSlug={artwork.slug}
               onBack={bounceBackToCheckout}

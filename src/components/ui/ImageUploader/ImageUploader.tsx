@@ -56,7 +56,7 @@ function formatFileSize(bytes: number): string {
 }
 
 // Whitelist of MIME types both print providers accept. The Print Space
-// only takes JPEG, PNG and TIFF; Prodigi accepts a superset, so this is
+// only takes JPEG, PNG and TIFF, matching theprintspace's
 // the safe intersection.
 const ACCEPTED_MIME_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/tiff'])
 

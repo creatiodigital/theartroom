@@ -183,14 +183,6 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
       options: glassOptions,
       visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
     } satisfies EnumDimension,
-    // Hanging — visible when framing.
-    {
-      kind: 'enum',
-      id: 'hanging',
-      label: 'Hanging',
-      options: hangingOptions,
-      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
-    } satisfies EnumDimension,
     // Window Mount (passepartout) — visible when framing. Buyer
     // picks a colour first; the size input below appears only after
     // they pick a non-'none' colour.
@@ -213,11 +205,20 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
       defaultCm: TPS_MOUNT_BOARD_BOUNDS.defaultCm,
       visibleWhen: { dimensionId: 'windowMount', valueIn: windowMountColourIds },
     } satisfies BorderDimension,
+    // Hanging — visible when framing. Last so it sits after all
+    // visual choices (frame / glass / mount).
+    {
+      kind: 'enum',
+      id: 'hanging',
+      label: 'Hanging',
+      options: hangingOptions,
+      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+    } satisfies EnumDimension,
     // No orientation dimension — TPS sells custom W × H. Whether the
     // print is portrait or landscape is implicit in the buyer's typed
     // dimensions (W < H = portrait; W > H = landscape). Confirmed
     // against TPS's "Order Prints" help doc + cart spec strings,
-    // 2026-04-27. Prodigi keeps orientation because its preset SKUs
+    // 2026-04-27. The dimension stays implicit in the buyer's typed W×H.
     // are aspect-fixed but rotation-free.
   ]
 

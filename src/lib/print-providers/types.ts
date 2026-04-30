@@ -1,13 +1,14 @@
 /**
- * Provider-agnostic contract between the print wizard and any underlying
- * fulfillment service (Prodigi, The Print Space, future services).
+ * Provider-agnostic contract between the print wizard and the underlying
+ * fulfillment service (currently theprintspace, but the abstraction is
+ * preserved so swapping in a future adapter stays low-risk).
  *
- * The wizard imports ONLY this file. Adapters live under their own folder
- * (e.g. `prodigi/`) and expose nothing the wizard sees beyond what's
+ * The wizard imports ONLY this file. The adapter lives under its own
+ * folder (`printspace/`) and exposes nothing the wizard sees beyond what's
  * declared here.
  */
 
-export type ProviderId = 'prodigi' | 'printspace'
+export type ProviderId = 'printspace'
 
 // ── Catalog shape ────────────────────────────────────────────────
 
@@ -49,9 +50,7 @@ export type SizeDimension = DimensionBase & {
   /**
    * When set, the wizard exposes width/height inputs alongside (or
    * instead of) the preset list. Provider decides whether to lock the
-   * inputs to the artwork's aspect ratio — TPS does (one degree of
-   * freedom: change W, H follows); Prodigi doesn't expose custom mode
-   * at all so this is ignored there.
+   * inputs to the artwork's aspect ratio.
    */
   custom?: {
     minCm: number
@@ -201,8 +200,7 @@ export type QuoteLine = {
 /**
  * Adapter-supplied predicate: given the current config + country, can
  * `value` for `dimensionId` be picked? The wizard uses this to filter
- * options without knowing how the adapter encodes its availability
- * (Prodigi: per-SKU shipsTo; TPS: a hardcoded country list).
+ * options without knowing how the adapter encodes its availability.
  */
 export type AvailabilityCheck = (
   dimensionId: string,

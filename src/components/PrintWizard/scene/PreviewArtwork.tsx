@@ -93,7 +93,7 @@ export const PreviewArtwork = ({
   const widthM = (displayIsLandscape ? effectiveSize.heightCm : effectiveSize.widthCm) / 100
   const heightM = (displayIsLandscape ? effectiveSize.widthCm : effectiveSize.heightCm) / 100
 
-  // White paper border (TPS) wraps the printed image on the same
+  // White paper border wraps the printed image on the same
   // sheet — sits behind the print and reads as paper, not mat.
   const paperWidthM = widthM + paperBorderM * 2
   const paperHeightM = heightM + paperBorderM * 2

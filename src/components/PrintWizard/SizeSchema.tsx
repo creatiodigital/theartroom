@@ -13,7 +13,7 @@ interface SizeSchemaProps {
 }
 
 /**
- * Live SVG diagram that mirrors theprintspace-style "print + mat + frame"
+ * Live SVG diagram that mirrors gallery-style "print + mat + frame"
  * measurements panel. Axis labels show cm only — the dual-format
  * "cm (in)" spell-out lives in the measurement list beside the diagram.
  */

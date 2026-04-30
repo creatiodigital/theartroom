@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { routes } from './fixtures'
+import { fixtures, routes } from './fixtures'
 
 /**
  * Public artwork page — the discovery → conversion entry point.
@@ -14,7 +14,7 @@ import { routes } from './fixtures'
  * Read-only: just navigates and reads. No form submission.
  */
 test('artwork page: renders + has CTA', async ({ page }) => {
-  const response = await page.goto(routes.artwork())
+  const response = await page.goto(routes.artwork(fixtures.artworkSlug))
   expect(response?.status(), 'artwork page should respond 2xx').toBeLessThan(400)
 
   // Image hydrated — best signal that the Prisma fetch + R2/CDN

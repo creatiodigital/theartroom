@@ -6,7 +6,6 @@
  * the right adapter — wizard stays oblivious to who's quoting.
  */
 import type { GetQuoteInput, ProviderId, Quote } from './types'
-import { getProdigiQuote } from './prodigi/getQuote'
 import { getPrintspaceQuote } from './printspace/getQuote'
 
 export async function getProviderQuote(
@@ -14,8 +13,6 @@ export async function getProviderQuote(
   input: GetQuoteInput,
 ): Promise<Quote> {
   switch (providerId) {
-    case 'prodigi':
-      return getProdigiQuote(input)
     case 'printspace':
       return getPrintspaceQuote(input)
     default:

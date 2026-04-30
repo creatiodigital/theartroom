@@ -65,7 +65,7 @@ export async function getPrintspaceQuote(input: GetQuoteInput): Promise<Quote> {
   const mountCents =
     isFramed && mountId && mountId !== 'none' ? getMountBoardSupplementCents(mountWidthCm) : 0
 
-  // Gallery markup on the artist's price (matches Prodigi adapter).
+  // Gallery markup on the artist's price.
   const galleryCents = Math.round(artistPriceCents * TPS_GALLERY_MARKUP_RATE)
 
   // Shipping — flat per-print rate when not framed; tiered per-frame
@@ -75,7 +75,7 @@ export async function getPrintspaceQuote(input: GetQuoteInput): Promise<Quote> {
     : TPS_SHIPPING_PRINTS_CENTS[region]
 
   // Wizard summary lumps artwork + production into a single "Artwork"
-  // line and shows shipping separately, matching the Prodigi flow.
+  // line and shows shipping separately.
   const artworkLineCents =
     artistPriceCents +
     galleryCents +
