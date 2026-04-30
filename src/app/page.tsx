@@ -9,7 +9,6 @@ import { Intro } from '@/components/landing/Intro/Intro'
 import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
-import { PrintCatalogPrefetcher } from '@/components/PrintWizard/PrintCatalogPrefetcher'
 import prisma from '@/lib/prisma'
 
 import styles from './page.module.scss'
@@ -102,7 +101,6 @@ export default async function Home() {
 
   return (
     <main id="main-content" className={styles.home}>
-      <PrintCatalogPrefetcher />
       <Header />
 
       <Text as="h1" className={styles.srOnly}>

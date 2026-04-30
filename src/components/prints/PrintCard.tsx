@@ -53,7 +53,7 @@ export const PrintCard = ({ artwork }: Props) => {
           <Button
             href={`/artworks/${artwork.slug}/print`}
             label="Order Print"
-            variant="secondary"
+            variant="primary"
             size="small"
           />
         </div>

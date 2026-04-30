@@ -10,7 +10,7 @@ export const MIN_IMAGE_HEIGHT = 0
 export const MIN_ARTWORK_IMAGE_WIDTH = 1200
 export const MIN_ARTWORK_IMAGE_HEIGHT = 1200
 
-// Minimum resolution for print eligibility (smallest Prodigi SKU: 20×25 cm @ 300 DPI)
+// Minimum resolution for print eligibility (smallest practical print: 20×25 cm @ 300 DPI)
 export const MIN_PRINT_WIDTH = 2400
 export const MIN_PRINT_HEIGHT = 2400
 

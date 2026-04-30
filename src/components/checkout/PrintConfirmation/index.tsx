@@ -6,6 +6,8 @@ import Link from 'next/link'
 
 import Logo from '@/icons/logo.svg'
 
+import { clearPrintSession } from '../clearPrintSession'
+
 import styles from './PrintConfirmation.module.scss'
 
 interface PrintConfirmationProps {
@@ -31,12 +33,10 @@ interface PrintConfirmationProps {
 export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintConfirmationProps) => {
   useEffect(() => {
     if (status !== 'succeeded' && status !== 'processing') return
-    try {
-      sessionStorage.removeItem(`print-payment:${artwork.slug}`)
-      sessionStorage.removeItem(`print-address:${artwork.slug}`)
-    } catch {
-      // Non-fatal — storage may be disabled.
-    }
+    // Wipe every stash for this artwork so a return visit starts the
+    // wizard fresh — the previous order's config / country / address /
+    // payment ids would otherwise re-hydrate on the next /print mount.
+    clearPrintSession(artwork.slug)
   }, [artwork.slug, status])
 
   const headline =
@@ -81,10 +81,12 @@ export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintCon
 
           <div className={styles.orderMeta}>
             <div>
-              <span>Artwork</span>
-              <strong>
-                {artwork.title} — {artwork.artistName}
-              </strong>
+              <span>Title</span>
+              <strong>{artwork.title}</strong>
+            </div>
+            <div>
+              <span>Author</span>
+              <strong>{artwork.artistName}</strong>
             </div>
             {paymentIntentId && (
               <div>
@@ -95,7 +97,7 @@ export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintCon
           </div>
 
           <Link href={`/artworks/${artwork.slug}`} className={styles.primaryLink}>
-            Back to the artwork
+            Back to the Artwork Page
           </Link>
         </section>
       </main>

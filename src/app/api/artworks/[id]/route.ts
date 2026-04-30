@@ -4,8 +4,8 @@ import type { NextRequest } from 'next/server'
 import { deleteFromR2 } from '@/lib/r2'
 
 import { requireOwnership } from '@/lib/authUtils'
-import { FORMATS, FRAME_COLORS, MOUNTS, PAPERS, SIZES } from '@/components/PrintWizard/options'
-import type { PrintOptions } from '@/components/PrintWizard/types'
+import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
+import type { PrintRestrictions } from '@/lib/print-providers'
 import { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
@@ -14,41 +14,39 @@ import { generateUniqueSlug } from '@/lib/slugify'
 // the wizard understands. Any unknown keys or unknown ids get dropped.
 // Empty/all-covering dimensions are stripped — null stands for "no
 // restrictions" throughout the stack.
-function sanitizePrintOptions(raw: unknown): PrintOptions | null {
+//
+// Canonical PrintRestrictions shape: `{ allowed: { dimId: ids[] } }`.
+function cleanIds(arr: unknown, universe: readonly { id: string }[]): string[] | undefined {
+  if (!Array.isArray(arr)) return undefined
+  const universeIds = new Set(universe.map((u) => u.id))
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of arr) {
+    if (typeof item !== 'string') continue
+    if (!universeIds.has(item)) continue
+    if (seen.has(item)) continue
+    seen.add(item)
+    out.push(item)
+  }
+  // Whole-universe-or-empty ≡ no restriction → drop.
+  if (out.length === 0 || out.length === universe.length) return undefined
+  return out
+}
+
+function sanitizePrintOptions(raw: unknown): PrintRestrictions | null {
   if (!raw || typeof raw !== 'object') return null
   const obj = raw as Record<string, unknown>
-
-  const clean = (arr: unknown, universe: readonly { id: string }[]): string[] | undefined => {
-    if (!Array.isArray(arr)) return undefined
-    const universeIds = new Set(universe.map((u) => u.id))
-    const seen = new Set<string>()
-    const out: string[] = []
-    for (const item of arr) {
-      if (typeof item !== 'string') continue
-      if (!universeIds.has(item)) continue
-      if (seen.has(item)) continue
-      seen.add(item)
-      out.push(item)
-    }
-    // An array that covers the whole universe or nothing at all is
-    // equivalent to "no restriction" — return undefined so it's dropped.
-    if (out.length === 0 || out.length === universe.length) return undefined
-    return out
-  }
-
-  const next: PrintOptions = {}
-  const paperIds = clean(obj.allowedPaperIds, PAPERS)
-  const formatIds = clean(obj.allowedFormatIds, FORMATS)
-  const sizeIds = clean(obj.allowedSizeIds, SIZES)
-  const frameColorIds = clean(obj.allowedFrameColorIds, FRAME_COLORS)
-  const mountIds = clean(obj.allowedMountIds, MOUNTS)
-  if (paperIds) next.allowedPaperIds = paperIds as PrintOptions['allowedPaperIds']
-  if (formatIds) next.allowedFormatIds = formatIds as PrintOptions['allowedFormatIds']
-  if (sizeIds) next.allowedSizeIds = sizeIds as PrintOptions['allowedSizeIds']
-  if (frameColorIds)
-    next.allowedFrameColorIds = frameColorIds as PrintOptions['allowedFrameColorIds']
-  if (mountIds) next.allowedMountIds = mountIds as PrintOptions['allowedMountIds']
-  return Object.keys(next).length === 0 ? null : next
+  const inner =
+    obj.allowed && typeof obj.allowed === 'object' ? (obj.allowed as Record<string, unknown>) : null
+  if (!inner) return null
+  const next: Record<string, string[]> = {}
+  const paperIds = cleanIds(inner.paper, TPS_PAPERS)
+  const frameTypeIds = cleanIds(inner.frameType, TPS_FRAME_TYPES)
+  const windowMountIds = cleanIds(inner.windowMount, TPS_WINDOW_MOUNTS)
+  if (paperIds) next.paper = paperIds
+  if (frameTypeIds) next.frameType = frameTypeIds
+  if (windowMountIds) next.windowMount = windowMountIds
+  return Object.keys(next).length === 0 ? null : { allowed: next }
 }
 
 // The exhibition profile API (/api/exhibitions/by-url/[url]) caches its
@@ -122,8 +120,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         ? Math.round(parsedPrice)
         : null
 
-    // Sanitize artist-set printing restrictions. Absent or non-object
-    // input resets to null (no restrictions).
+    // Sanitize artist-set printing restrictions.
     const printOptions = sanitizePrintOptions(body.printOptions)
 
     // Base update data (fields that definitely exist)

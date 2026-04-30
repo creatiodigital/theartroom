@@ -74,11 +74,11 @@
 .body {
   flex: 1;
   display: grid;
-  grid-template-columns: 320px 1fr 340px;
+  grid-template-columns: 340px 1fr 360px;
   min-height: 0;
 
   @media (max-width: 1100px) {
-    grid-template-columns: 280px 1fr 300px;
+    grid-template-columns: 300px 1fr 320px;
   }
 
   @media (max-width: 900px) {
@@ -103,6 +103,150 @@
 .stepField {
   & + & {
     margin-top: var(--space-3);
+  }
+}
+
+.customSizeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.customSizeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1 1 0;
+  min-width: 100px;
+
+  span {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  input {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: var(--radius-sm);
+    background: white;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-text-primary);
+
+    &:focus {
+      outline: none;
+      border-color: rgba(0, 0, 0, 0.55);
+    }
+
+    &:disabled {
+      background: rgba(0, 0, 0, 0.04);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.customSizeSeparator {
+  align-self: center;
+  padding-bottom: var(--space-2);
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.customSizeHint {
+  flex-basis: 100%;
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.4;
+}
+
+.sliderValue {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.slider {
+  width: 100%;
+  height: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.stepFieldLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.stepFieldInfo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.helpList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  dt {
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+  }
+
+  dd {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.65);
   }
 }
 
@@ -382,23 +526,20 @@
 
 .sceneWrapper {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6);
   background: #f7f5ef;
   min-height: 0;
 
   @media (max-width: 900px) {
     order: 1;
+    // On mobile the grid cell has no intrinsic height, so keep a
+    // usable preview size instead of collapsing to zero.
+    aspect-ratio: 4 / 3;
   }
 }
 
 .sceneCanvas {
-  position: relative;
-  width: 100%;
-  max-width: 760px;
-  aspect-ratio: 4 / 3;
+  position: absolute;
+  inset: 0;
 
   canvas {
     display: block;
@@ -535,6 +676,20 @@
   line-height: 1.4;
 }
 
+.deliveryEstimate {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.65);
+  text-align: center;
+
+  strong {
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 600;
+  }
+}
+
 .ctaButton {
   display: inline-flex;
   align-items: center;
@@ -616,9 +771,19 @@
 
 .schemaSvg {
   width: 100%;
-  max-width: 180px;
+  max-width: 260px;
   height: auto;
   overflow: visible;
+
+  // Small-laptop viewports (e.g. 13"/14", ~768–900px tall): shrink the
+  // diagram so the summary panel's CTA stays above the fold.
+  @media (min-width: 900px) and (max-height: 900px) {
+    max-width: 210px;
+  }
+
+  @media (min-width: 900px) and (max-height: 780px) {
+    max-width: 170px;
+  }
 }
 
 .schemaLabel {
@@ -630,7 +795,7 @@
 .measurementsList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   margin: 0;
   font-family: var(--font-sans);
   font-size: var(--text-xs);
@@ -670,8 +835,6 @@
 
   dt {
     color: rgba(0, 0, 0, 0.55);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
   }
 
   dd {

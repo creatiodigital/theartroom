@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+
+import { HelpTooltip } from '@/components/ui/HelpTooltip'
 
 import styles from './SelectDropdown.module.scss'
 
@@ -12,6 +14,12 @@ export type SelectOption<V extends string = string> = {
   disabled?: boolean
   /** Optional tooltip text shown when hovering a disabled option. */
   disabledReason?: string
+  /** Rich tooltip shown when hovering this option in the open menu.
+   *  Replaces the "i" affordance next to the label for dimensions
+   *  where explanations are per-option (e.g. paper tiers). */
+  tooltip?: ReactNode
+  /** Optional illustration shown to the left of the tooltip content. */
+  tooltipImage?: ReactNode
 }
 
 interface SelectDropdownProps<V extends string = string> {
@@ -147,6 +155,27 @@ export const SelectDropdown = <V extends string = string>({
           {options.map((opt) => {
             const isSelected = opt.value === value
             const isDisabled = !!opt.disabled
+            const button = (
+              <button
+                type="button"
+                className={`${styles.option} ${isSelected ? styles.optionSelected : ''} ${isDisabled ? styles.optionDisabled : ''}`}
+                disabled={isDisabled}
+                title={isDisabled ? opt.disabledReason : undefined}
+                onClick={() => {
+                  if (isDisabled) return
+                  onChange(opt.value)
+                  setOpen(false)
+                }}
+              >
+                <span className={styles.optionLabel}>{opt.label}</span>
+                {opt.description && (
+                  <span className={styles.optionDescription}>{opt.description}</span>
+                )}
+                {isDisabled && opt.disabledReason && (
+                  <span className={styles.optionDisabledNote}>{opt.disabledReason}</span>
+                )}
+              </button>
+            )
             return (
               <li
                 key={opt.value}
@@ -157,25 +186,19 @@ export const SelectDropdown = <V extends string = string>({
                   else optionRefs.current.delete(opt.value)
                 }}
               >
-                <button
-                  type="button"
-                  className={`${styles.option} ${isSelected ? styles.optionSelected : ''} ${isDisabled ? styles.optionDisabled : ''}`}
-                  disabled={isDisabled}
-                  title={isDisabled ? opt.disabledReason : undefined}
-                  onClick={() => {
-                    if (isDisabled) return
-                    onChange(opt.value)
-                    setOpen(false)
-                  }}
-                >
-                  <span className={styles.optionLabel}>{opt.label}</span>
-                  {opt.description && (
-                    <span className={styles.optionDescription}>{opt.description}</span>
-                  )}
-                  {isDisabled && opt.disabledReason && (
-                    <span className={styles.optionDisabledNote}>{opt.disabledReason}</span>
-                  )}
-                </button>
+                {opt.tooltip && !isDisabled ? (
+                  <HelpTooltip
+                    content={opt.tooltip}
+                    image={opt.tooltipImage}
+                    placement="right"
+                    offset={24}
+                    className={styles.tooltipWrapper}
+                  >
+                    {button}
+                  </HelpTooltip>
+                ) : (
+                  button
+                )}
               </li>
             )
           })}

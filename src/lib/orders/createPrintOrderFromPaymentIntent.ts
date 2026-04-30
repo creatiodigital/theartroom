@@ -1,8 +1,9 @@
 import prisma from '@/lib/prisma'
-import { ProdigiError, createOrder, getProduct } from '@/lib/prodigi/client'
-import { resolveSku } from '@/components/PrintWizard/options'
-import type { PrintConfig } from '@/components/PrintWizard/types'
+import type { SpecsSummary, WizardConfig } from '@/lib/print-providers'
+import { summarizeConfig } from '@/lib/print-providers'
+import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
 import { generateAndUploadCertificate } from '@/lib/certificates/generateAndUploadCertificate'
+import { sendAdminOrderNotification } from '@/lib/emails/adminOrderNotification'
 import { sendOrderPlacedEmail } from '@/lib/emails/orderPlaced'
 import { captureError } from '@/lib/observability/captureError'
 import { logOrderEvent } from './logOrderEvent'
@@ -28,28 +29,45 @@ type StripePaymentIntent = {
 /**
  * Called from the `payment_intent.amount_capturable_updated` webhook once
  * the buyer's card is authorized (funds held, not captured). Creates (or
- * finds) the local PrintOrder row and submits the order to Prodigi.
+ * finds) the local PrintOrder row so the gallery admin can place the
+ * order on theprintspace's portal by hand.
  *
- * The buyer's card is captured later, from the Prodigi callback, once
- * Prodigi has allocated the order for production. See
- * memory/project_payment_auth_capture.md for the full flow.
+ * MANUAL FULFILLMENT MODE: auto-submit is disabled. Buyer's card stays
+ * authorized; admin captures manually from Stripe when they place the
+ * upstream order. See memory/project_manual_fulfillment_launch.md.
  *
  * Idempotency: the PrintOrder row is keyed on paymentIntentId. If a
- * Stripe webhook retries we'll find the existing row. Prodigi order
- * submission is gated on `prodigiOrderId == null` so we never
- * double-submit.
+ * Stripe webhook retries we'll find the existing row.
  */
 export async function createPrintOrderFromPaymentIntent(
   pi: StripePaymentIntent,
-): Promise<
-  { ok: true; orderId: string; prodigiOrderId: string | null } | { ok: false; error: string }
-> {
+): Promise<{ ok: true; orderId: string } | { ok: false; error: string }> {
   const md = pi.metadata ?? {}
   const artworkId = md.artworkId
   const artistUserId = md.artistUserId
   const country = md.countryCode
   if (!artworkId || !artistUserId || !country) {
     return { ok: false, error: 'PaymentIntent missing required metadata.' }
+  }
+
+  // Parse the wizard config blob. Stripe metadata values are always
+  // strings, so we JSON-decode here. A parse failure means the PI was
+  // created by an older code path or the metadata got corrupted —
+  // either way, treat as a fatal data error rather than papering over
+  // it.
+  let config: WizardConfig
+  try {
+    config = JSON.parse(md.wizardConfig ?? '') as WizardConfig
+    if (!config?.values) throw new Error('wizardConfig has no values')
+  } catch (err) {
+    captureError(err instanceof Error ? err : new Error(String(err)), {
+      flow: 'order',
+      stage: 'parse-wizard-config',
+      extra: { paymentIntentId: pi.id },
+      level: 'error',
+      fingerprint: ['order:parse-wizard-config-failed'],
+    })
+    return { ok: false, error: 'PaymentIntent metadata.wizardConfig could not be parsed.' }
   }
 
   const artwork = await prisma.artwork.findUnique({
@@ -67,8 +85,6 @@ export async function createPrintOrderFromPaymentIntent(
     },
   })
   if (!artwork) {
-    // Shouldn't happen in normal flow — either a DB inconsistency or
-    // someone has tampered with the PI metadata. Either way we need eyes.
     captureError(new Error(`Artwork ${artworkId} not found during order creation`), {
       flow: 'order',
       stage: 'artwork-not-found',
@@ -94,14 +110,27 @@ export async function createPrintOrderFromPaymentIntent(
     return { ok: false, error: 'Artwork/artist mismatch on PaymentIntent.' }
   }
 
-  const config: PrintConfig = {
-    paperId: md.paperId as PrintConfig['paperId'],
-    formatId: md.formatId as PrintConfig['formatId'],
-    sizeId: md.sizeId as PrintConfig['sizeId'],
-    frameColorId: md.frameColorId as PrintConfig['frameColorId'],
-    mountId: md.mountId as PrintConfig['mountId'],
-    unit: 'cm',
-    orientation: (md.orientation as PrintConfig['orientation']) ?? 'portrait',
+  // Spec rows (Print type / Paper / Frame / Glass / etc.) for the admin
+  // email. Re-derived from the config + catalog rather than shipped
+  // through PI metadata, since framed configs can exceed Stripe's
+  // 500-char per-value cap. The catalog is local data, so this is cheap.
+  let specs: SpecsSummary = []
+  try {
+    const catalog = await loadProviderCatalog('printspace', {
+      imageWidthPx: artwork.originalWidth ?? 1000,
+      imageHeightPx: artwork.originalHeight ?? 1000,
+    })
+    specs = summarizeConfig(catalog, config)
+  } catch (err) {
+    // Specs are display-only — if catalog load or summarize fails we
+    // fall back to an empty list (admin email shows raw config) rather
+    // than failing the webhook outright. Logged for follow-up.
+    captureError(err instanceof Error ? err : new Error(String(err)), {
+      flow: 'order',
+      stage: 'derive-specs',
+      extra: { paymentIntentId: pi.id },
+      level: 'warning',
+    })
   }
 
   const buyerName = pi.shipping?.name ?? ''
@@ -124,18 +153,20 @@ export async function createPrintOrderFromPaymentIntent(
         country: addr.country ?? country,
         phone: pi.shipping?.phone ?? '',
       },
+      // Stored as JSON. The admin order page re-renders specs from this
+      // rather than the PI metadata.
       printConfig: config as unknown as object,
       country,
       totalCents:
-        Number(md.prodigiItemCents ?? 0) +
-        Number(md.prodigiShippingCents ?? 0) +
+        Number(md.productionCents ?? 0) +
+        Number(md.shippingCents ?? 0) +
         Number(md.artistCents ?? 0) +
         Number(md.galleryCents ?? 0) +
         Number(md.customerVatCents ?? 0),
       artistCents: Number(md.artistCents ?? 0),
       galleryCents: Number(md.galleryCents ?? 0),
-      prodigiItemCents: Number(md.prodigiItemCents ?? 0),
-      prodigiShippingCents: Number(md.prodigiShippingCents ?? 0),
+      productionCents: Number(md.productionCents ?? 0),
+      productionShippingCents: Number(md.shippingCents ?? 0),
       customerVatCents: Number(md.customerVatCents ?? 0),
       currency: 'eur',
       paymentStatus: 'authorized',
@@ -161,6 +192,7 @@ export async function createPrintOrderFromPaymentIntent(
       artistName,
       totalCents: order.totalCents,
       currency: order.currency,
+      shippingCountryCode: addr.country ?? country,
     })
     await logOrderEvent({
       orderId: order.id,
@@ -182,20 +214,15 @@ export async function createPrintOrderFromPaymentIntent(
     }
   }
 
-  if (order.prodigiOrderId) {
-    return { ok: true, orderId: order.id, prodigiOrderId: order.prodigiOrderId }
-  }
-
   const printImageUrl = artwork.originalImageUrl ?? artwork.imageUrl
   if (!printImageUrl) {
-    return { ok: false, error: 'Artwork has no image; cannot submit to Prodigi.' }
+    return { ok: false, error: 'Artwork has no image; cannot prepare order.' }
   }
 
   // Generate the certificate of authenticity PDF, upload to R2, and
-  // include the public URL in the Prodigi order as a `branding.flyer`
-  // asset (A5 insert shipped with the print). Idempotent via the event
-  // log — if the webhook retries after a successful cert upload we reuse
-  // the stored URL instead of re-rendering.
+  // include the public URL in the admin order page. Idempotent via the
+  // event log — if the webhook retries after a successful cert upload
+  // we reuse the stored URL instead of re-rendering.
   let certificateUrl = order.certificateUrl
   if (!certificateUrl) {
     const artistName = [artwork.user?.name, artwork.user?.lastName].filter(Boolean).join(' ').trim()
@@ -221,8 +248,7 @@ export async function createPrintOrderFromPaymentIntent(
       })
     } else {
       // Non-fatal: log and continue without the certificate. We'd rather
-      // submit the order to Prodigi and ship the print than block on a
-      // cert generation glitch.
+      // create the order and ship the print than block on a cert glitch.
       await logOrderEvent({
         orderId: order.id,
         kind: 'note',
@@ -240,129 +266,57 @@ export async function createPrintOrderFromPaymentIntent(
     }
   }
 
-  const { sku, attributes } = resolveSku(config)
-
-  // If the buyer's chosen orientation matches the image's natural orientation,
-  // crop to fill the print area (gallery look). If they forced the opposite
-  // orientation, fit with whitespace so the artwork isn't heavily cropped or
-  // rotated by Prodigi's auto-rotation.
-  const imgW = artwork.originalWidth ?? 0
-  const imgH = artwork.originalHeight ?? 0
-  const imageIsLandscape = imgW > 0 && imgH > 0 ? imgW >= imgH : true
-  const chosenIsLandscape = config.orientation === 'landscape'
-  const sizing = imageIsLandscape === chosenIsLandscape ? 'fillPrintArea' : 'fitPrintArea'
-
-  try {
-    const product = await getProduct(sku)
-    const allAttrs: Record<string, string> = {}
-    for (const [name, values] of Object.entries(product.product.attributes)) {
-      allAttrs[name] = attributes[name] ?? values[0]
-    }
-
+  // Admin order-notification email — idempotent via event log, same
+  // pattern as the buyer email. Tells the gallery admin a new order is
+  // ready to be placed by hand on theprintspace's portal; surfaces every
+  // field needed to recreate the exact order.
+  const alreadyNotifiedAdmin = await prisma.printOrderEvent.findFirst({
+    where: { orderId: order.id, kind: 'email_sent', message: 'admin_order_notification' },
+    select: { id: true },
+  })
+  if (!alreadyNotifiedAdmin) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
-    const prodigiSecret = process.env.PRODIGI_WEBHOOK_SECRET ?? ''
-    const callbackUrl = prodigiSecret
-      ? `${siteUrl}/api/webhooks/prodigi?key=${encodeURIComponent(prodigiSecret)}`
-      : undefined
-
-    const prodigiRes = await createOrder({
-      merchantReference: order.id,
-      shippingMethod: 'Standard',
-      idempotencyKey: order.id,
-      callbackUrl,
-      branding: certificateUrl ? { flyer: { url: certificateUrl } } : undefined,
-      recipient: {
-        name: buyerName || 'Recipient',
-        email: order.buyerEmail || undefined,
-        phoneNumber: pi.shipping?.phone || undefined,
-        address: {
-          line1: addr.line1 ?? '',
-          line2: addr.line2 ?? undefined,
-          townOrCity: addr.city ?? '',
-          stateOrCounty: addr.state ?? undefined,
-          postalOrZipCode: addr.postal_code ?? '',
-          countryCode: addr.country ?? country,
-        },
-      },
-      items: [
-        {
-          sku,
-          copies: 1,
-          sizing,
-          attributes: allAttrs,
-          assets: Object.keys(product.product.printAreas).map((pa) => ({
-            printArea: pa,
-            url: printImageUrl,
-          })),
-        },
-      ],
-    })
-
-    await prisma.printOrder.update({
-      where: { id: order.id },
-      data: {
-        prodigiOrderId: prodigiRes.order.id,
-        prodigiStage: prodigiRes.order.status.stage,
-      },
-    })
-
-    await logOrderEvent({
-      orderId: order.id,
-      kind: 'prodigi_submitted',
-      actor: 'system',
-      message: `Prodigi order created: ${prodigiRes.order.id} (${prodigiRes.outcome})`,
-      payload: {
-        prodigiOrderId: prodigiRes.order.id,
-        outcome: prodigiRes.outcome,
-        stage: prodigiRes.order.status.stage,
-        issues: prodigiRes.order.status.issues,
-      },
-    })
-
-    return {
-      ok: true,
-      orderId: order.id,
-      prodigiOrderId: prodigiRes.order.id,
-    }
-  } catch (err) {
-    const detail =
-      err instanceof ProdigiError
-        ? JSON.stringify(err.body)
-        : err instanceof Error
-          ? err.message
-          : String(err)
-    console.error(
-      `[createPrintOrderFromPaymentIntent] Prodigi createOrder failed for order ${order.id}:`,
-      detail,
+    const artistName = [artwork.user?.name, artwork.user?.lastName].filter(Boolean).join(' ').trim()
+    const attributes: Record<string, string> = Object.fromEntries(
+      specs.map((row) => [row.label, row.value]),
     )
+    const adminRes = await sendAdminOrderNotification({
+      orderId: order.id,
+      artworkTitle: artwork.title ?? '',
+      artistName,
+      buyerName: order.buyerName,
+      buyerEmail: order.buyerEmail,
+      shippingAddress: {
+        line1: addr.line1 ?? '',
+        line2: addr.line2 ?? '',
+        city: addr.city ?? '',
+        state: addr.state ?? '',
+        postalCode: addr.postal_code ?? '',
+        country: addr.country ?? country,
+        phone: pi.shipping?.phone ?? '',
+      },
+      totalCents: order.totalCents,
+      currency: order.currency,
+      skuAttributes: attributes,
+      adminOrderUrl: `${siteUrl}/admin/orders/${order.id}`,
+    })
     await logOrderEvent({
       orderId: order.id,
-      kind: 'prodigi_submit_failed',
+      kind: adminRes.ok ? 'email_sent' : 'email_failed',
       actor: 'system',
-      message: 'Prodigi createOrder threw',
-      payload: {
-        error: detail,
-        status: err instanceof ProdigiError ? err.status : undefined,
-        body: err instanceof ProdigiError ? err.body : undefined,
-      },
+      message: 'admin_order_notification',
+      payload: adminRes.ok ? { resendId: adminRes.id } : { error: adminRes.error },
     })
-    // Critical: buyer's card is authed but Prodigi refused the submit —
-    // the order is now stuck in limbo until admin intervenes. Surface
-    // loudly to Sentry so we can fix/cancel before auth expiry.
-    captureError(err, {
-      flow: 'order',
-      stage: 'prodigi-submit-failed',
-      extra: {
-        orderId: order.id,
-        paymentIntentId: order.paymentIntentId,
-        artworkId: artwork.id,
-        sku,
-        prodigiStatus: err instanceof ProdigiError ? err.status : undefined,
-        prodigiBody: err instanceof ProdigiError ? err.body : undefined,
-      },
-      level: 'error',
-      fingerprint: ['order:prodigi-submit-failed'],
-    })
-    return { ok: false, error: `Prodigi submission failed: ${detail}` }
+    if (!adminRes.ok) {
+      captureError(new Error(`Admin order-notification email failed: ${adminRes.error}`), {
+        flow: 'email',
+        stage: 'admin-order-notification-send',
+        extra: { orderId: order.id, error: adminRes.error },
+        level: 'warning',
+        fingerprint: ['email:admin-order-notification-failed'],
+      })
+    }
   }
+
+  return { ok: true, orderId: order.id }
 }

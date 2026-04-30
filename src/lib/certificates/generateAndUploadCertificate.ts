@@ -17,7 +17,7 @@ type Args = {
 
 /**
  * Render the certificate of authenticity PDF and upload it to R2. Returns
- * the public URL of the stored PDF, which we then hand to Prodigi as a
+ * the public URL of the stored PDF, which we attach as a
  * `branding.flyer` asset on the order.
  *
  * The R2 key is deterministic per order (`certificates/{orderId}.pdf`),

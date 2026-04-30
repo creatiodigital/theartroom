@@ -1,23 +1,17 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
-import {
-  formatEuro,
-  formatSize,
-  getFormat,
-  getFrameColor,
-  getMount,
-  getPaper,
-  getSize,
-} from '@/components/PrintWizard/options'
-import type { PrintConfig, WizardArtwork } from '@/components/PrintWizard/types'
+import type { ProviderId } from '@/lib/print-providers'
+
+import type { CheckoutArtwork } from '../PrintCheckout'
+import { clearPrintSession } from '../clearPrintSession'
 
 import { PaymentForm } from './PaymentForm'
 import type { StashedPayment } from './types'
@@ -25,8 +19,9 @@ import type { StashedPayment } from './types'
 import styles from './PrintPayment.module.scss'
 
 interface PrintPaymentProps {
-  artwork: WizardArtwork
-  config: PrintConfig
+  artwork: CheckoutArtwork
+  /** Server-resolved provider — bounce-back URL preserves it. */
+  providerId: ProviderId
   country: string
 }
 
@@ -37,13 +32,7 @@ const stripePromise: Promise<Stripe | null> =
     ? Promise.resolve(null)
     : loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '')
 
-const regionNames =
-  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
-    ? new Intl.DisplayNames(['en'], { type: 'region' })
-    : null
-const countryName = (code: string) => regionNames?.of(code) ?? code
-
-export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) => {
+export const PrintPayment = ({ artwork, providerId, country }: PrintPaymentProps) => {
   const router = useRouter()
   const [stashed, setStashed] = useState<StashedPayment | null>(null)
   const [hydrating, setHydrating] = useState(true)
@@ -60,7 +49,14 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
         return
       }
       const parsed = JSON.parse(raw) as StashedPayment
-      if (!parsed.clientSecret) {
+      if (!parsed.clientSecret || !parsed.providerId || !parsed.specs || !parsed.config) {
+        bounceBackToCheckout()
+        return
+      }
+      // Defensive: never trust a stash from a different provider for
+      // the artwork the URL says we're rendering. (A stale tab could
+      // is stale across artworks.)
+      if (parsed.providerId !== providerId) {
         bounceBackToCheckout()
         return
       }
@@ -71,27 +67,17 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
       setHydrating(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artwork.slug])
+  }, [artwork.slug, providerId])
 
-  const bounceBackToCheckout = () => {
-    const params = new URLSearchParams({
-      paper: config.paperId,
-      format: config.formatId,
-      size: config.sizeId,
-      color: config.frameColorId,
-      mount: config.mountId,
-      orientation: config.orientation,
-      unit: config.unit,
-      country,
-    })
-    router.replace(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
+  const handleClose = () => {
+    clearPrintSession(artwork.slug)
+    router.push('/prints')
   }
 
-  const paper = getPaper(config.paperId)
-  const format = getFormat(config.formatId)
-  const size = getSize(config.sizeId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
+  const bounceBackToCheckout = () => {
+    const params = new URLSearchParams({ country, provider: providerId })
+    router.replace(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
+  }
 
   const elementsOptions = useMemo(() => {
     if (!stashed) return null
@@ -104,110 +90,37 @@ export const PrintPayment = ({ artwork, config, country }: PrintPaymentProps) =>
   return (
     <div className={styles.payment}>
       <header className={styles.header}>
-        <Logo className={styles.logo} />
-        <span className={styles.headerTitle}>Payment</span>
+        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
+          <Logo className={styles.logo} />
+        </Link>
+        <span />
         <button
           type="button"
-          onClick={bounceBackToCheckout}
-          className={styles.backButton}
-          aria-label="Back to shipping details"
+          onClick={handleClose}
+          className={styles.closeButton}
+          aria-label="Close payment"
         >
-          <Icon name="arrowLeft" size={16} />
-          BACK
+          CLOSE
+          <span className={styles.closeIcon}>
+            <Icon name="close" size={16} />
+          </span>
         </button>
       </header>
 
       <main className={styles.body}>
-        <section className={styles.paymentPanel}>
-          <h2 className={styles.sectionTitle}>Pay with card</h2>
-          <p className={styles.sectionHelp}>
-            All payments are processed securely by Stripe. Your card details never touch our
-            servers. We&apos;ll hold your card now and charge it once your print enters production.
-          </p>
-          <p className={styles.sectionHelp}>
-            By placing your order you agree to our{' '}
-            <a href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
-              Online Terms of Sale
-            </a>
-            .
-          </p>
+        {hydrating && <p className={styles.hydrating}>Preparing secure payment…</p>}
 
-          {hydrating && <p className={styles.hydrating}>Preparing secure payment…</p>}
-
-          {!hydrating && stashed && elementsOptions && (
-            <Elements stripe={stripePromise} options={elementsOptions}>
-              <PaymentForm
-                stashed={stashed}
-                artworkSlug={artwork.slug}
-                onBack={bounceBackToCheckout}
-              />
-            </Elements>
-          )}
-        </section>
-
-        <aside className={styles.summaryPanel}>
-          <div className={styles.summaryHeader}>
-            {artwork.imageUrl && (
-              <Image
-                src={artwork.imageUrl}
-                alt={artwork.title}
-                width={72}
-                height={72}
-                className={`${styles.summaryThumb}${
-                  (config.orientation === 'landscape') !==
-                  artwork.originalWidthPx >= artwork.originalHeightPx
-                    ? ` ${styles.summaryThumbRotated}`
-                    : ''
-                }`}
-              />
-            )}
-            <div className={styles.summaryMeta}>
-              <span className={styles.summaryEyebrow}>{artwork.artistName}</span>
-              <h2 className={styles.summaryTitle}>{artwork.title}</h2>
-              {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
-            </div>
-          </div>
-
-          <ul className={styles.specList}>
-            <li>
-              <span>Paper</span>
-              <span>{paper.label}</span>
-            </li>
-            <li>
-              <span>Format</span>
-              <span>{format.label}</span>
-            </li>
-            <li>
-              <span>Size</span>
-              <span>{formatSize(size, config.unit, config.orientation)}</span>
-            </li>
-            {format.framed && (
-              <>
-                <li>
-                  <span>Frame</span>
-                  <span>{frameColor.label}</span>
-                </li>
-                <li>
-                  <span>Mount</span>
-                  <span>{mount.label}</span>
-                </li>
-              </>
-            )}
-          </ul>
-
-          {stashed && (
-            <>
-              <div className={styles.destinationLine}>
-                <span>Shipping to</span>
-                <strong>{countryName(country)}</strong>
-              </div>
-              <div className={styles.totalRow}>
-                <span>Total</span>
-                <span className={styles.totalValue}>{formatEuro(stashed.totals.totalCents)}</span>
-              </div>
-            </>
-          )}
-        </aside>
+        {!hydrating && stashed && elementsOptions && (
+          <Elements stripe={stripePromise} options={elementsOptions}>
+            <PaymentForm
+              stashed={stashed}
+              artwork={artwork}
+              country={country}
+              artworkSlug={artwork.slug}
+              onBack={bounceBackToCheckout}
+            />
+          </Elements>
+        )}
       </main>
     </div>
   )

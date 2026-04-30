@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ArtistProfilePage } from '@/components/artists/profile'
@@ -40,6 +41,15 @@ export async function generateMetadata({ params }: ArtistProfileProps): Promise<
 
 const ArtistProfile = async ({ params }: ArtistProfileProps) => {
   const { slug } = await params
+
+  // 404 at the server boundary on missing / unpublished artists.
+  // Mirrors the where clause used in generateMetadata.
+  const artist = await prisma.user.findFirst({
+    where: { handler: slug, published: true },
+    select: { id: true },
+  })
+  if (!artist) notFound()
+
   return <ArtistProfilePage slug={slug} />
 }
 

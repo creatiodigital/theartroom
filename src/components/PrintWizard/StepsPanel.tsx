@@ -1,96 +1,58 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import Image from 'next/image'
 
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
-import { Icon } from '@/components/ui/Icon'
 import { SelectDropdown } from '@/components/ui/SelectDropdown'
 import type { SelectOption } from '@/components/ui/SelectDropdown'
 
-import type { CatalogStatus } from './index'
 import {
-  canSwap,
-  filterFormatsForArtwork,
-  filterFrameColorsForArtwork,
-  filterMountsForArtwork,
-  filterPapersForArtwork,
-  filterSizesForArtwork,
-  formatSize,
-  getCompatibleSizes,
-  getFormat,
-  isSizePrintEligible,
-} from './options'
-import type {
-  FormatId,
-  FrameColorId,
-  MountId,
-  Orientation,
-  PaperId,
-  PrintConfig,
-  PrintOptions,
-  SizeId,
-  SizeOption,
-} from './types'
+  type AvailabilityCheck,
+  type BorderDimension,
+  type Catalog,
+  type Dimension,
+  type EnumDimension,
+  type Option,
+  type PrintRestrictions,
+  type SizeDimension,
+  type SizeOption,
+  type WizardConfig,
+  clampCm,
+  isDimensionVisible,
+  isOptionPickable,
+  sizeOptionLabel,
+} from '@/lib/print-providers'
 
 import styles from './PrintWizard.module.scss'
 
 interface StepsPanelProps {
-  config: PrintConfig
+  catalog: Catalog
+  config: WizardConfig
   aspectRatio: number
-  /** Pixel dimensions of the artwork's source image. Used to hide sizes
-   *  the image physically can't print at 300 DPI. */
-  originalWidthPx: number
-  originalHeightPx: number
-  onChange: (patch: Partial<PrintConfig>) => void
-  countryCode: string
-  onCountryChange: (code: string) => void
-  catalogStatus: CatalogStatus
-  /**
-   * Countries list from localStorage (previous session). Used to populate
-   * the destinations dropdown *while the full catalog is still loading*,
-   * so a returning buyer sees a usable country picker instantly instead
-   * of "Loading available destinations…".
-   */
-  fallbackCountries: string[] | null
-  /** Artist-set restrictions for this artwork. null/undefined = no restrictions. */
-  printOptions: PrintOptions | null
-  /**
-   * True when no combination of (ships-to-country) × (artist-allowed)
-   * is available for the current selection. Parent flips this when both
-   * `firstShippableConfig` and `findShippableConfig` return null.
-   */
-  noViableCombo: boolean
+  onChange: (patch: Record<string, string>) => void
+  onCustomSizeChange: (size: { widthCm: number; heightCm: number }) => void
+  onBorderChange: (dimensionId: string, allCm: number) => void
+  availability: AvailabilityCheck
+  restrictions: PrintRestrictions | null
 }
 
-type StepKey = 'orientation' | 'paper' | 'format' | 'size' | 'frame' | 'mount'
-
-const regionNames =
-  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
-    ? new Intl.DisplayNames(['en'], { type: 'region' })
-    : null
-const countryName = (code: string) => regionNames?.of(code) ?? code
-const sortCountries = (codes: string[]) =>
-  [...codes].sort((a, b) => countryName(a).localeCompare(countryName(b)))
-
 export const StepsPanel = ({
+  catalog,
   config,
   aspectRatio,
-  originalWidthPx,
-  originalHeightPx,
   onChange,
-  countryCode,
-  onCountryChange,
-  catalogStatus,
-  fallbackCountries,
-  printOptions,
-  noViableCombo,
+  onCustomSizeChange,
+  onBorderChange,
+  availability,
+  restrictions,
 }: StepsPanelProps) => {
-  // Independent open/closed state per section — the buyer can have any
-  // combination open. All sections start closed so the panel is compact on
-  // first render; the user opens whichever step they want to adjust.
-  const [openSteps, setOpenSteps] = useState<Set<StepKey>>(() => new Set())
-
-  const toggle = (key: StepKey) => (open: boolean) => {
+  // Per-step open/closed state. Keyed by dimension id. Independent —
+  // buyer can have any combination open at once. Country isn't picked
+  // here any more (lives on the checkout step), so every section
+  // available is for the print configuration itself.
+  const [openSteps, setOpenSteps] = useState<Set<string>>(() => new Set())
+  const toggle = (key: string) => (open: boolean) => {
     setOpenSteps((prev) => {
       const next = new Set(prev)
       if (open) next.add(key)
@@ -99,315 +61,994 @@ export const StepsPanel = ({
     })
   }
 
-  const isFramed = getFormat(config.formatId).framed
-
-  // Filter sizes by aspect ratio, ordered best-fit first. The "will crop or
-  // pad" suffix on mismatched ratios is enough hint — no toggle needed.
-  const sizeGroups = useMemo(() => getCompatibleSizes(aspectRatio), [aspectRatio])
-
-  // Per-artwork restrictions come before the Prodigi-availability filter:
-  // whatever the artist banned is just gone, no grey-out, no surprise.
-  const allowedPapers = useMemo(() => filterPapersForArtwork(printOptions), [printOptions])
-  const allowedFormats = useMemo(() => filterFormatsForArtwork(printOptions), [printOptions])
-  const allowedFrameColors = useMemo(
-    () => filterFrameColorsForArtwork(printOptions),
-    [printOptions],
-  )
-  const allowedMounts = useMemo(() => filterMountsForArtwork(printOptions), [printOptions])
-
-  const catalog = catalogStatus.kind === 'ready' ? catalogStatus.catalog : null
-
-  // Option dropdowns are locked until (a) the catalog is loaded AND (b) the
-  // user has picked a destination. Before either, picking options would be
-  // meaningless — we can't tell them what ships where yet.
-  const optionsLocked = catalogStatus.kind !== 'ready' || !countryCode
-
-  // Before a country is picked we show every option. After the user picks,
-  // we filter the lists so only shippable values appear — no grey-out
-  // states to parse, no banners, just a clean set of choices that work.
-  const keepAvail = <V extends string>(
-    dimension: 'paper' | 'format' | 'size' | 'frame' | 'mount',
-    value: V,
-  ) => !catalog || !countryCode || canSwap(config, dimension, value, countryCode, catalog)
-
-  const paperOptions: SelectOption<PaperId>[] = useMemo(
-    () =>
-      allowedPapers
-        .filter((p) => keepAvail('paper', p.id))
-        .map((p) => ({
-          value: p.id,
-          label: p.label,
-          description: p.description,
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog, allowedPapers],
-  )
-  const formatOptions: SelectOption<FormatId>[] = useMemo(
-    () =>
-      allowedFormats
-        .filter((f) => keepAvail('format', f.id))
-        .map((f) => ({
-          value: f.id,
-          label: f.label,
-          description: f.description,
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog, allowedFormats],
-  )
-  const frameColorOptions: SelectOption<FrameColorId>[] = useMemo(
-    () =>
-      allowedFrameColors
-        .filter((c) => keepAvail('frame', c.id))
-        .map((c) => ({
-          value: c.id,
-          label: c.label,
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog, allowedFrameColors],
-  )
-  const mountOptions: SelectOption<MountId>[] = useMemo(
-    () =>
-      allowedMounts
-        .filter((m) => keepAvail('mount', m.id))
-        .map((m) => ({ value: m.id, label: m.label })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config, countryCode, catalog, allowedMounts],
-  )
-  const sizeOptions: SelectOption<SizeId>[] = useMemo(() => {
-    // Drop sizes the image physically can't print at 300 DPI — the
-    // buyer shouldn't see an option that would yield an under-resolved
-    // print, regardless of aspect fit or country coverage.
-    const eligible = (s: SizeOption) => isSizePrintEligible(s, originalWidthPx, originalHeightPx)
-    const perfect = filterSizesForArtwork(sizeGroups.perfect, printOptions).filter(eligible)
-    const close = filterSizesForArtwork(sizeGroups.close, printOptions).filter(eligible)
-    const mismatch = filterSizesForArtwork(sizeGroups.mismatch, printOptions).filter(eligible)
-    // Labels follow the buyer's chosen orientation so "40×50 cm" flips
-    // to "50×40 cm" when the print hangs landscape.
-    const formatLabel = (s: SizeOption) => {
-      const cm = formatSize(s, 'cm', config.orientation)
-      const inches = formatSize(s, 'inches', config.orientation)
-      return `${cm} (${inches})`
-    }
-    const allSizes: SelectOption<SizeId>[] = []
-    for (const s of perfect) allSizes.push({ value: s.id, label: formatLabel(s) })
-    for (const s of close) allSizes.push({ value: s.id, label: formatLabel(s) })
-    for (const s of mismatch) {
-      allSizes.push({ value: s.id, label: `${formatLabel(s)} — will crop or pad` })
-    }
-    return allSizes.filter((opt) => keepAvail('size', opt.value))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sizeGroups, config, countryCode, catalog, printOptions, originalWidthPx, originalHeightPx])
-
-  const countryOptions: SelectOption<string>[] = useMemo(() => {
-    // Prefer the live catalog's countries; fall back to the persisted
-    // list from a previous session so the dropdown is usable immediately
-    // on a cold-cache deep-link.
-    const available =
-      catalogStatus.kind === 'ready' ? catalogStatus.countries : (fallbackCountries ?? [])
-    return sortCountries(available).map((code) => ({
-      value: code,
-      label: countryName(code),
-    }))
-  }, [catalogStatus, fallbackCountries])
-
-  const showCountryDropdown =
-    catalogStatus.kind === 'ready' || (fallbackCountries && fallbackCountries.length > 0)
+  // Country never gates option selection here — the checkout step
+  // handles destination and re-quotes. The catalog ships everything
+  // everywhere, so options stay unlocked always.
+  const countryCode = ''
+  const optionsLocked = false
 
   return (
     <aside className={styles.stepsPanel}>
-      <div className={styles.destinationBlock}>
-        <div className={styles.destinationHeader}>
-          <span className={styles.destinationTitle}>Shipping destination</span>
-        </div>
-        <p className={styles.destinationHelp}>
-          Pick your destination first. The options below will only show what we can actually ship to
-          that country.
-        </p>
+      {(() => {
+        // The catalog bundles a few dimensions that are read as one decision:
+        //   - printType + paper       (paper is filtered by process)
+        //   - format + frameType + moulding (frame parts only matter
+        //     once the buyer opts into framing)
+        // We render those as single sections so the buyer doesn't see
+        // 5 separate dropdowns for what is really 2 questions. Each
+        // group renders in place of its leader dimension, preserving
+        // the catalog's declared order.
+        const dimsById = new Map(catalog.dimensions.map((d) => [d.id, d]))
+        const printType = dimsById.get('printType')
+        const paper = dimsById.get('paper')
+        const size = dimsById.get('size')
+        const border = dimsById.get('border')
+        const format = dimsById.get('format')
+        const frameType = dimsById.get('frameType')
+        const moulding = dimsById.get('moulding')
+        const glass = dimsById.get('glass')
+        const hanging = dimsById.get('hanging')
+        const windowMount = dimsById.get('windowMount')
+        const windowMountSize = dimsById.get('windowMountSize')
 
-        {catalogStatus.kind === 'loading' && !showCountryDropdown && (
-          <p
-            className={
-              styles.destinationNotice +
-              ' ' +
-              styles.destinationNoticeInfo +
-              ' ' +
-              styles.destinationNoticeWithSpinner
-            }
-          >
-            <span>Loading available destinations…</span>
-            <span className={styles.spinner} aria-hidden="true">
-              <Icon name="loaderCircle" size={16} />
-            </span>
-          </p>
-        )}
+        const printGrouped =
+          printType && paper && printType.kind === 'enum' && paper.kind === 'enum'
+        const sizeGrouped = size && border && size.kind === 'size' && border.kind === 'border'
+        const frameGrouped =
+          format &&
+          frameType &&
+          moulding &&
+          format.kind === 'enum' &&
+          frameType.kind === 'enum' &&
+          moulding.kind === 'enum'
 
-        {catalogStatus.kind === 'error' && (
-          <p className={styles.destinationNotice}>
-            Couldn&apos;t load destinations right now. Please try again in a moment.
-          </p>
-        )}
+        const groupLeader = new Map<string, 'print' | 'size' | 'frame'>()
+        if (printGrouped) {
+          groupLeader.set('printType', 'print')
+          groupLeader.set('paper', 'print')
+        }
+        if (sizeGrouped) {
+          // Paper border is a size-shaping decision (extra white
+          // space around the image), so it lives next to the print
+          // size itself rather than in its own section.
+          groupLeader.set('size', 'size')
+          groupLeader.set('border', 'size')
+        }
+        if (frameGrouped) {
+          // Everything that only matters once the buyer opts into
+          // framing lives in one section: frame parts, glass, hanging,
+          // and the passepartout (window mount + its size slider).
+          // Without framing none of these have meaningful values.
+          groupLeader.set('format', 'frame')
+          groupLeader.set('frameType', 'frame')
+          groupLeader.set('moulding', 'frame')
+          if (glass?.kind === 'enum') groupLeader.set('glass', 'frame')
+          if (hanging?.kind === 'enum') groupLeader.set('hanging', 'frame')
+          if (windowMount?.kind === 'enum') groupLeader.set('windowMount', 'frame')
+          if (windowMountSize?.kind === 'border') groupLeader.set('windowMountSize', 'frame')
+        }
 
-        {showCountryDropdown && (
-          <div className={styles.stepField}>
-            <SelectDropdown<string>
-              label="Country"
-              options={countryOptions}
-              value={countryCode}
-              onChange={onCountryChange}
-              placeholder="Choose a country…"
-            />
-          </div>
-        )}
+        return (
+          <>
+            {catalog.dimensions.map((dim) => {
+              const group = groupLeader.get(dim.id)
+              if (group === 'print' && dim.id !== 'printType') return null
+              if (group === 'size' && dim.id !== 'size') return null
+              if (group === 'frame' && dim.id !== 'format') return null
+              if (group === 'print' && printGrouped && printType && paper) {
+                return (
+                  <PrintAndPaperSection
+                    key="printAndPaper"
+                    printType={printType}
+                    paper={paper}
+                    config={config}
+                    countryCode={countryCode}
+                    availability={availability}
+                    restrictions={restrictions}
+                    optionsLocked={optionsLocked}
+                    open={openSteps.has('printAndPaper')}
+                    onToggle={toggle('printAndPaper')}
+                    onChange={onChange}
+                  />
+                )
+              }
+              if (group === 'size' && sizeGrouped && size && border) {
+                return (
+                  <SizeAndBorderSection
+                    key="sizeAndBorder"
+                    size={size}
+                    border={border}
+                    config={config}
+                    aspectRatio={aspectRatio}
+                    optionsLocked={optionsLocked}
+                    open={openSteps.has('sizeAndBorder')}
+                    onToggle={toggle('sizeAndBorder')}
+                    onCustomSizeChange={onCustomSizeChange}
+                    onBorderChange={onBorderChange}
+                  />
+                )
+              }
+              if (group === 'frame' && frameGrouped && format && frameType && moulding) {
+                return (
+                  <FrameSection
+                    key="frameGroup"
+                    format={format}
+                    frameType={frameType}
+                    moulding={moulding}
+                    glass={glass?.kind === 'enum' ? glass : undefined}
+                    hanging={hanging?.kind === 'enum' ? hanging : undefined}
+                    windowMount={windowMount?.kind === 'enum' ? windowMount : undefined}
+                    windowMountSize={
+                      windowMountSize?.kind === 'border' ? windowMountSize : undefined
+                    }
+                    catalog={catalog}
+                    config={config}
+                    countryCode={countryCode}
+                    availability={availability}
+                    restrictions={restrictions}
+                    optionsLocked={optionsLocked}
+                    open={openSteps.has('frameGroup')}
+                    onToggle={toggle('frameGroup')}
+                    onChange={onChange}
+                    onBorderChange={onBorderChange}
+                  />
+                )
+              }
+              return (
+                <DimensionSection
+                  key={dim.id}
+                  dimension={dim}
+                  catalog={catalog}
+                  config={config}
+                  aspectRatio={aspectRatio}
+                  countryCode={countryCode}
+                  availability={availability}
+                  restrictions={restrictions}
+                  optionsLocked={optionsLocked}
+                  open={openSteps.has(dim.id)}
+                  onToggle={toggle(dim.id)}
+                  onChange={onChange}
+                  onCustomSizeChange={onCustomSizeChange}
+                  onBorderChange={onBorderChange}
+                />
+              )
+            })}
+          </>
+        )
+      })()}
+    </aside>
+  )
+}
 
-        {showCountryDropdown && !countryCode && (
-          <p className={styles.destinationNotice + ' ' + styles.destinationNoticeInfo}>
-            Pick a destination to continue.
-          </p>
-        )}
+// ── Print + Paper grouped section ──────────────────────────
 
-        {/* No config satisfies both shipping AND artist's restrictions
-            for this destination. Show a clear message and stop — the
-            Continue button is already disabled upstream via canContinue. */}
-        {catalogStatus.kind === 'ready' && countryCode && noViableCombo && (
-          <p className={styles.destinationNotice}>
-            Sorry — this artwork isn&apos;t currently available for shipping to{' '}
-            {countryName(countryCode)}. Try a different destination.
-          </p>
-        )}
+interface PrintAndPaperSectionProps {
+  printType: EnumDimension
+  paper: EnumDimension
+  config: WizardConfig
+  countryCode: string
+  availability: AvailabilityCheck
+  restrictions: PrintRestrictions | null
+  optionsLocked: boolean
+  open: boolean
+  onToggle: (open: boolean) => void
+  onChange: (patch: Record<string, string>) => void
+}
+
+const PrintAndPaperSection = ({
+  printType,
+  paper,
+  config,
+  countryCode,
+  availability,
+  restrictions,
+  optionsLocked,
+  open,
+  onToggle,
+  onChange,
+}: PrintAndPaperSectionProps) => {
+  const filterPickable = (dim: EnumDimension) =>
+    dim.options.filter((option) =>
+      isOptionPickable(option, {
+        dimensionId: dim.id,
+        config,
+        country: countryCode,
+        availability,
+        restrictions,
+      }),
+    )
+
+  const printTypeOptions: SelectOption<string>[] = useMemo(
+    () =>
+      filterPickable(printType).map((option) => ({
+        value: option.id,
+        label: option.label,
+        tooltip: optionTooltip(option),
+        tooltipImage: option.tooltipImageUrl ? (
+          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} />
+        ) : undefined,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [printType, config, countryCode, availability, restrictions],
+  )
+
+  const paperOptions: SelectOption<string>[] = useMemo(
+    () =>
+      filterPickable(paper).map((option) => ({
+        value: option.id,
+        label: option.label,
+        tooltip: optionTooltip(option),
+        tooltipImage: option.tooltipImageUrl ? (
+          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} />
+        ) : undefined,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [paper, config, countryCode, availability, restrictions],
+  )
+
+  return (
+    <CollapsibleSection title="Print" open={open} onToggle={onToggle}>
+      <div className={styles.stepField}>
+        <SelectDropdown<string>
+          label="Type"
+          options={printTypeOptions}
+          value={config.values[printType.id] ?? ''}
+          onChange={(v) => onChange({ [printType.id]: v })}
+          disabled={optionsLocked}
+        />
       </div>
+      <div className={styles.stepField}>
+        <SelectDropdown<string>
+          label={paper.label}
+          options={paperOptions}
+          value={config.values[paper.id] ?? ''}
+          onChange={(v) => onChange({ [paper.id]: v })}
+          disabled={optionsLocked}
+        />
+      </div>
+    </CollapsibleSection>
+  )
+}
 
-      {!noViableCombo && (
+// ── Size + Paper border grouped section ───────────────────
+//
+// Paper border is a size-shaping decision (extra paper around the
+// image), so it sits inside the same section as Print size rather
+// than as its own collapsible.
+
+interface SizeAndBorderSectionProps {
+  size: SizeDimension
+  border: BorderDimension
+  config: WizardConfig
+  aspectRatio: number
+  optionsLocked: boolean
+  open: boolean
+  onToggle: (open: boolean) => void
+  onCustomSizeChange: (size: { widthCm: number; heightCm: number }) => void
+  onBorderChange: (dimensionId: string, allCm: number) => void
+}
+
+const SizeAndBorderSection = ({
+  size,
+  border,
+  config,
+  aspectRatio,
+  optionsLocked,
+  open,
+  onToggle,
+  onCustomSizeChange,
+  onBorderChange,
+}: SizeAndBorderSectionProps) => {
+  return (
+    <CollapsibleSection title={size.label} open={open} onToggle={onToggle}>
+      <div className={styles.stepField}>
+        <CustomSizeInputs
+          dimension={size}
+          aspectRatio={aspectRatio}
+          customSize={config.customSize}
+          disabled={optionsLocked}
+          onChange={onCustomSizeChange}
+        />
+      </div>
+      <BorderSlider
+        dim={border}
+        config={config}
+        optionsLocked={optionsLocked}
+        onBorderChange={onBorderChange}
+      />
+    </CollapsibleSection>
+  )
+}
+
+// ── Frame grouped section ─────────────────────────────────
+//
+// Bundles every framing-conditional dimension into one section. The
+// format dropdown is always rendered; the rest only show when the
+// buyer chose to frame. windowMountSize follows the catalog's own
+// visibility rule (only when a non-'none' mount colour is picked).
+
+interface FrameSectionProps {
+  format: EnumDimension
+  frameType: EnumDimension
+  moulding: EnumDimension
+  glass?: EnumDimension
+  hanging?: EnumDimension
+  windowMount?: EnumDimension
+  windowMountSize?: BorderDimension
+  catalog: Catalog
+  config: WizardConfig
+  countryCode: string
+  availability: AvailabilityCheck
+  restrictions: PrintRestrictions | null
+  optionsLocked: boolean
+  open: boolean
+  onToggle: (open: boolean) => void
+  onChange: (patch: Record<string, string>) => void
+  onBorderChange: (dimensionId: string, allCm: number) => void
+}
+
+const FrameSection = ({
+  format,
+  frameType,
+  moulding,
+  glass,
+  hanging,
+  windowMount,
+  windowMountSize,
+  catalog,
+  config,
+  countryCode,
+  availability,
+  restrictions,
+  optionsLocked,
+  open,
+  onToggle,
+  onChange,
+  onBorderChange,
+}: FrameSectionProps) => {
+  const isFraming = config.values[format.id] === 'framing'
+
+  return (
+    <CollapsibleSection title="Frame" open={open} onToggle={onToggle}>
+      <EnumDropdown
+        dim={format}
+        config={config}
+        countryCode={countryCode}
+        availability={availability}
+        restrictions={restrictions}
+        optionsLocked={optionsLocked}
+        onChange={onChange}
+      />
+      {isFraming && (
         <>
-          <CollapsibleSection title="Size" open={openSteps.has('size')} onToggle={toggle('size')}>
-            <div className={styles.stepField}>
-              <SelectDropdown<SizeId>
-                label="Size"
-                options={sizeOptions}
-                value={config.sizeId}
-                onChange={(v) => onChange({ sizeId: v })}
-                disabled={optionsLocked}
-              />
-              {sizeOptions.some((o) => o.label.includes('crop or pad')) && (
-                <p className={styles.destinationHelp}>
-                  Sizes marked <em>&ldquo;will crop or pad&rdquo;</em> don&apos;t match your
-                  artwork&apos;s aspect ratio. To fit them we either trim the edges (crop) or add a
-                  white border (pad). Pick one of the unmarked sizes to print the whole image
-                  without either.
-                </p>
-              )}
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title="Paper"
-            open={openSteps.has('paper')}
-            onToggle={toggle('paper')}
-          >
-            <div className={styles.stepField}>
-              <SelectDropdown<PaperId>
-                label="Paper tier"
-                options={paperOptions}
-                value={config.paperId}
-                onChange={(v) => onChange({ paperId: v })}
-                disabled={optionsLocked}
-              />
-            </div>
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title="Format"
-            open={openSteps.has('format')}
-            onToggle={toggle('format')}
-          >
-            <div className={styles.stepField}>
-              <SelectDropdown<FormatId>
-                label="Format"
-                options={formatOptions}
-                value={config.formatId}
-                onChange={(v) => onChange({ formatId: v })}
-                disabled={optionsLocked}
-              />
-            </div>
-          </CollapsibleSection>
-
-          {isFramed && (
-            <CollapsibleSection
-              title="Frame"
-              open={openSteps.has('frame')}
-              onToggle={toggle('frame')}
-            >
-              <div className={styles.stepField}>
-                <SelectDropdown<FrameColorId>
-                  label="Frame color"
-                  options={frameColorOptions}
-                  value={config.frameColorId}
-                  onChange={(v) => onChange({ frameColorId: v })}
-                  disabled={optionsLocked}
-                />
-              </div>
-            </CollapsibleSection>
+          <EnumDropdown
+            dim={frameType}
+            config={config}
+            countryCode={countryCode}
+            availability={availability}
+            restrictions={restrictions}
+            optionsLocked={optionsLocked}
+            onChange={onChange}
+          />
+          <EnumDropdown
+            dim={moulding}
+            config={config}
+            countryCode={countryCode}
+            availability={availability}
+            restrictions={restrictions}
+            optionsLocked={optionsLocked}
+            onChange={onChange}
+          />
+          {glass && (
+            <EnumDropdown
+              dim={glass}
+              config={config}
+              countryCode={countryCode}
+              availability={availability}
+              restrictions={restrictions}
+              optionsLocked={optionsLocked}
+              onChange={onChange}
+            />
           )}
-
-          {isFramed && (
-            <CollapsibleSection
-              title="Mount"
-              open={openSteps.has('mount')}
-              onToggle={toggle('mount')}
-            >
-              <div className={styles.stepField}>
-                <SelectDropdown<MountId>
-                  label="Passepartout"
-                  options={mountOptions}
-                  value={config.mountId}
-                  onChange={(v) => onChange({ mountId: v })}
-                  disabled={optionsLocked}
-                />
-              </div>
-            </CollapsibleSection>
+          {windowMount && (
+            <EnumDropdown
+              dim={windowMount}
+              config={config}
+              countryCode={countryCode}
+              availability={availability}
+              restrictions={restrictions}
+              optionsLocked={optionsLocked}
+              onChange={onChange}
+            />
           )}
-
-          <CollapsibleSection
-            title="Orientation"
-            open={openSteps.has('orientation')}
-            onToggle={toggle('orientation')}
-          >
-            <div className={styles.stepField}>
-              <p className={styles.destinationHelp}>
-                How the print will be hung. Defaulted to match your artwork — you can flip it if you
-                want a different hang.
-              </p>
-              <div className={styles.orientationChoices} role="radiogroup" aria-label="Orientation">
-                {(['portrait', 'landscape'] as Orientation[]).map((value) => {
-                  const selected = config.orientation === value
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      disabled={optionsLocked}
-                      className={`${styles.orientationChoice} ${
-                        selected ? styles.orientationChoiceSelected : ''
-                      } ${optionsLocked ? styles.orientationChoiceDisabled : ''}`}
-                      onClick={() => onChange({ orientation: value })}
-                    >
-                      <span
-                        className={`${styles.orientationIcon} ${
-                          value === 'landscape' ? styles.orientationIconLandscape : ''
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span className={styles.orientationLabel}>
-                        {value === 'portrait' ? 'Portrait' : 'Landscape'}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </CollapsibleSection>
+          {windowMountSize && isDimensionVisible(windowMountSize, config, catalog) && (
+            <BorderSlider
+              dim={windowMountSize}
+              config={config}
+              optionsLocked={optionsLocked}
+              onBorderChange={onBorderChange}
+            />
+          )}
+          {hanging && (
+            <EnumDropdown
+              dim={hanging}
+              config={config}
+              countryCode={countryCode}
+              availability={availability}
+              restrictions={restrictions}
+              optionsLocked={optionsLocked}
+              onChange={onChange}
+            />
+          )}
         </>
       )}
-    </aside>
+    </CollapsibleSection>
+  )
+}
+
+// Bare enum dropdown — same logic as EnumDimensionSection but without
+// the outer CollapsibleSection wrapper, so it can be used inside a
+// grouped section.
+const EnumDropdown = ({
+  dim,
+  config,
+  countryCode,
+  availability,
+  restrictions,
+  optionsLocked,
+  onChange,
+}: {
+  dim: EnumDimension
+  config: WizardConfig
+  countryCode: string
+  availability: AvailabilityCheck
+  restrictions: PrintRestrictions | null
+  optionsLocked: boolean
+  onChange: (patch: Record<string, string>) => void
+}) => {
+  const filtered = useMemo(
+    () =>
+      dim.options.filter((option) =>
+        isOptionPickable(option, {
+          dimensionId: dim.id,
+          config,
+          country: countryCode,
+          availability,
+          restrictions,
+        }),
+      ),
+    [dim, config, countryCode, availability, restrictions],
+  )
+
+  const selectOptions: SelectOption<string>[] = useMemo(
+    () =>
+      filtered.map((option) => ({
+        value: option.id,
+        label: option.label,
+        tooltip: optionTooltip(option),
+        tooltipImage: option.tooltipImageUrl ? (
+          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} />
+        ) : undefined,
+      })),
+    [filtered],
+  )
+
+  return (
+    <div className={styles.stepField}>
+      <SelectDropdown<string>
+        label={dim.label}
+        options={selectOptions}
+        value={config.values[dim.id] ?? ''}
+        onChange={(v) => onChange({ [dim.id]: v })}
+        disabled={optionsLocked}
+      />
+    </div>
+  )
+}
+
+// Bare border slider — mirrors BorderDimensionSection's inner content
+// without the outer CollapsibleSection.
+const BorderSlider = ({
+  dim,
+  config,
+  optionsLocked,
+  onBorderChange,
+}: {
+  dim: BorderDimension
+  config: WizardConfig
+  optionsLocked: boolean
+  onBorderChange: (dimensionId: string, allCm: number) => void
+}) => {
+  const value = config.borders?.[dim.id]?.allCm ?? dim.defaultCm
+  const decimals = dim.stepCm >= 1 ? 0 : Math.ceil(-Math.log10(dim.stepCm))
+  const displayed = parseFloat(value.toFixed(decimals)).toString()
+  return (
+    <div className={styles.stepField}>
+      <span className={styles.stepFieldLabel}>{dim.label}</span>
+      {dim.helpText && <p className={styles.destinationHelp}>{dim.helpText}</p>}
+      <p className={styles.sliderValue}>{displayed} cm</p>
+      <input
+        type="range"
+        className={styles.slider}
+        min={dim.minCm}
+        max={dim.maxCm}
+        step={dim.stepCm}
+        value={value}
+        disabled={optionsLocked}
+        onChange={(e) =>
+          onBorderChange(dim.id, clampCm(Number(e.target.value), dim.minCm, dim.maxCm, dim.stepCm))
+        }
+      />
+    </div>
+  )
+}
+
+// ── Per-dimension renderer ───────────────────────────────────────
+
+interface DimensionSectionProps {
+  dimension: Dimension
+  catalog: Catalog
+  config: WizardConfig
+  aspectRatio: number
+  countryCode: string
+  availability: AvailabilityCheck
+  restrictions: PrintRestrictions | null
+  optionsLocked: boolean
+  open: boolean
+  onToggle: (open: boolean) => void
+  onChange: (patch: Record<string, string>) => void
+  onCustomSizeChange: (size: { widthCm: number; heightCm: number }) => void
+  onBorderChange: (dimensionId: string, allCm: number) => void
+}
+
+const DimensionSection = ({
+  dimension,
+  catalog,
+  config,
+  aspectRatio,
+  countryCode,
+  availability,
+  restrictions,
+  optionsLocked,
+  open,
+  onToggle,
+  onChange,
+  onCustomSizeChange,
+  onBorderChange,
+}: DimensionSectionProps) => {
+  const aspectRatioForChild = aspectRatio
+  if (!isDimensionVisible(dimension, config, catalog)) return null
+
+  if (dimension.kind === 'orientation') {
+    return (
+      <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+        <div className={styles.stepField}>
+          <p className={styles.destinationHelp}>
+            How the print will be hung. Defaulted to match your artwork — flip it if you want a
+            different hang.
+          </p>
+          <div className={styles.orientationChoices} role="radiogroup" aria-label="Orientation">
+            {(['portrait', 'landscape'] as const).map((value) => {
+              const selected = config.values.orientation === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={optionsLocked}
+                  className={`${styles.orientationChoice} ${
+                    selected ? styles.orientationChoiceSelected : ''
+                  } ${optionsLocked ? styles.orientationChoiceDisabled : ''}`}
+                  onClick={() => onChange({ orientation: value })}
+                >
+                  <span
+                    className={`${styles.orientationIcon} ${
+                      value === 'landscape' ? styles.orientationIconLandscape : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.orientationLabel}>
+                    {value === 'portrait' ? 'Portrait' : 'Landscape'}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </CollapsibleSection>
+    )
+  }
+
+  if (dimension.kind === 'size') {
+    return (
+      <SizeDimensionSection
+        dimension={dimension}
+        config={config}
+        aspectRatio={aspectRatioForChild}
+        countryCode={countryCode}
+        availability={availability}
+        restrictions={restrictions}
+        optionsLocked={optionsLocked}
+        open={open}
+        onToggle={onToggle}
+        onChange={onChange}
+        onCustomSizeChange={onCustomSizeChange}
+      />
+    )
+  }
+
+  if (dimension.kind === 'border') {
+    return (
+      <BorderDimensionSection
+        dimension={dimension}
+        config={config}
+        optionsLocked={optionsLocked}
+        open={open}
+        onToggle={onToggle}
+        onBorderChange={onBorderChange}
+      />
+    )
+  }
+
+  // kind === 'enum'
+  return (
+    <EnumDimensionSection
+      dimension={dimension}
+      config={config}
+      countryCode={countryCode}
+      availability={availability}
+      restrictions={restrictions}
+      optionsLocked={optionsLocked}
+      open={open}
+      onToggle={onToggle}
+      onChange={onChange}
+    />
+  )
+}
+
+// ── Enum dimensions ──────────────────────────────────────────────
+
+interface EnumSectionProps extends Omit<
+  DimensionSectionProps,
+  'dimension' | 'catalog' | 'aspectRatio' | 'onCustomSizeChange' | 'onBorderChange'
+> {
+  dimension: EnumDimension
+}
+
+const EnumDimensionSection = ({
+  dimension,
+  config,
+  countryCode,
+  availability,
+  restrictions,
+  optionsLocked,
+  open,
+  onToggle,
+  onChange,
+}: EnumSectionProps) => {
+  const filtered = useMemo(
+    () =>
+      dimension.options.filter((option) =>
+        isOptionPickable(option, {
+          dimensionId: dimension.id,
+          config,
+          country: countryCode,
+          availability,
+          restrictions,
+        }),
+      ),
+    [dimension, config, countryCode, availability, restrictions],
+  )
+
+  const selectOptions: SelectOption<string>[] = useMemo(
+    () =>
+      filtered.map((option) => ({
+        value: option.id,
+        label: option.label,
+        tooltip: optionTooltip(option),
+        tooltipImage: option.tooltipImageUrl ? (
+          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} />
+        ) : undefined,
+      })),
+    [filtered],
+  )
+
+  return (
+    <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+      <div className={styles.stepField}>
+        <SelectDropdown<string>
+          options={selectOptions}
+          value={config.values[dimension.id] ?? ''}
+          onChange={(v) => onChange({ [dimension.id]: v })}
+          disabled={optionsLocked}
+        />
+      </div>
+    </CollapsibleSection>
+  )
+}
+
+// ── Size dimension ───────────────────────────────────────────────
+
+interface SizeSectionProps extends Omit<
+  DimensionSectionProps,
+  'dimension' | 'catalog' | 'onBorderChange'
+> {
+  dimension: SizeDimension
+}
+
+const SizeDimensionSection = ({
+  dimension,
+  config,
+  aspectRatio,
+  countryCode,
+  availability,
+  restrictions,
+  optionsLocked,
+  open,
+  onToggle,
+  onChange,
+  onCustomSizeChange,
+}: SizeSectionProps) => {
+  const orientation: 'portrait' | 'landscape' =
+    config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
+
+  const filtered = useMemo(() => {
+    return dimension.options
+      .filter((o) => o.printEligible)
+      .filter((o) =>
+        isOptionPickable(o, {
+          dimensionId: dimension.id,
+          config,
+          country: countryCode,
+          availability,
+          restrictions,
+        }),
+      )
+  }, [dimension, config, countryCode, availability, restrictions])
+
+  const sorted = useMemo(() => {
+    const order: Record<SizeOption['fit'], number> = { perfect: 0, close: 1, mismatch: 2 }
+    return [...filtered].sort((a, b) => order[a.fit] - order[b.fit])
+  }, [filtered])
+
+  const hasPresets = dimension.options.length > 0
+  const customMode = !hasPresets && dimension.custom !== undefined
+
+  const selectOptions: SelectOption<string>[] = useMemo(
+    () =>
+      sorted.map((size) => ({
+        value: size.id,
+        label: sizeOptionLabel(size, orientation),
+        tooltip: (
+          <p>
+            This size matches your artwork&apos;s aspect ratio — the whole image prints without
+            cropping or padding.
+          </p>
+        ),
+      })),
+    [sorted, orientation],
+  )
+
+  return (
+    <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+      <div className={styles.stepField}>
+        {customMode ? (
+          <CustomSizeInputs
+            dimension={dimension}
+            aspectRatio={aspectRatio}
+            customSize={config.customSize}
+            disabled={optionsLocked}
+            onChange={onCustomSizeChange}
+          />
+        ) : (
+          <SelectDropdown<string>
+            options={selectOptions}
+            value={config.values[dimension.id] ?? ''}
+            onChange={(v) => onChange({ [dimension.id]: v })}
+            disabled={optionsLocked}
+          />
+        )}
+      </div>
+    </CollapsibleSection>
+  )
+}
+
+// ── Custom size (height × width, aspect-locked) ──────────────────
+
+interface CustomSizeInputsProps {
+  dimension: SizeDimension
+  aspectRatio: number
+  customSize: WizardConfig['customSize']
+  disabled: boolean
+  onChange: (size: { widthCm: number; heightCm: number }) => void
+}
+
+const CustomSizeInputs = ({
+  dimension,
+  aspectRatio,
+  customSize,
+  disabled,
+  onChange,
+}: CustomSizeInputsProps) => {
+  // Hooks must be called unconditionally on every render. We don't
+  // bail out on `!custom` until after they've been declared, so the
+  // hook order stays stable when the dimension switches between
+  // custom-size and preset-size variants.
+  const { custom } = dimension
+  const widthCm = customSize?.widthCm ?? 0
+  const heightCm = customSize?.heightCm ?? 0
+  // Local string state so the user can type/clear freely without
+  // each keystroke clamping mid-input. We commit (and clamp) on blur
+  // or when the input parses to a valid in-range number — at which
+  // point the partner field auto-updates from the locked aspect.
+  const stepCmForInit = custom?.stepCm ?? 1
+  const [widthInput, setWidthInput] = useState<string>(formatCm(widthCm, stepCmForInit))
+  const [heightInput, setHeightInput] = useState<string>(formatCm(heightCm, stepCmForInit))
+  const [editing, setEditing] = useState<'width' | 'height' | null>(null)
+
+  if (!custom) return null
+
+  // Sync local input with external customSize updates when the user
+  // isn't actively typing in either field.
+  if (editing === null) {
+    const wStr = formatCm(widthCm, custom.stepCm)
+    const hStr = formatCm(heightCm, custom.stepCm)
+    if (wStr !== widthInput) setWidthInput(wStr)
+    if (hStr !== heightInput) setHeightInput(hStr)
+  }
+
+  const aspectLocked = custom.aspectLocked === true
+  // The aspect ratio in cm-space. Width / height. When the buyer
+  // edits either field, the other follows from this ratio.
+  const ratioWH = aspectLocked && aspectRatio > 0 ? aspectRatio : null
+
+  const handleChange = (which: 'width' | 'height', raw: string) => {
+    if (which === 'width') setWidthInput(raw)
+    else setHeightInput(raw)
+    const parsed = Number(raw.replace(',', '.'))
+    if (!Number.isFinite(parsed) || parsed <= 0) return
+
+    if (ratioWH === null) {
+      // No aspect lock — both fields independent.
+      const w =
+        which === 'width' ? clampCm(parsed, custom.minCm, custom.maxCm, custom.stepCm) : widthCm
+      const h =
+        which === 'height' ? clampCm(parsed, custom.minCm, custom.maxCm, custom.stepCm) : heightCm
+      onChange({ widthCm: w, heightCm: h })
+      return
+    }
+
+    // Aspect-locked. Compute the feasible range for the edited side
+    // such that the *other* side also lands within [minCm, maxCm].
+    // Otherwise typing 10 for width on a 1.5:1 landscape would clamp
+    // height to minCm (10) and the lock appears broken.
+    const minSide = custom.minCm
+    const maxSide = custom.maxCm
+    let w: number
+    let h: number
+    if (which === 'width') {
+      const minW = Math.max(minSide, minSide * ratioWH)
+      const maxW = Math.min(maxSide, maxSide * ratioWH)
+      w = clampCm(Math.max(minW, Math.min(maxW, parsed)), custom.minCm, custom.maxCm, custom.stepCm)
+      h = clampCm(w / ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
+      // Mirror to the other field so the buyer sees it follow live
+      // (the editing-gate would otherwise hold the stale value until
+      // blur).
+      setHeightInput(formatCm(h, custom.stepCm))
+    } else {
+      const minH = Math.max(minSide, minSide / ratioWH)
+      const maxH = Math.min(maxSide, maxSide / ratioWH)
+      h = clampCm(Math.max(minH, Math.min(maxH, parsed)), custom.minCm, custom.maxCm, custom.stepCm)
+      w = clampCm(h * ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
+      setWidthInput(formatCm(w, custom.stepCm))
+    }
+    onChange({ widthCm: w, heightCm: h })
+  }
+
+  return (
+    <div className={styles.customSizeRow}>
+      <label className={styles.customSizeField}>
+        <span>Height (cm)</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={heightInput}
+          disabled={disabled}
+          onFocus={() => setEditing('height')}
+          onBlur={() => setEditing(null)}
+          onChange={(e) => handleChange('height', e.target.value)}
+        />
+      </label>
+      <span className={styles.customSizeSeparator} aria-hidden="true">
+        ×
+      </span>
+      <label className={styles.customSizeField}>
+        <span>Width (cm)</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={widthInput}
+          disabled={disabled}
+          onFocus={() => setEditing('width')}
+          onBlur={() => setEditing(null)}
+          onChange={(e) => handleChange('width', e.target.value)}
+        />
+      </label>
+      {aspectLocked && (
+        <p className={styles.customSizeHint}>
+          Width and height are locked to this artwork&apos;s aspect ratio — change either, the other
+          follows.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function formatCm(value: number, step: number): string {
+  if (!Number.isFinite(value) || value === 0) return ''
+  const decimals = step >= 1 ? 0 : Math.ceil(-Math.log10(step))
+  return value.toFixed(decimals)
+}
+
+// ── Border dimension (uniform) ──────────────────────────────────
+
+interface BorderSectionProps {
+  dimension: BorderDimension
+  config: WizardConfig
+  optionsLocked: boolean
+  open: boolean
+  onToggle: (open: boolean) => void
+  onBorderChange: (dimensionId: string, allCm: number) => void
+}
+
+const BorderDimensionSection = ({
+  dimension,
+  config,
+  optionsLocked,
+  open,
+  onToggle,
+  onBorderChange,
+}: BorderSectionProps) => {
+  const value = config.borders?.[dimension.id]?.allCm ?? dimension.defaultCm
+  const decimals = dimension.stepCm >= 1 ? 0 : Math.ceil(-Math.log10(dimension.stepCm))
+  // Strip trailing zeros so 0 → "0", 1.0 → "1", 0.3 stays "0.3".
+  const displayed = parseFloat(value.toFixed(decimals)).toString()
+  return (
+    <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+      <div className={styles.stepField}>
+        {dimension.helpText && <p className={styles.destinationHelp}>{dimension.helpText}</p>}
+        <p className={styles.sliderValue}>{displayed} cm</p>
+        <input
+          type="range"
+          className={styles.slider}
+          min={dimension.minCm}
+          max={dimension.maxCm}
+          step={dimension.stepCm}
+          value={value}
+          disabled={optionsLocked}
+          onChange={(e) =>
+            onBorderChange(
+              dimension.id,
+              clampCm(Number(e.target.value), dimension.minCm, dimension.maxCm, dimension.stepCm),
+            )
+          }
+        />
+      </div>
+    </CollapsibleSection>
+  )
+}
+
+// ── Tooltip helper ───────────────────────────────────────────────
+
+function optionTooltip(option: Option): ReactNode {
+  if (!option.description) return undefined
+  return (
+    <>
+      <p>
+        <strong>{option.label}</strong>
+      </p>
+      <p>{option.description}</p>
+    </>
   )
 }

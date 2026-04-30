@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { revalidateTag } from 'next/cache'
 
 import { auth } from '@/auth'
+import { MAX_ARTWORK_UPLOAD_SIZE } from '@/lib/imageConfig'
 import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
@@ -14,13 +15,15 @@ import {
   buildOriginalImageKey,
 } from '@/lib/r2'
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+// Restricted to formats both print providers accept. The Print Space
+// only takes JPEG, PNG and TIFF, matching theprintspace's
+// is the safe intersection for the artwork-image pipeline.
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/tiff']
 
 const MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
+  'image/tiff': 'tif',
 }
 
 /**
@@ -39,7 +42,7 @@ const MIME_TO_EXT: Record<string, string> = {
  * arbitrary `originalUrl`. That would be an SSRF primitive (server
  * fetches attacker-controlled URL) and an image-substitution vector
  * (attacker uploads a clean preview to R2, then points originalKey at
- * external content that Prodigi later fetches for printing). Instead we
+ * external content that the print provider later fetches for printing). Instead we
  * validate `originalKey` is a well-formed R2 key under our own bucket
  * prefix, rebuild the URL from it, and only fetch our own bucket.
  */
@@ -48,7 +51,7 @@ const MIME_TO_EXT: Record<string, string> = {
 //   artworks-original/<envPrefix>/<handler>/<artworkId>-<suffix>.<ext>
 // Extension is restricted to the mime map above.
 const ORIGINAL_KEY_RE =
-  /^artworks-original\/[a-z0-9-]+\/[a-z0-9-]+\/[a-zA-Z0-9_-]+-[a-zA-Z0-9]+\.(jpg|png|webp|gif)$/
+  /^artworks-original\/[a-z0-9-]+\/[a-z0-9-]+\/[a-zA-Z0-9_-]+-[a-zA-Z0-9]+\.(jpg|png|tif)$/
 
 function isSafeOriginalKey(key: unknown, artworkId: string): key is string {
   if (typeof key !== 'string' || key.length === 0 || key.length > 256) return false
@@ -78,13 +81,16 @@ export async function POST(request: NextRequest) {
 
       if (!ALLOWED_IMAGE_TYPES.includes(contentType)) {
         return NextResponse.json(
-          { error: 'Invalid file type. Accepted: JPG, PNG, WebP, GIF.' },
+          { error: 'Invalid file type. Accepted: JPG, PNG, TIFF.' },
           { status: 400 },
         )
       }
 
-      if (fileSize && fileSize > 200 * 1024 * 1024) {
-        return NextResponse.json({ error: 'File too large. Maximum is 200MB.' }, { status: 400 })
+      if (fileSize && fileSize > MAX_ARTWORK_UPLOAD_SIZE) {
+        return NextResponse.json(
+          { error: `File too large. Maximum is ${MAX_ARTWORK_UPLOAD_SIZE / (1024 * 1024)}MB.` },
+          { status: 400 },
+        )
       }
 
       const artwork = await prisma.artwork.findUnique({
@@ -157,7 +163,7 @@ export async function POST(request: NextRequest) {
 
       if (!isValidImageType(originalBuffer)) {
         return NextResponse.json(
-          { error: 'Invalid file type. Please upload a JPG, PNG, WebP, or GIF image.' },
+          { error: 'Invalid file type. Please upload a JPG, PNG, or TIFF image.' },
           { status: 400 },
         )
       }
@@ -171,8 +177,7 @@ export async function POST(request: NextRequest) {
       const formatMap: Record<string, string> = {
         jpeg: 'JPEG',
         png: 'PNG',
-        webp: 'WebP',
-        gif: 'GIF',
+        tiff: 'TIFF',
       }
       const originalFormat =
         formatMap[metadata.format ?? ''] ?? metadata.format?.toUpperCase() ?? null
@@ -202,13 +207,6 @@ export async function POST(request: NextRequest) {
       const webUrl = await uploadToR2(webKey, processedBuffer, 'image/webp')
 
       // Update artwork with both URLs + dimensions
-      console.log('[upload/image complete] saving original metadata:', {
-        originalWidth,
-        originalHeight,
-        originalDpi,
-        originalFormat,
-        originalSizeBytes,
-      })
       await prisma.artwork.update({
         where: { id: artworkId },
         data: {

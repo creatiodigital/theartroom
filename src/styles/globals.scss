@@ -12,14 +12,11 @@
   box-sizing: border-box;
 }
 
-// Remove default focus outline but provide a visible focus-visible indicator
-*:focus {
-  outline: none;
-}
-
+// Suppress browser/native focus indicators site-wide — components own
+// their own hover/active styling and the heavy blue ring reads as a bug.
+*:focus,
 *:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 // Native <select> elements stay focused after the dropdown closes and

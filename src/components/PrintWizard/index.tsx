@@ -1,78 +1,58 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Icon } from '@/components/ui/Icon'
+import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import Logo from '@/icons/logo.svg'
 
-import { getProdigiQuote } from '@/components/checkout/PrintCheckout/getQuote'
-import type { ProdigiQuoteResult } from '@/components/checkout/PrintCheckout/getQuote'
+import {
+  type Catalog,
+  type PrintRestrictions,
+  type Quote,
+  type WizardConfig,
+  buildAvailability,
+  buildInitialConfig,
+  summarizeConfig,
+} from '@/lib/print-providers'
+import { getProviderQuote } from '@/lib/print-providers/quote'
 
-import {
-  getCachedCatalog,
-  getCachedCountries,
-  hydrateCountriesFromStorage,
-  setCachedCatalog,
-  setCachedCountries,
-} from './catalogClientCache'
-import { getPrintCatalog } from './getPrintCatalog'
-import type { SkuData } from './getPrintCatalog'
-import {
-  buildDefaultConfig,
-  collectAllCountries,
-  configShipsTo,
-  deriveOrientation,
-  findShippableConfig,
-  firstShippableConfig,
-  normalizePrintConfig,
-} from './options'
 import { Scene } from './Scene'
 import { StepsPanel } from './StepsPanel'
 import { SummaryPanel } from './SummaryPanel'
-import type { PrintConfig, WizardArtwork } from './types'
 
 import styles from './PrintWizard.module.scss'
 
-interface PrintWizardProps {
-  artwork: WizardArtwork
+export type WizardArtwork = {
+  slug: string
+  title: string
+  artistName: string
+  year?: string
+  imageUrl: string
+  originalWidthPx: number
+  originalHeightPx: number
+  printPriceCents: number
 }
 
-export type CatalogStatus =
-  | { kind: 'loading' }
-  | { kind: 'ready'; catalog: SkuData[]; countries: string[] }
-  | { kind: 'error' }
+interface PrintWizardProps {
+  artwork: WizardArtwork
+  catalog: Catalog
+  /** Provider-agnostic, dimension-keyed restriction map (already converted by the page route). */
+  restrictions: PrintRestrictions | null
+}
 
-const UNIT_STORAGE_KEY = 'artroom:print-unit'
-
-export const PrintWizard = ({ artwork }: PrintWizardProps) => {
+export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // If the user came back here from checkout via "Change destination", the
-  // URL carries their previous picks + country. Restore them so they don't
-  // have to re-configure. Unknown/missing ids are sanitised by
-  // normalizePrintConfig; a missing country stays empty (user must re-pick).
-  const urlCountry = searchParams.get('country') ?? ''
-  const urlConfigSeed: Partial<PrintConfig> = {
-    paperId: (searchParams.get('paper') ?? undefined) as PrintConfig['paperId'] | undefined,
-    formatId: (searchParams.get('format') ?? undefined) as PrintConfig['formatId'] | undefined,
-    sizeId: (searchParams.get('size') ?? undefined) as PrintConfig['sizeId'] | undefined,
-    frameColorId: (searchParams.get('color') ?? undefined) as
-      | PrintConfig['frameColorId']
-      | undefined,
-    mountId: (searchParams.get('mount') ?? undefined) as PrintConfig['mountId'] | undefined,
-    orientation: (searchParams.get('orientation') ?? undefined) as
-      | PrintConfig['orientation']
-      | undefined,
-    unit: (searchParams.get('unit') ?? undefined) as PrintConfig['unit'] | undefined,
-  }
-  const hasUrlConfig = Object.values(urlConfigSeed).some((v) => v !== undefined)
+  // Synchronous availability check, rebuilt only when the catalog
+  // identity changes (i.e. essentially never within one wizard session).
+  const availability = useMemo(() => buildAvailability(catalog), [catalog])
 
-  // DB-reported dimensions aren't always accurate (old artworks may lack them,
-  // new uploads may not have been measured yet). Measure the actual image
-  // client-side as a fallback so landscape/portrait detection is always right.
+  // Measure the actual image client-side as a fallback when DB-reported
+  // dimensions are absent or wrong.
   const [measuredAspect, setMeasuredAspect] = useState<number | null>(null)
   useEffect(() => {
     const img = new Image()
@@ -84,248 +64,169 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
     img.src = artwork.imageUrl
   }, [artwork.imageUrl])
 
-  const aspectRatio = measuredAspect ?? artwork.originalWidthPx / artwork.originalHeightPx
+  const aspectRatio =
+    measuredAspect ??
+    (artwork.originalWidthPx > 0 && artwork.originalHeightPx > 0
+      ? artwork.originalWidthPx / artwork.originalHeightPx
+      : 1)
 
-  const [config, setConfig] = useState<PrintConfig>(() => {
-    const base = buildDefaultConfig(artwork.originalWidthPx, artwork.originalHeightPx)
-    if (!hasUrlConfig) return base
-    return normalizePrintConfig({ ...base, ...urlConfigSeed })
+  // Restore from URL params on mount (e.g. user came back from checkout
+  // via backToWizard, which always forwards the in-flight selection in
+  // the URL). A bare /print URL = fresh entry; we ignore + later wipe
+  // any stale sessionStorage stash from a previous abandoned attempt.
+  const urlSeed = useMemo(
+    () => readConfigFromParams(catalog, searchParams),
+    [catalog, searchParams],
+  )
+  const hasSeed =
+    Object.keys(urlSeed.values).length > 0 ||
+    urlSeed.customSize !== undefined ||
+    urlSeed.borders !== undefined
+
+  const [config, setConfig] = useState<WizardConfig>(() => {
+    const fresh = buildInitialConfig(catalog, aspectRatio, restrictions)
+    if (!hasSeed) return fresh
+    return {
+      ...fresh,
+      values: { ...fresh.values, ...urlSeed.values },
+      customSize: urlSeed.customSize ?? fresh.customSize,
+      borders: urlSeed.borders ?? fresh.borders,
+    }
   })
 
-  // Keep the orientation default in sync with the real image ratio. DB
-  // dimensions can be missing on older artworks, in which case buildDefaultConfig
-  // fell back to 'portrait' regardless of the actual image. Once the
-  // client-side measurement lands, flip orientation to match — unless the
-  // user has already picked one explicitly (URL seed or manual toggle).
+  // Fresh entry → wipe leftovers from a prior abandoned flow so the
+  // wizard / checkout / payment surfaces don't surface stale country,
+  // address, or payment-intent ids.
+  useEffect(() => {
+    if (hasSeed) return
+    try {
+      sessionStorage.removeItem(`print-quote:${artwork.slug}`)
+      sessionStorage.removeItem(`print-address:${artwork.slug}`)
+      sessionStorage.removeItem(`print-payment:${artwork.slug}`)
+    } catch {
+      // sessionStorage may be unavailable — non-fatal.
+    }
+  }, [hasSeed, artwork.slug])
+
+  // Once the client-side image measurement lands, snap orientation to
+  // match — unless the user has touched it (URL seed or manual toggle).
   const [orientationTouched, setOrientationTouched] = useState(
-    urlConfigSeed.orientation !== undefined,
+    urlSeed.values.orientation !== undefined,
   )
   useEffect(() => {
     if (orientationTouched || measuredAspect === null) return
-    const derived = deriveOrientation(measuredAspect)
+    const derived = measuredAspect < 1 ? 'portrait' : 'landscape'
     setConfig((prev) =>
-      prev.orientation === derived ? prev : normalizePrintConfig({ ...prev, orientation: derived }),
+      prev.values.orientation === derived
+        ? prev
+        : { ...prev, values: { ...prev.values, orientation: derived } },
     )
   }, [measuredAspect, orientationTouched])
 
-  const updateConfig = (patch: Partial<PrintConfig>) => {
+  const updateConfig = (patch: Record<string, string>) => {
     if (patch.orientation !== undefined) setOrientationTouched(true)
-    setConfig((prev) => normalizePrintConfig({ ...prev, ...patch }))
+    setConfig((prev) => ({ ...prev, values: { ...prev.values, ...patch } }))
   }
 
-  // Unit preference persists across visits via localStorage so returning
-  // buyers keep their previous cm/in choice. URL seed (e.g. returning from
-  // checkout) always wins over storage. Reading localStorage must happen
-  // in an effect to avoid SSR/client hydration mismatch.
-  useEffect(() => {
-    if (urlConfigSeed.unit !== undefined) return
-    try {
-      const saved = window.localStorage.getItem(UNIT_STORAGE_KEY)
-      if (saved === 'cm' || saved === 'inches') {
-        setConfig((prev) => (prev.unit === saved ? prev : { ...prev, unit: saved }))
-      }
-    } catch {
-      // localStorage unavailable (private mode, quota, etc.) — fall back
-      // silently to whatever default buildDefaultConfig set.
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const handleUnitChange = (unit: PrintConfig['unit']) => {
-    updateConfig({ unit })
-    try {
-      window.localStorage.setItem(UNIT_STORAGE_KEY, unit)
-    } catch {
-      // See note above — persistence failure is non-critical.
-    }
+  const updateCustomSize = (size: { widthCm: number; heightCm: number }) => {
+    setConfig((prev) => ({ ...prev, customSize: size }))
   }
 
-  // Country is picked by the user — never defaulted. Restored from the URL
-  // if the user came back from checkout; otherwise empty until chosen.
-  const [countryCode, setCountryCode] = useState<string>(urlCountry)
+  const updateBorder = (dimensionId: string, allCm: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      borders: { ...(prev.borders ?? {}), [dimensionId]: { allCm } },
+    }))
+  }
 
-  // Pre-fetch the full catalog once on mount. If we already fetched it
-  // earlier in this session (e.g. user navigated wizard → checkout → back),
-  // hydrate synchronously from the client cache so there's no loading
-  // flash on soft navigations.
-  const [catalog, setCatalog] = useState<CatalogStatus>(() => {
-    const cached = getCachedCatalog()
-    if (cached) {
-      return {
-        kind: 'ready',
-        catalog: cached,
-        countries: collectAllCountries(cached),
-      }
+  // Country lives on the checkout step. If the buyer already picked one
+  // there and bounced back to the wizard via the URL-seeded path, it
+  // persists via the wizard handoff stash so the summary reflects the
+  // choice (Shipping to: <country> + real shipping line). On fresh
+  // entry (no URL seed) we ignore the stash — that's an abandon-restart.
+  const [country] = useState<string>(() => {
+    if (!hasSeed) return ''
+    if (typeof window === 'undefined') return ''
+    try {
+      const raw = sessionStorage.getItem(`print-quote:${artwork.slug}`)
+      if (!raw) return ''
+      const parsed = JSON.parse(raw) as { country?: unknown }
+      return typeof parsed.country === 'string' ? parsed.country : ''
+    } catch {
+      return ''
     }
-    return { kind: 'loading' }
   })
 
-  // Persisted countries list (localStorage). Stays null until the
-  // useEffect below hydrates it — doing so during render would break
-  // SSR/client hydration parity.
-  const [fallbackCountries, setFallbackCountries] = useState<string[] | null>(null)
+  const canContinue = true
 
-  useEffect(() => {
-    hydrateCountriesFromStorage()
-    const cached = getCachedCountries()
-    if (cached) setFallbackCountries(cached)
-  }, [])
-
-  useEffect(() => {
-    if (catalog.kind === 'ready') return
-    let cancelled = false
-    getPrintCatalog().then((res) => {
-      if (cancelled) return
-      if (!res.ok) {
-        setCatalog({ kind: 'error' })
-        return
-      }
-      const countries = collectAllCountries(res.skus)
-      setCachedCatalog(res.skus)
-      setCachedCountries(countries)
-      setFallbackCountries(countries)
-      setCatalog({
-        kind: 'ready',
-        catalog: res.skus,
-        countries,
-      })
-    })
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Whether the current (config, country) pair actually ships. Derived —
-  // no extra API calls.
-  const shipsCurrent = useMemo(() => {
-    if (catalog.kind !== 'ready') return false
-    if (!countryCode) return false
-    return configShipsTo(config, countryCode, catalog.catalog)
-  }, [catalog, config, countryCode])
-
-  // Tracks the last country the user was configuring for. Used to
-  // distinguish "first country pick" (build a fresh initial config from
-  // the catalog) from "country change" (preserve picks where possible).
-  // Seeded from the URL so restoring state from checkout doesn't cause
-  // an unwanted first-pick reset on top of the user's existing config.
-  const prevCountryRef = useRef(urlCountry)
-
-  // Whether any config at all satisfies (ships-to-country) AND
-  // (artist's restrictions). When this is false for the selected
-  // country, the wizard shows an "unavailable for this destination"
-  // message rather than drifting into a banned-but-shipping config.
-  const [noViableCombo, setNoViableCombo] = useState(false)
-
-  useEffect(() => {
-    if (catalog.kind !== 'ready') return
-    if (!countryCode) {
-      prevCountryRef.current = ''
-      setNoViableCombo(false)
-      return
-    }
-    const firstPick = prevCountryRef.current === ''
-    prevCountryRef.current = countryCode
-
-    if (firstPick) {
-      // No hardcoded defaults — we don't yet know what's actually in the
-      // catalog for this destination, so seed from the first shippable
-      // combo the catalog exposes (respecting aspect-ratio fit AND the
-      // artist's per-artwork restrictions).
-      const initial = firstShippableConfig(
-        countryCode,
-        catalog.catalog,
-        aspectRatio,
-        artwork.printOptions ?? null,
-      )
-      if (initial) {
-        setConfig(initial)
-        setNoViableCombo(false)
-      } else {
-        // Nothing this artwork allows ships to the chosen country.
-        setNoViableCombo(true)
-      }
-      return
-    }
-
-    // Country changed. Preserve as many of the user's existing picks as
-    // still ship to the new destination AND remain allowed by the
-    // artist; silently adjust the rest. If nothing works, flag as
-    // no-viable-combo so the UI can explain.
-    if (shipsCurrent) {
-      setNoViableCombo(false)
-      return
-    }
-    const fixed = findShippableConfig(
-      config,
-      countryCode,
-      catalog.catalog,
-      aspectRatio,
-      artwork.printOptions ?? null,
-    )
-    if (fixed) {
-      setConfig(fixed)
-      setNoViableCombo(false)
-    } else {
-      setNoViableCombo(true)
-    }
-  }, [catalog, countryCode, shipsCurrent, config, aspectRatio, artwork.printOptions])
-
-  const canContinue = catalog.kind === 'ready' && !!countryCode && shipsCurrent && !noViableCombo
-
-  // Fetch a real Prodigi quote so the summary shows the final total (incl.
-  // shipping + VAT) before the user advances to checkout. Prodigi's quote
-  // is country-deterministic — no address required — so this matches what
-  // the checkout page will show. Fetched eagerly on every config/country
-  // change so the displayed total always reflects the current selection;
-  // in-flight quotes are cancelled via the `cancelled` flag.
-  const [quote, setQuote] = useState<ProdigiQuoteResult | null>(null)
+  // Pre-fetch quote on every (config, country) change. Without a
+  // country the server returns just the artwork line — shipping + tax
+  // appear once a destination is set on the checkout step.
+  //
+  // We deliberately KEEP the previous quote visible while the new one
+  // is in flight. Clearing it on every keystroke makes the price flash
+  // between "€X" → "…" → "€Y" as the buyer drags a slider.
+  const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
   useEffect(() => {
-    if (!canContinue) {
-      setQuote(null)
-      setQuoteLoading(false)
-      return
-    }
     let cancelled = false
-    setQuote(null)
     setQuoteLoading(true)
-    getProdigiQuote(config, countryCode).then((res) => {
-      if (cancelled) return
-      setQuote(res.ok ? res.data : null)
-      setQuoteLoading(false)
+    getProviderQuote(catalog.providerId, {
+      config,
+      country,
+      artistPriceCents: artwork.printPriceCents,
     })
+      .then((q) => {
+        if (cancelled) return
+        setQuote(q)
+        setQuoteLoading(false)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        console.warn('[PrintWizard] quote failed:', err)
+        setQuoteLoading(false)
+      })
     return () => {
       cancelled = true
     }
-  }, [canContinue, config, countryCode])
+  }, [catalog.providerId, config, country, artwork.printPriceCents])
 
   const handleAddToCart = () => {
-    if (!canContinue) return
-    // Hand the checkout the quote we already fetched here so it doesn't
-    // have to round-trip Prodigi again. Stashed against the exact
-    // (config, country) it was quoted for — the checkout re-validates
-    // before using, and falls back to its own fetch on mismatch.
+    // Stash everything downstream needs so checkout doesn't have to
+    // re-fetch the catalog or re-quote on every render. Country is
+    // forwarded if the buyer already picked it; otherwise empty and
+    // checkout asks for it.
+    const specs = summarizeConfig(catalog, config)
     if (quote) {
       try {
         sessionStorage.setItem(
           `print-quote:${artwork.slug}`,
-          JSON.stringify({ config, country: countryCode, quote }),
+          JSON.stringify({
+            providerId: catalog.providerId,
+            config,
+            country,
+            quote,
+            specs,
+          }),
         )
       } catch {
-        // Non-fatal — checkout will just re-fetch.
+        // Non-fatal — checkout will re-fetch.
       }
     }
-    const params = new URLSearchParams({
-      paper: config.paperId,
-      format: config.formatId,
-      size: config.sizeId,
-      color: config.frameColorId,
-      mount: config.mountId,
-      orientation: config.orientation,
-      unit: config.unit,
-      country: countryCode,
-    })
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(config.values)) {
+      params.set(key, value)
+    }
+    if (config.customSize) {
+      params.set('customSize', `${config.customSize.widthCm}x${config.customSize.heightCm}`)
+    }
+    if (config.borders) {
+      for (const [borderId, b] of Object.entries(config.borders)) {
+        params.set(borderId, String(b.allCm))
+      }
+    }
+    if (country) params.set('country', country)
+    params.set('provider', catalog.providerId)
     router.push(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
   }
 
@@ -338,7 +239,10 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
         <span />
         <button
           type="button"
-          onClick={() => router.push('/prints')}
+          onClick={() => {
+            clearPrintSession(artwork.slug)
+            router.push('/prints')
+          }}
           className={styles.closeButton}
           aria-label="Close wizard"
         >
@@ -351,37 +255,92 @@ export const PrintWizard = ({ artwork }: PrintWizardProps) => {
 
       <main className={styles.body}>
         <StepsPanel
+          catalog={catalog}
           config={config}
           aspectRatio={aspectRatio}
-          originalWidthPx={artwork.originalWidthPx}
-          originalHeightPx={artwork.originalHeightPx}
           onChange={updateConfig}
-          countryCode={countryCode}
-          onCountryChange={setCountryCode}
-          catalogStatus={catalog}
-          fallbackCountries={fallbackCountries}
-          printOptions={artwork.printOptions ?? null}
-          noViableCombo={noViableCombo}
+          onCustomSizeChange={updateCustomSize}
+          onBorderChange={updateBorder}
+          availability={availability}
+          restrictions={restrictions}
         />
         <Scene
           imageUrl={artwork.imageUrl}
+          catalog={catalog}
           config={config}
           imageAspectRatio={aspectRatio}
-          configReady={canContinue}
+          configReady
         />
         <SummaryPanel
           artwork={artwork}
+          catalog={catalog}
           config={config}
-          imageAspectRatio={aspectRatio}
-          onAddToCart={handleAddToCart}
-          canContinue={canContinue}
-          configReady={canContinue}
-          onUnitChange={handleUnitChange}
-          countryCode={countryCode}
+          country={country}
           quote={quote}
           quoteLoading={quoteLoading}
+          canContinue={canContinue}
+          configReady
+          onAddToCart={handleAddToCart}
         />
       </main>
     </div>
   )
+}
+
+/**
+ * Reconstruct a partial config from URL params. Accept a param only
+ * when its key matches a catalog dimension id AND its value is a
+ * valid option for that dimension (or 'portrait'/'landscape' for the
+ * orientation dim). This protects against stale URLs from a different
+ * config that doesn't fit the current catalog — e.g. a stale URL
+ * `size=60x80` getting merged into a new catalog where size is
+ * custom-only and `60x80` resolves to nothing.
+ *
+ * Also parses `customSize=WxH` (custom W×H in cm) and any border-
+ * kind dimension's numeric value, so the buyer's full configuration
+ * survives a back-and-forth through the URL — not just enum picks.
+ */
+function readConfigFromParams(
+  catalog: Catalog,
+  params: URLSearchParams,
+): {
+  values: Record<string, string>
+  customSize?: { widthCm: number; heightCm: number }
+  borders?: Record<string, { allCm: number }>
+} {
+  const values: Record<string, string> = {}
+  const borders: Record<string, { allCm: number }> = {}
+  let customSize: { widthCm: number; heightCm: number } | undefined
+  const dimsById = new Map(catalog.dimensions.map((d) => [d.id, d]))
+  params.forEach((value, key) => {
+    if (key === 'country' || key === 'provider') return
+    if (key === 'customSize') {
+      const m = /^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)$/i.exec(value)
+      if (m) {
+        const w = Number(m[1])
+        const h = Number(m[2])
+        if (w > 0 && h > 0) customSize = { widthCm: w, heightCm: h }
+      }
+      return
+    }
+    const dim = dimsById.get(key)
+    if (!dim) return
+    if (dim.kind === 'enum') {
+      if (dim.options.some((o) => o.id === value)) values[key] = value
+    } else if (dim.kind === 'size') {
+      if (dim.options.some((o) => o.id === value)) values[key] = value
+    } else if (dim.kind === 'orientation') {
+      if (value === 'portrait' || value === 'landscape') values[key] = value
+    } else if (dim.kind === 'border') {
+      const cm = Number(value)
+      if (Number.isFinite(cm) && cm >= dim.minCm && cm <= dim.maxCm) {
+        borders[key] = { allCm: cm }
+      }
+    }
+  })
+  return {
+    values,
+    customSize,
+    borders: Object.keys(borders).length > 0 ? borders : undefined,
+  }
 }

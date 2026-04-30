@@ -1,8 +1,7 @@
 /**
- * Days we hold after Prodigi reports `Complete` (shipment dispatched)
- * before the artist's payout button becomes eligible. Covers the
- * delivery + typical buyer-complaint window while matching our written
- * agreement with artists.
+ * Days we hold after the order is marked delivered before the artist's
+ * payout button becomes eligible. Covers the typical buyer-complaint
+ * window while matching our written agreement with artists.
  *
  * Lives outside of `admin/orders/actions.ts` because that file has a
  * `'use server'` directive — which forbids exporting anything that

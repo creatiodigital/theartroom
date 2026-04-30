@@ -19,7 +19,7 @@
  * moment — it's a conscious, deliberate event.
  *
  * Scope: these hide the public-facing buttons only. Admin dashboard,
- * Stripe + Prodigi webhooks, and the underlying routes/APIs keep
+ * Stripe webhooks, and the underlying routes/APIs keep
  * working so in-flight staging orders finish cleanly.
  */
 

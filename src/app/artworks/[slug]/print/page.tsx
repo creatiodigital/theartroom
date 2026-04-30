@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { PrintWizard } from '@/components/PrintWizard'
-import type { PrintOptions } from '@/components/PrintWizard/types'
+import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import type { PrintRestrictions } from '@/lib/print-providers'
 import prisma from '@/lib/prisma'
 
 interface PrintWizardPageProps {
@@ -38,18 +39,20 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   if (!artwork || !artwork.imageUrl) {
     notFound()
   }
-  // Print flow is gated per-artwork. If the artist hasn't enabled prints
-  // (or hasn't set a price) a direct link to /print should 404 — the
-  // public page already hides the "Buy Printable" CTA.
   if (!artwork.printEnabled || !artwork.printPriceCents) {
     notFound()
   }
 
-  // Fall back to 1:1 if we don't have original pixel dimensions for some reason.
   const originalWidthPx = artwork.originalWidth ?? 1000
   const originalHeightPx = artwork.originalHeight ?? 1000
-
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`
+
+  const catalog = await loadProviderCatalog('printspace', {
+    imageWidthPx: originalWidthPx,
+    imageHeightPx: originalHeightPx,
+  })
+
+  const restrictions = (artwork.printOptions as PrintRestrictions | null) ?? null
 
   return (
     <PrintWizard
@@ -62,8 +65,9 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         originalWidthPx,
         originalHeightPx,
         printPriceCents: artwork.printPriceCents,
-        printOptions: (artwork.printOptions as PrintOptions | null) ?? null,
       }}
+      catalog={catalog}
+      restrictions={restrictions}
     />
   )
 }

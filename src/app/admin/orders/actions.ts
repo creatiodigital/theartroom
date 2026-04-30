@@ -2,7 +2,14 @@
 
 import { auth } from '@/auth'
 import { isAdminOrAbove } from '@/lib/authUtils'
+import { summarizeConfig, type SpecsSummary, type WizardConfig } from '@/lib/print-providers'
+import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import { sendAdminOrderCancelledAlert } from '@/lib/emails/adminOrderCancelled'
 import { sendArtistPayoutEmail } from '@/lib/emails/artistPayout'
+import { sendOrderCancelledEmail } from '@/lib/emails/orderCancelled'
+import { sendOrderDeliveredEmail } from '@/lib/emails/orderDelivered'
+import { sendOrderInProductionEmail } from '@/lib/emails/orderInProduction'
+import { sendOrderShippedEmail } from '@/lib/emails/orderShipped'
 import { sendRefundIssuedEmail } from '@/lib/emails/refundIssued'
 import { captureError } from '@/lib/observability/captureError'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
@@ -28,8 +35,7 @@ export type AdminOrderRow = {
   artistCents: number
   currency: string
   paymentStatus: string
-  prodigiOrderId: string | null
-  prodigiStage: string | null
+  fulfillmentStatus: string | null
   trackingUrl: string | null
   shippedAt: string | null
   transferId: string | null
@@ -98,8 +104,7 @@ export async function listOrders(): Promise<
     artistCents: r.artistCents,
     currency: r.currency,
     paymentStatus: r.paymentStatus,
-    prodigiOrderId: r.prodigiOrderId,
-    prodigiStage: r.prodigiStage,
+    fulfillmentStatus: r.fulfillmentStatus,
     trackingUrl: r.trackingUrl,
     shippedAt: r.shippedAt?.toISOString() ?? null,
     transferId: r.transferId,
@@ -126,10 +131,19 @@ export type AdminOrderEvent = {
 export type AdminOrderDetail = AdminOrderRow & {
   shippingAddress: unknown
   printConfig: unknown
-  prodigiItemCents: number
-  prodigiShippingCents: number
+  productionCents: number
+  productionShippingCents: number
   galleryCents: number
   customerVatCents: number
+  /** Server-rendered spec rows (Print type / Paper / Frame / Glass / etc.)
+   *  derived from `printConfig` + the catalog. The admin pastes these
+   *  into theprintspace's "Order Prints" form. */
+  specs: SpecsSummary
+  /** R2 URL of the print-master image (original) the admin uploads to TPS. */
+  assetUrl: string | null
+  /** Web-sized thumbnail for visual ID at the top of the detail page. */
+  thumbnailUrl: string | null
+  certificateUrl: string | null
   events: AdminOrderEvent[]
 }
 
@@ -190,7 +204,15 @@ export async function getOrderDetail(
   const r = await prisma.printOrder.findUnique({
     where: { id: orderId },
     include: {
-      artwork: { select: { id: true, slug: true, title: true } },
+      artwork: {
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          imageUrl: true,
+          originalImageUrl: true,
+        },
+      },
       artistUser: {
         select: {
           id: true,
@@ -204,6 +226,22 @@ export async function getOrderDetail(
     },
   })
   if (!r) return { ok: false, error: 'Order not found.' }
+
+  // Spec rows for the "For TPS placement" panel. Derived from the
+  // stored wizardConfig + the live catalog so the labels stay in sync
+  // even if option labels change after the order was placed. Falls
+  // back to an empty array on any catalog/render error — admin can
+  // still read the raw printConfig in the timeline payload.
+  let specs: SpecsSummary = []
+  try {
+    const catalog = await loadProviderCatalog('printspace', {
+      imageWidthPx: 1000,
+      imageHeightPx: 1000,
+    })
+    specs = summarizeConfig(catalog, r.printConfig as WizardConfig)
+  } catch {
+    // non-fatal
+  }
 
   const order: AdminOrderDetail = {
     id: r.id,
@@ -223,8 +261,7 @@ export async function getOrderDetail(
     artistCents: r.artistCents,
     currency: r.currency,
     paymentStatus: r.paymentStatus,
-    prodigiOrderId: r.prodigiOrderId,
-    prodigiStage: r.prodigiStage,
+    fulfillmentStatus: r.fulfillmentStatus,
     trackingUrl: r.trackingUrl,
     shippedAt: r.shippedAt?.toISOString() ?? null,
     transferId: r.transferId,
@@ -236,10 +273,14 @@ export async function getOrderDetail(
     payoutEligibleAt: payoutEligibleAt(r.shippedAt)?.toISOString() ?? null,
     shippingAddress: r.shippingAddress,
     printConfig: r.printConfig,
-    prodigiItemCents: r.prodigiItemCents,
-    prodigiShippingCents: r.prodigiShippingCents,
+    productionCents: r.productionCents,
+    productionShippingCents: r.productionShippingCents,
     galleryCents: r.galleryCents,
     customerVatCents: r.customerVatCents,
+    specs,
+    assetUrl: r.artwork.originalImageUrl ?? r.artwork.imageUrl ?? null,
+    thumbnailUrl: r.artwork.imageUrl ?? r.artwork.originalImageUrl ?? null,
+    certificateUrl: r.certificateUrl,
     events: r.events.map((e) => ({
       id: e.id,
       at: e.at.toISOString(),
@@ -254,9 +295,20 @@ export async function getOrderDetail(
 }
 
 /**
- * Release the artist's cut for a shipped order. Preconditions:
+ * Manual fulfillment stage. The admin advances each order by hand from
+ * the detail page. Stored on PrintOrder.fulfillmentStatus.
+ */
+const STAGE_PENDING = null // buyer paid, not yet placed at TPS
+const STAGE_PLACED = 'Placed' // admin placed at TPS; payment captured
+const STAGE_STARTED = 'Started' // TPS started production
+const STAGE_SHIPPED = 'Shipped' // TPS shipped
+const STAGE_COMPLETE = 'Complete' // delivered; 14-day payout clock starts
+const STAGE_REJECTED = 'Rejected' // admin marked rejected / cancelled
+
+/**
+ * Release the artist's cut for a delivered order. Preconditions:
  *   - payment succeeded (status = 'succeeded')
- *   - Prodigi says Complete (shipped/delivered)
+ *   - fulfillment Complete (delivered)
  *   - artist has a Connect account with onboarding complete
  *   - transfer hasn't already been sent
  *
@@ -283,10 +335,10 @@ export async function releasePayout(
   if (order.paymentStatus !== 'succeeded') {
     return { ok: false, error: `Payment not succeeded (status: ${order.paymentStatus}).` }
   }
-  if (order.prodigiStage !== 'Complete') {
+  if (order.fulfillmentStatus !== STAGE_COMPLETE) {
     return {
       ok: false,
-      error: `Prodigi stage is "${order.prodigiStage ?? 'pending'}"; wait until Complete before releasing.`,
+      error: `Order is "${order.fulfillmentStatus ?? 'pending'}"; wait until Complete before releasing.`,
     }
   }
   const eligible = payoutEligibleAt(order.shippedAt)
@@ -318,8 +370,6 @@ export async function releasePayout(
         description: `Artist payout for order ${order.id}`,
         metadata: { orderId: order.id, paymentIntentId: order.paymentIntentId },
       },
-      // Same idempotency key across retries of the same order — Stripe
-      // will return the original transfer on retry.
       { idempotencyKey: `payout:${order.id}` },
     )
 
@@ -341,9 +391,6 @@ export async function releasePayout(
       payload: { transferId: transfer.id, amountCents: order.artistCents },
     })
 
-    // Artist notification — the *only* email the artist gets about this
-    // sale. Send after the transfer has succeeded so we never promise
-    // payout money that didn't actually move.
     if (order.artistUser.email) {
       const emailRes = await sendArtistPayoutEmail({
         to: order.artistUser.email,
@@ -386,12 +433,11 @@ export async function releasePayout(
 /**
  * Full refund of a buyer's order. Handles both pre-capture (authorized,
  * no money moved) and post-capture (succeeded, money in our balance)
- * states. Does NOT touch Prodigi — that vendor side is handled manually
- * by the admin.
+ * states.
  *
  * If the artist payout has already been released, we still allow the
- * refund but surface a warning in the event log so you know to chase
- * the artist's share separately.
+ * refund but surface a warning in the event log so the team knows to
+ * chase the artist's share separately.
  */
 export async function refundOrder(
   orderId: string,
@@ -418,13 +464,10 @@ export async function refundOrder(
 
   try {
     if (order.paymentStatus === 'authorized') {
-      // Auth only — no money has moved. Canceling the PaymentIntent
-      // releases the hold; the buyer is never charged.
       await stripe.paymentIntents.cancel(order.paymentIntentId, {
         cancellation_reason: 'requested_by_customer',
       })
     } else {
-      // Captured — pull money back from our Stripe balance to the buyer's card.
       await stripe.refunds.create(
         {
           payment_intent: order.paymentIntentId,
@@ -490,6 +533,525 @@ export async function refundOrder(
     return {
       ok: false,
       error: err instanceof Error ? err.message : 'Refund failed. Check server logs.',
+    }
+  }
+}
+
+/**
+ * Dev-only: create a fake local PrintOrder. Doesn't call any external
+ * API — TPS has no sandbox. Starts the order at paymentStatus='authorized'
+ * and stage=null so the admin can exercise the full manual flow on the
+ * detail page (Capture & mark placed → Mark in production → Mark shipped
+ * → Mark delivered) and verify the four buyer emails.
+ */
+export async function createTestOrder(): Promise<
+  { ok: true; orderId: string } | { ok: false; error: string }
+> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  if (process.env.NODE_ENV === 'production') {
+    return { ok: false, error: 'Test orders are disabled in production.' }
+  }
+
+  const artwork = await prisma.artwork.findFirst({
+    where: { OR: [{ imageUrl: { not: null } }, { originalImageUrl: { not: null } }] },
+    select: {
+      id: true,
+      title: true,
+      userId: true,
+      user: { select: { name: true, lastName: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (!artwork) {
+    return { ok: false, error: 'No artworks available to use as a test item. Upload one first.' }
+  }
+
+  // Synthetic Stripe PI id — the manual `markPlaced` flow expects an
+  // authorized PI it can capture; for dev-only test orders we skip the
+  // real Stripe interaction. Admin who clicks "Capture & mark placed"
+  // on this row will see the Stripe error inline; that's acceptable for
+  // QA of the manual flow itself.
+  const pi = `pi_tps_test_${Date.now()}`
+  const buyerEmail = guard.session.user.email ?? 'tps-test@theartroom.gallery'
+  const buyerName = guard.session.user.name ?? 'TPS Test Buyer'
+
+  const order = await prisma.printOrder.create({
+    data: {
+      paymentIntentId: pi,
+      artworkId: artwork.id,
+      artistUserId: artwork.userId,
+      buyerEmail,
+      buyerName,
+      shippingAddress: {
+        line1: '221B Baker Street',
+        line2: '',
+        city: 'London',
+        state: '',
+        postalCode: 'NW1 6XE',
+        country: 'GB',
+        phone: '',
+      },
+      printConfig: {
+        paperId: 'hahnemuhle-german-etching',
+        printTypeId: 'giclee',
+        widthCm: 40,
+        heightCm: 30,
+        formatId: 'unframed',
+        orientation: 'landscape',
+      },
+      country: 'GB',
+      totalCents: 6500,
+      artistCents: 1500,
+      galleryCents: 1500,
+      productionCents: 3000,
+      productionShippingCents: 500,
+      customerVatCents: 0,
+      currency: 'eur',
+      paymentStatus: 'authorized',
+    },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: 'Test order created (dev fixture)',
+    payload: {},
+  })
+
+  return { ok: true, orderId: order.id }
+}
+
+/**
+ * Hard-delete an order from the DB. Admin owns refund / payout reversal
+ * decisions outside this flow — this just removes the order row + its
+ * event history.
+ *
+ * Best-effort: if the buyer's card is currently authorized (hold but
+ * not captured), we try to cancel the Stripe PaymentIntent first so
+ * the hold releases. Failure to cancel doesn't block the delete —
+ * admin chose to delete and we honour that.
+ */
+export async function deleteOrder(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+
+  const isTestOrder = order.paymentIntentId.startsWith('pi_tps_test_')
+
+  // Best-effort release of the Stripe hold for live, still-authorized
+  // orders. If it fails (already captured upstream, already canceled,
+  // synthetic PI, etc.), we log and proceed — the admin asked for a
+  // delete and shouldn't be blocked by Stripe state.
+  if (!isTestOrder && order.paymentStatus === 'authorized') {
+    try {
+      await stripe.paymentIntents.cancel(order.paymentIntentId)
+    } catch (err) {
+      captureError(err, {
+        flow: 'admin',
+        stage: 'delete-order-cancel-pi',
+        extra: { orderId, paymentIntentId: order.paymentIntentId },
+        level: 'warning',
+        fingerprint: ['admin:delete-cancel-pi-failed'],
+      })
+    }
+  }
+
+  try {
+    await prisma.$transaction([
+      prisma.printOrderEvent.deleteMany({ where: { orderId } }),
+      prisma.printOrder.delete({ where: { id: orderId } }),
+    ])
+  } catch (err) {
+    captureError(err, {
+      flow: 'admin',
+      stage: 'delete-order-db',
+      extra: { orderId, paymentStatus: order.paymentStatus },
+      level: 'error',
+      fingerprint: ['admin:delete-order-db-failed'],
+    })
+    return {
+      ok: false,
+      error: `Database delete failed: ${err instanceof Error ? err.message : String(err)}`,
+    }
+  }
+
+  return { ok: true }
+}
+
+/**
+ * Admin CTA: order placed at theprintspace by hand. Captures the Stripe
+ * auth (auth → succeeded) and advances stage to Placed. No buyer email
+ * at this stage — Placed is internal.
+ */
+export async function markPlaced(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+  if (order.fulfillmentStatus !== STAGE_PENDING) {
+    return {
+      ok: false,
+      error: `Already advanced past pending (status: ${order.fulfillmentStatus}).`,
+    }
+  }
+  if (order.paymentStatus !== 'authorized') {
+    return {
+      ok: false,
+      error: `Payment must be authorized to capture (current: ${order.paymentStatus}).`,
+    }
+  }
+
+  try {
+    await stripe.paymentIntents.capture(order.paymentIntentId)
+  } catch (err) {
+    captureError(err, {
+      flow: 'admin',
+      stage: 'mark-placed-capture',
+      extra: { orderId, paymentIntentId: order.paymentIntentId },
+      level: 'error',
+      fingerprint: ['admin:mark-placed-capture-failed'],
+    })
+    return {
+      ok: false,
+      error: `Stripe capture failed: ${err instanceof Error ? err.message : String(err)}`,
+    }
+  }
+
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: { fulfillmentStatus: STAGE_PLACED, paymentStatus: 'succeeded' },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: 'Marked placed at The Print Space (payment captured)',
+    payload: {},
+  })
+
+  return { ok: true }
+}
+
+/**
+ * Admin CTA: TPS accepted the order and started production. Sets stage
+ * to Started and fires the buyer's "order accepted" email.
+ */
+export async function markStarted(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return advanceStage(orderId, STAGE_STARTED, {
+    logMessage: 'Marked in production (TPS accepted the order)',
+  })
+}
+
+/**
+ * Admin CTA: TPS shipped the print. Stamps trackingUrl (if provided)
+ * so the buyer's "Your artwork is on its way" email links to it.
+ * shippedAt is intentionally left for STAGE_COMPLETE — the column name
+ * is historical, it really means "payout clock start" and we want that
+ * tied to delivery, not pickup.
+ */
+export async function markShipped(
+  orderId: string,
+  trackingUrl: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const trimmedTracking = trackingUrl?.trim() || null
+  return advanceStage(orderId, STAGE_SHIPPED, {
+    logMessage: trimmedTracking
+      ? 'Marked shipped (tracking URL recorded)'
+      : 'Marked shipped (no tracking URL)',
+    trackingUrl: trimmedTracking,
+  })
+}
+
+/**
+ * Admin CTA: the buyer received the print. Stamps the payout-clock start
+ * (`shippedAt`) and fires the "Your artwork has arrived" email.
+ */
+export async function markDelivered(
+  orderId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return advanceStage(orderId, STAGE_COMPLETE, {
+    logMessage: 'Marked delivered',
+    setShippedAtNow: true,
+  })
+}
+
+/**
+ * Admin CTA: order rejected (artist disabled prints, file unusable, etc.)
+ * Terminal state. If payment was still authorized we cancel the Stripe
+ * PI (releases the hold); if it was already captured, admin must use
+ * the existing Refund flow to return funds.
+ */
+export async function markRejected(
+  orderId: string,
+  reason: string,
+): Promise<{ ok: true; needsRefund: boolean } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const trimmedReason = reason.trim()
+  if (!trimmedReason) return { ok: false, error: 'A reason is required.' }
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+  if (order.fulfillmentStatus === STAGE_COMPLETE || order.fulfillmentStatus === STAGE_REJECTED) {
+    return {
+      ok: false,
+      error: `Cannot reject from stage "${order.fulfillmentStatus}".`,
+    }
+  }
+
+  let voided = false
+  if (order.paymentStatus === 'authorized') {
+    try {
+      await stripe.paymentIntents.cancel(order.paymentIntentId)
+      voided = true
+    } catch (err) {
+      captureError(err, {
+        flow: 'admin',
+        stage: 'mark-rejected-cancel-pi',
+        extra: { orderId, paymentIntentId: order.paymentIntentId },
+        level: 'error',
+        fingerprint: ['admin:mark-rejected-cancel-failed'],
+      })
+      return {
+        ok: false,
+        error: `Stripe cancel failed: ${err instanceof Error ? err.message : String(err)}`,
+      }
+    }
+  }
+
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: {
+      fulfillmentStatus: STAGE_REJECTED,
+      ...(voided ? { paymentStatus: 'canceled' } : {}),
+    },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: voided
+      ? 'Marked rejected (Stripe auth voided)'
+      : 'Marked rejected (manual refund required)',
+    payload: { reason: trimmedReason, voided, priorPaymentStatus: order.paymentStatus },
+  })
+
+  await maybeSendBuyerTransitionEmail(order.id, STAGE_REJECTED, { trackingUrl: null })
+
+  const needsRefund = order.paymentStatus === 'succeeded' && !order.transferId
+  return { ok: true, needsRefund }
+}
+
+/**
+ * Shared core for the stage-advance CTAs. Validates the transition (no
+ * advancing past terminal states), updates the row, logs an event, and
+ * fires the buyer email if the new stage is one of the four critical
+ * transitions covered by maybeSendBuyerTransitionEmail.
+ */
+async function advanceStage(
+  orderId: string,
+  newStage: string,
+  opts: {
+    logMessage: string
+    trackingUrl?: string | null
+    setShippedAtNow?: boolean
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+  if (order.fulfillmentStatus === STAGE_COMPLETE || order.fulfillmentStatus === STAGE_REJECTED) {
+    return {
+      ok: false,
+      error: `Cannot advance from terminal stage "${order.fulfillmentStatus}".`,
+    }
+  }
+
+  const effectiveTrackingUrl =
+    typeof opts.trackingUrl === 'string' ? opts.trackingUrl : (order.trackingUrl ?? null)
+
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: {
+      fulfillmentStatus: newStage,
+      ...(opts.trackingUrl !== undefined ? { trackingUrl: opts.trackingUrl } : {}),
+      ...(opts.setShippedAtNow ? { shippedAt: new Date() } : {}),
+    },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: opts.logMessage,
+    payload: {
+      previousStage: order.fulfillmentStatus,
+      newStage,
+      trackingUrl: effectiveTrackingUrl,
+    },
+  })
+
+  await maybeSendBuyerTransitionEmail(order.id, newStage, {
+    trackingUrl: effectiveTrackingUrl,
+  })
+
+  return { ok: true }
+}
+
+/**
+ * Send the buyer (and optionally admin) the appropriate transition
+ * email for a stage change, gated by the event log so retries never
+ * double-send.
+ */
+async function maybeSendBuyerTransitionEmail(
+  orderId: string,
+  newStage: string,
+  opts: { trackingUrl: string | null },
+): Promise<void> {
+  if (
+    newStage !== STAGE_STARTED &&
+    newStage !== STAGE_SHIPPED &&
+    newStage !== STAGE_COMPLETE &&
+    newStage !== STAGE_REJECTED
+  ) {
+    return
+  }
+
+  const emailMessageKey =
+    newStage === STAGE_STARTED
+      ? 'order_in_production'
+      : newStage === STAGE_SHIPPED
+        ? 'order_shipped'
+        : newStage === STAGE_COMPLETE
+          ? 'order_delivered'
+          : 'order_cancelled'
+
+  const alreadySent = await prisma.printOrderEvent.findFirst({
+    where: { orderId, kind: 'email_sent', message: emailMessageKey },
+    select: { id: true },
+  })
+  if (alreadySent) return
+
+  const order = await prisma.printOrder.findUnique({
+    where: { id: orderId },
+    include: {
+      artwork: { select: { title: true } },
+      artistUser: { select: { name: true, lastName: true } },
+    },
+  })
+  if (!order || !order.buyerEmail) return
+
+  const artistName = [order.artistUser.name, order.artistUser.lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+
+  const emailRes =
+    newStage === STAGE_STARTED
+      ? await sendOrderInProductionEmail({
+          to: order.buyerEmail,
+          buyerName: order.buyerName,
+          orderId: order.id,
+          artworkTitle: order.artwork.title ?? '',
+          artistName,
+        })
+      : newStage === STAGE_SHIPPED
+        ? await sendOrderShippedEmail({
+            to: order.buyerEmail,
+            buyerName: order.buyerName,
+            orderId: order.id,
+            artworkTitle: order.artwork.title ?? '',
+            artistName,
+            trackingUrl: opts.trackingUrl,
+          })
+        : newStage === STAGE_COMPLETE
+          ? await sendOrderDeliveredEmail({
+              to: order.buyerEmail,
+              buyerName: order.buyerName,
+              orderId: order.id,
+              artworkTitle: order.artwork.title ?? '',
+              artistName,
+            })
+          : await sendOrderCancelledEmail({
+              to: order.buyerEmail,
+              buyerName: order.buyerName,
+              orderId: order.id,
+              artworkTitle: order.artwork.title ?? '',
+              artistName,
+              paymentStatus: order.paymentStatus,
+            })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: emailRes.ok ? 'email_sent' : 'email_failed',
+    actor: 'system',
+    message: emailMessageKey,
+    payload: emailRes.ok
+      ? { to: order.buyerEmail, resendId: emailRes.id }
+      : { to: order.buyerEmail, error: emailRes.error },
+  })
+
+  if (!emailRes.ok) {
+    captureError(new Error(`Buyer ${emailMessageKey} email failed: ${emailRes.error}`), {
+      flow: 'email',
+      stage: `buyer-${emailMessageKey}-send`,
+      extra: { orderId: order.id, to: order.buyerEmail, error: emailRes.error },
+      level: 'warning',
+      fingerprint: [`email:${emailMessageKey}-failed`],
+    })
+  }
+
+  if (newStage === STAGE_REJECTED) {
+    const adminAlreadySent = await prisma.printOrderEvent.findFirst({
+      where: { orderId, kind: 'email_sent', message: 'admin_order_cancelled' },
+      select: { id: true },
+    })
+    if (!adminAlreadySent) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
+      const adminRes = await sendAdminOrderCancelledAlert({
+        orderId: order.id,
+        artworkTitle: order.artwork.title ?? '',
+        artistName,
+        buyerName: order.buyerName,
+        buyerEmail: order.buyerEmail,
+        paymentStatus: order.paymentStatus,
+        totalCents: order.totalCents,
+        currency: order.currency,
+        adminOrderUrl: `${siteUrl}/admin/orders/${order.id}`,
+      })
+      await logOrderEvent({
+        orderId: order.id,
+        kind: adminRes.ok ? 'email_sent' : 'email_failed',
+        actor: 'system',
+        message: 'admin_order_cancelled',
+        payload: adminRes.ok ? { resendId: adminRes.id } : { error: adminRes.error },
+      })
+      if (!adminRes.ok) {
+        captureError(new Error(`Admin cancellation alert failed: ${adminRes.error}`), {
+          flow: 'email',
+          stage: 'admin-order-cancelled-send',
+          extra: { orderId: order.id, error: adminRes.error },
+          level: 'warning',
+          fingerprint: ['email:admin-order-cancelled-failed'],
+        })
+      }
     }
   }
 }

@@ -12,7 +12,7 @@ import {
   populateFormData,
 } from '@/components/shared/ArtworkEditForm'
 import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
-import type { PrintOptions } from '@/components/PrintWizard/types'
+import type { PrintRestrictions } from '@/lib/print-providers'
 
 type ArtworkEditPageProps = {
   artworkId: string
@@ -84,14 +84,6 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           return
         }
 
-        console.log('[ArtworkEdit] fetched artwork original info:', {
-          originalWidth: data.originalWidth,
-          originalHeight: data.originalHeight,
-          originalDpi: data.originalDpi,
-          originalFormat: data.originalFormat,
-          originalSizeBytes: data.originalSizeBytes,
-          originalImageUrl: data.originalImageUrl,
-        })
         setArtwork(data)
         setOriginalImageUrl(data.imageUrl)
         setImageDpi(data.originalDpi ?? null)
@@ -121,7 +113,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handlePrintOptionsChange = (next: PrintOptions | null) => {
+  const handlePrintOptionsChange = (next: PrintRestrictions | null) => {
     setFormData((prev) => ({ ...prev, printOptions: next }))
   }
 

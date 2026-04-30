@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { PrintCatalogPrefetcher } from '@/components/PrintWizard/PrintCatalogPrefetcher'
 import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 
@@ -59,8 +58,6 @@ export const PrintsPage = () => {
 
   return (
     <PageLayout loading={loading}>
-      <PrintCatalogPrefetcher />
-
       <PageHeader
         pageTitle="Prints"
         pageSubtitle="Museum-grade prints of selected works, hand-signed by the artist."

@@ -2,19 +2,18 @@ import * as Sentry from '@sentry/nextjs'
 
 type Flow =
   | 'payment' // Stripe-side money flows: auth, capture, refund, cancel
-  | 'order' // Our PrintOrder lifecycle (create, update, submit to Prodigi)
-  | 'webhook' // Incoming webhooks from Stripe / Prodigi
+  | 'order' // Our PrintOrder lifecycle (create, update)
+  | 'webhook' // Incoming webhooks from Stripe
   | 'admin' // Admin-initiated actions (refund, payout release)
   | 'email' // Outbound transactional email (Resend)
   | 'cert' // Certificate-of-authenticity PDF generation / upload
   | 'upload' // File uploads (artwork images, signatures)
-  | 'prodigi' // Prodigi client calls (createOrder, getProduct, cancel)
   | 'stripe' // Stripe client calls (paymentIntents.*, transfers.*, refunds.*)
 
 export type CaptureContext = {
   /** Broad business domain — groups related errors in Sentry filters. */
   flow: Flow
-  /** Specific step inside the flow, e.g. 'prodigi-submit', 'capture-failed'. */
+  /** Specific step inside the flow, e.g. 'create-payment-intent', 'capture-failed'. */
   stage: string
   /**
    * Stable keys that identify which business object the error relates to.
@@ -36,7 +35,7 @@ export type CaptureContext = {
   /**
    * Fingerprint override for manual grouping. Default lets Sentry decide.
    * Use when a class of errors should collapse to a single issue (e.g.
-   * every Prodigi submit failure for different orders is one issue).
+   * every Stripe capture failure for different orders is one issue).
    */
   fingerprint?: string[]
 }

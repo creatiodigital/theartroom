@@ -1,88 +1,90 @@
 'use client'
 
-import type { ProdigiQuoteResult } from '@/components/checkout/PrintCheckout/getQuote'
+import { useMemo } from 'react'
 
 import {
-  computeQuotedTotals,
+  type Catalog,
+  type Quote,
+  type WizardConfig,
+  collectVisualHints,
   formatEuro,
-  formatSize,
-  getFormat,
-  getFrameColor,
-  getMount,
-  getPaper,
-  getSize,
-} from './options'
+  getEffectiveBorderCm,
+  getEffectiveMatCm,
+  getEffectiveSizeCm,
+  summarizeConfig,
+} from '@/lib/print-providers'
+
+import { SpecList } from '../print/SpecList/SpecList'
 import { SizeSchema } from './SizeSchema'
-import type { PrintConfig, SizeUnit, WizardArtwork } from './types'
+import type { WizardArtwork } from './index'
 
 import styles from './PrintWizard.module.scss'
 
 interface SummaryPanelProps {
   artwork: WizardArtwork
-  config: PrintConfig
-  /** Pixel aspect ratio of the artwork. > 1 = landscape → dimensions swap. */
-  imageAspectRatio: number
-  onAddToCart: () => void
-  canContinue: boolean
-  /** Hide all config-specific content (schema/specs/price) until true. */
-  configReady: boolean
-  /** Update the parent config — used by the cm/in display toggle. */
-  onUnitChange: (unit: SizeUnit) => void
-  /** Destination country — needed to apply EU VAT on top of the quote. */
-  countryCode: string
-  /** Live Prodigi quote for (config, country). Null while loading/unavailable. */
-  quote: ProdigiQuoteResult | null
+  catalog: Catalog
+  config: WizardConfig
+  /** ISO country code if the buyer already picked one on checkout (then
+   *  navigated back). Empty string when the destination hasn't been
+   *  chosen yet — the summary shows "—" for shipping in that case. */
+  country: string
+  quote: Quote | null
   quoteLoading: boolean
+  canContinue: boolean
+  configReady: boolean
+  onAddToCart: () => void
 }
+
+const regionNames =
+  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
+    ? new Intl.DisplayNames(['en'], { type: 'region' })
+    : null
+const countryName = (code: string) => regionNames?.of(code) ?? code
 
 export const SummaryPanel = ({
   artwork,
+  catalog,
   config,
-  imageAspectRatio,
-  onAddToCart,
-  canContinue,
-  configReady,
-  onUnitChange,
-  countryCode,
+  country,
   quote,
   quoteLoading,
+  canContinue,
+  configReady,
+  onAddToCart,
 }: SummaryPanelProps) => {
-  const paper = getPaper(config.paperId)
-  const format = getFormat(config.formatId)
-  const size = getSize(config.sizeId)
-  const frameColor = getFrameColor(config.frameColorId)
-  const mount = getMount(config.mountId)
+  const orientation: 'portrait' | 'landscape' =
+    config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
 
-  const totals = quote
-    ? computeQuotedTotals({
-        printPriceCents: artwork.printPriceCents,
-        prodigiItemCents: quote.itemCents,
-        prodigiShippingCents: quote.shippingCents,
-        countryCode,
-      })
-    : null
+  // Effective print size — preset OR custom. Drives schema + label.
+  const effectiveSize = useMemo(() => getEffectiveSizeCm(catalog, config), [catalog, config])
 
-  // Display unit lives on PrintConfig so it propagates to checkout via the
-  // URL — otherwise the buyer toggles inches here and the next step still
-  // shows cm, which reads like a bug.
-  const displayUnit = config.unit
+  // Merged visual hints from every selected enum option. The TPS
+  // (`color` dim) and TPS (`moulding` dim) write into `frameColorHex`
+  // — the merge picks whichever is set.
+  const visuals = useMemo(() => collectVisualHints(catalog, config), [catalog, config])
 
-  const formatDim = (cm: number) =>
-    displayUnit === 'inches' ? `${Math.round(cm / 2.54)} in` : `${cm.toFixed(0)} cm`
+  const borderCm = getEffectiveBorderCm(config, 'border')
+  const matCm = getEffectiveMatCm(catalog, config)
 
-  const showFrame = format.framed
-  const moldingWidthCm = showFrame ? 2.0 : 0 // Prodigi Classic molding width
-  const mattingBorderCm = showFrame ? mount.borderCm : 0
+  const showFrame = visuals.framed === true
+  const moldingWidthCm = showFrame ? (visuals.mouldingWidthCm ?? 2.0) : 0
+  const mattingBorderCm = showFrame ? matCm : 0
+  const moldingColorHex = visuals.frameColorHex ?? '#0b0b0b'
+  const mattingColorHex = visuals.matColorHex ?? '#f6f3ec'
 
-  // SIZES are declared portrait. Swap when the buyer chose landscape so the
-  // schema + measurements match the 3D preview and the printed orientation.
-  const isLandscape = config.orientation === 'landscape'
-  const printWidthCm = isLandscape ? size.heightCm : size.widthCm
-  const printHeightCm = isLandscape ? size.widthCm : size.heightCm
-  const matWidthCm = printWidthCm + mattingBorderCm * 2
-  const matHeightCm = printHeightCm + mattingBorderCm * 2
-  const overallWidthCm = matWidthCm + moldingWidthCm * 2
-  const overallHeightCm = matHeightCm + moldingWidthCm * 2
+  // Sizes are stored portrait. Landscape orientation swaps width/height
+  // so the schema and label match how the print will be hung.
+  const isLandscape = orientation === 'landscape'
+  const printWidthCm = effectiveSize
+    ? isLandscape
+      ? effectiveSize.heightCm
+      : effectiveSize.widthCm
+    : 0
+  const printHeightCm = effectiveSize
+    ? isLandscape
+      ? effectiveSize.widthCm
+      : effectiveSize.heightCm
+    : 0
 
   if (!configReady) {
     return (
@@ -107,122 +109,48 @@ export const SummaryPanel = ({
         {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
       </div>
 
-      <div className={styles.schemaSection}>
-        <div className={styles.unitToggle} role="group" aria-label="Measurement unit">
-          <button
-            type="button"
-            className={`${styles.unitToggleOption} ${displayUnit === 'cm' ? styles.unitToggleOptionActive : ''}`}
-            onClick={() => onUnitChange('cm')}
-            aria-pressed={displayUnit === 'cm'}
-          >
-            cm
-          </button>
-          <span className={styles.unitToggleSeparator} aria-hidden="true">
-            |
-          </span>
-          <button
-            type="button"
-            className={`${styles.unitToggleOption} ${displayUnit === 'inches' ? styles.unitToggleOptionActive : ''}`}
-            onClick={() => onUnitChange('inches')}
-            aria-pressed={displayUnit === 'inches'}
-          >
-            in
-          </button>
+      {effectiveSize && (
+        <div className={styles.schemaSection}>
+          <SizeSchema
+            printWidthCm={printWidthCm}
+            printHeightCm={printHeightCm}
+            moldingWidthCm={moldingWidthCm}
+            moldingColorHex={moldingColorHex}
+            mattingBorderCm={mattingBorderCm + borderCm}
+            mattingColorHex={borderCm > 0 ? '#ffffff' : mattingColorHex}
+            showFrame={showFrame || borderCm > 0}
+          />
         </div>
-        <SizeSchema
-          printWidthCm={printWidthCm}
-          printHeightCm={printHeightCm}
-          moldingWidthCm={moldingWidthCm}
-          moldingColorHex={frameColor.hex}
-          mattingBorderCm={mattingBorderCm}
-          mattingColorHex="#f6f3ec"
-          showFrame={showFrame}
-          unit={displayUnit}
-        />
-        <dl className={styles.measurementsList}>
-          <div>
-            <dt>Print size</dt>
-            <dd>
-              {formatDim(printWidthCm)} × {formatDim(printHeightCm)}
-            </dd>
-          </div>
-          {showFrame && mount.id !== 'none' && (
-            <div>
-              <dt>Mount outer</dt>
-              <dd>
-                {formatDim(matWidthCm)} × {formatDim(matHeightCm)}
-              </dd>
-            </div>
-          )}
-          {showFrame && (
-            <div>
-              <dt>Overall size (incl. frame)</dt>
-              <dd>
-                {formatDim(overallWidthCm)} × {formatDim(overallHeightCm)}
-              </dd>
-            </div>
-          )}
-        </dl>
-      </div>
+      )}
 
-      <dl className={styles.specList}>
-        <div>
-          <dt>Paper</dt>
-          <dd>{paper.label}</dd>
-        </div>
-        <div>
-          <dt>Format</dt>
-          <dd>{format.label}</dd>
-        </div>
-        <div>
-          <dt>Size</dt>
-          <dd>{formatSize(size, displayUnit, config.orientation)}</dd>
-        </div>
-        {showFrame && (
-          <>
-            <div>
-              <dt>Frame</dt>
-              <dd>{frameColor.label}</dd>
-            </div>
-            <div>
-              <dt>Mount</dt>
-              <dd>{mount.label}</dd>
-            </div>
-          </>
-        )}
-      </dl>
+      <SpecList specs={summarizeConfig(catalog, config)} />
 
-      {totals ? (
-        <>
+      {(() => {
+        const artworkLine = quote?.lines.find((l) => l.id === 'artwork')
+        const shippingLine = quote?.lines.find((l) => l.id === 'shipping')
+        const placeholder = quoteLoading ? '…' : '—'
+        const vatLabel = quote?.taxLabel ?? 'VAT'
+        return (
           <dl className={styles.priceList}>
             <div className={styles.priceRow}>
+              <dt>Shipping to</dt>
+              <dd>{country ? countryName(country) : '—'}</dd>
+            </div>
+            <div className={styles.priceRow}>
               <dt>Artwork</dt>
-              <dd>
-                {formatEuro(totals.artistCents + totals.galleryCents + totals.prodigiItemCents)}
-              </dd>
+              <dd>{artworkLine ? formatEuro(artworkLine.amountCents) : placeholder}</dd>
             </div>
             <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
               <dt>Shipping</dt>
-              <dd>{formatEuro(totals.prodigiShippingCents)}</dd>
+              <dd>{shippingLine ? formatEuro(shippingLine.amountCents) : '—'}</dd>
             </div>
-            {totals.customerVatCents > 0 && (
-              <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
-                <dt>VAT (21%)</dt>
-                <dd>{formatEuro(totals.customerVatCents)}</dd>
-              </div>
-            )}
+            <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
+              <dt>{vatLabel}</dt>
+              <dd>{quote && quote.taxCents > 0 ? formatEuro(quote.taxCents) : '—'}</dd>
+            </div>
           </dl>
-          <div className={styles.totalRow}>
-            <span>Total</span>
-            <span className={styles.totalValue}>{formatEuro(totals.totalCents)}</span>
-          </div>
-        </>
-      ) : (
-        <div className={styles.totalRow}>
-          <span>Total</span>
-          <span className={styles.totalValue}>{quoteLoading ? 'Calculating…' : '—'}</span>
-        </div>
-      )}
+        )
+      })()}
 
       <button
         type="button"

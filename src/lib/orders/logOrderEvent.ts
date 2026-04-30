@@ -8,19 +8,13 @@ export type OrderEventKind =
   | 'payment_failed'
   | 'captured'
   | 'capture_failed'
-  // Prodigi lifecycle
-  | 'prodigi_submitted'
-  | 'prodigi_submit_failed'
-  | 'prodigi_status_changed'
-  | 'prodigi_cancelled'
-  | 'prodigi_issue'
   // Our side
   | 'email_sent'
   | 'email_failed'
   | 'admin_action'
   | 'note'
 
-export type OrderEventActor = 'stripe' | 'prodigi' | 'system' | `admin:${string}`
+export type OrderEventActor = 'stripe' | 'system' | `admin:${string}`
 
 /**
  * Append an audit event to a PrintOrder. Never throws — logging failures

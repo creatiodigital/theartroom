@@ -66,6 +66,31 @@ export const LoginPage = () => {
         return
       }
 
+      // Local-dev escape hatch: server signalled OTP is bypassed
+      // (SKIP_LOGIN_OTP=true), so we sign in straight from the
+      // password step without showing the 6-digit prompt.
+      if (data.skipOtp) {
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        })
+        if (result?.error) {
+          setError('Failed to sign in')
+          setSubmitting(false)
+          return
+        }
+        const session = await getSession()
+        const userType = session?.user?.userType
+        if (userType === 'admin' || userType === 'superAdmin') {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
+        router.refresh()
+        return
+      }
+
       // Move to code verification step
       setStep('code')
       setSubmitting(false)

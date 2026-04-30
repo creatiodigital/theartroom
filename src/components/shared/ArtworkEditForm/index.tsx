@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal/Modal'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
-import { FORMATS, FRAME_COLORS, MOUNTS, PAPERS, SIZES } from '@/components/PrintWizard/options'
-import type { PrintOptions } from '@/components/PrintWizard/types'
+import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
+import type { PrintRestrictions } from '@/lib/print-providers'
 import {
   MAX_ARTWORK_UPLOAD_SIZE,
   MIN_ARTWORK_IMAGE_WIDTH,
@@ -59,7 +59,13 @@ export type Artwork = {
   hiddenFromExhibition: boolean
   printEnabled?: boolean
   printPriceCents?: number | null
-  printOptions?: PrintOptions | null
+  /**
+   * Artist-set veto/allow-list for printing options. Canonical
+   * `PrintRestrictions` shape: `{ allowed: { dimensionId: ids[] } }`.
+   * Stored as JSON; the page route + payment-intent re-check both
+   * read it.
+   */
+  printOptions?: PrintRestrictions | null
 }
 
 export type ArtworkFormData = {
@@ -77,8 +83,11 @@ export type ArtworkFormData = {
   printEnabled: boolean
   /** Euros as a string for the input field; converted to cents at submit. */
   printPriceEuros: string
-  /** Artist-set restrictions. null = no restrictions (all options offered). */
-  printOptions: PrintOptions | null
+  /**
+   * Artist-set restrictions in canonical PrintRestrictions shape.
+   * `null` = no restrictions (all options offered).
+   */
+  printOptions: PrintRestrictions | null
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -133,7 +142,7 @@ type ArtworkEditFormProps = {
   error: string
   onFormChange: (field: string, value: string | boolean) => void
   /** Replace the whole printOptions object. Called as the artist (un)checks boxes. */
-  onPrintOptionsChange?: (next: PrintOptions | null) => void
+  onPrintOptionsChange?: (next: PrintRestrictions | null) => void
   onImageUpload: (file: File) => Promise<void>
   onImageRemove: () => void | Promise<void>
   onSoundUpload?: (file: File) => Promise<void>
@@ -159,132 +168,128 @@ const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
+// Minimum DPI for print eligibility — 300 DPI, the conventional
+// fine-art-print threshold.
 const MIN_DPI = 300
 
-type PrintSizeEligibility = {
+// TPS accepted image formats. Used to gate the print-sales toggle for
+// legacy uploads (e.g. WebP) where the file can't be sent to TPS.
+const TPS_ACCEPTED_FORMATS: readonly string[] = ['JPEG', 'PNG', 'TIFF']
+
+function isImageFormatPrintable(format: string | undefined | null): boolean {
+  if (!format) return true
+  const upper = format.toUpperCase()
+  // Skip the placeholder fallback used when we don't have a real
+  // format on hand (e.g. legacy artworks pre-format-tracking).
+  if (upper === 'IMAGE') return true
+  return TPS_ACCEPTED_FORMATS.includes(upper)
+}
+
+// Output is height × width (art-gallery convention). Args still take
+// (widthCm, heightCm) so callers don't have to swap their fields.
+function cmToInchLabel(widthCm: number, heightCm: number): string {
+  const w = (widthCm / 2.54).toFixed(1)
+  const h = (heightCm / 2.54).toFixed(1)
+  return `${h}×${w} in`
+}
+
+/**
+ * TPS supports any custom size respecting the artwork's aspect ratio.
+ * To show the artist where the resolution starts breaking down, we
+ * sample a series of common long-edge values and compute the matching
+ * aspect-locked short edge + effective DPI for each. Eligibility =
+ * effective DPI ≥ MIN_DPI.
+ *
+ * Long edges chosen to span TPS's 10–150 cm slider range with
+ * meaningful intervals — gives the artist a clear sense of "up to
+ * about this size, prints stay sharp".
+ */
+const TPS_LONG_EDGE_SAMPLES_CM = [20, 30, 40, 50, 60, 80, 100, 120, 150]
+
+type TpsSizeSample = {
   label: string
   widthCm: number
   heightCm: number
-  requiredWidth: number
-  requiredHeight: number
+  effectiveDpi: number
   eligible: boolean
-  effectiveDpiW: number
-  effectiveDpiH: number
 }
 
-function getPrintSizeEligibility(meta: ImageMeta | null): PrintSizeEligibility[] {
-  return SIZES.map((size) => {
-    const requiredWidth = Math.ceil((size.widthCm / 2.54) * MIN_DPI)
-    const requiredHeight = Math.ceil((size.heightCm / 2.54) * MIN_DPI)
-    const printWidthInches = size.widthCm / 2.54
-    const printHeightInches = size.heightCm / 2.54
-    const effectiveDpiW = meta ? Math.round(meta.width / printWidthInches) : 0
-    const effectiveDpiH = meta ? Math.round(meta.height / printHeightInches) : 0
-    const eligible = meta ? meta.width >= requiredWidth && meta.height >= requiredHeight : false
+function getTpsSizeSamples(meta: ImageMeta | null): TpsSizeSample[] {
+  if (!meta || meta.width <= 0 || meta.height <= 0) return []
+  const longEdgePx = Math.max(meta.width, meta.height)
+  const shortEdgePx = Math.min(meta.width, meta.height)
+  const aspect = shortEdgePx / longEdgePx // ≤ 1
+  const imageIsPortrait = meta.height > meta.width
+  return TPS_LONG_EDGE_SAMPLES_CM.map((longEdgeCm) => {
+    const shortEdgeCm = Math.round(longEdgeCm * aspect)
+    const widthCm = imageIsPortrait ? shortEdgeCm : longEdgeCm
+    const heightCm = imageIsPortrait ? longEdgeCm : shortEdgeCm
+    // Effective DPI is min of the two axes — use the long edge since
+    // the short edge follows from it via the locked aspect ratio.
+    const effectiveDpi = Math.round(longEdgePx / (longEdgeCm / 2.54))
     return {
-      label: size.label,
-      widthCm: size.widthCm,
-      heightCm: size.heightCm,
-      requiredWidth,
-      requiredHeight,
-      eligible,
-      effectiveDpiW,
-      effectiveDpiH,
+      label: `${heightCm}×${widthCm} cm (${cmToInchLabel(widthCm, heightCm)})`,
+      widthCm,
+      heightCm,
+      effectiveDpi,
+      eligible: effectiveDpi >= MIN_DPI,
     }
   })
 }
 
-function isPrintEligible(meta: ImageMeta | null): boolean {
-  if (!meta) return false
-  return getPrintSizeEligibility(meta).some((s) => s.eligible)
-}
-
-/**
- * SIZES filtered to only those the current image can physically render
- * at 300 DPI. Used to scope the artist's restriction UI — it doesn't
- * make sense to offer a checkbox for a size the image can't fulfil.
- * If we have no meta yet, return everything so the UI isn't empty
- * while the image measures.
- */
-function getEligibleSizes(meta: ImageMeta | null) {
-  if (!meta) return SIZES
-  return SIZES.filter((size) => {
-    const requiredWidth = Math.ceil((size.widthCm / 2.54) * MIN_DPI)
-    const requiredHeight = Math.ceil((size.heightCm / 2.54) * MIN_DPI)
-    return meta.width >= requiredWidth && meta.height >= requiredHeight
-  })
-}
-
-/**
- * Toggle membership of `id` in the allow-list for one dimension of
- * `PrintOptions`. The UI convention: all-checked means "no restriction"
- * so we drop the allow-list entirely when that dimension ends up matching
- * every id in `all`. Mirror inverse: leaving zero checked reinstates all.
- */
-function togglePrintOptionId<K extends keyof PrintOptions>(
-  current: PrintOptions | null,
-  key: K,
+function toggleTpsRestrictionId(
+  current: PrintRestrictions | null,
+  dimensionId: string,
   id: string,
   all: readonly string[],
-): PrintOptions | null {
-  const currentList = current?.[key] as readonly string[] | undefined
+): PrintRestrictions | null {
+  const currentList = current?.allowed?.[dimensionId]
   const effective = currentList && currentList.length > 0 ? [...currentList] : [...all]
   const idx = effective.indexOf(id)
   const next = idx === -1 ? [...effective, id] : effective.filter((x) => x !== id)
 
-  // Artist has re-checked everything or unchecked everything: drop the
-  // allow-list so the field reverts to "no restriction" (buyers see all).
-  // Zero-length would otherwise mean "nothing allowed" which we treat as
-  // the same as "no restriction" to prevent accidental total lockouts.
+  // All checked or zero checked → drop this dimension's allow-list.
   const reachesAll = next.length === all.length
   const isEmpty = next.length === 0
-  const shouldClearDimension = reachesAll || isEmpty
+  const shouldClear = reachesAll || isEmpty
 
-  const base: PrintOptions = { ...(current ?? {}) }
-  if (shouldClearDimension) {
-    delete base[key]
-  } else {
-    ;(base as Record<string, unknown>)[key as string] = next
-  }
+  const baseAllowed: Record<string, string[]> = { ...(current?.allowed ?? {}) }
+  if (shouldClear) delete baseAllowed[dimensionId]
+  else baseAllowed[dimensionId] = next
 
-  // Drop the whole printOptions object when nothing remains restricted.
-  const anyRestriction = Object.values(base).some(
-    (v) => Array.isArray(v) && v.length > 0 && v.length < all.length,
-  )
-  return Object.keys(base).length === 0 ? null : anyRestriction ? base : null
+  return Object.keys(baseAllowed).length === 0 ? null : { allowed: baseAllowed }
 }
 
-function isDimensionChecked<K extends keyof PrintOptions>(
-  opts: PrintOptions | null,
-  key: K,
+function isTpsDimensionChecked(
+  restrictions: PrintRestrictions | null,
+  dimensionId: string,
   id: string,
 ): boolean {
-  const list = opts?.[key] as readonly string[] | undefined
-  // No allow-list set → all options allowed → every checkbox is checked.
+  const list = restrictions?.allowed?.[dimensionId]
   if (!list || list.length === 0) return true
   return list.includes(id)
 }
 
-type PrintRestrictionGroupProps<K extends keyof PrintOptions> = {
+type TpsRestrictionGroupProps = {
   title: string
   all: Array<{ id: string; label: string }>
   allIds: readonly string[]
-  dimensionKey: K
-  options: PrintOptions | null
-  onChange?: (next: PrintOptions | null) => void
+  dimensionId: string
+  restrictions: PrintRestrictions | null
+  onChange?: (next: PrintRestrictions | null) => void
 }
 
-const PrintRestrictionGroup = <K extends keyof PrintOptions>({
+const TpsRestrictionGroup = ({
   title,
   all,
   allIds,
-  dimensionKey,
-  options,
+  dimensionId,
+  restrictions,
   onChange,
-}: PrintRestrictionGroupProps<K>) => {
+}: TpsRestrictionGroupProps) => {
   const handleToggle = (id: string) => {
     if (!onChange) return
-    onChange(togglePrintOptionId(options, dimensionKey, id, allIds))
+    onChange(toggleTpsRestrictionId(restrictions, dimensionId, id, allIds))
   }
   return (
     <div className={styles.printRestrictionGroup}>
@@ -293,7 +298,7 @@ const PrintRestrictionGroup = <K extends keyof PrintOptions>({
         {all.map((item) => (
           <Checkbox
             key={item.id}
-            checked={isDimensionChecked(options, dimensionKey, item.id)}
+            checked={isTpsDimensionChecked(restrictions, dimensionId, item.id)}
             onChange={() => handleToggle(item.id)}
             label={item.label}
           />
@@ -309,7 +314,6 @@ export const ArtworkEditForm = ({
   imageDpi,
   originalWidth,
   originalHeight,
-  originalImageUrl,
   originalFormat,
   originalSizeBytes,
   soundUrl,
@@ -355,12 +359,15 @@ export const ArtworkEditForm = ({
   // Server meta takes priority over client-detected meta
   const imageMeta = serverMeta ?? clientMeta
 
-  const printEligible = isPrintEligible(imageMeta)
-  const printSizes = getPrintSizeEligibility(imageMeta)
-  const eligibleSizes = printSizes.filter((s) => s.eligible)
-  // Actual SizeOption entries the image can physically print at — used
-  // to scope the artist's restriction checkboxes for the Sizes group.
-  const eligibleSizeOptions = getEligibleSizes(imageMeta)
+  // TPS supports custom sizes (aspect-locked), so eligibility is
+  // sample-based: walk a series of long-edge values, find any that
+  // hit 300 DPI. If at least one passes, the artist can sell prints.
+  const tpsSizeSamples = imageMeta ? getTpsSizeSamples(imageMeta) : []
+  const printEligible = tpsSizeSamples.some((s) => s.eligible)
+
+  // Format check: TPS accepts JPG/PNG/TIFF. Disables the
+  // "Enable print sales" toggle for legacy uploads (e.g. WebP).
+  const printableFormat = isImageFormatPrintable(imageMeta?.format)
 
   const handleImageMetaChange = useCallback((meta: ImageMeta | null) => {
     if (meta && meta.width > 0) {
@@ -450,8 +457,88 @@ export const ArtworkEditForm = ({
 
   return (
     <>
-      {/* Page Title */}
-      <h1 className={dashboardStyles.pageTitle}>Edit Artwork</h1>
+      {/* Page Title — type-specific so the artist immediately sees which
+          surface they're on (Image / Text / Video / Sound). */}
+      <h1 className={dashboardStyles.pageTitle}>
+        {formData.artworkType === 'image'
+          ? 'Edit Image'
+          : formData.artworkType === 'text'
+            ? 'Edit Text'
+            : formData.artworkType === 'video'
+              ? 'Edit Video'
+              : formData.artworkType === 'sound'
+                ? 'Edit Sound'
+                : 'Edit Artwork'}
+      </h1>
+
+      {/* Print Sales — pinned to the top for image artworks so artists see
+          the sell-as-print decision before scrolling into metadata.
+          The enable toggle gates everything else: provider, price and
+          restrictions only render once the artist opts in. */}
+      {formData.artworkType === 'image' && (
+        <div className={dashboardStyles.section}>
+          <h3 className={dashboardStyles.sectionTitle}>Print Sales</h3>
+          <p className={dashboardStyles.sectionDescription}>
+            Let buyers order a physical print of this artwork. We&apos;ll show a &quot;Buy
+            Printable&quot; button next to &quot;Inquire&quot; on the public page.
+          </p>
+
+          <Checkbox
+            checked={formData.printEnabled}
+            onChange={(e) => {
+              if ((printEligible && printableFormat) || !e.target.checked) {
+                onFormChange('printEnabled', e.target.checked)
+              }
+            }}
+            label="Enable this artwork for print sales"
+            disabled={!printEligible || !printableFormat}
+          />
+          {!printEligible && (
+            <p className={styles.printDisabledHint}>
+              Upload an image with at least {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px (around{' '}
+              {MIN_DPI} DPI on the largest sellable size) to enable print sales.
+            </p>
+          )}
+          {printEligible && !printableFormat && imageMeta && (
+            <p className={styles.printDisabledHint}>
+              The current image format ({imageMeta.format}) can&apos;t be printed. Re-upload as JPG,
+              PNG or TIFF to enable print sales.
+            </p>
+          )}
+
+          {formData.printEnabled && (
+            <>
+              <div
+                className={dashboardStyles.field}
+                style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
+              >
+                <label htmlFor="printPriceEuros">Your price per print (&euro;)</label>
+                <Input
+                  id="printPriceEuros"
+                  type="text"
+                  inputMode="decimal"
+                  size="medium"
+                  value={formData.printPriceEuros}
+                  onChange={(e) =>
+                    onFormChange(
+                      'printPriceEuros',
+                      // Accept both period and comma as decimal separators
+                      // (Spanish/EU users) but normalise to period — the
+                      // app's display convention is always `1234.56`.
+                      e.target.value.replace(',', '.').replace(/[^0-9.]/g, ''),
+                    )
+                  }
+                  placeholder="100"
+                />
+              </div>
+              <span className={dashboardStyles.hint}>
+                This is the amount you earn per print sold. Production, shipping, gallery fee and
+                VAT are added separately at checkout.
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Video File Upload Section - only for video type */}
       {formData.artworkType === 'video' && (
@@ -570,8 +657,11 @@ export const ArtworkEditForm = ({
               />
             </div>
 
-            {/* Print requirements info — only for image artworks */}
-            {formData.artworkType === 'image' && (
+            {/* Print requirements info — only when print sales is enabled.
+                The DPI/eligibility detail is irrelevant if the artist
+                isn't selling prints, so we keep it gated behind the
+                Print Sales toggle to avoid noise. */}
+            {formData.artworkType === 'image' && formData.printEnabled && (
               <div className={styles.printInfoCol}>
                 <div className={styles.printInfoCard}>
                   <h4 className={styles.printInfoTitle}>
@@ -579,54 +669,61 @@ export const ArtworkEditForm = ({
                     Sell as print
                   </h4>
                   <p className={styles.printInfoText}>
-                    You can sell physical prints of your artwork through our print-on-demand
-                    service. This is completely optional — your artwork will always be displayed in
-                    exhibitions regardless of image resolution.
-                  </p>
-                  <p className={styles.printInfoText}>
                     To enable print sales, your image needs to be high resolution (at least{' '}
                     {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px). The larger the image, the more print
                     sizes will be available to buyers.
                   </p>
 
-                  {/* Per-size eligibility checklist */}
+                  {/* Per-size eligibility — TPS supports any custom W×H
+                      (aspect-locked); show the maximum size achievable at
+                      300 DPI as reference points, not exact dimensions. */}
                   {imageUrl && imageMeta ? (
-                    <>
-                      <p
-                        className={styles.printInfoText}
-                        style={{ marginBottom: 'var(--space-1)' }}
-                      >
-                        <strong>Print size eligibility:</strong>
-                      </p>
-                      <ul className={styles.printSizeChecklist}>
-                        {printSizes.map((s) => (
-                          <li
-                            key={s.label}
-                            className={
-                              s.eligible ? styles.printSizeEligible : styles.printSizeIneligible
-                            }
+                    (() => {
+                      const anyEligible = tpsSizeSamples.some((s) => s.eligible)
+                      return (
+                        <>
+                          <p
+                            className={styles.printInfoText}
+                            style={{ marginBottom: 'var(--space-1)' }}
                           >
-                            <Icon name={s.eligible ? 'check-circle' : 'alert-circle'} size={14} />
-                            <span>{s.label}</span>
-                            <span className={styles.printSizeDpi}>
-                              {Math.min(s.effectiveDpiW, s.effectiveDpiH)} DPI
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      {eligibleSizes.length === 0 && (
-                        <div className={styles.printStatusNotReady}>
-                          <Icon name="alert-circle" size={16} />
-                          <span>
-                            This image is {imageMeta.width} × {imageMeta.height} px — below the
-                            minimum for any print size. Upload a higher resolution version to enable
-                            print sales.
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  ) : imageUrl ? (
-                    <p className={styles.printInfoTextMuted}>Loading image info...</p>
+                            <strong>Print size eligibility:</strong>
+                          </p>
+                          <p className={styles.printInfoTextMuted}>
+                            Prints are sold at custom sizes — every print respects the original
+                            proportions of your file. The values below are reference points, not
+                            exact dimensions; buyers can pick any width or height within range, and
+                            the other side auto-locks to your artwork&apos;s aspect ratio.
+                          </p>
+                          <ul className={styles.printSizeChecklist}>
+                            {tpsSizeSamples.map((s) => (
+                              <li
+                                key={s.label}
+                                className={
+                                  s.eligible ? styles.printSizeEligible : styles.printSizeIneligible
+                                }
+                              >
+                                <Icon
+                                  name={s.eligible ? 'check-circle' : 'alert-circle'}
+                                  size={14}
+                                />
+                                <span>{s.label}</span>
+                                <span className={styles.printSizeDpi}>{s.effectiveDpi} DPI</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {!anyEligible && (
+                            <div className={styles.printStatusNotReady}>
+                              <Icon name="alert-circle" size={16} />
+                              <span>
+                                This image is {imageMeta.width} × {imageMeta.height} px — below the
+                                {MIN_DPI} DPI threshold for any sellable size. Upload a higher
+                                resolution version to enable print sales.
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()
                   ) : (
                     <p className={styles.printInfoTextMuted}>
                       Upload an image to check print eligibility.
@@ -648,119 +745,54 @@ export const ArtworkEditForm = ({
           </div>
 
           <span className={dashboardStyles.hint}>
-            Accepted: JPG, PNG, WebP, GIF (max 200MB). Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH}{' '}
-            × {MIN_ARTWORK_IMAGE_HEIGHT} px. For print sales, upload the highest resolution
-            available. Images are automatically optimized for the web.
+            Accepted: JPG, PNG, TIFF. Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH} ×{' '}
+            {MIN_ARTWORK_IMAGE_HEIGHT} px. Images are automatically optimized for the web.
           </span>
         </div>
       )}
 
-      {/* Print Sales — right after the image uploader, image artworks only */}
-      {formData.artworkType === 'image' && (
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Print Sales</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Let buyers order a physical print of this artwork. We&apos;ll show a &quot;Buy
-            Printable&quot; button next to &quot;Inquire&quot; on the public page.
-          </p>
-          <Checkbox
-            checked={formData.printEnabled}
-            onChange={(e) => {
-              if (printEligible || !e.target.checked) {
-                onFormChange('printEnabled', e.target.checked)
-              }
-            }}
-            label="Enable this artwork for print sales"
-            disabled={!printEligible}
-          />
-          {!printEligible && (
-            <p className={styles.printDisabledHint}>
-              Upload an image with at least {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px to enable
-              print sales.
-            </p>
-          )}
-          <div
-            className={dashboardStyles.field}
-            style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
-          >
-            <label htmlFor="printPriceEuros">Your price per print (&euro;)</label>
-            <Input
-              id="printPriceEuros"
-              type="text"
-              size="medium"
-              value={formData.printPriceEuros}
-              onChange={(e) =>
-                onFormChange('printPriceEuros', e.target.value.replace(/[^0-9.]/g, ''))
-              }
-              placeholder="100"
-            />
-          </div>
-          <span className={dashboardStyles.hint}>
-            This is the amount you earn per print sold. Production, shipping, gallery fee and VAT
-            are added separately at checkout.
-          </span>
-        </div>
-      )}
-
-      {/* Per-artwork printing restrictions — separate section so the
-          parent's hint break-out doesn't visually collide with this block. */}
+      {/* Per-artwork printing restrictions. Stored in canonical
+          PrintRestrictions shape (`{ allowed: { dimId: ids[] } }`). */}
       {formData.artworkType === 'image' && formData.printEnabled && (
         <div className={dashboardStyles.section}>
           <h3 className={dashboardStyles.sectionTitle}>Printing restrictions</h3>
           <p className={dashboardStyles.sectionDescription}>
             Advanced — you don&apos;t need to touch this unless you have very specific reasons not
-            to offer a particular paper, format, size or frame for this artwork.
+            to offer a particular paper, frame type or passepartout for this artwork.
           </p>
 
           <details className={styles.printRestrictions}>
             <summary className={styles.printRestrictionsSummary}>Show options</summary>
 
             <p className={styles.printRestrictionsIntro}>
-              We already offer the best print quality we can — museum-grade papers, archival inks,
-              and gallery-tested framing. The options listed below are the ones our printing service
-              supports for this kind of artwork. Uncheck anything you&apos;d rather we not offer;
-              everything that stays checked remains available to buyers.
+              We offer many printing options — to keep this simple we only let you veto the three
+              that matter most for editorial control: papers, frame types and the passepartout.
+              Everything that stays checked remains available to buyers.
             </p>
 
-            <PrintRestrictionGroup
+            <TpsRestrictionGroup
               title="Papers"
-              all={PAPERS.map((p) => ({ id: p.id, label: p.label }))}
-              dimensionKey="allowedPaperIds"
-              options={formData.printOptions}
+              all={TPS_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
+              dimensionId="paper"
+              restrictions={formData.printOptions ?? null}
               onChange={onPrintOptionsChange}
-              allIds={PAPERS.map((p) => p.id)}
+              allIds={TPS_PAPERS.map((p) => p.id)}
             />
-            <PrintRestrictionGroup
-              title="Formats"
-              all={FORMATS.map((f) => ({ id: f.id, label: f.label }))}
-              dimensionKey="allowedFormatIds"
-              options={formData.printOptions}
+            <TpsRestrictionGroup
+              title="Frame types"
+              all={TPS_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
+              dimensionId="frameType"
+              restrictions={formData.printOptions ?? null}
               onChange={onPrintOptionsChange}
-              allIds={FORMATS.map((f) => f.id)}
+              allIds={TPS_FRAME_TYPES.map((f) => f.id)}
             />
-            <PrintRestrictionGroup
-              title="Sizes"
-              all={eligibleSizeOptions.map((s) => ({ id: s.id, label: s.label }))}
-              dimensionKey="allowedSizeIds"
-              options={formData.printOptions}
+            <TpsRestrictionGroup
+              title="Mount (Passepartout)"
+              all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
+              dimensionId="windowMount"
+              restrictions={formData.printOptions ?? null}
               onChange={onPrintOptionsChange}
-              allIds={eligibleSizeOptions.map((s) => s.id)}
-            />
-            <PrintRestrictionGroup
-              title="Frame colors"
-              all={FRAME_COLORS.map((c) => ({ id: c.id, label: c.label }))}
-              dimensionKey="allowedFrameColorIds"
-              options={formData.printOptions}
-              onChange={onPrintOptionsChange}
-              allIds={FRAME_COLORS.map((c) => c.id)}
-            />
-            <PrintRestrictionGroup
-              title="Mounts"
-              all={MOUNTS.map((m) => ({ id: m.id, label: m.label }))}
-              dimensionKey="allowedMountIds"
-              options={formData.printOptions}
-              onChange={onPrintOptionsChange}
-              allIds={MOUNTS.map((m) => m.id)}
+              allIds={TPS_WINDOW_MOUNTS.map((w) => w.id)}
             />
           </details>
         </div>
@@ -864,34 +896,6 @@ export const ArtworkEditForm = ({
           </span>
         </div>
 
-        {/* Type Section */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Type</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            The artwork type cannot be changed after creation.
-          </p>
-          <Input
-            id="artworkType"
-            type="text"
-            size="medium"
-            value={
-              formData.artworkType === 'image'
-                ? 'Image'
-                : formData.artworkType === 'sound'
-                  ? 'Sound'
-                  : formData.artworkType === 'video'
-                    ? 'Video'
-                    : 'Text'
-            }
-            onChange={() => {}}
-            variant="disabled"
-          />
-          <span className={dashboardStyles.hint}>
-            Image for visual artworks, Text for written content, Sound for audio, Video for video
-            artworks.
-          </span>
-        </div>
-
         {/* Author */}
         {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
           <div className={dashboardStyles.section}>
@@ -936,13 +940,23 @@ export const ArtworkEditForm = ({
         {formData.artworkType === 'image' && (
           <div className={dashboardStyles.section}>
             <h3 className={dashboardStyles.sectionTitle}>Dimensions</h3>
+            <p className={dashboardStyles.sectionDescription}>
+              A reference dimension shown on the public artwork page — most relevant for unique
+              physical works (paintings, drawings, sculptures) where the size is fixed. For
+              photography or editions sold as prints, list the original capture size; the actual
+              print sizes are picked by the buyer in the print wizard.
+            </p>
             <Input
               id="dimensions"
               type="text"
               size="medium"
               value={formData.dimensions}
               onChange={(e) => onFormChange('dimensions', e.target.value)}
+              placeholder="e.g. 40 × 30 cm"
             />
+            <span className={dashboardStyles.hint}>
+              Follow gallery convention: height × width (× depth for 3D works).
+            </span>
           </div>
         )}
 
@@ -1033,31 +1047,29 @@ export const ArtworkEditForm = ({
               Print Size Requirements
             </Text>
             <p className={styles.printModalDescription}>
-              Each print size requires a minimum image resolution at 300 DPI. The table below shows
-              the minimum pixel dimensions needed for each size we offer.
+              Prints are sold at custom sizes (aspect-locked to your file). Every long-edge value
+              below assumes the buyer picks that as the longest side; the short side follows from
+              your image&apos;s aspect ratio. Effective DPI must hit {MIN_DPI} for the print to
+              ship.
             </p>
             <table className={styles.printModalTable}>
               <thead>
                 <tr>
                   <th>Print Size</th>
-                  <th>Min. Resolution</th>
                   {imageMeta && <th>Your DPI</th>}
                   {imageMeta && <th>Status</th>}
                 </tr>
               </thead>
               <tbody>
-                {printSizes.map((size) => (
+                {tpsSizeSamples.map((size) => (
                   <tr key={size.label}>
                     <td>{size.label}</td>
-                    <td>
-                      {size.requiredWidth} × {size.requiredHeight} px
-                    </td>
                     {imageMeta && (
                       <td>
                         <span
                           className={size.eligible ? styles.statusReady : styles.statusNotReady}
                         >
-                          {Math.min(size.effectiveDpiW, size.effectiveDpiH)} DPI
+                          {size.effectiveDpi} DPI
                         </span>
                       </td>
                     )}
