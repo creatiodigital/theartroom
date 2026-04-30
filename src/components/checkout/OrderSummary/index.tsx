@@ -85,12 +85,10 @@ export const OrderSummary = ({
       <SpecList specs={specs} />
 
       <div className={styles.priceList}>
-        {country && (
-          <div className={styles.priceRow}>
-            <span>Shipping to</span>
-            <strong>{countryName(country)}</strong>
-          </div>
-        )}
+        <div className={styles.priceRow}>
+          <span>Shipping to</span>
+          <strong>{country ? countryName(country) : '—'}</strong>
+        </div>
         {priceLines.map((line) => (
           <div
             key={line.label}

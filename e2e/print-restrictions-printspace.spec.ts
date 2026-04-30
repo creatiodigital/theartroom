@@ -4,7 +4,7 @@ import { TPS_PAPERS } from '@/lib/print-providers/printspace/data'
 
 import { getArtworkRestrictions, vetoedIds } from './db-helpers'
 import { fixtures } from './fixtures'
-import { openWizardWithCountry, pickWizardOption, readWizardOptions } from './wizard-helpers'
+import { openWizard, pickWizardOption, readWizardOptions } from './wizard-helpers'
 
 /**
  * Per-artwork print-restriction contract — DB ↔ wizard.
@@ -44,7 +44,7 @@ test('TPS: wizard hides papers the artist vetoed in the DB', async ({ page }) =>
     'fixture should have ≥1 vetoed paper so the test is meaningful',
   ).toBeGreaterThan(0)
 
-  await openWizardWithCountry(page, slug, 'belgium')
+  await openWizard(page, slug)
 
   // TPS bundles printType + paper into a single "Print" section with two
   // SelectDropdowns labeled "Type" and "Paper". Papers cascade on the

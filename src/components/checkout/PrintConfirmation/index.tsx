@@ -6,6 +6,8 @@ import Link from 'next/link'
 
 import Logo from '@/icons/logo.svg'
 
+import { clearPrintSession } from '../clearPrintSession'
+
 import styles from './PrintConfirmation.module.scss'
 
 interface PrintConfirmationProps {
@@ -31,12 +33,10 @@ interface PrintConfirmationProps {
 export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintConfirmationProps) => {
   useEffect(() => {
     if (status !== 'succeeded' && status !== 'processing') return
-    try {
-      sessionStorage.removeItem(`print-payment:${artwork.slug}`)
-      sessionStorage.removeItem(`print-address:${artwork.slug}`)
-    } catch {
-      // Non-fatal — storage may be disabled.
-    }
+    // Wipe every stash for this artwork so a return visit starts the
+    // wizard fresh — the previous order's config / country / address /
+    // payment ids would otherwise re-hydrate on the next /print mount.
+    clearPrintSession(artwork.slug)
   }, [artwork.slug, status])
 
   const headline =

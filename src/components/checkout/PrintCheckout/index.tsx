@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
 import Logo from '@/icons/logo.svg'
 import {
   type ProviderId,
@@ -28,6 +29,8 @@ const regionNames =
     ? new Intl.DisplayNames(['en'], { type: 'region' })
     : null
 const countryName = (code: string) => regionNames?.of(code) ?? code
+const sortCountries = (codes: string[]) =>
+  [...codes].sort((a, b) => countryName(a).localeCompare(countryName(b)))
 
 export type CheckoutArtwork = {
   slug: string
@@ -45,8 +48,10 @@ interface PrintCheckoutProps {
   /** Server-authoritative provider for this artwork — used to dispatch
    *  quote calls and the server-side payment intent. */
   providerId: ProviderId
-  /** ISO country code the wizard validated. */
-  country: string
+  /** ISO codes the catalog can ship to — drives the country dropdown. */
+  supportedCountries: string[]
+  /** Pre-filled country (e.g. when the buyer comes back from payment). */
+  initialCountry: string
 }
 
 type AddressForm = {
@@ -70,14 +75,30 @@ type WizardHandoff = {
   specs: SpecsSummary
 }
 
-export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutProps) => {
+export const PrintCheckout = ({
+  artwork,
+  providerId,
+  supportedCountries,
+  initialCountry,
+}: PrintCheckoutProps) => {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
+  const [country, setCountry] = useState<string>(initialCountry)
   const [handoff, setHandoff] = useState<WizardHandoff | null>(null)
+  const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(true)
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const countryOptions: SelectOption<string>[] = useMemo(
+    () =>
+      sortCountries(supportedCountries).map((code) => ({
+        value: code,
+        label: countryName(code),
+      })),
+    [supportedCountries],
+  )
   // Form validity is tracked separately because inputs are uncontrolled
   // (so Chrome autofill works without React re-renders clobbering values).
   // We poll the native HTML5 validity on every form input event.
@@ -127,10 +148,8 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
 
   const backToWizard = () => {
     // Forward every wizard option back into the URL so the wizard
-    // re-hydrates the buyer's exact selection. Mirrors the
-    // wizard → checkout handoff in PrintWizard's handleAddToCart.
-    // Falls back to country+provider only when there's no handoff
-    // (the bouncing-back-from-stale-link path).
+    // re-hydrates the buyer's exact selection. Country is intentionally
+    // omitted — it lives on the checkout step now, not the wizard.
     const params = new URLSearchParams()
     if (handoff) {
       for (const [key, value] of Object.entries(handoff.config.values)) {
@@ -148,17 +167,9 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
         }
       }
     }
-    params.set('country', country)
     params.set('provider', providerId)
     router.push(`/artworks/${artwork.slug}/print?${params.toString()}`)
   }
-
-  // If we landed here without a country (URL tampering or stale link) the
-  // wizard's validation is the only check we trust — bounce the user back.
-  useEffect(() => {
-    if (!country) backToWizard()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [country])
 
   // Chrome autofill doesn't always fire input events — poll validity a
   // few times after mount so the Continue button unlocks once autofill
@@ -195,73 +206,76 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Read the wizard's stash on mount. The wizard always writes a full
-  // `WizardHandoff` blob keyed by artwork slug — we trust it as long as
-  // the (providerId, country) match the page route's authoritative
-  // values. When it doesn't, or it's missing entirely, we re-fetch a
-  // live quote from the same provider; if even that fails we bounce
-  // the buyer back to the wizard.
+  // Read the wizard's stash on mount. The wizard hands off without a
+  // country (country is picked here), so we don't validate against
+  // country any more — just (artwork slug, providerId). If the stash
+  // happens to have a country (buyer picked one and bounced back +
+  // forth) seed our local state from it.
   useEffect(() => {
-    if (!country) return
-    let cancelled = false
-
-    const stash = readHandoff(artwork.slug, providerId, country)
+    const stash = readHandoff(artwork.slug, providerId)
     if (stash) {
       setHandoff(stash)
-      setQuoteLoading(false)
       setQuoteError(null)
+      if (stash.country && !country) setCountry(stash.country)
       return
     }
-
-    // No usable stash — fall back to a live re-quote against the
-    // provider URL params alone. We don't have a full WizardConfig
-    // server-side, so this branch only runs when the buyer arrived
-    // via a stale URL or different tab. In that case there's no
-    // config to pass — bounce to the wizard.
-    setQuoteLoading(false)
+    // No usable stash — buyer arrived via a stale URL or different
+    // tab. Bounce to the wizard so they can reconfigure.
     setQuoteError('Your selection expired. Please reconfigure your print.')
-    if (!cancelled) backToWizard()
-
-    return () => {
-      cancelled = true
-    }
+    backToWizard()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artwork.slug, providerId, country])
+  }, [artwork.slug, providerId])
 
-  // Refresh the live quote against the same provider in the background
-  // so the totals shown here always come from a fresh server-side
-  // calculation — guards against the wizard's stash going stale (e.g.
-  // pricing tables changed mid-session). The stash gets us instant
-  // first paint; this re-validates.
+  // Persist the picked country back into the wizard handoff stash so
+  // navigating back to the wizard pre-fills "Shipping to" and shows
+  // the real shipping line instead of dashes.
+  useEffect(() => {
+    if (!handoff) return
+    try {
+      sessionStorage.setItem(
+        `print-quote:${artwork.slug}`,
+        JSON.stringify({ ...handoff, country, quote: quote ?? handoff.quote }),
+      )
+    } catch {
+      // sessionStorage can be disabled/full — non-fatal.
+    }
+  }, [handoff, country, quote, artwork.slug])
+
+  // Re-quote on every (config, country) change. When `country` is
+  // empty, the server returns only the artwork line — shipping and
+  // tax show "—" in the summary until the buyer picks a destination.
   useEffect(() => {
     if (!handoff) return
     let cancelled = false
+    setQuoteLoading(true)
 
     getProviderQuote(handoff.providerId, {
       config: handoff.config,
-      country: handoff.country,
+      country,
       artistPriceCents: artwork.printPriceCents,
     })
-      .then((quote) => {
+      .then((next) => {
         if (cancelled) return
-        setHandoff((prev) => (prev ? { ...prev, quote } : prev))
+        setQuote(next)
+        setQuoteLoading(false)
       })
       .catch((err) => {
         if (cancelled) return
-        console.warn('[PrintCheckout] live quote refresh failed:', err)
+        console.warn('[PrintCheckout] live quote failed:', err)
+        setQuote(null)
+        setQuoteLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-  }, [handoff?.providerId, handoff?.config, handoff?.country, artwork.printPriceCents])
+  }, [handoff?.providerId, handoff?.config, country, artwork.printPriceCents])
 
-  const quote = handoff?.quote ?? null
   const specs: SpecsSummary = handoff?.specs ?? []
   const orientation: 'portrait' | 'landscape' =
     handoff?.config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
 
-  const canSubmit = !!quote && !quoteLoading && formValid && !!handoff
+  const canSubmit = !!quote && !quoteLoading && formValid && !!handoff && !!country
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -319,8 +333,6 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
     }
   }
 
-  if (!country) return null
-
   return (
     <div className={styles.checkout}>
       <header className={styles.header}>
@@ -351,14 +363,16 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
         >
           <h2 className={styles.formSectionTitle}>Where should we send it?</h2>
 
-          <div className={styles.destinationLock}>
-            <div className={styles.destinationLockLine}>
-              <span className={styles.destinationLockLabel}>Shipping to</span>
-              <strong className={styles.destinationLockValue}>{countryName(country)}</strong>
-            </div>
-            <button type="button" onClick={backToWizard} className={styles.destinationLockChange}>
-              Change destination
-            </button>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label className={styles.fieldLabel} htmlFor="country">
+              Country
+            </label>
+            <SelectDropdown<string>
+              options={countryOptions}
+              value={country}
+              onChange={setCountry}
+              placeholder="Choose a country…"
+            />
           </div>
 
           <div className={styles.fieldGrid}>
@@ -510,33 +524,33 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
           specs={specs}
           orientation={orientation}
           country={country}
-          priceLines={
-            quote
-              ? quote.lines.map((line) => ({
-                  label: line.label,
-                  value: formatEuro(line.amountCents),
-                  muted: line.muted,
-                }))
-              : [
-                  {
-                    label: 'Artwork',
-                    value: quoteLoading ? (
-                      <span className={styles.priceCalculating}>
-                        Calculating…
-                        <span className={styles.priceSpinner} aria-hidden="true">
-                          <Icon name="loaderCircle" size={12} />
-                        </span>
-                      </span>
-                    ) : (
-                      '—'
-                    ),
-                  },
-                  { label: 'Shipping', value: quoteLoading ? '…' : '—', muted: true },
-                ]
-          }
+          priceLines={(() => {
+            const artworkLine = quote?.lines.find((l) => l.id === 'artwork')
+            const shippingLine = quote?.lines.find((l) => l.id === 'shipping')
+            const placeholder = quoteLoading ? '…' : '—'
+            const vatLabel = quote?.taxLabel ?? 'VAT'
+            const vatValue =
+              quote && quote.taxCents > 0 ? formatEuro(quote.taxCents) : country ? '—' : '—'
+            return [
+              {
+                label: 'Artwork',
+                value: artworkLine ? formatEuro(artworkLine.amountCents) : placeholder,
+              },
+              {
+                label: 'Shipping',
+                value: shippingLine ? formatEuro(shippingLine.amountCents) : '—',
+                muted: true,
+              },
+              {
+                label: vatLabel,
+                value: vatValue,
+                muted: true,
+              },
+            ]
+          })()}
           total={{
-            label: 'Total (before taxes)',
-            value: quote ? formatEuro(quote.subtotalCents) : '—',
+            label: country ? 'Total' : 'Total (before taxes)',
+            value: quote ? formatEuro(quote.totalCents) : '—',
           }}
           notes={[quoteError, submitError].filter((n): n is string => Boolean(n))}
           cta={{
@@ -554,22 +568,20 @@ export const PrintCheckout = ({ artwork, providerId, country }: PrintCheckoutPro
 }
 
 /**
- * Read and validate the wizard → checkout handoff blob from
- * sessionStorage. We trust the stash as long as the (providerId,
- * country) match what the server route resolved to. Returns null when
- * the stash is missing, malformed, or for a different
- * provider/country.
+ * Read the wizard → checkout handoff blob from sessionStorage. The
+ * wizard hands off without a country (it's picked on this step), so
+ * we only validate that the providerId still matches what the page
+ * route resolved.
  */
-function readHandoff(slug: string, providerId: ProviderId, country: string): WizardHandoff | null {
+function readHandoff(slug: string, providerId: ProviderId): WizardHandoff | null {
   try {
     const raw = sessionStorage.getItem(`print-quote:${slug}`)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Partial<WizardHandoff>
-    if (!parsed.providerId || !parsed.config || !parsed.country || !parsed.quote || !parsed.specs) {
+    if (!parsed.providerId || !parsed.config || !parsed.quote || !parsed.specs) {
       return null
     }
     if (parsed.providerId !== providerId) return null
-    if (parsed.country !== country) return null
     return parsed as WizardHandoff
   } catch {
     return null

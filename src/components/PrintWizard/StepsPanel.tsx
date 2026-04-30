@@ -33,20 +33,9 @@ interface StepsPanelProps {
   onChange: (patch: Record<string, string>) => void
   onCustomSizeChange: (size: { widthCm: number; heightCm: number }) => void
   onBorderChange: (dimensionId: string, allCm: number) => void
-  countryCode: string
-  onCountryChange: (code: string) => void
   availability: AvailabilityCheck
   restrictions: PrintRestrictions | null
-  noViableCombo: boolean
 }
-
-const regionNames =
-  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
-    ? new Intl.DisplayNames(['en'], { type: 'region' })
-    : null
-const countryName = (code: string) => regionNames?.of(code) ?? code
-const sortCountries = (codes: string[]) =>
-  [...codes].sort((a, b) => countryName(a).localeCompare(countryName(b)))
 
 export const StepsPanel = ({
   catalog,
@@ -55,21 +44,14 @@ export const StepsPanel = ({
   onChange,
   onCustomSizeChange,
   onBorderChange,
-  countryCode,
-  onCountryChange,
   availability,
   restrictions,
-  noViableCombo,
 }: StepsPanelProps) => {
-  // Per-step open/closed state. Keyed by dimension id (plus 'destination'
-  // for the always-on country picker). Independent — buyer can have any
-  // combination open. Destination auto-opens when no country has been
-  // picked yet so the buyer's first click reveals the country dropdown
-  // directly (otherwise they'd have to click "Destination" first to
-  // expose it, which read as broken).
-  const [openSteps, setOpenSteps] = useState<Set<string>>(
-    () => new Set(countryCode ? [] : ['destination']),
-  )
+  // Per-step open/closed state. Keyed by dimension id. Independent —
+  // buyer can have any combination open at once. Country isn't picked
+  // here any more (lives on the checkout step), so every section
+  // available is for the print configuration itself.
+  const [openSteps, setOpenSteps] = useState<Set<string>>(() => new Set())
   const toggle = (key: string) => (open: boolean) => {
     setOpenSteps((prev) => {
       const next = new Set(prev)
@@ -79,194 +61,161 @@ export const StepsPanel = ({
     })
   }
 
-  // Country picker uses the catalog's full supportedCountries list.
-  const countryOptions: SelectOption<string>[] = useMemo(
-    () =>
-      sortCountries(catalog.supportedCountries).map((code) => ({
-        value: code,
-        label: countryName(code),
-      })),
-    [catalog.supportedCountries],
-  )
-
-  const optionsLocked = !countryCode
+  // Country never gates option selection here — the checkout step
+  // handles destination and re-quotes. The catalog ships everything
+  // everywhere, so options stay unlocked always.
+  const countryCode = ''
+  const optionsLocked = false
 
   return (
     <aside className={styles.stepsPanel}>
-      <CollapsibleSection
-        title="Destination"
-        open={openSteps.has('destination')}
-        onToggle={toggle('destination')}
-      >
-        <div className={styles.stepField}>
-          <SelectDropdown<string>
-            options={countryOptions}
-            value={countryCode}
-            onChange={onCountryChange}
-            placeholder="Choose a country…"
-          />
-          {countryCode && noViableCombo && (
-            <p className={styles.destinationNotice}>
-              Sorry — this artwork isn&apos;t currently available for shipping to{' '}
-              {countryName(countryCode)}. Try a different destination.
-            </p>
-          )}
-        </div>
-      </CollapsibleSection>
+      {(() => {
+        // The catalog bundles a few dimensions that are read as one decision:
+        //   - printType + paper       (paper is filtered by process)
+        //   - format + frameType + moulding (frame parts only matter
+        //     once the buyer opts into framing)
+        // We render those as single sections so the buyer doesn't see
+        // 5 separate dropdowns for what is really 2 questions. Each
+        // group renders in place of its leader dimension, preserving
+        // the catalog's declared order.
+        const dimsById = new Map(catalog.dimensions.map((d) => [d.id, d]))
+        const printType = dimsById.get('printType')
+        const paper = dimsById.get('paper')
+        const size = dimsById.get('size')
+        const border = dimsById.get('border')
+        const format = dimsById.get('format')
+        const frameType = dimsById.get('frameType')
+        const moulding = dimsById.get('moulding')
+        const glass = dimsById.get('glass')
+        const hanging = dimsById.get('hanging')
+        const windowMount = dimsById.get('windowMount')
+        const windowMountSize = dimsById.get('windowMountSize')
 
-      {countryCode &&
-        !noViableCombo &&
-        (() => {
-          // The catalog bundles a few dimensions that are read as one decision:
-          //   - printType + paper       (paper is filtered by process)
-          //   - format + frameType + moulding (frame parts only matter
-          //     once the buyer opts into framing)
-          // We render those as single sections so the buyer doesn't see
-          // 5 separate dropdowns for what is really 2 questions. Each
-          // group renders in place of its leader dimension, preserving
-          // the catalog's declared order.
-          const dimsById = new Map(catalog.dimensions.map((d) => [d.id, d]))
-          const printType = dimsById.get('printType')
-          const paper = dimsById.get('paper')
-          const size = dimsById.get('size')
-          const border = dimsById.get('border')
-          const format = dimsById.get('format')
-          const frameType = dimsById.get('frameType')
-          const moulding = dimsById.get('moulding')
-          const glass = dimsById.get('glass')
-          const hanging = dimsById.get('hanging')
-          const windowMount = dimsById.get('windowMount')
-          const windowMountSize = dimsById.get('windowMountSize')
+        const printGrouped =
+          printType && paper && printType.kind === 'enum' && paper.kind === 'enum'
+        const sizeGrouped = size && border && size.kind === 'size' && border.kind === 'border'
+        const frameGrouped =
+          format &&
+          frameType &&
+          moulding &&
+          format.kind === 'enum' &&
+          frameType.kind === 'enum' &&
+          moulding.kind === 'enum'
 
-          const printGrouped =
-            printType && paper && printType.kind === 'enum' && paper.kind === 'enum'
-          const sizeGrouped = size && border && size.kind === 'size' && border.kind === 'border'
-          const frameGrouped =
-            format &&
-            frameType &&
-            moulding &&
-            format.kind === 'enum' &&
-            frameType.kind === 'enum' &&
-            moulding.kind === 'enum'
+        const groupLeader = new Map<string, 'print' | 'size' | 'frame'>()
+        if (printGrouped) {
+          groupLeader.set('printType', 'print')
+          groupLeader.set('paper', 'print')
+        }
+        if (sizeGrouped) {
+          // Paper border is a size-shaping decision (extra white
+          // space around the image), so it lives next to the print
+          // size itself rather than in its own section.
+          groupLeader.set('size', 'size')
+          groupLeader.set('border', 'size')
+        }
+        if (frameGrouped) {
+          // Everything that only matters once the buyer opts into
+          // framing lives in one section: frame parts, glass, hanging,
+          // and the passepartout (window mount + its size slider).
+          // Without framing none of these have meaningful values.
+          groupLeader.set('format', 'frame')
+          groupLeader.set('frameType', 'frame')
+          groupLeader.set('moulding', 'frame')
+          if (glass?.kind === 'enum') groupLeader.set('glass', 'frame')
+          if (hanging?.kind === 'enum') groupLeader.set('hanging', 'frame')
+          if (windowMount?.kind === 'enum') groupLeader.set('windowMount', 'frame')
+          if (windowMountSize?.kind === 'border') groupLeader.set('windowMountSize', 'frame')
+        }
 
-          const groupLeader = new Map<string, 'print' | 'size' | 'frame'>()
-          if (printGrouped) {
-            groupLeader.set('printType', 'print')
-            groupLeader.set('paper', 'print')
-          }
-          if (sizeGrouped) {
-            // Paper border is a size-shaping decision (extra white
-            // space around the image), so it lives next to the print
-            // size itself rather than in its own section.
-            groupLeader.set('size', 'size')
-            groupLeader.set('border', 'size')
-          }
-          if (frameGrouped) {
-            // Everything that only matters once the buyer opts into
-            // framing lives in one section: frame parts, glass, hanging,
-            // and the passepartout (window mount + its size slider).
-            // Without framing none of these have meaningful values.
-            groupLeader.set('format', 'frame')
-            groupLeader.set('frameType', 'frame')
-            groupLeader.set('moulding', 'frame')
-            if (glass?.kind === 'enum') groupLeader.set('glass', 'frame')
-            if (hanging?.kind === 'enum') groupLeader.set('hanging', 'frame')
-            if (windowMount?.kind === 'enum') groupLeader.set('windowMount', 'frame')
-            if (windowMountSize?.kind === 'border') groupLeader.set('windowMountSize', 'frame')
-          }
-
-          return (
-            <>
-              {catalog.dimensions.map((dim) => {
-                const group = groupLeader.get(dim.id)
-                if (group === 'print' && dim.id !== 'printType') return null
-                if (group === 'size' && dim.id !== 'size') return null
-                if (group === 'frame' && dim.id !== 'format') return null
-                if (group === 'print' && printGrouped && printType && paper) {
-                  return (
-                    <PrintAndPaperSection
-                      key="printAndPaper"
-                      printType={printType}
-                      paper={paper}
-                      config={config}
-                      countryCode={countryCode}
-                      availability={availability}
-                      restrictions={restrictions}
-                      optionsLocked={optionsLocked}
-                      open={openSteps.has('printAndPaper')}
-                      onToggle={toggle('printAndPaper')}
-                      onChange={onChange}
-                    />
-                  )
-                }
-                if (group === 'size' && sizeGrouped && size && border) {
-                  return (
-                    <SizeAndBorderSection
-                      key="sizeAndBorder"
-                      size={size}
-                      border={border}
-                      config={config}
-                      aspectRatio={aspectRatio}
-                      countryCode={countryCode}
-                      availability={availability}
-                      restrictions={restrictions}
-                      optionsLocked={optionsLocked}
-                      open={openSteps.has('sizeAndBorder')}
-                      onToggle={toggle('sizeAndBorder')}
-                      onChange={onChange}
-                      onCustomSizeChange={onCustomSizeChange}
-                      onBorderChange={onBorderChange}
-                    />
-                  )
-                }
-                if (group === 'frame' && frameGrouped && format && frameType && moulding) {
-                  return (
-                    <FrameSection
-                      key="frameGroup"
-                      format={format}
-                      frameType={frameType}
-                      moulding={moulding}
-                      glass={glass?.kind === 'enum' ? glass : undefined}
-                      hanging={hanging?.kind === 'enum' ? hanging : undefined}
-                      windowMount={windowMount?.kind === 'enum' ? windowMount : undefined}
-                      windowMountSize={
-                        windowMountSize?.kind === 'border' ? windowMountSize : undefined
-                      }
-                      catalog={catalog}
-                      config={config}
-                      countryCode={countryCode}
-                      availability={availability}
-                      restrictions={restrictions}
-                      optionsLocked={optionsLocked}
-                      open={openSteps.has('frameGroup')}
-                      onToggle={toggle('frameGroup')}
-                      onChange={onChange}
-                      onBorderChange={onBorderChange}
-                    />
-                  )
-                }
+        return (
+          <>
+            {catalog.dimensions.map((dim) => {
+              const group = groupLeader.get(dim.id)
+              if (group === 'print' && dim.id !== 'printType') return null
+              if (group === 'size' && dim.id !== 'size') return null
+              if (group === 'frame' && dim.id !== 'format') return null
+              if (group === 'print' && printGrouped && printType && paper) {
                 return (
-                  <DimensionSection
-                    key={dim.id}
-                    dimension={dim}
-                    catalog={catalog}
+                  <PrintAndPaperSection
+                    key="printAndPaper"
+                    printType={printType}
+                    paper={paper}
                     config={config}
-                    aspectRatio={aspectRatio}
                     countryCode={countryCode}
                     availability={availability}
                     restrictions={restrictions}
                     optionsLocked={optionsLocked}
-                    open={openSteps.has(dim.id)}
-                    onToggle={toggle(dim.id)}
+                    open={openSteps.has('printAndPaper')}
+                    onToggle={toggle('printAndPaper')}
                     onChange={onChange}
+                  />
+                )
+              }
+              if (group === 'size' && sizeGrouped && size && border) {
+                return (
+                  <SizeAndBorderSection
+                    key="sizeAndBorder"
+                    size={size}
+                    border={border}
+                    config={config}
+                    aspectRatio={aspectRatio}
+                    optionsLocked={optionsLocked}
+                    open={openSteps.has('sizeAndBorder')}
+                    onToggle={toggle('sizeAndBorder')}
                     onCustomSizeChange={onCustomSizeChange}
                     onBorderChange={onBorderChange}
                   />
                 )
-              })}
-            </>
-          )
-        })()}
+              }
+              if (group === 'frame' && frameGrouped && format && frameType && moulding) {
+                return (
+                  <FrameSection
+                    key="frameGroup"
+                    format={format}
+                    frameType={frameType}
+                    moulding={moulding}
+                    glass={glass?.kind === 'enum' ? glass : undefined}
+                    hanging={hanging?.kind === 'enum' ? hanging : undefined}
+                    windowMount={windowMount?.kind === 'enum' ? windowMount : undefined}
+                    windowMountSize={
+                      windowMountSize?.kind === 'border' ? windowMountSize : undefined
+                    }
+                    catalog={catalog}
+                    config={config}
+                    countryCode={countryCode}
+                    availability={availability}
+                    restrictions={restrictions}
+                    optionsLocked={optionsLocked}
+                    open={openSteps.has('frameGroup')}
+                    onToggle={toggle('frameGroup')}
+                    onChange={onChange}
+                    onBorderChange={onBorderChange}
+                  />
+                )
+              }
+              return (
+                <DimensionSection
+                  key={dim.id}
+                  dimension={dim}
+                  catalog={catalog}
+                  config={config}
+                  aspectRatio={aspectRatio}
+                  countryCode={countryCode}
+                  availability={availability}
+                  restrictions={restrictions}
+                  optionsLocked={optionsLocked}
+                  open={openSteps.has(dim.id)}
+                  onToggle={toggle(dim.id)}
+                  onChange={onChange}
+                  onCustomSizeChange={onCustomSizeChange}
+                  onBorderChange={onBorderChange}
+                />
+              )
+            })}
+          </>
+        )
+      })()}
     </aside>
   )
 }
@@ -372,13 +321,9 @@ interface SizeAndBorderSectionProps {
   border: BorderDimension
   config: WizardConfig
   aspectRatio: number
-  countryCode: string
-  availability: AvailabilityCheck
-  restrictions: PrintRestrictions | null
   optionsLocked: boolean
   open: boolean
   onToggle: (open: boolean) => void
-  onChange: (patch: Record<string, string>) => void
   onCustomSizeChange: (size: { widthCm: number; heightCm: number }) => void
   onBorderChange: (dimensionId: string, allCm: number) => void
 }
@@ -388,69 +333,22 @@ const SizeAndBorderSection = ({
   border,
   config,
   aspectRatio,
-  countryCode,
-  availability,
-  restrictions,
   optionsLocked,
   open,
   onToggle,
-  onChange,
   onCustomSizeChange,
   onBorderChange,
 }: SizeAndBorderSectionProps) => {
-  const orientation: 'portrait' | 'landscape' =
-    config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
-
-  const filtered = useMemo(() => {
-    return size.options
-      .filter((o) => o.printEligible)
-      .filter((o) =>
-        isOptionPickable(o, {
-          dimensionId: size.id,
-          config,
-          country: countryCode,
-          availability,
-          restrictions,
-        }),
-      )
-  }, [size, config, countryCode, availability, restrictions])
-
-  const sorted = useMemo(() => {
-    const order: Record<SizeOption['fit'], number> = { perfect: 0, close: 1, mismatch: 2 }
-    return [...filtered].sort((a, b) => order[a.fit] - order[b.fit])
-  }, [filtered])
-
-  const hasPresets = size.options.length > 0
-  const customMode = !hasPresets && size.custom !== undefined
-
-  const selectOptions: SelectOption<string>[] = useMemo(
-    () =>
-      sorted.map((s) => ({
-        value: s.id,
-        label: sizeOptionLabel(s, orientation),
-      })),
-    [sorted, orientation],
-  )
-
   return (
     <CollapsibleSection title={size.label} open={open} onToggle={onToggle}>
       <div className={styles.stepField}>
-        {customMode ? (
-          <CustomSizeInputs
-            dimension={size}
-            aspectRatio={aspectRatio}
-            customSize={config.customSize}
-            disabled={optionsLocked}
-            onChange={onCustomSizeChange}
-          />
-        ) : (
-          <SelectDropdown<string>
-            options={selectOptions}
-            value={config.values[size.id] ?? ''}
-            onChange={(v) => onChange({ [size.id]: v })}
-            disabled={optionsLocked}
-          />
-        )}
+        <CustomSizeInputs
+          dimension={size}
+          aspectRatio={aspectRatio}
+          customSize={config.customSize}
+          disabled={optionsLocked}
+          onChange={onCustomSizeChange}
+        />
       </div>
       <BorderSlider
         dim={border}
@@ -1021,15 +919,31 @@ const CustomSizeInputs = ({
       return
     }
 
+    // Aspect-locked. Compute the feasible range for the edited side
+    // such that the *other* side also lands within [minCm, maxCm].
+    // Otherwise typing 10 for width on a 1.5:1 landscape would clamp
+    // height to minCm (10) and the lock appears broken.
+    const minSide = custom.minCm
+    const maxSide = custom.maxCm
+    let w: number
+    let h: number
     if (which === 'width') {
-      const w = clampCm(parsed, custom.minCm, custom.maxCm, custom.stepCm)
-      const h = clampCm(w / ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
-      onChange({ widthCm: w, heightCm: h })
+      const minW = Math.max(minSide, minSide * ratioWH)
+      const maxW = Math.min(maxSide, maxSide * ratioWH)
+      w = clampCm(Math.max(minW, Math.min(maxW, parsed)), custom.minCm, custom.maxCm, custom.stepCm)
+      h = clampCm(w / ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
+      // Mirror to the other field so the buyer sees it follow live
+      // (the editing-gate would otherwise hold the stale value until
+      // blur).
+      setHeightInput(formatCm(h, custom.stepCm))
     } else {
-      const h = clampCm(parsed, custom.minCm, custom.maxCm, custom.stepCm)
-      const w = clampCm(h * ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
-      onChange({ widthCm: w, heightCm: h })
+      const minH = Math.max(minSide, minSide / ratioWH)
+      const maxH = Math.min(maxSide, maxSide / ratioWH)
+      h = clampCm(Math.max(minH, Math.min(maxH, parsed)), custom.minCm, custom.maxCm, custom.stepCm)
+      w = clampCm(h * ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
+      setWidthInput(formatCm(w, custom.stepCm))
     }
+    onChange({ widthCm: w, heightCm: h })
   }
 
   return (

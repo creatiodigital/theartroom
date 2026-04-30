@@ -27,7 +27,7 @@ interface SpecListProps {
   visibleByDefault?: number
 }
 
-export const SpecList = ({ specs, className, visibleByDefault = 4 }: SpecListProps) => {
+export const SpecList = ({ specs, className, visibleByDefault = 5 }: SpecListProps) => {
   const [expanded, setExpanded] = useState(false)
   if (specs.length === 0) return null
 

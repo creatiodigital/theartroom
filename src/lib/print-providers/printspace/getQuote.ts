@@ -6,13 +6,12 @@ import {
   TPS_GALLERY_MARKUP_RATE,
   TPS_HANGING_SUPPLEMENT_CENTS,
   TPS_SHIPPING_PRINTS_CENTS,
-  TPS_VAT_RATE,
   getFrameShippingCents,
   getFrameSupplementCents,
   getGlassSupplementCents,
   getMountBoardSupplementCents,
   getPrintBaseCents,
-  isEuVatCountry,
+  getVatRate,
   resolveTpsRegion,
 } from './pricing'
 
@@ -22,8 +21,12 @@ import {
  * gallery accepts a small variance and rounds slightly upward so the
  * delta always lands in the gallery's favour, never the buyer's.
  *
+ * `country` is optional. When the buyer hasn't picked one yet (wizard
+ * step 1) we return only the artwork line — no shipping, no tax. The
+ * checkout step calls this again with a country to fold those in.
+ *
  * Composition:
- *   subtotal = artist + gallery markup + print base + frame + glass + hanging + shipping
+ *   subtotal = artist + gallery markup + print base + frame + glass + hanging [+ shipping]
  *   tax      = 21% on subtotal when shipping to an EU country
  *   total    = subtotal + tax
  */
@@ -36,7 +39,7 @@ export async function getPrintspaceQuote(input: GetQuoteInput): Promise<Quote> {
   // throwing.
   const widthCm = config.customSize?.widthCm ?? 21
   const heightCm = config.customSize?.heightCm ?? 30
-  const region = resolveTpsRegion(country)
+  const hasCountry = !!country
 
   const formatId = config.values.format
   const isFramed = formatId === 'framing'
@@ -68,14 +71,8 @@ export async function getPrintspaceQuote(input: GetQuoteInput): Promise<Quote> {
   // Gallery markup on the artist's price.
   const galleryCents = Math.round(artistPriceCents * TPS_GALLERY_MARKUP_RATE)
 
-  // Shipping — flat per-print rate when not framed; tiered per-frame
-  // rate when framed (long-edge cm).
-  const shippingCents = isFramed
-    ? getFrameShippingCents(region, widthCm, heightCm)
-    : TPS_SHIPPING_PRINTS_CENTS[region]
-
   // Wizard summary lumps artwork + production into a single "Artwork"
-  // line and shows shipping separately.
+  // line and shows shipping separately when a destination is set.
   const artworkLineCents =
     artistPriceCents +
     galleryCents +
@@ -85,21 +82,43 @@ export async function getPrintspaceQuote(input: GetQuoteInput): Promise<Quote> {
     hangingCents +
     mountCents
 
+  const lines: QuoteLine[] = [{ id: 'artwork', label: 'Artwork', amountCents: artworkLineCents }]
+
+  if (!hasCountry) {
+    return {
+      currency: 'EUR',
+      lines,
+      subtotalCents: artworkLineCents,
+      taxCents: 0,
+      totalCents: artworkLineCents,
+    }
+  }
+
+  // Shipping — flat per-print rate when not framed; tiered per-frame
+  // rate when framed (long-edge cm).
+  const region = resolveTpsRegion(country)
+  const shippingCents = isFramed
+    ? getFrameShippingCents(region, widthCm, heightCm)
+    : TPS_SHIPPING_PRINTS_CENTS[region]
+  lines.push({ id: 'shipping', label: 'Shipping', amountCents: shippingCents, muted: true })
+
   const subtotalCents = artworkLineCents + shippingCents
-  const taxCents = isEuVatCountry(country) ? Math.round(subtotalCents * TPS_VAT_RATE) : 0
+  const vatRate = getVatRate(country)
+  const taxCents = Math.round(subtotalCents * vatRate)
   const totalCents = subtotalCents + taxCents
 
-  const lines: QuoteLine[] = [
-    { id: 'artwork', label: 'Artwork', amountCents: artworkLineCents },
-    { id: 'shipping', label: 'Shipping', amountCents: shippingCents, muted: true },
-  ]
+  // Format the rate as a percentage with up to 1 decimal so 19% / 25.5%
+  // both render cleanly. Country code stays in the label so the buyer
+  // sees which jurisdiction the rate is for.
+  const ratePercent = vatRate * 100
+  const rateText = Number.isInteger(ratePercent) ? `${ratePercent}%` : `${ratePercent.toFixed(1)}%`
 
   return {
     currency: 'EUR',
     lines,
     subtotalCents,
     taxCents,
-    taxLabel: taxCents > 0 ? 'VAT (21%)' : undefined,
+    taxLabel: vatRate > 0 ? `VAT (${country.toUpperCase()} ${rateText})` : undefined,
     totalCents,
   }
 }

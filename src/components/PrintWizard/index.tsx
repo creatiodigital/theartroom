@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -15,8 +15,6 @@ import {
   type WizardConfig,
   buildAvailability,
   buildInitialConfig,
-  configShipsTo,
-  findShippableConfig,
   summarizeConfig,
 } from '@/lib/print-providers'
 import { getProviderQuote } from '@/lib/print-providers/quote'
@@ -72,19 +70,21 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
       ? artwork.originalWidthPx / artwork.originalHeightPx
       : 1)
 
-  // Restore from URL params on mount (e.g. user came back from checkout).
+  // Restore from URL params on mount (e.g. user came back from checkout
+  // via backToWizard, which always forwards the in-flight selection in
+  // the URL). A bare /print URL = fresh entry; we ignore + later wipe
+  // any stale sessionStorage stash from a previous abandoned attempt.
   const urlSeed = useMemo(
     () => readConfigFromParams(catalog, searchParams),
     [catalog, searchParams],
   )
-  const urlCountry = searchParams.get('country') ?? ''
+  const hasSeed =
+    Object.keys(urlSeed.values).length > 0 ||
+    urlSeed.customSize !== undefined ||
+    urlSeed.borders !== undefined
 
   const [config, setConfig] = useState<WizardConfig>(() => {
     const fresh = buildInitialConfig(catalog, aspectRatio, restrictions)
-    const hasSeed =
-      Object.keys(urlSeed.values).length > 0 ||
-      urlSeed.customSize !== undefined ||
-      urlSeed.borders !== undefined
     if (!hasSeed) return fresh
     return {
       ...fresh,
@@ -93,6 +93,20 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
       borders: urlSeed.borders ?? fresh.borders,
     }
   })
+
+  // Fresh entry → wipe leftovers from a prior abandoned flow so the
+  // wizard / checkout / payment surfaces don't surface stale country,
+  // address, or payment-intent ids.
+  useEffect(() => {
+    if (hasSeed) return
+    try {
+      sessionStorage.removeItem(`print-quote:${artwork.slug}`)
+      sessionStorage.removeItem(`print-address:${artwork.slug}`)
+      sessionStorage.removeItem(`print-payment:${artwork.slug}`)
+    } catch {
+      // sessionStorage may be unavailable — non-fatal.
+    }
+  }, [hasSeed, artwork.slug])
 
   // Once the client-side image measurement lands, snap orientation to
   // match — unless the user has touched it (URL seed or manual toggle).
@@ -125,81 +139,41 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
     }))
   }
 
-  const [countryCode, setCountryCode] = useState<string>(urlCountry)
-
-  // Tracks last country so we can distinguish "first pick" (seed initial
-  // config from catalog availability) from "country change" (preserve
-  // picks where possible, snap others).
-  const prevCountryRef = useRef(urlCountry)
-
-  // True when no combination satisfies (ships-to-country) AND
-  // (artist-allowed) for the current destination.
-  const [noViableCombo, setNoViableCombo] = useState(false)
-
-  const shipsCurrent = useMemo(
-    () => configShipsTo(catalog, config, countryCode, availability),
-    [catalog, config, countryCode, availability],
-  )
-
-  useEffect(() => {
-    if (!countryCode) {
-      prevCountryRef.current = ''
-      setNoViableCombo(false)
-      return
+  // Country lives on the checkout step. If the buyer already picked one
+  // there and bounced back to the wizard via the URL-seeded path, it
+  // persists via the wizard handoff stash so the summary reflects the
+  // choice (Shipping to: <country> + real shipping line). On fresh
+  // entry (no URL seed) we ignore the stash — that's an abandon-restart.
+  const [country] = useState<string>(() => {
+    if (!hasSeed) return ''
+    if (typeof window === 'undefined') return ''
+    try {
+      const raw = sessionStorage.getItem(`print-quote:${artwork.slug}`)
+      if (!raw) return ''
+      const parsed = JSON.parse(raw) as { country?: unknown }
+      return typeof parsed.country === 'string' ? parsed.country : ''
+    } catch {
+      return ''
     }
+  })
 
-    const firstPick = prevCountryRef.current === ''
-    prevCountryRef.current = countryCode
+  const canContinue = true
 
-    if (firstPick) {
-      const fresh = buildInitialConfig(catalog, aspectRatio, restrictions)
-      if (configShipsTo(catalog, fresh, countryCode, availability)) {
-        setConfig(fresh)
-        setNoViableCombo(false)
-        return
-      }
-      const seeded = findShippableConfig(catalog, fresh, countryCode, availability, restrictions)
-      if (seeded) {
-        setConfig(seeded)
-        setNoViableCombo(false)
-      } else {
-        setNoViableCombo(true)
-      }
-      return
-    }
-
-    if (shipsCurrent) {
-      setNoViableCombo(false)
-      return
-    }
-    const fixed = findShippableConfig(catalog, config, countryCode, availability, restrictions)
-    if (fixed) {
-      setConfig(fixed)
-      setNoViableCombo(false)
-    } else {
-      setNoViableCombo(true)
-    }
-  }, [catalog, countryCode, shipsCurrent, config, aspectRatio, availability, restrictions])
-
-  const canContinue = !!countryCode && shipsCurrent && !noViableCombo
-
-  // Pre-fetch quote eagerly on every config/country change so the
-  // summary always reflects the current selection. Cancelled mid-flight
-  // when inputs change to avoid races.
+  // Pre-fetch quote on every (config, country) change. Without a
+  // country the server returns just the artwork line — shipping + tax
+  // appear once a destination is set on the checkout step.
+  //
+  // We deliberately KEEP the previous quote visible while the new one
+  // is in flight. Clearing it on every keystroke makes the price flash
+  // between "€X" → "…" → "€Y" as the buyer drags a slider.
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
   useEffect(() => {
-    if (!canContinue) {
-      setQuote(null)
-      setQuoteLoading(false)
-      return
-    }
     let cancelled = false
-    setQuote(null)
     setQuoteLoading(true)
     getProviderQuote(catalog.providerId, {
       config,
-      country: countryCode,
+      country,
       artistPriceCents: artwork.printPriceCents,
     })
       .then((q) => {
@@ -210,22 +184,18 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
       .catch((err) => {
         if (cancelled) return
         console.warn('[PrintWizard] quote failed:', err)
-        setQuote(null)
         setQuoteLoading(false)
       })
     return () => {
       cancelled = true
     }
-  }, [canContinue, catalog.providerId, config, countryCode, artwork.printPriceCents])
+  }, [catalog.providerId, config, country, artwork.printPriceCents])
 
   const handleAddToCart = () => {
-    if (!canContinue) return
-    // Stash everything downstream needs so checkout/payment don't have
-    // to re-fetch the catalog or re-quote on every render. The blob is
-    // provider-agnostic — `providerId` lets the server-side payment
-    // handler dispatch quotes through the right adapter; `specs` are
-    // pre-computed labels so the OrderSummary stays decoupled from
-    // either provider's option vocabulary.
+    // Stash everything downstream needs so checkout doesn't have to
+    // re-fetch the catalog or re-quote on every render. Country is
+    // forwarded if the buyer already picked it; otherwise empty and
+    // checkout asks for it.
     const specs = summarizeConfig(catalog, config)
     if (quote) {
       try {
@@ -234,7 +204,7 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
           JSON.stringify({
             providerId: catalog.providerId,
             config,
-            country: countryCode,
+            country,
             quote,
             specs,
           }),
@@ -255,7 +225,7 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
         params.set(borderId, String(b.allCm))
       }
     }
-    params.set('country', countryCode)
+    if (country) params.set('country', country)
     params.set('provider', catalog.providerId)
     router.push(`/artworks/${artwork.slug}/print/checkout?${params.toString()}`)
   }
@@ -291,27 +261,25 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
           onChange={updateConfig}
           onCustomSizeChange={updateCustomSize}
           onBorderChange={updateBorder}
-          countryCode={countryCode}
-          onCountryChange={setCountryCode}
           availability={availability}
           restrictions={restrictions}
-          noViableCombo={noViableCombo}
         />
         <Scene
           imageUrl={artwork.imageUrl}
           catalog={catalog}
           config={config}
           imageAspectRatio={aspectRatio}
-          configReady={canContinue}
+          configReady
         />
         <SummaryPanel
           artwork={artwork}
           catalog={catalog}
           config={config}
+          country={country}
           quote={quote}
           quoteLoading={quoteLoading}
           canContinue={canContinue}
-          configReady={canContinue}
+          configReady
           onAddToCart={handleAddToCart}
         />
       </main>

@@ -625,15 +625,14 @@ export async function createTestOrder(): Promise<
 }
 
 /**
- * Hard-delete an order from the DB, with safety guards. Intended for
- * cleaning up test/mistaken orders pre-launch. Refuses to delete any
- * order that has captured money we haven't returned yet, or where the
- * artist payout has already been released — those cases need a Refund
- * (to return buyer money) or a manual Stripe reversal first.
+ * Hard-delete an order from the DB. Admin owns refund / payout reversal
+ * decisions outside this flow — this just removes the order row + its
+ * event history.
  *
- * If the payment is currently `authorized` (buyer's card on hold but
- * not charged), the Stripe PaymentIntent is cancelled first so the
- * hold releases.
+ * Best-effort: if the buyer's card is currently authorized (hold but
+ * not captured), we try to cancel the Stripe PaymentIntent first so
+ * the hold releases. Failure to cancel doesn't block the delete —
+ * admin chose to delete and we honour that.
  */
 export async function deleteOrder(
   orderId: string,
@@ -644,44 +643,23 @@ export async function deleteOrder(
   const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
   if (!order) return { ok: false, error: 'Order not found.' }
 
-  // Test orders carry synthetic Stripe PI ids that Stripe never issued
-  // (`pi_tps_test_*`). They have no real money attached, so we skip the
-  // captured-payment / payout-released guards and the Stripe cancel
-  // call. Production-like orders still have to be refunded before
-  // deletion.
   const isTestOrder = order.paymentIntentId.startsWith('pi_tps_test_')
 
-  if (!isTestOrder) {
-    if (order.transferId) {
-      return {
-        ok: false,
-        error:
-          'Artist payout already released — cannot delete. Recover funds from the artist first.',
-      }
-    }
-    if (order.paymentStatus === 'succeeded') {
-      return {
-        ok: false,
-        error: 'Payment was captured. Refund the buyer first; only then can the order be deleted.',
-      }
-    }
-
-    if (order.paymentStatus === 'authorized') {
-      try {
-        await stripe.paymentIntents.cancel(order.paymentIntentId)
-      } catch (err) {
-        captureError(err, {
-          flow: 'admin',
-          stage: 'delete-order-cancel-pi',
-          extra: { orderId, paymentIntentId: order.paymentIntentId },
-          level: 'error',
-          fingerprint: ['admin:delete-cancel-pi-failed'],
-        })
-        return {
-          ok: false,
-          error: `Stripe cancel failed: ${err instanceof Error ? err.message : String(err)}. Order not deleted.`,
-        }
-      }
+  // Best-effort release of the Stripe hold for live, still-authorized
+  // orders. If it fails (already captured upstream, already canceled,
+  // synthetic PI, etc.), we log and proceed — the admin asked for a
+  // delete and shouldn't be blocked by Stripe state.
+  if (!isTestOrder && order.paymentStatus === 'authorized') {
+    try {
+      await stripe.paymentIntents.cancel(order.paymentIntentId)
+    } catch (err) {
+      captureError(err, {
+        flow: 'admin',
+        stage: 'delete-order-cancel-pi',
+        extra: { orderId, paymentIntentId: order.paymentIntentId },
+        level: 'warning',
+        fingerprint: ['admin:delete-cancel-pi-failed'],
+      })
     }
   }
 

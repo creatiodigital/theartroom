@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { PrintCheckout } from '@/components/checkout/PrintCheckout'
+import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
 import prisma from '@/lib/prisma'
 
 interface CheckoutPageProps {
@@ -33,8 +34,15 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
   if (!artwork || !artwork.imageUrl) notFound()
   if (!artwork.printEnabled || !artwork.printPriceCents) notFound()
 
-  const country = pickString(sp.country) ?? ''
+  const initialCountry = pickString(sp.country) ?? ''
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`
+
+  // Load catalog for the country dropdown — every supported destination
+  // is offered. Buyer picks here (no longer pre-locked from the wizard).
+  const catalog = await loadProviderCatalog('printspace', {
+    imageWidthPx: artwork.originalWidth ?? 1000,
+    imageHeightPx: artwork.originalHeight ?? 1000,
+  })
 
   return (
     <PrintCheckout
@@ -49,7 +57,8 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
         printPriceCents: artwork.printPriceCents,
       }}
       providerId="printspace"
-      country={country}
+      supportedCountries={catalog.supportedCountries}
+      initialCountry={initialCountry}
     />
   )
 }

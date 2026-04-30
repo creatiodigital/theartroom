@@ -24,6 +24,10 @@ interface SummaryPanelProps {
   artwork: WizardArtwork
   catalog: Catalog
   config: WizardConfig
+  /** ISO country code if the buyer already picked one on checkout (then
+   *  navigated back). Empty string when the destination hasn't been
+   *  chosen yet — the summary shows "—" for shipping in that case. */
+  country: string
   quote: Quote | null
   quoteLoading: boolean
   canContinue: boolean
@@ -31,10 +35,17 @@ interface SummaryPanelProps {
   onAddToCart: () => void
 }
 
+const regionNames =
+  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
+    ? new Intl.DisplayNames(['en'], { type: 'region' })
+    : null
+const countryName = (code: string) => regionNames?.of(code) ?? code
+
 export const SummaryPanel = ({
   artwork,
   catalog,
   config,
+  country,
   quote,
   quoteLoading,
   canContinue,
@@ -114,30 +125,32 @@ export const SummaryPanel = ({
 
       <SpecList specs={summarizeConfig(catalog, config)} />
 
-      {quote ? (
-        <>
+      {(() => {
+        const artworkLine = quote?.lines.find((l) => l.id === 'artwork')
+        const shippingLine = quote?.lines.find((l) => l.id === 'shipping')
+        const placeholder = quoteLoading ? '…' : '—'
+        const vatLabel = quote?.taxLabel ?? 'VAT'
+        return (
           <dl className={styles.priceList}>
-            {quote.lines.map((line) => (
-              <div
-                key={line.id}
-                className={`${styles.priceRow} ${line.muted ? styles.priceRowMuted : ''}`}
-              >
-                <dt>{line.label}</dt>
-                <dd>{formatEuro(line.amountCents)}</dd>
-              </div>
-            ))}
+            <div className={styles.priceRow}>
+              <dt>Shipping to</dt>
+              <dd>{country ? countryName(country) : '—'}</dd>
+            </div>
+            <div className={styles.priceRow}>
+              <dt>Artwork</dt>
+              <dd>{artworkLine ? formatEuro(artworkLine.amountCents) : placeholder}</dd>
+            </div>
+            <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
+              <dt>Shipping</dt>
+              <dd>{shippingLine ? formatEuro(shippingLine.amountCents) : '—'}</dd>
+            </div>
+            <div className={`${styles.priceRow} ${styles.priceRowMuted}`}>
+              <dt>{vatLabel}</dt>
+              <dd>{quote && quote.taxCents > 0 ? formatEuro(quote.taxCents) : '—'}</dd>
+            </div>
           </dl>
-          <div className={styles.totalRow}>
-            <span>Total (before taxes)</span>
-            <span className={styles.totalValue}>{formatEuro(quote.subtotalCents)}</span>
-          </div>
-        </>
-      ) : (
-        <div className={styles.totalRow}>
-          <span>Total</span>
-          <span className={styles.totalValue}>{quoteLoading ? 'Calculating…' : '—'}</span>
-        </div>
-      )}
+        )
+      })()}
 
       <button
         type="button"

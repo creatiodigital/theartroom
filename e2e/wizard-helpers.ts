@@ -13,14 +13,16 @@ import { routes } from './fixtures'
  * are provider-agnostic — operate purely on the catalog DOM contract.
  */
 
-/** Open the public wizard for an artwork and pick a destination so options unlock. */
-export async function openWizardWithCountry(
-  page: Page,
-  slug: string,
-  country: string,
-): Promise<void> {
+/** Open the public wizard for an artwork. Country lives on the
+ *  checkout step now; the wizard renders all options immediately. */
+export async function openWizard(page: Page, slug: string): Promise<void> {
   const response = await page.goto(routes.printWizard(slug))
   expect(response?.status(), 'wizard should respond 2xx').toBeLessThan(400)
+}
+
+/** Pick a destination country from the country dropdown on the
+ *  checkout step (the address form's first field). */
+export async function pickCheckoutCountry(page: Page, country: string): Promise<void> {
   await page.getByRole('button', { name: /choose a country/i }).click()
   await page.getByRole('option', { name: new RegExp(country, 'i') }).click()
 }

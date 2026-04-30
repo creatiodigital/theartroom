@@ -423,41 +423,48 @@ export const TPS_SUPPORTED_COUNTRIES: string[] = [
 
 // ── VAT ─────────────────────────────────────────────────────────
 
-export const TPS_VAT_RATE = 0.21
 export const TPS_GALLERY_MARKUP_RATE = 0.45
 
-// EU member states (2026) — destinations where flat 21% VAT applies on
-// the buyer-facing total. Pre-launch accountant review pending.
-const TPS_EU_COUNTRIES = new Set([
-  'AT',
-  'BE',
-  'BG',
-  'HR',
-  'CY',
-  'CZ',
-  'DK',
-  'EE',
-  'FI',
-  'FR',
-  'DE',
-  'GR',
-  'HU',
-  'IE',
-  'IT',
-  'LV',
-  'LT',
-  'LU',
-  'MT',
-  'NL',
-  'PL',
-  'PT',
-  'RO',
-  'SK',
-  'SI',
-  'ES',
-  'SE',
-])
+// Per-destination standard VAT rate. Approximate values (mid-2025);
+// the buyer's checkout preview uses these. The PaymentIntent step
+// overrides with Stripe Tax's authoritative rate, so any inaccuracy
+// here only affects the preview, never what the buyer is charged.
+//
+// Pre-launch accountant review pending — see project_vat_todo memory.
+const TPS_VAT_RATES: Record<string, number> = {
+  AT: 0.2,
+  BE: 0.21,
+  BG: 0.2,
+  HR: 0.25,
+  CY: 0.19,
+  CZ: 0.21,
+  DK: 0.25,
+  EE: 0.22,
+  FI: 0.255,
+  FR: 0.2,
+  DE: 0.19,
+  GR: 0.24,
+  HU: 0.27,
+  IE: 0.23,
+  IT: 0.22,
+  LV: 0.21,
+  LT: 0.21,
+  LU: 0.17,
+  MT: 0.18,
+  NL: 0.21,
+  PL: 0.23,
+  PT: 0.23,
+  RO: 0.19,
+  SK: 0.23,
+  SI: 0.22,
+  ES: 0.21,
+  SE: 0.25,
+  GB: 0.2,
+}
 
-export function isEuVatCountry(countryCode: string): boolean {
-  return TPS_EU_COUNTRIES.has(countryCode)
+/** Standard VAT rate the buyer sees at checkout for a given country.
+ *  Returns 0 for any country we don't (yet) charge VAT for. */
+export function getVatRate(countryCode: string): number {
+  if (!countryCode) return 0
+  return TPS_VAT_RATES[countryCode.toUpperCase()] ?? 0
 }

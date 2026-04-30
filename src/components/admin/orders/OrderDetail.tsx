@@ -1065,8 +1065,8 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
       <div className={dashboardStyles.section}>
         <h2 style={{ margin: '0 0 4px 0', fontSize: 16 }}>Danger zone</h2>
         <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
-          Permanently delete this order and its event history. Only available while no money has
-          been captured and the artist payout has not been released.
+          Permanently delete this order and its event history. Refunds and payout reversals are
+          handled separately — this only removes the order row.
         </p>
         {deleteError && (
           <p style={{ margin: '0 0 12px 0', color: '#b91c1c', fontSize: 13 }}>⚠️ {deleteError}</p>
@@ -1093,19 +1093,13 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                 <>
                   <br />
                   <br />
-                  The Stripe card hold ({formatEuro(order.totalCents)}) will be cancelled before the
-                  order is removed, releasing the funds back to the buyer&apos;s card.
+                  The Stripe card hold ({formatEuro(order.totalCents)}) will be cancelled
+                  best-effort, releasing the funds back to the buyer&apos;s card.
                 </>
               )}
             </>
           }
-          warning={
-            <>
-              This cannot be undone. If this is a real customer order, consider using{' '}
-              <strong>Mark rejected</strong> or <strong>Refund buyer</strong> instead so you keep
-              the audit trail.
-            </>
-          }
+          warning="This cannot be undone."
           confirmLabel="Yes, delete permanently"
           cancelLabel="Keep order"
           destructive
