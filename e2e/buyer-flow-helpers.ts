@@ -33,6 +33,23 @@ export interface BuyerFlowResult {
 export async function runBuyerFlow(page: Page): Promise<BuyerFlowResult> {
   const slug = fixtures.artworkSlug
 
+  // Capture browser-side signals so when the Stripe redirect hangs
+  // we can tell whether confirmPayment errored client-side or Stripe
+  // rejected something at the API. Surfaced in the timeout error.
+  const consoleErrors: string[] = []
+  const stripeNetworkErrors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() !== 'error') return
+    consoleErrors.push(msg.text())
+  })
+  page.on('pageerror', (err) => consoleErrors.push(`pageerror: ${err.message}`))
+  page.on('response', (res) => {
+    const url = res.url()
+    if (!url.includes('stripe.com')) return
+    const status = res.status()
+    if (status >= 400) stripeNetworkErrors.push(`${status} ${url}`)
+  })
+
   // ── Wizard ─────────────────────────────────────────────────────
   const wizardResponse = await page.goto(routes.printWizard(slug))
   expect(wizardResponse?.status(), 'wizard should respond 2xx').toBeLessThan(400)
@@ -65,18 +82,31 @@ export async function runBuyerFlow(page: Page): Promise<BuyerFlowResult> {
   // Identify by the iframe's title (Stripe sets a stable substring).
   const stripeFrame = page.frameLocator('iframe[title*="Secure payment input frame"]').first()
 
+  // With `automatic_payment_methods: { enabled: true }` Stripe shows
+  // multiple methods as tabs (Card + bank-redirect rails depending
+  // on the buyer's country). The default tab varies, so explicitly
+  // pick "Card" before filling card fields. If only Card is offered,
+  // there's no tablist — skip silently.
+  const cardTab = stripeFrame.getByRole('tab', { name: /^card$/i })
+  if (await cardTab.count()) {
+    await cardTab.first().click()
+  }
+
   const cardNumberField = stripeFrame.getByLabel(/card number/i)
   await expect(cardNumberField, 'card number field should be visible').toBeVisible({
     timeout: 30_000,
   })
   await cardNumberField.fill(TEST_CARD.number)
 
-  await stripeFrame.getByLabel(/expir/i).fill(TEST_CARD.expiry)
-  await stripeFrame.getByLabel(/security code|cvc/i).fill(TEST_CARD.cvc)
+  // `getByRole('textbox')` filters to actual form controls — Stripe
+  // ships SVG icons with the same accessible names ("Security code",
+  // "ZIP code") which would otherwise confuse strict-mode locators.
+  await stripeFrame.getByRole('textbox', { name: /expir/i }).fill(TEST_CARD.expiry)
+  await stripeFrame.getByRole('textbox', { name: /security code|cvc/i }).fill(TEST_CARD.cvc)
 
-  // Stripe asks for ZIP for some card brands / regions. The field
-  // sometimes isn't rendered — fill if present, ignore otherwise.
-  const zipField = stripeFrame.getByLabel(/zip|postal/i)
+  // ZIP is rendered conditionally (US-style postal field for some
+  // card brands / regions). Skip if absent.
+  const zipField = stripeFrame.getByRole('textbox', { name: /zip|postal/i })
   if (await zipField.count()) {
     await zipField.first().fill(TEST_CARD.zip)
   }
@@ -86,7 +116,29 @@ export async function runBuyerFlow(page: Page): Promise<BuyerFlowResult> {
   await payCta.click()
 
   // ── Confirmation ──────────────────────────────────────────────
-  await page.waitForURL(`**/artworks/${slug}/print/confirmation?**`, { timeout: 60_000 })
+  try {
+    await page.waitForURL(`**/artworks/${slug}/print/confirmation?**`, { timeout: 60_000 })
+  } catch (err) {
+    // Stripe didn't redirect to the confirmation URL within the
+    // timeout. Pull together every signal we've been collecting so
+    // the failure is actionable instead of just "timed out".
+    const visibleError = await page
+      .locator('[class*="paymentError" i], [role="alert"], .error')
+      .first()
+      .textContent({ timeout: 1000 })
+      .catch(() => null)
+    const debug = [
+      `current url: ${page.url()}`,
+      visibleError ? `visible error on page: ${visibleError.trim()}` : 'no visible error span',
+      stripeNetworkErrors.length
+        ? `stripe.com 4xx/5xx: ${stripeNetworkErrors.join(' | ')}`
+        : 'no stripe.com 4xx/5xx',
+      consoleErrors.length
+        ? `browser console errors:\n  - ${consoleErrors.slice(-5).join('\n  - ')}`
+        : 'no browser console errors',
+    ].join('\n')
+    throw new Error(`Stripe redirect to /confirmation never fired.\n${debug}\n\nOriginal: ${err instanceof Error ? err.message : String(err)}`)
+  }
 
   const url = new URL(page.url())
   const paymentIntentId = url.searchParams.get('payment_intent')

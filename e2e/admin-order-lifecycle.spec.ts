@@ -48,15 +48,14 @@ test('admin order lifecycle: advance every stage and delete', async ({ page }) =
     expect(res?.status(), 'admin order detail should respond 2xx').toBeLessThan(400)
 
     // ── Capture & mark placed ────────────────────────────────────
+    // Detail page fires handlePlaced directly on click (no
+    // confirmation modal — that lives only on the now-removed list
+    // view modal). Click and wait for the next stage's CTA.
     const placeCta = page.getByRole('button', { name: /capture payment & mark placed/i })
     await expect(placeCta, 'capture & mark placed CTA should be visible').toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     })
     await placeCta.click()
-    // ConfirmModal — confirm.
-    await page
-      .getByRole('button', { name: /yes, capture & mark placed/i })
-      .click()
     await expect(
       page.getByRole('button', { name: /mark in production/i }),
       'after place: mark in production CTA should appear',

@@ -75,14 +75,21 @@ export const PaymentForm = ({
         // inside Stripe's iframe).
         payment_method_data: {
           billing_details: {
+            // Every billing-details field is configured with `fields:
+            // 'never'` on the PaymentElement above, which means Stripe
+            // requires us to pass each one explicitly here — including
+            // optional ones the buyer left blank. Using `''` (not
+            // `undefined`) for optional/unfilled fields keeps Stripe
+            // happy. Without this, EU buyers who skip the optional
+            // "State / region" field hit a silent confirmPayment hang.
             name: addr.fullName,
-            email: addr.email || undefined,
-            phone: addr.phone || undefined,
+            email: addr.email,
+            phone: addr.phone,
             address: {
               line1: addr.address1,
-              line2: addr.address2 || undefined,
+              line2: addr.address2,
               city: addr.city,
-              state: addr.stateOrRegion || undefined,
+              state: addr.stateOrRegion,
               postal_code: addr.postalCode,
               country: addr.countryCode,
             },
