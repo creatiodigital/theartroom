@@ -236,7 +236,8 @@ export const AdminOrders = () => {
           // a single refund is unremarkable, multiples are a pattern
           // worth flagging.
           const refundedAlert = isRefunded && count > 1
-          const colorize = hasItems && (isAttention || refundedAlert || (!isRefunded && !isAttention))
+          const colorize =
+            hasItems && (isAttention || refundedAlert || (!isRefunded && !isAttention))
           const pillBg = !colorize
             ? 'rgba(0,0,0,0.06)'
             : isAttention
@@ -399,7 +400,6 @@ export const AdminOrders = () => {
           )
         })()}
       </div>
-
     </DashboardLayout>
   )
 }
@@ -428,4 +428,3 @@ const NextActionCell = ({ order, bucket }: { order: AdminOrderRow; bucket: Bucke
     </Link>
   )
 }
-

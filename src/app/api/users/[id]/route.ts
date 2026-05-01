@@ -10,6 +10,7 @@ import {
   isSuperAdmin,
 } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { sanitizeLine } from '@/utils/sanitizeLine'
 
 type Body = {
   name?: string
@@ -100,12 +101,40 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       }
     }
 
+    // Sanitize single-line text fields. Biography is rich-text HTML
+    // (TipTap) — left untouched here, DOMPurify cleans it at render
+    // time. Length caps on the sanitized values reject oversized
+    // payloads that smuggled control chars to pad their byte count.
     const data: Prisma.UserUpdateInput = {}
-    if (body.name !== undefined) data.name = body.name
-    if (body.lastName !== undefined) data.lastName = body.lastName
+    if (body.name !== undefined) {
+      const v = sanitizeLine(String(body.name))
+      if (v.length > 100) {
+        return NextResponse.json({ error: 'Name too long.' }, { status: 400 })
+      }
+      data.name = v
+    }
+    if (body.lastName !== undefined) {
+      const v = sanitizeLine(String(body.lastName))
+      if (v.length > 100) {
+        return NextResponse.json({ error: 'Last name too long.' }, { status: 400 })
+      }
+      data.lastName = v
+    }
     if (body.biography !== undefined) data.biography = body.biography
-    if (body.handler !== undefined) data.handler = body.handler
-    if (body.email !== undefined) data.email = body.email
+    if (body.handler !== undefined) {
+      const v = sanitizeLine(String(body.handler))
+      if (v.length > 60) {
+        return NextResponse.json({ error: 'Handler too long.' }, { status: 400 })
+      }
+      data.handler = v
+    }
+    if (body.email !== undefined) {
+      const v = sanitizeLine(String(body.email))
+      if (v.length > 200) {
+        return NextResponse.json({ error: 'Email too long.' }, { status: 400 })
+      }
+      data.email = v
+    }
     if (body.isFeatured !== undefined) data.isFeatured = body.isFeatured
     if (body.published !== undefined) data.published = body.published
     if (userTypeEnum !== undefined) data.userType = { set: userTypeEnum }

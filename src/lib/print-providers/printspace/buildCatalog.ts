@@ -78,12 +78,30 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
   }))
 
   // ── Moulding (visible when framing; options cascade on frameType) ─
+  // Per-moulding `mouldingWidthCm` makes the preview read differently
+  // for Thin / Square / Wide / Large profiles, since `collectVisualHints`
+  // is order-merged and `moulding` comes after `frameType` — so this
+  // overrides the per-frame-type default. The numbers are illustrative
+  // (TPS doesn't publish exact moulding widths in the public catalog),
+  // tuned to make the visual difference clear without being unrealistic.
+  const inferMouldingWidthCm = (mouldingId: string): number => {
+    if (mouldingId.endsWith('-large')) return 4.5
+    if (mouldingId.endsWith('-wide-rounded') || mouldingId.endsWith('-wide')) return 3.5
+    if (mouldingId.endsWith('-square')) return 2.5
+    if (mouldingId.endsWith('-small')) return 2.0
+    if (mouldingId.endsWith('-thin-rounded') || mouldingId.endsWith('-thin')) return 1.4
+    return 2.0
+  }
   const mouldingOptions: Option[] = TPS_MOULDINGS.map((m) => ({
     id: m.id,
     label: m.label,
     visibleWhen: { dimensionId: 'frameType', valueIn: [m.frameType] },
     isDefault: m.id === 'std-black-thin',
-    visual: { frameColorHex: m.hex, frameRoughness: m.roughness },
+    visual: {
+      frameColorHex: m.hex,
+      frameRoughness: m.roughness,
+      mouldingWidthCm: inferMouldingWidthCm(m.id),
+    },
   }))
 
   // ── Glass (visible when framing; same 3 options across all frame types) ─

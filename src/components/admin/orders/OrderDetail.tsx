@@ -73,9 +73,7 @@ const TERMINAL_STAGES = new Set(['Complete', 'Rejected'])
 // manual — has actually fired). Off-ramp `Rejected` is rendered
 // separately, not as part of this trail.
 const buildLifecycle = (order: { fulfillmentStatus: string | null; paidOutAt: string | null }) => {
-  const fIdx = ['Placed', 'Started', 'Shipped', 'Complete'].indexOf(
-    order.fulfillmentStatus ?? '',
-  )
+  const fIdx = ['Placed', 'Started', 'Shipped', 'Complete'].indexOf(order.fulfillmentStatus ?? '')
   return [
     { label: 'New', reached: true },
     { label: 'At TPS', reached: fIdx >= 0 },
@@ -85,7 +83,6 @@ const buildLifecycle = (order: { fulfillmentStatus: string | null; paidOutAt: st
     { label: 'Artist paid', reached: !!order.paidOutAt },
   ]
 }
-
 
 const CopyButton = ({ value, label }: { value: string; label?: string }) => {
   const [copied, setCopied] = useState(false)
@@ -470,11 +467,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
             <Badge label="Rejected" variant="past" />
           ) : (
             buildLifecycle(order).map((s) => (
-              <Badge
-                key={s.label}
-                label={s.label}
-                variant={s.reached ? 'current' : 'neutral'}
-              />
+              <Badge key={s.label} label={s.label} variant={s.reached ? 'current' : 'neutral'} />
             ))
           )}
         </div>
@@ -688,7 +681,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
             </div>
           )}
         </div>
-
       </div>
 
       {/* Pay the Artist — only surfaces once the order is delivered.
@@ -907,7 +899,9 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                 <Button
                   font="dashboard"
                   variant="primary"
-                  label={manualSubmitting ? 'Saving…' : `Mark paid (${formatEuro(order.artistCents)})`}
+                  label={
+                    manualSubmitting ? 'Saving…' : `Mark paid (${formatEuro(order.artistCents)})`
+                  }
                   onClick={handleMarkPaidManually}
                   disabled={manualSubmitting || manualMethod.trim().length === 0}
                 />
@@ -952,9 +946,9 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               <>
                 Delivered <strong>{days}</strong> day{days === 1 ? '' : 's'} ago — only{' '}
                 {PAYOUT_SAFE_WINDOW_DAYS - days} day
-                {PAYOUT_SAFE_WINDOW_DAYS - days === 1 ? '' : 's'} into the{' '}
-                {PAYOUT_SAFE_WINDOW_DAYS}-day safe window. If the buyer disputes this order later,
-                recovering the artist&apos;s share will be on you.
+                {PAYOUT_SAFE_WINDOW_DAYS - days === 1 ? '' : 's'} into the {PAYOUT_SAFE_WINDOW_DAYS}
+                -day safe window. If the buyer disputes this order later, recovering the
+                artist&apos;s share will be on you.
               </>
             )
           })()}

@@ -38,7 +38,6 @@ export async function deletePrintOrderByPaymentIntent(paymentIntentId: string): 
   try {
     await prisma.printOrder.deleteMany({ where: { paymentIntentId } })
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.warn(
       `[e2e cleanup] delete by paymentIntentId=${paymentIntentId} failed:`,
       err instanceof Error ? err.message : err,
@@ -51,7 +50,6 @@ export async function deletePrintOrderById(orderId: string): Promise<void> {
   try {
     await prisma.printOrder.deleteMany({ where: { id: orderId } })
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.warn(
       `[e2e cleanup] delete by id=${orderId} failed:`,
       err instanceof Error ? err.message : err,

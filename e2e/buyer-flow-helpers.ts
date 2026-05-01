@@ -64,7 +64,10 @@ export async function runBuyerFlow(page: Page): Promise<BuyerFlowResult> {
   // ── Checkout: shipping form ───────────────────────────────────
   await pickCheckoutCountry(page, 'belgium')
   await page.getByLabel(/full name/i).fill('Test Buyer')
-  await page.getByLabel(/email/i).fill('e2e+buyer@theartroom.gallery')
+  // example.com is IANA-reserved for documentation — guaranteed to
+  // bounce, so even without SKIP_EMAILS=true a stray test won't
+  // deliver anything anywhere real.
+  await page.getByLabel(/email/i).fill('e2e+buyer@example.com')
   await page.getByLabel(/phone \(for carrier\)/i).fill('612345678')
   await page.getByLabel(/^address$/i).fill('123 Rue de la Loi')
   await page.getByLabel(/^city$/i).fill('Brussels')
@@ -137,7 +140,9 @@ export async function runBuyerFlow(page: Page): Promise<BuyerFlowResult> {
         ? `browser console errors:\n  - ${consoleErrors.slice(-5).join('\n  - ')}`
         : 'no browser console errors',
     ].join('\n')
-    throw new Error(`Stripe redirect to /confirmation never fired.\n${debug}\n\nOriginal: ${err instanceof Error ? err.message : String(err)}`)
+    throw new Error(
+      `Stripe redirect to /confirmation never fired.\n${debug}\n\nOriginal: ${err instanceof Error ? err.message : String(err)}`,
+    )
   }
 
   const url = new URL(page.url())

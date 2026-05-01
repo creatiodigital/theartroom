@@ -173,7 +173,9 @@ export const AdminUsers = () => {
     <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
       <div className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>
-          <h1 className={dashboardStyles.pageTitle} style={{ margin: 0 }}>Users</h1>
+          <h1 className={dashboardStyles.pageTitle} style={{ margin: 0 }}>
+            Users
+          </h1>
           <Button
             font="dashboard"
             variant="primary"

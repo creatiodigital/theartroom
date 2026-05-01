@@ -70,12 +70,8 @@ test('admin order lifecycle: advance every stage and delete', async ({ page }) =
 
     // ── Mark shipped (with tracking URL) ────────────────────────
     await page.getByRole('button', { name: /mark shipped/i }).click()
-    await page
-      .getByLabel(/tracking url/i)
-      .fill('https://tracking.example.com/e2e-test')
-    await page
-      .getByRole('button', { name: /^mark shipped$/i })
-      .click()
+    await page.getByLabel(/tracking url/i).fill('https://tracking.example.com/e2e-test')
+    await page.getByRole('button', { name: /^mark shipped$/i }).click()
     await expect(
       page.getByRole('button', { name: /mark delivered/i }),
       'after shipped: mark delivered CTA should appear',

@@ -61,7 +61,12 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: false,
-  retries: 0,
+  // One auto-retry. The login specs (admin-login, artist-login) hit
+  // /api/auth/send-login-code, which rate-limits at 5/min/IP — re-
+  // running the suite within a minute can push us over the cap and
+  // flake the very first auth spec. A single retry absorbs that blip
+  // without slowing down clean runs.
+  retries: 1,
   reporter: [['list']],
 
   use: {

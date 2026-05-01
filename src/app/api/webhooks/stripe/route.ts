@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { sendAdminCriticalAlert } from '@/lib/emails/adminCriticalAlert'
 import { createPrintOrderFromPaymentIntent } from '@/lib/orders/createPrintOrderFromPaymentIntent'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
 import { captureError } from '@/lib/observability/captureError'
@@ -125,6 +126,19 @@ export async function POST(req: NextRequest) {
       level: 'error',
       fingerprint: ['webhook:stripe-handler-threw', event.type],
     })
+    // Email the admin too — anything that throws here past the inner
+    // handlers' own alerts is unexpected, and on the order-creation event
+    // type a thrown handler likely means the buyer is held with no row.
+    await sendAdminCriticalAlert({
+      title: 'Webhook handler threw an exception',
+      problem: `The Stripe webhook for event type "${event.type}" threw an exception. ${err instanceof Error ? err.message : String(err)}`,
+      context: { eventType: event.type, eventId: event.id },
+      whatToDo: [
+        'Check the server logs and Sentry for the stack trace.',
+        'If this is the amount_capturable_updated event, an order may be missing — check the reconciliation alert.',
+        'Look up the related PaymentIntent in Stripe to confirm card state.',
+      ],
+    })
   }
 
   return NextResponse.json({ received: true })
@@ -173,6 +187,20 @@ async function handlePaymentIntentAuthorized(pi: PaymentIntentLike) {
     console.error(
       `[stripe-webhook] amount_capturable_updated pi=${pi.id} → order creation failed: ${res.error}`,
     )
+    // The order-creation function fires its own targeted alerts for the
+    // known failure shapes. This is a belt-and-braces alert so any new
+    // failure mode added in the future doesn't go silently — it's safe
+    // to receive two alerts for the same incident.
+    await sendAdminCriticalAlert({
+      title: 'Order creation failed after card auth',
+      problem: `createPrintOrderFromPaymentIntent returned not-ok: ${res.error}`,
+      paymentIntentId: pi.id,
+      whatToDo: [
+        'You may have already received a more specific alert above — check.',
+        'Open the PaymentIntent in Stripe to confirm whether the buyer’s card is held.',
+        'If held with no order: cancel the PI to release the hold, then contact the buyer.',
+      ],
+    })
     return
   }
   await logOrderEvent({
@@ -192,6 +220,22 @@ async function handlePaymentIntentCaptured(pi: PaymentIntentLike) {
   })
   if (!order) {
     console.warn(`[stripe-webhook] payment_intent.succeeded pi=${pi.id} → no PrintOrder found`)
+    // succeeded fires after capture, which only the admin can do via
+    // markPlaced — so the order MUST exist by this point. If it doesn't,
+    // something has gone very wrong (manual capture in Stripe Dashboard
+    // bypassing our flow, or order deleted between auth and capture).
+    await sendAdminCriticalAlert({
+      title: 'Capture confirmed but no PrintOrder row',
+      problem:
+        'A PaymentIntent was captured (money moved from buyer to our balance) but no matching PrintOrder exists locally. The buyer has been charged.',
+      paymentIntentId: pi.id,
+      whatToDo: [
+        'Open the PaymentIntent in Stripe to see the buyer details.',
+        'Check whether someone manually captured the PI from the Stripe dashboard (bypassing the admin app).',
+        'Check whether the order was deleted from /admin/orders after auth but before capture.',
+        'Refund the buyer immediately, then contact them to re-place the order.',
+      ],
+    })
     return
   }
   await prisma.printOrder.update({

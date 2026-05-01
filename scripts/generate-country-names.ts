@@ -42,9 +42,7 @@ const lines = isoCodes.map((iso) => {
 })
 
 const generated =
-  `export const COUNTRY_NAMES: Record<string, string> = {\n` +
-  lines.join('\n') +
-  `\n}\n`
+  `export const COUNTRY_NAMES: Record<string, string> = {\n` + lines.join('\n') + `\n}\n`
 
 const MARKER_START = '// <COUNTRY_NAMES:start>'
 const MARKER_END = '// <COUNTRY_NAMES:end>'
@@ -57,10 +55,7 @@ if (source.includes(MARKER_START)) {
   )
 } else {
   const insertion = `\n${MARKER_START}\n${generated}${MARKER_END}\n`
-  next = source.replace(
-    /(export function getDialCode)/,
-    `${insertion}\n$1`,
-  )
+  next = source.replace(/(export function getDialCode)/, `${insertion}\n$1`)
 }
 
 writeFileSync(TARGET, next, 'utf8')
