@@ -113,6 +113,14 @@
   }
 }
 
+// Visual section break: when a standalone .field (e.g. the Country
+// dropdown at the top of the form) is followed by the .fieldGrid, push
+// the grid down so the country choice reads as its own decision before
+// the buyer fills in name/address details below.
+.field + .fieldGrid {
+  margin-top: var(--space-6);
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -146,7 +154,8 @@
   border-color: rgba(180, 30, 30, 0.6);
 }
 
-.field[data-touched='true'] .fieldInput:invalid ~ .fieldError {
+.field[data-touched='true']:has(.fieldInput:invalid) .fieldError,
+.field[data-touched='true'][data-invalid='true'] .fieldError {
   display: block;
 }
 
@@ -179,6 +188,32 @@
   background-repeat: no-repeat;
   background-position: right var(--space-4) center;
   padding-right: var(--space-6);
+}
+
+// Phone field: dial-code dropdown + free-text number digits in one row.
+// The dropdown is independent of the shipping country (a buyer might
+// keep a foreign number after relocating, gift to another country, etc).
+.phoneRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.phoneDial {
+  flex: 0 0 auto;
+  width: 88px;
+}
+
+.phoneNumberCol {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.phoneNumber {
+  width: 100%;
 }
 
 .editButtonRow {

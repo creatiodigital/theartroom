@@ -1,25 +1,18 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { daysSinceDelivered, PAYOUT_SAFE_WINDOW_DAYS } from '@/lib/orders/payoutPolicy'
 import { formatEuro } from '@/lib/print-providers/format'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
-import {
-  createTestOrder,
-  listOrders,
-  releasePayout,
-  type AdminOrderRow,
-} from '@/app/admin/orders/actions'
+import { listOrders, type AdminOrderRow } from '@/app/admin/orders/actions'
 
 const formatDate = (iso: string | null) => {
   if (!iso) return '—'
@@ -30,51 +23,12 @@ const formatDate = (iso: string | null) => {
   })
 }
 
-// Quick-scan traffic-light palette. Green = healthy, red = attention,
-// amber = in flight, grey = not started / terminal-neutral.
 const DOT_COLORS: Record<string, string> = {
   green: '#10b981',
   red: '#ef4444',
   amber: '#f59e0b',
   blue: '#3b82f6',
   grey: '#9ca3af',
-}
-
-const paymentDot = (status: string): keyof typeof DOT_COLORS => {
-  if (status === 'succeeded') return 'green'
-  if (status === 'authorized') return 'blue'
-  if (status === 'processing') return 'amber'
-  if (status === 'failed') return 'red'
-  if (status === 'canceled' || status === 'refunded') return 'grey'
-  return 'grey'
-}
-
-const paymentLabel = (status: string): string => {
-  if (status === 'succeeded') return 'Charged'
-  if (status === 'authorized') return 'Card held'
-  if (status === 'processing') return 'Processing'
-  if (status === 'failed') return 'Payment failed'
-  if (status === 'canceled') return 'Canceled'
-  if (status === 'refunded') return 'Refunded'
-  return status
-}
-
-const fulfillmentDot = (stage: string | null): keyof typeof DOT_COLORS => {
-  if (stage === 'Complete') return 'green'
-  if (stage === 'Rejected') return 'red'
-  if (stage === 'Shipped') return 'blue'
-  if (stage === 'Started' || stage === 'Placed') return 'amber'
-  return 'grey'
-}
-
-const fulfillmentLabel = (stage: string | null): string => {
-  if (!stage) return 'Pending placement'
-  if (stage === 'Placed') return 'Placed'
-  if (stage === 'Started') return 'In production'
-  if (stage === 'Shipped') return 'Shipped'
-  if (stage === 'Complete') return 'Delivered'
-  if (stage === 'Rejected') return 'Rejected'
-  return stage
 }
 
 const Dot = ({ color }: { color: keyof typeof DOT_COLORS }) => (
@@ -92,6 +46,112 @@ const Dot = ({ color }: { color: keyof typeof DOT_COLORS }) => (
   />
 )
 
+// Workflow buckets — each bucket corresponds to one tab on the orders
+// page. Order matters (it's the user's mental left-to-right pipeline).
+type Bucket =
+  | 'new'
+  | 'at-tps'
+  | 'production'
+  | 'shipped'
+  | 'delivered'
+  | 'done'
+  | 'rejected'
+  | 'refunded'
+  | 'attention'
+
+const BUCKET_ORDER: Bucket[] = [
+  'new',
+  'at-tps',
+  'production',
+  'shipped',
+  'delivered',
+  'done',
+  'rejected',
+  'refunded',
+  'attention',
+]
+
+const BUCKET_META: Record<
+  Bucket,
+  {
+    title: string
+    helper: string
+    nextAction: string
+  }
+> = {
+  new: {
+    title: 'New',
+    helper:
+      'Buyer paid; card is on hold. Place the order on theprintspace, then click Capture & mark placed to charge the buyer and advance.',
+    nextAction: 'Capture & mark placed',
+  },
+  'at-tps': {
+    title: 'At TPS',
+    helper:
+      'Order placed at theprintspace; payment captured. Click Mark in production once TPS confirms they’re printing.',
+    nextAction: 'Mark in production',
+  },
+  production: {
+    title: 'In production',
+    helper: 'TPS is printing. Once they ship, paste the tracking URL to advance.',
+    nextAction: 'Mark shipped',
+  },
+  shipped: {
+    title: 'Shipped',
+    helper: 'TPS shipped. Mark delivered once the buyer confirms receipt.',
+    nextAction: 'Mark delivered',
+  },
+  delivered: {
+    title: 'Delivered',
+    helper: `Buyer received the print. You can pay the artist any time — the ${PAYOUT_SAFE_WINDOW_DAYS}-day counter is just a buyer-dispute risk hint.`,
+    nextAction: 'Pay the Artist',
+  },
+  done: {
+    title: 'Artist paid',
+    helper: 'Order delivered and artist paid. Archived view.',
+    nextAction: 'View details',
+  },
+  rejected: {
+    title: 'Rejected',
+    helper:
+      'Orders pulled out of the pipeline before delivery — TPS rejected the file, artist disabled prints, etc. Refunds (if needed) are handled from the order detail page.',
+    nextAction: 'View details',
+  },
+  refunded: {
+    title: 'Refunded',
+    helper:
+      'Buyer was refunded — money returned, no further action. Refunds can happen at any stage (e.g. pre-placement cancel, post-delivery goodwill).',
+    nextAction: 'View details',
+  },
+  attention: {
+    title: 'Needs attention',
+    helper:
+      'Failed payments, rejected orders, refunds. Each case differs — open the order to refund, cancel, or close it out.',
+    nextAction: 'Open & resolve →',
+  },
+}
+
+function bucketOf(o: AdminOrderRow): Bucket {
+  const f = o.fulfillmentStatus
+  const p = o.paymentStatus
+
+  if (f === 'Rejected') return 'rejected'
+  if (p === 'refunded') return 'refunded'
+  if (p === 'failed' || p === 'canceled') return 'attention'
+
+  if (f === null && p === 'authorized') return 'new'
+  if (f === 'Placed') return 'at-tps'
+  if (f === 'Started') return 'production'
+  if (f === 'Shipped') return 'shipped'
+  // `paidOutAt` is the universal "artist has been paid" signal — set
+  // by both Stripe Connect transfers and out-of-band manual payments.
+  // `transferId` only tracks the Stripe path.
+  if (f === 'Complete' && !o.paidOutAt) return 'delivered'
+  if (f === 'Complete' && o.paidOutAt) return 'done'
+
+  return 'attention'
+}
+
 export const AdminOrders = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
@@ -99,9 +159,7 @@ export const AdminOrders = () => {
   const [orders, setOrders] = useState<AdminOrderRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [releasingId, setReleasingId] = useState<string | null>(null)
-  const [confirmPayoutId, setConfirmPayoutId] = useState<string | null>(null)
-  const [creatingTestOrder, setCreatingTestOrder] = useState(false)
+  const [activeBucket, setActiveBucket] = useState<Bucket>('new')
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -124,66 +182,30 @@ export const AdminOrders = () => {
     if (sessionStatus === 'authenticated') load()
   }, [sessionStatus, load])
 
-  const handleCreateTestOrder = useCallback(async () => {
-    setCreatingTestOrder(true)
-    setError(null)
-    const res = await createTestOrder()
-    setCreatingTestOrder(false)
-    if (!res.ok) {
-      setError(res.error)
-      return
+  const grouped = useMemo(() => {
+    const map: Record<Bucket, AdminOrderRow[]> = {
+      new: [],
+      'at-tps': [],
+      production: [],
+      shipped: [],
+      delivered: [],
+      done: [],
+      rejected: [],
+      refunded: [],
+      attention: [],
     }
-    router.push(`/admin/orders/${res.orderId}`)
-  }, [router])
+    for (const o of orders) {
+      map[bucketOf(o)].push(o)
+    }
+    return map
+  }, [orders])
 
-  const handleRelease = useCallback(
-    async (orderId: string) => {
-      setReleasingId(orderId)
-      setError(null)
-      const res = await releasePayout(orderId)
-      if (!res.ok) setError(res.error)
-      await load()
-      setReleasingId(null)
-      setConfirmPayoutId(null)
-    },
-    [load],
-  )
-
-  const confirmingOrder = orders.find((o) => o.id === confirmPayoutId) ?? null
+  const visibleOrders = grouped[activeBucket]
+  const activeMeta = BUCKET_META[activeBucket]
 
   return (
     <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
       <h1 className={dashboardStyles.pageTitle}>Orders</h1>
-
-      {process.env.NODE_ENV !== 'production' && (
-        <div className={dashboardStyles.section}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '10px 14px',
-              background: '#eef2ff',
-              border: '1px dashed #6366f1',
-              borderRadius: 4,
-              fontSize: 13,
-              flexWrap: 'wrap',
-            }}
-          >
-            <span style={{ flex: 1, minWidth: 240 }}>
-              <strong>Dev tools</strong> — spin up a fake local order to exercise the manual
-              fulfillment + email pipelines without spending money. Hidden in production.
-            </span>
-            <Button
-              font="dashboard"
-              variant="secondary"
-              label={creatingTestOrder ? 'Creating…' : 'Create a test order'}
-              onClick={handleCreateTestOrder}
-              disabled={creatingTestOrder}
-            />
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className={dashboardStyles.section}>
@@ -191,13 +213,104 @@ export const AdminOrders = () => {
         </div>
       )}
 
+      <div
+        role="tablist"
+        aria-label="Order workflow stages"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 4,
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          marginBottom: 12,
+          marginTop: 8,
+        }}
+      >
+        {BUCKET_ORDER.map((b) => {
+          const meta = BUCKET_META[b]
+          const count = grouped[b].length
+          const active = b === activeBucket
+          const isAttention = b === 'attention' || b === 'rejected'
+          const isRefunded = b === 'refunded'
+          const hasItems = count > 0
+          // Refunded only goes orange when there's *more than one* —
+          // a single refund is unremarkable, multiples are a pattern
+          // worth flagging.
+          const refundedAlert = isRefunded && count > 1
+          const colorize = hasItems && (isAttention || refundedAlert || (!isRefunded && !isAttention))
+          const pillBg = !colorize
+            ? 'rgba(0,0,0,0.06)'
+            : isAttention
+              ? '#fdecea'
+              : isRefunded
+                ? '#ffedd5'
+                : '#d1fae5'
+          const pillColor = !colorize
+            ? 'inherit'
+            : isAttention
+              ? '#b91c1c'
+              : isRefunded
+                ? '#9a3412'
+                : '#065f46'
+          return (
+            <button
+              key={b}
+              role="tab"
+              aria-selected={active}
+              type="button"
+              onClick={() => setActiveBucket(b)}
+              style={{
+                padding: '8px 14px',
+                background: active ? '#fff' : 'transparent',
+                border: '1px solid',
+                borderColor: active ? 'rgba(0,0,0,0.15)' : 'transparent',
+                borderBottomColor: active ? '#fff' : 'transparent',
+                marginBottom: -1,
+                fontFamily: 'inherit',
+                fontSize: 13,
+                cursor: 'pointer',
+                fontWeight: active ? 600 : 400,
+              }}
+            >
+              {meta.title}
+              <span
+                style={{
+                  marginLeft: 6,
+                  padding: '1px 7px',
+                  borderRadius: 10,
+                  background: pillBg,
+                  fontSize: 11,
+                  color: pillColor,
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
       <div className={dashboardStyles.section}>
+        <p
+          className={dashboardStyles.sectionDescription}
+          style={{ margin: '0 0 16px 0', fontSize: 13 }}
+        >
+          {activeMeta.helper}
+        </p>
+
         {(() => {
           if (loading) {
             return <p className={dashboardStyles.sectionDescription}>Loading…</p>
           }
-          if (orders.length === 0) {
-            return <EmptyState message="No print orders yet." />
+          if (visibleOrders.length === 0) {
+            return (
+              <EmptyState
+                message={
+                  activeBucket === 'new'
+                    ? 'No new orders right now.'
+                    : `No orders in "${activeMeta.title}".`
+                }
+              />
+            )
           }
           return (
             <table className={dashboardStyles.table}>
@@ -207,13 +320,17 @@ export const AdminOrders = () => {
                   <th>Order</th>
                   <th>Buyer</th>
                   <th>Total</th>
-                  <th>Fulfillment</th>
-                  <th>Artist payout</th>
-                  <th>Actions</th>
+                  {activeBucket === 'shipped' || activeBucket === 'delivered' ? (
+                    <th>Shipped</th>
+                  ) : null}
+                  {activeBucket === 'delivered' || activeBucket === 'done' ? (
+                    <th>Artist payout</th>
+                  ) : null}
+                  <th>Next action</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((o) => (
+                {visibleOrders.map((o) => (
                   <tr key={o.id}>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(o.createdAt)}</td>
                     <td>
@@ -228,87 +345,52 @@ export const AdminOrders = () => {
                         {o.buyerEmail}
                       </div>
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <div>{formatEuro(o.totalCents)}</div>
-                      <div
-                        style={{
-                          fontSize: 'var(--text-xs)',
-                          opacity: 0.7,
-                          marginTop: 2,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <Dot color={paymentDot(o.paymentStatus)} />
-                        {paymentLabel(o.paymentStatus)}
-                      </div>
-                    </td>
-                    <td>
-                      <Dot color={fulfillmentDot(o.fulfillmentStatus)} />
-                      <Badge
-                        label={fulfillmentLabel(o.fulfillmentStatus)}
-                        variant={o.fulfillmentStatus === 'Complete' ? 'published' : 'neutral'}
-                      />
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {(() => {
-                        if (o.transferId) {
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatEuro(o.totalCents)}</td>
+
+                    {(activeBucket === 'shipped' || activeBucket === 'delivered') && (
+                      <td style={{ whiteSpace: 'nowrap', fontSize: 'var(--text-xs)' }}>
+                        {o.shippedAt ? formatDate(o.shippedAt) : '—'}
+                      </td>
+                    )}
+
+                    {(activeBucket === 'delivered' || activeBucket === 'done') && (
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {(() => {
+                          if (o.paidOutAt) {
+                            const isManual = o.transferStatus === 'paid_manual'
+                            return (
+                              <>
+                                <Dot color="green" />
+                                <span style={{ fontSize: 'var(--text-xs)' }}>
+                                  {formatEuro(o.artistCents)} · {formatDate(o.paidOutAt)}
+                                  {isManual ? ' (manual)' : ''}
+                                </span>
+                              </>
+                            )
+                          }
+                          const days = daysSinceDelivered(o.shippedAt)
+                          if (days === null) {
+                            return (
+                              <span style={{ fontSize: 'var(--text-xs)', opacity: 0.6 }}>—</span>
+                            )
+                          }
+                          const past = days >= PAYOUT_SAFE_WINDOW_DAYS
+                          const remaining = Math.max(0, PAYOUT_SAFE_WINDOW_DAYS - days)
                           return (
                             <>
-                              <Dot color="green" />
+                              <Dot color={past ? 'green' : 'amber'} />
                               <span style={{ fontSize: 'var(--text-xs)' }}>
-                                {formatEuro(o.artistCents)} paid · {formatDate(o.paidOutAt)}
+                                {days}d since delivered ·{' '}
+                                {past ? 'safe window passed' : `${remaining}d to safe window`}
                               </span>
                             </>
                           )
-                        }
-                        const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
-                        const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
-                        const label =
-                          o.fulfillmentStatus !== 'Complete'
-                            ? 'Awaiting delivery'
-                            : eligible
-                              ? 'Ready to release'
-                              : `Ready ${eligibleAt ? formatDate(eligibleAt.toISOString()) : 'soon'}`
-                        const color: keyof typeof DOT_COLORS =
-                          o.fulfillmentStatus !== 'Complete' ? 'grey' : eligible ? 'amber' : 'blue'
-                        return (
-                          <>
-                            <Dot color={color} />
-                            <span style={{ fontSize: 'var(--text-xs)' }}>{label}</span>
-                          </>
-                        )
-                      })()}
-                    </td>
+                        })()}
+                      </td>
+                    )}
+
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      {(() => {
-                        const eligibleAt = o.payoutEligibleAt ? new Date(o.payoutEligibleAt) : null
-                        const eligible = !!eligibleAt && eligibleAt.getTime() <= Date.now()
-                        const canRelease =
-                          !o.transferId &&
-                          o.fulfillmentStatus === 'Complete' &&
-                          o.paymentStatus === 'succeeded' &&
-                          o.artist.stripeOnboardingComplete &&
-                          eligible
-                        return (
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <Link
-                              href={`/admin/orders/${o.id}`}
-                              style={{ fontSize: 'var(--text-xs)', textDecoration: 'underline' }}
-                            >
-                              View details
-                            </Link>
-                            {canRelease && (
-                              <Button
-                                font="dashboard"
-                                variant="primary"
-                                label={releasingId === o.id ? 'Releasing…' : 'Release payout'}
-                                onClick={() => setConfirmPayoutId(o.id)}
-                                disabled={releasingId !== null}
-                              />
-                            )}
-                          </div>
-                        )
-                      })()}
+                      <NextActionCell order={o} bucket={activeBucket} />
                     </td>
                   </tr>
                 ))}
@@ -318,28 +400,32 @@ export const AdminOrders = () => {
         })()}
       </div>
 
-      {confirmingOrder && (
-        <ConfirmModal
-          title="Release payout to artist?"
-          message={
-            <>
-              You&apos;re about to transfer{' '}
-              <strong>{formatEuro(confirmingOrder.artistCents)}</strong> to{' '}
-              <strong>{confirmingOrder.artist.name}</strong>&apos;s Stripe account for order{' '}
-              <code>#{confirmingOrder.id.slice(0, 8)}</code>.
-              <br />
-              <br />
-              This action is final — once released, the money moves to the artist&apos;s balance and
-              can&apos;t be pulled back from this dashboard.
-            </>
-          }
-          confirmLabel="Yes, release payout"
-          cancelLabel="Cancel"
-          busy={releasingId === confirmingOrder.id}
-          onConfirm={() => handleRelease(confirmingOrder.id)}
-          onCancel={() => setConfirmPayoutId(null)}
-        />
-      )}
     </DashboardLayout>
   )
 }
+
+const NextActionCell = ({ order, bucket }: { order: AdminOrderRow; bucket: Bucket }) => {
+  const meta = BUCKET_META[bucket]
+
+  // Every row in every bucket is just a doorway to the detail page.
+  // Real actions (capture, mark in production, refund, pay artist…)
+  // only fire from the detail page, where the admin sees full context
+  // and can't trip them with an accidental table tap.
+  const linkStyle: React.CSSProperties = {
+    display: 'inline-block',
+    padding: '6px 12px',
+    background: bucket === 'attention' ? '#b91c1c' : '#111',
+    color: '#fff',
+    textDecoration: 'none',
+    borderRadius: 3,
+    fontSize: 12,
+    whiteSpace: 'nowrap',
+  }
+
+  return (
+    <Link href={`/admin/orders/${order.id}`} style={linkStyle}>
+      {meta.nextAction}
+    </Link>
+  )
+}
+
