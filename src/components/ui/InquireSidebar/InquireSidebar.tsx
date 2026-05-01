@@ -237,6 +237,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     onChange={(e) => setFirstName(e.target.value)}
                     onBlur={() => handleBlur('firstName', firstName)}
                     variant="underline"
+                    maxLength={100}
                     className={`${styles.input} ${touched.firstName && errors.firstName ? styles.inputError : ''}`}
                   />
                   {touched.firstName && errors.firstName && (
@@ -256,6 +257,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     onChange={(e) => setLastName(e.target.value)}
                     onBlur={() => handleBlur('lastName', lastName)}
                     variant="underline"
+                    maxLength={100}
                     className={`${styles.input} ${touched.lastName && errors.lastName ? styles.inputError : ''}`}
                   />
                   {touched.lastName && errors.lastName && (
@@ -276,6 +278,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => handleBlur('email', email)}
                     variant="underline"
+                    maxLength={200}
                     className={`${styles.input} ${touched.email && errors.email ? styles.inputError : ''}`}
                   />
                   {touched.email && errors.email && (
@@ -295,6 +298,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     onChange={(e) => setPhone(e.target.value)}
                     onBlur={() => handleBlur('phone', phone)}
                     variant="underline"
+                    maxLength={32}
                     className={`${styles.input} ${touched.phone && errors.phone ? styles.inputError : ''}`}
                   />
                   {touched.phone && errors.phone && (
@@ -315,6 +319,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     onBlur={() => handleBlur('message', message)}
                     className={`${styles.textarea} ${touched.message && errors.message ? styles.textareaError : ''}`}
                     rows={4}
+                    maxLength={4000}
                   />
                   {touched.message && errors.message && (
                     <Text as="span" size="xs" className={styles.errorText}>

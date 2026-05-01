@@ -34,6 +34,10 @@ type TInput = {
   autoComplete?: string
   placeholder?: string
   required?: boolean
+  /** Hard cap on number of characters the user can type. Match the
+   *  server-side cap so the client can't smuggle oversized payloads
+   *  past the same-key validation. */
+  maxLength?: number
   id?: string
   className?: string
   showPasswordToggle?: boolean
@@ -54,6 +58,7 @@ const Input = ({
   autoComplete,
   placeholder,
   required,
+  maxLength,
   id,
   className,
   showPasswordToggle = false,
@@ -84,6 +89,7 @@ const Input = ({
         autoComplete={autoComplete}
         placeholder={placeholder}
         required={required}
+        maxLength={maxLength}
       />
       {icon && (
         <div className={c(styles.icon, { [styles[`rotate${rotate}` as string]]: !!rotate })}>

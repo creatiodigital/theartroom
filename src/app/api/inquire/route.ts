@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 import { escapeHtml } from '@/utils/escapeHtml'
+import { sanitizeLine, sanitizeMultiline } from '@/utils/sanitizeLine'
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -46,15 +47,63 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    const { firstName, lastName, email, phone, message, artworkSlug, artworkTitle, artworkArtist } =
-      body
+    const rawFirstName = body.firstName
+    const rawLastName = body.lastName
+    const rawEmail = body.email
+    const rawPhone = body.phone
+    const rawMessage = body.message
+    const rawArtworkSlug = body.artworkSlug
+    const rawArtworkTitle = body.artworkTitle
+    const rawArtworkArtist = body.artworkArtist
 
-    // Validate required fields
-    if (!firstName || !lastName || !email || !phone || !message) {
-      return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
+    if (
+      typeof rawFirstName !== 'string' ||
+      typeof rawLastName !== 'string' ||
+      typeof rawEmail !== 'string' ||
+      typeof rawPhone !== 'string' ||
+      typeof rawMessage !== 'string'
+    ) {
+      return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
     }
 
-    // Sanitize inputs for HTML email templates
+    // Strip control chars / zero-width Unicode and trim. Single-line
+    // fields use sanitizeLine; the free-form message preserves newlines
+    // via sanitizeMultiline so the admin email can render paragraphs.
+    const firstName = sanitizeLine(rawFirstName)
+    const lastName = sanitizeLine(rawLastName)
+    const email = sanitizeLine(rawEmail)
+    const phone = sanitizeLine(rawPhone)
+    const message = sanitizeMultiline(rawMessage)
+    const artworkSlug = typeof rawArtworkSlug === 'string' ? sanitizeLine(rawArtworkSlug) : ''
+    const artworkTitle = typeof rawArtworkTitle === 'string' ? sanitizeLine(rawArtworkTitle) : ''
+    const artworkArtist = typeof rawArtworkArtist === 'string' ? sanitizeLine(rawArtworkArtist) : ''
+
+    // Length caps after sanitization (a tampered payload padded with
+    // control chars can't sneak past via raw byte count this way).
+    if (
+      firstName.length > 100 ||
+      lastName.length > 100 ||
+      email.length > 200 ||
+      phone.length > 32 ||
+      message.length > 4000
+    ) {
+      return NextResponse.json({ error: 'Input too long.' }, { status: 400 })
+    }
+
+    // Required-field presence check post-sanitize (a pure-whitespace
+    // input that the client smuggled past `required` is rejected here).
+    if (!firstName || !lastName || !email || !phone || !message) {
+      return NextResponse.json({ error: 'All fields are required.' }, { status: 400 })
+    }
+
+    // Email format validation — checked AFTER sanitization so smuggled
+    // CRLF can't slip into header injection.
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
+
+    // Now safe to escape for HTML email template interpolation.
     const safeFirstName = escapeHtml(firstName)
     const safeLastName = escapeHtml(lastName)
     const safeEmail = escapeHtml(email)
@@ -63,12 +112,6 @@ export async function POST(request: NextRequest) {
     const safeArtworkTitle = escapeHtml(artworkTitle)
     const safeArtworkArtist = escapeHtml(artworkArtist)
     const safeArtworkSlug = escapeHtml(artworkSlug)
-
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
-    }
 
     // Get environment variables
     const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'

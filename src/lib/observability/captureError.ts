@@ -9,6 +9,7 @@ type Flow =
   | 'cert' // Certificate-of-authenticity PDF generation / upload
   | 'upload' // File uploads (artwork images, signatures)
   | 'stripe' // Stripe client calls (paymentIntents.*, transfers.*, refunds.*)
+  | 'cron' // Scheduled jobs (reconciliation, etc.)
 
 export type CaptureContext = {
   /** Broad business domain — groups related errors in Sentry filters. */

@@ -9,6 +9,7 @@ import type { PrintRestrictions } from '@/lib/print-providers'
 import { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
+import { sanitizeLine } from '@/utils/sanitizeLine'
 
 // Defense-in-depth: only persist printOptions whose shape matches what
 // the wizard understands. Any unknown keys or unknown ids get dropped.
@@ -99,6 +100,26 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (authError) return authError
 
     const body = await request.json()
+
+    // Sanitize single-line text fields. `description` and `textContent`
+    // are rich-text HTML — left untouched here, DOMPurify cleans at
+    // render time. Length caps reject oversized payloads (defense
+    // against control-char padding).
+    if (body.title !== undefined) body.title = sanitizeLine(String(body.title))
+    if (body.author !== undefined) body.author = sanitizeLine(String(body.author))
+    if (body.year !== undefined) body.year = sanitizeLine(String(body.year))
+    if (body.technique !== undefined) body.technique = sanitizeLine(String(body.technique))
+    if (body.dimensions !== undefined) body.dimensions = sanitizeLine(String(body.dimensions))
+
+    if (
+      (typeof body.title === 'string' && body.title.length > 200) ||
+      (typeof body.author === 'string' && body.author.length > 150) ||
+      (typeof body.year === 'string' && body.year.length > 30) ||
+      (typeof body.technique === 'string' && body.technique.length > 200) ||
+      (typeof body.dimensions === 'string' && body.dimensions.length > 100)
+    ) {
+      return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 })
+    }
 
     // Regenerate slug if title changed
     const titleChanged = body.title && body.title !== existing.title

@@ -13,7 +13,6 @@ import { sendOrderShippedEmail } from '@/lib/emails/orderShipped'
 import { sendRefundIssuedEmail } from '@/lib/emails/refundIssued'
 import { captureError } from '@/lib/observability/captureError'
 import { logOrderEvent } from '@/lib/orders/logOrderEvent'
-import { PAYOUT_HOLD_DAYS, payoutEligibleAt } from '@/lib/orders/payoutPolicy'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
@@ -42,7 +41,6 @@ export type AdminOrderRow = {
   transferStatus: string | null
   paidOutAt: string | null
   latestEvent: { kind: string; message: string | null; at: string } | null
-  payoutEligibleAt: string | null
 }
 
 async function requireAdminSession() {
@@ -113,7 +111,6 @@ export async function listOrders(): Promise<
     latestEvent: r.events[0]
       ? { kind: r.events[0].kind, message: r.events[0].message, at: r.events[0].at.toISOString() }
       : null,
-    payoutEligibleAt: payoutEligibleAt(r.shippedAt)?.toISOString() ?? null,
   }))
 
   return { ok: true, orders }
@@ -156,7 +153,9 @@ export type AdminPayoutRow = {
   artworkSlug: string | null
   amountCents: number
   currency: string
-  transferId: string
+  /** Stripe Transfer ID for Connect payouts. Null for manual payouts. */
+  transferId: string | null
+  transferStatus: string | null
 }
 
 /**
@@ -171,7 +170,10 @@ export async function listArtistPayouts(): Promise<
   if (!guard.ok) return guard
 
   const rows = await prisma.printOrder.findMany({
-    where: { transferId: { not: null } },
+    // Both Stripe Connect transfers and out-of-band manual payments
+    // stamp paidOutAt — that's the universal "the artist has been paid"
+    // signal. transferId only tracks the Stripe path.
+    where: { paidOutAt: { not: null } },
     orderBy: { paidOutAt: 'desc' },
     take: 500,
     include: {
@@ -189,7 +191,8 @@ export async function listArtistPayouts(): Promise<
     artworkSlug: r.artwork.slug,
     amountCents: r.artistCents,
     currency: r.currency,
-    transferId: r.transferId!,
+    transferId: r.transferId,
+    transferStatus: r.transferStatus,
   }))
 
   return { ok: true, payouts }
@@ -270,7 +273,6 @@ export async function getOrderDetail(
     latestEvent: r.events[0]
       ? { kind: r.events[0].kind, message: r.events[0].message, at: r.events[0].at.toISOString() }
       : null,
-    payoutEligibleAt: payoutEligibleAt(r.shippedAt)?.toISOString() ?? null,
     shippingAddress: r.shippingAddress,
     printConfig: r.printConfig,
     productionCents: r.productionCents,
@@ -339,14 +341,6 @@ export async function releasePayout(
     return {
       ok: false,
       error: `Order is "${order.fulfillmentStatus ?? 'pending'}"; wait until Complete before releasing.`,
-    }
-  }
-  const eligible = payoutEligibleAt(order.shippedAt)
-  if (!eligible || eligible.getTime() > Date.now()) {
-    const when = eligible ? eligible.toLocaleDateString() : 'once the order has shipped'
-    return {
-      ok: false,
-      error: `Payout not yet eligible — waiting ${PAYOUT_HOLD_DAYS} days after shipment. Available ${when}.`,
     }
   }
   if (order.transferId) {
@@ -428,6 +422,78 @@ export async function releasePayout(
     })
     return { ok: false, error: 'Stripe transfer failed. Check server logs.' }
   }
+}
+
+/**
+ * Record an out-of-band artist payment (Wise, SEPA, PayPal, cash, etc.)
+ * for cases where the admin paid the artist outside of Stripe Connect.
+ *
+ * Mirrors `releasePayout` for state-keeping but skips the Stripe
+ * transfer call: stamps `paidOutAt` and `transferStatus = 'paid_manual'`
+ * so the order moves to the Done bucket and shows up in the payouts
+ * history. `transferId` stays null — there is no Stripe transfer.
+ *
+ * Method / reference / note are captured in the event log payload only;
+ * the artist isn't auto-emailed because the admin presumably already
+ * notified them when sending the money out-of-band.
+ */
+export async function markPaidManually(
+  orderId: string,
+  opts: { method: string; reference?: string; note?: string },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const method = (opts.method ?? '').trim()
+  if (!method) return { ok: false, error: 'A payment method is required (e.g. SEPA, Wise).' }
+
+  const order = await prisma.printOrder.findUnique({ where: { id: orderId } })
+  if (!order) return { ok: false, error: 'Order not found.' }
+
+  if (order.paymentStatus !== 'succeeded') {
+    return { ok: false, error: `Payment not succeeded (status: ${order.paymentStatus}).` }
+  }
+  if (order.fulfillmentStatus !== STAGE_COMPLETE) {
+    return {
+      ok: false,
+      error: `Order is "${order.fulfillmentStatus ?? 'pending'}"; wait until Complete before recording a payout.`,
+    }
+  }
+  if (order.paidOutAt) {
+    return {
+      ok: false,
+      error: order.transferId
+        ? `Already paid via Stripe (${order.transferId}).`
+        : 'Already marked paid manually.',
+    }
+  }
+  if (order.artistCents <= 0) {
+    return { ok: false, error: 'Artist amount is zero.' }
+  }
+
+  await prisma.printOrder.update({
+    where: { id: order.id },
+    data: {
+      transferStatus: 'paid_manual',
+      paidOutAt: new Date(),
+    },
+  })
+
+  await logOrderEvent({
+    orderId: order.id,
+    kind: 'admin_action',
+    actor: `admin:${guard.session.user.id}`,
+    message: `Marked paid manually via ${method}`,
+    payload: {
+      method,
+      reference: opts.reference?.trim() || undefined,
+      note: opts.note?.trim() || undefined,
+      amountCents: order.artistCents,
+      currency: order.currency,
+    },
+  })
+
+  return { ok: true }
 }
 
 /**

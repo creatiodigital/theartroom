@@ -15,6 +15,7 @@ import {
   type WizardConfig,
   formatEuro,
 } from '@/lib/print-providers'
+import { DIAL_CODES, getCountryName } from '@/lib/print-providers/dialCodes'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 
 import { OrderSummary } from '../OrderSummary'
@@ -24,13 +25,13 @@ import { createPaymentIntent } from './createPaymentIntent'
 
 import styles from './PrintCheckout.module.scss'
 
-const regionNames =
-  typeof Intl !== 'undefined' && 'DisplayNames' in Intl
-    ? new Intl.DisplayNames(['en'], { type: 'region' })
-    : null
-const countryName = (code: string) => regionNames?.of(code) ?? code
+// Country names come from a static map (COUNTRY_NAMES in dialCodes.ts)
+// rather than Intl.DisplayNames. Reason: Node and Chrome ship different
+// ICU data for politically-sensitive regions (e.g. FK), so the SSR
+// option text disagrees with the CSR option text and React throws a
+// hydration mismatch. Static map => identical strings on both sides.
 const sortCountries = (codes: string[]) =>
-  [...codes].sort((a, b) => countryName(a).localeCompare(countryName(b)))
+  [...codes].sort((a, b) => getCountryName(a).localeCompare(getCountryName(b)))
 
 export type CheckoutArtwork = {
   slug: string
@@ -84,6 +85,13 @@ export const PrintCheckout = ({
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const [country, setCountry] = useState<string>(initialCountry)
+  // Independent of `country` by design — a buyer might keep a foreign
+  // phone after relocating or be sending a gift to another country. We
+  // seed it from the initial shipping country (best guess) but never
+  // auto-sync after that; the buyer owns the choice.
+  const [phoneDial, setPhoneDial] = useState<string>(
+    () => DIAL_CODES[initialCountry] ?? DIAL_CODES.ES,
+  )
   const [handoff, setHandoff] = useState<WizardHandoff | null>(null)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(true)
@@ -95,10 +103,21 @@ export const PrintCheckout = ({
     () =>
       sortCountries(supportedCountries).map((code) => ({
         value: code,
-        label: countryName(code),
+        label: getCountryName(code),
       })),
     [supportedCountries],
   )
+
+  // Phone-prefix options: unique dial codes only (many countries share
+  // a prefix — e.g. +1 covers US/CA/Caribbean — and the digits a buyer
+  // types work the same regardless), sorted numerically. Independent
+  // of `supportedCountries`: the buyer's phone can be from anywhere.
+  const phoneDialOptions: SelectOption<string>[] = useMemo(() => {
+    const unique = Array.from(new Set(Object.values(DIAL_CODES)))
+    return unique
+      .sort((a, b) => Number(a) - Number(b))
+      .map((dial) => ({ value: dial, label: `+${dial}` }))
+  }, [])
   // Form validity is tracked separately because inputs are uncontrolled
   // (so Chrome autofill works without React re-renders clobbering values).
   // We poll the native HTML5 validity on every form input event.
@@ -282,13 +301,23 @@ export const PrintCheckout = ({
     const form = formRef.current
     if (!form || !handoff) return
 
+    if (!country) {
+      setTouched((prev) => ({ ...prev, country: true }))
+      return
+    }
+
     if (!form.reportValidity()) return
 
     const fd = new FormData(form)
+    // Combine the dial-code dropdown choice with the digits the buyer
+    // typed. Server gets a single E.164-ish string ("+34 612345678")
+    // it can pass straight to TPS / show in admin orders.
+    const rawPhone = String(fd.get('phone') ?? '').trim()
+    const phoneCombined = rawPhone && phoneDial ? `+${phoneDial} ${rawPhone}` : rawPhone
     const submitted: AddressForm = {
       fullName: String(fd.get('fullName') ?? '').trim(),
       email: String(fd.get('email') ?? '').trim(),
-      phone: String(fd.get('phone') ?? '').trim(),
+      phone: phoneCombined,
       countryCode: country,
       address1: String(fd.get('address1') ?? '').trim(),
       address2: String(fd.get('address2') ?? '').trim(),
@@ -363,16 +392,24 @@ export const PrintCheckout = ({
         >
           <h2 className={styles.formSectionTitle}>Where should we send it?</h2>
 
-          <div className={`${styles.field} ${styles.fieldFull}`}>
+          <div
+            className={`${styles.field} ${styles.fieldFull}`}
+            {...fieldProps('country')}
+            data-invalid={!country ? 'true' : 'false'}
+          >
             <label className={styles.fieldLabel} htmlFor="country">
               Country
             </label>
             <SelectDropdown<string>
               options={countryOptions}
               value={country}
-              onChange={setCountry}
+              onChange={(next) => {
+                setCountry(next)
+                setTouched((prev) => (prev.country ? prev : { ...prev, country: true }))
+              }}
               placeholder="Choose a country…"
             />
+            <span className={styles.fieldError}>Please choose a country.</span>
           </div>
 
           <div className={styles.fieldGrid}>
@@ -387,6 +424,7 @@ export const PrintCheckout = ({
                 type="text"
                 autoComplete="name"
                 required
+                maxLength={200}
                 defaultValue=""
               />
               <span className={styles.fieldError}>Please enter your full name.</span>
@@ -403,6 +441,7 @@ export const PrintCheckout = ({
                 type="email"
                 autoComplete="email"
                 required
+                maxLength={200}
                 defaultValue=""
               />
               <span className={styles.fieldError}>Please enter a valid email address.</span>
@@ -412,16 +451,27 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="phone">
                 Phone (for carrier)
               </label>
-              <input
-                id="phone"
-                name="phone"
-                className={styles.fieldInput}
-                type="tel"
-                autoComplete="tel"
-                required
-                defaultValue=""
-              />
-              <span className={styles.fieldError}>Please enter a valid phone number.</span>
+              <div className={styles.phoneRow}>
+                <SelectDropdown<string>
+                  className={styles.phoneDial}
+                  options={phoneDialOptions}
+                  value={phoneDial}
+                  onChange={setPhoneDial}
+                />
+                <div className={styles.phoneNumberCol}>
+                  <input
+                    id="phone"
+                    name="phone"
+                    className={`${styles.fieldInput} ${styles.phoneNumber}`}
+                    type="tel"
+                    autoComplete="tel"
+                    required
+                    maxLength={32}
+                    defaultValue=""
+                  />
+                  <span className={styles.fieldError}>Please enter a phone number.</span>
+                </div>
+              </div>
             </div>
 
             <div className={`${styles.field} ${styles.fieldFull}`} {...fieldProps('address1')}>
@@ -435,6 +485,7 @@ export const PrintCheckout = ({
                 type="text"
                 autoComplete="address-line1"
                 required
+                maxLength={200}
                 defaultValue=""
               />
               <span className={styles.fieldError}>Please enter your street address.</span>
@@ -450,6 +501,7 @@ export const PrintCheckout = ({
                 className={styles.fieldInput}
                 type="text"
                 autoComplete="address-line2"
+                maxLength={200}
                 defaultValue=""
               />
             </div>
@@ -465,6 +517,7 @@ export const PrintCheckout = ({
                 type="text"
                 autoComplete="address-level2"
                 required
+                maxLength={120}
                 defaultValue=""
               />
               <span className={styles.fieldError}>Please enter a city.</span>
@@ -472,7 +525,7 @@ export const PrintCheckout = ({
 
             <div className={styles.field}>
               <label className={styles.fieldLabel} htmlFor="state">
-                State / region
+                State / region (optional)
               </label>
               <input
                 id="state"
@@ -480,6 +533,7 @@ export const PrintCheckout = ({
                 className={styles.fieldInput}
                 type="text"
                 autoComplete="address-level1"
+                maxLength={120}
                 defaultValue=""
               />
             </div>
@@ -495,6 +549,7 @@ export const PrintCheckout = ({
                 type="text"
                 autoComplete="postal-code"
                 required
+                maxLength={20}
                 defaultValue=""
               />
               <span className={styles.fieldError}>Please enter a postal code.</span>

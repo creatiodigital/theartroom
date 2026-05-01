@@ -1,8 +1,11 @@
+import type { PrintOrder } from '@/generated/prisma'
+
 import prisma from '@/lib/prisma'
 import type { SpecsSummary, WizardConfig } from '@/lib/print-providers'
 import { summarizeConfig } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
 import { generateAndUploadCertificate } from '@/lib/certificates/generateAndUploadCertificate'
+import { sendAdminCriticalAlert } from '@/lib/emails/adminCriticalAlert'
 import { sendAdminOrderNotification } from '@/lib/emails/adminOrderNotification'
 import { sendOrderPlacedEmail } from '@/lib/emails/orderPlaced'
 import { captureError } from '@/lib/observability/captureError'
@@ -47,6 +50,23 @@ export async function createPrintOrderFromPaymentIntent(
   const artistUserId = md.artistUserId
   const country = md.countryCode
   if (!artworkId || !artistUserId || !country) {
+    await sendAdminCriticalAlert({
+      title: 'Order missing required metadata',
+      problem:
+        'The Stripe PaymentIntent webhook fired but the metadata fields needed to build a PrintOrder row are missing. The buyer’s card may be authorized — no order row was created.',
+      paymentIntentId: pi.id,
+      context: {
+        artworkId: artworkId ?? '(missing)',
+        artistUserId: artistUserId ?? '(missing)',
+        countryCode: country ?? '(missing)',
+      },
+      whatToDo: [
+        'Open the PaymentIntent in Stripe and check whether it is in requires_capture or succeeded state.',
+        'If the buyer’s card is authorized, cancel the PaymentIntent in Stripe to release the hold.',
+        'Contact the buyer (use the receipt_email on the PaymentIntent) to apologize and offer to re-place the order manually.',
+        'If you receive multiple of these for the same PI, check the deploy log around the timestamp — the metadata shape may have changed.',
+      ],
+    })
     return { ok: false, error: 'PaymentIntent missing required metadata.' }
   }
 
@@ -66,6 +86,22 @@ export async function createPrintOrderFromPaymentIntent(
       extra: { paymentIntentId: pi.id },
       level: 'error',
       fingerprint: ['order:parse-wizard-config-failed'],
+    })
+    await sendAdminCriticalAlert({
+      title: 'Order config could not be parsed',
+      problem: `Failed to parse the wizardConfig metadata blob on the PaymentIntent. ${err instanceof Error ? err.message : String(err)}`,
+      paymentIntentId: pi.id,
+      context: {
+        artworkId,
+        artistUserId,
+        rawWizardConfigLength: md.wizardConfig?.length ?? 0,
+      },
+      whatToDo: [
+        'Open the PaymentIntent in Stripe and inspect the metadata.wizardConfig value.',
+        'Open the buyer’s receipt in Stripe to see what they thought they were buying.',
+        'Cancel the PaymentIntent to release the card hold.',
+        'Contact the buyer to re-place the order through the wizard.',
+      ],
     })
     return { ok: false, error: 'PaymentIntent metadata.wizardConfig could not be parsed.' }
   }
@@ -89,7 +125,19 @@ export async function createPrintOrderFromPaymentIntent(
       flow: 'order',
       stage: 'artwork-not-found',
       extra: { artworkId, artistUserId, paymentIntentId: pi.id },
-      level: 'warning',
+      level: 'error',
+      fingerprint: ['order:artwork-not-found'],
+    })
+    await sendAdminCriticalAlert({
+      title: 'Artwork not found for paid order',
+      problem: `The buyer paid for artwork ${artworkId} but no such artwork exists in the database. The most likely cause is that the artwork was deleted between the buyer opening the wizard and Stripe firing the webhook.`,
+      paymentIntentId: pi.id,
+      context: { artworkId, artistUserId },
+      whatToDo: [
+        'Cancel the PaymentIntent in Stripe to release the buyer’s card hold.',
+        'Contact the buyer to apologize and offer alternatives.',
+        'Investigate why the artwork was deleted — soft-delete should be used so paid orders don’t orphan.',
+      ],
     })
     return { ok: false, error: `Artwork ${artworkId} not found.` }
   }
@@ -106,6 +154,22 @@ export async function createPrintOrderFromPaymentIntent(
       },
       level: 'error',
       fingerprint: ['order:artwork-artist-mismatch'],
+    })
+    await sendAdminCriticalAlert({
+      title: 'Artwork/artist mismatch on paid order',
+      problem:
+        'The artistUserId on the PaymentIntent metadata does not match the artwork’s actual artist. This is a tampering signal — refusing to create the order.',
+      paymentIntentId: pi.id,
+      context: {
+        artworkId,
+        metadataArtistUserId: artistUserId,
+        actualArtistUserId: artwork.userId,
+      },
+      whatToDo: [
+        'Cancel the PaymentIntent in Stripe to release the card hold.',
+        'Investigate the source of the request — check Sentry for the wizard session.',
+        'Do not manually create an order until you have verified the buyer’s actual intent.',
+      ],
     })
     return { ok: false, error: 'Artwork/artist mismatch on PaymentIntent.' }
   }
@@ -136,44 +200,88 @@ export async function createPrintOrderFromPaymentIntent(
   const buyerName = pi.shipping?.name ?? ''
   const addr = pi.shipping?.address ?? {}
 
-  const order = await prisma.printOrder.upsert({
-    where: { paymentIntentId: pi.id },
-    create: {
+  const buyerEmail = pi.receipt_email ?? md.customerEmail ?? ''
+  // The buyer email is the only way we can reach them after the order is
+  // placed (transactional emails: order placed, in production, shipped,
+  // delivered, refund). An empty string here means we'd silently send
+  // every email to nowhere — alert immediately so the admin can recover
+  // the address from the Stripe customer record or by phone.
+  if (!buyerEmail) {
+    await sendAdminCriticalAlert({
+      title: 'Order has no buyer email',
+      problem:
+        'The PaymentIntent has neither receipt_email nor a customerEmail in metadata. The order will be created but the buyer will receive zero transactional emails.',
       paymentIntentId: pi.id,
-      artworkId: artwork.id,
-      artistUserId,
-      buyerEmail: pi.receipt_email ?? md.customerEmail ?? '',
-      buyerName,
-      shippingAddress: {
-        line1: addr.line1 ?? '',
-        line2: addr.line2 ?? '',
-        city: addr.city ?? '',
-        state: addr.state ?? '',
-        postalCode: addr.postal_code ?? '',
-        country: addr.country ?? country,
-        phone: pi.shipping?.phone ?? '',
+      context: { artworkId, artistUserId, buyerName },
+      whatToDo: [
+        'Open the PaymentIntent in Stripe and check for a Customer object with an email.',
+        'If you find one, update the PrintOrder.buyerEmail directly in the database.',
+        'If you can’t find it, contact the buyer via the shipping phone number.',
+      ],
+    })
+  }
+
+  let order: PrintOrder
+  try {
+    order = await prisma.printOrder.upsert({
+      where: { paymentIntentId: pi.id },
+      create: {
+        paymentIntentId: pi.id,
+        artworkId: artwork.id,
+        artistUserId,
+        buyerEmail,
+        buyerName,
+        shippingAddress: {
+          line1: addr.line1 ?? '',
+          line2: addr.line2 ?? '',
+          city: addr.city ?? '',
+          state: addr.state ?? '',
+          postalCode: addr.postal_code ?? '',
+          country: addr.country ?? country,
+          phone: pi.shipping?.phone ?? '',
+        },
+        // Stored as JSON. The admin order page re-renders specs from this
+        // rather than the PI metadata.
+        printConfig: config as unknown as object,
+        country,
+        totalCents:
+          Number(md.productionCents ?? 0) +
+          Number(md.shippingCents ?? 0) +
+          Number(md.artistCents ?? 0) +
+          Number(md.galleryCents ?? 0) +
+          Number(md.customerVatCents ?? 0),
+        artistCents: Number(md.artistCents ?? 0),
+        galleryCents: Number(md.galleryCents ?? 0),
+        productionCents: Number(md.productionCents ?? 0),
+        productionShippingCents: Number(md.shippingCents ?? 0),
+        customerVatCents: Number(md.customerVatCents ?? 0),
+        currency: 'eur',
+        paymentStatus: 'authorized',
       },
-      // Stored as JSON. The admin order page re-renders specs from this
-      // rather than the PI metadata.
-      printConfig: config as unknown as object,
-      country,
-      totalCents:
-        Number(md.productionCents ?? 0) +
-        Number(md.shippingCents ?? 0) +
-        Number(md.artistCents ?? 0) +
-        Number(md.galleryCents ?? 0) +
-        Number(md.customerVatCents ?? 0),
-      artistCents: Number(md.artistCents ?? 0),
-      galleryCents: Number(md.galleryCents ?? 0),
-      productionCents: Number(md.productionCents ?? 0),
-      productionShippingCents: Number(md.shippingCents ?? 0),
-      customerVatCents: Number(md.customerVatCents ?? 0),
-      currency: 'eur',
-      paymentStatus: 'authorized',
-    },
-    // Don't downgrade — if we're already 'succeeded' (captured) keep it.
-    update: {},
-  })
+      // Don't downgrade — if we're already 'succeeded' (captured) keep it.
+      update: {},
+    })
+  } catch (err) {
+    captureError(err instanceof Error ? err : new Error(String(err)), {
+      flow: 'order',
+      stage: 'upsert-print-order',
+      extra: { paymentIntentId: pi.id, artworkId, artistUserId },
+      level: 'error',
+      fingerprint: ['order:upsert-failed'],
+    })
+    await sendAdminCriticalAlert({
+      title: 'Database write failed for paid order',
+      problem: `Could not persist the PrintOrder row. ${err instanceof Error ? err.message : String(err)}`,
+      paymentIntentId: pi.id,
+      context: { artworkId, artistUserId, buyerEmail, buyerName },
+      whatToDo: [
+        'Check the database is healthy (Supabase status page).',
+        'The Stripe webhook will retry, so this may resolve itself within minutes.',
+        'If you keep seeing this alert for the same PI, cancel the PaymentIntent in Stripe and contact the buyer.',
+      ],
+    })
+    return { ok: false, error: 'Database write failed.' }
+  }
 
   // Buyer confirmation email — sent the first time we see this order.
   // The event log is the idempotency gate: if the webhook retries, we

@@ -9,17 +9,20 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { daysSinceDelivered, PAYOUT_SAFE_WINDOW_DAYS } from '@/lib/orders/payoutPolicy'
 import { formatEuro } from '@/lib/print-providers/format'
 
 import {
   deleteOrder,
   getOrderDetail,
   markDelivered,
+  markPaidManually,
   markPlaced,
   markRejected,
   markShipped,
   markStarted,
   refundOrder,
+  releasePayout,
   type AdminOrderDetail as Detail,
 } from '@/app/admin/orders/actions'
 
@@ -60,33 +63,26 @@ const Dot = ({ color }: { color: DotColor }) => (
   />
 )
 
-const paymentDot = (status: string): DotColor => {
-  if (status === 'succeeded') return 'green'
-  if (status === 'authorized') return 'blue'
-  if (status === 'processing') return 'amber'
-  if (status === 'failed') return 'red'
-  return 'grey'
-}
-
-const fulfillmentDot = (stage: string | null): DotColor => {
-  if (stage === 'Complete') return 'green'
-  if (stage === 'Rejected') return 'red'
-  if (stage === 'Shipped') return 'blue'
-  if (stage === 'Started' || stage === 'Placed') return 'amber'
-  return 'grey'
-}
-
-const fulfillmentLabel = (stage: string | null): string => {
-  if (!stage) return 'Pending placement'
-  if (stage === 'Placed') return 'Placed at TPS'
-  if (stage === 'Started') return 'In production'
-  if (stage === 'Shipped') return 'Shipped'
-  if (stage === 'Complete') return 'Delivered'
-  if (stage === 'Rejected') return 'Rejected'
-  return stage
-}
-
 const TERMINAL_STAGES = new Set(['Complete', 'Rejected'])
+
+// Full order lifecycle, rendered top-of-page as a trail of badges so
+// the admin can see at a glance which milestones have been hit and
+// which are still ahead. The first five steps are driven by
+// `fulfillmentStatus`; the final "Artist paid" step is driven by
+// `paidOutAt` (set when the artist payout — Stripe transfer or
+// manual — has actually fired). Off-ramp `Rejected` is rendered
+// separately, not as part of this trail.
+const buildLifecycle = (order: { fulfillmentStatus: string | null; paidOutAt: string | null }) => {
+  const fIdx = ['Placed', 'Started', 'Shipped', 'Complete'].indexOf(order.fulfillmentStatus ?? '')
+  return [
+    { label: 'New', reached: true },
+    { label: 'At TPS', reached: fIdx >= 0 },
+    { label: 'In production', reached: fIdx >= 1 },
+    { label: 'Shipped', reached: fIdx >= 2 },
+    { label: 'Delivered', reached: fIdx >= 3 },
+    { label: 'Artist paid', reached: !!order.paidOutAt },
+  ]
+}
 
 const CopyButton = ({ value, label }: { value: string; label?: string }) => {
   const [copied, setCopied] = useState(false)
@@ -149,6 +145,17 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
   const [busyError, setBusyError] = useState<string | null>(null)
   const [shipOpen, setShipOpen] = useState(false)
   const [trackingUrlInput, setTrackingUrlInput] = useState('')
+
+  const [payOpen, setPayOpen] = useState(false)
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
+
+  const [manualOpen, setManualOpen] = useState(false)
+  const [manualMethod, setManualMethod] = useState('')
+  const [manualReference, setManualReference] = useState('')
+  const [manualNote, setManualNote] = useState('')
+  const [manualSubmitting, setManualSubmitting] = useState(false)
+  const [manualError, setManualError] = useState<string | null>(null)
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -273,6 +280,41 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
     await load()
   }, [order, load])
 
+  const handlePayArtist = useCallback(async () => {
+    if (!order) return
+    setPaying(true)
+    setPayError(null)
+    const res = await releasePayout(order.id)
+    setPaying(false)
+    if (!res.ok) {
+      setPayError(res.error)
+      return
+    }
+    setPayOpen(false)
+    await load()
+  }, [order, load])
+
+  const handleMarkPaidManually = useCallback(async () => {
+    if (!order) return
+    setManualSubmitting(true)
+    setManualError(null)
+    const res = await markPaidManually(order.id, {
+      method: manualMethod,
+      reference: manualReference,
+      note: manualNote,
+    })
+    setManualSubmitting(false)
+    if (!res.ok) {
+      setManualError(res.error)
+      return
+    }
+    setManualOpen(false)
+    setManualMethod('')
+    setManualReference('')
+    setManualNote('')
+    await load()
+  }, [order, manualMethod, manualReference, manualNote, load])
+
   if (loading) {
     return (
       <DashboardLayout backLink="/admin/orders" backLabel="← Back to Orders">
@@ -351,68 +393,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         ['Currency', order.currency.toUpperCase()],
       ],
     },
-    {
-      title: 'State',
-      rows: [
-        [
-          'Payment',
-          <span key="p">
-            <Dot color={paymentDot(order.paymentStatus)} />
-            <Badge label={order.paymentStatus} variant="current" />
-          </span>,
-        ],
-        [
-          'Fulfillment',
-          <span key="pr">
-            <Dot color={fulfillmentDot(order.fulfillmentStatus)} />
-            <Badge label={fulfillmentLabel(order.fulfillmentStatus)} variant="current" />
-          </span>,
-        ],
-        [
-          'Stripe PaymentIntent',
-          <a
-            key="pi"
-            href={`https://dashboard.stripe.com/payments/${order.paymentIntentId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {order.paymentIntentId}
-          </a>,
-        ],
-        [
-          'Tracking',
-          order.trackingUrl ? (
-            <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer">
-              {order.trackingUrl}
-            </a>
-          ) : (
-            '—'
-          ),
-        ],
-        ['Shipped at', formatDateTime(order.shippedAt)],
-        [
-          'Payout eligible',
-          order.transferId
-            ? 'Paid'
-            : order.payoutEligibleAt
-              ? (() => {
-                  const at = new Date(order.payoutEligibleAt)
-                  const ready = at.getTime() <= Date.now()
-                  return ready ? (
-                    <span>
-                      <Dot color="amber" /> Ready ({formatDateTime(order.payoutEligibleAt)})
-                    </span>
-                  ) : (
-                    <span>
-                      <Dot color="blue" /> Holding until {formatDateTime(order.payoutEligibleAt)}
-                    </span>
-                  )
-                })()
-              : '—',
-        ],
-        ['Artist payout', order.transferId ? `Paid (${order.transferId})` : 'Not yet'],
-      ],
-    },
   ]
 
   const stage = order.fulfillmentStatus
@@ -477,32 +457,28 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            gap: 16,
             marginBottom: 12,
             flexWrap: 'wrap',
           }}
         >
           <h2 style={{ margin: 0, fontSize: 16 }}>Fulfillment</h2>
-          <Dot color={fulfillmentDot(stage)} />
-          <Badge label={fulfillmentLabel(stage)} variant="current" />
+          {stage === 'Rejected' ? (
+            <Badge label="Rejected" variant="past" />
+          ) : (
+            buildLifecycle(order).map((s) => (
+              <Badge key={s.label} label={s.label} variant={s.reached ? 'current' : 'neutral'} />
+            ))
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div
-            style={{
-              padding: '8px 12px',
-              background: '#f3f0ff',
-              border: '1px solid #c4b5fd',
-              borderRadius: 4,
-              fontSize: 12,
-              lineHeight: 1.5,
-            }}
-          >
-            <strong>Manual fulfillment.</strong> Place each order on theprintspace&apos;s portal by
-            hand, then advance the stage here as you get updates from them. Each click sends the
-            corresponding buyer email automatically.
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Single stage-aware primary CTA. The fulfillment pipeline
+                is strictly forward-only — backward steps would just send
+                contradictory emails to the buyer (the prior stage's
+                email already went out and can't be unsent). At any
+                moment there is exactly one "what to do next" button. */}
             {stage === null && order.paymentStatus === 'authorized' && (
               <Button
                 font="dashboard"
@@ -512,35 +488,41 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                 disabled={busy !== null}
               />
             )}
-            {stage !== null && !isTerminal && (
-              <>
-                <Button
-                  font="dashboard"
-                  variant="secondary"
-                  label={busy === 'started' ? 'Marking…' : 'Mark in production (notify buyer)'}
-                  onClick={handleStarted}
-                  disabled={busy !== null || stage === 'Started'}
-                />
-                <Button
-                  font="dashboard"
-                  variant="secondary"
-                  label={busy === 'shipped' ? 'Marking…' : 'Mark shipped (notify buyer)'}
-                  onClick={() => {
-                    setBusyError(null)
-                    setTrackingUrlInput(order.trackingUrl ?? '')
-                    setShipOpen(true)
-                  }}
-                  disabled={busy !== null || stage === 'Shipped'}
-                />
-                <Button
-                  font="dashboard"
-                  variant="secondary"
-                  label={busy === 'delivered' ? 'Marking…' : 'Mark delivered (notify buyer)'}
-                  onClick={handleDelivered}
-                  disabled={busy !== null}
-                />
-              </>
+            {stage === 'Placed' && (
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={busy === 'started' ? 'Marking…' : 'Mark in production (notify buyer)'}
+                onClick={handleStarted}
+                disabled={busy !== null}
+              />
             )}
+            {stage === 'Started' && (
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={busy === 'shipped' ? 'Marking…' : 'Mark shipped (notify buyer)'}
+                onClick={() => {
+                  setBusyError(null)
+                  setTrackingUrlInput(order.trackingUrl ?? '')
+                  setShipOpen(true)
+                }}
+                disabled={busy !== null}
+              />
+            )}
+            {stage === 'Shipped' && (
+              <Button
+                font="dashboard"
+                variant="primary"
+                label={busy === 'delivered' ? 'Marking…' : 'Mark delivered (notify buyer)'}
+                onClick={handleDelivered}
+                disabled={busy !== null}
+              />
+            )}
+            {/* Off-ramp, available until terminal. Not a forward step in
+                the pipeline — it pulls the order out of the flow
+                entirely (and triggers refund-needed messaging if the
+                card was already charged). */}
             {canReject && (
               <Button
                 font="dashboard"
@@ -625,14 +607,359 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               </div>
             </div>
           )}
+          {rejectOpen && (
+            <div
+              style={{
+                padding: 16,
+                border: '1px solid rgba(0,0,0,0.15)',
+                borderRadius: 4,
+                background: '#fafafa',
+              }}
+            >
+              <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
+                <strong>Mark this order as rejected</strong>
+                {order.paymentStatus === 'authorized'
+                  ? ' — the Stripe hold will be voided immediately (no money moves).'
+                  : order.paymentStatus === 'succeeded'
+                    ? ' — the payment was already captured; after marking rejected you’ll need to issue a refund separately.'
+                    : '.'}
+              </p>
+              <label
+                htmlFor="reject-reason"
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  marginBottom: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  opacity: 0.7,
+                }}
+              >
+                Reason (internal, for audit log)
+              </label>
+              <textarea
+                id="reject-reason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+                placeholder="e.g. TPS rejected the file for low resolution."
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  border: '1px solid rgba(0,0,0,0.2)',
+                  borderRadius: 4,
+                  fontFamily: 'inherit',
+                  fontSize: 13,
+                  boxSizing: 'border-box',
+                }}
+              />
+              {rejectError && (
+                <p style={{ margin: '12px 0 0 0', color: '#b91c1c', fontSize: 13 }}>
+                  ⚠️ {rejectError}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <Button
+                  font="dashboard"
+                  variant="danger"
+                  label={rejecting ? 'Marking…' : 'Mark rejected'}
+                  onClick={handleMarkRejected}
+                  disabled={rejecting || rejectReason.trim().length === 0}
+                />
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label="Cancel"
+                  onClick={() => {
+                    setRejectOpen(false)
+                    setRejectReason('')
+                    setRejectError(null)
+                  }}
+                  disabled={rejecting}
+                />
+              </div>
+            </div>
+          )}
         </div>
-
-        {isTerminal && (
-          <p style={{ margin: '12px 0 0 0', fontSize: 12, opacity: 0.6 }}>
-            Terminal stage — no further fulfillment action.
-          </p>
-        )}
       </div>
+
+      {/* Pay the Artist — only surfaces once the order is delivered.
+          Hidden once the artist has been paid (paidOutAt set, by either
+          Stripe Connect transfer or out-of-band manual payment). The
+          list page's Delivered-tab CTA navigates here so the admin
+          sees full context before confirming a real money transfer. */}
+      {order.fulfillmentStatus === 'Complete' && !order.paidOutAt && (
+        <div className={dashboardStyles.section}>
+          <h2 style={{ margin: '0 0 4px 0', fontSize: 16 }}>Pay the artist</h2>
+          <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
+            Release the artist&apos;s share to their connected Stripe account. Buyer&apos;s name and
+            address are never shared.
+          </p>
+
+          {(() => {
+            const days = daysSinceDelivered(order.shippedAt)
+            const past = days !== null && days >= PAYOUT_SAFE_WINDOW_DAYS
+            const remaining = days === null ? null : Math.max(0, PAYOUT_SAFE_WINDOW_DAYS - days)
+            return (
+              <div
+                style={{
+                  padding: '12px 14px',
+                  background: past ? '#ecfdf5' : '#fffbeb',
+                  border: `1px solid ${past ? '#a7f3d0' : '#fde68a'}`,
+                  borderRadius: 4,
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  marginBottom: 16,
+                }}
+              >
+                <div style={{ marginBottom: 6 }}>
+                  <strong>Amount to pay:</strong> {formatEuro(order.artistCents)} →{' '}
+                  {order.artist.name}
+                </div>
+                <div style={{ marginBottom: 6 }}>
+                  <strong>Delivered:</strong>{' '}
+                  {order.shippedAt ? formatDateTime(order.shippedAt) : 'unknown'}{' '}
+                  {days !== null ? `(${days} day${days === 1 ? '' : 's'} ago)` : ''}
+                </div>
+                <div>
+                  <strong>Safe window ({PAYOUT_SAFE_WINDOW_DAYS} days):</strong>{' '}
+                  {past ? (
+                    <span style={{ color: '#047857' }}>
+                      ✓ Passed — paying now is low-risk for buyer disputes.
+                    </span>
+                  ) : (
+                    <span style={{ color: '#b45309' }}>
+                      ⚠ {remaining} day{remaining === 1 ? '' : 's'} remaining. Paying now is your
+                      call — if the buyer disputes the order later, recovering the artist&apos;s
+                      share will be on you.
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          {!order.artist.stripeOnboardingComplete && (
+            <p
+              style={{
+                margin: '0 0 16px 0',
+                padding: '10px 14px',
+                background: '#fdecea',
+                border: '1px solid #f5a5a0',
+                borderRadius: 4,
+                fontSize: 13,
+              }}
+            >
+              ⚠️ <strong>Artist hasn&apos;t completed Stripe Connect onboarding.</strong> The
+              transfer will fail. Ask {order.artist.name} to finish onboarding before you can pay
+              them.
+            </p>
+          )}
+
+          {payError && (
+            <p style={{ margin: '0 0 12px 0', color: '#b91c1c', fontSize: 13 }}>⚠️ {payError}</p>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              font="dashboard"
+              variant="primary"
+              label={paying ? 'Paying…' : 'Pay with Stripe'}
+              onClick={() => {
+                setPayError(null)
+                setPayOpen(true)
+              }}
+              disabled={paying || manualSubmitting || !order.artist.stripeOnboardingComplete}
+            />
+            <Button
+              font="dashboard"
+              variant="secondary"
+              label="Pay manually"
+              onClick={() => {
+                setManualError(null)
+                setManualOpen(true)
+              }}
+              disabled={paying || manualSubmitting}
+            />
+          </div>
+
+          {manualOpen && (
+            <div
+              style={{
+                marginTop: 16,
+                padding: 16,
+                border: '1px solid rgba(0,0,0,0.15)',
+                borderRadius: 4,
+                background: '#fafafa',
+              }}
+            >
+              <p style={{ margin: '0 0 12px 0', fontSize: 13, lineHeight: 1.5 }}>
+                Use this if you paid {order.artist.name} outside Stripe Connect (e.g. SEPA from your
+                bank, Wise, PayPal). The order will be marked paid and moved to Done — but no Stripe
+                transfer happens. The artist is not auto-emailed; please notify them yourself.
+              </p>
+
+              <label
+                htmlFor="manual-method"
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  marginBottom: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  opacity: 0.7,
+                }}
+              >
+                Method (e.g. SEPA, Wise, PayPal)
+              </label>
+              <input
+                id="manual-method"
+                type="text"
+                value={manualMethod}
+                onChange={(e) => setManualMethod(e.target.value)}
+                placeholder="SEPA"
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  border: '1px solid rgba(0,0,0,0.2)',
+                  borderRadius: 4,
+                  fontFamily: 'inherit',
+                  fontSize: 13,
+                  marginBottom: 12,
+                  boxSizing: 'border-box',
+                }}
+              />
+
+              <label
+                htmlFor="manual-reference"
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  marginBottom: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  opacity: 0.7,
+                }}
+              >
+                Reference (optional — bank transfer ID, etc.)
+              </label>
+              <input
+                id="manual-reference"
+                type="text"
+                value={manualReference}
+                onChange={(e) => setManualReference(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  border: '1px solid rgba(0,0,0,0.2)',
+                  borderRadius: 4,
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  marginBottom: 12,
+                  boxSizing: 'border-box',
+                }}
+              />
+
+              <label
+                htmlFor="manual-note"
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  marginBottom: 4,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  opacity: 0.7,
+                }}
+              >
+                Note (optional)
+              </label>
+              <textarea
+                id="manual-note"
+                value={manualNote}
+                onChange={(e) => setManualNote(e.target.value)}
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  border: '1px solid rgba(0,0,0,0.2)',
+                  borderRadius: 4,
+                  fontFamily: 'inherit',
+                  fontSize: 13,
+                  boxSizing: 'border-box',
+                }}
+              />
+
+              {manualError && (
+                <p style={{ margin: '12px 0 0 0', color: '#b91c1c', fontSize: 13 }}>
+                  ⚠️ {manualError}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <Button
+                  font="dashboard"
+                  variant="primary"
+                  label={
+                    manualSubmitting ? 'Saving…' : `Mark paid (${formatEuro(order.artistCents)})`
+                  }
+                  onClick={handleMarkPaidManually}
+                  disabled={manualSubmitting || manualMethod.trim().length === 0}
+                />
+                <Button
+                  font="dashboard"
+                  variant="secondary"
+                  label="Cancel"
+                  onClick={() => {
+                    setManualOpen(false)
+                    setManualMethod('')
+                    setManualReference('')
+                    setManualNote('')
+                    setManualError(null)
+                  }}
+                  disabled={manualSubmitting}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Confirmation modal for the actual transfer. */}
+      {payOpen && order && (
+        <ConfirmModal
+          title="Pay the artist?"
+          message={
+            <>
+              This will transfer <strong>{formatEuro(order.artistCents)}</strong> to{' '}
+              <strong>{order.artist.name}</strong>&apos;s Stripe account for order{' '}
+              <code>#{order.id.slice(0, 8)}</code>. The order will then move into the Done tab.
+              <br />
+              <br />
+              Once released, the money is on the artist&apos;s side — you can&apos;t pull it back
+              from this dashboard.
+            </>
+          }
+          warning={(() => {
+            const days = daysSinceDelivered(order.shippedAt)
+            if (days === null || days >= PAYOUT_SAFE_WINDOW_DAYS) return null
+            return (
+              <>
+                Delivered <strong>{days}</strong> day{days === 1 ? '' : 's'} ago — only{' '}
+                {PAYOUT_SAFE_WINDOW_DAYS - days} day
+                {PAYOUT_SAFE_WINDOW_DAYS - days === 1 ? '' : 's'} into the {PAYOUT_SAFE_WINDOW_DAYS}
+                -day safe window. If the buyer disputes this order later, recovering the
+                artist&apos;s share will be on you.
+              </>
+            )
+          })()}
+          confirmLabel="Yes, pay the artist"
+          cancelLabel="Cancel"
+          destructive
+          busy={paying}
+          onConfirm={handlePayArtist}
+          onCancel={() => setPayOpen(false)}
+        />
+      )}
 
       <div className={dashboardStyles.section}>
         <h2 style={{ margin: '0 0 4px 0', fontSize: 16 }}>For TPS placement</h2>
@@ -761,82 +1088,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
         )}
       </div>
 
-      {rejectOpen && (
-        <div className={dashboardStyles.section}>
-          <div
-            style={{
-              padding: 16,
-              border: '1px solid rgba(0,0,0,0.15)',
-              borderRadius: 4,
-              background: '#fafafa',
-            }}
-          >
-            <p style={{ margin: '0 0 12px 0', fontSize: 14 }}>
-              <strong>Mark this order as rejected</strong>
-              {order.paymentStatus === 'authorized'
-                ? ' — the Stripe hold will be voided immediately (no money moves).'
-                : order.paymentStatus === 'succeeded'
-                  ? ' — the payment was already captured; after marking rejected you’ll need to issue a refund separately.'
-                  : '.'}
-            </p>
-            <label
-              htmlFor="reject-reason"
-              style={{
-                display: 'block',
-                fontSize: 12,
-                marginBottom: 6,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                opacity: 0.7,
-              }}
-            >
-              Reason (internal, for audit log)
-            </label>
-            <textarea
-              id="reject-reason"
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              rows={3}
-              placeholder="e.g. TPS rejected the file for low resolution."
-              style={{
-                width: '100%',
-                padding: 8,
-                border: '1px solid rgba(0,0,0,0.2)',
-                borderRadius: 4,
-                fontFamily: 'inherit',
-                fontSize: 13,
-                boxSizing: 'border-box',
-              }}
-            />
-            {rejectError && (
-              <p style={{ margin: '12px 0 0 0', color: '#b91c1c', fontSize: 13 }}>
-                ⚠️ {rejectError}
-              </p>
-            )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <Button
-                font="dashboard"
-                variant="danger"
-                label={rejecting ? 'Marking…' : 'Mark rejected'}
-                onClick={handleMarkRejected}
-                disabled={rejecting || rejectReason.trim().length === 0}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => {
-                  setRejectOpen(false)
-                  setRejectReason('')
-                  setRejectError(null)
-                }}
-                disabled={rejecting}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       {(() => {
         const refundable =
           order.paymentStatus === 'authorized' || order.paymentStatus === 'succeeded'
@@ -877,7 +1128,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                     : ' — this returns the money from our Stripe balance to the buyer’s card. Takes 5–10 business days to appear on their statement.'}
                 </p>
 
-                {order.transferId && (
+                {order.paidOutAt && (
                   <p
                     style={{
                       margin: '0 0 12px 0',
@@ -889,8 +1140,10 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
                     }}
                   >
                     ⚠️ <strong>Artist payout already released</strong> (
-                    {formatEuro(order.artistCents)}). Refunding here will <em>not</em> claw that
-                    back — you&apos;ll need to recover it from the artist separately.
+                    {formatEuro(order.artistCents)}
+                    {order.transferId ? ' via Stripe' : ' manually'}). Refunding here will{' '}
+                    <em>not</em> claw that back — you&apos;ll need to recover it from the artist
+                    separately.
                   </p>
                 )}
 
@@ -988,11 +1241,11 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
             </>
           }
           warning={
-            order.transferId ? (
+            order.paidOutAt ? (
               <>
-                <strong>Artist payout already released</strong> ({formatEuro(order.artistCents)}).
-                This refund will not claw that back — you&apos;ll need to recover it from the artist
-                separately.
+                <strong>Artist payout already released</strong> ({formatEuro(order.artistCents)}
+                {order.transferId ? ' via Stripe' : ' manually'}). This refund will not claw that
+                back — you&apos;ll need to recover it from the artist separately.
               </>
             ) : null
           }

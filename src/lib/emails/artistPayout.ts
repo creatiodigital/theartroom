@@ -27,6 +27,10 @@ type ArtistPayoutArgs = {
 export async function sendArtistPayoutEmail(
   args: ArtistPayoutArgs,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  if (process.env.SKIP_EMAILS === 'true') {
+    return { ok: true, id: 'skipped-e2e' }
+  }
+
   const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'
 
   const safeName = escapeHtml(args.artistFirstName || 'there')

@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
+import { sanitizeLine } from '@/utils/sanitizeLine'
 
 export const dynamic = 'force-dynamic'
 
@@ -106,9 +107,29 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { artworkType, title, author, year, technique, dimensions, description, featured } = body
 
+    // Sanitize single-line text fields. Description is rich-text HTML
+    // (TipTap) — not sanitized here, DOMPurify cleans at render time.
+    const cleanTitle = typeof title === 'string' ? sanitizeLine(title) : ''
+    const cleanAuthor = typeof author === 'string' ? sanitizeLine(author) : ''
+    const cleanYear = typeof year === 'string' ? sanitizeLine(year) : ''
+    const cleanTechnique = typeof technique === 'string' ? sanitizeLine(technique) : ''
+    const cleanDimensions = typeof dimensions === 'string' ? sanitizeLine(dimensions) : ''
+
+    // Length caps post-sanitize. Generous to allow real-world data
+    // (multi-language titles, complex techniques, etc.) but bounded.
+    if (
+      cleanTitle.length > 200 ||
+      cleanAuthor.length > 150 ||
+      cleanYear.length > 30 ||
+      cleanTechnique.length > 200 ||
+      cleanDimensions.length > 100
+    ) {
+      return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 })
+    }
+
     // Auto-generate title if not provided
-    let finalTitle = title
-    if (!finalTitle || finalTitle.trim() === '') {
+    let finalTitle = cleanTitle
+    if (!finalTitle) {
       // Count existing artworks to generate "Untitled 1", "Untitled 2", etc.
       const count = await prisma.artwork.count({
         where: { userId },
@@ -125,10 +146,10 @@ export async function POST(request: NextRequest) {
         slug,
         artworkType: artworkType || 'image',
         title: finalTitle,
-        author: author || null,
-        year: year || null,
-        technique: technique || null,
-        dimensions: dimensions || null,
+        author: cleanAuthor || null,
+        year: cleanYear || null,
+        technique: cleanTechnique || null,
+        dimensions: cleanDimensions || null,
         description: description || null,
         featured: featured === true || featured === 'true',
       },

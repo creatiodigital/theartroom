@@ -15,6 +15,7 @@ import type { PrintRestrictions } from '@/lib/print-providers/types'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
+import { sanitizeLine } from '@/utils/sanitizeLine'
 
 import { getTaxEstimate } from './getTaxEstimate'
 
@@ -107,6 +108,8 @@ function isKnownProvider(id: unknown): id is ProviderId {
   return id === 'printspace'
 }
 
+// sanitizeLine moved to @/utils/sanitizeLine
+
 /**
  * Server-authoritative payment setup. Quotes the order against TPS so we
  * don't trust the number the client saw, then opens a Stripe
@@ -135,10 +138,11 @@ export async function createPaymentIntent(
   if (!address?.countryCode || address.countryCode.length !== 2) {
     return { ok: false, error: 'Invalid request. Please reload and try again.' }
   }
-  // Address strings have hard caps to keep the Stripe payload bounded
-  // and reject obvious junk. Stripe enforces its own limits but we cap
-  // earlier so we can treat oversized inputs as tamper signals.
-  const stringFields = [
+  // Address strings: type-check first, then sanitize (strip control
+  // chars, zero-width Unicode, collapse whitespace), then length-check.
+  // Length cap kicks in AFTER sanitize so a tampered payload that's
+  // padded with control chars can't sneak past via raw byte count.
+  const rawFields = [
     address.fullName,
     address.email,
     address.phone,
@@ -148,7 +152,52 @@ export async function createPaymentIntent(
     address.stateOrRegion,
     address.postalCode,
   ]
-  if (stringFields.some((s) => typeof s !== 'string' || s.length > 200)) {
+  if (rawFields.some((s) => typeof s !== 'string')) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
+
+  // Mutate `address` in place with sanitized values. Downstream code
+  // (Stripe metadata, PI shipping, DB write via webhook) all read from
+  // here, so cleaning once at the boundary is enough.
+  address.fullName = sanitizeLine(address.fullName)
+  address.email = sanitizeLine(address.email)
+  address.phone = sanitizeLine(address.phone)
+  address.address1 = sanitizeLine(address.address1)
+  address.address2 = sanitizeLine(address.address2)
+  address.city = sanitizeLine(address.city)
+  address.stateOrRegion = sanitizeLine(address.stateOrRegion)
+  address.postalCode = sanitizeLine(address.postalCode)
+
+  const sanitizedFields = [
+    address.fullName,
+    address.email,
+    address.phone,
+    address.address1,
+    address.address2,
+    address.city,
+    address.stateOrRegion,
+    address.postalCode,
+  ]
+  if (sanitizedFields.some((s) => s.length > 200)) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
+  // Required-field presence check (post-sanitize, so a pure-whitespace
+  // input that the client smuggled past `required` is rejected here).
+  if (
+    !address.fullName ||
+    !address.email ||
+    !address.phone ||
+    !address.address1 ||
+    !address.city ||
+    !address.postalCode
+  ) {
+    return { ok: false, error: 'Invalid request. Please reload and try again.' }
+  }
+  // Email must contain at least one '@' and one '.' after it. Cheap
+  // structural check on top of HTML5 client validation; Stripe + Resend
+  // do their own format checks downstream too.
+  const atIndex = address.email.indexOf('@')
+  if (atIndex < 1 || address.email.indexOf('.', atIndex) < 0) {
     return { ok: false, error: 'Invalid request. Please reload and try again.' }
   }
 
