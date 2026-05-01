@@ -29,8 +29,22 @@ loadDotenv({ path: path.join(ROOT, '.env.test.local'), override: true })
  * - No CI-specific config: these tests are intentionally not wired
  *   into the build pipeline. Run them by hand with `pnpm test:e2e`.
  *
- * Tests are read-only by contract — they hit a shared dev/staging DB
- * and must not mutate it (no order creation, no edits, no deletes).
+ * Most specs are read-only by contract — they hit a shared dev /
+ * staging DB and observe state without mutating it. The exceptions
+ * are full-flow specs that exercise the buyer + admin pipelines
+ * end-to-end (buyer-checkout, admin-order-lifecycle): those create
+ * a real PrintOrder + Stripe test-mode PaymentIntent and clean up
+ * after themselves in a `finally` block via cleanup-helpers.ts. New
+ * specs should default to read-only; only opt in to writes when the
+ * test target is the persistence pipeline itself.
+ *
+ * Pre-requisites for the write specs:
+ *   - SKIP_EMAILS=true in the dev server's env (prevents Resend from
+ *     fanning out real emails during the run).
+ *   - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY + STRIPE_SECRET_KEY pointing
+ *     at Stripe test-mode keys.
+ *   - Local Stripe CLI webhook listener forwarding to /api/webhooks/stripe
+ *     so the order row actually gets created.
  */
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001'
 

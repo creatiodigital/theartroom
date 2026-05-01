@@ -1,0 +1,141 @@
+// Counter cards — clickable, route to filtered views.
+.counterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.counterCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-4);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &:visited {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+}
+
+.counterValue {
+  font-size: 28px;
+  font-weight: var(--font-medium);
+  line-height: 1.1;
+  color: var(--color-text-primary);
+}
+
+.counterLabel {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.35;
+}
+
+// Tone is applied only when the counter has items > 0 (wired in
+// follow-up). With placeholder zeros, the neutral baseline shows.
+.tone_red {
+  .counterValue {
+    color: #b91c1c;
+  }
+  .counterLabel {
+    color: #b91c1c;
+    opacity: 0.85;
+  }
+  &:hover {
+    border-color: #f5a5a0;
+  }
+}
+
+.tone_amber {
+  .counterValue {
+    color: #b45309;
+  }
+  .counterLabel {
+    color: #b45309;
+    opacity: 0.85;
+  }
+  &:hover {
+    border-color: #fcd34d;
+  }
+}
+
+// Hubs — navigation cards into the dedicated workspace routes.
+.hubGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+
+.hubCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-4);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &:visited {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+}
+
+.hubLabel {
+  font-size: 16px;
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+.hubDescription {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+// Placeholder blocks for unbuilt sections (Action queue, Analytics).
+// Same visual weight as counter / hub cards so the layout reads as
+// "ready slot" not "broken / missing".
+.placeholderBlock {
+  padding: var(--space-6) var(--space-5);
+  background: #fafafa;
+  border: 1px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(0, 0, 0, 0.55);
+}
