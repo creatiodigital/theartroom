@@ -6,7 +6,7 @@ import {
   mapToArtwork,
   mapToArtworkPosition,
 } from '@/lib/exhibitionArtworkMapper'
-import { restoreArtwork } from '@/redux/slices/artworkSlice'
+import { resetArtworks, restoreArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
 
 /**
@@ -60,6 +60,13 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
     const loadArtworks = async () => {
       setLoading(true)
       setImagesLoading(true)
+      // Clear artworks from any previous exhibition before loading the new
+      // ones. Without this, navigating exhibition A → exhibition B leaves
+      // A's artworks in `state.byId` and the scene renders both sets
+      // mixed in the same room. Same-exhibition reload is short-circuited
+      // by the `loadedExhibitionId.current === exhibitionId` check above,
+      // so this only fires on a genuine exhibition switch.
+      dispatch(resetArtworks())
       try {
         const modeParam = mode ? `&mode=${mode}` : ''
         const response = await fetch(

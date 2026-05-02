@@ -125,9 +125,15 @@ const exhibitionSlice = createSlice({
     },
 
     setExhibition: (state: TExhibitionWithHistory, action: PayloadAction<TExhibition>) => {
-      // Preserve existing artwork positions if they've been loaded
+      // Preserve existing artwork positions only when re-setting the SAME
+      // exhibition (e.g., RTK Query refetch). Switching to a different
+      // exhibition must drop the previous one's positions — otherwise
+      // both exhibitions' artworks render mixed in the same room.
+      const isSameExhibition = state.id === action.payload.id
       const preservePositions =
-        state.allExhibitionArtworkIds && state.allExhibitionArtworkIds.length > 0
+        isSameExhibition &&
+        state.allExhibitionArtworkIds &&
+        state.allExhibitionArtworkIds.length > 0
       return {
         ...action.payload,
         ...(preservePositions
