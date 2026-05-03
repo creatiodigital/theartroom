@@ -84,5 +84,15 @@ export function isValidImageType(buffer: Buffer): boolean {
     return true
   }
 
+  // TIFF (little-endian, "II*\0"): 49 49 2A 00
+  if (buffer[0] === 0x49 && buffer[1] === 0x49 && buffer[2] === 0x2a && buffer[3] === 0x00) {
+    return true
+  }
+
+  // TIFF (big-endian, "MM\0*"): 4D 4D 00 2A
+  if (buffer[0] === 0x4d && buffer[1] === 0x4d && buffer[2] === 0x00 && buffer[3] === 0x2a) {
+    return true
+  }
+
   return false
 }

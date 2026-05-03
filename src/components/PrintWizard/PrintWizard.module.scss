@@ -1,0 +1,845 @@
+.wizard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--color-white, #fff);
+  color: var(--color-text-primary, #111);
+
+  // At desktop widths the three panels are a fixed-height grid: the
+  // center scene stays anchored, and the left/right panels scroll
+  // internally when their content grows (e.g. opening collapsibles).
+  // On mobile (<900px) the layout stacks vertically so we let the
+  // whole page scroll as normal.
+  @media (min-width: 900px) {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+.header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  @media (min-width: 768px) {
+    padding: var(--space-5) var(--space-8);
+  }
+}
+
+.logoLink {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.logo {
+  width: 180px;
+  height: auto;
+  color: var(--color-brand);
+  overflow: visible;
+}
+
+.headerTitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+}
+
+.closeIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 340px 1fr 360px;
+  min-height: 0;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 300px 1fr 320px;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Left steps panel ─────────────────────────────────────────
+
+.stepsPanel {
+  padding: var(--space-5) var(--space-5) var(--space-40);
+  overflow-y: auto;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+
+  @media (max-width: 900px) {
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    order: 2;
+  }
+}
+
+.stepField {
+  & + & {
+    margin-top: var(--space-3);
+  }
+}
+
+.customSizeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.customSizeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1 1 0;
+  min-width: 100px;
+
+  span {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  input {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: var(--radius-sm);
+    background: white;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-text-primary);
+
+    &:focus {
+      outline: none;
+      border-color: rgba(0, 0, 0, 0.55);
+    }
+
+    &:disabled {
+      background: rgba(0, 0, 0, 0.04);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.customSizeSeparator {
+  align-self: center;
+  padding-bottom: var(--space-2);
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.customSizeHint {
+  flex-basis: 100%;
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.4;
+}
+
+.sliderValue {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.slider {
+  width: 100%;
+  height: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.stepFieldLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.stepFieldInfo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.helpList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  dt {
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+  }
+
+  dd {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.65);
+  }
+}
+
+// ── Destination block (country picker at top of steps panel) ──
+.destinationBlock {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  background: var(--color-white, #fff);
+}
+
+.destinationHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.destinationTitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.destinationRequired {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.55);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.destinationHelp {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3) 0;
+}
+
+// ── Orientation block ─────────────────────────────────────────
+.orientationBlock {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  background: var(--color-white, #fff);
+}
+
+.orientationChoices {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.orientationChoice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+.orientationChoiceSelected {
+  border-color: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.orientationChoiceDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+}
+
+.orientationIcon {
+  width: 18px;
+  height: 26px;
+  border: 1.5px solid rgba(0, 0, 0, 0.75);
+  border-radius: 2px;
+}
+
+.orientationIconLandscape {
+  width: 26px;
+  height: 18px;
+}
+
+.orientationLabel {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.destinationNotice {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: var(--space-3) 0 0 0;
+  padding: var(--space-3);
+  border-radius: 4px;
+  background: rgba(200, 80, 40, 0.08);
+  color: rgba(120, 40, 20, 1);
+}
+
+.destinationNoticeInfo {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.destinationNoticeWithSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: spinnerRotate 1s linear infinite;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+@keyframes spinnerRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mountingToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+// ── Size input ──────────────────────────────────────────────
+
+.sizeInput {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sizeUnitRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sizeUnitLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.sizeUnitToggle {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.sizeUnitOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+
+  input[type='radio'] {
+    accent-color: var(--color-text-primary, #111);
+  }
+}
+
+.sizeDimensionRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.sizeDimension {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sizeDimensionLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.sizeInputField {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary, #111);
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &:focus {
+    border-color: var(--color-text-primary, #111);
+  }
+}
+
+.sizeTimes {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  color: rgba(0, 0, 0, 0.4);
+  padding-bottom: var(--space-3);
+}
+
+.sizeHint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.4;
+}
+
+.mountingOption {
+  padding: var(--space-3);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.35);
+  }
+}
+
+.mountingOptionSelected {
+  border-color: var(--color-text-primary, #111);
+  background: #fafafa;
+}
+
+// ── Center scene canvas ──────────────────────────────────────
+
+.sceneWrapper {
+  position: relative;
+  background: #f7f5ef;
+  min-height: 0;
+
+  @media (max-width: 900px) {
+    order: 1;
+    // On mobile the grid cell has no intrinsic height, so keep a
+    // usable preview size instead of collapsing to zero.
+    aspect-ratio: 4 / 3;
+  }
+}
+
+.sceneCanvas {
+  position: absolute;
+  inset: 0;
+
+  canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.scenePrompt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  pointer-events: none;
+}
+
+.scenePromptText {
+  max-width: 460px;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+// ── Right summary panel ──────────────────────────────────────
+
+.summaryPanel {
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-y: auto;
+
+  @media (max-width: 900px) {
+    border-left: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    order: 3;
+  }
+}
+
+.summaryHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.summaryEyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.summaryTitle {
+  font-family: var(--font-serif, serif);
+  font-size: var(--text-xl);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.summaryYear {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.priceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  margin: 0;
+
+  dt {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.priceRowMuted {
+  color: rgba(0, 0, 0, 0.55);
+
+  dt,
+  dd {
+    color: inherit;
+  }
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 500;
+}
+
+.totalValue {
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.shippingNote {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: rgba(0, 0, 0, 0.55);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.deliveryEstimate {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: rgba(0, 0, 0, 0.65);
+  text-align: center;
+
+  strong {
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 600;
+  }
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-text-primary, #111);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  &:disabled {
+    background: rgba(0, 0, 0, 0.25);
+    cursor: not-allowed;
+  }
+}
+
+// ── Size schema (measurements) ──────────────────────────────
+
+.schemaSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.unitToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.unitToggleOption {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.45);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.75);
+  }
+}
+
+.unitToggleOptionActive {
+  color: var(--color-text-primary, #111);
+  font-weight: 600;
+}
+
+.unitToggleSeparator {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.schemaWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.schemaSvg {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  overflow: visible;
+
+  // Small-laptop viewports (e.g. 13"/14", ~768–900px tall): shrink the
+  // diagram so the summary panel's CTA stays above the fold.
+  @media (min-width: 900px) and (max-height: 900px) {
+    max-width: 210px;
+  }
+
+  @media (min-width: 900px) and (max-height: 780px) {
+    max-width: 170px;
+  }
+}
+
+.schemaLabel {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  fill: rgba(0, 0, 0, 0.7);
+}
+
+.measurementsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+
+  > div {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  dt {
+    color: rgba(0, 0, 0, 0.55);
+    flex-shrink: 0;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.specList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  dt {
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text-primary);
+    text-align: right;
+  }
+}

@@ -35,6 +35,8 @@ type Artwork = {
   dimensions?: string
   description?: string
   imageUrl?: string
+  printEnabled?: boolean
+  printPriceCents?: number | null
 }
 
 interface ArtworkDetailPageProps {
@@ -194,6 +196,16 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
                 onClick={() => setIsInquireOpen(true)}
                 className={styles.inquireButton}
               />
+              {artwork.printEnabled && artwork.printPriceCents ? (
+                <Button
+                  variant="primary"
+                  label="Buy Printable"
+                  icon="arrowRight"
+                  size="bigSquared"
+                  onClick={() => router.push(`/artworks/${artwork.slug}/print`)}
+                  className={styles.inquireButton}
+                />
+              ) : null}
               <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
             </div>
 
@@ -289,6 +301,16 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
               onClick={() => setIsInquireOpen(true)}
               className={styles.inquireButton}
             />
+            {artwork.printEnabled && artwork.printPriceCents ? (
+              <Button
+                variant="primary"
+                label="Buy Printable"
+                icon="arrowRight"
+                size="bigSquared"
+                onClick={() => router.push(`/artworks/${artwork.slug}/print`)}
+                className={styles.inquireButton}
+              />
+            ) : null}
             <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
           </div>
 

@@ -2,6 +2,16 @@
   width: 100%;
 }
 
+// When `fill` is passed to the component, the container itself becomes
+// a flex column that grows within its parent so the inner preview or
+// dropzone can stretch to match the card's remaining vertical space.
+.containerFill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .hiddenInput {
   display: none;
 }
@@ -92,6 +102,28 @@
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
   color: var(--color-text-primary);
+}
+
+.imageMetaLabel {
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+.imageMeta {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+
+  span {
+    &:not(:last-child)::after {
+      content: '·';
+      margin-left: var(--space-3);
+      color: var(--color-border-default);
+    }
+  }
 }
 
 .sizeError {

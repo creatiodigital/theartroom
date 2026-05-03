@@ -19,6 +19,7 @@ import { Analytics } from '@vercel/analytics/next'
 import '@/styles/globals.scss'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
+const IS_PROD = process.env.NEXT_PUBLIC_APP_ENV === 'production'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -36,10 +37,16 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  // Only allow indexing on production. Staging and any preview deploys
+  // emit <meta name="robots" content="noindex,nofollow"> so search
+  // engines don't pick up test content.
+  robots: IS_PROD
+    ? { index: true, follow: true }
+    : {
+        index: false,
+        follow: false,
+        googleBot: { index: false, follow: false },
+      },
 }
 
 type RootLayoutProps = {

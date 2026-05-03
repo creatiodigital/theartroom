@@ -12,7 +12,18 @@ import styles from './Input.module.scss'
 type TInput = {
   variant?: string
   size?: 'regular' | 'medium'
+  /**
+   * NOTE: we deliberately do not allow `type="number"`. Native
+   * number inputs auto-format per browser locale (showing "30,5"
+   * instead of "30.5" in Spanish/French/German), which we don't
+   * want — see the consistent decimal convention used throughout
+   * the app: period for display, accept both period and comma on
+   * input. Use `type="text"` with `inputMode="decimal"` for any
+   * numeric/decimal field.
+   */
   type?: 'text' | 'password' | 'email'
+  /** Hint to mobile keyboards. Use `'decimal'` for any decimal field. */
+  inputMode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'email' | 'url' | 'search' | 'none'
   value: string
   onChange: ChangeEventHandler<HTMLInputElement>
   icon?: IconName
@@ -23,6 +34,10 @@ type TInput = {
   autoComplete?: string
   placeholder?: string
   required?: boolean
+  /** Hard cap on number of characters the user can type. Match the
+   *  server-side cap so the client can't smuggle oversized payloads
+   *  past the same-key validation. */
+  maxLength?: number
   id?: string
   className?: string
   showPasswordToggle?: boolean
@@ -32,6 +47,7 @@ const Input = ({
   variant,
   size = 'regular',
   type = 'text',
+  inputMode,
   value,
   onChange,
   icon,
@@ -42,6 +58,7 @@ const Input = ({
   autoComplete,
   placeholder,
   required,
+  maxLength,
   id,
   className,
   showPasswordToggle = false,
@@ -56,6 +73,7 @@ const Input = ({
       <input
         id={id}
         type={inputType}
+        inputMode={inputMode}
         className={c([
           styles.input,
           styles[size],
@@ -71,6 +89,7 @@ const Input = ({
         autoComplete={autoComplete}
         placeholder={placeholder}
         required={required}
+        maxLength={maxLength}
       />
       {icon && (
         <div className={c(styles.icon, { [styles[`rotate${rotate}` as string]]: !!rotate })}>

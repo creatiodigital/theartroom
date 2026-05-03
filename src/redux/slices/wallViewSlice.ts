@@ -71,7 +71,7 @@ const wallViewSlice = createSlice({
       if (newScale === oldScale) return
 
       // ---- Geometry ----------------------------------------------------------
-      // CSS: wrapper positioned at left:50%; top:50% (TL corner at container centre)
+      // CSS: wrapper positioned at left:50%; top:50% (TL corner at container center)
       //      transform: translate(panX%, panY%) scale(s)
       //      transform-origin: 50% 50% (default = W/2, H/2 = 1500, 1500)
       //

@@ -35,6 +35,8 @@ const getCachedArtworkBySlug = (slug: string) =>
           dimensions: artwork.dimensions,
           description: artwork.description,
           imageUrl: artwork.imageUrl,
+          printEnabled: artwork.printEnabled,
+          printPriceCents: artwork.printPriceCents,
         },
         artist: artwork.user,
       }

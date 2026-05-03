@@ -12,14 +12,26 @@
   box-sizing: border-box;
 }
 
-// Remove default focus outline but provide a visible focus-visible indicator
-*:focus {
+// Suppress browser/native focus indicators site-wide — components own
+// their own hover/active styling and the heavy blue ring reads as a bug.
+*:focus,
+*:focus-visible {
   outline: none;
 }
 
-*:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+// Native <select> elements stay focused after the dropdown closes and
+// Chrome treats that as focus-visible — which paints a heavy accent ring
+// around the whole control. Suppress it; the element already has its own
+// border to show focus.
+//
+// Same reasoning for our custom dropdown components (Select / SelectDropdown):
+// their triggers are focusable buttons/divs with listbox popups — the heavy
+// ring looks like a visual bug. They have their own hover/open styling.
+select:focus,
+select:focus-visible,
+[aria-haspopup='listbox']:focus,
+[aria-haspopup='listbox']:focus-visible {
+  outline: none;
 }
 
 html {

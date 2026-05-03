@@ -8,6 +8,7 @@ import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { buildExhibitionSnapshot } from '@/lib/exhibitionSnapshot'
 
+import { sanitizeLine } from '@/utils/sanitizeLine'
 import { slugify } from '@/utils/slugify'
 
 type ExhibitionUpdateBody = {
@@ -120,6 +121,23 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (authError) return authError
 
     const body = (await request.json()) as ExhibitionUpdateBody
+
+    // Sanitize single-line text fields. `description` is rich-text
+    // HTML — DOMPurify cleans at render. shortDescription is plain
+    // text but multi-paragraph optional, so we still treat as a single
+    // line for now (no newlines today; revisit if product asks).
+    if (body.mainTitle !== undefined) body.mainTitle = sanitizeLine(String(body.mainTitle))
+    if (body.url !== undefined) body.url = sanitizeLine(String(body.url))
+    if (body.shortDescription !== undefined) {
+      body.shortDescription = sanitizeLine(String(body.shortDescription))
+    }
+    if (
+      (typeof body.mainTitle === 'string' && body.mainTitle.length > 200) ||
+      (typeof body.url === 'string' && body.url.length > 200) ||
+      (typeof body.shortDescription === 'string' && body.shortDescription.length > 500)
+    ) {
+      return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 })
+    }
 
     const data: Prisma.ExhibitionUpdateInput = {}
     if (body.mainTitle !== undefined) {
