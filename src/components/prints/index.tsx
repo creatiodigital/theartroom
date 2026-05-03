@@ -83,7 +83,7 @@ export const PrintsPage = () => {
       </div>
 
       {sorted.length === 0 ? (
-        <EmptyState message="No prints available yet." />
+        <EmptyState message="Very soon we will showcase a selection of works as signed, limited-edition prints — produced on archival, gallery-grade paper and shipped worldwide." />
       ) : (
         <div className={styles.grid}>
           {sorted.map((artwork) => (
