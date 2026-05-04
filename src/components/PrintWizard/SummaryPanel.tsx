@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 
+import { Button } from '@/components/ui/Button'
 import {
   type Catalog,
   type Quote,
@@ -94,9 +95,15 @@ export const SummaryPanel = ({
           <h2 className={styles.summaryTitle}>{artwork.title}</h2>
           {artwork.year && <span className={styles.summaryYear}>{artwork.year}</span>}
         </div>
-        <button type="button" className={styles.ctaButton} onClick={onAddToCart} disabled>
-          Add shipping address
-        </button>
+        <Button
+          variant="primary"
+          size="big"
+          fullWidth
+          onClick={onAddToCart}
+          disabled
+          label="Add shipping address"
+          className={styles.ctaButton}
+        />
       </aside>
     )
   }
@@ -152,14 +159,15 @@ export const SummaryPanel = ({
         )
       })()}
 
-      <button
-        type="button"
-        className={styles.ctaButton}
+      <Button
+        variant="primary"
+        size="big"
+        fullWidth
         onClick={onAddToCart}
         disabled={!canContinue}
-      >
-        Add shipping address
-      </button>
+        label="Add shipping address"
+        className={styles.ctaButton}
+      />
     </aside>
   )
 }

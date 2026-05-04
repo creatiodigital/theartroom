@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background: rgb(250, 250, 250);
+  background: var(--color-gray-10);
 
   // The dashboard is a utilitarian admin UI, not the gallery face. Override
   // the global serif heading rule so inline <h1>/<h2>/<h3> elements inside
@@ -242,7 +242,7 @@
   color: var(--color-brand);
 
   &:hover {
-    background: rgba(239, 68, 68, 0.06);
+    background: var(--color-error-bg);
   }
 }
 
@@ -303,7 +303,7 @@
 }
 
 .deleteWarning {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--color-error-bg);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-4);
   margin-bottom: var(--space-6);

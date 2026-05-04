@@ -67,6 +67,51 @@ type AddressForm = {
   postalCode: string
 }
 
+type ShippingFieldName =
+  | 'country'
+  | 'fullName'
+  | 'email'
+  | 'phone'
+  | 'address1'
+  | 'city'
+  | 'postalCode'
+
+type ShippingErrors = Partial<Record<ShippingFieldName, string>>
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const validateShippingField = (name: ShippingFieldName, value: string): string | undefined => {
+  const trimmed = value.trim()
+  switch (name) {
+    case 'country':
+      if (!trimmed) return 'Please choose a country.'
+      return
+    case 'fullName':
+      if (trimmed.length < 2) return 'Please enter your full name.'
+      return
+    case 'email':
+      if (!emailRegex.test(trimmed)) return 'Please enter a valid email address.'
+      return
+    case 'phone': {
+      const digits = trimmed.replace(/\D/g, '')
+      if (digits.length < 8) return 'Please enter a valid phone number.'
+      if (/^(\d)\1+$/.test(digits)) return 'Please enter a valid phone number.'
+      return
+    }
+    case 'address1':
+      if (trimmed.length < 3) return 'Please enter your street address.'
+      return
+    case 'city':
+      if (trimmed.length < 2) return 'Please enter a city.'
+      return
+    case 'postalCode':
+      if (trimmed.length < 3 || !/\d/.test(trimmed)) {
+        return 'Please enter a valid postal code.'
+      }
+      return
+  }
+}
+
 /** Shape of the wizard → checkout/payment handoff stash. */
 type WizardHandoff = {
   providerId: ProviderId
@@ -118,14 +163,12 @@ export const PrintCheckout = ({
       .sort((a, b) => Number(a) - Number(b))
       .map((dial) => ({ value: dial, label: `+${dial}` }))
   }, [])
-  // Form validity is tracked separately because inputs are uncontrolled
-  // (so Chrome autofill works without React re-renders clobbering values).
-  // We poll the native HTML5 validity on every form input event.
-  const [formValid, setFormValid] = useState(false)
-
-  // Per-field "touched" state drives whether we show inline red error text
-  // under each field. Keeps empty fields from flashing red on page load.
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
+  // Validation errors keyed by field name. Populated only after the
+  // first submit attempt; cleared/updated as the user fixes each field.
+  // Inputs stay uncontrolled (Chrome autofill safety) — we read values
+  // off the form element when validating.
+  const [errors, setErrors] = useState<ShippingErrors>({})
+  const [submitAttempted, setSubmitAttempted] = useState(false)
 
   // Persist the shipping form to sessionStorage so navigating back to the
   // wizard and returning doesn't wipe out what the user (or Chrome
@@ -133,10 +176,18 @@ export const PrintCheckout = ({
   // don't collide.
   const storageKey = `print-address:${artwork.slug}`
 
-  const handleFormInput = () => {
+  const handleFormInput = (e: React.FormEvent<HTMLFormElement>) => {
     const form = formRef.current
     if (!form) return
-    setFormValid(form.checkValidity())
+    // Re-validate the changed field if we've already shown errors once,
+    // so the message clears in place when the user fixes it.
+    if (submitAttempted) {
+      const target = e.target as HTMLInputElement
+      const name = target?.name as ShippingFieldName | undefined
+      if (name && name in errors) {
+        setErrors((prev) => ({ ...prev, [name]: validateShippingField(name, target.value) }))
+      }
+    }
     try {
       const fd = new FormData(form)
       const snapshot: Record<string, string> = {}
@@ -149,15 +200,8 @@ export const PrintCheckout = ({
     }
   }
 
-  const handleBlur = (e: React.FocusEvent<HTMLFormElement>) => {
-    const target = e.target
-    if (target && 'name' in target && target.name) {
-      setTouched((prev) => (prev[target.name] ? prev : { ...prev, [target.name]: true }))
-    }
-  }
-
-  const fieldProps = (name: string) => ({
-    'data-touched': touched[name] ? 'true' : 'false',
+  const fieldProps = (name: ShippingFieldName) => ({
+    'data-error': errors[name] ? 'true' : 'false',
   })
 
   const handleClose = () => {
@@ -190,18 +234,6 @@ export const PrintCheckout = ({
     router.push(`/artworks/${artwork.slug}/print?${params.toString()}`)
   }
 
-  // Chrome autofill doesn't always fire input events — poll validity a
-  // few times after mount so the Continue button unlocks once autofill
-  // has landed.
-  useEffect(() => {
-    const checks = [200, 600, 1200, 2000].map((ms) =>
-      setTimeout(() => {
-        setFormValid(formRef.current?.checkValidity() ?? false)
-      }, ms),
-    )
-    return () => checks.forEach(clearTimeout)
-  }, [])
-
   // Restore previously entered shipping details (e.g. after bouncing back
   // from the wizard). Inputs are uncontrolled so we hydrate them by name
   // directly — no re-render, no interference with Chrome autofill.
@@ -218,7 +250,6 @@ export const PrintCheckout = ({
           el.value = value
         }
       }
-      setFormValid(form.checkValidity())
     } catch {
       // Stored blob was unreadable — ignore.
     }
@@ -294,21 +325,32 @@ export const PrintCheckout = ({
   const orientation: 'portrait' | 'landscape' =
     handoff?.config.values.orientation === 'landscape' ? 'landscape' : 'portrait'
 
-  const canSubmit = !!quote && !quoteLoading && formValid && !!handoff && !!country
+  const canSubmit = !!quote && !quoteLoading && !!handoff
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     const form = formRef.current
     if (!form || !handoff) return
 
-    if (!country) {
-      setTouched((prev) => ({ ...prev, country: true }))
-      return
-    }
-
-    if (!form.reportValidity()) return
-
+    setSubmitAttempted(true)
     const fd = new FormData(form)
+    const fieldValues: Record<ShippingFieldName, string> = {
+      country,
+      fullName: String(fd.get('fullName') ?? ''),
+      email: String(fd.get('email') ?? ''),
+      phone: String(fd.get('phone') ?? ''),
+      address1: String(fd.get('address1') ?? ''),
+      city: String(fd.get('city') ?? ''),
+      postalCode: String(fd.get('postalCode') ?? ''),
+    }
+    const newErrors: ShippingErrors = {}
+    for (const name of Object.keys(fieldValues) as ShippingFieldName[]) {
+      const err = validateShippingField(name, fieldValues[name])
+      if (err) newErrors[name] = err
+    }
+    setErrors(newErrors)
+    if (Object.keys(newErrors).length > 0) return
+
     // Combine the dial-code dropdown choice with the digits the buyer
     // typed. Server gets a single E.164-ish string ("+34 612345678")
     // it can pass straight to TPS / show in admin orders.
@@ -369,17 +411,14 @@ export const PrintCheckout = ({
           <Logo className={styles.logo} />
         </Link>
         <span />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={handleClose}
+          label="CLOSE"
+          iconRight={<Icon name="close" size={16} />}
           className={styles.closeButton}
           aria-label="Close checkout"
-        >
-          CLOSE
-          <span className={styles.closeIcon}>
-            <Icon name="close" size={16} />
-          </span>
-        </button>
+        />
       </header>
 
       <main className={styles.body}>
@@ -388,15 +427,10 @@ export const PrintCheckout = ({
           className={styles.formPanel}
           onSubmit={handleSubmit}
           onInput={handleFormInput}
-          onBlur={handleBlur}
         >
           <h2 className={styles.formSectionTitle}>Where should we send it?</h2>
 
-          <div
-            className={`${styles.field} ${styles.fieldFull}`}
-            {...fieldProps('country')}
-            data-invalid={!country ? 'true' : 'false'}
-          >
+          <div className={`${styles.field} ${styles.fieldFull}`} {...fieldProps('country')}>
             <label className={styles.fieldLabel} htmlFor="country">
               Country
             </label>
@@ -405,7 +439,12 @@ export const PrintCheckout = ({
               value={country}
               onChange={(next) => {
                 setCountry(next)
-                setTouched((prev) => (prev.country ? prev : { ...prev, country: true }))
+                if (submitAttempted) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    country: validateShippingField('country', next),
+                  }))
+                }
               }}
               placeholder="Choose a country…"
             />
@@ -469,7 +508,7 @@ export const PrintCheckout = ({
                     maxLength={32}
                     defaultValue=""
                   />
-                  <span className={styles.fieldError}>Please enter a phone number.</span>
+                  <span className={styles.fieldError}>Please enter a valid phone number.</span>
                 </div>
               </div>
             </div>
@@ -552,7 +591,7 @@ export const PrintCheckout = ({
                 maxLength={20}
                 defaultValue=""
               />
-              <span className={styles.fieldError}>Please enter a postal code.</span>
+              <span className={styles.fieldError}>Please enter a valid postal code.</span>
             </div>
           </div>
 

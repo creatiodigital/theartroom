@@ -4,6 +4,7 @@ import c from 'classnames'
 import { useState } from 'react'
 import type { ChangeEventHandler, FocusEventHandler, KeyboardEventHandler } from 'react'
 
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import type { IconName } from '@/components/ui/Icon'
 
@@ -97,14 +98,14 @@ const Input = ({
         </div>
       )}
       {type === 'password' && showPasswordToggle && (
-        <button
-          type="button"
-          className={styles.passwordToggle}
+        <Button
+          variant="ghost"
           onClick={() => setShowPassword(!showPassword)}
+          className={styles.passwordToggle}
           aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color="#666666" />
-        </button>
+        </Button>
       )}
     </div>
   )

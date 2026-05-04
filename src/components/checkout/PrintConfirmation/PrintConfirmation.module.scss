@@ -2,13 +2,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #fafaf7;
+  background: var(--color-surface-paper);
 }
 
 .header {
   padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  background: #fff;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-white);
 }
 
 .logoLink {
@@ -32,8 +32,8 @@
 .card {
   max-width: 480px;
   width: 100%;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   padding: var(--space-8);
   display: flex;
@@ -61,7 +61,7 @@
 .bodyText {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0;
 }
@@ -71,7 +71,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--color-border-light);
   padding-top: var(--space-4);
   margin-top: var(--space-2);
 
@@ -85,14 +85,14 @@
     font-size: 12px;
 
     span {
-      color: rgba(0, 0, 0, 0.5);
+      color: var(--color-text-secondary);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       font-size: 10px;
     }
 
     strong {
-      font-family: var(--font-mono, monospace);
+      font-family: var(--font-mono);
       font-weight: 400;
       word-break: break-all;
     }
@@ -103,8 +103,8 @@
   display: inline-block;
   margin-top: var(--space-3);
   padding: var(--space-3) var(--space-5);
-  background: var(--color-text-primary, #111);
-  color: #fff;
+  background: var(--color-text-primary);
+  color: var(--color-white);
   text-decoration: none;
   border-radius: 4px;
   font-family: var(--font-sans);

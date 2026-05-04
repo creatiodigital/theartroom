@@ -87,25 +87,17 @@ const buildLifecycle = (order: { fulfillmentStatus: string | null; paidOutAt: st
 const CopyButton = ({ value, label }: { value: string; label?: string }) => {
   const [copied, setCopied] = useState(false)
   return (
-    <button
-      type="button"
+    <Button
+      variant={copied ? 'primary' : 'secondary'}
+      size="small"
+      font="dashboard"
       onClick={() => {
         void navigator.clipboard.writeText(value)
         setCopied(true)
         setTimeout(() => setCopied(false), 1200)
       }}
-      style={{
-        fontSize: 11,
-        padding: '2px 8px',
-        border: '1px solid rgba(0,0,0,0.2)',
-        background: copied ? '#d1fae5' : '#fff',
-        borderRadius: 3,
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-      }}
-    >
-      {copied ? 'Copied' : (label ?? 'Copy')}
-    </button>
+      label={copied ? 'Copied' : (label ?? 'Copy')}
+    />
   )
 }
 

@@ -3,6 +3,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { Component, type ReactNode } from 'react'
 
+import { Button } from '@/components/ui/Button'
+
 import styles from './SceneErrorBoundary.module.scss'
 
 interface Props {
@@ -85,9 +87,12 @@ export class SceneErrorBoundary extends Component<Props, State> {
               ? 'Your network appears to be blocking files required for the 3D exhibition. This can happen on corporate or restricted networks. Please try again from a different network or device.'
               : "Something went wrong while rendering the exhibition. This has been reported and we're looking into it."}
           </p>
-          <button className={styles.retryButton} onClick={() => window.location.reload()}>
-            {isNetworkBlocked ? 'Try again' : 'Reload page'}
-          </button>
+          <Button
+            variant="secondary"
+            onClick={() => window.location.reload()}
+            label={isNetworkBlocked ? 'Try again' : 'Reload page'}
+            className={styles.retryButton}
+          />
         </div>
       )
     }

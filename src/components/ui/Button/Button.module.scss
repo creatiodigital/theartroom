@@ -47,6 +47,19 @@
   }
 }
 
+// Borderless / transparent variant for close-X header buttons,
+// icon-only close buttons, kebab triggers, toolbar icons, etc.
+// No bg, no border — just text/icon that reacts on hover.
+.ghost {
+  background: none;
+  color: var(--color-text-primary);
+  border: none;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
 /* Sizes - small and regular are Vercel-style rounded, big is squared for CTAs */
 .small {
   padding: 6px var(--space-3);

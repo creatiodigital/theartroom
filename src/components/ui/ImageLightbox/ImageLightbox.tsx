@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from 'react'
 
+import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 
 import styles from './ImageLightbox.module.scss'
@@ -45,19 +46,13 @@ export const ImageLightbox = ({ imageUrl, alt, caption, onClose }: ImageLightbox
 
   return (
     <div className={styles.overlay} role="dialog" aria-label={alt} onClick={handleBackdropClick}>
-      <button className={styles.closeButton} onClick={onClose} aria-label="Close lightbox">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
+      <Button
+        variant="ghost"
+        icon="close"
+        onClick={onClose}
+        className={styles.closeButton}
+        aria-label="Close lightbox"
+      />
       <img
         src={imageUrl}
         alt={alt}

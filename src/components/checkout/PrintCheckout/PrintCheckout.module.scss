@@ -3,8 +3,8 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  background: var(--color-white, #fff);
-  color: var(--color-text-primary, #111);
+  background: var(--color-white);
+  color: var(--color-text-primary);
 }
 
 .header {
@@ -13,7 +13,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--color-border-light);
 
   @media (min-width: 768px) {
     padding: var(--space-5) var(--space-8);
@@ -91,7 +91,7 @@
 
 .formSectionTitle {
   font-family: var(--font-serif);
-  font-size: var(--text-xl, 1.4rem);
+  font-size: var(--text-xl);
   margin: 0 0 var(--space-2) 0;
   color: var(--color-text-primary);
 }
@@ -99,7 +99,7 @@
 .formSectionHelp {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-secondary);
   margin: 0 0 var(--space-6) 0;
 }
 
@@ -136,26 +136,27 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
-// Per-field error text. Only rendered when `.field[data-touched="true"]`
-// and the input inside is invalid — avoids flashing red on initial load.
+// Per-field error text. Driven by JS validation state via the
+// `data-error` attribute on the field wrapper — only set after the
+// first submit attempt, then cleared/re-set live as the user fixes
+// each field. Avoids flashing red on initial load or while typing.
 .fieldError {
   display: none;
   font-family: var(--font-sans);
   font-size: 11px;
-  color: rgba(180, 30, 30, 0.9);
+  color: var(--color-error-text);
   margin-top: 4px;
   line-height: 1.4;
 }
 
-.field[data-touched='true'] .fieldInput:invalid {
-  border-color: rgba(180, 30, 30, 0.6);
+.field[data-error='true'] .fieldInput {
+  border-color: var(--color-error-text);
 }
 
-.field[data-touched='true']:has(.fieldInput:invalid) .fieldError,
-.field[data-touched='true'][data-invalid='true'] .fieldError {
+.field[data-error='true'] .fieldError {
   display: block;
 }
 
@@ -163,8 +164,8 @@
 .fieldSelect {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-strong);
   border-radius: 4px;
   font-family: var(--font-sans);
   font-size: var(--text-sm);
@@ -172,13 +173,13 @@
   transition: border-color 0.15s ease;
 
   &:hover {
-    border-color: rgba(0, 0, 0, 0.4);
+    border-color: var(--color-gray-70);
   }
 
   &:focus,
   &:focus-visible {
     outline: none;
-    border-color: var(--color-text-primary, #111);
+    border-color: var(--color-text-primary);
   }
 }
 
@@ -231,7 +232,7 @@
   align-items: center;
   justify-content: center;
   animation: priceSpinnerRotate 1s linear infinite;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-secondary);
 }
 
 @keyframes priceSpinnerRotate {
@@ -250,9 +251,9 @@
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   margin: 0 0 var(--space-5) 0;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--color-border-default);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--color-surface-subtle);
 }
 
 .destinationLockLine {
@@ -266,13 +267,13 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-secondary);
 }
 
 .destinationLockValue {
   font-family: var(--font-sans);
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--color-text-primary);
 }
 
 .destinationLockChange {
@@ -281,11 +282,11 @@
   padding: 0;
   font-family: var(--font-sans);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-secondary);
   cursor: pointer;
   text-decoration: underline;
 
   &:hover {
-    color: rgba(0, 0, 0, 0.9);
+    color: var(--color-text-primary);
   }
 }

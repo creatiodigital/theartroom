@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+import { Button } from '@/components/ui/Button'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Logout } from '@/components/ui/Logout'
 import { Text } from '@/components/ui/Typography'
@@ -58,16 +59,16 @@ export const DashboardLayout = ({
           <Text font="dashboard" as="span">
             Viewing as <strong>{effectiveUser.name}</strong>
           </Text>
-          <button
-            type="button"
-            className={styles.stopButton}
+          <Button
+            variant="ghost"
+            font="dashboard"
             onClick={() => {
               stopImpersonation()
               router.push('/admin/dashboard')
             }}
-          >
-            Stop Impersonating
-          </button>
+            label="Stop Impersonating"
+            className={styles.stopButton}
+          />
         </div>
       )}
 

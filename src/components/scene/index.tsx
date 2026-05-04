@@ -8,6 +8,7 @@ import { Mesh } from 'three'
 import { useSelector } from 'react-redux'
 import { Volume2, VolumeX } from 'lucide-react'
 
+import { Button } from '@/components/ui/Button'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { Loader } from '@/components/ui/Loader'
 import {
@@ -38,17 +39,19 @@ const FloatingMuteButton = () => {
   if (!hasActiveAudio) return null
 
   return (
-    <button
-      className={styles.stopButton}
+    <Button
+      variant="ghost"
       onClick={toggleMute}
+      className={styles.stopButton}
       title={isMuted ? 'Unmute sound' : 'Mute sound'}
+      aria-pressed={isMuted}
     >
       {isMuted ? (
         <VolumeX size={20} strokeWidth={ICON_STROKE_WIDTH} />
       ) : (
         <Volume2 size={20} strokeWidth={ICON_STROKE_WIDTH} />
       )}
-    </button>
+    </Button>
   )
 }
 

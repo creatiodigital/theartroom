@@ -1,6 +1,6 @@
 .section {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: var(--color-white, #fff);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-white);
   border-radius: 4px;
   position: relative;
 
@@ -10,7 +10,7 @@
 }
 
 .sectionOpen {
-  border-color: rgba(0, 0, 0, 0.2);
+  border-color: var(--color-border-strong);
 }
 
 .header {
@@ -27,7 +27,7 @@
   font-family: var(--font-sans);
 
   &:hover {
-    background: rgba(0, 0, 0, 0.02);
+    background: var(--color-surface-subtle);
   }
 }
 
@@ -35,13 +35,13 @@
   font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-primary, #111);
+  color: var(--color-text-primary);
 }
 
 .chevron {
   font-size: 12px;
   line-height: 1;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
   transition: transform 0.2s ease;
   transform: rotate(0deg);
 }
@@ -52,5 +52,5 @@
 
 .body {
   padding: var(--space-4) var(--space-5) var(--space-5);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-light);
 }

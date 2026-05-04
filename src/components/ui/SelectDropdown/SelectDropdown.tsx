@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
+import { Button } from '@/components/ui/Button'
 import { HelpTooltip } from '@/components/ui/HelpTooltip'
 
 import styles from './SelectDropdown.module.scss'
@@ -134,8 +135,8 @@ export const SelectDropdown = <V extends string = string>({
       onKeyDown={handleKeyDown}
     >
       {label && <span className={styles.label}>{label}</span>}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         className={`${styles.control} ${open ? styles.controlOpen : ''}`}
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
@@ -148,7 +149,7 @@ export const SelectDropdown = <V extends string = string>({
         <span className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} aria-hidden>
           ▾
         </span>
-      </button>
+      </Button>
 
       {open && (
         <ul className={styles.menu} role="listbox">
@@ -156,8 +157,8 @@ export const SelectDropdown = <V extends string = string>({
             const isSelected = opt.value === value
             const isDisabled = !!opt.disabled
             const button = (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 className={`${styles.option} ${isSelected ? styles.optionSelected : ''} ${isDisabled ? styles.optionDisabled : ''}`}
                 disabled={isDisabled}
                 title={isDisabled ? opt.disabledReason : undefined}
@@ -174,7 +175,7 @@ export const SelectDropdown = <V extends string = string>({
                 {isDisabled && opt.disabledReason && (
                   <span className={styles.optionDisabledNote}>{opt.disabledReason}</span>
                 )}
-              </button>
+              </Button>
             )
             return (
               <li

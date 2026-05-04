@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { Button } from '@/components/ui/Button'
 import type { SpecsSummary } from '@/lib/print-providers'
 
 import styles from './SpecList.module.scss'
@@ -45,8 +46,8 @@ export const SpecList = ({ specs, className, visibleByDefault = 5 }: SpecListPro
         ))}
       </dl>
       {collapsible && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           className={styles.toggle}
           aria-expanded={expanded}
           onClick={() => setExpanded((v) => !v)}
@@ -55,7 +56,7 @@ export const SpecList = ({ specs, className, visibleByDefault = 5 }: SpecListPro
           <span className={`${styles.chevron} ${expanded ? styles.chevronOpen : ''}`} aria-hidden>
             ▾
           </span>
-        </button>
+        </Button>
       )}
     </div>
   )

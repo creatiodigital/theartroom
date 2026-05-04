@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { daysSinceDelivered, PAYOUT_SAFE_WINDOW_DAYS } from '@/lib/orders/payoutPolicy'
 import { formatEuro } from '@/lib/print-providers/format'
@@ -253,18 +254,18 @@ export const AdminOrders = () => {
                 ? '#9a3412'
                 : '#065f46'
           return (
-            <button
+            <Button
               key={b}
+              variant="ghost"
               role="tab"
               aria-selected={active}
-              type="button"
               onClick={() => setActiveBucket(b)}
               style={{
                 padding: '8px 14px',
-                background: active ? '#fff' : 'transparent',
+                background: active ? 'var(--color-white)' : 'transparent',
                 border: '1px solid',
-                borderColor: active ? 'rgba(0,0,0,0.15)' : 'transparent',
-                borderBottomColor: active ? '#fff' : 'transparent',
+                borderColor: active ? 'var(--color-border-strong)' : 'transparent',
+                borderBottomColor: active ? 'var(--color-white)' : 'transparent',
                 marginBottom: -1,
                 fontFamily: 'inherit',
                 fontSize: 13,
@@ -285,7 +286,7 @@ export const AdminOrders = () => {
               >
                 {count}
               </span>
-            </button>
+            </Button>
           )
         })}
       </div>

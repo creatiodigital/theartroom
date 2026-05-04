@@ -422,21 +422,24 @@ export const LeftPanel = () => {
         <div className={styles.section}>
           <div className={styles.tabs}>
             {(['all', 'image', 'text', 'video', 'sound'] as const).map((type) => (
-              <button
+              <Button
                 key={type}
+                variant="ghost"
                 className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
                 onClick={() => setTypeFilter(type)}
-              >
-                {type === 'all'
-                  ? 'All'
-                  : type === 'image'
-                    ? 'Images'
-                    : type === 'text'
-                      ? 'Text'
-                      : type === 'video'
-                        ? 'Video'
-                        : 'Sound'}
-              </button>
+                aria-pressed={typeFilter === type}
+                label={
+                  type === 'all'
+                    ? 'All'
+                    : type === 'image'
+                      ? 'Images'
+                      : type === 'text'
+                        ? 'Text'
+                        : type === 'video'
+                          ? 'Video'
+                          : 'Sound'
+                }
+              />
             ))}
           </div>
           <div className={styles.subsection}>
@@ -562,15 +565,17 @@ export const LeftPanel = () => {
               <Text as="span" font="dashboard" size="sm" className={styles.groupName}>
                 {group.name} ({group.artworkIds.length})
               </Text>
-              <button
+              <Button
+                variant="ghost"
                 className={styles.groupDelete}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleDeleteAutofocusGroup(group.id)
                 }}
+                aria-label="Delete group"
               >
                 <Icon name="close" size={14} color="currentColor" />
-              </button>
+              </Button>
             </div>
           ))}
           {wallAutofocusGroups.length === 0 && (

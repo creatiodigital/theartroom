@@ -190,16 +190,17 @@ function ArtworkCard({
             {artwork.exhibitionArtworks.map((ea) => (
               <span key={ea.id} className={styles.exhibitionTag}>
                 {ea.exhibition.mainTitle}
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   className={styles.removeBtn}
                   onClick={() =>
                     onUnlink(ea.id, artwork.title || 'Artwork', ea.exhibition.mainTitle)
                   }
                   title={`Remove from ${ea.exhibition.mainTitle}`}
+                  aria-label={`Remove from ${ea.exhibition.mainTitle}`}
                 >
                   <Icon name="close" size={14} />
-                </button>
+                </Button>
               </span>
             ))}
           </div>
@@ -407,41 +408,41 @@ export const ArtworkLibraryPage = () => {
       {/* Filter Tags */}
       <div className={styles.filterBar}>
         <div className={styles.filters}>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             className={`${styles.filterTag} ${typeFilter === 'all' ? styles.active : ''}`}
             onClick={() => setTypeFilter('all')}
-          >
-            All
-          </button>
-          <button
-            type="button"
+            aria-pressed={typeFilter === 'all'}
+            label="All"
+          />
+          <Button
+            variant="ghost"
             className={`${styles.filterTag} ${typeFilter === 'image' ? styles.active : ''}`}
             onClick={() => setTypeFilter('image')}
-          >
-            Image
-          </button>
-          <button
-            type="button"
+            aria-pressed={typeFilter === 'image'}
+            label="Image"
+          />
+          <Button
+            variant="ghost"
             className={`${styles.filterTag} ${typeFilter === 'text' ? styles.active : ''}`}
             onClick={() => setTypeFilter('text')}
-          >
-            Text
-          </button>
-          <button
-            type="button"
+            aria-pressed={typeFilter === 'text'}
+            label="Text"
+          />
+          <Button
+            variant="ghost"
             className={`${styles.filterTag} ${typeFilter === 'sound' ? styles.active : ''}`}
             onClick={() => setTypeFilter('sound')}
-          >
-            Sound
-          </button>
-          <button
-            type="button"
+            aria-pressed={typeFilter === 'sound'}
+            label="Sound"
+          />
+          <Button
+            variant="ghost"
             className={`${styles.filterTag} ${typeFilter === 'video' ? styles.active : ''}`}
             onClick={() => setTypeFilter('video')}
-          >
-            Video
-          </button>
+            aria-pressed={typeFilter === 'video'}
+            label="Video"
+          />
         </div>
         <div className={styles.searchRow}>
           <Input

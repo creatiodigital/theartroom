@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
+import { Button } from '@/components/ui/Button'
+
 import styles from './CollapsibleSection.module.scss'
 
 interface CollapsibleSectionProps {
@@ -41,12 +43,17 @@ export const CollapsibleSection = ({
 
   return (
     <section className={`${styles.section} ${isOpen ? styles.sectionOpen : ''} ${className ?? ''}`}>
-      <button type="button" className={styles.header} onClick={handleToggle} aria-expanded={isOpen}>
+      <Button
+        variant="ghost"
+        onClick={handleToggle}
+        className={styles.header}
+        aria-expanded={isOpen}
+      >
         <span className={styles.title}>{title}</span>
         <span className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`} aria-hidden>
           ▾
         </span>
-      </button>
+      </Button>
       {isOpen && <div className={styles.body}>{children}</div>}
     </section>
   )

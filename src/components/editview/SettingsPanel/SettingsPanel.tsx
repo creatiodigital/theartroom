@@ -2,8 +2,8 @@
 
 import { useRef } from 'react'
 
+import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
-import { Icon } from '@/components/ui/Icon'
 
 import styles from './SettingsPanel.module.scss'
 
@@ -29,9 +29,13 @@ const SettingsPanel = ({ title, children, onClose }: SettingsPanelProps) => {
           {title}
         </Text>
         {onClose && (
-          <button className={styles.closeButton} onClick={onClose} aria-label="Close panel">
-            <Icon name="close" size={18} />
-          </button>
+          <Button
+            variant="ghost"
+            icon="close"
+            onClick={onClose}
+            className={styles.closeButton}
+            aria-label="Close panel"
+          />
         )}
       </div>
 

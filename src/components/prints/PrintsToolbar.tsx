@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Search as SearchIcon } from 'lucide-react'
 
+import { Button } from '@/components/ui/Button'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
@@ -67,15 +68,15 @@ export const PrintsToolbar = ({
             }}
           />
         ) : (
-          <button
-            type="button"
-            className={styles.searchToggle}
+          <Button
+            variant="ghost"
             onClick={() => setSearchOpen(true)}
+            className={styles.searchToggle}
             aria-label="Open search"
           >
             <SearchIcon size={18} strokeWidth={ICON_STROKE_WIDTH} />
             <span>Search</span>
-          </button>
+          </Button>
         )}
       </div>
     </div>

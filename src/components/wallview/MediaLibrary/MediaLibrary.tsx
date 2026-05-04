@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
@@ -197,28 +198,35 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
         <Text font="dashboard" as="h3">
           Media Library
         </Text>
-        <button className={styles.closeButton} onClick={onClose}>
-          <Icon name="close" size={18} />
-        </button>
+        <Button
+          variant="ghost"
+          icon="close"
+          onClick={onClose}
+          className={styles.closeButton}
+          aria-label="Close"
+        />
       </div>
 
       <div className={styles.tabs}>
         {(['all', 'image', 'text', 'sound', 'video'] as const).map((type) => (
-          <button
+          <Button
             key={type}
+            variant="ghost"
             className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
             onClick={() => setTypeFilter(type)}
-          >
-            {type === 'all'
-              ? 'All'
-              : type === 'image'
-                ? 'Images'
-                : type === 'text'
-                  ? 'Text'
-                  : type === 'sound'
-                    ? 'Sound'
-                    : 'Video'}
-          </button>
+            aria-pressed={typeFilter === type}
+            label={
+              type === 'all'
+                ? 'All'
+                : type === 'image'
+                  ? 'Images'
+                  : type === 'text'
+                    ? 'Text'
+                    : type === 'sound'
+                      ? 'Sound'
+                      : 'Video'
+            }
+          />
         ))}
       </div>
 

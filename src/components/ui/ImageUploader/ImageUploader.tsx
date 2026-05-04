@@ -5,7 +5,6 @@ import type { ChangeEvent, DragEvent } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
-import { Icon } from '@/components/ui/Icon'
 import { MAX_UPLOAD_SIZE, MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT } from '@/lib/imageConfig'
 
 import styles from './ImageUploader.module.scss'
@@ -255,15 +254,14 @@ export const ImageUploader = ({
         <div className={styles.preview} style={boxStyle}>
           <Image src={imageUrl} alt="Uploaded image" fill style={{ objectFit }} />
           {onRemove && (
-            <button
-              type="button"
-              className={styles.removeButton}
+            <Button
+              variant="ghost"
+              icon="close"
               onClick={handleRemove}
               disabled={uploading}
+              className={styles.removeButton}
               aria-label="Remove image"
-            >
-              <Icon name="close" size={16} />
-            </button>
+            />
           )}
           {uploading && (
             <div className={styles.uploadingOverlay}>

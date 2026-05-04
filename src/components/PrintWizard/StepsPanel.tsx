@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import Image from 'next/image'
 
+import { Button } from '@/components/ui/Button'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { SelectDropdown } from '@/components/ui/SelectDropdown'
 import type { SelectOption } from '@/components/ui/SelectDropdown'
@@ -631,9 +632,9 @@ const DimensionSection = ({
             {(['portrait', 'landscape'] as const).map((value) => {
               const selected = config.values.orientation === value
               return (
-                <button
+                <Button
                   key={value}
-                  type="button"
+                  variant="ghost"
                   role="radio"
                   aria-checked={selected}
                   disabled={optionsLocked}
@@ -651,7 +652,7 @@ const DimensionSection = ({
                   <span className={styles.orientationLabel}>
                     {value === 'portrait' ? 'Portrait' : 'Landscape'}
                   </span>
-                </button>
+                </Button>
               )
             })}
           </div>

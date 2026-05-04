@@ -3,8 +3,8 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  background: var(--color-white, #fff);
-  color: var(--color-text-primary, #111);
+  background: var(--color-white);
+  color: var(--color-text-primary);
 
   // At desktop widths the three panels are a fixed-height grid: the
   // center scene stays anchored, and the left/right panels scroll
@@ -24,7 +24,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--color-border-light);
 
   @media (min-width: 768px) {
     padding: var(--space-5) var(--space-8);
@@ -91,11 +91,11 @@
 .stepsPanel {
   padding: var(--space-5) var(--space-5) var(--space-40);
   overflow-y: auto;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: 1px solid var(--color-border-light);
 
   @media (max-width: 900px) {
     border-right: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--color-border-light);
     order: 2;
   }
 }
@@ -125,25 +125,25 @@
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--color-text-secondary);
   }
 
   input {
     padding: var(--space-2) var(--space-3);
-    border: 1px solid rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-    background: white;
+    background: var(--color-white);
     font-family: var(--font-sans);
     font-size: 14px;
     color: var(--color-text-primary);
 
     &:focus {
       outline: none;
-      border-color: rgba(0, 0, 0, 0.55);
+      border-color: var(--color-text-secondary);
     }
 
     &:disabled {
-      background: rgba(0, 0, 0, 0.04);
+      background: var(--color-surface-subtle);
       cursor: not-allowed;
     }
   }
@@ -153,7 +153,7 @@
   align-self: center;
   padding-bottom: var(--space-2);
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--color-gray-70);
 }
 
 .customSizeHint {
@@ -161,7 +161,7 @@
   margin: var(--space-1) 0 0;
   font-family: var(--font-sans);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
   line-height: 1.4;
 }
 
@@ -177,7 +177,7 @@
   height: 2px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--color-border-strong);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -187,8 +187,8 @@
     appearance: none;
     width: 14px;
     height: 14px;
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.55);
+    background: var(--color-white);
+    border: 1px solid var(--color-text-secondary);
     border-radius: 50%;
     cursor: pointer;
   }
@@ -196,8 +196,8 @@
   &::-moz-range-thumb {
     width: 14px;
     height: 14px;
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.55);
+    background: var(--color-white);
+    border: 1px solid var(--color-text-secondary);
     border-radius: 50%;
     cursor: pointer;
   }
@@ -218,18 +218,18 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
 .stepFieldInfo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--color-gray-70);
   transition: color 0.15s ease;
 
   &:hover {
-    color: rgba(0, 0, 0, 0.7);
+    color: var(--color-text-secondary);
   }
 }
 
@@ -246,17 +246,17 @@
 
   dd {
     margin: 0;
-    color: rgba(0, 0, 0, 0.65);
+    color: var(--color-text-secondary);
   }
 }
 
 // ── Destination block (country picker at top of steps panel) ──
 .destinationBlock {
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border-strong);
   border-radius: 4px;
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-4);
-  background: var(--color-white, #fff);
+  background: var(--color-white);
 }
 
 .destinationHeader {
@@ -278,7 +278,7 @@
 .destinationRequired {
   font-family: var(--font-sans);
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -286,18 +286,18 @@
 .destinationHelp {
   font-family: var(--font-sans);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-secondary);
   line-height: 1.5;
   margin: 0 0 var(--space-3) 0;
 }
 
 // ── Orientation block ─────────────────────────────────────────
 .orientationBlock {
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border-strong);
   border-radius: 4px;
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-4);
-  background: var(--color-white, #fff);
+  background: var(--color-white);
 }
 
 .orientationChoices {
@@ -313,7 +313,7 @@
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border-strong);
   border-radius: 4px;
   background: transparent;
   cursor: pointer;
@@ -323,13 +323,13 @@
     background 0.15s ease;
 
   &:hover {
-    border-color: rgba(0, 0, 0, 0.45);
+    border-color: var(--color-gray-70);
   }
 }
 
 .orientationChoiceSelected {
-  border-color: rgba(0, 0, 0, 0.85);
-  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--color-text-primary);
+  background: var(--color-surface-subtle);
 }
 
 .orientationChoiceDisabled {
@@ -337,14 +337,14 @@
   cursor: not-allowed;
 
   &:hover {
-    border-color: rgba(0, 0, 0, 0.2);
+    border-color: var(--color-border-strong);
   }
 }
 
 .orientationIcon {
   width: 18px;
   height: 26px;
-  border: 1.5px solid rgba(0, 0, 0, 0.75);
+  border: 1.5px solid var(--color-text-primary);
   border-radius: 2px;
 }
 
@@ -366,13 +366,13 @@
   margin: var(--space-3) 0 0 0;
   padding: var(--space-3);
   border-radius: 4px;
-  background: rgba(200, 80, 40, 0.08);
-  color: rgba(120, 40, 20, 1);
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
 }
 
 .destinationNoticeInfo {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.7);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
 }
 
 .destinationNoticeWithSpinner {
@@ -387,7 +387,7 @@
   align-items: center;
   justify-content: center;
   animation: spinnerRotate 1s linear infinite;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--color-text-secondary);
 }
 
 @keyframes spinnerRotate {
@@ -426,7 +426,7 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
 .sizeUnitToggle {
@@ -443,7 +443,7 @@
   font-size: var(--text-sm);
 
   input[type='radio'] {
-    accent-color: var(--color-text-primary, #111);
+    accent-color: var(--color-text-primary);
   }
 }
 
@@ -465,30 +465,30 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
 .sizeInputField {
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-strong);
   border-radius: 4px;
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: var(--color-text-primary, #111);
+  color: var(--color-text-primary);
   outline: none;
   transition: border-color 0.15s ease;
 
   &:focus {
-    border-color: var(--color-text-primary, #111);
+    border-color: var(--color-text-primary);
   }
 }
 
 .sizeTimes {
   font-family: var(--font-sans);
   font-size: var(--text-lg);
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--color-gray-70);
   padding-bottom: var(--space-3);
 }
 
@@ -496,14 +496,14 @@
   margin: 0;
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
   line-height: 1.4;
 }
 
 .mountingOption {
   padding: var(--space-3);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-white);
   cursor: pointer;
   border-radius: 4px;
   font-family: var(--font-sans);
@@ -513,20 +513,20 @@
     background 0.15s ease;
 
   &:hover {
-    border-color: rgba(0, 0, 0, 0.35);
+    border-color: var(--color-gray-70);
   }
 }
 
 .mountingOptionSelected {
-  border-color: var(--color-text-primary, #111);
-  background: #fafafa;
+  border-color: var(--color-text-primary);
+  background: var(--color-gray-10);
 }
 
 // ── Center scene canvas ──────────────────────────────────────
 
 .sceneWrapper {
   position: relative;
-  background: #f7f5ef;
+  background: var(--color-surface-paper);
   min-height: 0;
 
   @media (max-width: 900px) {
@@ -569,13 +569,13 @@
   font-family: var(--font-sans);
   font-size: var(--text-md);
   line-height: 1.5;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
 }
 
 // ── Right summary panel ──────────────────────────────────────
 
 .summaryPanel {
-  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  border-left: 1px solid var(--color-border-light);
   padding: var(--space-6) var(--space-5);
   display: flex;
   flex-direction: column;
@@ -584,7 +584,7 @@
 
   @media (max-width: 900px) {
     border-left: none;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid var(--color-border-light);
     order: 3;
   }
 }
@@ -600,11 +600,11 @@
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
 .summaryTitle {
-  font-family: var(--font-serif, serif);
+  font-family: var(--font-serif);
   font-size: var(--text-xl);
   margin: 0;
   line-height: 1.2;
@@ -613,7 +613,7 @@
 .summaryYear {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
 .priceList {
@@ -622,7 +622,7 @@
   gap: var(--space-2);
   margin: 0;
   padding-top: var(--space-3);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .priceRow {
@@ -634,7 +634,7 @@
   margin: 0;
 
   dt {
-    color: rgba(0, 0, 0, 0.7);
+    color: var(--color-text-secondary);
   }
 
   dd {
@@ -644,7 +644,7 @@
 }
 
 .priceRowMuted {
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 
   dt,
   dd {
@@ -657,7 +657,7 @@
   justify-content: space-between;
   align-items: baseline;
   padding-top: var(--space-3);
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--color-border-strong);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: 500;
@@ -671,7 +671,7 @@
 .shippingNote {
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
   margin: 0;
   line-height: 1.4;
 }
@@ -681,11 +681,11 @@
   padding: var(--space-2) 0;
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
   text-align: center;
 
   strong {
-    color: rgba(0, 0, 0, 0.85);
+    color: var(--color-text-primary);
     font-weight: 600;
   }
 }
@@ -695,8 +695,8 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
-  background: var(--color-text-primary, #111);
-  color: #fff;
+  background: var(--color-text-primary);
+  color: var(--color-white);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -713,7 +713,7 @@
   }
 
   &:disabled {
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--color-gray-65);
     cursor: not-allowed;
   }
 }
@@ -725,7 +725,7 @@
   flex-direction: column;
   gap: var(--space-3);
   padding-top: var(--space-4);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .unitToggle {
@@ -744,23 +744,23 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-secondary);
   font: inherit;
   letter-spacing: inherit;
   text-transform: inherit;
 
   &:hover {
-    color: rgba(0, 0, 0, 0.75);
+    color: var(--color-text-primary);
   }
 }
 
 .unitToggleOptionActive {
-  color: var(--color-text-primary, #111);
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
 .unitToggleSeparator {
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--color-gray-65);
 }
 
 .schemaWrapper {
@@ -789,7 +789,7 @@
 .schemaLabel {
   font-family: var(--font-sans);
   font-size: 12px;
-  fill: rgba(0, 0, 0, 0.7);
+  fill: var(--color-text-secondary);
 }
 
 .measurementsList {
@@ -806,7 +806,7 @@
   }
 
   dt {
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--color-text-secondary);
     flex-shrink: 0;
   }
 
@@ -823,7 +823,7 @@
   gap: var(--space-2);
   margin: 0;
   padding-top: var(--space-4);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border-light);
   font-family: var(--font-sans);
   font-size: var(--text-xs);
 
@@ -834,7 +834,7 @@
   }
 
   dt {
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--color-text-secondary);
   }
 
   dd {

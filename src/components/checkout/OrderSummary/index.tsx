@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 
+import { Button } from '@/components/ui/Button'
 import type { SpecsSummary } from '@/lib/print-providers'
 
 import { SpecList } from '../../print/SpecList/SpecList'
@@ -112,18 +113,26 @@ export const OrderSummary = ({
       ))}
 
       {cta.kind === 'button' ? (
-        <button
-          type="button"
-          className={styles.ctaButton}
+        <Button
+          variant="primary"
+          size="big"
+          fullWidth
+          label={cta.label}
           onClick={cta.onClick}
           disabled={cta.disabled}
-        >
-          {cta.label}
-        </button>
+          className={styles.ctaButton}
+        />
       ) : (
-        <button type="submit" form={cta.form} className={styles.ctaButton} disabled={cta.disabled}>
-          {cta.label}
-        </button>
+        <Button
+          type="submit"
+          variant="primary"
+          size="big"
+          fullWidth
+          label={cta.label}
+          form={cta.form}
+          disabled={cta.disabled}
+          className={styles.ctaButton}
+        />
       )}
     </aside>
   )

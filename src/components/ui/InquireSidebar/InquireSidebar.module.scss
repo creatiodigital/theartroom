@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0);
+  background: transparent;
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
@@ -209,10 +209,14 @@
   pointer-events: none;
 }
 
-// Error states
+// Error states — match the print checkout / wizard form style.
 .errorText {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
   color: var(--color-error-text);
-  margin-top: var(--space-1);
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 .inputError {

@@ -60,13 +60,14 @@ const NavigationButton = ({ artistSlug, exhibitionSlug }: NavigationButtonProps)
   return (
     <div className={styles.navigationButtonWrapper}>
       <Tooltip label="Leave Exhibition" placement="left">
-        <button
-          className={styles.navigationButton}
+        <Button
+          variant="ghost"
           onClick={handleClick}
+          className={styles.navigationButton}
           aria-label="Leave Exhibition"
         >
           <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
-        </button>
+        </Button>
       </Tooltip>
     </div>
   )
@@ -203,17 +204,27 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
 
   return (
     <>
-      <button className={styles.infoButton} onClick={handleInfoClick} aria-label="Navigation help">
+      <Button
+        variant="ghost"
+        onClick={handleInfoClick}
+        className={styles.infoButton}
+        aria-label="Navigation help"
+      >
         <Info size={20} strokeWidth={ICON_STROKE_WIDTH} />
-      </button>
+      </Button>
 
       {/* Help Modal */}
       {currentStep === 'help' && (
         <div className={styles.infoOverlay} onClick={handleCloseHelp}>
           <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.infoPanelClose} onClick={handleCloseHelp} aria-label="Close">
+            <Button
+              variant="ghost"
+              onClick={handleCloseHelp}
+              className={styles.infoPanelClose}
+              aria-label="Close"
+            >
               <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
-            </button>
+            </Button>
             <div className={styles.welcomeSection}>
               <Monogram className={styles.welcomeMonogram} />
               <Text as="h2" size="lg" font="sans" className={styles.welcomeTitle}>
@@ -360,9 +371,14 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
       {currentStep === 'media' && (
         <div className={styles.infoOverlay} onClick={handleCloseMedia}>
           <div className={styles.infoPanel} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.infoPanelClose} onClick={handleCloseMedia} aria-label="Close">
+            <Button
+              variant="ghost"
+              onClick={handleCloseMedia}
+              className={styles.infoPanelClose}
+              aria-label="Close"
+            >
               <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
-            </button>
+            </Button>
             <div className={styles.welcomeSection}>
               <Volume2
                 size={32}
