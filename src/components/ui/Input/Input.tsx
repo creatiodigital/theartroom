@@ -22,14 +22,24 @@ type TInput = {
    * input. Use `type="text"` with `inputMode="decimal"` for any
    * numeric/decimal field.
    */
-  type?: 'text' | 'password' | 'email'
+  type?: 'text' | 'password' | 'email' | 'tel' | 'search' | 'url'
   /** Hint to mobile keyboards. Use `'decimal'` for any decimal field. */
   inputMode?: 'text' | 'decimal' | 'numeric' | 'tel' | 'email' | 'url' | 'search' | 'none'
-  value: string
-  onChange: ChangeEventHandler<HTMLInputElement>
+  /** Controlled value. Pair with `onChange`. Omit to render uncontrolled
+   *  (use `defaultValue` instead) — required for forms that rely on
+   *  Chrome autofill, since React rerenders fight the autofill engine. */
+  value?: string
+  onChange?: ChangeEventHandler<HTMLInputElement>
+  /** Uncontrolled initial value. Use this with `name` for forms read via
+   *  `FormData`, e.g. the print checkout shipping address form. */
+  defaultValue?: string
+  /** Form field name — required when uncontrolled (so FormData picks it
+   *  up). Optional but useful when controlled, for accessibility. */
+  name?: string
   icon?: IconName
   rotate?: number
   onBlur?: FocusEventHandler<HTMLInputElement>
+  onFocus?: FocusEventHandler<HTMLInputElement>
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>
   autoFocus?: boolean
   autoComplete?: string
@@ -41,7 +51,16 @@ type TInput = {
   maxLength?: number
   id?: string
   className?: string
+  /** Class applied directly to the underlying `<input>` element. Use this
+   *  when a parent stylesheet styles inputs by class (e.g. the wizard's
+   *  `.fieldInput`) and the wrapper-level `className` would land in the
+   *  wrong place. */
+  inputClassName?: string
   showPasswordToggle?: boolean
+  tabIndex?: number
+  disabled?: boolean
+  readOnly?: boolean
+  'aria-label'?: string
 }
 
 const Input = ({
@@ -51,9 +70,12 @@ const Input = ({
   inputMode,
   value,
   onChange,
+  defaultValue,
+  name,
   icon,
   rotate,
   onBlur,
+  onFocus,
   onKeyDown,
   autoFocus = false,
   autoComplete,
@@ -62,7 +84,12 @@ const Input = ({
   maxLength,
   id,
   className,
+  inputClassName,
   showPasswordToggle = false,
+  tabIndex,
+  disabled,
+  readOnly,
+  'aria-label': ariaLabel,
 }: TInput) => {
   const [showPassword, setShowPassword] = useState(false)
 
@@ -73,24 +100,32 @@ const Input = ({
     <div className={c(styles.wrapper, className)}>
       <input
         id={id}
+        name={name}
         type={inputType}
         inputMode={inputMode}
-        className={c([
+        className={c(
           styles.input,
           styles[size],
           variant && styles[variant],
           { [styles.withIcon]: !!icon },
           { [styles.withToggle]: type === 'password' && showPasswordToggle },
-        ])}
+          inputClassName,
+        )}
         value={value}
+        defaultValue={defaultValue}
         onChange={onChange}
         onBlur={onBlur}
+        onFocus={onFocus}
         onKeyDown={onKeyDown}
         autoFocus={autoFocus}
         autoComplete={autoComplete}
         placeholder={placeholder}
         required={required}
         maxLength={maxLength}
+        tabIndex={tabIndex}
+        disabled={disabled}
+        readOnly={readOnly}
+        aria-label={ariaLabel}
       />
       {icon && (
         <div className={c(styles.icon, { [styles[`rotate${rotate}` as string]]: !!rotate })}>

@@ -5,6 +5,7 @@ import type { ChangeEvent, DragEvent } from 'react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
+import { FileInput } from '@/components/ui/FileInput'
 import { MAX_UPLOAD_SIZE, MIN_IMAGE_WIDTH, MIN_IMAGE_HEIGHT } from '@/lib/imageConfig'
 
 import styles from './ImageUploader.module.scss'
@@ -241,9 +242,9 @@ export const ImageUploader = ({
 
   return (
     <div className={containerClass}>
-      <input
+      <FileInput
         ref={fileInputRef}
-        type="file"
+        id="image-uploader-file"
         accept={ACCEPT_ATTR}
         onChange={handleFileSelect}
         className={styles.hiddenInput}

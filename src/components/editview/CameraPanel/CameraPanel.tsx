@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
+import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideCameraPanel } from '@/redux/slices/dashboardSlice'
@@ -76,14 +77,13 @@ const CameraPanel = () => {
             <label className={styles.label}>Field of View</label>
             <span className={styles.sliderValue}>{cameraFOV.toFixed(0)}°</span>
           </div>
-          <input
-            type="range"
-            min="40"
-            max="60"
-            step="1"
+          <Slider
+            min={40}
+            max={60}
+            step={1}
             value={cameraFOV}
-            onChange={(e) => set('cameraFOV', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('cameraFOV', v)}
+            aria-label="Field of View"
           />
         </div>
 
@@ -92,14 +92,13 @@ const CameraPanel = () => {
             <label className={styles.label}>Eye Level</label>
             <span className={styles.sliderValue}>{cameraElevation.toFixed(2)}m</span>
           </div>
-          <input
-            type="range"
-            min="1.5"
-            max="1.7"
-            step="0.01"
+          <Slider
+            min={1.5}
+            max={1.7}
+            step={0.01}
             value={cameraElevation}
-            onChange={(e) => set('cameraElevation', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('cameraElevation', v)}
+            aria-label="Eye Level"
           />
         </div>
       </div>

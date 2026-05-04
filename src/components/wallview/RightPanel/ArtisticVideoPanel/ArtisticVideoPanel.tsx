@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { Section } from '@/components/ui/Section/Section'
 import { Select } from '@/components/ui/Select'
+import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkVideoHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkVideoHandlers'
@@ -87,16 +88,14 @@ const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
             </Text>
             <span className={styles.sliderValue}>{Math.round((videoVolume ?? 1) * 100)}%</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
+          <Slider
+            min={0}
+            max={1}
+            step={0.01}
             value={videoVolume ?? 1}
-            onChange={(e) => handleEditVideo('videoVolume', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => handleEditVideo('videoVolume', v)}
             disabled={disabled}
-            style={disabled ? { opacity: 0.5 } : undefined}
+            aria-label="Video volume"
           />
         </div>
 

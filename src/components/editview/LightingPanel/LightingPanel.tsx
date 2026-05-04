@@ -6,6 +6,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '@/components/ui/Button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Section } from '@/components/ui/Section/Section'
+import { Slider } from '@/components/ui/Slider'
+import { Toggle } from '@/components/ui/Toggle'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
@@ -240,14 +242,13 @@ const LightingPanel = () => {
             <label className={styles.label}>Sky Rotation</label>
             <span className={styles.sliderValue}>{hdriRotation.toFixed(0)}°</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            step="1"
+          <Slider
+            min={0}
+            max={360}
+            step={1}
             value={hdriRotation}
-            onChange={(e) => set('hdriRotation', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('hdriRotation', v)}
+            aria-label="Sky Rotation"
           />
         </div>
 
@@ -264,14 +265,13 @@ const LightingPanel = () => {
             <label className={styles.label}>Ambient Intensity</label>
             <span className={styles.sliderValue}>{ambientIntensity.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
+          <Slider
+            min={0}
+            max={1}
+            step={0.01}
             value={ambientIntensity}
-            onChange={(e) => set('ambientLightIntensity', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('ambientLightIntensity', v)}
+            aria-label="Ambient Intensity"
           />
         </div>
       </Section>
@@ -293,14 +293,13 @@ const LightingPanel = () => {
                   <label className={styles.label}>Ceiling Light Intensity</label>
                   <span className={styles.sliderValue}>{skylightIntensity.toFixed(2)}</span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  step="0.1"
+                <Slider
+                  min={0}
+                  max={10}
+                  step={0.1}
                   value={skylightIntensity}
-                  onChange={(e) => set('skylightIntensity', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => set('skylightIntensity', v)}
+                  aria-label="Ceiling Light Intensity"
                 />
               </div>
             </>
@@ -321,14 +320,13 @@ const LightingPanel = () => {
                   <label className={styles.label}>Lamp Intensity</label>
                   <span className={styles.sliderValue}>{lampIntensity.toFixed(2)}</span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  step="0.1"
+                <Slider
+                  min={0}
+                  max={10}
+                  step={0.1}
                   value={lampIntensity}
-                  onChange={(e) => set('ceilingLampIntensity', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => set('ceilingLampIntensity', v)}
+                  aria-label="Lamp Intensity"
                 />
               </div>
             </>
@@ -368,14 +366,13 @@ const LightingPanel = () => {
                     <label className={styles.label}>Plafond Intensity</label>
                     <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.1"
+                  <Slider
+                    min={0}
+                    max={10}
+                    step={0.1}
                     value={recessedLampIntensity}
-                    onChange={(e) => set('recessedLampIntensity', parseFloat(e.target.value))}
-                    className={styles.slider}
+                    onChange={(v) => set('recessedLampIntensity', v)}
+                    aria-label="Plafond Intensity"
                   />
                 </div>
 
@@ -386,14 +383,13 @@ const LightingPanel = () => {
                       {(recessedLampAngle * (180 / Math.PI)).toFixed(0)}°
                     </span>
                   </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.2"
-                    step="0.05"
+                  <Slider
+                    min={0.1}
+                    max={1.2}
+                    step={0.05}
                     value={recessedLampAngle}
-                    onChange={(e) => set('recessedLampAngle', parseFloat(e.target.value))}
-                    className={styles.slider}
+                    onChange={(v) => set('recessedLampAngle', v)}
+                    aria-label="Plafond Angle"
                   />
                 </div>
 
@@ -402,14 +398,13 @@ const LightingPanel = () => {
                     <label className={styles.label}>Plafond Distance</label>
                     <span className={styles.sliderValue}>{recessedLampDistance.toFixed(1)}m</span>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="20"
-                    step="0.5"
+                  <Slider
+                    min={1}
+                    max={20}
+                    step={0.5}
                     value={recessedLampDistance}
-                    onChange={(e) => set('recessedLampDistance', parseFloat(e.target.value))}
-                    className={styles.slider}
+                    onChange={(v) => set('recessedLampDistance', v)}
+                    aria-label="Plafond Distance"
                   />
                 </div>
               </>
@@ -434,14 +429,13 @@ const LightingPanel = () => {
                 <label className={styles.label}>Intensity</label>
                 <span className={styles.sliderValue}>{trackLampIntensity.toFixed(2)}</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.1"
+              <Slider
+                min={0}
+                max={10}
+                step={0.1}
                 value={trackLampIntensity}
-                onChange={(e) => set('trackLampIntensity', parseFloat(e.target.value))}
-                className={styles.slider}
+                onChange={(v) => set('trackLampIntensity', v)}
+                aria-label="Track Lamp Intensity"
               />
             </div>
 
@@ -452,14 +446,13 @@ const LightingPanel = () => {
                   {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
                 </span>
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="1.2"
-                step="0.05"
+              <Slider
+                min={0.1}
+                max={1.2}
+                step={0.05}
                 value={trackLampAngle}
-                onChange={(e) => set('trackLampAngle', parseFloat(e.target.value))}
-                className={styles.slider}
+                onChange={(v) => set('trackLampAngle', v)}
+                aria-label="Track Lamp Angle"
               />
             </div>
 
@@ -468,14 +461,13 @@ const LightingPanel = () => {
                 <label className={styles.label}>Distance</label>
                 <span className={styles.sliderValue}>{trackLampDistance.toFixed(1)}m</span>
               </div>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                step="0.5"
+              <Slider
+                min={1}
+                max={10}
+                step={0.5}
                 value={trackLampDistance}
-                onChange={(e) => set('trackLampDistance', parseFloat(e.target.value))}
-                className={styles.slider}
+                onChange={(v) => set('trackLampDistance', v)}
+                aria-label="Track Lamp Distance"
               />
             </div>
 
@@ -498,49 +490,40 @@ const LightingPanel = () => {
                 <div key={`lamp-${i}`} className={styles.lampRow}>
                   <div className={styles.lampHeader}>
                     <span className={styles.lampLabel}>Lamp {i + 1}</span>
-                    <label className={styles.toggle}>
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={() => {
-                          dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
-                          setSaved(false)
-                        }}
-                      />
-                      <span className={styles.toggleSlider} />
-                    </label>
-                  </div>
-                  <div className={styles.lampSlider}>
-                    <input
-                      type="range"
-                      min="-180"
-                      max="180"
-                      step="1"
-                      value={rotation}
-                      onChange={(e) => {
-                        dispatch(
-                          setTrackLampRotation({ index: i, rotation: parseFloat(e.target.value) }),
-                        )
+                    <Toggle
+                      checked={isEnabled}
+                      onChange={() => {
+                        dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
                         setSaved(false)
                       }}
-                      className={styles.slider}
+                      aria-label={`Lamp ${i + 1} enabled`}
+                    />
+                  </div>
+                  <div className={styles.lampSlider}>
+                    <Slider
+                      min={-180}
+                      max={180}
+                      step={1}
+                      value={rotation}
+                      onChange={(v) => {
+                        dispatch(setTrackLampRotation({ index: i, rotation: v }))
+                        setSaved(false)
+                      }}
+                      aria-label={`Lamp ${i + 1} rotation`}
                     />
                     <span className={styles.sliderValue}>{rotation}°</span>
                   </div>
                   <div className={styles.lampSlider}>
-                    <input
-                      type="range"
-                      min="-2"
-                      max="2"
-                      step="0.01"
+                    <Slider
+                      min={-2}
+                      max={2}
+                      step={0.01}
                       value={offset}
-                      onChange={(e) => {
-                        dispatch(
-                          setTrackLampOffset({ index: i, offset: parseFloat(e.target.value) }),
-                        )
+                      onChange={(v) => {
+                        dispatch(setTrackLampOffset({ index: i, offset: v }))
                         setSaved(false)
                       }}
-                      className={styles.slider}
+                      aria-label={`Lamp ${i + 1} offset`}
                     />
                     <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
                   </div>
@@ -554,14 +537,11 @@ const LightingPanel = () => {
         <Section title="Window">
           <div className={styles.sectionHeader}>
             <label className={styles.label}>Transparent</label>
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={windowTransparency}
-                onChange={() => set('windowTransparency', !windowTransparency)}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
+            <Toggle
+              checked={windowTransparency}
+              onChange={() => set('windowTransparency', !windowTransparency)}
+              aria-label="Window transparency"
+            />
           </div>
 
           {windowTransparency ? (
@@ -583,14 +563,13 @@ const LightingPanel = () => {
                   <label className={styles.label}>Intensity</label>
                   <span className={styles.sliderValue}>{windowIntensity.toFixed(2)}</span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  step="0.1"
+                <Slider
+                  min={0}
+                  max={10}
+                  step={0.1}
                   value={windowIntensity}
-                  onChange={(e) => set('windowLightIntensity', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => set('windowLightIntensity', v)}
+                  aria-label="Window Intensity"
                 />
               </div>
             </>
@@ -604,14 +583,13 @@ const LightingPanel = () => {
             <label className={styles.label}>Blur</label>
             <span className={styles.sliderValue}>{shadowBlur.toFixed(3)}</span>
           </div>
-          <input
-            type="range"
-            min="0.01"
-            max="0.08"
-            step="0.005"
+          <Slider
+            min={0.01}
+            max={0.08}
+            step={0.005}
             value={shadowBlur}
-            onChange={(e) => set('shadowBlur', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('shadowBlur', v)}
+            aria-label="Shadow Blur"
           />
         </div>
 
@@ -620,14 +598,13 @@ const LightingPanel = () => {
             <label className={styles.label}>Spread</label>
             <span className={styles.sliderValue}>{shadowSpread.toFixed(1)}</span>
           </div>
-          <input
-            type="range"
-            min="0.5"
-            max="3.0"
-            step="0.1"
+          <Slider
+            min={0.5}
+            max={3.0}
+            step={0.1}
             value={shadowSpread}
-            onChange={(e) => set('shadowSpread', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('shadowSpread', v)}
+            aria-label="Shadow Spread"
           />
         </div>
 
@@ -636,14 +613,13 @@ const LightingPanel = () => {
             <label className={styles.label}>Tightness</label>
             <span className={styles.sliderValue}>{shadowOpacity.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0.05"
-            max="0.80"
-            step="0.01"
+          <Slider
+            min={0.05}
+            max={0.8}
+            step={0.01}
             value={shadowOpacity}
-            onChange={(e) => set('shadowOpacity', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('shadowOpacity', v)}
+            aria-label="Shadow Tightness"
           />
         </div>
 
@@ -652,14 +628,13 @@ const LightingPanel = () => {
             <label className={styles.label}>Direction</label>
             <span className={styles.sliderValue}>{shadowDirection.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0.0"
-            max="1.0"
-            step="0.05"
+          <Slider
+            min={0.0}
+            max={1.0}
+            step={0.05}
             value={shadowDirection}
-            onChange={(e) => set('shadowDirection', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('shadowDirection', v)}
+            aria-label="Shadow Direction"
           />
         </div>
       </Section>

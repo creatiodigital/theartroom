@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
@@ -231,12 +232,13 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
       </div>
 
       <div className={styles.searchWrapper}>
-        <input
+        <Input
           type="text"
-          className={styles.searchInput}
+          inputClassName={styles.searchInput}
           placeholder="Search artworks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Search artworks"
         />
       </div>
 

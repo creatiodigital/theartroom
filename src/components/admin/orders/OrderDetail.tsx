@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { Input } from '@/components/ui/Input'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { daysSinceDelivered, PAYOUT_SAFE_WINDOW_DAYS } from '@/lib/orders/payoutPolicy'
 import { formatEuro } from '@/lib/print-providers/format'
@@ -561,21 +562,13 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               >
                 Tracking URL (optional)
               </label>
-              <input
+              <Input
                 id="tracking-url"
                 type="url"
                 value={trackingUrlInput}
                 onChange={(e) => setTrackingUrlInput(e.target.value)}
                 placeholder="https://tracking.example.com/..."
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: 4,
-                  fontFamily: 'monospace',
-                  fontSize: 13,
-                  boxSizing: 'border-box',
-                }}
+                size="medium"
               />
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <Button
@@ -804,23 +797,16 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               >
                 Method (e.g. SEPA, Wise, PayPal)
               </label>
-              <input
-                id="manual-method"
-                type="text"
-                value={manualMethod}
-                onChange={(e) => setManualMethod(e.target.value)}
-                placeholder="SEPA"
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: 4,
-                  fontFamily: 'inherit',
-                  fontSize: 13,
-                  marginBottom: 12,
-                  boxSizing: 'border-box',
-                }}
-              />
+              <div style={{ marginBottom: 12 }}>
+                <Input
+                  id="manual-method"
+                  type="text"
+                  value={manualMethod}
+                  onChange={(e) => setManualMethod(e.target.value)}
+                  placeholder="SEPA"
+                  size="medium"
+                />
+              </div>
 
               <label
                 htmlFor="manual-reference"
@@ -835,22 +821,15 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
               >
                 Reference (optional — bank transfer ID, etc.)
               </label>
-              <input
-                id="manual-reference"
-                type="text"
-                value={manualReference}
-                onChange={(e) => setManualReference(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: 4,
-                  fontFamily: 'monospace',
-                  fontSize: 13,
-                  marginBottom: 12,
-                  boxSizing: 'border-box',
-                }}
-              />
+              <div style={{ marginBottom: 12 }}>
+                <Input
+                  id="manual-reference"
+                  type="text"
+                  value={manualReference}
+                  onChange={(e) => setManualReference(e.target.value)}
+                  size="medium"
+                />
+              </div>
 
               <label
                 htmlFor="manual-note"

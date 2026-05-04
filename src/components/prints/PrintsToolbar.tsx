@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search as SearchIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
@@ -56,16 +57,17 @@ export const PrintsToolbar = ({
 
       <div className={styles.searchArea}>
         {searchOpen ? (
-          <input
+          <Input
             autoFocus
             type="search"
-            className={styles.searchInput}
+            inputClassName={styles.searchInput}
             placeholder="Search artist or title"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             onBlur={() => {
               if (!search) setSearchOpen(false)
             }}
+            aria-label="Search artist or title"
           />
         ) : (
           <Button

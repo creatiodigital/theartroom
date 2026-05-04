@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { Input } from '@/components/ui/Input'
 import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
 import Logo from '@/icons/logo.svg'
 import {
@@ -128,8 +129,19 @@ export const PrintCheckout = ({
   initialCountry,
 }: PrintCheckoutProps) => {
   const router = useRouter()
-  const formRef = useRef<HTMLFormElement>(null)
   const [country, setCountry] = useState<string>(initialCountry)
+  // Controlled shipping-address state — modern Chrome/Safari autofill
+  // dispatches a synthetic `input` event that React picks up via
+  // onChange, so we get the autofill value into state without any
+  // special handling.
+  const [fullName, setFullName] = useState('')
+  const [emailField, setEmailField] = useState('')
+  const [phoneField, setPhoneField] = useState('')
+  const [address1, setAddress1] = useState('')
+  const [address2, setAddress2] = useState('')
+  const [city, setCity] = useState('')
+  const [stateOrRegion, setStateOrRegion] = useState('')
+  const [postalCode, setPostalCode] = useState('')
   // Independent of `country` by design — a buyer might keep a foreign
   // phone after relocating or be sending a gift to another country. We
   // seed it from the initial shipping country (best guess) but never
@@ -165,8 +177,6 @@ export const PrintCheckout = ({
   }, [])
   // Validation errors keyed by field name. Populated only after the
   // first submit attempt; cleared/updated as the user fixes each field.
-  // Inputs stay uncontrolled (Chrome autofill safety) — we read values
-  // off the form element when validating.
   const [errors, setErrors] = useState<ShippingErrors>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
@@ -176,29 +186,45 @@ export const PrintCheckout = ({
   // don't collide.
   const storageKey = `print-address:${artwork.slug}`
 
-  const handleFormInput = (e: React.FormEvent<HTMLFormElement>) => {
-    const form = formRef.current
-    if (!form) return
-    // Re-validate the changed field if we've already shown errors once,
-    // so the message clears in place when the user fixes it.
-    if (submitAttempted) {
-      const target = e.target as HTMLInputElement
-      const name = target?.name as ShippingFieldName | undefined
-      if (name && name in errors) {
-        setErrors((prev) => ({ ...prev, [name]: validateShippingField(name, target.value) }))
-      }
-    }
+  // Re-validate one field as the user edits it after the first failed
+  // submit so the error message clears in place once they fix it.
+  const handleFieldChange = (name: ShippingFieldName, value: string) => {
+    if (!submitAttempted) return
+    if (!(name in errors)) return
+    setErrors((prev) => ({ ...prev, [name]: validateShippingField(name, value) }))
+  }
+
+  // Persist the form snapshot whenever any shipping field changes so the
+  // buyer doesn't lose what they typed if they bounce back to the wizard.
+  useEffect(() => {
     try {
-      const fd = new FormData(form)
-      const snapshot: Record<string, string> = {}
-      fd.forEach((v, k) => {
-        snapshot[k] = String(v ?? '')
-      })
-      sessionStorage.setItem(storageKey, JSON.stringify(snapshot))
+      sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          fullName,
+          email: emailField,
+          phone: phoneField,
+          address1,
+          address2,
+          city,
+          state: stateOrRegion,
+          postalCode,
+        }),
+      )
     } catch {
       // sessionStorage can be disabled/full — non-fatal, we just lose persistence.
     }
-  }
+  }, [
+    storageKey,
+    fullName,
+    emailField,
+    phoneField,
+    address1,
+    address2,
+    city,
+    stateOrRegion,
+    postalCode,
+  ])
 
   const fieldProps = (name: ShippingFieldName) => ({
     'data-error': errors[name] ? 'true' : 'false',
@@ -235,21 +261,20 @@ export const PrintCheckout = ({
   }
 
   // Restore previously entered shipping details (e.g. after bouncing back
-  // from the wizard). Inputs are uncontrolled so we hydrate them by name
-  // directly — no re-render, no interference with Chrome autofill.
+  // from the wizard) into the controlled state. Runs once on mount.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(storageKey)
       if (!raw) return
       const saved = JSON.parse(raw) as Record<string, string>
-      const form = formRef.current
-      if (!form) return
-      for (const [name, value] of Object.entries(saved)) {
-        const el = form.elements.namedItem(name)
-        if (el instanceof HTMLInputElement && !el.value) {
-          el.value = value
-        }
-      }
+      if (saved.fullName) setFullName(saved.fullName)
+      if (saved.email) setEmailField(saved.email)
+      if (saved.phone) setPhoneField(saved.phone)
+      if (saved.address1) setAddress1(saved.address1)
+      if (saved.address2) setAddress2(saved.address2)
+      if (saved.city) setCity(saved.city)
+      if (saved.state) setStateOrRegion(saved.state)
+      if (saved.postalCode) setPostalCode(saved.postalCode)
     } catch {
       // Stored blob was unreadable — ignore.
     }
@@ -329,19 +354,17 @@ export const PrintCheckout = ({
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    const form = formRef.current
-    if (!form || !handoff) return
+    if (!handoff) return
 
     setSubmitAttempted(true)
-    const fd = new FormData(form)
     const fieldValues: Record<ShippingFieldName, string> = {
       country,
-      fullName: String(fd.get('fullName') ?? ''),
-      email: String(fd.get('email') ?? ''),
-      phone: String(fd.get('phone') ?? ''),
-      address1: String(fd.get('address1') ?? ''),
-      city: String(fd.get('city') ?? ''),
-      postalCode: String(fd.get('postalCode') ?? ''),
+      fullName,
+      email: emailField,
+      phone: phoneField,
+      address1,
+      city,
+      postalCode,
     }
     const newErrors: ShippingErrors = {}
     for (const name of Object.keys(fieldValues) as ShippingFieldName[]) {
@@ -354,18 +377,18 @@ export const PrintCheckout = ({
     // Combine the dial-code dropdown choice with the digits the buyer
     // typed. Server gets a single E.164-ish string ("+34 612345678")
     // it can pass straight to TPS / show in admin orders.
-    const rawPhone = String(fd.get('phone') ?? '').trim()
+    const rawPhone = phoneField.trim()
     const phoneCombined = rawPhone && phoneDial ? `+${phoneDial} ${rawPhone}` : rawPhone
     const submitted: AddressForm = {
-      fullName: String(fd.get('fullName') ?? '').trim(),
-      email: String(fd.get('email') ?? '').trim(),
+      fullName: fullName.trim(),
+      email: emailField.trim(),
       phone: phoneCombined,
       countryCode: country,
-      address1: String(fd.get('address1') ?? '').trim(),
-      address2: String(fd.get('address2') ?? '').trim(),
-      city: String(fd.get('city') ?? '').trim(),
-      stateOrRegion: String(fd.get('state') ?? '').trim(),
-      postalCode: String(fd.get('postalCode') ?? '').trim(),
+      address1: address1.trim(),
+      address2: address2.trim(),
+      city: city.trim(),
+      stateOrRegion: stateOrRegion.trim(),
+      postalCode: postalCode.trim(),
     }
 
     setSubmitError(null)
@@ -422,12 +445,7 @@ export const PrintCheckout = ({
       </header>
 
       <main className={styles.body}>
-        <form
-          ref={formRef}
-          className={styles.formPanel}
-          onSubmit={handleSubmit}
-          onInput={handleFormInput}
-        >
+        <form className={styles.formPanel} onSubmit={handleSubmit}>
           <h2 className={styles.formSectionTitle}>Where should we send it?</h2>
 
           <div className={`${styles.field} ${styles.fieldFull}`} {...fieldProps('country')}>
@@ -456,15 +474,19 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="fullName">
                 Full name
               </label>
-              <input
+              <Input
                 id="fullName"
                 name="fullName"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="name"
                 required
                 maxLength={200}
-                defaultValue=""
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value)
+                  handleFieldChange('fullName', e.target.value)
+                }}
               />
               <span className={styles.fieldError}>Please enter your full name.</span>
             </div>
@@ -473,15 +495,19 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="email">
                 Email
               </label>
-              <input
+              <Input
                 id="email"
                 name="email"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="email"
                 autoComplete="email"
                 required
                 maxLength={200}
-                defaultValue=""
+                value={emailField}
+                onChange={(e) => {
+                  setEmailField(e.target.value)
+                  handleFieldChange('email', e.target.value)
+                }}
               />
               <span className={styles.fieldError}>Please enter a valid email address.</span>
             </div>
@@ -498,15 +524,20 @@ export const PrintCheckout = ({
                   onChange={setPhoneDial}
                 />
                 <div className={styles.phoneNumberCol}>
-                  <input
+                  <Input
                     id="phone"
                     name="phone"
-                    className={`${styles.fieldInput} ${styles.phoneNumber}`}
+                    className={styles.phoneNumber}
+                    inputClassName={styles.fieldInput}
                     type="tel"
                     autoComplete="tel"
                     required
                     maxLength={32}
-                    defaultValue=""
+                    value={phoneField}
+                    onChange={(e) => {
+                      setPhoneField(e.target.value)
+                      handleFieldChange('phone', e.target.value)
+                    }}
                   />
                   <span className={styles.fieldError}>Please enter a valid phone number.</span>
                 </div>
@@ -517,15 +548,19 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="address1">
                 Address
               </label>
-              <input
+              <Input
                 id="address1"
                 name="address1"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-line1"
                 required
                 maxLength={200}
-                defaultValue=""
+                value={address1}
+                onChange={(e) => {
+                  setAddress1(e.target.value)
+                  handleFieldChange('address1', e.target.value)
+                }}
               />
               <span className={styles.fieldError}>Please enter your street address.</span>
             </div>
@@ -534,14 +569,15 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="address2">
                 Apartment, suite, etc. (optional)
               </label>
-              <input
+              <Input
                 id="address2"
                 name="address2"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-line2"
                 maxLength={200}
-                defaultValue=""
+                value={address2}
+                onChange={(e) => setAddress2(e.target.value)}
               />
             </div>
 
@@ -549,15 +585,19 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="city">
                 City
               </label>
-              <input
+              <Input
                 id="city"
                 name="city"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-level2"
                 required
                 maxLength={120}
-                defaultValue=""
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value)
+                  handleFieldChange('city', e.target.value)
+                }}
               />
               <span className={styles.fieldError}>Please enter a city.</span>
             </div>
@@ -566,14 +606,15 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="state">
                 State / region (optional)
               </label>
-              <input
+              <Input
                 id="state"
                 name="state"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-level1"
                 maxLength={120}
-                defaultValue=""
+                value={stateOrRegion}
+                onChange={(e) => setStateOrRegion(e.target.value)}
               />
             </div>
 
@@ -581,15 +622,19 @@ export const PrintCheckout = ({
               <label className={styles.fieldLabel} htmlFor="postalCode">
                 Postal code
               </label>
-              <input
+              <Input
                 id="postalCode"
                 name="postalCode"
-                className={styles.fieldInput}
+                inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="postal-code"
                 required
                 maxLength={20}
-                defaultValue=""
+                value={postalCode}
+                onChange={(e) => {
+                  setPostalCode(e.target.value)
+                  handleFieldChange('postalCode', e.target.value)
+                }}
               />
               <span className={styles.fieldError}>Please enter a valid postal code.</span>
             </div>

@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
+import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideWallCeilingPanel } from '@/redux/slices/dashboardSlice'
@@ -104,14 +105,13 @@ const WallCeilingPanel = () => {
             <label className={styles.label}>Brightness</label>
             <span className={styles.sliderValue}>{wallBrightness.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="1.0"
-            max="5.0"
-            step="0.05"
+          <Slider
+            min={1.0}
+            max={5.0}
+            step={0.05}
             value={wallBrightness}
-            onChange={(e) => set('wallBrightness', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('wallBrightness', v)}
+            aria-label="Wall Brightness"
           />
         </div>
       </div>

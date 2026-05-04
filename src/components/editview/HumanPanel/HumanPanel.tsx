@@ -2,6 +2,8 @@
 
 import { useDispatch, useSelector } from 'react-redux'
 
+import { Slider } from '@/components/ui/Slider'
+import { Toggle } from '@/components/ui/Toggle'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideHumanPanel } from '@/redux/slices/dashboardSlice'
 import {
@@ -40,10 +42,11 @@ const HumanPanel = () => {
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTitle}>Show Human</span>
-          <label className={styles.toggle}>
-            <input type="checkbox" checked={isHumanVisible} onChange={handleToggle} />
-            <span className={styles.toggleSlider} />
-          </label>
+          <Toggle
+            checked={isHumanVisible}
+            onChange={handleToggle}
+            aria-label="Show human reference"
+          />
         </div>
         <span className={styles.heightLabel}>Height: 1.70 m</span>
       </div>
@@ -54,14 +57,13 @@ const HumanPanel = () => {
             <label className={styles.label}>X Position</label>
             <span className={styles.sliderValue}>{humanPositionX.toFixed(1)}</span>
           </div>
-          <input
-            type="range"
-            min="-12"
-            max="12"
-            step="0.1"
+          <Slider
+            min={-12}
+            max={12}
+            step={0.1}
             value={humanPositionX}
-            onChange={(e) => dispatch(setHumanPositionX(parseFloat(e.target.value)))}
-            className={styles.slider}
+            onChange={(v) => dispatch(setHumanPositionX(v))}
+            aria-label="Human position X"
           />
         </div>
 
@@ -70,14 +72,13 @@ const HumanPanel = () => {
             <label className={styles.label}>Z Position</label>
             <span className={styles.sliderValue}>{humanPositionZ.toFixed(1)}</span>
           </div>
-          <input
-            type="range"
-            min="-12"
-            max="12"
-            step="0.1"
+          <Slider
+            min={-12}
+            max={12}
+            step={0.1}
             value={humanPositionZ}
-            onChange={(e) => dispatch(setHumanPositionZ(parseFloat(e.target.value)))}
-            className={styles.slider}
+            onChange={(v) => dispatch(setHumanPositionZ(v))}
+            aria-label="Human position Z"
           />
         </div>
 
@@ -86,14 +87,13 @@ const HumanPanel = () => {
             <label className={styles.label}>Rotation</label>
             <span className={styles.sliderValue}>{humanRotationY.toFixed(0)}°</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            step="1"
+          <Slider
+            min={0}
+            max={360}
+            step={1}
             value={humanRotationY}
-            onChange={(e) => dispatch(setHumanRotationY(parseFloat(e.target.value)))}
-            className={styles.slider}
+            onChange={(v) => dispatch(setHumanRotationY(v))}
+            aria-label="Human rotation"
           />
         </div>
       </div>
