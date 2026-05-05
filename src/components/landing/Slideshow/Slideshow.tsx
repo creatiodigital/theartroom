@@ -29,11 +29,12 @@ export const Slideshow = ({ slides }: SlideshowProps) => {
         modules={[Autoplay, Pagination]}
         spaceBetween={0}
         slidesPerView={1}
-        loop={false}
+        loop
         speed={800}
         autoplay={{
           delay: 5000,
-          disableOnInteraction: true,
+          disableOnInteraction: false,
+          pauseOnMouseEnter: true,
         }}
         pagination={{
           clickable: true,
