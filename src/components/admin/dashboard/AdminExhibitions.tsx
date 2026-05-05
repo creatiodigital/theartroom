@@ -247,29 +247,35 @@ export const AdminExhibitions = () => {
                     className={dashboardStyles.kebabWrapper}
                     ref={openMenuId === exhibition.id ? menuRef : undefined}
                   >
-                    <button
+                    <Button
+                      variant="ghost"
                       className={dashboardStyles.kebabButton}
                       onClick={() =>
                         setOpenMenuId(openMenuId === exhibition.id ? null : exhibition.id)
                       }
                       aria-label="Actions"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === exhibition.id}
                     >
                       <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
-                    </button>
+                    </Button>
                     {openMenuId === exhibition.id && (
-                      <div className={dashboardStyles.kebabMenu}>
-                        <button
+                      <div className={dashboardStyles.kebabMenu} role="menu">
+                        <Button
+                          variant="menuItem"
+                          role="menuitem"
                           className={dashboardStyles.kebabMenuItem}
                           onClick={() => {
                             setOpenMenuId(null)
                             handleToggleStatus(exhibition.id, exhibition.status)
                           }}
-                        >
-                          {exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
-                        </button>
+                          label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
+                        />
                         {/* Publish / Update Exhibition */}
                         {(!exhibition.published || exhibition.hasPendingChanges) && (
-                          <button
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
@@ -284,71 +290,77 @@ export const AdminExhibitions = () => {
                               !exhibition.previewEnabled &&
                               !exhibition.user.published
                             }
-                          >
-                            {exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
-                          </button>
+                            label={exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
+                          />
                         )}
                         {/* Unpublish — always available when published */}
                         {exhibition.published && (
-                          <button
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
                               handlePublishAction(exhibition.id, 'unpublish')
                             }}
-                          >
-                            Unpublish
-                          </button>
+                            label="Unpublish"
+                          />
                         )}
                         {/* Publish / Unpublish Preview — only for unpublished exhibitions */}
                         {!exhibition.published && (
-                          <button
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
                               handleTogglePreview(exhibition.id, exhibition.previewEnabled)
                             }}
-                          >
-                            {exhibition.previewEnabled ? 'Unpublish Preview' : 'Publish Preview'}
-                          </button>
+                            label={
+                              exhibition.previewEnabled ? 'Unpublish Preview' : 'Publish Preview'
+                            }
+                          />
                         )}
                         {/* Copy Preview Link — only when preview is active */}
                         {!exhibition.published &&
                           exhibition.previewEnabled &&
                           exhibition.previewToken && (
-                            <button
+                            <Button
+                              variant="menuItem"
+                              role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               onClick={() => {
                                 setOpenMenuId(null)
                                 handleCopyPreviewLink(exhibition)
                               }}
-                            >
-                              Copy Preview Link
-                            </button>
+                              label="Copy Preview Link"
+                            />
                           )}
                         {/* Update Preview Link — regenerate token (old link becomes invalid) */}
                         {!exhibition.published &&
                           exhibition.previewEnabled &&
                           exhibition.previewToken && (
-                            <button
+                            <Button
+                              variant="menuItem"
+                              role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               onClick={() => {
                                 setOpenMenuId(null)
                                 handleUpdatePreviewLink(exhibition.id)
                               }}
-                            >
-                              Update Preview Link
-                            </button>
+                              label="Update Preview Link"
+                            />
                           )}
-                        <button
+                        <Button
+                          variant="menuItem"
+                          role="menuitem"
                           className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                           onClick={() => {
                             setOpenMenuId(null)
                             setDeleteTarget(exhibition)
                           }}
-                        >
-                          Delete
-                        </button>
+                          label="Delete"
+                        />
                       </div>
                     )}
                   </div>

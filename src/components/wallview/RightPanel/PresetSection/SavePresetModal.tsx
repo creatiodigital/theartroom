@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal/Modal'
 import { Text } from '@/components/ui/Typography'
 
@@ -22,11 +23,6 @@ const SavePresetModal = ({
   existingNames = [],
 }: SavePresetModalProps) => {
   const [name, setName] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
 
   const trimmed = name.trim()
   const isDuplicate =
@@ -49,10 +45,10 @@ const SavePresetModal = ({
           <Text font="dashboard" as="label" size="xs" className={styles.label}>
             Preset name
           </Text>
-          <input
-            ref={inputRef}
+          <Input
+            autoFocus
             type="text"
-            className={styles.input}
+            inputClassName={styles.input}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Photography Standard"

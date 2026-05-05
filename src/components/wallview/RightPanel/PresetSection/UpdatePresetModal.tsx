@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/Button'
-import { Icon } from '@/components/ui/Icon'
 import Modal from '@/components/ui/Modal/Modal'
 import { Text } from '@/components/ui/Typography'
 
@@ -26,9 +25,14 @@ const UpdatePresetModal = ({ presets, onUpdate, onClose, loading }: UpdatePreset
         <Text font="dashboard" as="h3" size="sm" weight="bold">
           Update Preset
         </Text>
-        <button className={styles.closeBtn} onClick={onClose} title="Close">
-          <Icon name="close" size={16} color="currentColor" />
-        </button>
+        <Button
+          variant="ghost"
+          icon="close"
+          onClick={onClose}
+          className={styles.closeBtn}
+          title="Close"
+          aria-label="Close"
+        />
       </div>
       <div className={styles.list}>
         {presets.length === 0 ? (

@@ -34,11 +34,33 @@ type FormErrors = {
 
 type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error'
 
-// Email validation regex
+type FieldName = keyof FormErrors
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// Phone validation regex - allows various formats
-const phoneRegex = /^[\d\s\-+().]{7,20}$/
+const validateField = (field: FieldName, value: string): string | undefined => {
+  const trimmed = value.trim()
+  switch (field) {
+    case 'firstName':
+      if (trimmed.length < 2) return 'Please enter your first name.'
+      return
+    case 'lastName':
+      if (trimmed.length < 2) return 'Please enter your last name.'
+      return
+    case 'email':
+      if (!emailRegex.test(trimmed)) return 'Please enter a valid email address.'
+      return
+    case 'phone': {
+      const digits = trimmed.replace(/\D/g, '')
+      if (digits.length < 8) return 'Please enter a valid phone number.'
+      if (/^(\d)\1+$/.test(digits)) return 'Please enter a valid phone number.'
+      return
+    }
+    case 'message':
+      if (trimmed.length < 10) return 'Please enter a message of at least 10 characters.'
+      return
+  }
+}
 
 export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps) => {
   const [firstName, setFirstName] = useState('')
@@ -48,53 +70,16 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
   const [message, setMessage] = useState('')
   const [honeypot, setHoneypot] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
+  const [submitAttempted, setSubmitAttempted] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle')
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [showModal, setShowModal] = useState(false)
 
-  const validateField = (field: string, value: string): string | undefined => {
-    switch (field) {
-      case 'firstName':
-        if (!value.trim()) return 'First name is required'
-        if (value.trim().length < 2) return 'First name is too short'
-        break
-      case 'lastName':
-        if (!value.trim()) return 'Last name is required'
-        if (value.trim().length < 2) return 'Last name is too short'
-        break
-      case 'email':
-        if (!value.trim()) return 'Email is required'
-        if (!emailRegex.test(value)) return 'Please enter a valid email address'
-        break
-      case 'phone':
-        if (!value.trim()) return 'Phone number is required'
-        if (!phoneRegex.test(value)) return 'Please enter a valid phone number'
-        break
-      case 'message':
-        if (!value.trim()) return 'Message is required'
-        if (value.trim().length < 10) return 'Message is too short (minimum 10 characters)'
-        break
-    }
-    return undefined
-  }
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {
-      firstName: validateField('firstName', firstName),
-      lastName: validateField('lastName', lastName),
-      email: validateField('email', email),
-      phone: validateField('phone', phone),
-      message: validateField('message', message),
-    }
-
-    setErrors(newErrors)
-    return !Object.values(newErrors).some((error) => error !== undefined)
-  }
-
-  const handleBlur = (field: string, value: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }))
-    const error = validateField(field, value)
-    setErrors((prev) => ({ ...prev, [field]: error }))
+  // After a failed submit, re-validate a field as the user edits it so
+  // the error clears in place. Per project rule, no validation runs
+  // before the first submit attempt.
+  const handleChange = (field: FieldName, value: string) => {
+    if (!submitAttempted) return
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }))
   }
 
   const resetForm = () => {
@@ -103,32 +88,30 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
     setEmail('')
     setPhone('')
     setMessage('')
-    setTouched({})
     setErrors({})
+    setSubmitAttempted(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Honeypot check - if filled, it's a bot
     if (honeypot) {
-      // Bot detected via honeypot — silently accept
       setSubmitStatus('success')
       setShowModal(true)
       onClose()
       return
     }
 
-    if (!validateForm()) {
-      setTouched({
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        message: true,
-      })
-      return
+    setSubmitAttempted(true)
+    const newErrors: FormErrors = {
+      firstName: validateField('firstName', firstName),
+      lastName: validateField('lastName', lastName),
+      email: validateField('email', email),
+      phone: validateField('phone', phone),
+      message: validateField('message', message),
     }
+    setErrors(newErrors)
+    if (Object.values(newErrors).some((err) => err !== undefined)) return
 
     setSubmitStatus('submitting')
 
@@ -206,12 +189,14 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
               <Text as="h2" size="2xl" font="serif" className={styles.title}>
                 Send an inquiry
               </Text>
-              <button onClick={onClose} className={styles.closeButton}>
-                CLOSE{' '}
-                <span className={styles.closeIcon}>
-                  <Icon name="close" size={16} />
-                </span>
-              </button>
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                label="CLOSE"
+                iconRight={<Icon name="close" size={16} />}
+                className={styles.closeButton}
+                aria-label="Close inquiry"
+              />
             </div>
 
             <div className={styles.content}>
@@ -234,17 +219,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                   <Input
                     id="firstName"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    onBlur={() => handleBlur('firstName', firstName)}
+                    onChange={(e) => {
+                      setFirstName(e.target.value)
+                      handleChange('firstName', e.target.value)
+                    }}
                     variant="underline"
                     maxLength={100}
-                    className={`${styles.input} ${touched.firstName && errors.firstName ? styles.inputError : ''}`}
+                    className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
                   />
-                  {touched.firstName && errors.firstName && (
-                    <Text as="span" size="xs" className={styles.errorText}>
-                      {errors.firstName}
-                    </Text>
-                  )}
+                  {errors.firstName && <span className={styles.errorText}>{errors.firstName}</span>}
                 </div>
 
                 <div className={styles.field}>
@@ -254,17 +237,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                   <Input
                     id="lastName"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    onBlur={() => handleBlur('lastName', lastName)}
+                    onChange={(e) => {
+                      setLastName(e.target.value)
+                      handleChange('lastName', e.target.value)
+                    }}
                     variant="underline"
                     maxLength={100}
-                    className={`${styles.input} ${touched.lastName && errors.lastName ? styles.inputError : ''}`}
+                    className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
                   />
-                  {touched.lastName && errors.lastName && (
-                    <Text as="span" size="xs" className={styles.errorText}>
-                      {errors.lastName}
-                    </Text>
-                  )}
+                  {errors.lastName && <span className={styles.errorText}>{errors.lastName}</span>}
                 </div>
 
                 <div className={styles.field}>
@@ -275,17 +256,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => handleBlur('email', email)}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      handleChange('email', e.target.value)
+                    }}
                     variant="underline"
                     maxLength={200}
-                    className={`${styles.input} ${touched.email && errors.email ? styles.inputError : ''}`}
+                    className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
                   />
-                  {touched.email && errors.email && (
-                    <Text as="span" size="xs" className={styles.errorText}>
-                      {errors.email}
-                    </Text>
-                  )}
+                  {errors.email && <span className={styles.errorText}>{errors.email}</span>}
                 </div>
 
                 <div className={styles.field}>
@@ -295,17 +274,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                   <Input
                     id="phone"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    onBlur={() => handleBlur('phone', phone)}
+                    onChange={(e) => {
+                      setPhone(e.target.value)
+                      handleChange('phone', e.target.value)
+                    }}
                     variant="underline"
                     maxLength={32}
-                    className={`${styles.input} ${touched.phone && errors.phone ? styles.inputError : ''}`}
+                    className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
                   />
-                  {touched.phone && errors.phone && (
-                    <Text as="span" size="xs" className={styles.errorText}>
-                      {errors.phone}
-                    </Text>
-                  )}
+                  {errors.phone && <span className={styles.errorText}>{errors.phone}</span>}
                 </div>
 
                 <div className={styles.field}>
@@ -315,17 +292,15 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                   <textarea
                     id="message"
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onBlur={() => handleBlur('message', message)}
-                    className={`${styles.textarea} ${touched.message && errors.message ? styles.textareaError : ''}`}
+                    onChange={(e) => {
+                      setMessage(e.target.value)
+                      handleChange('message', e.target.value)
+                    }}
+                    className={`${styles.textarea} ${errors.message ? styles.textareaError : ''}`}
                     rows={4}
                     maxLength={4000}
                   />
-                  {touched.message && errors.message && (
-                    <Text as="span" size="xs" className={styles.errorText}>
-                      {errors.message}
-                    </Text>
-                  )}
+                  {errors.message && <span className={styles.errorText}>{errors.message}</span>}
                 </div>
 
                 <div className={styles.artworkPreview}>

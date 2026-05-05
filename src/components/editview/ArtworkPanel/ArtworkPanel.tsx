@@ -65,13 +65,14 @@ const ArtworkPanel = () => {
       data-panel-overlay
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <button
-        className={styles.closeButton}
+      <Button
+        variant="ghost"
         onClick={() => dispatch(hideArtworkPanel())}
+        className={styles.closeButton}
         aria-label="Close"
       >
         CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
-      </button>
+      </Button>
       <div className={styles.header}>
         {thumbnailUrl && (
           <div className={styles.imageWrapper}>

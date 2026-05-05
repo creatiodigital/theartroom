@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
+
+import { Button } from '@/components/ui/Button'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import styles from './CollapsibleSection.module.scss'
 
@@ -41,12 +45,20 @@ export const CollapsibleSection = ({
 
   return (
     <section className={`${styles.section} ${isOpen ? styles.sectionOpen : ''} ${className ?? ''}`}>
-      <button type="button" className={styles.header} onClick={handleToggle} aria-expanded={isOpen}>
+      <Button
+        variant="bare"
+        onClick={handleToggle}
+        className={styles.header}
+        aria-expanded={isOpen}
+      >
         <span className={styles.title}>{title}</span>
-        <span className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`} aria-hidden>
-          ▾
-        </span>
-      </button>
+        <ChevronDown
+          size={16}
+          strokeWidth={ICON_STROKE_WIDTH}
+          className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
+          aria-hidden
+        />
+      </Button>
       {isOpen && <div className={styles.body}>{children}</div>}
     </section>
   )

@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Section } from '@/components/ui/Section/Section'
 import { Select } from '@/components/ui/Select'
+import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { editArtwork } from '@/redux/slices/artworkSlice'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
@@ -78,14 +79,13 @@ const ShapePanel = ({ disabled }: { disabled?: boolean }) => {
               </Text>
               <span className={styles.sliderValue}>{Math.round(shapeOpacity * 100)}%</span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
+            <Slider
+              min={0}
+              max={1}
+              step={0.05}
               value={shapeOpacity}
-              onChange={(e) => handleChange('shapeOpacity', parseFloat(e.target.value))}
-              className={styles.slider}
+              onChange={(v) => handleChange('shapeOpacity', v)}
+              aria-label="Shape opacity"
             />
           </div>
         </div>

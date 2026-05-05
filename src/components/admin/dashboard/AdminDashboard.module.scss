@@ -10,8 +10,8 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-5) var(--space-4);
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
   border-radius: 6px;
   text-decoration: none;
   color: inherit;
@@ -30,7 +30,7 @@
     box-shadow 0.15s ease;
 
   &:hover {
-    border-color: rgba(0, 0, 0, 0.25);
+    border-color: var(--color-gray-65);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   }
@@ -45,7 +45,7 @@
 
 .counterLabel {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-secondary);
   line-height: 1.35;
 }
 
@@ -53,27 +53,27 @@
 // follow-up). With placeholder zeros, the neutral baseline shows.
 .tone_red {
   .counterValue {
-    color: #b91c1c;
+    color: var(--color-badge-danger-text);
   }
   .counterLabel {
-    color: #b91c1c;
+    color: var(--color-badge-danger-text);
     opacity: 0.85;
   }
   &:hover {
-    border-color: #f5a5a0;
+    border-color: var(--color-error-border);
   }
 }
 
 .tone_amber {
   .counterValue {
-    color: #b45309;
+    color: var(--color-badge-warning-text);
   }
   .counterLabel {
-    color: #b45309;
+    color: var(--color-badge-warning-text);
     opacity: 0.85;
   }
   &:hover {
-    border-color: #fcd34d;
+    border-color: var(--color-amber-50);
   }
 }
 
@@ -89,8 +89,8 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-5) var(--space-4);
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
   border-radius: 6px;
   text-decoration: none;
   color: inherit;
@@ -109,7 +109,7 @@
     box-shadow 0.15s ease;
 
   &:hover {
-    border-color: rgba(0, 0, 0, 0.25);
+    border-color: var(--color-gray-65);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   }
@@ -124,7 +124,7 @@
 .hubDescription {
   font-size: 13px;
   line-height: 1.5;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }
 
 // Placeholder blocks for unbuilt sections (Action queue, Analytics).
@@ -132,10 +132,10 @@
 // "ready slot" not "broken / missing".
 .placeholderBlock {
   padding: var(--space-6) var(--space-5);
-  background: #fafafa;
-  border: 1px dashed rgba(0, 0, 0, 0.15);
+  background: var(--color-gray-10);
+  border: 1px dashed var(--color-border-strong);
   border-radius: 6px;
   font-size: 13px;
   line-height: 1.55;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-secondary);
 }

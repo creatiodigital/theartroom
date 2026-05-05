@@ -201,13 +201,12 @@ export const LoginPage = () => {
                   showPasswordToggle
                   required
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   className={styles.forgotLink}
                   onClick={() => setShowForgotPassword(true)}
-                >
-                  Forgot password?
-                </button>
+                  label="Forgot password?"
+                />
               </div>
 
               <ErrorText>{error}</ErrorText>
@@ -285,27 +284,25 @@ export const LoginPage = () => {
                   label={submitting ? 'Verifying...' : 'Sign in'}
                   type="submit"
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   className={styles.resendLink}
                   onClick={handleResendCode}
                   disabled={submitting}
-                >
-                  Resend code
-                </button>
+                  label="Resend code"
+                />
               </div>
 
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 className={styles.backLink}
                 onClick={() => {
                   setStep('credentials')
                   setLoginCode('')
                   setError('')
                 }}
-              >
-                ← Back to login
-              </button>
+                label="← Back to login"
+              />
             </form>
           )}
         </div>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section/Section'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { NumberInput } from '@/components/ui/NumberInput'
+import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
@@ -390,23 +391,22 @@ const ArtworkPanel = () => {
                 {Math.round(exhibitionArtwork.rotation ?? 0)}°
               </Text>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="360"
-              step="1"
+            <Slider
+              min={0}
+              max={360}
+              step={1}
               value={exhibitionArtwork.rotation ?? 0}
-              onChange={(e) => {
+              onChange={(v) => {
                 if (!currentArtworkId) return
                 dispatch(
                   updateArtworkPosition({
                     artworkId: currentArtworkId,
-                    artworkPosition: { rotation: parseFloat(e.target.value) },
+                    artworkPosition: { rotation: v },
                   }),
                 )
               }}
-              className={styles.slider}
               disabled={isLocked}
+              aria-label="Artwork rotation"
             />
           </div>
         )}

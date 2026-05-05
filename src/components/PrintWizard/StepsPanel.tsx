@@ -3,8 +3,11 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import Image from 'next/image'
 
+import { Button } from '@/components/ui/Button'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
+import { Input } from '@/components/ui/Input'
 import { SelectDropdown } from '@/components/ui/SelectDropdown'
+import { Slider } from '@/components/ui/Slider'
 import type { SelectOption } from '@/components/ui/SelectDropdown'
 
 import {
@@ -567,17 +570,14 @@ const BorderSlider = ({
       <span className={styles.stepFieldLabel}>{dim.label}</span>
       {dim.helpText && <p className={styles.destinationHelp}>{dim.helpText}</p>}
       <p className={styles.sliderValue}>{displayed} cm</p>
-      <input
-        type="range"
-        className={styles.slider}
+      <Slider
         min={dim.minCm}
         max={dim.maxCm}
         step={dim.stepCm}
         value={value}
         disabled={optionsLocked}
-        onChange={(e) =>
-          onBorderChange(dim.id, clampCm(Number(e.target.value), dim.minCm, dim.maxCm, dim.stepCm))
-        }
+        onChange={(v) => onBorderChange(dim.id, clampCm(v, dim.minCm, dim.maxCm, dim.stepCm))}
+        aria-label={dim.label}
       />
     </div>
   )
@@ -631,9 +631,9 @@ const DimensionSection = ({
             {(['portrait', 'landscape'] as const).map((value) => {
               const selected = config.values.orientation === value
               return (
-                <button
+                <Button
                   key={value}
-                  type="button"
+                  variant="ghost"
                   role="radio"
                   aria-checked={selected}
                   disabled={optionsLocked}
@@ -651,7 +651,7 @@ const DimensionSection = ({
                   <span className={styles.orientationLabel}>
                     {value === 'portrait' ? 'Portrait' : 'Landscape'}
                   </span>
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -950,7 +950,7 @@ const CustomSizeInputs = ({
     <div className={styles.customSizeRow}>
       <label className={styles.customSizeField}>
         <span>Height (cm)</span>
-        <input
+        <Input
           type="text"
           inputMode="decimal"
           value={heightInput}
@@ -958,6 +958,7 @@ const CustomSizeInputs = ({
           onFocus={() => setEditing('height')}
           onBlur={() => setEditing(null)}
           onChange={(e) => handleChange('height', e.target.value)}
+          aria-label="Custom print height in centimeters"
         />
       </label>
       <span className={styles.customSizeSeparator} aria-hidden="true">
@@ -965,7 +966,7 @@ const CustomSizeInputs = ({
       </span>
       <label className={styles.customSizeField}>
         <span>Width (cm)</span>
-        <input
+        <Input
           type="text"
           inputMode="decimal"
           value={widthInput}
@@ -973,11 +974,12 @@ const CustomSizeInputs = ({
           onFocus={() => setEditing('width')}
           onBlur={() => setEditing(null)}
           onChange={(e) => handleChange('width', e.target.value)}
+          aria-label="Custom print width in centimeters"
         />
       </label>
       {aspectLocked && (
         <p className={styles.customSizeHint}>
-          Width and height are locked to this artwork&apos;s aspect ratio — change either, the other
+          Height and width are locked to this artwork&apos;s aspect ratio — change either, the other
           follows.
         </p>
       )}
@@ -1019,20 +1021,19 @@ const BorderDimensionSection = ({
       <div className={styles.stepField}>
         {dimension.helpText && <p className={styles.destinationHelp}>{dimension.helpText}</p>}
         <p className={styles.sliderValue}>{displayed} cm</p>
-        <input
-          type="range"
-          className={styles.slider}
+        <Slider
           min={dimension.minCm}
           max={dimension.maxCm}
           step={dimension.stepCm}
           value={value}
           disabled={optionsLocked}
-          onChange={(e) =>
+          onChange={(v) =>
             onBorderChange(
               dimension.id,
-              clampCm(Number(e.target.value), dimension.minCm, dimension.maxCm, dimension.stepCm),
+              clampCm(v, dimension.minCm, dimension.maxCm, dimension.stepCm),
             )
           }
+          aria-label={dimension.label}
         />
       </div>
     </CollapsibleSection>

@@ -19,6 +19,9 @@ export default function SearchFilter({ onFilterChange }: SearchFilterProps) {
   )
 
   return (
+    // Native input intentionally — the api-reference admin tool has its
+    // own dark theme that's distinct from the design system, so we don't
+    // route it through the shared Input component.
     <input
       type="text"
       value={value}

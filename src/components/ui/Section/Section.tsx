@@ -3,6 +3,7 @@
 import { useState, useCallback, type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 
+import { Button } from '@/components/ui/Button'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import styles from './Section.module.scss'
@@ -63,14 +64,14 @@ export const Section = ({
 
   return (
     <div className={styles.section}>
-      <button type="button" className={styles.header} onClick={toggle} aria-expanded={isOpen}>
+      <Button variant="bare" onClick={toggle} className={styles.header} aria-expanded={isOpen}>
         <ChevronRight
           size={12}
           strokeWidth={ICON_STROKE_WIDTH}
           className={`${styles.chevron} ${isOpen ? styles.open : ''}`}
         />
         <span className={styles.title}>{title}</span>
-      </button>
+      </Button>
       {isOpen && (
         <div className={styles.content} style={contentStyle}>
           {children}

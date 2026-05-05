@@ -20,7 +20,7 @@ export const ContactPage = () => {
               EMAIL
             </Text>
             <a href="mailto:contact@theartroom.gallery" className={styles.email}>
-              inquiries@theartroom.gallery
+              contact@theartroom.gallery
             </a>
           </div>
 

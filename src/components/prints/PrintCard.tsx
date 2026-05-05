@@ -54,7 +54,7 @@ export const PrintCard = ({ artwork }: Props) => {
             href={`/artworks/${artwork.slug}/print`}
             label="Order Print"
             variant="primary"
-            size="small"
+            size="smallSquared"
           />
         </div>
       </div>

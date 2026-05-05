@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import Logo from '@/icons/logo.svg'
@@ -237,20 +238,17 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
           <Logo className={styles.logo} />
         </Link>
         <span />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={() => {
             clearPrintSession(artwork.slug)
             router.push('/prints')
           }}
+          label="CLOSE"
+          iconRight={<Icon name="close" size={16} />}
           className={styles.closeButton}
           aria-label="Close wizard"
-        >
-          CLOSE
-          <span className={styles.closeIcon}>
-            <Icon name="close" size={16} />
-          </span>
-        </button>
+        />
       </header>
 
       <main className={styles.body}>
