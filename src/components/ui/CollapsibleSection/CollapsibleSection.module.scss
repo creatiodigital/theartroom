@@ -8,26 +8,29 @@
   & + & {
     margin-top: var(--space-3);
   }
+
+  // Nested under `.section` so the compiled selector is `.section .header`
+  // (specificity 0,0,2,0). That beats Button's `.bare` variant
+  // (0,0,1,0) regardless of bundle order — no !important needed.
+  .header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    gap: var(--space-3);
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-sans);
+
+    &:hover {
+      background: var(--color-surface-subtle);
+    }
+  }
 }
 
 .sectionOpen {
   border-color: var(--color-border-strong);
-}
-
-.header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  gap: var(--space-3);
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-sans);
-
-  &:hover {
-    background: var(--color-surface-subtle);
-  }
 }
 
 .title {
