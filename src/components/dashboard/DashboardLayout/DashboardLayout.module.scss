@@ -220,22 +220,11 @@
   margin-top: var(--space-1);
 }
 
+// Layout / hover / color come from Button variant="menuItem"; this class
+// adds dashboard typography and prevents wrapping inside the dropdown.
 .kebabMenuItem {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-4);
-  background: none;
-  border: none;
-  text-align: left;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-  cursor: pointer;
   white-space: nowrap;
-
-  &:hover {
-    background: var(--color-surface-subtle);
-  }
 }
 
 .kebabMenuItemDanger {

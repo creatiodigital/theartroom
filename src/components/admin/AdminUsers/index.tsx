@@ -236,7 +236,7 @@ export const AdminUsers = () => {
                       <div className={dashboardStyles.kebabMenu} role="menu">
                         {isSuperAdminUser && user.email && (
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -247,7 +247,7 @@ export const AdminUsers = () => {
                           />
                         )}
                         <Button
-                          variant="ghost"
+                          variant="menuItem"
                           role="menuitem"
                           className={dashboardStyles.kebabMenuItem}
                           onClick={() => {
@@ -257,7 +257,7 @@ export const AdminUsers = () => {
                           label={user.published ? 'Unpublish' : 'Publish'}
                         />
                         <Button
-                          variant="ghost"
+                          variant="menuItem"
                           role="menuitem"
                           className={dashboardStyles.kebabMenuItem}
                           onClick={async () => {
@@ -279,7 +279,7 @@ export const AdminUsers = () => {
                           (isSuperAdminUser ||
                             (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
                             <Button
-                              variant="ghost"
+                              variant="menuItem"
                               role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               disabled={isImpersonating && session?.impersonating?.id === user.id}
@@ -301,7 +301,7 @@ export const AdminUsers = () => {
                           )}
                         {isSuperAdminUser && user.id !== session?.user?.id && (
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                             onClick={() => {

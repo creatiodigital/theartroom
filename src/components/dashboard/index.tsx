@@ -290,7 +290,7 @@ export const DashboardPage = () => {
                       {openMenuId === ex.id && (
                         <div className={dashboardStyles.kebabMenu} role="menu">
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -301,7 +301,7 @@ export const DashboardPage = () => {
                             label="View"
                           />
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -311,7 +311,7 @@ export const DashboardPage = () => {
                             label="Edit Exhibition"
                           />
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -322,7 +322,7 @@ export const DashboardPage = () => {
                           />
                           {isAdminOrSuperAdmin && (
                             <Button
-                              variant="ghost"
+                              variant="menuItem"
                               role="menuitem"
                               className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                               onClick={() => {

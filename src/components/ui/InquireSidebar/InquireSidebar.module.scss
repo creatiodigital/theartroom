@@ -221,12 +221,12 @@
 
 .inputError {
   input {
-    border-color: var(--color-error-text) !important;
+    border-color: var(--color-error-text);
   }
 }
 
 .textareaError {
-  border-color: var(--color-error-text) !important;
+  border-color: var(--color-error-text);
 }
 
 .submitError {

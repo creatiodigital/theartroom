@@ -84,7 +84,13 @@ export const PrintPayment = ({ artwork, providerId, country }: PrintPaymentProps
     if (!stashed) return null
     return {
       clientSecret: stashed.clientSecret,
-      appearance: { theme: 'stripe' as const },
+      appearance: {
+        theme: 'stripe' as const,
+        // Client-facing UI is squared per the gallery design rule.
+        variables: {
+          borderRadius: '0px',
+        },
+      },
     }
   }, [stashed])
 

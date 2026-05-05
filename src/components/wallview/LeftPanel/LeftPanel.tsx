@@ -424,8 +424,8 @@ export const LeftPanel = () => {
             {(['all', 'image', 'text', 'video', 'sound'] as const).map((type) => (
               <Button
                 key={type}
-                variant="ghost"
-                className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
+                variant="tab"
+                className={styles.tab}
                 onClick={() => setTypeFilter(type)}
                 aria-pressed={typeFilter === type}
                 label={

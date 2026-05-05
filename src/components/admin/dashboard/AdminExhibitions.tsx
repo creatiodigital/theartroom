@@ -262,7 +262,7 @@ export const AdminExhibitions = () => {
                     {openMenuId === exhibition.id && (
                       <div className={dashboardStyles.kebabMenu} role="menu">
                         <Button
-                          variant="ghost"
+                          variant="menuItem"
                           role="menuitem"
                           className={dashboardStyles.kebabMenuItem}
                           onClick={() => {
@@ -274,7 +274,7 @@ export const AdminExhibitions = () => {
                         {/* Publish / Update Exhibition */}
                         {(!exhibition.published || exhibition.hasPendingChanges) && (
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -296,7 +296,7 @@ export const AdminExhibitions = () => {
                         {/* Unpublish — always available when published */}
                         {exhibition.published && (
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -309,7 +309,7 @@ export const AdminExhibitions = () => {
                         {/* Publish / Unpublish Preview — only for unpublished exhibitions */}
                         {!exhibition.published && (
                           <Button
-                            variant="ghost"
+                            variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
@@ -326,7 +326,7 @@ export const AdminExhibitions = () => {
                           exhibition.previewEnabled &&
                           exhibition.previewToken && (
                             <Button
-                              variant="ghost"
+                              variant="menuItem"
                               role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               onClick={() => {
@@ -341,7 +341,7 @@ export const AdminExhibitions = () => {
                           exhibition.previewEnabled &&
                           exhibition.previewToken && (
                             <Button
-                              variant="ghost"
+                              variant="menuItem"
                               role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               onClick={() => {
@@ -352,7 +352,7 @@ export const AdminExhibitions = () => {
                             />
                           )}
                         <Button
-                          variant="ghost"
+                          variant="menuItem"
                           role="menuitem"
                           className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                           onClick={() => {

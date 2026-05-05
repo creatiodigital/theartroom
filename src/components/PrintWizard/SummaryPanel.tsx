@@ -97,7 +97,7 @@ export const SummaryPanel = ({
         </div>
         <Button
           variant="primary"
-          size="big"
+          size="bigSquared"
           fullWidth
           onClick={onAddToCart}
           disabled
@@ -161,7 +161,7 @@ export const SummaryPanel = ({
 
       <Button
         variant="primary"
-        size="big"
+        size="bigSquared"
         fullWidth
         onClick={onAddToCart}
         disabled={!canContinue}

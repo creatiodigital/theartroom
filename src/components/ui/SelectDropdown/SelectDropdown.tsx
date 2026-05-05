@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { HelpTooltip } from '@/components/ui/HelpTooltip'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import styles from './SelectDropdown.module.scss'
 
@@ -136,7 +138,7 @@ export const SelectDropdown = <V extends string = string>({
     >
       {label && <span className={styles.label}>{label}</span>}
       <Button
-        variant="ghost"
+        variant="bare"
         className={`${styles.control} ${open ? styles.controlOpen : ''}`}
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
@@ -146,9 +148,12 @@ export const SelectDropdown = <V extends string = string>({
         <span className={styles.controlLabel}>
           {selected ? selected.label : (placeholder ?? 'Select…')}
         </span>
-        <span className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} aria-hidden>
-          ▾
-        </span>
+        <ChevronDown
+          size={16}
+          strokeWidth={ICON_STROKE_WIDTH}
+          className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
+          aria-hidden
+        />
       </Button>
 
       {open && (
@@ -158,7 +163,7 @@ export const SelectDropdown = <V extends string = string>({
             const isDisabled = !!opt.disabled
             const button = (
               <Button
-                variant="ghost"
+                variant="bare"
                 className={`${styles.option} ${isSelected ? styles.optionSelected : ''} ${isDisabled ? styles.optionDisabled : ''}`}
                 disabled={isDisabled}
                 title={isDisabled ? opt.disabledReason : undefined}

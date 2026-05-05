@@ -115,7 +115,7 @@ export const OrderSummary = ({
       {cta.kind === 'button' ? (
         <Button
           variant="primary"
-          size="big"
+          size="bigSquared"
           fullWidth
           label={cta.label}
           onClick={cta.onClick}
@@ -126,7 +126,7 @@ export const OrderSummary = ({
         <Button
           type="submit"
           variant="primary"
-          size="big"
+          size="bigSquared"
           fullWidth
           label={cta.label}
           form={cta.form}

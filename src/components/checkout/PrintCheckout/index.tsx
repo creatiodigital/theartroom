@@ -344,7 +344,7 @@ export const PrintCheckout = ({
     return () => {
       cancelled = true
     }
-  }, [handoff?.providerId, handoff?.config, country, artwork.printPriceCents])
+  }, [handoff, country, artwork.printPriceCents])
 
   const specs: SpecsSummary = handoff?.specs ?? []
   const orientation: 'portrait' | 'landscape' =
@@ -477,6 +477,7 @@ export const PrintCheckout = ({
               <Input
                 id="fullName"
                 name="fullName"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="name"
@@ -498,6 +499,7 @@ export const PrintCheckout = ({
               <Input
                 id="email"
                 name="email"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="email"
                 autoComplete="email"
@@ -528,6 +530,7 @@ export const PrintCheckout = ({
                     id="phone"
                     name="phone"
                     className={styles.phoneNumber}
+                    size="bare"
                     inputClassName={styles.fieldInput}
                     type="tel"
                     autoComplete="tel"
@@ -551,6 +554,7 @@ export const PrintCheckout = ({
               <Input
                 id="address1"
                 name="address1"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-line1"
@@ -572,6 +576,7 @@ export const PrintCheckout = ({
               <Input
                 id="address2"
                 name="address2"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-line2"
@@ -588,6 +593,7 @@ export const PrintCheckout = ({
               <Input
                 id="city"
                 name="city"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-level2"
@@ -609,6 +615,7 @@ export const PrintCheckout = ({
               <Input
                 id="state"
                 name="state"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="address-level1"
@@ -625,6 +632,7 @@ export const PrintCheckout = ({
               <Input
                 id="postalCode"
                 name="postalCode"
+                size="bare"
                 inputClassName={styles.fieldInput}
                 type="text"
                 autoComplete="postal-code"
@@ -643,7 +651,7 @@ export const PrintCheckout = ({
           <div className={styles.editButtonRow}>
             <Button
               variant="secondary"
-              size="big"
+              size="bigSquared"
               label="Back to Configuration"
               iconLeft={<Icon name="arrowLeft" size={20} />}
               onClick={backToWizard}

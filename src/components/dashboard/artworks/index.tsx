@@ -409,36 +409,31 @@ export const ArtworkLibraryPage = () => {
       <div className={styles.filterBar}>
         <div className={styles.filters}>
           <Button
-            variant="ghost"
-            className={`${styles.filterTag} ${typeFilter === 'all' ? styles.active : ''}`}
+            variant="pill"
             onClick={() => setTypeFilter('all')}
             aria-pressed={typeFilter === 'all'}
             label="All"
           />
           <Button
-            variant="ghost"
-            className={`${styles.filterTag} ${typeFilter === 'image' ? styles.active : ''}`}
+            variant="pill"
             onClick={() => setTypeFilter('image')}
             aria-pressed={typeFilter === 'image'}
             label="Image"
           />
           <Button
-            variant="ghost"
-            className={`${styles.filterTag} ${typeFilter === 'text' ? styles.active : ''}`}
+            variant="pill"
             onClick={() => setTypeFilter('text')}
             aria-pressed={typeFilter === 'text'}
             label="Text"
           />
           <Button
-            variant="ghost"
-            className={`${styles.filterTag} ${typeFilter === 'sound' ? styles.active : ''}`}
+            variant="pill"
             onClick={() => setTypeFilter('sound')}
             aria-pressed={typeFilter === 'sound'}
             label="Sound"
           />
           <Button
-            variant="ghost"
-            className={`${styles.filterTag} ${typeFilter === 'video' ? styles.active : ''}`}
+            variant="pill"
             onClick={() => setTypeFilter('video')}
             aria-pressed={typeFilter === 'video'}
             label="Video"

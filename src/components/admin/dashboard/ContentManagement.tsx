@@ -70,7 +70,7 @@ export const ContentManagement = () => {
                   {openMenuId === page.route && (
                     <div className={dashboardStyles.kebabMenu} role="menu">
                       <Button
-                        variant="ghost"
+                        variant="menuItem"
                         className={dashboardStyles.kebabMenuItem}
                         role="menuitem"
                         onClick={() => {

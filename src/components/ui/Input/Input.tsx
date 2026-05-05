@@ -12,7 +12,7 @@ import styles from './Input.module.scss'
 
 type TInput = {
   variant?: string
-  size?: 'regular' | 'medium'
+  size?: 'regular' | 'medium' | 'bare'
   /**
    * NOTE: we deliberately do not allow `type="number"`. Native
    * number inputs auto-format per browser locale (showing "30,5"
@@ -103,12 +103,19 @@ const Input = ({
         name={name}
         type={inputType}
         inputMode={inputMode}
+        // size="bare" skips ALL Input styles so the consumer's
+        // `inputClassName` owns the visual completely. Used by forms with
+        // their own input class (e.g. wizard / checkout `.fieldInput`).
         className={c(
-          styles.input,
-          styles[size],
-          variant && styles[variant],
-          { [styles.withIcon]: !!icon },
-          { [styles.withToggle]: type === 'password' && showPasswordToggle },
+          size === 'bare'
+            ? null
+            : [
+                styles.input,
+                styles[size],
+                variant && styles[variant],
+                { [styles.withIcon]: !!icon },
+                { [styles.withToggle]: type === 'password' && showPasswordToggle },
+              ],
           inputClassName,
         )}
         value={value}

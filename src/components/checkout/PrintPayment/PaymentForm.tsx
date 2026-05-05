@@ -147,7 +147,7 @@ export const PaymentForm = ({
         <div className={styles.backRow}>
           <Button
             variant="secondary"
-            size="big"
+            size="bigSquared"
             label="Back to shipping"
             iconLeft={<Icon name="arrowLeft" size={20} />}
             onClick={onBack}

@@ -212,8 +212,8 @@ export const MediaLibrary = ({ onClose, onClickArtwork }: MediaLibraryProps) => 
         {(['all', 'image', 'text', 'sound', 'video'] as const).map((type) => (
           <Button
             key={type}
-            variant="ghost"
-            className={`${styles.tab} ${typeFilter === type ? styles.tabActive : ''}`}
+            variant="tab"
+            className={styles.tab}
             onClick={() => setTypeFilter(type)}
             aria-pressed={typeFilter === type}
             label={
