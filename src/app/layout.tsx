@@ -17,6 +17,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'
 import { CookieBanner } from '@/components/ui/CookieBanner'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import '@/styles/globals.scss'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </StoreProvider>
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
         <CookieBanner />
       </body>
     </html>
