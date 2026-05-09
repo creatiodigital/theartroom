@@ -11,9 +11,14 @@ type Props = {
   artwork: PrintArtwork
 }
 
+const FALLBACK_WIDTH = 800
+const FALLBACK_HEIGHT = 600
+
 export const PrintCard = ({ artwork }: Props) => {
   const artist = displayArtist(artwork) || 'Unknown artist'
   const title = artwork.title || artwork.name
+  const w = artwork.originalWidth ?? FALLBACK_WIDTH
+  const h = artwork.originalHeight ?? FALLBACK_HEIGHT
 
   return (
     <div className={styles.card}>
@@ -24,8 +29,9 @@ export const PrintCard = ({ artwork }: Props) => {
               src={artwork.imageUrl}
               alt={title || 'Artwork'}
               className={styles.image}
-              width={600}
-              height={600}
+              width={w}
+              height={h}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </Link>
         ) : (

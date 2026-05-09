@@ -1,6 +1,6 @@
 {
   "name": "the-art-room",
-  "version": "3.7.1",
+  "version": "3.7.2",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -54,8 +54,8 @@
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "classnames": "^2.5.1",
-    "dompurify": "^3.3.3",
     "dotenv": "^17.3.1",
+    "isomorphic-dompurify": "^3.12.0",
     "lucide-react": "^0.562.0",
     "next": "^16.1.6",
     "next-auth": "5.0.0-beta.30",

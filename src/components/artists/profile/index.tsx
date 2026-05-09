@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
@@ -19,7 +17,7 @@ type Artist = {
   name: string
   lastName: string
   handler: string
-  biography: string
+  biography: string | null
   profileImageUrl: string | null
 }
 
@@ -27,80 +25,32 @@ type Exhibition = {
   id: string
   mainTitle: string
   url: string
-  handler: string
-  featuredImageUrl?: string | null
-  shortDescription?: string | null
+  handler: string | null
+  featuredImageUrl: string | null
+  shortDescription: string | null
 }
 
 type Artwork = {
   id: string
   slug: string
   name: string
-  title?: string
-  author?: string
-  year?: string
-  technique?: string
-  dimensions?: string
-  imageUrl?: string
+  title?: string | null
+  author?: string | null
+  year?: string | null
+  technique?: string | null
+  dimensions?: string | null
+  imageUrl?: string | null
+  originalWidth?: number | null
+  originalHeight?: number | null
 }
 
 interface ArtistProfilePageProps {
-  slug: string
+  artist: Artist
+  exhibitions: Exhibition[]
+  artworks: Artwork[]
 }
 
-export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
-  const [artist, setArtist] = useState<Artist | null>(null)
-  const [exhibitions, setExhibitions] = useState<Exhibition[]>([])
-  const [artworks, setArtworks] = useState<Artwork[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchArtist = async () => {
-      try {
-        const response = await fetch(`/api/artists/${slug}`)
-        if (!response.ok) {
-          setError('Artist not found')
-          return
-        }
-        const data = await response.json()
-        setArtist(data)
-
-        // Fetch exhibitions and artworks in parallel
-        const [exResponse, artResponse] = await Promise.all([
-          fetch(`/api/exhibitions?userId=${data.id}&published=true`),
-          fetch(`/api/artworks?userId=${data.id}&artworkType=image&featured=true`),
-        ])
-
-        if (exResponse.ok) {
-          setExhibitions(await exResponse.json())
-        }
-        if (artResponse.ok) {
-          setArtworks(await artResponse.json())
-        }
-      } catch (err) {
-        console.error('Failed to fetch artist:', err)
-        setError('Failed to load artist')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchArtist()
-  }, [slug])
-
-  if (loading) {
-    return <PageLayout loading />
-  }
-
-  if (error || !artist) {
-    return (
-      <PageLayout>
-        <Text as="p">{error || 'Artist not found'}</Text>
-      </PageLayout>
-    )
-  }
-
+export const ArtistProfilePage = ({ artist, exhibitions, artworks }: ArtistProfilePageProps) => {
   const artistFullName = `${artist.name} ${artist.lastName}`
 
   return (
@@ -117,6 +67,8 @@ export const ArtistProfilePage = ({ slug }: ArtistProfilePageProps) => {
               src={artist.profileImageUrl}
               alt={artistFullName}
               fill
+              priority
+              sizes="(max-width: 768px) 50vw, 25vw"
               className={styles.avatar}
             />
           </div>

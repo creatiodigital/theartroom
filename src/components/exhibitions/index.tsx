@@ -1,6 +1,3 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
@@ -28,7 +25,17 @@ type Exhibition = {
   }
 }
 
-const ExhibitionCard = ({ exhibition }: { exhibition: Exhibition }) => (
+interface ExhibitionsPageProps {
+  exhibitions: Exhibition[]
+}
+
+const ExhibitionCard = ({
+  exhibition,
+  priority,
+}: {
+  exhibition: Exhibition
+  priority?: boolean
+}) => (
   <li className={styles.listItem}>
     <Link
       href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
@@ -42,6 +49,7 @@ const ExhibitionCard = ({ exhibition }: { exhibition: Exhibition }) => (
             fill
             sizes="(max-width: 768px) 100vw, 55vw"
             className={styles.image}
+            priority={priority}
           />
         ) : (
           <div className={styles.imagePlaceholder} />
@@ -63,32 +71,12 @@ const ExhibitionCard = ({ exhibition }: { exhibition: Exhibition }) => (
   </li>
 )
 
-export const ExhibitionsPage = () => {
-  const [exhibitions, setExhibitions] = useState<Exhibition[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchExhibitions = async () => {
-      try {
-        const response = await fetch('/api/exhibitions?published=true')
-        if (response.ok) {
-          const data = await response.json()
-          setExhibitions(data)
-        }
-      } catch (error) {
-        console.error('Failed to fetch exhibitions:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchExhibitions()
-  }, [])
-
+export const ExhibitionsPage = ({ exhibitions }: ExhibitionsPageProps) => {
   const currentExhibitions = exhibitions.filter((e) => e.status === 'current')
   const pastExhibitions = exhibitions.filter((e) => e.status === 'past')
 
   return (
-    <PageLayout loading={loading}>
+    <PageLayout>
       <PageHeader
         pageTitle="Exhibitions"
         pageSubtitle="Explore our curated exhibitions, both current and past."
@@ -98,8 +86,12 @@ export const ExhibitionsPage = () => {
           <EmptyState message="No current exhibitions." />
         ) : (
           <ul className={styles.list}>
-            {currentExhibitions.map((exhibition) => (
-              <ExhibitionCard key={exhibition.id} exhibition={exhibition} />
+            {currentExhibitions.map((exhibition, idx) => (
+              <ExhibitionCard
+                key={exhibition.id}
+                exhibition={exhibition}
+                priority={idx === 0}
+              />
             ))}
           </ul>
         )}

@@ -1,7 +1,3 @@
-'use client'
-
-import { useEffect, useMemo, useState } from 'react'
-
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
@@ -16,48 +12,21 @@ import type { PrintArtwork, PrintsPageContent } from './types'
 // Toolbar (artist filter, sort, search) is parked until the catalog grows —
 // see PrintsToolbar.tsx. Re-wire state + `<PrintsToolbar />` below when needed.
 
-export const PrintsPage = () => {
-  const [artworks, setArtworks] = useState<PrintArtwork[]>([])
-  const [pageContent, setPageContent] = useState<PrintsPageContent | null>(null)
-  const [loading, setLoading] = useState(true)
+interface PrintsPageProps {
+  artworks: PrintArtwork[]
+  pageContent: PrintsPageContent | null
+}
 
-  useEffect(() => {
-    // Parallel fetches: the prints catalog and the CMS page (banner + copy).
-    // We don't block the catalog on the CMS response — missing content
-    // just hides the banner/description sections.
-    Promise.all([
-      fetch('/api/prints').then((r) => (r.ok ? r.json() : [])),
-      fetch('/api/pages/prints').then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([printsData, pageData]) => {
-        setArtworks(Array.isArray(printsData) ? printsData : [])
-        if (pageData && typeof pageData === 'object' && 'slug' in pageData) {
-          setPageContent({
-            title: pageData.title,
-            content: pageData.content ?? '',
-            bannerImageUrl: pageData.bannerImageUrl ?? null,
-          })
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to load prints page:', error)
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }, [])
-
-  const sorted = useMemo(() => {
-    return [...artworks].sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    })
-  }, [artworks])
+export const PrintsPage = ({ artworks, pageContent }: PrintsPageProps) => {
+  const sorted = [...artworks].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
 
   const hasDescription =
     !!pageContent?.content && pageContent.content.trim() !== '' && pageContent.content !== '<p></p>'
 
   return (
-    <PageLayout loading={loading}>
+    <PageLayout>
       <PageHeader
         pageTitle="Prints"
         pageSubtitle="Museum-grade prints of selected works, hand-signed by the artist."
