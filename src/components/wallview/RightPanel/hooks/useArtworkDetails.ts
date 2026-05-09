@@ -1,10 +1,25 @@
 import { useSelector } from 'react-redux'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
+import {
+  frameThicknessOptions,
+  passepartoutThicknessOptions,
+} from '@/components/wallview/RightPanel/PresentationSection/constants'
 
 import type { RootState } from '@/redux/store'
 import type { TOption } from '@/types/artwork'
 import type { TFontFamily, TFontWeight } from '@/types/fonts'
+
+const DEFAULT_FRAME_THICKNESS: TOption<number> = { label: '2', value: 2 }
+const DEFAULT_PASSEPARTOUT_THICKNESS: TOption<number> = { label: '0.6', value: 0.6 }
+
+const normalizeFrameThickness = (v?: TOption<number>): TOption<number> =>
+  v && frameThicknessOptions.some((o) => o.value === v.value) ? v : DEFAULT_FRAME_THICKNESS
+
+const normalizePassepartoutThickness = (v?: TOption<number>): TOption<number> =>
+  v && passepartoutThicknessOptions.some((o) => o.value === v.value)
+    ? v
+    : DEFAULT_PASSEPARTOUT_THICKNESS
 
 export const useArtworkDetails = (currentArtworkId: string) => {
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -37,7 +52,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       letterSpacing: { label: '0', value: 0 } as TOption<number>,
       fontFamily: { label: 'Roboto', value: 'roboto' } as TOption<TFontFamily>,
       frameSize: { label: '3', value: 3 },
-      frameThickness: { label: '1', value: 1 },
+      frameThickness: DEFAULT_FRAME_THICKNESS,
       frameMaterial: 'plastic',
       frameCornerStyle: 'mitered',
       frameTextureScale: 2.0,
@@ -47,7 +62,9 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       showPassepartout: false,
       passepartoutColor: '#ffffff',
       passepartoutSize: { label: '5', value: 5 },
-      passepartoutThickness: { label: '0.3', value: 0.3 },
+      passepartoutThickness: DEFAULT_PASSEPARTOUT_THICKNESS,
+      showPaperBorder: false,
+      paperBorderSize: { label: '0', value: 0 } as TOption<number>,
       supportThickness: { label: '2', value: 2 },
       supportColor: '#ffffff',
       showSupport: false,
@@ -124,6 +141,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     passepartoutColor,
     passepartoutSize,
     passepartoutThickness,
+    showPaperBorder,
+    paperBorderSize,
     supportThickness,
     supportColor,
     showSupport,
@@ -203,7 +222,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     letterSpacing: letterSpacing ?? { label: '0', value: 0 },
     fontFamily: fontFamily ?? { label: 'Roboto', value: 'roboto' as TFontFamily },
     frameSize: frameSize ?? { label: '3', value: 3 },
-    frameThickness: frameThickness ?? { label: '1', value: 1 },
+    frameThickness: normalizeFrameThickness(frameThickness),
     frameMaterial: frameMaterial ?? 'plastic',
     frameCornerStyle: frameCornerStyle ?? 'mitered',
     frameTextureScale: frameTextureScale ?? 2.0,
@@ -213,7 +232,9 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     showPassepartout,
     passepartoutColor,
     passepartoutSize: passepartoutSize ?? { label: '5', value: 5 },
-    passepartoutThickness: passepartoutThickness ?? { label: '0.3', value: 0.3 },
+    passepartoutThickness: normalizePassepartoutThickness(passepartoutThickness),
+    showPaperBorder: showPaperBorder ?? false,
+    paperBorderSize: paperBorderSize ?? { label: '0', value: 0 },
     supportThickness: supportThickness ?? { label: '2', value: 2 },
     supportColor: supportColor ?? '#ffffff',
     showSupport: showSupport ?? false,
