@@ -37,6 +37,8 @@ type PresentationSectionProps = {
   passepartoutColor: string
   passepartoutSize?: { label: string; value: number }
   passepartoutThickness?: { label: string; value: number }
+  showPaperBorder?: boolean
+  paperBorderSize?: { label: string; value: number }
   hideShadow?: boolean
   onEdit: <K extends keyof TArtwork>(property: K, value: TArtwork[K]) => void
   /** Whether to show the "Hide shadow" checkbox (default: true) */
@@ -62,6 +64,8 @@ const PresentationSection = ({
   passepartoutColor,
   passepartoutSize,
   passepartoutThickness,
+  showPaperBorder,
+  paperBorderSize,
   hideShadow,
   onEdit,
   showShadowControl = true,
@@ -387,6 +391,44 @@ const PresentationSection = ({
                 }
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      <Tooltip
+        label="Add an extra white paper margin around the printed image, equal on every side"
+        placement="left"
+      >
+        <Checkbox
+          checked={showPaperBorder ?? false}
+          onChange={(e) => onEdit('showPaperBorder', e.target.checked)}
+          label="Add Paper Border"
+          disabled={disabled}
+        />
+      </Tooltip>
+      {showPaperBorder && (
+        <div className={styles.controlGroup}>
+          <div className={styles.item}>
+            <div className={styles.sliderHeader}>
+              <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                Size (cm)
+              </Text>
+              <span className={styles.sliderValue}>{paperBorderSize?.value ?? 0}</span>
+            </div>
+            <Slider
+              min={0}
+              max={10}
+              step={1}
+              value={paperBorderSize?.value ?? 0}
+              onChange={(v) =>
+                onEdit('paperBorderSize', {
+                  label: String(v),
+                  value: v,
+                })
+              }
+              disabled={disabled}
+              aria-label="Paper border size in centimeters"
+            />
           </div>
         </div>
       )}

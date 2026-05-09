@@ -15,6 +15,7 @@ import {
 import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'
+import { CookieBanner } from '@/components/ui/CookieBanner'
 import { Analytics } from '@vercel/analytics/next'
 import '@/styles/globals.scss'
 
@@ -86,6 +87,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </StoreProvider>
         </AuthProvider>
         <Analytics />
+        <CookieBanner />
       </body>
     </html>
   )

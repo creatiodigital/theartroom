@@ -58,7 +58,7 @@
   p {
     margin: 0 0 var(--space-5);
     font-family: var(--font-sans), var(--font-sans-fallback);
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     font-weight: var(--font-regular);
     line-height: var(--leading-loose);
 
@@ -146,10 +146,10 @@
   // Links
   a {
     color: inherit;
-    text-decoration: underline;
+    text-decoration: none;
 
     &:hover {
-      text-decoration: none;
+      text-decoration: underline;
     }
   }
 

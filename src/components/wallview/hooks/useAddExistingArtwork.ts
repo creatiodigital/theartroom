@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D } from '@/components/wallview/utils'
+import { createNewArtwork } from '@/factories/artworkFactory'
 import { restoreArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import {
@@ -12,7 +13,7 @@ import {
 } from '@/redux/slices/wallViewSlice'
 import { showWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
-import type { TArtwork, TArtworkPosition } from '@/types/artwork'
+import type { TArtwork, TArtworkKind, TArtworkPosition } from '@/types/artwork'
 import type { TDimensions } from '@/types/geometry'
 
 export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
@@ -56,22 +57,23 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       const posX2d = (wallWidth * WALL_SCALE) / 2 - size / 2
       const posY2d = (wallHeight * WALL_SCALE) / 2 - size / 2
 
-      // Restore artwork to Redux with full data
+      // Re-adding from library wipes per-exhibition presentation (frame, passepartout,
+      // paper border, support…). Start from factory defaults, then layer on the
+      // metadata returned by the API.
       const artwork: TArtwork = {
-        id: artworkData.id,
+        ...createNewArtwork({
+          id: artworkData.id,
+          artworkType: artworkData.artworkType as TArtworkKind,
+        }),
         name: artworkData.name,
-        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound' | 'video',
         artworkTitle: artworkData.title || undefined,
         author: artworkData.author || undefined,
         artworkYear: artworkData.year || undefined,
         artworkDimensions: artworkData.dimensions || undefined,
         description: artworkData.description || undefined,
         imageUrl: artworkData.imageUrl || undefined,
-        // Text-specific core content
         textContent: artworkData.textContent || undefined,
-        // Sound-specific
         soundUrl: artworkData.soundUrl || undefined,
-        // Video-specific
         videoUrl: artworkData.videoUrl || undefined,
       }
 
@@ -123,22 +125,23 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
       const adjustedX = posX2d - size / 2
       const adjustedY = posY2d - size / 2
 
-      // Restore artwork to Redux with full data
+      // Re-adding from library wipes per-exhibition presentation (frame, passepartout,
+      // paper border, support…). Start from factory defaults, then layer on the
+      // metadata returned by the API.
       const artwork: TArtwork = {
-        id: artworkData.id,
+        ...createNewArtwork({
+          id: artworkData.id,
+          artworkType: artworkData.artworkType as TArtworkKind,
+        }),
         name: artworkData.name,
-        artworkType: artworkData.artworkType as 'image' | 'text' | 'sound' | 'video',
         artworkTitle: artworkData.title || undefined,
         author: artworkData.author || undefined,
         artworkYear: artworkData.year || undefined,
         artworkDimensions: artworkData.dimensions || undefined,
         description: artworkData.description || undefined,
         imageUrl: artworkData.imageUrl || undefined,
-        // Text-specific core content
         textContent: artworkData.textContent || undefined,
-        // Sound-specific
         soundUrl: artworkData.soundUrl || undefined,
-        // Video-specific
         videoUrl: artworkData.videoUrl || undefined,
       }
 

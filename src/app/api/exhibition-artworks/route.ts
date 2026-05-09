@@ -135,6 +135,8 @@ export async function POST(request: NextRequest) {
         passepartoutColor?: string
         passepartoutSize?: number
         passepartoutThickness?: number
+        showPaperBorder?: boolean
+        paperBorderSize?: number
         supportThickness?: number
         supportColor?: string
         showSupport?: boolean
@@ -254,7 +256,7 @@ export async function POST(request: NextRequest) {
             showFrame: pos.showFrame ?? false,
             frameColor: pos.frameColor ?? '#000000',
             frameSize: pos.frameSize ?? 5,
-            frameThickness: pos.frameThickness ?? 0.5,
+            frameThickness: pos.frameThickness ?? 2,
             frameMaterial: pos.frameMaterial ?? 'plastic',
             frameCornerStyle: pos.frameCornerStyle ?? 'mitered',
             frameTextureScale: pos.frameTextureScale ?? 2.0,
@@ -264,7 +266,9 @@ export async function POST(request: NextRequest) {
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
             passepartoutSize: pos.passepartoutSize ?? 10,
-            passepartoutThickness: pos.passepartoutThickness ?? 0.3,
+            passepartoutThickness: pos.passepartoutThickness ?? 0.6,
+            showPaperBorder: pos.showPaperBorder ?? false,
+            paperBorderSize: pos.paperBorderSize ?? 0,
             supportThickness: pos.supportThickness ?? 2,
             supportColor: pos.supportColor ?? '#ffffff',
             showSupport: pos.showSupport ?? false,
@@ -333,7 +337,7 @@ export async function POST(request: NextRequest) {
             showFrame: pos.showFrame ?? false,
             frameColor: pos.frameColor ?? '#000000',
             frameSize: pos.frameSize ?? 5,
-            frameThickness: pos.frameThickness ?? 0.5,
+            frameThickness: pos.frameThickness ?? 2,
             frameMaterial: pos.frameMaterial ?? 'plastic',
             frameCornerStyle: pos.frameCornerStyle ?? 'mitered',
             frameTextureScale: pos.frameTextureScale ?? 2.0,
@@ -343,7 +347,9 @@ export async function POST(request: NextRequest) {
             showPassepartout: pos.showPassepartout ?? false,
             passepartoutColor: pos.passepartoutColor ?? '#ffffff',
             passepartoutSize: pos.passepartoutSize ?? 10,
-            passepartoutThickness: pos.passepartoutThickness ?? 0.3,
+            passepartoutThickness: pos.passepartoutThickness ?? 0.6,
+            showPaperBorder: pos.showPaperBorder ?? false,
+            paperBorderSize: pos.paperBorderSize ?? 0,
             supportThickness: pos.supportThickness ?? 2,
             supportColor: pos.supportColor ?? '#ffffff',
             showSupport: pos.showSupport ?? false,

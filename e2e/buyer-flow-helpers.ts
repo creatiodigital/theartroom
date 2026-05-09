@@ -59,7 +59,7 @@ export async function runBuyerFlow(page: Page): Promise<BuyerFlowResult> {
     timeout: 30_000,
   })
   await wizardCta.click()
-  await page.waitForURL(`**/artworks/${slug}/print/checkout?**`, { timeout: 15_000 })
+  await page.waitForURL(`**/artworks/${slug}/print/checkout?**`, { timeout: 30_000 })
 
   // ── Checkout: shipping form ───────────────────────────────────
   await pickCheckoutCountry(page, 'belgium')

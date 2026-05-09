@@ -14,8 +14,8 @@ const navItems = [
   { label: 'Artists', href: '/artists' },
   { label: 'Exhibitions', href: '/exhibitions' },
   { label: 'Prints', href: '/prints' },
-  { label: 'Contact', href: '/contact' },
   { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export const Navigation = () => {

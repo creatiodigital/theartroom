@@ -54,6 +54,8 @@ export type ExhibitionArtworkResponse = {
   passepartoutColor: string
   passepartoutSize: number
   passepartoutThickness: number
+  showPaperBorder: boolean
+  paperBorderSize: number
   supportThickness: number
   supportColor: string
   showSupport: boolean
@@ -132,11 +134,12 @@ const WEIGHT_LABEL_MAP: Record<string, string> = {
 export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
   const mappedWeight = WEIGHT_MAP[ea.fontWeight] ?? 'regular'
 
-  // Clamp passepartoutThickness to valid range 0.1-1.0 (old data may have invalid values)
+  // Clamp passepartoutThickness to valid range; fall back to 0.6 (a value present in the
+  // dropdown options) so the Select doesn't render blank for legacy 0.3 rows.
   const passepartoutThicknessVal =
-    ea.passepartoutThickness && ea.passepartoutThickness >= 0.1 && ea.passepartoutThickness <= 1.0
+    ea.passepartoutThickness && ea.passepartoutThickness >= 0.2 && ea.passepartoutThickness <= 3
       ? ea.passepartoutThickness
-      : 0.3
+      : 0.6
 
   return {
     id: ea.artworkId,
@@ -160,7 +163,7 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
     showFrame: ea.showFrame,
     frameColor: ea.frameColor,
     frameSize: { label: String(ea.frameSize ?? 3), value: ea.frameSize ?? 3 },
-    frameThickness: { label: String(ea.frameThickness ?? 1), value: ea.frameThickness ?? 1 },
+    frameThickness: { label: String(ea.frameThickness ?? 2), value: ea.frameThickness ?? 2 },
     frameMaterial: ea.frameMaterial === 'wood' ? 'wood-dark' : (ea.frameMaterial ?? 'plastic'),
     frameCornerStyle: ea.frameCornerStyle ?? 'mitered',
     frameTextureScale: ea.frameTextureScale ?? 2.0,
@@ -173,6 +176,11 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
     passepartoutThickness: {
       label: String(passepartoutThicknessVal),
       value: passepartoutThicknessVal,
+    },
+    showPaperBorder: ea.showPaperBorder ?? false,
+    paperBorderSize: {
+      label: String(ea.paperBorderSize ?? 0),
+      value: ea.paperBorderSize ?? 0,
     },
     supportThickness: {
       label: String(ea.supportThickness ?? 2),

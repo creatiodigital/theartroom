@@ -68,15 +68,25 @@ const Artwork = memo(
     const artworkPositions = exhibitionArtworksById[id]
     const { posX2d, posY2d, height2d, width2d } = artworkPositions
 
-    // Calculate how much frame + passepartout borders add around the image
-    const { showFrame, frameSize, imageUrl, showPassepartout, passepartoutSize } = artwork
+    // Calculate how much frame + passepartout + paper-border layers add around the image
+    const {
+      showFrame,
+      frameSize,
+      imageUrl,
+      showPassepartout,
+      passepartoutSize,
+      showPaperBorder,
+      paperBorderSize,
+    } = artwork
     const scaleMul = WALL_SCALE / 100
     const frameBorderPx = showFrame && imageUrl && frameSize?.value ? frameSize.value * scaleMul : 0
     const ppBorderPx =
       showPassepartout && imageUrl && passepartoutSize?.value
         ? passepartoutSize.value * scaleMul
         : 0
-    const totalBorderEachSide = frameBorderPx + ppBorderPx
+    const paperBorderPx =
+      showPaperBorder && imageUrl && paperBorderSize?.value ? paperBorderSize.value * scaleMul : 0
+    const totalBorderEachSide = frameBorderPx + ppBorderPx + paperBorderPx
 
     // The container grows to include borders. With border-box, the CSS borders
     // eat inward, so the image content naturally ends up at width2d × height2d.
