@@ -12,7 +12,17 @@ test('artist logout: signs out and clears the session', async ({ page }) => {
   await page.getByRole('button', { name: /^log out$/i }).click()
   await page.waitForURL((url) => url.pathname === '/', { timeout: 15_000 })
 
-  const sessionRes = await page.request.get('/api/auth/session')
-  const session = await sessionRes.json()
-  expect(session?.user, 'session should be empty after logout').toBeFalsy()
+  // Poll the session endpoint — the cookie clear and the redirect can
+  // race, so the first request after waitForURL may still carry the
+  // expiring cookie. Retry briefly until the server confirms no user.
+  await expect
+    .poll(
+      async () => {
+        const res = await page.request.get('/api/auth/session')
+        const data = await res.json()
+        return data?.user
+      },
+      { message: 'session should be empty after logout', timeout: 5_000 },
+    )
+    .toBeFalsy()
 })
