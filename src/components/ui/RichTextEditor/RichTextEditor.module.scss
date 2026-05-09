@@ -1,8 +1,9 @@
 .container {
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  overflow: hidden;
   background: var(--color-white);
+  max-height: 500px;
+  overflow-y: auto;
 
   &:focus-within {
     border-color: var(--color-text-primary);
@@ -10,6 +11,9 @@
 }
 
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -49,6 +53,30 @@
   height: var(--space-5);
   background: var(--color-border-strong);
   margin: 0 var(--space-1);
+}
+
+.linkModal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 360px;
+}
+
+.linkInput {
+  border-radius: 0;
+}
+
+.linkModalActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.linkModalActionsRight {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
 }
 
 .editor {

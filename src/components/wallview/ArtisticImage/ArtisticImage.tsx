@@ -24,6 +24,8 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     showPassepartout,
     passepartoutColor,
     passepartoutSize,
+    showPaperBorder,
+    paperBorderSize,
   } = artwork
 
   return (
@@ -90,20 +92,32 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
         }}
       >
         <div
-          className={styles.image}
           style={{
-            backgroundImage: imageUrl ? `url(${imageUrl})` : 'none',
+            width: '100%',
+            height: '100%',
+            boxSizing: 'border-box',
+            border:
+              showPaperBorder && imageUrl && paperBorderSize?.value
+                ? `${paperBorderSize.value * (WALL_SCALE / 100)}px solid #ffffff`
+                : undefined,
           }}
         >
-          {!imageUrl && (
-            <div className={styles.empty}>
-              <Tooltip label="Upload an image via the artwork library" placement="top">
-                <span style={{ display: 'inline-flex' }}>
-                  <Icon name="image" size={40} color="#000000" />
-                </span>
-              </Tooltip>
-            </div>
-          )}
+          <div
+            className={styles.image}
+            style={{
+              backgroundImage: imageUrl ? `url(${imageUrl})` : 'none',
+            }}
+          >
+            {!imageUrl && (
+              <div className={styles.empty}>
+                <Tooltip label="Upload an image via the artwork library" placement="top">
+                  <span style={{ display: 'inline-flex' }}>
+                    <Icon name="image" size={40} color="#000000" />
+                  </span>
+                </Tooltip>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

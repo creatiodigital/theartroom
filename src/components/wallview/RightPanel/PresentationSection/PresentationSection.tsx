@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Section } from '@/components/ui/Section/Section'
 import { Select } from '@/components/ui/Select'
+import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
@@ -36,6 +37,8 @@ type PresentationSectionProps = {
   passepartoutColor: string
   passepartoutSize?: { label: string; value: number }
   passepartoutThickness?: { label: string; value: number }
+  showPaperBorder?: boolean
+  paperBorderSize?: { label: string; value: number }
   hideShadow?: boolean
   onEdit: <K extends keyof TArtwork>(property: K, value: TArtwork[K]) => void
   /** Whether to show the "Hide shadow" checkbox (default: true) */
@@ -61,6 +64,8 @@ const PresentationSection = ({
   passepartoutColor,
   passepartoutSize,
   passepartoutThickness,
+  showPaperBorder,
+  paperBorderSize,
   hideShadow,
   onEdit,
   showShadowControl = true,
@@ -180,16 +185,14 @@ const PresentationSection = ({
                     {(frameTextureRoughness ?? 0.6).toFixed(2)}
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
+                <Slider
+                  min={0}
+                  max={1}
+                  step={0.01}
                   value={frameTextureRoughness ?? 0.6}
-                  onChange={(e) => onEdit('frameTextureRoughness', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => onEdit('frameTextureRoughness', v)}
                   disabled={disabled}
-                  style={disabled ? { opacity: 0.5 } : undefined}
+                  aria-label="Frame texture roughness"
                 />
               </div>
             </>
@@ -228,16 +231,14 @@ const PresentationSection = ({
                   </Text>
                   <span className={styles.sliderValue}>{(frameTextureScale ?? 2).toFixed(1)}</span>
                 </div>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="8"
-                  step="0.1"
+                <Slider
+                  min={0.1}
+                  max={8}
+                  step={0.1}
                   value={frameTextureScale ?? 2}
-                  onChange={(e) => onEdit('frameTextureScale', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => onEdit('frameTextureScale', v)}
                   disabled={disabled}
-                  style={disabled ? { opacity: 0.5 } : undefined}
+                  aria-label="Frame texture scale"
                 />
               </div>
               <div className={styles.item}>
@@ -249,16 +250,14 @@ const PresentationSection = ({
                     {(frameTextureRotation ?? 0).toFixed(0)}°
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="360"
-                  step="1"
+                <Slider
+                  min={0}
+                  max={360}
+                  step={1}
                   value={frameTextureRotation ?? 0}
-                  onChange={(e) => onEdit('frameTextureRotation', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => onEdit('frameTextureRotation', v)}
                   disabled={disabled}
-                  style={disabled ? { opacity: 0.5 } : undefined}
+                  aria-label="Frame texture rotation"
                 />
               </div>
               <div className={styles.item}>
@@ -270,16 +269,14 @@ const PresentationSection = ({
                     {(frameTextureRoughness ?? 0.6).toFixed(2)}
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
+                <Slider
+                  min={0}
+                  max={1}
+                  step={0.01}
                   value={frameTextureRoughness ?? 0.6}
-                  onChange={(e) => onEdit('frameTextureRoughness', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => onEdit('frameTextureRoughness', v)}
                   disabled={disabled}
-                  style={disabled ? { opacity: 0.5 } : undefined}
+                  aria-label="Frame texture roughness"
                 />
               </div>
               <div className={styles.item}>
@@ -291,16 +288,14 @@ const PresentationSection = ({
                     {(frameTextureNormalScale ?? 0.5).toFixed(2)}
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1"
-                  step="0.01"
+                <Slider
+                  min={0.1}
+                  max={1}
+                  step={0.01}
                   value={frameTextureNormalScale ?? 0.5}
-                  onChange={(e) => onEdit('frameTextureNormalScale', parseFloat(e.target.value))}
-                  className={styles.slider}
+                  onChange={(v) => onEdit('frameTextureNormalScale', v)}
                   disabled={disabled}
-                  style={disabled ? { opacity: 0.5 } : undefined}
+                  aria-label="Frame texture details"
                 />
               </div>
             </>
@@ -396,6 +391,44 @@ const PresentationSection = ({
                 }
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      <Tooltip
+        label="Add an extra white paper margin around the printed image, equal on every side"
+        placement="left"
+      >
+        <Checkbox
+          checked={showPaperBorder ?? false}
+          onChange={(e) => onEdit('showPaperBorder', e.target.checked)}
+          label="Add Paper Border"
+          disabled={disabled}
+        />
+      </Tooltip>
+      {showPaperBorder && (
+        <div className={styles.controlGroup}>
+          <div className={styles.item}>
+            <div className={styles.sliderHeader}>
+              <Text font="dashboard" as="span" size="xs" className={styles.label}>
+                Size (cm)
+              </Text>
+              <span className={styles.sliderValue}>{paperBorderSize?.value ?? 0}</span>
+            </div>
+            <Slider
+              min={0}
+              max={10}
+              step={1}
+              value={paperBorderSize?.value ?? 0}
+              onChange={(v) =>
+                onEdit('paperBorderSize', {
+                  label: String(v),
+                  value: v,
+                })
+              }
+              disabled={disabled}
+              aria-label="Paper border size in centimeters"
+            />
           </div>
         </div>
       )}

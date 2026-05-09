@@ -217,6 +217,8 @@ const Display = ({ artwork }: DisplayProps) => {
     passepartoutColor,
     passepartoutSize,
     passepartoutThickness,
+    showPaperBorder,
+    paperBorderSize,
     supportThickness,
     supportColor,
     showSupport,
@@ -297,6 +299,14 @@ const Display = ({ artwork }: DisplayProps) => {
             halfW += memberArt.passepartoutSize.value / 100
             halfH += memberArt.passepartoutSize.value / 100
           }
+          if (
+            memberArt?.showPaperBorder &&
+            memberArt?.imageUrl &&
+            memberArt?.paperBorderSize?.value
+          ) {
+            halfW += memberArt.paperBorderSize.value / 100
+            halfH += memberArt.paperBorderSize.value / 100
+          }
 
           minX = Math.min(minX, pos.posX3d - halfW)
           maxX = Math.max(maxX, pos.posX3d + halfW)
@@ -325,8 +335,9 @@ const Display = ({ artwork }: DisplayProps) => {
         // Individual artwork focus (default behavior)
         const pBorder = (showPassepartout ? passepartoutSize?.value : 0) || 0
         const fBorder = (showFrame ? frameSize?.value : 0) || 0
-        const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2) / 100
-        const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2) / 100
+        const paperBorderCm = (showPaperBorder ? paperBorderSize?.value : 0) || 0
+        const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2 + paperBorderCm * 2) / 100
+        const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2 + paperBorderCm * 2) / 100
 
         dispatch(
           setFocusTarget({
@@ -356,6 +367,8 @@ const Display = ({ artwork }: DisplayProps) => {
     getNormalFromQuaternion,
     showPassepartout,
     passepartoutSize,
+    showPaperBorder,
+    paperBorderSize,
     showFrame,
     frameSize,
     autofocusGroups,
@@ -572,15 +585,22 @@ const Display = ({ artwork }: DisplayProps) => {
   const passepartoutDepth = Math.min(3, Math.max(0.2, passepartoutThickness?.value ?? 0.4))
   // supportThickness is for Z-depth, clamped 0-10
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
+  // Paper border (white margin) — extends paper plane around the image
+  const paperBorderS = showPaperBorder ? (paperBorderSize?.value ?? 0) : 0
 
   // Image stays at the artist-specified size (planeWidth × planeHeight).
-  // Passepartout and frame grow OUTWARD around the image.
-  const passepartoutBorder = passepartoutS / 100 // border width in 3D units
-  const frameBorder = frameS / 100 // border width in 3D units
+  // Paper, passepartout, and frame each grow OUTWARD around the image.
+  const paperBorder = paperBorderS / 100 // border width in 3D units (cm → m)
+  const passepartoutBorder = passepartoutS / 100
+  const frameBorder = frameS / 100
 
-  // Passepartout outer = image + passepartout border on each side
-  const passepartoutOuterW = planeWidth + passepartoutBorder * 2
-  const passepartoutOuterH = planeHeight + passepartoutBorder * 2
+  // Paper outer = image + paper border on each side
+  const paperOuterW = planeWidth + paperBorder * 2
+  const paperOuterH = planeHeight + paperBorder * 2
+
+  // Passepartout outer = paper outer + passepartout border on each side
+  const passepartoutOuterW = paperOuterW + passepartoutBorder * 2
+  const passepartoutOuterH = paperOuterH + passepartoutBorder * 2
 
   // Frame outer = passepartout outer + frame border on each side
   const frameOuterW = passepartoutOuterW + frameBorder * 2
@@ -605,6 +625,14 @@ const Display = ({ artwork }: DisplayProps) => {
 
       {/* Artwork sits on top of support surface — at the artist-specified size */}
       <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
+        {/* Paper sheet — extends past the image as a white margin on every side */}
+        {showPaperBorder && paperBorder > 0 && (
+          <mesh renderOrder={1} position={[0, 0, -0.0005]}>
+            <planeGeometry args={[paperOuterW, paperOuterH]} />
+            <meshBasicMaterial color="#ffffff" side={DoubleSide} />
+          </mesh>
+        )}
+
         {!imageUrl && (
           <mesh renderOrder={2}>
             <planeGeometry args={[planeWidth, planeHeight]} />

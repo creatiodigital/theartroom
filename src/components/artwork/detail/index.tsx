@@ -102,12 +102,14 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE{' '}
-              <span className={styles.closeIcon}>
-                <Icon name="close" size={16} />
-              </span>
-            </button>
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              label="CLOSE"
+              iconRight={<Icon name="close" size={16} />}
+              className={styles.closeButton}
+              aria-label="Close artwork"
+            />
           </header>
           <div className={styles.content}>
             <LoadingBar />
@@ -121,12 +123,14 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE{' '}
-              <span className={styles.closeIcon}>
-                <Icon name="close" size={16} />
-              </span>
-            </button>
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              label="CLOSE"
+              iconRight={<Icon name="close" size={16} />}
+              className={styles.closeButton}
+              aria-label="Close artwork"
+            />
           </header>
           <div className={styles.content}>
             <Text as="p">{error || 'Artwork not found'}</Text>
@@ -140,12 +144,14 @@ export const ArtworkDetailPage = ({ slug }: ArtworkDetailPageProps) => {
         <div className={styles.page}>
           <header className={styles.minimalHeader}>
             <Logo className={styles.logo} />
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE{' '}
-              <span className={styles.closeIcon}>
-                <Icon name="close" size={16} />
-              </span>
-            </button>
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              label="CLOSE"
+              iconRight={<Icon name="close" size={16} />}
+              className={styles.closeButton}
+              aria-label="Close artwork"
+            />
           </header>
 
           <div className={styles.content}>

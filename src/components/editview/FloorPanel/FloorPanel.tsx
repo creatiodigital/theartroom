@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section/Section'
+import { Slider } from '@/components/ui/Slider'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { hideFloorPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
@@ -128,14 +129,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Tile Scale</label>
             <span className={styles.sliderValue}>{(8.5 - floorTextureScale).toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0.5"
-            max="8"
-            step="0.01"
+          <Slider
+            min={0.5}
+            max={8}
+            step={0.01}
             value={8.5 - floorTextureScale}
-            onChange={(e) => set('floorTextureScale', 8.5 - parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorTextureScale', 8.5 - v)}
+            aria-label="Tile Scale"
           />
         </div>
 
@@ -144,14 +144,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Tile Position X</label>
             <span className={styles.sliderValue}>{floorTextureOffsetX.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
+          <Slider
+            min={0}
+            max={1}
+            step={0.01}
             value={floorTextureOffsetX}
-            onChange={(e) => set('floorTextureOffsetX', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorTextureOffsetX', v)}
+            aria-label="Tile Position X"
           />
         </div>
 
@@ -160,14 +159,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Tile Position Y</label>
             <span className={styles.sliderValue}>{floorTextureOffsetY.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
+          <Slider
+            min={0}
+            max={1}
+            step={0.01}
             value={floorTextureOffsetY}
-            onChange={(e) => set('floorTextureOffsetY', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorTextureOffsetY', v)}
+            aria-label="Tile Position Y"
           />
         </div>
 
@@ -176,14 +174,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Floor Rotation</label>
             <span className={styles.sliderValue}>{floorRotation.toFixed(0)}°</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            step="1"
+          <Slider
+            min={0}
+            max={360}
+            step={1}
             value={floorRotation}
-            onChange={(e) => set('floorRotation', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorRotation', v)}
+            aria-label="Floor Rotation"
           />
         </div>
       </Section>
@@ -194,14 +191,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Reflectiveness</label>
             <span className={styles.sliderValue}>{floorReflectiveness.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
+          <Slider
+            min={0}
+            max={1}
+            step={0.01}
             value={floorReflectiveness}
-            onChange={(e) => set('floorReflectiveness', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorReflectiveness', v)}
+            aria-label="Reflectiveness"
           />
         </div>
 
@@ -210,14 +206,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Floor Details</label>
             <span className={styles.sliderValue}>{floorNormalScale.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="5"
-            step="0.1"
+          <Slider
+            min={0}
+            max={5}
+            step={0.1}
             value={floorNormalScale}
-            onChange={(e) => set('floorNormalScale', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorNormalScale', v)}
+            aria-label="Floor Details"
           />
         </div>
 
@@ -226,14 +221,13 @@ const FloorPanel = () => {
             <label className={styles.label}>Color Temperature</label>
             <span className={styles.sliderValue}>{floorTemperature.toFixed(2)}</span>
           </div>
-          <input
-            type="range"
-            min="-1"
-            max="1"
-            step="0.05"
+          <Slider
+            min={-1}
+            max={1}
+            step={0.05}
             value={floorTemperature}
-            onChange={(e) => set('floorTemperature', parseFloat(e.target.value))}
-            className={styles.slider}
+            onChange={(v) => set('floorTemperature', v)}
+            aria-label="Color Temperature"
           />
         </div>
       </Section>

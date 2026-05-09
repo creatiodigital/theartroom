@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Share2, Mail } from 'lucide-react'
 
+import { Button } from '@/components/ui/Button'
+
 import styles from './Share.module.scss'
 
 const WhatsAppIcon = ({ size = 15 }: { size?: number }) => (
@@ -28,10 +30,15 @@ export const Share = ({ title, url, className }: ShareProps) => {
 
   return (
     <div className={className}>
-      <button className={styles.toggle} onClick={() => setIsOpen(!isOpen)}>
+      <Button
+        variant="ghost"
+        onClick={() => setIsOpen(!isOpen)}
+        className={styles.toggle}
+        aria-expanded={isOpen}
+      >
         <Share2 size={16} strokeWidth={1.25} />
         <span>Share</span>
-      </button>
+      </Button>
       {isOpen && (
         <div className={styles.options}>
           <a

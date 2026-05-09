@@ -277,53 +277,60 @@ export const DashboardPage = () => {
                       className={dashboardStyles.kebabWrapper}
                       ref={openMenuId === ex.id ? menuRef : undefined}
                     >
-                      <button
+                      <Button
+                        variant="ghost"
                         className={dashboardStyles.kebabButton}
                         onClick={() => setOpenMenuId(openMenuId === ex.id ? null : ex.id)}
                         aria-label="Actions"
+                        aria-haspopup="menu"
+                        aria-expanded={openMenuId === ex.id}
                       >
                         <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
-                      </button>
+                      </Button>
                       {openMenuId === ex.id && (
-                        <div className={dashboardStyles.kebabMenu}>
-                          <button
+                        <div className={dashboardStyles.kebabMenu} role="menu">
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
                               handleViewExhibition(ex)
                             }}
                             disabled={!ex.published}
-                          >
-                            View
-                          </button>
-                          <button
+                            label="View"
+                          />
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
                               handleEditExhibitionSettings(ex)
                             }}
-                          >
-                            Edit Exhibition
-                          </button>
-                          <button
+                            label="Edit Exhibition"
+                          />
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
                               handleEdit3DSpace(ex)
                             }}
-                          >
-                            Edit 3D Space
-                          </button>
+                            label="Edit 3D Space"
+                          />
                           {isAdminOrSuperAdmin && (
-                            <button
+                            <Button
+                              variant="menuItem"
+                              role="menuitem"
                               className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                               onClick={() => {
                                 setOpenMenuId(null)
                                 handleDeleteClick(ex.id, ex.mainTitle)
                               }}
-                            >
-                              Delete
-                            </button>
+                              label="Delete"
+                            />
                           )}
                         </div>
                       )}

@@ -46,7 +46,11 @@ export function Text<T extends TextElement = 'span'>({
 }: PolymorphicTextProps<T>) {
   const Component = (as || 'span') as TextElement
 
-  const resolvedSize = size || DEFAULT_SIZE_BY_ELEMENT[Component]
+  // If the consumer passes a `className` they're presumably styling the
+  // text themselves; skip the default-by-element size class so the
+  // consumer's class wins at equal specificity without needing
+  // `!important`. They can still pass an explicit `size` to opt back in.
+  const resolvedSize = size || (className ? undefined : DEFAULT_SIZE_BY_ELEMENT[Component])
   const resolvedFont = font || (HEADING_ELEMENTS.includes(Component) ? 'serif' : 'sans')
 
   const classNames = [

@@ -20,15 +20,15 @@ export const ContactPage = () => {
               EMAIL
             </Text>
             <a href="mailto:contact@theartroom.gallery" className={styles.email}>
-              inquiries@theartroom.gallery
+              contact@theartroom.gallery
             </a>
           </div>
 
           <div className={styles.section}>
             <Text as="span" size="xs" className={styles.label}>
-              LOCATION
+              LOCATIONS
             </Text>
-            <Text className={styles.value}>Madrid, Spain</Text>
+            <Text className={styles.value}>Madrid &nbsp;&nbsp;&nbsp; Vienna</Text>
           </div>
         </div>
 

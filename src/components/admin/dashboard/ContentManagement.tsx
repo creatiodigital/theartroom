@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { MoreVertical } from 'lucide-react'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { Button } from '@/components/ui/Button'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 const contentPages = [
@@ -56,24 +57,28 @@ export const ContentManagement = () => {
                   className={dashboardStyles.kebabWrapper}
                   ref={openMenuId === page.route ? menuRef : undefined}
                 >
-                  <button
+                  <Button
+                    variant="ghost"
                     className={dashboardStyles.kebabButton}
                     onClick={() => setOpenMenuId(openMenuId === page.route ? null : page.route)}
                     aria-label="Actions"
+                    aria-haspopup="menu"
+                    aria-expanded={openMenuId === page.route}
                   >
                     <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
-                  </button>
+                  </Button>
                   {openMenuId === page.route && (
-                    <div className={dashboardStyles.kebabMenu}>
-                      <button
+                    <div className={dashboardStyles.kebabMenu} role="menu">
+                      <Button
+                        variant="menuItem"
                         className={dashboardStyles.kebabMenuItem}
+                        role="menuitem"
                         onClick={() => {
                           setOpenMenuId(null)
                           router.push(page.route)
                         }}
-                      >
-                        Edit
-                      </button>
+                        label="Edit"
+                      />
                     </div>
                   )}
                 </div>

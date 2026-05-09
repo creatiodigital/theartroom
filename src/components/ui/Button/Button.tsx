@@ -11,7 +11,7 @@ import type { MouseEventHandler, ReactNode } from 'react'
 import styles from './Button.module.scss'
 
 type ButtonProps = {
-  variant?: 'primary' | 'secondary' | 'danger'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'tab' | 'pill' | 'menuItem' | 'bare'
   size?: 'small' | 'smallSquared' | 'regular' | 'regularSquared' | 'big' | 'bigSquared'
   font?: 'serif' | 'sans' | 'dashboard'
   type?: 'submit' | 'button' | 'reset'
@@ -27,6 +27,16 @@ type ButtonProps = {
   draggable?: boolean
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void
   fullWidth?: boolean
+  children?: ReactNode
+  form?: string
+  style?: React.CSSProperties
+  'aria-label'?: string
+  'aria-expanded'?: boolean
+  'aria-pressed'?: boolean
+  'aria-checked'?: boolean
+  'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog' | 'tree' | 'grid'
+  'aria-selected'?: boolean
+  role?: string
 }
 
 export const Button = React.memo(
@@ -47,8 +57,18 @@ export const Button = React.memo(
     draggable,
     onDragStart,
     fullWidth,
+    children,
+    form,
+    style,
+    'aria-label': ariaLabel,
+    'aria-expanded': ariaExpanded,
+    'aria-pressed': ariaPressed,
+    'aria-checked': ariaChecked,
+    'aria-haspopup': ariaHaspopup,
+    'aria-selected': ariaSelected,
+    role,
   }: ButtonProps) => {
-    const isIconOnly = icon && !label
+    const isIconOnly = icon && !label && !children
 
     const classNames = c([
       styles.button,
@@ -63,7 +83,7 @@ export const Button = React.memo(
 
     const iconSize = size === 'big' ? 24 : size === 'small' ? 16 : 20
 
-    const content = (
+    const content = children ?? (
       <>
         {iconLeft && <span className={styles.iconLeft}>{iconLeft}</span>}
         {icon && <Icon name={icon} size={iconSize} color="currentColor" />}
@@ -75,7 +95,7 @@ export const Button = React.memo(
     // Render as Link if href is provided
     if (href) {
       return (
-        <Link href={href} className={classNames} title={title}>
+        <Link href={href} className={classNames} title={title} style={style} aria-label={ariaLabel}>
           {content}
         </Link>
       )
@@ -88,8 +108,17 @@ export const Button = React.memo(
         type={type}
         disabled={disabled}
         title={title}
+        style={style}
         draggable={draggable}
         onDragStart={onDragStart}
+        form={form}
+        role={role}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+        aria-pressed={ariaPressed}
+        aria-checked={ariaChecked}
+        aria-haspopup={ariaHaspopup}
+        aria-selected={ariaSelected}
       >
         {content}
       </button>

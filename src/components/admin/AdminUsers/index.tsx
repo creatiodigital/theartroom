@@ -222,36 +222,43 @@ export const AdminUsers = () => {
                     className={dashboardStyles.kebabWrapper}
                     ref={openMenuId === user.id ? menuRef : undefined}
                   >
-                    <button
+                    <Button
+                      variant="ghost"
                       className={dashboardStyles.kebabButton}
                       onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
                       aria-label="Actions"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === user.id}
                     >
                       <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
-                    </button>
+                    </Button>
                     {openMenuId === user.id && (
-                      <div className={dashboardStyles.kebabMenu}>
+                      <div className={dashboardStyles.kebabMenu} role="menu">
                         {isSuperAdminUser && user.email && (
-                          <button
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
                               handleInviteClick(user)
                             }}
-                          >
-                            Invite
-                          </button>
+                            label="Invite"
+                          />
                         )}
-                        <button
+                        <Button
+                          variant="menuItem"
+                          role="menuitem"
                           className={dashboardStyles.kebabMenuItem}
                           onClick={() => {
                             setOpenMenuId(null)
                             handleTogglePublished(user.id, user.published ?? false)
                           }}
-                        >
-                          {user.published ? 'Unpublish' : 'Publish'}
-                        </button>
-                        <button
+                          label={user.published ? 'Unpublish' : 'Publish'}
+                        />
+                        <Button
+                          variant="menuItem"
+                          role="menuitem"
                           className={dashboardStyles.kebabMenuItem}
                           onClick={async () => {
                             setOpenMenuId(null)
@@ -266,13 +273,14 @@ export const AdminUsers = () => {
                               console.error('Failed to update featured status:', err)
                             }
                           }}
-                        >
-                          {user.isFeatured ? 'Remove Featured' : 'Set as Featured'}
-                        </button>
+                          label={user.isFeatured ? 'Remove Featured' : 'Set as Featured'}
+                        />
                         {user.id !== session?.user?.id &&
                           (isSuperAdminUser ||
                             (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
-                            <button
+                            <Button
+                              variant="menuItem"
+                              role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               disabled={isImpersonating && session?.impersonating?.id === user.id}
                               style={
@@ -284,22 +292,24 @@ export const AdminUsers = () => {
                                 setOpenMenuId(null)
                                 handleImpersonate(user)
                               }}
-                            >
-                              {isImpersonating && session?.impersonating?.id === user.id
-                                ? 'Impersonating'
-                                : 'Impersonate'}
-                            </button>
+                              label={
+                                isImpersonating && session?.impersonating?.id === user.id
+                                  ? 'Impersonating'
+                                  : 'Impersonate'
+                              }
+                            />
                           )}
                         {isSuperAdminUser && user.id !== session?.user?.id && (
-                          <button
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
                             className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
                             onClick={() => {
                               setOpenMenuId(null)
                               handleDeleteClick(user.id, `${user.name} ${user.lastName}`)
                             }}
-                          >
-                            Delete
-                          </button>
+                            label="Delete"
+                          />
                         )}
                       </div>
                     )}

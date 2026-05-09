@@ -33,11 +33,7 @@
   }
 
   &.active {
-    color: var(--color-gray-65);
-
-    &:hover {
-      color: var(--color-brand);
-    }
+    color: var(--color-brand);
   }
 }
 

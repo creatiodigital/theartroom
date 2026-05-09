@@ -22,6 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 
 import { Button } from '@/components/ui/Button'
+import { FileInput } from '@/components/ui/FileInput'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
@@ -324,12 +325,11 @@ export default function LandingContentPage() {
 
             <div className={styles.section}>
               <label className={styles.label}>Image</label>
-              <input
+              <FileInput
                 ref={fileInputRef}
-                type="file"
+                id="landing-slide-image"
                 accept="image/*"
                 onChange={handleFileSelect}
-                style={{ display: 'none' }}
               />
               <div className={styles.uploadArea} onClick={() => fileInputRef.current?.click()}>
                 {uploading ? (

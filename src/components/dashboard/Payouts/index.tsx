@@ -171,21 +171,17 @@ export const PayoutsPage = () => {
               <p className={dashboardStyles.sectionDescription}>
                 Stripe updates us in the background once onboarding is complete. If this page still
                 says &quot;in progress&quot; after a minute, click{' '}
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={load}
+                  label="refresh"
                   style={{
-                    background: 'none',
-                    border: 'none',
                     padding: 0,
                     textDecoration: 'underline',
-                    cursor: 'pointer',
                     color: 'inherit',
                     font: 'inherit',
                   }}
-                >
-                  refresh
-                </button>
+                />
                 .
               </p>
             </div>

@@ -79,7 +79,7 @@ model ArtworkPreset {
   showFrame               Boolean @default(false)
   frameColor              String  @default("#000000")
   frameSize               Float   @default(5)
-  frameThickness          Float   @default(0.5)
+  frameThickness          Float   @default(2)
   frameMaterial           String  @default("plastic")
   frameCornerStyle        String  @default("mitered")
   frameTextureScale       Float   @default(2.0)
@@ -91,7 +91,7 @@ model ArtworkPreset {
   showPassepartout      Boolean @default(false)
   passepartoutColor     String  @default("#ffffff")
   passepartoutSize      Float   @default(10)
-  passepartoutThickness Float   @default(0.3)
+  passepartoutThickness Float   @default(0.6)
 
   // Support
   showSupport      Boolean @default(false)
@@ -378,7 +378,7 @@ model ExhibitionArtwork {
   showFrame               Boolean @default(false)
   frameColor              String  @default("#000000")
   frameSize               Float   @default(5) // Border width (XY)
-  frameThickness          Float   @default(0.5) // Z-depth
+  frameThickness          Float   @default(2) // Z-depth
   frameMaterial           String  @default("plastic")
   frameCornerStyle        String  @default("mitered")
   frameTextureScale       Float   @default(2.0)
@@ -388,7 +388,9 @@ model ExhibitionArtwork {
   showPassepartout        Boolean @default(false)
   passepartoutColor       String  @default("#ffffff")
   passepartoutSize        Float   @default(10) // Border width around artwork (XY)
-  passepartoutThickness   Float   @default(0.3) // Z-depth of passepartout in 3D
+  passepartoutThickness   Float   @default(0.6) // Z-depth of passepartout in 3D
+  showPaperBorder         Boolean @default(false)
+  paperBorderSize         Float   @default(0) // White paper margin around image, equal on all sides (cm)
   showArtworkInformation  Boolean @default(false)
 
   // Support (canvas/panel depth) - rendering depth behind artwork

@@ -3,6 +3,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 
+import { Button } from '@/components/ui/Button'
+
 export default function GlobalError({
   error,
   reset,
@@ -22,8 +24,8 @@ export default function GlobalError({
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#111',
-        color: '#fff',
+        backgroundColor: 'var(--color-text-primary)',
+        color: 'var(--color-white)',
         fontFamily: 'Inter, system-ui, sans-serif',
         padding: '2rem',
         textAlign: 'center',
@@ -32,24 +34,19 @@ export default function GlobalError({
       <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: 500 }}>
         Something went wrong
       </h2>
-      <p style={{ color: '#999', fontSize: '0.875rem', maxWidth: '420px', lineHeight: 1.6 }}>
-        We encountered an unexpected error. This has been reported and we&apos;re looking into it.
-      </p>
-      <button
-        onClick={reset}
+      <p
         style={{
-          marginTop: '1.5rem',
-          padding: '0.625rem 1.5rem',
-          backgroundColor: '#333',
-          color: '#fff',
-          border: '1px solid #555',
-          borderRadius: '6px',
-          cursor: 'pointer',
+          color: 'var(--color-text-secondary)',
           fontSize: '0.875rem',
+          maxWidth: '420px',
+          lineHeight: 1.6,
         }}
       >
-        Try again
-      </button>
+        We encountered an unexpected error. This has been reported and we&apos;re looking into it.
+      </p>
+      <div style={{ marginTop: '1.5rem' }}>
+        <Button variant="secondary" onClick={reset} label="Try again" />
+      </div>
     </div>
   )
 }

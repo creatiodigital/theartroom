@@ -9,22 +9,22 @@
   &:first-of-type {
     border-top: none;
   }
-}
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  user-select: none;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  text-align: left;
+  // Nested under `.section` so the compiled selector is `.section .header`
+  // (specificity 0,0,2,0). That beats Button's `.bare` variant
+  // (0,0,1,0) regardless of bundle order — no !important needed.
+  .header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    text-align: left;
 
-  &.nonCollapsible {
-    cursor: default;
+    &.nonCollapsible {
+      cursor: default;
+    }
   }
 }
 

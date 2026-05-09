@@ -22,6 +22,8 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
     passepartoutColor,
     passepartoutSize,
     passepartoutThickness,
+    showPaperBorder,
+    paperBorderSize,
     frameColor,
     frameSize,
     frameThickness,
@@ -103,6 +105,8 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
         passepartoutColor={passepartoutColor!}
         passepartoutSize={passepartoutSize}
         passepartoutThickness={passepartoutThickness}
+        showPaperBorder={showPaperBorder}
+        paperBorderSize={paperBorderSize}
         hideShadow={hideShadow}
         onEdit={handleEditArtisticImage}
         showShadowControl={false}

@@ -7,6 +7,7 @@ import { slugify } from '@/utils/slugify'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ImageUploader } from '@/components/ui/ImageUploader'
+import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 
 import { Text } from '@/components/ui/Typography'
@@ -266,14 +267,14 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         <p className={dashboardStyles.sectionDescription}>
           The name of your exhibition. This also determines the URL slug.
         </p>
-        <input
+        <Input
           type="text"
           value={mainTitle}
           onChange={(e) => setMainTitle(e.target.value)}
           placeholder="Exhibition name"
-          className={styles.titleInput}
+          inputClassName={styles.titleInput}
           readOnly={!editingName}
-          style={!editingName ? { opacity: 0.6, cursor: 'default', border: 'none' } : undefined}
+          aria-label="Exhibition name"
         />
         <div style={{ marginTop: 'var(--space-2)', display: 'flex', gap: 'var(--space-2)' }}>
           {!editingName ? (
@@ -311,15 +312,15 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
             >
               Custom URL slug (optional)
             </label>
-            <input
+            <Input
               type="text"
               value={customUrl}
               onChange={(e) =>
                 setCustomUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
               }
               placeholder={slugify(mainTitle)}
-              className={styles.titleInput}
-              style={{ fontSize: '0.9rem' }}
+              inputClassName={styles.titleInput}
+              aria-label="Custom URL slug"
             />
             <span className={dashboardStyles.hint}>
               Leave empty to auto-generate from title. Only lowercase letters, numbers, and dashes.

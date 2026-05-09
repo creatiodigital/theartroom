@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
+import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import Logo from '@/icons/logo.svg'
 import type { ProviderId } from '@/lib/print-providers'
@@ -83,7 +84,13 @@ export const PrintPayment = ({ artwork, providerId, country }: PrintPaymentProps
     if (!stashed) return null
     return {
       clientSecret: stashed.clientSecret,
-      appearance: { theme: 'stripe' as const },
+      appearance: {
+        theme: 'stripe' as const,
+        // Client-facing UI is squared per the gallery design rule.
+        variables: {
+          borderRadius: '0px',
+        },
+      },
     }
   }, [stashed])
 
@@ -94,17 +101,14 @@ export const PrintPayment = ({ artwork, providerId, country }: PrintPaymentProps
           <Logo className={styles.logo} />
         </Link>
         <span />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={handleClose}
+          label="CLOSE"
+          iconRight={<Icon name="close" size={16} />}
           className={styles.closeButton}
           aria-label="Close payment"
-        >
-          CLOSE
-          <span className={styles.closeIcon}>
-            <Icon name="close" size={16} />
-          </span>
-        </button>
+        />
       </header>
 
       <main className={styles.body}>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
+import { Button } from '@/components/ui/Button'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Logo from '@/icons/logo.svg'
 import styles from './Navigation.module.scss'
@@ -13,8 +14,8 @@ const navItems = [
   { label: 'Artists', href: '/artists' },
   { label: 'Exhibitions', href: '/exhibitions' },
   { label: 'Prints', href: '/prints' },
-  { label: 'Contact', href: '/contact' },
   { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export const Navigation = () => {
@@ -62,14 +63,15 @@ export const Navigation = () => {
       </nav>
 
       {/* Mobile Hamburger Button */}
-      <button
-        className={styles.hamburgerButton}
+      <Button
+        variant="ghost"
         onClick={toggleMenu}
+        className={styles.hamburgerButton}
         aria-label="Open menu"
         aria-expanded={isMenuOpen}
       >
         <Menu size={24} strokeWidth={ICON_STROKE_WIDTH} />
-      </button>
+      </Button>
 
       {/* Mobile Menu Overlay */}
       <div className={`${styles.mobileOverlay} ${isMenuOpen ? styles.open : ''}`}>
@@ -77,9 +79,14 @@ export const Navigation = () => {
           <Link href="/" className={styles.mobileLogo} onClick={() => setIsMenuOpen(false)}>
             <Logo />
           </Link>
-          <button className={styles.closeButton} onClick={toggleMenu} aria-label="Close menu">
+          <Button
+            variant="ghost"
+            onClick={toggleMenu}
+            className={styles.closeButton}
+            aria-label="Close menu"
+          >
             <X size={24} strokeWidth={ICON_STROKE_WIDTH} />
-          </button>
+          </Button>
         </div>
         <nav className={styles.mobileNav}>
           <ul className={styles.mobileNavList}>

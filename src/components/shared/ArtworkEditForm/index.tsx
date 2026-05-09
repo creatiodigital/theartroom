@@ -6,6 +6,7 @@ import type { ChangeEvent, DragEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
+import { FileInput } from '@/components/ui/FileInput'
 import { Icon } from '@/components/ui/Icon'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import type { ImageMeta } from '@/components/ui/ImageUploader'
@@ -548,9 +549,9 @@ export const ArtworkEditForm = ({
             Upload the video file. This will be played in exhibitions.
           </p>
 
-          <input
+          <FileInput
             ref={videoInputRef}
-            type="file"
+            id="artwork-video-file"
             accept="video/mp4,video/webm"
             onChange={handleVideoFileSelect}
             className={styles.hiddenInput}
@@ -806,9 +807,9 @@ export const ArtworkEditForm = ({
             Upload an audio file. This sound will be playable in exhibitions.
           </p>
 
-          <input
+          <FileInput
             ref={soundInputRef}
-            type="file"
+            id="artwork-sound-file"
             accept="audio/mpeg,audio/mp4,audio/ogg,audio/webm,audio/wav,audio/x-wav,audio/aac,audio/flac"
             onChange={handleSoundFileSelect}
             className={styles.hiddenInput}

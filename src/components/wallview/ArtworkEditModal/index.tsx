@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useDispatch } from 'react-redux'
 
+import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Icon } from '@/components/ui/Icon'
 import { closeArtworkEditModal } from '@/redux/slices/wallViewSlice'
@@ -304,12 +305,14 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       <div className={styles.overlay} data-no-deselect="true">
         <div className={styles.modal}>
           <header className={styles.header}>
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE{' '}
-              <span className={styles.closeIcon}>
-                <Icon name="close" size={16} />
-              </span>
-            </button>
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              label="CLOSE"
+              iconRight={<Icon name="close" size={16} />}
+              className={styles.closeButton}
+              aria-label="Close"
+            />
           </header>
           <div className={styles.content}>Loading...</div>
         </div>
@@ -322,12 +325,14 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       <div className={styles.overlay} data-no-deselect="true">
         <div className={styles.modal}>
           <header className={styles.header}>
-            <button onClick={handleClose} className={styles.closeButton}>
-              CLOSE{' '}
-              <span className={styles.closeIcon}>
-                <Icon name="close" size={16} />
-              </span>
-            </button>
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              label="CLOSE"
+              iconRight={<Icon name="close" size={16} />}
+              className={styles.closeButton}
+              aria-label="Close"
+            />
           </header>
           <div className={styles.content}>
             <ErrorText>{error}</ErrorText>
@@ -341,12 +346,14 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
     <div className={styles.overlay} data-no-deselect="true">
       <div className={styles.modal}>
         <header className={styles.header}>
-          <button onClick={handleClose} className={styles.closeButton}>
-            CLOSE{' '}
-            <span className={styles.closeIcon}>
-              <Icon name="close" size={16} />
-            </span>
-          </button>
+          <Button
+            variant="ghost"
+            onClick={handleClose}
+            label="CLOSE"
+            iconRight={<Icon name="close" size={16} />}
+            className={styles.closeButton}
+            aria-label="Close"
+          />
         </header>
         <div className={styles.content}>
           <ArtworkEditForm
