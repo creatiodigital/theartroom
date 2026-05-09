@@ -1,7 +1,4 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
@@ -16,32 +13,17 @@ type Artist = {
   name: string
   lastName: string
   handler: string
-  biography: string
-  profileImageUrl?: string
+  biography: string | null
+  profileImageUrl: string | null
 }
 
-export const ArtistsPage = () => {
-  const [artists, setArtists] = useState<Artist[]>([])
-  const [loading, setLoading] = useState(true)
+interface ArtistsPageProps {
+  artists: Artist[]
+}
 
-  useEffect(() => {
-    const fetchArtists = async () => {
-      try {
-        const response = await fetch('/api/artists')
-        const data = await response.json()
-        setArtists(data)
-      } catch (error) {
-        console.error('Failed to fetch artists:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchArtists()
-  }, [])
-
+export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
   return (
-    <PageLayout loading={loading}>
+    <PageLayout>
       {artists.length === 0 ? (
         <EmptyState message="No artists found." />
       ) : (
@@ -67,6 +49,7 @@ export const ArtistsPage = () => {
                         alt={`${artist.name} ${artist.lastName}`}
                         width={200}
                         height={140}
+                        sizes="200px"
                         className={styles.featuredImage}
                       />
                     </div>

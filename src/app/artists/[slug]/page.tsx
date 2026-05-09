@@ -1,8 +1,58 @@
 import { notFound } from 'next/navigation'
+import { unstable_cache } from 'next/cache'
 import type { Metadata } from 'next'
 
 import { ArtistProfilePage } from '@/components/artists/profile'
 import prisma from '@/lib/prisma'
+
+// Cache tag matches /api/artists/[slug] so existing revalidateTag
+// invalidations cover both surfaces.
+const getCachedArtistFull = (slug: string) =>
+  unstable_cache(
+    () =>
+      prisma.user.findFirst({
+        where: { handler: slug, published: true },
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          handler: true,
+          biography: true,
+          profileImageUrl: true,
+          exhibitions: {
+            where: { published: true },
+            select: {
+              id: true,
+              mainTitle: true,
+              url: true,
+              handler: true,
+              featuredImageUrl: true,
+              shortDescription: true,
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          artworks: {
+            where: { artworkType: 'image', featured: true },
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              title: true,
+              author: true,
+              year: true,
+              technique: true,
+              dimensions: true,
+              imageUrl: true,
+              originalWidth: true,
+              originalHeight: true,
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      }),
+    [`artist-page-full-${slug}`],
+    { tags: [`artist-${slug}`, 'artists', 'exhibitions', 'artworks'], revalidate: 3600 },
+  )()
 
 interface ArtistProfileProps {
   params: Promise<{ slug: string }>
@@ -42,15 +92,17 @@ export async function generateMetadata({ params }: ArtistProfileProps): Promise<
 const ArtistProfile = async ({ params }: ArtistProfileProps) => {
   const { slug } = await params
 
-  // 404 at the server boundary on missing / unpublished artists.
-  // Mirrors the where clause used in generateMetadata.
-  const artist = await prisma.user.findFirst({
-    where: { handler: slug, published: true },
-    select: { id: true },
-  })
+  // One round-trip instead of three: artist + their published exhibitions
+  // + their featured image-type artworks. The previous /api/artists,
+  // /api/exhibitions, /api/artworks waterfall is collapsed here.
+  const artist = await getCachedArtistFull(slug)
+
   if (!artist) notFound()
 
-  return <ArtistProfilePage slug={slug} />
+  const { exhibitions, artworks, ...artistData } = artist
+  return (
+    <ArtistProfilePage artist={artistData} exhibitions={exhibitions} artworks={artworks} />
+  )
 }
 
 export default ArtistProfile

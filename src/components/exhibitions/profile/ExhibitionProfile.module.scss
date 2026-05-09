@@ -58,6 +58,8 @@
 }
 
 .heroImageWrapper {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   aspect-ratio: 3 / 2;
 

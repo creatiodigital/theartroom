@@ -1,17 +1,19 @@
-'use client'
-
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { StaticPageContent } from '@/components/ui/StaticPageContent'
 
-export const PrivacyPage = () => {
+interface PrivacyPageProps {
+  content: string | null
+}
+
+export const PrivacyPage = ({ content }: PrivacyPageProps) => {
   return (
     <PageLayout>
       <PageHeader
         pageTitle="Privacy Policy"
         pageSubtitle="How we collect, use, and protect your personal information"
       />
-      <StaticPageContent slug="privacy" />
+      <StaticPageContent content={content} />
     </PageLayout>
   )
 }
