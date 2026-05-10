@@ -87,11 +87,7 @@ export const ExhibitionsPage = ({ exhibitions }: ExhibitionsPageProps) => {
         ) : (
           <ul className={styles.list}>
             {currentExhibitions.map((exhibition, idx) => (
-              <ExhibitionCard
-                key={exhibition.id}
-                exhibition={exhibition}
-                priority={idx === 0}
-              />
+              <ExhibitionCard key={exhibition.id} exhibition={exhibition} priority={idx === 0} />
             ))}
           </ul>
         )}

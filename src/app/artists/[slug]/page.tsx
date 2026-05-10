@@ -100,9 +100,7 @@ const ArtistProfile = async ({ params }: ArtistProfileProps) => {
   if (!artist) notFound()
 
   const { exhibitions, artworks, ...artistData } = artist
-  return (
-    <ArtistProfilePage artist={artistData} exhibitions={exhibitions} artworks={artworks} />
-  )
+  return <ArtistProfilePage artist={artistData} exhibitions={exhibitions} artworks={artworks} />
 }
 
 export default ArtistProfile

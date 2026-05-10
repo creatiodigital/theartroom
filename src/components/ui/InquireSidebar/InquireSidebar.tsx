@@ -314,7 +314,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                     />
                   </div>
                   <div className={styles.artworkInfo}>
-                    <Text as="p" size="sm" weight="medium">
+                    <Text as="p" size="sm" weight="medium" font="serif">
                       {artwork.artistName}
                     </Text>
                     <Text as="p" size="sm" font="serif">
