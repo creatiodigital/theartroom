@@ -18,16 +18,29 @@ loadDotenv({ path: path.join(ROOT, '.env.test.local'), override: true })
  * Playwright configuration — local-only e2e tests.
  *
  * - Tests live in `./e2e`.
- * - Base URL is read from `PLAYWRIGHT_BASE_URL`, defaulting to
- *   `http://localhost:3001` (the `dev` script's port). If you change
- *   the dev server port later, update this default OR override the
- *   env var at run time: `PLAYWRIGHT_BASE_URL=http://localhost:4000 pnpm test:e2e`.
- * - `webServer.reuseExistingServer: true` so if you already have
- *   `pnpm dev` running, Playwright picks that up instead of trying to
- *   start a second instance on the same port. If no dev server is
- *   running, Playwright starts one for the duration of the run.
+ * - Base URL defaults to `http://localhost:3001` — the same port as
+ *   `pnpm dev`. Override with `PLAYWRIGHT_BASE_URL=http://localhost:4000 pnpm test:e2e`.
+ * - `reuseExistingServer: false` — Playwright always spawns its own
+ *   `next dev -p 3001` for the run. We need this so the email-skip
+ *   env vars below actually land on the dev server's process (an
+ *   already-running server has its own frozen env). Practical
+ *   consequence: stop `pnpm dev` before running e2e, otherwise the
+ *   spawn fails with "port 3001 already in use".
+ * - We keep e2e on 3001 (instead of a separate port) so the existing
+ *   Stripe CLI forwarder (`stripe listen --forward-to localhost:3001/...`)
+ *   reaches the test server without any reconfiguration. The buyer +
+ *   admin-lifecycle specs need that webhook to land for the PrintOrder
+ *   row to get created.
  * - No CI-specific config: these tests are intentionally not wired
  *   into the build pipeline. Run them by hand with `pnpm test:e2e`.
+ *
+ * Email handling:
+ *   - `pnpm test:e2e` (default, daily/pre-push): SKIP_EMAILS,
+ *     SKIP_LOGIN_EMAIL, SKIP_LOGIN_OTP are all injected into the dev
+ *     server, so no real Resend traffic leaves the suite.
+ *   - `pnpm test:e2e:send-emails` (rare, manual verification): same
+ *     suite but emails actually go out. Use only when verifying
+ *     templates or end-to-end Resend delivery — burns the quota fast.
  *
  * Most specs are read-only by contract — they hit a shared dev /
  * staging DB and observe state without mutating it. The exceptions
@@ -38,15 +51,24 @@ loadDotenv({ path: path.join(ROOT, '.env.test.local'), override: true })
  * specs should default to read-only; only opt in to writes when the
  * test target is the persistence pipeline itself.
  *
- * Pre-requisites for the write specs:
- *   - SKIP_EMAILS=true in the dev server's env (prevents Resend from
- *     fanning out real emails during the run).
+ * Other pre-requisites for the write specs:
  *   - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY + STRIPE_SECRET_KEY pointing
  *     at Stripe test-mode keys.
  *   - Local Stripe CLI webhook listener forwarding to /api/webhooks/stripe
  *     so the order row actually gets created.
  */
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001'
+
+// Default = suppress all email sends. Opt in to real sends with
+// `pnpm test:e2e-no-skips`, which sets E2E_SEND_EMAILS=true.
+const sendEmails = process.env.E2E_SEND_EMAILS === 'true'
+const emailSkipEnv: Record<string, string> = sendEmails
+  ? {}
+  : {
+      SKIP_EMAILS: 'true',
+      SKIP_LOGIN_EMAIL: 'true',
+      SKIP_LOGIN_OTP: 'true',
+    }
 
 export default defineConfig({
   testDir: './e2e',
@@ -86,9 +108,10 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm dev',
+    command: 'next dev -p 3001',
     url: BASE_URL,
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120_000,
+    env: emailSkipEnv,
   },
 })
