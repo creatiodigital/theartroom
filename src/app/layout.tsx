@@ -16,6 +16,7 @@ import StoreProvider from '@/app/storeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'
 import { CookieBanner } from '@/components/ui/CookieBanner'
+import { NavigationProgressBar } from '@/components/ui/NavigationProgressBar'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import '@/styles/globals.scss'
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <a href="#main-content" className="skip-to-content">
           Skip to main content
         </a>
+        <NavigationProgressBar />
         <AuthProvider>
           <StoreProvider>
             <ImageProtection />

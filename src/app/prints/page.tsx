@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 // surface too: 'page-prints' (CMS edit), 'artworks' (artwork edit).
 const getCachedPrintsPage = unstable_cache(
   async () => {
-    const [artworks, page] = await Promise.all([
+    const [artworksRaw, page] = await Promise.all([
       prisma.artwork.findMany({
         where: {
           printEnabled: true,
@@ -45,6 +45,14 @@ const getCachedPrintsPage = unstable_cache(
       }),
       prisma.pageContent.findUnique({ where: { slug: 'prints' } }),
     ])
+    // Convert Date → ISO string before the cache stores the payload.
+    // unstable_cache serializes on store; reading a cached entry gives
+    // back a string, so calling .toISOString() outside this function
+    // crashes on cache hits.
+    const artworks = artworksRaw.map((a) => ({
+      ...a,
+      createdAt: a.createdAt.toISOString(),
+    }))
     return { artworks, page }
   },
   ['prints-public-page'],
@@ -52,15 +60,7 @@ const getCachedPrintsPage = unstable_cache(
 )
 
 const Prints = async () => {
-  const { artworks: artworksRaw, page: pageRaw } = await getCachedPrintsPage()
-
-  // PrintArtwork.createdAt is a string in the client type (from JSON
-  // over the wire pre-conversion). Stringify here so the prop shape
-  // matches without forcing the client component to know about Date.
-  const artworks = artworksRaw.map((a) => ({
-    ...a,
-    createdAt: a.createdAt.toISOString(),
-  }))
+  const { artworks, page: pageRaw } = await getCachedPrintsPage()
 
   const pageContent = pageRaw
     ? {
