@@ -70,6 +70,22 @@ const emailSkipEnv: Record<string, string> = sendEmails
       SKIP_LOGIN_OTP: 'true',
     }
 
+// Opt-in: run the suite against a real production build (`next build &&
+// next start`) instead of the default `next dev`. Use sparingly — for
+// big refactors, `'use client'` ↔ server-component conversions, dep
+// upgrades, or anything that changes module loading. The dev server's
+// loader is more forgiving than Vercel's serverless runtime; this mode
+// catches the class of regression that 500'd prod on LG-112. Each run
+// adds ~30–60s for the build.
+//
+// Caveats when E2E_PROD_BUILD=true:
+//   - NODE_ENV becomes "production", so the SKIP_EMAILS / SKIP_LOGIN_*
+//     guards (which check `NODE_ENV !== 'production'`) are bypassed:
+//     two real login-code emails fire to the test creds on each run.
+//   - AUTH_TRUST_HOST=true is required to let NextAuth issue sessions
+//     on localhost in prod mode (UntrustedHost otherwise).
+const prodBuild = process.env.E2E_PROD_BUILD === 'true'
+
 export default defineConfig({
   testDir: './e2e',
   // globalSetup runs once before any spec. It logs in as admin and
@@ -108,10 +124,10 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'next dev -p 3001',
+    command: prodBuild ? 'next build && next start -p 3001' : 'next dev -p 3001',
     url: BASE_URL,
     reuseExistingServer: false,
-    timeout: 120_000,
-    env: emailSkipEnv,
+    timeout: prodBuild ? 180_000 : 120_000,
+    env: prodBuild ? { ...emailSkipEnv, AUTH_TRUST_HOST: 'true' } : emailSkipEnv,
   },
 })
