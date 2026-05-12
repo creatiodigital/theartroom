@@ -1,3 +1,5 @@
+'use client'
+
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
