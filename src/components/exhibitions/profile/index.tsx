@@ -1,12 +1,7 @@
-'use client'
-
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { ArrowRight } from 'lucide-react'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
-import { Button } from '@/components/ui/Button'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { RichText } from '@/components/ui/RichText'
 import { Share } from '@/components/ui/Share'
@@ -15,6 +10,7 @@ import { isRichTextEmpty } from '@/lib/textUtils'
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import type { PublicExhibition } from '@/lib/queries/getPublicExhibitionByUrl'
 
+import { EnterExhibitionButton } from './EnterExhibitionButton'
 import styles from './ExhibitionProfile.module.scss'
 
 interface ExhibitionProfilePageProps {
@@ -23,14 +19,14 @@ interface ExhibitionProfilePageProps {
   exhibition: PublicExhibition
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
+
 export const ExhibitionProfilePage = ({
   artistSlug,
   exhibitionSlug,
   exhibition,
 }: ExhibitionProfilePageProps) => {
-  const pathname = usePathname()
-
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}${pathname}` : ''
+  const shareUrl = `${SITE_URL}/exhibitions/${artistSlug}/${exhibitionSlug}`
   const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
 
@@ -59,28 +55,12 @@ export const ExhibitionProfilePage = ({
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
-            <div
-              onClick={() => {
-                try {
-                  sessionStorage.setItem(
-                    'the-art-room:internal-nav',
-                    JSON.stringify({
-                      from: 'exhibition',
-                      returnUrl: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
-                    }),
-                  )
-                } catch {}
-              }}
-            >
-              <Button
-                variant="primary"
-                size="regularSquared"
-                label="Enter Virtual Exhibition"
-                href={visitUrl}
-                iconLeft={<ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />}
-                className={styles.button}
-              />
-            </div>
+            <EnterExhibitionButton
+              artistSlug={artistSlug}
+              exhibitionSlug={exhibitionSlug}
+              visitUrl={visitUrl}
+              className={styles.button}
+            />
             <Share
               title={`${exhibition.mainTitle} — ${artistName}`}
               url={shareUrl}
