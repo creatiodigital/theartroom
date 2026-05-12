@@ -9,24 +9,33 @@ import localFont from 'next/font/local'
  * Body font - Used for: text, navigation, forms, labels, lists, UI elements
  * Current: Lato
  * To change: Replace Lato with any Google font and update the variable name if needed
+ *
+ * `display: 'optional'` — the browser waits ~100ms for the font; if it
+ * hasn't arrived, the size-adjusted fallback is used for the whole
+ * pageview, eliminating font-swap CLS. Trade-off: slow-connection
+ * visitors may not see the brand font on first paint.
  */
 export const bodyFont = Lato({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
   variable: '--font-sans',
-  display: 'swap',
+  display: 'optional',
 })
 
 /**
  * Heading font - Used for: h1, h2, h3, h4, h5, h6
  * Current: EB Garamond
  * To change: Replace EB_Garamond with any Google font
+ *
+ * `display: 'optional'` — see note on bodyFont. Headings are the most
+ * visible font-swap CLS source because heading sizes amplify metric
+ * differences between fallback and webfont.
  */
 export const headingFont = EB_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-serif',
-  display: 'swap',
+  display: 'optional',
 })
 
 /**
