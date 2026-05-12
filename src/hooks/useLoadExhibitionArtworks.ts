@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 
 import {
@@ -46,16 +46,20 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
   const [imagesLoading, setImagesLoading] = useState(false)
   const [imageProgress, setImageProgress] = useState({ loaded: 0, total: 0 })
 
-  // Track which exhibition we've loaded to prevent duplicate loads
-  // but allow loading different exhibitions
-  const loadedExhibitionId = useRef<string | null>(null)
+  // Which exhibition's artworks are currently in `state.byId`. Tracked as
+  // state (not a ref) so consumers can react when it flips — e.g. the
+  // NavigationHelpModal needs to wait until this matches the visiting
+  // exhibition before deciding whether to auto-show the media warning,
+  // otherwise it reads the previous exhibition's artworks from the
+  // Redux store and warns about media that isn't here.
+  const [loadedExhibitionId, setLoadedExhibitionId] = useState<string | null>(null)
 
   useEffect(() => {
     // Skip if no exhibition ID
     if (!exhibitionId) return
 
     // Skip if we already loaded this exact exhibition
-    if (loadedExhibitionId.current === exhibitionId) return
+    if (loadedExhibitionId === exhibitionId) return
 
     const loadArtworks = async () => {
       setLoading(true)
@@ -64,8 +68,8 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
       // ones. Without this, navigating exhibition A → exhibition B leaves
       // A's artworks in `state.byId` and the scene renders both sets
       // mixed in the same room. Same-exhibition reload is short-circuited
-      // by the `loadedExhibitionId.current === exhibitionId` check above,
-      // so this only fires on a genuine exhibition switch.
+      // by the `loadedExhibitionId === exhibitionId` check above, so this
+      // only fires on a genuine exhibition switch.
       dispatch(resetArtworks())
       try {
         const modeParam = mode ? `&mode=${mode}` : ''
@@ -100,16 +104,17 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
           )
         })
 
-        // Mark data as loaded
+        // Redux now reflects this exhibition. Mark the load complete
+        // *before* image preloading so downstream consumers (modal
+        // gating, "has media artworks?" checks) can run as soon as the
+        // data is in place, without waiting on every image download.
         setLoading(false)
+        setLoadedExhibitionId(exhibitionId)
 
         // Preload all images
         await preloadImages(imageUrls, (loaded, total) => {
           setImageProgress({ loaded, total })
         })
-
-        // Mark this exhibition as loaded
-        loadedExhibitionId.current = exhibitionId
       } catch (error) {
         console.error('Error loading exhibition artworks:', error)
       } finally {
@@ -119,12 +124,7 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
     }
 
     loadArtworks()
-
-    // Reset ref on unmount so re-entering this page re-fetches live data
-    return () => {
-      loadedExhibitionId.current = null
-    }
-  }, [exhibitionId, dispatch, mode])
+  }, [exhibitionId, dispatch, mode, loadedExhibitionId])
 
   return {
     loading,
@@ -132,5 +132,9 @@ export const useLoadExhibitionArtworks = (exhibitionId: string | undefined, mode
     imageProgress,
     // Combined ready state - false until both data and images are loaded
     isReady: !loading && !imagesLoading,
+    /** ID of the exhibition whose artworks currently populate Redux.
+     *  Compare with the exhibition you're viewing to know whether the
+     *  store is stale (mid-switch) vs. correctly populated. */
+    loadedExhibitionId,
   }
 }
