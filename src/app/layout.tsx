@@ -73,12 +73,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
       lang="en"
       className={`${bodyFont.variable} ${headingFont.variable} ${dashboardFont.variable} ${wallFont1.variable} ${wallFont2.variable} ${wallFont3.variable} ${wallFont4.variable} ${wallFont5.variable} ${wallFont6.variable}`}
     >
-      <head>
-        {/* Preconnect to the image CDN so the hero image's TLS handshake
-            overlaps with HTML parsing instead of blocking LCP. */}
-        <link rel="preconnect" href="https://assets.theartroom.gallery" crossOrigin="anonymous" />
-      </head>
       <body>
+        {/* Preconnect to the image CDN so the hero image's TLS handshake
+            overlaps with HTML parsing. React 19 auto-hoists <link> to the
+            document head, so we render it inside <body> rather than a
+            literal <head> — the explicit-<head> pattern conflicts with
+            generateMetadata + RSC streaming on Vercel's runtime. */}
+        <link rel="preconnect" href="https://assets.theartroom.gallery" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
