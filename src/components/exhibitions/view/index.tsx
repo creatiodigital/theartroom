@@ -130,16 +130,30 @@ const MobileExhibitionView = ({
   )
 }
 
+// Nav help is dismissed globally — once a visitor learns the controls,
+// they don't need to re-learn them per exhibition.
 const NAVIGATION_HELP_STORAGE_KEY = 'the-art-room:navigation-help-dismissed'
-const MEDIA_NOTICE_STORAGE_KEY = 'the-art-room:media-notice-dismissed'
+
+// Media notice is dismissed PER exhibition: each exhibition with audio /
+// video needs to warn the visitor fresh, since sound is exhibition-
+// specific (the user has to know which rooms to turn the volume up for).
+// Key shape: `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`.
+const MEDIA_NOTICE_STORAGE_PREFIX = 'the-art-room:media-notice-dismissed:'
 
 interface NavigationHelpModalProps {
   hidden?: boolean
+  /** ID of the exhibition currently being viewed. */
+  exhibitionId?: string
+  /** True once `state.artworks.byId` has been populated for the current
+   *  exhibition (vs. still holding the previous exhibition's data). Auto-
+   *  show is gated on this so we don't read stale artworks and warn
+   *  about media that isn't here. */
+  artworksReady?: boolean
 }
 
 type ModalStep = 'none' | 'help' | 'media'
 
-const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
+const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: NavigationHelpModalProps) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>('none')
   const [helpDismissed, setHelpDismissed] = useState(false)
   const [mediaDismissed, setMediaDismissed] = useState(false)
@@ -151,8 +165,11 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
     return Object.values(artworksById).some((artwork) => artwork.soundUrl || artwork.videoUrl)
   }, [artworksById])
 
-  // Auto-show on mount: help first, then media
+  // Auto-show on mount: help first, then media. Gated on `artworksReady`
+  // so navigating exhibition A → B doesn't trigger the media modal for B
+  // based on A's still-cached artworks in Redux.
   useEffect(() => {
+    if (!exhibitionId || !artworksReady) return
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
 
@@ -161,7 +178,8 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
 
     try {
       const helpDone = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY) === 'true'
-      const mediaDone = localStorage.getItem(MEDIA_NOTICE_STORAGE_KEY) === 'true'
+      const mediaKey = `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`
+      const mediaDone = localStorage.getItem(mediaKey) === 'true'
 
       if (helpDone) setHelpDismissed(true)
       if (mediaDone) setMediaDismissed(true)
@@ -176,7 +194,7 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
     } catch {
       setCurrentStep('help')
     }
-  }, [hasMediaArtworks])
+  }, [exhibitionId, artworksReady, hasMediaArtworks])
 
   // Track if the current flow was manually triggered (info button)
   const manualTriggerRef = useRef(false)
@@ -426,7 +444,9 @@ const NavigationHelpModal = ({ hidden }: NavigationHelpModalProps) => {
                 className={styles.dismissButton}
                 onClick={() => {
                   try {
-                    localStorage.setItem(MEDIA_NOTICE_STORAGE_KEY, 'true')
+                    if (exhibitionId) {
+                      localStorage.setItem(`${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`, 'true')
+                    }
                   } catch {
                     // localStorage not available, ignore
                   }
@@ -552,7 +572,12 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     }
   }, [exhibition, dispatch])
 
-  useLoadExhibitionArtworks(exhibition?.id)
+  const { loadedExhibitionId } = useLoadExhibitionArtworks(exhibition?.id)
+  // Artworks are "ready" for the modal only when Redux holds the
+  // current exhibition's data. Avoids the A→B navigation race where the
+  // media warning would fire based on the previous exhibition's
+  // artworks before the new ones land.
+  const artworksReady = !!exhibition?.id && loadedExhibitionId === exhibition.id
 
   if (error) {
     return <div className={styles.errorState}>Error loading exhibition</div>
@@ -571,7 +596,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {!isArtworkPanelOpen && (
         <NavigationButton artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
       )}
-      <NavigationHelpModal hidden={isArtworkPanelOpen} />
+      <NavigationHelpModal
+        hidden={isArtworkPanelOpen}
+        exhibitionId={exhibition?.id}
+        artworksReady={artworksReady}
+      />
       <LoadingOverlay />
       {exhibition && <Scene hideLoader />}
       {isArtworkPanelOpen && <ArtworkPanel />}
