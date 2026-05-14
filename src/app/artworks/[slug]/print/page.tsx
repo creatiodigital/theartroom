@@ -53,8 +53,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   })
 
   const restrictions = (artwork.printOptions as PrintRestrictions | null) ?? null
-  const recommendations =
-    (artwork.printRecommendations as PrintRecommendations | null) ?? null
+  const recommendations = (artwork.printRecommendations as PrintRecommendations | null) ?? null
 
   return (
     <PrintWizard

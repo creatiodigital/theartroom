@@ -60,9 +60,7 @@ export const BoxPreview = ({
     <>
       {/* Print stack recessed backward into the frame depth. */}
       <group position={[0, 0, -PRINT_RECESS_M]}>
-        {matBorderM > 0 && (
-          <MatPlane widthM={matWidthM} heightM={matHeightM} colorHex={matHex} />
-        )}
+        {matBorderM > 0 && <MatPlane widthM={matWidthM} heightM={matHeightM} colorHex={matHex} />}
 
         {paperBorderM > 0 && (
           <PaperSheet widthM={paperWidthM} heightM={paperHeightM} roughness={paperRoughness} />

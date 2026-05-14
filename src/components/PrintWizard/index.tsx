@@ -355,8 +355,8 @@ export const PrintWizard = ({
                 The <strong>Artist&apos;s Signature</strong>.
               </li>
               <li>
-                Your print, <strong>made to order</strong> — produced on demand, hand-inspected,
-                and finished individually by a specialist fine-art print lab on archival giclée or
+                Your print, <strong>made to order</strong> — produced on demand, hand-inspected, and
+                finished individually by a specialist fine-art print lab on archival giclée or
                 C-Type paper.
               </li>
             </ul>

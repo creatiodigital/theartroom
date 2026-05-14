@@ -551,15 +551,19 @@ export const ArtworkEditForm = ({
               <div>
                 <strong>This image isn&apos;t high enough resolution for print sales.</strong>
                 <p style={{ margin: 'var(--space-2) 0 0' }}>
-                  Your file: <strong>{imageMeta.width} × {imageMeta.height} px</strong>
+                  Your file:{' '}
+                  <strong>
+                    {imageMeta.width} × {imageMeta.height} px
+                  </strong>
                   <br />
-                  Required: <strong>
+                  Required:{' '}
+                  <strong>
                     at least {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px
                   </strong>
                 </p>
                 <p style={{ margin: 'var(--space-2) 0 0' }}>
-                  Re-upload a higher-resolution version to enable prints. We need {MIN_DPI} DPI
-                  on the smallest sellable print (20 cm on the long edge).
+                  Re-upload a higher-resolution version to enable prints. We need {MIN_DPI} DPI on
+                  the smallest sellable print (20 cm on the long edge).
                 </p>
               </div>
             </div>
@@ -604,18 +608,14 @@ export const ArtworkEditForm = ({
               <div style={{ marginTop: 'var(--space-4)' }}>
                 <Checkbox
                   checked={formData.printEditionLimited}
-                  onChange={(e) =>
-                    onFormChange('printEditionLimited', e.target.checked)
-                  }
+                  onChange={(e) => onFormChange('printEditionLimited', e.target.checked)}
                   label="This artwork is a limited edition"
                 />
                 <div
                   className={dashboardStyles.field}
                   style={{ maxWidth: 240, marginTop: 'var(--space-2)' }}
                 >
-                  <label htmlFor="printEditionTotal">
-                    Total prints in the series
-                  </label>
+                  <label htmlFor="printEditionTotal">Total prints in the series</label>
                   <Input
                     id="printEditionTotal"
                     type="text"
@@ -632,10 +632,7 @@ export const ArtworkEditForm = ({
                     }
                     placeholder="50"
                   />
-                  <p
-                    className={styles.printDisabledHint}
-                    style={{ marginTop: 'var(--space-2)' }}
-                  >
+                  <p className={styles.printDisabledHint} style={{ marginTop: 'var(--space-2)' }}>
                     When enabled, buyers see &quot;limited edition of{' '}
                     {formData.printEditionTotal || 'N'}&quot; on the print page.
                   </p>
@@ -793,8 +790,8 @@ export const ArtworkEditForm = ({
                           className={styles.printInfoTextMuted}
                           style={{ marginTop: 0, marginBottom: 'var(--space-2)' }}
                         >
-                          Buyers pick any custom size in this range. The other side auto-locks
-                          to your artwork&apos;s aspect ratio.
+                          Buyers pick any custom size in this range. The other side auto-locks to
+                          your artwork&apos;s aspect ratio.
                         </p>
                         <table
                           style={{
@@ -827,19 +824,13 @@ export const ArtworkEditForm = ({
                                 }}
                               >
                                 <strong>
-                                  {formatPrintSize(
-                                    printMinSize.heightCm,
-                                    printMinSize.widthCm,
-                                  )}
+                                  {formatPrintSize(printMinSize.heightCm, printMinSize.widthCm)}
                                 </strong>
                               </td>
                               <td style={{ padding: 'var(--space-1) 0' }}>
                                 {printMaxSize ? (
                                   <strong>
-                                    {formatPrintSize(
-                                      printMaxSize.heightCm,
-                                      printMaxSize.widthCm,
-                                    )}
+                                    {formatPrintSize(printMaxSize.heightCm, printMaxSize.widthCm)}
                                   </strong>
                                 ) : (
                                   <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
@@ -854,8 +845,8 @@ export const ArtworkEditForm = ({
                         <Icon name="alert-circle" size={16} />
                         <span>
                           This image is {imageMeta.width} × {imageMeta.height} px — below the{' '}
-                          {MIN_DPI} DPI threshold for any sellable size. Upload a higher
-                          resolution version to enable print sales.
+                          {MIN_DPI} DPI threshold for any sellable size. Upload a higher resolution
+                          version to enable print sales.
                         </span>
                       </div>
                     )
@@ -1215,10 +1206,9 @@ export const ArtworkEditForm = ({
               Print Size Requirements
             </Text>
             <p className={styles.printModalDescription}>
-              Prints are sold at custom sizes, aspect-locked to your file. Buyers pick any
-              width or height within your file&apos;s allowed range, and the other side
-              auto-locks to your artwork&apos;s proportions. Prints ship at {MIN_DPI} DPI or
-              higher.
+              Prints are sold at custom sizes, aspect-locked to your file. Buyers pick any width or
+              height within your file&apos;s allowed range, and the other side auto-locks to your
+              artwork&apos;s proportions. Prints ship at {MIN_DPI} DPI or higher.
             </p>
 
             {imageMeta && printMinSize && (
@@ -1254,9 +1244,7 @@ export const ArtworkEditForm = ({
                   </li>
                   <li style={{ color: 'var(--color-text-secondary)' }}>Smallest sellable:</li>
                   <li>
-                    <strong>
-                      {formatPrintSize(printMinSize.heightCm, printMinSize.widthCm)}
-                    </strong>
+                    <strong>{formatPrintSize(printMinSize.heightCm, printMinSize.widthCm)}</strong>
                   </li>
                   <li style={{ color: 'var(--color-text-secondary)' }}>
                     Largest at {MIN_DPI} DPI:

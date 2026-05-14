@@ -948,8 +948,8 @@ const CustomSizeInputs = ({
   // function during the brief moment before bounds are computed.
   const effectiveMinLongCm = longEdgeBounds?.minLongCm ?? custom.minCm
   const effectiveMaxLongCm = longEdgeBounds?.maxLongCm ?? custom.maxCm
-  const aspectShortOverLong = longEdgeBounds?.aspect
-    ?? (ratioWH !== null ? Math.min(ratioWH, 1 / ratioWH) : 1)
+  const aspectShortOverLong =
+    longEdgeBounds?.aspect ?? (ratioWH !== null ? Math.min(ratioWH, 1 / ratioWH) : 1)
   const isPortrait = longEdgeBounds?.isPortrait ?? (ratioWH !== null && ratioWH < 1)
   const minShortCm = effectiveMinLongCm * aspectShortOverLong
   const maxShortCm = effectiveMaxLongCm * aspectShortOverLong
@@ -981,7 +981,8 @@ const CustomSizeInputs = ({
       // No aspect lock — both fields independent. (Unused with TPS,
       // but kept for symmetry with the catalog.)
       const w = which === 'width' ? clampCm(parsed, minWidthCm, maxWidthCm, custom.stepCm) : widthCm
-      const h = which === 'height' ? clampCm(parsed, minHeightCm, maxHeightCm, custom.stepCm) : heightCm
+      const h =
+        which === 'height' ? clampCm(parsed, minHeightCm, maxHeightCm, custom.stepCm) : heightCm
       onChange({ widthCm: w, heightCm: h })
       return
     }
@@ -1039,29 +1040,30 @@ const CustomSizeInputs = ({
           min={effectiveMinLongCm}
           max={effectiveMaxLongCm}
           step={custom.stepCm}
-          value={Math.min(
-            effectiveMaxLongCm,
-            Math.max(effectiveMinLongCm, currentLongCm),
-          )}
+          value={Math.min(effectiveMaxLongCm, Math.max(effectiveMinLongCm, currentLongCm))}
           disabled={disabled}
           onChange={(v) => commitLongEdge(v)}
           aria-label="Print size"
         />
         <div className={styles.customSizeRangeLabels}>
-          <span>{formatPrintSize(
-            isPortrait ? effectiveMinLongCm : minShortCm,
-            isPortrait ? minShortCm : effectiveMinLongCm,
-          )}</span>
-          <span>{formatPrintSize(
-            isPortrait ? effectiveMaxLongCm : maxShortCm,
-            isPortrait ? maxShortCm : effectiveMaxLongCm,
-          )}</span>
+          <span>
+            {formatPrintSize(
+              isPortrait ? effectiveMinLongCm : minShortCm,
+              isPortrait ? minShortCm : effectiveMinLongCm,
+            )}
+          </span>
+          <span>
+            {formatPrintSize(
+              isPortrait ? effectiveMaxLongCm : maxShortCm,
+              isPortrait ? maxShortCm : effectiveMaxLongCm,
+            )}
+          </span>
         </div>
       </div>
       {aspectLocked && (
         <p className={styles.customSizeHint}>
-          Height and width are locked to this artwork&apos;s aspect ratio — change either, the
-          other follows. We guarantee high print quality at every size in this range.
+          Height and width are locked to this artwork&apos;s aspect ratio — change either, the other
+          follows. We guarantee high print quality at every size in this range.
         </p>
       )}
     </div>
@@ -1129,13 +1131,7 @@ function optionTooltip(option: Option, recommended?: boolean): ReactNode {
     <>
       {option.tooltipHeaderImageUrl && (
         <div className={styles.tooltipHeaderImage}>
-          <Image
-            src={option.tooltipHeaderImageUrl}
-            alt=""
-            width={640}
-            height={360}
-            sizes="320px"
-          />
+          <Image src={option.tooltipHeaderImageUrl} alt="" width={640} height={360} sizes="320px" />
         </div>
       )}
       <p>

@@ -99,11 +99,7 @@ export const TrayPreview = ({
           centred on it with the paper border showing around it. */}
       <group position={[0, 0, PRINT_FORWARD_Z]}>
         {paperBorderM > 0 && (
-          <PaperSheet
-            widthM={paperWidthM}
-            heightM={paperHeightM}
-            roughness={paperRoughness}
-          />
+          <PaperSheet widthM={paperWidthM} heightM={paperHeightM} roughness={paperRoughness} />
         )}
         <PrintPlane
           widthM={printWidthM}

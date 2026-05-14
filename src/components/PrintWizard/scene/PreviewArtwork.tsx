@@ -112,11 +112,7 @@ export const PreviewArtwork = ({
     return (
       <group position={[0, 0, ARTWORK_Z]}>
         {paperBorderM > 0 && (
-          <PaperSheet
-            widthM={paperWidthM}
-            heightM={paperHeightM}
-            roughness={paperRoughness}
-          />
+          <PaperSheet widthM={paperWidthM} heightM={paperHeightM} roughness={paperRoughness} />
         )}
         <PrintPlane
           widthM={widthM}

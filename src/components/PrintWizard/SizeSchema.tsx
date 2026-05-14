@@ -108,8 +108,7 @@ export const SizeSchema = ({
 
   // "Outer" arrows are shown when any layer surrounds the image — frame,
   // mat, or paper border. Otherwise the diagram is just the bare image.
-  const hasOuter =
-    showFrame || effectiveMatting > 0 || effectivePaperBorder > 0
+  const hasOuter = showFrame || effectiveMatting > 0 || effectivePaperBorder > 0
 
   return (
     <div className={styles.schemaWrapper}>

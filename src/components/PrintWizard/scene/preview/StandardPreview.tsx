@@ -57,9 +57,7 @@ export const StandardPreview = ({
     <>
       {/* Artwork stack sits just behind the moulding's front face. */}
       <group position={[0, 0, PRINT_FORWARD_M]}>
-        {matBorderM > 0 && (
-          <MatPlane widthM={matWidthM} heightM={matHeightM} colorHex={matHex} />
-        )}
+        {matBorderM > 0 && <MatPlane widthM={matWidthM} heightM={matHeightM} colorHex={matHex} />}
 
         {paperBorderM > 0 && (
           <PaperSheet widthM={paperWidthM} heightM={paperHeightM} roughness={paperRoughness} />
