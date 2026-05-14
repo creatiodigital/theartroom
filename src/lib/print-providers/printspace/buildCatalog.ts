@@ -74,6 +74,7 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
     id: t.id,
     label: t.label,
     description: t.description,
+    tooltipHeaderImageUrl: t.helperImageUrl,
     visual: FRAME_TYPE_VISUALS[t.id],
   }))
 
@@ -201,15 +202,18 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
       options: glassOptions,
       visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
     } satisfies EnumDimension,
-    // Window Mount (passepartout) — visible when framing. Buyer
-    // picks a colour first; the size input below appears only after
-    // they pick a non-'none' colour.
+    // Window Mount (passepartout) — only meaningful for frame styles
+    // that put the print behind glass with a window-cut card around
+    // it (Standard, Box). Floating frames use a visible Dibond
+    // backboard around the print instead; TPS hides this dropdown
+    // for Floating, and we match that. Cascades transitively to
+    // print-only via frameType's own format='framing' rule.
     {
       kind: 'enum',
       id: 'windowMount',
       label: 'Mount (Passepartout)',
       options: windowMountOptions,
-      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+      visibleWhen: { dimensionId: 'frameType', valueIn: ['standard', 'box'] },
     } satisfies EnumDimension,
     // Mount board size — uniform width of the passepartout in cm.
     // Visible only when a window-mount colour is chosen (not 'none').

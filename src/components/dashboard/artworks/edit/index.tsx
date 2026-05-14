@@ -12,7 +12,7 @@ import {
   populateFormData,
 } from '@/components/shared/ArtworkEditForm'
 import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
-import type { PrintRestrictions } from '@/lib/print-providers'
+import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 
 type ArtworkEditPageProps = {
   artworkId: string
@@ -114,7 +114,28 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   }
 
   const handlePrintOptionsChange = (next: PrintRestrictions | null) => {
-    setFormData((prev) => ({ ...prev, printOptions: next }))
+    setFormData((prev) => {
+      // If a paper just got vetoed, drop it from the recommendations
+      // so the two stay consistent (the wizard ignores recommendations
+      // outside the allowed set anyway, but better to fix at the source).
+      const allowedPapers = next?.allowed?.paper
+      const currentRecs = prev.printRecommendations?.paper ?? []
+      const filteredRecs =
+        allowedPapers && currentRecs.length > 0
+          ? currentRecs.filter((id) => allowedPapers.includes(id))
+          : currentRecs
+      const printRecommendations =
+        filteredRecs.length === currentRecs.length
+          ? prev.printRecommendations
+          : filteredRecs.length === 0
+            ? null
+            : { paper: filteredRecs }
+      return { ...prev, printOptions: next, printRecommendations }
+    })
+  }
+
+  const handlePrintRecommendationsChange = (next: PrintRecommendations | null) => {
+    setFormData((prev) => ({ ...prev, printRecommendations: next }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -438,6 +459,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         error={error}
         onFormChange={handleChange}
         onPrintOptionsChange={handlePrintOptionsChange}
+        onPrintRecommendationsChange={handlePrintRecommendationsChange}
         onImageUpload={handleImageUpload}
         onImageRemove={handleRemoveImage}
         onSoundUpload={handleSoundUpload}

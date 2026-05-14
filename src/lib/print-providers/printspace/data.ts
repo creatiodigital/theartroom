@@ -182,6 +182,9 @@ export type TpsFrameType = {
   id: TpsFrameTypeId
   label: string
   description: string
+  /** Full-width helper illustration shown at the top of the option's
+   *  tooltip popup in the wizard. */
+  helperImageUrl?: string
 }
 
 export const TPS_FRAME_TYPES: TpsFrameType[] = [
@@ -189,18 +192,21 @@ export const TPS_FRAME_TYPES: TpsFrameType[] = [
     id: 'standard',
     label: 'Standard Frame',
     description: 'Classic moulding-and-glazing frame. Pick a colour and profile in the next step.',
+    helperImageUrl: '/assets/helpers/classic.jpg',
   },
   {
     id: 'box',
     label: 'Box Frame',
     description:
       'Deeper frame with the print recessed inside. Modern, contemporary look — pick the moulding next.',
+    helperImageUrl: '/assets/helpers/box.jpg',
   },
   {
     id: 'floating',
     label: 'Floating Frame',
     description:
       'The print appears suspended within the frame with a small visible gap on each side. Gallery-style presentation.',
+    helperImageUrl: '/assets/helpers/floating.jpg',
   },
 ]
 

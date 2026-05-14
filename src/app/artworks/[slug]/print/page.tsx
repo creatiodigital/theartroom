@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 import { PrintWizard } from '@/components/PrintWizard'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import type { PrintRestrictions } from '@/lib/print-providers'
+import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import prisma from '@/lib/prisma'
 
 interface PrintWizardPageProps {
@@ -53,6 +53,8 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   })
 
   const restrictions = (artwork.printOptions as PrintRestrictions | null) ?? null
+  const recommendations =
+    (artwork.printRecommendations as PrintRecommendations | null) ?? null
 
   return (
     <PrintWizard
@@ -65,9 +67,12 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         originalWidthPx,
         originalHeightPx,
         printPriceCents: artwork.printPriceCents,
+        editionLimited: artwork.printEditionLimited ?? false,
+        editionTotal: artwork.printEditionTotal ?? null,
       }}
       catalog={catalog}
       restrictions={restrictions}
+      recommendations={recommendations}
     />
   )
 }

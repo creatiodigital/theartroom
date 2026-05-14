@@ -5,7 +5,7 @@ import { deleteFromR2 } from '@/lib/r2'
 
 import { requireOwnership } from '@/lib/authUtils'
 import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
-import type { PrintRestrictions } from '@/lib/print-providers'
+import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import { Prisma } from '@/generated/prisma'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
@@ -48,6 +48,33 @@ function sanitizePrintOptions(raw: unknown): PrintRestrictions | null {
   if (frameTypeIds) next.frameType = frameTypeIds
   if (windowMountIds) next.windowMount = windowMountIds
   return Object.keys(next).length === 0 ? null : { allowed: next }
+}
+
+// Sanitize artist-set recommendations. Today only paper IDs are
+// accepted. Any paper that's been hard-restricted in `printOptions`
+// is dropped here — a paper can't be both vetoed and recommended.
+function sanitizePrintRecommendations(
+  raw: unknown,
+  restrictions: PrintRestrictions | null,
+): PrintRecommendations | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+  const paperIdsRaw = obj.paper
+  if (!Array.isArray(paperIdsRaw)) return null
+  const universeIds = new Set<string>(TPS_PAPERS.map((p) => p.id))
+  const allowedPapers = restrictions?.allowed?.paper
+  const allowedSet = allowedPapers ? new Set(allowedPapers) : null
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of paperIdsRaw) {
+    if (typeof item !== 'string') continue
+    if (!universeIds.has(item)) continue
+    if (allowedSet && !allowedSet.has(item)) continue
+    if (seen.has(item)) continue
+    seen.add(item)
+    out.push(item)
+  }
+  return out.length === 0 ? null : { paper: out }
 }
 
 // The exhibition profile API (/api/exhibitions/by-url/[url]) caches its
@@ -141,8 +168,28 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         ? Math.round(parsedPrice)
         : null
 
+    // Limited-edition fields. `printEditionTotal` is an integer count
+    // of prints in the series; meaningful only when the flag is on.
+    const printEditionLimited =
+      body.printEditionLimited === true || body.printEditionLimited === 'true'
+    const rawEditionTotal = body.printEditionTotal
+    const parsedEditionTotal =
+      rawEditionTotal === null || rawEditionTotal === undefined || rawEditionTotal === ''
+        ? null
+        : Number(rawEditionTotal)
+    const printEditionTotal =
+      parsedEditionTotal !== null && Number.isFinite(parsedEditionTotal) && parsedEditionTotal > 0
+        ? Math.round(parsedEditionTotal)
+        : null
+
     // Sanitize artist-set printing restrictions.
     const printOptions = sanitizePrintOptions(body.printOptions)
+    // Sanitize recommendations — depends on restrictions to enforce the
+    // "can't recommend a vetoed paper" invariant.
+    const printRecommendations = sanitizePrintRecommendations(
+      body.printRecommendations,
+      printOptions,
+    )
 
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
@@ -160,10 +207,16 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       featured: body.featured === true || body.featured === 'true',
       printEnabled: body.printEnabled === true || body.printEnabled === 'true',
       printPriceCents,
+      printEditionLimited,
+      printEditionTotal,
       // Prisma's nullable-Json update slot doesn't accept a bare `null`
       // — the DB NULL value is signalled via Prisma.DbNull sentinel.
       printOptions:
         printOptions === null ? Prisma.DbNull : (printOptions as unknown as Prisma.InputJsonValue),
+      printRecommendations:
+        printRecommendations === null
+          ? Prisma.DbNull
+          : (printRecommendations as unknown as Prisma.InputJsonValue),
     }
 
     // Try with new fields first
