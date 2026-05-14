@@ -170,7 +170,18 @@ export const PrintWizard = ({
 
   const updateConfig = (patch: Record<string, string>) => {
     if (patch.orientation !== undefined) setOrientationTouched(true)
-    setConfig((prev) => ({ ...prev, values: { ...prev.values, ...patch } }))
+    setConfig((prev) => {
+      const nextValues = { ...prev.values, ...patch }
+      // Picking 'None' for the passepartout colour hides the mount-size
+      // input via cascade; reset the stored size so it doesn't re-appear
+      // (e.g. 4.5 cm sticking around) when the buyer later switches back
+      // to a coloured mount.
+      let nextBorders = prev.borders
+      if (patch.windowMount === 'none' && prev.borders?.windowMountSize) {
+        nextBorders = { ...prev.borders, windowMountSize: { allCm: 0 } }
+      }
+      return { ...prev, values: nextValues, borders: nextBorders }
+    })
   }
 
   const updateCustomSize = (size: { widthCm: number; heightCm: number }) => {

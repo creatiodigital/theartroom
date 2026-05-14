@@ -469,7 +469,7 @@ const FrameSection = ({
             optionsLocked={optionsLocked}
             onChange={onChange}
           />
-          {glass && (
+          {glass && isDimensionVisible(glass, config, catalog) && (
             <EnumDropdown
               dim={glass}
               config={config}

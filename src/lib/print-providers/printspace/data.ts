@@ -174,9 +174,10 @@ export const TPS_FORMATS: TpsFormat[] = [
 
 // ── Frame Type (only when Format = Framing) ──────────────────
 //
-// TPS offers four frame types. The remaining three are added as
-// they're supplied — for now only Standard Frame is wired.
-export type TpsFrameTypeId = 'standard' | 'box' | 'floating'
+// TPS offers four frame types. All four are wired: Standard, Box,
+// Floating, Tray. Tray is the only one without glass — open-faced,
+// Dibond-mounted print sits slightly recessed inside the moulding.
+export type TpsFrameTypeId = 'standard' | 'box' | 'floating' | 'tray'
 
 export type TpsFrameType = {
   id: TpsFrameTypeId
@@ -207,6 +208,13 @@ export const TPS_FRAME_TYPES: TpsFrameType[] = [
     description:
       'The print appears suspended within the frame with a small visible gap on each side. Gallery-style presentation.',
     helperImageUrl: '/assets/helpers/floating.jpg',
+  },
+  {
+    id: 'tray',
+    label: 'Tray Frame',
+    description:
+      'Open frame, no glass. Your Dibond-mounted print sits slightly recessed below the moulding edge for a minimal, contemporary look.',
+    helperImageUrl: '/assets/helpers/tray.jpg',
   },
 ]
 
@@ -253,6 +261,11 @@ export type TpsMouldingId =
   | 'flt-black-square'
   | 'flt-oak-thin'
   | 'flt-oak-thin-rounded'
+  // Tray Frame — 4 options (TPS only sells one profile, varying colour)
+  | 'tray-beech'
+  | 'tray-white'
+  | 'tray-black'
+  | 'tray-walnut'
 
 export type TpsMoulding = {
   id: TpsMouldingId
@@ -508,6 +521,36 @@ export const TPS_MOULDINGS: TpsMoulding[] = [
     label: 'Oak — Thin Rounded',
     frameType: 'floating',
     hex: '#c8a27a',
+    roughness: 0.7,
+  },
+
+  // Tray Frame mouldings (4 — TPS only sells the one profile per colour)
+  {
+    id: 'tray-beech',
+    label: 'Beech',
+    frameType: 'tray',
+    hex: '#d8b986',
+    roughness: 0.7,
+  },
+  {
+    id: 'tray-white',
+    label: 'White',
+    frameType: 'tray',
+    hex: '#f2f2f2',
+    roughness: 0.55,
+  },
+  {
+    id: 'tray-black',
+    label: 'Black',
+    frameType: 'tray',
+    hex: '#0b0b0b',
+    roughness: 0.35,
+  },
+  {
+    id: 'tray-walnut',
+    label: 'Walnut',
+    frameType: 'tray',
+    hex: '#5a3b28',
     roughness: 0.7,
   },
 ]

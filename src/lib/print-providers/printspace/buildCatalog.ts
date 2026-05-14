@@ -64,11 +64,12 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
 
   // ── Frame Type (only visible when Format = Framing) ─────────
   // Per-type moulding silhouette so the 3D preview reads differently
-  // for Standard / Box / Floating without needing bespoke geometry.
+  // for Standard / Box / Floating / Tray without bespoke geometry.
   const FRAME_TYPE_VISUALS: Record<TpsFrameTypeId, VisualHints> = {
     standard: { mouldingWidthCm: 2.0, mouldingDepthCm: 2.2 },
     box: { mouldingWidthCm: 2.0, mouldingDepthCm: 5.5 },
     floating: { mouldingWidthCm: 1.4, mouldingDepthCm: 3.2 },
+    tray: { mouldingWidthCm: 2.0, mouldingDepthCm: 5.0 },
   }
   const frameTypeOptions: Option[] = TPS_FRAME_TYPES.map((t) => ({
     id: t.id,
@@ -194,13 +195,16 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
       options: mouldingOptions,
       visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
     } satisfies EnumDimension,
-    // Glass — visible when framing.
+    // Glass — only meaningful for the three glazed frame styles.
+    // Tray is open-faced (no glass), so this dropdown is hidden when
+    // Tray is selected. Cascades transitively to print-only via
+    // frameType's own format='framing' rule.
     {
       kind: 'enum',
       id: 'glass',
       label: 'Glass',
       options: glassOptions,
-      visibleWhen: { dimensionId: 'format', valueIn: ['framing'] },
+      visibleWhen: { dimensionId: 'frameType', valueIn: ['standard', 'box', 'floating'] },
     } satisfies EnumDimension,
     // Window Mount (passepartout) — only meaningful for frame styles
     // that put the print behind glass with a window-cut card around
