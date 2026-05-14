@@ -8,7 +8,7 @@ import { fixtures, routes } from './fixtures'
  * If this page breaks, no buyer ever reaches the print wizard. We
  * assert on the bare minimum that proves the route resolves, the
  * artwork data hydrates, and at least one conversion CTA renders
- * (Buy Printable when the artwork is print-enabled, Inquire as the
+ * (Order Print when the artwork is print-enabled, Inquire as the
  * fallback). Both invisible would mean the page has no path forward.
  *
  * Read-only: just navigates and reads. No form submission.
@@ -27,7 +27,7 @@ test('artwork page: renders + has CTA', async ({ page }) => {
   // anchors — so we match by accessible name. Either label is fine
   // depending on whether the artwork is print-enabled. Both missing
   // is the regression we're catching.
-  const buyPrintable = page.getByRole('button', { name: /buy printable/i })
+  const buyPrintable = page.getByRole('button', { name: /order print/i })
   const inquire = page.getByRole('button', { name: /inquire/i })
 
   const buyVisible = await buyPrintable.isVisible().catch(() => false)
@@ -35,6 +35,6 @@ test('artwork page: renders + has CTA', async ({ page }) => {
 
   expect(
     buyVisible || inquireVisible,
-    'artwork page must surface at least one conversion CTA (Buy Printable or Inquire)',
+    'artwork page must surface at least one conversion CTA (Order Print or Inquire)',
   ).toBe(true)
 })

@@ -166,7 +166,7 @@ model Artwork {
   order                Int     @default(0)
 
   // Print sales (theprintspace fulfillment). `printEnabled` gates the
-  // "Buy Printable" CTA + the /print wizard; when false the artwork page
+  // "Order Print" CTA + the /print wizard; when false the artwork page
   // shows "Inquire" instead. `printPriceCents` is the artist's cut
   // per print (the gallery markup + TPS cost stack on top at
   // checkout time). Nullable so we can distinguish "not set yet"
