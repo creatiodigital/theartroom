@@ -32,3 +32,4 @@ export { buildPrintspaceAvailability, buildPrintspaceCatalog } from './buildCata
 export { getPrintspaceQuote } from './getQuote'
 export { loadPrintspaceCatalog } from './loadCatalog'
 export * from './data'
+export * from './sizeBounds'

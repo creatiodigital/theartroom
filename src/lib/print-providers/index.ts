@@ -19,6 +19,7 @@ export type {
   Option,
   OrientationDimension,
   PrintProvider,
+  PrintRecommendations,
   PrintRestrictions,
   ProviderId,
   Quote,

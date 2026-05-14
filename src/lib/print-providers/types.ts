@@ -91,6 +91,10 @@ export type Option = {
   description?: string
   /** Optional asset URL rendered in the tooltip alongside the description. */
   tooltipImageUrl?: string
+  /** Optional asset URL rendered at the top of the tooltip body, full
+   *  width. Used for the frame-type helper popups where the image
+   *  illustrates the construction style. */
+  tooltipHeaderImageUrl?: string
   /** Hide this option until the parent dimension has one of these values. */
   visibleWhen?: { dimensionId: string; valueIn: string[] }
   /**
@@ -261,4 +265,16 @@ export type DeliveryEstimate = {
  */
 export type PrintRestrictions = {
   allowed?: Record<string, string[]>
+}
+
+/**
+ * Artist-controlled "recommended" markers. Soft hint surfaced in the
+ * buyer's wizard (check-circle next to the option) — does NOT filter
+ * availability. Distinct from `PrintRestrictions`, which hard-removes
+ * options. Stored on `Artwork.printRecommendations` as JSON. Today only
+ * paper IDs are supported; other dimensions can be added later without
+ * a schema change.
+ */
+export type PrintRecommendations = {
+  paper?: string[]
 }

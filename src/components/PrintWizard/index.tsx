@@ -6,11 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { Modal } from '@/components/ui/Modal'
 import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import Logo from '@/icons/logo.svg'
+import Monogram from '@/icons/monogram.svg'
 
 import {
   type Catalog,
+  type PrintRecommendations,
   type PrintRestrictions,
   type Quote,
   type WizardConfig,
@@ -18,6 +21,7 @@ import {
   buildInitialConfig,
   summarizeConfig,
 } from '@/lib/print-providers'
+import { getPrintLongEdgeBounds } from '@/lib/print-providers/printspace'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 
 import { Scene } from './Scene'
@@ -35,6 +39,12 @@ export type WizardArtwork = {
   originalWidthPx: number
   originalHeightPx: number
   printPriceCents: number
+  /** Limited-edition flag. When true the intro modal surfaces the
+   *  edition size; the public artwork page also displays it. */
+  editionLimited?: boolean
+  /** Total prints in the series. Meaningful only when
+   *  `editionLimited` is true; null when not yet set. */
+  editionTotal?: number | null
 }
 
 interface PrintWizardProps {
@@ -42,9 +52,17 @@ interface PrintWizardProps {
   catalog: Catalog
   /** Provider-agnostic, dimension-keyed restriction map (already converted by the page route). */
   restrictions: PrintRestrictions | null
+  /** Soft recommendations — surfaces a check-circle on the matching
+   *  paper option in the picker. Paper-only for now. */
+  recommendations: PrintRecommendations | null
 }
 
-export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps) => {
+export const PrintWizard = ({
+  artwork,
+  catalog,
+  restrictions,
+  recommendations,
+}: PrintWizardProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -70,6 +88,21 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
     (artwork.originalWidthPx > 0 && artwork.originalHeightPx > 0
       ? artwork.originalWidthPx / artwork.originalHeightPx
       : 1)
+
+  // Per-artwork size bounds — drives the size slider's range and the
+  // input clamps. Computed from the artwork's pixel resolution and
+  // the lab's hardware paper width. Null when the file is too small
+  // to produce any sharp print (defensive — print-enabled artworks
+  // should always pass eligibility).
+  const longEdgeBounds = useMemo(
+    () =>
+      getPrintLongEdgeBounds(
+        artwork.originalWidthPx > 0 && artwork.originalHeightPx > 0
+          ? { width: artwork.originalWidthPx, height: artwork.originalHeightPx }
+          : null,
+      ),
+    [artwork.originalWidthPx, artwork.originalHeightPx],
+  )
 
   // Restore from URL params on mount (e.g. user came back from checkout
   // via backToWizard, which always forwards the in-flight selection in
@@ -109,6 +142,17 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
     }
   }, [hasSeed, artwork.slug])
 
+  // Quality-reassurance modal. Shown on every wizard entry — the
+  // value-confidence framing (COA, signature, limited-edition note)
+  // is important enough to surface to the buyer every time, not just
+  // on first visit. Initialise closed on SSR to avoid a hydration
+  // mismatch; open in an effect on mount.
+  const [introOpen, setIntroOpen] = useState(false)
+  useEffect(() => {
+    setIntroOpen(true)
+  }, [artwork.slug])
+  const dismissIntro = () => setIntroOpen(false)
+
   // Once the client-side image measurement lands, snap orientation to
   // match — unless the user has touched it (URL seed or manual toggle).
   const [orientationTouched, setOrientationTouched] = useState(
@@ -126,7 +170,18 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
 
   const updateConfig = (patch: Record<string, string>) => {
     if (patch.orientation !== undefined) setOrientationTouched(true)
-    setConfig((prev) => ({ ...prev, values: { ...prev.values, ...patch } }))
+    setConfig((prev) => {
+      const nextValues = { ...prev.values, ...patch }
+      // Picking 'None' for the passepartout colour hides the mount-size
+      // input via cascade; reset the stored size so it doesn't re-appear
+      // (e.g. 4.5 cm sticking around) when the buyer later switches back
+      // to a coloured mount.
+      let nextBorders = prev.borders
+      if (patch.windowMount === 'none' && prev.borders?.windowMountSize) {
+        nextBorders = { ...prev.borders, windowMountSize: { allCm: 0 } }
+      }
+      return { ...prev, values: nextValues, borders: nextBorders }
+    })
   }
 
   const updateCustomSize = (size: { widthCm: number; heightCm: number }) => {
@@ -256,11 +311,13 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
           catalog={catalog}
           config={config}
           aspectRatio={aspectRatio}
+          longEdgeBounds={longEdgeBounds}
           onChange={updateConfig}
           onCustomSizeChange={updateCustomSize}
           onBorderChange={updateBorder}
           availability={availability}
           restrictions={restrictions}
+          recommendations={recommendations}
         />
         <Scene
           imageUrl={artwork.imageUrl}
@@ -281,6 +338,39 @@ export const PrintWizard = ({ artwork, catalog, restrictions }: PrintWizardProps
           onAddToCart={handleAddToCart}
         />
       </main>
+
+      {introOpen && (
+        <Modal onClose={dismissIntro} titleId="print-intro-title">
+          <div className={styles.introModal}>
+            <Monogram className={styles.introMonogram} aria-hidden="true" />
+            <p id="print-intro-title" className={styles.introBody}>
+              Your print of <strong>{artwork.title}</strong> by{' '}
+              <strong>{artwork.artistName}</strong> will ship with:
+            </p>
+            <ul className={styles.introList}>
+              <li>
+                A <strong>Certificate of Authenticity</strong>.
+              </li>
+              <li>
+                The <strong>Artist&apos;s Signature</strong>.
+              </li>
+              <li>
+                Your print, <strong>made to order</strong> — produced on demand, hand-inspected, and
+                finished individually by a specialist fine-art print lab on archival giclée or
+                C-Type paper.
+              </li>
+            </ul>
+            {artwork.editionLimited && artwork.editionTotal && artwork.editionTotal > 0 && (
+              <p className={styles.introEdition}>
+                This is a <strong>limited edition of {artwork.editionTotal}</strong>.
+              </p>
+            )}
+            <div className={styles.introActions}>
+              <Button variant="primary" label="Continue" onClick={dismissIntro} />
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

@@ -102,6 +102,30 @@ const FRAME_SUPPLEMENT_CENTS: Record<TpsFrameTypeId, readonly SizeTier<number>[]
     { upToLongEdgeCm: 84, value: 56000 }, // €560 — interpolated, conservative
     { upToLongEdgeCm: 119, value: 58000 }, // €580 ← real €540 + ~7% bias (anchor)
   ],
+  // Tray vs Standard follows a U-curve, not a linear ramp. At small
+  // sizes the two are near parity (Standard's fixed labor dominates);
+  // at mid sizes Tray is cheapest relative to Standard (~0.83×); at
+  // large sizes Tray pulls ahead as Dibond mounting cost takes over.
+  //
+  // TPS cart data 2026-05-14:
+  //   20×29 Tray Black, no glass → framing €60.08
+  //                                Standard same size = €63.21 (0.95×)
+  //   30×43 Tray Black, no glass → framing €106.27
+  //                                Standard same size = €128.11 (0.83×)
+  //   50×72 Tray Black, no glass → framing €223.78
+  //                                Standard same size = €178.15 (1.26×)
+  //   60×86 Tray Black, no glass → framing €373.75
+  //                                Standard same size = €276.39 (1.35×)
+  //
+  // Four real anchors cover ≤35, ≤60, ≤84, ≤119. ≤42 interpolated.
+  // All values biased ~7-10% upward for safety.
+  tray: [
+    { upToLongEdgeCm: 35, value: 6500 }, // €65 ← real €60 + ~8% bias (anchor)
+    { upToLongEdgeCm: 42, value: 9500 }, // €95 — interpolated between ≤35 and ≤60
+    { upToLongEdgeCm: 60, value: 11500 }, // €115 ← real €106 + ~9% bias (anchor)
+    { upToLongEdgeCm: 84, value: 24000 }, // €240 ← real €224 + ~7% bias (anchor)
+    { upToLongEdgeCm: 119, value: 41000 }, // €410 ← real €373.75 + ~10% bias (anchor)
+  ],
 }
 
 export function getPrintBaseCents(widthCm: number, heightCm: number): number {

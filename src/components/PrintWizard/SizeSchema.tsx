@@ -10,12 +10,26 @@ interface SizeSchemaProps {
   mattingBorderCm: number
   mattingColorHex: string
   showFrame: boolean
+  /** Artwork preview URL. When provided, fills the print rect (image
+   *  = the buyer's typed print size, matching the 3D scene). */
+  imageUrl?: string
+  /** Uniform white paper border on every side of the printed image,
+   *  in cm. Rendered as a WHITE sheet layer OUTSIDE the image — the
+   *  buyer's print size is the image, the paper sheet is bigger. */
+  paperBorderCm?: number
 }
 
 /**
- * Live SVG diagram that mirrors gallery-style "print + mat + frame"
- * measurements panel. Axis labels show cm only — the dual-format
- * "cm (in)" spell-out lives in the measurement list beside the diagram.
+ * Live SVG diagram that mirrors gallery-style "image + paper + mat +
+ * frame" measurements panel. Matches the 3D preview's convention:
+ * the buyer's typed print size IS the image; the paper sheet, any
+ * passepartout, and the moulding stack outward from it.
+ *
+ * Layer stack (innermost → outermost):
+ *   image (print rect) → paper border → matting → frame
+ *
+ * Axis labels show cm only — the dual-format "cm (in)" spell-out
+ * lives in the measurement list beside the diagram.
  */
 export const SizeSchema = ({
   printWidthCm,
@@ -25,16 +39,24 @@ export const SizeSchema = ({
   mattingBorderCm,
   mattingColorHex,
   showFrame,
+  imageUrl,
+  paperBorderCm = 0,
 }: SizeSchemaProps) => {
+  const effectivePaperBorder = Math.max(paperBorderCm, 0)
   const effectiveMatting = showFrame ? mattingBorderCm : 0
   const effectiveFrame = showFrame ? moldingWidthCm : 0
 
-  const matWidthCm = printWidthCm + effectiveMatting * 2
-  const matHeightCm = printHeightCm + effectiveMatting * 2
+  const paperWidthCm = printWidthCm + effectivePaperBorder * 2
+  const paperHeightCm = printHeightCm + effectivePaperBorder * 2
+  const matWidthCm = paperWidthCm + effectiveMatting * 2
+  const matHeightCm = paperHeightCm + effectiveMatting * 2
   const overallWidthCm = matWidthCm + effectiveFrame * 2
   const overallHeightCm = matHeightCm + effectiveFrame * 2
 
-  const formatDim = (cm: number) => `${cm.toFixed(0)} cm`
+  // Match the size-input precision (0.1 cm step): show one decimal
+  // when the value isn't a whole cm, otherwise drop the trailing .0.
+  // Keeps "22 cm" tidy and "22.4 cm" honest.
+  const formatDim = (cm: number) => `${Number.isInteger(cm) ? cm : cm.toFixed(1)} cm`
 
   // Square viewBox so portrait and landscape renders get the same visual
   // budget. Scaling by the *longest* side means a 30×20 print looks the
@@ -46,25 +68,31 @@ export const SizeSchema = ({
   const availableW = VIEWBOX_W - PADDING * 2
   const availableH = VIEWBOX_H - PADDING * 2
 
-  // Enforce a minimum *visual* thickness for the frame/mat so the outer
-  // and inner arrows never look the same length. A 2 cm frame on a large
-  // print scales to ~6 px — indistinguishable from no frame at all.
-  // Labels keep the real measurements; only the diagram is exaggerated.
-  const MIN_FRAME_PX = 14
-  const MIN_MAT_PX = 10
+  // Each border layer is rendered at its real proportional scale so
+  // the diagram matches what the 3D shows. A small floor (3 px) keeps
+  // very thin layers from disappearing on huge prints without
+  // dominating the visual at small ones.
+  const MIN_FRAME_PX = 3
+  const MIN_MAT_PX = 3
+  const MIN_PAPER_PX = 3
   const rawScale = Math.min(availableW, availableH) / Math.max(overallWidthCm, overallHeightCm)
   const frameW = effectiveFrame > 0 ? Math.max(effectiveFrame * rawScale, MIN_FRAME_PX) : 0
   const matBorderW = effectiveMatting > 0 ? Math.max(effectiveMatting * rawScale, MIN_MAT_PX) : 0
+  const paperBorderW =
+    effectivePaperBorder > 0 ? Math.max(effectivePaperBorder * rawScale, MIN_PAPER_PX) : 0
 
-  // Re-fit the print so the exaggerated borders still leave room inside
-  // the viewBox. The print itself stays proportional to real dimensions.
-  const borderPx = (frameW + matBorderW) * 2
+  // Re-fit the print (image) so the exaggerated borders still leave room
+  // inside the viewBox. The image itself stays proportional to real
+  // dimensions, only the surrounding layers are nudged up to a min size.
+  const borderPx = (frameW + matBorderW + paperBorderW) * 2
   const longestPrintCm = Math.max(printWidthCm, printHeightCm)
   const printScale = (Math.min(availableW, availableH) - borderPx) / longestPrintCm
   const printW = printWidthCm * printScale
   const printH = printHeightCm * printScale
-  const matW = printW + matBorderW * 2
-  const matH = printH + matBorderW * 2
+  const paperW = printW + paperBorderW * 2
+  const paperH = printH + paperBorderW * 2
+  const matW = paperW + matBorderW * 2
+  const matH = paperH + matBorderW * 2
   const outerW = matW + frameW * 2
   const outerH = matH + frameW * 2
 
@@ -73,8 +101,14 @@ export const SizeSchema = ({
   const outerY = (VIEWBOX_H - outerH) / 2
   const matX = outerX + frameW
   const matY = outerY + frameW
-  const printX = matX + matBorderW
-  const printY = matY + matBorderW
+  const paperX = matX + matBorderW
+  const paperY = matY + matBorderW
+  const printX = paperX + paperBorderW
+  const printY = paperY + paperBorderW
+
+  // "Outer" arrows are shown when any layer surrounds the image — frame,
+  // mat, or paper border. Otherwise the diagram is just the bare image.
+  const hasOuter = showFrame || effectiveMatting > 0 || effectivePaperBorder > 0
 
   return (
     <div className={styles.schemaWrapper}>
@@ -95,24 +129,54 @@ export const SizeSchema = ({
           />
         )}
 
-        {/* Mat — rendered in the selected mat color. */}
+        {/* Mat (passepartout) */}
         {showFrame && effectiveMatting > 0 && (
           <rect x={matX} y={matY} width={matW} height={matH} fill={mattingColorHex} />
         )}
 
-        {/* Print area */}
+        {/* Paper sheet — white border extending around the image. Visible
+            when paperBorderCm > 0. A thin stroke shows the sheet boundary
+            when nothing else is around it. */}
+        {effectivePaperBorder > 0 && (
+          <rect
+            x={paperX}
+            y={paperY}
+            width={paperW}
+            height={paperH}
+            fill="#ffffff"
+            stroke={showFrame || effectiveMatting > 0 ? 'none' : '#d0d0d0'}
+            strokeWidth={0.5}
+          />
+        )}
+
+        {/* Print rect — fills with white as a fallback; the image draws
+            on top of this. Stroke only when nothing else outlines it. */}
         <rect
           x={printX}
           y={printY}
           width={printW}
           height={printH}
-          fill={showFrame ? '#ffffff' : '#ffffff'}
-          stroke={showFrame ? 'none' : '#d0d0d0'}
+          fill="#ffffff"
+          stroke={hasOuter ? 'none' : '#d0d0d0'}
           strokeWidth={0.5}
         />
 
+        {/* Artwork image filling the print rect. Aspect is preserved;
+            the print rect is already aspect-locked to the artwork so
+            there should be no letterboxing. */}
+        {imageUrl && printW > 0 && printH > 0 && (
+          <image
+            href={imageUrl}
+            x={printX}
+            y={printY}
+            width={printW}
+            height={printH}
+            preserveAspectRatio="xMidYMid meet"
+          />
+        )}
+
         {/* ── Outer width label (top) ─────────────────────────── */}
-        {showFrame && (
+        {hasOuter && (
           <>
             <line
               x1={outerX}
@@ -156,7 +220,7 @@ export const SizeSchema = ({
         </text>
 
         {/* ── Outer height label (right) ──────────────────────── */}
-        {showFrame && (
+        {hasOuter && (
           <>
             <line
               x1={outerX + outerW + 22}

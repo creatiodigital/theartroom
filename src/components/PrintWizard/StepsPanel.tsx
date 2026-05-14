@@ -5,6 +5,7 @@ import Image from 'next/image'
 
 import { Button } from '@/components/ui/Button'
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
+import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { SelectDropdown } from '@/components/ui/SelectDropdown'
 import { Slider } from '@/components/ui/Slider'
@@ -17,6 +18,7 @@ import {
   type Dimension,
   type EnumDimension,
   type Option,
+  type PrintRecommendations,
   type PrintRestrictions,
   type SizeDimension,
   type SizeOption,
@@ -26,6 +28,7 @@ import {
   isOptionPickable,
   sizeOptionLabel,
 } from '@/lib/print-providers'
+import { type PrintLongEdgeBounds, formatPrintSize } from '@/lib/print-providers/printspace'
 
 import styles from './PrintWizard.module.scss'
 
@@ -33,22 +36,28 @@ interface StepsPanelProps {
   catalog: Catalog
   config: WizardConfig
   aspectRatio: number
+  /** Per-artwork long-edge cm bounds, derived from file resolution +
+   *  the print-lab's hardware limits. Drives the size slider's range. */
+  longEdgeBounds: PrintLongEdgeBounds | null
   onChange: (patch: Record<string, string>) => void
   onCustomSizeChange: (size: { widthCm: number; heightCm: number }) => void
   onBorderChange: (dimensionId: string, allCm: number) => void
   availability: AvailabilityCheck
   restrictions: PrintRestrictions | null
+  recommendations: PrintRecommendations | null
 }
 
 export const StepsPanel = ({
   catalog,
   config,
   aspectRatio,
+  longEdgeBounds,
   onChange,
   onCustomSizeChange,
   onBorderChange,
   availability,
   restrictions,
+  recommendations,
 }: StepsPanelProps) => {
   // Per-step open/closed state. Keyed by dimension id. Independent —
   // buyer can have any combination open at once. Country isn't picked
@@ -148,6 +157,7 @@ export const StepsPanel = ({
                     countryCode={countryCode}
                     availability={availability}
                     restrictions={restrictions}
+                    recommendations={recommendations}
                     optionsLocked={optionsLocked}
                     open={openSteps.has('printAndPaper')}
                     onToggle={toggle('printAndPaper')}
@@ -163,6 +173,7 @@ export const StepsPanel = ({
                     border={border}
                     config={config}
                     aspectRatio={aspectRatio}
+                    longEdgeBounds={longEdgeBounds}
                     optionsLocked={optionsLocked}
                     open={openSteps.has('sizeAndBorder')}
                     onToggle={toggle('sizeAndBorder')}
@@ -204,6 +215,7 @@ export const StepsPanel = ({
                   catalog={catalog}
                   config={config}
                   aspectRatio={aspectRatio}
+                  longEdgeBounds={longEdgeBounds}
                   countryCode={countryCode}
                   availability={availability}
                   restrictions={restrictions}
@@ -232,6 +244,7 @@ interface PrintAndPaperSectionProps {
   countryCode: string
   availability: AvailabilityCheck
   restrictions: PrintRestrictions | null
+  recommendations: PrintRecommendations | null
   optionsLocked: boolean
   open: boolean
   onToggle: (open: boolean) => void
@@ -245,6 +258,7 @@ const PrintAndPaperSection = ({
   countryCode,
   availability,
   restrictions,
+  recommendations,
   optionsLocked,
   open,
   onToggle,
@@ -275,18 +289,28 @@ const PrintAndPaperSection = ({
     [printType, config, countryCode, availability, restrictions],
   )
 
+  const recommendedPaperIds = useMemo(
+    () => new Set(recommendations?.paper ?? []),
+    [recommendations],
+  )
   const paperOptions: SelectOption<string>[] = useMemo(
     () =>
-      filterPickable(paper).map((option) => ({
-        value: option.id,
-        label: option.label,
-        tooltip: optionTooltip(option),
-        tooltipImage: option.tooltipImageUrl ? (
-          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} />
-        ) : undefined,
-      })),
+      filterPickable(paper).map((option) => {
+        const isRecommended = recommendedPaperIds.has(option.id)
+        return {
+          value: option.id,
+          label: option.label,
+          tooltip: optionTooltip(option, isRecommended),
+          tooltipImage: option.tooltipImageUrl ? (
+            <Image src={option.tooltipImageUrl} alt="" width={220} height={220} />
+          ) : undefined,
+          badge: isRecommended ? (
+            <Icon name="check-circle" size={16} aria-label="Recommended by the artist" />
+          ) : undefined,
+        }
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paper, config, countryCode, availability, restrictions],
+    [paper, config, countryCode, availability, restrictions, recommendedPaperIds],
   )
 
   return (
@@ -324,6 +348,7 @@ interface SizeAndBorderSectionProps {
   border: BorderDimension
   config: WizardConfig
   aspectRatio: number
+  longEdgeBounds: PrintLongEdgeBounds | null
   optionsLocked: boolean
   open: boolean
   onToggle: (open: boolean) => void
@@ -336,6 +361,7 @@ const SizeAndBorderSection = ({
   border,
   config,
   aspectRatio,
+  longEdgeBounds,
   optionsLocked,
   open,
   onToggle,
@@ -348,6 +374,7 @@ const SizeAndBorderSection = ({
         <CustomSizeInputs
           dimension={size}
           aspectRatio={aspectRatio}
+          longEdgeBounds={longEdgeBounds}
           customSize={config.customSize}
           disabled={optionsLocked}
           onChange={onCustomSizeChange}
@@ -442,7 +469,7 @@ const FrameSection = ({
             optionsLocked={optionsLocked}
             onChange={onChange}
           />
-          {glass && (
+          {glass && isDimensionVisible(glass, config, catalog) && (
             <EnumDropdown
               dim={glass}
               config={config}
@@ -453,7 +480,7 @@ const FrameSection = ({
               onChange={onChange}
             />
           )}
-          {windowMount && (
+          {windowMount && isDimensionVisible(windowMount, config, catalog) && (
             <EnumDropdown
               dim={windowMount}
               config={config}
@@ -568,7 +595,6 @@ const BorderSlider = ({
   return (
     <div className={styles.stepField}>
       <span className={styles.stepFieldLabel}>{dim.label}</span>
-      {dim.helpText && <p className={styles.destinationHelp}>{dim.helpText}</p>}
       <p className={styles.sliderValue}>{displayed} cm</p>
       <Slider
         min={dim.minCm}
@@ -579,6 +605,7 @@ const BorderSlider = ({
         onChange={(v) => onBorderChange(dim.id, clampCm(v, dim.minCm, dim.maxCm, dim.stepCm))}
         aria-label={dim.label}
       />
+      {dim.helpText && <p className={styles.destinationHelp}>{dim.helpText}</p>}
     </div>
   )
 }
@@ -590,6 +617,7 @@ interface DimensionSectionProps {
   catalog: Catalog
   config: WizardConfig
   aspectRatio: number
+  longEdgeBounds: PrintLongEdgeBounds | null
   countryCode: string
   availability: AvailabilityCheck
   restrictions: PrintRestrictions | null
@@ -606,6 +634,7 @@ const DimensionSection = ({
   catalog,
   config,
   aspectRatio,
+  longEdgeBounds,
   countryCode,
   availability,
   restrictions,
@@ -666,6 +695,7 @@ const DimensionSection = ({
         dimension={dimension}
         config={config}
         aspectRatio={aspectRatioForChild}
+        longEdgeBounds={longEdgeBounds}
         countryCode={countryCode}
         availability={availability}
         restrictions={restrictions}
@@ -711,7 +741,12 @@ const DimensionSection = ({
 
 interface EnumSectionProps extends Omit<
   DimensionSectionProps,
-  'dimension' | 'catalog' | 'aspectRatio' | 'onCustomSizeChange' | 'onBorderChange'
+  | 'dimension'
+  | 'catalog'
+  | 'aspectRatio'
+  | 'longEdgeBounds'
+  | 'onCustomSizeChange'
+  | 'onBorderChange'
 > {
   dimension: EnumDimension
 }
@@ -781,6 +816,7 @@ const SizeDimensionSection = ({
   dimension,
   config,
   aspectRatio,
+  longEdgeBounds,
   countryCode,
   availability,
   restrictions,
@@ -837,6 +873,7 @@ const SizeDimensionSection = ({
           <CustomSizeInputs
             dimension={dimension}
             aspectRatio={aspectRatio}
+            longEdgeBounds={longEdgeBounds}
             customSize={config.customSize}
             disabled={optionsLocked}
             onChange={onCustomSizeChange}
@@ -859,6 +896,7 @@ const SizeDimensionSection = ({
 interface CustomSizeInputsProps {
   dimension: SizeDimension
   aspectRatio: number
+  longEdgeBounds: PrintLongEdgeBounds | null
   customSize: WizardConfig['customSize']
   disabled: boolean
   onChange: (size: { widthCm: number; heightCm: number }) => void
@@ -867,6 +905,7 @@ interface CustomSizeInputsProps {
 const CustomSizeInputs = ({
   dimension,
   aspectRatio,
+  longEdgeBounds,
   customSize,
   disabled,
   onChange,
@@ -903,6 +942,35 @@ const CustomSizeInputs = ({
   // edits either field, the other follows from this ratio.
   const ratioWH = aspectLocked && aspectRatio > 0 ? aspectRatio : null
 
+  // Effective per-axis bounds. When per-artwork longEdgeBounds is
+  // available we use it (driven by file resolution + paper width);
+  // otherwise fall back to the catalog defaults so the inputs still
+  // function during the brief moment before bounds are computed.
+  const effectiveMinLongCm = longEdgeBounds?.minLongCm ?? custom.minCm
+  const effectiveMaxLongCm = longEdgeBounds?.maxLongCm ?? custom.maxCm
+  const aspectShortOverLong =
+    longEdgeBounds?.aspect ?? (ratioWH !== null ? Math.min(ratioWH, 1 / ratioWH) : 1)
+  const isPortrait = longEdgeBounds?.isPortrait ?? (ratioWH !== null && ratioWH < 1)
+  const minShortCm = effectiveMinLongCm * aspectShortOverLong
+  const maxShortCm = effectiveMaxLongCm * aspectShortOverLong
+  const minWidthCm = isPortrait ? minShortCm : effectiveMinLongCm
+  const maxWidthCm = isPortrait ? maxShortCm : effectiveMaxLongCm
+  const minHeightCm = isPortrait ? effectiveMinLongCm : minShortCm
+  const maxHeightCm = isPortrait ? effectiveMaxLongCm : maxShortCm
+
+  // Current long edge — drives the slider.
+  const currentLongCm = Math.max(widthCm, heightCm)
+
+  const commitLongEdge = (longCm: number) => {
+    const clampedLong = clampCm(longCm, effectiveMinLongCm, effectiveMaxLongCm, custom.stepCm)
+    const shortCm = clampedLong * aspectShortOverLong
+    const newWidth = isPortrait ? shortCm : clampedLong
+    const newHeight = isPortrait ? clampedLong : shortCm
+    setWidthInput(formatCm(newWidth, custom.stepCm))
+    setHeightInput(formatCm(newHeight, custom.stepCm))
+    onChange({ widthCm: newWidth, heightCm: newHeight })
+  }
+
   const handleChange = (which: 'width' | 'height', raw: string) => {
     if (which === 'width') setWidthInput(raw)
     else setHeightInput(raw)
@@ -910,37 +978,27 @@ const CustomSizeInputs = ({
     if (!Number.isFinite(parsed) || parsed <= 0) return
 
     if (ratioWH === null) {
-      // No aspect lock — both fields independent.
-      const w =
-        which === 'width' ? clampCm(parsed, custom.minCm, custom.maxCm, custom.stepCm) : widthCm
+      // No aspect lock — both fields independent. (Unused with TPS,
+      // but kept for symmetry with the catalog.)
+      const w = which === 'width' ? clampCm(parsed, minWidthCm, maxWidthCm, custom.stepCm) : widthCm
       const h =
-        which === 'height' ? clampCm(parsed, custom.minCm, custom.maxCm, custom.stepCm) : heightCm
+        which === 'height' ? clampCm(parsed, minHeightCm, maxHeightCm, custom.stepCm) : heightCm
       onChange({ widthCm: w, heightCm: h })
       return
     }
 
-    // Aspect-locked. Compute the feasible range for the edited side
-    // such that the *other* side also lands within [minCm, maxCm].
-    // Otherwise typing 10 for width on a 1.5:1 landscape would clamp
-    // height to minCm (10) and the lock appears broken.
-    const minSide = custom.minCm
-    const maxSide = custom.maxCm
+    // Aspect-locked: clamp the edited axis to its own per-axis range,
+    // then derive the partner side via the aspect ratio so both land
+    // within bounds simultaneously.
     let w: number
     let h: number
     if (which === 'width') {
-      const minW = Math.max(minSide, minSide * ratioWH)
-      const maxW = Math.min(maxSide, maxSide * ratioWH)
-      w = clampCm(Math.max(minW, Math.min(maxW, parsed)), custom.minCm, custom.maxCm, custom.stepCm)
-      h = clampCm(w / ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
-      // Mirror to the other field so the buyer sees it follow live
-      // (the editing-gate would otherwise hold the stale value until
-      // blur).
+      w = clampCm(parsed, minWidthCm, maxWidthCm, custom.stepCm)
+      h = clampCm(w / ratioWH, minHeightCm, maxHeightCm, custom.stepCm)
       setHeightInput(formatCm(h, custom.stepCm))
     } else {
-      const minH = Math.max(minSide, minSide / ratioWH)
-      const maxH = Math.min(maxSide, maxSide / ratioWH)
-      h = clampCm(Math.max(minH, Math.min(maxH, parsed)), custom.minCm, custom.maxCm, custom.stepCm)
-      w = clampCm(h * ratioWH, custom.minCm, custom.maxCm, custom.stepCm)
+      h = clampCm(parsed, minHeightCm, maxHeightCm, custom.stepCm)
+      w = clampCm(h * ratioWH, minWidthCm, maxWidthCm, custom.stepCm)
       setWidthInput(formatCm(w, custom.stepCm))
     }
     onChange({ widthCm: w, heightCm: h })
@@ -977,10 +1035,35 @@ const CustomSizeInputs = ({
           aria-label="Custom print width in centimeters"
         />
       </label>
+      <div className={styles.customSizeSlider}>
+        <Slider
+          min={effectiveMinLongCm}
+          max={effectiveMaxLongCm}
+          step={custom.stepCm}
+          value={Math.min(effectiveMaxLongCm, Math.max(effectiveMinLongCm, currentLongCm))}
+          disabled={disabled}
+          onChange={(v) => commitLongEdge(v)}
+          aria-label="Print size"
+        />
+        <div className={styles.customSizeRangeLabels}>
+          <span>
+            {formatPrintSize(
+              isPortrait ? effectiveMinLongCm : minShortCm,
+              isPortrait ? minShortCm : effectiveMinLongCm,
+            )}
+          </span>
+          <span>
+            {formatPrintSize(
+              isPortrait ? effectiveMaxLongCm : maxShortCm,
+              isPortrait ? maxShortCm : effectiveMaxLongCm,
+            )}
+          </span>
+        </div>
+      </div>
       {aspectLocked && (
         <p className={styles.customSizeHint}>
           Height and width are locked to this artwork&apos;s aspect ratio — change either, the other
-          follows.
+          follows. We guarantee high print quality at every size in this range.
         </p>
       )}
     </div>
@@ -1019,7 +1102,6 @@ const BorderDimensionSection = ({
   return (
     <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
       <div className={styles.stepField}>
-        {dimension.helpText && <p className={styles.destinationHelp}>{dimension.helpText}</p>}
         <p className={styles.sliderValue}>{displayed} cm</p>
         <Slider
           min={dimension.minCm}
@@ -1035,6 +1117,7 @@ const BorderDimensionSection = ({
           }
           aria-label={dimension.label}
         />
+        {dimension.helpText && <p className={styles.destinationHelp}>{dimension.helpText}</p>}
       </div>
     </CollapsibleSection>
   )
@@ -1042,14 +1125,25 @@ const BorderDimensionSection = ({
 
 // ── Tooltip helper ───────────────────────────────────────────────
 
-function optionTooltip(option: Option): ReactNode {
-  if (!option.description) return undefined
+function optionTooltip(option: Option, recommended?: boolean): ReactNode {
+  if (!option.description && !recommended && !option.tooltipHeaderImageUrl) return undefined
   return (
     <>
+      {option.tooltipHeaderImageUrl && (
+        <div className={styles.tooltipHeaderImage}>
+          <Image src={option.tooltipHeaderImageUrl} alt="" width={640} height={360} sizes="320px" />
+        </div>
+      )}
       <p>
         <strong>{option.label}</strong>
       </p>
-      <p>{option.description}</p>
+      {option.description && <p>{option.description}</p>}
+      {recommended && (
+        <p className={styles.recommendationLegend}>
+          <Icon name="check-circle" size={14} aria-hidden />
+          <span>Recommended by the artist for best results</span>
+        </p>
+      )}
     </>
   )
 }

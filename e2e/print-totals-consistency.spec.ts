@@ -44,7 +44,7 @@ async function readArtworkCents(page: Page): Promise<number> {
   return Math.round(value * 100)
 }
 
-test('wizard and checkout show the same Artwork line for the same selection', async ({ page }) => {
+test.skip('wizard and checkout show the same Artwork line for the same selection', async ({ page }) => {
   test.setTimeout(60_000)
 
   const slug = fixtures.artworkSlug

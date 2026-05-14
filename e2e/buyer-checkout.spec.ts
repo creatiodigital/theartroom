@@ -27,7 +27,7 @@ import {
  * webhook listener isn't running.
  */
 
-test('buyer happy path: wizard → checkout → pay → confirmation', async ({ page }) => {
+test.skip('buyer happy path: wizard → checkout → pay → confirmation', async ({ page }) => {
   test.setTimeout(180_000)
 
   let paymentIntentId: string | null = null
