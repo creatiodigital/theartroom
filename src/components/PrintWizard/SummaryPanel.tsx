@@ -123,9 +123,11 @@ export const SummaryPanel = ({
             printHeightCm={printHeightCm}
             moldingWidthCm={moldingWidthCm}
             moldingColorHex={moldingColorHex}
-            mattingBorderCm={mattingBorderCm + borderCm}
-            mattingColorHex={borderCm > 0 ? '#ffffff' : mattingColorHex}
-            showFrame={showFrame || borderCm > 0}
+            mattingBorderCm={mattingBorderCm}
+            mattingColorHex={mattingColorHex}
+            showFrame={showFrame}
+            imageUrl={artwork.imageUrl}
+            paperBorderCm={borderCm}
           />
         </div>
       )}

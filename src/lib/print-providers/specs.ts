@@ -70,10 +70,11 @@ function renderDimensionValue(
     return formatDualSize(wCm, hCm)
   }
   if (dim.kind === 'border') {
-    // 0 cm = "no border" = don't add a row. Buyers expect no row to
-    // mean nothing extra, not a row that says "0 cm".
+    // Keep the row even when the border is 0 — buyers want to see
+    // "this dimension exists, you chose none" rather than the row
+    // vanishing. 0 (or unset) renders as "N/A".
     const cm = getEffectiveBorderCm(config, dim.id)
-    if (cm <= 0) return null
+    if (cm <= 0) return 'N/A'
     return `${roundCm(cm)} cm`
   }
   // Orientation — already encoded in the size row's swap, would just

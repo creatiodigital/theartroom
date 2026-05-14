@@ -130,18 +130,35 @@ export const PrintCheckout = ({
 }: PrintCheckoutProps) => {
   const router = useRouter()
   const [country, setCountry] = useState<string>(initialCountry)
+
+  // Read any previously-typed shipping form (sessionStorage) synchronously
+  // on first render so useState below seeds from it. Doing this in an
+  // effect after mount races with the save effect, which fires on mount
+  // with empty initial state and wipes the stored values before they can
+  // be restored.
+  const storageKey = `print-address:${artwork.slug}`
+  const initialAddress = useMemo<Record<string, string>>(() => {
+    if (typeof window === 'undefined') return {}
+    try {
+      const raw = sessionStorage.getItem(storageKey)
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {}
+    } catch {
+      return {}
+    }
+  }, [storageKey])
+
   // Controlled shipping-address state — modern Chrome/Safari autofill
   // dispatches a synthetic `input` event that React picks up via
   // onChange, so we get the autofill value into state without any
   // special handling.
-  const [fullName, setFullName] = useState('')
-  const [emailField, setEmailField] = useState('')
-  const [phoneField, setPhoneField] = useState('')
-  const [address1, setAddress1] = useState('')
-  const [address2, setAddress2] = useState('')
-  const [city, setCity] = useState('')
-  const [stateOrRegion, setStateOrRegion] = useState('')
-  const [postalCode, setPostalCode] = useState('')
+  const [fullName, setFullName] = useState(initialAddress.fullName ?? '')
+  const [emailField, setEmailField] = useState(initialAddress.email ?? '')
+  const [phoneField, setPhoneField] = useState(initialAddress.phone ?? '')
+  const [address1, setAddress1] = useState(initialAddress.address1 ?? '')
+  const [address2, setAddress2] = useState(initialAddress.address2 ?? '')
+  const [city, setCity] = useState(initialAddress.city ?? '')
+  const [stateOrRegion, setStateOrRegion] = useState(initialAddress.state ?? '')
+  const [postalCode, setPostalCode] = useState(initialAddress.postalCode ?? '')
   // Independent of `country` by design — a buyer might keep a foreign
   // phone after relocating or be sending a gift to another country. We
   // seed it from the initial shipping country (best guess) but never
@@ -179,12 +196,6 @@ export const PrintCheckout = ({
   // first submit attempt; cleared/updated as the user fixes each field.
   const [errors, setErrors] = useState<ShippingErrors>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
-
-  // Persist the shipping form to sessionStorage so navigating back to the
-  // wizard and returning doesn't wipe out what the user (or Chrome
-  // autofill) already typed. Keyed by artwork slug so different items
-  // don't collide.
-  const storageKey = `print-address:${artwork.slug}`
 
   // Re-validate one field as the user edits it after the first failed
   // submit so the error message clears in place once they fix it.
@@ -259,27 +270,6 @@ export const PrintCheckout = ({
     params.set('provider', providerId)
     router.push(`/artworks/${artwork.slug}/print?${params.toString()}`)
   }
-
-  // Restore previously entered shipping details (e.g. after bouncing back
-  // from the wizard) into the controlled state. Runs once on mount.
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(storageKey)
-      if (!raw) return
-      const saved = JSON.parse(raw) as Record<string, string>
-      if (saved.fullName) setFullName(saved.fullName)
-      if (saved.email) setEmailField(saved.email)
-      if (saved.phone) setPhoneField(saved.phone)
-      if (saved.address1) setAddress1(saved.address1)
-      if (saved.address2) setAddress2(saved.address2)
-      if (saved.city) setCity(saved.city)
-      if (saved.state) setStateOrRegion(saved.state)
-      if (saved.postalCode) setPostalCode(saved.postalCode)
-    } catch {
-      // Stored blob was unreadable — ignore.
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Read the wizard's stash on mount. The wizard hands off without a
   // country (country is picked here), so we don't validate against

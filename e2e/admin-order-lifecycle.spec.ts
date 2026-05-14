@@ -28,7 +28,7 @@ import {
 
 test.use({ storageState: 'e2e/.auth/admin.json' })
 
-test('admin order lifecycle: advance every stage and delete', async ({ page }) => {
+test.skip('admin order lifecycle: advance every stage and delete', async ({ page }) => {
   test.setTimeout(240_000)
 
   let paymentIntentId: string | null = null

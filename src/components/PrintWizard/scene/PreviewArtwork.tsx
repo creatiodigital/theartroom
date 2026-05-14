@@ -4,8 +4,6 @@ import { useMemo } from 'react'
 import { MeshStandardMaterial, RepeatWrapping, SRGBColorSpace, TextureLoader } from 'three'
 import { useLoader } from '@react-three/fiber'
 
-import Frame from '@/components/scene/spaces/objects/Frame/Frame'
-
 import {
   type Catalog,
   type WizardConfig,
@@ -14,6 +12,13 @@ import {
   getEffectiveMatCm,
   getEffectiveSizeCm,
 } from '@/lib/print-providers'
+
+import { BoxPreview } from './preview/BoxPreview'
+import { FloatingPreview } from './preview/FloatingPreview'
+import { PaperSheet } from './preview/parts/PaperSheet'
+import { PrintPlane } from './preview/parts/PrintPlane'
+import { StandardPreview } from './preview/StandardPreview'
+import { TrayPreview } from './preview/TrayPreview'
 
 interface PreviewArtworkProps {
   imageUrl: string
@@ -33,6 +38,12 @@ const DEFAULT_FRAME_ROUGHNESS = 0.4
 const DEFAULT_PAPER_ROUGHNESS = 0.7
 const DEFAULT_MAT_HEX = '#f6f3ec'
 
+/**
+ * Frame-type-aware preview dispatcher. Reads the wizard config, derives
+ * shared dimensions / materials, then hands off to the matching frame
+ * component (Standard / Box / Floating). Print-only (`format` ≠
+ * `framing`) renders the paper print without any frame chrome.
+ */
 export const PreviewArtwork = ({
   imageUrl,
   catalog,
@@ -81,7 +92,6 @@ export const PreviewArtwork = ({
   const matCm = getEffectiveMatCm(catalog, config)
 
   const framed = visuals.framed === true
-  const matBorderM = framed && matCm > 0 ? matCm / 100 : 0
   const paperBorderM = borderCm / 100
   const mouldingWidthM = (visuals.mouldingWidthCm ?? DEFAULT_MOULDING_WIDTH_CM) / 100
   const mouldingDepthM = (visuals.mouldingDepthCm ?? DEFAULT_MOULDING_DEPTH_CM) / 100
@@ -93,47 +103,85 @@ export const PreviewArtwork = ({
   const widthM = (displayIsLandscape ? effectiveSize.heightCm : effectiveSize.widthCm) / 100
   const heightM = (displayIsLandscape ? effectiveSize.widthCm : effectiveSize.heightCm) / 100
 
-  // White paper border wraps the printed image on the same
-  // sheet — sits behind the print and reads as paper, not mat.
-  const paperWidthM = widthM + paperBorderM * 2
-  const paperHeightM = heightM + paperBorderM * 2
+  // Unframed: print + optional paper border. No frame chrome. The
+  // paper sheet sits behind the print, extending outward by the
+  // border on every side — same convention as the framed previews.
+  if (!framed) {
+    const paperWidthM = widthM + paperBorderM * 2
+    const paperHeightM = heightM + paperBorderM * 2
+    return (
+      <group position={[0, 0, ARTWORK_Z]}>
+        {paperBorderM > 0 && (
+          <PaperSheet widthM={paperWidthM} heightM={paperHeightM} roughness={paperRoughness} />
+        )}
+        <PrintPlane
+          widthM={widthM}
+          heightM={heightM}
+          texture={texture}
+          roughness={paperRoughness}
+        />
+      </group>
+    )
+  }
 
-  // Passepartout (mount) sits between the paper and the frame.
-  const matWidthM = paperWidthM + matBorderM * 2
-  const matHeightM = paperHeightM + matBorderM * 2
+  const frameTypeId = config.values.frameType
+  // Matted is only meaningful for Standard / Box (windowMount cascades
+  // hide it for Floating); guard at render time too in case visuals
+  // carry a stale matCm value.
+  const matBorderM = matCm > 0 ? matCm / 100 : 0
 
   return (
     <group position={[0, 0, ARTWORK_Z]}>
-      {framed && matBorderM > 0 && (
-        <mesh position={[0, 0, -0.0015]}>
-          <planeGeometry args={[matWidthM, matHeightM]} />
-          <meshStandardMaterial color={matHex} roughness={0.95} />
-        </mesh>
-      )}
-
-      {paperBorderM > 0 && (
-        <mesh position={[0, 0, -0.001]}>
-          <planeGeometry args={[paperWidthM, paperHeightM]} />
-          <meshStandardMaterial color="#ffffff" roughness={paperRoughness} />
-        </mesh>
-      )}
-
-      <mesh>
-        <planeGeometry args={[widthM, heightM]} />
-        <meshStandardMaterial map={texture} roughness={paperRoughness} />
-      </mesh>
-
-      {framed && (
-        <group position={[0, 0, -0.002]}>
-          <Frame
-            width={matWidthM + mouldingWidthM * 2}
-            height={matHeightM + mouldingWidthM * 2}
-            thickness={mouldingWidthM}
-            depth={mouldingDepthM}
-            material={frameMaterial}
-            cornerStyle="mitered"
-          />
-        </group>
+      {frameTypeId === 'floating' ? (
+        <FloatingPreview
+          texture={texture}
+          printWidthM={widthM}
+          printHeightM={heightM}
+          paperBorderM={paperBorderM}
+          mouldingWidthM={mouldingWidthM}
+          mouldingDepthM={mouldingDepthM}
+          frameMaterial={frameMaterial}
+          paperRoughness={paperRoughness}
+        />
+      ) : frameTypeId === 'tray' ? (
+        <TrayPreview
+          texture={texture}
+          printWidthM={widthM}
+          printHeightM={heightM}
+          paperBorderM={paperBorderM}
+          mouldingWidthM={mouldingWidthM}
+          mouldingDepthM={mouldingDepthM}
+          frameMaterial={frameMaterial}
+          paperRoughness={paperRoughness}
+        />
+      ) : frameTypeId === 'box' ? (
+        <BoxPreview
+          texture={texture}
+          printWidthM={widthM}
+          printHeightM={heightM}
+          paperBorderM={paperBorderM}
+          matBorderM={matBorderM}
+          matHex={matHex}
+          mouldingWidthM={mouldingWidthM}
+          mouldingDepthM={mouldingDepthM}
+          frameMaterial={frameMaterial}
+          paperRoughness={paperRoughness}
+        />
+      ) : (
+        // Default to Standard when frameTypeId is 'standard' or
+        // undefined (catalog default before the buyer picks).
+        <StandardPreview
+          texture={texture}
+          printWidthM={widthM}
+          printHeightM={heightM}
+          paperBorderM={paperBorderM}
+          matBorderM={matBorderM}
+          matHex={matHex}
+          mouldingWidthM={mouldingWidthM}
+          mouldingDepthM={mouldingDepthM}
+          frameMaterial={frameMaterial}
+          paperRoughness={paperRoughness}
+        />
       )}
     </group>
   )

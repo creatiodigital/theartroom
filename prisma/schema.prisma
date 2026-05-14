@@ -166,7 +166,7 @@ model Artwork {
   order                Int     @default(0)
 
   // Print sales (theprintspace fulfillment). `printEnabled` gates the
-  // "Buy Printable" CTA + the /print wizard; when false the artwork page
+  // "Order Print" CTA + the /print wizard; when false the artwork page
   // shows "Inquire" instead. `printPriceCents` is the artist's cut
   // per print (the gallery markup + TPS cost stack on top at
   // checkout time). Nullable so we can distinguish "not set yet"
@@ -174,12 +174,28 @@ model Artwork {
   printEnabled    Boolean @default(false)
   printPriceCents Int?
 
+  // Limited-edition flag + total number of prints in the series.
+  // When `printEditionLimited` is true, the buyer's wizard surfaces a
+  // "limited edition of N" note and the public artwork page can
+  // display the series size. `printEditionTotal` is meaningful only
+  // when `printEditionLimited` is true; nullable so the form can
+  // distinguish "not set" from a deliberate value.
+  printEditionLimited Boolean @default(false)
+  printEditionTotal   Int?
+
   // Per-artwork printing restrictions set by the artist. Canonical
   // PrintRestrictions shape: { allowed: { dimensionId: ids[] } }.
   // When null / missing / field missing, all options from the catalog
   // are offered. Each dimension is validated server-side at
   // PaymentIntent creation.
   printOptions    Json?
+
+  // Soft "recommended by the artist" markers — distinct from the
+  // hard restriction list above. Shape: { paper: string[] } (paper
+  // IDs only for now). Surfaces a check-circle in the buyer's paper
+  // picker; does NOT filter availability. An artist can't recommend
+  // a paper they've also hard-restricted (validated at write time).
+  printRecommendations Json?
 
   exhibitionArtworks ExhibitionArtwork[]
   printOrders        PrintOrder[]

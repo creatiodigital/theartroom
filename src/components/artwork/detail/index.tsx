@@ -142,7 +142,7 @@ export const ArtworkDetailPage = ({ artwork, artist }: ArtworkDetailPageProps) =
               {artwork.printEnabled && artwork.printPriceCents ? (
                 <Button
                   variant="primary"
-                  label="Buy Printable"
+                  label="Order Print"
                   icon="arrowRight"
                   size="bigSquared"
                   onClick={() => router.push(`/artworks/${artwork.slug}/print`)}
@@ -236,7 +236,7 @@ export const ArtworkDetailPage = ({ artwork, artist }: ArtworkDetailPageProps) =
             {artwork.printEnabled && artwork.printPriceCents ? (
               <Button
                 variant="primary"
-                label="Buy Printable"
+                label="Order Print"
                 icon="arrowRight"
                 size="bigSquared"
                 onClick={() => router.push(`/artworks/${artwork.slug}/print`)}

@@ -23,6 +23,10 @@ export type SelectOption<V extends string = string> = {
   tooltip?: ReactNode
   /** Optional illustration shown to the left of the tooltip content. */
   tooltipImage?: ReactNode
+  /** End-of-row indicator (e.g. a check-circle marking the artist's
+   *  recommended paper). Rendered both in the open menu and on the
+   *  closed control when this option is the selected value. */
+  badge?: ReactNode
 }
 
 interface SelectDropdownProps<V extends string = string> {
@@ -148,6 +152,7 @@ export const SelectDropdown = <V extends string = string>({
         <span className={styles.controlLabel}>
           {selected ? selected.label : (placeholder ?? 'Select…')}
         </span>
+        {selected?.badge && <span className={styles.controlBadge}>{selected.badge}</span>}
         <ChevronDown
           size={16}
           strokeWidth={ICON_STROKE_WIDTH}
@@ -180,6 +185,7 @@ export const SelectDropdown = <V extends string = string>({
                 {isDisabled && opt.disabledReason && (
                   <span className={styles.optionDisabledNote}>{opt.disabledReason}</span>
                 )}
+                {opt.badge && <span className={styles.optionBadge}>{opt.badge}</span>}
               </Button>
             )
             return (

@@ -10,14 +10,13 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import { getVatRate } from '@/lib/print-providers/printspace/pricing'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 import { sanitizeLine } from '@/utils/sanitizeLine'
-
-import { getTaxEstimate } from './getTaxEstimate'
 
 export type ShippingAddress = {
   fullName: string
@@ -283,23 +282,14 @@ export async function createPaymentIntent(
   const preTaxCents = quote.subtotalCents
   const currency = quote.currency.toLowerCase()
 
-  // Stripe Tax is the source of truth for the rate + amount — overrides
-  // whatever the provider's adapter computed (TPS guesses 21% flat, but
-  // Stripe knows the destination's actual rate). It picks the correct
-  // EU rate by destination and handles OSS reporting downstream via the
-  // TaxTransaction we create in the payment_intent.succeeded webhook.
-  const taxRes = await getTaxEstimate({
-    countryCode: address.countryCode,
-    postalCode: address.postalCode,
-    preTaxCents,
-    currency,
-  })
-  if (!taxRes.ok) {
-    return { ok: false, error: `Could not calculate tax: ${taxRes.error}` }
-  }
-  const customerVatCents = taxRes.data.taxCents
-  const taxCalculationId = taxRes.data.calculationId
-  const totalCents = taxRes.data.totalCents
+  // VAT is computed from the same local rate table the address-step
+  // quote uses (getVatRate in printspace/pricing.ts), so the buyer sees
+  // the same number on both surfaces. Accountant input pending before
+  // we model OSS thresholds, postal-aware Canary/Ceuta/Melilla, or
+  // B2B reverse-charge — for now this is a flat per-country rate.
+  const vatRate = getVatRate(address.countryCode)
+  const customerVatCents = Math.round(preTaxCents * vatRate)
+  const totalCents = preTaxCents + customerVatCents
 
   // Final sanity check — anything above the ceiling is treated as a
   // pricing-tamper signal and refused. Logged so we can investigate.
@@ -316,10 +306,9 @@ export async function createPaymentIntent(
 
   // Idempotency key guards against double-submits. Client-side we already
   // disable the button while `submitting` is true; this is the server-side
-  // belt-and-braces. taxCalculationId is included because each call to
-  // Stripe Tax produces a fresh id — on retry we want a new key (and a
-  // new PaymentIntent linked to the new tax calc) rather than colliding
-  // with the cached params from the previous attempt.
+  // belt-and-braces. Same (artwork, config, address, total) reuses the
+  // cached PaymentIntent — proper idempotency, so accidental double-clicks
+  // don't create duplicate authorizations.
   const idempotencyKey = crypto
     .createHash('sha256')
     .update(
@@ -330,7 +319,6 @@ export async function createPaymentIntent(
         address,
         totalCents,
         currency,
-        taxCalculationId,
       }),
     )
     .digest('hex')
@@ -378,10 +366,6 @@ export async function createPaymentIntent(
           artistCents: String(artistCents),
           galleryCents: String(galleryCents),
           customerVatCents: String(customerVatCents),
-          // Links this payment to a Stripe Tax calculation; the webhook
-          // materialises it into a TaxTransaction once payment succeeds
-          // so the sale shows up in OSS reports.
-          taxCalculationId,
         },
       },
       { idempotencyKey },
