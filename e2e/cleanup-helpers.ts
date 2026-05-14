@@ -1,13 +1,17 @@
+import { Prisma } from '@/generated/prisma/client'
 import prisma from '@/lib/prisma'
 
 /**
  * Write-helpers used ONLY by full-flow e2e tests that exercise the
- * buyer + admin pipelines end-to-end. Keep them out of `db-helpers`
+ * buyer + admin pipelines end-to-end, or by specs that seed a known
+ * fixture state to make their assertion meaningful (see
+ * print-restrictions-printspace.spec). Keep them out of `db-helpers`
  * to preserve that module's read-only contract.
  *
- * Every helper here is idempotent and best-effort — partial failures
- * are logged but never thrown, so test cleanup can run in `finally`
- * blocks without masking the real assertion failure.
+ * Cleanup helpers (delete*, restore*) are best-effort — they log but
+ * never throw so they can run in `finally` blocks without masking the
+ * real assertion failure. Seed helpers (set*) throw, because a test
+ * that can't establish its precondition shouldn't proceed.
  */
 
 const POLL_INTERVAL_MS = 500
@@ -52,6 +56,54 @@ export async function deletePrintOrderById(orderId: string): Promise<void> {
   } catch (err) {
     console.warn(
       `[e2e cleanup] delete by id=${orderId} failed:`,
+      err instanceof Error ? err.message : err,
+    )
+  }
+}
+
+/**
+ * Seed `Artwork.printOptions` to a known value for a single spec run.
+ * Returns the previous value so the test can put it back in `finally`.
+ * Throws if the artwork doesn't exist — the spec depends on this state.
+ */
+export async function setArtworkPrintOptions(
+  slug: string,
+  value: Prisma.InputJsonValue,
+): Promise<Prisma.JsonValue> {
+  const prev = await prisma.artwork.findUnique({
+    where: { slug },
+    select: { printOptions: true },
+  })
+  if (!prev) {
+    throw new Error(`Artwork "${slug}" not found — can't seed printOptions`)
+  }
+  await prisma.artwork.update({
+    where: { slug },
+    data: { printOptions: value },
+  })
+  return prev.printOptions
+}
+
+/**
+ * Best-effort restore of `Artwork.printOptions` to a previously captured
+ * value. Maps JS `null` → `Prisma.DbNull` so a DB NULL round-trips
+ * correctly. Logs and swallows errors so it's safe in `finally`.
+ */
+export async function restoreArtworkPrintOptions(
+  slug: string,
+  previous: Prisma.JsonValue,
+): Promise<void> {
+  try {
+    await prisma.artwork.update({
+      where: { slug },
+      data: {
+        printOptions:
+          previous === null ? Prisma.DbNull : (previous as Prisma.InputJsonValue),
+      },
+    })
+  } catch (err) {
+    console.warn(
+      `[e2e cleanup] restore printOptions for slug=${slug} failed:`,
       err instanceof Error ? err.message : err,
     )
   }
