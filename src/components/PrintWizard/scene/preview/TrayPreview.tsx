@@ -2,6 +2,7 @@ import type { Material, Texture } from 'three'
 
 import Frame from '@/components/scene/spaces/objects/Frame/Frame'
 
+import { PaperSheet } from './parts/PaperSheet'
 import { Plinth } from './parts/Plinth'
 import { PrintPlane } from './parts/PrintPlane'
 
@@ -9,6 +10,9 @@ interface TrayPreviewProps {
   texture: Texture
   printWidthM: number
   printHeightM: number
+  /** White paper border around the image, in metres. The paper sheet
+   *  bonded to Dibond is (print + 2 × border) on each axis. */
+  paperBorderM: number
   mouldingWidthM: number
   mouldingDepthM: number
   frameMaterial: Material
@@ -52,30 +56,36 @@ export const TrayPreview = ({
   texture,
   printWidthM,
   printHeightM,
+  paperBorderM,
   mouldingWidthM,
   mouldingDepthM,
   frameMaterial,
   paperRoughness,
 }: TrayPreviewProps) => {
-  // Inner cavity dimensions — print plus the slot on each side.
-  const cavityWidthM = printWidthM + TRAY_SLOT_M * 2
-  const cavityHeightM = printHeightM + TRAY_SLOT_M * 2
+  // Paper sheet bonded to Dibond — image + uniform paper border.
+  const paperWidthM = printWidthM + paperBorderM * 2
+  const paperHeightM = printHeightM + paperBorderM * 2
 
-  // Plinth slightly smaller than the print so its side walls
-  // hide behind the print head-on but contribute depth at angle.
-  const plinthWidthM = printWidthM - PLINTH_INSET_M * 2
-  const plinthHeightM = printHeightM - PLINTH_INSET_M * 2
+  // Inner cavity dimensions — paper sheet plus the slot on each side.
+  // (Slot sits between the paper, not the image, and the moulding.)
+  const cavityWidthM = paperWidthM + TRAY_SLOT_M * 2
+  const cavityHeightM = paperHeightM + TRAY_SLOT_M * 2
+
+  // Plinth slightly smaller than the paper sheet so its side walls
+  // hide behind the paper head-on but contribute depth at angle.
+  const plinthWidthM = paperWidthM - PLINTH_INSET_M * 2
+  const plinthHeightM = paperHeightM - PLINTH_INSET_M * 2
 
   return (
     <>
       {/* Tray floor — moulding-coloured plate filling the cavity
-          behind the print. Visible through the slot. */}
+          behind the paper sheet. Visible through the slot. */}
       <mesh position={[0, 0, TRAY_FLOOR_Z]}>
         <planeGeometry args={[cavityWidthM, cavityHeightM]} />
         <primitive object={frameMaterial} attach="material" />
       </mesh>
 
-      {/* Plinth — dark support block bridging floor to print. */}
+      {/* Plinth — dark support block bridging floor to paper sheet. */}
       <Plinth
         widthM={plinthWidthM}
         heightM={plinthHeightM}
@@ -84,9 +94,17 @@ export const TrayPreview = ({
         frontZ={PLINTH_FRONT_Z}
       />
 
-      {/* Print pushed forward to sit just behind the moulding's
-          front face. */}
+      {/* Paper sheet + image pushed forward to sit just behind the
+          moulding's front face. The paper sits flush; the image is
+          centred on it with the paper border showing around it. */}
       <group position={[0, 0, PRINT_FORWARD_Z]}>
+        {paperBorderM > 0 && (
+          <PaperSheet
+            widthM={paperWidthM}
+            heightM={paperHeightM}
+            roughness={paperRoughness}
+          />
+        )}
         <PrintPlane
           widthM={printWidthM}
           heightM={printHeightM}
@@ -96,7 +114,7 @@ export const TrayPreview = ({
       </group>
 
       {/* Moulding wrapping the cavity. Inner opening is wider than
-          the print by TRAY_SLOT_M per side so the slot stays
+          the paper sheet by TRAY_SLOT_M per side so the slot stays
           visible. Front face anchored at FRAME_FRONT_Z; the deeper
           tray depth extends backward (occluded by the wall plane). */}
       <group position={[0, 0, FRAME_FRONT_Z - mouldingDepthM]}>

@@ -15,6 +15,7 @@ import {
 
 import { BoxPreview } from './preview/BoxPreview'
 import { FloatingPreview } from './preview/FloatingPreview'
+import { PaperSheet } from './preview/parts/PaperSheet'
 import { PrintPlane } from './preview/parts/PrintPlane'
 import { StandardPreview } from './preview/StandardPreview'
 import { TrayPreview } from './preview/TrayPreview'
@@ -102,10 +103,21 @@ export const PreviewArtwork = ({
   const widthM = (displayIsLandscape ? effectiveSize.heightCm : effectiveSize.widthCm) / 100
   const heightM = (displayIsLandscape ? effectiveSize.widthCm : effectiveSize.heightCm) / 100
 
-  // Unframed: just the print + optional paper border. No frame chrome.
+  // Unframed: print + optional paper border. No frame chrome. The
+  // paper sheet sits behind the print, extending outward by the
+  // border on every side — same convention as the framed previews.
   if (!framed) {
+    const paperWidthM = widthM + paperBorderM * 2
+    const paperHeightM = heightM + paperBorderM * 2
     return (
       <group position={[0, 0, ARTWORK_Z]}>
+        {paperBorderM > 0 && (
+          <PaperSheet
+            widthM={paperWidthM}
+            heightM={paperHeightM}
+            roughness={paperRoughness}
+          />
+        )}
         <PrintPlane
           widthM={widthM}
           heightM={heightM}
@@ -139,6 +151,7 @@ export const PreviewArtwork = ({
           texture={texture}
           printWidthM={widthM}
           printHeightM={heightM}
+          paperBorderM={paperBorderM}
           mouldingWidthM={mouldingWidthM}
           mouldingDepthM={mouldingDepthM}
           frameMaterial={frameMaterial}

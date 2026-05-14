@@ -69,7 +69,7 @@ export function buildPrintspaceCatalog(_input: BuildInput): Catalog {
     standard: { mouldingWidthCm: 2.0, mouldingDepthCm: 2.2 },
     box: { mouldingWidthCm: 2.0, mouldingDepthCm: 5.5 },
     floating: { mouldingWidthCm: 1.4, mouldingDepthCm: 3.2 },
-    tray: { mouldingWidthCm: 2.0, mouldingDepthCm: 5.0 },
+    tray: { mouldingWidthCm: 1.5, mouldingDepthCm: 5.0 },
   }
   const frameTypeOptions: Option[] = TPS_FRAME_TYPES.map((t) => ({
     id: t.id,

@@ -102,7 +102,8 @@ export function longEdgeOf(size: PrintSize): number {
 }
 
 export function formatPrintSize(heightCm: number, widthCm: number): string {
-  const h = Math.round(heightCm)
-  const w = Math.round(widthCm)
-  return `${h} × ${w} cm`
+  // Match the size-input format exactly (0.1 cm step → always one
+  // decimal, including trailing .0 on whole-cm values), so the
+  // slider min/max labels read identically to the input fields.
+  return `${heightCm.toFixed(1)} × ${widthCm.toFixed(1)} cm`
 }
