@@ -449,12 +449,14 @@ export const TPS_SUPPORTED_COUNTRIES: string[] = [
 
 export const TPS_GALLERY_MARKUP_RATE = 0.45
 
-// Per-destination standard VAT rate. Approximate values (mid-2025);
-// the buyer's checkout preview uses these. The PaymentIntent step
-// overrides with Stripe Tax's authoritative rate, so any inaccuracy
-// here only affects the preview, never what the buyer is charged.
+// Per-destination standard VAT rate. Single source of truth for both
+// the checkout preview AND the PaymentIntent total — what's here is
+// what the buyer is charged. Keep in sync with the official EU rates
+// list (taxation-customs.europa.eu / TEDB); values below are 2025.
 //
-// Pre-launch accountant review pending — see project_vat_todo memory.
+// Pre-launch accountant review pending: OSS thresholds, postal-aware
+// Canary/Ceuta/Melilla zero-rating, B2B reverse-charge — see
+// project_vat_todo memory.
 const TPS_VAT_RATES: Record<string, number> = {
   AT: 0.2,
   BE: 0.21,
