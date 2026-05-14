@@ -3,6 +3,7 @@ import type { Material, Texture } from 'three'
 import Frame from '@/components/scene/spaces/objects/Frame/Frame'
 
 import { Backboard } from './parts/Backboard'
+import { PaperSheet } from './parts/PaperSheet'
 import { Plinth } from './parts/Plinth'
 import { PrintPlane } from './parts/PrintPlane'
 
@@ -10,16 +11,19 @@ interface FloatingPreviewProps {
   texture: Texture
   printWidthM: number
   printHeightM: number
+  /** White paper border around the image, in metres. The paper sheet
+   *  bonded to Dibond is (print + 2 × border) on each axis. */
+  paperBorderM: number
   mouldingWidthM: number
   mouldingDepthM: number
   frameMaterial: Material
   paperRoughness: number
 }
 
-// Visible coloured backboard border, in metres. TPS exposes this as a
-// per-side configurable "Mount Board Size" for Floating frames; for
-// now we use a sane default so the preview reads correctly. Wire it
-// up to a wizard dimension when we add that input.
+// Visible coloured backboard border around the paper sheet, in metres.
+// TPS exposes this as a per-side configurable "Mount Board Size" for
+// Floating frames; for now we use a sane default so the preview reads
+// correctly. Wire it up to a wizard dimension when we add that input.
 const DEFAULT_BACKBOARD_BORDER_M = 0.02
 // Always white. TPS's schematic documents that foamex comes in
 // white or black, but their actual order flow only exposes white,
@@ -47,20 +51,26 @@ export const FloatingPreview = ({
   texture,
   printWidthM,
   printHeightM,
+  paperBorderM,
   mouldingWidthM,
   mouldingDepthM,
   frameMaterial,
   paperRoughness,
 }: FloatingPreviewProps) => {
-  const backboardBorderM = DEFAULT_BACKBOARD_BORDER_M
-  const backboardWidthM = printWidthM + backboardBorderM * 2
-  const backboardHeightM = printHeightM + backboardBorderM * 2
+  // Paper sheet bonded to Dibond — image + uniform paper border.
+  const paperWidthM = printWidthM + paperBorderM * 2
+  const paperHeightM = printHeightM + paperBorderM * 2
 
-  // Plinth slightly smaller than the print so any sliver of its side
-  // wall is hidden behind the print from a head-on camera.
+  // Backboard extends past the paper sheet by its own border.
+  const backboardBorderM = DEFAULT_BACKBOARD_BORDER_M
+  const backboardWidthM = paperWidthM + backboardBorderM * 2
+  const backboardHeightM = paperHeightM + backboardBorderM * 2
+
+  // Plinth slightly smaller than the paper sheet so any sliver of its
+  // side wall is hidden behind the paper from a head-on camera.
   const plinthInsetM = 0.002
-  const plinthWidthM = printWidthM - plinthInsetM * 2
-  const plinthHeightM = printHeightM - plinthInsetM * 2
+  const plinthWidthM = paperWidthM - plinthInsetM * 2
+  const plinthHeightM = paperHeightM - plinthInsetM * 2
 
   return (
     <>
@@ -78,6 +88,10 @@ export const FloatingPreview = ({
         colorHex={DEFAULT_BACKBOARD_HEX}
         frontZ={-0.0015}
       />
+
+      {paperBorderM > 0 && (
+        <PaperSheet widthM={paperWidthM} heightM={paperHeightM} roughness={paperRoughness} />
+      )}
 
       <PrintPlane
         widthM={printWidthM}

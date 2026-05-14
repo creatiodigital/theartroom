@@ -137,6 +137,7 @@ export const PreviewArtwork = ({
           texture={texture}
           printWidthM={widthM}
           printHeightM={heightM}
+          paperBorderM={paperBorderM}
           mouldingWidthM={mouldingWidthM}
           mouldingDepthM={mouldingDepthM}
           frameMaterial={frameMaterial}

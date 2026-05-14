@@ -142,16 +142,28 @@ export const PrintWizard = ({
     }
   }, [hasSeed, artwork.slug])
 
-  // Quality-reassurance modal. Shown on every wizard entry — the
-  // value-confidence framing (COA, signature, limited-edition note)
-  // is important enough to surface to the buyer every time, not just
-  // on first visit. Initialise closed on SSR to avoid a hydration
-  // mismatch; open in an effect on mount.
+  // Quality-reassurance modal. Shown once per artwork — once the buyer
+  // dismisses it, the localStorage flag suppresses it on subsequent
+  // visits to the same artwork's wizard. Initialise closed on SSR to
+  // avoid a hydration mismatch; open in an effect on mount.
+  const introSeenKey = `print-intro-seen:${artwork.slug}`
   const [introOpen, setIntroOpen] = useState(false)
   useEffect(() => {
+    try {
+      if (localStorage.getItem(introSeenKey) === 'true') return
+    } catch {
+      // localStorage unavailable — fall through and just show it.
+    }
     setIntroOpen(true)
-  }, [artwork.slug])
-  const dismissIntro = () => setIntroOpen(false)
+  }, [introSeenKey])
+  const dismissIntro = () => {
+    setIntroOpen(false)
+    try {
+      localStorage.setItem(introSeenKey, 'true')
+    } catch {
+      // Non-fatal — buyer will just see it again next time.
+    }
+  }
 
   // Once the client-side image measurement lands, snap orientation to
   // match — unless the user has touched it (URL seed or manual toggle).
