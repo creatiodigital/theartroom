@@ -331,13 +331,7 @@ export const PrintWizard = ({
           restrictions={restrictions}
           recommendations={recommendations}
         />
-        <Scene
-          imageUrl={artwork.imageUrl}
-          catalog={catalog}
-          config={config}
-          imageAspectRatio={aspectRatio}
-          configReady
-        />
+        <Scene imageUrl={artwork.imageUrl} catalog={catalog} config={config} configReady />
         <SummaryPanel
           artwork={artwork}
           catalog={catalog}
