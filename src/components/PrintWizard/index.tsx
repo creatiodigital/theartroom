@@ -236,11 +236,23 @@ export const PrintWizard = ({
   // between "€X" → "…" → "€Y" as the buyer drags a slider.
   const [quote, setQuote] = useState<Quote | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
+  // Debounce the config so rapid slider/option changes collapse into a
+  // single quote request once the buyer stops interacting. Without this,
+  // every keystroke fires a server-action POST and Vercel's per-request
+  // latency means each in-flight request gets cancelled by the next
+  // config change — the displayed price ends up stuck for seconds (or
+  // until the wizard remounts) waiting for one to actually resolve.
+  const [debouncedConfig, setDebouncedConfig] = useState(config)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedConfig(config), 200)
+    return () => clearTimeout(t)
+  }, [config])
+
   useEffect(() => {
     let cancelled = false
     setQuoteLoading(true)
     getProviderQuote(catalog.providerId, {
-      config,
+      config: debouncedConfig,
       country,
       artistPriceCents: artwork.printPriceCents,
     })
@@ -257,7 +269,7 @@ export const PrintWizard = ({
     return () => {
       cancelled = true
     }
-  }, [catalog.providerId, config, country, artwork.printPriceCents])
+  }, [catalog.providerId, debouncedConfig, country, artwork.printPriceCents])
 
   const handleAddToCart = () => {
     // Stash everything downstream needs so checkout doesn't have to
