@@ -74,7 +74,7 @@ function renderDimensionValue(
     // "this dimension exists, you chose none" rather than the row
     // vanishing. 0 (or unset) renders as "N/A".
     const cm = getEffectiveBorderCm(config, dim.id)
-    if (cm <= 0) return 'N/A'
+    if (cm <= 0) return '—'
     return `${roundCm(cm)} cm`
   }
   // Orientation — already encoded in the size row's swap, would just
