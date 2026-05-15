@@ -19,6 +19,7 @@ import {
   type WizardConfig,
   buildAvailability,
   buildInitialConfig,
+  isOptionVisible,
   summarizeConfig,
 } from '@/lib/print-providers'
 import { getPrintLongEdgeBounds } from '@/lib/print-providers/tpl'
@@ -191,6 +192,24 @@ export const PrintWizard = ({
       let nextBorders = prev.borders
       if (patch.windowMount === 'none' && prev.borders?.windowMountSize) {
         nextBorders = { ...prev.borders, windowMountSize: { allCm: 0 } }
+      }
+      // Re-validate enum selections whose option-level visibleWhen
+      // depends on a value that just changed (e.g. moulding options
+      // cascade on frameType). Without this, switching the parent
+      // leaves a stale child id whose option is filtered out of the
+      // dropdown but still rendered in the summary panel.
+      const probe: WizardConfig = { ...prev, values: nextValues, borders: nextBorders }
+      for (const dim of catalog.dimensions) {
+        if (dim.kind !== 'enum') continue
+        const current = nextValues[dim.id]
+        if (!current) continue
+        const opt = dim.options.find((o) => o.id === current)
+        if (opt && isOptionVisible(opt, probe)) continue
+        const replacement =
+          dim.options.find((o) => o.isDefault && isOptionVisible(o, probe)) ??
+          dim.options.find((o) => isOptionVisible(o, probe))
+        if (replacement) nextValues[dim.id] = replacement.id
+        else delete nextValues[dim.id]
       }
       return { ...prev, values: nextValues, borders: nextBorders }
     })
