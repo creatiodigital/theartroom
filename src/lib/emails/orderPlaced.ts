@@ -43,7 +43,7 @@ const EU_ISO_CODES = new Set([
 
 /**
  * Rough end-to-end delivery window by destination (production + shipping
- * on theprintspace's Standard tier). Indicative, not guaranteed —
+ * on the print lab's Standard tier). Indicative, not guaranteed —
  * framed orders can push the upper bound.
  */
 function estimateDeliveryWindow(countryCode: string): { minDays: number; maxDays: number } {

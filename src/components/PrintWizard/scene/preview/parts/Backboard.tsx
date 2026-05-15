@@ -8,7 +8,7 @@ interface BackboardProps {
 /**
  * Visible coloured backboard for Floating frames — the Dibond-mounted
  * print sits proud of this on a plinth, so the backboard's colour
- * shows as a border on all four sides. White or black per TPS.
+ * shows as a border on all four sides. White or black per TPL.
  */
 export const Backboard = ({ widthM, heightM, colorHex, z = -0.005 }: BackboardProps) => (
   <mesh position={[0, 0, z]}>

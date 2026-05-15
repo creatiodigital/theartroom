@@ -1,11 +1,11 @@
 /**
- * The Print Space catalog data. Built up incrementally as the user
+ * The Print Lab catalog data. Built up incrementally as the user
  * supplies each section's vocabulary. Only the dimensions filled in
  * here render in the wizard — anything not listed simply doesn't exist
- * for TPS yet.
+ * for TPL yet.
  *
- * Names match TPS's exact UI wording so the admin can copy/paste them
- * straight into TPS's order portal during manual fulfillment.
+ * Names match TPL's exact UI wording so the admin can copy/paste them
+ * straight into TPL's order portal during manual fulfillment.
  */
 
 // ── Print Type (top-level cascade) ───────────────────────────
@@ -13,15 +13,15 @@
 // Two main categories. Each has its own paper list — the buyer picks
 // the print type first, then sees only that type's papers.
 
-export type TpsPrintTypeId = 'giclee' | 'ctype'
+export type TplPrintTypeId = 'giclee' | 'ctype'
 
-export type TpsPrintType = {
-  id: TpsPrintTypeId
+export type TplPrintType = {
+  id: TplPrintTypeId
   label: string
   description: string
 }
 
-export const TPS_PRINT_TYPES: TpsPrintType[] = [
+export const TPL_PRINT_TYPES: TplPrintType[] = [
   {
     id: 'giclee',
     label: 'Giclée',
@@ -38,7 +38,7 @@ export const TPS_PRINT_TYPES: TpsPrintType[] = [
 
 // ── Papers (gated by print type) ─────────────────────────────
 
-export type TpsPaperId =
+export type TplPaperId =
   // Giclée papers
   | 'hahnemuhle-german-etching'
   | 'hahnemuhle-pearl'
@@ -51,17 +51,17 @@ export type TpsPaperId =
   | 'fuji-matt'
   | 'fuji-gloss'
 
-export type TpsPaper = {
-  id: TpsPaperId
+export type TplPaper = {
+  id: TplPaperId
   label: string
   description: string
   /** Which print-type this paper belongs to. Drives the cascading filter. */
-  printType: TpsPrintTypeId
+  printType: TplPrintTypeId
   /** Paper roughness for the 3D preview (0 = mirror-glossy, 1 = full matte). */
   paperRoughness: number
 }
 
-export const TPS_PAPERS: TpsPaper[] = [
+export const TPL_PAPERS: TplPaper[] = [
   // Giclée — 7 options
   {
     id: 'hahnemuhle-german-etching',
@@ -141,21 +141,21 @@ export const TPS_PAPERS: TpsPaper[] = [
 
 // ── Format / Framing ─────────────────────────────────────────
 //
-// TPS calls this "Mounting / Framing" but we deliberately do NOT
+// TPL calls this "Mounting / Framing" but we deliberately do NOT
 // offer the Mounting variant — only Print Only and Framing. When
 // Framing is picked, downstream dimensions (Frame Type and its
 // dependent material/colour options) become visible via
 // `visibleWhen`.
-export type TpsFormatId = 'print-only' | 'framing'
+export type TplFormatId = 'print-only' | 'framing'
 
-export type TpsFormat = {
-  id: TpsFormatId
+export type TplFormat = {
+  id: TplFormatId
   label: string
   description: string
   framed: boolean
 }
 
-export const TPS_FORMATS: TpsFormat[] = [
+export const TPL_FORMATS: TplFormat[] = [
   {
     id: 'print-only',
     label: 'Print Only',
@@ -167,20 +167,20 @@ export const TPS_FORMATS: TpsFormat[] = [
     id: 'framing',
     label: 'Framing',
     description:
-      'Print delivered ready to hang in a TPS frame. Pick the frame type, material and finish in the next steps.',
+      'Print delivered ready to hang in a TPL frame. Pick the frame type, material and finish in the next steps.',
     framed: true,
   },
 ]
 
 // ── Frame Type (only when Format = Framing) ──────────────────
 //
-// TPS offers four frame types. All four are wired: Standard, Box,
+// TPL offers four frame types. All four are wired: Standard, Box,
 // Floating, Tray. Tray is the only one without glass — open-faced,
 // Dibond-mounted print sits slightly recessed inside the moulding.
-export type TpsFrameTypeId = 'standard' | 'box' | 'floating' | 'tray'
+export type TplFrameTypeId = 'standard' | 'box' | 'floating' | 'tray'
 
-export type TpsFrameType = {
-  id: TpsFrameTypeId
+export type TplFrameType = {
+  id: TplFrameTypeId
   label: string
   description: string
   /** Full-width helper illustration shown at the top of the option's
@@ -188,7 +188,7 @@ export type TpsFrameType = {
   helperImageUrl?: string
 }
 
-export const TPS_FRAME_TYPES: TpsFrameType[] = [
+export const TPL_FRAME_TYPES: TplFrameType[] = [
   {
     id: 'standard',
     label: 'Standard Frame',
@@ -223,7 +223,7 @@ export const TPS_FRAME_TYPES: TpsFrameType[] = [
 // Standard Frame has 9 mouldings = 3 colours × 3 profiles each, with
 // minor variations (Oak swaps "Square" for "Thin Rounded"). Other
 // frame types' mouldings get added when supplied.
-export type TpsMouldingId =
+export type TplMouldingId =
   // Standard Frame — 22 options
   | 'std-white-thin'
   | 'std-white-wide'
@@ -261,24 +261,24 @@ export type TpsMouldingId =
   | 'flt-black-square'
   | 'flt-oak-thin'
   | 'flt-oak-thin-rounded'
-  // Tray Frame — 4 options (TPS only sells one profile, varying colour)
+  // Tray Frame — 4 options (TPL only sells one profile, varying colour)
   | 'tray-beech'
   | 'tray-white'
   | 'tray-black'
   | 'tray-walnut'
 
-export type TpsMoulding = {
-  id: TpsMouldingId
+export type TplMoulding = {
+  id: TplMouldingId
   label: string
   /** Which frame type this moulding belongs to — drives the cascade. */
-  frameType: TpsFrameTypeId
+  frameType: TplFrameTypeId
   /** Hex used for the 3D preview's frame material. */
   hex: string
   /** Material roughness for the 3D preview (0 = mirror, 1 = matte). */
   roughness: number
 }
 
-export const TPS_MOULDINGS: TpsMoulding[] = [
+export const TPL_MOULDINGS: TplMoulding[] = [
   // White
   {
     id: 'std-white-thin',
@@ -524,7 +524,7 @@ export const TPS_MOULDINGS: TpsMoulding[] = [
     roughness: 0.7,
   },
 
-  // Tray Frame mouldings (4 — TPS only sells the one profile per colour)
+  // Tray Frame mouldings (4 — TPL only sells the one profile per colour)
   {
     id: 'tray-beech',
     label: 'Beech',
@@ -559,15 +559,15 @@ export const TPS_MOULDINGS: TpsMoulding[] = [
 //
 // Same three glass options across every frame type — no cascading
 // on frame type. Visibility is gated only by the framing format.
-export type TpsGlassId = 'none' | 'standard' | 'anti-reflective'
+export type TplGlassId = 'none' | 'standard' | 'anti-reflective'
 
-export type TpsGlass = {
-  id: TpsGlassId
+export type TplGlass = {
+  id: TplGlassId
   label: string
   description: string
 }
 
-export const TPS_GLASS_OPTIONS: TpsGlass[] = [
+export const TPL_GLASS_OPTIONS: TplGlass[] = [
   {
     id: 'none',
     label: 'None',
@@ -591,30 +591,30 @@ export const TPS_GLASS_OPTIONS: TpsGlass[] = [
 // ── Mount Board Size bounds ─────────────────────────────────
 //
 // Width of the passepartout (mat) on every side, uniform on all
-// four sides. TPS's slider is discrete: increments of 3 mm from
+// four sides. TPL's slider is discrete: increments of 3 mm from
 // 0 mm up to 72 mm (= 7.2 cm). Step values: 0, 3, 6, 9, …, 72 mm.
 // We model in cm internally for consistency with the rest of the
-// catalog; 0.3 cm step + 7.2 cm max matches TPS's allowed values.
-export const TPS_MOUNT_BOARD_BOUNDS = {
+// catalog; 0.3 cm step + 7.2 cm max matches TPL's allowed values.
+export const TPL_MOUNT_BOARD_BOUNDS = {
   minCm: 0,
-  /** Real TPS cap: 72 mm. */
+  /** Real TPL cap: 72 mm. */
   maxCm: 7.2,
   /** Discrete 3 mm steps, expressed as cm. */
   stepCm: 0.3,
-  /** Default: 0 (no mat), matching TPS's default 0-0 state. */
+  /** Default: 0 (no mat), matching TPL's default 0-0 state. */
   defaultCm: 0,
 }
 
 // ── Window Mount / Passepartout (only when Format = Framing) ─
 //
-// TPS calls the passepartout "Window Mount". Seven options including
+// TPL calls the passepartout "Window Mount". Seven options including
 // 'none' (which means no mat between the print and the frame).
 // `hex` feeds the mat colour in the 3D preview; `roughness` keeps it
 // matte-board-like. When buyer picks anything other than 'none', a
 // follow-up "Mount Board Size" input controls the mat width — this
 // is a TODO follow-up; for now the dimension is colour-only and the
 // preview will use a small default width when a colour is chosen.
-export type TpsWindowMountId =
+export type TplWindowMountId =
   | 'none'
   | 'off-white'
   | 'bright-white'
@@ -623,8 +623,8 @@ export type TpsWindowMountId =
   | 'black'
   | 'grey'
 
-export type TpsWindowMount = {
-  id: TpsWindowMountId
+export type TplWindowMount = {
+  id: TplWindowMountId
   label: string
   /** Hex used for the 3D preview's mat layer; ignored when id='none'. */
   hex: string
@@ -632,7 +632,7 @@ export type TpsWindowMount = {
   roughness: number
 }
 
-export const TPS_WINDOW_MOUNTS: TpsWindowMount[] = [
+export const TPL_WINDOW_MOUNTS: TplWindowMount[] = [
   { id: 'none', label: 'None', hex: '#ffffff', roughness: 0.95 },
   { id: 'off-white', label: 'Off White', hex: '#f5f1e6', roughness: 0.95 },
   { id: 'bright-white', label: 'Bright White', hex: '#ffffff', roughness: 0.92 },
@@ -645,15 +645,15 @@ export const TPS_WINDOW_MOUNTS: TpsWindowMount[] = [
 // ── Hanging Option (only when Format = Framing) ──────────────
 //
 // Same four options across every frame type.
-export type TpsHangingId = 'none' | 'd-rings-cord' | 'mirror-plates' | 'strap-hangers'
+export type TplHangingId = 'none' | 'd-rings-cord' | 'mirror-plates' | 'strap-hangers'
 
-export type TpsHanging = {
-  id: TpsHangingId
+export type TplHanging = {
+  id: TplHangingId
   label: string
   description: string
 }
 
-export const TPS_HANGING_OPTIONS: TpsHanging[] = [
+export const TPL_HANGING_OPTIONS: TplHanging[] = [
   {
     id: 'none',
     label: 'None',
@@ -681,12 +681,12 @@ export const TPS_HANGING_OPTIONS: TpsHanging[] = [
 
 // ── Print size ───────────────────────────────────────────────
 //
-// TPS sells custom sizes — buyer picks width OR height, the other
+// TPL sells custom sizes — buyer picks width OR height, the other
 // follows from the artwork's natural aspect ratio (no crop, ever).
-// Bounds correspond roughly to TPS's product range (A4 ≈ 21 cm short
+// Bounds correspond roughly to TPL's product range (A4 ≈ 21 cm short
 // edge → A0 ≈ 119 cm long edge); pick conservative outer limits.
 // `stepCm = 0.1` gives mm precision in the input.
-export const TPS_SIZE_BOUNDS = {
+export const TPL_SIZE_BOUNDS = {
   minCm: 10,
   maxCm: 150,
   stepCm: 0.1,
@@ -697,7 +697,7 @@ export const TPS_SIZE_BOUNDS = {
 // Per-side border in cm. Distinct from passepartout (which is a
 // separate mat). Common artist preference is 0–5 cm; we cap at 10 cm.
 // Integer cm — sub-cm precision isn't meaningful for a paper border.
-export const TPS_BORDER_BOUNDS = {
+export const TPL_BORDER_BOUNDS = {
   minCm: 0,
   maxCm: 10,
   stepCm: 1,
