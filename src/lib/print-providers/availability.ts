@@ -8,12 +8,12 @@
  * picks the right one.
  */
 import type { AvailabilityCheck, Catalog } from './types'
-import { buildPrintspaceAvailability } from './printspace/buildCatalog'
+import { buildTplAvailability } from './tpl/buildCatalog'
 
 export function buildAvailability(catalog: Catalog): AvailabilityCheck {
   switch (catalog.providerId) {
-    case 'printspace':
-      return buildPrintspaceAvailability()
+    case 'tpl':
+      return buildTplAvailability()
     default:
       return () => true
   }

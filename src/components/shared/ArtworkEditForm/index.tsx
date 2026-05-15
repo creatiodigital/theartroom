@@ -16,13 +16,13 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Text } from '@/components/ui/Typography'
 import {
   MIN_DPI,
-  TPS_FRAME_TYPES,
-  TPS_PAPERS,
-  TPS_WINDOW_MOUNTS,
+  TPL_FRAME_TYPES,
+  TPL_PAPERS,
+  TPL_WINDOW_MOUNTS,
   formatPrintSize,
   getPrintMaxSize,
   getPrintMinSize,
-} from '@/lib/print-providers/printspace'
+} from '@/lib/print-providers/tpl'
 import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import {
   MAX_ARTWORK_UPLOAD_SIZE,
@@ -206,9 +206,9 @@ const MAX_SOUND_SIZE = 3 * 1024 * 1024 // 3MB
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024 // 50MB
 
-// TPS accepted image formats. Used to gate the print-sales toggle for
-// legacy uploads (e.g. WebP) where the file can't be sent to TPS.
-const TPS_ACCEPTED_FORMATS: readonly string[] = ['JPEG', 'PNG', 'TIFF']
+// TPL accepted image formats. Used to gate the print-sales toggle for
+// legacy uploads (e.g. WebP) where the file can't be sent to TPL.
+const TPL_ACCEPTED_FORMATS: readonly string[] = ['JPEG', 'PNG', 'TIFF']
 
 function isImageFormatPrintable(format: string | undefined | null): boolean {
   if (!format) return true
@@ -216,10 +216,10 @@ function isImageFormatPrintable(format: string | undefined | null): boolean {
   // Skip the placeholder fallback used when we don't have a real
   // format on hand (e.g. legacy artworks pre-format-tracking).
   if (upper === 'IMAGE') return true
-  return TPS_ACCEPTED_FORMATS.includes(upper)
+  return TPL_ACCEPTED_FORMATS.includes(upper)
 }
 
-function toggleTpsRestrictionId(
+function toggleTplRestrictionId(
   current: PrintRestrictions | null,
   dimensionId: string,
   id: string,
@@ -242,7 +242,7 @@ function toggleTpsRestrictionId(
   return Object.keys(baseAllowed).length === 0 ? null : { allowed: baseAllowed }
 }
 
-function isTpsDimensionChecked(
+function isTplDimensionChecked(
   restrictions: PrintRestrictions | null,
   dimensionId: string,
   id: string,
@@ -252,7 +252,7 @@ function isTpsDimensionChecked(
   return list.includes(id)
 }
 
-type TpsRestrictionGroupProps = {
+type TplRestrictionGroupProps = {
   title: string
   all: Array<{ id: string; label: string }>
   allIds: readonly string[]
@@ -261,17 +261,17 @@ type TpsRestrictionGroupProps = {
   onChange?: (next: PrintRestrictions | null) => void
 }
 
-const TpsRestrictionGroup = ({
+const TplRestrictionGroup = ({
   title,
   all,
   allIds,
   dimensionId,
   restrictions,
   onChange,
-}: TpsRestrictionGroupProps) => {
+}: TplRestrictionGroupProps) => {
   const handleToggle = (id: string) => {
     if (!onChange) return
-    onChange(toggleTpsRestrictionId(restrictions, dimensionId, id, allIds))
+    onChange(toggleTplRestrictionId(restrictions, dimensionId, id, allIds))
   }
   return (
     <div className={styles.printRestrictionGroup}>
@@ -280,7 +280,7 @@ const TpsRestrictionGroup = ({
         {all.map((item) => (
           <Checkbox
             key={item.id}
-            checked={isTpsDimensionChecked(restrictions, dimensionId, item.id)}
+            checked={isTplDimensionChecked(restrictions, dimensionId, item.id)}
             onChange={() => handleToggle(item.id)}
             label={item.label}
           />
@@ -403,14 +403,14 @@ export const ArtworkEditForm = ({
   // Server meta takes priority over client-detected meta
   const imageMeta = serverMeta ?? clientMeta
 
-  // TPS supports custom sizes (aspect-locked), so eligibility is
+  // TPL supports custom sizes (aspect-locked), so eligibility is
   // sample-based: walk a series of long-edge values, find any that
   // hit 300 DPI. If at least one passes, the artist can sell prints.
   const printMinSize = getPrintMinSize(imageMeta)
   const printEligible = printMinSize !== null
   const printMaxSize = printEligible ? getPrintMaxSize(imageMeta) : null
 
-  // Format check: TPS accepts JPG/PNG/TIFF. Disables the
+  // Format check: TPL accepts JPG/PNG/TIFF. Disables the
   // "Enable print sales" toggle for legacy uploads (e.g. WebP).
   const printableFormat = isImageFormatPrintable(imageMeta?.format)
 
@@ -899,29 +899,29 @@ export const ArtworkEditForm = ({
               Everything that stays checked remains available to buyers.
             </p>
 
-            <TpsRestrictionGroup
+            <TplRestrictionGroup
               title="Papers"
-              all={TPS_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
+              all={TPL_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
               dimensionId="paper"
               restrictions={formData.printOptions ?? null}
               onChange={onPrintOptionsChange}
-              allIds={TPS_PAPERS.map((p) => p.id)}
+              allIds={TPL_PAPERS.map((p) => p.id)}
             />
-            <TpsRestrictionGroup
+            <TplRestrictionGroup
               title="Frame types"
-              all={TPS_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
+              all={TPL_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
               dimensionId="frameType"
               restrictions={formData.printOptions ?? null}
               onChange={onPrintOptionsChange}
-              allIds={TPS_FRAME_TYPES.map((f) => f.id)}
+              allIds={TPL_FRAME_TYPES.map((f) => f.id)}
             />
-            <TpsRestrictionGroup
+            <TplRestrictionGroup
               title="Mount (Passepartout)"
-              all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
+              all={TPL_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
               dimensionId="windowMount"
               restrictions={formData.printOptions ?? null}
               onChange={onPrintOptionsChange}
-              allIds={TPS_WINDOW_MOUNTS.map((w) => w.id)}
+              allIds={TPL_WINDOW_MOUNTS.map((w) => w.id)}
             />
           </details>
         </div>
@@ -950,8 +950,8 @@ export const ArtworkEditForm = ({
             </p>
 
             <PaperRecommendationGroup
-              papers={TPS_PAPERS.filter((p) =>
-                isTpsDimensionChecked(formData.printOptions ?? null, 'paper', p.id),
+              papers={TPL_PAPERS.filter((p) =>
+                isTplDimensionChecked(formData.printOptions ?? null, 'paper', p.id),
               ).map((p) => ({ id: p.id, label: p.label }))}
               recommendations={formData.printRecommendations ?? null}
               onChange={onPrintRecommendationsChange}

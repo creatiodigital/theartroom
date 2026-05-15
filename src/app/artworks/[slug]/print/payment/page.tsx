@@ -51,7 +51,7 @@ const PaymentPage = async ({ params, searchParams }: PaymentPageProps) => {
         originalHeightPx: artwork.originalHeight,
         printPriceCents: artwork.printPriceCents,
       }}
-      providerId="printspace"
+      providerId="tpl"
       country={country}
     />
   )

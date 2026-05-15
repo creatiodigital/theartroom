@@ -307,32 +307,24 @@ export const PrintCheckout = ({
   }, [handoff, country, quote, artwork.slug])
 
   // Re-quote on every (config, country) change. When `country` is
-  // empty, the server returns only the artwork line — shipping and
+  // empty, the function returns only the artwork line — shipping and
   // tax show "—" in the summary until the buyer picks a destination.
+  // Sync compute, no roundtrip — same pure function the server uses
+  // at payment-intent creation, so the buyer can't tamper.
   useEffect(() => {
     if (!handoff) return
-    let cancelled = false
-    setQuoteLoading(true)
-
-    getProviderQuote(handoff.providerId, {
-      config: handoff.config,
-      country,
-      artistPriceCents: artwork.printPriceCents,
-    })
-      .then((next) => {
-        if (cancelled) return
-        setQuote(next)
-        setQuoteLoading(false)
+    try {
+      const next = getProviderQuote(handoff.providerId, {
+        config: handoff.config,
+        country,
+        artistPriceCents: artwork.printPriceCents,
       })
-      .catch((err) => {
-        if (cancelled) return
-        console.warn('[PrintCheckout] live quote failed:', err)
-        setQuote(null)
-        setQuoteLoading(false)
-      })
-
-    return () => {
-      cancelled = true
+      setQuote(next)
+      setQuoteLoading(false)
+    } catch (err) {
+      console.warn('[PrintCheckout] live quote failed:', err)
+      setQuote(null)
+      setQuoteLoading(false)
     }
   }, [handoff, country, artwork.printPriceCents])
 
@@ -366,7 +358,7 @@ export const PrintCheckout = ({
 
     // Combine the dial-code dropdown choice with the digits the buyer
     // typed. Server gets a single E.164-ish string ("+34 612345678")
-    // it can pass straight to TPS / show in admin orders.
+    // it can pass straight to TPL / show in admin orders.
     const rawPhone = phoneField.trim()
     const phoneCombined = rawPhone && phoneDial ? `+${phoneDial} ${rawPhone}` : rawPhone
     const submitted: AddressForm = {
