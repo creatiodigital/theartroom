@@ -128,9 +128,17 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
   //
   // Tightness does not cause churn here: `flipflops` + `onFallback` turn the
   // oscillation into a hill-climb that settles on the highest step that HOLDS.
+  //
+  // The floor is 0.93 (≈56 fps on 60 Hz) rather than 0.95 (57). 0.95 was too
+  // strict once the scene grew: measured 2026-09-07 on a real 25-artwork show
+  // with bloom, reflections, MSAA and the room environment all on, the average
+  // sits at 57 — exactly ON a 0.95 bound, so a 1 fps wobble would demote a step
+  // and `flipflops` could then pin it there. 0.93 rides out that wobble while
+  // still catching a genuine drop. Eduardo's call: 57 on the heaviest show is
+  // acceptable, so holding resolution through it is the behaviour he wants.
   const performanceBounds = useCallback((refreshRate: number): [number, number] => {
     const cap = refreshRate > 0 ? refreshRate : 60
-    return [cap * 0.95, cap * 0.97]
+    return [cap * 0.93, cap * 0.97]
   }, [])
 
   // Called once PerformanceMonitor has seen `flipflops` oscillations: the machine

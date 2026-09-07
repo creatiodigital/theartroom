@@ -19,6 +19,7 @@ import type { ThreeEvent } from '@react-three/fiber'
 import { Frame } from '@/components/scene/spaces/objects/Frame'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
 import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
+import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 import { Support } from '@/components/scene/spaces/objects/Support'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
@@ -83,7 +84,7 @@ const disposeReducedTexture = (url: string) => {
 
 const configureTexture = (texture: Texture) => {
   texture.colorSpace = SRGBColorSpace
-  texture.anisotropy = 4
+  texture.anisotropy = MAX_ANISOTROPY
   texture.minFilter = LinearMipmapLinearFilter
   texture.generateMipmaps = true
 }

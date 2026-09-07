@@ -4,7 +4,7 @@ import { Mesh, BufferGeometry, DoubleSide, Vector3, SpotLight, MeshStandardMater
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import type { RootState } from '@/redux/store'
-import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
+import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 
@@ -24,7 +24,25 @@ const DEFAULT_LAMP_INTENSITY = 4.0
  */
 const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
   // Count comes from the GLB unless a space deliberately overrides it.
-  const resolvedCount = count ?? countNodes(nodes, 'roundLampBody')
+  // Which lamps to render, BY NODE INDEX — never `0..count-1`.
+  //
+  // A GLB's numbering is not guaranteed contiguous: deleting a fixture in Blender
+  // leaves a hole, and Madrid's round lamps are 0,2,4,5,7,9,10,12,14,15,16. Counting
+  // them gives 11 and looping 0..10 renders only the seven that happen to fall in
+  // that range — 12,14,15,16 silently never appear, while the ceiling's baked
+  // texture still shows their silhouettes. `isRoomActive` has the same requirement:
+  // its predicate is checked against real node indices, so a loop counter would also
+  // mis-cull a gapped multi-room space.
+  //
+  // `getNodeIndices` is gap-tolerant by design and `RecessedLamp` already used it —
+  // this brings RoundLamp in line. The `count` prop stays as an explicit override.
+  const lampIndices = useMemo(
+    () =>
+      count !== undefined
+        ? Array.from({ length: count }, (_, i) => i)
+        : getNodeIndices(nodes, 'roundLampBody'),
+    [count, nodes],
+  )
   // Lights in the room the visitor is not in are switched off — three never
   // culls lights itself, so an unseen lamp costs a full frame's shading.
   const isRoomActive = useActiveRoom(nodes, 'roundLampBody')
@@ -67,20 +85,42 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
   )
   useDisposable(bulbMaterial)
 
+  // The bulb as it looks in a room whose lights are OFF.
+  //
+  // `useActiveRoom` unmounts the far room's spotlights, but the lamp meshes keep rendering,
+  // so without this the unlit room sits dark with its bulbs still emitting — and since bloom
+  // came on, glowing hard. It is visible at the hysteresis boundary in the corridor, which is
+  // the one place Vienna's two rooms are briefly co-visible.
+  //
+  // Emissive 0.3 is well under BLOOM_THRESHOLD (1.0 in Effects.tsx), so an off bulb reads as
+  // a pale glass face rather than a light. Matches TrackLamp's existing on/off pattern.
+  const bulbOffMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#cccccc',
+        emissiveIntensity: 0.3,
+      }),
+    [],
+  )
+  useDisposable(bulbOffMaterial)
+
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
-    for (let i = 0; i < resolvedCount; i++) {
+    for (const i of lampIndices) {
       const bodyNode = nodes[`roundLampBody${i}`]
       const bulbNode = nodes[`roundLampBulb${i}`]
       if (bodyNode) bodyNode.material = bodyMaterial
-      if (bulbNode) bulbNode.material = bulbMaterial
+      // Per lamp, not per component: a lamp in the room the visitor is not in gets the
+      // unlit bulb, so the fixture matches the spotlight that `useActiveRoom` removed.
+      if (bulbNode) bulbNode.material = isRoomActive(i) ? bulbMaterial : bulbOffMaterial
     }
-  }, [nodes, resolvedCount, bodyMaterial, bulbMaterial])
+  }, [nodes, lampIndices, bodyMaterial, bulbMaterial, bulbOffMaterial, isRoomActive])
 
   // Compute world-space bulb positions for spotlight placement
   const bulbPositions = useMemo(() => {
-    const positions: Vector3[] = []
-    for (let i = 0; i < resolvedCount; i++) {
+    const positions = new Map<number, Vector3>()
+    for (const i of lampIndices) {
       const bodyNode = nodes[`roundLampBody${i}`]
       const bulbNode = nodes[`roundLampBulb${i}`]
 
@@ -88,25 +128,23 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
         bodyNode.updateWorldMatrix(true, true)
         const worldPos = new Vector3()
         bulbNode.getWorldPosition(worldPos)
-        positions.push(worldPos)
+        positions.set(i, worldPos)
       } else if (bodyNode) {
-        positions.push(new Vector3(bodyNode.position.x, bodyNode.position.y, bodyNode.position.z))
+        positions.set(i, new Vector3(bodyNode.position.x, bodyNode.position.y, bodyNode.position.z))
       } else {
-        positions.push(new Vector3())
+        positions.set(i, new Vector3())
       }
     }
     return positions
-  }, [nodes, resolvedCount])
-
-  const lampsArray = useMemo(() => Array.from({ length: resolvedCount }), [resolvedCount])
+  }, [nodes, lampIndices])
 
   return (
     <>
-      {lampsArray.map((_, i) => {
+      {lampIndices.map((i) => {
         const bodyNode = nodes[`roundLampBody${i}`]
         if (!bodyNode) return null
 
-        const bulbPos = bulbPositions[i]
+        const bulbPos = bulbPositions.get(i) ?? new Vector3()
 
         return (
           <group key={`roundLamp-${i}`}>
