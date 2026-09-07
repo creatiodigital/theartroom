@@ -1,5 +1,6 @@
 import { useTexture } from '@react-three/drei'
 import { Mesh, BufferGeometry, SRGBColorSpace } from 'three'
+import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 
 /**
  * Shared renderer for the flat wayfinding signs mounted on the gallery walls —
@@ -31,6 +32,7 @@ const WallSign: React.FC<WallSignProps> = ({ nodes, name, texture: textureUrl })
   // the UVs baked into the GLB follow glTF's top-left origin. Without this the
   // sign renders vertically mirrored.
   texture.flipY = false
+  texture.anisotropy = MAX_ANISOTROPY
   texture.needsUpdate = true
 
   const node = nodes[name]

@@ -39,7 +39,9 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
-  const bulbEmissiveIntensity = disableSpotlights ? lampIntensity : 2
+  // 3, not 2: it must sit clear of BLOOM_THRESHOLD (2.0 in Effects.tsx) or these bulbs stop
+  // glowing when the threshold is raised to keep lit walls from blooming.
+  const bulbEmissiveIntensity = disableSpotlights ? lampIntensity : 3
   const lampAngle = useSelector((state: RootState) => state.exhibition.recessedLampAngle ?? 0.45)
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
@@ -54,6 +56,10 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
         : getNodeIndices(nodes, 'recessedLampBody')),
     [indices, count, nodes],
   )
+
+  // Lights in the room the visitor is not in are switched off — three never
+  // culls lights itself, so an unseen lamp costs a full frame's shading.
+  const isRoomActive = useActiveRoom(nodes, 'recessedLampBody')
 
   // Shared materials — all recessed lamps use the same body and bulb instance
   const bodyMaterial = useMemo(
@@ -80,21 +86,40 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   )
   useDisposable(bulbMaterial)
 
+  // The bulb as it looks in a room whose lights are OFF.
+  //
+  // `useActiveRoom` unmounts the far room's spotlights, but the lamp meshes keep rendering,
+  // so without this the unlit room sits dark with its bulbs still emitting — and since bloom
+  // came on, glowing hard. It is visible at the hysteresis boundary in the corridor, which is
+  // the one place Vienna's two rooms are briefly co-visible.
+  //
+  // Emissive 0.3 is well under BLOOM_THRESHOLD (1.0 in Effects.tsx), so an off bulb reads as
+  // a pale glass face rather than a light. Matches TrackLamp's existing on/off pattern.
+  const bulbOffMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: '#000000',
+        emissive: '#cccccc',
+        emissiveIntensity: 0.3,
+      }),
+    [],
+  )
+  useDisposable(bulbOffMaterial)
+
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
     for (const i of lampIndices) {
       const bodyNode = nodes[`recessedLampBody${i}`]
       const bulbNode = nodes[`recessedLampBulb${i}`]
       if (bodyNode) bodyNode.material = bodyMaterial
-      if (bulbNode) bulbNode.material = bulbMaterial
+      // Per lamp, not per component: a lamp in the room the visitor is not in gets the
+      // unlit bulb, so the fixture matches the spotlight that `useActiveRoom` removed.
+      if (bulbNode) bulbNode.material = isRoomActive(i) ? bulbMaterial : bulbOffMaterial
     }
-  }, [nodes, lampIndices, bodyMaterial, bulbMaterial])
+  }, [nodes, lampIndices, bodyMaterial, bulbMaterial, bulbOffMaterial, isRoomActive])
 
   // Compute world-space bulb positions for spotlight placement
 
-  // Lights in the room the visitor is not in are switched off — three never
-  // culls lights itself, so an unseen lamp costs a full frame's shading.
-  const isRoomActive = useActiveRoom(nodes, 'recessedLampBody')
   const bulbPositions = useMemo(() => {
     const posMap = new Map<number, Vector3>()
     for (const i of lampIndices) {

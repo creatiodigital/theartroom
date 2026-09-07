@@ -14,7 +14,7 @@ import {
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import type { RootState } from '@/redux/store'
-import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
+import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 
@@ -110,7 +110,25 @@ const TrackSpotlight: React.FC<{
 const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   // Count comes from the GLB unless a space deliberately overrides it, so a
   // bigger space needs no code change to show all of its props.
-  const resolvedCount = count ?? countNodes(nodes, 'trackLampArm')
+  // Which lamps to render, BY NODE INDEX — never `0..count-1`.
+  //
+  // A GLB's numbering is not guaranteed contiguous: deleting a fixture in Blender
+  // leaves a hole, and Madrid's round lamps are 0,2,4,5,7,9,10,12,14,15,16. Counting
+  // them gives 11 and looping 0..10 renders only the seven that happen to fall in
+  // that range — 12,14,15,16 silently never appear, while the ceiling's baked
+  // texture still shows their silhouettes. `isRoomActive` has the same requirement:
+  // its predicate is checked against real node indices, so a loop counter would also
+  // mis-cull a gapped multi-room space.
+  //
+  // `getNodeIndices` is gap-tolerant by design and `RecessedLamp` already used it —
+  // this brings TrackLamp in line. The `count` prop stays as an explicit override.
+  const lampIndices = useMemo(
+    () =>
+      count !== undefined
+        ? Array.from({ length: count }, (_, i) => i)
+        : getNodeIndices(nodes, 'trackLampArm'),
+    [count, nodes],
+  )
   // Lights in the room the visitor is not in are switched off — three never
   // culls lights itself, so an unseen lamp costs a full frame's shading.
   const isRoomActive = useActiveRoom(nodes, 'trackLampArm')
@@ -134,7 +152,21 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   // Per-lamp settings (rotation + on/off + offset)
   const trackLampSettings = useSelector((state: RootState) => state.exhibition.trackLampSettings)
 
-  const bulbEmissiveIntensity = 2
+  // Deliberately BELOW the composer's bloom threshold (BLOOM_THRESHOLD = 1.0 in
+  // Effects.tsx), so track lamps do not glow while round and recessed lamps do.
+  //
+  // Bloom is a full-screen effect keyed on luminance — it cannot be told to skip an object.
+  // The alternatives were `SelectiveBloom`, which costs an extra render pass of the selection
+  // and would mean wrapping every lamp `<primitive>` in `<Select>`, or this: keep the bulb
+  // emissive under the threshold. Round lamps sit at `lampIntensity` (default 4.0) and
+  // recessed at 2, both well clear of it, so the separation is free.
+  //
+  // 0.8 rather than 0.99 because `luminanceSmoothing={0.15}` ramps in either side of the
+  // threshold — a value just under it would still catch a little glow.
+  //
+  // ⚠️ Coupled to BLOOM_THRESHOLD. Raise that and track lamps stay dark; lower it below 0.8
+  // and they start glowing again. The two numbers only mean anything together.
+  const bulbEmissiveIntensity = 0.8
 
   // Shared materials — all track lamps reuse the same instances
   const armBodyMaterial = useMemo(
@@ -176,7 +208,7 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
 
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
-    for (let i = 0; i < resolvedCount; i++) {
+    for (const i of lampIndices) {
       const armNode = nodes[`trackLampArm${i}`]
       const bodyNode = nodes[`trackLampBody${i}`]
       const bulbNode = nodes[`trackLampBulb${i}`]
@@ -188,17 +220,14 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
       if (bodyNode) bodyNode.material = armBodyMaterial
       if (bulbNode) bulbNode.material = isEnabled ? bulbOnMaterial : bulbOffMaterial
     }
-  }, [nodes, resolvedCount, armBodyMaterial, bulbOnMaterial, bulbOffMaterial, trackLampSettings])
+  }, [nodes, lampIndices, armBodyMaterial, bulbOnMaterial, bulbOffMaterial, trackLampSettings])
 
   // Compute world-space bulb positions and aim directions using node transforms directly.
   // We can't use getWorldPosition() because <primitive> re-parents nodes.
   const lampData = useMemo(() => {
-    const data: Array<{
-      bulbWorldPos: Vector3
-      aimDir: Vector3
-    }> = []
+    const data = new Map<number, { bulbWorldPos: Vector3; aimDir: Vector3 }>()
 
-    for (let i = 0; i < resolvedCount; i++) {
+    for (const i of lampIndices) {
       const armNode = nodes[`trackLampArm${i}`]
       const bulbNode = nodes[`trackLampBulb${i}`]
       const bodyNode = nodes[`trackLampBody${i}`]
@@ -245,21 +274,22 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
         }
       }
 
-      data.push({ bulbWorldPos, aimDir })
+      data.set(i, { bulbWorldPos, aimDir })
     }
 
     return data
-  }, [nodes, resolvedCount])
-
-  const lampsArray = useMemo(() => Array.from({ length: resolvedCount }), [resolvedCount])
+  }, [nodes, lampIndices])
 
   return (
     <>
-      {lampsArray.map((_, i) => {
+      {lampIndices.map((i) => {
         const armNode = nodes[`trackLampArm${i}`]
         if (!armNode) return null
 
-        const { bulbWorldPos, aimDir } = lampData[i]
+        const { bulbWorldPos, aimDir } = lampData.get(i) ?? {
+          bulbWorldPos: new Vector3(),
+          aimDir: new Vector3(0, -1, 0),
+        }
 
         // Per-lamp settings
         const settings = trackLampSettings?.[String(i)]

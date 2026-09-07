@@ -6,6 +6,7 @@ import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
+import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 
 // Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
 //
@@ -273,6 +274,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     Object.values(textures).forEach((texture) => {
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
+      texture.anisotropy = MAX_ANISOTROPY
       texture.repeat.set(repeatX, repeatY)
       texture.offset.set(floorTextureOffsetX, floorTextureOffsetY)
       texture.rotation = rotationRad
