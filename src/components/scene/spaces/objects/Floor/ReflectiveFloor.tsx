@@ -7,8 +7,22 @@ import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
 
-// Floor reflections disabled for performance
-const ENABLE_REFLECTIONS = false
+// Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
+//
+// This is the most expensive thing in the scene: MeshReflectorMaterial renders the whole
+// room a SECOND time into a 1024 buffer every frame, and with 22 spotlights evaluated per
+// pixel that is close to a second full lighting pass. Measured on a real prod show it cost
+// ~3x the draw calls and still held a flat 60 fps at dpr 1.75 — it fits, but it competes
+// with the dpr ladder for the same headroom. Weaker machines pay for it in RESOLUTION
+// (softer wall text), not in framerate, because the ladder absorbs it silently.
+//
+// ⚠️ `floorReflectiveness` (the dashboard slider) scales only `mirror` / `mixStrength` — it
+// does NOT skip this pass. A floor dialled to 0 still costs the full second render. Gate
+// the ternary below on the value if that ever needs to be a real per-exhibition lever.
+//
+// If it ever needs to go: set false, and judge by the dpr line, not the fps — the ladder
+// hides this cost in resolution.
+const ENABLE_REFLECTIONS = true
 
 // Bump this version when replacing floor texture files to bust Three.js cache
 // v4: 2026-07-12 recompression (visually lossless; originals in R2 under
