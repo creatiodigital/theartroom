@@ -1,6 +1,25 @@
 import { useMemo, useRef, useEffect } from 'react'
 import { ShaderMaterial, Vector2, NormalBlending } from 'three'
 
+/**
+ * A FAKE contact shadow, drawn as a gradient quad behind each artwork.
+ *
+ * It exists because real shadow maps are not available to this scene — not for performance
+ * reasons, but because of a hard GPU limit. Every shadow-casting light consumes one FRAGMENT
+ * TEXTURE UNIT for its shadow map, and `MAX_TEXTURE_IMAGE_UNITS` is 16. The gallery runs 22
+ * spotlights, and the floor material alone uses 6 maps (map, normal, bump, roughness,
+ * metalness, AO), so enabling `castShadow` fails to LINK:
+ *
+ *   THREE.WebGLProgram: Shader Error 0 - VALIDATE_STATUS false
+ *   FRAGMENT shader texture image units count exceeds MAX_TEXTURE_IMAGE_UNITS(16)
+ *
+ * Verified again 2026-09-07 after the fill-rate work (AR-144), on the theory that shadows had
+ * only ever been assumed too slow. They are not slow — they are impossible at this light
+ * count. Any future attempt is capped at roughly 8 casters (16 minus the material's own map
+ * count), split across whichever lamp components are mounted, which would light some artworks
+ * and not others. Do not file this as "restore real shadows".
+ */
+
 // Shared vertex shader
 const vertexShader = `
   varying vec2 vUv;

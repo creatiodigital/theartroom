@@ -2,6 +2,7 @@ import { useTexture } from '@react-three/drei'
 import { Mesh, BufferGeometry, RepeatWrapping, SRGBColorSpace, DoubleSide } from 'three'
 
 import { assetUrl } from '@/lib/assetUrl'
+import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 
 interface PlasterWallProps {
   i: number
@@ -35,6 +36,7 @@ const PlasterWall: React.FC<PlasterWallProps> = ({
   Object.values(textures).forEach((texture) => {
     texture.wrapS = RepeatWrapping
     texture.wrapT = RepeatWrapping
+    texture.anisotropy = MAX_ANISOTROPY
     texture.repeat.set(textureRepeat, textureRepeat)
   })
   textures.map.colorSpace = SRGBColorSpace

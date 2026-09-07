@@ -2,6 +2,7 @@ import { useTexture } from '@react-three/drei'
 import { BufferGeometry, RepeatWrapping, SRGBColorSpace, Vector2, DoubleSide } from 'three'
 
 import { assetUrl } from '@/lib/assetUrl'
+import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 
 interface PlasterCeilingProps {
   geometry: BufferGeometry
@@ -36,6 +37,7 @@ const PlasterCeiling: React.FC<PlasterCeilingProps> = ({
   Object.values(textures).forEach((texture) => {
     texture.wrapS = RepeatWrapping
     texture.wrapT = RepeatWrapping
+    texture.anisotropy = MAX_ANISOTROPY
     texture.repeat.set(textureRepeat, textureRepeat)
   })
   textures.map.colorSpace = SRGBColorSpace
