@@ -26,7 +26,7 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   },
   vienna: {
     displayName: 'Vienna',
-    gltfPath: assetUrl('/assets/spaces/vienna/vienna7.glb?v=2'),
+    gltfPath: assetUrl('/assets/spaces/vienna/vienna11.glb?v=1'),
   },
   madrid: {
     displayName: 'Madrid',

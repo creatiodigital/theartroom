@@ -48,7 +48,12 @@ export const spaceConfig: Record<string, SpaceFeatures> = {
   // and lamps not listed default to 'x'.
   vienna: {
     hasSkylight: false,
-    hasLamps: false,
+    // True because the model HAS 34 round lamps (roundLampBody0-33, split 17/17 across the
+    // two rooms). It was false, which hid their controls in LightingPanel while the mode
+    // dropdown still offered 'plafond' — and that mode mounts <RoundLamp>. The result was 34
+    // fixtures on screen that the artist could not steer, except by accident via the
+    // recessedLamp* values RoundLamp happens to read.
+    hasLamps: true,
     hasTrackLamps: true,
     hasRecessedLamps: true,
     hasWindows: true,
