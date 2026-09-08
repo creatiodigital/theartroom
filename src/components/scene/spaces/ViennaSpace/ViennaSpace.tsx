@@ -98,9 +98,9 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // Baked lighting, neutral (no albedo) so the wall colour above stays the
   // artist's to control. No module-scope preload: drei's useKTX2.preload never
   // calls detectSupport(renderer) and would poison the loader cache.
-  const wallTexture = useKTX2(assetUrl('/assets/spaces/vienna/textures/bgw1.ktx2?v=4'), '/basis/')
+  const wallTexture = useKTX2(assetUrl('/assets/spaces/vienna/textures/bgw1.ktx2?v=5'), '/basis/')
   const ceilingTexture = useKTX2(
-    assetUrl('/assets/spaces/vienna/textures/bgc1.ktx2?v=4'),
+    assetUrl('/assets/spaces/vienna/textures/bgc1.ktx2?v=5'),
     '/basis/',
   )
 

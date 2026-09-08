@@ -73,8 +73,30 @@ async function walk(dir: string): Promise<string[]> {
 
 async function collectFiles(): Promise<string[]> {
   const files: string[] = []
-  for (const dir of INCLUDE_DIRS) files.push(...(await walk(path.join(LOCAL_ROOT, dir))))
-  for (const f of INCLUDE_FILES) files.push(path.join(LOCAL_ROOT, f))
+  // Missing entries are normal, not an error: once an asset family lives on R2 it is deleted
+  // from the repo to keep the checkout small (see chore/AR-127-remove-vercel-3d-assets), so a
+  // fresh clone has only some of INCLUDE_DIRS on disk. Skipping absent paths is what makes
+  // this usable for a partial re-export — re-uploading one space's textures should not
+  // require restoring every asset the bucket has ever held.
+  for (const dir of INCLUDE_DIRS) {
+    const full = path.join(LOCAL_ROOT, dir)
+    try {
+      files.push(...(await walk(full)))
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
+      console.log(`  – skipping ${dir}/ (not present locally)`)
+    }
+  }
+  for (const f of INCLUDE_FILES) {
+    const full = path.join(LOCAL_ROOT, f)
+    try {
+      await stat(full)
+      files.push(full)
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err
+      console.log(`  – skipping ${f} (not present locally)`)
+    }
+  }
   return files
 }
 
