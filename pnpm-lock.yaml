@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  webgl-sdf-generator@1.1.1:
+    hash: d20176e88ca0e9ddcae820fb577711fbd46deba5f0fdd2cb32289c380f487c59
+    path: patches/webgl-sdf-generator@1.1.1.patch
+
 importers:
 
   .:
@@ -12666,7 +12671,7 @@ snapshots:
       three: 0.175.0
       troika-three-utils: 0.52.4(three@0.175.0)
       troika-worker-utils: 0.52.0
-      webgl-sdf-generator: 1.1.1
+      webgl-sdf-generator: 1.1.1(patch_hash=d20176e88ca0e9ddcae820fb577711fbd46deba5f0fdd2cb32289c380f487c59)
 
   troika-three-utils@0.52.4(three@0.175.0):
     dependencies:
@@ -12888,7 +12893,7 @@ snapshots:
 
   webgl-constants@1.1.1: {}
 
-  webgl-sdf-generator@1.1.1: {}
+  webgl-sdf-generator@1.1.1(patch_hash=d20176e88ca0e9ddcae820fb577711fbd46deba5f0fdd2cb32289c380f487c59): {}
 
   webidl-conversions@3.0.1: {}
 
