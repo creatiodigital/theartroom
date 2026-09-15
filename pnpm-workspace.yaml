@@ -1,2 +1,24 @@
+# pnpm 10 keeps these settings here rather than in package.json. This file is
+# load-bearing for install: without it the webgl-sdf-generator patch is silently
+# skipped (pnpm 10 does NOT read patchedDependencies from package.json — it
+# installs the unpatched code into a directory named as though it were patched).
+#
+# It also requires package.json#packageManager to pin pnpm 10. Vercel otherwise
+# selects pnpm 9 by project creation date, and pnpm 9 reads this file purely as a
+# workspace definition — failing the build with "packages field missing or empty".
+
 patchedDependencies:
   webgl-sdf-generator@1.1.1: patches/webgl-sdf-generator@1.1.1.patch
+
+# pnpm 10 blocks dependency build scripts by default; pnpm 9 ran them all. These
+# are exactly the packages that were running scripts under pnpm 9, listed so the
+# pnpm 10 pin does not silently change what gets built — prisma and sharp in
+# particular are load-bearing for the print pipeline.
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@prisma/engines'
+  - '@sentry/cli'
+  - prisma
+  - protobufjs
+  - sharp
+  - unrs-resolver
