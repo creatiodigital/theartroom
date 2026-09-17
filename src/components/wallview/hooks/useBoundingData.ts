@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Mesh, Box3 } from 'three'
 
+import { worldMatrixOf } from '@/components/scene/spaces/objects/nodeIndices'
 import { calculateAverageNormal, calculateDimensionsAndBasis } from '@/components/wallview/utils'
 import type { TDimensions } from '@/types/geometry'
 
@@ -64,11 +65,13 @@ export const useBoundingData = (
 
       if (currentWall.geometry.boundingBox) {
         // Clone the geometry bounding box and translate it to world space
-        // (geometry is in local space; the mesh's position provides the world offset)
+        // (geometry is in local space; the mesh's transform provides the world
+        // offset). `worldMatrixOf` rather than `matrixWorld` because a space
+        // whose placeholders hang off a room Empty has already had that offset
+        // baked into the node — see the note there.
         const localBB = currentWall.geometry.boundingBox as Box3
         const boundingBox = localBB.clone()
-        currentWall.updateWorldMatrix(true, false)
-        boundingBox.applyMatrix4(currentWall.matrixWorld)
+        boundingBox.applyMatrix4(worldMatrixOf(currentWall))
         const normal = calculateAverageNormal(currentWall)
         const dimensions = calculateDimensionsAndBasis(boundingBox, normal)
 

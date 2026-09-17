@@ -13,6 +13,8 @@
  * `trackLampB`, and a loose match would conflate them.
  */
 
+import type { Matrix4, Object3D } from 'three'
+
 /** Every index present for a prop family, ascending. Tolerates gaps. */
 export const getNodeIndices = (nodes: Record<string, unknown>, prefix: string): number[] => {
   const pattern = new RegExp(`^${prefix}(\\d+)$`)
@@ -167,6 +169,39 @@ export const bakeWorldTransforms = (
   }
 
   return baked
+}
+
+/**
+ * The matrix that maps a node's geometry into world space.
+ *
+ * `matrixWorld` is the obvious answer and it is wrong for a baked node. Baking
+ * folds the ancestors INTO the node — but it cannot detach it, because
+ * `groupNodesByRoom` reads room membership off `.parent`, and because nothing
+ * re-parents `placeholder*` anyway: the scene copies the node into a fresh
+ * `<mesh>` rather than mounting it with `<primitive>`. So the Empty is still
+ * overhead, already accounted for, and `updateWorldMatrix(true, …)` multiplies
+ * it back in a second time.
+ *
+ * Vienna is where that bites. Its room-1 Empty sits ~20 m up the z axis, so the
+ * doubling put all four of that room's wall centres beyond the far wall of the
+ * building — and `MainCamera`, which parks the camera 5 m along the wall normal
+ * on Save & close, parked it out in the void with it.
+ *
+ * A baked node's LOCAL transform already IS its world transform, and it is the
+ * transform the scene draws the placeholder at, so reading `matrix` is also
+ * what keeps the editor measuring the same wall the artist clicked.
+ *
+ * An unbaked node — Paris, Madrid, or Vienna before the space has mounted —
+ * still carries its offset overhead and takes the normal path.
+ */
+export const worldMatrixOf = (node: Object3D): Matrix4 => {
+  if (worldBaked.has(node)) {
+    node.updateMatrix()
+    return node.matrix
+  }
+
+  node.updateWorldMatrix(true, false)
+  return node.matrixWorld
 }
 
 /**
