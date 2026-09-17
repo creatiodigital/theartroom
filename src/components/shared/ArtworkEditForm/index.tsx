@@ -27,6 +27,7 @@ import {
 } from '@/lib/print-providers/printspace'
 import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import type { LimitedVariantDraft } from '@/lib/editions/types'
+import { resolveArtworkAuthor } from '@/utils/artistDisplayName'
 import { LimitedVariantsEditor } from './LimitedVariantsEditor'
 import { ArtworkMediaManager } from './ArtworkMediaManager'
 import {
@@ -56,6 +57,12 @@ export const stripHtml = (html: string): string => {
 export type Artwork = {
   id: string
   userId: string
+  /**
+   * The artwork's own artist, used to prefill the Author field. Optional
+   * because `ArtworkEditModal` populates from a payload that does not carry it;
+   * `resolveArtworkAuthor` treats a missing artist as "no name to offer".
+   */
+  user?: { name?: string | null; lastName?: string | null } | null
   name: string
   artworkType: string
   title: string | null
@@ -160,7 +167,8 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   name: data.name || '',
   artworkType: data.artworkType || 'image',
   title: data.title || '',
-  author: data.author || '',
+  // Prefilled with the artwork's artist when empty — see `resolveArtworkAuthor`.
+  author: resolveArtworkAuthor(data.author, data.user),
   year: data.year || '',
   technique: data.technique || '',
   dimensions: data.dimensions || '',

@@ -109,6 +109,11 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
         limitedVariants: {
           orderBy: { order: 'asc' },
         },
+        // Just the two name halves, so the editor can prefill the Author field
+        // with the artwork's OWN artist rather than whoever is signed in. Adds
+        // nothing private to this public read — an artist's first and last name
+        // is already on their public portfolio page.
+        user: { select: { name: true, lastName: true } },
       },
     })
 
