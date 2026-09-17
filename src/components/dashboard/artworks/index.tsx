@@ -22,6 +22,11 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
+import {
+  readArtworkTypeFilter,
+  writeArtworkTypeFilter,
+  type ArtworkTypeFilter,
+} from '@/lib/artworkTypeFilter'
 
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
@@ -291,7 +296,18 @@ export const ArtworkLibraryPage = () => {
   } | null>(null)
   const [unlinking, setUnlinking] = useState(false)
   const [actionError, setActionError] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound' | 'video'>('all')
+  // Lazily initialised from storage so the filter survives the remount that
+  // editing an artwork causes. Safe against hydration: the first render returns
+  // `Loading...` on both server and client, so the stored value cannot reach the
+  // DOM before hydration is done.
+  const [typeFilter, setTypeFilter] = useState<ArtworkTypeFilter>(readArtworkTypeFilter)
+
+  // Written here rather than in an effect on `typeFilter`, so a mount that only
+  // read the value does not immediately write it back.
+  const selectType = useCallback((next: ArtworkTypeFilter) => {
+    setTypeFilter(next)
+    writeArtworkTypeFilter(next)
+  }, [])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
@@ -522,31 +538,31 @@ export const ArtworkLibraryPage = () => {
         <div className={styles.filters}>
           <Button
             variant="pill"
-            onClick={() => setTypeFilter('all')}
+            onClick={() => selectType('all')}
             aria-pressed={typeFilter === 'all'}
             label="All"
           />
           <Button
             variant="pill"
-            onClick={() => setTypeFilter('image')}
+            onClick={() => selectType('image')}
             aria-pressed={typeFilter === 'image'}
             label="Image"
           />
           <Button
             variant="pill"
-            onClick={() => setTypeFilter('text')}
+            onClick={() => selectType('text')}
             aria-pressed={typeFilter === 'text'}
             label="Text"
           />
           <Button
             variant="pill"
-            onClick={() => setTypeFilter('sound')}
+            onClick={() => selectType('sound')}
             aria-pressed={typeFilter === 'sound'}
             label="Sound"
           />
           <Button
             variant="pill"
-            onClick={() => setTypeFilter('video')}
+            onClick={() => selectType('video')}
             aria-pressed={typeFilter === 'video'}
             label="Video"
           />
