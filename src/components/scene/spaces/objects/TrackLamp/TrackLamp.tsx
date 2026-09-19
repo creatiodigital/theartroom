@@ -225,7 +225,10 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   // Compute world-space bulb positions and aim directions using node transforms directly.
   // We can't use getWorldPosition() because <primitive> re-parents nodes.
   const lampData = useMemo(() => {
-    const data = new Map<number, { bulbWorldPos: Vector3; aimDir: Vector3 }>()
+    const data = new Map<
+      number,
+      { bulbWorldPos: Vector3; aimDir: Vector3; offsetAxis: 'x' | 'z' }
+    >()
 
     for (const i of lampIndices) {
       const armNode = nodes[`trackLampArm${i}`]
@@ -274,7 +277,20 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
         }
       }
 
-      data.set(i, { bulbWorldPos, aimDir })
+      // Which way the offset slider slides this lamp. A track lamp runs along the
+      // wall it lights, so the track is the horizontal axis the aim does NOT point
+      // down: a lamp facing ±x hangs from a track running along z.
+      //
+      // Derived from the aim rather than configured per lamp. Vienna has 28 lamps
+      // across two rooms and its config deliberately skipped the per-lamp map to
+      // avoid the maintenance burden — which silently left all 28 on the 'x'
+      // default, so the 14 lamps on z-running tracks slid towards and away from
+      // their wall instead of sideways along it. Deriving it reproduces Paris's
+      // hand-written map exactly (14/14) and costs no config, so a new space is
+      // correct the moment it loads.
+      const offsetAxis: 'x' | 'z' = Math.abs(aimDir.x) > Math.abs(aimDir.z) ? 'z' : 'x'
+
+      data.set(i, { bulbWorldPos, aimDir, offsetAxis })
     }
 
     return data
@@ -286,9 +302,10 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
         const armNode = nodes[`trackLampArm${i}`]
         if (!armNode) return null
 
-        const { bulbWorldPos, aimDir } = lampData.get(i) ?? {
+        const { bulbWorldPos, aimDir, offsetAxis } = lampData.get(i) ?? {
           bulbWorldPos: new Vector3(),
           aimDir: new Vector3(0, -1, 0),
+          offsetAxis: 'x' as const,
         }
 
         // Per-lamp settings
@@ -302,7 +319,8 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
         const armPos = armNode.position
 
         // Apply position offset on the axis configured for this lamp
-        const axis = spaceFeatures.trackLampOffsetAxes?.[i] ?? 'x'
+        // Config stays an explicit override; the model decides when it is silent.
+        const axis = spaceFeatures.trackLampOffsetAxes?.[i] ?? offsetAxis
         const offsetPos: [number, number, number] = [
           armPos.x + (axis === 'x' ? offset : 0),
           armPos.y,
