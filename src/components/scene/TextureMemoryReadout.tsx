@@ -62,6 +62,12 @@ export function TextureMemoryReadout() {
     const run = () => {
       const seen = new Map<Texture, Row>()
 
+      // TEMP DIAGNOSTIC — hunting "Texture marked for update but no image data
+      // found", which three re-warns on EVERY frame. Such a texture measures
+      // zero bytes, so the accounting below skips it and it never shows up in
+      // the readout. Delete this block once the offender is fixed.
+      const imageless: { object: string; material: string; slot: string; name: string }[] = []
+
       scene.traverse((obj) => {
         const mat = (obj as unknown as { material?: Material | Material[] }).material
         if (!mat) return
@@ -71,6 +77,16 @@ export function TextureMemoryReadout() {
             const tex = val as Texture | null
             if (!tex || !(tex as unknown as { isTexture?: boolean }).isTexture) continue
             if (seen.has(tex)) continue
+            const texAny = tex as unknown as { version?: number; image?: unknown }
+            if (!texAny.image && (texAny.version ?? 0) > 0) {
+              imageless.push({
+                object: obj.name || obj.type,
+                material: (m as unknown as { type?: string }).type ?? 'unknown',
+                slot,
+                name: tex.name || '(unnamed)',
+              })
+            }
+
             const { bytes, compressed } = textureBytes(tex)
             if (bytes === 0) continue
             const img = tex.image as
@@ -97,6 +113,14 @@ export function TextureMemoryReadout() {
       ;(window as unknown as { __scene?: unknown }).__scene = { scene, gl, camera }
 
       const rows = [...seen.values()].sort((a, b) => b.mb - a.mb)
+      if (imageless.length > 0) {
+        console.warn(
+          `%c[imageless textures] ${imageless.length} texture(s) marked for update with no image`,
+          'color:#e53e3e;font-weight:bold',
+        )
+        console.table(imageless)
+      }
+
       ;(window as unknown as { __textureRows?: Row[] }).__textureRows = rows
 
       const total = rows.reduce((s, r) => s + r.mb, 0)

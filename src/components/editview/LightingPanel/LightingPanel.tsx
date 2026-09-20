@@ -9,6 +9,7 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Section } from '@/components/ui/Section/Section'
 import { Slider } from '@/components/ui/Slider'
 import { Toggle } from '@/components/ui/Toggle'
+import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
@@ -497,7 +498,9 @@ const LightingPanel = () => {
             {trackLampGroups.map((group) => {
               const lamps = group.indices.map((i: number, position: number) => {
                 const settings = trackLampSettings?.[String(i)]
-                const isEnabled = settings?.enabled ?? true
+                // A hidden lamp is gone from the scene, so there is nothing for
+                // its rotation and offset to aim — the sliders go with it.
+                const isEnabled = isTrackLampVisible(settings)
                 const rotation = settings?.rotation ?? 0
                 const offset = settings?.offset ?? 0
                 // Numbering restarts inside each room, because the section
@@ -530,6 +533,7 @@ const LightingPanel = () => {
                           dispatch(setTrackLampRotation({ index: i, rotation: v }))
                           setSaved(false)
                         }}
+                        disabled={!isEnabled}
                         aria-label={`${label} rotation`}
                       />
                       <span className={styles.sliderValue}>{rotation}°</span>
@@ -544,6 +548,7 @@ const LightingPanel = () => {
                           dispatch(setTrackLampOffset({ index: i, offset: v }))
                           setSaved(false)
                         }}
+                        disabled={!isEnabled}
                         aria-label={`${label} offset`}
                       />
                       <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>

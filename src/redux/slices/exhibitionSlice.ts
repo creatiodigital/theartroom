@@ -6,6 +6,7 @@ import { exhibitionFactory } from '@/factories/exhibitionFactory'
 import type { TArtworkPosition } from '@/types/artwork'
 import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { TExhibition } from '@/types/exhibition'
+import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 
 const HISTORY_LIMIT = 20
 
@@ -113,6 +114,22 @@ const exhibitionSlice = createSlice({
       }
     },
 
+    /**
+     * Set one item's stacking order within its wall. The value itself is worked
+     * out by the caller with `zOrderToFront` / `zOrderToBack` from
+     * src/components/wallview/layerOrder.ts, which needs every item on the wall
+     * and their kinds — state this slice does not hold on its own.
+     */
+    setArtworkZOrder: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ artworkId: string; zOrder: number }>,
+    ) => {
+      const { artworkId, zOrder } = action.payload
+      if (state.exhibitionArtworksById[artworkId]) {
+        state.exhibitionArtworksById[artworkId].zOrder = zOrder
+      }
+    },
+
     toggleArtworkLocked: (
       state: TExhibitionWithHistory,
       action: PayloadAction<{ artworkId: string }>,
@@ -198,6 +215,23 @@ const exhibitionSlice = createSlice({
         state.trackLampSettings[String(index)] = { rotation: 0, enabled: true, offset: 0 }
       }
       state.trackLampSettings[String(index)].offset = Math.max(-2, Math.min(2, offset))
+    },
+
+    /**
+     * Patch one display panel's settings.
+     *
+     * A single patch reducer rather than one per field: a panel carries five
+     * (enabled, x, z, rotationY, color) and the sidebar edits them one at a
+     * time, so five near-identical reducers would be pure noise.
+     */
+    setPanelSettings: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ index: number; patch: Partial<PanelSettings> }>,
+    ) => {
+      const { index, patch } = action.payload
+      if (!state.panelSettings) state.panelSettings = {}
+      const key = String(index)
+      state.panelSettings[key] = { ...state.panelSettings[key], ...patch }
     },
 
     // ── Autofocus group actions ────────────────────────────────────────────
@@ -305,6 +339,8 @@ export const {
   createArtworkPosition,
   updateArtworkPosition,
   deleteArtworkPosition,
+  setArtworkZOrder,
+  setPanelSettings,
   toggleArtworkLocked,
   setExhibition,
   setExhibitionField,

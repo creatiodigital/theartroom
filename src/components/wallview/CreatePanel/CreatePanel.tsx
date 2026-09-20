@@ -15,6 +15,7 @@ import { MediaLibrary } from '@/components/wallview/MediaLibrary'
 import type { RootState } from '@/redux/store'
 
 import styles from './CreatePanel.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 export const CreatePanel = () => {
   const [showMediaLibrary, setShowMediaLibrary] = useState(false)
@@ -22,7 +23,7 @@ export const CreatePanel = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }
@@ -96,6 +97,20 @@ export const CreatePanel = () => {
             />
           </Tooltip>
           <Tooltip
+            label="Click to create a decorative shape, or drag and drop anywhere on the wall"
+            placement="top"
+            offset={16}
+          >
+            <Button
+              size="big"
+              icon="shapes"
+              variant="secondary"
+              onClick={() => handleCreateArtwork('shape')}
+              draggable
+              onDragStart={(e) => handleArtworkDragStart(e, 'shape')}
+            />
+          </Tooltip>
+          <Tooltip
             label="Click to create video in the middle of the wall, or drag and drop anywhere on the wall"
             placement="top"
             offset={16}
@@ -121,20 +136,6 @@ export const CreatePanel = () => {
               onClick={() => handleCreateArtwork('sound')}
               draggable
               onDragStart={(e) => handleArtworkDragStart(e, 'sound')}
-            />
-          </Tooltip>
-          <Tooltip
-            label="Click to create a decorative shape, or drag and drop anywhere on the wall"
-            placement="top"
-            offset={16}
-          >
-            <Button
-              size="big"
-              icon="shapes"
-              variant="secondary"
-              onClick={() => handleCreateArtwork('shape')}
-              draggable
-              onDragStart={(e) => handleArtworkDragStart(e, 'shape')}
             />
           </Tooltip>
         </div>

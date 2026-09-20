@@ -44,6 +44,7 @@ import type { RootState } from '@/redux/store'
 import { toRuntimeArtwork } from '@/utils/artworkTransform'
 
 import styles from './LeftPanel.module.scss'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 export const LeftPanel = () => {
   const dispatch = useDispatch()
@@ -63,9 +64,7 @@ export const LeftPanel = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'text' | 'sound' | 'video'>('all')
 
   // Autofocus Groups
-  const allAutofocusGroups = useSelector(
-    (state: RootState) => state.exhibition.autofocusGroups ?? [],
-  )
+  const allAutofocusGroups = useSelector(selectAutofocusGroups)
   const wallAutofocusGroups = useMemo(
     () => allAutofocusGroups.filter((g) => g.wallId === currentWallId),
     [allAutofocusGroups, currentWallId],

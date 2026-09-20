@@ -17,6 +17,9 @@ type ShapeObjectProps = {
   artwork: RuntimeArtwork
 }
 
+/** Matte paint: fully diffuse, no specular highlight. */
+const SHAPE_ROUGHNESS = 0.95
+
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
 const CLICK_MAX_DURATION = 300
@@ -83,8 +86,20 @@ const ShapeObject = ({ artwork }: ShapeObjectProps) => {
         ) : (
           <planeGeometry args={[width, height]} />
         )}
-        <meshBasicMaterial
+        {/* Standard, not Basic. A shape fakes a painted section of the wall it
+            sits on, so it has to take the same light the wall does — and
+            `meshBasicMaterial` is unlit by definition: it ignores every light
+            in the scene and paints the raw color, which is why a spotlight
+            used to stop dead at a shape's edge.
+
+            Standard also lights per fragment, so the pool of a track lamp
+            falls across the shape properly rather than being interpolated
+            between a plane's four corners. High roughness, no metalness: matte
+            paint, no sheen. */}
+        <meshStandardMaterial
           color={color}
+          roughness={SHAPE_ROUGHNESS}
+          metalness={0}
           side={DoubleSide}
           transparent={opacity < 1}
           opacity={opacity}

@@ -47,7 +47,7 @@ export function ScenePerfHud() {
     el.setAttribute('data-scene-perf-hud', '')
     el.style.cssText = [
       'position:fixed',
-      'top:12px',
+      'bottom:12px',
       'right:12px',
       'z-index:99999',
       'pointer-events:none',

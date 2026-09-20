@@ -220,7 +220,11 @@ export const deriveSpaceRefs = (nodes: Record<string, unknown>) => ({
   // Architecture walls, the invisible exit barrier, and radiators — every one is
   // a surface the camera must not walk through.
   walls:
-    countNodes(nodes, 'wall') + countNodes(nodes, 'invisibleWall') + countNodes(nodes, 'radiator'),
+    countNodes(nodes, 'wall') +
+    countNodes(nodes, 'invisibleWall') +
+    countNodes(nodes, 'radiator') +
+    // Display panels are freestanding walls, and just as solid.
+    countNodes(nodes, 'panel'),
   windows: countNodes(nodes, 'windowFrame'),
   glass: countNodes(nodes, 'windowGlass'),
 })

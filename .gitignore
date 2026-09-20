@@ -67,6 +67,17 @@ package-lock.json
 # Vercel, shadowing the real one. Scoped to *.glb ONLY: other files under
 # public/assets (e.g. signage PNGs served from the app origin) must stay tracked.
 /public/assets/**/*.glb
+# FALLBACK COPY. `spaceGltfUrl` loads every space from R2 and drops to the app's
+# own origin when R2 404s or cannot be reached — so a model listed here is the
+# copy Vercel serves in that case. It is an exception, never a mirror: R2 stays
+# canonical (AR-127), and a stale local copy left here would silently shadow a
+# corrected remote one.
+#
+# vienna14 is here because it could not be uploaded — the R2 S3 API is
+# TCP-unreachable from the office connection, its Cloudflare IP range blocked by
+# the Spanish ISP. READS are fine; only writes are. Remove this line and the file
+# once the upload lands.
+!/public/assets/spaces/vienna/vienna14.glb
 
 # Space bakes — the KTX2 the scene loads and the PNG sources they are encoded
 # from. Same reasoning as the GLB rule above: R2 is the canonical copy for every

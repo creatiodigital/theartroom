@@ -25,8 +25,22 @@ import type { ReactElement } from 'react'
  * What it DOES cost is render-target memory and resolve bandwidth, and that is
  * not free: at dpr 1.5 a 5K panel is 3840×2160 ≈ 8.3M pixels, so colour + depth
  * runs ~66 MB per sample — ~133 MB at 2×, ~265 MB at 4×, on top of ~344 MB of
- * textures. Hence 2×: measure with `ScenePerfHud` (fps AND texture memory)
- * before considering 4×.
+ * textures.
+ *
+ * Hence 2×: measure with `ScenePerfHud` (fps AND texture memory) before
+ * considering 4×.
+ *
+ * 2026-09-20: 2× is known NOT to be enough for shallow geometry diagonals now that
+ * FXAA is off — two samples give a near-horizontal edge exactly two levels of
+ * gradation, which reads as a staircase (most visible on the top edge of a display
+ * panel seen from below). 4× is the lever, and it is the cheap KIND of cost — MSAA
+ * shades once per pixel, so the 22-light fragment cost does not multiply, and it adds
+ * no full-screen pass. It is NOT free: render-target memory and resolve bandwidth.
+ * Left at 2× deliberately, pending a measurement.
+ *
+ * ⚠️ If it is tried, judge it on the DPR LINE in `ScenePerfHud`, not on fps — the
+ * adaptive ladder absorbs new cost by dropping resolution and holding 60, which reads
+ * as free. If dpr can no longer climb off its 1.5 floor, 4× is too expensive.
  *
  * ⚠️ MSAA does NOT touch the wall labels. Troika draws glyphs as fragment-shader
  * alpha on a quad; MSAA antialiases geometry edges only. Distant-text shimmer is
@@ -47,6 +61,13 @@ const MULTISAMPLING = 2
  *
  * Dropping it also removes a full-screen pass, so it should cost nothing — a rare change
  * that can only help framerate.
+ *
+ * VERDICT 2026-09-20: text is sharper and FXAA stays off, but it WAS also the thing
+ * smoothing shallow geometry diagonals, and MSAA at 2× did not cover for it. The answer is
+ * more MSAA, not FXAA back: MSAA works on geometry edges only and cannot touch a troika
+ * glyph, so it buys the edges back without re-blurring the labels. If 4× MSAA still is not
+ * enough, SMAA is the next thing to try — it ships with @react-three/postprocessing (no new
+ * dependency) and preserves detail far better than FXAA — but it is another full-screen pass.
  */
 const ENABLE_FXAA = false
 

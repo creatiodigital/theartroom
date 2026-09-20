@@ -11,6 +11,7 @@ import { buildExhibitionSnapshot } from '@/lib/exhibitionSnapshot'
 
 import { sanitizeLine } from '@/utils/sanitizeLine'
 import { slugify } from '@/utils/slugify'
+import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 
 type ExhibitionUpdateBody = {
   mainTitle?: string
@@ -43,6 +44,7 @@ type ExhibitionUpdateBody = {
   trackLampAngle?: number
   trackLampDistance?: number
   trackLampSettings?: Record<string, { rotation: number; enabled: boolean; offset?: number }> | null
+  panelSettings?: Record<string, PanelSettings> | null
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
@@ -216,6 +218,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.trackLampSettings !== undefined)
       data.trackLampSettings =
         body.trackLampSettings === null ? Prisma.JsonNull : body.trackLampSettings
+    if (body.panelSettings !== undefined)
+      data.panelSettings = body.panelSettings === null ? Prisma.JsonNull : body.panelSettings
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
