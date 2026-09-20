@@ -67,6 +67,13 @@ package-lock.json
 # Vercel, shadowing the real one. Scoped to *.glb ONLY: other files under
 # public/assets (e.g. signage PNGs served from the app origin) must stay tracked.
 /public/assets/**/*.glb
+# TEMPORARY (2026-09-20): Vienna's model ships in the repo, not from R2.
+# The R2 S3 API is unreachable from the office connection (Cloudflare IP range
+# blocked by the Spanish ISP) so vienna14 could not be uploaded, and staging
+# 404s without it. Reads from R2 are fine — only writes are blocked. Remove
+# this line and the file once the upload lands, and restore assetUrl() in
+# src/components/scene/constants.tsx.
+!/public/assets/spaces/vienna/vienna14.glb
 
 # Space bakes — the KTX2 the scene loads and the PNG sources they are encoded
 # from. Same reasoning as the GLB rule above: R2 is the canonical copy for every

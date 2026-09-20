@@ -26,7 +26,22 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   },
   vienna: {
     displayName: 'Vienna',
-    gltfPath: assetUrl('/assets/spaces/vienna/vienna14.glb?v=1'),
+    // TEMPORARY (2026-09-20) — served from the app's own origin, NOT R2.
+    //
+    // `assetUrl` would point this at R2, which is where every other 3D asset
+    // lives and where this belongs. The file could not be uploaded: the R2 S3
+    // API (`<account>.r2.cloudflarestorage.com`) is unreachable from here, its
+    // Cloudflare IP range being TCP-blocked by the Spanish ISP. READS are
+    // unaffected — the CDN serves vienna12 fine — so this is a write-side
+    // outage only, and intermittent.
+    //
+    // Staging 404s on this exact URL without the file, taking the whole Vienna
+    // scene down, so the model ships in the repo instead (see the matching
+    // negation in .gitignore).
+    //
+    // 🔴 REVERT once the upload succeeds: restore `assetUrl(...)` here, drop
+    // the .gitignore negation, and delete the 9.3MB file from the repo.
+    gltfPath: '/assets/spaces/vienna/vienna14.glb?v=1',
   },
   madrid: {
     displayName: 'Madrid',
