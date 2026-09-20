@@ -45,6 +45,8 @@ export const fontFamilies: TOption<TFontFamily>[] = [
   { value: 'roboto', label: 'Roboto' },
   { value: 'garamond-glc', label: 'Garamond GLC' },
   { value: 'crimson', label: 'Crimson' },
+  { value: 'dm-sans', label: 'DM Sans' },
+  { value: 'plus-jakarta-sans', label: 'Plus Jakarta Sans' },
 ]
 
 export const textPaddings = toOptions(Array.from({ length: 25 }, (_, i) => i) as number[])

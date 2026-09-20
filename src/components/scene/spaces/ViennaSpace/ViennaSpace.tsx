@@ -15,6 +15,7 @@ import { ExitSign } from '@/components/scene/spaces/objects/ExitSign'
 import { ExitTrigger } from '@/components/scene/spaces/objects/ExitTrigger'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
+import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 import { Radiator } from '@/components/scene/spaces/objects/Radiator'
 import { RecessedLamp } from '@/components/scene/spaces/objects/RecessedLamp'
@@ -26,6 +27,7 @@ import { Wall } from '@/components/scene/spaces/objects/Wall'
 import {
   bakeWorldTransforms,
   countNodes,
+  getNodeIndices,
   groupNodesByRoom,
 } from '@/components/scene/spaces/objects/nodeIndices'
 
@@ -52,6 +54,13 @@ const ROOM_PARENTED_PREFIXES = [
   'trackLampArm',
   'roundLampBody',
   'recessedLampBody',
+  // Display panels. Three separate entries because the match is `^<prefix>\d+$`:
+  // 'panel' alone would take panel0 and leave panelFront0/panelBack0 behind,
+  // which is the worst outcome — the box moves to the room offset and its two
+  // hangable faces stay 21 m away.
+  'panel',
+  'panelFront',
+  'panelBack',
 ] as const
 
 type GLTFResult = GLTF & {
@@ -83,6 +92,11 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // Room membership FIRST — it reads `.parent`, which the next step leaves intact
   // but `<primitive>` would destroy on mount.
   const trackLampGroups = useMemo(() => groupNodesByRoom(nodes, 'trackLampArm'), [nodes])
+
+  // Display panels authored into this space. Indices run in blocks of ten,
+  // one block per room, so they are not contiguous — `getNodeIndices` collects
+  // whatever is there.
+  const panelIndices = useMemo(() => getNodeIndices(nodes, 'panel'), [nodes])
 
   // Then collapse the room Empties' transforms into their children. Vienna's
   // Empties sit up to ~21 m from the origin, and R3F drops them on mount.
@@ -282,6 +296,18 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
           visible={false}
         />
       )}
+
+      {/* Display panels. Collision refs continue after the three fixed slots
+          above (wall0, radiator, invisibleWall0) so a visitor cannot walk
+          through a panel any more than through a wall. */}
+      {panelIndices.map((index, position) => (
+        <Panel
+          key={index}
+          i={index}
+          nodes={nodes}
+          panelRef={wallRefs[3 + position]}
+        />
+      ))}
 
       <ExitTrigger nodes={nodes} />
 

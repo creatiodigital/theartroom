@@ -5,6 +5,8 @@ export const FONT_FAMILIES = [
   'roboto',
   'garamond-glc',
   'crimson',
+  'dm-sans',
+  'plus-jakarta-sans',
 ] as const
 export type TFontFamily = (typeof FONT_FAMILIES)[number]
 
@@ -22,6 +24,8 @@ export const FONT_FAMILY_WEIGHTS: Record<TFontFamily, readonly TFontWeight[]> = 
   roboto: ['regular', 'italic', 'bold', 'bold-italic'],
   'garamond-glc': ['regular'],
   crimson: ['regular', 'italic', 'bold', 'bold-italic'],
+  'dm-sans': ['regular', 'italic', 'bold', 'bold-italic'],
+  'plus-jakarta-sans': ['regular', 'italic', 'bold', 'bold-italic'],
 }
 
 export type TTextAlign = 'left' | 'center' | 'right'

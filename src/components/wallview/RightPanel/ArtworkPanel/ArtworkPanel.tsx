@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { zOrderToBack, zOrderToFront, type LayerItem } from '@/components/wallview/layerOrder'
 import { useGLTF } from '@react-three/drei'
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -20,7 +21,12 @@ import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { cmEventToMeters } from '@/components/wallview/utils'
 import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
 import { getPrintMaxSize } from '@/lib/print-providers/printspace/sizeBounds'
-import { updateArtworkPosition, toggleArtworkLocked } from '@/redux/slices/exhibitionSlice'
+import {
+  updateArtworkPosition,
+  toggleArtworkLocked,
+  setArtworkZOrder,
+  pushToHistory,
+} from '@/redux/slices/exhibitionSlice'
 import { setSizeLocked } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
@@ -46,6 +52,7 @@ const ArtworkPanel = () => {
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)
 
   // Get artwork data to check if it has an uploaded image
+  const allArtworkIds = useSelector((state: RootState) => state.artworks.allIds)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
@@ -163,6 +170,33 @@ const ArtworkPanel = () => {
         },
       }),
     )
+  }
+
+  // Every item sharing this wall, in creation order — the tie-break
+  // `zOrderToFront` / `zOrderToBack` need to work out a new position.
+  const wallItems: LayerItem[] = useMemo(() => {
+    const wallId = exhibitionArtwork?.wallId
+    if (!wallId) return []
+    const items: LayerItem[] = []
+    allArtworkIds.forEach((id) => {
+      const artwork = artworksById[id]
+      const pos = exhibitionArtworksById[id]
+      if (!artwork || !pos || pos.wallId !== wallId) return
+      items.push({ id, artworkType: artwork.artworkType, zOrder: pos.zOrder })
+    })
+    return items
+  }, [allArtworkIds, artworksById, exhibitionArtworksById, exhibitionArtwork?.wallId])
+
+  const handleMoveToFront = () => {
+    if (!currentArtworkId) return
+    dispatch(pushToHistory())
+    dispatch(setArtworkZOrder({ artworkId: currentArtworkId, zOrder: zOrderToFront(wallItems) }))
+  }
+
+  const handleMoveToBack = () => {
+    if (!currentArtworkId) return
+    dispatch(pushToHistory())
+    dispatch(setArtworkZOrder({ artworkId: currentArtworkId, zOrder: zOrderToBack(wallItems) }))
   }
 
   // Proportional resize handlers (when Lock size is checked)
@@ -528,6 +562,36 @@ const ArtworkPanel = () => {
             />
           </div>
         )}
+      </Section>
+
+      {/* ARRANGEMENT Section — stacking order within the wall */}
+      <Section title="Arrangement" disabled={isLocked}>
+        <div className={styles.row}>
+          <div className={styles.item}>
+            <Button
+              font="dashboard"
+              fullWidth
+              size="small"
+              variant="secondary"
+              icon="bring-to-front"
+              label="Move to front"
+              onClick={handleMoveToFront}
+              disabled={isLocked}
+            />
+          </div>
+          <div className={styles.item}>
+            <Button
+              font="dashboard"
+              fullWidth
+              size="small"
+              variant="secondary"
+              icon="send-to-back"
+              label="Move to back"
+              onClick={handleMoveToBack}
+              disabled={isLocked}
+            />
+          </div>
+        </div>
       </Section>
     </>
   )

@@ -12,6 +12,7 @@ import { setFocusTarget, setCurrentArtwork } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useIconTexture } from './useIconTexture'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 type SoundObjectProps = {
   artwork: RuntimeArtwork
@@ -41,7 +42,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const autofocusGroups = useSelector(selectAutofocusGroups)
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
@@ -204,7 +205,8 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
   ])
 
   // Handle double click - play/stop sound
-  const handleDoubleClick = useCallback(() => {
+  const handleDoubleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation()
     if (singleClickTimeout.current) {
       clearTimeout(singleClickTimeout.current)
       singleClickTimeout.current = null
@@ -219,8 +221,11 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
     }
   }, [soundUrl, isPlaying, isPlaceholdersShown, id, play, stop])
 
+  // Stops propagation for the same reason Display does — see the note there.
+  // Without it a work on the far face of a display panel steals the click.
   // Pointer down
   const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation()
     if (singleClickTimeout.current) {
       clearTimeout(singleClickTimeout.current)
       singleClickTimeout.current = null
@@ -232,6 +237,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
   // Pointer up
   const handlePointerUp = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation()
       if (!pointerDownPos.current) return
 
       const dx = event.clientX - pointerDownPos.current.x

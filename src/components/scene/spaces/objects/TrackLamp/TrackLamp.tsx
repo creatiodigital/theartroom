@@ -17,6 +17,7 @@ import type { RootState } from '@/redux/store'
 import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
 
 interface TrackLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -193,34 +194,21 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   )
   useDisposable(bulbOnMaterial)
 
-  const bulbOffMaterial = useMemo(
-    () =>
-      new MeshStandardMaterial({
-        color: '#000000',
-        emissive: '#cccccc',
-        emissiveIntensity: 0.3,
-        toneMapped: false,
-        side: DoubleSide,
-      }),
-    [],
-  )
-  useDisposable(bulbOffMaterial)
-
   // Apply shared materials imperatively (required when using <primitive>)
   useEffect(() => {
     for (const i of lampIndices) {
+      // A hidden lamp is not rendered at all, so it has no nodes to material.
+      if (!isTrackLampVisible(trackLampSettings?.[String(i)])) continue
+
       const armNode = nodes[`trackLampArm${i}`]
       const bodyNode = nodes[`trackLampBody${i}`]
       const bulbNode = nodes[`trackLampBulb${i}`]
 
-      const settings = trackLampSettings?.[String(i)]
-      const isEnabled = settings?.enabled ?? true
-
       if (armNode) armNode.material = armBodyMaterial
       if (bodyNode) bodyNode.material = armBodyMaterial
-      if (bulbNode) bulbNode.material = isEnabled ? bulbOnMaterial : bulbOffMaterial
+      if (bulbNode) bulbNode.material = bulbOnMaterial
     }
-  }, [nodes, lampIndices, armBodyMaterial, bulbOnMaterial, bulbOffMaterial, trackLampSettings])
+  }, [nodes, lampIndices, armBodyMaterial, bulbOnMaterial, trackLampSettings])
 
   // Compute world-space bulb positions and aim directions using node transforms directly.
   // We can't use getWorldPosition() because <primitive> re-parents nodes.
@@ -302,6 +290,10 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
         const armNode = nodes[`trackLampArm${i}`]
         if (!armNode) return null
 
+        // A disabled lamp leaves the scene outright — arm, body, bulb and
+        // spotlight. An unlit fixture on the ceiling is decoration, not light.
+        if (!isTrackLampVisible(trackLampSettings?.[String(i)])) return null
+
         const { bulbWorldPos, aimDir, offsetAxis } = lampData.get(i) ?? {
           bulbWorldPos: new Vector3(),
           aimDir: new Vector3(0, -1, 0),
@@ -310,7 +302,6 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
 
         // Per-lamp settings
         const settings = trackLampSettings?.[String(i)]
-        const isEnabled = settings?.enabled ?? true
         const rotation = settings?.rotation ?? 0
         const rotationRad = (rotation * Math.PI) / 180
         const offset = settings?.offset ?? 0
@@ -334,7 +325,7 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
               <primitive object={armNode} />
 
               {/* Spotlight — inside inner group so -armPos cancels with offsetPos */}
-              {isEnabled && isRoomActive(i) && (
+              {isRoomActive(i) && (
                 <TrackSpotlight
                   position={bulbWorldPos}
                   aimDirection={aimDir}

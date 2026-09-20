@@ -12,6 +12,7 @@ import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 type StencilProps = {
   artwork: RuntimeArtwork
@@ -194,7 +195,7 @@ const Stencil = ({ artwork }: StencilProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const autofocusGroups = useSelector(selectAutofocusGroups)
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
@@ -307,7 +308,8 @@ const Stencil = ({ artwork }: StencilProps) => {
   ])
 
   // Handle double click for info panel
-  const handleDoubleClick = useCallback(() => {
+  const handleDoubleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation()
     if (singleClickTimeout.current) {
       clearTimeout(singleClickTimeout.current)
       singleClickTimeout.current = null
@@ -319,8 +321,11 @@ const Stencil = ({ artwork }: StencilProps) => {
     }
   }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
 
+  // Stops propagation for the same reason Display does — see the note there.
+  // Without it a work on the far face of a display panel steals the click.
   // Pointer down
   const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation()
     if (singleClickTimeout.current) {
       clearTimeout(singleClickTimeout.current)
       singleClickTimeout.current = null
@@ -332,6 +337,7 @@ const Stencil = ({ artwork }: StencilProps) => {
   // Pointer up
   const handlePointerUp = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation()
       if (!pointerDownPos.current) return
 
       const dx = event.clientX - pointerDownPos.current.x
@@ -392,6 +398,18 @@ const Stencil = ({ artwork }: StencilProps) => {
       italic: '/fonts/crimson-italic.ttf',
       bold: '/fonts/crimson-bold.ttf',
       'bold-italic': '/fonts/crimson-bold-italic.ttf',
+    },
+    'dm-sans': {
+      regular: '/fonts/dm-sans-regular.ttf',
+      italic: '/fonts/dm-sans-italic.ttf',
+      bold: '/fonts/dm-sans-bold.ttf',
+      'bold-italic': '/fonts/dm-sans-bold-italic.ttf',
+    },
+    'plus-jakarta-sans': {
+      regular: '/fonts/plus-jakarta-sans-regular.ttf',
+      italic: '/fonts/plus-jakarta-sans-italic.ttf',
+      bold: '/fonts/plus-jakarta-sans-bold.ttf',
+      'bold-italic': '/fonts/plus-jakarta-sans-bold-italic.ttf',
     },
   }
 
@@ -528,7 +546,14 @@ const Stencil = ({ artwork }: StencilProps) => {
         return (
           <mesh renderOrder={1}>
             <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshBasicMaterial color={textBackgroundColor ?? 'white'} side={DoubleSide} />
+            {/* Standard to match the thick card above: a flat card is still a
+                painted surface on a wall and has to take the same light. Basic
+                is unlit, so a lamp used to stop at the card's edge. */}
+            <meshStandardMaterial
+              color={textBackgroundColor ?? 'white'}
+              roughness={1.0}
+              side={DoubleSide}
+            />
           </mesh>
         )
       })()}

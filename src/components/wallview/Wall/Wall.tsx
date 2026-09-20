@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei'
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import type { DragEvent } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Mesh } from 'three'
+import { Mesh, Vector3 } from 'three'
 
 import { Artwork } from '@/components/wallview/Artwork'
 import { Group } from '@/components/wallview/Group'
@@ -20,6 +20,7 @@ import { Human } from '@/components/wallview/Human'
 import { DistanceLines } from '@/components/wallview/DistanceLines'
 import { SelectionBox } from '@/components/wallview/SelectionBox'
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { sortBackToFront } from '@/components/wallview/layerOrder'
 import { convert2DTo3D, getVisualBounds } from '@/components/wallview/utils'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
 import { updateArtworkPosition, pushToHistory } from '@/redux/slices/exhibitionSlice'
@@ -87,7 +88,10 @@ export const Wall = () => {
     }
     const floorSurfaceY = floorMesh.position.y + (floorMesh.geometry.boundingBox?.max.y ?? 0)
 
-    // Get wall placeholder bottom Y
+    // Get wall placeholder bottom Y.
+    // Deliberately NOT panel-transformed: a panel moves in x/z and turns about
+    // Y, so the bottom edge's height never changes. Add a y offset to
+    // PanelSettings and this becomes wrong.
     const wallBottomY = boundingData.boundingBox.min.y
 
     // Calculate offset in meters
@@ -166,15 +170,16 @@ export const Wall = () => {
       setWallWidth(String(Math.round(width * 100)))
       setWallHeight(String(Math.round(height * 100)))
 
-      const { boundingBox, normal } = boundingData
-      const { min, max } = boundingBox
+      // The camera is the one consumer that wants WORLD space, so it is the one
+      // place the panel transform gets applied. Everything else works in the
+      // face's own space, which is what gets stored — see `faceBoundingData`.
+      // `transformDirection` on the normal: rotation only, never the translation.
+      const { boundingBox, normal, panelTransform } = boundingData
+      const center = boundingBox.getCenter(new Vector3()).applyMatrix4(panelTransform)
+      const facing = new Vector3(normal.x, normal.y, normal.z).transformDirection(panelTransform)
 
-      const x = (min.x + max.x) / 2
-      const y = (min.y + max.y) / 2
-      const z = (min.z + max.z) / 2
-
-      const wallCoordinates = { x, y, z }
-      const wallNormal = { x: normal.x, y: normal.y, z: normal.z }
+      const wallCoordinates = { x: center.x, y: center.y, z: center.z }
+      const wallNormal = { x: facing.x, y: facing.y, z: facing.z }
 
       dispatch(setWallDimensions({ width, height }))
       dispatch(setWallCoordinates({ coordinates: wallCoordinates, normal: wallNormal }))
@@ -326,15 +331,25 @@ export const Wall = () => {
 
   const wallArtworks = useMemo(() => {
     if (!currentWallId) return []
-    return allIds
+    const onThisWall = allIds
       .map((id) => {
         const artwork = artworksById[id]
         const pos = exhibitionArtworksById[id]
         if (!artwork || !pos) return null
         if (pos.wallId !== currentWallId) return null
-        return toRuntimeArtwork(artwork, pos)
+        return {
+          id: artwork.id,
+          artworkType: artwork.artworkType,
+          zOrder: pos.zOrder,
+          runtime: toRuntimeArtwork(artwork, pos),
+        }
       })
-      .filter((a): a is NonNullable<typeof a> => Boolean(a))
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+
+    // Emitted back to front: every item shares one z-index, so DOM order is
+    // what actually stacks the canvas. `allIds` order feeds in as the tie-break
+    // between items the artist has never explicitly reordered.
+    return sortBackToFront(onThisWall).map((entry) => entry.runtime)
   }, [allIds, artworksById, exhibitionArtworksById, currentWallId])
 
   return (

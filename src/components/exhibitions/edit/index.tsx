@@ -116,6 +116,7 @@ export const ExhibitionEditPage = ({
         trackLampAngle: exhibition.trackLampAngle ?? undefined,
         trackLampDistance: exhibition.trackLampDistance ?? undefined,
         trackLampSettings: exhibition.trackLampSettings ?? undefined,
+        panelSettings: exhibition.panelSettings ?? undefined,
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,

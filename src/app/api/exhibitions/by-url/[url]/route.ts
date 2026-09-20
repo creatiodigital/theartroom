@@ -232,6 +232,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         trackLampAngle: snapshotExhibition.trackLampAngle,
         trackLampDistance: snapshotExhibition.trackLampDistance,
         trackLampSettings: snapshotExhibition.trackLampSettings,
+        panelSettings: snapshotExhibition.panelSettings,
         windowLightColor: snapshotExhibition.windowLightColor,
         windowLightIntensity: snapshotExhibition.windowLightIntensity,
         windowTransparency: snapshotExhibition.windowTransparency,

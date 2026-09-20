@@ -128,3 +128,31 @@ export const wallFont6 = localFont({
   display: 'swap',
   preload: false,
 })
+
+// DM Sans and Plus Jakarta Sans are `localFont`, not `next/font/google`,
+// deliberately: the 3D scene loads these exact .ttf files off `public/fonts`
+// for troika, so pointing the 2D editor at Google's CDN would render the artist
+// a different cut of the same family than the room shows. One file, both views.
+export const wallFont7 = localFont({
+  src: [
+    { path: '../../public/fonts/dm-sans-regular.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/dm-sans-italic.ttf', weight: '400', style: 'italic' },
+    { path: '../../public/fonts/dm-sans-bold.ttf', weight: '700', style: 'normal' },
+    { path: '../../public/fonts/dm-sans-bold-italic.ttf', weight: '700', style: 'italic' },
+  ],
+  variable: '--font-wall-dm-sans',
+  display: 'swap',
+  preload: false,
+})
+
+export const wallFont8 = localFont({
+  src: [
+    { path: '../../public/fonts/plus-jakarta-sans-regular.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/plus-jakarta-sans-italic.ttf', weight: '400', style: 'italic' },
+    { path: '../../public/fonts/plus-jakarta-sans-bold.ttf', weight: '700', style: 'normal' },
+    { path: '../../public/fonts/plus-jakarta-sans-bold-italic.ttf', weight: '700', style: 'italic' },
+  ],
+  variable: '--font-wall-plus-jakarta-sans',
+  display: 'swap',
+  preload: false,
+})

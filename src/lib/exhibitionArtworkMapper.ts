@@ -106,6 +106,8 @@ export type ExhibitionArtworkResponse = {
   shapeOpacity: number
   rotation: number
   locked: boolean
+  // Stacking order within the wall; null until explicitly reordered.
+  zOrder: number | null
 }
 
 // ── Font weight mapping ─────────────────────────────────────────────────────
@@ -266,5 +268,6 @@ export function mapToArtworkPosition(ea: ExhibitionArtworkResponse): TArtworkPos
     quaternionW: ea.quaternionW,
     rotation: ea.rotation ?? 0,
     locked: ea.locked ?? false,
+    zOrder: ea.zOrder ?? null,
   }
 }

@@ -5,6 +5,7 @@ import { getAllPendingUploads, clearAllPendingUploads, isLocalBlobUrl } from '@/
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import type { RootState } from '@/redux/store'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 export const useSaveExhibition = () => {
   const { effectiveUser } = useEffectiveUser()
@@ -16,7 +17,7 @@ export const useSaveExhibition = () => {
   const allArtworkIds = useSelector((state: RootState) => state.artworks.allIds)
   const positionsById = useSelector((state: RootState) => state.exhibition.exhibitionArtworksById)
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
-  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const autofocusGroups = useSelector(selectAutofocusGroups)
 
   const saveToDatabase = useCallback(async () => {
     if (!effectiveUser?.id) {
@@ -293,6 +294,7 @@ export const useSaveExhibition = () => {
             shapeOpacity: artwork.shapeOpacity ?? 1,
             rotation: pos.rotation ?? 0,
             locked: pos.locked ?? false,
+            zOrder: pos.zOrder ?? null,
             // Sound styling (per-exhibition)
             soundIcon: artwork.soundIcon ?? 'volume-2',
             soundBackgroundColor: artwork.soundBackgroundColor ?? null,
