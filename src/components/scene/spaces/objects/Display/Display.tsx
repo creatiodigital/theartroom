@@ -28,6 +28,7 @@ import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 type DisplayProps = {
   artwork: RuntimeArtwork
@@ -209,20 +210,83 @@ const useCachedTexture = (url: string, accept: (u: string) => boolean): Texture 
 // would silently split back into separate uploads.
 const frameTextureBases = new Map<string, Texture>()
 
+// Clones taken while their shared Source was still empty — see cloneFrameTexture.
+const clonesAwaitingImage = new Map<string, Texture[]>()
+
+const releaseClonesAwaitingImage = (url: string) => {
+  const waiting = clonesAwaitingImage.get(url)
+  clonesAwaitingImage.delete(url)
+  waiting?.forEach((clone) => {
+    clone.needsUpdate = true
+  })
+}
+
 const getFrameTextureBase = (url: string, srgb: boolean): Texture => {
   const cached = frameTextureBases.get(url)
   if (cached) return cached
 
-  const texture = new TextureLoader().load(url)
+  const texture = new TextureLoader().load(
+    url,
+    () => releaseClonesAwaitingImage(url),
+    undefined,
+    // Nothing will ever arrive, so drop the held clones rather than retaining
+    // them for the life of the page. They stay at version 0 and simply never
+    // upload, which is what they did before this anyway.
+    () => clonesAwaitingImage.delete(url),
+  )
   texture.wrapS = texture.wrapT = 1000 // RepeatWrapping
   if (srgb) texture.colorSpace = SRGBColorSpace
   frameTextureBases.set(url, texture)
   return texture
 }
 
-/** A private Texture over a shared Source: own UV transform, one GPU upload. */
-const cloneFrameTexture = (url: string, srgb: boolean): Texture =>
-  getFrameTextureBase(url, srgb).clone()
+/**
+ * A private Texture over a shared Source: own UV transform, one GPU upload.
+ *
+ * `Texture.copy()` ends with `this.needsUpdate = true`, so a clone is born with
+ * `version = 1` — "upload me". `TextureLoader.load()` returns its texture
+ * synchronously with `source.data` still null, so a clone taken in that window
+ * is marked for upload with nothing to upload, and three's `setTexture2D`
+ * warns "Texture marked for update but no image data found" for that clone on
+ * EVERY frame until the fetch lands (forever, if it fails).
+ *
+ * The base itself escapes this only because it is never cloned from: it sits at
+ * `version = 0` until the loader sets both image and version together.
+ *
+ * So hold the clone at version 0 too, and mark it the moment the image is
+ * really there. `image` reads through to the shared Source, so by then the
+ * clone already has the pixels — this only tells three when to look.
+ */
+const cloneFrameTexture = (url: string, srgb: boolean): Texture => {
+  const base = getFrameTextureBase(url, srgb)
+  const clone = base.clone()
+
+  if (base.image === null) {
+    clone.version = 0
+    const waiting = clonesAwaitingImage.get(url) ?? []
+    waiting.push(clone)
+    clonesAwaitingImage.set(url, waiting)
+  }
+
+  return clone
+}
+
+/**
+ * How far the image floats above its paper sheet, in metres.
+ *
+ * The image and the paper are coplanar, so one of them has to move or they
+ * z-fight. It must be the IMAGE that moves forward, never the paper backward:
+ * an artwork's local origin sits exactly ON the surface it hangs from
+ * (`layerRankById` gives the backmost item on a wall a rank of 0, so it gets no
+ * lift at all), which means anything at negative z is INSIDE that surface and
+ * is occluded by it. On a white wall that was invisible. On a display panel
+ * painted the exhibition's wall colour it is not: the paper margin disappeared
+ * and the panel's own colour showed through where the white mat should be.
+ *
+ * Matches LAYER_DEPTH_STEP — half a millimetre is below anything visible at
+ * gallery viewing distance, and only the relative order matters.
+ */
+const IMAGE_LIFT = 0.0005
 
 const isBlobUrl = (url: string) => url.startsWith('blob:')
 const isNonEmptyUrl = (url: string) => url !== ''
@@ -436,7 +500,7 @@ const Display = ({ artwork }: DisplayProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const autofocusGroups = useSelector((state: RootState) => state.exhibition.autofocusGroups ?? [])
+  const autofocusGroups = useSelector(selectAutofocusGroups)
   const shadowBlur = useSelector((state: RootState) => state.exhibition.shadowBlur ?? 0.025)
   const shadowSpread = useSelector((state: RootState) => state.exhibition.shadowSpread ?? 1.2)
   const shadowOpacity = useSelector((state: RootState) => state.exhibition.shadowOpacity ?? 0.25)
@@ -580,7 +644,8 @@ const Display = ({ artwork }: DisplayProps) => {
   ])
 
   // Handle double click for info panel (existing behavior)
-  const handleDoubleClick = useCallback(() => {
+  const handleDoubleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation()
     // Cancel any pending single-click action
     if (singleClickTimeout.current) {
       clearTimeout(singleClickTimeout.current)
@@ -593,8 +658,24 @@ const Display = ({ artwork }: DisplayProps) => {
     }
   }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
 
+  // Every pointer handler stops propagation, because a display panel put two
+  // hangable faces 15 cm apart and R3F does not occlude.
+  //
+  // R3F raycasts the whole scene and calls the handler on EVERY object the ray
+  // passes through, nearest first — a solid mesh in between blocks nothing, so
+  // the panel's own box does not shield the face behind it. Click a work on the
+  // front of a panel and the work on the BACK receives the same click, because
+  // the image, paper and passepartout planes are all DoubleSide and so are hit
+  // from behind. Both then schedule `handleSingleClick`, both dispatch
+  // `setFocusTarget`, and the far one lands LAST and wins: the camera flies past
+  // the panel and parks facing its blank back.
+  //
+  // Nothing errors and nothing looks wrong until two works overlap through a
+  // panel, which is why this survived every wall in the building — a room wall
+  // has hangable art on one side only.
   // Pointer down - start tracking (and clear any pending single-click to support double-click)
   const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation()
     // Clear any pending single-click timeout (this is the start of a potential double-click)
     if (singleClickTimeout.current) {
       clearTimeout(singleClickTimeout.current)
@@ -607,6 +688,7 @@ const Display = ({ artwork }: DisplayProps) => {
   // Pointer up - check if it qualifies as a click
   const handlePointerUp = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation()
       if (!pointerDownPos.current) return
 
       const dx = event.clientX - pointerDownPos.current.x
@@ -837,20 +919,26 @@ const Display = ({ artwork }: DisplayProps) => {
       <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
         {/* Paper sheet — extends past the image as a white margin on every side */}
         {showPaperBorder && paperBorder > 0 && (
-          <mesh renderOrder={1} position={[0, 0, -0.0005]}>
+          <mesh renderOrder={1}>
             <planeGeometry args={[paperOuterW, paperOuterH]} />
-            <meshBasicMaterial color="#ffffff" side={DoubleSide} />
+            {/* A paper sheet is a real surface hanging on the wall: unlit, it
+                glowed flat white while the wall around it took the lamp. */}
+            <meshStandardMaterial color="#ffffff" roughness={0.9} side={DoubleSide} />
           </mesh>
         )}
 
-        {!imageUrl && (
-          <mesh renderOrder={2}>
-            <planeGeometry args={[planeWidth, planeHeight]} />
-            <meshBasicMaterial color="white" side={DoubleSide} />
-          </mesh>
-        )}
+        {/* The image rides ON the paper, so it is the image that lifts — never
+            the paper that sinks. See IMAGE_LIFT. */}
+        <group position={[0, 0, IMAGE_LIFT]}>
+          {!imageUrl && (
+            <mesh renderOrder={2}>
+              <planeGeometry args={[planeWidth, planeHeight]} />
+              <meshStandardMaterial color="white" roughness={0.9} side={DoubleSide} />
+            </mesh>
+          )}
 
-        {imageUrl && <ArtworkImage url={imageUrl} width={planeWidth} height={planeHeight} />}
+          {imageUrl && <ArtworkImage url={imageUrl} width={planeWidth} height={planeHeight} />}
+        </group>
       </group>
 
       {/* Frame extends backward from Z=0 by frameDepth — outermost layer */}

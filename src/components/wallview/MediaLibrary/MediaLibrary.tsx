@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
@@ -9,6 +9,10 @@ import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { Text } from '@/components/ui/Typography'
+import {
+  isPanelEnabled,
+  panelIndexOfFace,
+} from '@/components/scene/spaces/objects/Panel/panelSettings'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import type { RootState } from '@/redux/store'
 
@@ -114,6 +118,25 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
   // Get artworks already in this exhibition to filter them out
   const exhibitionArtworkIds = useSelector((state: RootState) => state.artworks.allIds)
 
+  // Artworks hung on a panel that is currently switched off. They are in the
+  // exhibition, so the filter below would drop them — but the panel is gone
+  // from the room, so they are not on any wall either. Filtered out they would
+  // be invisible everywhere, and the artist would just find work missing with
+  // nowhere to look for it. So they stay in the library, marked.
+  const exhibitionArtworksById = useSelector(
+    (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
+  const panelSettings = useSelector((state: RootState) => state.exhibition.panelSettings)
+  const onHiddenPanel = useMemo(() => {
+    const ids = new Set<string>()
+    for (const [artworkId, pos] of Object.entries(exhibitionArtworksById)) {
+      const panelIndex = panelIndexOfFace(pos.wallId)
+      if (panelIndex === null) continue
+      if (!isPanelEnabled(panelSettings?.[String(panelIndex)])) ids.add(artworkId)
+    }
+    return ids
+  }, [exhibitionArtworksById, panelSettings])
+
   useEffect(() => {
     const fetchArtworks = async () => {
       if (!effectiveUser?.id) return
@@ -135,7 +158,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
 
   // Filter out artworks already in this exhibition
   const availableArtworks = artworks
-    .filter((artwork) => !exhibitionArtworkIds.includes(artwork.id))
+    .filter((artwork) => !exhibitionArtworkIds.includes(artwork.id) || onHiddenPanel.has(artwork.id))
     .filter((artwork) => typeFilter === 'all' || artwork.artworkType === typeFilter)
     .filter((artwork) => {
       if (!searchQuery.trim()) return true
@@ -262,8 +285,13 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
         <div className={styles.grid}>
           {availableArtworks.map((artwork) => (
             <div key={artwork.id} className={styles.itemWrapper}>
+              {onHiddenPanel.has(artwork.id) && (
+                <span className={styles.hiddenBadge} title="On a panel that is switched off">
+                  <Icon name="eye-off" size={12} />
+                </span>
+              )}
               <div
-                className={styles.item}
+                className={`${styles.item} ${onHiddenPanel.has(artwork.id) ? styles.onHiddenPanel : ''}`}
                 onClick={() => onClickArtwork(artwork)}
                 draggable
                 onDragStart={(e) => handleDragStart(e, artwork)}
@@ -319,6 +347,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
                 )}
               </div>
               <span className={styles.name}>{artwork.title || artwork.name}</span>
+              {onHiddenPanel.has(artwork.id) && (
+                <span className={styles.hiddenNote}>In use · panel hidden</span>
+              )}
             </div>
           ))}
         </div>

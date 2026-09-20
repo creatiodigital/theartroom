@@ -25,6 +25,8 @@ export type TArtworkPosition = {
   quaternionZ: number
   quaternionW: number
   locked?: boolean
+  /** Stacking order within the wall; null until explicitly reordered. */
+  zOrder?: number | null
 }
 
 export type TArtwork = {

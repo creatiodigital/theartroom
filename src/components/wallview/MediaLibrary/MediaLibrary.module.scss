@@ -62,6 +62,7 @@
 }
 
 .itemWrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -170,4 +171,41 @@
   &:focus {
     border-color: var(--color-text-primary);
   }
+}
+
+/* Marks an artwork that is hung on a panel currently switched off. It stays in
+   the library — otherwise it would be in the exhibition, off the walls, and
+   listed nowhere. */
+.hiddenBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-white);
+  color: var(--color-text-secondary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+  pointer-events: none;
+}
+
+/* An artwork parked on a switched-off panel is still in the show, so it must not
+   look available. Dimmed and labelled rather than removed: removing it is what
+   made it vanish from the room AND the library at once. */
+.onHiddenPanel {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.hiddenNote {
+  font-size: var(--text-2xs, 10px);
+  line-height: 1.2;
+  text-align: center;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

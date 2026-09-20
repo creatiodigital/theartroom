@@ -193,6 +193,7 @@ export async function POST(request: NextRequest) {
         shapeOpacity?: number
         rotation?: number
         locked?: boolean
+        zOrder?: number | null
       }>
     }
 
@@ -347,6 +348,7 @@ export async function POST(request: NextRequest) {
             shapeOpacity: pos.shapeOpacity ?? 1,
             rotation: pos.rotation ?? 0,
             locked: pos.locked ?? false,
+            zOrder: pos.zOrder ?? null,
           },
           update: {
             wallId: pos.wallId,
@@ -428,6 +430,7 @@ export async function POST(request: NextRequest) {
             shapeOpacity: pos.shapeOpacity ?? 1,
             rotation: pos.rotation ?? 0,
             locked: pos.locked ?? false,
+            zOrder: pos.zOrder ?? null,
           },
         }),
       ),

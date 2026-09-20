@@ -7,6 +7,8 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import {
   showLightingPanel,
   hideLightingPanel,
+  showPanelsPanel,
+  hidePanelsPanel,
   showFloorPanel,
   hideFloorPanel,
   showCameraPanel,
@@ -25,6 +27,7 @@ export const Menu = () => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
+  const isPanelsPanelOpen = useSelector((state: RootState) => state.dashboard.isPanelsPanelOpen)
   const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
   const isCameraPanelOpen = useSelector((state: RootState) => state.dashboard.isCameraPanelOpen)
 
@@ -49,6 +52,7 @@ export const Menu = () => {
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
 
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       dispatch(showLightingPanel())
     }
   }
@@ -62,6 +66,7 @@ export const Menu = () => {
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
 
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       dispatch(showFloorPanel())
     }
   }
@@ -75,6 +80,7 @@ export const Menu = () => {
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
 
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       dispatch(showCameraPanel())
     }
   }
@@ -86,8 +92,22 @@ export const Menu = () => {
       if (isLightingPanelOpen) dispatch(hideLightingPanel())
       if (isFloorPanelOpen) dispatch(hideFloorPanel())
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
 
       dispatch(showWallCeilingPanel())
+    }
+  }
+
+  const togglePanelsPanel = () => {
+    if (isPanelsPanelOpen) {
+      dispatch(hidePanelsPanel())
+    } else {
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+
+      dispatch(showPanelsPanel())
     }
   }
 
@@ -118,6 +138,9 @@ export const Menu = () => {
         <Button size="regular" variant="secondary" icon="light" onClick={toggleLightingPanel} />
       </Tooltip>
 
+      <Tooltip label="Display panels" placement="right">
+        <Button size="regular" variant="secondary" icon="panel-top" onClick={togglePanelsPanel} />
+      </Tooltip>
       <Tooltip label="Walls and Ceiling" placement="right">
         <Button size="regular" variant="secondary" icon="house" onClick={toggleWallCeilingPanel} />
       </Tooltip>

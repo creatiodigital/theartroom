@@ -6,6 +6,7 @@ import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { CameraPanel } from '@/components/editview/CameraPanel'
 import { FloorPanel } from '@/components/editview/FloorPanel'
 import { LightingPanel } from '@/components/editview/LightingPanel'
+import { PanelsPanel } from '@/components/editview/PanelsPanel'
 import WallCeilingPanel from '@/components/editview/WallCeilingPanel/WallCeilingPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
@@ -24,6 +25,9 @@ function EditView() {
   )
   const isLightingPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isLightingPanelOpen,
+  )
+  const isPanelsPanelOpen: boolean = useSelector(
+    (state: RootState) => state.dashboard.isPanelsPanelOpen,
   )
   const isFloorPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isFloorPanelOpen,
@@ -59,6 +63,7 @@ function EditView() {
           <Scene />
           {isArtworkPanelOpen && <ArtworkPanel />}
           {isLightingPanelOpen && <LightingPanel />}
+          {isPanelsPanelOpen && <PanelsPanel />}
           {isFloorPanelOpen && <FloorPanel />}
           {isCameraPanelOpen && <CameraPanel />}
 

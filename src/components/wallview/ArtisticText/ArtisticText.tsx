@@ -58,6 +58,8 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     manrope: 'var(--font-wall-manrope)',
     'garamond-glc': 'var(--font-wall-garamond-glc)',
     crimson: 'var(--font-wall-crimson)',
+    'dm-sans': 'var(--font-wall-dm-sans)',
+    'plus-jakarta-sans': 'var(--font-wall-plus-jakarta-sans)',
   }
 
   // Map font weight/style values to CSS properties

@@ -705,6 +705,11 @@ model Exhibition {
   trackLampAngle         Float?   @default(0.45)
   trackLampDistance      Float?   @default(5.0)
   trackLampSettings      Json?
+  // Display panels, keyed by panel index:
+  //   { "0": { enabled, x, z, rotationY, color } }
+  // Absent means no panel has ever been switched on. See
+  // src/components/scene/spaces/objects/Panel/panelSettings.ts
+  panelSettings          Json?
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)
@@ -841,6 +846,12 @@ model ExhibitionArtwork {
 
   // Wall-normal rotation (degrees, 0-360, only used for shapes)
   rotation Float @default(0)
+
+  // Stacking order within a wall, back to front. Null until the artist moves the
+  // item with "move to front" / "move to back" — an untouched item falls back to
+  // the default for its kind, which keeps shapes behind artworks. See
+  // src/components/wallview/layerOrder.ts.
+  zOrder Int?
 
   // Lock protection (prevents move, resize, delete, preset, and grouping in wall view)
   locked Boolean @default(false)

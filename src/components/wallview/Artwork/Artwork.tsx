@@ -10,6 +10,7 @@ import { ArtisticText } from '@/components/wallview/ArtisticText'
 import ArtisticVideo from '@/components/wallview/ArtisticVideo/ArtisticVideo'
 import { ArtworkMeasurements } from '@/components/wallview/ArtworkMeasurements'
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { WALL_ITEM_Z_INDEX } from '@/components/wallview/layerOrder'
 import { Handles } from '@/components/wallview/Handles'
 import { useMoveArtwork } from '@/components/wallview/hooks/useMoveArtwork'
 import { chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
@@ -20,6 +21,7 @@ import type { TDimensions } from '@/types/geometry'
 import type { ResizeHandler } from '@/types/wallView'
 
 import styles from './Artwork.module.scss'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 type ArtworkProps = {
   artwork: TArtwork
@@ -56,9 +58,7 @@ const Artwork = memo(
     const activeAutofocusGroupId = useSelector(
       (state: RootState) => state.wallView.activeAutofocusGroupId,
     )
-    const autofocusGroups = useSelector(
-      (state: RootState) => state.exhibition.autofocusGroups ?? [],
-    )
+    const autofocusGroups = useSelector(selectAutofocusGroups)
 
     // Check if this artwork is in the currently highlighted autofocus group
     const isInActiveAutofocusGroup = activeAutofocusGroupId
@@ -168,7 +168,7 @@ const Artwork = memo(
           left: `${finalX}px`,
           width: `${finalWidth}px`,
           height: `${finalHeight}px`,
-          zIndex: currentArtworkId === id ? 10 : 1,
+          zIndex: WALL_ITEM_Z_INDEX,
           cursor: artworkPositions.locked ? 'not-allowed' : 'grab',
           overflow: artworkType === 'shape' ? 'visible' : undefined,
         }}

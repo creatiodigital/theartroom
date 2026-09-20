@@ -1,6 +1,7 @@
 import type { TArtworkPosition } from '@/types/artwork'
 import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { ExhibitionArtworkResponse } from '@/lib/exhibitionArtworkMapper'
+import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 
 export type TExhibition = {
   id: string
@@ -42,6 +43,8 @@ export type TExhibition = {
   trackLampAngle?: number
   trackLampDistance?: number
   trackLampSettings?: Record<string, { rotation: number; enabled: boolean; offset?: number }>
+  /** Display panels, keyed by panel index. See panelSettings.ts. */
+  panelSettings?: Record<string, PanelSettings>
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
