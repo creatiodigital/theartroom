@@ -25,6 +25,7 @@ import { useGroupDetails } from '../hooks/useGroupDetails'
 import { useGroupHandlers } from '../hooks/useGroupHandlers'
 import GroupPresetApply from './GroupPresetApply'
 import styles from '../RightPanel.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 const GroupPanel = () => {
   const artworkGroupIds = useSelector((state: RootState) => state.wallView.artworkGroupIds)
@@ -49,7 +50,7 @@ const GroupPanel = () => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
 
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }

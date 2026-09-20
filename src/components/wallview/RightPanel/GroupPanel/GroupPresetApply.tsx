@@ -18,6 +18,7 @@ import {
   type PresetType,
 } from '../PresetSection/applyPresetToArtwork'
 import styles from '../PresetSection/PresetSection.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 type GroupPresetApplyProps = {
   artworkIds: string[]
@@ -34,7 +35,7 @@ const GroupPresetApply = ({ artworkIds, uniformType }: GroupPresetApplyProps) =>
 
   // Get bounding data for convert2DTo3D
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as { nodes: Record<string, Mesh> }
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)

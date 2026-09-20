@@ -32,6 +32,7 @@ import {
   textPaddings,
   textThicknessOptions,
 } from './constants'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 /** Map font-family keys to the CSS custom properties used in the 2D wall view */
 const fontFamilyMap: Record<string, string> = {
@@ -56,7 +57,7 @@ const ArtisticText = ({ disabled }: { disabled?: boolean }) => {
 
   // Bounding data for 2D→3D coordinate conversion
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as { nodes: Record<string, Mesh> }
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
   const boundingData = useBoundingData(nodes as Record<string, Mesh>, currentWallId)

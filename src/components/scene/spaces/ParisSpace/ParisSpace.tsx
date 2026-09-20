@@ -41,6 +41,7 @@ import {
 } from '@/components/scene/spaces/objects/nodeIndices'
 import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // No module-scope preload for these: drei's useKTX2.preload only sets the
 // transcoder path, never calling detectSupport(renderer). Since useLoader caches
@@ -65,7 +66,7 @@ type ParisSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF(spaceConfigs.paris.gltfPath) as unknown as GLTFResult
+  const { nodes } = useGLTF(spaceGltfUrl(spaceConfigs.paris.gltfPath)) as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -304,12 +305,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
       {/* Display panels — see docs/display-panels.md. Collision refs continue
           after this space's fixed slots. */}
       {panelIndices.map((index, position) => (
-        <Panel
-          key={index}
-          i={index}
-          nodes={nodes}
-          panelRef={wallRefs[3 + position]}
-        />
+        <Panel key={index} i={index} nodes={nodes} panelRef={wallRefs[3 + position]} />
       ))}
 
       <ExitTrigger nodes={nodes} />

@@ -11,6 +11,7 @@ import type { TArtwork } from '@/types/artwork'
 
 import { spaceComponents, getSpaceConfig, type SpaceKey } from './constants'
 import { deriveSpaceRefs } from './spaces/objects/nodeIndices'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 type SpaceProps = {
   onPlaceholderClick: (wallId: string) => void
@@ -29,7 +30,7 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
   // claimed used to end up with uncollidable glass and nothing to explain why.
   // Same GLB the space component loads; useGLTF caches by URL, so this is the
   // already-parsed instance rather than a second download.
-  const { nodes } = useGLTF(spaceConfig.gltfPath) as unknown as {
+  const { nodes } = useGLTF(spaceGltfUrl(spaceConfig.gltfPath)) as unknown as {
     nodes: Record<string, unknown>
   }
   const refs = useMemo(() => spaceConfig.refs ?? deriveSpaceRefs(nodes), [spaceConfig.refs, nodes])

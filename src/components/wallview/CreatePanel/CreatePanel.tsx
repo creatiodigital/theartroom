@@ -15,6 +15,7 @@ import { MediaLibrary } from '@/components/wallview/MediaLibrary'
 import type { RootState } from '@/redux/store'
 
 import styles from './CreatePanel.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 export const CreatePanel = () => {
   const [showMediaLibrary, setShowMediaLibrary] = useState(false)
@@ -22,7 +23,7 @@ export const CreatePanel = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const currentWallId = useSelector((state: RootState) => state.wallView.currentWallId)
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }

@@ -32,11 +32,12 @@ import { toRuntimeArtwork } from '@/utils/artworkTransform'
 import { Measurements } from '../Measurements'
 import { AlignedLine } from './AlignedLine'
 import styles from './Wall.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 export const Wall = () => {
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }

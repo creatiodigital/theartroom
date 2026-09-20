@@ -45,6 +45,7 @@ import { spaceConfigs } from '@/components/scene/constants'
 // — a second identical file today would only drift.
 import { Lights } from '@/components/scene/spaces/ParisSpace/lights'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // Prop families whose nodes hang off a room Empty in the Vienna GLB. Their
 // ancestor transforms have to be collapsed into the nodes themselves before
@@ -81,7 +82,7 @@ type ViennaSpaceProps = React.ComponentProps<'group'> & {
 }
 
 const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRefs, ...props }) => {
-  const { nodes } = useGLTF(spaceConfigs.vienna.gltfPath) as unknown as GLTFResult
+  const { nodes } = useGLTF(spaceGltfUrl(spaceConfigs.vienna.gltfPath)) as unknown as GLTFResult
 
   const dispatch = useDispatch()
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
@@ -301,12 +302,7 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
           above (wall0, radiator, invisibleWall0) so a visitor cannot walk
           through a panel any more than through a wall. */}
       {panelIndices.map((index, position) => (
-        <Panel
-          key={index}
-          i={index}
-          nodes={nodes}
-          panelRef={wallRefs[3 + position]}
-        />
+        <Panel key={index} i={index} nodes={nodes} panelRef={wallRefs[3 + position]} />
       ))}
 
       <ExitTrigger nodes={nodes} />

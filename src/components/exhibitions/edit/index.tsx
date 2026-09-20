@@ -24,6 +24,7 @@ import {
 import { resetWizard, showWizard } from '@/redux/slices/wizardSlice'
 import type { AppDispatch } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
+import { spaceGltfUrlSync } from '@/components/scene/spaceAsset'
 
 interface ExhibitionEditPageProps {
   artistSlug: string
@@ -63,7 +64,11 @@ export const ExhibitionEditPage = ({
       dispatch(resetWizard())
 
       // Clear GLTF cache for space types
-      Object.values(spaceConfigs).forEach((config) => useGLTF.clear(config.gltfPath))
+      // Clear by the RESOLVED url — after a fallback the loader cached the
+      // local copy, and clearing the R2 url would miss it.
+      Object.values(spaceConfigs).forEach((config) =>
+        useGLTF.clear(spaceGltfUrlSync(config.gltfPath)),
+      )
 
       hasResetRef.current = exhibitionSlug
       // Reset restored state ref when exhibition changes

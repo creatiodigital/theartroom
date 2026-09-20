@@ -34,6 +34,7 @@ import type { TAlign } from '@/types/wizard'
 import { useArtworkDetails } from '../hooks/useArtworkDetails'
 import { useArtworkHandlers } from '../hooks/useArtworkHandlers'
 import styles from '../RightPanel.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 const ArtworkPanel = () => {
   const dispatch = useDispatch()
@@ -44,7 +45,7 @@ const ArtworkPanel = () => {
 
   // Use exhibition spaceId to load the correct GLB for this exhibition
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
-  const gltfPath = getSpaceConfig(spaceId || 'paris').gltfPath
+  const gltfPath = spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath)
   const { nodes } = useGLTF(gltfPath) as unknown as {
     nodes: Record<string, Mesh>
   }

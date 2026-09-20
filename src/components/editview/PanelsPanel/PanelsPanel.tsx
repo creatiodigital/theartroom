@@ -23,6 +23,7 @@ import { setPanelSettings } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
 import styles from './PanelsPanel.module.scss'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 /** How far a panel may be nudged from where Blender put it, in metres. */
 const MOVE_RANGE = 15
@@ -46,7 +47,9 @@ const PanelsPanel = () => {
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
 
-  const { nodes } = useGLTF(getSpaceConfig(spaceId || 'paris').gltfPath) as unknown as {
+  const { nodes } = useGLTF(
+    spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath),
+  ) as unknown as {
     nodes: Record<string, unknown>
   }
   const panelIndices = useMemo(() => getNodeIndices(nodes, 'panel'), [nodes])

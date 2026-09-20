@@ -14,6 +14,7 @@ import {
 import { LAYER_DEPTH_STEP, layerRankById, type LayerItem } from '@/components/wallview/layerOrder'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
+import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 type ArtworkWithPosition = TArtwork & {
   position: Vector3
@@ -31,7 +32,9 @@ const ArtObjects = () => {
 
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
   const panelSettings = useSelector((state: RootState) => state.exhibition.panelSettings)
-  const { nodes } = useGLTF(getSpaceConfig(spaceId || 'paris').gltfPath) as unknown as {
+  const { nodes } = useGLTF(
+    spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath),
+  ) as unknown as {
     nodes: Record<string, Mesh>
   }
 
