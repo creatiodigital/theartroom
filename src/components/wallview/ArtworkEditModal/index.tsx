@@ -116,7 +116,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
     }
   }, [previewUrl])
 
-  const handleChange = (field: string, value: string | boolean) => {
+  const handleChange = (field: string, value: string | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -239,8 +239,11 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
       }
 
       // Step 2: transform the euros-string the UI tracks into the cents-integer
-      // the PUT route expects (raw formData would drop the price).
-      const { printPriceEuros, ...rest } = formData
+      // the PUT route expects (raw formData would drop the price). Also drop
+      // exhibitionIds — this modal has no Exhibitions picker (see the render
+      // below), so it must never touch membership; omitting the key is what
+      // the PUT route treats as "leave membership untouched".
+      const { printPriceEuros, exhibitionIds: _exhibitionIds, ...rest } = formData
       const parsed = Number(printPriceEuros)
       const printPriceCents =
         printPriceEuros.trim() === '' || !Number.isFinite(parsed) || parsed < 0
