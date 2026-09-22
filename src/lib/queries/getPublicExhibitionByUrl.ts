@@ -6,11 +6,13 @@ import { captureError } from '@/lib/observability/captureError'
 /**
  * Every artwork field the public exhibition grid renders, in ONE place.
  *
- * This page loads its artworks through two different paths — the published
- * snapshot and the live relation — and they each used to spell their select
- * out. A field added to one and forgotten in the other is invisible until a
- * priced work quietly shows no price on a published exhibition, which is the
- * only kind there is. Sharing the constant makes that impossible.
+ * This page once loaded its artworks through two paths — the published
+ * snapshot and the live relation — each spelling its own select out, so a
+ * field added to one and forgotten in the other stayed invisible until a
+ * priced work quietly showed no price. Only the live path remains (AR-151),
+ * but the constant stays: the artwork-detail prev/next nav reads this same
+ * shape through `getPublicExhibitionByUrl`, and one definition is still the
+ * reason the two cannot drift.
  */
 const PUBLIC_ARTWORK_SELECT = {
   id: true,
