@@ -271,3 +271,51 @@ export function mapToArtworkPosition(ea: ExhibitionArtworkResponse): TArtworkPos
     zOrder: ea.zOrder ?? null,
   }
 }
+
+// ── Placement narrowing ─────────────────────────────────────────────────────
+
+/**
+ * The twelve placement columns are nullable in the database because a work can
+ * be in a show without hanging in its 3D room. Every consumer downstream of
+ * `ExhibitionArtworkResponse` — the whole wall editor and the 3D scene — was
+ * written against non-null coordinates and must stay that way.
+ *
+ * So the nullability stops here. Queries that feed the editor or the scene
+ * filter on `wallId: { not: null }`, then pass their rows through this to
+ * narrow. Prisma cannot infer that the filter guarantees the other eleven
+ * columns, so the cast carries that knowledge in one place instead of at
+ * twenty-five call sites.
+ */
+type PlacementColumns = {
+  wallId: string | null
+  posX2d: number | null
+  posY2d: number | null
+  width2d: number | null
+  height2d: number | null
+  posX3d: number | null
+  posY3d: number | null
+  posZ3d: number | null
+  quaternionX: number | null
+  quaternionY: number | null
+  quaternionZ: number | null
+  quaternionW: number | null
+}
+
+export type Placed<T extends PlacementColumns> = Omit<T, keyof PlacementColumns> & {
+  wallId: string
+  posX2d: number
+  posY2d: number
+  width2d: number
+  height2d: number
+  posX3d: number
+  posY3d: number
+  posZ3d: number
+  quaternionX: number
+  quaternionY: number
+  quaternionZ: number
+  quaternionW: number
+}
+
+export function toPlacedRows<T extends PlacementColumns>(rows: T[]): Placed<T>[] {
+  return rows.filter((row) => row.wallId !== null) as Placed<T>[]
+}

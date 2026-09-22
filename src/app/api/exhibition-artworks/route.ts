@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { requireOwnership, isSuperAdmin } from '@/lib/authUtils'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
+import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -90,8 +91,11 @@ export async function GET(request: NextRequest) {
     // URL / metadata from the joined artwork — this endpoint is
     // unauthenticated and would otherwise leak every placed artwork's
     // 60MB+ print original (see /api/artworks GET).
+    //
+    // Placed rows only. This is the wall editor's live load (mode=edit) — a
+    // work that is in the show but not hung yet has no wall to draw it on.
     const exhibitionArtworks = await prisma.exhibitionArtwork.findMany({
-      where: { exhibitionId },
+      where: { exhibitionId, wallId: { not: null } },
       include: {
         artwork: {
           omit: PUBLIC_ARTWORK_OMIT,
@@ -99,7 +103,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(exhibitionArtworks)
+    return NextResponse.json(toPlacedRows(exhibitionArtworks))
   } catch (error) {
     console.error('[GET /api/exhibition-artworks] error:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
