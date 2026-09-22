@@ -196,8 +196,20 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       for (const g of soldGrouped) soldByVariant.set(g.variantId, g._count._all)
     }
 
+    // Exhibitions currently showing this artwork on their page. Membership is
+    // `showOnPage`, not row existence — a row hung in a room but unchecked from
+    // the page is deliberately excluded, so the dashboard's Exhibitions picker
+    // only pre-checks shows the artwork is actually curated into. Without this,
+    // the picker would always render blank and the next unrelated save would
+    // silently strip the artwork from every exhibition it is really in.
+    const memberOf = await prisma.exhibitionArtwork.findMany({
+      where: { artworkId: id, showOnPage: true },
+      select: { exhibitionId: true },
+    })
+
     return NextResponse.json({
       ...artwork,
+      exhibitionIds: memberOf.map((m) => m.exhibitionId),
       limitedVariants: artwork.limitedVariants.map((v) => ({
         ...v,
         committedCount: committedByVariant.get(v.id) ?? 0,
@@ -348,6 +360,93 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         printRecommendations === null
           ? Prisma.DbNull
           : (printRecommendations as unknown as Prisma.InputJsonValue),
+    }
+
+    // Exhibition membership. The client sends the full desired set, so this is
+    // a diff rather than an append.
+    //
+    // The requested ids are intersected with exhibitions that still exist AND
+    // belong to this artwork's owner. Both halves matter: an exhibition deleted
+    // while the form was open would otherwise fail the whole save on a foreign
+    // key, and without the ownership check a caller could curate their artwork
+    // into someone else's show. Never trust the list the form sent.
+    if (Array.isArray(body.exhibitionIds)) {
+      const requestedIds = [
+        ...new Set(
+          (body.exhibitionIds as unknown[]).filter(
+            (value): value is string => typeof value === 'string',
+          ),
+        ),
+      ]
+
+      const ownedExhibitions = requestedIds.length
+        ? await prisma.exhibition.findMany({
+            where: { id: { in: requestedIds }, userId: existing.userId },
+            select: { id: true },
+          })
+        : []
+      const allowedIds = new Set(ownedExhibitions.map((e) => e.id))
+
+      const rows = await prisma.exhibitionArtwork.findMany({
+        where: { artworkId: id },
+        select: { exhibitionId: true, wallId: true, showOnPage: true },
+      })
+
+      // Membership is `showOnPage`, not row existence — a 3D-only row exists
+      // but is not a member, and re-checking it must flip the flag rather than
+      // create a duplicate the unique constraint would reject.
+      const memberIds = new Set(rows.filter((r) => r.showOnPage).map((r) => r.exhibitionId))
+      const rowByExhibition = new Map(rows.map((r) => [r.exhibitionId, r]))
+
+      const operations = []
+
+      for (const exhibitionId of allowedIds) {
+        if (memberIds.has(exhibitionId)) continue
+        const row = rowByExhibition.get(exhibitionId)
+        if (row) {
+          // Hung but unchecked until now: keep the coordinates, add the page.
+          operations.push(
+            prisma.exhibitionArtwork.update({
+              where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
+              data: { showOnPage: true },
+            }),
+          )
+        } else {
+          // Brand new membership: on the page, not hung anywhere.
+          operations.push(
+            prisma.exhibitionArtwork.create({
+              data: { exhibitionId, artworkId: id, showOnPage: true },
+            }),
+          )
+        }
+      }
+
+      for (const row of rows) {
+        if (!row.showOnPage || allowedIds.has(row.exhibitionId)) continue
+        if (row.wallId !== null) {
+          // Still hanging in the room — keep the placement and the styling,
+          // just take it off the page. This is the rare 3D-only state.
+          operations.push(
+            prisma.exhibitionArtwork.update({
+              where: {
+                exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
+              },
+              data: { showOnPage: false },
+            }),
+          )
+        } else {
+          // Neither on the page nor in the room: nothing left worth keeping.
+          operations.push(
+            prisma.exhibitionArtwork.delete({
+              where: {
+                exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
+              },
+            }),
+          )
+        }
+      }
+
+      if (operations.length > 0) await prisma.$transaction(operations)
     }
 
     // Try with new fields first
