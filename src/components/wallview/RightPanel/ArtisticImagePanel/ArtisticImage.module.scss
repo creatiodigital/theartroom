@@ -1,0 +1,14 @@
+@use '@/styles/mixins' as *;
+
+// A quiet marker for a legitimate-but-rare row state: a work hung in the
+// room but curated off the exhibition page. Warning-toned so it reads as
+// worth a glance, not an error.
+.offPageMarker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: calc(-1 * var(--space-1));
+  color: var(--color-badge-warning-text);
+
+  @include tinySans();
+}

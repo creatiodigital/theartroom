@@ -98,6 +98,14 @@ export type Artwork = {
    * availability. Stored as JSON. Canonical shape: `{ paper: string[] }`.
    */
   printRecommendations?: PrintRecommendations | null
+  /**
+   * Exhibitions currently showing this artwork on their page (`showOnPage`
+   * rows only). Populated by the privileged artwork GET so the dashboard's
+   * Exhibitions picker can pre-check the artist's real curation instead of
+   * always rendering blank. Optional because `ArtworkEditModal` populates
+   * from the same payload and has no picker to feed.
+   */
+  exhibitionIds?: string[]
 }
 
 export type ArtworkFormData = {
@@ -138,6 +146,9 @@ export type ArtworkFormData = {
    * wizard shows no checkmarks. Today only `paper` is meaningful.
    */
   printRecommendations: PrintRecommendations | null
+  /** Ids of the exhibitions this artwork should appear in. Independent of
+   *  placement — see the Exhibitions section below. */
+  exhibitionIds: string[]
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -161,6 +172,7 @@ export const getInitialFormData = (): ArtworkFormData => ({
   printEditionTotal: '',
   printOptions: null,
   printRecommendations: null,
+  exhibitionIds: [],
 })
 
 export const populateFormData = (data: Artwork): ArtworkFormData => ({
@@ -190,6 +202,7 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
     typeof data.printEditionTotal === 'number' ? String(data.printEditionTotal) : '',
   printOptions: data.printOptions ?? null,
   printRecommendations: data.printRecommendations ?? null,
+  exhibitionIds: data.exhibitionIds ?? [],
 })
 
 type ArtworkEditFormProps = {
@@ -210,7 +223,11 @@ type ArtworkEditFormProps = {
   loadingText?: string
   saving: boolean
   error: string
-  onFormChange: (field: string, value: string | boolean) => void
+  onFormChange: (field: string, value: string | boolean | string[]) => void
+  /** The artist's own exhibitions, for the Exhibitions checkbox section. Renders
+   *  only when this is supplied — the wall-view ArtworkEditModal is already
+   *  inside one exhibition and has no use for a cross-exhibition picker. */
+  exhibitions?: { id: string; mainTitle: string; published: boolean }[]
   /** Replace the whole printOptions object. Called as the artist (un)checks boxes. */
   onPrintOptionsChange?: (next: PrintRestrictions | null) => void
   /** Replace the whole printRecommendations object. Paper IDs only for now. */
@@ -422,6 +439,7 @@ export const ArtworkEditForm = ({
   originalSizeBytes,
   soundUrl,
   videoUrl,
+  exhibitions,
   uploading,
   loadingText = 'Uploading...',
   saving,
@@ -1408,6 +1426,43 @@ export const ArtworkEditForm = ({
             />
             <span className={dashboardStyles.hint}>
               Featured artworks appear prominently in your profile&apos;s artwork grid.
+            </span>
+          </div>
+        )}
+
+        {/* Exhibition membership. Deliberately separate from the 3D room: a
+            work appears here because it was chosen for the show, not because
+            it happens to hang on a wall. Renders only where the caller supplies
+            the artist's exhibitions — the wall-view modal is already inside
+            one show and has no use for it. */}
+        {exhibitions && exhibitions.length > 0 && formData.artworkType === 'image' && (
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>Exhibitions</h3>
+            <p className={dashboardStyles.sectionDescription}>
+              Choose which exhibitions show this artwork on their page.
+            </p>
+            {exhibitions.map((exhibition) => (
+              <Checkbox
+                key={exhibition.id}
+                checked={formData.exhibitionIds.includes(exhibition.id)}
+                onChange={(e) =>
+                  onFormChange(
+                    'exhibitionIds',
+                    e.target.checked
+                      ? [...formData.exhibitionIds, exhibition.id]
+                      : formData.exhibitionIds.filter((id) => id !== exhibition.id),
+                  )
+                }
+                label={
+                  exhibition.published
+                    ? exhibition.mainTitle
+                    : `${exhibition.mainTitle} (draft)`
+                }
+              />
+            ))}
+            <span className={dashboardStyles.hint}>
+              Independent of the 3D space. An artwork can appear on the page
+              without hanging in the room.
             </span>
           </div>
         )}

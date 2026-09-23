@@ -112,11 +112,21 @@ export const useLoadExhibitionArtworks = (
             imageUrls.push(ea.artwork.imageUrl)
           }
 
-          // Create position in exhibition slice
+          // Create position in exhibition slice.
+          //
+          // `showOnPage` isn't part of `ExhibitionArtworkResponse` — that
+          // type is the wall editor / 3D scene's placement contract, and
+          // page membership is deliberately kept out of it. The edit-mode
+          // fetch (`mode=edit`) returns raw ExhibitionArtwork rows, which
+          // carry the column regardless; this reads it off the wire without
+          // widening the shared mapper type, purely so the panel can mark a
+          // work that's hung but curated off the exhibition page.
+          const showOnPage = (ea as ExhibitionArtworkResponse & { showOnPage?: boolean })
+            .showOnPage
           dispatch(
             createArtworkPosition({
               artworkId: ea.artworkId,
-              artworkPosition: mapToArtworkPosition(ea),
+              artworkPosition: { ...mapToArtworkPosition(ea), showOnPage },
             }),
           )
         })

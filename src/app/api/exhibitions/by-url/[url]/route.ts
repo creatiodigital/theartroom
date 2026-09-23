@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
+import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
 import prisma from '@/lib/prisma'
 
 // Public exhibition read (snapshot path). No data cache: read fresh so edits
@@ -28,6 +29,11 @@ const getExhibition = (url: string) =>
         },
       },
       exhibitionArtworks: {
+        // Placed rows only. Both branches below feed the 3D scene (the
+        // snapshot branch overrides this with the frozen snapshot; the
+        // legacy no-snapshot branch returns these rows as-is), and an
+        // unplaced row has no wall to draw it on.
+        where: { wallId: { not: null } },
         include: {
           artwork: {
             // Full public artwork shape (see ExhibitionArtworkResponse): on the
@@ -77,8 +83,16 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    // If exhibition is not published, check permissions or preview mode
-    if (!exhibition.published) {
+    // Two switches, one gate. `published` decides whether the exhibition exists
+    // publicly at all; `spacePublished` decides only whether its 3D room is
+    // open. This endpoint serves the room, so either being off closes it.
+    //
+    // Deliberately the same gate rather than a new one: it already lets the
+    // owner and any admin through, which is what makes a room taken offline
+    // for repairs still reachable by the person repairing it. Do NOT add a
+    // notFound() to /visit/page.tsx — it would 404 before this code runs and
+    // lock the owner out of their own room.
+    if (!exhibition.published || !exhibition.spacePublished) {
       const previewParam = _req.nextUrl.searchParams.get('preview')
       let isValidPreview = false
 
@@ -266,12 +280,17 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     }
 
     // Legacy published exhibition (no snapshot) → return live data
-    const artworks = exhibition.exhibitionArtworks
+    const placedExhibitionArtworks = toPlacedRows(exhibition.exhibitionArtworks)
+    const artworks = placedExhibitionArtworks
       .map((ea) => ea.artwork)
       .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
 
     return NextResponse.json({
       ...exhibition,
+      // Override the raw (already placed-only, per the query's `where`)
+      // relation with its narrowed type — same reasoning as the snapshot
+      // branch above: this feeds the 3D scene directly.
+      exhibitionArtworks: placedExhibitionArtworks,
       artworks,
     })
   } catch (error) {
@@ -295,6 +314,9 @@ async function getEditModeResponse(url: string) {
         },
       },
       exhibitionArtworks: {
+        // Placed rows only. This is the wall editor's own exhibition load
+        // (mode=edit) — an unplaced work has no wall to draw it on here.
+        where: { wallId: { not: null } },
         include: {
           artwork: {
             select: {
@@ -330,12 +352,14 @@ async function getEditModeResponse(url: string) {
     return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
   }
 
-  const artworks = exhibition.exhibitionArtworks
+  const placedExhibitionArtworks = toPlacedRows(exhibition.exhibitionArtworks)
+  const artworks = placedExhibitionArtworks
     .map((ea) => ea.artwork)
     .filter((artwork) => !artwork.hiddenFromExhibition)
 
   return NextResponse.json({
     ...exhibition,
+    exhibitionArtworks: placedExhibitionArtworks,
     artworks,
   })
 }

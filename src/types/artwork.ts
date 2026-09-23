@@ -27,6 +27,14 @@ export type TArtworkPosition = {
   locked?: boolean
   /** Stacking order within the wall; null until explicitly reordered. */
   zOrder?: number | null
+  /**
+   * Page membership, not placement — whether this row shows on the
+   * exhibition's public grid. Kept optional and separate from the mapper's
+   * `ExhibitionArtworkResponse` contract (which stays placement-only): this
+   * is threaded through by the loader purely so the wall editor can mark a
+   * hung-but-off-page work, not because the 3D scene needs it.
+   */
+  showOnPage?: boolean
 }
 
 export type TArtwork = {

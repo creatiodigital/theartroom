@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { requireOwnership, isSuperAdmin } from '@/lib/authUtils'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
+import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -90,8 +91,11 @@ export async function GET(request: NextRequest) {
     // URL / metadata from the joined artwork — this endpoint is
     // unauthenticated and would otherwise leak every placed artwork's
     // 60MB+ print original (see /api/artworks GET).
+    //
+    // Placed rows only. This is the wall editor's live load (mode=edit) — a
+    // work that is in the show but not hung yet has no wall to draw it on.
     const exhibitionArtworks = await prisma.exhibitionArtwork.findMany({
-      where: { exhibitionId },
+      where: { exhibitionId, wallId: { not: null } },
       include: {
         artwork: {
           omit: PUBLIC_ARTWORK_OMIT,
@@ -99,7 +103,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(exhibitionArtworks)
+    return NextResponse.json(toPlacedRows(exhibitionArtworks))
   } catch (error) {
     console.error('[GET /api/exhibition-artworks] error:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
@@ -242,18 +246,37 @@ export async function POST(request: NextRequest) {
     })
     const existingArtworkIds = existingPositions.map((p) => p.artworkId)
 
-    // Find artworks that were deleted (exist in DB but not in current positions)
+    // A work absent from the payload has been taken off a wall. That clears its
+    // PLACEMENT and nothing else — membership belongs to the artwork form's
+    // checkbox, and an artist tidying a wall is not curating the show. Only a
+    // row that is neither placed nor a member has nothing left worth keeping.
     const currentArtworkIds = positions.map((p) => p.artworkId)
-    const deletedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
+    const unplacedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
 
-    // Delete removed positions
-    if (deletedArtworkIds.length > 0) {
-      await prisma.exhibitionArtwork.deleteMany({
-        where: {
-          exhibitionId,
-          artworkId: { in: deletedArtworkIds },
+    let deletedCount = 0
+    if (unplacedArtworkIds.length > 0) {
+      await prisma.exhibitionArtwork.updateMany({
+        where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: true },
+        data: {
+          wallId: null,
+          posX2d: null,
+          posY2d: null,
+          width2d: null,
+          height2d: null,
+          posX3d: null,
+          posY3d: null,
+          posZ3d: null,
+          quaternionX: null,
+          quaternionY: null,
+          quaternionZ: null,
+          quaternionW: null,
         },
       })
+
+      const deleted = await prisma.exhibitionArtwork.deleteMany({
+        where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: false },
+      })
+      deletedCount = deleted.count
     }
 
     // Upsert remaining positions with display properties
@@ -451,7 +474,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         count: results.length,
-        deleted: deletedArtworkIds.length,
+        deleted: deletedCount,
       },
       { status: 201 },
     )

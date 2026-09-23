@@ -57,12 +57,14 @@ export const ExhibitionProfilePage = ({
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
-            <EnterExhibitionButton
-              artistSlug={artistSlug}
-              exhibitionSlug={exhibitionSlug}
-              visitUrl={visitUrl}
-              className={styles.button}
-            />
+            {exhibition.spacePublished && (
+              <EnterExhibitionButton
+                artistSlug={artistSlug}
+                exhibitionSlug={exhibitionSlug}
+                visitUrl={visitUrl}
+                className={styles.button}
+              />
+            )}
             <Share
               title={`${exhibition.mainTitle} — ${artistName}`}
               url={shareUrl}

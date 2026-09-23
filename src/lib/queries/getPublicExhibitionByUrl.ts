@@ -6,11 +6,13 @@ import { captureError } from '@/lib/observability/captureError'
 /**
  * Every artwork field the public exhibition grid renders, in ONE place.
  *
- * This page loads its artworks through two different paths — the published
- * snapshot and the live relation — and they each used to spell their select
- * out. A field added to one and forgotten in the other is invisible until a
- * priced work quietly shows no price on a published exhibition, which is the
- * only kind there is. Sharing the constant makes that impossible.
+ * This page once loaded its artworks through two paths — the published
+ * snapshot and the live relation — each spelling its own select out, so a
+ * field added to one and forgotten in the other stayed invisible until a
+ * priced work quietly showed no price. Only the live path remains (AR-151),
+ * but the constant stays: the artwork-detail prev/next nav reads this same
+ * shape through `getPublicExhibitionByUrl`, and one definition is still the
+ * reason the two cannot drift.
  */
 const PUBLIC_ARTWORK_SELECT = {
   id: true,
@@ -30,10 +32,11 @@ const PUBLIC_ARTWORK_SELECT = {
 
 type PublicArtworkRow = Prisma.ArtworkGetPayload<{ select: typeof PUBLIC_ARTWORK_SELECT }>
 
-// No data cache: read straight from the DB so library reordering and artwork
-// metadata edits propagate to the public exhibition page immediately. The
-// page that calls this is force-dynamic. The 3D scene is still frozen via the
-// exhibition's publishedSnapshot — only live metadata/order is enriched below.
+// No data cache: read straight from the DB so curation (the Exhibitions
+// checkbox), reordering and artwork metadata edits all propagate to the
+// public exhibition page immediately. The page that calls this is
+// force-dynamic. The 3D scene is still frozen via the exhibition's
+// publishedSnapshot — that snapshot has no bearing on this query.
 const getExhibition = (url: string) =>
   prisma.exhibition.findUnique({
     where: { url },
@@ -48,7 +51,11 @@ const getExhibition = (url: string) =>
         },
       },
       exhibitionArtworks: {
-        include: {
+        // Membership, not placement. A work with no coordinates at all belongs
+        // here; a work hung in the room but unchecked does not.
+        where: { showOnPage: true },
+        select: {
+          pageOrder: true,
           artwork: { select: PUBLIC_ARTWORK_SELECT },
         },
       },
@@ -82,6 +89,7 @@ export type PublicExhibition = {
   status: string
   startDate: Date | null
   endDate: Date | null
+  spacePublished: boolean
   user: {
     id: string
     name: string
@@ -119,12 +127,9 @@ function toPublicArtwork(row: PublicArtworkRow): PublicExhibitionArtwork {
  * `null` for missing or unpublished exhibitions so callers can map to
  * a 404 at the route boundary.
  *
- * Mirrors the snapshot reconciliation done in /api/exhibitions/by-url:
- * when an exhibition has a `publishedSnapshot`, the curated artwork set
- * comes from the snapshot, then each artwork is enriched with live DB
- * metadata so edits to title/dimensions/etc. show up without a republish.
- * 3D scene fields in the snapshot are not part of this profile shape —
- * they're only consumed by the /visit route.
+ * The artwork list is live membership (`showOnPage`), not the publish-time
+ * snapshot — see `loadPublicExhibition`. The snapshot still exists, but only
+ * to freeze the 3D scene for /visit.
  */
 export async function getPublicExhibitionByUrl(url: string): Promise<PublicExhibition | null> {
   // Report DB/read failures with flow context — they'd otherwise bubble to the
@@ -149,65 +154,21 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
   const exhibition = await getExhibition(url)
   if (!exhibition || !exhibition.published) return null
 
-  const snapshot = exhibition.publishedSnapshot as Record<string, unknown> | null
-  let artworks: PublicExhibitionArtwork[] = []
-
-  if (snapshot) {
-    const snapshotArtworks = (snapshot.artworks as Array<Record<string, unknown>>) || []
-    const snapshotArtworkObjects = snapshotArtworks
-      .map((ea) => ea.artwork as Record<string, unknown>)
-      .filter((artwork) => !artwork?.hiddenFromExhibition && artwork?.artworkType === 'image')
-
-    const ids = snapshotArtworkObjects.map((a) => a.id as string).filter(Boolean)
-    const live = await prisma.artwork.findMany({
-      where: { id: { in: ids } },
-      select: PUBLIC_ARTWORK_SELECT,
+  // Live rows only. This page used to prefer `publishedSnapshot` for its
+  // artwork list, which froze the grid at publish time — a checkbox would not
+  // have taken effect until the next republish. The snapshot still exists and
+  // still freezes the 3D scene for /visit; it simply has no say over the page.
+  const artworks = exhibition.exhibitionArtworks
+    .filter((ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image')
+    .sort((a, b) => {
+      // Per-exhibition order when the artist has set one, otherwise the
+      // artist's library order. Unordered rows sink below ordered ones.
+      const aOrder = a.pageOrder ?? Number.POSITIVE_INFINITY
+      const bOrder = b.pageOrder ?? Number.POSITIVE_INFINITY
+      if (aOrder !== bOrder) return aOrder - bOrder
+      return a.artwork.order - b.artwork.order
     })
-    const liveById = Object.fromEntries(live.map((a) => [a.id, a]))
-
-    artworks = snapshotArtworkObjects
-      .map((artwork) => {
-        const liveArtwork = liveById[artwork.id as string]
-        // The artwork is gone from the library — the snapshot is all that is
-        // left of it. Frozen metadata can be shown; a price cannot, because
-        // there is no live row to price and nothing to sell.
-        if (!liveArtwork) {
-          return {
-            id: artwork.id as string,
-            slug: artwork.slug as string,
-            name: artwork.name as string,
-            title: (artwork.title as string) ?? null,
-            author: (artwork.author as string) ?? null,
-            year: (artwork.year as string) ?? null,
-            technique: (artwork.technique as string) ?? null,
-            dimensions: (artwork.dimensions as string) ?? null,
-            imageUrl: (artwork.imageUrl as string) ?? null,
-            originalWidth: (artwork.originalWidth as number) ?? null,
-            originalHeight: (artwork.originalHeight as number) ?? null,
-            sale: null,
-          }
-        }
-        return toPublicArtwork(liveArtwork)
-      })
-      .filter((artwork) => {
-        const liveArtwork = liveById[artwork.id]
-        return !liveArtwork?.hiddenFromExhibition
-      })
-      // Sort by the artist's library order so reordering in the dashboard
-      // propagates here without needing to republish the snapshot. Items
-      // no longer in the live DB sink to the bottom.
-      .sort(
-        (a, b) =>
-          (liveById[a.id]?.order ?? Number.POSITIVE_INFINITY) -
-          (liveById[b.id]?.order ?? Number.POSITIVE_INFINITY),
-      )
-  } else {
-    artworks = exhibition.exhibitionArtworks
-      .map((ea) => ea.artwork)
-      .filter((a) => !a.hiddenFromExhibition && a.artworkType === 'image')
-      .sort((a, b) => a.order - b.order)
-      .map(toPublicArtwork)
-  }
+    .map((ea) => toPublicArtwork(ea.artwork))
 
   return {
     id: exhibition.id,
@@ -219,6 +180,7 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
     status: exhibition.status,
     startDate: exhibition.startDate,
     endDate: exhibition.endDate,
+    spacePublished: exhibition.spacePublished,
     user: exhibition.user,
     artworks,
   }
