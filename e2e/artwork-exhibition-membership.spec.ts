@@ -227,4 +227,49 @@ test.describe('the artwork save and exhibition membership', () => {
       await prisma.user.deleteMany({ where: { id: otherArtist.id } })
     }
   })
+
+  test('a validation failure elsewhere in the save leaves membership untouched', async ({
+    request,
+  }) => {
+    // The exhibition-membership diff used to commit in its own transaction
+    // before the artwork's own fields were validated and saved. That meant
+    // a request which both unchecked an exhibition AND failed some later
+    // validation could return an error while the artwork had already
+    // dropped off the exhibition page — the opposite of "one Save button,
+    // one atomic write". An over-long title is the simplest way to force a
+    // 400 from this route (see the length checks near the top of the PUT
+    // handler); this asserts that failure never leaves membership changed.
+    const owner = await fixtureOwner()
+    const exhibition = await createExhibition(owner.id, owner.handler, 'Atomic Save Check')
+    const artwork = await createArtwork(owner.id, 'Atomic Save Artwork')
+    await prisma.exhibitionArtwork.create({
+      data: { exhibitionId: exhibition.id, artworkId: artwork.id, showOnPage: true },
+    })
+
+    try {
+      const res = await request.put(`/api/artworks/${artwork.id}`, {
+        data: {
+          // Unchecks the exhibition the artwork currently belongs to...
+          exhibitionIds: [],
+          // ...in the same request as a title the route must reject.
+          title: 'A'.repeat(201),
+        },
+      })
+      expect(res.status(), `an over-long title must be rejected: ${await res.text()}`).toBe(400)
+
+      const row = await prisma.exhibitionArtwork.findUnique({
+        where: {
+          exhibitionId_artworkId: { exhibitionId: exhibition.id, artworkId: artwork.id },
+        },
+      })
+      expect(
+        row,
+        'a request that failed must not have changed membership, even partially',
+      ).not.toBeNull()
+      expect(row?.showOnPage).toBe(true)
+    } finally {
+      await prisma.exhibition.deleteMany({ where: { id: exhibition.id } })
+      await prisma.artwork.deleteMany({ where: { id: artwork.id } })
+    }
+  })
 })
