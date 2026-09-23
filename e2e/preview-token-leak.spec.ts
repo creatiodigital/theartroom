@@ -48,6 +48,12 @@ async function createExhibition(opts: { userId: string; published: boolean; toke
       spaceId: 'paris',
       status: 'draft',
       published: opts.published,
+      // AR-151 split the 3D room onto its own switch, and it defaults OFF so a
+      // new exhibition is page-first. The by-url route serves the ROOM, so it
+      // now 404s when the room is closed — which would kill these requests
+      // before they ever reach the question this spec asks. Open the room so
+      // the only thing under test is whether the preview token leaks.
+      spacePublished: true,
       previewEnabled: true,
       previewToken: opts.token,
     },
