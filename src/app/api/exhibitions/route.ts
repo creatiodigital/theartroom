@@ -81,7 +81,6 @@ export async function GET(request: NextRequest) {
 
     if (userId) where.userId = userId
     if (status) where.status = status
-    if (published !== null) where.published = published === 'true'
 
     // Permission rules:
     // - SuperAdmin: can see own + other admins + all artists/curators
@@ -113,6 +112,33 @@ export async function GET(request: NextRequest) {
     } else {
       // Public (unauthenticated) users can only see artist/curator exhibitions
       where.user = { userType: { notIn: ['admin', 'superAdmin'] } }
+    }
+
+    // Draft visibility gate. This route has no auth requirement of its own,
+    // and a bare `?userId=<artistId>` was returning every one of that
+    // artist's exhibitions regardless of `published` — exposing a draft's
+    // `mainTitle`/`url` (and, now that this branch adds them, `spacePublished`
+    // / `hasPlacedArtworks`) to anyone who asked. Mirrors the
+    // `viewerOwnsTarget` gate on GET /api/artworks: an unpublished exhibition
+    // must be invisible everywhere, including as a bare title (see the design
+    // spec, "Unpublished exhibitions must not leak").
+    //
+    // Admins/superAdmins keep full draft visibility — AdminExhibitions.tsx
+    // has to see a draft to publish it. Everyone else only sees drafts under
+    // their own userId, which is exactly what lets the artwork edit form's
+    // Exhibitions picker keep showing an artist their own unpublished shows
+    // while hiding them from anyone else. Filtering the query itself (rather
+    // than redacting fields after the fetch) is what makes the row invisible
+    // as a bare title too — there is no later step that could forget to
+    // strip one field and let the rest through.
+    const viewerOwnsTarget = requesterId === userId || isAdmin || isSuperAdmin
+    if (viewerOwnsTarget) {
+      // Owners/admins may still narrow with the explicit query param.
+      if (published !== null) where.published = published === 'true'
+    } else {
+      // Never let an unprivileged caller widen this back open by passing
+      // ?published=false themselves.
+      where.published = true
     }
 
     const exhibitions = await prisma.exhibition.findMany({
