@@ -246,18 +246,37 @@ export async function POST(request: NextRequest) {
     })
     const existingArtworkIds = existingPositions.map((p) => p.artworkId)
 
-    // Find artworks that were deleted (exist in DB but not in current positions)
+    // A work absent from the payload has been taken off a wall. That clears its
+    // PLACEMENT and nothing else — membership belongs to the artwork form's
+    // checkbox, and an artist tidying a wall is not curating the show. Only a
+    // row that is neither placed nor a member has nothing left worth keeping.
     const currentArtworkIds = positions.map((p) => p.artworkId)
-    const deletedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
+    const unplacedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
 
-    // Delete removed positions
-    if (deletedArtworkIds.length > 0) {
-      await prisma.exhibitionArtwork.deleteMany({
-        where: {
-          exhibitionId,
-          artworkId: { in: deletedArtworkIds },
+    let deletedCount = 0
+    if (unplacedArtworkIds.length > 0) {
+      await prisma.exhibitionArtwork.updateMany({
+        where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: true },
+        data: {
+          wallId: null,
+          posX2d: null,
+          posY2d: null,
+          width2d: null,
+          height2d: null,
+          posX3d: null,
+          posY3d: null,
+          posZ3d: null,
+          quaternionX: null,
+          quaternionY: null,
+          quaternionZ: null,
+          quaternionW: null,
         },
       })
+
+      const deleted = await prisma.exhibitionArtwork.deleteMany({
+        where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: false },
+      })
+      deletedCount = deleted.count
     }
 
     // Upsert remaining positions with display properties
@@ -455,7 +474,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         count: results.length,
-        deleted: deletedArtworkIds.length,
+        deleted: deletedCount,
       },
       { status: 201 },
     )
