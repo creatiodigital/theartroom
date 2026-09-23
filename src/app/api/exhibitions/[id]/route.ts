@@ -20,6 +20,9 @@ type ExhibitionUpdateBody = {
   shortDescription?: string
   status?: string // 'current' | 'past'
   published?: boolean
+  // Gates the 3D room alone (the "Enter Virtual Exhibition" button + the
+  // scene API) — independent of `published`, which gates the page.
+  spacePublished?: boolean
   previewEnabled?: boolean
   hasPendingChanges?: boolean
   thumbnailUrl?: string
@@ -337,6 +340,22 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       })
       if (exhibition?.published || exhibition?.previewEnabled) {
         data.hasPendingChanges = true
+      }
+    }
+
+    // --- 3D space publish logic ---
+    if (body.spacePublished !== undefined) {
+      data.spacePublished = body.spacePublished
+
+      if (body.spacePublished === true) {
+        // The snapshot freezes the room at the moment it is published. An
+        // exhibition whose page went live weeks before its room was finished
+        // still carries that empty early snapshot, so revealing the room has
+        // to re-freeze it — otherwise visitors walk into the room as it was,
+        // not as it is. Switching OFF deliberately leaves the snapshot alone,
+        // so a room taken down for repairs is not lost.
+        data.publishedSnapshot = await buildExhibitionSnapshot(id)
+        data.hasPendingChanges = false
       }
     }
 

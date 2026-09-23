@@ -83,8 +83,16 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
-    // If exhibition is not published, check permissions or preview mode
-    if (!exhibition.published) {
+    // Two switches, one gate. `published` decides whether the exhibition exists
+    // publicly at all; `spacePublished` decides only whether its 3D room is
+    // open. This endpoint serves the room, so either being off closes it.
+    //
+    // Deliberately the same gate rather than a new one: it already lets the
+    // owner and any admin through, which is what makes a room taken offline
+    // for repairs still reachable by the person repairing it. Do NOT add a
+    // notFound() to /visit/page.tsx — it would 404 before this code runs and
+    // lock the owner out of their own room.
+    if (!exhibition.published || !exhibition.spacePublished) {
       const previewParam = _req.nextUrl.searchParams.get('preview')
       let isValidPreview = false
 

@@ -21,6 +21,7 @@ type Exhibition = {
   spaceId: string
   status: string
   published: boolean
+  spacePublished: boolean
   hasPendingChanges: boolean
   previewEnabled: boolean
   previewToken: string | null
@@ -101,6 +102,28 @@ export const AdminExhibitions = () => {
       }
     } catch (error) {
       console.error('Failed to update published status:', error)
+    }
+  }
+
+  // Independent of handlePublishAction: `spacePublished` gates only the 3D
+  // room (the Enter button + the scene API), never the exhibition page
+  // itself. Disabled in the menu below while the exhibition is unpublished —
+  // there is no room to switch on for a show that isn't live.
+  const handleSpacePublishAction = async (
+    exhibitionId: string,
+    action: 'publish' | 'unpublish',
+  ) => {
+    try {
+      const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spacePublished: action === 'publish' }),
+      })
+      if (response.ok) {
+        fetchExhibitions()
+      }
+    } catch (error) {
+      console.error('Failed to update 3D space published status:', error)
     }
   }
 
@@ -293,10 +316,15 @@ export const AdminExhibitions = () => {
                               !exhibition.previewEnabled &&
                               !exhibition.user.published
                             }
-                            label={exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish'}
+                            label={
+                              exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish exhibition'
+                            }
                           />
                         )}
-                        {/* Unpublish — always available when published */}
+                        {/* Unpublish — always available when published. Label is
+                            explicit ("exhibition") so it's never mistaken for the
+                            3D-only control below: this one takes the whole show
+                            off the site. */}
                         {exhibition.published && (
                           <Button
                             variant="menuItem"
@@ -306,9 +334,29 @@ export const AdminExhibitions = () => {
                               setOpenMenuId(null)
                               handlePublishAction(exhibition.id, 'unpublish')
                             }}
-                            label="Unpublish"
+                            label="Unpublish exhibition"
                           />
                         )}
+                        {/* Publish / Unpublish 3D space — independent of the
+                            exhibition-wide toggle above. Disabled while the
+                            exhibition itself is unpublished: there is no live
+                            show to attach a room to yet. */}
+                        <Button
+                          variant="menuItem"
+                          role="menuitem"
+                          className={dashboardStyles.kebabMenuItem}
+                          onClick={() => {
+                            setOpenMenuId(null)
+                            handleSpacePublishAction(
+                              exhibition.id,
+                              exhibition.spacePublished ? 'unpublish' : 'publish',
+                            )
+                          }}
+                          disabled={!exhibition.published}
+                          label={
+                            exhibition.spacePublished ? 'Unpublish 3D space' : 'Publish 3D space'
+                          }
+                        />
                         {/* Publish / Unpublish Preview — only for unpublished exhibitions */}
                         {!exhibition.published && (
                           <Button
