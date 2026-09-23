@@ -128,6 +128,12 @@ export async function GET(request: NextRequest) {
             published: true,
           },
         },
+        // Placed-artwork count for the admin "3D room ready" marker: a show
+        // that's published, has work hung, and still has its room switched
+        // off is worth flagging as a likely-forgotten step, not an error.
+        _count: {
+          select: { exhibitionArtworks: { where: { wallId: { not: null } } } },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -139,7 +145,12 @@ export async function GET(request: NextRequest) {
     // the artist to re-publish. (The profile page already reads live
     // `...exhibition` via /api/exhibitions/by-url, so this keeps both
     // surfaces consistent.)
-    return NextResponse.json(exhibitions)
+    const withPlacedCounts = exhibitions.map(({ _count, ...exhibition }) => ({
+      ...exhibition,
+      hasPlacedArtworks: _count.exhibitionArtworks,
+    }))
+
+    return NextResponse.json(withPlacedCounts)
   } catch (error) {
     console.error('[GET /api/exhibitions] error:', error)
     return NextResponse.json({ error: 'Failed to fetch exhibitions' }, { status: 500 })

@@ -86,6 +86,9 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       imageUrl: '',
       featured: false,
       hiddenFromExhibition: false,
+      // Default true: unknown must never look like "deliberately hidden"
+      // and light up the off-page marker for no reason.
+      showOnPage: true,
       hideShadow: false,
       soundIcon: 'volume-2',
       soundPlayMode: 'play-once' as const,
@@ -107,7 +110,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     }
   }
 
-  const { width2d, height2d, posX2d, posY2d } = artworkPosition
+  const { width2d, height2d, posX2d, posY2d, showOnPage } = artworkPosition
   const {
     name,
     artworkTitle,
@@ -255,6 +258,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     monogramSize: monogramSize ?? { label: '4', value: 4 },
     featured,
     hiddenFromExhibition,
+    // Same default as the empty state above: unknown reads as "shown".
+    showOnPage: showOnPage ?? true,
     hideShadow: hideShadow ?? false,
     imageUrl,
     soundIcon: soundIcon ?? 'volume-2',

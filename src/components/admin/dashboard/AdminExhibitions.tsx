@@ -9,6 +9,7 @@ import { spaceConfigs, type SpaceKey } from '@/components/scene/constants'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ErrorText } from '@/components/ui/ErrorText'
+import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
@@ -25,6 +26,9 @@ type Exhibition = {
   hasPendingChanges: boolean
   previewEnabled: boolean
   previewToken: string | null
+  // Count of ExhibitionArtwork rows with a wallId — how many works are
+  // actually hung in the 3D room, independent of page membership.
+  hasPlacedArtworks: number
   user: {
     id: string
     name: string
@@ -251,6 +255,18 @@ export const AdminExhibitions = () => {
                     label={exhibition.published ? 'Published' : 'Unpublished'}
                     variant={exhibition.published ? 'published' : 'unpublished'}
                   />
+                  {/* Switching the room on is the norm; leaving it off is the
+                      exception. So the likelier mistake is finishing a room
+                      and forgetting to reveal it. This appears in that one
+                      state and no other. */}
+                  {exhibition.published &&
+                    exhibition.hasPlacedArtworks > 0 &&
+                    !exhibition.spacePublished && (
+                      <span className={dashboardStyles.readyMarker}>
+                        <Icon name="box" size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        3D room ready — not switched on
+                      </span>
+                    )}
                 </td>
                 <td>
                   {!exhibition.published && (
