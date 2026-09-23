@@ -3,13 +3,17 @@
 import { useSelector } from 'react-redux'
 
 import { Checkbox } from '@/components/ui/Checkbox'
+import { Icon } from '@/components/ui/Icon'
 import { Section } from '@/components/ui/Section/Section'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
 import PresentationSection from '@/components/wallview/RightPanel/PresentationSection/PresentationSection'
 import PresetSection from '@/components/wallview/RightPanel/PresetSection/PresetSection'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import type { RootState } from '@/redux/store'
+
+import styles from './ArtisticImage.module.scss'
 
 const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -38,6 +42,7 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
     supportColor,
     hiddenFromExhibition,
     hideShadow,
+    showOnPage,
   } = useArtworkDetails(currentArtworkId!)
 
   const { handleEditArtisticImage } = useArtworkImageHandlers(currentArtworkId!)
@@ -70,6 +75,16 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
             disabled={disabled}
           />
         </Tooltip>
+
+        {/* Hung in the room but deliberately off the exhibition page. A
+            legitimate state, and a rare one — so it should read as a
+            decision, not as something forgotten. */}
+        {!showOnPage && (
+          <span className={styles.offPageMarker}>
+            <Icon name="eyeOff" size={14} strokeWidth={ICON_STROKE_WIDTH} />
+            Not shown on the exhibition page
+          </span>
+        )}
 
         <Tooltip
           label="When enabled, the drop shadow behind the artwork in the 3D scene will be hidden"

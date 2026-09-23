@@ -681,6 +681,10 @@ model Exhibition {
   endDate           DateTime?
   status            String
   published         Boolean   @default(false)
+  // Gates the 3D room alone: the "Enter Virtual Exhibition" button and the
+  // /visit route. Defaults false so a new exhibition is page-first and the
+  // room is revealed only when it is ready.
+  spacePublished    Boolean   @default(false)
   publishedAt       DateTime? // When last published/updated
   publishedSnapshot Json? // Full snapshot at publish time
   hasPendingChanges Boolean   @default(false) // True when draft differs from published
@@ -757,18 +761,28 @@ model ExhibitionArtwork {
   artworkId    String
   artwork      Artwork    @relation(fields: [artworkId], references: [id], onDelete: Cascade)
 
-  wallId      String
-  posX2d      Float
-  posY2d      Float
-  width2d     Float
-  height2d    Float
-  posX3d      Float
-  posY3d      Float
-  posZ3d      Float
-  quaternionX Float
-  quaternionY Float
-  quaternionZ Float
-  quaternionW Float
+  // Placement — null when the work is in the show but not hung in the 3D room.
+  // Cleared when the artist takes a work off a wall; never deleted with it.
+  wallId      String?
+  posX2d      Float?
+  posY2d      Float?
+  width2d     Float?
+  height2d    Float?
+  posX3d      Float?
+  posY3d      Float?
+  posZ3d      Float?
+  quaternionX Float?
+  quaternionY Float?
+  quaternionZ Float?
+  quaternionW Float?
+
+  // Membership — the only thing that decides the public exhibition page.
+  // Defaults true so every row that exists today comes out of the migration
+  // already on its page: nothing in prod changes on deploy.
+  showOnPage Boolean @default(true)
+  // Per-exhibition grid position. Null falls back to the artist's library
+  // order, which is what every row uses until a reorder UI exists.
+  pageOrder  Int?
 
   // Display properties (per-exhibition customization)
   showFrame               Boolean @default(false)

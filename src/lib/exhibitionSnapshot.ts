@@ -1,3 +1,4 @@
+import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
 import prisma from '@/lib/prisma'
 
 /**
@@ -21,7 +22,10 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
           biography: true,
         },
       },
+      // Placed rows only. The snapshot's one job is freezing the 3D scene —
+      // the public grid reads live membership and never looks in here.
       exhibitionArtworks: {
+        where: { wallId: { not: null } },
         include: {
           artwork: {
             select: {
@@ -62,7 +66,7 @@ export async function buildExhibitionSnapshot(exhibitionId: string) {
 
   return {
     exhibition: exhibitionSnapshot,
-    artworks: exhibitionArtworks.map((ea) => {
+    artworks: toPlacedRows(exhibitionArtworks).map((ea) => {
       // Omit Prisma relation/system fields — keep all curatorial data
       const {
         exhibitionId: _exhId,

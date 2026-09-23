@@ -196,8 +196,20 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       for (const g of soldGrouped) soldByVariant.set(g.variantId, g._count._all)
     }
 
+    // Exhibitions currently showing this artwork on their page. Membership is
+    // `showOnPage`, not row existence — a row hung in a room but unchecked from
+    // the page is deliberately excluded, so the dashboard's Exhibitions picker
+    // only pre-checks shows the artwork is actually curated into. Without this,
+    // the picker would always render blank and the next unrelated save would
+    // silently strip the artwork from every exhibition it is really in.
+    const memberOf = await prisma.exhibitionArtwork.findMany({
+      where: { artworkId: id, showOnPage: true },
+      select: { exhibitionId: true },
+    })
+
     return NextResponse.json({
       ...artwork,
+      exhibitionIds: memberOf.map((m) => m.exhibitionId),
       limitedVariants: artwork.limitedVariants.map((v) => ({
         ...v,
         committedCount: committedByVariant.get(v.id) ?? 0,
@@ -350,6 +362,98 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           : (printRecommendations as unknown as Prisma.InputJsonValue),
     }
 
+    // Exhibition membership. The client sends the full desired set, so this is
+    // a diff rather than an append.
+    //
+    // The requested ids are intersected with exhibitions that still exist AND
+    // belong to this artwork's owner. Both halves matter: an exhibition deleted
+    // while the form was open would otherwise fail the whole save on a foreign
+    // key, and without the ownership check a caller could curate their artwork
+    // into someone else's show. Never trust the list the form sent.
+    //
+    // This only BUILDS the write list — nothing here touches the DB yet.
+    // Every `prisma.exhibitionArtwork.update/create/delete(...)` call below
+    // returns a lazy PrismaPromise that doesn't run until it's awaited or
+    // handed to `$transaction`, so assembling `membershipOperations` is as
+    // inert as any other in-memory diff. The actual write is deferred to
+    // just before the response, after every fallible step below has had its
+    // chance to reject the request — see the comment there for why.
+    const membershipOperations: Prisma.PrismaPromise<unknown>[] = []
+    if (Array.isArray(body.exhibitionIds)) {
+      const requestedIds = [
+        ...new Set(
+          (body.exhibitionIds as unknown[]).filter(
+            (value): value is string => typeof value === 'string',
+          ),
+        ),
+      ]
+
+      const ownedExhibitions = requestedIds.length
+        ? await prisma.exhibition.findMany({
+            where: { id: { in: requestedIds }, userId: existing.userId },
+            select: { id: true },
+          })
+        : []
+      const allowedIds = new Set(ownedExhibitions.map((e) => e.id))
+
+      const rows = await prisma.exhibitionArtwork.findMany({
+        where: { artworkId: id },
+        select: { exhibitionId: true, wallId: true, showOnPage: true },
+      })
+
+      // Membership is `showOnPage`, not row existence — a 3D-only row exists
+      // but is not a member, and re-checking it must flip the flag rather than
+      // create a duplicate the unique constraint would reject.
+      const memberIds = new Set(rows.filter((r) => r.showOnPage).map((r) => r.exhibitionId))
+      const rowByExhibition = new Map(rows.map((r) => [r.exhibitionId, r]))
+
+      for (const exhibitionId of allowedIds) {
+        if (memberIds.has(exhibitionId)) continue
+        const row = rowByExhibition.get(exhibitionId)
+        if (row) {
+          // Hung but unchecked until now: keep the coordinates, add the page.
+          membershipOperations.push(
+            prisma.exhibitionArtwork.update({
+              where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
+              data: { showOnPage: true },
+            }),
+          )
+        } else {
+          // Brand new membership: on the page, not hung anywhere.
+          membershipOperations.push(
+            prisma.exhibitionArtwork.create({
+              data: { exhibitionId, artworkId: id, showOnPage: true },
+            }),
+          )
+        }
+      }
+
+      for (const row of rows) {
+        if (!row.showOnPage || allowedIds.has(row.exhibitionId)) continue
+        if (row.wallId !== null) {
+          // Still hanging in the room — keep the placement and the styling,
+          // just take it off the page. This is the rare 3D-only state.
+          membershipOperations.push(
+            prisma.exhibitionArtwork.update({
+              where: {
+                exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
+              },
+              data: { showOnPage: false },
+            }),
+          )
+        } else {
+          // Neither on the page nor in the room: nothing left worth keeping.
+          membershipOperations.push(
+            prisma.exhibitionArtwork.delete({
+              where: {
+                exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
+              },
+            }),
+          )
+        }
+      }
+    }
+
     // Try with new fields first
     try {
       const artwork = await prisma.artwork.update({
@@ -379,6 +483,17 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         }
       }
 
+      // Exhibition membership commits LAST, once nothing else in this
+      // request can still fail. The route promises "one Save button, one
+      // atomic write" — an artist watching a failed save must never find
+      // the artwork already off an exhibition page it was only tentatively
+      // unchecked from. `saveLimitedVariants` above is the last thing that
+      // can 400 today, but the guarantee this ordering encodes is general:
+      // membership is the final write in the handler, full stop, so any
+      // fallible step added later is structurally forced to go above this
+      // line rather than below it.
+      if (membershipOperations.length > 0) await prisma.$transaction(membershipOperations)
+
       // Bust caches that include this artwork's data. `page-prints` and
       // `artworks` are global listing tags — without busting them, the
       // /prints page and the artist profile can show stale presence/
@@ -398,6 +513,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         where: { id },
         data: baseData,
       })
+
+      // Same ordering rule as the primary path above: membership commits
+      // only after the artwork row itself is safely saved, so a fallback
+      // that still fails here never leaves membership changed behind it.
+      if (membershipOperations.length > 0) await prisma.$transaction(membershipOperations)
 
       // Bust caches that include this artwork's data
       revalidateTag(`artwork-${id}`, 'default')

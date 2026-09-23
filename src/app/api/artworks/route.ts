@@ -45,6 +45,10 @@ export async function GET(request: NextRequest) {
     const targetType = targetUser.userType
     const targetIsAdminOrAbove = targetType === 'admin' || targetType === 'superAdmin'
 
+    // Mirrors the access rules resolved below: the target's own account, or an
+    // admin acting on an artist, may see draft exhibition titles.
+    const viewerOwnsTarget = requesterId === userId || isAdmin || isSuperAdmin
+
     // Check access permissions
     if (session?.user) {
       // SuperAdmin can see everything
@@ -84,6 +88,15 @@ export async function GET(request: NextRequest) {
       omit: PUBLIC_ARTWORK_OMIT,
       include: {
         exhibitionArtworks: {
+          // This endpoint serves unauthenticated callers, and the include
+          // carried every exhibition title an artwork belonged to — drafts
+          // included. Membership is now a checkbox rather than a consequence
+          // of hanging a work, so curating into a draft show would have put
+          // that draft's name in a public response.
+          //
+          // The owner and admins still see their own drafts; everyone else
+          // sees published shows only.
+          where: viewerOwnsTarget ? {} : { exhibition: { published: true } },
           include: {
             exhibition: {
               select: { id: true, mainTitle: true },

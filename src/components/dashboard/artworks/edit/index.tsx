@@ -37,6 +37,12 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const [readyVariantIndex, setReadyVariantIndex] = useState<number | null>(null)
   const [publishing, setPublishing] = useState(false)
   const [formData, setFormData] = useState<ArtworkFormData>(getInitialFormData())
+  // The artist's own exhibitions, for the Exhibitions checkbox section. Fetched
+  // once the artwork loads (its ownerId decides whose exhibitions to list —
+  // matters for an admin editing another artist's work).
+  const [exhibitions, setExhibitions] = useState<
+    { id: string; mainTitle: string; published: boolean }[]
+  >([])
 
   // Original image URL from server
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
@@ -106,6 +112,28 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         setSoundUrl(data.soundUrl || null)
         setVideoUrl(data.videoUrl || null)
         setFormData(populateFormData(data))
+
+        // The artwork's OWN artist's exhibitions, not necessarily the viewer's
+        // — an admin editing someone else's work must see that artist's shows.
+        if (data.userId) {
+          try {
+            const exhibitionsRes = await fetch(`/api/exhibitions?userId=${data.userId}`)
+            if (exhibitionsRes.ok) {
+              const exhibitionsData: { id: string; mainTitle: string; published: boolean }[] =
+                await exhibitionsRes.json()
+              setExhibitions(
+                exhibitionsData.map((ex) => ({
+                  id: ex.id,
+                  mainTitle: ex.mainTitle,
+                  published: ex.published,
+                })),
+              )
+            }
+          } catch {
+            // Non-fatal: the picker just renders empty. The artwork itself
+            // still loaded, so the artist can still save everything else.
+          }
+        }
       } catch {
         setError('Failed to load artwork')
       } finally {
@@ -118,7 +146,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId, session?.user?.id, session?.user?.userType, router, backLink])
 
-  const handleChange = (field: string, value: string | boolean) => {
+  const handleChange = (field: string, value: string | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -685,6 +713,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         originalSizeBytes={originalInfo.sizeBytes}
         soundUrl={soundUrl}
         videoUrl={videoUrl}
+        exhibitions={exhibitions}
         uploading={soundUploading || videoUploading}
         loadingText={videoUploading ? 'Uploading video...' : 'Uploading sound...'}
         saving={saving}
