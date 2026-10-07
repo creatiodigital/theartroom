@@ -60,11 +60,11 @@ const ExhibitionCard = ({
         )}
       </div>
       <div className={styles.info}>
-        <Text as="span" font="serif" size="3xl" className={styles.exhibitionTitle}>
-          {exhibition.mainTitle}
-        </Text>
         <Text as="span" font="serif" size="xl" className={styles.artistName}>
           {exhibition.user.name} {exhibition.user.lastName}
+        </Text>
+        <Text as="span" font="serif" size="3xl" className={styles.exhibitionTitle}>
+          {exhibition.mainTitle}
         </Text>
         {exhibition.shortDescription && (
           <Text as="p" size="sm" className={styles.description}>
