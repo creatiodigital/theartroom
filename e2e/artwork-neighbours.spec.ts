@@ -4,7 +4,12 @@ import { getGallerySelection } from '@/lib/queries/getGallerySelection'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
 import prisma from '@/lib/prisma'
 
-import { setupLimitedFixture, teardownLimitedFixture, type LimitedFixture } from './edition-helpers'
+import {
+  setupFeaturedFixtures,
+  setupLimitedFixture,
+  teardownLimitedFixture,
+  type LimitedFixture,
+} from './edition-helpers'
 import { fixtures } from './fixtures'
 
 /**
@@ -20,9 +25,10 @@ import { fixtures } from './fixtures'
  * else the dev DB already has selected. That makes the last one genuinely last,
  * which is the only way to assert that the final work has no next arrow.
  *
- * The artist block uses the SEEDED artist rather than fixtures:
- * `setupLimitedFixture` does not set `featured`, and the profile grid renders
- * only featured image works — a fixture would never appear on it.
+ * The artist block seeds its own FEATURED works: the profile grid renders only
+ * featured image works, and featuring is optional, so the seeded artist may
+ * feature nothing. They are ordered to the FRONT of the profile, so the walk
+ * below always starts on them, whatever else the dev DB features.
  */
 
 const ORDER_BASE = 900_000
@@ -174,6 +180,16 @@ test.describe('prints previous/next arrows', () => {
 })
 
 test.describe('artist profile previous/next arrows', () => {
+  let featured: LimitedFixture[] = []
+
+  test.beforeAll(async () => {
+    featured = await setupFeaturedFixtures(3, 'Artist Nav', -800_000)
+  })
+
+  test.afterAll(async () => {
+    for (const fx of featured) await teardownLimitedFixture(fx)
+  })
+
   test('every card on the profile carries the artist context', async ({ page }) => {
     await page.goto(`/artists/${fixtures.artistSlug}`)
 
@@ -181,7 +197,7 @@ test.describe('artist profile previous/next arrows', () => {
       .locator('a[href*="/artworks/"]')
       .evaluateAll((links) => [...new Set(links.map((a) => a.getAttribute('href') ?? ''))])
 
-    expect(hrefs.length, 'the seeded artist must have featured works').toBeGreaterThan(0)
+    expect(hrefs.length, 'the seeded featured works must reach the profile').toBeGreaterThan(0)
     for (const href of hrefs) {
       expect(href, `${href} must mark the set it belongs to`).toContain(
         `artist=${fixtures.artistSlug}`,
@@ -192,7 +208,9 @@ test.describe('artist profile previous/next arrows', () => {
   test("the arrows walk the artist's works, carrying the context each hop", async ({ page }) => {
     const artist = await getPublicArtistByHandler(fixtures.artistSlug)
     const works = artist?.artworks ?? []
-    test.skip(works.length < 3, 'needs at least three featured works to walk a middle')
+    expect(works.length, 'the seeded featured works must reach the profile').toBeGreaterThanOrEqual(
+      3,
+    )
 
     const [first, second, third] = works
     const context = `?artist=${fixtures.artistSlug}`
