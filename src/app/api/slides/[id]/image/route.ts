@@ -9,6 +9,11 @@ import { uploadToR2, deleteFromR2, buildSlideImageKey } from '@/lib/r2'
 
 const MAX_FILE_SIZE = MAX_UPLOAD_SIZE
 
+// `?variant=mobile` targets the optional portrait image (phones + tablets);
+// anything else targets the main desktop image. Same processing, same bucket.
+const slideImageField = (request: NextRequest) =>
+  request.nextUrl.searchParams.get('variant') === 'mobile' ? 'mobileImageUrl' : 'imageUrl'
+
 // POST - Upload image for a slide
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,6 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (authError) return authError
 
     const { id } = await params
+    const field = slideImageField(request)
 
     const slide = await prisma.slide.findUnique({ where: { id } })
     if (!slide) {
@@ -46,9 +52,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const processedBuffer = await processImage(buffer)
 
     // Delete old image if it's hosted on R2 or Vercel Blob
-    if (slide.imageUrl) {
+    const previousUrl = slide[field]
+    if (previousUrl) {
       try {
-        await deleteFromR2(slide.imageUrl)
+        await deleteFromR2(previousUrl)
       } catch (error) {
         console.warn('Failed to delete old slide image:', error)
       }
@@ -61,7 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Update slide with new image URL
     await prisma.slide.update({
       where: { id },
-      data: { imageUrl: url },
+      data: { [field]: url },
     })
 
     return NextResponse.json({ url })
@@ -71,9 +78,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-// DELETE - Remove the slide's image (clears imageUrl + removes R2 object).
+// DELETE - Remove the slide's image (clears the field + removes R2 object).
+// Removing the mobile image sets it back to null, so the slide falls back to
+// the desktop image on every screen.
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -81,21 +90,26 @@ export async function DELETE(
     if (authError) return authError
 
     const { id } = await params
+    const field = slideImageField(request)
 
     const slide = await prisma.slide.findUnique({ where: { id } })
     if (!slide) {
       return NextResponse.json({ error: 'Slide not found' }, { status: 404 })
     }
 
-    if (slide.imageUrl) {
+    const currentUrl = slide[field]
+    if (currentUrl) {
       try {
-        await deleteFromR2(slide.imageUrl)
+        await deleteFromR2(currentUrl)
       } catch (error) {
         console.warn('Failed to delete slide image from R2:', error)
       }
     }
 
-    await prisma.slide.update({ where: { id }, data: { imageUrl: '' } })
+    await prisma.slide.update({
+      where: { id },
+      data: field === 'mobileImageUrl' ? { mobileImageUrl: null } : { imageUrl: '' },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -61,6 +61,7 @@ export type TExhibition = {
     | 'terrazzo'
     | 'parquet-light'
     | 'concrete-tiles'
+    | 'clear-wood'
   floorTextureScale?: number
   floorTextureOffsetX?: number
   floorTextureOffsetY?: number

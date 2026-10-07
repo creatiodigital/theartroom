@@ -30,6 +30,7 @@ const getSlides = async () => {
   return slidesData.map((slide) => ({
     id: slide.id,
     imageUrl: slide.imageUrl,
+    mobileImageUrl: slide.mobileImageUrl,
     exhibitionUrl: slide.exhibitionUrl,
     meta: slide.meta,
     title: slide.title,

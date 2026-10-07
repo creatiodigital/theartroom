@@ -159,6 +159,14 @@ const MATERIAL_CONFIG: Record<
     metallic: null,
     ao: 'ao.jpg',
   },
+  'clear-wood': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
 }
 
 // Resolve legacy/deleted material names to valid ones
@@ -175,16 +183,18 @@ const resolveFloorMaterial = (material?: string | null): string => {
 // render and preload so the preloaded cache entries always match (?v= included).
 const buildFloorTexturePaths = (material: string): Record<string, string> => {
   const config = MATERIAL_CONFIG[material]
-  const basePath = assetUrl(`/assets/materials/${material}`)
-  const v = `?v=${TEXTURE_VERSION}`
+  // Resolve each FILE through assetUrl, not the folder: NEXT_PUBLIC_LOCAL_ASSETS
+  // matches exact file paths, so a folder-level call never hits the local override.
+  const url = (file: string) =>
+    `${assetUrl(`/assets/materials/${material}/${file}`)}?v=${TEXTURE_VERSION}`
   const paths: Record<string, string> = {
-    map: `${basePath}/${config.diffuse}${v}`,
+    map: url(config.diffuse),
   }
-  if (config.roughness) paths.roughnessMap = `${basePath}/${config.roughness}${v}`
-  if (config.normal) paths.normalMap = `${basePath}/${config.normal}${v}`
-  if (config.bump) paths.bumpMap = `${basePath}/${config.bump}${v}`
-  if (config.metallic) paths.metalnessMap = `${basePath}/${config.metallic}${v}`
-  if (config.ao) paths.aoMap = `${basePath}/${config.ao}${v}`
+  if (config.roughness) paths.roughnessMap = url(config.roughness)
+  if (config.normal) paths.normalMap = url(config.normal)
+  if (config.bump) paths.bumpMap = url(config.bump)
+  if (config.metallic) paths.metalnessMap = url(config.metallic)
+  if (config.ao) paths.aoMap = url(config.ao)
   return paths
 }
 

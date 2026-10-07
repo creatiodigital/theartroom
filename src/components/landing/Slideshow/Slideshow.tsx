@@ -8,9 +8,14 @@ import { reportImageError } from '@/lib/observability/reportImageError'
 
 import styles from './Slideshow.module.scss'
 
+// Below the `lg` breakpoint (1024px, where the desktop layout starts) a slide
+// shows its portrait image if it has one. Keep in sync with `bp(lg)` in mixins.
+const MOBILE_IMAGE_MEDIA = '(max-width: 1023.98px)'
+
 type Slide = {
   id: string
   imageUrl: string
+  mobileImageUrl?: string | null
   exhibitionUrl: string
   subtitle: string
   title: string
@@ -42,13 +47,23 @@ export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
           href={slide.exhibitionUrl}
           className={c(styles.slide, index === activeIndex && styles.slideActive)}
         >
-          <img
-            src={slide.imageUrl}
-            alt=""
-            className={styles.background}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            onError={() => reportImageError(slide.imageUrl, { surface: 'home-slideshow' })}
-          />
+          {/* <picture> so the browser downloads ONLY the image its screen uses. */}
+          <picture>
+            {slide.mobileImageUrl && (
+              <source media={MOBILE_IMAGE_MEDIA} srcSet={slide.mobileImageUrl} />
+            )}
+            <img
+              src={slide.imageUrl}
+              alt=""
+              className={styles.background}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              onError={(e) =>
+                reportImageError(e.currentTarget.currentSrc || slide.imageUrl, {
+                  surface: 'home-slideshow',
+                })
+              }
+            />
+          </picture>
           <div className={styles.container}>
             <div className={styles.content} style={{ color: slide.textColor || '#ffffff' }}>
               {slide.meta && (

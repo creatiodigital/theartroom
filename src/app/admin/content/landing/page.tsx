@@ -36,6 +36,7 @@ type Slide = {
   id: string
   order: number
   imageUrl: string
+  mobileImageUrl: string | null
   title: string
   subtitle: string
   meta: string
@@ -43,6 +44,18 @@ type Slide = {
   isActive: boolean
   textColor: string
 }
+
+// `desktop` is the main image; `mobile` is the optional portrait one used on
+// phones and tablets (falls back to the desktop image when absent).
+type SlideImageVariant = 'desktop' | 'mobile'
+
+const IMAGE_FIELD = {
+  desktop: 'imageUrl',
+  mobile: 'mobileImageUrl',
+} as const satisfies Record<SlideImageVariant, keyof Slide>
+
+const slideImageEndpoint = (slideId: string, variant: SlideImageVariant) =>
+  `/api/slides/${slideId}/image${variant === 'mobile' ? '?variant=mobile' : ''}`
 
 type SortableSlideItemProps = {
   slide: Slide
@@ -104,8 +117,8 @@ export default function LandingContentPage() {
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null)
   const [isNewSlide, setIsNewSlide] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState<SlideImageVariant | null>(null)
+  const [uploadErrors, setUploadErrors] = useState<Partial<Record<SlideImageVariant, string>>>({})
   const [deleteTarget, setDeleteTarget] = useState<Slide | null>(null)
 
   // Redirect non-admins
@@ -141,6 +154,7 @@ export default function LandingContentPage() {
       id: '',
       order: slides.length,
       imageUrl: '',
+      mobileImageUrl: null,
       title: '',
       subtitle: '',
       meta: '',
@@ -149,48 +163,54 @@ export default function LandingContentPage() {
       textColor: '#ffffff',
     })
     setIsNewSlide(true)
-    setUploadError(null)
+    setUploadErrors({})
   }
 
   const handleEditSlide = (slide: Slide) => {
     setEditingSlide(slide)
     setIsNewSlide(false)
-    setUploadError(null)
+    setUploadErrors({})
   }
 
-  const uploadImageToSlide = useCallback(async (file: File, slideId: string) => {
-    setUploading(true)
-    setUploadError(null)
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
-      const response = await fetch(`/api/slides/${slideId}/image`, {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        setUploadError(data.error || 'Failed to upload image')
-        return
+  const setUploadError = (variant: SlideImageVariant, message: string | null) =>
+    setUploadErrors((prev) => ({ ...prev, [variant]: message ?? undefined }))
+
+  const uploadImageToSlide = useCallback(
+    async (file: File, slideId: string, variant: SlideImageVariant) => {
+      setUploading(variant)
+      setUploadError(variant, null)
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
+        const response = await fetch(slideImageEndpoint(slideId, variant), {
+          method: 'POST',
+          body: formData,
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          setUploadError(variant, data.error || 'Failed to upload image')
+          return
+        }
+        setEditingSlide((prev) => (prev ? { ...prev, [IMAGE_FIELD[variant]]: data.url } : null))
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        setUploadError(variant, 'Failed to upload image')
+      } finally {
+        setUploading(null)
       }
-      setEditingSlide((prev) => (prev ? { ...prev, imageUrl: data.url } : null))
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      setUploadError('Failed to upload image')
-    } finally {
-      setUploading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
   // ImageUploader's onUpload. For a brand-new slide we need a DB row to
   // attach the R2 image to, so create the slide first (empty fields are
   // fine — the user fills them in via the form and clicks Save).
   const handleSlideUpload = useCallback(
-    async (file: File) => {
+    async (file: File, variant: SlideImageVariant) => {
       if (!editingSlide) return
       if (isNewSlide && !editingSlide.id) {
         setSaving(true)
-        setUploadError(null)
+        setUploadError(variant, null)
         try {
           const response = await fetch('/api/slides', {
             method: 'POST',
@@ -199,45 +219,52 @@ export default function LandingContentPage() {
           })
           const savedSlide = await response.json()
           if (!response.ok) {
-            setUploadError(savedSlide.error || 'Failed to create slide')
+            setUploadError(variant, savedSlide.error || 'Failed to create slide')
             return
           }
           setEditingSlide(savedSlide)
           setIsNewSlide(false)
-          await uploadImageToSlide(file, savedSlide.id)
+          await uploadImageToSlide(file, savedSlide.id, variant)
           await fetchSlides()
         } catch (error) {
           console.error('Error creating slide:', error)
-          setUploadError('Failed to create slide')
+          setUploadError(variant, 'Failed to create slide')
         } finally {
           setSaving(false)
         }
       } else {
-        await uploadImageToSlide(file, editingSlide.id)
+        await uploadImageToSlide(file, editingSlide.id, variant)
       }
     },
     [editingSlide, isNewSlide, uploadImageToSlide, fetchSlides],
   )
 
-  const handleSlideImageRemove = useCallback(async () => {
-    if (!editingSlide?.id || !editingSlide.imageUrl) return
-    setUploading(true)
-    setUploadError(null)
-    try {
-      const response = await fetch(`/api/slides/${editingSlide.id}/image`, { method: 'DELETE' })
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        setUploadError(data.error || 'Failed to remove image')
-        return
+  const handleSlideImageRemove = useCallback(
+    async (variant: SlideImageVariant) => {
+      if (!editingSlide?.id || !editingSlide[IMAGE_FIELD[variant]]) return
+      setUploading(variant)
+      setUploadError(variant, null)
+      try {
+        const response = await fetch(slideImageEndpoint(editingSlide.id, variant), {
+          method: 'DELETE',
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          setUploadError(variant, data.error || 'Failed to remove image')
+          return
+        }
+        setEditingSlide((prev) =>
+          prev ? { ...prev, [IMAGE_FIELD[variant]]: variant === 'mobile' ? null : '' } : null,
+        )
+      } catch (error) {
+        console.error('Error removing image:', error)
+        setUploadError(variant, 'Failed to remove image')
+      } finally {
+        setUploading(null)
       }
-      setEditingSlide((prev) => (prev ? { ...prev, imageUrl: '' } : null))
-    } catch (error) {
-      console.error('Error removing image:', error)
-      setUploadError('Failed to remove image')
-    } finally {
-      setUploading(false)
-    }
-  }, [editingSlide?.id, editingSlide?.imageUrl])
+    },
+    [editingSlide],
+  )
 
   const handleSaveSlide = async () => {
     if (!editingSlide) return
@@ -348,71 +375,94 @@ export default function LandingContentPage() {
 
       {/* Edit/Add Modal */}
       {editingSlide && (
-        <Modal onClose={() => setEditingSlide(null)}>
-          <div className={styles.modal}>
-            <Text font="dashboard" as="h2">
+        <Modal onClose={() => setEditingSlide(null)} maxWidth="720px">
+          <div className={styles.slideModal}>
+            <Text font="dashboard" as="h2" className={styles.slideModalTitle}>
               {isNewSlide ? 'Add Slide' : 'Edit Slide'}
             </Text>
 
-            <div className={styles.section}>
-              <label className={styles.label}>Image</label>
-              <ImageUploader
-                imageUrl={editingSlide.imageUrl || null}
-                onUpload={handleSlideUpload}
-                onRemove={editingSlide.id ? handleSlideImageRemove : undefined}
-                uploading={uploading}
-                error={uploadError}
-                aspectRatio="16 / 9"
-              />
+            {/* Only this middle part scrolls: the title and Save stay in view
+                on short laptop screens. */}
+            <div className={styles.slideModalBody}>
+              <div className={styles.section}>
+                <label className={styles.label}>Desktop image</label>
+                <ImageUploader
+                  imageUrl={editingSlide.imageUrl || null}
+                  onUpload={(file) => handleSlideUpload(file, 'desktop')}
+                  onRemove={editingSlide.id ? () => handleSlideImageRemove('desktop') : undefined}
+                  uploading={uploading === 'desktop'}
+                  error={uploadErrors.desktop}
+                  aspectRatio="16 / 9"
+                  objectFit="contain"
+                />
 
-              <label className={styles.label} htmlFor="title">
-                Title
-              </label>
-              <Input
-                id="title"
-                size="medium"
-                value={editingSlide.title}
-                onChange={(e) => updateField('title', e.target.value)}
-              />
+                <label className={styles.label}>Mobile &amp; tablet image (optional)</label>
+                <Text font="dashboard" as="p" size="sm" className={styles.hint}>
+                  Shown on screens narrower than 1024px, cropped from the center. Pick a portrait
+                  image with a calm area behind the text. Without one, the desktop image is used
+                  everywhere.
+                </Text>
+                <div className={styles.mobileUploader}>
+                  <ImageUploader
+                    imageUrl={editingSlide.mobileImageUrl || null}
+                    onUpload={(file) => handleSlideUpload(file, 'mobile')}
+                    onRemove={editingSlide.id ? () => handleSlideImageRemove('mobile') : undefined}
+                    uploading={uploading === 'mobile'}
+                    error={uploadErrors.mobile}
+                    aspectRatio="3 / 4"
+                    objectFit="contain"
+                  />
+                </div>
 
-              <label className={styles.label} htmlFor="subtitle">
-                Subtitle
-              </label>
-              <Input
-                id="subtitle"
-                size="medium"
-                value={editingSlide.subtitle}
-                onChange={(e) => updateField('subtitle', e.target.value)}
-              />
+                <label className={styles.label} htmlFor="title">
+                  Title
+                </label>
+                <Input
+                  id="title"
+                  size="medium"
+                  value={editingSlide.title}
+                  onChange={(e) => updateField('title', e.target.value)}
+                />
 
-              <label className={styles.label} htmlFor="meta">
-                Meta
-              </label>
-              <Input
-                id="meta"
-                size="medium"
-                value={editingSlide.meta}
-                onChange={(e) => updateField('meta', e.target.value)}
-              />
+                <label className={styles.label} htmlFor="subtitle">
+                  Subtitle
+                </label>
+                <Input
+                  id="subtitle"
+                  size="medium"
+                  value={editingSlide.subtitle}
+                  onChange={(e) => updateField('subtitle', e.target.value)}
+                />
 
-              <label className={styles.label} htmlFor="exhibitionUrl">
-                Exhibition URL
-              </label>
-              <Input
-                id="exhibitionUrl"
-                size="medium"
-                value={editingSlide.exhibitionUrl}
-                onChange={(e) => updateField('exhibitionUrl', e.target.value)}
-              />
+                <label className={styles.label} htmlFor="meta">
+                  Meta
+                </label>
+                <Input
+                  id="meta"
+                  size="medium"
+                  value={editingSlide.meta}
+                  onChange={(e) => updateField('meta', e.target.value)}
+                />
 
-              <label className={styles.label}>Text color</label>
-              <ColorPicker
-                textColor={editingSlide.textColor || '#ffffff'}
-                onColorSelect={(color) => updateField('textColor', color)}
-              />
+                <label className={styles.label} htmlFor="exhibitionUrl">
+                  Exhibition URL
+                </label>
+                <Input
+                  id="exhibitionUrl"
+                  size="medium"
+                  value={editingSlide.exhibitionUrl}
+                  onChange={(e) => updateField('exhibitionUrl', e.target.value)}
+                />
+
+                <label className={styles.label}>Text color</label>
+                <ColorPicker
+                  textColor={editingSlide.textColor || '#ffffff'}
+                  onColorSelect={(color) => updateField('textColor', color)}
+                />
+              </div>
             </div>
 
-            <div className={styles.modalActions}>
+            <div className={styles.slideModalActions}>
               <Button
                 font="dashboard"
                 variant="secondary"

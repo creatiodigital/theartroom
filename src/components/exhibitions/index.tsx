@@ -18,6 +18,7 @@ type Exhibition = {
   url: string
   status: string
   featuredImageUrl: string | null
+  shortDescription: string | null
   user: {
     name: string
     lastName: string
@@ -65,6 +66,11 @@ const ExhibitionCard = ({
         <Text as="span" font="serif" size="xl" className={styles.artistName}>
           {exhibition.user.name} {exhibition.user.lastName}
         </Text>
+        {exhibition.shortDescription && (
+          <Text as="p" size="sm" className={styles.description}>
+            {exhibition.shortDescription}
+          </Text>
+        )}
         <span className={styles.visitLink}>
           <ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />
           <span>Visit exhibition</span>
