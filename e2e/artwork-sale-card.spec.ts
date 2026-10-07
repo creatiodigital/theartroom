@@ -6,7 +6,11 @@ import prisma from '@/lib/prisma'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
 
-import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
+import {
+  setupFeaturedFixtures,
+  setupLimitedFixture,
+  teardownLimitedFixture,
+} from './edition-helpers'
 import { fixtures, routes } from './fixtures'
 
 /**
@@ -154,20 +158,27 @@ async function expectedSaleFor(artworkId: string) {
 
 test.describe('the artist page carries the sale block', () => {
   test('every featured card agrees with the sale rule', async () => {
-    const artist = await getPublicArtistByHandler(fixtures.artistSlug)
-    expect(
-      artist,
-      `fixture artist "${fixtures.artistSlug}" not found — check dev DB`,
-    ).not.toBeNull()
-    expect(
-      artist!.artworks.length,
-      'fixture artist has no featured work to assert on',
-    ).toBeGreaterThan(0)
+    // Featuring is optional, so the artist may feature nothing. Seed one so
+    // the loop below always has a card to check.
+    const seeded = await setupFeaturedFixtures(1, 'Artist Rule')
+    try {
+      const artist = await getPublicArtistByHandler(fixtures.artistSlug)
+      expect(
+        artist,
+        `fixture artist "${fixtures.artistSlug}" not found — check dev DB`,
+      ).not.toBeNull()
+      expect(
+        artist!.artworks.some((a) => a.id === seeded[0].artworkId),
+        'the seeded featured work must reach the artist page',
+      ).toBe(true)
 
-    for (const artwork of artist!.artworks) {
-      expect(artwork.sale, `sale block for "${artwork.title ?? artwork.name}"`).toEqual(
-        await expectedSaleFor(artwork.id),
-      )
+      for (const artwork of artist!.artworks) {
+        expect(artwork.sale, `sale block for "${artwork.title ?? artwork.name}"`).toEqual(
+          await expectedSaleFor(artwork.id),
+        )
+      }
+    } finally {
+      for (const fx of seeded) await teardownLimitedFixture(fx)
     }
   })
 
