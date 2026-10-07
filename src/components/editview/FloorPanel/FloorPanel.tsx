@@ -27,6 +27,7 @@ const FLOOR_MATERIALS = [
   { value: 'parquet', label: 'Parquet' },
   { value: 'parquet-light', label: 'Parquet Light' },
   { value: 'wood-planks', label: 'Wood Planks' },
+  { value: 'clear-wood', label: 'Clear Wood' },
   { value: 'terrazzo', label: 'Terrazzo' },
 ] as const
 

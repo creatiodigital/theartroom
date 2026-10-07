@@ -190,3 +190,43 @@ export async function editionNumberStates(
     orderBy: { number: 'asc' },
   })
 }
+
+/**
+ * `count` limited editions FEATURED on the fixture artist's profile, each
+ * wearing the seed artwork's image so the grid has a real picture to lay out.
+ *
+ * Featuring is optional — an artist may feature nothing — so a spec that needs
+ * cards on the artist page must bring its own rather than rely on whatever the
+ * dev DB happens to feature. `orderBase` sets the works' `order` (the profile
+ * sorts on it); pass a very low one to pin them to the front of the grid.
+ * Tear down each with `teardownLimitedFixture`.
+ */
+export async function setupFeaturedFixtures(
+  count: number,
+  label: string,
+  orderBase = 0,
+): Promise<LimitedFixture[]> {
+  const seed = await prisma.artwork.findUnique({
+    where: { slug: fixtures.artworkSlug },
+    select: { imageUrl: true },
+  })
+  const created: LimitedFixture[] = []
+  // Sequential: `order` decides the grid sequence and `createdAt` breaks ties.
+  for (let i = 0; i < count; i++) {
+    const fx = await setupLimitedFixture(3)
+    await prisma.artwork.update({
+      where: { id: fx.artworkId },
+      // `printPriceCents: null` keeps it a limited edition only, so the card
+      // carries one sale channel.
+      data: {
+        featured: true,
+        order: orderBase + i,
+        printPriceCents: null,
+        imageUrl: seed?.imageUrl ?? null,
+        title: `E2E ${label} ${i} ${fx.slug}`,
+      },
+    })
+    created.push(fx)
+  }
+  return created
+}

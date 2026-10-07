@@ -2,7 +2,11 @@ import { test, expect, type Page } from '@playwright/test'
 
 import prisma from '@/lib/prisma'
 
-import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
+import {
+  setupFeaturedFixtures,
+  setupLimitedFixture,
+  teardownLimitedFixture,
+} from './edition-helpers'
 import { routes } from './fixtures'
 
 /**
@@ -106,8 +110,15 @@ test('the exhibition grid aligns dividers and image centres', async ({ page }) =
 })
 
 test('the artist grid aligns dividers and image centres', async ({ page }) => {
-  await page.goto(routes.artistProfile())
-  await assertAlignment(page, 'artist')
+  // The profile shows only FEATURED works, and featuring is optional, so the
+  // artist may have none. Seed two so there is always a row to assert on.
+  const seeded = await setupFeaturedFixtures(2, 'Grid Align', -900_000)
+  try {
+    await page.goto(routes.artistProfile())
+    await assertAlignment(page, 'artist')
+  } finally {
+    for (const fx of seeded) await teardownLimitedFixture(fx)
+  }
 })
 
 test('the prints grid aligns dividers and image centres', async ({ page }) => {

@@ -82,6 +82,12 @@
   font-weight: var(--font-regular);
 }
 
+.description {
+  color: var(--color-text-primary);
+  line-height: 2;
+  margin-top: var(--space-4);
+}
+
 .visitLink {
   display: flex;
   align-items: center;
