@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test'
 
+import { PRINTS_PAGE_SIZE } from '@/components/prints/types'
 import prisma from '@/lib/prisma'
 
 import { seedCookieConsent } from './consent-helpers'
-import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
+import {
+  setupLimitedFixture,
+  setupOpenFixture,
+  teardownLimitedFixture,
+  teardownOpenFixture,
+  type OpenFixture,
+} from './edition-helpers'
 
 test.use({ storageState: 'e2e/.auth/admin.json' })
 
@@ -93,6 +100,36 @@ test('the picker adds a work by artist, and it lands on /prints', async ({ page 
   } finally {
     await prisma.selectedPrint.deleteMany({ where: { artworkId: fx.artworkId } })
     await teardownLimitedFixture(fx)
+  }
+})
+
+// The picker reuses the public catalog's paged query. It once asked for page 1
+// only, so an artist with more prints than one page silently lost their oldest
+// works — 40 prints on the badge, 24 in the grid.
+test("the picker offers every one of an artist's prints, not just the first page", async ({
+  page,
+}) => {
+  const target = await setupLimitedFixture(3)
+  const title = `E2E Picker Oldest ${target.slug}`
+  const fillers: OpenFixture[] = []
+  try {
+    // Oldest, so a full page of newer work pushes it off page 1.
+    await prisma.artwork.update({
+      where: { id: target.artworkId },
+      data: { printPriceCents: null, title, createdAt: new Date('2000-01-01') },
+    })
+    for (let i = 0; i < PRINTS_PAGE_SIZE; i++) fillers.push(await setupOpenFixture())
+
+    await seedCookieConsent(page)
+    await page.goto('/admin/content/gallery-selection')
+    await page.getByRole('button', { name: 'Add artworks' }).click()
+    await page.getByPlaceholder('Search artists').fill('John')
+    await page.getByRole('button', { name: /John Doe/ }).click()
+
+    await expect(page.locator('[data-picker-row]', { hasText: title })).toBeVisible()
+  } finally {
+    for (const f of fillers) await teardownOpenFixture(f)
+    await teardownLimitedFixture(target)
   }
 })
 

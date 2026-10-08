@@ -33,15 +33,9 @@ export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
             pageSubtitle="Participants in current and past exhibitions."
           />
           <ul className={styles.list}>
-            {artists.map((artist, index) => (
+            {artists.map((artist) => (
               <li key={artist.id}>
                 <Link href={`/artists/${artist.handler}`} className={styles.artistRow}>
-                  <div className={styles.artistInfo}>
-                    <span className={styles.index}>({String(index + 1).padStart(2, '0')})</span>
-                    <span className={styles.artistName}>
-                      {artist.name} {artist.lastName}
-                    </span>
-                  </div>
                   {artist.profileImageUrl && (
                     <ProtectedImage
                       src={artist.profileImageUrl}
@@ -53,6 +47,9 @@ export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
                       className={styles.featuredImage}
                     />
                   )}
+                  <span className={styles.artistName}>
+                    {artist.name} {artist.lastName}
+                  </span>
                 </Link>
               </li>
             ))}

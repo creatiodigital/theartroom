@@ -9,6 +9,7 @@ export const createDashboardState = (): TDashboardState => ({
   isCameraPanelOpen: false,
 
   isWallCeilingPanelOpen: false,
+  isWindowsPanelOpen: false,
   isPanelsPanelOpen: false,
   isEditingArtwork: false,
   selectedSpace: { label: 'Paris', value: 'paris' },

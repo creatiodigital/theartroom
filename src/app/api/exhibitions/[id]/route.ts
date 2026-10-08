@@ -71,6 +71,10 @@ type ExhibitionUpdateBody = {
   ceilingColor?: string
   wallBrightness?: number
 
+  // Windows
+  windowFrameColor?: string
+  radiatorColor?: string
+
   // Autofocus groups
   autofocusGroups?: Array<{ id: string; name: string; artworkIds: string[] }> | null
 
@@ -266,6 +270,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.ceilingColor !== undefined) data.ceilingColor = body.ceilingColor
     if (body.wallBrightness !== undefined)
       data.wallBrightness = Math.max(1.0, Math.min(5.0, body.wallBrightness))
+
+    // Windows
+    if (body.windowFrameColor !== undefined) data.windowFrameColor = body.windowFrameColor
+    if (body.radiatorColor !== undefined) data.radiatorColor = body.radiatorColor
 
     // Autofocus groups
     if (body.autofocusGroups !== undefined)

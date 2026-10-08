@@ -8,7 +8,7 @@
   font-size: var(--text-xl-mobile);
   font-family: var(--font-serif);
   display: block;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-2);
 
   @include breakpoint(lg) {
     font-size: var(--text-xl);
@@ -17,6 +17,10 @@
   &:hover {
     text-decoration: none;
   }
+}
+
+.title {
+  margin-bottom: var(--space-6);
 }
 
 .heroSection {

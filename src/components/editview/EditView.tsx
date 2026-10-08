@@ -8,6 +8,7 @@ import { FloorPanel } from '@/components/editview/FloorPanel'
 import { LightingPanel } from '@/components/editview/LightingPanel'
 import { PanelsPanel } from '@/components/editview/PanelsPanel'
 import WallCeilingPanel from '@/components/editview/WallCeilingPanel/WallCeilingPanel'
+import { WindowsPanel } from '@/components/editview/WindowsPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
 import { WallView } from '@/components/wallview'
@@ -39,6 +40,9 @@ function EditView() {
   const isWallCeilingPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isWallCeilingPanelOpen,
   )
+  const isWindowsPanelOpen: boolean = useSelector(
+    (state: RootState) => state.dashboard.isWindowsPanelOpen,
+  )
 
   // The scene mounts `ExitTrigger` here exactly as it does for a visitor, so
   // walking to the end of the entrance corridor raises the prompt in the editor
@@ -68,6 +72,7 @@ function EditView() {
           {isCameraPanelOpen && <CameraPanel />}
 
           {isWallCeilingPanelOpen && <WallCeilingPanel />}
+          {isWindowsPanelOpen && <WindowsPanel />}
 
           <ExitPrompt
             open={isExitPromptOpen}

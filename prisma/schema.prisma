@@ -738,6 +738,10 @@ model Exhibition {
   ceilingColor   String? @default("#ffffff")
   wallBrightness Float?  @default(1.8)
 
+  // Windows — material colors. Defaults are the colors these always had.
+  windowFrameColor String? @default("#e8e8e8")
+  radiatorColor    String? @default("#e8e8e8")
+
   // Shadow decal controls
   shadowBlur      Float? @default(0.025)
   shadowSpread    Float? @default(1.2)

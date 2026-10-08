@@ -16,30 +16,18 @@
   }
 }
 
+// Photo first, name right beside it — same row as the home page's Featured
+// Artists.
 .artistRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-6);
   text-decoration: none;
   padding: var(--space-6) 0;
   border-bottom: 1px solid var(--color-border-default);
   &:hover {
     text-decoration: none;
   }
-}
-
-.artistInfo {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-1);
-}
-
-.index {
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: var(--text-sm);
-  font-style: italic;
-  color: var(--color-text-tertiary);
-  min-width: 36px;
 }
 
 .artistName {
