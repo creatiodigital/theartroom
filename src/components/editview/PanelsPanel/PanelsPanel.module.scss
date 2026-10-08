@@ -1,7 +1,8 @@
+// Same insets as a panel section — the panel content itself has no padding.
 .hint {
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
+  padding: var(--space-4) var(--space-5) 0;
 }
 
 .panelRow {

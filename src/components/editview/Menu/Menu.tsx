@@ -15,6 +15,8 @@ import {
   hideCameraPanel,
   showWallCeilingPanel,
   hideWallCeilingPanel,
+  showWindowsPanel,
+  hideWindowsPanel,
 } from '@/redux/slices/dashboardSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
@@ -34,6 +36,7 @@ export const Menu = () => {
   const isWallCeilingPanelOpen = useSelector(
     (state: RootState) => state.dashboard.isWallCeilingPanelOpen,
   )
+  const isWindowsPanelOpen = useSelector((state: RootState) => state.dashboard.isWindowsPanelOpen)
 
   const togglePlaceholders = () => {
     if (isPlaceholdersShown) {
@@ -53,6 +56,7 @@ export const Menu = () => {
 
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       dispatch(showLightingPanel())
     }
   }
@@ -67,6 +71,7 @@ export const Menu = () => {
 
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       dispatch(showFloorPanel())
     }
   }
@@ -81,6 +86,7 @@ export const Menu = () => {
 
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       dispatch(showCameraPanel())
     }
   }
@@ -94,6 +100,7 @@ export const Menu = () => {
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
 
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       dispatch(showWallCeilingPanel())
     }
   }
@@ -107,7 +114,22 @@ export const Menu = () => {
       if (isCameraPanelOpen) dispatch(hideCameraPanel())
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
 
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       dispatch(showPanelsPanel())
+    }
+  }
+
+  const toggleWindowsPanel = () => {
+    if (isWindowsPanelOpen) {
+      dispatch(hideWindowsPanel())
+    } else {
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
+
+      dispatch(showWindowsPanel())
     }
   }
 
@@ -143,6 +165,9 @@ export const Menu = () => {
       </Tooltip>
       <Tooltip label="Walls and Ceiling" placement="right">
         <Button size="regular" variant="secondary" icon="house" onClick={toggleWallCeilingPanel} />
+      </Tooltip>
+      <Tooltip label="Windows and Radiators" placement="right">
+        <Button size="regular" variant="secondary" icon="grid-2x2" onClick={toggleWindowsPanel} />
       </Tooltip>
       <Tooltip label="Floor controls" placement="right">
         <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />

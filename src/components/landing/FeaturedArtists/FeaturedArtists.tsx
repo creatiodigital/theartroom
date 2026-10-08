@@ -28,14 +28,8 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
       <NiceTitle title="Featured Artists" />
 
       <div className={styles.grid}>
-        {artists.map((artist, i) => (
+        {artists.map((artist) => (
           <Link key={artist.id} href={`/artists/${artist.handler}`} className={styles.artistRow}>
-            <div className={styles.artistInfo}>
-              <span className={styles.index}>({String(i + 1).padStart(2, '0')})</span>
-              <Text as="span" font="serif" size="2xl">
-                {artist.name} {artist.lastName}
-              </Text>
-            </div>
             {artist.profileImageUrl && (
               <ProtectedImage
                 src={artist.profileImageUrl}
@@ -46,6 +40,9 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
                 className={styles.profileImage}
               />
             )}
+            <Text as="span" font="serif" size="2xl">
+              {artist.name} {artist.lastName}
+            </Text>
           </Link>
         ))}
       </div>
