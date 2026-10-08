@@ -12,7 +12,8 @@ import { seedCookieConsent } from './consent-helpers'
  * What this DOES cover (all cart-page logic): rendering, quantity stepper,
  * the qty-1 "minus becomes trash → confirm" remove flow, the Edit-item deep
  * link, the spec-list show-all toggle, distinct-config lines + totals, the
- * units-based badge count, and the limited-edition "nothing is reserved" notice.
+ * site-header cart (units-based badge, present on every page, empty or not),
+ * and the limited-edition "nothing is reserved" notice.
  *
  * What this does NOT cover (lives in the wizard, which is WebGL and off-limits
  * here): the add-time merge of identical configs, the "Add anyway" duplicate
@@ -158,10 +159,44 @@ test.describe('shopping cart — /cart page', () => {
 
   test('the header cart badge counts total units, not lines', async ({ page }) => {
     // One line at quantity 2 → the badge reads "2" (units), per cartCount.
+    // Deliberately NOT /prints: the cart lives in the site header, so a buyer
+    // who added a print and wandered off still sees it waiting for them.
     await seedCart(page, [makeCartItem({ lineId: 'line-1', quantity: 2 })])
+    await page.goto('/about')
+
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: 'Cart, 2 items' }),
+    ).toBeVisible()
+  })
+
+  test('the empty header cart is still there and leads to the empty state', async ({ page }) => {
+    await seedCart(page, [])
+    await page.goto('/about')
+
+    const cart = page.getByRole('banner').getByRole('link', { name: 'Cart, 0 items' })
+    await expect(cart).toBeVisible()
+    await cart.click()
+
+    await expect(page).toHaveURL(/\/cart$/)
+    await expect(page.getByText('Your cart is empty')).toBeVisible()
+  })
+
+  test('the header cart stays visible on a phone, outside the menu', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await seedCart(page, [makeCartItem({ lineId: 'line-1' })])
+    await page.goto('/about')
+
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Cart, 1 item' })).toBeVisible()
+  })
+
+  test('/prints shows one cart, the header one', async ({ page }) => {
+    await seedCart(page, [])
     await page.goto('/prints')
 
-    await expect(page.getByRole('link', { name: 'Cart, 2 items' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /^Cart, \d+ items?$/ })).toHaveCount(1)
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: 'Cart, 0 items' }),
+    ).toBeVisible()
   })
 
   test('one hidden option is not worth a toggle', async ({ page }) => {
