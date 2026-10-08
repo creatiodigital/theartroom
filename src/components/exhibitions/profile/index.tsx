@@ -51,12 +51,12 @@ export const ExhibitionProfilePage = ({
       <div className={styles.content}>
         <div className={styles.heroSection}>
           <div className={styles.heroCta}>
-            <Text as="h1" size="3xl" className={styles.title}>
-              {exhibition.mainTitle}
-            </Text>
             <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
               {artistName}
             </Link>
+            <Text as="h1" size="3xl" className={styles.title}>
+              {exhibition.mainTitle}
+            </Text>
             {exhibition.spacePublished && (
               <EnterExhibitionButton
                 artistSlug={artistSlug}

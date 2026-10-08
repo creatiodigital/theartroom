@@ -50,6 +50,12 @@ const dashboardSlice = createSlice({
     hideWallCeilingPanel: (state: TDashboardState) => {
       state.isWallCeilingPanelOpen = false
     },
+    showWindowsPanel: (state: TDashboardState) => {
+      state.isWindowsPanelOpen = true
+    },
+    hideWindowsPanel: (state: TDashboardState) => {
+      state.isWindowsPanelOpen = false
+    },
     showPanelsPanel: (state: TDashboardState) => {
       state.isPanelsPanelOpen = true
     },
@@ -83,6 +89,8 @@ export const {
 
   showWallCeilingPanel,
   hideWallCeilingPanel,
+  showWindowsPanel,
+  hideWindowsPanel,
   setEditingArtwork,
   selectSpace,
 } = dashboardSlice.actions

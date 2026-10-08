@@ -149,6 +149,8 @@ export const ExhibitionEditPage = ({
         // Wall & Ceiling
         wallColor: exhibition.wallColor ?? undefined,
         ceilingColor: exhibition.ceilingColor ?? undefined,
+        windowFrameColor: exhibition.windowFrameColor ?? undefined,
+        radiatorColor: exhibition.radiatorColor ?? undefined,
         // Autofocus groups
         autofocusGroups: exhibition.autofocusGroups ?? undefined,
       }

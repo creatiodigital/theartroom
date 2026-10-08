@@ -12,7 +12,11 @@ import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
-import type { PrintArtistOption, PrintArtwork } from '@/components/prints/types'
+import {
+  PRINTS_PAGE_SIZE,
+  type PrintArtistOption,
+  type PrintArtwork,
+} from '@/components/prints/types'
 
 import styles from './GallerySelection.module.scss'
 
@@ -26,6 +30,26 @@ type Props = {
 }
 
 const SKELETON_COUNT = 10
+
+type CatalogQuery = Omit<Parameters<typeof getPrintsCatalogPage>[0], 'page'>
+
+/**
+ * Every matching print, not one page of them. The picker borrows the public
+ * catalog's paged query, which stops at PRINTS_PAGE_SIZE — asking for page 1
+ * alone silently dropped an artist's oldest work once they had more than one
+ * page. Page 1 reports the total; the rest are fetched from it. The server
+ * query keeps its page cap, so nothing public can ask for an unbounded list.
+ */
+const fetchAllPrints = async (query: CatalogQuery): Promise<PrintArtwork[]> => {
+  const first = await getPrintsCatalogPage({ ...query, page: 1 })
+  const pageCount = Math.ceil(first.totalCount / PRINTS_PAGE_SIZE)
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(pageCount - 1, 0) }, (_, i) =>
+      getPrintsCatalogPage({ ...query, page: i + 2 }),
+    ),
+  )
+  return [first, ...rest].flatMap((r) => r.items)
+}
 
 /**
  * Two ways in, never both at once, because they answer different questions:
@@ -60,8 +84,8 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
     setQuery('')
     setArtistWorks([])
     setLoadingWorks(true)
-    void getPrintsCatalogPage({ page: 1, artistId, excludeIds })
-      .then((r) => setArtistWorks(r.items))
+    void fetchAllPrints({ artistId, excludeIds })
+      .then(setArtistWorks)
       .finally(() => setLoadingWorks(false))
   }, [artistId, excludeIds])
 
@@ -75,8 +99,8 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
     }
     setLoadingWorks(true)
     const t = setTimeout(() => {
-      void getPrintsCatalogPage({ page: 1, search: query.trim(), excludeIds })
-        .then((r) => setNameResults(r.items))
+      void fetchAllPrints({ search: query.trim(), excludeIds })
+        .then(setNameResults)
         .finally(() => setLoadingWorks(false))
     }, 250)
     return () => clearTimeout(t)

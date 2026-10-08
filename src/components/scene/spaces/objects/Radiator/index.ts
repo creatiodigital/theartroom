@@ -1,1 +1,1 @@
-export { default as Radiator } from './Radiator'
+export { default as Radiator, DEFAULT_RADIATOR_COLOR } from './Radiator'

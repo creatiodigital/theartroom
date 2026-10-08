@@ -8,8 +8,10 @@ import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
 
 const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
 const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
+// The off-white every frame had before the color became editable.
+export const DEFAULT_WINDOW_FRAME_COLOR = '#e8e8e8'
 
-interface ParisWindowProps {
+interface WindowsProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
   frameCount?: number
   glassCount?: number
@@ -18,7 +20,7 @@ interface ParisWindowProps {
   glassRefs?: React.RefObject<Mesh | null>[]
 }
 
-const ParisWindow: React.FC<ParisWindowProps> = ({
+const Windows: React.FC<WindowsProps> = ({
   nodes,
   frameCount,
   glassCount,
@@ -35,9 +37,12 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
   const windowTransparency = useSelector(
     (state: RootState) => state.exhibition.windowTransparency ?? false,
   )
+  const windowFrameColor = useSelector(
+    (state: RootState) => state.exhibition.windowFrameColor ?? DEFAULT_WINDOW_FRAME_COLOR,
+  )
 
   // Tinted colors that respond to ambient light (NOT for glass)
-  const tintedFrame = useAmbientLightColor('#e8e8e8')
+  const tintedFrame = useAmbientLightColor(windowFrameColor)
   const tintedHandle = useAmbientLightColor('#8d8d8a')
 
   // Counts come from the GLB unless a space deliberately overrides them.
@@ -120,4 +125,4 @@ const ParisWindow: React.FC<ParisWindowProps> = ({
   )
 }
 
-export default ParisWindow
+export default Windows

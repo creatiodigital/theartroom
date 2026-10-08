@@ -80,6 +80,10 @@ export type TExhibition = {
   ceilingColor?: string
   wallBrightness?: number
 
+  // Windows
+  windowFrameColor?: string
+  radiatorColor?: string
+
   // Shadow decal controls
   shadowBlur?: number
   shadowSpread?: number

@@ -14,7 +14,7 @@ import { ContinueSign } from '@/components/scene/spaces/objects/ContinueSign'
 import { ExitSign } from '@/components/scene/spaces/objects/ExitSign'
 import { ExitTrigger } from '@/components/scene/spaces/objects/ExitTrigger'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
-import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
+import { Windows } from '@/components/scene/spaces/objects/Windows'
 import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 import { Radiator } from '@/components/scene/spaces/objects/Radiator'
@@ -257,7 +257,7 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
 
       {/* Every prop family below counts its own nodes from the GLB, so Vienna's
           larger numbers need no arguments here. */}
-      <ParisWindow nodes={nodes} windowRefs={windowRefs} glassRefs={glassRefs} />
+      <Windows nodes={nodes} windowRefs={windowRefs} glassRefs={glassRefs} />
 
       <Radiator nodes={nodes} radiatorRef={wallRefs[1]} />
 

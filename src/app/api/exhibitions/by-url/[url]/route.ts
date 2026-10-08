@@ -270,6 +270,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         wallColor: snapshotExhibition.wallColor,
         ceilingColor: snapshotExhibition.ceilingColor,
         wallBrightness: snapshotExhibition.wallBrightness,
+        // Windows
+        windowFrameColor: snapshotExhibition.windowFrameColor,
+        radiatorColor: snapshotExhibition.radiatorColor,
         // Autofocus groups
         autofocusGroups: snapshotExhibition.autofocusGroups,
         // Snapshot positions enriched with live artwork metadata — consumed

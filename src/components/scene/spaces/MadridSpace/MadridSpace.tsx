@@ -11,7 +11,7 @@ import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
 
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
-import { ParisWindow } from '@/components/scene/spaces/objects/ParisWindow'
+import { Windows } from '@/components/scene/spaces/objects/Windows'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 import { Radiator } from '@/components/scene/spaces/objects/Radiator'
 import RoundLamp from '@/components/scene/spaces/objects/RoundLamp/RoundLamp'
@@ -245,7 +245,7 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
       )}
 
       {/* Windows */}
-      <ParisWindow nodes={nodes} windowRefs={windowRefs} glassRefs={glassRefs} />
+      <Windows nodes={nodes} windowRefs={windowRefs} glassRefs={glassRefs} />
 
       {/* Radiators */}
       <Radiator nodes={nodes} />

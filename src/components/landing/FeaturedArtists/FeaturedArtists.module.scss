@@ -15,10 +15,12 @@
   }
 }
 
+// Photo first, name right beside it. With the photo pushed to the far end of
+// the row it sat closer to the neighboring column's name than to its own.
 .artistRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-6);
   text-decoration: none;
   padding: var(--space-6) 0;
   border-bottom: 1px solid var(--color-border-default);
@@ -38,20 +40,6 @@
   &:hover {
     text-decoration: none;
   }
-}
-
-.artistInfo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.index {
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: var(--text-sm);
-  font-style: italic;
-  color: var(--color-text-secondary);
-  min-width: 36px;
 }
 
 .nameBlock {
