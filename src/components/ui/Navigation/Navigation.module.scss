@@ -1,5 +1,18 @@
 @use '@/styles/mixins' as *;
 
+// Links + cart + hamburger. Desktop: the cart takes the same gutter as the
+// links, so it reads as the last item of the row. Mobile: the links are
+// hidden and the cart sits a little closer to the menu button.
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+
+  @include breakpoint(lg) {
+    gap: var(--space-8);
+  }
+}
+
 // Desktop Navigation (hidden on mobile)
 .navigation {
   display: none;

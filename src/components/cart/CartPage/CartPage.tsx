@@ -1,5 +1,7 @@
 'use client'
 
+import { ShoppingBag } from 'lucide-react'
+
 import { CartLine } from '@/components/cart/CartLine'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -8,6 +10,7 @@ import { Text } from '@/components/ui/Typography'
 import { cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
 import { LIMITED_NOT_RESERVED_NOTICE } from '@/lib/cart/notices'
 import { useCart } from '@/lib/cart/useCart'
+import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { formatEuro } from '@/lib/print-providers'
 
 import styles from './CartPage.module.scss'
@@ -23,9 +26,22 @@ export const CartPage = () => {
     return (
       <PageLayout>
         <PageHeader pageTitle="Cart" />
+        {/* Centered, with air above and below: the header cart now leads here
+            from every page, so an empty cart is a real arrival, not a dead
+            end tucked into the left column. */}
         <div className={styles.empty}>
-          <Text as="p" font="serif" size="lg" className={styles.emptyText}>
+          <ShoppingBag
+            size={40}
+            strokeWidth={ICON_STROKE_WIDTH}
+            className={styles.emptyIcon}
+            aria-hidden="true"
+          />
+          <Text as="p" font="serif" size="2xl" className={styles.emptyText}>
             Your cart is empty
+          </Text>
+          <Text as="p" muted className={styles.emptyNote}>
+            Every print is made to order on archival fine-art paper and arrives with a Certificate
+            of Authenticity.
           </Text>
           <Button variant="primary" size="bigSquared" href="/prints" label="Browse prints" />
         </div>

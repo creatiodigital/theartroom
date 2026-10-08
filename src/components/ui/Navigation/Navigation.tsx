@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
+import { CartIcon } from '@/components/cart/CartIcon'
 import { Button } from '@/components/ui/Button'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Logo from '@/icons/logo.svg'
@@ -43,35 +44,43 @@ export const Navigation = () => {
 
   return (
     <>
-      {/* Desktop Navigation */}
-      <nav className={styles.navigation}>
-        <ul className={styles.navList}>
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`${styles.navLink} ${isActive ? styles.active : ''}`}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
+      {/* The cart sits in the always-visible bar, never inside the mobile menu:
+          a buyer who added a print and wandered off must see it from any page,
+          not only from /prints. Between the links and the hamburger so it
+          reads [links][cart] on desktop and [cart][menu] on mobile. */}
+      <div className={styles.bar}>
+        {/* Desktop Navigation */}
+        <nav className={styles.navigation}>
+          <ul className={styles.navList}>
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`${styles.navLink} ${isActive ? styles.active : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
 
-      {/* Mobile Hamburger Button */}
-      <Button
-        variant="ghost"
-        onClick={toggleMenu}
-        className={styles.hamburgerButton}
-        aria-label="Open menu"
-        aria-expanded={isMenuOpen}
-      >
-        <Menu size={24} strokeWidth={ICON_STROKE_WIDTH} />
-      </Button>
+        <CartIcon />
+
+        {/* Mobile Hamburger Button */}
+        <Button
+          variant="ghost"
+          onClick={toggleMenu}
+          className={styles.hamburgerButton}
+          aria-label="Open menu"
+          aria-expanded={isMenuOpen}
+        >
+          <Menu size={24} strokeWidth={ICON_STROKE_WIDTH} />
+        </Button>
+      </div>
 
       {/* Mobile Menu Overlay */}
       <div className={`${styles.mobileOverlay} ${isMenuOpen ? styles.open : ''}`}>
