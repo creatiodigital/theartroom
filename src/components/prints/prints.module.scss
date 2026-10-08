@@ -57,16 +57,13 @@
 
 // Prints commerce toolbar — sits between two double borders (the gallery
 // motif), holding the artist filter (left) and the cart (right).
-// Single row — filters left, cart right. The cart dropping to its own line
-// reads broken, so wrapping is off at normal widths. Below sm it comes back
-// as an escape hatch: the select labels can't shrink or truncate (by
-// design), so a long selected artist name on a narrow phone must wrap
-// rather than push the cart off-screen.
+// Single row of filters, left-aligned. The cart lives in the site header
+// (AR-154), not here. Below sm wrapping comes back as an escape hatch: the
+// select labels can't shrink or truncate (by design), so a long selected
+// artist name on a narrow phone must wrap rather than overflow.
 .printsToolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  // Guaranteed air between the filter group and the cart when space is tight.
   gap: var(--space-6);
 
   @include media-down(sm) {
@@ -86,20 +83,11 @@
 }
 
 // Both triggers hug their content (label + chevron, nothing more) so the two
-// filters cluster tightly on the left and all the free space sits between
-// them and the cart — never inside the filter group.
+// filters cluster tightly on the left — free space never sits inside the
+// filter group.
 .artistSelect,
 .editionSelect {
   max-width: 100%;
-}
-
-.toolbarActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  // Inset from the toolbar's right edge so the cart badge (which overhangs the
-  // icon ~8px) never touches the screen edge on mobile.
-  padding-right: var(--space-3);
 }
 
 // Wraps the grid so the last card row never sits on the footer's double rule.

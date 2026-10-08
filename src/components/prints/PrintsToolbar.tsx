@@ -1,6 +1,5 @@
 'use client'
 
-import { CartIcon } from '@/components/cart/CartIcon'
 import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
 
 import styles from './prints.module.scss'
@@ -44,10 +43,6 @@ export const PrintsToolbar = ({
           placeholder="All Editions"
           className={styles.editionSelect}
         />
-      </div>
-
-      <div className={styles.toolbarActions}>
-        <CartIcon />
       </div>
     </div>
   )

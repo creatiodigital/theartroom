@@ -279,11 +279,13 @@ test('/prints renders the selection in order, and nothing else', async ({ page }
     await expect(page.getByText('A curated selection', { exact: false })).toBeVisible()
 
     // The toolbar STAYS — it is production UI. Its filters now run over the
-    // curated list in memory, and the cart lives in it: this page is the only
-    // non-wizard cart affordance, so losing the row loses the cart.
+    // curated list in memory. The cart moved up to the site header (AR-154),
+    // so it is there on every page, this one included.
     await expect(page.getByText('All artists')).toBeVisible()
     await expect(page.getByText('All Editions')).toBeVisible()
-    await expect(page.getByRole('link', { name: /^Cart, \d+ items?$/ })).toBeVisible()
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: /^Cart, \d+ items?$/ }),
+    ).toBeVisible()
 
     // What DID go with the catalogue: the pager. A curated selection is one page.
     await expect(page.getByRole('navigation', { name: 'Pagination' })).toHaveCount(0)

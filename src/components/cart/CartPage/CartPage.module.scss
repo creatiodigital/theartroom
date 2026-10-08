@@ -3,14 +3,34 @@
 .empty {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-6);
-  padding: var(--space-10) 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  // Tall enough that the block sits in the middle of the page rather than
+  // hugging the header rule, with the footer kept below the fold's edge.
+  min-height: 50vh;
+  padding: var(--space-16) 0;
+
+  @include media-down(sm) {
+    min-height: 0;
+    padding: var(--space-12) 0;
+  }
+}
+
+.emptyIcon {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-6);
 }
 
 .emptyText {
   margin: 0;
   color: var(--color-text-primary);
+}
+
+// One reassuring line, kept to a short measure so it reads as a caption.
+.emptyNote {
+  margin: var(--space-4) 0 var(--space-8);
+  max-width: 420px;
 }
 
 // Page layout: items table (left) + sticky order summary (right).
