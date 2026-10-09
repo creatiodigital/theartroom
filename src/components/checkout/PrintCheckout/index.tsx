@@ -318,7 +318,6 @@ export const PrintCheckout = ({
         <Button
           variant="ghost"
           onClick={handleClose}
-          label="CLOSE"
           iconRight={<Icon name="close" size={16} />}
           className={styles.closeButton}
           aria-label="Close checkout"

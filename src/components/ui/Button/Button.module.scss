@@ -44,6 +44,27 @@
   }
 }
 
+.outline {
+  background: var(--color-button-outline-bg);
+  color: var(--color-button-outline-text);
+  border: 1px solid var(--color-button-outline-border);
+
+  // Bold, not medium: Lato ships only 300/400/700, so 500 renders as 400.
+  // Compound selectors so the weight outranks the font-family classes below,
+  // which also set font-weight and come later in this file.
+  &.sans,
+  &.serif,
+  &.dashboard {
+    font-weight: var(--font-bold);
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-button-outline-hover-bg);
+    color: var(--color-button-outline-hover-text);
+  }
+}
+
 .danger {
   background: var(--color-button-danger-bg);
   color: var(--color-button-danger-text);

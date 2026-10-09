@@ -178,7 +178,6 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
               <Button
                 variant="ghost"
                 onClick={onClose}
-                label="CLOSE"
                 iconRight={<Icon name="close" size={16} />}
                 className={styles.closeButton}
                 aria-label="Close inquiry"

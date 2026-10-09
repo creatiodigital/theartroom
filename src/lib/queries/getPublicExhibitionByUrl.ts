@@ -2,6 +2,7 @@ import type { Prisma } from '@/generated/prisma'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
 import { captureError } from '@/lib/observability/captureError'
+import { groupBySection, type SectionGroup } from '@/lib/exhibitionSections'
 
 /**
  * Every artwork field the public exhibition grid renders, in ONE place.
@@ -50,12 +51,17 @@ const getExhibition = (url: string) =>
           biography: true,
         },
       },
+      sections: {
+        select: { id: true, title: true },
+        orderBy: { order: 'asc' },
+      },
       exhibitionArtworks: {
         // Membership, not placement. A work with no coordinates at all belongs
         // here; a work hung in the room but unchecked does not.
         where: { showOnPage: true },
         select: {
           pageOrder: true,
+          sectionId: true,
           artwork: { select: PUBLIC_ARTWORK_SELECT },
         },
       },
@@ -98,6 +104,10 @@ export type PublicExhibition = {
     biography: string | null
   }
   artworks: PublicExhibitionArtwork[]
+  /** The grid's layout: works with no section first (title null), then one
+   *  group per section in the artist's order. Empty groups are left out.
+   *  `artworks` is exactly these groups flattened. */
+  groups: SectionGroup<PublicExhibitionArtwork>[]
 }
 
 /**
@@ -158,7 +168,7 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
   // artwork list, which froze the grid at publish time — a checkbox would not
   // have taken effect until the next republish. The snapshot still exists and
   // still freezes the 3D scene for /visit; it simply has no say over the page.
-  const artworks = exhibition.exhibitionArtworks
+  const ordered = exhibition.exhibitionArtworks
     .filter((ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image')
     .sort((a, b) => {
       // Per-exhibition order when the artist has set one, otherwise the
@@ -168,7 +178,14 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
       if (aOrder !== bOrder) return aOrder - bOrder
       return a.artwork.order - b.artwork.order
     })
-    .map((ea) => toPublicArtwork(ea.artwork))
+
+  // Sections split the page; the flattened groups are the one display order the
+  // artwork page's previous/next arrows also walk.
+  const groups = groupBySection(
+    ordered.map((ea) => ({ sectionId: ea.sectionId, artwork: toPublicArtwork(ea.artwork) })),
+    exhibition.sections,
+  )
+  const artworks = groups.flatMap((g) => g.artworks)
 
   return {
     id: exhibition.id,
@@ -183,5 +200,6 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
     spacePublished: exhibition.spacePublished,
     user: exhibition.user,
     artworks,
+    groups,
   }
 }
