@@ -311,7 +311,6 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
           <Button
             variant="ghost"
             onClick={close}
-            label="CLOSE"
             iconRight={<Icon name="close" size={16} />}
             className={styles.closeButton}
             aria-label="Close wizard"

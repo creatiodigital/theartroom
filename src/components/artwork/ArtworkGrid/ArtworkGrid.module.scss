@@ -3,19 +3,21 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-6);
+  // Rows breathe more than columns: each card is a tall image + caption, and
+  // stacked cards read as one block when the row gap matches the column gap.
+  gap: var(--space-10) var(--space-6);
   // The grid is the last thing on /prints, artist and exhibition pages, so its
   // bottom row otherwise sits hard against the footer's rule.
   margin-bottom: var(--space-14);
 
   @include breakpoint(md) {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-8);
+    gap: var(--space-12) var(--space-8);
   }
 
   @include breakpoint(lg) {
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-10);
+    gap: var(--space-16) var(--space-10);
     margin-bottom: var(--space-18);
   }
 }
@@ -106,8 +108,14 @@
 }
 
 .info {
-  text-align: center;
-  padding-top: var(--space-3);
+  // Caption left, CTA right, both hanging from the divider — the gallery
+  // convention, rather than one centered stack.
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  text-align: left;
+  padding-top: var(--space-5);
   border-top: 1px solid var(--color-border-default);
   width: 100%;
 
@@ -120,6 +128,11 @@
   }
 }
 
+.caption {
+  // Lets a long title wrap instead of pushing the CTA out of the card.
+  min-width: 0;
+}
+
 .artist {
   font-weight: 600;
   margin-bottom: 0;
@@ -129,9 +142,15 @@
 
 .title {
   color: var(--color-text-primary);
-  // Tight to the details below it — artist / title / technique are one block
-  // of identity, not separately spaced lines.
-  margin-bottom: var(--space-1);
+  // Tight to the details below it — artist / title / year are one block of
+  // identity, not separately spaced lines.
+  margin-bottom: 0;
+  line-height: 1.35;
+}
+
+.year {
+  margin: 0;
+  color: var(--color-text-primary);
   line-height: 1.35;
 }
 
@@ -180,15 +199,24 @@
 // grid-wide flag, because the artist and exhibition grids mix sellable work
 // with work that was never for sale.
 .orderAction {
-  // The one real break in the caption — identity above, commerce below.
-  margin-top: var(--space-3);
+  // Beside the caption now, not under it: no top gap, and it never shrinks —
+  // the caption wraps instead.
+  margin-top: 0;
+  flex-shrink: 0;
   // Column flex rather than a stack of blocks: the Button is `inline-flex`, so
   // in an inline flow it sat on a text baseline and carried the line-box's
   // descender space under it — a few stray pixels that read as a gap between
   // the price and the CTA. As a flex item it has none.
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+}
+
+// A touch taller than regularSquared's 8px, sides unchanged. Scoped under
+// .orderAction so it outranks Button's size class regardless of stylesheet order.
+.orderAction .orderButton {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
 }
 
 // The figure. A bare number, stated plainly — no "from", no "starting at":

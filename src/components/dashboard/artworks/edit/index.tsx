@@ -12,10 +12,22 @@ import {
   getInitialFormData,
   populateFormData,
 } from '@/components/shared/ArtworkEditForm'
-import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
+import type {
+  Artwork,
+  ArtworkFormData,
+  ArtworkFormValue,
+} from '@/components/shared/ArtworkEditForm'
 import type { LimitedVariantDraft } from '@/lib/editions/types'
 import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import { describeUploadFailure } from '@/lib/upload/describeUploadFailure'
+
+/** One of the artist's exhibitions as the Exhibitions picker needs it. */
+type ExhibitionOption = {
+  id: string
+  mainTitle: string
+  published: boolean
+  sections: { id: string; title: string }[]
+}
 
 type ArtworkEditPageProps = {
   artworkId: string
@@ -40,9 +52,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   // The artist's own exhibitions, for the Exhibitions checkbox section. Fetched
   // once the artwork loads (its ownerId decides whose exhibitions to list —
   // matters for an admin editing another artist's work).
-  const [exhibitions, setExhibitions] = useState<
-    { id: string; mainTitle: string; published: boolean }[]
-  >([])
+  const [exhibitions, setExhibitions] = useState<ExhibitionOption[]>([])
 
   // Original image URL from server
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
@@ -119,13 +129,13 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           try {
             const exhibitionsRes = await fetch(`/api/exhibitions?userId=${data.userId}`)
             if (exhibitionsRes.ok) {
-              const exhibitionsData: { id: string; mainTitle: string; published: boolean }[] =
-                await exhibitionsRes.json()
+              const exhibitionsData: ExhibitionOption[] = await exhibitionsRes.json()
               setExhibitions(
                 exhibitionsData.map((ex) => ({
                   id: ex.id,
                   mainTitle: ex.mainTitle,
                   published: ex.published,
+                  sections: ex.sections ?? [],
                 })),
               )
             }
@@ -146,7 +156,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId, session?.user?.id, session?.user?.userType, router, backLink])
 
-  const handleChange = (field: string, value: string | boolean | string[]) => {
+  const handleChange = (field: string, value: ArtworkFormValue) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -427,7 +437,13 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         printPriceEuros.trim() === '' || !Number.isFinite(parsed) || parsed < 0
           ? null
           : Math.round(parsed * 100)
-      const payload = { ...rest, printPriceCents }
+      // An explicit section for every ticked show, so the server saves what the
+      // dropdown shows. Without it, re-ticking a show this work still hangs in
+      // would silently restore the section it had before it was unticked.
+      const exhibitionSections = Object.fromEntries(
+        rest.exhibitionIds.map((id) => [id, rest.exhibitionSections[id] ?? null]),
+      )
+      const payload = { ...rest, exhibitionSections, printPriceCents }
 
       const response = await fetch(`/api/artworks/${artworkId}`, {
         method: 'PUT',

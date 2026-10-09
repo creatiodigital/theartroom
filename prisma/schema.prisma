@@ -753,6 +753,9 @@ model Exhibition {
 
   exhibitionArtworks ExhibitionArtwork[]
   wallGuides         WallGuide[]
+  // Optional titled groups on the public page, in artist order. See
+  // docs/superpowers/specs/2026-10-08-exhibition-sections-design.md
+  sections           ExhibitionSection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -783,10 +786,15 @@ model ExhibitionArtwork {
   // Membership — the only thing that decides the public exhibition page.
   // Defaults true so every row that exists today comes out of the migration
   // already on its page: nothing in prod changes on deploy.
-  showOnPage Boolean @default(true)
+  showOnPage Boolean            @default(true)
   // Per-exhibition grid position. Null falls back to the artist's library
   // order, which is what every row uses until a reorder UI exists.
   pageOrder  Int?
+  // Which titled section of the page this work sits in, per exhibition. Null =
+  // no section (listed first, no heading). SetNull is what makes deleting a
+  // section return its works to "no section" instead of losing them.
+  sectionId  String?
+  section    ExhibitionSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
   // Display properties (per-exhibition customization)
   showFrame               Boolean @default(false)
@@ -878,6 +886,20 @@ model ExhibitionArtwork {
   updatedAt DateTime @updatedAt
 
   @@unique([exhibitionId, artworkId])
+}
+
+model ExhibitionSection {
+  id           String     @id @default(uuid())
+  exhibitionId String
+  exhibition   Exhibition @relation(fields: [exhibitionId], references: [id], onDelete: Cascade)
+  title        String
+  // Position on the page, 0-based. Rewritten wholesale by the reorder route.
+  order        Int
+  createdAt    DateTime   @default(now())
+
+  exhibitionArtworks ExhibitionArtwork[]
+
+  @@index([exhibitionId])
 }
 
 model Account {

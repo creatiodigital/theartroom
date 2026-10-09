@@ -131,16 +131,24 @@ export const ArtworkGrid = ({
               )}
             </div>
             <div className={styles.info}>
-              <Text as="h2" font="sans" size="md" className={styles.artist}>
-                {/* Per-card first: it is the only value that is right on a
-                    multi-artist listing. Then the free-text override, then the
-                    page-level fallback a single-artist page supplies. */}
-                {artwork.artistName || artwork.author || artistName || ''}
-              </Text>
-              <Text as="h1" font="sans" size="lg" className={styles.title}>
-                <em>{artwork.title || artwork.name}</em>
-                {artwork.year && <span>, {artwork.year}</span>}
-              </Text>
+              {/* Identity on the left, one fact per line; the CTA sits on
+                  the right, level with the artist name. */}
+              <div className={styles.caption}>
+                <Text as="h2" font="sans" size="md" className={styles.artist}>
+                  {/* Per-card first: it is the only value that is right on a
+                      multi-artist listing. Then the free-text override, then the
+                      page-level fallback a single-artist page supplies. */}
+                  {artwork.artistName || artwork.author || artistName || ''}
+                </Text>
+                <Text as="h1" font="sans" size="md" className={styles.title}>
+                  <em>{artwork.title || artwork.name}</em>
+                </Text>
+                {artwork.year && (
+                  <Text as="p" font="sans" size="md" className={styles.year}>
+                    {artwork.year}
+                  </Text>
+                )}
+              </div>
               {sale && (
                 <div className={styles.orderAction}>
                   {/* `null` = nothing left to buy, and that is the one number
@@ -157,8 +165,9 @@ export const ArtworkGrid = ({
                       <Button
                         href={`/artworks/${artwork.slug}${context}`}
                         label="Order Print"
-                        variant="primary"
+                        variant="outline"
                         size="regularSquared"
+                        className={styles.orderButton}
                       />
                     </>
                   ) : (
