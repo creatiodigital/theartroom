@@ -15,6 +15,7 @@ import { Text } from '@/components/ui/Typography'
 import { DashboardLayout } from '../../DashboardLayout'
 import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
 import styles from './ExhibitionSettings.module.scss'
+import { SectionsEditor } from './SectionsEditor'
 
 type Exhibition = {
   id: string
@@ -369,6 +370,8 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         />
         <span className={dashboardStyles.hint}>{shortDescription.length}/400 characters</span>
       </div>
+
+      <SectionsEditor exhibitionId={exhibition.id} />
 
       <div className={dashboardStyles.section}>
         <h3 className={dashboardStyles.sectionTitle}>Description</h3>

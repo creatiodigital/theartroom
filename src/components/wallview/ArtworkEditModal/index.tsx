@@ -14,7 +14,11 @@ import {
   getInitialFormData,
   populateFormData,
 } from '@/components/shared/ArtworkEditForm'
-import type { Artwork, ArtworkFormData } from '@/components/shared/ArtworkEditForm'
+import type {
+  Artwork,
+  ArtworkFormData,
+  ArtworkFormValue,
+} from '@/components/shared/ArtworkEditForm'
 import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import { describeUploadFailure } from '@/lib/upload/describeUploadFailure'
 
@@ -116,7 +120,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
     }
   }, [previewUrl])
 
-  const handleChange = (field: string, value: string | boolean | string[]) => {
+  const handleChange = (field: string, value: ArtworkFormValue) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -439,7 +443,6 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
             <Button
               variant="ghost"
               onClick={handleClose}
-              label="CLOSE"
               iconRight={<Icon name="close" size={16} />}
               className={styles.closeButton}
               aria-label="Close"
@@ -459,7 +462,6 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
             <Button
               variant="ghost"
               onClick={handleClose}
-              label="CLOSE"
               iconRight={<Icon name="close" size={16} />}
               className={styles.closeButton}
               aria-label="Close"
@@ -480,7 +482,6 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
           <Button
             variant="ghost"
             onClick={handleClose}
-            label="CLOSE"
             iconRight={<Icon name="close" size={16} />}
             className={styles.closeButton}
             aria-label="Close"

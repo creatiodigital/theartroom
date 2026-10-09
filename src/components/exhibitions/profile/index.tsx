@@ -103,13 +103,27 @@ export const ExhibitionProfilePage = ({
 
         {exhibition.artworks.length > 0 && (
           <div className={styles.artworksSection}>
-            {/* The slug rides along on every card link, so the artwork page
+            {/* One grid per section, no-section works first with no heading.
+                The slug rides along on every card link, so the artwork page
                 can offer arrows through THIS exhibition's sequence. */}
-            <ArtworkGrid
-              artworks={exhibition.artworks}
-              artistName={artistName}
-              exhibitionSlug={exhibitionSlug}
-            />
+            {exhibition.groups.map((group) => (
+              <section
+                key={group.id ?? 'unsectioned'}
+                className={styles.group}
+                aria-label={group.title ?? undefined}
+              >
+                {group.title && (
+                  <Text as="h2" className={styles.groupHeading} data-section-heading>
+                    {group.title}
+                  </Text>
+                )}
+                <ArtworkGrid
+                  artworks={group.artworks}
+                  artistName={artistName}
+                  exhibitionSlug={exhibitionSlug}
+                />
+              </section>
+            ))}
           </div>
         )}
       </div>

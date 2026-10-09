@@ -154,6 +154,12 @@ export async function GET(request: NextRequest) {
             published: true,
           },
         },
+        // For the artwork form's per-exhibition section dropdown. Titles only;
+        // drafts are already filtered out above for anyone but the owner.
+        sections: {
+          select: { id: true, title: true },
+          orderBy: { order: 'asc' },
+        },
         // Placed-artwork count for the admin "3D room ready" marker: a show
         // that's published, has work hung, and still has its room switched
         // off is worth flagging as a likely-forgotten step, not an error.

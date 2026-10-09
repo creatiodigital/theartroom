@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal/Modal'
 import { RadioGroup } from '@/components/ui/RadioGroup'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { SelectDropdown } from '@/components/ui/SelectDropdown'
 import { Text } from '@/components/ui/Typography'
 import {
   MIN_DPI,
@@ -106,6 +107,9 @@ export type Artwork = {
    * from the same payload and has no picker to feed.
    */
   exhibitionIds?: string[]
+  /** The section each member exhibition places this work in (null = none).
+   *  Keyed by exhibition id; same source as `exhibitionIds`. */
+  exhibitionSections?: Record<string, string | null>
 }
 
 export type ArtworkFormData = {
@@ -149,6 +153,9 @@ export type ArtworkFormData = {
   /** Ids of the exhibitions this artwork should appear in. Independent of
    *  placement — see the Exhibitions section below. */
   exhibitionIds: string[]
+  /** Section per exhibition, keyed by exhibition id. Only ticked exhibitions'
+   *  entries are applied on save. */
+  exhibitionSections: Record<string, string | null>
 }
 
 export const getInitialFormData = (): ArtworkFormData => ({
@@ -173,6 +180,7 @@ export const getInitialFormData = (): ArtworkFormData => ({
   printOptions: null,
   printRecommendations: null,
   exhibitionIds: [],
+  exhibitionSections: {},
 })
 
 export const populateFormData = (data: Artwork): ArtworkFormData => ({
@@ -203,7 +211,11 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   printOptions: data.printOptions ?? null,
   printRecommendations: data.printRecommendations ?? null,
   exhibitionIds: data.exhibitionIds ?? [],
+  exhibitionSections: data.exhibitionSections ?? {},
 })
+
+/** Every value shape the form's single change handler carries. */
+export type ArtworkFormValue = string | boolean | string[] | Record<string, string | null>
 
 type ArtworkEditFormProps = {
   formData: ArtworkFormData
@@ -223,11 +235,17 @@ type ArtworkEditFormProps = {
   loadingText?: string
   saving: boolean
   error: string
-  onFormChange: (field: string, value: string | boolean | string[]) => void
+  onFormChange: (field: string, value: ArtworkFormValue) => void
   /** The artist's own exhibitions, for the Exhibitions checkbox section. Renders
    *  only when this is supplied — the wall-view ArtworkEditModal is already
-   *  inside one exhibition and has no use for a cross-exhibition picker. */
-  exhibitions?: { id: string; mainTitle: string; published: boolean }[]
+   *  inside one exhibition and has no use for a cross-exhibition picker. Each
+   *  carries its sections, in page order, for the per-exhibition dropdown. */
+  exhibitions?: {
+    id: string
+    mainTitle: string
+    published: boolean
+    sections: { id: string; title: string }[]
+  }[]
   /** Replace the whole printOptions object. Called as the artist (un)checks boxes. */
   onPrintOptionsChange?: (next: PrintRestrictions | null) => void
   /** Replace the whole printRecommendations object. Paper IDs only for now. */
@@ -1441,28 +1459,50 @@ export const ArtworkEditForm = ({
             <p className={dashboardStyles.sectionDescription}>
               Choose which exhibitions show this artwork on their page.
             </p>
-            {exhibitions.map((exhibition) => (
-              <Checkbox
-                key={exhibition.id}
-                checked={formData.exhibitionIds.includes(exhibition.id)}
-                onChange={(e) =>
-                  onFormChange(
-                    'exhibitionIds',
-                    e.target.checked
-                      ? [...formData.exhibitionIds, exhibition.id]
-                      : formData.exhibitionIds.filter((id) => id !== exhibition.id),
-                  )
-                }
-                label={
-                  exhibition.published
-                    ? exhibition.mainTitle
-                    : `${exhibition.mainTitle} (draft)`
-                }
-              />
-            ))}
+            {exhibitions.map((exhibition) => {
+              const ticked = formData.exhibitionIds.includes(exhibition.id)
+              return (
+                <div key={exhibition.id} data-exhibition-row={exhibition.id}>
+                  <Checkbox
+                    checked={ticked}
+                    onChange={(e) =>
+                      onFormChange(
+                        'exhibitionIds',
+                        e.target.checked
+                          ? [...formData.exhibitionIds, exhibition.id]
+                          : formData.exhibitionIds.filter((id) => id !== exhibition.id),
+                      )
+                    }
+                    label={
+                      exhibition.published
+                        ? exhibition.mainTitle
+                        : `${exhibition.mainTitle} (draft)`
+                    }
+                  />
+                  {/* Only when the work is on this show's page and the show has
+                      sections to offer — otherwise the form reads as before. */}
+                  {ticked && exhibition.sections.length > 0 && (
+                    <SelectDropdown
+                      className={styles.sectionSelect}
+                      options={[
+                        { value: '', label: 'No section' },
+                        ...exhibition.sections.map((s) => ({ value: s.id, label: s.title })),
+                      ]}
+                      value={formData.exhibitionSections[exhibition.id] ?? ''}
+                      onChange={(value) =>
+                        onFormChange('exhibitionSections', {
+                          ...formData.exhibitionSections,
+                          [exhibition.id]: value || null,
+                        })
+                      }
+                    />
+                  )}
+                </div>
+              )
+            })}
             <span className={dashboardStyles.hint}>
-              Independent of the 3D space. An artwork can appear on the page
-              without hanging in the room.
+              Independent of the 3D space. An artwork can appear on the page without hanging in the
+              room. Sections are set up on each exhibition&apos;s settings page.
             </span>
           </div>
         )}

@@ -204,12 +204,15 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     // silently strip the artwork from every exhibition it is really in.
     const memberOf = await prisma.exhibitionArtwork.findMany({
       where: { artworkId: id, showOnPage: true },
-      select: { exhibitionId: true },
+      select: { exhibitionId: true, sectionId: true },
     })
 
     return NextResponse.json({
       ...artwork,
       exhibitionIds: memberOf.map((m) => m.exhibitionId),
+      // The section each show places this work in (null = no section), so the
+      // Exhibitions picker pre-selects instead of resetting on every save.
+      exhibitionSections: Object.fromEntries(memberOf.map((m) => [m.exhibitionId, m.sectionId])),
       limitedVariants: artwork.limitedVariants.map((v) => ({
         ...v,
         committedCount: committedByVariant.get(v.id) ?? 0,
@@ -396,9 +399,45 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         : []
       const allowedIds = new Set(ownedExhibitions.map((e) => e.id))
 
+      // The section per ticked exhibition. Absent → sections are left exactly
+      // as they are. Entries for exhibitions that aren't ticked are ignored.
+      // A section must belong to the exhibition it is filed under — checked
+      // here, before any write is queued, so a bad id fails the whole save.
+      const requestedSections = new Map<string, string | null>()
+      if (body.exhibitionSections && typeof body.exhibitionSections === 'object') {
+        for (const [exhibitionId, sectionId] of Object.entries(
+          body.exhibitionSections as Record<string, unknown>,
+        )) {
+          if (!allowedIds.has(exhibitionId)) continue
+          if (sectionId === null || typeof sectionId === 'string') {
+            requestedSections.set(exhibitionId, sectionId || null)
+          }
+        }
+      }
+      const namedSectionIds = [...requestedSections.values()].filter((v): v is string => v !== null)
+      if (namedSectionIds.length) {
+        const found = await prisma.exhibitionSection.findMany({
+          where: { id: { in: namedSectionIds } },
+          select: { id: true, exhibitionId: true },
+        })
+        const ownerOf = new Map(found.map((s) => [s.id, s.exhibitionId]))
+        for (const [exhibitionId, sectionId] of requestedSections) {
+          if (sectionId !== null && ownerOf.get(sectionId) !== exhibitionId) {
+            return NextResponse.json(
+              { error: 'That section belongs to a different exhibition.' },
+              { status: 400 },
+            )
+          }
+        }
+      }
+      const sectionData = (exhibitionId: string) =>
+        requestedSections.has(exhibitionId)
+          ? { sectionId: requestedSections.get(exhibitionId) ?? null }
+          : {}
+
       const rows = await prisma.exhibitionArtwork.findMany({
         where: { artworkId: id },
-        select: { exhibitionId: true, wallId: true, showOnPage: true },
+        select: { exhibitionId: true, wallId: true, showOnPage: true, sectionId: true },
       })
 
       // Membership is `showOnPage`, not row existence — a 3D-only row exists
@@ -408,21 +447,34 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       const rowByExhibition = new Map(rows.map((r) => [r.exhibitionId, r]))
 
       for (const exhibitionId of allowedIds) {
-        if (memberIds.has(exhibitionId)) continue
         const row = rowByExhibition.get(exhibitionId)
+        if (memberIds.has(exhibitionId)) {
+          // Already on the page — only the section may have changed. Skip the
+          // write when it hasn't, so echoing the GET back is a true no-op.
+          const next = sectionData(exhibitionId)
+          if ('sectionId' in next && next.sectionId !== row?.sectionId) {
+            membershipOperations.push(
+              prisma.exhibitionArtwork.update({
+                where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
+                data: next,
+              }),
+            )
+          }
+          continue
+        }
         if (row) {
           // Hung but unchecked until now: keep the coordinates, add the page.
           membershipOperations.push(
             prisma.exhibitionArtwork.update({
               where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
-              data: { showOnPage: true },
+              data: { showOnPage: true, ...sectionData(exhibitionId) },
             }),
           )
         } else {
           // Brand new membership: on the page, not hung anywhere.
           membershipOperations.push(
             prisma.exhibitionArtwork.create({
-              data: { exhibitionId, artworkId: id, showOnPage: true },
+              data: { exhibitionId, artworkId: id, showOnPage: true, ...sectionData(exhibitionId) },
             }),
           )
         }

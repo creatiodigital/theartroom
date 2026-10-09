@@ -20,14 +20,14 @@
 }
 
 .title {
-  margin-bottom: var(--space-6);
+  margin-bottom: 0;
 }
 
 .heroSection {
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 
   @include breakpoint(lg) {
     flex-direction: row;
@@ -42,36 +42,43 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  margin-bottom: var(--space-6);
 
   @include breakpoint(lg) {
     flex: 1;
     padding-top: 200px;
     padding-right: var(--space-10);
-    margin-bottom: 0;
   }
 }
 
 .button {
   width: auto;
   display: inline-flex;
+  // The gap lives on the button, not under the title, so a show without a 3D
+  // room doesn't stack it on top of the hero's own bottom margin.
+  margin-top: var(--space-6);
 }
 
 .share {
   margin-top: var(--space-8);
 }
 
+// Stacked (mobile + tablet): the image leads, the artist and title follow.
+// Visual order only — the DOM keeps the h1 first for screen readers and SEO.
 .heroImageWrapper {
   position: relative;
   overflow: hidden;
   width: 100%;
   aspect-ratio: 3 / 2;
+  order: -1;
+  margin-bottom: var(--space-6);
 
   @include breakpoint(lg) {
+    order: 0;
     width: 66%;
     height: 100%;
     aspect-ratio: auto;
     flex-shrink: 0;
+    margin-bottom: 0;
   }
 }
 
@@ -113,5 +120,38 @@
 
   @include breakpoint(lg) {
     margin-top: var(--space-16);
+  }
+}
+
+// Space above a section heading. The previous grid's own margin-bottom
+// (56px, 72px on lg) collapses with any margin here, so the extra room is
+// padding, which stacks on top of it instead of merging into it.
+.group + .group {
+  padding-top: var(--space-4);
+
+  @include breakpoint(lg) {
+    padding-top: var(--space-8);
+  }
+}
+
+// Section title framed by a full-width double rule above and below — a
+// catalog-style divider. `double` at 3px draws two 1px lines with a 1px gap.
+.groupHeading {
+  margin: 0 0 var(--space-12);
+  padding: var(--space-4) 0;
+  border-top: 3px double var(--color-border-strong);
+  border-bottom: 3px double var(--color-border-strong);
+  font-size: var(--text-xl-mobile);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  text-align: center;
+  // Spaced capitals read as a divider label rather than a second page title.
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+
+  @include breakpoint(lg) {
+    padding: var(--space-5) 0;
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-16);
   }
 }
