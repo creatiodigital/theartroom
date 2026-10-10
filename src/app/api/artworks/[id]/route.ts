@@ -92,7 +92,7 @@ async function revalidateLinkedExhibitions(artworkId: string) {
     select: { exhibition: { select: { url: true } } },
   })
   for (const { exhibition } of linked) {
-    if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, 'default')
+    if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, { expire: 0 })
   }
 }
 
@@ -551,10 +551,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // /prints page and the artist profile can show stale presence/
       // absence (e.g. just-enabled print artwork missing for up to an
       // hour after the toggle).
-      revalidateTag(`artwork-${id}`, 'default')
-      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, 'default')
-      revalidateTag('page-prints', 'default')
-      revalidateTag('artworks', 'default')
+      revalidateTag(`artwork-${id}`, { expire: 0 })
+      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, { expire: 0 })
+      revalidateTag('page-prints', { expire: 0 })
+      revalidateTag('artworks', { expire: 0 })
       await revalidateLinkedExhibitions(id)
 
       return NextResponse.json(artwork)
@@ -572,10 +572,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       if (membershipOperations.length > 0) await prisma.$transaction(membershipOperations)
 
       // Bust caches that include this artwork's data
-      revalidateTag(`artwork-${id}`, 'default')
-      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, 'default')
-      revalidateTag('page-prints', 'default')
-      revalidateTag('artworks', 'default')
+      revalidateTag(`artwork-${id}`, { expire: 0 })
+      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, { expire: 0 })
+      revalidateTag('page-prints', { expire: 0 })
+      revalidateTag('artworks', { expire: 0 })
       await revalidateLinkedExhibitions(id)
 
       return NextResponse.json(artwork)
@@ -690,15 +690,15 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     // Bust detail page cache + any exhibition pages that showed it +
     // the artist profile page that lists the artwork.
-    revalidateTag(`artwork-${id}`, 'default')
+    revalidateTag(`artwork-${id}`, { expire: 0 })
     for (const { exhibition } of linkedExhibitions) {
-      if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, 'default')
+      if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, { expire: 0 })
     }
     if (artwork.user?.handler) {
-      revalidateTag(`artist-${artwork.user.handler}`, 'default')
+      revalidateTag(`artist-${artwork.user.handler}`, { expire: 0 })
     }
-    revalidateTag('artists', 'default')
-    revalidateTag('artworks', 'default')
+    revalidateTag('artists', { expire: 0 })
+    revalidateTag('artworks', { expire: 0 })
 
     return NextResponse.json({ success: true })
   } catch (error) {

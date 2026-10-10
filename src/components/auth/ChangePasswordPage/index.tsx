@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input'
 import { Text } from '@/components/ui/Typography'
 import { validatePassword } from '@/lib/validation'
 
+import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 import styles from './ChangePasswordPage.module.scss'
 
 export const ChangePasswordPage = () => {
@@ -50,7 +51,10 @@ export const ChangePasswordPage = () => {
 
     const nextErrors = computeFieldErrors(newPassword, confirmPassword)
     setFieldErrors(nextErrors)
-    if (nextErrors.newPassword || nextErrors.confirmPassword) return
+    if (nextErrors.newPassword || nextErrors.confirmPassword) {
+      scrollToFirstError()
+      return
+    }
 
     setSubmitting(true)
 

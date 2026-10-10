@@ -175,6 +175,24 @@
     margin-top: 0;
   }
 
+  // Page variant - long-form static pages (About, legal). Section headings sit
+  // close to the paragraph above by default, so the sections read as one block;
+  // a larger top margin separates them while the heading stays tight to its body.
+  &.page {
+    h2 {
+      margin-top: var(--space-12);
+    }
+
+    h3 {
+      margin-top: var(--space-8);
+    }
+
+    // Re-assert the reset below, which the heading rules above outrank
+    > *:first-child {
+      margin-top: 0;
+    }
+  }
+
   // Compact variant - for artwork metadata (technique, dimensions, etc.)
   &.compact {
     // Base styles for the wrapper (for content without p tags)

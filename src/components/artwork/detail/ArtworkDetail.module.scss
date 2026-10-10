@@ -219,6 +219,11 @@
     .navArrow:first-child {
       justify-content: flex-start;
       padding-left: 0;
+      // Mirror of the `margin-left: auto` above. Without it a lone previous
+      // arrow (the last work in a set) fell back to the container's centring
+      // instead of sitting in the left corner. With both arrows present the two
+      // autos split the spare space, so they still land in the corners.
+      margin-right: auto;
     }
 
     .navArrow:last-child {

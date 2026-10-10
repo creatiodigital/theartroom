@@ -23,6 +23,10 @@ import { AnalyticsSection } from './AnalyticsSection'
 // authoritative guard — this flag is just UI.
 const DEV_CLEANUP_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== 'production'
 
+// Shown when an action never got an answer (timeout, offline, mid-deploy) —
+// distinct from the action's own `error`, which means it ran and said no.
+const UNREACHABLE = 'Could not reach the server.'
+
 import styles from './AdminDashboard.module.scss'
 
 // Counter cards surface what needs the admin's attention right now. Each
@@ -117,6 +121,7 @@ export const DashboardAdmin = () => {
   const [pauseConfirmOpen, setPauseConfirmOpen] = useState(false)
   const [pauseToggling, setPauseToggling] = useState(false)
   const [pauseError, setPauseError] = useState<string | null>(null)
+  const [countsError, setCountsError] = useState<string | null>(null)
 
   // Dev-cleanup state (section only renders outside production).
   const [cleanupConfirmOpen, setCleanupConfirmOpen] = useState(false)
@@ -137,22 +142,39 @@ export const DashboardAdmin = () => {
 
   // Live counts for the "Needs your attention" cards. Reuses the orders
   // list's bucketOf so the dashboard never drifts from the tab badges.
+  //
+  // Every action call on this page catches TRANSPORT failures too, not just
+  // `ok: false`: a 504 or a rolling deploy rejects the promise before the
+  // action's own try/catch runs. Uncaught, that surfaced in Sentry as
+  // "An unexpected response was received from the server" — tagged with
+  // whatever admin page was open by then, because Next queues actions and
+  // posts each one to the CURRENT url, so a slow one outlives the dashboard.
   const loadCounts = useCallback(async () => {
-    const res = await listOrders()
-    if (res.ok) setMetrics(countAttentionMetrics(res.orders))
+    setCountsError(null)
+    try {
+      const res = await listOrders()
+      if (res.ok) setMetrics(countAttentionMetrics(res.orders))
+      else setCountsError(res.error)
+    } catch {
+      setCountsError(UNREACHABLE)
+    }
   }, [])
 
   useEffect(() => {
-    if (sessionStatus === 'authenticated') loadCounts()
+    if (sessionStatus === 'authenticated') void loadCounts()
   }, [sessionStatus, loadCounts])
 
   // Extracted so the error state can offer a retry — during an incident the
   // kill switch must not dead-end on one failed read.
   const loadPausedState = useCallback(async () => {
     setPauseError(null)
-    const res = await getPurchasesPausedState()
-    if (res.ok) setPurchasesPaused(res.paused)
-    else setPauseError(res.error)
+    try {
+      const res = await getPurchasesPausedState()
+      if (res.ok) setPurchasesPaused(res.paused)
+      else setPauseError(res.error)
+    } catch {
+      setPauseError(UNREACHABLE)
+    }
   }, [])
 
   useEffect(() => {
@@ -164,31 +186,49 @@ export const DashboardAdmin = () => {
     if (purchasesPaused === null) return
     setPauseToggling(true)
     setPauseError(null)
-    const res = await togglePurchasesPaused(!purchasesPaused)
-    setPauseToggling(false)
-    setPauseConfirmOpen(false)
-    if (res.ok) setPurchasesPaused(res.paused)
-    else setPauseError(res.error)
+    try {
+      const res = await togglePurchasesPaused(!purchasesPaused)
+      if (res.ok) setPurchasesPaused(res.paused)
+      else setPauseError(res.error)
+    } catch {
+      // The switch may or may not have flipped server-side — say so rather
+      // than guess, and leave the shown state as it was.
+      setPauseError(`${UNREACHABLE} Reload to see the current state before trying again.`)
+    } finally {
+      setPauseToggling(false)
+      setPauseConfirmOpen(false)
+    }
   }, [purchasesPaused])
 
   const openCleanupConfirm = useCallback(async () => {
     setCleanupResult(null)
     setCleanupCounts(null)
     setCleanupConfirmOpen(true)
-    const res = await getTestDataCounts()
-    setCleanupCounts(
-      res.ok
-        ? `${res.counts.printOrders} orders, ${res.counts.invoices} invoices, ` +
-            `${res.counts.pendingCarts} staged carts, ${res.counts.editionNumbersHeld} held edition numbers`
-        : res.error,
-    )
+    try {
+      const res = await getTestDataCounts()
+      setCleanupCounts(
+        res.ok
+          ? `${res.counts.printOrders} orders, ${res.counts.invoices} invoices, ` +
+              `${res.counts.pendingCarts} staged carts, ${res.counts.editionNumbersHeld} held edition numbers`
+          : res.error,
+      )
+    } catch {
+      setCleanupCounts(UNREACHABLE)
+    }
   }, [])
 
   const handleClearTestData = useCallback(async () => {
     setCleaning(true)
-    const res = await clearAllTestData()
-    setCleaning(false)
-    setCleanupConfirmOpen(false)
+    let res: Awaited<ReturnType<typeof clearAllTestData>>
+    try {
+      res = await clearAllTestData()
+    } catch {
+      setCleanupResult(`Cleanup failed: ${UNREACHABLE} Reload to see what was cleared.`)
+      return
+    } finally {
+      setCleaning(false)
+      setCleanupConfirmOpen(false)
+    }
     if (res.ok) {
       const s = res.summary
       setCleanupResult(
@@ -197,7 +237,7 @@ export const DashboardAdmin = () => {
           `${s.editionNumbersReset} edition numbers returned to the pool` +
           (s.editionSlotsBackfilled ? `, ${s.editionSlotsBackfilled} slots backfilled.` : '.'),
       )
-      loadCounts()
+      void loadCounts()
     } else {
       setCleanupResult(`Cleanup failed: ${res.error}`)
     }
@@ -239,12 +279,25 @@ export const DashboardAdmin = () => {
             const toneClass = count > 0 && c.tone ? styles[`tone_${c.tone}`] : ''
             return (
               <Link key={c.label} href={c.href} className={`${styles.counterCard} ${toneClass}`}>
-                <div className={styles.counterValue}>{count}</div>
+                {/* A dash until the counts arrive: a 0 before they load (or
+                    after they fail) would read as "nothing needs you". */}
+                <div className={styles.counterValue}>{metrics ? count : '–'}</div>
                 <div className={styles.counterLabel}>{c.label}</div>
               </Link>
             )
           })}
         </div>
+        {countsError && (
+          <p className={dashboardStyles.sectionDescription} style={{ margin: '12px 0 0 0' }}>
+            {countsError}{' '}
+            <Button
+              font="dashboard"
+              variant="ghost"
+              label="Retry"
+              onClick={() => void loadCounts()}
+            />
+          </p>
+        )}
       </section>
 
       {/* Navigation hubs — entry points to the workspaces. Replaces

@@ -25,6 +25,7 @@ import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
+import { useWebGLAvailable } from '@/components/scene/webglSupport'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
@@ -628,6 +629,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   // artworks before the new ones land.
   const artworksReady = !!exhibition?.id && loadedExhibitionId === exhibition.id
 
+  // Without WebGL nothing ever loads, so the loading overlay would sit on top
+  // of the scene's "can't display" message forever, and the help modal would
+  // explain controls for a room that never appears. Keep only the exit button.
+  const webglAvailable = useWebGLAvailable()
+
   if (error) {
     return <div className={styles.errorState}>Error loading exhibition</div>
   }
@@ -643,12 +649,16 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   return (
     <>
       {!isArtworkPanelOpen && <NavigationButton />}
-      <NavigationHelpModal
-        hidden={isArtworkPanelOpen}
-        exhibitionId={exhibition?.id}
-        artworksReady={artworksReady}
-      />
-      <LoadingOverlay />
+      {webglAvailable !== false && (
+        <>
+          <NavigationHelpModal
+            hidden={isArtworkPanelOpen}
+            exhibitionId={exhibition?.id}
+            artworksReady={artworksReady}
+          />
+          <LoadingOverlay />
+        </>
+      )}
       {exhibition && <Scene hideLoader />}
       {isArtworkPanelOpen && <ArtworkPanel />}
       {isArtworkModalOpen && <ArtworkModal />}

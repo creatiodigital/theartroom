@@ -22,6 +22,7 @@ import {
 import { releaseEditionNumberById } from '@/lib/editions/releaseEditionNumber'
 import { captureError } from '@/lib/observability/captureError'
 import { sanitizeAndValidateAddress } from '@/lib/checkout/sanitizeAndValidateAddress'
+import { CHECKOUT_RATE_LIMITED, isCheckoutRateLimited } from '@/lib/checkout/checkoutRateLimit'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
 
@@ -138,6 +139,12 @@ export async function createPaymentIntent(
   // only; authorized payments are untouched.
   if (await getPurchasesPaused()) {
     return { ok: false, error: 'Purchases are temporarily paused — please check back soon.' }
+  }
+
+  // Per-IP throttle, before any DB / catalog / Stripe work. A limited edition
+  // also counts against the stricter hold limit — see checkoutRateLimit.
+  if (await isCheckoutRateLimited('payment', ...(variantId ? (['limitedHold'] as const) : []))) {
+    return { ok: false, error: CHECKOUT_RATE_LIMITED }
   }
 
   // ── Defensive input validation ──────────────────────────────

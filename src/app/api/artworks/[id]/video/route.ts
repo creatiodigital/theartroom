@@ -88,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     // Bust cache
-    revalidateTag(`artwork-${id}`, 'default')
+    revalidateTag(`artwork-${id}`, { expire: 0 })
 
     return NextResponse.json({
       url,
@@ -138,7 +138,7 @@ export async function DELETE(
     })
 
     // Bust cache
-    revalidateTag(`artwork-${id}`, 'default')
+    revalidateTag(`artwork-${id}`, { expire: 0 })
 
     return NextResponse.json({ message: 'Video deleted' })
   } catch (error) {
