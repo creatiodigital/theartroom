@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
         data: { videoUrl: url },
       })
 
-      revalidateTag(`artwork-${artworkId}`, 'default')
+      revalidateTag(`artwork-${artworkId}`, { expire: 0 })
 
       return NextResponse.json({ url })
     }

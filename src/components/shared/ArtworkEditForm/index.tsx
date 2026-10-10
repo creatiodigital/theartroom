@@ -40,6 +40,7 @@ import {
 } from '@/lib/imageConfig'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 import styles from './ArtworkEditForm.module.scss'
 
 // Strip HTML tags from text content (for content saved with RichTextEditor previously)
@@ -501,6 +502,7 @@ export const ArtworkEditForm = ({
     if (!formData.title.trim()) {
       e.preventDefault()
       setTitleError('Please enter a title.')
+      scrollToFirstError()
       return
     }
     setTitleError(undefined)
@@ -569,6 +571,7 @@ export const ArtworkEditForm = ({
   const handleOpenReadyToSell = () => {
     if (openPriceInvalid) {
       setTriedOpenReadyToSell(true)
+      scrollToFirstError()
       return
     }
     onReadyToSell?.()

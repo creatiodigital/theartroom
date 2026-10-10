@@ -193,9 +193,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     // Revalidate artist caches
-    revalidateTag('artists', 'default')
+    revalidateTag('artists', { expire: 0 })
     if (updated.handler) {
-      revalidateTag(`artist-${updated.handler}`, 'default')
+      revalidateTag(`artist-${updated.handler}`, { expire: 0 })
     }
     revalidatePath('/')
 
@@ -229,9 +229,9 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     await prisma.user.delete({ where: { id } })
 
     // Revalidate artist caches
-    revalidateTag('artists', 'default')
+    revalidateTag('artists', { expire: 0 })
     if (targetUser.handler) {
-      revalidateTag(`artist-${targetUser.handler}`, 'default')
+      revalidateTag(`artist-${targetUser.handler}`, { expire: 0 })
     }
     revalidatePath('/')
 

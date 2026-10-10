@@ -10,8 +10,9 @@ type RichTextProps = {
    * Predefined style variants:
    * - 'default': Large serif text for editorial content (biographies, descriptions)
    * - 'compact': Smaller sans-serif text for artwork metadata (technique, dimensions)
+   * - 'page': Long-form static pages (About, legal) — more air above section headings
    */
-  variant?: 'default' | 'compact'
+  variant?: 'default' | 'compact' | 'page'
 }
 
 // Server-safe sanitizer. `sanitize-html` is pure JS (no jsdom), unlike the
@@ -59,7 +60,12 @@ export const RichText = ({ content, className, variant = 'default' }: RichTextPr
 
   return (
     <div
-      className={c(styles.richText, variant === 'compact' && styles.compact, className)}
+      className={c(
+        styles.richText,
+        variant === 'compact' && styles.compact,
+        variant === 'page' && styles.page,
+        className,
+      )}
       dangerouslySetInnerHTML={{ __html: sanitizedContent }}
     />
   )

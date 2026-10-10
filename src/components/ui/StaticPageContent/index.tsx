@@ -16,7 +16,7 @@ export const StaticPageContent = ({ content }: StaticPageContentProps) => {
 
   return (
     <div>
-      <RichText content={content} />
+      <RichText content={content} variant="page" />
     </div>
   )
 }

@@ -72,7 +72,7 @@
   backface-visibility: hidden;
 
   @include breakpoint(lg) {
-    padding-bottom: var(--space-16);
+    padding-bottom: var(--space-10);
   }
 }
 
@@ -97,35 +97,4 @@
   position: relative;
   color: inherit;
   margin-top: var(--space-2);
-}
-
-.dots {
-  position: absolute;
-  bottom: var(--space-4);
-  left: 0;
-  right: 0;
-  z-index: 10;
-  max-width: var(--header-max-width);
-  margin: 0 auto;
-  padding: 0 var(--space-6);
-  gap: var(--space-2);
-  display: none;
-
-  @include breakpoint(lg) {
-    bottom: var(--space-6);
-    padding: 0 var(--site-padding);
-    display: flex;
-  }
-}
-
-.dot {
-  width: var(--space-1);
-  height: var(--space-1);
-  background: var(--color-white);
-  border-radius: 50%;
-  transition: background 0.2s ease;
-}
-
-.dotActive {
-  background: var(--color-black);
 }

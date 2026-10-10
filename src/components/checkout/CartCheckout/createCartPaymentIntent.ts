@@ -6,6 +6,7 @@ import { Prisma } from '@/generated/prisma'
 import type { PendingCartItem } from '@/lib/cart/pendingCartItem'
 import type { CartLikeItem, CartTotals } from '@/lib/cart/validateCart'
 import { validateCart } from '@/lib/cart/validateCart'
+import { CHECKOUT_RATE_LIMITED, isCheckoutRateLimited } from '@/lib/checkout/checkoutRateLimit'
 import { getPurchasesPaused } from '@/lib/settings'
 import {
   attachPaymentIntentToReservation,
@@ -74,6 +75,14 @@ export async function createCartPaymentIntent(
   // refusal. New intents only; anything already authorized is untouched.
   if (await getPurchasesPaused()) {
     return { ok: false, error: 'Purchases are temporarily paused — please check back soon.' }
+  }
+
+  // ── 0b. Per-IP throttle ───────────────────────────────────────────
+  // Before any pricing / Stripe / edition-number work. A cart holding limited
+  // copies also counts against the stricter hold limit — see checkoutRateLimit.
+  const holdsLimited = Array.isArray(items) && items.some((i) => i?.editionType === 'limited')
+  if (await isCheckoutRateLimited('payment', ...(holdsLimited ? (['limitedHold'] as const) : []))) {
+    return { ok: false, error: CHECKOUT_RATE_LIMITED }
   }
 
   // ── 1. Server-authoritative re-validation + pricing ──────────────

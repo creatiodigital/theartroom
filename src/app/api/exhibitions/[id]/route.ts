@@ -373,13 +373,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     })
 
     // Revalidate caches
-    revalidateTag(`exhibition-${updated.url}`, 'default')
+    revalidateTag(`exhibition-${updated.url}`, { expire: 0 })
     if (
       body.published !== undefined ||
       body.mainTitle !== undefined ||
       data.hasPendingChanges !== undefined
     ) {
-      revalidateTag('exhibitions', 'default')
+      revalidateTag('exhibitions', { expire: 0 })
       revalidatePath('/')
     }
 
@@ -418,7 +418,7 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     await prisma.exhibition.delete({ where: { id } })
 
     // Revalidate caches
-    revalidateTag('exhibitions', 'default')
+    revalidateTag('exhibitions', { expire: 0 })
     revalidatePath('/')
 
     return NextResponse.json({ success: true, id })

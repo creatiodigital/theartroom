@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
       }
       mark('deleteOldImages')
 
-      revalidateTag(`artwork-${artworkId}`, 'default')
+      revalidateTag(`artwork-${artworkId}`, { expire: 0 })
 
       return NextResponse.json({
         imageUrl: webUrl,

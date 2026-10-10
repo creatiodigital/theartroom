@@ -69,7 +69,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    revalidateTag(`page-${slug}`, 'default')
+    revalidateTag(`page-${slug}`, { expire: 0 })
     const route = PAGE_ROUTE_BY_SLUG[slug]
     if (route) revalidatePath(route)
     return NextResponse.json({ url })
@@ -104,7 +104,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       data: { bannerImageUrl: null },
     })
 
-    revalidateTag(`page-${slug}`, 'default')
+    revalidateTag(`page-${slug}`, { expire: 0 })
     const route = PAGE_ROUTE_BY_SLUG[slug]
     if (route) revalidatePath(route)
     return NextResponse.json({ ok: true })

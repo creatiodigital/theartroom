@@ -13,6 +13,7 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
 import { validatePassword } from '@/lib/validation'
 
+import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 import styles from './reset-password.module.scss'
 
 const ResetPasswordForm = () => {
@@ -61,7 +62,10 @@ const ResetPasswordForm = () => {
 
     const nextErrors = computeFieldErrors(password, confirmPassword)
     setFieldErrors(nextErrors)
-    if (nextErrors.password || nextErrors.confirmPassword) return
+    if (nextErrors.password || nextErrors.confirmPassword) {
+      scrollToFirstError()
+      return
+    }
 
     setLoading(true)
 

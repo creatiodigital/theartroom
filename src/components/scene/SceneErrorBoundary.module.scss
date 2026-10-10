@@ -13,6 +13,8 @@
 }
 
 .title {
+  // Set explicitly: the global h2 color beats the color inherited from .container
+  color: var(--color-white);
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
   font-weight: 500;
