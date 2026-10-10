@@ -1,6 +1,8 @@
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 
 import { requireAdmin } from '@/lib/authUtils'
+import { PAGE_ROUTE_BY_SLUG } from '@/lib/cms/pageRoutes'
 import prisma from '@/lib/prisma'
 
 type RouteParams = { params: Promise<{ slug: string }> }
@@ -50,8 +52,15 @@ export async function PUT(request: Request, { params }: RouteParams) {
       create: { slug, title, content },
     })
 
-    // No cache to bust: the public content pages and the editor's GET both
-    // read fresh from the DB now, so the save is visible on the next request.
+    // The public pages read through getStaticPageContent, which caches each
+    // page for 24h under `page-${slug}`. This line used to say there was no
+    // cache to bust — written before that cache existed — so an admin edit sat
+    // invisible on the live site for up to a day. `expire: 0` drops the entry
+    // outright; a named profile ('default'/'max') is stale-while-revalidate and
+    // would serve the old text once more after the save.
+    revalidateTag(`page-${slug}`, { expire: 0 })
+    const route = PAGE_ROUTE_BY_SLUG[slug]
+    if (route) revalidatePath(route)
 
     return NextResponse.json(page)
   } catch (error) {

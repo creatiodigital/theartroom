@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     // Bust detail page cache
-    revalidateTag(`artwork-${id}`, 'default')
+    revalidateTag(`artwork-${id}`, { expire: 0 })
 
     return NextResponse.json({
       url,
@@ -146,7 +146,7 @@ export async function DELETE(
     })
 
     // Bust detail page cache
-    revalidateTag(`artwork-${id}`, 'default')
+    revalidateTag(`artwork-${id}`, { expire: 0 })
 
     return NextResponse.json({ message: 'Image deleted' })
   } catch (error) {

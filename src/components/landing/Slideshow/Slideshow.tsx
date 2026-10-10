@@ -81,16 +81,6 @@ export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
           </div>
         </Link>
       ))}
-      {slides.length > 1 && (
-        <div className={styles.dots}>
-          {slides.map((_, index) => (
-            <span
-              key={index}
-              className={c(styles.dot, index === activeIndex && styles.dotActive)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }

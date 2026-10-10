@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Revalidate caches
-    revalidateTag('exhibitions', 'default')
+    revalidateTag('exhibitions', { expire: 0 })
     revalidatePath('/')
 
     return NextResponse.json(exhibition, { status: 201 })

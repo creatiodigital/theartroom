@@ -7,6 +7,9 @@ import { getClientIp } from '@/lib/getClientIp'
 import { rateLimit } from '@/lib/rateLimit'
 import { sendForgotPasswordEmail } from '@/lib/emails/forgotPassword'
 
+// A gallery with a few dozen accounts sends a handful of these a week.
+const FORGOT_PASSWORD_DAILY_CAP = 50
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting (durable, trusted x-real-ip not the spoofable first hop).
@@ -41,6 +44,21 @@ export async function POST(request: NextRequest) {
     // Email format validation
     if (!isEmail(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
+
+    // Per-address cap on top of the per-IP one above, which a bot spread over
+    // many IPs walks straight past — and then floods one artist's inbox with
+    // reset emails. Checked BEFORE the lookup, for known and unknown addresses
+    // alike, so it cannot become a way to tell which emails have accounts. Over
+    // the cap the caller gets the same silent success as an unknown address.
+    const perAddress = await rateLimit({
+      name: 'forgot-password-email',
+      key: email.trim().toLowerCase(),
+      limit: 3,
+      windowSeconds: 60 * 60,
+    })
+    if (!perAddress.success) {
+      return NextResponse.json({ success: true })
     }
 
     // Find user by email (don't reveal if email exists or not for security)
@@ -80,6 +98,19 @@ export async function POST(request: NextRequest) {
     // fire-and-forget, which a serverless runtime may freeze before it sends.
     after(async () => {
       try {
+        // Site-wide ceiling on reset emails actually sent — the backstop when
+        // many IPs AND many addresses are in play. Counted here, after the
+        // response, so it adds no account-dependent latency.
+        const daily = await rateLimit({
+          name: 'forgot-password-daily',
+          key: 'global',
+          limit: FORGOT_PASSWORD_DAILY_CAP,
+          windowSeconds: 24 * 60 * 60,
+        })
+        if (!daily.success) {
+          console.error('[forgot-password] daily cap reached, reset email not sent')
+          return
+        }
         await sendForgotPasswordEmail({ to: email, name: user.name, resetUrl })
       } catch (err) {
         console.error('Error sending forgot-password email:', err)

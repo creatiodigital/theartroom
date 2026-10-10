@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 
 import { validateFields, type Validator } from '@/lib/validation'
+import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 
 export type FieldErrors<K extends string> = Partial<Record<K, string>>
 
@@ -13,7 +14,8 @@ export type UseFormValidation<K extends string> = {
   submitAttempted: boolean
   /**
    * Validate every field in the schema against `values`. Records all errors
-   * and returns `true` when the form is valid. Call from the form's onSubmit.
+   * and returns `true` when the form is valid; on failure, scrolls the first
+   * error into view. Call from the form's onSubmit.
    */
   validateAll: (values: Record<K, string>) => boolean
   /**
@@ -50,7 +52,11 @@ export function useFormValidation<K extends string>(
       setSubmitAttempted(true)
       const nextErrors = validateFields(values, schema)
       setErrors(nextErrors)
-      return Object.keys(nextErrors).length === 0
+      const valid = Object.keys(nextErrors).length === 0
+      // A long form (checkout's address) can fail on a field far above the
+      // submit button — take the user to it rather than leave them guessing.
+      if (!valid) scrollToFirstError()
+      return valid
     },
     [schema],
   )

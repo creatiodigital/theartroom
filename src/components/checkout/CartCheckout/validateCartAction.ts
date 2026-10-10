@@ -1,6 +1,7 @@
 'use server'
 
 import { validateCart } from '@/lib/cart/validateCart'
+import { CHECKOUT_RATE_LIMITED, isCheckoutRateLimited } from '@/lib/checkout/checkoutRateLimit'
 import type { CartLikeItem, CartTotals, CartValidationFailure } from '@/lib/cart/validateCart'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
@@ -19,5 +20,8 @@ export async function validateCartAction(
   items: CartLikeItem[],
   address: ShippingAddress,
 ): Promise<{ ok: true; totals: CartTotals } | { ok: false; failures: CartValidationFailure[] }> {
+  if (await isCheckoutRateLimited('validate')) {
+    return { ok: false, failures: [{ lineId: '', error: CHECKOUT_RATE_LIMITED }] }
+  }
   return validateCart(items, address)
 }

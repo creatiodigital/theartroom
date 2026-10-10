@@ -74,12 +74,23 @@ export type CartTotals = {
 
 export type CartValidationFailure = { lineId: string; error: string }
 
+// A real cart is a handful of works. Every line costs a catalog lookup and a
+// pricing pass, so a payload of thousands — a script, never a buyer — is
+// refused before any of that work runs.
+export const MAX_CART_LINES = 20
+
 export async function validateCart(
   items: CartLikeItem[],
   address: ShippingAddress,
 ): Promise<{ ok: true; totals: CartTotals } | { ok: false; failures: CartValidationFailure[] }> {
   if (items.length === 0) {
     return { ok: false, failures: [{ lineId: '', error: 'Your cart is empty.' }] }
+  }
+  if (items.length > MAX_CART_LINES) {
+    return {
+      ok: false,
+      failures: [{ lineId: '', error: 'Invalid request. Please reload and try again.' }],
+    }
   }
 
   // Address tamper defense at the boundary — mutates `address` in place with
@@ -99,6 +110,7 @@ export async function validateCart(
   // hits the DB + catalog, and carts are small; keeping it ordered also
   // makes the failure list deterministic.
   const failures: CartValidationFailure[] = []
+  const limitedVariantsSeen = new Set<string>()
   const priced: Array<{
     item: CartLikeItem
     pricing: ItemPricing
@@ -120,6 +132,20 @@ export async function validateCart(
     if (!Number.isInteger(item.quantity) || item.quantity < 1) {
       failures.push({ lineId: item.lineId, error: 'Invalid quantity for this item.' })
       continue
+    }
+
+    // One copy of each limited edition per order — what the cart UI already
+    // allows ("+" is disabled on a limited line, and the wizard offers "Go to
+    // cart" instead of a second add). Enforced here because the cart is
+    // client-held: without it one tampered request (`quantity: 50`, or the same
+    // variant on 50 lines) reserves a whole edition at the payment step.
+    if (item.editionType === 'limited') {
+      const repeat = !!item.variantId && limitedVariantsSeen.has(item.variantId)
+      if (item.quantity !== 1 || repeat) {
+        failures.push({ lineId: item.lineId, error: 'Limited editions are one copy per order.' })
+        continue
+      }
+      if (item.variantId) limitedVariantsSeen.add(item.variantId)
     }
 
     const result = await validateAndPriceItem({

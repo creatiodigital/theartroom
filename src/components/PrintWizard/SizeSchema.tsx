@@ -97,8 +97,8 @@ export const SizeSchema = ({
   const VIEWBOX_H = 280
   const PADDING = 32
   // The two side measurement labels are drawn OUTSIDE that 280-unit box — the
-  // left one anchored `end` at outerX - 18, the right one anchored `start` at
-  // outerX + outerW + 28. They used to hang out of the svg element itself
+  // left (outer height) one anchored `end` at outerX - 28, the right (print
+  // height) one anchored `start` at outerX + outerW + 18. They used to hang out of the svg element itself
   // (overflow: visible) and rely on the stage's padding to catch them, which
   // is a promise the layout cannot keep: on a phone the column is narrower
   // than the overhang and both labels lost their leading digits ("30.0 cm"
@@ -350,13 +350,13 @@ export const SizeSchema = ({
           {formatDim(printWidthCm)}
         </text>
 
-        {/* ── Outer height label (right) ──────────────────────── */}
+        {/* ── Outer height label (left) ─────────────────────── */}
         {hasOuter && (
           <>
             <line
-              x1={outerX + outerW + 22}
+              x1={outerX - 22}
               y1={outerY}
-              x2={outerX + outerW + 22}
+              x2={outerX - 22}
               y2={outerY + outerH}
               stroke="#9a9a9a"
               strokeWidth={0.5}
@@ -364,9 +364,9 @@ export const SizeSchema = ({
               markerEnd="url(#arrowEnd)"
             />
             <text
-              x={outerX + outerW + 28}
+              x={outerX - 28}
               y={outerY + outerH / 2}
-              textAnchor="start"
+              textAnchor="end"
               dominantBaseline="middle"
               className={styles.schemaLabel}
             >
@@ -375,11 +375,11 @@ export const SizeSchema = ({
           </>
         )}
 
-        {/* ── Print height label (left of the whole frame) ────── */}
+        {/* ── Print height label (right of the whole frame) ───── */}
         <line
-          x1={outerX - 12}
+          x1={outerX + outerW + 12}
           y1={printY}
-          x2={outerX - 12}
+          x2={outerX + outerW + 12}
           y2={printY + printH}
           stroke="#9a9a9a"
           strokeWidth={0.5}
@@ -387,9 +387,9 @@ export const SizeSchema = ({
           markerEnd="url(#arrowEnd)"
         />
         <text
-          x={outerX - 18}
+          x={outerX + outerW + 18}
           y={printY + printH / 2}
-          textAnchor="end"
+          textAnchor="start"
           dominantBaseline="middle"
           className={styles.schemaLabel}
         >

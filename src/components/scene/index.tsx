@@ -26,6 +26,8 @@ import { SceneErrorBoundary } from './SceneErrorBoundary'
 import styles from './Scene.module.scss'
 import { Space } from './Space'
 import { WebGLMonitor } from './WebGLMonitor'
+import { WebGLUnavailable } from './WebGLUnavailable'
+import { GL_ATTRIBUTES, useWebGLAvailable } from './webglSupport'
 
 // Adaptive resolution ladder. Fill rate is this scene's only real budget — cost
 // is pixels × lights, and every pixel evaluates all 22 spotlights in three's
@@ -90,6 +92,8 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
   }
 
   const artworks: TArtwork[] = []
+
+  const webglAvailable = useWebGLAvailable()
 
   const [dprStep, setDprStep] = useState(DPR_START_STEP)
 
@@ -161,44 +165,34 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
     <SceneAudioProvider>
       <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
         <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
-          <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
-            <Canvas
-              shadows={false}
-              dpr={dpr}
-              gl={{
-                // Intentionally off, and inert either way: `Effects` mounts an
-                // EffectComposer in every space, which renders the scene into
-                // its own offscreen target — so the default framebuffer's MSAA
-                // is never what you see. Antialiasing is configured by the
-                // composer's `multisampling` prop, not here. Leaving this false
-                // avoids allocating a multisampled framebuffer nothing samples.
-                antialias: false,
-                powerPreference: 'high-performance',
-              }}
-            >
-              <WebGLMonitor exhibitionUrl={exhibitionUrl} />
-              <Suspense fallback={hideLoader ? null : <Loader />}>
-                {/* INSIDE Suspense on purpose. Mounted outside it, this samples
+          {webglAvailable === false && <WebGLUnavailable />}
+          {webglAvailable && (
+            <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
+              <Canvas shadows={false} dpr={dpr} gl={GL_ATTRIBUTES}>
+                <WebGLMonitor exhibitionUrl={exhibitionUrl} />
+                <Suspense fallback={hideLoader ? null : <Loader />}>
+                  {/* INSIDE Suspense on purpose. Mounted outside it, this samples
                     the loading frames — GLB parse, KTX2 upload and ~19 shader
                     programs compiling all land in the same window — sees a
                     single-digit average before the scene has rendered once, and
                     immediately declines. With `flipflops` that verdict is
                     permanent: `onFallback` pins the floor and it can never
                     climb. Suspense delays it until the assets have resolved. */}
-                <PerformanceMonitor
-                  bounds={performanceBounds}
-                  onDecline={handlePerformanceDecline}
-                  onIncline={handlePerformanceIncline}
-                  flipflops={3}
-                  onFallback={handlePerformanceFallback}
-                />
-                <group>
-                  <Controls />
-                  <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
-                </group>
-              </Suspense>
-            </Canvas>
-          </SceneErrorBoundary>
+                  <PerformanceMonitor
+                    bounds={performanceBounds}
+                    onDecline={handlePerformanceDecline}
+                    onIncline={handlePerformanceIncline}
+                    flipflops={3}
+                    onFallback={handlePerformanceFallback}
+                  />
+                  <group>
+                    <Controls />
+                    <Space onPlaceholderClick={handlePlaceholderClick} artworks={artworks} />
+                  </group>
+                </Suspense>
+              </Canvas>
+            </SceneErrorBoundary>
+          )}
           {hideLoader && <FloatingMuteButton />}
         </div>
       </SceneContext.Provider>
