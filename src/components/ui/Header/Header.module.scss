@@ -1,8 +1,22 @@
 @use '@/styles/mixins' as *;
 
+// Sticky on every page and breakpoint. The shell spans the full viewport so
+// content scrolling underneath is covered edge to edge, not just inside the
+// centered column. Kept below modals/drawers (z-index 1000+); the mobile menu
+// overlay lives inside this stacking context, which already sits above page
+// content. No transform/filter here: either would trap that fixed overlay.
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--color-surface-page);
+}
+
+.headerInner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid var(--color-border-default);
-  background: var(--color-white);
   padding: var(--space-7) 0;
   max-width: var(--header-max-width);
   margin: 0 auto;
@@ -14,14 +28,8 @@
   }
 }
 
-.borderless {
+.borderless .headerInner {
   border-bottom: none;
-}
-
-.headerInner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .logoLink {

@@ -17,7 +17,9 @@
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  // `clip`, not `hidden`: hidden turns .home into a scroll container, and the
+  // sticky Header inside it would then never stick.
+  overflow-x: clip;
 }
 
 .hero {
@@ -38,6 +40,13 @@
 .content {
   width: 100%;
   padding: var(--space-6);
+  // Phones hide the Intro tagline, so "Current Exhibitions" comes straight
+  // after the slideshow — give it room to breathe.
+  padding-top: var(--space-12);
+
+  @include breakpoint(md) {
+    padding-top: var(--space-6);
+  }
 
   @include breakpoint(lg) {
     max-width: calc(var(--content-max-width) + var(--space-8) * 2);

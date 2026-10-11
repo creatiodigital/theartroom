@@ -1,7 +1,15 @@
+@use '@/styles/mixins' as *;
+
+// Hidden on phones: under the slideshow it read as a stray heading however it
+// was dressed, so mobile goes straight to "Current Exhibitions".
 .intro {
-  display: flex;
+  display: none;
   justify-content: center;
   text-align: center;
   padding-top: 20px;
   margin-bottom: 60px;
+
+  @include breakpoint(md) {
+    display: flex;
+  }
 }
