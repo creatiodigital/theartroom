@@ -22,13 +22,14 @@ const FLOOR_MATERIALS = [
   { value: 'patterned-concrete', label: 'Patterned Concrete' },
   { value: 'worn-concrete', label: 'Worn Concrete' },
   { value: 'concrete-tiles', label: 'Concrete Tiles' },
-  { value: 'red-parquet', label: 'Red Parquet' },
+  { value: 'dark-concrete', label: 'Dark Concrete' },
   { value: 'marble', label: 'Marble' },
   { value: 'parquet', label: 'Parquet' },
   { value: 'parquet-light', label: 'Parquet Light' },
+  { value: 'parquet-soft', label: 'Parquet Soft' },
+  { value: 'parquet-white', label: 'Parquet White' },
   { value: 'wood-planks', label: 'Wood Planks' },
   { value: 'clear-wood', label: 'Clear Wood' },
-  { value: 'terrazzo', label: 'Terrazzo' },
 ] as const
 
 const FloorPanel = () => {
