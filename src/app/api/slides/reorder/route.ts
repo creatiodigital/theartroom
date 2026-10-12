@@ -2,7 +2,7 @@ import { revalidateTag, revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 
 import { requireAdmin } from '@/lib/authUtils'
-import prisma from '@/lib/prisma'
+import { reorderByIndex } from '@/lib/reorderByIndex'
 
 // POST reorder slides (admin only)
 export async function POST(request: Request) {
@@ -14,19 +14,11 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { slideIds } = body as { slideIds: string[] }
 
-    if (!Array.isArray(slideIds)) {
-      return NextResponse.json({ error: 'slideIds must be an array' }, { status: 400 })
+    if (!Array.isArray(slideIds) || !slideIds.every((id) => typeof id === 'string')) {
+      return NextResponse.json({ error: 'slideIds must be an array of strings' }, { status: 400 })
     }
 
-    // Update each slide's order based on its position in the array
-    await prisma.$transaction(
-      slideIds.map((id, index) =>
-        prisma.slide.update({
-          where: { id },
-          data: { order: index },
-        }),
-      ),
-    )
+    await reorderByIndex('Slide', slideIds)
 
     // Bust the homepage cache so the new order appears immediately.
     // Without this, /app/page.tsx's unstable_cache (revalidate: 3600)
