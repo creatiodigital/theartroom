@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
 import { requireSuperAdmin } from '@/lib/authUtils'
-import prisma from '@/lib/prisma'
+import { reorderByIndex } from '@/lib/reorderByIndex'
 
 /**
  * Same shape as /api/slides/reorder: the client sends the ids in their new
- * order and each row's `order` becomes its index, in one transaction so a
+ * order and each row's `order` becomes its index, in one statement so a
  * half-written order can never be read.
  */
 export async function POST(request: Request) {
@@ -19,11 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'ids must be a non-empty array' }, { status: 400 })
   }
 
-  await prisma.$transaction(
-    (ids as string[]).map((id, index) =>
-      prisma.selectedPrint.update({ where: { id }, data: { order: index } }),
-    ),
-  )
+  await reorderByIndex('SelectedPrint', ids as string[])
 
   revalidatePath('/prints')
   return NextResponse.json({ success: true })

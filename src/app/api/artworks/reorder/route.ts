@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getEffectiveUserId } from '@/lib/authUtils'
-import prisma from '@/lib/prisma'
+import { reorderByIndex } from '@/lib/reorderByIndex'
 
 // POST reorder artworks
 export async function POST(request: Request) {
@@ -17,20 +17,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'artworkIds must be an array' }, { status: 400 })
     }
 
-    // Persist the new order. `updateMany` scoped to { id, userId } both
-    // enforces ownership per-row AND is resilient to ids that are no longer
-    // in the DB (a stale client list): a missing or foreign id updates zero
-    // rows instead of throwing P2025 and rolling the whole transaction back.
-    // The previous code used `update`, which threw on the first stale id and
-    // 500'd, so the new order was never saved.
-    await prisma.$transaction(
-      artworkIds.map((id, index) =>
-        prisma.artwork.updateMany({
-          where: { id, userId },
-          data: { order: index },
-        }),
-      ),
-    )
+    if (!artworkIds.every((id) => typeof id === 'string')) {
+      return NextResponse.json({ error: 'artworkIds must be strings' }, { status: 400 })
+    }
+
+    // Scoping on userId enforces ownership per row: a stale or foreign id
+    // simply matches nothing instead of failing the whole save.
+    await reorderByIndex('Artwork', artworkIds, { column: 'userId', value: userId })
 
     return NextResponse.json({ success: true })
   } catch (error) {

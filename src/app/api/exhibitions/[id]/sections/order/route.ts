@@ -7,6 +7,7 @@ import {
   toSectionDto,
 } from '@/lib/exhibitionSectionAccess'
 import prisma from '@/lib/prisma'
+import { reorderByIndex } from '@/lib/reorderByIndex'
 
 type Context = { params: Promise<{ id: string }> }
 
@@ -40,11 +41,10 @@ export async function PUT(request: NextRequest, context: Context) {
       )
     }
 
-    await prisma.$transaction(
-      (requested as string[]).map((sectionId, order) =>
-        prisma.exhibitionSection.update({ where: { id: sectionId }, data: { order } }),
-      ),
-    )
+    await reorderByIndex('ExhibitionSection', requested as string[], {
+      column: 'exhibitionId',
+      value: id,
+    })
 
     const sections = await prisma.exhibitionSection.findMany({
       where: { exhibitionId: id },
