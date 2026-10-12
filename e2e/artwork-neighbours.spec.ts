@@ -10,6 +10,7 @@ import {
   teardownLimitedFixture,
   type LimitedFixture,
 } from './edition-helpers'
+import { seedCookieConsent } from './consent-helpers'
 import { fixtures } from './fixtures'
 
 /**
@@ -106,6 +107,9 @@ test.describe('prints previous/next arrows', () => {
       third.slug,
     ])
 
+    // The arrow is clicked for real, and the centered cookie banner would sit
+    // over it whenever the page scrolls it into the middle of the viewport.
+    await seedCookieConsent(page)
     await page.goto(`/artworks/${first.slug}?from=prints`)
 
     // First of the three: next leads to the second, context intact.
@@ -215,6 +219,8 @@ test.describe('artist profile previous/next arrows', () => {
     const [first, second, third] = works
     const context = `?artist=${fixtures.artistSlug}`
 
+    // Same as the prints walk: keep the cookie banner off the arrow it clicks.
+    await seedCookieConsent(page)
     await page.goto(`/artworks/${first.slug}${context}`)
 
     // First work: no previous, and next leads into the set.

@@ -18,6 +18,50 @@
   }
 }
 
+// Instagram, Facebook and Email in one row under the policy links, in the
+// same small spaced capitals, each with its icon in front.
+.socialBar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-8);
+  // Thin rules set the social row apart as its own band.
+  border-top: 1px solid var(--color-border-default);
+  border-bottom: 1px solid var(--color-border-default);
+  padding: var(--space-5) 0;
+
+  @include breakpoint(lg) {
+    gap: var(--space-12);
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-primary);
+    font-size: var(--text-xs-mobile);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-decoration: none;
+
+    @include breakpoint(lg) {
+      font-size: var(--text-xs);
+    }
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+// The brand logos are solid glyphs, which read heavier than the thin-stroke
+// lucide Mail icon at the same size, so they sit a touch smaller.
+.brandIcon {
+  width: 16px;
+  height: 16px;
+}
+
 .monogramRow {
   display: flex;
   justify-content: center;
