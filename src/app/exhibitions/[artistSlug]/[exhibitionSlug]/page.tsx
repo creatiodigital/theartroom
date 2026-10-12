@@ -26,7 +26,6 @@ export async function generateMetadata({ params }: ExhibitionProfileProps): Prom
     select: {
       mainTitle: true,
       shortDescription: true,
-      featuredImageUrl: true,
       user: { select: { name: true, lastName: true } },
     },
   })
@@ -47,9 +46,6 @@ export async function generateMetadata({ params }: ExhibitionProfileProps): Prom
     openGraph: {
       title: tabTitle,
       description,
-      ...(exhibition.featuredImageUrl && {
-        images: [{ url: exhibition.featuredImageUrl, width: 1200, height: 630, alt: tabTitle }],
-      }),
     },
   }
 }

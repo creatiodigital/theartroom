@@ -50,7 +50,9 @@ export const ContactPage = () => {
               SUBMISSION
             </Text>
             <Text as="p" font="serif" className={styles.value}>
-              Submissions and proposals are by invitation only.
+              Artists from anywhere in the world are welcome to ask to participate. Write to us with
+              a link to your work and a short bio. Every request is reviewed by the gallery, and
+              participation is subject to acceptance.
             </Text>
             <Text as="p" size="sm" className={styles.note}>
               For institutional partnerships and curatorial inquiries, please direct correspondence

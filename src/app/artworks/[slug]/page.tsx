@@ -170,7 +170,6 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
     select: {
       title: true,
       description: true,
-      imageUrl: true,
       user: { select: { name: true, lastName: true } },
     },
   })
@@ -189,9 +188,6 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
     openGraph: {
       title: tabTitle,
       description,
-      ...(artwork.imageUrl && {
-        images: [{ url: artwork.imageUrl, alt: tabTitle }],
-      }),
     },
   }
 }

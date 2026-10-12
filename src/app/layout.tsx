@@ -23,6 +23,7 @@ import { CookieBanner } from '@/components/ui/CookieBanner'
 import { NavigationProgressBar } from '@/components/ui/NavigationProgressBar'
 import { VersionGuard } from '@/components/observability/VersionGuard'
 import { CartProvider } from '@/lib/cart/useCart'
+import { SOCIAL_LINKS } from '@/lib/socialLinks'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import '@/styles/globals.scss'
@@ -67,10 +68,10 @@ const jsonLd = {
   '@type': 'Organization',
   name: 'The Art Room',
   url: SITE_URL,
-  logo: `${SITE_URL}/opengraph-image`,
+  logo: `${SITE_URL}/avatar.png`,
   description:
     'Virtual exhibition space dedicated to showcasing contemporary art in immersive 3D environments.',
-  sameAs: [],
+  sameAs: [SOCIAL_LINKS.instagram, SOCIAL_LINKS.facebook],
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
