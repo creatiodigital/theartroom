@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: ArtistProfileProps): Promise<
 
   const artist = await prisma.user.findFirst({
     where: { handler: slug, published: true },
-    select: { name: true, lastName: true, biography: true, profileImageUrl: true },
+    select: { name: true, lastName: true, biography: true },
   })
 
   if (!artist) {
@@ -37,9 +37,6 @@ export async function generateMetadata({ params }: ArtistProfileProps): Promise<
     openGraph: {
       title: tabTitle,
       description,
-      ...(artist.profileImageUrl && {
-        images: [{ url: artist.profileImageUrl, alt: artistName }],
-      }),
     },
   }
 }
