@@ -235,6 +235,49 @@
   color: var(--color-text-primary);
 }
 
+// The fade lives on a frame around the list, not on the list itself: the list
+// is the scroller, so anything drawn inside it scrolls away with the rows.
+.countryListFrame {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: var(--space-12);
+    background: linear-gradient(to bottom, transparent, var(--color-white));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &.moreBelow::after {
+    opacity: 1;
+  }
+}
+
+// Hidden with `visibility` rather than unmounted, so it keeps its line and the
+// sign-off below does not jump up the moment the buyer reaches the end.
+.scrollHint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0 0;
+  color: var(--color-text-secondary);
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+
+  &.moreBelow {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
 .modalOutro {
   margin: var(--space-5) 0 0 0;
   padding-top: var(--space-4);
