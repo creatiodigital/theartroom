@@ -26,7 +26,7 @@ import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/Artwork
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
 import { useWebGLAvailable } from '@/components/scene/webglSupport'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useCanEnterWalkthrough } from '@/hooks/useCanEnterWalkthrough'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
@@ -506,7 +506,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const previewToken = searchParams.get('preview') || undefined
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
-  const isMobile = useIsMobile()
+  const canEnterWalkthrough = useCanEnterWalkthrough()
 
   const {
     data: exhibition,
@@ -642,7 +642,9 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     return <div className={styles.emptyState}>Exhibition not found</div>
   }
 
-  if (isMobile) {
+  // Device, not just width: a 13" iPad held sideways is laptop-wide but has no
+  // keyboard or mouse to walk the room with.
+  if (!canEnterWalkthrough) {
     return <MobileExhibitionView artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
   }
 

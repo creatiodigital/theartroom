@@ -142,6 +142,15 @@ $breakpoint-2xl: map.get($breakpoints, xxl);
   }
 }
 
+// Devices that can walk the 3D exhibition: laptop width AND a mouse or trackpad
+// (a fine pointer that hovers). Touch-first tablets fail it at any size. Mirror
+// of WALKTHROUGH_MEDIA_QUERY in src/hooks/useCanEnterWalkthrough.ts.
+@mixin walkthrough-device {
+  @media (min-width: bp(lg)) and (hover: hover) and (pointer: fine) {
+    @content;
+  }
+}
+
 // Convenience mixin for mobile-only content (hidden on desktop)
 @mixin mobile-only {
   display: block;
