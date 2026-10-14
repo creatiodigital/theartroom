@@ -142,6 +142,18 @@ test('"Where we ship" opens over checkout, and picking a country fills the form'
   // The kind sign-off, so a buyer whose country is absent is not just refused.
   await expect(dialog.getByText(/adding new delivery countries/i)).toBeVisible()
 
+  // The list scrolls inside the dialog, and macOS hides scrollbars — the
+  // visible part ended on a full row and looked complete, which hid the UK,
+  // the US and Spain from buyers. So the dialog says there is more, and stops
+  // saying it once the buyer reaches the end.
+  const scrollHint = dialog.getByText(/scroll to see all countries/i)
+  const lastCountry = dialog.getByRole('button', { name: 'United States', exact: true })
+  await expect(lastCountry).not.toBeInViewport()
+  await expect(scrollHint).toBeVisible()
+  await dialog.getByRole('list').evaluate((list) => list.scrollTo({ top: list.scrollHeight }))
+  await expect(lastCountry).toBeInViewport()
+  await expect(scrollHint).toBeHidden()
+
   // Spain is on the list; choosing it sets the country and closes the dialog.
   await dialog.getByRole('button', { name: 'Spain', exact: true }).click()
   await expect(dialog).toBeHidden()

@@ -78,10 +78,8 @@
   justify-content: flex-end;
   padding: 30px;
   background-color: var(--color-surface-subtle);
-
-  @include media-up(lg) {
-    display: none;
-  }
+  // No width rule here: this is rendered only when useCanEnterWalkthrough says
+  // the device cannot walk the room, and that includes laptop-wide iPads.
 }
 
 .mobileOverlayContent {
@@ -103,6 +101,9 @@
 }
 
 .mobileOverlayText {
+  // A reading measure: on a laptop-wide iPad the card spans the screen, and
+  // one 1,300px line is hard to follow.
+  max-width: 32rem;
   margin-bottom: var(--space-4);
   color: var(--color-text-primary);
   line-height: 1.5;
