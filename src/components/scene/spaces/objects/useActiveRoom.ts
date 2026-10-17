@@ -37,6 +37,8 @@ import { Vector3 } from 'three'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import type { RootState } from '@/redux/store'
 
+import { useBakeAllRooms } from '@/components/scene/realismProbe'
+
 import { groupNodesByRoom } from './nodeIndices'
 
 /** Metres the next room must be closer by before we switch, so standing near a
@@ -154,8 +156,12 @@ export const useActiveRoom = (
     setActive(nearest)
   })
 
+  // AR-161 probe (dev-only, throwaway): the light bake mounts every room's lamps while it
+  // gathers them, then hands culling back.
+  const bakeAllRooms = useBakeAllRooms()
+
   return useMemo(
-    () => litLampPredicate(groups, active, alwaysLit),
-    [groups, active, alwaysLit],
+    () => (bakeAllRooms ? () => true : litLampPredicate(groups, active, alwaysLit)),
+    [groups, active, alwaysLit, bakeAllRooms],
   )
 }

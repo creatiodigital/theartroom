@@ -1,6 +1,18 @@
 import { EffectComposer, ToneMapping, FXAA, Bloom } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
-import type { ReactElement } from 'react'
+import { useEffect, useMemo, type ReactElement } from 'react'
+import { useThree } from '@react-three/fiber'
+import { Raycaster } from 'three'
+
+import {
+  PROBE_AVAILABLE,
+  probeExposure,
+  useMeteredExposure,
+  useMeteredWhiteBalance,
+  useRealismProbe,
+} from '@/components/scene/realismProbe'
+
+import { WhiteBalanceEffect } from './WhiteBalanceEffect'
 
 /**
  * Post-processing for every space. Mounted with `enabled` true in Paris, Madrid
@@ -145,6 +157,38 @@ interface EffectsProps {
 }
 
 export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
+  // AR-161 probe (dev-only, throwaway). Exposure is the renderer's: the ToneMapping effect's
+  // shader multiplies by three's `toneMappingExposure` uniform.
+  const probe = useRealismProbe()
+  const gl = useThree((s) => s.gl)
+  const camera = useThree((s) => s.camera)
+  const scene = useThree((s) => s.scene)
+  useEffect(() => {
+    // Spike diagnostics: the headless render harness places the camera and reads the scene.
+    if (!PROBE_AVAILABLE) return
+    Object.assign(window, {
+      __ar161Camera: camera,
+      __ar161Scene: scene,
+      __ar161Raycaster: Raycaster,
+    })
+  }, [camera, scene])
+  const metered = useMeteredExposure()
+  const whiteBalanceGain = useMeteredWhiteBalance()
+  const whiteBalance = useMemo(() => new WhiteBalanceEffect(), [])
+  useEffect(() => () => whiteBalance.dispose(), [whiteBalance])
+  if (whiteBalanceGain) whiteBalance.setGain(whiteBalanceGain)
+  const exposure = probeExposure(probe, metered)
+  useEffect(() => {
+    gl.toneMappingExposure = exposure
+    return () => {
+      gl.toneMappingExposure = 1
+    }
+  }, [gl, exposure])
+  const toneMappingMode = probe.enabled
+    ? ToneMappingMode[probe.toneMapping]
+    : ToneMappingMode.ACES_FILMIC
+  const bloomOn = probe.enabled ? probe.bloom : ENABLE_BLOOM
+
   if (!enabled) return null
 
   // Built as an array rather than inline conditionals: EffectComposer types its children as
@@ -153,7 +197,7 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
   // order — grain goes last so it sits on the graded image, not the linear one.
   const passes: ReactElement[] = []
   if (ENABLE_FXAA) passes.push(<FXAA key="fxaa" />)
-  if (ENABLE_BLOOM) {
+  if (bloomOn) {
     passes.push(
       <Bloom
         key="bloom"
@@ -165,7 +209,8 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
       />,
     )
   }
-  passes.push(<ToneMapping key="tonemapping" mode={ToneMappingMode.ACES_FILMIC} />)
+  if (whiteBalanceGain) passes.push(<primitive key="white-balance" object={whiteBalance} />)
+  passes.push(<ToneMapping key={`tonemapping-${toneMappingMode}`} mode={toneMappingMode} />)
 
   return <EffectComposer multisampling={MULTISAMPLING}>{passes}</EffectComposer>
 }

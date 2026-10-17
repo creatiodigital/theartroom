@@ -45,6 +45,7 @@ import { spaceConfigs } from '@/components/scene/constants'
 // — a second identical file today would only drift.
 import { Lights } from '@/components/scene/spaces/ParisSpace/lights'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { applyBakeProbe, useRealismProbe } from '@/components/scene/realismProbe'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // Prop families whose nodes hang off a room Empty in the Vienna GLB. Their
@@ -144,10 +145,21 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // the artwork.
   const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
   const invalidate = useThree((s) => s.invalidate)
+  // AR-161 probe (dev-only, throwaway): outside `current` mode it owns these colours.
+  const probe = useRealismProbe()
   useEffect(() => {
+    const wallProbed = applyBakeProbe(wallMaterial, wallTexture, wallColor, probe)
+    const ceilingProbed = applyBakeProbe(
+      ceilingMaterial,
+      ceilingTexture,
+      ceilingColor,
+      probe,
+      'ceiling',
+    )
     const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
-    wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
-    ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+    if (!wallProbed) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    if (!ceilingProbed)
+      ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
   }, [
     wallMaterial,
@@ -158,6 +170,9 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
     ceilingColor,
     wallBrightness,
     invalidate,
+    probe,
+    wallTexture,
+    ceilingTexture,
   ])
 
   // Count comes from the model — Vienna has 8 where Paris has 4.

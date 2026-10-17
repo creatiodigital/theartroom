@@ -41,6 +41,7 @@ import {
 } from '@/components/scene/spaces/objects/nodeIndices'
 import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { applyBakeProbe, useRealismProbe } from '@/components/scene/realismProbe'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // No module-scope preload for these: drei's useKTX2.preload only sets the
@@ -115,11 +116,22 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   // Boost wall/ceiling brightness so artworks aren't over-lit by cranking ambient.
   const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
   const invalidate = useThree((s) => s.invalidate)
+  // AR-161 probe (dev-only, throwaway): outside `current` mode it owns these colours.
+  const probe = useRealismProbe()
   useEffect(() => {
+    const wallProbed = applyBakeProbe(wallMaterial, wallTexture, wallColor, probe)
+    const ceilingProbed = applyBakeProbe(
+      ceilingMaterial,
+      ceilingTexture,
+      ceilingColor,
+      probe,
+      'ceiling',
+    )
     const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
 
-    wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
-    ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+    if (!wallProbed) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    if (!ceilingProbed)
+      ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
   }, [
     wallMaterial,
@@ -130,6 +142,9 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     ceilingColor,
     wallBrightness,
     invalidate,
+    probe,
+    wallTexture,
+    ceilingTexture,
   ])
 
   // Arrays for iterating over indexed meshes

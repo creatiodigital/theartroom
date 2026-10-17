@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
+import { useRealismProbe } from '@/components/scene/realismProbe'
 
 const DEFAULT_AMBIENT_COLOR = '#e4e8f2'
 const DEFAULT_AMBIENT_INTENSITY = 1.0
@@ -52,6 +53,14 @@ const AMBIENT_INTENSITY_OVERRIDE: number | null = null
 // intensity change.
 const AMBIENT_COLOR_OVERRIDE: string | null = null
 
+// AR-161 probe: a direction on the unit sphere, scaled out. A directional light only cares
+// about direction (position → its target at the origin), not distance.
+const keyLightPosition = (azimuthDeg: number, elevationDeg: number): [number, number, number] => {
+  const az = (azimuthDeg * Math.PI) / 180
+  const el = (elevationDeg * Math.PI) / 180
+  return [Math.cos(el) * Math.sin(az) * 10, Math.sin(el) * 10, Math.cos(el) * Math.cos(az) * 10]
+}
+
 const AmbientLight = () => {
   const ambientLightColor = useSelector(
     (state: RootState) => state.exhibition.ambientLightColor ?? DEFAULT_AMBIENT_COLOR,
@@ -60,11 +69,29 @@ const AmbientLight = () => {
     (state: RootState) => state.exhibition.ambientLightIntensity ?? DEFAULT_AMBIENT_INTENSITY,
   )
 
+  // AR-161 probe (dev-only, throwaway).
+  const probe = useRealismProbe()
+  const probeIntensity = probe.enabled && probe.ambientOverride ? probe.ambientIntensity : null
+  const probeColor = probe.enabled && probe.ambientNeutral ? '#ffffff' : null
+
   return (
-    <ambientLight
-      color={AMBIENT_COLOR_OVERRIDE ?? ambientLightColor}
-      intensity={AMBIENT_INTENSITY_OVERRIDE ?? ambientLightIntensity}
-    />
+    <>
+      <ambientLight
+        color={probeColor ?? AMBIENT_COLOR_OVERRIDE ?? ambientLightColor}
+        intensity={probeIntensity ?? AMBIENT_INTENSITY_OVERRIDE ?? ambientLightIntensity}
+      />
+      {probe.enabled && probe.hemiIntensity > 0 && (
+        <hemisphereLight args={[probe.hemiSky, probe.hemiGround, probe.hemiIntensity]} />
+      )}
+      {probe.enabled && probe.keyIntensity > 0 && (
+        <directionalLight
+          color={probe.keyColor}
+          intensity={probe.keyIntensity}
+          castShadow={false}
+          position={keyLightPosition(probe.keyAzimuth, probe.keyElevation)}
+        />
+      )}
+    </>
   )
 }
 

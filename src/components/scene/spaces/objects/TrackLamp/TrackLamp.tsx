@@ -18,6 +18,7 @@ import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
+import { probeSpot, useRealismProbe } from '@/components/scene/realismProbe'
 
 interface TrackLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -67,6 +68,9 @@ const TrackSpotlight: React.FC<{
 }> = ({ position, aimDirection, color, intensity, angle, distance }) => {
   const lightRef = useRef<SpotLight>(null)
   const targetRef = useRef<Object3D>(null)
+  // AR-161 probe (dev-only, throwaway).
+  const probe = useRealismProbe()
+  const spot = probeSpot(probe, { intensity, angle, penumbra: 0.8, distance }, 'track')
 
   useEffect(() => {
     if (lightRef.current && targetRef.current) {
@@ -88,10 +92,10 @@ const TrackSpotlight: React.FC<{
         ref={lightRef}
         position={[position.x, position.y, position.z]}
         color={color}
-        intensity={intensity}
-        angle={angle}
-        penumbra={0.8}
-        distance={distance}
+        intensity={spot.intensity}
+        angle={spot.angle}
+        penumbra={spot.penumbra}
+        distance={spot.distance}
         decay={2}
         castShadow={false}
       />

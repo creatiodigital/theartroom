@@ -7,6 +7,7 @@ import type { RootState } from '@/redux/store'
 import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { probeSpot, useRealismProbe } from '@/components/scene/realismProbe'
 
 interface RecessedLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -36,6 +37,8 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   const lampColor = useSelector(
     (state: RootState) => state.exhibition.recessedLampColor ?? DEFAULT_LAMP_COLOR,
   )
+  // AR-161 probe (dev-only, throwaway).
+  const probe = useRealismProbe()
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
@@ -46,6 +49,18 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
   )
+  const bulbSpot = probeSpot(probe, {
+    intensity: lampIntensity * 2,
+    angle: lampAngle,
+    penumbra: 0.8,
+    distance: lampDistance,
+  })
+  const plainSpot = probeSpot(probe, {
+    intensity: lampIntensity * 3,
+    angle: lampAngle,
+    penumbra: 1,
+    distance: lampDistance,
+  })
 
   // Resolve which indices to render — explicit list or sequential fallback
   const lampIndices = useMemo(
@@ -195,10 +210,10 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
                 <spotLight
                   position={[bulbPos.x, bulbPos.y, bulbPos.z]}
                   color={lampColor}
-                  intensity={lampIntensity * 2}
-                  angle={lampAngle}
-                  penumbra={0.8}
-                  distance={lampDistance}
+                  intensity={bulbSpot.intensity}
+                  angle={bulbSpot.angle}
+                  penumbra={bulbSpot.penumbra}
+                  distance={bulbSpot.distance}
                   decay={2}
                   castShadow={false}
                 />
@@ -226,10 +241,10 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
             <spotLight
               position={[pos.x, pos.y, pos.z]}
               color={lampColor}
-              intensity={lampIntensity * 3}
-              angle={lampAngle}
-              penumbra={1}
-              distance={lampDistance}
+              intensity={plainSpot.intensity}
+              angle={plainSpot.angle}
+              penumbra={plainSpot.penumbra}
+              distance={plainSpot.distance}
               decay={2}
               castShadow={false}
             />

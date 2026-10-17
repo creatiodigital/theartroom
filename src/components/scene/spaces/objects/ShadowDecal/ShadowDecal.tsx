@@ -1,6 +1,8 @@
 import { useMemo, useRef, useEffect } from 'react'
 import { ShaderMaterial, Vector2, NormalBlending } from 'three'
 
+import { useRealismProbe } from '@/components/scene/realismProbe'
+
 /**
  * A FAKE contact shadow, drawn as a gradient quad behind each artwork.
  *
@@ -126,8 +128,12 @@ export function ShadowDecal({
     }
   }, [width, height, outerWidth, outerHeight, maxOpacity, direction])
 
+  // AR-161 probe (dev-only, throwaway): the load-time bake casts the real shadow.
+  const probe = useRealismProbe()
+
   // No frame = no shadow (after hooks to maintain consistent hook count)
   if (frameDepth <= 0) return null
+  if (probe.enabled && probe.bake) return null
 
   return (
     <mesh position={[0, 0, 0.001]} renderOrder={0}>

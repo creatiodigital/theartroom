@@ -7,6 +7,7 @@ import type { RootState } from '@/redux/store'
 import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { probeSpot, useRealismProbe } from '@/components/scene/realismProbe'
 
 interface RoundLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -51,6 +52,8 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
   const lampColor = useSelector(
     (state: RootState) => state.exhibition.recessedLampColor ?? DEFAULT_LAMP_COLOR,
   )
+  // AR-161 probe (dev-only, throwaway).
+  const probe = useRealismProbe()
   const lampIntensity = useSelector(
     (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
   )
@@ -59,6 +62,12 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
   )
+  const spot = probeSpot(probe, {
+    intensity: lampIntensity * 2,
+    angle: lampAngle,
+    penumbra: 1,
+    distance: lampDistance,
+  })
 
   // Shared materials — all 17 lamps use the same body and bulb material
   const bodyMaterial = useMemo(
@@ -169,10 +178,10 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
                 <spotLight
                   position={[bulbPos.x, bulbPos.y, bulbPos.z]}
                   color={lampColor}
-                  intensity={lampIntensity * 2}
-                  angle={lampAngle}
-                  penumbra={1}
-                  distance={lampDistance}
+                  intensity={spot.intensity}
+                  angle={spot.angle}
+                  penumbra={spot.penumbra}
+                  distance={spot.distance}
                   decay={2}
                   castShadow={false}
                 />

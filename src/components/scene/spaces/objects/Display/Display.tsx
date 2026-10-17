@@ -1,6 +1,7 @@
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
+  Color,
   DoubleSide,
   MeshStandardMaterial,
   SRGBColorSpace,
@@ -28,6 +29,7 @@ import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { useRealismProbe } from '@/components/scene/realismProbe'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 type DisplayProps = {
@@ -313,6 +315,39 @@ const applyCoverUVs = (texture: Texture, planeWidth: number, planeHeight: number
   }
 }
 
+// AR-161 probe (dev-only, throwaway): the artwork surface. Production is the unlit Basic
+// material tinted by the ambient colour — it glows like a screen and ignores every lamp.
+// The probe can make it Lambert so the spotlights actually fall across the picture.
+const ArtworkSurfaceMaterial = ({ map, tint }: { map: Texture; tint: Color }) => {
+  const probe = useRealismProbe()
+  const neutral = probe.enabled && probe.artworkNeutralTint
+  const color = neutral ? WHITE_TINT : tint
+  if (probe.enabled && probe.artworkLit && probe.artworkMaterial === 'standard') {
+    return (
+      <meshStandardMaterial
+        key="lit-standard"
+        map={map}
+        color={color.clone().multiplyScalar(probe.artworkGain)}
+        roughness={probe.artworkRoughness}
+        metalness={0}
+        side={DoubleSide}
+      />
+    )
+  }
+  if (probe.enabled && probe.artworkLit) {
+    return (
+      <meshLambertMaterial
+        key="lit"
+        map={map}
+        color={color.clone().multiplyScalar(probe.artworkGain)}
+        side={DoubleSide}
+      />
+    )
+  }
+  return <meshBasicMaterial key="unlit" map={map} color={color} side={DoubleSide} />
+}
+const WHITE_TINT = new Color('#ffffff')
+
 // Component for blob URL images (uses custom loader)
 const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   const texture = useBlobTexture(url)
@@ -325,9 +360,9 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
   applyCoverUVs(texture, width, height)
 
   return (
-    <mesh castShadow receiveShadow renderOrder={2}>
+    <mesh name="artworkImage" castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshBasicMaterial map={texture} color={ambientColor} side={DoubleSide} />
+      <ArtworkSurfaceMaterial map={texture} tint={ambientColor} />
     </mesh>
   )
 }
@@ -441,9 +476,9 @@ const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
   applyCoverUVs(displayTexture, width, height)
 
   return (
-    <mesh ref={meshRef} castShadow receiveShadow renderOrder={2}>
+    <mesh ref={meshRef} name="artworkImage" castShadow receiveShadow renderOrder={2}>
       <planeGeometry args={[width, height]} />
-      <meshBasicMaterial map={displayTexture} color={ambientColor} side={DoubleSide} />
+      <ArtworkSurfaceMaterial map={displayTexture} tint={ambientColor} />
     </mesh>
   )
 }
@@ -644,19 +679,22 @@ const Display = ({ artwork }: DisplayProps) => {
   ])
 
   // Handle double click for info panel (existing behavior)
-  const handleDoubleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation()
-    // Cancel any pending single-click action
-    if (singleClickTimeout.current) {
-      clearTimeout(singleClickTimeout.current)
-      singleClickTimeout.current = null
-    }
+  const handleDoubleClick = useCallback(
+    (event: ThreeEvent<MouseEvent>) => {
+      event.stopPropagation()
+      // Cancel any pending single-click action
+      if (singleClickTimeout.current) {
+        clearTimeout(singleClickTimeout.current)
+        singleClickTimeout.current = null
+      }
 
-    if (!isPlaceholdersShown && showArtworkInformation) {
-      dispatch(showArtworkPanel())
-      dispatch(setCurrentArtwork(artwork.id))
-    }
-  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+      if (!isPlaceholdersShown && showArtworkInformation) {
+        dispatch(showArtworkPanel())
+        dispatch(setCurrentArtwork(artwork.id))
+      }
+    },
+    [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation],
+  )
 
   // Every pointer handler stops propagation, because a display panel put two
   // hangable faces 15 cm apart and R3F does not occlude.

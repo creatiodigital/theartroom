@@ -2,12 +2,14 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import type { ComponentRef } from 'react'
 import { useSelector } from 'react-redux'
 import { MeshReflectorMaterial } from '@react-three/drei'
-import { Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
+import { Color, Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
 import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
+import { useRealismProbe } from '@/components/scene/realismProbe'
+import { createReflectorProbeUniforms, setReflectorProbePatch } from './reflectorProbePatch'
 
 // Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
 //
@@ -198,6 +200,9 @@ const MATERIAL_CONFIG: Record<
   },
 }
 
+/** AR-161 probe (dev-only, throwaway): the floor sets the probe panel can switch between. */
+export const PROBE_FLOOR_MATERIALS = Object.keys(MATERIAL_CONFIG)
+
 // Resolve legacy/deleted material names to valid ones
 const MATERIAL_ALIASES: Record<string, string> = {
   chevron: 'parquet',
@@ -259,7 +264,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   const reflectorRef = useRef<ComponentRef<typeof MeshReflectorMaterial>>(null)
 
   // Read floor settings from Redux
-  const floorMaterial = useSelector(
+  const storedFloorMaterial = useSelector(
     (state: RootState) => state.exhibition.floorMaterial ?? 'concrete',
   )
 
@@ -267,7 +272,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     (state: RootState) => state.exhibition.floorTextureScale ?? DEFAULT_FLOOR_TEXTURE_SCALE,
   )
 
-  const reflectiveness = useSelector(
+  const storedReflectiveness = useSelector(
     (state: RootState) => state.exhibition.floorReflectiveness ?? DEFAULT_FLOOR_REFLECTIVENESS,
   )
 
@@ -281,11 +286,20 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
 
   const floorTemperature = useSelector((state: RootState) => state.exhibition.floorTemperature ?? 0)
 
-  const floorNormalScale = useSelector(
+  const storedNormalScale = useSelector(
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
   )
 
-  const floorRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
+  const storedRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
+
+  // AR-161 probe (dev-only, throwaway): render-only floor overrides. Never written back.
+  const probe = useRealismProbe()
+  const floorProbe = probe.enabled && probe.floorOverride
+  const textureProbe = floorProbe && !probe.floorKeepStoredTexture
+  const floorMaterial = textureProbe ? probe.floorMaterial : storedFloorMaterial
+  const reflectiveness = floorProbe ? probe.floorReflectiveness : storedReflectiveness
+  const floorNormalScale = floorProbe ? probe.floorNormalScale : storedNormalScale
+  const floorRotation = textureProbe ? probe.floorRotation : storedRotation
 
   // Clamp scale for safety (0.5 = largest tiles, 5.0 = smallest)
   const clampedScale = Math.max(0.5, Math.min(8.0, floorTextureScale))
@@ -293,10 +307,19 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   const validMaterial = resolveFloorMaterial(floorMaterial)
 
   // Temperature-tinted multiplier (white at neutral, unless the floor darkens)
-  const floorColor = getTemperatureColor(
+  const temperatureColor = getTemperatureColor(
     floorTemperature,
     MATERIAL_CONFIG[validMaterial].darken ? NEUTRAL_COLOR : WHITE,
   )
+  const floorColor = floorProbe
+    ? `#${new Color(temperatureColor)
+        .multiply(new Color(probe.floorTint))
+        .multiplyScalar(probe.floorBrightness)
+        .getHexString()}`
+    : temperatureColor
+  const anisotropy = floorProbe ? probe.floorAnisotropy : MAX_ANISOTROPY
+  // Repeats per metre. Production: one tile spans 10 / scale metres. Probe: a real tile size.
+  const tileRepeat = textureProbe ? 1 / probe.floorTileMeters : clampedScale / 10
 
   // Build texture paths (metallic, normal, and ao are optional) — memoized to avoid
   // unstable references that cause useTexture to re-trigger loading on every render
@@ -312,12 +335,16 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     const rotationRad = (floorRotation * Math.PI) / 180 // Convert degrees to radians
     // Scale repeat to maintain same physical tile size as the old 100-unit plane
     // Old: clampedScale * 10 on a 100-unit plane. Now: scale proportionally to actual floor size.
-    const repeatX = clampedScale * 10 * (width / 100)
-    const repeatY = clampedScale * 10 * (depth / 100)
+    const repeatX = width * tileRepeat
+    const repeatY = depth * tileRepeat
     Object.values(textures).forEach((texture) => {
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
-      texture.anisotropy = MAX_ANISOTROPY
+      if (texture.anisotropy !== anisotropy) {
+        texture.anisotropy = anisotropy
+        // A sampler parameter: three applies it only on (re)upload.
+        texture.needsUpdate = true
+      }
       texture.repeat.set(repeatX, repeatY)
       texture.offset.set(floorTextureOffsetX, floorTextureOffsetY)
       texture.rotation = rotationRad
@@ -326,7 +353,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     textures.map.colorSpace = SRGBColorSpace
   }, [
     textures,
-    clampedScale,
+    tileRepeat,
+    anisotropy,
     floorTextureOffsetX,
     floorTextureOffsetY,
     floorRotation,
@@ -342,9 +370,43 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   // (A `key` remount would also work but re-allocates the reflector's buffers.)
   // Keyed on texturePaths, which is memoized per floor: `textures` is a new
   // object every render and would recompile on every slider tick.
+  // AR-161 probe (dev-only, throwaway): which maps / view / reflection behaviour to render.
+  const debugView = floorProbe ? probe.floorDebug : 'normal'
+  const mapsOn = {
+    albedo: !floorProbe || (probe.floorMapAlbedo && debugView !== 'lighting'),
+    normal: !floorProbe || probe.floorMapNormal,
+    roughness: !floorProbe || probe.floorMapRoughness,
+    ao: !floorProbe || probe.floorMapAo,
+    metalness: !floorProbe || probe.floorMapMetalness,
+  }
+  const mapsKey = Object.values(mapsOn).join()
+  const reflectionsOn = floorProbe ? probe.floorReflections : ENABLE_REFLECTIONS
+  const fixReflUv = floorProbe && probe.floorFixReflUv
+  const reflUniforms = useMemo(createReflectorProbeUniforms, [])
+  reflUniforms.uReflMode.value = !floorProbe
+    ? 0
+    : debugView === 'reflection'
+      ? 2
+      : probe.floorReflMode === 'fresnel'
+        ? 1
+        : 0
+  reflUniforms.uFresnelF0.value = floorProbe ? probe.floorFresnelF0 : 0.04
+
   useLayoutEffect(() => {
     if (reflectorRef.current) reflectorRef.current.needsUpdate = true
-  }, [texturePaths])
+  }, [texturePaths, mapsKey])
+
+  useLayoutEffect(() => {
+    if (!reflectorRef.current || !reflectionsOn || debugView === 'albedo') return
+    setReflectorProbePatch(reflectorRef.current, reflUniforms, {
+      enabled: floorProbe,
+      fixUv: fixReflUv,
+    })
+  }, [floorProbe, fixReflUv, reflectionsOn, debugView, reflUniforms])
+
+  const metalness = floorProbe ? probe.floorMetalness : 0.05
+  const aoMapIntensity = floorProbe ? probe.floorAoIntensity : 1.0
+  const envMapIntensity = floorProbe ? probe.floorEnvIntensity : 1.0
 
   // Create Vector2 for normalScale (required by Three.js)
   const normalScaleVec = useMemo(
@@ -369,43 +431,52 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           }
         }}
       />
-      {ENABLE_REFLECTIONS ? (
+      {debugView === 'albedo' ? (
+        <meshBasicMaterial key="floor-albedo" color={floorColor} map={textures.map} />
+      ) : reflectionsOn ? (
         <MeshReflectorMaterial
           ref={reflectorRef}
-          blur={[600, 400]} // Higher blur for maximum stability
-          resolution={1024} // Full resolution for smooth reflections
-          mixBlur={0.9} // High blend for stable reflections
-          mixStrength={reflectiveness * 1.5} // Reduced from *3 to let normal map show
-          roughness={1 - reflectiveness * 0.2}
-          depthScale={0}
+          blur={
+            floorProbe ? [probe.floorBlur * 1.2, probe.floorBlur * 0.8] : [600, 400] // Higher blur for maximum stability
+          }
+          resolution={floorProbe ? probe.floorReflResolution : 1024} // Full resolution for smooth reflections
+          mixBlur={floorProbe ? probe.floorMixBlur : 0.9} // High blend for stable reflections
+          mixStrength={floorProbe ? probe.floorMixStrength : reflectiveness * 1.5} // Reduced from *3 to let normal map show
+          mixContrast={floorProbe ? probe.floorMixContrast : 1}
+          roughness={floorProbe ? probe.floorRoughness : 1 - reflectiveness * 0.2}
+          depthScale={floorProbe ? probe.floorDepthScale : 0}
+          minDepthThreshold={floorProbe ? probe.floorMinDepth : 0.9}
+          maxDepthThreshold={floorProbe ? probe.floorMaxDepth : 1}
           color={floorColor}
-          metalness={0.05}
-          mirror={reflectiveness * 0.03}
-          map={textures.map}
-          normalMap={textures.normalMap}
+          metalness={metalness}
+          mirror={floorProbe ? probe.floorMirror : reflectiveness * 0.03}
+          map={mapsOn.albedo ? textures.map : undefined}
+          normalMap={mapsOn.normal ? textures.normalMap : undefined}
           normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
           bumpMap={textures.bumpMap}
           bumpScale={floorNormalScale}
-          roughnessMap={textures.roughnessMap}
-          metalnessMap={textures.metalnessMap}
-          aoMap={textures.aoMap}
-          aoMapIntensity={1.0}
+          roughnessMap={mapsOn.roughness ? textures.roughnessMap : undefined}
+          metalnessMap={mapsOn.metalness ? textures.metalnessMap : undefined}
+          aoMap={mapsOn.ao ? textures.aoMap : undefined}
+          aoMapIntensity={aoMapIntensity}
+          envMapIntensity={envMapIntensity}
         />
       ) : (
         <meshStandardMaterial
-          key={`floor-mat-${floorMaterial}`}
+          key={`floor-mat-${floorMaterial}-${mapsKey}`}
           color={floorColor}
-          map={textures.map}
-          normalMap={textures.normalMap}
+          map={mapsOn.albedo ? textures.map : undefined}
+          normalMap={mapsOn.normal ? textures.normalMap : undefined}
           normalScale={normalScaleVec}
           bumpMap={textures.bumpMap}
           bumpScale={floorNormalScale}
-          roughnessMap={textures.roughnessMap}
-          metalnessMap={textures.metalnessMap}
-          aoMap={textures.aoMap}
-          aoMapIntensity={1.0}
-          roughness={1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
-          metalness={0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
+          roughnessMap={mapsOn.roughness ? textures.roughnessMap : undefined}
+          metalnessMap={mapsOn.metalness ? textures.metalnessMap : undefined}
+          aoMap={mapsOn.ao ? textures.aoMap : undefined}
+          aoMapIntensity={aoMapIntensity}
+          envMapIntensity={envMapIntensity}
+          roughness={floorProbe ? probe.floorRoughness : 1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
+          metalness={floorProbe ? metalness : 0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
         />
       )}
     </mesh>
