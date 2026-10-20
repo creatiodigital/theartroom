@@ -14,6 +14,7 @@ export type TDashboardState = {
   isWallCeilingPanelOpen: boolean
   isWindowsPanelOpen: boolean
   isPanelsPanelOpen: boolean
+  isBakePanelOpen: boolean
   isEditingArtwork: boolean
   selectedSpace: TSpaceOption
 }

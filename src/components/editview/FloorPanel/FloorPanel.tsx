@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Section } from '@/components/ui/Section/Section'
 import { Slider } from '@/components/ui/Slider'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { hideFloorPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
@@ -43,6 +44,7 @@ const FloorPanel = () => {
   }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
 
   const floorReflectiveness = useSelector(
     (state: RootState) => state.exhibition.floorReflectiveness ?? DEFAULT_FLOOR_REFLECTIVENESS,
@@ -107,6 +109,10 @@ const FloorPanel = () => {
   const handleClose = () => {
     dispatch(hideFloorPanel())
   }
+
+  // AR-161 (spec rule 3): one floor for every room of every baked space — not an artist's
+  // setting there. The menu has no Floor entry in a baked space; this covers any other way in.
+  if (isBakedSpace(spaceId)) return null
 
   return (
     <SettingsPanel title="Floor" onClose={handleClose}>

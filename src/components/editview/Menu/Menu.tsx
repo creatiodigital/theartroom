@@ -1,7 +1,9 @@
 'use client'
 
 import { useDispatch, useSelector } from 'react-redux'
+import { useSession } from 'next-auth/react'
 
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import {
@@ -17,6 +19,8 @@ import {
   hideWallCeilingPanel,
   showWindowsPanel,
   hideWindowsPanel,
+  showBakePanel,
+  hideBakePanel,
 } from '@/redux/slices/dashboardSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
@@ -37,6 +41,14 @@ export const Menu = () => {
     (state: RootState) => state.dashboard.isWallCeilingPanelOpen,
   )
   const isWindowsPanelOpen = useSelector((state: RootState) => state.dashboard.isWindowsPanelOpen)
+  const isBakePanelOpen = useSelector((state: RootState) => state.dashboard.isBakePanelOpen)
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+
+  // Presentation only: the server decides who may bake or publish.
+  const { data: session } = useSession()
+  const userType = session?.user?.userType
+  const bakedSpace = isBakedSpace(spaceId)
+  const showBake = (userType === 'admin' || userType === 'superAdmin') && bakedSpace
 
   const togglePlaceholders = () => {
     if (isPlaceholdersShown) {
@@ -57,6 +69,7 @@ export const Menu = () => {
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isBakePanelOpen) dispatch(hideBakePanel())
       dispatch(showLightingPanel())
     }
   }
@@ -72,6 +85,7 @@ export const Menu = () => {
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isBakePanelOpen) dispatch(hideBakePanel())
       dispatch(showFloorPanel())
     }
   }
@@ -87,6 +101,7 @@ export const Menu = () => {
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isBakePanelOpen) dispatch(hideBakePanel())
       dispatch(showCameraPanel())
     }
   }
@@ -101,6 +116,7 @@ export const Menu = () => {
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
 
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isBakePanelOpen) dispatch(hideBakePanel())
       dispatch(showWallCeilingPanel())
     }
   }
@@ -115,6 +131,7 @@ export const Menu = () => {
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
 
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isBakePanelOpen) dispatch(hideBakePanel())
       dispatch(showPanelsPanel())
     }
   }
@@ -129,7 +146,22 @@ export const Menu = () => {
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
 
+      if (isBakePanelOpen) dispatch(hideBakePanel())
       dispatch(showWindowsPanel())
+    }
+  }
+
+  const toggleBakePanel = () => {
+    if (isBakePanelOpen) {
+      dispatch(hideBakePanel())
+    } else {
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      dispatch(showBakePanel())
     }
   }
 
@@ -169,12 +201,26 @@ export const Menu = () => {
       <Tooltip label="Windows and Radiators" placement="right">
         <Button size="regular" variant="secondary" icon="grid-2x2" onClick={toggleWindowsPanel} />
       </Tooltip>
-      <Tooltip label="Floor controls" placement="right">
-        <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
-      </Tooltip>
+      {/* AR-161 (spec rule 3): a baked space has one floor; artists no longer choose it. */}
+      {!bakedSpace && (
+        <Tooltip label="Floor controls" placement="right">
+          <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
+        </Tooltip>
+      )}
       <Tooltip label="Camera controls" placement="right">
         <Button size="regular" variant="secondary" icon="camera" onClick={toggleCameraPanel} />
       </Tooltip>
+      {showBake && (
+        <Tooltip label="Baked lighting" placement="right">
+          <Button
+            size="regular"
+            variant="secondary"
+            icon="box"
+            aria-label="Baked lighting"
+            onClick={toggleBakePanel}
+          />
+        </Tooltip>
+      )}
     </div>
   )
 }

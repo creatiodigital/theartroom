@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { MoreVertical } from 'lucide-react'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
@@ -12,6 +13,9 @@ import { ErrorText } from '@/components/ui/ErrorText'
 import { Icon } from '@/components/ui/Icon'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { BAKE_GATE_MESSAGES, isBakeGateError } from '@/lib/bake/publishGate'
+import type { BakeGateError } from '@/lib/bake/publishGate'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 type Exhibition = {
@@ -39,6 +43,7 @@ type Exhibition = {
 }
 
 export const AdminExhibitions = () => {
+  const router = useRouter()
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<Exhibition | null>(null)
@@ -46,6 +51,9 @@ export const AdminExhibitions = () => {
   const [deleteError, setDeleteError] = useState('')
   const [confirmText, setConfirmText] = useState('')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  // Publishes the server refused (a baked room needs a current, reviewed bake), by
+  // exhibition id: explained on the row until an action on it goes through.
+  const [refusals, setRefusals] = useState<Record<string, BakeGateError>>({})
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close kebab menu on outside click
@@ -78,6 +86,18 @@ export const AdminExhibitions = () => {
     fetchExhibitions()
   }, [fetchExhibitions])
 
+  const noteRefusal = async (exhibitionId: string, response: Response) => {
+    let refusal: BakeGateError | null = null
+    if (response.status === 409) {
+      const data = await response.json().catch(() => null)
+      if (isBakeGateError(data?.error)) refusal = data.error
+    }
+    if (!refusal && !response.ok) return
+    setRefusals(({ [exhibitionId]: _previous, ...others }) =>
+      refusal ? { ...others, [exhibitionId]: refusal } : others,
+    )
+  }
+
   const handleToggleStatus = async (exhibitionId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'current' ? 'past' : 'current'
     try {
@@ -101,6 +121,7 @@ export const AdminExhibitions = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ published: action === 'publish' }),
       })
+      await noteRefusal(exhibitionId, response)
       if (response.ok) {
         fetchExhibitions()
       }
@@ -123,6 +144,7 @@ export const AdminExhibitions = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spacePublished: action === 'publish' }),
       })
+      await noteRefusal(exhibitionId, response)
       if (response.ok) {
         fetchExhibitions()
       }
@@ -138,6 +160,7 @@ export const AdminExhibitions = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hasPendingChanges: false }),
       })
+      await noteRefusal(exhibitionId, response)
       if (response.ok) {
         fetchExhibitions()
       }
@@ -269,7 +292,7 @@ export const AdminExhibitions = () => {
                     )}
                 </td>
                 <td>
-                  {!exhibition.published && (
+                  {(!exhibition.published || isBakedSpace(exhibition.spaceId)) && (
                     <Badge
                       label={exhibition.previewEnabled ? 'Active' : '—'}
                       variant={exhibition.previewEnabled ? 'published' : 'unpublished'}
@@ -333,7 +356,9 @@ export const AdminExhibitions = () => {
                               !exhibition.user.published
                             }
                             label={
-                              exhibition.hasPendingChanges ? 'Update Exhibition' : 'Publish exhibition'
+                              exhibition.hasPendingChanges
+                                ? 'Update Exhibition'
+                                : 'Publish exhibition'
                             }
                           />
                         )}
@@ -373,8 +398,10 @@ export const AdminExhibitions = () => {
                             exhibition.spacePublished ? 'Unpublish 3D space' : 'Publish 3D space'
                           }
                         />
-                        {/* Publish / Unpublish Preview — only for unpublished exhibitions */}
-                        {!exhibition.published && (
+                        {/* Publish / Unpublish Preview — unpublished exhibitions; in a baked
+                            space (AR-161) the same switch is the bake preview link, available
+                            for live exhibitions too. */}
+                        {(!exhibition.published || isBakedSpace(exhibition.spaceId)) && (
                           <Button
                             variant="menuItem"
                             role="menuitem"
@@ -384,12 +411,18 @@ export const AdminExhibitions = () => {
                               handleTogglePreview(exhibition.id, exhibition.previewEnabled)
                             }}
                             label={
-                              exhibition.previewEnabled ? 'Unpublish Preview' : 'Publish Preview'
+                              isBakedSpace(exhibition.spaceId)
+                                ? exhibition.previewEnabled
+                                  ? 'Disable bake preview link'
+                                  : 'Enable bake preview link'
+                                : exhibition.previewEnabled
+                                  ? 'Unpublish Preview'
+                                  : 'Publish Preview'
                             }
                           />
                         )}
                         {/* Copy Preview Link — only when preview is active */}
-                        {!exhibition.published &&
+                        {(!exhibition.published || isBakedSpace(exhibition.spaceId)) &&
                           exhibition.previewEnabled &&
                           exhibition.previewToken && (
                             <Button
@@ -400,11 +433,31 @@ export const AdminExhibitions = () => {
                                 setOpenMenuId(null)
                                 handleCopyPreviewLink(exhibition)
                               }}
-                              label="Copy Preview Link"
+                              label={
+                                isBakedSpace(exhibition.spaceId)
+                                  ? 'Copy bake preview link'
+                                  : 'Copy Preview Link'
+                              }
                             />
                           )}
+                        {/* View baked room (AR-161) — the draft bake exactly as visitors will
+                            get it; looking at it is what marks it reviewed. */}
+                        {isBakedSpace(exhibition.spaceId) && (
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
+                            className={dashboardStyles.kebabMenuItem}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              router.push(
+                                `/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit?review=1`,
+                              )
+                            }}
+                            label="View baked room"
+                          />
+                        )}
                         {/* Update Preview Link — regenerate token (old link becomes invalid) */}
-                        {!exhibition.published &&
+                        {(!exhibition.published || isBakedSpace(exhibition.spaceId)) &&
                           exhibition.previewEnabled &&
                           exhibition.previewToken && (
                             <Button
@@ -432,6 +485,14 @@ export const AdminExhibitions = () => {
                       </div>
                     )}
                   </div>
+                  {refusals[exhibition.id] && (
+                    <div className={dashboardStyles.publishRefusal} role="alert">
+                      <ErrorText>{BAKE_GATE_MESSAGES[refusals[exhibition.id]]}</ErrorText>
+                      <Link href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}/edit`}>
+                        Open the 3D editor
+                      </Link>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
