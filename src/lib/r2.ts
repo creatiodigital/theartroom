@@ -268,11 +268,14 @@ export async function getPresignedUploadUrl(
   key: string,
   contentType: string,
   expiresIn = 3600,
+  cacheControl?: string,
 ): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: BUCKET,
     Key: key,
     ContentType: contentType,
+    // Signed into the URL when given: the uploader must send the same header.
+    ...(cacheControl ? { CacheControl: cacheControl } : {}),
   })
   return getSignedUrl(r2, command, { expiresIn })
 }
@@ -349,6 +352,19 @@ export async function buildExhibitionImageKey(exhibitionId: string): Promise<str
   })
   const slug = exhibition?.url ?? exhibitionId
   return `${getEnvPrefix()}/exhibitions/${slug}/featured-${randomSuffix()}.webp`
+}
+
+/**
+ * A stored light bake (AR-161). One folder per exhibition per bake id, so two
+ * bakes never share a key and a new bake can never be served from a stale cache.
+ */
+export function buildExhibitionBakeKey(exhibitionId: string, bakeId: string, file: string): string {
+  return `${getEnvPrefix()}/exhibitions/${exhibitionId}/bakes/${bakeId}/${file}`
+}
+
+/** The public URL of a main-bucket object key. */
+export function publicUrlForKey(key: string): string {
+  return `${PUBLIC_URL}/${key}`
 }
 
 export async function buildSlideImageKey(slideId: string): Promise<string> {

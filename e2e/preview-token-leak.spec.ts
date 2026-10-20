@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import prisma from '@/lib/prisma'
 
+import { giveReviewedBake } from './bake-helpers'
 import { fixtures } from './fixtures'
 
 /**
@@ -98,6 +99,9 @@ test.describe('publishing retires the preview token', () => {
     // A draft with a live preview link — the normal state before an opening.
     const TOKEN = `e2e-token-${stamp()}`
     const ex = await createExhibition({ userId: userId!, published: false, token: TOKEN })
+    // AR-161: the fixture's room is open in a baked space (paris), so publishing needs a
+    // current, reviewed bake (e2e/bake-publish-gate.spec.ts covers the refusals).
+    await giveReviewedBake(ex.id)
 
     try {
       // Publishing is the moment the token stops having a job: the show is open

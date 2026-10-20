@@ -59,6 +59,19 @@ function keyEnv(key: string): string | null {
   return parts[0] ?? null
 }
 
+/**
+ * The map URLs of a stored light bake (AR-161: `Exhibition.bake`, or the one in
+ * `publishedSnapshot.exhibition.bake`). Read leniently — any `maps[].url` string counts — so a
+ * record this script can't fully parse still protects its files.
+ */
+function bakeMapUrls(bake: unknown): string[] {
+  const maps = (bake as { maps?: unknown } | null)?.maps
+  if (!Array.isArray(maps)) return []
+  return maps
+    .map((m) => (m as { url?: unknown } | null)?.url)
+    .filter((url): url is string => typeof url === 'string')
+}
+
 async function collectReferencedKeys(): Promise<Set<string>> {
   // Pull every URL-bearing column from every model that writes to R2.
   // Keep this list in sync with schema.prisma — any new *Url column
@@ -71,7 +84,14 @@ async function collectReferencedKeys(): Promise<Set<string>> {
     prisma.user.findMany({ select: { profileImageUrl: true, signatureUrl: true } }),
     prisma.printOrder.findMany({ select: { certificateUrl: true } }),
     prisma.exhibition.findMany({
-      select: { thumbnailUrl: true, bannerUrl: true, featuredImageUrl: true },
+      select: {
+        thumbnailUrl: true,
+        bannerUrl: true,
+        featuredImageUrl: true,
+        // AR-161 light bakes: the draft bake's maps and the published one's (the snapshot).
+        bake: true,
+        publishedSnapshot: true,
+      },
     }),
     prisma.slide.findMany({ select: { imageUrl: true } }),
     prisma.pageContent.findMany({ select: { bannerImageUrl: true } }),
@@ -99,6 +119,10 @@ async function collectReferencedKeys(): Promise<Set<string>> {
     add(e.thumbnailUrl)
     add(e.bannerUrl)
     add(e.featuredImageUrl)
+    // Every map of the draft bake and of the bake visitors get (`<env>/exhibitions/{id}/bakes/…`).
+    const snapshot = e.publishedSnapshot as { exhibition?: { bake?: unknown } } | null
+    for (const url of bakeMapUrls(e.bake)) add(url)
+    for (const url of bakeMapUrls(snapshot?.exhibition?.bake)) add(url)
   }
   for (const s of slides) add(s.imageUrl)
   for (const p of pages) add(p.bannerImageUrl)

@@ -690,6 +690,7 @@ model Exhibition {
   hasPendingChanges Boolean   @default(false) // True when draft differs from published
   previewEnabled    Boolean   @default(false) // When true, visit route is accessible even if unpublished
   previewToken      String? // UUID token required in ?preview= param
+  bake              Json? // AR-161: draft BakeRecord; the published one lives in publishedSnapshot
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")
