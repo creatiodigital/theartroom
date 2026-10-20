@@ -6,6 +6,7 @@ import { Component, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 
 import styles from './SceneErrorBoundary.module.scss'
+import { setSceneFailed } from './sceneFailure'
 
 interface Props {
   children: ReactNode
@@ -33,7 +34,17 @@ export class SceneErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
+  componentDidMount() {
+    setSceneFailed(false)
+  }
+
+  componentWillUnmount() {
+    setSceneFailed(false)
+  }
+
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // The scene will never finish loading: the visit page's loader must not cover this message.
+    setSceneFailed(true)
     Sentry.withScope((scope) => {
       scope.setTag('component', '3d-scene')
       scope.setTag('exhibition.id', this.props.exhibitionId || 'unknown')

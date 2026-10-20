@@ -9,6 +9,11 @@
  * and this bucket already carries CORS rules for artist browser uploads —
  * those existing rules are always preserved.
  *
+ * Restrict / preview (upload mode only):
+ *   --only=spaces/paris/paris22_noq.glb,materials/plaster/   comma-separated path prefixes
+ *                                                            relative to public/assets
+ *   --dry-run                                                list what WOULD upload, send nothing
+ *
  * Idempotent: re-running skips objects whose remote size already matches.
  */
 import { createReadStream } from 'node:fs'
@@ -109,8 +114,28 @@ async function remoteSizeMatches(key: string, size: number): Promise<boolean> {
   }
 }
 
+const DRY_RUN = process.argv.includes('--dry-run')
+const ONLY_ARG = process.argv.find((a) => a === '--only' || a.startsWith('--only'))
+const ONLY = (ONLY_ARG?.startsWith('--only=') ? ONLY_ARG.slice('--only='.length) : '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+function fail(message: string): never {
+  console.error(`error: ${message}`)
+  process.exit(1)
+}
+
 async function uploadAll(): Promise<void> {
-  const files = await collectFiles()
+  const matches = (rel: string, entry: string) =>
+    rel === entry || (entry.endsWith('/') && rel.startsWith(entry))
+  const all = await collectFiles()
+  const rels = all.map((f) => path.relative(LOCAL_ROOT, f).split(path.sep).join('/'))
+  if (ONLY_ARG) {
+    const unmatched = ONLY.filter((entry) => !rels.some((rel) => matches(rel, entry)))
+    if (unmatched.length > 0) fail(`--only entries match no local file: ${unmatched.join(', ')}`)
+  }
+  const files = all.filter((_, i) => !ONLY_ARG || ONLY.some((entry) => matches(rels[i]!, entry)))
   let uploaded = 0
   let skipped = 0
   let bytes = 0
@@ -124,6 +149,12 @@ async function uploadAll(): Promise<void> {
       continue
     }
     const ext = path.extname(file).toLowerCase()
+    if (DRY_RUN) {
+      uploaded++
+      bytes += size
+      console.log(`WOULD upload ${key} (${size} bytes)`)
+      continue
+    }
     await r2.send(
       new PutObjectCommand({
         Bucket: BUCKET,
@@ -178,6 +209,22 @@ async function updateCors(): Promise<void> {
   console.log(`Appended GET rule for: ${ALLOWED_ORIGINS.join(', ')} (existing rules preserved)`)
 }
 
+// Every argument must be a flag this script knows, before anything reaches R2: a misspelled
+// --dry-run (--dryrun, --dry_run, --dry-run=true…) would otherwise run a REAL upload.
+const unknown = process.argv
+  .slice(2)
+  .filter((a) => a !== '--dry-run' && a !== '--cors' && a !== '--only' && !a.startsWith('--only='))
+if (unknown.length > 0) {
+  fail(
+    `unknown argument(s): ${unknown.join(' ')} — known: --dry-run, --cors, --only=<path>[,<path>]`,
+  )
+}
+if (ONLY_ARG && ONLY.length === 0) {
+  fail('--only needs a non-empty comma-separated list, written --only=<path>[,<path>] (no space)')
+}
+if (process.argv.includes('--cors') && (DRY_RUN || ONLY_ARG)) {
+  fail('--cors cannot be combined with --dry-run or --only (it would run the CORS merge for real)')
+}
 const main = process.argv.includes('--cors') ? updateCors : uploadAll
 main().catch((err) => {
   console.error(err)

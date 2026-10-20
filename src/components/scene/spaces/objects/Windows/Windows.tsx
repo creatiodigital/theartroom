@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { Mesh, BufferGeometry } from 'three'
+import { DoubleSide, Mesh, BufferGeometry } from 'three'
 import type { RootState } from '@/redux/store'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 
 const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
 const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
@@ -28,15 +29,21 @@ const Windows: React.FC<WindowsProps> = ({
   windowRefs,
   glassRefs,
 }) => {
-  const windowLightIntensity = useSelector(
+  const storedLightIntensity = useSelector(
     (state: RootState) => state.exhibition.windowLightIntensity ?? DEFAULT_WINDOW_LIGHT_INTENSITY,
   )
-  const windowLightColor = useSelector(
+  const storedLightColor = useSelector(
     (state: RootState) => state.exhibition.windowLightColor ?? DEFAULT_WINDOW_LIGHT_COLOR,
   )
-  const windowTransparency = useSelector(
+  const storedTransparency = useSelector(
     (state: RootState) => state.exhibition.windowTransparency ?? false,
   )
+  // AR-161: in the baked look the window is the space's — glass always on (no "show sky" view),
+  // its color and brightness the space's daylight.
+  const look = useBakedLook()
+  const windowLightIntensity = look.baked ? look.space.windowIntensity : storedLightIntensity
+  const windowLightColor = look.baked ? look.space.windowColor : storedLightColor
+  const windowTransparency = look.baked ? false : storedTransparency
   const windowFrameColor = useSelector(
     (state: RootState) => state.exhibition.windowFrameColor ?? DEFAULT_WINDOW_FRAME_COLOR,
   )
@@ -49,6 +56,11 @@ const Windows: React.FC<WindowsProps> = ({
   const frames = frameCount ?? countNodes(nodes, 'windowFrame')
   const glass = glassCount ?? countNodes(nodes, 'windowGlass')
   const handles = handleCount ?? countNodes(nodes, 'windowHandle')
+  // AR-161: `windowLight` planes are daylight openings modelled in Blender (the sky behind a
+  // window, a light well): in the baked look drawn as daylight and baked as light sources. Today's
+  // look never draws them.
+  const daylightPanels = look.baked ? countNodes(nodes, 'windowLight') : 0
+  const panelsArray = useMemo(() => Array.from({ length: daylightPanels }), [daylightPanels])
 
   const framesArray = useMemo(() => Array.from({ length: frames }), [frames])
   const glassArray = useMemo(() => Array.from({ length: glass }), [glass])
@@ -80,6 +92,29 @@ const Windows: React.FC<WindowsProps> = ({
               emissive={windowLightColor}
               emissiveIntensity={windowLightIntensity * 0.3}
               envMapIntensity={0}
+            />
+          </mesh>
+        )
+      })}
+
+      {panelsArray.map((_, i) => {
+        const panelNode = nodes[`windowLight${i}`]
+        if (!panelNode) return null
+        return (
+          <mesh
+            key={`daylight-${i}`}
+            name={`windowLight${i}`}
+            geometry={panelNode.geometry}
+            position={panelNode.position}
+            rotation={panelNode.rotation}
+            scale={panelNode.scale}
+          >
+            <meshStandardMaterial
+              color={windowLightColor}
+              emissive={windowLightColor}
+              emissiveIntensity={windowLightIntensity * 0.3}
+              envMapIntensity={0}
+              side={DoubleSide}
             />
           </mesh>
         )

@@ -87,6 +87,10 @@ package-lock.json
 # must stay tracked, as must /public/basis (the KTX2 transcoder).
 /public/assets/spaces/**/*.ktx2
 /public/assets/spaces/**/*.png
+# Shared material maps (AR-161: plaster walls, whitewash parquet). Same again: the scene loads
+# them from R2 (app/assets/materials/, put there by scripts/upload-3d-assets.ts); the local
+# JPEGs are only that script's source and must never be committed.
+/public/assets/materials/
 
 # theprintspace branding pulled down for portal/packaging setup — reference
 # material for configuring the print provider's account, not app assets.
@@ -108,3 +112,4 @@ docs/superpowers/plans/2026-06-19-email-migration-all.md
 
 # Local MCP server wiring — absolute paths to this machine's Blender extension venv.
 .mcp.json
+.bake-files/

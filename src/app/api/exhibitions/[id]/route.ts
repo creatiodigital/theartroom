@@ -5,9 +5,14 @@ import { deleteFromR2 } from '@/lib/r2'
 
 import { Prisma } from '@/generated/prisma'
 import { auth } from '@/auth'
-import { requireOwnership, isAdminOrAbove } from '@/lib/authUtils'
+import { requireAdminOrAbove, requireOwnership, isAdminOrAbove } from '@/lib/authUtils'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { deleteBakeObjects } from '@/lib/bake/bakeStorage'
+import { BAKE_GATE_MESSAGES } from '@/lib/bake/publishGate'
+import { exhibitionUpdateRoles } from '@/lib/exhibitionUpdateRoles'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
-import { buildExhibitionSnapshot } from '@/lib/exhibitionSnapshot'
+import { freezeExhibition } from '@/lib/exhibitionSnapshot'
 
 import { sanitizeLine } from '@/utils/sanitizeLine'
 import { slugify } from '@/utils/slugify'
@@ -111,7 +116,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     // Draft (unpublished) exhibitions are visible only to their owner or an
     // admin. And the secret `previewToken` (which unlocks the preview page)
     // must never be returned to anyone else — the public visit path is
-    // /api/exhibitions/by-url, which applies the same gate.
+    // /api/exhibitions/by-url, which applies the same gate. Neither is the
+    // draft `bake` (AR-161): an unreviewed bake no visitor may get; the one
+    // visitors get travels in `publishedSnapshot`.
     const session = await auth()
     const viewerId = session?.impersonating?.id || session?.user?.id
     const isOwnerOrAdmin =
@@ -122,7 +129,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     }
 
     if (!isOwnerOrAdmin) {
-      const { previewToken: _previewToken, ...safe } = exhibition
+      const { previewToken: _previewToken, bake: _bake, ...safe } = exhibition
       return NextResponse.json(safe)
     }
 
@@ -133,22 +140,75 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
   }
 }
 
-/* ------------------------ PUT (requires auth + ownership) ------------------------ */
+const bakeIdOf = (bake: unknown): string | null => {
+  const id = (bake as { id?: unknown } | null)?.id
+  return typeof id === 'string' ? id : null
+}
+
+const publishedBakeIdOf = (snapshot: unknown): string | null =>
+  bakeIdOf((snapshot as { exhibition?: { bake?: unknown } } | null)?.exhibition?.bake)
+
+/**
+ * After a publish replaced the snapshot: the bake visitors had before goes, unless the row,
+ * re-read now, still publishes it or holds it as the draft (a concurrent bake save or
+ * publish may have moved either pointer). A failed cleanup never fails the publish.
+ */
+async function deleteReplacedBake(exhibitionId: string, previousBakeId: string) {
+  try {
+    const now = await prisma.exhibition.findUnique({
+      where: { id: exhibitionId },
+      select: { bake: true, publishedSnapshot: true },
+    })
+    if (
+      previousBakeId === bakeIdOf(now?.bake) ||
+      previousBakeId === publishedBakeIdOf(now?.publishedSnapshot)
+    ) {
+      return
+    }
+    await deleteBakeObjects(exhibitionId, previousBakeId)
+  } catch (err) {
+    console.error('[PUT /api/exhibitions/[id]] bake cleanup failed:', err)
+    captureError(err, {
+      flow: 'admin',
+      stage: 'publish-bake-cleanup',
+      level: 'warning',
+      extra: { exhibitionId, bakeId: previousBakeId },
+    })
+  }
+}
+
+/* -------------- PUT (requires auth + ownership; publishing requires an admin) -------------- */
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
 
-    // Verify ownership before allowing update
     const currentExhibition = await prisma.exhibition.findUnique({
       where: { id },
-      select: { userId: true },
+      select: {
+        userId: true,
+        spaceId: true,
+        published: true,
+        spacePublished: true,
+        previewEnabled: true,
+      },
     })
     if (!currentExhibition)
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
-    const { error: authError } = await requireOwnership(currentExhibition.userId)
-    if (authError) return authError
 
     const body = (await request.json()) as ExhibitionUpdateBody
+
+    // Publishing is the gallery's call: whatever puts the show (or its preview) in front
+    // of people needs an admin, any admin. Every other edit is the owner's (or an
+    // impersonating admin's, or a superAdmin's).
+    const roles = exhibitionUpdateRoles(body as Record<string, unknown>)
+    if (roles.admin) {
+      const { error } = await requireAdminOrAbove()
+      if (error) return error
+    }
+    if (roles.owner) {
+      const { error } = await requireOwnership(currentExhibition.userId)
+      if (error) return error
+    }
 
     // Sanitize single-line text fields. `description` is rich-text
     // HTML — DOMPurify cleans at render. shortDescription is plain
@@ -289,15 +349,36 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.shadowDirection !== undefined)
       data.shadowDirection = Math.max(0.0, Math.min(1.0, body.shadowDirection))
 
+    // Baked spaces (AR-161) light the room from a stored bake, so a snapshot there is only
+    // ever a publish: it is frozen only when the exhibition is published after this
+    // request, and the room it shows visitors must carry a current, reviewed bake (the
+    // gate below). Other spaces keep today's snapshots, preview included.
+    const bakedSpace = isBakedSpace(currentExhibition.spaceId)
+    const publishedAfter =
+      body.published === true || body.published === false
+        ? body.published
+        : currentExhibition.published
+    const spacePublishedAfter =
+      body.spacePublished !== undefined
+        ? body.spacePublished === true
+        : currentExhibition.spacePublished
+    // One snapshot per request, however many branches below ask for it. In a baked space
+    // it carries the draft bake only when that bake passes the gate (else `bake: null`).
+    let frozen: Awaited<ReturnType<typeof freezeExhibition>> | undefined
+    const freeze = async () => (frozen ??= await freezeExhibition(id)).snapshot
+
     // Preview toggle (only meaningful when unpublished)
     if (body.previewEnabled !== undefined) {
       data.previewEnabled = body.previewEnabled
-      if (body.previewEnabled) {
+      if (bakedSpace) {
+        // The bake preview link is only a credential: it shows the live draft with its
+        // bake, so it neither freezes nor clears the visitors' snapshot.
+        data.previewToken = body.previewEnabled ? crypto.randomUUID() : null
+      } else if (body.previewEnabled) {
         // Generate a unique preview token when enabling
         data.previewToken = crypto.randomUUID()
         // Build a snapshot so the preview link serves frozen data
-        const snapshot = await buildExhibitionSnapshot(id)
-        data.publishedSnapshot = snapshot
+        data.publishedSnapshot = await freeze()
         data.hasPendingChanges = false
       } else {
         // Clear token and snapshot when disabling preview
@@ -310,8 +391,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.published === true) {
       // Publishing or re-publishing: build snapshot from current state
       data.published = true
-      const snapshot = await buildExhibitionSnapshot(id)
-      data.publishedSnapshot = snapshot
+      data.publishedSnapshot = await freeze()
       data.publishedAt = new Date()
       data.hasPendingChanges = false
       // Retire the preview credential: once the show is open to everyone the
@@ -331,22 +411,18 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     } else if (body.hasPendingChanges === false) {
       // Explicit clear of pending changes (e.g. "Update Exhibition" for preview)
       data.hasPendingChanges = false
-      // Rebuild snapshot so the preview link reflects the latest state
-      const exhibition = await prisma.exhibition.findUnique({
-        where: { id },
-        select: { previewEnabled: true },
-      })
-      if (exhibition?.previewEnabled) {
-        const snapshot = await buildExhibitionSnapshot(id)
-        data.publishedSnapshot = snapshot
+      // Rebuild snapshot so the preview link reflects the latest state. In a baked space
+      // the preview reads the live draft instead, and on a live exhibition this is
+      // "Update Exhibition": it republishes (gated below).
+      if (bakedSpace ? currentExhibition.published : currentExhibition.previewEnabled) {
+        data.publishedSnapshot = await freeze()
       }
     } else {
-      // Any other edit on a published or preview-enabled exhibition → mark as having pending changes
-      const exhibition = await prisma.exhibition.findUnique({
-        where: { id },
-        select: { published: true, previewEnabled: true },
-      })
-      if (exhibition?.published || exhibition?.previewEnabled) {
+      // Any other edit on a published or preview-enabled exhibition → mark as having pending
+      // changes. (In a baked space, issuing or revoking the preview link is not an edit.)
+      const previewLinkOnly =
+        bakedSpace && Object.keys(body).every((key) => key === 'previewEnabled')
+      if (!previewLinkOnly && (currentExhibition.published || currentExhibition.previewEnabled)) {
         data.hasPendingChanges = true
       }
     }
@@ -355,22 +431,50 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.spacePublished !== undefined) {
       data.spacePublished = body.spacePublished
 
-      if (body.spacePublished === true) {
+      // A baked room switched on while the page is unpublished is frozen later, by the
+      // publish that shows it (`published: true` always re-freezes).
+      if (body.spacePublished === true && (!bakedSpace || publishedAfter)) {
         // The snapshot freezes the room at the moment it is published. An
         // exhibition whose page went live weeks before its room was finished
         // still carries that empty early snapshot, so revealing the room has
         // to re-freeze it — otherwise visitors walk into the room as it was,
         // not as it is. Switching OFF deliberately leaves the snapshot alone,
         // so a room taken down for repairs is not lost.
-        data.publishedSnapshot = await buildExhibitionSnapshot(id)
+        data.publishedSnapshot = await freeze()
         data.hasPendingChanges = false
       }
+    }
+
+    // --- Baked room gate (AR-161) ---
+    // A new snapshot that puts a baked room in front of visitors must carry a bake made
+    // for the room exactly as it stands, and one the admin reviewed. The verdict comes
+    // from the very read the snapshot froze, so what is checked is what ships. A refusal
+    // writes nothing. A page-only publish (room switched off) goes through, its snapshot
+    // without the refused bake.
+    const refusal = frozen?.bakeRefusal
+    if (bakedSpace && refusal && publishedAfter && spacePublishedAfter) {
+      return NextResponse.json(
+        { error: refusal, message: BAKE_GATE_MESSAGES[refusal] },
+        { status: 409 },
+      )
+    }
+
+    // The bake visitors had until now, so its files can go once the new snapshot is in.
+    let previousBakeId: string | null = null
+    if (frozen) {
+      const previous = await prisma.exhibition.findUnique({
+        where: { id },
+        select: { publishedSnapshot: true },
+      })
+      previousBakeId = publishedBakeIdOf(previous?.publishedSnapshot)
     }
 
     const updated = await prisma.exhibition.update({
       where: { id },
       data,
     })
+
+    if (frozen && previousBakeId) await deleteReplacedBake(id, previousBakeId)
 
     // Revalidate caches
     revalidateTag(`exhibition-${updated.url}`, { expire: 0 })

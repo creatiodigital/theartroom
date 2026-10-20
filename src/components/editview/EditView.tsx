@@ -3,6 +3,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
+import { BakePanel } from '@/components/editview/BakePanel'
 import { CameraPanel } from '@/components/editview/CameraPanel'
 import { FloorPanel } from '@/components/editview/FloorPanel'
 import { LightingPanel } from '@/components/editview/LightingPanel'
@@ -43,6 +44,9 @@ function EditView() {
   const isWindowsPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isWindowsPanelOpen,
   )
+  const isBakePanelOpen: boolean = useSelector(
+    (state: RootState) => state.dashboard.isBakePanelOpen,
+  )
 
   // The scene mounts `ExitTrigger` here exactly as it does for a visitor, so
   // walking to the end of the entrance corridor raises the prompt in the editor
@@ -73,6 +77,7 @@ function EditView() {
 
           {isWallCeilingPanelOpen && <WallCeilingPanel />}
           {isWindowsPanelOpen && <WindowsPanel />}
+          {isBakePanelOpen && <BakePanel />}
 
           <ExitPrompt
             open={isExitPromptOpen}

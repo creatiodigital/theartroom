@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 
 const DEFAULT_AMBIENT_COLOR = '#e4e8f2'
 const DEFAULT_AMBIENT_INTENSITY = 1.0
@@ -60,10 +61,14 @@ const AmbientLight = () => {
     (state: RootState) => state.exhibition.ambientLightIntensity ?? DEFAULT_AMBIENT_INTENSITY,
   )
 
+  // AR-161: the baked look has no ambient fill — no physical source gives one; the room's
+  // bounce is in its bake and its captured environment.
+  const look = useBakedLook()
+
   return (
     <ambientLight
-      color={AMBIENT_COLOR_OVERRIDE ?? ambientLightColor}
-      intensity={AMBIENT_INTENSITY_OVERRIDE ?? ambientLightIntensity}
+      color={look.baked ? '#ffffff' : (AMBIENT_COLOR_OVERRIDE ?? ambientLightColor)}
+      intensity={look.baked ? 0 : (AMBIENT_INTENSITY_OVERRIDE ?? ambientLightIntensity)}
     />
   )
 }

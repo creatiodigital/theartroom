@@ -1,12 +1,22 @@
 import { useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { Mesh, BufferGeometry, DoubleSide, Vector3, SpotLight, MeshStandardMaterial } from 'three'
+import {
+  Mesh,
+  BufferGeometry,
+  DoubleSide,
+  Matrix4,
+  Vector3,
+  SpotLight,
+  MeshStandardMaterial,
+} from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import type { RootState } from '@/redux/store'
-import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
+import { getNodeIndices, worldMatrixOf } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { useBakedDimmer, useLampLevel } from '@/components/scene/spaces/objects/useLampDimmer'
+import { lookSpot, useBakedLook } from '@/components/scene/bake/bakedLook'
 
 interface RecessedLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -16,7 +26,6 @@ interface RecessedLampProps {
 }
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
-const DEFAULT_LAMP_INTENSITY = 4.0
 
 /**
  * Recessed lamp using <primitive> to preserve Blender hierarchy (body → bulb).
@@ -33,18 +42,46 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
 }) => {
   const tintedPlastic = useAmbientLightColor('#ffffff')
 
-  const lampColor = useSelector(
+  // AR-161: in the baked look the lamps' color is the space's, and their beam and throw are the
+  // diffused fixture's (`lookSpot`): the stored angle and distance only shape today's look.
+  const look = useBakedLook()
+  const storedLampColor = useSelector(
     (state: RootState) => state.exhibition.recessedLampColor ?? DEFAULT_LAMP_COLOR,
   )
-  const lampIntensity = useSelector(
-    (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
-  )
+  const lampColor = look.baked ? look.space.lampColor : storedLampColor
+  const lampIntensity = useLampLevel('recessed')
+  // AR-161: in a baked space the ceiling-lamp dimmer (50–100%) scales the lamps' light and, in
+  // the baked look, their discs with it (at 100% both are exactly the approved ones).
+  const dimmer = useBakedDimmer('recessed')
+  const discShare = look.baked && dimmer !== undefined ? dimmer : 1
   // 3, not 2: it must sit clear of BLOOM_THRESHOLD (2.0 in Effects.tsx) or these bulbs stop
   // glowing when the threshold is raised to keep lit walls from blooming.
-  const bulbEmissiveIntensity = disableSpotlights ? lampIntensity : 3
+  const bulbEmissiveIntensity = (disableSpotlights ? lampIntensity : 3) * discShare
   const lampAngle = useSelector((state: RootState) => state.exhibition.recessedLampAngle ?? 0.45)
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
+  )
+  const bulbSpot = lookSpot(
+    look,
+    {
+      intensity: lampIntensity * 2,
+      angle: lampAngle,
+      penumbra: 0.8,
+      distance: lampDistance,
+    },
+    'recessed',
+    dimmer,
+  )
+  const plainSpot = lookSpot(
+    look,
+    {
+      intensity: lampIntensity * 3,
+      angle: lampAngle,
+      penumbra: 1,
+      distance: lampDistance,
+    },
+    'recessed',
+    dimmer,
   )
 
   // Resolve which indices to render — explicit list or sequential fallback
@@ -127,9 +164,13 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
       const bulbNode = nodes[`recessedLampBulb${i}`]
 
       if (bodyNode && bulbNode) {
-        bodyNode.updateWorldMatrix(true, true)
-        const worldPos = new Vector3()
-        bulbNode.getWorldPosition(worldPos)
+        // Not `getWorldPosition`: Vienna's bodies are world-baked yet still hang off their room
+        // Empty, so it applied the room offset twice — every spotlight at 2× its bulb, above the
+        // ceiling and outside the building. `worldMatrixOf` is the plain world matrix elsewhere.
+        bulbNode.updateMatrix()
+        const worldPos = new Vector3().setFromMatrixPosition(
+          new Matrix4().multiplyMatrices(worldMatrixOf(bodyNode), bulbNode.matrix),
+        )
         posMap.set(i, worldPos)
       } else if (bodyNode) {
         posMap.set(i, new Vector3(bodyNode.position.x, bodyNode.position.y, bodyNode.position.z))
@@ -195,10 +236,10 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
                 <spotLight
                   position={[bulbPos.x, bulbPos.y, bulbPos.z]}
                   color={lampColor}
-                  intensity={lampIntensity * 2}
-                  angle={lampAngle}
-                  penumbra={0.8}
-                  distance={lampDistance}
+                  intensity={bulbSpot.intensity}
+                  angle={bulbSpot.angle}
+                  penumbra={bulbSpot.penumbra}
+                  distance={bulbSpot.distance}
                   decay={2}
                   castShadow={false}
                 />
@@ -226,10 +267,10 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
             <spotLight
               position={[pos.x, pos.y, pos.z]}
               color={lampColor}
-              intensity={lampIntensity * 3}
-              angle={lampAngle}
-              penumbra={1}
-              distance={lampDistance}
+              intensity={plainSpot.intensity}
+              angle={plainSpot.angle}
+              penumbra={plainSpot.penumbra}
+              distance={plainSpot.distance}
               decay={2}
               castShadow={false}
             />

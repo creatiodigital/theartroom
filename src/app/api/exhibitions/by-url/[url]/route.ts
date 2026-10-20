@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { isBakeRecord } from '@/lib/bake/bakeRecord'
+import { fingerprintRoom } from '@/lib/bake/loadBakeFingerprint'
 import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
 import prisma from '@/lib/prisma'
 
@@ -83,6 +86,22 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
     }
 
+    // --- Bake preview link (AR-161) ---
+    // In a baked space a valid preview token shows the LIVE draft with its draft bake, for
+    // unpublished and live exhibitions alike; visitors without the token never get here.
+    // Anything else (no/wrong/disabled token, other spaces) falls through to today's answers.
+    const previewParam = _req.nextUrl.searchParams.get('preview')
+    if (previewParam && isBakedSpace(exhibition.spaceId)) {
+      // Fresh DB read for access control — never trust the cache for this
+      const fresh = await prisma.exhibition.findUnique({
+        where: { url },
+        select: { previewEnabled: true, previewToken: true },
+      })
+      if (!!fresh?.previewEnabled && !!fresh.previewToken && previewParam === fresh.previewToken) {
+        return getBakePreviewResponse(exhibition)
+      }
+    }
+
     // Two switches, one gate. `published` decides whether the exhibition exists
     // publicly at all; `spacePublished` decides only whether its 3D room is
     // open. This endpoint serves the room, so either being off closes it.
@@ -93,7 +112,6 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     // notFound() to /visit/page.tsx — it would 404 before this code runs and
     // lock the owner out of their own room.
     if (!exhibition.published || !exhibition.spacePublished) {
-      const previewParam = _req.nextUrl.searchParams.get('preview')
       let isValidPreview = false
 
       if (previewParam) {
@@ -275,6 +293,10 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         radiatorColor: snapshotExhibition.radiatorColor,
         // Autofocus groups
         autofocusGroups: snapshotExhibition.autofocusGroups,
+        // Baked light: the PUBLISHED bake, from the snapshot — never the live
+        // column, which holds the unreviewed draft (the `...exhibition` spread
+        // above carries it, so it must be overridden here).
+        bake: snapshotExhibition.bake ?? null,
         // Snapshot positions enriched with live artwork metadata — consumed
         // directly by the 3D scene (no second request).
         exhibitionArtworks: enrichedExhibitionArtworks,
@@ -290,6 +312,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
     return NextResponse.json({
       ...exhibition,
+      // No snapshot, no published bake; the live column is a draft.
+      bake: null,
       // Override the raw (already placed-only, per the query's `where`)
       // relation with its narrowed type — same reasoning as the snapshot
       // branch above: this feeds the 3D scene directly.
@@ -300,6 +324,39 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     console.error('[GET /api/exhibitions/by-url/[url]] error:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: 'Failed to fetch exhibition' }, { status: 500 })
   }
+}
+
+type PublicExhibitionRow = NonNullable<Awaited<ReturnType<typeof getExhibition>>>
+
+/**
+ * The bake preview answer: the live draft in the legacy branch's shape, plus whether the
+ * draft bake matches the draft room. Judged from the very rows returned, so what is checked
+ * is what is shown. The bake rides along only when current — a stale one would light a room
+ * it wasn't made for. Revalidated on every use, never served from a shared cache: next.config.mjs sends
+ * `Cache-Control: no-cache` for all of /api/exhibitions/:path* (the query string is not part
+ * of that match, so it covers `?preview=`).
+ */
+function getBakePreviewResponse(exhibition: PublicExhibitionRow) {
+  const { publishedSnapshot: _publishedSnapshot, ...live } = exhibition
+  const placedExhibitionArtworks = toPlacedRows(exhibition.exhibitionArtworks)
+  const artworks = placedExhibitionArtworks
+    .map((ea) => ea.artwork)
+    .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
+
+  const draft = exhibition.bake
+  const bakeStatus = !isBakeRecord(draft)
+    ? 'missing'
+    : draft.fingerprint === fingerprintRoom(exhibition, exhibition.exhibitionArtworks)
+      ? 'current'
+      : 'stale'
+
+  return NextResponse.json({
+    ...live,
+    bake: bakeStatus === 'current' ? draft : null,
+    bakeStatus,
+    exhibitionArtworks: placedExhibitionArtworks,
+    artworks,
+  })
 }
 
 // Edit mode: always fresh, never cached
@@ -362,6 +419,14 @@ async function getEditModeResponse(url: string) {
 
   return NextResponse.json({
     ...exhibition,
+    // `bake` is the draft here. The room's current light fingerprint (for the
+    // stale check) is admin-only: bakes are made and reviewed by admins. Judged
+    // from the very rows returned (the full exhibition row and every placed
+    // row, with its artwork's type and visibility), so a save between two reads
+    // can never label this room with another room's fingerprint.
+    ...(isAdminOrAbove && {
+      bakeFingerprint: fingerprintRoom(exhibition, exhibition.exhibitionArtworks),
+    }),
     exhibitionArtworks: placedExhibitionArtworks,
     artworks,
   })

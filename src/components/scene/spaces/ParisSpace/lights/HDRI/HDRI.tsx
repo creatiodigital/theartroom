@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
 import { assetUrl } from '@/lib/assetUrl'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import { RoomEnvironmentCapture } from '@/components/scene/RoomEnvironmentCapture'
 
 // PERF TEST: Set to false to disable HDRI environment
 const ENABLE_HDRI = true
@@ -65,12 +67,17 @@ const HDRI = () => {
   const hdriEnvironment = AVAILABLE_HDRIS.includes(rawHdri as (typeof AVAILABLE_HDRIS)[number])
     ? rawHdri
     : 'soil'
-  const windowTransparency = useSelector(
+  const storedTransparency = useSelector(
     (state: RootState) => state.exhibition.windowTransparency ?? false,
   )
   const hdriRotation = useSelector(
     (state: RootState) => state.exhibition.hdriRotation ?? DEFAULT_HDRI_ROTATION,
   )
+
+  // AR-161: in the baked look the environment is the real room, captured, and the window glass
+  // is always on (no sky shows through it).
+  const look = useBakedLook()
+  const windowTransparency = look.baked ? false : storedTransparency
 
   // Skip HDRI if disabled for performance testing
   if (!ENABLE_HDRI) return null
@@ -82,61 +89,65 @@ const HDRI = () => {
       <HDRIErrorBoundary>
         {/* Reflections: a synthetic white room. Not visible in the scene — Lightformers live
             in the portal scene that is rendered into the cubemap, never in the gallery. */}
-        <Environment frames={1} resolution={256} environmentIntensity={ROOM_ENV_INTENSITY}>
-          {/* Ceiling: the dominant source in a gallery, and the reason a polished floor
+        {look.baked ? (
+          <RoomEnvironmentCapture intensity={1} />
+        ) : (
+          <Environment frames={1} resolution={256} environmentIntensity={ROOM_ENV_INTENSITY}>
+            {/* Ceiling: the dominant source in a gallery, and the reason a polished floor
               reads bright rather than mirror-dark. */}
-          <Lightformer
-            form="rect"
-            intensity={1.0}
-            scale={[12, 12, 1]}
-            position={[0, 4, 0]}
-            rotation={[Math.PI / 2, 0, 0]}
-            color="#ffffff"
-          />
-          {/* Four walls. White walls bounce most of the light in a room like this, so they
+            <Lightformer
+              form="rect"
+              intensity={1.0}
+              scale={[12, 12, 1]}
+              position={[0, 4, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              color="#ffffff"
+            />
+            {/* Four walls. White walls bounce most of the light in a room like this, so they
               carry real weight rather than being a rim detail. */}
-          <Lightformer
-            form="rect"
-            intensity={0.55}
-            scale={[12, 4, 1]}
-            position={[0, 1.5, -6]}
-            color="#ffffff"
-          />
-          <Lightformer
-            form="rect"
-            intensity={0.55}
-            scale={[12, 4, 1]}
-            position={[0, 1.5, 6]}
-            rotation={[0, Math.PI, 0]}
-            color="#ffffff"
-          />
-          <Lightformer
-            form="rect"
-            intensity={0.55}
-            scale={[12, 4, 1]}
-            position={[-6, 1.5, 0]}
-            rotation={[0, Math.PI / 2, 0]}
-            color="#ffffff"
-          />
-          <Lightformer
-            form="rect"
-            intensity={0.55}
-            scale={[12, 4, 1]}
-            position={[6, 1.5, 0]}
-            rotation={[0, -Math.PI / 2, 0]}
-            color="#ffffff"
-          />
-          {/* Floor: dark and slightly warm, standing in for the parquet. Without it the
+            <Lightformer
+              form="rect"
+              intensity={0.55}
+              scale={[12, 4, 1]}
+              position={[0, 1.5, -6]}
+              color="#ffffff"
+            />
+            <Lightformer
+              form="rect"
+              intensity={0.55}
+              scale={[12, 4, 1]}
+              position={[0, 1.5, 6]}
+              rotation={[0, Math.PI, 0]}
+              color="#ffffff"
+            />
+            <Lightformer
+              form="rect"
+              intensity={0.55}
+              scale={[12, 4, 1]}
+              position={[-6, 1.5, 0]}
+              rotation={[0, Math.PI / 2, 0]}
+              color="#ffffff"
+            />
+            <Lightformer
+              form="rect"
+              intensity={0.55}
+              scale={[12, 4, 1]}
+              position={[6, 1.5, 0]}
+              rotation={[0, -Math.PI / 2, 0]}
+              color="#ffffff"
+            />
+            {/* Floor: dark and slightly warm, standing in for the parquet. Without it the
               underside of every frame reflects white and the room loses its floor. */}
-          <Lightformer
-            form="rect"
-            intensity={0.12}
-            scale={[12, 12, 1]}
-            position={[0, -1.5, 0]}
-            rotation={[-Math.PI / 2, 0, 0]}
-            color="#6b5a4a"
-          />
-        </Environment>
+            <Lightformer
+              form="rect"
+              intensity={0.12}
+              scale={[12, 12, 1]}
+              position={[0, -1.5, 0]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              color="#6b5a4a"
+            />
+          </Environment>
+        )}
 
         {/* Background stays the real HDR: this is what shows THROUGH the windows, where an
             outdoor image is correct. `background="only"` keeps it from touching reflections. */}

@@ -188,6 +188,30 @@
   color: var(--color-badge-warning-text);
 }
 
+// Why the server refused a publish (AR-161: a baked room needs a current, reviewed
+// bake), under the row's actions, with the way to fix it.
+.publishRefusal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  max-width: 16rem;
+  margin-top: var(--space-2);
+  margin-left: auto;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  text-align: right;
+
+  p {
+    font-size: inherit;
+  }
+
+  a {
+    color: var(--color-text-primary);
+    text-decoration: underline;
+  }
+}
+
 /* Actions - Button groups */
 .actions {
   display: flex;

@@ -18,6 +18,9 @@ import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
+import { lookSpot, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { useBakedDimmer, useLampLevel } from '@/components/scene/spaces/objects/useLampDimmer'
+import { DIMMER_STANDARD } from '@/lib/bake/dimmer'
 
 interface TrackLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -67,6 +70,7 @@ const TrackSpotlight: React.FC<{
 }> = ({ position, aimDirection, color, intensity, angle, distance }) => {
   const lightRef = useRef<SpotLight>(null)
   const targetRef = useRef<Object3D>(null)
+  const spot = lookSpot(useBakedLook(), { intensity, angle, penumbra: 0.8, distance }, 'track')
 
   useEffect(() => {
     if (lightRef.current && targetRef.current) {
@@ -88,10 +92,10 @@ const TrackSpotlight: React.FC<{
         ref={lightRef}
         position={[position.x, position.y, position.z]}
         color={color}
-        intensity={intensity}
-        angle={angle}
-        penumbra={0.8}
-        distance={distance}
+        intensity={spot.intensity}
+        angle={spot.angle}
+        penumbra={spot.penumbra}
+        distance={spot.distance}
         decay={2}
         castShadow={false}
       />
@@ -136,18 +140,28 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceFeatures = getSpaceFeatures(spaceId)
 
-  const materialColor = useSelector(
+  // AR-161: in the baked look the fixture — body color, light color, beam — is the space's.
+  const look = useBakedLook()
+  const storedMaterialColor = useSelector(
     (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_MATERIAL_COLOR,
   )
+  const materialColor = look.baked ? look.space.trackBodyColor : storedMaterialColor
   const tintedMaterial = useAmbientLightColor(materialColor)
 
-  const lampColor = useSelector(
+  const storedLampColor = useSelector(
     (state: RootState) => state.exhibition.trackLampColor ?? DEFAULT_LAMP_COLOR,
   )
-  const lampIntensity = useSelector(
-    (state: RootState) => state.exhibition.trackLampIntensity ?? 4.0,
-  )
-  const lampAngle = useSelector((state: RootState) => state.exhibition.trackLampAngle ?? 0.45)
+  const lampColor = look.baked ? look.space.trackLampColor : storedLampColor
+  const storedLevel = useLampLevel('track')
+  // AR-161: in a baked space the track dimmer (50–100%) scales the lamps' light — the space's
+  // track scale × level/4 of the standard — and, in the baked look, their discs with it (at 100%
+  // both are exactly the approved ones). The editor's realtime preview keeps the stored level.
+  const dimmer = useBakedDimmer('track')
+  const bakedLook = look.baked && dimmer !== undefined
+  const lampIntensity = bakedLook ? dimmer * DIMMER_STANDARD : storedLevel
+  const storedAngle = useSelector((state: RootState) => state.exhibition.trackLampAngle ?? 0.45)
+  const lampAngle = look.baked ? look.space.trackLampAngle : storedAngle
+  // The baked look has no cut-off (`lookSpot`): the throw only shapes today's look.
   const lampDistance = useSelector((state: RootState) => state.exhibition.trackLampDistance ?? 5.0)
 
   // Per-lamp settings (rotation + on/off + offset)
@@ -167,7 +181,7 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   //
   // ⚠️ Coupled to BLOOM_THRESHOLD. Raise that and track lamps stay dark; lower it below 0.8
   // and they start glowing again. The two numbers only mean anything together.
-  const bulbEmissiveIntensity = 0.8
+  const bulbEmissiveIntensity = 0.8 * (bakedLook ? dimmer : 1)
 
   // Shared materials — all track lamps reuse the same instances
   const armBodyMaterial = useMemo(

@@ -1,6 +1,7 @@
 import { AmbientLight } from './AmbientLight'
 import { HDRI } from './HDRI'
 import { ShadowSetup } from '@/components/scene/spaces/objects/ShadowSetup'
+import { RoomBake } from '@/components/scene/bake/RoomBake'
 
 /**
  * The shared lighting rig. Paris and Madrid mount it from their own `lights/index`; Vienna
@@ -32,6 +33,8 @@ export const Lights = () => {
       <AmbientLight />
       <HDRI />
       <ShadowSetup />
+      {/* AR-161: the stored bake, or the admin's bake (bake mode). */}
+      <RoomBake />
     </>
   )
 }

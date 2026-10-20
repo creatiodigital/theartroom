@@ -8,6 +8,7 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { hideWallCeilingPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
@@ -29,6 +30,10 @@ const WallCeilingPanel = () => {
   }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  // AR-161 (spec rule 7): in a baked space the wall paint is the artist's; the ceiling is white
+  // and the walls' brightness is the light's, both the space's.
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const bakedSpace = isBakedSpace(spaceId)
   const wallColor = useSelector(
     (state: RootState) => state.exhibition.wallColor ?? DEFAULT_WALL_COLOR,
   )
@@ -45,11 +50,10 @@ const WallCeilingPanel = () => {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallColor,
-          ceilingColor,
-          wallBrightness,
-        }),
+        // A baked space's panel saves only what it shows.
+        body: JSON.stringify(
+          bakedSpace ? { wallColor } : { wallColor, ceilingColor, wallBrightness },
+        ),
       })
 
       if (response.ok) {
@@ -81,40 +85,44 @@ const WallCeilingPanel = () => {
       </div>
 
       {/* Ceiling Color Section */}
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Ceiling Color
-        </Text>
+      {!bakedSpace && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Ceiling Color
+          </Text>
 
-        <div className={styles.field}>
-          <label className={styles.label}>Color</label>
-          <ColorPicker
-            textColor={ceilingColor}
-            onColorSelect={(color) => set('ceilingColor', color)}
-          />
+          <div className={styles.field}>
+            <label className={styles.label}>Color</label>
+            <ColorPicker
+              textColor={ceilingColor}
+              onColorSelect={(color) => set('ceilingColor', color)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Temporary: Lambert Brightness Boost */}
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Wall Brightness
-        </Text>
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Brightness</label>
-            <span className={styles.sliderValue}>{wallBrightness.toFixed(2)}</span>
+      {!bakedSpace && (
+        <div className={styles.section}>
+          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+            Wall Brightness
+          </Text>
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Brightness</label>
+              <span className={styles.sliderValue}>{wallBrightness.toFixed(2)}</span>
+            </div>
+            <Slider
+              min={1.0}
+              max={5.0}
+              step={0.05}
+              value={wallBrightness}
+              onChange={(v) => set('wallBrightness', v)}
+              aria-label="Wall Brightness"
+            />
           </div>
-          <Slider
-            min={1.0}
-            max={5.0}
-            step={0.05}
-            value={wallBrightness}
-            onChange={(v) => set('wallBrightness', v)}
-            aria-label="Wall Brightness"
-          />
         </div>
-      </div>
+      )}
 
       {/* Actions */}
       <div className={styles.actions}>
