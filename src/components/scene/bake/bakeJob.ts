@@ -51,7 +51,9 @@ export class BakeWait {
 export interface BakeRoom {
   /** The artist's wall color (the walls' albedo). */
   wall: string
-  /** The space's look: its lamp ratings, daylight, sun, ceiling and paint. */
+  /** The artist's ceiling color (the ceiling's albedo). */
+  ceiling: string
+  /** The space's look: its lamp ratings, daylight, sun and paint. */
   look: SpaceLook
   /**
    * The ceiling-lamp dimmer's share (0.5–1): the lamps carry it already (`lookSpot`); a
@@ -82,7 +84,11 @@ export const startBake = (
 ): StartedBake => {
   const floor = scene.getObjectByName('floor') as Mesh | undefined
   // Walls, ceiling, floor, artworks (measured only) and fixtures, on our own unwrap.
-  const prepared = prepareReceivers(scene, { wall: room.wall, look: room.look })
+  const prepared = prepareReceivers(scene, {
+    wall: room.wall,
+    ceiling: room.ceiling,
+    look: room.look,
+  })
   restore.push(prepared.restore)
   const { receivers } = prepared
   const unwrap = { hash: prepared.unwrapHash, stats: prepared.unwrapStats }

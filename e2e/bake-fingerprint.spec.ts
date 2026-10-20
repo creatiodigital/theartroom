@@ -68,6 +68,21 @@ test('artist decor stales the bake', () => {
   ).not.toBe(f)
 })
 
+test("the artist's track beam, throw and ceiling color stale the bake", () => {
+  // Eduardo 2026-10-20: the artist's again, baked like the wall color.
+  const f = computeBakeFingerprint(base)
+  const each = [{ trackLampAngle: 0.5 }, { trackLampDistance: 3 }, { ceilingColor: '#e8e0cd' }].map(
+    (patch) => fp((b) => Object.assign(b.exhibition, patch)),
+  )
+  for (const changed of each) expect(changed).not.toBe(f)
+  expect(new Set(each).size).toBe(3)
+  // No cut-off (0) is a throw of its own, not a missing one.
+  expect(fp((b) => Object.assign(b.exhibition, { trackLampDistance: 0 }))).not.toBe(f)
+  expect(fp((b) => Object.assign(b.exhibition, { trackLampDistance: 0 }))).not.toBe(
+    fp((b) => Object.assign(b.exhibition, { trackLampDistance: 5 })),
+  )
+})
+
 test('space-owned columns do not stale the bake', () => {
   const f = computeBakeFingerprint(base)
   expect(

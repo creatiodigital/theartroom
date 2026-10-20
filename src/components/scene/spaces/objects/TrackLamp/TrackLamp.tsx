@@ -140,7 +140,8 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceFeatures = getSpaceFeatures(spaceId)
 
-  // AR-161: in the baked look the fixture — body color, light color, beam — is the space's.
+  // AR-161: in the baked look the fixture — body and light color — is the space's; the beam and
+  // throw are the artist's (stored, baked and fingerprinted).
   const look = useBakedLook()
   const storedMaterialColor = useSelector(
     (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_MATERIAL_COLOR,
@@ -159,9 +160,8 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   const dimmer = useBakedDimmer('track')
   const bakedLook = look.baked && dimmer !== undefined
   const lampIntensity = bakedLook ? dimmer * DIMMER_STANDARD : storedLevel
-  const storedAngle = useSelector((state: RootState) => state.exhibition.trackLampAngle ?? 0.45)
-  const lampAngle = look.baked ? look.space.trackLampAngle : storedAngle
-  // The baked look has no cut-off (`lookSpot`): the throw only shapes today's look.
+  const lampAngle = useSelector((state: RootState) => state.exhibition.trackLampAngle ?? 0.45)
+  // three's cut-off distance, 0 = none (`trackThrow.ts`), in both looks.
   const lampDistance = useSelector((state: RootState) => state.exhibition.trackLampDistance ?? 5.0)
 
   // Per-lamp settings (rotation + on/off + offset)

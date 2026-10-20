@@ -72,6 +72,7 @@ const StoredBake = ({ bake }: { bake: BakeRecord }) => {
   const gl = useThree((s) => s.gl)
   const scene = useThree((s) => s.scene)
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
+  const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
   const floorMaterial = useSelector((state: RootState) => state.exhibition.floorMaterial)
   // Only mounted in the approved look (`RoomBake`): the space's look is the one baked.
   const look = useBakedLook()
@@ -94,8 +95,8 @@ const StoredBake = ({ bake }: { bake: BakeRecord }) => {
   }))
 
   // Everything the apply needs, read when it happens (it happens once per mount).
-  const latest = useRef({ bake, maps, plaster, wallColor, space, floorMaterial })
-  latest.current = { bake, maps, plaster, wallColor, space, floorMaterial }
+  const latest = useRef({ bake, maps, plaster, wallColor, ceilingColor, space, floorMaterial })
+  latest.current = { bake, maps, plaster, wallColor, ceilingColor, space, floorMaterial }
   const job = useRef({
     applied: false,
     undo: null as (() => void) | null,
@@ -159,6 +160,7 @@ const StoredBake = ({ bake }: { bake: BakeRecord }) => {
       if (!now.space) throw new Error('A stored bake outside a baked space')
       const result = applyStoredBake(scene, now.bake, now.maps, now.plaster, {
         wall: now.wallColor,
+        ceiling: now.ceilingColor,
         look: now.space,
       })
       if (result.ok) {

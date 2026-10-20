@@ -1,7 +1,6 @@
 import type { Object3D } from 'three'
 
 import type { BakeRecord } from '@/lib/bake/bakeRecord'
-import type { SpaceLook } from '@/lib/bake/spaceLooks'
 import { requestRoomRecapture } from '@/components/scene/RoomEnvironmentCapture'
 
 import {
@@ -14,7 +13,7 @@ import { BAKE_DEBUG } from './bakedLook'
 import { setMeteredExposure, setMeteredWhiteBalance } from './bakeState'
 import { brightenWindows } from './daylight'
 import { unwrapMatches } from './hashUnwrap'
-import { prepareReceivers } from './receivers'
+import { prepareReceivers, type RoomPaint } from './receivers'
 
 /**
  * ⚠️ AR-161 — a stored bake onto the room: what the admin's review and every visitor run (no
@@ -43,7 +42,8 @@ export type StoredBakeResult =
  * Applies `bake` (its maps already decoded, in `maps`) to the room. The maps fit only the unwrap
  * they were baked into: when this room's unwrap no longer matches, nothing is applied (`ok: false`
  * — never a misaligned bake). A throw midway is undone the same way. `room`: the artist's wall
- * color and the space's look, as the bake took them (the receivers' albedo, the window daylight).
+ * and ceiling colors and the space's look, as the bake took them (the receivers' albedo, the
+ * window daylight).
  * On success, `undo` puts back every change.
  */
 export const applyStoredBake = (
@@ -51,7 +51,7 @@ export const applyStoredBake = (
   bake: BakeRecord,
   maps: BakedMapTexture[],
   plaster: PlasterTextures | null,
-  room: { wall: string; look: SpaceLook },
+  room: RoomPaint,
 ): StoredBakeResult => {
   const undos: (() => void)[] = []
   // Last change first.

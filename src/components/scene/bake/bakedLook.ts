@@ -19,7 +19,8 @@ import { useBakePage, type BakePage } from './bakePage'
  *   sun as the space rates them (`spaceLooks`) — on physically based surfaces: matte paper and
  *   paint, no ambient fill, the room itself as the environment, Khronos PBR Neutral at the space's
  *   fixed camera, bloom on the lamps and window glass, every artwork image exactly its file. The values
- *   the space owns replace the exhibition's stored ones (`SpaceLook`).
+ *   the space owns replace the exhibition's stored ones (`SpaceLook`); the artist's — wall and
+ *   ceiling color, the dimmers, the track lamps' beam, throw, aim and on/off — are the stored ones.
  * - Today's realtime look (`TODAY_LOOK`): exactly the production look from before AR-161 — the 3D
  *   editor's live preview, every space without a bake, and an exhibition in a baked space until it
  *   has one.
@@ -133,8 +134,10 @@ const TRACK_PENUMBRA = 0.4
  * - downlights (`recessed`, round lamps) are diffused ceiling fixtures at the space's rating — a
  *   90° field whose smoothstep falloff integrates to π·I₀, so Φ = π·I₀ (lm → cd → three units) —
  *   times the artist's ceiling-lamp `dimmer` (50–100%; the stored level no longer switches them);
- * - track heads keep their aim and beam at the space's scale, with a crisp edge;
- * - every lamp falls off by the inverse square alone, with no cut-off distance.
+ * - track heads keep their aim, beam and throw (the artist's) at the space's scale, with a crisp
+ *   edge — the throw is three's `distance` (`trackThrow.ts`; 0, no cut-off, by default), which
+ *   the bake applies exactly as three does;
+ * - downlights fall off by the inverse square alone, with no cut-off distance.
  */
 export const lookSpot = (
   look: LookState,
@@ -153,7 +156,7 @@ export const lookSpot = (
     intensity: spot.intensity * look.space.trackScale,
     angle: spot.angle,
     penumbra: TRACK_PENUMBRA,
-    distance: 0,
+    distance: spot.distance,
   }
 }
 

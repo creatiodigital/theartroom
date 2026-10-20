@@ -75,12 +75,9 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
 
   // Independent wall & ceiling colors
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
-  const storedCeilingColor = useSelector(
-    (state: RootState) => state.exhibition.ceilingColor ?? '#ffffff',
-  )
-  // AR-161: in the baked look the ceiling is the space's (white), the walls the artist's.
+  const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
+  // AR-161: in the baked look too, the walls and the ceiling are the artist's colors.
   const look = useBakedLook()
-  const ceilingColor = look.baked ? look.space.ceilingColor : storedCeilingColor
 
   // Load external baked textures
   const wallTexture = useKTX2(assetUrl('/assets/spaces/madrid/textures/mwall2.ktx2'), '/basis/')

@@ -9,6 +9,7 @@ import { requireAdminOrAbove, requireOwnership, isAdminOrAbove } from '@/lib/aut
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { deleteBakeObjects } from '@/lib/bake/bakeStorage'
 import { BAKE_GATE_MESSAGES } from '@/lib/bake/publishGate'
+import { clampTrackThrow } from '@/lib/bake/trackThrow'
 import { exhibitionUpdateRoles } from '@/lib/exhibitionUpdateRoles'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
@@ -280,8 +281,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.trackLampMaterialColor = body.trackLampMaterialColor
     if (body.trackLampAngle !== undefined)
       data.trackLampAngle = Math.max(0.1, Math.min(1.2, body.trackLampAngle))
+    // 1–10 m, or 0: no cut-off.
     if (body.trackLampDistance !== undefined)
-      data.trackLampDistance = Math.max(1, Math.min(10, body.trackLampDistance))
+      data.trackLampDistance = clampTrackThrow(body.trackLampDistance)
     if (body.trackLampSettings !== undefined)
       data.trackLampSettings =
         body.trackLampSettings === null ? Prisma.JsonNull : body.trackLampSettings

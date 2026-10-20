@@ -30,8 +30,9 @@ const WallCeilingPanel = () => {
   }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
-  // AR-161 (spec rule 7): in a baked space the wall paint is the artist's; the ceiling is white
-  // and the walls' brightness is the light's, both the space's.
+  // AR-161 (spec rule 7): in a baked space the wall and ceiling paint are the artist's (the bake
+  // takes both colors; the ceiling since Eduardo 2026-10-20); the walls' brightness is the light's,
+  // the space's.
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const bakedSpace = isBakedSpace(spaceId)
   const wallColor = useSelector(
@@ -52,7 +53,7 @@ const WallCeilingPanel = () => {
         headers: { 'Content-Type': 'application/json' },
         // A baked space's panel saves only what it shows.
         body: JSON.stringify(
-          bakedSpace ? { wallColor } : { wallColor, ceilingColor, wallBrightness },
+          bakedSpace ? { wallColor, ceilingColor } : { wallColor, ceilingColor, wallBrightness },
         ),
       })
 
@@ -85,21 +86,19 @@ const WallCeilingPanel = () => {
       </div>
 
       {/* Ceiling Color Section */}
-      {!bakedSpace && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Ceiling Color
-          </Text>
+      <div className={styles.section}>
+        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
+          Ceiling Color
+        </Text>
 
-          <div className={styles.field}>
-            <label className={styles.label}>Color</label>
-            <ColorPicker
-              textColor={ceilingColor}
-              onColorSelect={(color) => set('ceilingColor', color)}
-            />
-          </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Color</label>
+          <ColorPicker
+            textColor={ceilingColor}
+            onColorSelect={(color) => set('ceilingColor', color)}
+          />
         </div>
-      )}
+      </div>
 
       {/* Temporary: Lambert Brightness Boost */}
       {!bakedSpace && (

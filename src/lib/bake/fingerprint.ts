@@ -5,14 +5,17 @@ import { canonicalJson } from './hash'
 
 /**
  * The exhibition columns that change how the room is lit — only what an artist may still
- * change. The space owns the rest (lamp colors, angles, floor, window light…) and the
- * renderer ignores those columns, so they must not stale a bake.
+ * change. The space owns the rest (lamp colors, the recessed lamps' angles, floor, window
+ * light…) and the renderer ignores those columns, so they must not stale a bake.
  */
 export const LIGHT_FIELDS: readonly string[] = [
   'spaceId',
   'wallColor',
+  'ceilingColor',
   'ceilingLightMode',
   'trackLampIntensity',
+  'trackLampAngle',
+  'trackLampDistance',
   'recessedLampIntensity',
   'trackLampsVisible',
   'trackLampSettings',

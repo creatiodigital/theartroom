@@ -60,6 +60,7 @@ export const BakeRunner = (props: BakeRunnerProps) => {
   const gl = useThree((s) => s.gl)
   const scene = useThree((s) => s.scene)
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
+  const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
   // Bake mode is always the approved look of a baked space (`lookFor`).
   const look = useBakedLook()
   // The ceiling-lamp dimmer, which the corridor's re-rated fixtures keep too (`bakeJob`).
@@ -167,7 +168,7 @@ export const BakeRunner = (props: BakeRunnerProps) => {
         j.started = startBake(
           gl,
           scene,
-          { wall: wallColor, look: look.space, recessedDimmer },
+          { wall: wallColor, ceiling: ceilingColor, look: look.space, recessedDimmer },
           j.restore,
         )
         j.phase = 'baking'

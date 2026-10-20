@@ -8,7 +8,15 @@ import {
   dimmerLevel,
   dimmerPercent,
 } from '@/lib/bake/dimmer'
-import { spaceLooks } from '@/lib/bake/spaceLooks'
+import { APPROVED_ROOM_SETTINGS, spaceLooks } from '@/lib/bake/spaceLooks'
+import {
+  TRACK_THROW_NO_LIMIT,
+  TRACK_THROW_SLIDER_MAX,
+  clampTrackThrow,
+  sliderToThrow,
+  throwLabel,
+  throwToSlider,
+} from '@/lib/bake/trackThrow'
 import {
   LUX_PER_UNIT,
   TODAY_LOOK,
@@ -65,13 +73,44 @@ test('a baked space dims the ceiling lamps from their rating; 100% is the rating
   )
 })
 
-test("a baked look's track lamps keep their aim and beam at the space's scale", () => {
-  const track = { intensity: 8, angle: 0.8, penumbra: 0.8, distance: 4.5 }
+test("a baked look's track lamps keep the artist's aim, beam and throw at the space's scale", () => {
+  const track = { intensity: 8, angle: 0.55, penumbra: 0.8, distance: 4.5 }
   expect(lookSpot(paris, track, 'track')).toEqual({
     intensity: 4,
-    angle: 0.8,
+    angle: 0.55,
     penumbra: 0.4,
-    distance: 0,
+    distance: 4.5,
+  })
+  // No cut-off stays no cut-off.
+  expect(lookSpot(paris, { ...track, distance: 0 }, 'track').distance).toBe(0)
+})
+
+test('the throw: 0 is no cut-off, otherwise 1–10 m; the slider top is "No limit"', () => {
+  expect(clampTrackThrow(0)).toBe(TRACK_THROW_NO_LIMIT)
+  expect(clampTrackThrow(-1)).toBe(TRACK_THROW_NO_LIMIT)
+  expect(clampTrackThrow(Number.NaN)).toBe(TRACK_THROW_NO_LIMIT)
+  expect(clampTrackThrow(0.4)).toBe(1)
+  expect(clampTrackThrow(4.5)).toBe(4.5)
+  expect(clampTrackThrow(12)).toBe(10)
+  expect(throwToSlider(0)).toBe(TRACK_THROW_SLIDER_MAX)
+  expect(sliderToThrow(TRACK_THROW_SLIDER_MAX)).toBe(0)
+  expect(sliderToThrow(10)).toBe(10)
+  expect(sliderToThrow(throwToSlider(3))).toBe(3)
+  expect(throwLabel(0)).toBe('No limit')
+  expect(throwLabel(3)).toBe('3.0m')
+})
+
+test("the rollout's room settings are the approved looks' (no cut-off, white ceiling)", () => {
+  expect(APPROVED_ROOM_SETTINGS.paris).toEqual({
+    trackLampAngle: 0.8,
+    trackLampDistance: 0,
+    ceilingColor: '#ffffff',
+  })
+  expect(APPROVED_ROOM_SETTINGS.vienna).toEqual(APPROVED_ROOM_SETTINGS.paris)
+  expect(APPROVED_ROOM_SETTINGS.madrid).toEqual({
+    trackLampAngle: 0.45,
+    trackLampDistance: 0,
+    ceilingColor: '#ffffff',
   })
 })
 

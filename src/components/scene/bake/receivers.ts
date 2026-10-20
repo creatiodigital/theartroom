@@ -61,17 +61,21 @@ export interface PreparedReceivers {
   restore: () => void
 }
 
+/** The room as a bake takes it: the artist's wall and ceiling colors, and the space's look. */
+export interface RoomPaint {
+  wall: string
+  ceiling: string
+  look: SpaceLook
+}
+
 /**
  * Walls, ceiling, floor, the artworks (measured only) and the fixtures, as the bake takes them —
- * `room`: the artist's wall color and the space's look (its ceiling color and paint). Every
+ * `room`: the artist's wall and ceiling colors and the space's look (its paint). Every
  * receiver on our own unwrap writes `uv1` on the scene meshes it stands for (its `sources`): the
  * baked maps are read through it. A throw midway puts back the geometry it had already replaced
  * before rethrowing.
  */
-export const prepareReceivers = (
-  scene: Object3D,
-  room: { wall: string; look: SpaceLook },
-): PreparedReceivers => {
+export const prepareReceivers = (scene: Object3D, room: RoomPaint): PreparedReceivers => {
   const restores: (() => void)[] = []
   const restore = () => restores.splice(0).forEach((undo) => undo())
   try {
@@ -84,7 +88,7 @@ export const prepareReceivers = (
 
 const buildReceivers = (
   scene: Object3D,
-  room: { wall: string; look: SpaceLook },
+  room: RoomPaint,
   restores: (() => void)[],
   restore: () => void,
 ): PreparedReceivers => {
@@ -126,7 +130,7 @@ const buildReceivers = (
       name: 'ceiling',
       mesh: new Mesh(atlas.merged),
       size: atlas.size,
-      albedo: new Color(room.look.ceilingColor).multiplyScalar(CEILING_ALBEDO),
+      albedo: new Color(room.ceiling).multiplyScalar(CEILING_ALBEDO),
       smoothBounce: true,
       directional: true,
       sources: [ceiling],

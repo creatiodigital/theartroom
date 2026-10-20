@@ -20,6 +20,14 @@ import {
   dimmerLevel,
   dimmerPercent,
 } from '@/lib/bake/dimmer'
+import {
+  TRACK_THROW_MIN,
+  TRACK_THROW_SLIDER_MAX,
+  TRACK_THROW_STEP,
+  sliderToThrow,
+  throwLabel,
+  throwToSlider,
+} from '@/lib/bake/trackThrow'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
 import {
   setExhibitionField,
@@ -78,9 +86,9 @@ const LightingPanel = () => {
   const storedSpaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const spaceId = storedSpaceId || 'paris'
   // AR-161 (spec rule 7): in a baked space the space owns the look. Artists keep what physically
-  // changes the light — a dimmer per lamp type and each track lamp's place, aim and on/off;
-  // the sky, ambient, window light, shadows, lamp colors/beams and the lighting set are the
-  // space's. Other spaces keep today's panel.
+  // changes the light — a dimmer per lamp type, the track lamps' beam angle and throw (Eduardo
+  // 2026-10-20) and each track lamp's place, aim and on/off; the sky, ambient, window light,
+  // shadows, lamp colors and the lighting set are the space's. Other spaces keep today's panel.
   const bakedSpace = isBakedSpace(storedSpaceId)
 
   const ambientColor = useSelector(
@@ -212,6 +220,8 @@ const LightingPanel = () => {
           bakedSpace
             ? {
                 trackLampIntensity,
+                trackLampAngle,
+                trackLampDistance,
                 trackLampSettings: trackLampSettings ?? null,
                 recessedLampIntensity,
               }
@@ -341,6 +351,44 @@ const LightingPanel = () => {
     )
   })
 
+  // Beam angle and throw, in every space. The throw's top position is no cut-off (stored 0): the
+  // light falls off by the inverse square alone, as every approved baked look was made.
+  const trackBeamControls = (
+    <>
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Angle</label>
+          <span className={styles.sliderValue}>
+            {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
+          </span>
+        </div>
+        <Slider
+          min={0.1}
+          max={1.2}
+          step={0.05}
+          value={trackLampAngle}
+          onChange={(v) => set('trackLampAngle', v)}
+          aria-label="Track Lamp Angle"
+        />
+      </div>
+
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Distance</label>
+          <span className={styles.sliderValue}>{throwLabel(trackLampDistance)}</span>
+        </div>
+        <Slider
+          min={TRACK_THROW_MIN}
+          max={TRACK_THROW_SLIDER_MAX}
+          step={TRACK_THROW_STEP}
+          value={throwToSlider(trackLampDistance)}
+          onChange={(v) => set('trackLampDistance', sliderToThrow(v))}
+          aria-label="Track Lamp Distance"
+        />
+      </div>
+    </>
+  )
+
   const saveButton = (
     <div className={styles.actions}>
       <Button
@@ -393,6 +441,8 @@ const LightingPanel = () => {
                 aria-label="Track Lamp Intensity"
               />
             </div>
+
+            {trackBeamControls}
 
             {trackLampControls}
           </Section>
@@ -623,37 +673,7 @@ const LightingPanel = () => {
               />
             </div>
 
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Angle</label>
-                <span className={styles.sliderValue}>
-                  {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
-                </span>
-              </div>
-              <Slider
-                min={0.1}
-                max={1.2}
-                step={0.05}
-                value={trackLampAngle}
-                onChange={(v) => set('trackLampAngle', v)}
-                aria-label="Track Lamp Angle"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Distance</label>
-                <span className={styles.sliderValue}>{trackLampDistance.toFixed(1)}m</span>
-              </div>
-              <Slider
-                min={1}
-                max={10}
-                step={0.5}
-                value={trackLampDistance}
-                onChange={(v) => set('trackLampDistance', v)}
-                aria-label="Track Lamp Distance"
-              />
-            </div>
+            {trackBeamControls}
 
             <div className={styles.field}>
               <label className={styles.label}>Material Color</label>

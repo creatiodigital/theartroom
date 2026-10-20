@@ -1,4 +1,5 @@
 import { COMMON_FLOOR, type CommonFloor } from './commonFloor'
+import { TRACK_THROW_NO_LIMIT } from './trackThrow'
 
 // Per-space data that decides how a baked room looks (AR-161 per-space rules: one sweet spot per
 // space, never per exhibition). Plain module (no React, no Next) so the scene, the bake and the
@@ -12,9 +13,10 @@ export interface SpaceCamera {
 
 /**
  * Everything about a baked room's light that belongs to the space (spec rule 2). Some of it an
- * exhibition still stores (lamp colors, beam angle, window glass, ceiling color, the floor,
- * the eye): in a baked space those stored values are ignored for these. The artist keeps wall
- * paint, decoration, the lamp dimmers, aim, on/off and the lighting set (rule 7).
+ * exhibition still stores (lamp colors, window glass, the floor, the eye): in a baked space those
+ * stored values are ignored for these. The artist keeps wall and ceiling paint, decoration, the
+ * lamp dimmers, the track lamps' beam and throw, aim, on/off and the lighting set (rule 7; the
+ * beam, throw and ceiling since 2026-10-20 — `APPROVED_ROOM_SETTINGS`).
  */
 export interface SpaceLook {
   /** Recessed downlights (diffused, 90° field): lumens at the standard dimmer. */
@@ -34,16 +36,14 @@ export interface SpaceLook {
   /** Window glass: color and display brightness (the stored `windowLightColor` / `windowLightIntensity` scale). */
   windowColor: string
   windowIntensity: number
-  ceilingColor: string
   /** White wall paint's reflectance (the wall color scales it). */
   paintReflectance: number
   /** Switch and socket plastic's reflectance. */
   plasticReflectance: number
   /** Recessed and round lamps: light (and disc) color. */
   lampColor: string
-  /** Track lamps: light color, beam angle (radians), fixture body color. */
+  /** Track lamps: light color, fixture body color. */
   trackLampColor: string
-  trackLampAngle: number
   trackBodyColor: string
   /** The visitor's eye: vertical field of view (degrees) and height (meters). */
   cameraFOV: number
@@ -54,7 +54,7 @@ export interface SpaceLook {
 /**
  * Paris and Vienna: their approved look (Eduardo 2026-10-18 — Paris on Permanence and Kritzendorf,
  * Vienna on Florescere, the same settings), with the room settings of "The Beauty of Permanence"
- * (lamp colors, track beam, window glass, eye) every one of those links used.
+ * (lamp colors, window glass, eye) every one of those links used.
  */
 const PARIS_VIENNA: SpaceLook = {
   recessedLumens: 6800,
@@ -68,12 +68,10 @@ const PARIS_VIENNA: SpaceLook = {
   daylightGain: 6,
   windowColor: '#f5fbff',
   windowIntensity: 4.2,
-  ceilingColor: '#ffffff',
   paintReflectance: 0.9,
   plasticReflectance: 0.85,
   lampColor: '#ffffff',
   trackLampColor: '#fffeeb',
-  trackLampAngle: 0.8,
   trackBodyColor: '#ffffff',
   cameraFOV: 50,
   cameraElevation: 1.6,
@@ -96,12 +94,10 @@ const MADRID: SpaceLook = {
   daylightGain: 6,
   windowColor: '#f2f2f2',
   windowIntensity: 4.2,
-  ceilingColor: '#ffffff',
   paintReflectance: 0.9,
   plasticReflectance: 0.85,
   lampColor: '#ffffff',
   trackLampColor: '#ffffff',
-  trackLampAngle: 0.45,
   trackBodyColor: '#ffffff',
   cameraFOV: 50,
   cameraElevation: 1.6,
@@ -117,4 +113,33 @@ export const spaceLooks: Record<string, { camera: SpaceCamera; look: SpaceLook }
   // 2–3 works beside the sunlit windows and darken the whole room ~11%; 0.56 keeps the approved
   // room brightness. Images are file-exact either way. WB = metered.
   madrid: { camera: { exposure: 0.56, whiteBalance: [0.92, 1.015, 1.126] }, look: MADRID },
+}
+
+/** The room settings an exhibition owns that each approved look was made with. */
+export interface ApprovedRoomSettings {
+  /** Track lamps' beam angle (radians). */
+  trackLampAngle: number
+  /** Track lamps' throw (`trackThrow.ts`). */
+  trackLampDistance: number
+  ceilingColor: string
+}
+
+/**
+ * Eduardo 2026-10-20: the track lamps' beam and throw and the ceiling color are the artist's
+ * again — baked and fingerprinted, like the wall color. These are the values every approved look
+ * was made with (the beam angle Permanence's (Paris, Vienna) / Vivrière's (Madrid), no cut-off, a
+ * white ceiling): `scripts/reset-light-levels.ts` puts every exhibition in a baked space here once
+ * at rollout, and a new exhibition in a baked space starts here, so the approved looks hold until
+ * someone moves a slider. Not part of a space's look (`spaceLookVersion` does not hash them): a
+ * bake depends on each exhibition's stored values, which its fingerprint covers.
+ */
+export const APPROVED_ROOM_SETTINGS: Record<string, ApprovedRoomSettings> = {
+  paris: { trackLampAngle: 0.8, trackLampDistance: TRACK_THROW_NO_LIMIT, ceilingColor: '#ffffff' },
+  vienna: { trackLampAngle: 0.8, trackLampDistance: TRACK_THROW_NO_LIMIT, ceilingColor: '#ffffff' },
+  // Madrid has no track lamps: its beam is Vivrière's, and lights nothing there.
+  madrid: {
+    trackLampAngle: 0.45,
+    trackLampDistance: TRACK_THROW_NO_LIMIT,
+    ceilingColor: '#ffffff',
+  },
 }
