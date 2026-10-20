@@ -39,7 +39,7 @@ import {
 } from '@/components/scene/spaces/objects/nodeIndices'
 import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
-import { applyBakeProbe, useRealismProbe } from '@/components/scene/realismProbe'
+import { applySurfaceLook, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // No module-scope preload for these: drei's useKTX2.preload only sets the
@@ -75,7 +75,12 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
 
   // Independent wall & ceiling colors
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
-  const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
+  const storedCeilingColor = useSelector(
+    (state: RootState) => state.exhibition.ceilingColor ?? '#ffffff',
+  )
+  // AR-161: in the baked look the ceiling is the space's (white), the walls the artist's.
+  const look = useBakedLook()
+  const ceilingColor = look.baked ? look.space.ceilingColor : storedCeilingColor
 
   // Load external baked textures
   const wallTexture = useKTX2(assetUrl('/assets/spaces/madrid/textures/mwall2.ktx2'), '/basis/')
@@ -113,22 +118,20 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // Lambert compensation: Lambert lacks PBR specular, so walls appear dimmer.
   const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
   const invalidate = useThree((s) => s.invalidate)
-  // AR-161 probe (dev-only, throwaway): outside `current` mode it owns these colours.
-  const probe = useRealismProbe()
   useEffect(() => {
-    const wallProbed = applyBakeProbe(wallMaterial, wallTexture, wallColor, probe)
-    const ceilingProbed = applyBakeProbe(
+    // AR-161: in the baked look `applySurfaceLook` owns these colors.
+    const wallSet = applySurfaceLook(wallMaterial, wallTexture, wallColor, look)
+    const ceilingSet = applySurfaceLook(
       ceilingMaterial,
       ceilingTexture,
       ceilingColor,
-      probe,
+      look,
       'ceiling',
     )
     const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
 
-    if (!wallProbed) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
-    if (!ceilingProbed)
-      ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+    if (!wallSet) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    if (!ceilingSet) ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
   }, [
     wallMaterial,
@@ -139,7 +142,7 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
     ceilingColor,
     wallBrightness,
     invalidate,
-    probe,
+    look,
     wallTexture,
     ceilingTexture,
   ])

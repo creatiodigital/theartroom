@@ -2,7 +2,6 @@ import {
   Box3,
   BufferAttribute,
   Color,
-  DataTexture,
   CubeCamera,
   CustomBlending,
   DoubleSide,
@@ -42,7 +41,6 @@ import {
   FULLSCREEN_VERTEX,
   CHART_FRAGMENT,
   CHART_VERTEX,
-  GATHER_FRAGMENT,
   GATHER_SIDE_FRAGMENT,
   GEOMETRY_FRAGMENT,
   NEAR_FRAGMENT,
@@ -51,24 +49,30 @@ import {
   SPOT_FRAGMENT,
   UV_SPACE_VERTEX,
   VPL_FRAGMENT,
-  WASH_FRAGMENT,
 } from './bakeShaders'
+import { isWorldVisible } from './daylight'
 import { buildGatherScene, TriangleKind, type GatherSource } from './gatherScene'
+import { BAKE_SURFACES, type BakeMapKind, type BakeSurface } from '@/lib/bake/bakeRecord'
 
 /**
- * ⚠️ AR-161 SPIKE — LOAD-TIME LIGHT BAKER. Dev-only, throwaway until proven.
- *
- * During a visit nothing moves, so right after load the browser bakes THIS exhibition's
- * lighting into the room's static surfaces (walls, ceiling, floor):
+ * ⚠️ AR-161 — THE LIGHT BAKER. The admin's computer bakes an exhibition's lighting into the
+ * room's static surfaces (walls, ceiling, floor, fixtures), stored and shown to visitors as it is:
  *
  *   1. Direct light from every lamp that is actually on, where it is actually aimed — three's
- *      own SpotLight model, with real shadows (one lamp at a time, so the 16-texture-unit
- *      limit that rules out realtime shadows does not apply). Each lamp is jittered over its
- *      LED aperture, so shadows are sharp at contact and soften with distance, as real ones do.
- *   2. Bounce light by instant radiosity: lit surface patches become virtual point lights
- *      that re-emit their radiosity (albedo × irradiance) with a cosine lobe, with shadows.
- *      Two bounces. Corners and the floor line darken because they see less of the room —
- *      physically, not by an AO fudge.
+ *      own SpotLight model (wide diffusers: an exact cosine), with real shadows (one lamp at a
+ *      time, so the 16-texture-unit limit that rules out realtime shadows does not apply). Each
+ *      lamp is jittered over its LED aperture, so shadows are sharp at contact and soften with
+ *      distance, as real ones do. The sun, through each window's glass only.
+ *   1b. Daylight: window glass as area emitters.
+ *   2. Bounce light by instant radiosity: lit surface patches become virtual point lights that
+ *      re-emit their radiosity (albedo × irradiance) with a cosine lobe, with shadows, in float;
+ *      the bounces not simulated added as the radiosity ambient tail. Corners and the floor line
+ *      darken because they see less of the room — physically, not by an AO fudge.
+ *   4. Near-field compensation: what the bounce lights' distance clamp drops in inside corners,
+ *      added back by short rays (`nearField`).
+ *
+ * The random numbers (lamp jitter, light placement) come from one fixed sequence, restarted every
+ * bake: the same room with the same lamps bakes identically every time.
  *
  * Output per receiver: an HDR irradiance lightmap in that receiver's own UVs.
  */
@@ -80,51 +84,46 @@ const LAMP_APERTURE = 0.03 // metres — an LED track head
 const DIFFUSER_APERTURE = 0.15 // metres — a plafond / opal downlight's diffuser (Ø 30 cm)
 const LAMP_FRONT_OFFSET = 0.04 // metres — the emitting face sits in front of the fixture's origin
 const SHADOW_SIZE = 2048
-// DEBUG A/B (spike): `?ar161bounces=6&ar161vpls=4096&ar161mindist=0.25` override these three;
-// `&ar161fullbounce=1` turns on float accumulation + the ambient tail (both off = approved look).
-const debugParam = (name: string, fallback: number) => {
-  if (typeof window === 'undefined') return fallback
-  const value = Number(new URLSearchParams(window.location.search).get(name))
-  return value > 0 ? value : fallback
-}
-// `&ar161denoise=1`: bounce lights jittered within their texel, 4× as many (noise ∝ 1/√N); the
-// clamp stays at 0.5 m. `&ar161filter=1` adds the geometry-aware bounce filter (it banded in
-// blocks near the window — off until fixed).
-const DENOISE = debugParam('ar161denoise', 0) > 0
-const BOUNCE_FILTER = DENOISE && debugParam('ar161filter', 0) > 0
-// `&ar161edges=1`: coverage-normalised bounce at chart edges (corners were too dark: bilinear
-// taps half off a chart averaged in black) + full-resolution bounce on every receiver.
-const EDGES = debugParam('ar161edges', 0) > 0
-// `&ar161lambert=1`: wide diffusers emit an exact cosine (see SPOT_FRAGMENT).
-const LAMBERT = debugParam('ar161lambert', 0) > 0
-const VPL_COUNT = debugParam('ar161vpls', DENOISE ? 4096 : 1024)
-const VPL_BOUNCES = debugParam('ar161bounces', 3)
-const EMITTER_VPLS = 384 // daylight samples across all window glass
-// `&ar161vplcube=512`: sharper bounce shadow maps (grazing rays along the ceiling self-shadowed
-// the wall–ceiling junction at 128).
-const VPL_CUBE_SIZE = debugParam('ar161vplcube', 128)
+// Bounce lights: 4,096 per bounce, each jittered within its texel (noise ∝ 1/√N; a regular grid
+// of them showed as rows of spots near corners), 8 bounces, accumulated in float.
+const VPL_COUNT = 4096
+const VPL_BOUNCES = 8
+// Daylight samples across all window glass: the window frame and reveals sit close to the glass,
+// and fewer, more widely spaced samples showed them as blotches.
+const EMITTER_VPLS = 4096
+const VPL_CUBE_SIZE = 128
 const LAMP_CUBE_SIZE = 1024 // wide diffusers' shadow cube (see SPOT_FRAGMENT)
-// metres — instant-radiosity singularity clamp (fireflies below this)
-const VPL_MIN_DIST = debugParam('ar161mindist', 0.5)
-const FULL_BOUNCE = debugParam('ar161fullbounce', 0) > 0
-// `&ar161gather=1`: final gather — every lightmap texel ray-traces the room and reads the light
-// where its rays land (see GATHER_FRAGMENT); replaces the VPL bounce in the final lightmaps.
-const FINAL_GATHER = debugParam('ar161gather', 0) > 0
-const GATHER_SPP = debugParam('ar161gatherspp', 256)
-const GATHER_RAYS_PER_PASS = 8
-// `&ar161nearfield=1`: the light the VPL clamp drops within VPL_MIN_DIST of every surface —
-// inside corners — added back by short rays (see `nearField`).
-const NEAR_FIELD = debugParam('ar161nearfield', 0) > 0
-const NEAR_SPP = debugParam('ar161nearspp', 256)
-// `&ar161disc=1`: VPLs are discs of the area they stand for (see VPL_FRAGMENT), no clamp.
-const DISC_VPLS = debugParam('ar161disc', 0) > 0
+// meters — instant-radiosity singularity clamp (fireflies below this); what it drops near
+// surfaces — inside corners — comes back by short rays (see `nearField`).
+const VPL_MIN_DIST = 0.5
+const NEAR_SPP = 256
+const RAYS_PER_PASS = 8
+// The bake's random numbers (lamp-disc jitter, VPL placement) come from one fixed sequence
+// restarted at every bake, so the same room with the same lamps bakes identically — otherwise
+// each bake of a room lands 1–2% apart (Eduardo 2026-10-18: no per-exhibition drift).
+const BAKE_SEED = 0x161
 
-/** Bounce filter: tap spacing and world-space falloff, metres. */
-const DENOISE_SPACING = 0.12
-const DENOISE_SIGMA = 0.3
+/** mulberry32 — a small seeded generator, uniform in [0, 1). */
+const seededRandom = (seed: number) => {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+// How far past a window's glass its wall still stands (the reveal shading the sun); anything
+// further out is outdoors and casts no sun shadow. Paris/Vienna walls: ~0.32 m outside the glass.
+const PORTAL_WALL_DEPTH = 0.5
+
 const GRID = 128
 
-/** A surface that emits light into the room — window glass showing the sky. */
+/**
+ * A surface that emits light into the room — window glass showing the sky. It faces the room
+ * center (single planes of either winding).
+ */
 export interface AreaEmitter {
   mesh: Mesh
   /** Linear radiance as seen (emissive × intensity): what you see is what lights the room. */
@@ -139,18 +138,13 @@ export interface BakeReceiver {
   albedo: Color
   /** Denoise the bounce. Only for single-chart UVs (a quad): see COMBINE_FRAGMENT. */
   smoothBounce?: boolean
-  /**
-   * Bounce at full lightmap resolution instead of half. For small props: a 1 cm switch rim
-   * has no half-res texel of its own, so it received NO bounce light — half its light.
-   */
-  fullResBounce?: boolean
   /** Also bake a directional lightmap (where the direct light comes from), for normal maps. */
   directional?: boolean
   /** Skip the lamps' direct light (the receiver gets it in realtime): daylight + bounce only. */
   noLampDirect?: boolean
   /** Not a bounce source (small, measured only — e.g. the artworks). */
   noEmit?: boolean
-  /** Scene meshes this receiver stands for (its proxy replaces them in the final gather). */
+  /** Scene meshes this receiver stands for (its proxy replaces them in the near-field rays). */
   sources?: Object3D[]
 }
 
@@ -163,13 +157,10 @@ interface ReceiverState extends BakeReceiver {
   normal: Float32Array
   texelArea: number
   normalWorld: Matrix3
-  /** Resolution of the bounce accumulation (half the lightmap unless fullResBounce). */
+  /** Resolution of the bounce accumulation. */
   bounceSize: number
   /** Σ direction × luminance of the direct light (directional receivers only). */
   dirAccum: WebGLRenderTarget | null
-  /** World position / normal per BOUNCE texel, for the geometry-aware filter (DENOISE). */
-  geoPos: WebGLRenderTarget | null
-  geoNrm: WebGLRenderTarget | null
 }
 
 interface Lamp {
@@ -185,6 +176,16 @@ interface Lamp {
   aperture: number
   /** A 90° field: shadows from a cube map, not a (170°) perspective one. */
   wide: boolean
+  /**
+   * Lights only the room side of a surface (the sun). Walls and ceiling are single planes whose
+   * outer face shares the inner face's texels: a sun on the roof would light the ceiling.
+   */
+  oneSided?: boolean
+  /**
+   * The window the light comes through (the sun): a surface is lit only if its ray to the light
+   * crosses this rectangle — centre and half-extent axes in the glass plane.
+   */
+  portal?: { center: Vector3; u: Vector3; v: Vector3 }
 }
 
 const isLampPart = (object: Object3D) => {
@@ -192,11 +193,6 @@ const isLampPart = (object: Object3D) => {
     if (/lamp|bulb/i.test(o.name)) return true
   }
   return false
-}
-
-const isWorldVisible = (object: Object3D) => {
-  for (let o: Object3D | null = object; o; o = o.parent) if (!o.visible) return false
-  return true
 }
 
 const worldArea = (geometry: BufferGeometry, mesh: Mesh) => {
@@ -239,6 +235,7 @@ export class LightBaker {
   private receivers: ReceiverState[] = []
   private lamps: Lamp[] = []
   private casters: Mesh[] = []
+  private random: () => number = seededRandom(BAKE_SEED)
   private bakeScene = new Scene()
   private quadScene = new Scene()
   private quad = new Mesh(new PlaneGeometry(2, 2))
@@ -267,7 +264,12 @@ export class LightBaker {
   private distanceMat = new ShaderMaterial({
     vertexShader: DISTANCE_VERTEX,
     fragmentShader: DISTANCE_FRAGMENT,
-    uniforms: { uLightPos: { value: new Vector3() } },
+    uniforms: {
+      uLightPos: { value: new Vector3() },
+      uOutside: { value: 0 },
+      uOutsideAt: { value: new Vector3() },
+      uOutsideNormal: { value: new Vector3() },
+    },
     side: DoubleSide,
   })
   private spotMat = additive(
@@ -289,13 +291,16 @@ export class LightBaker {
         uCubeShadow: { value: 0 },
         uCubeTexel: { value: Math.PI / 2 / LAMP_CUBE_SIZE },
         uLambert: { value: 0 },
+        uOneSided: { value: 0 },
+        uRoomCenter: { value: new Vector3() },
+        uPortal: { value: 0 },
+        uPortalCenter: { value: new Vector3() },
+        uPortalU: { value: new Vector3() },
+        uPortalV: { value: new Vector3() },
         uDirMode: { value: 0 },
-        // `&ar161finebias=1` (see SPOT_FRAGMENT cubeVisibility).
-        uFineBias: { value: debugParam('ar161finebias', 0) > 0 ? 1 : 0 },
         uShadowTexel: { value: new Vector2(1 / SHADOW_SIZE, 1 / SHADOW_SIZE) },
         uBias: { value: 0.02 },
         uWeight: { value: 1 },
-        uShadows: { value: 1 },
         uAlphaMode: { value: 0 },
       },
     }),
@@ -311,7 +316,6 @@ export class LightBaker {
         uVplIntensity: { value: new Color() },
         uVplShadow: { value: null },
         uMinDist2: { value: VPL_MIN_DIST * VPL_MIN_DIST },
-        uDiscR2: { value: 0 },
         uDirMode: { value: 0 },
         uBias: { value: 0.03 },
         uAlphaMode: { value: 0 },
@@ -342,14 +346,7 @@ export class LightBaker {
       uBounce: { value: null },
       uBounceTexel: { value: new Vector2() },
       uRadius: { value: 0 },
-      uPos: { value: null },
-      uNrm: { value: null },
-      uBilateral: { value: 0 },
-      uSigma2: { value: 2 * DENOISE_SIGMA * DENOISE_SIGMA },
       uWrites: { value: 1 },
-      uCoverageNorm: { value: 0 },
-      // `&ar161roomclip=1` (see COMBINE_FRAGMENT).
-      uRoomClip: { value: debugParam('ar161roomclip', 0) > 0 ? 1 : 0 },
     },
     depthTest: false,
     depthWrite: false,
@@ -381,24 +378,11 @@ export class LightBaker {
     depthTest: false,
     depthWrite: false,
   })
-  private washes: { receiver: string; irradiance: Color }[] = []
-  private washMat = additive(
-    new ShaderMaterial({
-      vertexShader: UV_SPACE_VERTEX,
-      fragmentShader: WASH_FRAGMENT,
-      uniforms: {
-        uNormalWorld: { value: new Matrix3() },
-        uIrradiance: { value: new Color() },
-        uRoomCenter: { value: new Vector3() },
-        uAlphaMode: { value: 0 },
-      },
-    }),
-  )
   private emitters: AreaEmitter[] = []
   /** Flux re-emitted by each bounce source (luminance), for the ambient term. */
   private bounceFlux: number[] = []
   private roomCenter = new Vector3()
-  readonly stats = { lamps: 0, casters: 0, vpls: 0, renders: 0, ms: 0 }
+  readonly stats = { lamps: 0, casters: 0, vpls: 0, renders: 0, ms: 0, steps: 0 }
 
   constructor(renderer: WebGLRenderer, scene: Scene) {
     this.renderer = renderer
@@ -413,13 +397,8 @@ export class LightBaker {
   }
 
   /** Gather receivers, lamps and casters from the live scene. */
-  prepare(
-    receivers: BakeReceiver[],
-    emitters: AreaEmitter[] = [],
-    roomCenter?: Vector3,
-    washes: { receiver: string; irradiance: Color }[] = [],
-  ) {
-    this.washes = washes
+  prepare(receivers: BakeReceiver[], emitters: AreaEmitter[] = [], roomCenter?: Vector3) {
+    this.random = seededRandom(BAKE_SEED)
     this.scene.updateMatrixWorld(true)
     this.emitters = emitters
     if (roomCenter) this.roomCenter.copy(roomCenter)
@@ -439,7 +418,7 @@ export class LightBaker {
           decay: light.decay,
           cutoff: light.distance,
           angle: light.angle,
-          // A 90° field is a diffused fixture (see probeSpot); anything narrower is a lensed head.
+          // A 90° field is a diffused fixture (see lookSpot); anything narrower is a lensed head.
           aperture: light.angle >= Math.PI / 2 - 1e-3 ? DIFFUSER_APERTURE : LAMP_APERTURE,
           wide: light.angle >= Math.PI / 2 - 1e-3,
         })
@@ -455,6 +434,8 @@ export class LightBaker {
       if (!material.visible || material.colorWrite === false) return
       if (material.isShaderMaterial && material.transparent) return // fake shadow decals
       if (/glass/i.test(mesh.name)) return
+      // A sky panel behind a window casts no shadow: the sky can't shade the sun.
+      if (/^windowLight\d+$/.test(mesh.name)) return
       if (receiverMeshes.has(mesh) || mesh.geometry) {
         mesh.layers.enable(CASTER_LAYER)
         this.casters.push(mesh)
@@ -471,17 +452,18 @@ export class LightBaker {
       proxy.matrixWorld.copy(r.mesh.matrixWorld)
       proxy.frustumCulled = false
       // Half float (~3 significant digits) rounds away small additive contributions once a
-      // texel is lit (~25% of the bounce light, measured) — FULL_BOUNCE accumulates in float32.
+      // texel is lit (~25% of the bounce light, measured): both accumulate in float32.
       const accum = new WebGLRenderTarget(r.size, r.size, {
-        type: FULL_BOUNCE ? FloatType : HalfFloatType,
+        type: FloatType,
         minFilter: LinearFilter,
         magFilter: LinearFilter,
       })
-      const bounceSize = r.fullResBounce || EDGES ? r.size : r.size / 2
+      // Bounce at full resolution on every receiver (a 1 cm switch rim has no half-resolution
+      // texel of its own), with exact write counts in alpha for the chart-edge normalization
+      // (half float stops counting at 2048).
+      const bounceSize = r.size
       const accumBounce = new WebGLRenderTarget(bounceSize, bounceSize, {
-        // The denoise needs exact write counts in alpha (half float stops counting at 2048)
-        // and loses no small contributions.
-        type: FULL_BOUNCE || DENOISE || EDGES ? FloatType : HalfFloatType,
+        type: FloatType,
         minFilter: LinearFilter,
         magFilter: LinearFilter,
       })
@@ -506,8 +488,6 @@ export class LightBaker {
               magFilter: LinearFilter,
             })
           : null,
-        geoPos: null,
-        geoNrm: null,
         normalWorld: new Matrix3().getNormalMatrix(r.mesh.matrixWorld),
       }
     })
@@ -529,6 +509,53 @@ export class LightBaker {
     this.stats.casters = this.casters.length
   }
 
+  /**
+   * Re-rates mounted lamps after `prepare` — per-zone lighting design (a corridor keeps standard
+   * fixtures). `rate` returns the lamp's new luminous intensity, or null.
+   */
+  rateLamps(
+    rate: (lamp: { position: Vector3; wide: boolean; intensity: number }) => number | null,
+  ) {
+    for (const l of this.lamps) {
+      const lum = l.color.r * 0.2126 + l.color.g * 0.7152 + l.color.b * 0.0722
+      const target = rate({ position: l.position, wide: l.wide, intensity: lum })
+      if (target !== null && lum > 0) l.color.multiplyScalar(target / lum)
+    }
+  }
+
+  /**
+   * The sun — parallel light (no falloff) travelling along `direction`, aimed through `through`
+   * (a window), with the sun's 0.27° disc as its soft-shadow aperture. Only the room side of each
+   * surface receives it (see `oneSided`), and with a `portal` only what it reaches through that
+   * window's glass.
+   */
+  addSun(
+    direction: Vector3,
+    illuminance: Color,
+    through: Vector3,
+    reach: number,
+    portal?: Lamp['portal'],
+  ) {
+    const distance = 60
+    const dir = direction.clone().normalize()
+    const angle = Math.atan(reach / distance)
+    this.lamps.push({
+      position: through.clone().addScaledVector(dir, -distance),
+      direction: dir,
+      color: illuminance.clone(),
+      coneCos: Math.cos(angle),
+      penumbraCos: Math.cos(angle * 0.95),
+      decay: 0,
+      cutoff: 0,
+      angle,
+      aperture: distance * Math.tan((0.27 * Math.PI) / 180),
+      wide: false,
+      oneSided: true,
+      portal,
+    })
+    this.stats.lamps = this.lamps.length
+  }
+
   private clear(target: WebGLRenderTarget) {
     this.renderer.setRenderTarget(target)
     this.renderer.setClearColor(0x000000, 0)
@@ -545,8 +572,35 @@ export class LightBaker {
     this.stats.renders++
   }
 
-  /** The baking work, as a generator so the caller can spread it across frames. */
+  /**
+   * The baking work, as a generator so the caller can spread it across frames. It yields
+   * `totalSteps()` times (`stats.steps` counts them).
+   */
   *run(): Generator<void, void, void> {
+    this.stats.steps = 0
+    for (const step of this.runSteps()) {
+      this.stats.steps++
+      yield step
+    }
+  }
+
+  /**
+   * How many times `run()` will yield, for the prepared bake — a loader's `done / total`.
+   * The bounce passes assume each draws its full `VPL_COUNT` lights (they do unless a bounce
+   * has no lit surface to sample); everything else is fixed by the prepared scene.
+   */
+  totalSteps(): number {
+    const receivers = this.receivers.length
+    let steps = 1 // geometry maps
+    steps += this.lamps.length * LAMP_JITTER // 1. direct light
+    steps += this.emitterTris().vpls // 1b. daylight
+    steps += VPL_BOUNCES * VPL_COUNT // 2. bounces
+    steps += 1 + receivers // 4. near field: room build, chart sides
+    steps += Math.max(1, Math.round(NEAR_SPP / RAYS_PER_PASS)) * receivers
+    return steps
+  }
+
+  private *runSteps(): Generator<void, void, void> {
     const t0 = performance.now()
     const renderer = this.renderer
     const savedAutoClear = renderer.autoClear
@@ -588,19 +642,6 @@ export class LightBaker {
       let covered = 0
       for (let i = 3; i < r.position.length; i += 4) if (r.position[i]! > 0) covered++
       r.texelArea = covered > 0 ? worldArea(r.mesh.geometry, r.mesh) / covered : 0
-      if (BOUNCE_FILTER) {
-        const options = { type: FloatType, minFilter: NearestFilter, magFilter: NearestFilter }
-        r.geoPos = new WebGLRenderTarget(r.bounceSize, r.bounceSize, options)
-        r.geoNrm = new WebGLRenderTarget(r.bounceSize, r.bounceSize, options)
-        for (const [what, target] of [
-          [0, r.geoPos],
-          [1, r.geoNrm],
-        ] as const) {
-          this.clear(target)
-          this.geometryMat.uniforms.uWhat.value = what
-          this.renderReceiver(r, this.geometryMat, target)
-        }
-      }
     }
     geomRT.dispose()
     end()
@@ -609,23 +650,9 @@ export class LightBaker {
     // --- 1. direct light from the real lamps, with shadows ------------------------------
     const s = this.spotMat.uniforms
     const v = this.vplMat.uniforms
-    // With the gather, a partly opaque caster (an 80%-opaque text panel) stops that fraction
-    // of each lamp's light: it casts in that many of the lamp's jittered samples. (The gather
-    // traces it the same way — see `coverage` in gatherScene.ts.)
-    const partial = FINAL_GATHER
-      ? this.casters.flatMap((mesh) => {
-          const m = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as Material
-          return m?.transparent && m.opacity < 1
-            ? [{ mesh, samples: Math.round(m.opacity * LAMP_JITTER) }]
-            : []
-        })
-      : []
     for (const lamp of this.lamps) {
       for (let j = 0; j < LAMP_JITTER; j++) {
         begin()
-        partial.forEach(({ mesh, samples }) =>
-          j < samples ? mesh.layers.enable(CASTER_LAYER) : mesh.layers.disable(CASTER_LAYER),
-        )
         // The LED's emitting surface: a small disc facing the aim direction, just in front of
         // the fixture. (A sphere put half the samples BEHIND the fixture — for recessed lamps
         // flush with the ceiling, above the ceiling, which then shadowed the whole room.)
@@ -633,8 +660,8 @@ export class LightBaker {
         if (tangent.lengthSq() < 1e-6) tangent.set(1, 0, 0)
         tangent.normalize()
         const bitangent = lamp.direction.clone().cross(tangent).normalize()
-        const radius = lamp.aperture * Math.sqrt(Math.random())
-        const theta = Math.random() * Math.PI * 2
+        const radius = lamp.aperture * Math.sqrt(this.random())
+        const theta = this.random() * Math.PI * 2
         const position = lamp.position
           .clone()
           .addScaledVector(lamp.direction, LAMP_FRONT_OFFSET)
@@ -643,7 +670,16 @@ export class LightBaker {
 
         // Shadow map from the lamp: inverse distance of the nearest caster. Wide diffusers
         // get a cube (even texels in every direction); lensed heads a perspective map.
-        this.distanceMat.uniforms.uLightPos.value.copy(position)
+        const d = this.distanceMat.uniforms
+        d.uLightPos.value.copy(position)
+        d.uOutside.value = lamp.portal ? 1 : 0
+        if (lamp.portal) {
+          // Outdoors starts past the window wall's own depth (its reveal still shades the sun).
+          const outward = lamp.portal.u.clone().cross(lamp.portal.v).normalize()
+          if (outward.dot(lamp.direction) > 0) outward.negate()
+          d.uOutsideNormal.value.copy(outward)
+          d.uOutsideAt.value.copy(lamp.portal.center).addScaledVector(outward, PORTAL_WALL_DEPTH)
+        }
         if (lamp.wide) {
           this.lampCubeCamera.position.copy(position)
           this.scene.overrideMaterial = this.distanceMat
@@ -666,8 +702,18 @@ export class LightBaker {
           this.scene.overrideMaterial = savedOverride
           this.stats.renders++
         }
+        // The VPL passes share this material: indoors only for the sun's own shadow map.
+        d.uOutside.value = 0
         s.uCubeShadow.value = lamp.wide ? 1 : 0
-        s.uLambert.value = lamp.wide && LAMBERT ? 1 : 0
+        s.uLambert.value = lamp.wide ? 1 : 0
+        s.uOneSided.value = lamp.oneSided ? 1 : 0
+        s.uRoomCenter.value.copy(this.roomCenter)
+        s.uPortal.value = lamp.portal ? 1 : 0
+        if (lamp.portal) {
+          s.uPortalCenter.value.copy(lamp.portal.center)
+          s.uPortalU.value.copy(lamp.portal.u)
+          s.uPortalV.value.copy(lamp.portal.v)
+        }
         s.uShadowCube.value = this.lampCubeRT.texture
 
         s.uLightPos.value.copy(position)
@@ -684,14 +730,6 @@ export class LightBaker {
         s.uWeight.value = 1 / LAMP_JITTER
         for (const r of this.receivers) {
           if (r.noLampDirect) continue
-          // DEBUG A/B: ?ar161noPropShadow disables lamp shadows on the props atlas only,
-          // ?ar161noLampShadow on every receiver.
-          const search = typeof window !== 'undefined' ? window.location.search : ''
-          s.uShadows.value =
-            search.includes('ar161noLampShadow') ||
-            (r.name === 'props' && search.includes('ar161noPropShadow'))
-              ? 0
-              : 1
           s.uAlphaMode.value = 0
           this.renderReceiver(r, this.spotMat, r.accum)
           s.uAlphaMode.value = 1
@@ -707,23 +745,6 @@ export class LightBaker {
       }
     }
 
-    // --- 1a. general light: uniform washes (ceiling uplight) --------------------------------
-    begin()
-    for (const wash of this.washes) {
-      const r = this.receivers.find((x) => x.name === wash.receiver)
-      if (!r) continue
-      this.washMat.uniforms.uIrradiance.value.copy(wash.irradiance)
-      this.washMat.uniforms.uRoomCenter.value.copy(this.roomCenter)
-      this.washMat.uniforms.uAlphaMode.value = 0
-      this.renderReceiver(r, this.washMat, r.accum)
-      this.washMat.uniforms.uAlphaMode.value = 1
-      this.renderReceiver(r, this.washMat, r.grid[0]!)
-    }
-    end()
-    yield
-
-    partial.forEach(({ mesh }) => mesh.layers.enable(CASTER_LAYER))
-
     // --- 1b. daylight: window glass as area emitters (into the room, with shadows) -------
     for (const vpl of this.sampleEmitters()) {
       begin()
@@ -731,7 +752,6 @@ export class LightBaker {
       v.uVplPos.value.copy(vpl.position)
       v.uVplNormal.value.copy(vpl.normal)
       v.uVplIntensity.value.copy(vpl.intensity)
-      v.uDiscR2.value = DISC_VPLS ? vpl.r2 : 0
       v.uVplShadow.value = this.cubeRT.texture
       for (const r of this.receivers) {
         v.uAlphaMode.value = 0
@@ -757,7 +777,7 @@ export class LightBaker {
       // a fraction r of the previous one, so everything after the last is that bounce ×
       // r/(1 − r). r is measured from the bake's own last two bounces. In a white room
       // (r ≈ 0.6) stopping at three bounces otherwise loses ~20% of the indirect light.
-      if (FULL_BOUNCE && bounce === VPL_BOUNCES - 1 && bounce > 0) {
+      if (bounce === VPL_BOUNCES - 1 && bounce > 0) {
         const r = Math.min(0.9, this.bounceFlux[bounce]! / this.bounceFlux[bounce - 1]!)
         if (r > 0) {
           const tail = 1 / (1 - r)
@@ -772,7 +792,6 @@ export class LightBaker {
         v.uVplPos.value.copy(vpl.position)
         v.uVplNormal.value.copy(vpl.normal)
         v.uVplIntensity.value.copy(vpl.intensity)
-        v.uDiscR2.value = DISC_VPLS ? vpl.r2 : 0
         v.uVplShadow.value = this.cubeRT.texture
         for (const r of this.receivers) {
           v.uAlphaMode.value = 0
@@ -788,15 +807,13 @@ export class LightBaker {
     // --- 3. resolve + dilate into the final lightmaps -----------------------------------
     begin()
     for (const r of this.receivers) {
-      this.outputs.push(this.compose(r, r.accumBounce.texture, r.bounceSize, true))
+      this.outputs.push(this.compose(r, r.accumBounce.texture, r.bounceSize))
       this.dirOutputs.push(r.dirAccum ? this.resolveDirection(r) : null)
     }
     end()
 
-    // --- 4. final gather: the bounce, re-measured by ray tracing from every texel ----------
-    if (FINAL_GATHER) yield* this.finalGather(begin, end)
-    // --- 4b. or keep the VPL bounce and add back what its clamp dropped near surfaces -------
-    else if (NEAR_FIELD) yield* this.nearField(begin, end)
+    // --- 4. near field: add back what the bounce lights' clamp dropped near surfaces --------
+    yield* this.nearField(begin, end)
 
     // Casters back to normal.
     this.casters.forEach((m) => m.layers.disable(CASTER_LAYER))
@@ -804,12 +821,7 @@ export class LightBaker {
   }
 
   /** Direct + bounce → one lightmap, dilated so bilinear sampling never reads black seams. */
-  private compose(
-    r: ReceiverState,
-    bounce: Texture,
-    bounceSize: number,
-    vplBounce: boolean,
-  ): WebGLRenderTarget {
+  private compose(r: ReceiverState, bounce: Texture, bounceSize: number): WebGLRenderTarget {
     const renderer = this.renderer
     const a = new WebGLRenderTarget(r.size, r.size, { type: HalfFloatType })
     const b = new WebGLRenderTarget(r.size, r.size, { type: HalfFloatType })
@@ -819,19 +831,8 @@ export class LightBaker {
     u.uBounce.value = bounce
     u.uBounceTexel.value.set(1 / bounceSize, 1 / bounceSize)
     u.uRadius.value = r.smoothBounce ? 1.5 : 0
-    // The VPL bounce's write-count alpha drives these; the gathered bounce has none.
-    u.uBilateral.value = vplBounce && r.geoPos ? 1 : 0
-    u.uCoverageNorm.value = vplBounce && EDGES ? 1 : 0
+    // The bounce's write-count alpha normalizes the chart-edge taps.
     u.uWrites.value = Math.max(1, this.stats.vpls)
-    if (vplBounce && r.geoPos && r.geoNrm) {
-      // Every receiver, multi-chart walls included: taps on another chart are far away in
-      // the world (or face another way) and get no weight, so light cannot bleed between
-      // walls that merely sit next to each other in the atlas.
-      const bounceTexelWorld = Math.sqrt(r.texelArea) * (GRID / r.bounceSize)
-      u.uRadius.value = DENOISE_SPACING / Math.max(bounceTexelWorld, 1e-4)
-      u.uPos.value = r.geoPos.texture
-      u.uNrm.value = r.geoNrm.texture
-    }
     this.clear(a)
     renderer.render(this.quadScene, this.quadCamera)
     let src = a
@@ -916,8 +917,9 @@ export class LightBaker {
   }
 
   /**
-   * Which side of each chart faces the room (see `finalGather`): ±1 per chart id, voted at up
-   * to 1024² — every texel's front-minus-back ray distance, summed per chart.
+   * Which side of each chart faces the room: ±1 per chart id, voted at up to 1024² — every
+   * texel's front-minus-back ray distance, summed per chart. (Voted per texel, texels beside a
+   * frame — rays stopped by it within cm — flipped and traced from behind the wall.)
    */
   private chartSides(r: ReceiverState, sideMat: ShaderMaterial): Map<number, number> {
     const renderer = this.renderer
@@ -955,7 +957,7 @@ export class LightBaker {
   }
 
   /**
-   * Near-field compensation (`&ar161nearfield=1`). Each bounce light's d² is clamped at
+   * Near-field compensation. Each bounce light's d² is clamped at
    * VPL_MIN_DIST (else a light 1 cm away is a firefly), so any surface within that distance of
    * another — every inside corner — loses the light the two exchange: measured on Madrid's
    * ceiling, −58% at the wall where the truth is ≈ −30%. That loss is exactly
@@ -1015,7 +1017,7 @@ export class LightBaker {
           uMaxDist: { value: VPL_MIN_DIST },
           uSide: { value: 1 },
           uPass: { value: 0 },
-          uRaysPerPass: { value: GATHER_RAYS_PER_PASS },
+          uRaysPerPass: { value: RAYS_PER_PASS },
           uTotalRays: { value: NEAR_SPP },
         },
       }),
@@ -1028,8 +1030,8 @@ export class LightBaker {
     )
     targets.forEach((t) => this.clear(t))
     const sync = new Float32Array(4)
-    const passes = Math.max(1, Math.round(NEAR_SPP / GATHER_RAYS_PER_PASS))
-    material.uniforms.uTotalRays.value = passes * GATHER_RAYS_PER_PASS
+    const passes = Math.max(1, Math.round(NEAR_SPP / RAYS_PER_PASS))
+    material.uniforms.uTotalRays.value = passes * RAYS_PER_PASS
     for (let pass = 0; pass < passes; pass++) {
       for (const [i, r] of this.receivers.entries()) {
         begin()
@@ -1073,168 +1075,10 @@ export class LightBaker {
     room.triangles.dispose()
     room.nodes.dispose()
     ;(this.stats as unknown as { nearField: Record<string, number> }).nearField = {
-      spp: passes * GATHER_RAYS_PER_PASS,
+      spp: passes * RAYS_PER_PASS,
       radius: VPL_MIN_DIST,
       ms: Math.round(performance.now() - t0),
     }
-  }
-
-  /**
-   * Final gather. The VPL solution above is a good estimate of every surface's light far from
-   * corners, but it cannot resolve the light two surfaces exchange near the edge they share
-   * (that integral is scale-invariant — it needs samples at every distance down to the texel),
-   * so inside corners came out up to ~40% too dark. Here every lightmap texel shoots
-   * cosine-weighted rays at the room's actual triangles and adds up what each ray sees: a
-   * receiver's albedo × its VPL-baked irradiance / π, window glass's daylight, a constant for
-   * the rest. This is one bounce of path tracing on top of the radiosity solution — what
-   * production lightmappers (and Cycles) compute — and it is exact at corners by construction.
-   * Final lightmap = the lamps' direct light (sharp shadows) + this gathered light.
-   */
-  private *finalGather(begin: () => void, end: () => void): Generator<void, void, void> {
-    const renderer = this.renderer
-    const t0 = performance.now()
-    const { room, sampled } = this.buildRoom()
-    const stats = this.stats as unknown as { gather: Record<string, number> }
-    stats.gather = {
-      triangles: room.triangleCount,
-      nodes: room.nodeCount,
-      depth: room.depth,
-      spp: GATHER_SPP,
-      buildMs: Math.round(performance.now() - t0),
-    }
-    yield
-
-    const lightmaps = this.lightmapUniforms(sampled)
-    const shared = {
-      uTris: { value: room.triangles },
-      uNodes: { value: room.nodes },
-      uOffset: { value: 0.002 },
-      uMaxDist: { value: 1e30 },
-      ...lightmaps,
-    }
-    const sideMat = new ShaderMaterial({
-      vertexShader: UV_SPACE_VERTEX,
-      fragmentShader: GATHER_SIDE_FRAGMENT,
-      uniforms: { uNormalWorld: { value: new Matrix3() }, ...shared },
-      side: DoubleSide,
-      depthTest: false,
-      depthWrite: false,
-      blending: NoBlending,
-    })
-    const gatherMat = additive(
-      new ShaderMaterial({
-        vertexShader: UV_SPACE_VERTEX,
-        fragmentShader: GATHER_FRAGMENT,
-        uniforms: {
-          uNormalWorld: { value: new Matrix3() },
-          ...shared,
-          uPass: { value: 0 },
-          uRaysPerPass: { value: GATHER_RAYS_PER_PASS },
-          uTotalRays: { value: GATHER_SPP },
-          uSide: { value: null },
-          uDebugSide: { value: debugParam('ar161gatherside', 0) > 0 ? 1 : 0 },
-        },
-      }),
-    )
-    // A 1-texel readback after each draw makes the CPU wait for the GPU, so the caller's
-    // per-frame budget measures real GPU time and the browser never queues seconds of work.
-    const sync = new Float32Array(4)
-    const targets = this.receivers.map((r) => {
-      const options = { type: FloatType, minFilter: NearestFilter, magFilter: NearestFilter }
-      const side = new WebGLRenderTarget(r.bounceSize, r.bounceSize, options)
-      const gather = new WebGLRenderTarget(r.bounceSize, r.bounceSize, {
-        type: FloatType,
-        minFilter: LinearFilter,
-        magFilter: LinearFilter,
-      })
-      return { side, gather }
-    })
-    // Which side faces the room — decided per CHART (a flat face points into the room as a
-    // whole): every texel votes with its score difference, the chart's sum decides. Per texel,
-    // texels beside a frame (rays stopped by it within cm) flipped and gathered from behind the
-    // wall: dark blotches around every frame.
-    const chartMat = new ShaderMaterial({
-      vertexShader: CHART_VERTEX,
-      fragmentShader: CHART_FRAGMENT,
-      uniforms: { uNormalWorld: { value: new Matrix3() } },
-      side: DoubleSide,
-      depthTest: false,
-      depthWrite: false,
-      blending: NoBlending,
-    })
-    const sideTextures: DataTexture[] = []
-    for (const [i, r] of this.receivers.entries()) {
-      begin()
-      const size = r.bounceSize
-      const scoreRT = targets[i]!.side
-      this.clear(scoreRT)
-      this.clear(targets[i]!.gather)
-      this.renderReceiver(r, sideMat, scoreRT)
-      const scores = new Float32Array(size * size * 4)
-      renderer.readRenderTargetPixels(scoreRT, 0, 0, size, size, scores)
-      const chartRT = new WebGLRenderTarget(size, size, {
-        type: FloatType,
-        minFilter: NearestFilter,
-        magFilter: NearestFilter,
-      })
-      this.clear(chartRT)
-      this.renderReceiver(r, chartMat, chartRT)
-      const charts = new Float32Array(size * size * 4)
-      renderer.readRenderTargetPixels(chartRT, 0, 0, size, size, charts)
-      chartRT.dispose()
-      const votes = new Map<number, number>()
-      for (let t = 0; t < size * size; t++) {
-        if (scores[t * 4 + 3]! <= 0) continue
-        const id = Math.round(charts[t * 4]!)
-        votes.set(id, (votes.get(id) ?? 0) + scores[t * 4]!)
-      }
-      const sides = new Float32Array(size * size * 4)
-      for (let t = 0; t < size * size; t++) {
-        const id = Math.round(charts[t * 4]!)
-        sides[t * 4] = (votes.get(id) ?? 1) < 0 ? -1 : 1
-        sides[t * 4 + 3] = 1
-      }
-      const side = new DataTexture(sides, size, size, RGBAFormat, FloatType)
-      side.minFilter = side.magFilter = NearestFilter
-      side.needsUpdate = true
-      sideTextures.push(side)
-      end()
-      yield
-    }
-    chartMat.dispose()
-    const passes = Math.max(1, Math.round(GATHER_SPP / GATHER_RAYS_PER_PASS))
-    gatherMat.uniforms.uTotalRays.value = passes * GATHER_RAYS_PER_PASS
-    for (let pass = 0; pass < passes; pass++) {
-      for (const [i, r] of this.receivers.entries()) {
-        begin()
-        gatherMat.uniforms.uPass.value = pass
-        gatherMat.uniforms.uSide.value = sideTextures[i]!
-        this.renderReceiver(r, gatherMat, targets[i]!.gather)
-        renderer.readRenderTargetPixels(targets[i]!.gather, 0, 0, 1, 1, sync)
-        end()
-        yield
-      }
-    }
-
-    // Recompose: the lamps' direct light + the gathered light.
-    begin()
-    this.receivers.forEach((r, i) => {
-      const gathered = this.compose(r, targets[i]!.gather.texture, r.bounceSize, false)
-      this.outputs[i]!.dispose()
-      this.outputs[i] = gathered
-    })
-    end()
-    targets.forEach((t) => {
-      t.side.dispose()
-      t.gather.dispose()
-    })
-    sideTextures.forEach((t) => t.dispose())
-    sideMat.dispose()
-    gatherMat.dispose()
-    room.triangles.dispose()
-    room.nodes.dispose()
-    this.gathered = true
-    stats.gather.ms = Math.round(performance.now() - t0)
   }
 
   /** Cube distance map from a point emitter, for its shadows. */
@@ -1256,7 +1100,7 @@ export class LightBaker {
    * πLA, i.e. radiant intensity L·A along its normal; split evenly across its samples. The
    * normal is turned to face the room (glass planes are single-sided either way round).
    */
-  private sampleEmitters() {
+  private emitterTris() {
     type Tri = { a: Vector3; b: Vector3; c: Vector3; area: number; normal: Vector3; e: AreaEmitter }
     const tris: Tri[] = []
     for (const e of this.emitters) {
@@ -1280,13 +1124,24 @@ export class LightBaker {
     }
     const lum = (c: Color) => c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
     const total = tris.reduce((sum, t) => sum + t.area * lum(t.e.radiance), 0)
+    const counts =
+      total > 0
+        ? tris.map((t) =>
+            Math.max(1, Math.round((EMITTER_VPLS * t.area * lum(t.e.radiance)) / total)),
+          )
+        : []
+    return { tris, counts, total, vpls: counts.reduce((sum, n) => sum + n, 0) }
+  }
+
+  private sampleEmitters() {
+    const { tris, counts, total } = this.emitterTris()
     if (total <= 0) return []
-    const vpls: { position: Vector3; normal: Vector3; intensity: Color; r2: number }[] = []
-    for (const t of tris) {
-      const n = Math.max(1, Math.round((EMITTER_VPLS * t.area * lum(t.e.radiance)) / total))
+    const vpls: { position: Vector3; normal: Vector3; intensity: Color }[] = []
+    for (const [index, t] of tris.entries()) {
+      const n = counts[index]!
       for (let k = 0; k < n; k++) {
-        let u = Math.random()
-        let w = Math.random()
+        let u = this.random()
+        let w = this.random()
         if (u + w > 1) {
           u = 1 - u
           w = 1 - w
@@ -1300,7 +1155,6 @@ export class LightBaker {
           position,
           normal: t.normal,
           intensity: t.e.radiance.clone().multiplyScalar(t.area / n),
-          r2: t.area / n / Math.PI,
         })
       }
     }
@@ -1356,11 +1210,11 @@ export class LightBaker {
     if (total <= 0 || candidates.length === 0) return []
 
     // Stratified sampling over the CDF.
-    const vpls: { position: Vector3; normal: Vector3; intensity: Color; r2: number }[] = []
+    const vpls: { position: Vector3; normal: Vector3; intensity: Color }[] = []
     let acc = 0
     let k = 0
     const step = total / VPL_COUNT
-    let next = Math.random() * step
+    let next = this.random() * step
     for (const c of candidates) {
       acc += c.weight
       while (acc >= next && k < VPL_COUNT) {
@@ -1373,23 +1227,19 @@ export class LightBaker {
           c.r.position[p + 1],
           c.r.position[p + 2],
         ).addScaledVector(normal, 0.02)
-        if (DENOISE) {
-          // Texel centres form a regular grid: near a corner its row of bounce lights showed
-          // as a row of spots on the adjacent wall. Place each one randomly within its texel.
-          const size = Math.sqrt(c.r.texelArea) * 0.8
-          const tangent = new Vector3(0, 1, 0).cross(normal)
-          if (tangent.lengthSq() < 1e-6) tangent.set(1, 0, 0)
-          tangent.normalize()
-          const bitangent = normal.clone().cross(tangent)
-          position
-            .addScaledVector(tangent, (Math.random() - 0.5) * size)
-            .addScaledVector(bitangent, (Math.random() - 0.5) * size)
-        }
+        // Texel centers form a regular grid: near a corner its row of bounce lights showed as a
+        // row of spots on the adjacent wall. Place each one randomly within its texel.
+        const size = Math.sqrt(c.r.texelArea) * 0.8
+        const tangent = new Vector3(0, 1, 0).cross(normal)
+        if (tangent.lengthSq() < 1e-6) tangent.set(1, 0, 0)
+        tangent.normalize()
+        const bitangent = normal.clone().cross(tangent)
+        position
+          .addScaledVector(tangent, (this.random() - 0.5) * size)
+          .addScaledVector(bitangent, (this.random() - 0.5) * size)
         // Each VPL carries flux × total/(weight × N); radiant intensity = Φ/π.
         const intensity = c.flux.clone().multiplyScalar(total / (c.weight * VPL_COUNT) / Math.PI)
-        // The surface area this VPL stands for: its texel's area × the share of flux it carries.
-        const area = (c.r.texelArea * total) / (c.weight * VPL_COUNT)
-        vpls.push({ position, normal, intensity, r2: area / Math.PI })
+        vpls.push({ position, normal, intensity })
         k++
         next += step
       }
@@ -1496,7 +1346,7 @@ export class LightBaker {
     if (!r) return 0
     const total = new Float32Array(GRID * GRID)
     const buffer = new Float32Array(GRID * GRID * 4)
-    // grid[0] is direct light (lamps, washes, daylight); the rest are bounces.
+    // grid[0] is direct light (lamps, the sun, daylight); the rest are bounces.
     for (const g of bounceOnly ? r.grid.slice(1) : r.grid) {
       this.renderer.readRenderTargetPixels(g, 0, 0, GRID, GRID, buffer)
       for (let t = 0; t < GRID * GRID; t++) {
@@ -1535,8 +1385,6 @@ export class LightBaker {
   }
 
   private gridSums = new Map<string, Float32Array>()
-  /** The final lightmaps hold the gathered light (step 4 ran). */
-  private gathered = false
 
   /**
    * Mean irradiance (RGB, every grid summed) over a receiver's texels inside a world box —
@@ -1547,21 +1395,6 @@ export class LightBaker {
     const mean = new Color(0, 0, 0)
     if (!r) return mean
     let sums = this.gridSums.get(name)
-    if (!sums && this.gathered) {
-      // After the gather the final lightmap is the truth: sample it at each grid texel's UV.
-      const index = this.receivers.indexOf(r)
-      const out = this.readFloat(this.outputs[index]!)
-      sums = new Float32Array(GRID * GRID * 3)
-      for (let t = 0; t < GRID * GRID; t++) {
-        const x = Math.floor((((t % GRID) + 0.5) / GRID) * out.width)
-        const y = Math.floor(((Math.floor(t / GRID) + 0.5) / GRID) * out.height)
-        const o = (y * out.width + x) * 4
-        sums[t * 3] = out.pixels[o]!
-        sums[t * 3 + 1] = out.pixels[o + 1]!
-        sums[t * 3 + 2] = out.pixels[o + 2]!
-      }
-      this.gridSums.set(name, sums)
-    }
     if (!sums) {
       sums = new Float32Array(GRID * GRID * 3)
       const buffer = new Float32Array(GRID * GRID * 4)
@@ -1650,6 +1483,34 @@ export class LightBaker {
     return this.dirOutputs[index]?.texture ?? null
   }
 
+  /**
+   * The finished maps, as float RGBA pixels: each receiver's light map and, where it has one,
+   * its direction map. Receivers outside `BakeSurface` (the artwork atlas, `art`) are left out.
+   * Call after `run()` finishes.
+   */
+  exportMaps(): {
+    receiver: BakeSurface
+    kind: BakeMapKind
+    pixels: Float32Array
+    width: number
+    height: number
+  }[] {
+    const maps: ReturnType<LightBaker['exportMaps']> = []
+    this.receivers.forEach((r, i) => {
+      if (!BAKE_SURFACES.includes(r.name as BakeSurface)) return
+      const receiver = r.name as BakeSurface
+      const targets = [
+        ['light', this.outputs[i]],
+        ['direction', this.dirOutputs[i]],
+      ] as const
+      for (const [kind, target] of targets) {
+        if (!target) continue
+        maps.push({ receiver, kind, ...this.readFloat(target) })
+      }
+    })
+    return maps
+  }
+
   /** The finished lightmap for a receiver, in `prepare` order. */
   lightMap(index: number): Texture | null {
     return this.outputs[index]?.texture ?? null
@@ -1661,9 +1522,7 @@ export class LightBaker {
       r.accum.dispose()
       r.accumBounce.dispose()
       r.grid.forEach((g) => g.dispose())
-      r.geoPos?.dispose()
       r.dirAccum?.dispose()
-      r.geoNrm?.dispose()
     })
     this.outputs.forEach((o) => o.dispose())
     this.dirOutputs.forEach((o) => o?.dispose())
@@ -1678,7 +1537,6 @@ export class LightBaker {
       this.resolveMat,
       this.dilateMat,
       this.combineMat,
-      this.washMat,
       this.directionMat,
       this.addMat,
     ].forEach((m) => m.dispose())

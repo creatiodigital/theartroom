@@ -1,0 +1,39 @@
+// AR-161 — the admin's review bar: above the room, below the loader and the visit page's dialogs.
+.bar {
+  position: fixed;
+  top: var(--space-6);
+  left: var(--space-6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: calc(100vw - 2 * var(--space-6) - 64px);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-black);
+  font-weight: var(--font-bold);
+}
+
+.status {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+}

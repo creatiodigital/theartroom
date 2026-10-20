@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Mesh, BufferGeometry } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
-import { probePlasticColor } from '@/components/scene/realismProbe'
+import { plasticColor, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
 
 interface SwitchProps {
@@ -18,8 +18,7 @@ const Switch: React.FC<SwitchProps> = ({ nodes, count }) => {
   // Count comes from the GLB unless a space deliberately overrides it, so a
   // bigger space needs no code change to show all of its props.
   const resolvedCount = count ?? countNodes(nodes, 'doubleSwitch')
-  // AR-161 probe (dev-only, throwaway): `&ar161plastic=` A/B.
-  const tintedPlastic = useAmbientLightColor(probePlasticColor('#d8d8d8'))
+  const tintedPlastic = useAmbientLightColor(plasticColor(useBakedLook(), '#d8d8d8'))
 
   const switchesArray = useMemo(() => Array.from({ length: resolvedCount }), [resolvedCount])
 

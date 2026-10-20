@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useState, useEffect } from 'react'
+import { useLayoutEffect, useMemo, useRef, useCallback, useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   Color,
@@ -29,8 +29,11 @@ import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
-import { useRealismProbe } from '@/components/scene/realismProbe'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+
+import { ARTWORK_DISPLAY_NAME, artworkUserData } from './artworkId'
+import { createArtworkFileMaterial, disposeEncodedMap, encodedMap } from './artworkFile'
 
 type DisplayProps = {
   artwork: RuntimeArtwork
@@ -40,6 +43,8 @@ type ArtworkImageProps = {
   url: string
   width: number
   height: number
+  /** Written on the image mesh (`artworkIdOf`): per-artwork data finds the work by it. */
+  artworkId: string
 }
 
 // Placeholder shown while texture loads
@@ -81,6 +86,7 @@ const reducedCache = new Map<string, Texture>()
 const disposeReducedTexture = (url: string) => {
   const reduced = reducedCache.get(url)
   if (!reduced) return
+  disposeEncodedMap(reduced)
   reduced.dispose()
   reducedCache.delete(url)
 }
@@ -105,6 +111,7 @@ const pruneTextureCache = () => {
   for (const [url, entry] of textureCache) {
     if (textureCache.size <= MAX_RETAINED_TEXTURES) break
     if (entry.refs === 0) {
+      disposeEncodedMap(entry.texture)
       entry.texture.dispose()
       textureCache.delete(url)
       // The LOD copy is derived from this exact URL and is useless without it,
@@ -315,41 +322,42 @@ const applyCoverUVs = (texture: Texture, planeWidth: number, planeHeight: number
   }
 }
 
-// AR-161 probe (dev-only, throwaway): the artwork surface. Production is the unlit Basic
-// material tinted by the ambient colour — it glows like a screen and ignores every lamp.
-// The probe can make it Lambert so the spotlights actually fall across the picture.
+/**
+ * The artwork image's surface. Today's look: the unlit Basic material tinted by the ambient
+ * color. The baked look (AR-161): exactly the file (`artworkFile.ts`), sampling its texture's
+ * undecoded twin (`useArtworkMap`, ARTWORK_ENCODED_SAMPLING). The material is built here, not as
+ * JSX, so R3F never re-marks that texture sRGB as it applies a `map` prop.
+ */
 const ArtworkSurfaceMaterial = ({ map, tint }: { map: Texture; tint: Color }) => {
-  const probe = useRealismProbe()
-  const neutral = probe.enabled && probe.artworkNeutralTint
-  const color = neutral ? WHITE_TINT : tint
-  if (probe.enabled && probe.artworkLit && probe.artworkMaterial === 'standard') {
-    return (
-      <meshStandardMaterial
-        key="lit-standard"
-        map={map}
-        color={color.clone().multiplyScalar(probe.artworkGain)}
-        roughness={probe.artworkRoughness}
-        metalness={0}
-        side={DoubleSide}
-      />
-    )
-  }
-  if (probe.enabled && probe.artworkLit) {
-    return (
-      <meshLambertMaterial
-        key="lit"
-        map={map}
-        color={color.clone().multiplyScalar(probe.artworkGain)}
-        side={DoubleSide}
-      />
-    )
-  }
-  return <meshBasicMaterial key="unlit" map={map} color={color} side={DoubleSide} />
+  const look = useBakedLook()
+  if (look.baked) return <ArtworkFileSurface map={map} />
+  return <meshBasicMaterial key="unlit" map={map} color={tint} side={DoubleSide} />
 }
-const WHITE_TINT = new Color('#ffffff')
+
+const ArtworkFileSurface = ({ map }: { map: Texture }) => {
+  // Built once per image: the LOD swaps its map (same shader).
+  const [material] = useState(() => createArtworkFileMaterial(map))
+  useLayoutEffect(() => {
+    material.map = map
+  }, [material, map])
+  useDisposable(material)
+  return <primitive object={material} attach="material" />
+}
+
+/**
+ * The texture the image samples: the cached one, or — in the baked look — its undecoded twin
+ * (`encodedMap`; the cached one itself when ARTWORK_ENCODED_SAMPLING is off). The cover crop goes
+ * on the texture actually sampled.
+ */
+const useArtworkMap = (texture: Texture, width: number, height: number): Texture => {
+  const look = useBakedLook()
+  const map = look.baked ? encodedMap(texture) : texture
+  applyCoverUVs(map, width, height)
+  return map
+}
 
 // Component for blob URL images (uses custom loader)
-const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
+const BlobImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
   const texture = useBlobTexture(url)
   const ambientColor = useAmbientLightColor('#ffffff', 1.0)
 
@@ -357,12 +365,35 @@ const BlobImage = ({ url, width, height }: ArtworkImageProps) => {
     return <ImagePlaceholder width={width} height={height} />
   }
 
-  applyCoverUVs(texture, width, height)
-
   return (
-    <mesh name="artworkImage" castShadow receiveShadow renderOrder={2}>
+    <BlobImageMesh
+      texture={texture}
+      width={width}
+      height={height}
+      artworkId={artworkId}
+      tint={ambientColor}
+    />
+  )
+}
+
+const BlobImageMesh = ({
+  texture,
+  width,
+  height,
+  artworkId,
+  tint,
+}: Omit<ArtworkImageProps, 'url'> & { texture: Texture; tint: Color }) => {
+  const map = useArtworkMap(texture, width, height)
+  return (
+    <mesh
+      name="artworkImage"
+      userData={artworkUserData(artworkId)}
+      castShadow
+      receiveShadow
+      renderOrder={2}
+    >
       <planeGeometry args={[width, height]} />
-      <ArtworkSurfaceMaterial map={texture} tint={ambientColor} />
+      <ArtworkSurfaceMaterial map={map} tint={tint} />
     </mesh>
   )
 }
@@ -463,7 +494,7 @@ const useArtworkLod = (
 const useRegularTexture = (url: string): Texture | null => useCachedTexture(url, isNonEmptyUrl)
 
 // Component for regular URL images (uses custom loader with error handling)
-const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
+const RegularImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
   const texture = useRegularTexture(url)
   const ambientColor = useAmbientLightColor('#ffffff', 1.0)
   const meshRef = useRef<Mesh>(null)
@@ -473,17 +504,47 @@ const RegularImage = ({ url, width, height }: ArtworkImageProps) => {
     return <ImagePlaceholder width={width} height={height} />
   }
 
-  applyCoverUVs(displayTexture, width, height)
-
   return (
-    <mesh ref={meshRef} name="artworkImage" castShadow receiveShadow renderOrder={2}>
+    <RegularImageMesh
+      meshRef={meshRef}
+      texture={displayTexture}
+      width={width}
+      height={height}
+      artworkId={artworkId}
+      tint={ambientColor}
+    />
+  )
+}
+
+const RegularImageMesh = ({
+  meshRef,
+  texture,
+  width,
+  height,
+  artworkId,
+  tint,
+}: Omit<ArtworkImageProps, 'url'> & {
+  meshRef: React.RefObject<Mesh | null>
+  texture: Texture
+  tint: Color
+}) => {
+  const map = useArtworkMap(texture, width, height)
+  return (
+    <mesh
+      ref={meshRef}
+      name="artworkImage"
+      userData={artworkUserData(artworkId)}
+      castShadow
+      receiveShadow
+      renderOrder={2}
+    >
       <planeGeometry args={[width, height]} />
-      <ArtworkSurfaceMaterial map={displayTexture} tint={ambientColor} />
+      <ArtworkSurfaceMaterial map={map} tint={tint} />
     </mesh>
   )
 }
 
-const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
+const ArtworkImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
   // Skip rendering if URL is empty or invalid
   if (!url || url === '') {
     return <ImagePlaceholder width={width} height={height} />
@@ -491,11 +552,11 @@ const ArtworkImage = ({ url, width, height }: ArtworkImageProps) => {
 
   // Use custom loader for blob URLs (temporary local previews)
   if (url.startsWith('blob:')) {
-    return <BlobImage url={url} width={width} height={height} />
+    return <BlobImage url={url} width={width} height={height} artworkId={artworkId} />
   }
 
   // Use custom loader for regular URLs (with error handling)
-  return <RegularImage url={url} width={width} height={height} />
+  return <RegularImage url={url} width={width} height={height} artworkId={artworkId} />
 }
 
 // Constants for click detection
@@ -942,6 +1003,7 @@ const Display = ({ artwork }: DisplayProps) => {
 
   return (
     <group
+      name={ARTWORK_DISPLAY_NAME}
       position={position}
       quaternion={quaternion}
       onDoubleClick={handleDoubleClick}
@@ -975,7 +1037,14 @@ const Display = ({ artwork }: DisplayProps) => {
             </mesh>
           )}
 
-          {imageUrl && <ArtworkImage url={imageUrl} width={planeWidth} height={planeHeight} />}
+          {imageUrl && (
+            <ArtworkImage
+              url={imageUrl}
+              width={planeWidth}
+              height={planeHeight}
+              artworkId={artwork.id}
+            />
+          )}
         </group>
       </group>
 

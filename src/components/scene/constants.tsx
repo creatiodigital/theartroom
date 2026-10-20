@@ -1,5 +1,8 @@
 import dynamic from 'next/dynamic'
 
+import { spaceGltfPaths } from '@/lib/bake/spaceModelVersion'
+import { spaceLooks } from '@/lib/bake/spaceLooks'
+
 import type { SpaceConfig } from './spaces/types'
 
 // =============================================================================
@@ -29,15 +32,23 @@ export type SpaceKey = 'paris' | 'madrid' | 'vienna'
 export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   paris: {
     displayName: 'Paris',
-    gltfPath: '/assets/spaces/paris/paris21_noq.glb',
+    // AR-161: paris22 = corridor-end opening + windowLight1, as a meshopt `_noq` (no quantize).
+    // On R2 (uploaded BEFORE any push — AR-127 outage); public/ copy is the origin fallback only.
+    gltfPath: spaceGltfPaths.paris!,
+    camera: spaceLooks.paris!.camera,
+    look: spaceLooks.paris!.look,
   },
   vienna: {
     displayName: 'Vienna',
-    gltfPath: '/assets/spaces/vienna/vienna14.glb?v=1',
+    gltfPath: spaceGltfPaths.vienna!,
+    camera: spaceLooks.vienna!.camera,
+    look: spaceLooks.vienna!.look,
   },
   madrid: {
     displayName: 'Madrid',
-    gltfPath: '/assets/spaces/madrid/madrid12_noq.glb',
+    gltfPath: spaceGltfPaths.madrid!,
+    camera: spaceLooks.madrid!.camera,
+    look: spaceLooks.madrid!.look,
   },
 }
 

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { Color } from 'three'
 
 import type { RootState } from '@/redux/store'
-import { useRealismProbe } from '@/components/scene/realismProbe'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 
 /**
  * Hook that returns a Three.js Color adjusted for ambient light settings.
@@ -31,8 +31,8 @@ export const useAmbientLightColor = (
   const ambientIntensity = useSelector(
     (state: RootState) => state.exhibition.ambientLightIntensity ?? 1,
   )
-  // AR-161 probe (dev-only, throwaway): a material's colour is its albedo, nothing else.
-  const neutral = useRealismProbe().neutralMaterialTint
+  // AR-161: in the baked look a material's color is its albedo, nothing else.
+  const neutral = useBakedLook().baked
 
   return useMemo(() => {
     if (neutral) return new Color(baseColor)
@@ -58,8 +58,8 @@ export const useAmbientLight = () => {
   const ambientIntensity = useSelector(
     (state: RootState) => state.exhibition.ambientLightIntensity ?? 1,
   )
-  // AR-161 probe (dev-only, throwaway): see useAmbientLightColor.
-  const neutral = useRealismProbe().neutralMaterialTint
+  // AR-161: see useAmbientLightColor.
+  const neutral = useBakedLook().baked
 
   return useMemo(
     () =>

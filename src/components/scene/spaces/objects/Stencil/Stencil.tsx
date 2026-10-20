@@ -43,6 +43,7 @@ function PaperBackground({
   if (depth > 0) {
     return (
       <RoundedBox
+        name="textCard"
         args={[width, height, depth]}
         radius={0.003}
         smoothness={2}
@@ -65,7 +66,7 @@ function PaperBackground({
   }
 
   return (
-    <mesh renderOrder={1}>
+    <mesh name="textCard" renderOrder={1}>
       <planeGeometry args={[width, height]} />
       <meshStandardMaterial
         map={textures.map}
@@ -308,18 +309,21 @@ const Stencil = ({ artwork }: StencilProps) => {
   ])
 
   // Handle double click for info panel
-  const handleDoubleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation()
-    if (singleClickTimeout.current) {
-      clearTimeout(singleClickTimeout.current)
-      singleClickTimeout.current = null
-    }
+  const handleDoubleClick = useCallback(
+    (event: ThreeEvent<MouseEvent>) => {
+      event.stopPropagation()
+      if (singleClickTimeout.current) {
+        clearTimeout(singleClickTimeout.current)
+        singleClickTimeout.current = null
+      }
 
-    if (!isPlaceholdersShown && showArtworkInformation) {
-      dispatch(showArtworkPanel())
-      dispatch(setCurrentArtwork(artwork.id))
-    }
-  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+      if (!isPlaceholdersShown && showArtworkInformation) {
+        dispatch(showArtworkPanel())
+        dispatch(setCurrentArtwork(artwork.id))
+      }
+    },
+    [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation],
+  )
 
   // Stops propagation for the same reason Display does — see the note there.
   // Without it a work on the far face of a display panel steals the click.
@@ -532,7 +536,9 @@ const Stencil = ({ artwork }: StencilProps) => {
 
         if (cardDepth > 0) {
           return (
+            // `textCard`: the bake gives cards the light measured at their artwork (AR-161).
             <RoundedBox
+              name="textCard"
               args={[planeWidth, planeHeight, cardDepth]}
               radius={0.003}
               smoothness={2}
@@ -544,7 +550,7 @@ const Stencil = ({ artwork }: StencilProps) => {
           )
         }
         return (
-          <mesh renderOrder={1}>
+          <mesh name="textCard" renderOrder={1}>
             <planeGeometry args={[planeWidth, planeHeight]} />
             {/* Standard to match the thick card above: a flat card is still a
                 painted surface on a wall and has to take the same light. Basic

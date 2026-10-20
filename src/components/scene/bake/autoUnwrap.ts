@@ -2,7 +2,7 @@ import { BufferAttribute, BufferGeometry, Vector3, type Mesh } from 'three'
 import { potpack } from 'three/examples/jsm/libs/potpack.module.js'
 
 /**
- * ⚠️ AR-161 SPIKE — automatic lightmap UVs for props whose authored UVs were made for tiling
+ * ⚠️ AR-161 — automatic lightmap UVs for props whose authored UVs were made for tiling
  * (overlapping, repeating), so they cannot hold a bake.
  *
  * Planar charts: triangles that share an edge and face the same way (normals within ~11°) form

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
 import { assetUrl } from '@/lib/assetUrl'
-import { useRealismProbe } from '@/components/scene/realismProbe'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { RoomEnvironmentCapture } from '@/components/scene/RoomEnvironmentCapture'
 
 // PERF TEST: Set to false to disable HDRI environment
@@ -67,16 +67,17 @@ const HDRI = () => {
   const hdriEnvironment = AVAILABLE_HDRIS.includes(rawHdri as (typeof AVAILABLE_HDRIS)[number])
     ? rawHdri
     : 'soil'
-  const windowTransparency = useSelector(
+  const storedTransparency = useSelector(
     (state: RootState) => state.exhibition.windowTransparency ?? false,
   )
   const hdriRotation = useSelector(
     (state: RootState) => state.exhibition.hdriRotation ?? DEFAULT_HDRI_ROTATION,
   )
 
-  // AR-161 probe (dev-only, throwaway).
-  const probe = useRealismProbe()
-  const probeEnvIntensity = probe.enabled && probe.envOverride ? probe.envIntensity : null
+  // AR-161: in the baked look the environment is the real room, captured, and the window glass
+  // is always on (no sky shows through it).
+  const look = useBakedLook()
+  const windowTransparency = look.baked ? false : storedTransparency
 
   // Skip HDRI if disabled for performance testing
   if (!ENABLE_HDRI) return null
@@ -88,14 +89,10 @@ const HDRI = () => {
       <HDRIErrorBoundary>
         {/* Reflections: a synthetic white room. Not visible in the scene — Lightformers live
             in the portal scene that is rendered into the cubemap, never in the gallery. */}
-        {probe.enabled && probe.envCapture ? (
-          <RoomEnvironmentCapture intensity={probeEnvIntensity ?? 1} />
+        {look.baked ? (
+          <RoomEnvironmentCapture intensity={1} />
         ) : (
-          <Environment
-            frames={1}
-            resolution={256}
-            environmentIntensity={probeEnvIntensity ?? ROOM_ENV_INTENSITY}
-          >
+          <Environment frames={1} resolution={256} environmentIntensity={ROOM_ENV_INTENSITY}>
             {/* Ceiling: the dominant source in a gallery, and the reason a polished floor
               reads bright rather than mirror-dark. */}
             <Lightformer

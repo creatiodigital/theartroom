@@ -1,17 +1,13 @@
 import { EffectComposer, ToneMapping, FXAA, Bloom } from '@react-three/postprocessing'
-import { ToneMappingMode } from 'postprocessing'
+import { ToneMappingMode, type BloomEffect } from 'postprocessing'
 import { useEffect, useMemo, type ReactElement } from 'react'
 import { useThree } from '@react-three/fiber'
 import { Raycaster } from 'three'
 
-import {
-  PROBE_AVAILABLE,
-  probeExposure,
-  useMeteredExposure,
-  useMeteredWhiteBalance,
-  useRealismProbe,
-} from '@/components/scene/realismProbe'
+import { BAKE_DEBUG, CAMERA_EXPOSURE, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { useMeteredExposure, useMeteredWhiteBalance } from '@/components/scene/bake/bakeState'
 
+import { ArtworkFileEffect } from './ArtworkFileEffect'
 import { WhiteBalanceEffect } from './WhiteBalanceEffect'
 
 /**
@@ -22,7 +18,9 @@ import { WhiteBalanceEffect } from './WhiteBalanceEffect'
  *
  * - MSAA: geometry-edge antialiasing (see `MULTISAMPLING` below)
  * - FXAA: catches the edges MSAA structurally cannot — see below
- * - Tone mapping: ACES Filmic for cinematic colour grading
+ * - Tone mapping: ACES Filmic for cinematic colour grading — in a baked space's approved look
+ *   (AR-161), Khronos PBR Neutral at the space's fixed camera, then each artwork image put back
+ *   exactly as its file
  */
 
 /**
@@ -157,37 +155,41 @@ interface EffectsProps {
 }
 
 export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
-  // AR-161 probe (dev-only, throwaway). Exposure is the renderer's: the ToneMapping effect's
-  // shader multiplies by three's `toneMappingExposure` uniform.
-  const probe = useRealismProbe()
+  const look = useBakedLook()
   const gl = useThree((s) => s.gl)
   const camera = useThree((s) => s.camera)
   const scene = useThree((s) => s.scene)
   useEffect(() => {
-    // Spike diagnostics: the headless render harness places the camera and reads the scene.
-    if (!PROBE_AVAILABLE) return
+    // Diagnostics: the headless render tools place the camera and read the scene.
+    if (!BAKE_DEBUG) return
     Object.assign(window, {
       __ar161Camera: camera,
       __ar161Scene: scene,
       __ar161Raycaster: Raycaster,
     })
   }, [camera, scene])
+  // The tools switch the glow off to measure what it adds.
+  const exposeBloom = (effect: BloomEffect | null) => {
+    if (BAKE_DEBUG) Object.assign(window, { __ar161Bloom: effect })
+  }
+  // The camera a bake sets (the space's fixed exposure and white balance, recorded with it).
   const metered = useMeteredExposure()
   const whiteBalanceGain = useMeteredWhiteBalance()
   const whiteBalance = useMemo(() => new WhiteBalanceEffect(), [])
+  const artworkFile = useMemo(() => new ArtworkFileEffect(), [])
+  useEffect(() => () => artworkFile.dispose(), [artworkFile])
   useEffect(() => () => whiteBalance.dispose(), [whiteBalance])
   if (whiteBalanceGain) whiteBalance.setGain(whiteBalanceGain)
-  const exposure = probeExposure(probe, metered)
+  // Exposure is the renderer's: the ToneMapping effect's shader multiplies by three's
+  // `toneMappingExposure` uniform.
+  const exposure = look.baked ? (metered ?? CAMERA_EXPOSURE) : 1
   useEffect(() => {
     gl.toneMappingExposure = exposure
     return () => {
       gl.toneMappingExposure = 1
     }
   }, [gl, exposure])
-  const toneMappingMode = probe.enabled
-    ? ToneMappingMode[probe.toneMapping]
-    : ToneMappingMode.ACES_FILMIC
-  const bloomOn = probe.enabled ? probe.bloom : ENABLE_BLOOM
+  const toneMappingMode = look.baked ? ToneMappingMode.NEUTRAL : ToneMappingMode.ACES_FILMIC
 
   if (!enabled) return null
 
@@ -197,10 +199,11 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
   // order — grain goes last so it sits on the graded image, not the linear one.
   const passes: ReactElement[] = []
   if (ENABLE_FXAA) passes.push(<FXAA key="fxaa" />)
-  if (bloomOn) {
+  if (ENABLE_BLOOM) {
     passes.push(
       <Bloom
         key="bloom"
+        ref={exposeBloom}
         mipmapBlur
         intensity={BLOOM_INTENSITY}
         luminanceThreshold={BLOOM_THRESHOLD}
@@ -209,8 +212,10 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
       />,
     )
   }
-  if (whiteBalanceGain) passes.push(<primitive key="white-balance" object={whiteBalance} />)
+  if (look.baked && whiteBalanceGain)
+    passes.push(<primitive key="white-balance" object={whiteBalance} />)
   passes.push(<ToneMapping key={`tonemapping-${toneMappingMode}`} mode={toneMappingMode} />)
+  if (look.baked) passes.push(<primitive key="artwork-file" object={artworkFile} />)
 
   return <EffectComposer multisampling={MULTISAMPLING}>{passes}</EffectComposer>
 }

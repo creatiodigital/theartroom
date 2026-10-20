@@ -45,7 +45,7 @@ import { spaceConfigs } from '@/components/scene/constants'
 // — a second identical file today would only drift.
 import { Lights } from '@/components/scene/spaces/ParisSpace/lights'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
-import { applyBakeProbe, useRealismProbe } from '@/components/scene/realismProbe'
+import { applySurfaceLook, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // Prop families whose nodes hang off a room Empty in the Vienna GLB. Their
@@ -109,7 +109,12 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
 
   // Independent wall & ceiling colors
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
-  const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
+  const storedCeilingColor = useSelector(
+    (state: RootState) => state.exhibition.ceilingColor ?? '#ffffff',
+  )
+  // AR-161: in the baked look the ceiling is the space's (white), the walls the artist's.
+  const look = useBakedLook()
+  const ceilingColor = look.baked ? look.space.ceilingColor : storedCeilingColor
 
   // Baked lighting, neutral (no albedo) so the wall colour above stays the
   // artist's to control. No module-scope preload: drei's useKTX2.preload never
@@ -145,21 +150,19 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // the artwork.
   const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
   const invalidate = useThree((s) => s.invalidate)
-  // AR-161 probe (dev-only, throwaway): outside `current` mode it owns these colours.
-  const probe = useRealismProbe()
   useEffect(() => {
-    const wallProbed = applyBakeProbe(wallMaterial, wallTexture, wallColor, probe)
-    const ceilingProbed = applyBakeProbe(
+    // AR-161: in the baked look `applySurfaceLook` owns these colors.
+    const wallSet = applySurfaceLook(wallMaterial, wallTexture, wallColor, look)
+    const ceilingSet = applySurfaceLook(
       ceilingMaterial,
       ceilingTexture,
       ceilingColor,
-      probe,
+      look,
       'ceiling',
     )
     const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
-    if (!wallProbed) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
-    if (!ceilingProbed)
-      ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+    if (!wallSet) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    if (!ceilingSet) ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
   }, [
     wallMaterial,
@@ -170,7 +173,7 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
     ceilingColor,
     wallBrightness,
     invalidate,
-    probe,
+    look,
     wallTexture,
     ceilingTexture,
   ])

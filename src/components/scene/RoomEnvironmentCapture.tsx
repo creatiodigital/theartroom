@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import {
   CubeCamera,
@@ -12,7 +12,7 @@ import {
 } from 'three'
 
 /**
- * ⚠️ AR-161 REALISM PROBE — DEV-ONLY, THROWAWAY. DO NOT SHIP AS-IS.
+ * ⚠️ AR-161 — the environment of a baked space's approved look (`HDRI`).
  *
  * Physically based bounce light for everything that is not baked (artworks, frames, panels,
  * floor, lamp bodies): render the ACTUAL room into a cube map from where the visitor stands,
@@ -21,9 +21,8 @@ import {
  * the same light the room is actually emitting — instead of a flat ambient term or a
  * synthetic Lightformer room.
  *
- * Lambert walls/ceiling are untouched by `scene.environment` (three only applies it to
- * Standard materials), which is what we want: their bounce comes from the Blender bake, so
- * they are not lit twice.
+ * Walls, ceiling and floor take their diffuse light from the room's bake alone (only the
+ * plaster's sheen and the floor's gloss reflect this environment), so they are not lit twice.
  *
  * Captured twice per pass so the second capture already includes the first's bounce, and
  * recaptured when the visitor has walked far enough that the room around them changed.
@@ -37,8 +36,8 @@ const CAPTURE_TIMES = [1.5, 6]
 /** Metres walked before the room around the visitor is considered different. */
 const RECAPTURE_DISTANCE = 4
 
-// Set by the load-time bake when it swaps baked light onto the room: the room the environment
-// captured a moment ago no longer exists, so take a fresh look.
+// Set when a bake goes on the room: the room the environment captured a moment ago no longer
+// exists, so take a fresh look.
 let recaptureRequested = false
 export const requestRoomRecapture = () => {
   recaptureRequested = true
@@ -60,7 +59,10 @@ export const RoomEnvironmentCapture = ({ intensity = 1 }: { intensity?: number }
   const camera = useThree((s) => s.camera)
   const capture = useRef<CaptureState | null>(null)
 
-  useEffect(() => {
+  // Layout effects: should the room leave the baked look (a stored bake that failed), this puts the
+  // environment back BEFORE today's `<Environment>` sets its own (also in a layout effect) — a
+  // passive cleanup would run after it and wipe it.
+  useLayoutEffect(() => {
     const cubeRT = new WebGLCubeRenderTarget(CAPTURE_SIZE, { type: HalfFloatType })
     const cubeCamera = new CubeCamera(0.05, 200, cubeRT)
     const pmrem = new PMREMGenerator(gl)
@@ -83,7 +85,7 @@ export const RoomEnvironmentCapture = ({ intensity = 1 }: { intensity?: number }
     }
   }, [gl, scene])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     scene.environmentIntensity = intensity
     return () => {
       scene.environmentIntensity = 1

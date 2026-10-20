@@ -28,8 +28,6 @@ import { Space } from './Space'
 import { WebGLMonitor } from './WebGLMonitor'
 import { WebGLUnavailable } from './WebGLUnavailable'
 import { GL_ATTRIBUTES, useWebGLAvailable } from './webglSupport'
-import { PROBE_AVAILABLE } from './realismProbe'
-import { RealismProbePanel } from './RealismProbePanel'
 
 // Adaptive resolution ladder. Fill rate is this scene's only real budget — cost
 // is pixels × lights, and every pixel evaluates all 22 spotlights in three's
@@ -196,8 +194,6 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
             </SceneErrorBoundary>
           )}
           {hideLoader && <FloatingMuteButton />}
-          {/* AR-161 realism probe — dev-only, throwaway. */}
-          {PROBE_AVAILABLE && webglAvailable && <RealismProbePanel />}
         </div>
       </SceneContext.Provider>
     </SceneAudioProvider>

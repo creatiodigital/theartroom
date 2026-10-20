@@ -7,7 +7,9 @@ import type { RootState } from '@/redux/store'
 import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
-import { probeSpot, useRealismProbe } from '@/components/scene/realismProbe'
+import { useBakedDimmer, useLampLevel } from '@/components/scene/spaces/objects/useLampDimmer'
+import { lookSpot, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { DIMMER_STANDARD } from '@/lib/bake/dimmer'
 
 interface RoundLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -15,7 +17,6 @@ interface RoundLampProps {
 }
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
-const DEFAULT_LAMP_INTENSITY = 4.0
 
 /**
  * Round lamp using <primitive> to preserve Blender hierarchy (body → bulb).
@@ -49,25 +50,34 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
   const isRoomActive = useActiveRoom(nodes, 'roundLampBody')
   const tintedPlastic = useAmbientLightColor('#ffffff')
 
-  const lampColor = useSelector(
+  // AR-161: in the baked look the lamps' color is the space's, and their beam and throw are the
+  // diffused fixture's (`lookSpot`): the stored angle and distance only shape today's look.
+  const look = useBakedLook()
+  const storedLampColor = useSelector(
     (state: RootState) => state.exhibition.recessedLampColor ?? DEFAULT_LAMP_COLOR,
   )
-  // AR-161 probe (dev-only, throwaway).
-  const probe = useRealismProbe()
-  const lampIntensity = useSelector(
-    (state: RootState) => state.exhibition.recessedLampIntensity ?? DEFAULT_LAMP_INTENSITY,
-  )
-  const bulbEmissiveIntensity = lampIntensity
+  const lampColor = look.baked ? look.space.lampColor : storedLampColor
+  const lampIntensity = useLampLevel('recessed')
+  // AR-161: in a baked space the ceiling-lamp dimmer (50–100%) scales the lamps' light and, in
+  // the baked look, their discs with it (at 100% both are exactly the approved ones).
+  const dimmer = useBakedDimmer('recessed')
+  const bulbEmissiveIntensity =
+    look.baked && dimmer !== undefined ? DIMMER_STANDARD * dimmer : lampIntensity
   const lampAngle = useSelector((state: RootState) => state.exhibition.recessedLampAngle ?? 0.45)
   const lampDistance = useSelector(
     (state: RootState) => state.exhibition.recessedLampDistance ?? 15,
   )
-  const spot = probeSpot(probe, {
-    intensity: lampIntensity * 2,
-    angle: lampAngle,
-    penumbra: 1,
-    distance: lampDistance,
-  })
+  const spot = lookSpot(
+    look,
+    {
+      intensity: lampIntensity * 2,
+      angle: lampAngle,
+      penumbra: 1,
+      distance: lampDistance,
+    },
+    'downlight',
+    dimmer,
+  )
 
   // Shared materials — all 17 lamps use the same body and bulb material
   const bodyMaterial = useMemo(

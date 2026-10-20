@@ -2,9 +2,10 @@ import { Effect } from 'postprocessing'
 import { Uniform, Vector3 } from 'three'
 
 /**
- * ⚠️ AR-161 SPIKE — camera white balance: per-channel gain on linear HDR, before tone mapping,
- * exactly what a camera's WB setting does. Set from the mounted lamps' colour, so a warm
- * lamp's light reads white on a white wall — as it does to the eye and in a photograph.
+ * ⚠️ AR-161 — camera white balance: per-channel gain on linear HDR, before tone mapping,
+ * exactly what a camera's WB setting does. The space's fixed white balance, recorded with its
+ * bake, so a warm lamp's light reads white on a white wall — as it does to the eye and in a
+ * photograph.
  */
 export class WhiteBalanceEffect extends Effect {
   constructor() {

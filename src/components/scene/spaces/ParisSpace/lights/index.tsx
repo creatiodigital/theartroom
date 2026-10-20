@@ -1,8 +1,7 @@
 import { AmbientLight } from './AmbientLight'
 import { HDRI } from './HDRI'
 import { ShadowSetup } from '@/components/scene/spaces/objects/ShadowSetup'
-import { useRealismProbe } from '@/components/scene/realismProbe'
-import { LoadTimeBake } from '@/components/scene/bake/LoadTimeBake'
+import { RoomBake } from '@/components/scene/bake/RoomBake'
 
 /**
  * The shared lighting rig. Paris and Madrid mount it from their own `lights/index`; Vienna
@@ -29,14 +28,13 @@ import { LoadTimeBake } from '@/components/scene/bake/LoadTimeBake'
  * again.
  */
 export const Lights = () => {
-  // AR-161 probe (dev-only, throwaway).
-  const probe = useRealismProbe()
   return (
     <>
       <AmbientLight />
       <HDRI />
       <ShadowSetup />
-      {probe.enabled && probe.bake && <LoadTimeBake />}
+      {/* AR-161: the stored bake, or the admin's bake (bake mode). */}
+      <RoomBake />
     </>
   )
 }

@@ -1,5 +1,5 @@
 /**
- * ⚠️ AR-161 SPIKE — load-time light baker shaders. Dev-only, throwaway until proven.
+ * ⚠️ AR-161 — the light baker's shaders (`LightBaker`).
  *
  * Receivers are rendered in TEXTURE space (gl_Position = uv): every fragment is one lightmap
  * texel, lit at its real world position and normal. Output is IRRADIANCE E in three's units,
@@ -49,6 +49,15 @@ export const SPOT_FRAGMENT = /* glsl */ `
   // A diffuser's exact cosine (Lambertian) emission, I(θ) = I₀·cosθ, instead of three's
   // smoothstep falloff — same flux (both integrate to π·I₀), more light toward the horizon.
   uniform float uLambert;
+  // 1: light only the room side of a surface (the sun): the side facing uRoomCenter.
+  uniform float uOneSided;
+  uniform vec3 uRoomCenter;
+  // 1: the light enters only through a window (the sun): the ray from the surface to the light
+  // must cross the glass rectangle (centre, half-extent axes in its plane).
+  uniform float uPortal;
+  uniform vec3 uPortalCenter;
+  uniform vec3 uPortalU;
+  uniform vec3 uPortalV;
   // 1: write the light's DIRECTION weighted by its luminance (directional lightmap), not E.
   uniform int uDirMode;
   uniform float uCubeTexel; // one cube texel's angle, radians
@@ -64,7 +73,6 @@ export const SPOT_FRAGMENT = /* glsl */ `
   uniform vec2 uShadowTexel;
   uniform float uBias;
   uniform float uWeight;
-  uniform float uShadows;
   varying vec3 vWorldPos;
   varying vec3 vWorldNormal;
   ${OUTPUT}
@@ -85,24 +93,20 @@ export const SPOT_FRAGMENT = /* glsl */ `
     return vis / 9.0;
   }
 
-  // 1: bias sized to the depth error a texel actually has on this surface (texel × tanθ,
+  // The bias is sized to the depth error a texel actually has on this surface (texel × tanθ,
   // doubled for the PCF taps one texel away) instead of a blanket ~3 cm — which swallowed the
   // shadow of a frame hung 2.5 cm off the wall.
-  uniform float uFineBias;
-
   float cubeVisibility(vec3 n, float ndl) {
     float texelWorld = uCubeTexel * length(uLightPos - vWorldPos) * 1.7; // ≤ √3 at face corners
     float c = max(abs(ndl), 0.05);
     float tanTheta = min(sqrt(1.0 - c * c) / c, 10.0);
-    vec3 p = vWorldPos + n * sign(ndl) * texelWorld * (uFineBias > 0.5 ? 1.0 : 1.5);
+    vec3 p = vWorldPos + n * sign(ndl) * texelWorld;
     vec3 fromLight = p - uLightPos;
     float dp = length(fromLight);
     vec3 dir = fromLight / dp;
     vec3 t = normalize(cross(abs(dir.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0), dir));
     vec3 b = cross(dir, t);
-    float bias = uFineBias > 0.5
-      ? texelWorld * (0.5 + 2.0 * tanTheta)
-      : texelWorld * (1.0 + 1.5 / c);
+    float bias = texelWorld * (0.5 + 2.0 * tanTheta);
     float vis = 0.0;
     for (int x = -1; x <= 1; x++) {
       for (int y = -1; y <= 1; y++) {
@@ -121,6 +125,27 @@ export const SPOT_FRAGMENT = /* glsl */ `
     vec3 L = toLight / d;
     vec3 n = normalize(vWorldNormal);
     float ndl = dot(n, L);
+    if (uOneSided > 0.5) {
+      vec3 inward = n * (dot(n, uRoomCenter - vWorldPos) >= 0.0 ? 1.0 : -1.0);
+      if (dot(inward, L) <= 0.0) {
+        gl_FragColor = uDirMode == 1 ? vec4(0.0) : bakeOutput(vec3(0.0), 1.0);
+        return;
+      }
+    }
+    if (uPortal > 0.5) {
+      vec3 pn = cross(uPortalU, uPortalV);
+      float facing = dot(pn, L);
+      float t = abs(facing) > 1e-6 ? dot(pn, uPortalCenter - vWorldPos) / facing : -1.0;
+      vec3 local = vWorldPos + L * t - uPortalCenter;
+      if (
+        t <= 0.0 ||
+        abs(dot(local, uPortalU)) > dot(uPortalU, uPortalU) ||
+        abs(dot(local, uPortalV)) > dot(uPortalV, uPortalV)
+      ) {
+        gl_FragColor = uDirMode == 1 ? vec4(0.0) : bakeOutput(vec3(0.0), 1.0);
+        return;
+      }
+    }
     float cosAxis = dot(-L, uLightDir);
     float spot = uLambert > 0.5 ? max(cosAxis, 0.0) : smoothstep(uConeCos, uPenumbraCos, cosAxis);
     float atten = 1.0 / max(pow(d, uDecay), 0.01);
@@ -128,8 +153,8 @@ export const SPOT_FRAGMENT = /* glsl */ `
       float r = clamp(1.0 - pow(d / uCutoff, 4.0), 0.0, 1.0);
       atten *= r * r;
     }
-    float vis = spot <= 0.0 || uShadows < 0.5
-      ? (spot > 0.0 ? 1.0 : 0.0)
+    float vis = spot <= 0.0
+      ? 0.0
       : uCubeShadow > 0.5
         ? cubeVisibility(n, ndl)
         : visibility(vWorldPos + n * sign(ndl) * 0.005, d);
@@ -146,7 +171,7 @@ export const SPOT_FRAGMENT = /* glsl */ `
 /**
  * One virtual point light (instant radiosity): a patch of lit surface re-emitting its
  * radiosity with a cosine lobe. I(ω) = (Φ/π)·cosθ_vpl, E = I·cosθ_recv / d². The d² clamp is
- * the standard VPL singularity bias.
+ * the standard VPL singularity bias (the near-field rays add back what it drops).
  */
 export const VPL_FRAGMENT = /* glsl */ `
   uniform vec3 uVplPos;
@@ -154,10 +179,6 @@ export const VPL_FRAGMENT = /* glsl */ `
   uniform vec3 uVplIntensity;
   uniform samplerCube uVplShadow;
   uniform float uMinDist2;
-  // > 0: the VPL is a Lambertian DISC of the area it stands for (r² = A/π). Exact on its axis:
-  // E = I·cosV·cosR / (d² + r²) — a point light far away, finite up close, so no clamp. The
-  // clamp threw away the near-field light that lights inside corners.
-  uniform float uDiscR2;
   uniform float uBias;
   // 1: write the light's DIRECTION weighted by its luminance (directional lightmap), not E.
   uniform int uDirMode;
@@ -183,31 +204,13 @@ export const VPL_FRAGMENT = /* glsl */ `
     float occluder = inv > 0.0 ? 1.0 / inv : 1e9;
     float bias = uBias + dp * 0.03 / max(abs(ndl), 0.2);
     float vis = dp - bias > occluder ? 0.0 : 1.0;
-    float denom = uDiscR2 > 0.0 ? d2 + uDiscR2 : max(d2, uMinDist2);
-    vec3 E = uVplIntensity * cosV * abs(ndl) / denom * vis;
+    vec3 E = uVplIntensity * cosV * abs(ndl) / max(d2, uMinDist2) * vis;
     if (uDirMode == 1) {
       float lum = dot(E, vec3(0.2126, 0.7152, 0.0722));
       gl_FragColor = vec4(L * lum, lum);
       return;
     }
     gl_FragColor = bakeOutput(E, ndl);
-  }
-`
-
-/**
- * A uniform irradiance wash on one surface — the indirect "general light" a gallery gets from
- * uplights aimed at its ceiling. Written as DIRECT light on that surface; the bounce passes
- * then carry it to everything else, occluded like any other light.
- */
-export const WASH_FRAGMENT = /* glsl */ `
-  uniform vec3 uIrradiance;
-  uniform vec3 uRoomCenter;
-  varying vec3 vWorldPos;
-  varying vec3 vWorldNormal;
-  ${OUTPUT}
-  void main() {
-    float facing = dot(normalize(vWorldNormal), uRoomCenter - vWorldPos);
-    gl_FragColor = bakeOutput(uIrradiance, facing >= 0.0 ? 1.0 : -1.0);
   }
 `
 
@@ -233,8 +236,15 @@ export const DISTANCE_VERTEX = /* glsl */ `
 
 export const DISTANCE_FRAGMENT = /* glsl */ `
   uniform vec3 uLightPos;
+  // The sun through a window (portal): what lies beyond uOutsideAt along uOutsideNormal is
+  // outdoors and casts nothing — a floor or ceiling modelled as one rectangle over the whole
+  // footprint reaches past the window wall and would otherwise shade the window.
+  uniform float uOutside;
+  uniform vec3 uOutsideAt;
+  uniform vec3 uOutsideNormal;
   varying vec3 vWorldPos;
   void main() {
+    if (uOutside > 0.5 && dot(vWorldPos - uOutsideAt, uOutsideNormal) > 0.0) discard;
     gl_FragColor = vec4(1.0 / max(length(vWorldPos - uLightPos), 1e-4), 0.0, 0.0, 1.0);
   }
 `
@@ -268,7 +278,7 @@ export const DILATE_FRAGMENT = /* glsl */ `
 
 /**
  * Final lightmap = direct (sharp: shadows, beam edges) + bounce (low-frequency by nature).
- * The bounce is gathered from a few hundred point emitters, so it carries sampling noise; a
+ * The bounce is gathered from thousands of point emitters, so it carries sampling noise; a
  * coverage-aware Gaussian denoises it. `uRadius` 0 = no filtering (multi-chart atlases, where
  * a blur would bleed light between unrelated walls); > 0 only on single-chart receivers.
  */
@@ -277,45 +287,14 @@ export const COMBINE_FRAGMENT = /* glsl */ `
   uniform sampler2D uBounce;
   uniform vec2 uBounceTexel;
   uniform float uRadius;
-  // Geometry-aware filter: per bounce texel world position (a = coverage) and normal. A tap
-  // counts only if it is near in the WORLD and faces the same way, so it never reaches across
-  // a chart seam or round a corner.
-  uniform sampler2D uPos;
-  uniform sampler2D uNrm;
-  uniform float uBilateral;
-  uniform float uSigma2;
+  // The bounce passes' total writes: each tap is weighted by how much of it lies on the chart
+  // (alpha / writes). Without it a bilinear tap at a chart's edge (a corner) averages in empty
+  // texels as black.
   uniform float uWrites;
-  // 1: weight each bounce tap by how much of it lies on the chart (alpha / writes). Without it
-  // a bilinear tap at a chart's edge (a corner) averages in empty texels as black.
-  uniform float uCoverageNorm;
-  // 1: a texel no light reaches at all is OUTSIDE the room (the model's ceiling and floor run
-  // on behind the walls). It is dropped from the bounce smoothing and left uncovered, so
-  // dilation refills it from the room side and neither the blur nor the GPU's bilinear lookup
-  // can pull its black into the visible edge.
-  uniform float uRoomClip;
   varying vec2 vUv;
   void main() {
     vec4 d = texture2D(uDirect, vUv);
     if (d.a <= 0.0) { gl_FragColor = vec4(0.0); return; }
-    vec3 luma = vec3(0.2126, 0.7152, 0.0722);
-    if (uRoomClip > 0.5 && dot(d.rgb, luma) + dot(texture2D(uBounce, vUv).rgb, luma) <= 0.0) {
-      gl_FragColor = vec4(0.0);
-      return;
-    }
-    vec4 pc = texture2D(uPos, vUv);
-    vec3 nc = texture2D(uNrm, vUv).xyz;
-    // A chart's edge texels can be covered at full res but not at bounce res: take the
-    // geometry of the nearest covered bounce texel, never fall back to an unweighted blur
-    // (which pulled light in from neighbouring charts as a seam).
-    for (int x = -1; x <= 1; x++) {
-      for (int y = -1; y <= 1; y++) {
-        if (pc.a > 0.0) continue;
-        vec2 o = vUv + vec2(float(x), float(y)) * uBounceTexel;
-        pc = texture2D(uPos, o);
-        nc = texture2D(uNrm, o).xyz;
-      }
-    }
-    bool bilateral = uBilateral > 0.5 && pc.a > 0.0;
     vec3 b = vec3(0.0);
     float w = 0.0;
     // Dense taps (13×13): on a narrow chart (a pilaster face) a sparse kernel's taps drop off
@@ -325,19 +304,11 @@ export const COMBINE_FRAGMENT = /* glsl */ `
         vec2 o = vUv + vec2(float(x), float(y)) * uBounceTexel * uRadius * 0.5;
         vec4 s = texture2D(uBounce, o);
         float g = exp(-float(x * x + y * y) / 18.0);
-        if (bilateral) {
-          vec4 ps = texture2D(uPos, o);
-          vec3 ns = texture2D(uNrm, o).xyz;
-          vec3 dp = ps.xyz - pc.xyz;
-          g *= ps.a > 0.0 && dot(ns, nc) > 0.8 ? exp(-dot(dp, dp) / uSigma2) : 0.0;
-        }
-        // Filtered path: bilinear taps, weighted by the fraction of the tap ON the chart
-        // (alpha / writes) — smooth inside a chart, exact at its edges (an unweighted tap half
-        // off the chart averaged in black: streaks; nearest taps instead: blocky plaid).
-        bool outside = uRoomClip > 0.5 && dot(s.rgb, luma) <= 0.0;
-        if (outside) continue;
-        if (bilateral || uCoverageNorm > 0.5) { b += s.rgb * g; w += g * s.a / uWrites; }
-        else if (s.a > 0.0) { b += s.rgb * g; w += g; }
+        // Bilinear taps, weighted by the fraction of the tap ON the chart (alpha / writes) —
+        // smooth inside a chart, exact at its edges (an unweighted tap half off the chart
+        // averaged in black: streaks; nearest taps instead: blocky plaid).
+        b += s.rgb * g;
+        w += g * s.a / uWrites;
       }
     }
     gl_FragColor = vec4(d.rgb + (w > 0.0 ? b / w : vec3(0.0)), 1.0);
@@ -377,8 +348,8 @@ export const RESOLVE_FRAGMENT = /* glsl */ `
 `
 
 /**
- * Final gather (AR-161): ray tracing against the room's triangles (see gatherScene.ts) from
- * every lightmap texel. `traceRay` walks the BVH with a small stack; `radianceAt` is what the
+ * Ray tracing against the room's triangles (see gatherScene.ts) from lightmap texels, for the
+ * near-field compensation. `traceRay` walks the BVH with a small stack; `radianceAt` is what the
  * ray sees at its hit: a receiver's albedo × baked irradiance / π, or a constant / emitter.
  */
 const TRACE_GLSL = /* glsl */ `
@@ -558,41 +529,6 @@ export const CHART_FRAGMENT = /* glsl */ `
   void main() { gl_FragColor = vec4(vChart, 0.0, 0.0, 1.0); }
 `
 
-/** One pass of the final gather: uRaysPerPass rays per texel, weighted to sum to E over all passes. */
-export const GATHER_FRAGMENT = /* glsl */ `
-  uniform float uOffset;
-  uniform int uPass;
-  uniform int uRaysPerPass;
-  uniform int uTotalRays;
-  uniform highp sampler2D uSide;
-  // 1: debug — paint the chosen side instead (front green, back red), first pass only.
-  uniform int uDebugSide;
-  varying vec3 vWorldPos;
-  varying vec3 vWorldNormal;
-  ${TRACE_GLSL}
-  void main() {
-    float side = texelFetch(uSide, ivec2(gl_FragCoord.xy), 0).r < 0.0 ? -1.0 : 1.0;
-    if (uDebugSide == 1) {
-      gl_FragColor = uPass == 0 ? vec4(side > 0.0 ? vec3(0.0, 3.0, 0.0) : vec3(3.0, 0.0, 0.0), 1.0) : vec4(0.0);
-      return;
-    }
-    vec3 n = normalize(vWorldNormal) * side;
-    vec3 o = vWorldPos + n * uOffset;
-    vec2 rot = texelRotation();
-    vec3 sum = vec3(0.0);
-    int tri;
-    vec2 bary;
-    for (int k = 0; k < 64; k++) {
-      if (k >= uRaysPerPass) break;
-      vec3 d = cosineDir(n, uPass * uRaysPerPass + k, uTotalRays, rot);
-      traceRay(o, d, tri, bary);
-      if (tri >= 0) sum += radianceAt(tri, bary);
-    }
-    // Cosine-weighted Monte Carlo: E = π · mean(L).
-    gl_FragColor = vec4(sum * GPI / float(uTotalRays), 1.0);
-  }
-`
-
 /** Texture-space receiver with the room side of its chart (`chartSide`, else `uSide`). */
 export const NEAR_VERTEX = /* glsl */ `
   uniform mat3 uNormalWorld;
@@ -637,7 +573,9 @@ export const NEAR_FRAGMENT = /* glsl */ `
       if (k >= uRaysPerPass) break;
       vec3 d = cosineDir(n, uPass * uRaysPerPass + k, uTotalRays, rot);
       float t = traceRay(o, d, tri, bary);
-      if (tri < 0 || int(fetchT(uTris, tri * 6).w + 0.5) == 1) continue;
+      if (tri < 0) continue;
+      int kind = int(fetchT(uTris, tri * 6).w + 0.5);
+      if (kind == 1) continue;
       sum += radianceAt(tri, bary) * (1.0 - t * t / r2);
     }
     gl_FragColor = vec4(sum * GPI / float(uTotalRays), float(uRaysPerPass) / float(uTotalRays));

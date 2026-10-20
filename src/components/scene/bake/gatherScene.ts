@@ -11,9 +11,9 @@ import {
 } from 'three'
 
 /**
- * ⚠️ AR-161 SPIKE — the room as ray-traceable data for the final gather: every triangle that
- * can be seen from a lightmap texel, in a BVH, packed into two float textures the gather shader
- * walks with `texelFetch`.
+ * ⚠️ AR-161 — the room as ray-traceable data for the bake's near-field rays: every triangle that
+ * can be seen from a lightmap texel, in a BVH, packed into two float textures the near-field
+ * shader walks with `texelFetch`.
  *
  * Each triangle knows what a ray that hits it sees:
  *  - kind 0, a lightmapped receiver: albedo × the bake's irradiance at the hit's lightmap UV / π;
