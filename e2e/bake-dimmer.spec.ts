@@ -61,12 +61,15 @@ const madrid: LookState = { baked: true, space: spaceLooks.madrid!.look }
 const paris: LookState = { baked: true, space: spaceLooks.paris!.look }
 const downlight = { intensity: 8, angle: 0.45, penumbra: 0.8, distance: 15 }
 const round = 3000 / Math.PI / LUX_PER_UNIT
-const recessed = 6800 / Math.PI / LUX_PER_UNIT
+const recessed = 10000 / Math.PI / LUX_PER_UNIT
 
 test('a baked space dims the ceiling lamps from their rating; 100% is the rating exactly', () => {
   expect(lookSpot(madrid, downlight, 'downlight', 1).intensity).toBe(round)
   expect(lookSpot(paris, downlight, 'recessed', 1).intensity).toBe(recessed)
   expect(lookSpot(paris, downlight, 'recessed', 0.5).intensity).toBe(recessed / 2)
+  // Paris's stronger downlights (2026-10-20) are Paris's alone: Vienna keeps its approved 6,800 lm.
+  const vienna: LookState = { baked: true, space: spaceLooks.vienna!.look }
+  expect(lookSpot(vienna, downlight, 'recessed', 1).intensity).toBe(6800 / Math.PI / LUX_PER_UNIT)
   // The stored level no longer switches them: the dimmer alone decides.
   expect(lookSpot(madrid, { ...downlight, intensity: 0 }, 'downlight', 0.5).intensity).toBe(
     round / 2,

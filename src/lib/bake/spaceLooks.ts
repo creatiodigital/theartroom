@@ -79,6 +79,14 @@ const PARIS_VIENNA: SpaceLook = {
 }
 
 /**
+ * Paris: the approved look with stronger downlights (Eduardo 2026-10-20: "nice, but pretty dark
+ * still" at 100%). 10,000 lm instead of 6,800 brings the walls and ceiling on screen to about
+ * Madrid's approved brightness (~+25%); the camera stays, and the window-side work, lit mostly by
+ * the sun patch, barely moves.
+ */
+const PARIS: SpaceLook = { ...PARIS_VIENNA, recessedLumens: 10000 }
+
+/**
  * Madrid: its approved look (Eduardo 2026-10-16/17, re-checked under the per-space rules
  * 2026-10-19), with Vivrière's room settings. Round lamps only (no recessed or track lamps, no
  * corridor rule): the recessed and track values are the defaults and light nothing here.
@@ -106,7 +114,7 @@ const MADRID: SpaceLook = {
 
 export const spaceLooks: Record<string, { camera: SpaceCamera; look: SpaceLook }> = {
   // AR-161: camera from the approved Permanence bake (seeded), 2026-10-18 — Kritzendorf uses it too.
-  paris: { camera: { exposure: 0.524, whiteBalance: [0.933, 1.01, 1.135] }, look: PARIS_VIENNA },
+  paris: { camera: { exposure: 0.524, whiteBalance: [0.933, 1.01, 1.135] }, look: PARIS },
   // AR-161: camera from the approved Florescere bake (seeded), 2026-10-18.
   vienna: { camera: { exposure: 0.588, whiteBalance: [0.916, 1.014, 1.153] }, look: PARIS_VIENNA },
   // AR-161: approved 2026-10-19 (Vivrière). With the sun the metered camera (0.435) would be set by
