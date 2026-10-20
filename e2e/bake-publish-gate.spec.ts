@@ -596,9 +596,7 @@ it.describe('publishing a baked room', () => {
 test.describe('the admin exhibitions list', () => {
   test.use({ storageState: ADMIN })
 
-  test('explains a refused publish next to the action and links to the 3D editor', async ({
-    page,
-  }) => {
+  test('explains a refused publish under the row and links to the 3D editor', async ({ page }) => {
     const ex = await createExhibition({
       tag: 'ui',
       published: false,
@@ -612,8 +610,10 @@ test.describe('the admin exhibitions list', () => {
       await row.getByRole('button', { name: 'Actions' }).click()
       await page.getByRole('menuitem', { name: 'Publish exhibition' }).click()
 
-      await expect(row.getByText(MESSAGES.BAKE_REQUIRED)).toBeVisible()
-      await expect(row.getByRole('link', { name: 'Open the 3D editor' })).toHaveAttribute(
+      // The notice is its own row, right under the exhibition's.
+      const notice = row.locator('xpath=following-sibling::tr[1]').getByRole('alert')
+      await expect(notice).toContainText(MESSAGES.BAKE_REQUIRED)
+      await expect(notice.getByRole('link', { name: 'Open 3D editor' })).toHaveAttribute(
         'href',
         `/exhibitions/${ex.handler}/${ex.url}/edit`,
       )

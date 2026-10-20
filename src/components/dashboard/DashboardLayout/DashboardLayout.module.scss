@@ -189,26 +189,34 @@
 }
 
 // Why the server refused a publish (AR-161: a baked room needs a current, reviewed
-// bake), under the row's actions, with the way to fix it.
+// bake): a notice row under the exhibition it belongs to, with the way to fix it.
+// The row above drops its divider so the two read as one.
+.table tr:has(+ .refusalRow) td {
+  border-bottom: none;
+}
+
+// Its one cell is both the first and the last: undo the actions column's right alignment.
+.table .refusalRow td {
+  padding-top: 0;
+  text-align: left;
+}
+
 .publishRefusal {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1);
-  max-width: 16rem;
-  margin-top: var(--space-2);
-  margin-left: auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-badge-warning-bg);
+  color: var(--color-badge-warning-text);
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  text-align: right;
+  font-size: var(--text-sm);
 
-  p {
-    font-size: inherit;
+  svg {
+    flex-shrink: 0;
   }
 
-  a {
-    color: var(--color-text-primary);
-    text-decoration: underline;
+  span {
+    flex: 1;
   }
 }
 

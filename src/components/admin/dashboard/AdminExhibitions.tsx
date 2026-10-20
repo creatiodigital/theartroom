@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Fragment, useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MoreVertical } from 'lucide-react'
@@ -255,246 +255,260 @@ export const AdminExhibitions = () => {
           </thead>
           <tbody>
             {exhibitions.map((exhibition) => (
-              <tr key={exhibition.id}>
-                <td>
-                  <Link href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}>
-                    {exhibition.mainTitle}
-                  </Link>
-                </td>
-                <td>
-                  {exhibition.user.name} {exhibition.user.lastName}
-                </td>
-                <td>
-                  {spaceConfigs[exhibition.spaceId as SpaceKey]?.displayName || exhibition.spaceId}
-                </td>
-                <td>
-                  <Badge
-                    label={exhibition.status}
-                    variant={exhibition.status as 'current' | 'past'}
-                  />
-                </td>
-                <td>
-                  <Badge
-                    label={exhibition.published ? 'Published' : 'Unpublished'}
-                    variant={exhibition.published ? 'published' : 'unpublished'}
-                  />
-                  {/* Switching the room on is the norm; leaving it off is the
+              <Fragment key={exhibition.id}>
+                <tr>
+                  <td>
+                    <Link href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}>
+                      {exhibition.mainTitle}
+                    </Link>
+                  </td>
+                  <td>
+                    {exhibition.user.name} {exhibition.user.lastName}
+                  </td>
+                  <td>
+                    {spaceConfigs[exhibition.spaceId as SpaceKey]?.displayName ||
+                      exhibition.spaceId}
+                  </td>
+                  <td>
+                    <Badge
+                      label={exhibition.status}
+                      variant={exhibition.status as 'current' | 'past'}
+                    />
+                  </td>
+                  <td>
+                    <Badge
+                      label={exhibition.published ? 'Published' : 'Unpublished'}
+                      variant={exhibition.published ? 'published' : 'unpublished'}
+                    />
+                    {/* Switching the room on is the norm; leaving it off is the
                       exception. So the likelier mistake is finishing a room
                       and forgetting to reveal it. This appears in that one
                       state and no other. */}
-                  {exhibition.published &&
-                    exhibition.hasPlacedArtworks > 0 &&
-                    !exhibition.spacePublished && (
-                      <span className={dashboardStyles.readyMarker}>
-                        <Icon name="box" size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                        3D room ready — not switched on
-                      </span>
+                    {exhibition.published &&
+                      exhibition.hasPlacedArtworks > 0 &&
+                      !exhibition.spacePublished && (
+                        <span className={dashboardStyles.readyMarker}>
+                          <Icon name="box" size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                          3D room ready — not switched on
+                        </span>
+                      )}
+                  </td>
+                  <td>
+                    {(!exhibition.published || isBakedSpace(exhibition.spaceId)) && (
+                      <Badge
+                        label={exhibition.previewEnabled ? 'Active' : '—'}
+                        variant={exhibition.previewEnabled ? 'published' : 'unpublished'}
+                      />
                     )}
-                </td>
-                <td>
-                  {(!exhibition.published || isBakedSpace(exhibition.spaceId)) && (
-                    <Badge
-                      label={exhibition.previewEnabled ? 'Active' : '—'}
-                      variant={exhibition.previewEnabled ? 'published' : 'unpublished'}
-                    />
-                  )}
-                </td>
-                <td>
-                  {(exhibition.published || exhibition.previewEnabled) && (
-                    <Badge
-                      label={exhibition.hasPendingChanges ? 'Needs Review' : 'Up to date'}
-                      variant={exhibition.hasPendingChanges ? 'current' : 'published'}
-                    />
-                  )}
-                </td>
-                <td>
-                  <div
-                    className={dashboardStyles.kebabWrapper}
-                    ref={openMenuId === exhibition.id ? menuRef : undefined}
-                  >
-                    <Button
-                      variant="ghost"
-                      className={dashboardStyles.kebabButton}
-                      onClick={() =>
-                        setOpenMenuId(openMenuId === exhibition.id ? null : exhibition.id)
-                      }
-                      aria-label="Actions"
-                      aria-haspopup="menu"
-                      aria-expanded={openMenuId === exhibition.id}
+                  </td>
+                  <td>
+                    {(exhibition.published || exhibition.previewEnabled) && (
+                      <Badge
+                        label={exhibition.hasPendingChanges ? 'Needs Review' : 'Up to date'}
+                        variant={exhibition.hasPendingChanges ? 'current' : 'published'}
+                      />
+                    )}
+                  </td>
+                  <td>
+                    <div
+                      className={dashboardStyles.kebabWrapper}
+                      ref={openMenuId === exhibition.id ? menuRef : undefined}
                     >
-                      <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
-                    </Button>
-                    {openMenuId === exhibition.id && (
-                      <div className={dashboardStyles.kebabMenu} role="menu">
-                        <Button
-                          variant="menuItem"
-                          role="menuitem"
-                          className={dashboardStyles.kebabMenuItem}
-                          onClick={() => {
-                            setOpenMenuId(null)
-                            handleToggleStatus(exhibition.id, exhibition.status)
-                          }}
-                          label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
-                        />
-                        {/* Publish / Update Exhibition */}
-                        {(!exhibition.published || exhibition.hasPendingChanges) && (
+                      <Button
+                        variant="ghost"
+                        className={dashboardStyles.kebabButton}
+                        onClick={() =>
+                          setOpenMenuId(openMenuId === exhibition.id ? null : exhibition.id)
+                        }
+                        aria-label="Actions"
+                        aria-haspopup="menu"
+                        aria-expanded={openMenuId === exhibition.id}
+                      >
+                        <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                      </Button>
+                      {openMenuId === exhibition.id && (
+                        <div className={dashboardStyles.kebabMenu} role="menu">
                           <Button
                             variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
-                              if (exhibition.hasPendingChanges && !exhibition.published) {
-                                handleUpdatePreviewExhibition(exhibition.id)
-                              } else {
-                                handlePublishAction(exhibition.id, 'publish')
-                              }
+                              handleToggleStatus(exhibition.id, exhibition.status)
                             }}
-                            disabled={
-                              !exhibition.published &&
-                              !exhibition.previewEnabled &&
-                              !exhibition.user.published
-                            }
-                            label={
-                              exhibition.hasPendingChanges
-                                ? 'Update Exhibition'
-                                : 'Publish exhibition'
-                            }
+                            label={exhibition.status === 'current' ? 'Mark Past' : 'Mark Current'}
                           />
-                        )}
-                        {/* Unpublish — always available when published. Label is
+                          {/* Publish / Update Exhibition */}
+                          {(!exhibition.published || exhibition.hasPendingChanges) && (
+                            <Button
+                              variant="menuItem"
+                              role="menuitem"
+                              className={dashboardStyles.kebabMenuItem}
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                if (exhibition.hasPendingChanges && !exhibition.published) {
+                                  handleUpdatePreviewExhibition(exhibition.id)
+                                } else {
+                                  handlePublishAction(exhibition.id, 'publish')
+                                }
+                              }}
+                              disabled={
+                                !exhibition.published &&
+                                !exhibition.previewEnabled &&
+                                !exhibition.user.published
+                              }
+                              label={
+                                exhibition.hasPendingChanges
+                                  ? 'Update Exhibition'
+                                  : 'Publish exhibition'
+                              }
+                            />
+                          )}
+                          {/* Unpublish — always available when published. Label is
                             explicit ("exhibition") so it's never mistaken for the
                             3D-only control below: this one takes the whole show
                             off the site. */}
-                        {exhibition.published && (
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handlePublishAction(exhibition.id, 'unpublish')
-                            }}
-                            label="Unpublish exhibition"
-                          />
-                        )}
-                        {/* Publish / Unpublish 3D space — independent of the
+                          {exhibition.published && (
+                            <Button
+                              variant="menuItem"
+                              role="menuitem"
+                              className={dashboardStyles.kebabMenuItem}
+                              onClick={() => {
+                                setOpenMenuId(null)
+                                handlePublishAction(exhibition.id, 'unpublish')
+                              }}
+                              label="Unpublish exhibition"
+                            />
+                          )}
+                          {/* Publish / Unpublish 3D space — independent of the
                             exhibition-wide toggle above. Disabled while the
                             exhibition itself is unpublished: there is no live
                             show to attach a room to yet. */}
-                        <Button
-                          variant="menuItem"
-                          role="menuitem"
-                          className={dashboardStyles.kebabMenuItem}
-                          onClick={() => {
-                            setOpenMenuId(null)
-                            handleSpacePublishAction(
-                              exhibition.id,
-                              exhibition.spacePublished ? 'unpublish' : 'publish',
-                            )
-                          }}
-                          disabled={!exhibition.published}
-                          label={
-                            exhibition.spacePublished ? 'Unpublish 3D space' : 'Publish 3D space'
-                          }
-                        />
-                        {/* Publish / Unpublish Preview — unpublished exhibitions; in a baked
-                            space (AR-161) the same switch is the bake preview link, available
-                            for live exhibitions too. */}
-                        {(!exhibition.published || isBakedSpace(exhibition.spaceId)) && (
                           <Button
                             variant="menuItem"
                             role="menuitem"
                             className={dashboardStyles.kebabMenuItem}
                             onClick={() => {
                               setOpenMenuId(null)
-                              handleTogglePreview(exhibition.id, exhibition.previewEnabled)
+                              handleSpacePublishAction(
+                                exhibition.id,
+                                exhibition.spacePublished ? 'unpublish' : 'publish',
+                              )
                             }}
+                            disabled={!exhibition.published}
                             label={
-                              isBakedSpace(exhibition.spaceId)
-                                ? exhibition.previewEnabled
-                                  ? 'Disable bake preview link'
-                                  : 'Enable bake preview link'
-                                : exhibition.previewEnabled
-                                  ? 'Unpublish Preview'
-                                  : 'Publish Preview'
+                              exhibition.spacePublished ? 'Unpublish 3D space' : 'Publish 3D space'
                             }
                           />
-                        )}
-                        {/* Copy Preview Link — only when preview is active */}
-                        {(!exhibition.published || isBakedSpace(exhibition.spaceId)) &&
-                          exhibition.previewEnabled &&
-                          exhibition.previewToken && (
+                          {/* Publish / Unpublish Preview — unpublished exhibitions; in a baked
+                            space (AR-161) the same switch is the bake preview link, available
+                            for live exhibitions too. */}
+                          {(!exhibition.published || isBakedSpace(exhibition.spaceId)) && (
                             <Button
                               variant="menuItem"
                               role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               onClick={() => {
                                 setOpenMenuId(null)
-                                handleCopyPreviewLink(exhibition)
+                                handleTogglePreview(exhibition.id, exhibition.previewEnabled)
                               }}
                               label={
                                 isBakedSpace(exhibition.spaceId)
-                                  ? 'Copy bake preview link'
-                                  : 'Copy Preview Link'
+                                  ? exhibition.previewEnabled
+                                    ? 'Disable bake preview link'
+                                    : 'Enable bake preview link'
+                                  : exhibition.previewEnabled
+                                    ? 'Unpublish Preview'
+                                    : 'Publish Preview'
                               }
                             />
                           )}
-                        {/* View baked room (AR-161) — the draft bake exactly as visitors will
+                          {/* Copy Preview Link — only when preview is active */}
+                          {(!exhibition.published || isBakedSpace(exhibition.spaceId)) &&
+                            exhibition.previewEnabled &&
+                            exhibition.previewToken && (
+                              <Button
+                                variant="menuItem"
+                                role="menuitem"
+                                className={dashboardStyles.kebabMenuItem}
+                                onClick={() => {
+                                  setOpenMenuId(null)
+                                  handleCopyPreviewLink(exhibition)
+                                }}
+                                label={
+                                  isBakedSpace(exhibition.spaceId)
+                                    ? 'Copy bake preview link'
+                                    : 'Copy Preview Link'
+                                }
+                              />
+                            )}
+                          {/* View baked room (AR-161) — the draft bake exactly as visitors will
                             get it; looking at it is what marks it reviewed. */}
-                        {isBakedSpace(exhibition.spaceId) && (
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              router.push(
-                                `/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit?review=1`,
-                              )
-                            }}
-                            label="View baked room"
-                          />
-                        )}
-                        {/* Update Preview Link — regenerate token (old link becomes invalid) */}
-                        {(!exhibition.published || isBakedSpace(exhibition.spaceId)) &&
-                          exhibition.previewEnabled &&
-                          exhibition.previewToken && (
+                          {isBakedSpace(exhibition.spaceId) && (
                             <Button
                               variant="menuItem"
                               role="menuitem"
                               className={dashboardStyles.kebabMenuItem}
                               onClick={() => {
                                 setOpenMenuId(null)
-                                handleUpdatePreviewLink(exhibition.id)
+                                router.push(
+                                  `/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit?review=1`,
+                                )
                               }}
-                              label="Update Preview Link"
+                              label="View baked room"
                             />
                           )}
+                          {/* Update Preview Link — regenerate token (old link becomes invalid) */}
+                          {(!exhibition.published || isBakedSpace(exhibition.spaceId)) &&
+                            exhibition.previewEnabled &&
+                            exhibition.previewToken && (
+                              <Button
+                                variant="menuItem"
+                                role="menuitem"
+                                className={dashboardStyles.kebabMenuItem}
+                                onClick={() => {
+                                  setOpenMenuId(null)
+                                  handleUpdatePreviewLink(exhibition.id)
+                                }}
+                                label="Update Preview Link"
+                              />
+                            )}
+                          <Button
+                            variant="menuItem"
+                            role="menuitem"
+                            className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              setDeleteError('')
+                              setDeleteTarget(exhibition)
+                            }}
+                            label="Delete"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                {/* Why the server refused a publish (AR-161), under the whole row and with the
+                  way to fix it — not squeezed into the actions column. */}
+                {refusals[exhibition.id] && (
+                  <tr className={dashboardStyles.refusalRow}>
+                    <td colSpan={8}>
+                      <div className={dashboardStyles.publishRefusal} role="alert">
+                        <Icon name="alert-circle" size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                        <span>{BAKE_GATE_MESSAGES[refusals[exhibition.id]]}</span>
                         <Button
-                          variant="menuItem"
-                          role="menuitem"
-                          className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
-                          onClick={() => {
-                            setOpenMenuId(null)
-                            setDeleteError('')
-                            setDeleteTarget(exhibition)
-                          }}
-                          label="Delete"
+                          variant="secondary"
+                          size="smallSquared"
+                          font="dashboard"
+                          href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}/edit`}
+                          label="Open 3D editor"
                         />
                       </div>
-                    )}
-                  </div>
-                  {refusals[exhibition.id] && (
-                    <div className={dashboardStyles.publishRefusal} role="alert">
-                      <ErrorText>{BAKE_GATE_MESSAGES[refusals[exhibition.id]]}</ErrorText>
-                      <Link href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}/edit`}>
-                        Open the 3D editor
-                      </Link>
-                    </div>
-                  )}
-                </td>
-              </tr>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
