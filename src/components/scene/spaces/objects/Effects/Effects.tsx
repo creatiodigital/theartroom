@@ -97,7 +97,8 @@ const ENABLE_FXAA = false
  *
  * ⚠️ This threshold also decides WHICH fixtures glow, by emissive level rather than by
  * selection: round (4.0) and recessed (3) are above it and bloom; track lamps are deliberately
- * held at 0.8 in `TrackLamp.tsx` so they do not — Eduardo's call. `SelectiveBloom` would be
+ * held at 0.8 in `TrackLamp.tsx` so they do not — Eduardo's call — except in a baked space's
+ * approved look, where their lens is at the recessed level and glows too (2026-10-21). `SelectiveBloom` would be
  * the structurally correct way to do that, but it costs an extra render pass of the selection.
  * Changing this number silently changes that grouping, and a lamp dimmed far enough in the
  * editor will drop below it and stop glowing.
