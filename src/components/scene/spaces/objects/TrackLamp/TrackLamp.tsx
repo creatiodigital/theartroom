@@ -55,6 +55,8 @@ const bulbNormalAim = (bulbNode: Mesh & { geometry: BufferGeometry }): Vector3 |
 
 const DEFAULT_LAMP_COLOR = '#ffffff'
 const DEFAULT_MATERIAL_COLOR = '#ffffff'
+/** The lens at 100% in the baked look: a recessed disc's level (`RecessedLamp`), above the bloom threshold. */
+const TRACK_BULB_BAKED = 3
 
 /**
  * Native Three.js spotlight for a track lamp.
@@ -181,7 +183,12 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   //
   // ⚠️ Coupled to BLOOM_THRESHOLD. Raise that and track lamps stay dark; lower it below 0.8
   // and they start glowing again. The two numbers only mean anything together.
-  const bulbEmissiveIntensity = 0.8 * (bakedLook ? dimmer : 1)
+  //
+  // AR-161, the baked look (Eduardo 2026-10-21: "the bloom should come from the bulb meshes"):
+  // the lens sits at the recessed discs' level (`TRACK_BULB_BAKED`), above the threshold, so it
+  // glows a little as they do. Under the baked camera (exposure ~0.5) the 0.8 lens read as a
+  // grey-blue disc. Realtime only: the bake's emitters are the window glass, never a bulb.
+  const bulbEmissiveIntensity = bakedLook ? TRACK_BULB_BAKED * dimmer : 0.8
 
   // Shared materials — all track lamps reuse the same instances
   const armBodyMaterial = useMemo(

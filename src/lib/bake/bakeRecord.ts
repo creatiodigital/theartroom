@@ -1,8 +1,11 @@
 export const BAKER_VERSION = 1 // bump whenever bake or display code changes the result
 
-export type BakeSurface = 'wall' | 'ceiling' | 'floor' | 'props'
-/** The receivers a stored bake carries maps for (the artwork atlas is measured only). */
-export const BAKE_SURFACES: readonly BakeSurface[] = ['wall', 'ceiling', 'floor', 'props']
+export type BakeSurface = 'wall' | 'ceiling' | 'floor' | 'props' | 'panels'
+/**
+ * The receivers a stored bake carries maps for (the artwork atlas is measured only). `panels`:
+ * the display panels, baked since 2026-10-21 (AR-163) — a bake from before has no map for them.
+ */
+export const BAKE_SURFACES: readonly BakeSurface[] = ['wall', 'ceiling', 'floor', 'props', 'panels']
 export type BakeMapKind = 'light' | 'direction'
 
 export interface LightmapEncoding {
@@ -63,7 +66,8 @@ const isMap = (v: unknown): boolean =>
   (v.receiver === 'wall' ||
     v.receiver === 'ceiling' ||
     v.receiver === 'floor' ||
-    v.receiver === 'props') &&
+    v.receiver === 'props' ||
+    v.receiver === 'panels') &&
   (v.kind === 'light' || v.kind === 'direction') &&
   isStr(v.url) &&
   isNum(v.width) &&

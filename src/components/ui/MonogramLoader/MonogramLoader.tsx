@@ -1,7 +1,7 @@
 'use client'
 
 import c from 'classnames'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import styles from './MonogramLoader.module.scss'
 
@@ -30,7 +30,6 @@ type MonogramLoaderProps = {
 const clamp01 = (value: number) => (Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0)
 
 export const MonogramLoader = ({ progress, title, note, done, className }: MonogramLoaderProps) => {
-  const clipId = useId()
   const shown = useRef(0)
   const [gone, setGone] = useState(false)
 
@@ -46,6 +45,9 @@ export const MonogramLoader = ({ progress, title, note, done, className }: Monog
   if (gone) return null
 
   const y = FILL_FROM - (FILL_FROM - FILL_TO) * fill
+  // The red mark shows below `y`: a CSS inset on its own layer. (Not an SVG <clipPath>: that
+  // needs a document id, and a `useId` one differed between the server's HTML and hydration.)
+  const top = `${((y / BOX_BOTTOM) * 100).toFixed(2)}%`
 
   return (
     <div
@@ -55,21 +57,20 @@ export const MonogramLoader = ({ progress, title, note, done, className }: Monog
       data-testid="monogram-loader"
       data-progress={fill.toFixed(3)}
     >
-      <svg className={styles.mark} viewBox="0 0 850.39 907.09" aria-hidden="true">
-        <defs>
-          <clipPath id={clipId}>
-            <rect x={0} y={y} width={851} height={BOX_BOTTOM - y} />
-          </clipPath>
-        </defs>
-        {MARK_PATHS.map((d) => (
-          <path key={d} d={d} className={styles.grey} />
-        ))}
-        <g clipPath={`url(#${clipId})`}>
+      <div className={styles.mark} aria-hidden="true">
+        <svg className={styles.layer} viewBox="0 0 850.39 907.09">
           {MARK_PATHS.map((d) => (
-            <path key={d} d={d} className={styles.red} />
+            <path key={d} d={d} className={styles.grey} />
           ))}
-        </g>
-      </svg>
+        </svg>
+        <div className={styles.layer} style={{ clipPath: `inset(${top} 0 0 0)` }}>
+          <svg className={styles.layer} viewBox="0 0 850.39 907.09">
+            {MARK_PATHS.map((d) => (
+              <path key={d} d={d} className={styles.red} />
+            ))}
+          </svg>
+        </div>
+      </div>
       <div className={styles.caption}>
         <p className={styles.title}>{title}</p>
         {note && <p className={styles.note}>{note}</p>}

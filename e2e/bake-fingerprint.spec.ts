@@ -1,7 +1,10 @@
+import { createHash } from 'node:crypto'
+
 import { test, expect } from '@playwright/test'
 
-import { isBakeRecord } from '@/lib/bake/bakeRecord'
-import { computeBakeFingerprint } from '@/lib/bake/fingerprint'
+import { BAKER_VERSION, isBakeRecord } from '@/lib/bake/bakeRecord'
+import { LIGHT_FIELDS, computeBakeFingerprint } from '@/lib/bake/fingerprint'
+import { canonicalJson } from '@/lib/bake/hash'
 import { spaceLookVersion } from '@/lib/bake/spaceLookVersion'
 
 const base = {
@@ -132,6 +135,76 @@ test('spaceLookVersion is stable and differs per calibrated space', () => {
   expect(spaceLookVersion('paris')).toBe(spaceLookVersion('paris'))
   expect(spaceLookVersion('paris')).not.toBe(spaceLookVersion('vienna'))
   expect(spaceLookVersion('paris')).toMatch(/^[0-9a-f]{8}$/)
+})
+
+// AR-163: display panels are baked. A room that shows a panel must re-bake (its old bake has no
+// panel map); a room without one keeps its fingerprint exactly, so its bake stays current.
+const panels = (enabled: boolean) => ({ '0': { x: 1, z: 2, color: '#86905a', enabled } })
+/** The fingerprint as it was before panels were baked. */
+const before = (b: typeof base & { exhibition: Record<string, unknown> }) => {
+  const exhibition: Record<string, unknown> = {}
+  for (const field of LIGHT_FIELDS) exhibition[field] = b.exhibition[field] ?? null
+  const placed = b.placed.map((row) => {
+    const { showOnPage: _s, pageOrder: _p, artwork, ...rest } = row
+    return {
+      ...rest,
+      artwork: {
+        artworkType: artwork.artworkType,
+        hiddenFromExhibition: artwork.hiddenFromExhibition,
+      },
+    }
+  })
+  return createHash('sha256')
+    .update(
+      canonicalJson({
+        bakerVersion: BAKER_VERSION,
+        spaceModelVersion: b.spaceModelVersion,
+        spaceLookVersion: b.spaceLookVersion,
+        exhibition,
+        placed,
+      }),
+    )
+    .digest('hex')
+}
+
+test('a room without a panel keeps its fingerprint from before panels were baked', () => {
+  expect(computeBakeFingerprint(base)).toBe(before(base))
+  const off = { ...base, exhibition: { ...base.exhibition, panelSettings: panels(false) } }
+  expect(computeBakeFingerprint(off)).toBe(before(off))
+})
+
+test('a room that shows a panel stales its bakes from before panels were baked', () => {
+  const on = { ...base, exhibition: { ...base.exhibition, panelSettings: panels(true) } }
+  expect(computeBakeFingerprint(on)).not.toBe(before(on))
+  // …and is otherwise as stable as any fingerprint.
+  expect(computeBakeFingerprint(structuredClone(on))).toBe(computeBakeFingerprint(on))
+})
+
+test('isBakeRecord accepts a panel map', () => {
+  const map = {
+    receiver: 'panels',
+    kind: 'light',
+    url: 'u',
+    width: 1,
+    height: 1,
+    encoding: { format: 'log16', max: 1, knee: 0.5 },
+  }
+  const record = {
+    id: 'x',
+    fingerprint: 'f',
+    bakerVersion: 1,
+    unwrapHash: 'u',
+    unwrapStats: [],
+    maps: [map],
+    camera: { exposure: 1, whiteBalance: [1, 1, 1] },
+    artLight: {},
+    bakedAt: 't',
+    bakedBy: 'a',
+    ms: 1,
+    reviewedAt: null,
+  }
+  expect(isBakeRecord(record)).toBe(true)
+  expect(isBakeRecord({ ...record, maps: [{ ...map, receiver: 'sofa' }] })).toBe(false)
 })
 
 test('isBakeRecord rejects partial records', () => {

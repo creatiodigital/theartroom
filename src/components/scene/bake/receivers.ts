@@ -21,6 +21,9 @@ const PLASTER_TILE = 0.7 // Eduardo, 2026-10-16: "decrease the size of the map a
 /** Static fixtures baked into one shared atlas: their authored UVs are for tiling. */
 const PROP_NAME = /^(windowFrame|windowHandle|radiator|singleSocket|doubleSwitch)\d+$/
 
+/** The display panels the room shows (`Panel` mounts only the enabled ones). */
+const PANEL_NAME = /^panel\d+$/
+
 /** The ceiling's paint reflectance (its color scales it). */
 const CEILING_ALBEDO = 0.85
 
@@ -46,6 +49,12 @@ const averageAlbedo = (texture: Texture | null | undefined): Color => {
   }
 }
 
+/** A display panel's paint as the bake takes it: the artist's color × the space's paint reflectance. */
+const panelAlbedo = (panel: Mesh, reflectance: number): Color => {
+  const color = (panel.material as MeshStandardMaterial).color ?? new Color(1, 1, 1)
+  return color.clone().multiplyScalar(reflectance)
+}
+
 export interface PreparedReceivers {
   /** In bake order: a receiver's position is its lightmap index. */
   receivers: BakeReceiver[]
@@ -69,17 +78,25 @@ export interface RoomPaint {
 }
 
 /**
- * Walls, ceiling, floor, the artworks (measured only) and the fixtures, as the bake takes them —
- * `room`: the artist's wall and ceiling colors and the space's look (its paint). Every
- * receiver on our own unwrap writes `uv1` on the scene meshes it stands for (its `sources`): the
- * baked maps are read through it. A throw midway puts back the geometry it had already replaced
- * before rethrowing.
+ * Walls, ceiling, floor, the artworks (measured only), the fixtures and the display panels, as
+ * the bake takes them — `room`: the artist's wall and ceiling colors and the space's look (its
+ * paint). Every receiver on our own unwrap writes `uv1` on the scene meshes it stands for (its
+ * `sources`): the baked maps are read through it. A throw midway puts back the geometry it had
+ * already replaced before rethrowing.
+ *
+ * `panels`: bake the display panels (every new bake). A stored bake from before panels were baked
+ * has no map for them: `false` lays the room out as it was then, so its maps still fit, and its
+ * panels keep their realtime light.
  */
-export const prepareReceivers = (scene: Object3D, room: RoomPaint): PreparedReceivers => {
+export const prepareReceivers = (
+  scene: Object3D,
+  room: RoomPaint,
+  { panels = true }: { panels?: boolean } = {},
+): PreparedReceivers => {
   const restores: (() => void)[] = []
   const restore = () => restores.splice(0).forEach((undo) => undo())
   try {
-    return buildReceivers(scene, room, restores, restore)
+    return buildReceivers(scene, room, panels, restores, restore)
   } catch (error) {
     restore()
     throw error
@@ -89,6 +106,7 @@ export const prepareReceivers = (scene: Object3D, room: RoomPaint): PreparedRece
 const buildReceivers = (
   scene: Object3D,
   room: RoomPaint,
+  withPanels: boolean,
   restores: (() => void)[],
   restore: () => void,
 ): PreparedReceivers => {
@@ -191,6 +209,36 @@ const buildReceivers = (
       albedo,
       sources: props,
     })
+  }
+
+  // Display panels (AR-163): painted walls standing in the room, so baked like the walls — the
+  // room's light falls on them once, with the lamps, the daylight and the bounce, wherever the
+  // visitor stands. Realtime, they took the lamps of the room the visitor was in (culled per
+  // room) and the room capture's bounce, and changed brightness as the visitor walked. Last, so
+  // a room without panels keeps every other receiver's slot and its unwrap.
+  if (withPanels) {
+    const panels: Mesh[] = []
+    scene.traverse((o) => {
+      const m = o as Mesh
+      if (m.isMesh && PANEL_NAME.test(m.name) && m.visible) panels.push(m)
+    })
+    if (panels.length) {
+      const atlas = unwrap(panels, 0.015, 1024)
+      // Each panel shows its own paint over the baked light (`applyBakedLighting`); the bounce
+      // they give the room is their average.
+      const albedo = panels
+        .reduce((sum, p) => sum.add(panelAlbedo(p, room.look.paintReflectance)), new Color(0, 0, 0))
+        .multiplyScalar(1 / panels.length)
+      receivers.push({
+        name: 'panels',
+        mesh: new Mesh(atlas.merged),
+        size: atlas.size,
+        albedo,
+        sources: panels,
+        // Paint, like the walls: its color × the space's paint reflectance.
+        lightMapIntensity: room.look.paintReflectance,
+      })
+    }
   }
 
   // A receiver on our own unwrap stands for its `sources`: their `uv1` is the layout its map

@@ -22,7 +22,7 @@ const EXHIBITION = 'ex-1'
 // --- File names and upload headers --------------------------------------------------------------
 
 test('map files are named receiver-kind.png, within the server’s file rule', () => {
-  for (const receiver of ['wall', 'ceiling', 'floor', 'props'] as const)
+  for (const receiver of ['wall', 'ceiling', 'floor', 'props', 'panels'] as const)
     for (const kind of ['light', 'direction'] as const) {
       const file = bakeMapFile(receiver, kind)
       expect(file).toBe(`${receiver}-${kind}.png`)

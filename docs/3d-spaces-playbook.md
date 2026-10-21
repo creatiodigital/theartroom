@@ -334,6 +334,12 @@ Headless bake times: Madrid ~45 s, Paris ~2 min, Vienna ~2.5 min. Download size 
 track lamps, panels, frame and radiator colors, placements), plus the baker version, the model
 version and the space's look version. Any change means bake again.
 
+**Display panels are baked** (AR-163, 2026-10-21), like the walls, on their own atlas
+(`panels-light.png`). Before that they were lit in realtime, and changed brightness as the visitor
+walked: Vienna's per-room lamp culling and the room capture's bounce both followed the visitor. A
+room that shows a panel carries a marker in its fingerprint, so its older bakes read "out of date";
+until it is baked again, its stored bake still applies, with the panels in realtime as before.
+
 ---
 
 ## 7. Things we learned the hard way

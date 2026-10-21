@@ -27,9 +27,10 @@ import { shownArtworkImages } from './receivers'
  * - floor → its own material keeps map/normal/roughness as authored and gains the lightmap,
  *   with realtime direct light and environment DIFFUSE switched off (both are in the bake);
  *   its environment SPECULAR stays — that is the floor's glossy reflection;
- * - fixtures → the same, through their shared atlas.
+ * - fixtures and display panels → the same, each through its shared atlas (a panel keeps its
+ *   paint; AR-163 — realtime, panels changed brightness as the visitor walked).
  *
- * Artworks, frames and panels stay realtime (lamps); each work's mat, frame and text card also
+ * Artworks and frames stay realtime (lamps); each work's mat, frame and text card also
  * take the daylight + bounce the bake measured at it. The images show their file (`Display`).
  */
 
@@ -76,10 +77,17 @@ const LIGHTS_OFF = `#include <lights_fragment_begin>
   reflectedLight.directDiffuse = vec3(0.0);
   reflectedLight.directSpecular = vec3(0.0);`
 
-/** A Standard material keeps its maps and reflections; its diffuse light comes from the bake. */
-const patchStandard = (material: MeshStandardMaterial, lightMap: Texture) => {
+/**
+ * A Standard material keeps its maps and reflections; its diffuse light comes from the bake (×
+ * `intensity`). Its own shader hooks, if any (a panel's `panelSurface`), give way while the bake
+ * is on and come back with the undo.
+ */
+const patchStandard = (material: MeshStandardMaterial, lightMap: Texture, intensity = 1) => {
+  const own = (key: 'onBeforeCompile' | 'customProgramCacheKey') =>
+    Object.prototype.hasOwnProperty.call(material, key) ? { value: material[key] } : null
+  const before = { compile: own('onBeforeCompile'), cacheKey: own('customProgramCacheKey') }
   material.lightMap = lightMap
-  material.lightMapIntensity = 1
+  material.lightMapIntensity = intensity
   material.onBeforeCompile = (shader) => {
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <lights_fragment_begin>', LIGHTS_OFF)
@@ -95,8 +103,14 @@ const patchStandard = (material: MeshStandardMaterial, lightMap: Texture) => {
   material.needsUpdate = true
   return () => {
     material.lightMap = null
-    Reflect.deleteProperty(material, 'onBeforeCompile')
-    Reflect.deleteProperty(material, 'customProgramCacheKey')
+    material.lightMapIntensity = 1
+    if (before.compile)
+      material.onBeforeCompile = before.compile.value as MeshStandardMaterial['onBeforeCompile']
+    else Reflect.deleteProperty(material, 'onBeforeCompile')
+    if (before.cacheKey)
+      material.customProgramCacheKey = before.cacheKey
+        .value as MeshStandardMaterial['customProgramCacheKey']
+    else Reflect.deleteProperty(material, 'customProgramCacheKey')
     material.needsUpdate = true
   }
 }
@@ -222,10 +236,13 @@ const swapBakedLighting = (
       restore.push(patchStandard(r.mesh.material as MeshStandardMaterial, lightMap))
       return
     }
-    if (r.name === 'props') {
+    if (r.name === 'props' || r.name === 'panels') {
+      // Each keeps its own material (a panel its artist's paint); the bake is its diffuse light.
       lightMap.channel = 1
-      ;(r.sources as Mesh[]).forEach((prop) =>
-        restore.push(patchStandard(prop.material as MeshStandardMaterial, lightMap)),
+      ;(r.sources as Mesh[]).forEach((source) =>
+        restore.push(
+          patchStandard(source.material as MeshStandardMaterial, lightMap, r.lightMapIntensity),
+        ),
       )
       return
     }
