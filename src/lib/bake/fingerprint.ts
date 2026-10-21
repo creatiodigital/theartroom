@@ -42,6 +42,21 @@ const PLACED_IGNORED = new Set([
   'soundDistance',
 ])
 
+/**
+ * Display panels are baked since AR-163 (2026-10-21); before, they kept realtime light. A room
+ * that shows a panel says so, so its bakes from before are out of date; a room without one keeps
+ * its fingerprint, and its bake.
+ */
+const PANELS_BAKED = 1
+
+/** Any panel switched on (`isPanelEnabled`: `enabled` true, off by default). */
+const showsPanels = (panelSettings: unknown): boolean =>
+  !!panelSettings &&
+  typeof panelSettings === 'object' &&
+  Object.values(panelSettings as Record<string, unknown>).some(
+    (p) => !!p && typeof p === 'object' && (p as { enabled?: unknown }).enabled === true,
+  )
+
 export interface BakeFingerprintInput {
   exhibition: Record<string, unknown>
   placed: Record<string, unknown>[]
@@ -78,6 +93,7 @@ export function computeBakeFingerprint(input: BakeFingerprintInput): string {
         bakerVersion: BAKER_VERSION,
         spaceModelVersion: input.spaceModelVersion,
         spaceLookVersion: input.spaceLookVersion,
+        ...(showsPanels(exhibition.panelSettings) ? { panelsBaked: PANELS_BAKED } : {}),
         exhibition,
         placed,
       }),

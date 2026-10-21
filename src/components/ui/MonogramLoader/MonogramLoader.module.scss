@@ -19,8 +19,17 @@
 }
 
 .mark {
-  width: 132px;
-  height: auto;
+  position: relative;
+  width: 64px;
+  aspect-ratio: 850.39 / 907.09;
+}
+
+// The grey mark and the red one stacked; the red layer is clipped from the top (`MonogramLoader`).
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: visible;
 }
 
