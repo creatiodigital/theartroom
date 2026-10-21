@@ -140,6 +140,11 @@ export interface BakeReceiver {
   smoothBounce?: boolean
   /** Also bake a directional lightmap (where the direct light comes from), for normal maps. */
   directional?: boolean
+  /**
+   * Display only: its sources show their own color over the baked light × this (the panels: the
+   * paint reflectance, as the walls' albedo carries it). 1 when unset.
+   */
+  lightMapIntensity?: number
   /** Skip the lamps' direct light (the receiver gets it in realtime): daylight + bounce only. */
   noLampDirect?: boolean
   /** Not a bounce source (small, measured only — e.g. the artworks). */
@@ -964,8 +969,9 @@ export class LightBaker {
    * ∫ L(y)·cosθ·(1 − d²/r²) dω over what lies within r (Kollig & Keller's bias compensation):
    * every texel traces cosine rays no further than r and adds what they hit, weighted so. Rays
    * that travel further add nothing, so the rest of the room is the VPL solution untouched.
-   * L(y) is the hit's albedo × its baked light / π (or the window's daylight); frames and
-   * panels were never bounce sources in the VPL solution, so they only block here.
+   * L(y) is the hit's albedo × its baked light / π (or the window's daylight); frames were
+   * never bounce sources in the VPL solution, so they only block here (display panels are
+   * receivers since AR-163, read like the walls).
    */
   private *nearField(begin: () => void, end: () => void): Generator<void, void, void> {
     const renderer = this.renderer
