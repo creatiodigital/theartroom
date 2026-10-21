@@ -46,6 +46,8 @@ import {
   useShownStoredBake,
   useStoredBakeFailed,
 } from '@/components/scene/bake/bakedLook'
+import { preloadStoredBake } from '@/components/scene/bake/BakedLighting'
+import { useLightmapBytes } from '@/components/scene/bake/lightmapLoader'
 import { useSceneFailed } from '@/components/scene/sceneFailure'
 import { MonogramLoader } from '@/components/ui/MonogramLoader'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
@@ -125,6 +127,10 @@ const BAKE_LOADER_NOTE =
 const ASSET_SHARE = 0.1
 // The admin's bake: the light is most of its part of the bar, storing it (seconds) the rest.
 const BAKE_SHARE = 0.92
+// A stored bake's maps are about half of a baked room's download: half the bar follows their
+// bytes, the other half the room's assets counted by file.
+const BAKE_MAPS_SHARE = 0.5
+const NO_URLS: readonly string[] = []
 
 /**
  * AR-161: what the visit page is for. `bake` / `review`: the admin's bake and review pages
@@ -144,7 +150,9 @@ const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
   // A stored bake that will be shown (`shownStoredBake`) only downloads (its files are assets) but
   // goes on after the artworks have loaded: the room stays covered until it is on
   // (`BakedLighting`). One that failed is not waited for: the room is back in today's look.
-  const storedBake = useShownStoredBake() !== null
+  const shownBake = useShownStoredBake()
+  const storedBake = shownBake !== null
+  const mapBytes = useLightmapBytes(shownBake ? shownBake.maps.map((m) => m.url) : NO_URLS)
   // Bake mode: the admin's bake.
   const bakes = mode === 'bake'
   // A crashed scene never finishes loading: step aside for its error message at once.
@@ -176,7 +184,11 @@ const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
   useEffect(() => {
     if (revealedWithBake) onRevealed?.()
   }, [revealedWithBake, onRevealed])
-  const fraction = bakes ? ASSET_SHARE * assets + (1 - ASSET_SHARE) * bake.fraction : assets
+  const fraction = bakes
+    ? ASSET_SHARE * assets + (1 - ASSET_SHARE) * bake.fraction
+    : storedBake
+      ? (1 - BAKE_MAPS_SHARE) * assets + BAKE_MAPS_SHARE * mapBytes
+      : assets
 
   return (
     <MonogramLoader
@@ -754,6 +766,15 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     }
   }, [exhibition, dispatch, roomBake, mode])
 
+  // AR-161: a stored bake's files download with the room's, not after it (`preloadStoredBake`) —
+  // only where the room will be shown (never on a phone, or without WebGL).
+  const webglAvailable = useWebGLAvailable()
+  const preloadBake = exhibition ? shownStoredBake(exhibition.spaceId, roomBake) : null
+  useEffect(() => {
+    if (preloadBake && canEnterWalkthrough && webglAvailable !== false)
+      preloadStoredBake(preloadBake)
+  }, [preloadBake, canEnterWalkthrough, webglAvailable])
+
   // by-url already delivers the (snapshot + live-enriched) exhibition
   // artworks — pass them through so the hook skips its own fetch. The bake
   // and review pages load the saved draft's placements, as the editor does.
@@ -770,8 +791,8 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
 
   // Without WebGL nothing ever loads, so the loading overlay would sit on top
   // of the scene's "can't display" message forever, and the help modal would
-  // explain controls for a room that never appears. Keep only the exit button.
-  const webglAvailable = useWebGLAvailable()
+  // explain controls for a room that never appears. Keep only the exit button
+  // (`webglAvailable`, read above with the bake's downloads).
 
   // --- AR-161: the admin's bake and review pages -------------------------------------------
   const visitPath = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`

@@ -38,6 +38,22 @@ import { applyStoredBake } from './storedBake'
  * that throws, is reported and falls back the same way.
  */
 
+/**
+ * Starts a stored bake's downloads (its maps and the plaster) as soon as the page knows the bake,
+ * alongside the room's own assets. `StoredBake` mounts only once the room around it has loaded, so
+ * on its own it would start them then, one after the other: on a first visit that queue was most
+ * of the wait. Same loaders and keys as `StoredBake`'s `useLoader`, so it suspends on these very
+ * loads, and the loading manager counts them from the start (the loader measures the whole wait).
+ */
+export const preloadStoredBake = (bake: BakeRecord) => {
+  useLoader.preload(
+    LightmapLoader,
+    bake.maps.map((m) => m.url),
+    (loader) => loader.describe(bake.maps),
+  )
+  useLoader.preload(TextureLoader, [PLASTER.normal, PLASTER.roughness])
+}
+
 /** Bakes mounted right now, by id: their cached maps are freed when the last one unmounts. */
 const mounted = new Map<string, number>()
 
