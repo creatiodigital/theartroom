@@ -201,12 +201,11 @@ export const Menu = () => {
       <Tooltip label="Windows and Radiators" placement="right">
         <Button size="regular" variant="secondary" icon="grid-2x2" onClick={toggleWindowsPanel} />
       </Tooltip>
-      {/* AR-161 (spec rule 3): a baked space has one floor; artists no longer choose it. */}
-      {!bakedSpace && (
-        <Tooltip label="Floor controls" placement="right">
-          <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
-        </Tooltip>
-      )}
+      {/* AR-161 (spec rule 3): a baked space has one floor — there, the panel sets only the
+          boards' size and placement (AR-163). */}
+      <Tooltip label="Floor controls" placement="right">
+        <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
+      </Tooltip>
       <Tooltip label="Camera controls" placement="right">
         <Button size="regular" variant="secondary" icon="camera" onClick={toggleCameraPanel} />
       </Tooltip>
