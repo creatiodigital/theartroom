@@ -54,17 +54,22 @@ export interface SpaceLook {
 /**
  * Paris and Vienna: their approved look (Eduardo 2026-10-18 — Paris on Permanence and Kritzendorf,
  * Vienna on Florescere, the same settings), with the room settings of "The Beauty of Permanence"
- * (lamp colors, window glass, eye) every one of those links used — and stronger downlights:
- * 10,000 lm instead of 6,800 (Paris 2026-10-20: "nice, but pretty dark still" at 100%; Vienna
- * 2026-10-21: near-white walls and white passepartouts read brownish-grey). About +25% on walls,
- * ceiling and passepartouts, Madrid's approved brightness on screen; the cameras stay, and the
- * window-side works, lit mostly by the sun patch, barely move.
+ * (lamp colors, window glass, eye) every one of those links used — and stronger lamps.
+ *
+ * A space's camera is fixed where its brightest (sunlit) work stays below paper white, so a white
+ * wall or passepartout shows white only under about 340 lx there; under ordinary gallery light
+ * (150–200 lx) they read grey. Eduardo, 2026-10-21: "if an almost white wall and a 100% white
+ * passepartout render greyish, we have to improve the lighting — an artist who wants to show a
+ * white passepartout won't be able to". So the lamps give 1.7× their approved light (downlights
+ * 10,000 → 17,000 lm, after 6,800 → 10,000 on 2026-10-20/21; track ×0.5 → ×0.85) and the cameras
+ * stay: about 136,000 lm of downlight in a 350 m² room, a normal gallery level from only 8
+ * fixtures. The artist dims from there (50–100%).
  */
 const PARIS_VIENNA: SpaceLook = {
-  recessedLumens: 10000,
+  recessedLumens: 17000,
   corridorLumens: 3000,
   roundLumens: 3000,
-  trackScale: 0.5,
+  trackScale: 0.85,
   sunLux: 5000,
   sunElevationDeg: 35,
   // Straight in (360° = 0°, written as the approved links set it).
