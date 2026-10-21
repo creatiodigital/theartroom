@@ -59,17 +59,17 @@ export interface SpaceLook {
  * A space's camera is fixed where its brightest (sunlit) work stays below paper white, so a white
  * wall or passepartout shows white only under about 340 lx there; under ordinary gallery light
  * (150–200 lx) they read grey. Eduardo, 2026-10-21: "if an almost white wall and a 100% white
- * passepartout render greyish, we have to improve the lighting — an artist who wants to show a
- * white passepartout won't be able to". So the lamps give 1.7× their approved light (downlights
- * 10,000 → 17,000 lm, after 6,800 → 10,000 on 2026-10-20/21; track ×0.5 → ×0.85) and the cameras
- * stay: about 136,000 lm of downlight in a 350 m² room, a normal gallery level from only 8
- * fixtures. The artist dims from there (50–100%).
+ * passepartout render greyish, we have to improve the lighting". 1.7× the approved light lit the
+ * room well but "a little too much" (spot pools blew out); since the passepartout and the paper
+ * border show their own color like the image (AR-163), the lamps sit at the middle point: 1.35×
+ * (downlights 10,000 → 13,500 lm, after 6,800 → 10,000 on 2026-10-20/21; track ×0.5 → ×0.675).
+ * The cameras stay; the artist dims from there (50–100%).
  */
 const PARIS_VIENNA: SpaceLook = {
-  recessedLumens: 17000,
+  recessedLumens: 13500,
   corridorLumens: 3000,
   roundLumens: 3000,
-  trackScale: 0.85,
+  trackScale: 0.675,
   sunLux: 5000,
   sunElevationDeg: 35,
   // Straight in (360° = 0°, written as the approved links set it).
