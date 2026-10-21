@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Vector3, Quaternion, PerspectiveCamera, Mesh, Raycaster } from 'three'
 
 import SceneContext from '@/contexts/SceneContext'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { getSpaceConfig } from '@/components/scene/constants'
 import { clearFocusTarget } from '@/redux/slices/sceneSlice'
 import { clearReturnFromWallView } from '@/redux/slices/wallViewSlice'
@@ -135,9 +136,12 @@ const MainCamera = () => {
   // double the 60fps step.
   const MAX_FRAME_DELTA = 1 / 30
 
-  // Get camera settings from Redux
-  const cameraFOV = useSelector((state: RootState) => state.exhibition.cameraFOV ?? 50)
-  const cameraElevation = useSelector((state: RootState) => state.exhibition.cameraElevation ?? 1.6)
+  // Get camera settings from Redux — in a baked space's approved look (AR-161), the space's eye
+  const look = useBakedLook()
+  const storedFOV = useSelector((state: RootState) => state.exhibition.cameraFOV ?? 50)
+  const storedElevation = useSelector((state: RootState) => state.exhibition.cameraElevation ?? 1.6)
+  const cameraFOV = look.baked ? look.space.cameraFOV : storedFOV
+  const cameraElevation = look.baked ? look.space.cameraElevation : storedElevation
 
   const wallCoordinates = useSelector((state: RootState) => state.wallView.currentWallCoordinates)
   const wallNormal = useSelector((state: RootState) => state.wallView.currentWallNormal)

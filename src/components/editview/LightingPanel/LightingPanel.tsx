@@ -12,6 +12,22 @@ import { Toggle } from '@/components/ui/Toggle'
 import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import {
+  DIMMER_MIN,
+  DIMMER_STANDARD,
+  DIMMER_STEP,
+  dimmerLevel,
+  dimmerPercent,
+} from '@/lib/bake/dimmer'
+import {
+  TRACK_THROW_MIN,
+  TRACK_THROW_SLIDER_MAX,
+  TRACK_THROW_STEP,
+  sliderToThrow,
+  throwLabel,
+  throwToSlider,
+} from '@/lib/bake/trackThrow'
 import { hideLightingPanel } from '@/redux/slices/dashboardSlice'
 import {
   setExhibitionField,
@@ -67,7 +83,13 @@ const LightingPanel = () => {
   }
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
-  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
+  const storedSpaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const spaceId = storedSpaceId || 'paris'
+  // AR-161 (spec rule 7): in a baked space the space owns the look. Artists keep what physically
+  // changes the light — a dimmer per lamp type, the track lamps' beam angle and throw (Eduardo
+  // 2026-10-20) and each track lamp's place, aim and on/off; the sky, ambient, window light,
+  // shadows, lamp colors and the lighting set are the space's. Other spaces keep today's panel.
+  const bakedSpace = isBakedSpace(storedSpaceId)
 
   const ambientColor = useSelector(
     (state: RootState) => state.exhibition.ambientLightColor ?? DEFAULT_AMBIENT_COLOR,
@@ -178,6 +200,13 @@ const LightingPanel = () => {
     ? ceilingLightMode
     : (availableCeilingLightOptions[0]?.value ?? 'plafond')
 
+  const showPlafond =
+    hasRecessedLamps &&
+    (effectiveCeilingLightMode === 'plafond' || effectiveCeilingLightMode === 'track-plafond')
+  const showTrackLamps =
+    hasTrackLamps &&
+    (effectiveCeilingLightMode === 'track' || effectiveCeilingLightMode === 'track-plafond')
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -186,34 +215,45 @@ const LightingPanel = () => {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ambientLightColor: ambientColor,
-          ambientLightIntensity: ambientIntensity,
-          skylightColor,
-          skylightIntensity,
-          ceilingLampColor: lampColor,
-          ceilingLampIntensity: lampIntensity,
-          trackLampColor,
-          trackLampIntensity,
-          trackLampAngle,
-          trackLampDistance,
-          trackLampSettings: trackLampSettings ?? null,
-          recessedLampColor,
-          recessedLampIntensity,
-          recessedLampAngle,
-          recessedLampDistance,
-          trackLampMaterialColor,
-          windowLightColor: windowColor,
-          windowLightIntensity: windowIntensity,
-          windowTransparency,
-          hdriEnvironment,
-          hdriRotation,
-          ceilingLightMode,
-          shadowBlur,
-          shadowSpread,
-          shadowOpacity,
-          shadowDirection,
-        }),
+        // A baked space's panel saves only what it shows.
+        body: JSON.stringify(
+          bakedSpace
+            ? {
+                trackLampIntensity,
+                trackLampAngle,
+                trackLampDistance,
+                trackLampSettings: trackLampSettings ?? null,
+                recessedLampIntensity,
+              }
+            : {
+                ambientLightColor: ambientColor,
+                ambientLightIntensity: ambientIntensity,
+                skylightColor,
+                skylightIntensity,
+                ceilingLampColor: lampColor,
+                ceilingLampIntensity: lampIntensity,
+                trackLampColor,
+                trackLampIntensity,
+                trackLampAngle,
+                trackLampDistance,
+                trackLampSettings: trackLampSettings ?? null,
+                recessedLampColor,
+                recessedLampIntensity,
+                recessedLampAngle,
+                recessedLampDistance,
+                trackLampMaterialColor,
+                windowLightColor: windowColor,
+                windowLightIntensity: windowIntensity,
+                windowTransparency,
+                hdriEnvironment,
+                hdriRotation,
+                ceilingLightMode,
+                shadowBlur,
+                shadowSpread,
+                shadowOpacity,
+                shadowDirection,
+              },
+        ),
       })
 
       if (response.ok) {
@@ -228,6 +268,189 @@ const LightingPanel = () => {
 
   const handleClose = () => {
     dispatch(hideLightingPanel())
+  }
+
+  // Individual lamp controls, one collapsible section per room.
+  // `groupNodesByRoom` normalises the Blender naming, so `room0`
+  // becomes "Room 1" here and the authoring convention never reaches
+  // the artist. An ungrouped space yields a single anonymous group
+  // and renders inline, exactly as before.
+  const trackLampControls = trackLampGroups.map((group) => {
+    const lamps = group.indices.map((i: number, position: number) => {
+      const settings = trackLampSettings?.[String(i)]
+      // A hidden lamp is gone from the scene, so there is nothing for
+      // its rotation and offset to aim — the sliders go with it.
+      const isEnabled = isTrackLampVisible(settings)
+      const rotation = settings?.rotation ?? 0
+      const offset = settings?.offset ?? 0
+      // Numbering restarts inside each room, because the section
+      // header already says which room these belong to. Every label
+      // below uses this same number: the sliders used to announce the
+      // raw GLB node index, so a screen reader named a different lamp
+      // than the one on screen.
+      const label = `Lamp ${position + 1}`
+
+      return (
+        <div key={`lamp-${i}`} className={styles.lampRow}>
+          <div className={styles.lampHeader}>
+            <span className={styles.lampLabel}>{label}</span>
+            <Toggle
+              checked={isEnabled}
+              onChange={() => {
+                dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
+                setSaved(false)
+              }}
+              aria-label={`${label} enabled`}
+            />
+          </div>
+          <div className={styles.lampSlider}>
+            <Slider
+              min={-180}
+              max={180}
+              step={1}
+              value={rotation}
+              onChange={(v) => {
+                dispatch(setTrackLampRotation({ index: i, rotation: v }))
+                setSaved(false)
+              }}
+              disabled={!isEnabled}
+              aria-label={`${label} rotation`}
+            />
+            <span className={styles.sliderValue}>{rotation}°</span>
+          </div>
+          <div className={styles.lampSlider}>
+            <Slider
+              min={-2}
+              max={2}
+              step={0.01}
+              value={offset}
+              onChange={(v) => {
+                dispatch(setTrackLampOffset({ index: i, offset: v }))
+                setSaved(false)
+              }}
+              disabled={!isEnabled}
+              aria-label={`${label} offset`}
+            />
+            <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
+          </div>
+        </div>
+      )
+    })
+
+    if (!group.room) return <Fragment key="track-lamps">{lamps}</Fragment>
+
+    const roomNumber = Number(group.room.replace('room', '')) + 1
+    return (
+      <CollapsibleSection
+        key={group.room}
+        title={`Room ${roomNumber} · ${group.indices.length} lamps`}
+        persistKey={`track-lamps-${group.room}`}
+      >
+        {lamps}
+      </CollapsibleSection>
+    )
+  })
+
+  // Beam angle and throw, in every space. The throw's top position is no cut-off (stored 0): the
+  // light falls off by the inverse square alone, as every approved baked look was made.
+  const trackBeamControls = (
+    <>
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Angle</label>
+          <span className={styles.sliderValue}>
+            {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
+          </span>
+        </div>
+        <Slider
+          min={0.1}
+          max={1.2}
+          step={0.05}
+          value={trackLampAngle}
+          onChange={(v) => set('trackLampAngle', v)}
+          aria-label="Track Lamp Angle"
+        />
+      </div>
+
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Distance</label>
+          <span className={styles.sliderValue}>{throwLabel(trackLampDistance)}</span>
+        </div>
+        <Slider
+          min={TRACK_THROW_MIN}
+          max={TRACK_THROW_SLIDER_MAX}
+          step={TRACK_THROW_STEP}
+          value={throwToSlider(trackLampDistance)}
+          onChange={(v) => set('trackLampDistance', sliderToThrow(v))}
+          aria-label="Track Lamp Distance"
+        />
+      </div>
+    </>
+  )
+
+  const saveButton = (
+    <div className={styles.actions}>
+      <Button
+        variant="primary"
+        label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+        onClick={handleSave}
+        disabled={saving}
+        className={styles.saveButton}
+      />
+    </div>
+  )
+
+  if (bakedSpace) {
+    // Dimmers: 50–100% of the space's calibrated lamps (slider 2–4, 4 = 100%, never above).
+    // A level stored before the rollout outside that range shows, and bakes, clamped.
+    return (
+      <SettingsPanel title="Lighting" onClose={handleClose}>
+        {showPlafond && (
+          <Section title="Ceiling">
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Plafond Intensity</label>
+                <span className={styles.sliderValue}>{dimmerPercent(recessedLampIntensity)}%</span>
+              </div>
+              <Slider
+                min={DIMMER_MIN}
+                max={DIMMER_STANDARD}
+                step={DIMMER_STEP}
+                value={dimmerLevel(recessedLampIntensity)}
+                onChange={(v) => set('recessedLampIntensity', v)}
+                aria-label="Plafond Intensity"
+              />
+            </div>
+          </Section>
+        )}
+
+        {showTrackLamps && (
+          <Section title="Track Lamps">
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Intensity</label>
+                <span className={styles.sliderValue}>{dimmerPercent(trackLampIntensity)}%</span>
+              </div>
+              <Slider
+                min={DIMMER_MIN}
+                max={DIMMER_STANDARD}
+                step={DIMMER_STEP}
+                value={dimmerLevel(trackLampIntensity)}
+                onChange={(v) => set('trackLampIntensity', v)}
+                aria-label="Track Lamp Intensity"
+              />
+            </div>
+
+            {trackBeamControls}
+
+            {trackLampControls}
+          </Section>
+        )}
+
+        {saveButton}
+      </SettingsPanel>
+    )
   }
 
   return (
@@ -450,37 +673,7 @@ const LightingPanel = () => {
               />
             </div>
 
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Angle</label>
-                <span className={styles.sliderValue}>
-                  {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
-                </span>
-              </div>
-              <Slider
-                min={0.1}
-                max={1.2}
-                step={0.05}
-                value={trackLampAngle}
-                onChange={(v) => set('trackLampAngle', v)}
-                aria-label="Track Lamp Angle"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Distance</label>
-                <span className={styles.sliderValue}>{trackLampDistance.toFixed(1)}m</span>
-              </div>
-              <Slider
-                min={1}
-                max={10}
-                step={0.5}
-                value={trackLampDistance}
-                onChange={(v) => set('trackLampDistance', v)}
-                aria-label="Track Lamp Distance"
-              />
-            </div>
+            {trackBeamControls}
 
             <div className={styles.field}>
               <label className={styles.label}>Material Color</label>
@@ -490,86 +683,7 @@ const LightingPanel = () => {
               />
             </div>
 
-            {/* Individual lamp controls, one collapsible section per room.
-                `groupNodesByRoom` normalises the Blender naming, so `room0`
-                becomes "Room 1" here and the authoring convention never reaches
-                the artist. An ungrouped space yields a single anonymous group
-                and renders inline, exactly as before. */}
-            {trackLampGroups.map((group) => {
-              const lamps = group.indices.map((i: number, position: number) => {
-                const settings = trackLampSettings?.[String(i)]
-                // A hidden lamp is gone from the scene, so there is nothing for
-                // its rotation and offset to aim — the sliders go with it.
-                const isEnabled = isTrackLampVisible(settings)
-                const rotation = settings?.rotation ?? 0
-                const offset = settings?.offset ?? 0
-                // Numbering restarts inside each room, because the section
-                // header already says which room these belong to. Every label
-                // below uses this same number: the sliders used to announce the
-                // raw GLB node index, so a screen reader named a different lamp
-                // than the one on screen.
-                const label = `Lamp ${position + 1}`
-
-                return (
-                  <div key={`lamp-${i}`} className={styles.lampRow}>
-                    <div className={styles.lampHeader}>
-                      <span className={styles.lampLabel}>{label}</span>
-                      <Toggle
-                        checked={isEnabled}
-                        onChange={() => {
-                          dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
-                          setSaved(false)
-                        }}
-                        aria-label={`${label} enabled`}
-                      />
-                    </div>
-                    <div className={styles.lampSlider}>
-                      <Slider
-                        min={-180}
-                        max={180}
-                        step={1}
-                        value={rotation}
-                        onChange={(v) => {
-                          dispatch(setTrackLampRotation({ index: i, rotation: v }))
-                          setSaved(false)
-                        }}
-                        disabled={!isEnabled}
-                        aria-label={`${label} rotation`}
-                      />
-                      <span className={styles.sliderValue}>{rotation}°</span>
-                    </div>
-                    <div className={styles.lampSlider}>
-                      <Slider
-                        min={-2}
-                        max={2}
-                        step={0.01}
-                        value={offset}
-                        onChange={(v) => {
-                          dispatch(setTrackLampOffset({ index: i, offset: v }))
-                          setSaved(false)
-                        }}
-                        disabled={!isEnabled}
-                        aria-label={`${label} offset`}
-                      />
-                      <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
-                    </div>
-                  </div>
-                )
-              })
-
-              if (!group.room) return <Fragment key="track-lamps">{lamps}</Fragment>
-
-              const roomNumber = Number(group.room.replace('room', '')) + 1
-              return (
-                <CollapsibleSection
-                  key={group.room}
-                  title={`Room ${roomNumber} · ${group.indices.length} lamps`}
-                  persistKey={`track-lamps-${group.room}`}
-                >
-                  {lamps}
-                </CollapsibleSection>
-              )
-            })}
+            {trackLampControls}
           </Section>
         )}
 
@@ -680,15 +794,7 @@ const LightingPanel = () => {
       </Section>
 
       {/* Actions */}
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          onClick={handleSave}
-          disabled={saving}
-          className={styles.saveButton}
-        />
-      </div>
+      {saveButton}
     </SettingsPanel>
   )
 }

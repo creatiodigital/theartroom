@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { WALL_SCALE } from '@/components/wallview/constants'
 
 import { exhibitionFactory } from '@/factories/exhibitionFactory'
+import { clampTrackThrow } from '@/lib/bake/trackThrow'
 import type { TArtworkPosition } from '@/types/artwork'
 import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { TExhibition } from '@/types/exhibition'
@@ -40,7 +41,8 @@ const FIELD_VALIDATORS: Record<string, FieldValidator> = {
   recessedLampAngle: (v) => Math.max(0.1, Math.min(1.2, v)),
   recessedLampDistance: (v) => Math.max(1, Math.min(20, v)),
   trackLampAngle: (v) => Math.max(0.1, Math.min(1.2, v)),
-  trackLampDistance: (v) => Math.max(1, Math.min(10, v)),
+  // 1–10 m, or 0: no cut-off.
+  trackLampDistance: clampTrackThrow,
   floorTextureScale: (v) => Math.max(0.5, Math.min(8.0, v)),
   floorTemperature: (v) => Math.max(-1, Math.min(1, v)),
   floorNormalScale: (v) => Math.max(0, Math.min(5.0, v)),

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Mesh, BufferGeometry } from 'three'
 
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
+import { plasticColor, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
 
 interface SingleSocketProps {
@@ -17,7 +18,7 @@ const SingleSocket: React.FC<SingleSocketProps> = ({ nodes, count }) => {
   // Count comes from the GLB unless a space deliberately overrides it, so a
   // bigger space needs no code change to show all of its props.
   const resolvedCount = count ?? countNodes(nodes, 'singleSocket')
-  const tintedPlastic = useAmbientLightColor('#d8d8d8')
+  const tintedPlastic = useAmbientLightColor(plasticColor(useBakedLook(), '#d8d8d8'))
 
   const socketsArray = useMemo(() => Array.from({ length: resolvedCount }), [resolvedCount])
 

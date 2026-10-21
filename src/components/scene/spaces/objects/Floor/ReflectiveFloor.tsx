@@ -8,6 +8,7 @@ import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 
 // Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
 //
@@ -155,6 +156,18 @@ const MATERIAL_CONFIG: Record<
     metallic: null,
     ao: null,
   },
+  // ⚠️ AR-161: the common floor of every baked space (`COMMON_FLOOR`) — parquet-light with two
+  // thirds of its orange taken out and lifted to a pale oak (linear albedo 0.40, R/B 1.37 vs 0.30,
+  // 2.76): every floor bounce was painting the room beige-brown. On R2 like the other sets
+  // (public/ copy is local-only, never commit).
+  'parquet-whitewash': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: null,
+  },
   'concrete-tiles': {
     diffuse: 'diffuse.jpg',
     normal: 'normal.jpg',
@@ -214,8 +227,8 @@ const buildFloorTexturePaths = (material: string): Record<string, string> => {
   const config = MATERIAL_CONFIG[material]
   // Resolve each FILE through assetUrl, not the folder: NEXT_PUBLIC_LOCAL_ASSETS
   // matches exact file paths, so a folder-level call never hits the local override.
-  const url = (file: string) =>
-    `${assetUrl(`/assets/materials/${material}/${file}`)}?v=${TEXTURE_VERSION}`
+  const path = (file: string) => `/assets/materials/${material}/${file}`
+  const url = (file: string) => `${assetUrl(path(file))}?v=${TEXTURE_VERSION}`
   const paths: Record<string, string> = {
     map: url(config.diffuse),
   }
@@ -259,11 +272,11 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   const reflectorRef = useRef<ComponentRef<typeof MeshReflectorMaterial>>(null)
 
   // Read floor settings from Redux
-  const floorMaterial = useSelector(
+  const storedFloorMaterial = useSelector(
     (state: RootState) => state.exhibition.floorMaterial ?? 'concrete',
   )
 
-  const floorTextureScale = useSelector(
+  const storedTextureScale = useSelector(
     (state: RootState) => state.exhibition.floorTextureScale ?? DEFAULT_FLOOR_TEXTURE_SCALE,
   )
 
@@ -271,21 +284,32 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     (state: RootState) => state.exhibition.floorReflectiveness ?? DEFAULT_FLOOR_REFLECTIVENESS,
   )
 
-  const floorTextureOffsetX = useSelector(
-    (state: RootState) => state.exhibition.floorTextureOffsetX ?? 0,
+  const storedOffsetX = useSelector((state: RootState) => state.exhibition.floorTextureOffsetX ?? 0)
+
+  const storedOffsetY = useSelector((state: RootState) => state.exhibition.floorTextureOffsetY ?? 0)
+
+  const storedTemperature = useSelector(
+    (state: RootState) => state.exhibition.floorTemperature ?? 0,
   )
 
-  const floorTextureOffsetY = useSelector(
-    (state: RootState) => state.exhibition.floorTextureOffsetY ?? 0,
-  )
-
-  const floorTemperature = useSelector((state: RootState) => state.exhibition.floorTemperature ?? 0)
-
-  const floorNormalScale = useSelector(
+  const storedNormalScale = useSelector(
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
   )
 
-  const floorRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
+  const storedRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
+
+  // AR-161: a baked space's approved look has one floor, the space's (`COMMON_FLOOR`), whatever
+  // the exhibition stores: matte, with no mirror pass — its gloss is the captured room's
+  // reflection (the environment's split-sum specular, Fresnel- and roughness-correct).
+  const look = useBakedLook()
+  const common = look.baked ? look.space.floor : null
+  const floorMaterial = common?.material ?? storedFloorMaterial
+  const floorTextureScale = common?.textureScale ?? storedTextureScale
+  const floorTextureOffsetX = common?.offsetX ?? storedOffsetX
+  const floorTextureOffsetY = common?.offsetY ?? storedOffsetY
+  const floorTemperature = common?.temperature ?? storedTemperature
+  const floorNormalScale = common?.normalScale ?? storedNormalScale
+  const floorRotation = common?.rotation ?? storedRotation
 
   // Clamp scale for safety (0.5 = largest tiles, 5.0 = smallest)
   const clampedScale = Math.max(0.5, Math.min(8.0, floorTextureScale))
@@ -297,6 +321,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     floorTemperature,
     MATERIAL_CONFIG[validMaterial].darken ? NEUTRAL_COLOR : WHITE,
   )
+  // Repeats per meter: one tile spans 10 / scale meters.
+  const tileRepeat = clampedScale / 10
 
   // Build texture paths (metallic, normal, and ao are optional) — memoized to avoid
   // unstable references that cause useTexture to re-trigger loading on every render
@@ -312,27 +338,23 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     const rotationRad = (floorRotation * Math.PI) / 180 // Convert degrees to radians
     // Scale repeat to maintain same physical tile size as the old 100-unit plane
     // Old: clampedScale * 10 on a 100-unit plane. Now: scale proportionally to actual floor size.
-    const repeatX = clampedScale * 10 * (width / 100)
-    const repeatY = clampedScale * 10 * (depth / 100)
+    const repeatX = width * tileRepeat
+    const repeatY = depth * tileRepeat
     Object.values(textures).forEach((texture) => {
       texture.wrapS = RepeatWrapping
       texture.wrapT = RepeatWrapping
-      texture.anisotropy = MAX_ANISOTROPY
+      if (texture.anisotropy !== MAX_ANISOTROPY) {
+        texture.anisotropy = MAX_ANISOTROPY
+        // A sampler parameter: three applies it only on (re)upload.
+        texture.needsUpdate = true
+      }
       texture.repeat.set(repeatX, repeatY)
       texture.offset.set(floorTextureOffsetX, floorTextureOffsetY)
       texture.rotation = rotationRad
       texture.center.set(0.5, 0.5) // Rotate around center
     })
     textures.map.colorSpace = SRGBColorSpace
-  }, [
-    textures,
-    clampedScale,
-    floorTextureOffsetX,
-    floorTextureOffsetY,
-    floorRotation,
-    width,
-    depth,
-  ])
+  }, [textures, tileRepeat, floorTextureOffsetX, floorTextureOffsetY, floorRotation, width, depth])
 
   // Switching floors swaps the maps on the SAME material, and three.js does not
   // recompile when a map appears or disappears: going from a floor with an AO
@@ -369,15 +391,34 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           }
         }}
       />
-      {ENABLE_REFLECTIONS ? (
+      {common ? (
+        <meshStandardMaterial
+          key={`floor-common-${floorMaterial}`}
+          color={floorColor}
+          map={textures.map}
+          normalMap={textures.normalMap}
+          normalScale={normalScaleVec}
+          bumpMap={textures.bumpMap}
+          bumpScale={floorNormalScale}
+          roughnessMap={textures.roughnessMap}
+          aoMap={textures.aoMap}
+          aoMapIntensity={1.0}
+          envMapIntensity={1.0}
+          roughness={common.roughness}
+          metalness={common.metalness}
+        />
+      ) : ENABLE_REFLECTIONS ? (
         <MeshReflectorMaterial
           ref={reflectorRef}
           blur={[600, 400]} // Higher blur for maximum stability
           resolution={1024} // Full resolution for smooth reflections
           mixBlur={0.9} // High blend for stable reflections
           mixStrength={reflectiveness * 1.5} // Reduced from *3 to let normal map show
+          mixContrast={1}
           roughness={1 - reflectiveness * 0.2}
           depthScale={0}
+          minDepthThreshold={0.9}
+          maxDepthThreshold={1}
           color={floorColor}
           metalness={0.05}
           mirror={reflectiveness * 0.03}
@@ -390,6 +431,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           metalnessMap={textures.metalnessMap}
           aoMap={textures.aoMap}
           aoMapIntensity={1.0}
+          envMapIntensity={1.0}
         />
       ) : (
         <meshStandardMaterial
@@ -404,6 +446,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
           metalnessMap={textures.metalnessMap}
           aoMap={textures.aoMap}
           aoMapIntensity={1.0}
+          envMapIntensity={1.0}
           roughness={1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
           metalness={0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
         />

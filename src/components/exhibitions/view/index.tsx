@@ -1,10 +1,11 @@
 'use client'
 
 import { useProgress } from '@react-three/drei'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import {
   ArrowDown,
   ArrowLeft,
@@ -30,6 +31,23 @@ import { useCanEnterWalkthrough } from '@/hooks/useCanEnterWalkthrough'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
+import {
+  bakeSettled,
+  resetBakeProgress,
+  setBakeProgress,
+  useBakeProgress,
+} from '@/components/scene/bake/bakeProgress'
+import type { BakeRunnerProps } from '@/components/scene/bake/BakeRunner'
+import { useCanBake } from '@/components/scene/bake/bakeSupport'
+import { BakePageProvider, type BakePage } from '@/components/scene/bake/bakePage'
+import {
+  lookFor,
+  shownStoredBake,
+  useShownStoredBake,
+  useStoredBakeFailed,
+} from '@/components/scene/bake/bakedLook'
+import { useSceneFailed } from '@/components/scene/sceneFailure'
+import { MonogramLoader } from '@/components/ui/MonogramLoader'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
 import {
   declineExit,
@@ -40,9 +58,13 @@ import {
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
+import { isBakeRecord } from '@/lib/bake/bakeRecord'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { bakePageUrl } from '@/lib/bake/bakePageUrl'
 import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip/Tooltip'
+import { BakeActions, BakeAdminBar } from './BakeAdmin/BakeAdmin'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 
@@ -93,29 +115,103 @@ interface ExhibitionViewPageProps {
   exhibitionSlug: string
 }
 
-const LoadingOverlay = () => {
-  const { active, progress } = useProgress()
-  const [dismissed, setDismissed] = useState(false)
+const VISITOR_LOADER_TITLE = 'Preparing the exhibition'
+const BAKE_LOADER_TITLE = 'Lighting the room'
+const BAKE_LOADER_NOTE =
+  'This takes a few minutes. Keep this tab open and in front, with the display awake.'
 
+// Asset loading is the first tenth of the bar; a bake on the page (minutes, not seconds) is the
+// rest. Visitors, with no bake, get the whole bar for the assets.
+const ASSET_SHARE = 0.1
+// The admin's bake: the light is most of its part of the bar, storing it (seconds) the rest.
+const BAKE_SHARE = 0.92
+
+/**
+ * AR-161: what the visit page is for. `bake` / `review`: the admin's bake and review pages
+ * (`?bake=1`, `?review=1`), on the saved draft; anyone else gets the visit.
+ */
+type PageMode = BakePage['mode']
+
+interface LoadingOverlayProps {
+  mode: PageMode
+  /** Once the room is revealed with its stored bake on — never when the bake failed to go on. */
+  onRevealed?: () => void
+}
+
+const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
+  const { active, progress } = useProgress()
+  const bake = useBakeProgress()
+  // A stored bake that will be shown (`shownStoredBake`) only downloads (its files are assets) but
+  // goes on after the artworks have loaded: the room stays covered until it is on
+  // (`BakedLighting`). One that failed is not waited for: the room is back in today's look.
+  const storedBake = useShownStoredBake() !== null
+  // Bake mode: the admin's bake.
+  const bakes = mode === 'bake'
+  // A crashed scene never finishes loading: step aside for its error message at once.
+  const sceneFailed = useSceneFailed()
+
+  // Today's look, after a stored bake failed, loads assets of its own (its floor): a second round
+  // of loads to wait for. Assets are ready for a round once nothing has loaded for 100 ms.
+  const assetsRound = useStoredBakeFailed() ? 1 : 0
+  const [assetsReadyRound, setAssetsReadyRound] = useState(-1)
   useEffect(() => {
     if (!active && progress >= 100) {
-      const timer = setTimeout(() => setDismissed(true), 100)
+      const timer = setTimeout(() => setAssetsReadyRound(assetsRound), 100)
       return () => clearTimeout(timer)
     }
-  }, [active, progress])
+  }, [active, progress, assetsRound])
+  const assetsReady = assetsReadyRound === assetsRound
 
-  if (dismissed) return null
+  const assets = Math.min(1, progress / 100)
+  // Latched: once the room is ready the loader only fades, even if the bake store resets.
+  const [done, setDone] = useState(false)
+  // A stored bake that failed ends the bake wait (the room is in today's look). Bake mode never
+  // reveals the room — the admin sees the bake in review, as stored — so only an error ends it there.
+  const ready =
+    sceneFailed || (mode !== 'bake' && assetsReady && (!(bakes || storedBake) || bakeSettled(bake)))
+  useEffect(() => {
+    if (ready) setDone(true)
+  }, [ready])
+  const revealedWithBake = done && !sceneFailed && storedBake && bake.phase === 'finished'
+  useEffect(() => {
+    if (revealedWithBake) onRevealed?.()
+  }, [revealedWithBake, onRevealed])
+  const fraction = bakes ? ASSET_SHARE * assets + (1 - ASSET_SHARE) * bake.fraction : assets
 
   return (
-    <div className={styles.loadingOverlay}>
-      <div className={styles.progressBar}>
-        <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-      </div>
-      <Text as="span">
-        {active ? `Loading Exhibition ${Math.round(progress)}%` : 'Almost ready...'}
-      </Text>
-    </div>
+    <MonogramLoader
+      progress={fraction}
+      done={done}
+      title={bakes ? BAKE_LOADER_TITLE : VISITOR_LOADER_TITLE}
+      note={bakes ? BAKE_LOADER_NOTE : undefined}
+    />
   )
+}
+
+type ReviewState = 'pending' | 'reviewed' | 'refused' | 'failed'
+
+const REVIEW_STATUS: Record<ReviewState, string> = {
+  pending: 'Loading the baked room…',
+  reviewed: 'Reviewed. This bake can be published.',
+  refused: 'The room changed since this bake. Bake again before publishing.',
+  failed: "The review couldn't be recorded. Reload the page to try again.",
+}
+
+/** The review page's admin bar; reads the bake's progress itself (so the page doesn't re-render). */
+const ReviewBar = ({
+  review,
+  bakeHref,
+  editorHref,
+}: {
+  review: ReviewState
+  bakeHref: string
+  editorHref: string
+}) => {
+  // A failed bake leaves the room in today's look (`shownStoredBake`).
+  const status = useStoredBakeFailed()
+    ? "This bake couldn't be shown on the room. Bake again."
+    : REVIEW_STATUS[review]
+  return <BakeAdminBar status={status} bakeHref={bakeHref} editorHref={editorHref} />
 }
 
 const MobileExhibitionView = ({
@@ -503,21 +599,54 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef<string | null>(null)
   const searchParams = useSearchParams()
-  const previewToken = searchParams.get('preview') || undefined
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
   const canEnterWalkthrough = useCanEnterWalkthrough()
 
-  const {
-    data: exhibition,
-    isLoading: isApiLoading,
-    error,
-  } = useGetExhibitionByUrlQuery(
-    { url: exhibitionSlug, ...(previewToken && { preview: previewToken }) },
+  // AR-161: `?bake=1` bakes the room on the admin's machine and stores it as the draft bake;
+  // `?review=1` shows the draft bake exactly as visitors will get it. Admins only — anyone else
+  // gets the visit (the server enforces it too). Both work on the saved draft (`mode: 'edit'`).
+  const { data: session, status: sessionStatus } = useSession()
+  const asksBake = searchParams.get('bake') === '1'
+  const asksAdminPage = asksBake || searchParams.get('review') === '1'
+  const userType = session?.user?.userType
+  const isAdmin = userType === 'admin' || userType === 'superAdmin'
+  // A bake or review link waits for the session rather than starting a visit.
+  const sessionPending = asksAdminPage && sessionStatus === 'loading'
+  const mode: PageMode = asksAdminPage && isAdmin ? (asksBake ? 'bake' : 'review') : 'visit'
+  const adminPage = mode !== 'visit'
+  const previewToken = adminPage ? undefined : searchParams.get('preview') || undefined
+
+  const { data, isLoading, fulfilledTimeStamp, error } = useGetExhibitionByUrlQuery(
+    adminPage
+      ? { url: exhibitionSlug, mode: 'edit' }
+      : { url: exhibitionSlug, ...(previewToken && { preview: previewToken }) },
     {
-      skip: !exhibitionSlug,
+      skip: !exhibitionSlug || sessionPending,
+      refetchOnMountOrArgChange: adminPage,
     },
   )
+  // The bake and review pages read the saved draft fresh: never a copy cached before they opened
+  // (the editor's, say), and a later refetch never takes the room away.
+  const [openedAt] = useState(() => Date.now())
+  const fresh = !adminPage || (fulfilledTimeStamp ?? 0) >= openedAt
+  const exhibition = fresh ? data : undefined
+  const isApiLoading = sessionPending || isLoading || !fresh
+
+  // AR-161: the draft bake, and whether it is a bake of the room as saved now.
+  const draftBake = adminPage && isBakeRecord(exhibition?.bake) ? exhibition.bake : null
+  const draftCurrent =
+    !!draftBake &&
+    !!exhibition?.bakeFingerprint &&
+    draftBake.fingerprint === exhibition.bakeFingerprint
+  // The bake the room shows: visitors' published one (or a preview's draft); in review the
+  // draft, only when current; in bake mode none (the bake runs on the unlit room).
+  const roomBake =
+    mode === 'visit'
+      ? (exhibition?.bake ?? null)
+      : mode === 'review' && draftCurrent
+        ? draftBake
+        : null
 
   // Keyed on the SLUG, not a boolean. As a boolean this ran once per mount ever,
   // and moving between two exhibitions reuses this component — so switching
@@ -548,8 +677,14 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       // effect (not render) so the loading manager's onStart doesn't fire
       // mid-render. Runs before the Scene mounts (it's gated on Redux
       // spaceId, set by the dispatch below), so ReflectiveFloor suspends on
-      // this cached promise instead of starting its own load.
-      preloadFloorMaterial(exhibition.floorMaterial)
+      // this cached promise instead of starting its own load. AR-161: a baked
+      // space's approved look shows the space's floor, not the stored one.
+      const look = lookFor(
+        mode,
+        exhibition.spaceId,
+        shownStoredBake(exhibition.spaceId, roomBake) !== null,
+      )
+      preloadFloorMaterial(look.baked ? look.space.floor.material : exhibition.floorMaterial)
       const exhibitionData: TExhibition = {
         id: exhibition.id,
         userId: exhibition.userId,
@@ -611,17 +746,21 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         radiatorColor: exhibition.radiatorColor ?? undefined,
         // Autofocus groups
         autofocusGroups: exhibition.autofocusGroups ?? undefined,
+        // AR-161: the baked light (published for visitors, the draft for the admin's review)
+        bake: roomBake,
+        bakeFingerprint: exhibition.bakeFingerprint,
       }
       dispatch(setExhibition(exhibitionData))
     }
-  }, [exhibition, dispatch])
+  }, [exhibition, dispatch, roomBake, mode])
 
   // by-url already delivers the (snapshot + live-enriched) exhibition
-  // artworks — pass them through so the hook skips its own fetch.
+  // artworks — pass them through so the hook skips its own fetch. The bake
+  // and review pages load the saved draft's placements, as the editor does.
   const { loadedExhibitionId } = useLoadExhibitionArtworks(
     exhibition?.id,
-    undefined,
-    exhibition?.exhibitionArtworks,
+    adminPage ? 'edit' : undefined,
+    adminPage ? undefined : exhibition?.exhibitionArtworks,
   )
   // Artworks are "ready" for the modal only when Redux holds the
   // current exhibition's data. Avoids the A→B navigation race where the
@@ -634,6 +773,77 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   // explain controls for a room that never appears. Keep only the exit button.
   const webglAvailable = useWebGLAvailable()
 
+  // --- AR-161: the admin's bake and review pages -------------------------------------------
+  const visitPath = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
+  const editorHref = `/exhibitions/${artistSlug}/${exhibitionSlug}/edit`
+  const bakeHref = `${visitPath}${bakePageUrl(searchParams.toString(), 'bake')}`
+  const reviewHref = `${visitPath}${bakePageUrl(searchParams.toString(), 'review')}`
+  const bakedSpace = isBakedSpace(exhibition?.spaceId)
+  const canBake = useCanBake(mode === 'bake')
+  const [bakeError, setBakeError] = useState<string | null>(null)
+  const exhibitionId = exhibition?.id
+  const fingerprint = exhibition?.bakeFingerprint
+  const spaceId = exhibition?.spaceId
+  const runner = useMemo<BakeRunnerProps | null>(
+    () =>
+      mode === 'bake' && exhibitionId && fingerprint && spaceId
+        ? {
+            exhibitionId,
+            fingerprint,
+            spaceId,
+            // The loader: the light first, then storing it; it never goes backwards.
+            onProgress: ({ phase, fraction }) =>
+              setBakeProgress(
+                'running',
+                phase === 'baking'
+                  ? BAKE_SHARE * fraction
+                  : BAKE_SHARE + (1 - BAKE_SHARE) * fraction,
+              ),
+            // Stored: review it, as visitors will get it — a fresh page (no bake left in memory),
+            // replacing this one so Back doesn't bake again.
+            onDone: () => {
+              setBakeProgress('running', 1)
+              window.location.replace(reviewHref)
+            },
+            onError: (bakeFailure) => setBakeError(bakeFailure.message),
+          }
+        : null,
+    [mode, exhibitionId, fingerprint, spaceId, reviewHref],
+  )
+  // The loader's bake progress belongs to this page while it bakes.
+  useEffect(() => {
+    if (mode !== 'bake') return
+    return () => resetBakeProgress()
+  }, [mode])
+  const bakePage = useMemo<BakePage>(
+    () =>
+      mode === 'bake' && runner
+        ? { mode: 'bake', runner }
+        : mode === 'review'
+          ? { mode: 'review' }
+          : { mode: 'visit' },
+    [mode, runner],
+  )
+
+  // Review: once the room is revealed with this draft bake on, the admin has reviewed it — said
+  // once, for this exact bake (the server refuses a bake that isn't current any more).
+  const [review, setReview] = useState<ReviewState>('pending')
+  const reviewedBake = useRef<string | null>(null)
+  const reviewBakeId = mode === 'review' && draftCurrent ? draftBake!.id : null
+  const markReviewed = useCallback(() => {
+    if (!reviewBakeId || !exhibitionId || reviewedBake.current === reviewBakeId) return
+    reviewedBake.current = reviewBakeId
+    fetch(`/api/exhibitions/${encodeURIComponent(exhibitionId)}/bake/reviewed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bakeId: reviewBakeId }),
+    })
+      .then((response) =>
+        setReview(response.ok ? 'reviewed' : response.status === 409 ? 'refused' : 'failed'),
+      )
+      .catch(() => setReview('failed'))
+  }, [reviewBakeId, exhibitionId])
+
   if (error) {
     return <div className={styles.errorState}>Error loading exhibition</div>
   }
@@ -642,11 +852,74 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     return <div className={styles.emptyState}>Exhibition not found</div>
   }
 
+  // AR-161: a bake preview of a room whose bake doesn't match it (or was never made). The
+  // room is not shown at all — never a room lit for another state of itself — so the 3D scene
+  // doesn't mount; the response says why in `bakeStatus`.
+  if (previewToken && exhibition?.bakeStatus && exhibition.bakeStatus !== 'current') {
+    return (
+      <div className={styles.previewNotice} role="status">
+        <Text as="h2" size="lg" font="serif">
+          {exhibition.bakeStatus === 'missing'
+            ? "This exhibition hasn't been baked yet."
+            : 'This preview is out of date — a new bake is needed.'}
+        </Text>
+      </div>
+    )
+  }
+
+  // AR-161: the bake and review pages say plainly when there is no room to show.
+  if (adminPage && exhibition) {
+    const notice = (title: string, actions: React.ReactNode, detail?: string) => (
+      <div className={styles.previewNotice} role="status">
+        <Text as="h2" size="lg" font="serif">
+          {title}
+        </Text>
+        {detail && (
+          <Text as="p" size="sm">
+            {detail}
+          </Text>
+        )}
+        {actions}
+      </div>
+    )
+    if (!bakedSpace) {
+      return notice(
+        "This exhibition's space isn't lit by a bake.",
+        <BakeActions editorHref={editorHref} />,
+      )
+    }
+    if (mode === 'bake' && canBake === false) {
+      return notice("This computer can't bake the room.", <BakeActions editorHref={editorHref} />)
+    }
+    if (mode === 'bake' && (bakeError || !fingerprint)) {
+      return notice(
+        "The bake didn't finish. Nothing was saved.",
+        <BakeActions bakeHref={bakeHref} editorHref={editorHref} />,
+        bakeError ?? 'The room could not be read for baking.',
+      )
+    }
+    if (mode === 'review' && !draftBake) {
+      return notice(
+        "This exhibition hasn't been baked yet.",
+        <BakeActions bakeHref={bakeHref} bakeLabel="Bake the room" editorHref={editorHref} />,
+      )
+    }
+    if (mode === 'review' && !draftCurrent) {
+      return notice(
+        'This preview is out of date — a new bake is needed.',
+        <BakeActions bakeHref={bakeHref} editorHref={editorHref} />,
+      )
+    }
+  }
+
   // Device, not just width: a 13" iPad held sideways is laptop-wide but has no
   // keyboard or mouse to walk the room with.
   if (!canEnterWalkthrough) {
     return <MobileExhibitionView artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
   }
+
+  // Bake mode mounts the scene once this computer is known to be able to bake.
+  const sceneReady = !!exhibition && (mode !== 'bake' || canBake === true)
 
   return (
     <>
@@ -654,14 +927,26 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {webglAvailable !== false && (
         <>
           <NavigationHelpModal
-            hidden={isArtworkPanelOpen}
+            hidden={isArtworkPanelOpen || mode === 'bake'}
             exhibitionId={exhibition?.id}
             artworksReady={artworksReady}
           />
-          <LoadingOverlay />
+          <LoadingOverlay
+            key={mode}
+            mode={mode}
+            onRevealed={mode === 'review' ? markReviewed : undefined}
+          />
         </>
       )}
-      {exhibition && <Scene hideLoader />}
+      {mode === 'review' && (
+        <ReviewBar review={review} bakeHref={bakeHref} editorHref={editorHref} />
+      )}
+      {sceneReady && (
+        // Keyed by the mode: a bake and a review never share a scene.
+        <BakePageProvider key={mode} value={bakePage}>
+          <Scene hideLoader />
+        </BakePageProvider>
+      )}
       {isArtworkPanelOpen && <ArtworkPanel />}
       {isArtworkModalOpen && <ArtworkModal />}
     </>

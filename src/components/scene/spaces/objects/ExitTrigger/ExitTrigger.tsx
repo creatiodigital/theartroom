@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Box3, Mesh, Object3D, Vector3 } from 'three'
 
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { openExitPrompt } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 
@@ -45,7 +46,10 @@ const ExitTrigger: React.FC<ExitTriggerProps> = ({ nodes, name = 'invisibleWall0
   const initialCameraDirection = useSelector(
     (state: RootState) => state.scene.initialCameraDirection,
   )
-  const cameraElevation = useSelector((state: RootState) => state.exhibition.cameraElevation ?? 1.6)
+  // AR-161: in a baked space's approved look the eye height is the space's.
+  const look = useBakedLook()
+  const storedElevation = useSelector((state: RootState) => state.exhibition.cameraElevation ?? 1.6)
+  const cameraElevation = look.baked ? look.space.cameraElevation : storedElevation
 
   // World-space bounding box of the barrier, computed once. Distance-to-box
   // copes with any rotation or scale, so the wall can be angled to suit the

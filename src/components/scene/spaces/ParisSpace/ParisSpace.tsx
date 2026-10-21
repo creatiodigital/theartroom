@@ -41,6 +41,7 @@ import {
 } from '@/components/scene/spaces/objects/nodeIndices'
 import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { applySurfaceLook, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // No module-scope preload for these: drei's useKTX2.preload only sets the
@@ -80,6 +81,8 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   // Independent wall & ceiling colors
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
   const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
+  // AR-161: in the baked look too, the walls and the ceiling are the artist's colors.
+  const look = useBakedLook()
 
   // Load external baked textures
   const wallTexture = useKTX2(assetUrl('/assets/spaces/paris/textures/bw2.ktx2'), '/basis/')
@@ -116,10 +119,19 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
   const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
+    // AR-161: in the baked look `applySurfaceLook` owns these colors.
+    const wallSet = applySurfaceLook(wallMaterial, wallTexture, wallColor, look)
+    const ceilingSet = applySurfaceLook(
+      ceilingMaterial,
+      ceilingTexture,
+      ceilingColor,
+      look,
+      'ceiling',
+    )
     const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
 
-    wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
-    ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+    if (!wallSet) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    if (!ceilingSet) ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
   }, [
     wallMaterial,
@@ -130,6 +142,9 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     ceilingColor,
     wallBrightness,
     invalidate,
+    look,
+    wallTexture,
+    ceilingTexture,
   ])
 
   // Arrays for iterating over indexed meshes

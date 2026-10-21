@@ -45,6 +45,7 @@ import { spaceConfigs } from '@/components/scene/constants'
 // — a second identical file today would only drift.
 import { Lights } from '@/components/scene/spaces/ParisSpace/lights'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { applySurfaceLook, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 // Prop families whose nodes hang off a room Empty in the Vienna GLB. Their
@@ -109,6 +110,8 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // Independent wall & ceiling colors
   const wallColor = useSelector((state: RootState) => state.exhibition.wallColor ?? '#ffffff')
   const ceilingColor = useSelector((state: RootState) => state.exhibition.ceilingColor ?? '#ffffff')
+  // AR-161: in the baked look too, the walls and the ceiling are the artist's colors.
+  const look = useBakedLook()
 
   // Baked lighting, neutral (no albedo) so the wall colour above stays the
   // artist's to control. No module-scope preload: drei's useKTX2.preload never
@@ -145,9 +148,18 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   const wallBrightness = useSelector((state: RootState) => state.exhibition.wallBrightness ?? 1.8)
   const invalidate = useThree((s) => s.invalidate)
   useEffect(() => {
+    // AR-161: in the baked look `applySurfaceLook` owns these colors.
+    const wallSet = applySurfaceLook(wallMaterial, wallTexture, wallColor, look)
+    const ceilingSet = applySurfaceLook(
+      ceilingMaterial,
+      ceilingTexture,
+      ceilingColor,
+      look,
+      'ceiling',
+    )
     const ambientTint = new Color(ambientColor).multiplyScalar(scale * wallBrightness)
-    wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
-    ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
+    if (!wallSet) wallMaterial.color = ambientTint.clone().multiply(new Color(wallColor))
+    if (!ceilingSet) ceilingMaterial.color = ambientTint.clone().multiply(new Color(ceilingColor))
     invalidate()
   }, [
     wallMaterial,
@@ -158,6 +170,9 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
     ceilingColor,
     wallBrightness,
     invalidate,
+    look,
+    wallTexture,
+    ceilingTexture,
   ])
 
   // Count comes from the model — Vienna has 8 where Paris has 4.

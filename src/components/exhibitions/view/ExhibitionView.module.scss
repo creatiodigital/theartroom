@@ -1,40 +1,23 @@
 @use '@/styles/mixins' as *;
 
-.loadingOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-3);
-  background-color: var(--color-white);
-  z-index: 99999;
-}
-
-.progressBar {
-  width: 200px;
-  height: 1px;
-  background-color: var(--color-border-default);
-  border-radius: var(--space-1);
-  overflow: hidden;
-}
-
-.progressFill {
-  height: 100%;
-  background-color: var(--color-text-primary);
-  transition: width 0.3s ease-out;
-}
-
 .errorState,
 .emptyState {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+}
+
+.previewNotice {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 100vh;
+  padding: var(--space-8);
+  text-align: center;
+  background-color: var(--color-surface-subtle);
 }
 
 .navigationButtonWrapper {

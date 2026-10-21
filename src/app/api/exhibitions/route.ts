@@ -5,6 +5,8 @@ import { revalidateTag, revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import type { Exhibition, Prisma } from '@/generated/prisma'
 import { getEffectiveUserId } from '@/lib/authUtils'
+import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { APPROVED_ROOM_SETTINGS } from '@/lib/bake/spaceLooks'
 import prisma from '@/lib/prisma'
 
 // POST create new exhibition (requires auth)
@@ -52,6 +54,9 @@ export async function POST(request: NextRequest) {
         url,
         spaceId,
         status: 'current',
+        // AR-161: a baked space's track beam, throw and ceiling start where its approved look
+        // was made (the columns' defaults are today's realtime ones).
+        ...(isBakedSpace(spaceId) ? APPROVED_ROOM_SETTINGS[spaceId] : undefined),
       },
     })
 

@@ -2,6 +2,7 @@ import type { TArtworkPosition } from '@/types/artwork'
 import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { ExhibitionArtworkResponse } from '@/lib/exhibitionArtworkMapper'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
+import type { BakeRecord } from '@/lib/bake/bakeRecord'
 
 export type TExhibition = {
   id: string
@@ -93,4 +94,13 @@ export type TExhibition = {
 
   // Autofocus groups
   autofocusGroups?: AutofocusGroup[]
+
+  /** AR-161: the baked light — the published bake for visitors, the draft in edit mode. */
+  bake?: BakeRecord | null
+  /** AR-161: the room's light fingerprint now (edit mode, admins only): a bake made from it is current. */
+  bakeFingerprint?: string
+  /** AR-161: only on a bake preview request: whether the draft bake matches the draft room. */
+  bakeStatus?: BakeStatus
 }
+
+export type BakeStatus = 'current' | 'stale' | 'missing'
