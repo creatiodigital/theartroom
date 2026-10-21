@@ -32,10 +32,11 @@ export const COMMON_FLOOR: CommonFloor = {
   offsetX: 0,
   offsetY: 0.04,
   rotation: 0,
-  // A little beige, like a real parquet (Eduardo 2026-10-21): the boards' red to blue ×1.15 over
-  // the whitewash photo. The bake takes it too (the floor's bounce is its color), so the room's
-  // light warms with it a little.
-  temperature: 0.5,
+  // Beige, like a real parquet (Eduardo 2026-10-21: "too greyish"; 0.5 was too subtle): the
+  // warmest tint, the boards' red to blue ×1.32 over the whitewash photo — a light oak, short of
+  // a real wood texture's orange. The bake takes it too (the floor's bounce is its color), so the
+  // room's light warms with it a little.
+  temperature: 1,
   normalScale: 1,
   roughness: 1,
   metalness: 0,
