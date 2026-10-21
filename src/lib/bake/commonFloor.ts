@@ -32,7 +32,10 @@ export const COMMON_FLOOR: CommonFloor = {
   offsetX: 0,
   offsetY: 0.04,
   rotation: 0,
-  temperature: 0,
+  // A little beige, like a real parquet (Eduardo 2026-10-21): the boards' red to blue ×1.15 over
+  // the whitewash photo. The bake takes it too (the floor's bounce is its color), so the room's
+  // light warms with it a little.
+  temperature: 0.5,
   normalScale: 1,
   roughness: 1,
   metalness: 0,

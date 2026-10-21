@@ -234,7 +234,7 @@ live links so he picks by eye.
 | `paintReflectance` / `plasticReflectance` | 0.9 / 0.85 | same | White paint and switch plastic. The authored `#d8d8d8` only looked white under the old ×1.5 ambient tint. |
 | `lampColor`, `trackLampColor`, `trackLampAngle`, `trackBodyColor` | `#ffffff`, `#fffeeb`, 0.8 rad, `#ffffff` | `#ffffff`, `#ffffff`, 0.45, `#ffffff` (inert) | Taken from the reference exhibition (Paris: Permanence) |
 | `cameraFOV` / `cameraElevation` | 50 / 1.6 m | same | |
-| `floor` | `COMMON_FLOOR` | same | **Not a per-space choice.** The floor is `parquet-whitewash` (albedo 0.40, R/B 1.37), scale 2.07, offset y 0.04, normal ×1, roughness 1. Every wood texture is orange in linear light (R/B 2.6–5.1), which painted the whole room beige-brown. |
+| `floor` | `COMMON_FLOOR` | same | **Not a per-space choice.** The floor is `parquet-whitewash` (albedo 0.40, R/B 1.37), scale 2.07, offset y 0.04, normal ×1, roughness 1, temperature 0.5 (a little beige, 2026-10-21: R/B ×1.15). Every wood texture is orange in linear light (R/B 2.6–5.1), which painted the whole room beige-brown. The boards' size and placement are the artist's since AR-163 (`bakedFloorTiling`). |
 
 **Also fixed, and the same in every space** (constants in `LightBaker.ts` and `bakeShaders.ts`):
 - Lamps: exact-cosine diffusers, a 1,024 cube shadow map for wide lamps, and a fine shadow bias.
