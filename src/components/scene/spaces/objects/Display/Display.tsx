@@ -33,7 +33,12 @@ import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 import { ARTWORK_DISPLAY_NAME, artworkUserData } from './artworkId'
-import { createArtworkFileMaterial, disposeEncodedMap, encodedMap } from './artworkFile'
+import {
+  createArtworkFileMaterial,
+  createArtworkSurfaceMaterial,
+  disposeEncodedMap,
+  encodedMap,
+} from './artworkFile'
 
 type DisplayProps = {
   artwork: RuntimeArtwork
@@ -946,14 +951,28 @@ const Display = ({ artwork }: DisplayProps) => {
   ])
   useDisposable(frameMatObj)
 
+  // AR-163: in the baked look the passepartout and the paper border are part of the image — they
+  // show exactly their color, whatever the room's light (`createArtworkSurfaceMaterial`).
+  const filePassepartout = useBakedLook().baked
+
   // Passepartout material with ambient light applied
   const passepartoutMaterial = useMemo(() => {
+    if (filePassepartout) return createArtworkSurfaceMaterial(passepartoutColor ?? '#ffffff')
     return new MeshStandardMaterial({
       color: passepartoutAmbientColor,
       roughness: 1,
     })
-  }, [passepartoutAmbientColor])
+  }, [filePassepartout, passepartoutColor, passepartoutAmbientColor])
   useDisposable(passepartoutMaterial)
+
+  const paperMaterial = useMemo(
+    () =>
+      filePassepartout
+        ? createArtworkSurfaceMaterial('#ffffff')
+        : new MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, side: DoubleSide }),
+    [filePassepartout],
+  )
+  useDisposable(paperMaterial)
 
   // Support material with ambient light applied
   const supportMaterial = useMemo(() => {
@@ -1019,11 +1038,10 @@ const Display = ({ artwork }: DisplayProps) => {
       <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
         {/* Paper sheet — extends past the image as a white margin on every side */}
         {showPaperBorder && paperBorder > 0 && (
-          <mesh renderOrder={1}>
+          <mesh renderOrder={1} material={paperMaterial}>
             <planeGeometry args={[paperOuterW, paperOuterH]} />
-            {/* A paper sheet is a real surface hanging on the wall: unlit, it
-                glowed flat white while the wall around it took the lamp. */}
-            <meshStandardMaterial color="#ffffff" roughness={0.9} side={DoubleSide} />
+            {/* Lit like the wall in today's look (unlit, it glowed flat white while the wall
+                around it took the lamp); part of the image in the baked look (AR-163). */}
           </mesh>
         )}
 
