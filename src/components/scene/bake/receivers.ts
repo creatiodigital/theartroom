@@ -24,6 +24,9 @@ const PROP_NAME = /^(windowFrame|windowHandle|radiator|singleSocket|doubleSwitch
 /** The display panels the room shows (`Panel` mounts only the enabled ones). */
 const PANEL_NAME = /^panel\d+$/
 
+/** The text cards: the board under a text (`Stencil`). */
+const CARD_NAME = 'textCard'
+
 /** The ceiling's paint reflectance (its color scales it). */
 const CEILING_ALBEDO = 0.85
 
@@ -49,7 +52,7 @@ const averageAlbedo = (texture: Texture | null | undefined): Color => {
   }
 }
 
-/** A display panel's paint as the bake takes it: the artist's color × the space's paint reflectance. */
+/** A panel's or card's paint as the bake takes it: its color × the space's paint reflectance. */
 const panelAlbedo = (panel: Mesh, reflectance: number): Color => {
   const color = (panel.material as MeshStandardMaterial).color ?? new Color(1, 1, 1)
   return color.clone().multiplyScalar(reflectance)
@@ -78,25 +81,25 @@ export interface RoomPaint {
 }
 
 /**
- * Walls, ceiling, floor, the artworks (measured only), the fixtures and the display panels, as
- * the bake takes them — `room`: the artist's wall and ceiling colors and the space's look (its
- * paint). Every receiver on our own unwrap writes `uv1` on the scene meshes it stands for (its
+ * Walls, ceiling, floor, the artworks (measured only), the fixtures, the display panels and the
+ * text cards, as the bake takes them — `room`: the artist's wall and ceiling colors and the
+ * space's look (its paint). Every receiver on our own unwrap writes `uv1` on the scene meshes it stands for (its
  * `sources`): the baked maps are read through it. A throw midway puts back the geometry it had
  * already replaced before rethrowing.
  *
- * `panels`: bake the display panels (every new bake). A stored bake from before panels were baked
- * has no map for them: `false` lays the room out as it was then, so its maps still fit, and its
- * panels keep their realtime light.
+ * `panels` / `cards`: bake the display panels / the text cards (every new bake). A stored bake from
+ * before they were baked has no map for them: `false` lays the room out as it was then, so its
+ * maps still fit, and they keep the light they had then.
  */
 export const prepareReceivers = (
   scene: Object3D,
   room: RoomPaint,
-  { panels = true }: { panels?: boolean } = {},
+  { panels = true, cards = true }: { panels?: boolean; cards?: boolean } = {},
 ): PreparedReceivers => {
   const restores: (() => void)[] = []
   const restore = () => restores.splice(0).forEach((undo) => undo())
   try {
-    return buildReceivers(scene, room, panels, restores, restore)
+    return buildReceivers(scene, room, { panels, cards }, restores, restore)
   } catch (error) {
     restore()
     throw error
@@ -106,7 +109,7 @@ export const prepareReceivers = (
 const buildReceivers = (
   scene: Object3D,
   room: RoomPaint,
-  withPanels: boolean,
+  bake: { panels: boolean; cards: boolean },
   restores: (() => void)[],
   restore: () => void,
 ): PreparedReceivers => {
@@ -216,7 +219,7 @@ const buildReceivers = (
   // visitor stands. Realtime, they took the lamps of the room the visitor was in (culled per
   // room) and the room capture's bounce, and changed brightness as the visitor walked. Last, so
   // a room without panels keeps every other receiver's slot and its unwrap.
-  if (withPanels) {
+  if (bake.panels) {
     const panels: Mesh[] = []
     scene.traverse((o) => {
       const m = o as Mesh
@@ -236,6 +239,31 @@ const buildReceivers = (
         albedo,
         sources: panels,
         // Paint, like the walls: its color × the space's paint reflectance.
+        lightMapIntensity: room.look.paintReflectance,
+      })
+    }
+  }
+
+  // Text cards (AR-163, Eduardo 2026-10-22: "bake the cards"): boards on the wall, so baked like
+  // it. Only the artwork image, its paper border and its passepartout ignore the room's light.
+  // Last, after the panels, for the same reason.
+  if (bake.cards) {
+    const cards: Mesh[] = []
+    scene.traverse((o) => {
+      const m = o as Mesh
+      if (m.isMesh && m.name === CARD_NAME && m.visible) cards.push(m)
+    })
+    if (cards.length) {
+      const atlas = unwrap(cards, 0.01, 1024)
+      const albedo = cards
+        .reduce((sum, c) => sum.add(panelAlbedo(c, room.look.paintReflectance)), new Color(0, 0, 0))
+        .multiplyScalar(1 / cards.length)
+      receivers.push({
+        name: 'cards',
+        mesh: new Mesh(atlas.merged),
+        size: atlas.size,
+        albedo,
+        sources: cards,
         lightMapIntensity: room.look.paintReflectance,
       })
     }
