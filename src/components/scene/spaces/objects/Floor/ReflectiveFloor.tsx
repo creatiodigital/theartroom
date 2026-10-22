@@ -8,7 +8,7 @@ import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
-import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import { shownFloor, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { bakedFloorTiling } from '@/lib/bake/commonFloor'
 
 // Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
@@ -299,12 +299,13 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
 
   const storedRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
 
-  // AR-161: a baked space's approved look has one floor, the space's (`COMMON_FLOOR`), whatever
-  // the exhibition stores: matte, with no mirror pass — its gloss is the captured room's
-  // reflection (the environment's split-sum specular, Fresnel- and roughness-correct). The
+  // AR-161: a baked space has one floor, the space's (`COMMON_FLOOR`), whatever the exhibition
+  // stores — in the editor too (AR-164): matte, with no mirror pass — its gloss is the captured
+  // room's reflection (the environment's split-sum specular, Fresnel- and roughness-correct). The
   // boards' size and placement are the artist's (AR-163, `bakedFloorTiling`).
   const look = useBakedLook()
-  const common = look.baked ? look.space.floor : null
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const common = shownFloor(look, spaceId)
   const tiling = common
     ? bakedFloorTiling(common, {
         floorMaterial: storedFloorMaterial,

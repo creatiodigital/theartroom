@@ -94,21 +94,11 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
     ceilingTexture.flipY = false
   }, [wallTexture, ceilingTexture])
 
-  // Create materials with baked textures
-  const wallMaterial = useMemo(() => {
-    return new MeshLambertMaterial({
-      map: wallTexture,
-      side: 2,
-    })
-  }, [wallTexture])
+  // No texture on the materials: `applySurfaceLook` decides (AR-164).
+  const wallMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(wallMaterial)
 
-  const ceilingMaterial = useMemo(() => {
-    return new MeshLambertMaterial({
-      map: ceilingTexture,
-      side: 2,
-    })
-  }, [ceilingTexture])
+  const ceilingMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(ceilingMaterial)
 
   // Apply ambient light tinting + independent wall/ceiling color
