@@ -9,6 +9,7 @@ import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import { bakedFloorTiling } from '@/lib/bake/commonFloor'
 
 // Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
 //
@@ -300,16 +301,26 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
 
   // AR-161: a baked space's approved look has one floor, the space's (`COMMON_FLOOR`), whatever
   // the exhibition stores: matte, with no mirror pass — its gloss is the captured room's
-  // reflection (the environment's split-sum specular, Fresnel- and roughness-correct).
+  // reflection (the environment's split-sum specular, Fresnel- and roughness-correct). The
+  // boards' size and placement are the artist's (AR-163, `bakedFloorTiling`).
   const look = useBakedLook()
   const common = look.baked ? look.space.floor : null
+  const tiling = common
+    ? bakedFloorTiling(common, {
+        floorMaterial: storedFloorMaterial,
+        floorTextureScale: storedTextureScale,
+        floorTextureOffsetX: storedOffsetX,
+        floorTextureOffsetY: storedOffsetY,
+        floorRotation: storedRotation,
+      })
+    : null
   const floorMaterial = common?.material ?? storedFloorMaterial
-  const floorTextureScale = common?.textureScale ?? storedTextureScale
-  const floorTextureOffsetX = common?.offsetX ?? storedOffsetX
-  const floorTextureOffsetY = common?.offsetY ?? storedOffsetY
+  const floorTextureScale = tiling?.textureScale ?? storedTextureScale
+  const floorTextureOffsetX = tiling?.offsetX ?? storedOffsetX
+  const floorTextureOffsetY = tiling?.offsetY ?? storedOffsetY
   const floorTemperature = common?.temperature ?? storedTemperature
   const floorNormalScale = common?.normalScale ?? storedNormalScale
-  const floorRotation = common?.rotation ?? storedRotation
+  const floorRotation = tiling?.rotation ?? storedRotation
 
   // Clamp scale for safety (0.5 = largest tiles, 5.0 = smallest)
   const clampedScale = Math.max(0.5, Math.min(8.0, floorTextureScale))

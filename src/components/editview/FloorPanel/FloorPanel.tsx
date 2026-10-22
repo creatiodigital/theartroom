@@ -8,6 +8,8 @@ import { Section } from '@/components/ui/Section/Section'
 import { Slider } from '@/components/ui/Slider'
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { bakedFloorTiling, type FloorTiling } from '@/lib/bake/commonFloor'
+import { spaceLooks } from '@/lib/bake/spaceLooks'
 import { hideFloorPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
@@ -76,6 +78,35 @@ const FloorPanel = () => {
 
   const floorRotation = useSelector((state: RootState) => state.exhibition.floorRotation ?? 0)
 
+  // AR-163: a baked space has one floor, the space's (AR-161 spec rule 3); the boards' size and
+  // placement are the artist's again (`bakedFloorTiling`). Moving one stores the space's floor
+  // with the whole tiling, so the tiling counts from then on.
+  const bakedFloor =
+    spaceId && isBakedSpace(spaceId) ? (spaceLooks[spaceId]?.look.floor ?? null) : null
+  const tiling: FloorTiling = bakedFloor
+    ? bakedFloorTiling(bakedFloor, {
+        floorMaterial,
+        floorTextureScale: rawFloorTextureScale,
+        floorTextureOffsetX,
+        floorTextureOffsetY,
+        floorRotation,
+      })
+    : {
+        textureScale: floorTextureScale,
+        offsetX: floorTextureOffsetX,
+        offsetY: floorTextureOffsetY,
+        rotation: floorRotation,
+      }
+  const tileScale = Math.max(0.5, Math.min(8.0, tiling.textureScale))
+  const setTiling = (patch: Partial<FloorTiling>) => {
+    const next = bakedFloor ? { ...tiling, ...patch } : patch
+    if (bakedFloor) set('floorMaterial', bakedFloor.material)
+    if (next.textureScale !== undefined) set('floorTextureScale', next.textureScale)
+    if (next.offsetX !== undefined) set('floorTextureOffsetX', next.offsetX)
+    if (next.offsetY !== undefined) set('floorTextureOffsetY', next.offsetY)
+    if (next.rotation !== undefined) set('floorRotation', next.rotation)
+  }
+
   const handleSave = async () => {
     if (!exhibitionId) return
 
@@ -110,9 +141,86 @@ const FloorPanel = () => {
     dispatch(hideFloorPanel())
   }
 
-  // AR-161 (spec rule 3): one floor for every room of every baked space — not an artist's
-  // setting there. The menu has no Floor entry in a baked space; this covers any other way in.
-  if (isBakedSpace(spaceId)) return null
+  const tileControls = (
+    <>
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Tile Scale</label>
+          <span className={styles.sliderValue}>{(8.5 - tileScale).toFixed(2)}</span>
+        </div>
+        <Slider
+          min={0.5}
+          max={8}
+          step={0.01}
+          value={8.5 - tileScale}
+          onChange={(v) => setTiling({ textureScale: 8.5 - v })}
+          aria-label="Tile Scale"
+        />
+      </div>
+
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Tile Position X</label>
+          <span className={styles.sliderValue}>{tiling.offsetX.toFixed(2)}</span>
+        </div>
+        <Slider
+          min={0}
+          max={1}
+          step={0.01}
+          value={tiling.offsetX}
+          onChange={(v) => setTiling({ offsetX: v })}
+          aria-label="Tile Position X"
+        />
+      </div>
+
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Tile Position Y</label>
+          <span className={styles.sliderValue}>{tiling.offsetY.toFixed(2)}</span>
+        </div>
+        <Slider
+          min={0}
+          max={1}
+          step={0.01}
+          value={tiling.offsetY}
+          onChange={(v) => setTiling({ offsetY: v })}
+          aria-label="Tile Position Y"
+        />
+      </div>
+
+      <div className={styles.field}>
+        <div className={styles.sliderHeader}>
+          <label className={styles.label}>Floor Rotation</label>
+          <span className={styles.sliderValue}>{tiling.rotation.toFixed(0)}°</span>
+        </div>
+        <Slider
+          min={0}
+          max={360}
+          step={1}
+          value={tiling.rotation}
+          onChange={(v) => setTiling({ rotation: v })}
+          aria-label="Floor Rotation"
+        />
+      </div>
+    </>
+  )
+
+  // A baked space: the boards only — the floor itself, its surface and its color are the space's.
+  if (bakedFloor)
+    return (
+      <SettingsPanel title="Floor" onClose={handleClose}>
+        <Section title="Tiles">{tileControls}</Section>
+        <div className={styles.actions}>
+          <Button
+            variant="primary"
+            label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+            onClick={handleSave}
+            disabled={saving}
+            className={styles.saveButton}
+          />
+        </div>
+      </SettingsPanel>
+    )
 
   return (
     <SettingsPanel title="Floor" onClose={handleClose}>
@@ -132,65 +240,7 @@ const FloorPanel = () => {
           </select>
         </div>
 
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Tile Scale</label>
-            <span className={styles.sliderValue}>{(8.5 - floorTextureScale).toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0.5}
-            max={8}
-            step={0.01}
-            value={8.5 - floorTextureScale}
-            onChange={(v) => set('floorTextureScale', 8.5 - v)}
-            aria-label="Tile Scale"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Tile Position X</label>
-            <span className={styles.sliderValue}>{floorTextureOffsetX.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0}
-            max={1}
-            step={0.01}
-            value={floorTextureOffsetX}
-            onChange={(v) => set('floorTextureOffsetX', v)}
-            aria-label="Tile Position X"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Tile Position Y</label>
-            <span className={styles.sliderValue}>{floorTextureOffsetY.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0}
-            max={1}
-            step={0.01}
-            value={floorTextureOffsetY}
-            onChange={(v) => set('floorTextureOffsetY', v)}
-            aria-label="Tile Position Y"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Floor Rotation</label>
-            <span className={styles.sliderValue}>{floorRotation.toFixed(0)}°</span>
-          </div>
-          <Slider
-            min={0}
-            max={360}
-            step={1}
-            value={floorRotation}
-            onChange={(v) => set('floorRotation', v)}
-            aria-label="Floor Rotation"
-          />
-        </div>
+        {tileControls}
       </Section>
 
       <Section title="Surface">
