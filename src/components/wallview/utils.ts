@@ -72,24 +72,30 @@ export const getVisualBounds = (
   return { x, y, width: w, height: h }
 }
 
-export const calculateAverageNormal = (placeholder: Mesh<BufferGeometry>): Vector3 => {
+/**
+ * The way a wall faces — the average of its normals — or null when there is none to read.
+ *
+ * Read through the attribute, never its raw `.array` (AR-164): the compressed models
+ * (`*_noq.glb`) store normals as Int8, normalized, padded to a 4-byte stride, which three.js
+ * hands over interleaved. Their raw array is `x y z pad` per vertex, so stepping it three at a
+ * time read the padding and ran off the end into NaN. `getX/Y/Z` handle the stride and the
+ * normalization of every encoding.
+ *
+ * No default facing: a guessed +Z is what turned every work on Paris's +X wall to face along it.
+ */
+export const calculateAverageNormal = (placeholder: Mesh<BufferGeometry>): Vector3 | null => {
+  const normals = placeholder.geometry?.getAttribute('normal')
+  if (!normals) return null
+
   const normal = new Vector3(0, 0, 0)
-
-  // Defensive check for geometry attributes
-  if (!placeholder.geometry?.attributes?.normal?.array) {
-    console.warn('calculateAverageNormal: geometry normal attributes not available')
-    return normal.set(0, 0, 1) // Default to facing +Z
+  for (let i = 0; i < normals.count; i++) {
+    normal.x += normals.getX(i)
+    normal.y += normals.getY(i)
+    normal.z += normals.getZ(i)
   }
 
-  const normalsArray = placeholder.geometry.attributes.normal.array as Float32Array
-
-  for (let i = 0; i < normalsArray.length; i += 3) {
-    normal.x += normalsArray[i]
-    normal.y += normalsArray[i + 1]
-    normal.z += normalsArray[i + 2]
-  }
-
-  return normal.normalize()
+  const length = normal.length()
+  return Number.isFinite(length) && length > 0 ? normal.divideScalar(length) : null
 }
 
 export const calculateDimensionsAndBasis = (boundingBox: Box3, normal: Vector3) => {
