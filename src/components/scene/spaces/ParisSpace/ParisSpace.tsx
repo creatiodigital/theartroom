@@ -96,21 +96,11 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
     ceilingTexture.flipY = false
   }, [wallTexture, ceilingTexture])
 
-  // Create materials with baked textures (Lambert for cheaper per-vertex lighting)
-  const wallMaterial = useMemo(() => {
-    return new MeshLambertMaterial({
-      map: wallTexture,
-      side: 2,
-    })
-  }, [wallTexture])
+  // Lambert for cheaper per-vertex lighting. No texture: `applySurfaceLook` decides (AR-164).
+  const wallMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(wallMaterial)
 
-  const ceilingMaterial = useMemo(() => {
-    return new MeshLambertMaterial({
-      map: ceilingTexture,
-      side: 2,
-    })
-  }, [ceilingTexture])
+  const ceilingMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(ceilingMaterial)
 
   // Apply ambient light tinting + independent wall/ceiling color

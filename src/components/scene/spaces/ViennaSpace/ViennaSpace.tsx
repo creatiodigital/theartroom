@@ -129,17 +129,11 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
     ceilingTexture.flipY = false
   }, [wallTexture, ceilingTexture])
 
-  // Lambert rather than Standard: cheaper per-vertex lighting, and the lighting
-  // is already baked into the map anyway.
-  const wallMaterial = useMemo(
-    () => new MeshLambertMaterial({ map: wallTexture, side: 2 }),
-    [wallTexture],
-  )
+  // Lambert rather than Standard: cheaper per-vertex lighting. No texture on the materials:
+  // `applySurfaceLook` decides (AR-164).
+  const wallMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(wallMaterial)
-  const ceilingMaterial = useMemo(
-    () => new MeshLambertMaterial({ map: ceilingTexture, side: 2 }),
-    [ceilingTexture],
-  )
+  const ceilingMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(ceilingMaterial)
 
   // Lambert compensation: it lacks PBR specular, so walls read dimmer. Boost

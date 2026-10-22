@@ -340,7 +340,7 @@ walked: Vienna's per-room lamp culling and the room capture's bounce both follow
 room that shows a panel carries a marker in its fingerprint, so its older bakes read "out of date";
 until it is baked again, its stored bake still applies, with the panels in realtime as before.
 
-**Text cards are baked too** (AR-163, 2026-10-22), on their own atlas (`cards-light.png`), matte like the panels. Only the artwork image, its paper border and its passepartout ignore the room's light (they show their own color). Baking the cards bumped `BAKER_VERSION` to 2, so every older bake reads "out of date"; until re-baked it still applies, with its cards lit by their nearest work's measured light as before.
+**Text cards are baked too** (AR-163, 2026-10-22), on their own atlas (`cards-light.png`), matte like the panels. Only the artwork image, its paper border and its passepartout ignore the room's light (they show their own color). Baking the cards bumped `BAKER_VERSION` to 2, so every older bake reads "out of date"; until re-baked it still applies, with its cards lit by their nearest work's measured light as before. A card only **blocks** near-field rays (`nearFieldReceivers`, AR-164): the near-field pass reads a hit's lightmap whichever side it struck, and a card's back shares its lit front's texels, so the wall behind every card glowed a centimetre or two past its edges. That fix bumped `BAKER_VERSION` to 3.
 
 ---
 

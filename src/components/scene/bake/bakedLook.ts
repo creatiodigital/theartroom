@@ -7,6 +7,7 @@ import type { MeshLambertMaterial, Texture } from 'three'
 
 import { isBakeRecord, type BakeRecord } from '@/lib/bake/bakeRecord'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import type { CommonFloor } from '@/lib/bake/commonFloor'
 import { spaceLooks, type SpaceLook } from '@/lib/bake/spaceLooks'
 import type { RootState } from '@/redux/store'
 
@@ -21,9 +22,9 @@ import { useBakePage, type BakePage } from './bakePage'
  *   fixed camera, bloom on the lamps and window glass, every artwork image exactly its file. The values
  *   the space owns replace the exhibition's stored ones (`SpaceLook`); the artist's — wall and
  *   ceiling color, the dimmers, the track lamps' beam, throw, aim and on/off — are the stored ones.
- * - Today's realtime look (`TODAY_LOOK`): exactly the production look from before AR-161 — the 3D
+ * - Today's realtime look (`TODAY_LOOK`): the production look from before AR-161 — the 3D
  *   editor's live preview, every space without a bake, and an exhibition in a baked space until it
- *   has one.
+ *   has one — minus the old Blender wall textures, and with the space's floor (AR-164).
  */
 export type LookState = { baked: false } | { baked: true; space: SpaceLook }
 
@@ -105,6 +106,16 @@ export const lookFor = (
   return APPROVED_LOOKS[spaceId!] ?? TODAY_LOOK
 }
 
+/**
+ * The floor a room shows: in a baked space always the space's own (`COMMON_FLOOR`), in the editor
+ * too — it showed each exhibition's stored floor, concrete, where every baked room has parquet
+ * (AR-164). Null outside a baked space: the exhibition's stored floor.
+ */
+export const shownFloor = (look: LookState, spaceId: string | null | undefined): CommonFloor | null => {
+  if (look.baked) return look.space.floor
+  return isBakedSpace(spaceId) ? (spaceLooks[spaceId!]?.look.floor ?? null) : null
+}
+
 /** The look this room renders with (see `lookFor`). */
 export const useBakedLook = (): LookState => {
   const page = useBakePage()
@@ -171,11 +182,13 @@ export const plasticColor = (look: LookState, authored: string): string =>
 const SURFACE_ALBEDO = { wall: 0.8, ceiling: 0.85 }
 
 /**
- * A space's walls / ceiling (Lambert) and its Blender bake. Today's look: the bake is the surface's
- * color, tinted by the caller (returns false). The approved look (returns true — the color is
- * set here): until the room's own bake replaces the material (under the loader), the Blender bake
- * is LIGHT arriving at matte paint of the artist's color — three r155+ Lambert computes
- * `irradiance × albedo / π`, so `lightMapIntensity = π` shows the bake exactly as baked.
+ * A space's walls / ceiling (Lambert) and its Blender bake. Today's look: the artist's paint under
+ * the editor's lights, tinted by the caller (returns false) — no texture: the Blender bakes were
+ * made for models that no longer exist, and paris22 read unpainted (black) parts of them (AR-164).
+ * The approved look (returns true — the color is set here): until the room's own bake replaces
+ * the material (under the loader), the Blender bake is LIGHT arriving at matte paint of the
+ * artist's color — three r155+ Lambert computes `irradiance × albedo / π`, so
+ * `lightMapIntensity = π` shows the bake exactly as baked.
  */
 export const applySurfaceLook = (
   material: MeshLambertMaterial,
@@ -184,10 +197,9 @@ export const applySurfaceLook = (
   look: LookState,
   surface: 'wall' | 'ceiling' = 'wall',
 ): boolean => {
-  const map = look.baked ? null : bake
   const lightMap = look.baked ? bake : null
-  if (material.map !== map || material.lightMap !== lightMap || material.emissiveMap !== null) {
-    material.map = map
+  if (material.map !== null || material.lightMap !== lightMap || material.emissiveMap !== null) {
+    material.map = null
     material.emissiveMap = null
     material.lightMap = lightMap
     // USE_MAP / USE_LIGHTMAP are compile-time defines: rebuild the program.
