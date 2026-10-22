@@ -78,11 +78,25 @@ const LIGHTS_OFF = `#include <lights_fragment_begin>
   reflectedLight.directSpecular = vec3(0.0);`
 
 /**
- * A Standard material keeps its maps and reflections; its diffuse light comes from the bake (×
- * `intensity`). Its own shader hooks, if any (a panel's `panelSurface`), give way while the bake
- * is on and come back with the undo.
+ * Matte paint (the display panels): no reflection either. The room capture's sheen depends on
+ * where the visitor stands and looks — recaptured as they walk, Fresnel-brightened at grazing
+ * angles — and turned a painted panel's color as the camera moved (AR-163). Plain painted walls
+ * have none either (`MeshBasicMaterial`).
  */
-const patchStandard = (material: MeshStandardMaterial, lightMap: Texture, intensity = 1) => {
+const REFLECTION_OFF = `#include <lights_fragment_end>
+  reflectedLight.indirectSpecular = vec3(0.0);`
+
+/**
+ * A Standard material keeps its maps and reflections; its diffuse light comes from the bake (×
+ * `intensity`). `matte`: its reflections go too (`REFLECTION_OFF`). Its own shader hooks, if any (a
+ * panel's `panelSurface`), give way while the bake is on and come back with the undo.
+ */
+const patchStandard = (
+  material: MeshStandardMaterial,
+  lightMap: Texture,
+  intensity = 1,
+  matte = false,
+) => {
   const own = (key: 'onBeforeCompile' | 'customProgramCacheKey') =>
     Object.prototype.hasOwnProperty.call(material, key) ? { value: material[key] } : null
   const before = { compile: own('onBeforeCompile'), cacheKey: own('customProgramCacheKey') }
@@ -98,8 +112,13 @@ const patchStandard = (material: MeshStandardMaterial, lightMap: Texture, intens
           '',
         ),
       )
+    if (matte)
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <lights_fragment_end>',
+        REFLECTION_OFF,
+      )
   }
-  material.customProgramCacheKey = () => `baked-standard-${lightMap.channel}`
+  material.customProgramCacheKey = () => `baked-${matte ? 'matte' : 'standard'}-${lightMap.channel}`
   material.needsUpdate = true
   return () => {
     material.lightMap = null
@@ -238,10 +257,17 @@ const swapBakedLighting = (
     }
     if (r.name === 'props' || r.name === 'panels') {
       // Each keeps its own material (a panel its artist's paint); the bake is its diffuse light.
+      // A panel is matte paint: only that light, like the walls — nothing that follows the eye.
       lightMap.channel = 1
+      const matte = r.name === 'panels'
       ;(r.sources as Mesh[]).forEach((source) =>
         restore.push(
-          patchStandard(source.material as MeshStandardMaterial, lightMap, r.lightMapIntensity),
+          patchStandard(
+            source.material as MeshStandardMaterial,
+            lightMap,
+            r.lightMapIntensity,
+            matte,
+          ),
         ),
       )
       return

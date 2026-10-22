@@ -1,12 +1,20 @@
-import { DoubleSide, MeshBasicMaterial, NoColorSpace, type Texture } from 'three'
+import {
+  DoubleSide,
+  MeshBasicMaterial,
+  NoColorSpace,
+  type ColorRepresentation,
+  type Texture,
+} from 'three'
 
 /**
  * ⚠️ AR-161 (spec rule 1, the sine qua non) — in the baked look an artwork IMAGE shows exactly its
  * file: no light, exposure, white balance, tone curve, tint or glow on it, even where it then
  * doesn't match the room's light. The image writes its texel (the file's linear color) with alpha
  * ARTWORK_FILE_ALPHA as a marker; the last screen effect (`ArtworkFileEffect`) puts that color back
- * over whatever bloom, white balance, exposure and tone mapping made of it. Mat, frame, card and
- * room stay physically lit.
+ * over whatever bloom, white balance, exposure and tone mapping made of it. The passepartout and
+ * the paper border count as part of the image (AR-163, Eduardo 2026-10-21: "we need to be able to
+ * show a perfectly white passepartout as well as an unaltered picture") and show their own color
+ * the same way (`createArtworkSurfaceMaterial`). Frame, card and room stay physically lit.
  */
 
 /** The alpha an artwork image writes (opaque surfaces write 1; nothing else in the room writes this). */
@@ -47,6 +55,23 @@ export const createArtworkFileMaterial = (map: Texture): MeshBasicMaterial => {
   }
   material.customProgramCacheKey = () =>
     ARTWORK_ENCODED_SAMPLING ? 'artwork-file-encoded' : 'artwork-file'
+  return material
+}
+
+/**
+ * A part of the artwork that shows exactly its color in the baked look, like the image: the
+ * passepartout and the paper border. Unlit, it writes its color with the image's marker, so a
+ * white passepartout is white beside the picture wherever it hangs.
+ */
+export const createArtworkSurfaceMaterial = (color: ColorRepresentation): MeshBasicMaterial => {
+  const material = new MeshBasicMaterial({ color, side: DoubleSide })
+  material.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <opaque_fragment>',
+      `#include <opaque_fragment>\n\tgl_FragColor = vec4( diffuseColor.rgb, ${ARTWORK_FILE_ALPHA.toFixed(2)} );`,
+    )
+  }
+  material.customProgramCacheKey = () => 'artwork-surface'
   return material
 }
 
