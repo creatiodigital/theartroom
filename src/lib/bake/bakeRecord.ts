@@ -1,5 +1,6 @@
 // Bump whenever bake or display code changes the result. 2: text cards are baked (AR-163).
-export const BAKER_VERSION = 2
+// 3: text cards no longer light the wall behind them, the glow around every card (AR-164).
+export const BAKER_VERSION = 3
 
 export type BakeSurface = 'wall' | 'ceiling' | 'floor' | 'props' | 'panels' | 'cards'
 /**

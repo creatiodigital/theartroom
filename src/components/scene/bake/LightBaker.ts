@@ -234,6 +234,18 @@ const additive = (material: ShaderMaterial) => {
   return material
 }
 
+/**
+ * The receivers a near-field ray reads the light of — up to six lightmap slots; every other one
+ * only blocks. Not the artworks (they lack the lamps' direct light in theirs), and not the text
+ * cards (AR-164): a card is one sheet a few millimetres off the wall, front and back sharing
+ * texels, and a ray reads a hit's lightmap whichever side it struck — the wall behind a card read
+ * its lit front and glowed past every edge. Its own light stays baked, and its front still bounces
+ * into the room through the VPLs, which are one-sided.
+ */
+export const nearFieldReceivers = <R extends { name: string; noLampDirect?: boolean }>(
+  receivers: R[],
+): R[] => receivers.filter((r) => !r.noLampDirect && r.name !== 'cards').slice(0, 6)
+
 export class LightBaker {
   private renderer: WebGLRenderer
   private scene: Scene
@@ -856,11 +868,10 @@ export class LightBaker {
 
   /**
    * The room as ray-traceable triangles: receivers a ray reads the light of (their lightmap
-   * slot), everything else as a constant, window glass as emitters. (Artworks lack the lamps'
-   * direct light in theirs, so a ray sees them as a constant instead.)
+   * slot, `nearFieldReceivers`), everything else as a constant, window glass as emitters.
    */
   private buildRoom() {
-    const sampled = this.receivers.filter((r) => !r.noLampDirect).slice(0, 6)
+    const sampled = nearFieldReceivers(this.receivers)
     const ambient = this.percentileIrradiance('wall', 0.5)
     const sources: GatherSource[] = []
     sampled.forEach((r, slot) =>
@@ -971,7 +982,7 @@ export class LightBaker {
    * that travel further add nothing, so the rest of the room is the VPL solution untouched.
    * L(y) is the hit's albedo × its baked light / π (or the window's daylight); frames were
    * never bounce sources in the VPL solution, so they only block here (display panels are
-   * receivers since AR-163, read like the walls).
+   * receivers since AR-163, read like the walls; text cards only block, see `nearFieldReceivers`).
    */
   private *nearField(begin: () => void, end: () => void): Generator<void, void, void> {
     const renderer = this.renderer
