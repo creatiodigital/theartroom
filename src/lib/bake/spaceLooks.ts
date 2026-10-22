@@ -62,15 +62,16 @@ export interface SpaceLook {
  * passepartout render greyish, we have to improve the lighting". 1.7× the approved light lit the
  * room well but "a little too much"; once the passepartout and the paper border showed their own
  * color like the image (AR-163), 1.35× still left patches of light on the walls and a washed-out
- * floor ("lower the intensity of the light in general"). So 1.15×: downlights 10,000 → 11,500 lm
- * (after 6,800 → 10,000 on 2026-10-20/21), track ×0.5 → ×0.575. The cameras stay; the artist dims
- * from there (50–100%).
+ * floor ("lower the intensity of the light in general"); 1.15× then read a little dim
+ * (2026-10-22: "brighten a little more the room"). So 1.25×: downlights 10,000 → 12,500 lm (after
+ * 6,800 → 10,000 on 2026-10-20/21), track ×0.5 → ×0.625. The cameras stay; the artist dims from
+ * there (50–100%).
  */
 const PARIS_VIENNA: SpaceLook = {
-  recessedLumens: 11500,
+  recessedLumens: 12500,
   corridorLumens: 3000,
   roundLumens: 3000,
-  trackScale: 0.575,
+  trackScale: 0.625,
   sunLux: 5000,
   sunElevationDeg: 35,
   // Straight in (360° = 0°, written as the approved links set it).
