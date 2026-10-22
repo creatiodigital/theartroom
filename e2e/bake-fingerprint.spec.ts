@@ -180,7 +180,7 @@ test('a room that shows a panel stales its bakes from before panels were baked',
   expect(computeBakeFingerprint(structuredClone(on))).toBe(computeBakeFingerprint(on))
 })
 
-test('isBakeRecord accepts a panel map', () => {
+test('isBakeRecord accepts a panel map and a card map', () => {
   const map = {
     receiver: 'panels',
     kind: 'light',
@@ -204,6 +204,7 @@ test('isBakeRecord accepts a panel map', () => {
     reviewedAt: null,
   }
   expect(isBakeRecord(record)).toBe(true)
+  expect(isBakeRecord({ ...record, maps: [{ ...map, receiver: 'cards' }] })).toBe(true)
   expect(isBakeRecord({ ...record, maps: [{ ...map, receiver: 'sofa' }] })).toBe(false)
 })
 

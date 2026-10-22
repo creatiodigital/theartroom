@@ -27,11 +27,13 @@ import { shownArtworkImages } from './receivers'
  * - floor → its own material keeps map/normal/roughness as authored and gains the lightmap,
  *   with realtime direct light and environment DIFFUSE switched off (both are in the bake);
  *   its environment SPECULAR stays — that is the floor's glossy reflection;
- * - fixtures and display panels → the same, each through its shared atlas (a panel keeps its
- *   paint; AR-163 — realtime, panels changed brightness as the visitor walked).
+ * - fixtures, display panels and text cards → the same, each through its shared atlas (a panel
+ *   or card keeps its paint, matte; AR-163 — realtime, panels changed brightness as the visitor
+ *   walked).
  *
- * Artworks and frames stay realtime (lamps); each work's mat, frame and text card also
- * take the daylight + bounce the bake measured at it. The images show their file (`Display`).
+ * Frames stay realtime (lamps) and take the daylight + bounce the bake measured at their work.
+ * The image, its paper border and its passepartout show their own color (`Display`); a text card
+ * from an older bake, with no map, takes its nearest work's measured light.
  */
 
 /**
@@ -255,11 +257,11 @@ const swapBakedLighting = (
       restore.push(patchStandard(r.mesh.material as MeshStandardMaterial, lightMap))
       return
     }
-    if (r.name === 'props' || r.name === 'panels') {
+    if (r.name === 'props' || r.name === 'panels' || r.name === 'cards') {
       // Each keeps its own material (a panel its artist's paint); the bake is its diffuse light.
-      // A panel is matte paint: only that light, like the walls — nothing that follows the eye.
+      // A panel or a card is matte: only that light, like the walls — nothing that follows the eye.
       lightMap.channel = 1
-      const matte = r.name === 'panels'
+      const matte = r.name === 'panels' || r.name === 'cards'
       ;(r.sources as Mesh[]).forEach((source) =>
         restore.push(
           patchStandard(
@@ -338,9 +340,9 @@ const patchArtworks = (
         restore.push(patchArtBounce(material, irradiance))
       })
     }
-    // Text cards take the same light as the passe-partouts beside them — the bounce measured
-    // at their nearest artwork (Eduardo 2026-10-18: only the images ignore the room's light).
-    // Left alone they took the room capture's IBL and read whiter (and bluer) than the mats.
+    // Text cards the bake has no map for (an older bake) take the bounce measured at their
+    // nearest artwork (Eduardo 2026-10-18). Left alone they took the room capture's IBL and read
+    // whiter (and bluer) than the walls.
     if (images.length) {
       const centres = images.map((image) => image.getWorldPosition(new Vector3()))
       for (const card of cards) {
@@ -376,7 +378,14 @@ const shownArtworks = (scene: Object3D) => {
   scene.traverse((o) => {
     const card = o as Mesh
     const material = card.material as MeshStandardMaterial | undefined
-    if (card.isMesh && card.name === 'textCard' && material?.isMeshStandardMaterial)
+    // A baked card (AR-163) has its light from the bake: only one that is not (an older bake,
+    // or one that mounted after the bake went on) takes the light measured at its artwork.
+    if (
+      card.isMesh &&
+      card.name === 'textCard' &&
+      material?.isMeshStandardMaterial &&
+      !material.lightMap
+    )
       cards.push(card)
   })
   // Every mesh and material the patches touch: an image, a mat or a frame that mounts later or

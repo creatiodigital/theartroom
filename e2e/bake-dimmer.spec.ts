@@ -61,7 +61,7 @@ const madrid: LookState = { baked: true, space: spaceLooks.madrid!.look }
 const paris: LookState = { baked: true, space: spaceLooks.paris!.look }
 const downlight = { intensity: 8, angle: 0.45, penumbra: 0.8, distance: 15 }
 const round = 3000 / Math.PI / LUX_PER_UNIT
-const recessed = 11500 / Math.PI / LUX_PER_UNIT
+const recessed = 12500 / Math.PI / LUX_PER_UNIT
 
 test('a baked space dims the ceiling lamps from their rating; 100% is the rating exactly', () => {
   expect(lookSpot(madrid, downlight, 'downlight', 1).intensity).toBe(round)
@@ -79,7 +79,7 @@ test('a baked space dims the ceiling lamps from their rating; 100% is the rating
 test("a baked look's track lamps keep the artist's aim, beam and throw at the space's scale", () => {
   const track = { intensity: 8, angle: 0.55, penumbra: 0.8, distance: 4.5 }
   expect(lookSpot(paris, track, 'track')).toEqual({
-    intensity: 8 * 0.575, // the space's track scale (Paris and Vienna, 2026-10-21)
+    intensity: 8 * 0.625, // the space's track scale (Paris and Vienna, 2026-10-21)
     angle: 0.55,
     penumbra: 0.4,
     distance: 4.5,

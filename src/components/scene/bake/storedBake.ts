@@ -64,10 +64,11 @@ export const applyStoredBake = (
     // Before the first frame the meshes' world matrices may not be current yet; the unwrap is
     // laid out in world space.
     scene.updateMatrixWorld()
-    // A bake from before the panels were baked (AR-163) carries no map for them: the room is laid
-    // out as it was then, so its maps still fit, and the panels keep their realtime light.
+    // A bake from before the panels or the text cards were baked (AR-163) carries no map for them:
+    // the room is laid out as it was then, so its maps still fit, and they keep their old light.
     const prepared = prepareReceivers(scene, room, {
       panels: bake.maps.some((m) => m.receiver === 'panels'),
+      cards: bake.maps.some((m) => m.receiver === 'cards'),
     })
     undos.push(prepared.restore)
     const unwrap = unwrapMatches(
