@@ -179,7 +179,7 @@ const PresentationSection = ({
               <div className={styles.item}>
                 <div className={styles.sliderHeader}>
                   <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                    Reflections
+                    Roughness
                   </Text>
                   <span className={styles.sliderValue}>
                     {(frameTextureRoughness ?? 0.6).toFixed(2)}
@@ -263,7 +263,7 @@ const PresentationSection = ({
               <div className={styles.item}>
                 <div className={styles.sliderHeader}>
                   <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                    Reflections
+                    Roughness
                   </Text>
                   <span className={styles.sliderValue}>
                     {(frameTextureRoughness ?? 0.6).toFixed(2)}
