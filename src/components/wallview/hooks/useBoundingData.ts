@@ -64,7 +64,10 @@ export const faceBoundingData = (
   // hang off a room Empty has already had that offset baked into the node.
   const boundingBox = (faceNode.geometry.boundingBox as Box3).clone()
   boundingBox.applyMatrix4(worldMatrixOf(faceNode))
+  // No facing to read gives no geometry, never a guessed one: the wall view then has nothing
+  // to recompute or save (AR-164). The caller retries, then reports.
   const normal = calculateAverageNormal(faceNode)
+  if (!normal) return null
 
   const panelTransform = panelNode
     ? panelMatrix(panelSettings, panelPivot(panelNode))
