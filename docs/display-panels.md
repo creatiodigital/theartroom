@@ -46,7 +46,7 @@ every exhibition that used it. Blocks mean rooms never disturb each other.
    two node names resolving to one index.
 3. **Both placeholder normals pointing the same way.** Duplicating the front
    face to make the back keeps the original's normal, and artworks on the back
-   then hang facing *into* the panel. Check with normals display on.
+   then hang facing _into_ the panel. Check with normals display on.
 4. **The panel floating above the floor.** Room placeholders start at exactly
    y=0. A panel whose base sits even 13mm up reads as hovering, and the contact
    shadow beneath it makes the gap obvious.
@@ -85,9 +85,11 @@ Vienna is the worked example — `ViennaSpace.tsx`.
    space's fixed slots:
 
    ```tsx
-   {panelIndices.map((index, position) => (
-     <Panel key={index} i={index} nodes={nodes} panelRef={wallRefs[3 + position]} />
-   ))}
+   {
+     panelIndices.map((index, position) => (
+       <Panel key={index} i={index} nodes={nodes} panelRef={wallRefs[3 + position]} />
+     ))
+   }
    ```
 
    `deriveSpaceRefs` already counts `panel` into the `walls` family, so the refs
@@ -106,11 +108,11 @@ A panel's position and rotation are the artist's, stored per exhibition — but
 the geometry is Blender's. That transform is built **once**, by `panelMatrix` in
 `panelSettings.ts`, and read by three places that must never disagree:
 
-| Reader | What it does with it |
-|---|---|
-| `Panel.tsx` | Sets it on the group holding the box and both faces |
-| `ArtObjects` | Applies it to every artwork hung on the panel, at draw time |
-| `Wall.tsx` | Applies it to place the wall-view camera, which needs world space |
+| Reader       | What it does with it                                              |
+| ------------ | ----------------------------------------------------------------- |
+| `Panel.tsx`  | Sets it on the group holding the box and both faces               |
+| `ArtObjects` | Applies it to every artwork hung on the panel, at draw time       |
+| `Wall.tsx`   | Applies it to place the wall-view camera, which needs world space |
 
 If these were three separate calculations, the failure would be silent: you
 would drag a panel across the room and the artworks would stay behind, floating
@@ -144,8 +146,8 @@ implementation of the same transform.
 
 ### Why the Blender hierarchy cannot do this
 
-Nesting the faces under the panel in Blender ties them together *while
-modelling* and nothing more. R3F's `<primitive>` re-parents nodes into its own
+Nesting the faces under the panel in Blender ties them together _while
+modelling_ and nothing more. R3F's `<primitive>` re-parents nodes into its own
 graph and `useGLTF` caches them globally, so the first render after a page load
 sees the authored parents and **every later mount sees `parent === null`**. A
 tie that depended on it would work once and then quietly stop.
@@ -165,14 +167,14 @@ switched on again. Two things follow, and both are deliberate:
   hang in mid-air where the panel used to be.
 - **`MediaLibrary` keeps them, marked.** The library normally hides anything
   already in the exhibition. A parked artwork is in the exhibition but on no
-  wall, so filtering it out would make it invisible in the room *and* in the
+  wall, so filtering it out would make it invisible in the room _and_ in the
   library at once — work missing with nowhere to look for it. It stays, dimmed,
   with an eye-off badge and "In use · panel hidden".
 
 ### Shadows
 
 Panels do not cast real shadows and cannot. `<Canvas shadows={false}>`, and
-enabling them fails to *link*: 22 spotlights against `MAX_TEXTURE_IMAGE_UNITS`
+enabling them fails to _link_: 22 spotlights against `MAX_TEXTURE_IMAGE_UNITS`
 of 16. Screen-space AO was measured as a stand-in on 2026-09-07 and rejected —
 47fps in an almost empty room against a bar of flat 60.
 
@@ -210,11 +212,11 @@ every panel base all sit at y=0.0000. Nothing was ever actually off the ground.
 
 ## 4. Files
 
-| File | Role |
-|---|---|
+| File                     | Role                                                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | `Panel/panelSettings.ts` | The contract: types, defaults, face parsing, `panelMatrix`, footprint. Pure — unit-tested in `e2e/panel-transform.spec.ts` |
-| `Panel/Panel.tsx` | The 3D object: box, both faces, contact shadow, collision |
-| `editview/PanelsPanel` | The sidebar: per room, toggle / across / depth / turn / color |
-| `useBoundingData` | Returns the face in its OWN space plus `panelTransform`, unapplied |
-| `ArtObjects` | Moves and hides the artworks hanging on a panel |
-| `MediaLibrary` | Marks artworks parked on a hidden panel |
+| `Panel/Panel.tsx`        | The 3D object: box, both faces, contact shadow, collision                                                                  |
+| `editview/PanelsPanel`   | The sidebar: per room, toggle / across / depth / turn / color                                                              |
+| `useBoundingData`        | Returns the face in its OWN space plus `panelTransform`, unapplied                                                         |
+| `ArtObjects`             | Moves and hides the artworks hanging on a panel                                                                            |
+| `MediaLibrary`           | Marks artworks parked on a hidden panel                                                                                    |

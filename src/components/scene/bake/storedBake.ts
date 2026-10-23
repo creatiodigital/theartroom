@@ -88,7 +88,7 @@ export const applyStoredBake = (
         '[AR-161 unwrap] tolerant match',
         JSON.stringify({ stored: bake.unwrapHash, local: prepared.unwrapHash }),
       )
-    undos.push(brightenWindows(scene, room.look.daylightGain).undo)
+    undos.push(brightenWindows(scene, room.look.daylightGain, room.look.lightWellDaylight).undo)
     // The light the bake measured at each artwork, found by the artwork's id.
     const baked = applyBakedLighting(
       scene,

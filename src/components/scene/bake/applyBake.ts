@@ -27,13 +27,14 @@ import { shownArtworkImages } from './receivers'
  * - floor → its own material keeps map/normal/roughness as authored and gains the lightmap,
  *   with realtime direct light and environment DIFFUSE switched off (both are in the bake);
  *   its environment SPECULAR stays — that is the floor's glossy reflection;
- * - fixtures, display panels and text cards → the same, each through its shared atlas (a panel
- *   or card keeps its paint, matte; AR-163 — realtime, panels changed brightness as the visitor
- *   walked).
+ * - fixtures and display panels → the same, each through its shared atlas (a panel keeps its
+ *   paint, matte; AR-163 — realtime, panels changed brightness as the visitor walked).
  *
  * Frames stay realtime (lamps) and take the daylight + bounce the bake measured at their work.
- * The image, its paper border and its passepartout show their own color (`Display`); a text card
- * from an older bake, with no map, takes its nearest work's measured light.
+ * The image, its paper border and its passepartout's front face show their own color (`Display`;
+ * the passepartout's bevel and edges are lit like the frame, AR-165). A text card is shown like a
+ * passepartout (AR-165, `TEXT_CARD_SHADING`): realtime, with its nearest work's measured light —
+ * its baked map, if the bake has one, is not used.
  */
 
 /**
@@ -171,10 +172,17 @@ const patchPlaster = (material: MeshStandardMaterial, lightMap: Texture, directi
  * An artwork's daylight + bounce, measured by the bake AT the artwork, replaces the environment's
  * diffuse — a single snapshot of the room from wherever the visitor
  * stood, which lit identical walls ~10% apart. The lamps' direct light stays realtime; the
- * environment's specular (the paper's faint sheen) stays too.
+ * environment's specular (the paper's faint sheen) stays too. A part with its own shader hook (a
+ * passepartout's face, AR-165) keeps it, under this light, and gets it back on undo.
  */
 const patchArtBounce = (material: MeshStandardMaterial, irradiance: Color) => {
-  material.onBeforeCompile = (shader) => {
+  const own = (key: 'onBeforeCompile' | 'customProgramCacheKey') =>
+    Object.prototype.hasOwnProperty.call(material, key) ? { value: material[key] } : null
+  const before = { compile: own('onBeforeCompile'), cacheKey: own('customProgramCacheKey') }
+  const ownCompile = before.compile?.value as MeshStandardMaterial['onBeforeCompile'] | undefined
+  const ownKey = before.cacheKey?.value as MeshStandardMaterial['customProgramCacheKey'] | undefined
+  material.onBeforeCompile = (shader, renderer) => {
+    ownCompile?.call(material, shader, renderer)
     shader.uniforms.artBounce = { value: irradiance }
     shader.fragmentShader = `uniform vec3 artBounce;\n${shader.fragmentShader}`.replace(
       '#include <lights_fragment_maps>',
@@ -186,11 +194,17 @@ const patchArtBounce = (material: MeshStandardMaterial, irradiance: Color) => {
         ),
     )
   }
-  material.customProgramCacheKey = () => 'baked-art-bounce'
+  material.customProgramCacheKey = () =>
+    ownKey ? `${ownKey.call(material)}-baked-art-bounce` : 'baked-art-bounce'
   material.needsUpdate = true
   return () => {
-    Reflect.deleteProperty(material, 'onBeforeCompile')
-    Reflect.deleteProperty(material, 'customProgramCacheKey')
+    if (before.compile)
+      material.onBeforeCompile = before.compile.value as MeshStandardMaterial['onBeforeCompile']
+    else Reflect.deleteProperty(material, 'onBeforeCompile')
+    if (before.cacheKey)
+      material.customProgramCacheKey = before.cacheKey
+        .value as MeshStandardMaterial['customProgramCacheKey']
+    else Reflect.deleteProperty(material, 'customProgramCacheKey')
     material.needsUpdate = true
   }
 }
@@ -252,16 +266,19 @@ const swapBakedLighting = (
     maps.find((m) => m.receiver === receiver && m.kind === kind)?.texture ?? null
   receivers.forEach((r) => {
     const lightMap = mapOf(r.name, 'light')
-    if (!lightMap) return
+    // A text card shows like a passepartout (AR-165: its rounded edges were hair-thin strips in
+    // the card atlas — a dashed line): its face mostly its own color, lit by the lamps and the
+    // light measured at its artwork (`patchArtworks`). The bake still counts it in the room.
+    if (!lightMap || r.name === 'cards') return
     if (r.name === 'floor') {
       restore.push(patchStandard(r.mesh.material as MeshStandardMaterial, lightMap))
       return
     }
-    if (r.name === 'props' || r.name === 'panels' || r.name === 'cards') {
+    if (r.name === 'props' || r.name === 'panels') {
       // Each keeps its own material (a panel its artist's paint); the bake is its diffuse light.
-      // A panel or a card is matte: only that light, like the walls — nothing that follows the eye.
+      // A panel is matte: only that light, like the walls — nothing that follows the eye.
       lightMap.channel = 1
-      const matte = r.name === 'panels' || r.name === 'cards'
+      const matte = r.name === 'panels'
       ;(r.sources as Mesh[]).forEach((source) =>
         restore.push(
           patchStandard(
@@ -340,9 +357,9 @@ const patchArtworks = (
         restore.push(patchArtBounce(material, irradiance))
       })
     }
-    // Text cards the bake has no map for (an older bake) take the bounce measured at their
-    // nearest artwork (Eduardo 2026-10-18). Left alone they took the room capture's IBL and read
-    // whiter (and bluer) than the walls.
+    // Text cards take the bounce measured at their nearest artwork (Eduardo 2026-10-18; every
+    // card since AR-165). Left alone they took the room capture's IBL and read whiter (and bluer)
+    // than the walls.
     if (images.length) {
       const centres = images.map((image) => image.getWorldPosition(new Vector3()))
       for (const card of cards) {
@@ -378,8 +395,8 @@ const shownArtworks = (scene: Object3D) => {
   scene.traverse((o) => {
     const card = o as Mesh
     const material = card.material as MeshStandardMaterial | undefined
-    // A baked card (AR-163) has its light from the bake: only one that is not (an older bake,
-    // or one that mounted after the bake went on) takes the light measured at its artwork.
+    // Every card takes the light measured at its artwork (AR-165: its baked map is not used; a
+    // card that carries a lightmap anyway is left alone).
     if (
       card.isMesh &&
       card.name === 'textCard' &&

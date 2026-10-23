@@ -84,22 +84,40 @@ Fixes made for Vienna (shared code, all spaces): recessed spotlights at their bu
 ### Task 6: Bake record type and room fingerprint
 
 **Files:**
+
 - Create: `src/lib/bake/bakeRecord.ts`, `src/lib/bake/fingerprint.ts`
 - Test: `e2e/bake-fingerprint.spec.ts`
 
 **Interfaces:**
+
 - Produces (`bakeRecord.ts`, isomorphic — no Node imports):
   ```ts
   export const BAKER_VERSION = 1 // bump whenever bake or display code changes the result
   export type BakeSurface = 'wall' | 'ceiling' | 'floor' | 'props'
   export type BakeMapKind = 'light' | 'direction'
-  export interface LightmapEncoding { format: 'log8' | 'signed8'; max: number; knee: number }
-  export interface BakeMap { receiver: BakeSurface; kind: BakeMapKind; url: string; width: number; height: number; encoding: LightmapEncoding }
+  export interface LightmapEncoding {
+    format: 'log8' | 'signed8'
+    max: number
+    knee: number
+  }
+  export interface BakeMap {
+    receiver: BakeSurface
+    kind: BakeMapKind
+    url: string
+    width: number
+    height: number
+    encoding: LightmapEncoding
+  }
   export interface BakeRecord {
-    id: string; fingerprint: string; bakerVersion: number; unwrapHash: string
+    id: string
+    fingerprint: string
+    bakerVersion: number
+    unwrapHash: string
     maps: BakeMap[]
     camera: { exposure: number; whiteBalance: [number, number, number] } // the space's fixed camera at bake time
-    bakedAt: string; bakedBy: string; ms: number
+    bakedAt: string
+    bakedBy: string
+    ms: number
     reviewedAt: string | null // set when the admin opened the review view on this exact bake (Task 8)
   }
   export function isBakeRecord(value: unknown): value is BakeRecord
@@ -107,7 +125,12 @@ Fixes made for Vienna (shared code, all spaces): recessed spotlights at their bu
 - Produces (`fingerprint.ts`, server-only — `node:crypto`):
   ```ts
   export const LIGHT_FIELDS: readonly string[]
-  export interface BakeFingerprintInput { exhibition: Record<string, unknown>; placed: Record<string, unknown>[]; spaceModelVersion: string; spaceLookVersion: string }
+  export interface BakeFingerprintInput {
+    exhibition: Record<string, unknown>
+    placed: Record<string, unknown>[]
+    spaceModelVersion: string
+    spaceLookVersion: string
+  }
   export function computeBakeFingerprint(input: BakeFingerprintInput): string // sha256 hex
   export async function loadBakeFingerprint(exhibitionId: string): Promise<string>
   ```
@@ -125,11 +148,24 @@ import { isBakeRecord } from '@/lib/bake/bakeRecord'
 
 const base = {
   exhibition: { spaceId: 'madrid', wallColor: '#ffffff', mainTitle: 'A', description: 'x' },
-  placed: [{ artworkId: 'a1', wallId: 'w1', posX3d: 1, showOnPage: true, pageOrder: 1, artwork: { artworkType: 'image', hiddenFromExhibition: false, title: 'T' } }],
+  placed: [
+    {
+      artworkId: 'a1',
+      wallId: 'w1',
+      posX3d: 1,
+      showOnPage: true,
+      pageOrder: 1,
+      artwork: { artworkType: 'image', hiddenFromExhibition: false, title: 'T' },
+    },
+  ],
   spaceModelVersion: 'madrid.glb?v=3',
   spaceLookVersion: 'look-1',
 }
-const fp = (patch: (b: typeof base) => void) => { const b = structuredClone(base); patch(b); return computeBakeFingerprint(b) }
+const fp = (patch: (b: typeof base) => void) => {
+  const b = structuredClone(base)
+  patch(b)
+  return computeBakeFingerprint(b)
+}
 
 test('stable and 64-hex', () => {
   expect(computeBakeFingerprint(base)).toMatch(/^[0-9a-f]{64}$/)
@@ -137,20 +173,58 @@ test('stable and 64-hex', () => {
 })
 test('light changes stale the bake', () => {
   const f = computeBakeFingerprint(base)
-  expect(fp((b) => { b.exhibition.wallColor = '#eeeeee' })).not.toBe(f)
-  expect(fp((b) => { b.placed[0]!.posX3d = 1.1 })).not.toBe(f)
-  expect(fp((b) => { b.spaceModelVersion = 'madrid.glb?v=4' })).not.toBe(f)
-  expect(fp((b) => { b.spaceLookVersion = 'look-2' })).not.toBe(f) // the space was recalibrated
+  expect(
+    fp((b) => {
+      b.exhibition.wallColor = '#eeeeee'
+    }),
+  ).not.toBe(f)
+  expect(
+    fp((b) => {
+      b.placed[0]!.posX3d = 1.1
+    }),
+  ).not.toBe(f)
+  expect(
+    fp((b) => {
+      b.spaceModelVersion = 'madrid.glb?v=4'
+    }),
+  ).not.toBe(f)
+  expect(
+    fp((b) => {
+      b.spaceLookVersion = 'look-2'
+    }),
+  ).not.toBe(f) // the space was recalibrated
 })
 test('space-owned columns do not stale the bake', () => {
   const f = computeBakeFingerprint(base)
-  expect(fp((b) => { Object.assign(b.exhibition, { floorMaterial: 'wood-planks', windowLightIntensity: 9, ambientLightIntensity: 2 }) })).toBe(f)
+  expect(
+    fp((b) => {
+      Object.assign(b.exhibition, {
+        floorMaterial: 'wood-planks',
+        windowLightIntensity: 9,
+        ambientLightIntensity: 2,
+      })
+    }),
+  ).toBe(f)
 })
 test('page-only changes do not stale the bake', () => {
   const f = computeBakeFingerprint(base)
-  expect(fp((b) => { b.exhibition.mainTitle = 'B'; b.exhibition.description = 'y' })).toBe(f)
-  expect(fp((b) => { b.placed[0]!.pageOrder = 9; b.placed[0]!.showOnPage = false })).toBe(f)
-  expect(fp((b) => { b.placed[0]!.artwork.title = 'Other' })).toBe(f)
+  expect(
+    fp((b) => {
+      b.exhibition.mainTitle = 'B'
+      b.exhibition.description = 'y'
+    }),
+  ).toBe(f)
+  expect(
+    fp((b) => {
+      b.placed[0]!.pageOrder = 9
+      b.placed[0]!.showOnPage = false
+    }),
+  ).toBe(f)
+  expect(
+    fp((b) => {
+      b.placed[0]!.artwork.title = 'Other'
+    }),
+  ).toBe(f)
 })
 test('isBakeRecord rejects partial records', () => {
   expect(isBakeRecord({ id: 'x' })).toBe(false)
@@ -166,6 +240,7 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 7: `Exhibition.bake`, snapshot, and who sees which bake
 
 **Files:**
+
 - Modify: `prisma/schema.prisma` (Exhibition: `bake Json? // draft BakeRecord; the published one lives in publishedSnapshot`)
 - Modify: `src/lib/exhibitionSnapshot.ts` (no code change expected: the omit-spread carries `bake`; add a comment saying so, and omit `publishedSnapshot` from the spread so snapshots stop nesting)
 - Modify: `src/app/api/exhibitions/by-url/[url]/route.ts`
@@ -173,6 +248,7 @@ test('isBakeRecord rejects partial records', () => {
 - Test: `e2e/bake-visibility.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `BakeRecord`, `isBakeRecord`, `loadBakeFingerprint` (Task 6).
 - Produces: `GET /api/exhibitions/by-url/[url]` returns `bake`:
   - public/preview snapshot branch → `snapshot.exhibition.bake ?? null` (**never** the live column; in baked spaces a valid preview token is answered by Task 10's branch instead);
@@ -182,11 +258,15 @@ test('isBakeRecord rejects partial records', () => {
 - [ ] **Step 0: DB gate.** Confirm `.env.local` is on the dev DB; edit the schema; Eduardo runs his migration + `pnpm db:generate` (or authorizes `pnpm db:push:dev` + `pnpm db:generate`).
 - [ ] **Step 1: Write the failing test** (`test.use({ storageState: 'e2e/.auth/admin.json' })` for the admin block, anonymous `request.newContext()` for the visitor block). Fixture: create via Prisma an exhibition owned by the e2e artist with `published: true, spacePublished: true`, a `publishedSnapshot` whose `exhibition.bake.id = 'pub'`, and live `bake.id = 'draft'`; delete it in `finally`.
   ```ts
-  expect((await anon.get(`/api/exhibitions/by-url/${url}`).then(r => r.json())).bake.id).toBe('pub')
-  const edit = await admin.get(`/api/exhibitions/by-url/${url}?mode=edit`).then(r => r.json())
+  expect((await anon.get(`/api/exhibitions/by-url/${url}`).then((r) => r.json())).bake.id).toBe(
+    'pub',
+  )
+  const edit = await admin.get(`/api/exhibitions/by-url/${url}?mode=edit`).then((r) => r.json())
   expect(edit.bake.id).toBe('draft')
   expect(edit.bakeFingerprint).toBe(await loadBakeFingerprint(id))
-  const artistEdit = await artist.get(`/api/exhibitions/by-url/${url}?mode=edit`).then(r => r.json())
+  const artistEdit = await artist
+    .get(`/api/exhibitions/by-url/${url}?mode=edit`)
+    .then((r) => r.json())
   expect(artistEdit.bakeFingerprint).toBeUndefined()
   ```
 - [ ] **Step 2: Run, verify it fails** (`bake` is `'draft'` on the public read today, or missing).
@@ -197,10 +277,20 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 8: Store a bake (admin only, nothing partial) — local today, R2 tomorrow
 
 **Files:**
+
 - Create: `src/lib/bake/bakeStorage.ts` — one seam, two backends chosen by `BAKE_STORAGE` (`'local' | 'r2'`, default `'r2'`): `local` (development only; refuses when `NEXT_PUBLIC_APP_ENV === 'production'`) writes under `.bake-files/` at the repo root (add to `.gitignore`) and serves `GET /api/bake-files/[...key]` with `Cache-Control: public, max-age=31536000, immutable`; `r2` = the presigned PUTs below. Used today because R2 is unreachable (2026-10-18); `.env.local` gets `BAKE_STORAGE=local` — Eduardo sets it.
   ```ts
-  export interface BakeUpload { file: string; url: string; method: 'PUT'; publicUrl: string }
-  export async function createBakeUploads(exhibitionId: string, bakeId: string, files: string[]): Promise<BakeUpload[]>
+  export interface BakeUpload {
+    file: string
+    url: string
+    method: 'PUT'
+    publicUrl: string
+  }
+  export async function createBakeUploads(
+    exhibitionId: string,
+    bakeId: string,
+    files: string[],
+  ): Promise<BakeUpload[]>
   export async function bakeObjectSize(publicUrl: string): Promise<number | null>
   export async function deleteBakeObjects(exhibitionId: string, bakeId: string): Promise<void>
   ```
@@ -212,21 +302,34 @@ test('isBakeRecord rejects partial records', () => {
 - Test: `e2e/bake-api.spec.ts`
 
 **Interfaces:**
+
 - `POST /api/exhibitions/[id]/bake/uploads` body `{ files: string[] }` (names like `wall-light.png`, `[a-z-]+\.png`, ≤ 12) → `{ bakeId: string (randomUUID), uploads: { file: string; url: string; publicUrl: string }[] }`; presigned with `contentType: 'image/png'`, `cacheControl: 'public, max-age=31536000, immutable'`. Admin only (`requireAdminOrAbove`), 403 otherwise.
 - `PUT /api/exhibitions/[id]/bake` body `BakeRecord` (without `bakedBy`; the server sets it from the session) → verifies `isBakeRecord`, every `maps[].url` lies under that exhibition's `bakes/{id}/` prefix, and every object exists (`bakeObjectSize` > 0); then writes `Exhibition.bake` with `reviewedAt: null`. **Does not touch `hasPendingChanges`.** Deletes the previous draft's objects if that draft is not the one in `publishedSnapshot`. Admin only. 400 on any failed check, draft unchanged.
 
 - [ ] **Step 1: Write the failing test** (Prisma fixture exhibition as in Task 7):
   ```ts
   // artist cannot start or save a bake
-  expect((await artist.post(`/api/exhibitions/${id}/bake/uploads`, { data: { files: ['wall-light.png'] } })).status()).toBe(403)
+  expect(
+    (
+      await artist.post(`/api/exhibitions/${id}/bake/uploads`, {
+        data: { files: ['wall-light.png'] },
+      })
+    ).status(),
+  ).toBe(403)
   expect((await artist.put(`/api/exhibitions/${id}/bake`, { data: record })).status()).toBe(403)
   // two bakes never share a key (cache-busting)
-  const a = await admin.post(`/api/exhibitions/${id}/bake/uploads`, { data: { files: ['wall-light.png'] } }).then(r => r.json())
-  const b = await admin.post(`/api/exhibitions/${id}/bake/uploads`, { data: { files: ['wall-light.png'] } }).then(r => r.json())
+  const a = await admin
+    .post(`/api/exhibitions/${id}/bake/uploads`, { data: { files: ['wall-light.png'] } })
+    .then((r) => r.json())
+  const b = await admin
+    .post(`/api/exhibitions/${id}/bake/uploads`, { data: { files: ['wall-light.png'] } })
+    .then((r) => r.json())
   expect(a.bakeId).not.toBe(b.bakeId)
   expect(a.uploads[0].publicUrl).toContain(`/exhibitions/${id}/bakes/${a.bakeId}/wall-light.png`)
   // nothing partial: a record pointing at an object never uploaded is refused, draft unchanged
-  const res = await admin.put(`/api/exhibitions/${id}/bake`, { data: { ...record, id: a.bakeId, maps: [{ ...map, url: a.uploads[0].publicUrl }] } })
+  const res = await admin.put(`/api/exhibitions/${id}/bake`, {
+    data: { ...record, id: a.bakeId, maps: [{ ...map, url: a.uploads[0].publicUrl }] },
+  })
   expect(res.status()).toBe(400)
   expect((await prisma.exhibition.findUnique({ where: { id } }))!.bake).toBeNull()
   ```
@@ -239,12 +342,14 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 9: Publishing requires a current, reviewed bake (in baked spaces); publishing is admin-only
 
 **Files:**
+
 - Create: `src/lib/bake/bakedSpaces.ts` — `export const BAKED_SPACES: ReadonlySet<string> = new Set(['paris', 'vienna'])` (Madrid joins after Task 4's approval) and `isBakedSpace(spaceId: string | null | undefined): boolean`. The per-space switch: the Bake button, the bake preview link and the publish gate exist only in these spaces; every other space keeps today's publishing and preview unchanged.
 - Modify: `src/app/api/exhibitions/[id]/route.ts` (PUT)
 - Modify: `src/components/admin/dashboard/AdminExhibitions.tsx` (show the refusal)
 - Test: `e2e/bake-publish-gate.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `loadBakeFingerprint`, `isBakeRecord`, `deleteBakeObjects` (Task 8).
 - Produces: PUT bodies carrying `published`, `spacePublished`, `previewEnabled` or `hasPendingChanges: false` require `requireAdminOrAbove` (403 otherwise; plain admins are no longer blocked by `requireOwnership` for these). Every other body keeps `requireOwnership`.
 - Gate (only when `isBakedSpace(spaceId)`): if after this request the 3D room would be served to visitors from a newly built snapshot (`spacePublished` true — requested or current — together with `published: true`, `spacePublished: true` or `hasPendingChanges: false` on a published exhibition), then `bake` must be a `BakeRecord` whose `fingerprint === await loadBakeFingerprint(id)` **and** `reviewedAt !== null`. Else **409** `{ error: 'BAKE_REQUIRED' | 'BAKE_STALE' | 'BAKE_UNREVIEWED', message }` and nothing is written. Page-only publishes (room not public) pass without a bake. (`previewEnabled` no longer builds a snapshot in baked spaces — Task 10.)
@@ -253,22 +358,51 @@ test('isBakeRecord rejects partial records', () => {
 
 - [ ] **Step 1: Write the failing test** (fixture: exhibition in `paris` owned by the e2e artist, `published: false`, `spacePublished: true`):
   ```ts
-  expect((await artist.put(`/api/exhibitions/${id}`, { data: { published: true } })).status()).toBe(403)
+  expect((await artist.put(`/api/exhibitions/${id}`, { data: { published: true } })).status()).toBe(
+    403,
+  )
   let r = await admin.put(`/api/exhibitions/${id}`, { data: { published: true } })
-  expect(r.status()).toBe(409); expect((await r.json()).error).toBe('BAKE_REQUIRED')
-  await prisma.exhibition.update({ where: { id }, data: { bake: { ...record, fingerprint: await loadBakeFingerprint(id), reviewedAt: null } } })
+  expect(r.status()).toBe(409)
+  expect((await r.json()).error).toBe('BAKE_REQUIRED')
+  await prisma.exhibition.update({
+    where: { id },
+    data: { bake: { ...record, fingerprint: await loadBakeFingerprint(id), reviewedAt: null } },
+  })
   r = await admin.put(`/api/exhibitions/${id}`, { data: { published: true } })
-  expect(r.status()).toBe(409); expect((await r.json()).error).toBe('BAKE_UNREVIEWED')
-  await prisma.exhibition.update({ where: { id }, data: { bake: { ...record, fingerprint: await loadBakeFingerprint(id), reviewedAt: new Date().toISOString() } } })
+  expect(r.status()).toBe(409)
+  expect((await r.json()).error).toBe('BAKE_UNREVIEWED')
+  await prisma.exhibition.update({
+    where: { id },
+    data: {
+      bake: {
+        ...record,
+        fingerprint: await loadBakeFingerprint(id),
+        reviewedAt: new Date().toISOString(),
+      },
+    },
+  })
   // artist saves after the bake → stale
   await prisma.exhibition.update({ where: { id }, data: { wallColor: '#f0f0f0' } })
   r = await admin.put(`/api/exhibitions/${id}`, { data: { published: true } })
-  expect(r.status()).toBe(409); expect((await r.json()).error).toBe('BAKE_STALE')
+  expect(r.status()).toBe(409)
+  expect((await r.json()).error).toBe('BAKE_STALE')
   // rebake + review → publish ships exactly that bake
-  await prisma.exhibition.update({ where: { id }, data: { bake: { ...record, id: 'b2', fingerprint: await loadBakeFingerprint(id), reviewedAt: new Date().toISOString() } } })
+  await prisma.exhibition.update({
+    where: { id },
+    data: {
+      bake: {
+        ...record,
+        id: 'b2',
+        fingerprint: await loadBakeFingerprint(id),
+        reviewedAt: new Date().toISOString(),
+      },
+    },
+  })
   r = await admin.put(`/api/exhibitions/${id}`, { data: { published: true } })
   expect(r.status()).toBe(200)
-  const snap = (await prisma.exhibition.findUnique({ where: { id } }))!.publishedSnapshot as { exhibition: { bake: { id: string } } }
+  const snap = (await prisma.exhibition.findUnique({ where: { id } }))!.publishedSnapshot as {
+    exhibition: { bake: { id: string } }
+  }
   expect(snap.exhibition.bake.id).toBe('b2')
   ```
   Add: an exhibition with `spacePublished: false` publishes with no bake → 200; a title-only change after the bake leaves publish at 200; the same flow on a `madrid` exhibition (not a baked space) publishes with no bake → 200.
@@ -280,12 +414,14 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 10: The bake preview link (replaces the unbaked preview link in baked spaces)
 
 **Files:**
+
 - Modify: `src/app/api/exhibitions/by-url/[url]/route.ts` — a preview branch ahead of the snapshot branch.
 - Modify: `src/components/exhibitions/view/index.tsx` — the out-of-date notice.
 - Modify: `src/components/admin/dashboard/AdminExhibitions.tsx` — labels and availability.
 - Test: `e2e/bake-preview.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `isBakedSpace` (Task 9), `loadBakeFingerprint`, `isBakeRecord` (Task 6).
 - Produces: `GET /api/exhibitions/by-url/[url]?preview=<token>`, when the exhibition's space is baked and the token is valid (fresh read: `previewEnabled && previewToken === token`, **published or not**): the LIVE draft — the same shape as the legacy no-snapshot branch (live `exhibitionArtworks` + public-safe artwork fields; never `originalImageUrl`, never `previewToken`) — plus `bakeStatus: 'current' | 'stale' | 'missing'` and `bake` = the draft `BakeRecord` only when `'current'` (fingerprint matches), else `null`. Any other request is answered exactly as today (published snapshot for visitors). Non-baked spaces keep today's preview behaviour.
 - View: on a preview request with `bakeStatus !== 'current'`, the 3D scene does not mount; a full-page notice reads "This preview is out of date — a new bake is needed." (`'missing'`: "This exhibition hasn't been baked yet.").
@@ -296,13 +432,17 @@ test('isBakeRecord rejects partial records', () => {
   const pub = await anon.get(`/api/exhibitions/by-url/${url}`).then((r) => r.json())
   expect(pub.bake.id).toBe('pub') // visitors: published, untouched by the preview
   const pv = await anon.get(`/api/exhibitions/by-url/${url}?preview=tok`).then((r) => r.json())
-  expect(pv.bakeStatus).toBe('current'); expect(pv.bake.id).toBe('draft')
+  expect(pv.bakeStatus).toBe('current')
+  expect(pv.bake.id).toBe('draft')
   expect(pv.wallColor).toBe(liveWallColor) // draft data, not the snapshot's
   expect(pv.previewToken).toBeUndefined()
   await prisma.exhibition.update({ where: { id }, data: { wallColor: '#e0e0e0' } })
   const stale = await anon.get(`/api/exhibitions/by-url/${url}?preview=tok`).then((r) => r.json())
-  expect(stale.bakeStatus).toBe('stale'); expect(stale.bake).toBeNull()
-  expect((await anon.get(`/api/exhibitions/by-url/${url}?preview=wrong`).then((r) => r.json())).bake.id).toBe('pub')
+  expect(stale.bakeStatus).toBe('stale')
+  expect(stale.bake).toBeNull()
+  expect(
+    (await anon.get(`/api/exhibitions/by-url/${url}?preview=wrong`).then((r) => r.json())).bake.id,
+  ).toBe('pub')
   ```
   Add: `previewEnabled: false` → the token is ignored (published answer); an unpublished exhibition with a wrong token → 404; no draft bake → `bakeStatus: 'missing'`.
 - [ ] **Step 2: Run, verify it fails. Step 3: Implement** the branch, the notice and the dashboard labels. **Step 4: Run, verify it passes;** re-run `pnpm test:e2e:gallery`.
@@ -315,10 +455,12 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 11: Lightmap codec
 
 **Files:**
+
 - Create: `src/components/scene/bake/lightmapCodec.ts`
 - Test: `e2e/lightmap-codec.spec.ts`
 
 **Interfaces:**
+
 - Pure (testable in Node):
   ```ts
   export function chooseEncoding(pixels: Float32Array, kind: BakeMapKind): LightmapEncoding
@@ -331,13 +473,21 @@ test('isBakeRecord rejects partial records', () => {
 - [ ] **Step 1: Write the failing test**
   ```ts
   test('log8 round trip within 1% above the knee', () => {
-    const v = Float32Array.from({ length: 4096 }, (_, i) => (i % 4 === 3 ? 1 : 0.02 + (i / 4096) * 8))
+    const v = Float32Array.from({ length: 4096 }, (_, i) =>
+      i % 4 === 3 ? 1 : 0.02 + (i / 4096) * 8,
+    )
     const e = chooseEncoding(v, 'light')
     const back = dequantize(quantize(v, e), e)
-    for (let i = 0; i < v.length; i++) if (i % 4 !== 3 && v[i]! > e.knee) expect(Math.abs(back[i]! - v[i]!) / v[i]!).toBeLessThan(0.01)
+    for (let i = 0; i < v.length; i++)
+      if (i % 4 !== 3 && v[i]! > e.knee)
+        expect(Math.abs(back[i]! - v[i]!) / v[i]!).toBeLessThan(0.01)
   })
-  test('signed8 keeps direction components to 1/255', () => { /* −0.5…0.5 round trip, |err| ≤ 1/255 */ })
-  test('zero stays zero; alpha is opaque', () => { /* quantize(0) === 0; every 4th byte 255 */ })
+  test('signed8 keeps direction components to 1/255', () => {
+    /* −0.5…0.5 round trip, |err| ≤ 1/255 */
+  })
+  test('zero stays zero; alpha is opaque', () => {
+    /* quantize(0) === 0; every 4th byte 255 */
+  })
   ```
 - [ ] **Step 2: Run, verify it fails. Step 3: Implement. Step 4: Run, verify it passes.**
 - [ ] **Step 5: Commit** (on his word): `AR-161: lightmap PNG codec`.
@@ -345,6 +495,7 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 12: Bake output and the space camera out of `LoadTimeBake`
 
 **Files:**
+
 - Modify: `src/components/scene/bake/LightBaker.ts` — `exportMaps(): { receiver: BakeSurface; kind: BakeMapKind; pixels: Float32Array; width: number; height: number }[]` (from `outputs`/`dirOutputs` via `readFloat`); `totalSteps(): number` (the number of `yield`s `run()` will make, computed after `prepare`).
 - Create: `src/components/scene/bake/meter.ts` — `bakeCamera(spaceId: string): { exposure: number; whiteBalance: [number, number, number] }` (the space's fixed camera from `spaceConfigs`; throws for a space without one — only baked spaces bake) and `meterBake(baker: LightBaker, scene: Object3D): { artPeakLux: number; paperWhite: number; meteredExposure: number }` (moved from `LoadTimeBake`'s finish; diagnostics only — it never sets the camera).
 - Verification only (WebGL): headless — exporting, encoding and re-applying (Task 13) the maps must reproduce the live bake's junction profile within ±1% (`junction.mjs`, same camera, same column).
@@ -356,6 +507,7 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 13: One unwrap and one material swap for bake, review and visitors
 
 **Files:**
+
 - Create: `src/components/scene/bake/receivers.ts` — `prepareReceivers(scene: Object3D, colors: { wall: string; ceiling: string }): { receivers: BakeReceiver[]; unwrapHash: string; restore: () => void }` (`BakeReceiver` = the existing receiver interface exported by `LightBaker.ts`, not the `BakeSurface` union) (the receiver-building block of `LoadTimeBake`: wall/ceiling `buildPropAtlas` with plaster tiling, floor, props atlas).
 - Create: `src/components/scene/bake/applyBake.ts` — `applyBakedLighting(scene: Object3D, receivers: BakeReceiver[], maps: { receiver: BakeSurface; kind: BakeMapKind; texture: Texture }[], plaster: { normal: Texture; roughness: Texture }): () => void` (the material-swap block: floor `patchStandard`, props `patchStandard` on `channel 1`, walls/ceiling plaster `MeshStandardMaterial` + `patchPlaster`).
 - Create: `src/components/scene/bake/hashUnwrap.ts` — `hashUnwrap(arrays: Float32Array[]): string` (FNV-1a over the float bits, hex).
@@ -365,7 +517,8 @@ test('isBakeRecord rejects partial records', () => {
   ```ts
   const a = new Float32Array([0.1, 0.2, 0.3, 0.4])
   expect(hashUnwrap([a])).toBe(hashUnwrap([new Float32Array(a)]))
-  const b = new Float32Array(a); b[2] = 0.30000001
+  const b = new Float32Array(a)
+  b[2] = 0.30000001
   expect(hashUnwrap([b])).not.toBe(hashUnwrap([a]))
   expect(hashUnwrap([a, b])).not.toBe(hashUnwrap([b, a]))
   ```
@@ -376,12 +529,14 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 14: Visitors and review apply a stored bake
 
 **Files:**
+
 - Create: `src/components/scene/bake/BakedLighting.tsx` — `<BakedLighting bake={BakeRecord} />`
 - Create: `src/components/scene/bake/lightmapLoader.ts` — `class LightmapLoader extends Loader<DataTexture>` (fetch → `decodeLightmapPng`), used with r3f `useLoader` so it suspends inside the scene's existing `<Suspense>` (the room is not revealed before the maps are applied).
 - Create: `src/components/scene/bake/bakeState.ts` — move `setMeteredExposure`/`useMeteredExposure`/`setMeteredWhiteBalance`/`useMeteredWhiteBalance` here from `realismProbe.ts`.
 - Modify: `src/components/scene/spaces/ParisSpace/lights/index.tsx` (shared by all three spaces): mount `<BakedLighting bake={exhibition.bake} />` when the exhibition in Redux has a `bake` and the page is not in bake mode.
 
 **Interfaces:**
+
 - Consumes: `BakeRecord` (Task 6), codec (Task 11), `prepareReceivers`/`applyBakedLighting`/`hashUnwrap` (Task 13).
 - Behaviour: load every map; `prepareReceivers`; if `unwrapHash !== bake.unwrapHash` → `captureError` (`src/lib/observability/captureError.ts`), restore, render nothing (today's look stays); else apply, `setMeteredExposure(bake.camera.exposure)`, `setMeteredWhiteBalance(bake.camera.whiteBalance)`, `requestRoomRecapture()`; undo everything on unmount.
 
@@ -392,6 +547,7 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 15: Bake mode and review mode (admin)
 
 **Files:**
+
 - Create: `src/components/scene/bake/BakeRunner.tsx` — runs `LightBaker` like `LoadTimeBake` (start delay, lamp-mount frames, frame budget), reports `onProgress(done / totalSteps)`, then `exportMaps` → `encodeLightmapPng` each → `POST …/bake/uploads` → PUT each blob to its upload URL (`BakeUpload.url`; R2: header `Cache-Control: public, max-age=31536000, immutable`) → `PUT …/bake` with the `BakeRecord` (fingerprint = the `bakeFingerprint` the page loaded with; `unwrapHash` and `camera` (= `bakeCamera(spaceId)`) from Tasks 12–13; `bakerVersion = BAKER_VERSION`) → `onDone()`.
 - Modify: `src/components/exhibitions/view/index.tsx` — `?bake=1` and `?review=1` (admin only; anyone else gets the normal visit): both load `useGetExhibitionByUrlQuery({ url, mode: 'edit' })`; bake mode mounts `<BakeRunner>` (no `BakedLighting`) and on done navigates to `?review=1`; review mode shows the draft via `BakedLighting` only when `bake.fingerprint === bakeFingerprint` (else the same "out of date — a new bake is needed" notice as Task 10), calls `POST …/bake/reviewed { bakeId }` once the room is revealed, and shows a small admin bar: "Bake again" / "Back to editor". A "View baked room" link to `?review=1` also goes on the exhibition's dashboard row (baked spaces only).
 - Modify: `src/redux/slices/exhibitionApi.ts` — `mode?: 'edit'` stays; `TExhibition` already carries `bake`/`bakeFingerprint` (Task 7).
@@ -403,10 +559,12 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 16: The monogram loader, for everyone
 
 **Files:**
+
 - Create: `src/components/ui/MonogramLoader/MonogramLoader.tsx`, `MonogramLoader.module.scss`, `index.ts`
 - Modify: `src/components/exhibitions/view/index.tsx` (replace `LoadingOverlay`), `BakeRunner` host (bake mode).
 
 **Interfaces:**
+
 - `<MonogramLoader progress={number /* 0..1 */} title={string} note?={string} done?={boolean} />`: `src/icons/monogram.svg` paths in grey `#ebe7e2`; the same paths in `#bd1622` clipped by a rect rising from the bottom of the mark (y from 825 to 95 in the SVG's 850.39 × 907.09 box) by `progress`; the displayed progress never decreases; on `done` the white screen fades (300 ms) and unmounts. Reference: mockup B, `.superpowers/brainstorm/19530-1792225350/content/loader-options-v2.html`.
 - Visitor progress = drei `useProgress` (asset loads, which include the lightmap fetches via `useLoader`) until the scene's Suspense resolves, then done.
 - Copy (Eduardo approves the words at the review step): visitors — title "Preparing the exhibition", no note; bake mode — title "Lighting the room", note "This takes a few minutes. Keep this tab open and in front, with the display awake."
@@ -418,10 +576,12 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 17: Bake controls in the 3D editor (admin only)
 
 **Files:**
+
 - Create: `src/components/editview/BakePanel/BakePanel.tsx` (+ scss, index)
 - Modify: `src/components/editview/Menu/*` (entry shown only when `session.user.userType` is `admin` or `superAdmin`), `src/components/editview/EditView.tsx`, `src/redux/slices/dashboardSlice.ts` (`isBakePanelOpen`).
 
 **Interfaces:**
+
 - Status from the editor's edit-mode data: no `bake` → "Not baked yet"; `bake.fingerprint === bakeFingerprint` → "Bake is current — baked {date}" (+ "reviewed" when `reviewedAt`); else → "The room changed since the last bake."
 - Shown only in baked spaces (`isBakedSpace`). Buttons: "Bake" (opens `/exhibitions/{artist}/{slug}/visit?bake=1` in a new tab), "View baked room" (opens `?review=1`; disabled without a bake).
 - Server enforcement is Tasks 8–9; this is presentation only (no e2e: the editor mounts WebGL).
@@ -431,6 +591,7 @@ test('isBakeRecord rejects partial records', () => {
 ### Task 18: Artist controls — spec rule 7 only (part pending Eduardo, spec "Still open")
 
 **Files:**
+
 - Modify: `src/components/editview/LightingPanel/LightingPanel.tsx`, `WallCeilingPanel/WallCeilingPanel.tsx`, `FloorPanel/FloorPanel.tsx`, `WindowsPanel/WindowsPanel.tsx`, `src/components/editview/Menu/*` (no Floor entry in baked spaces)
 - Create: `scripts/reset-light-levels.ts` (one-off, run by Eduardo at rollout)
 
@@ -449,6 +610,7 @@ test('isBakeRecord rejects partial records', () => {
 Runs after Tasks 3–4 are approved (it deletes the A/B flags they need).
 
 **Files:**
+
 - Modify: `src/components/scene/spaces/types.ts` + `src/components/scene/constants.tsx` — `SpaceConfig.look?: SpaceLook` next to `camera`: `interface SpaceLook { recessedLumens: number; corridorLumens: number; roundLumens: number; trackScale: number; sunLux: number; sunElevationDeg: number; daylightGain: number; ceilingColor: string }` — Paris/Vienna `{ recessedLumens: 6800, corridorLumens: 3000, roundLumens: 3000, trackScale: 0.5, sunLux: 5000, sunElevationDeg: 35, daylightGain: 6, ceilingColor: '#ffffff' }`; Madrid from Task 4. `spaceLookVersion` (Task 6) hashes `camera` + `look`.
 - Create: `src/components/scene/bake/commonFloor.ts` — the one floor for every room of every baked space: `{ material: 'parquet-whitewash', scale: 2.07, normal: 3, reflectiveness: 0.09, offsetY: 0.04, temperature: 0 }`; the floor component uses it in baked spaces whatever the exhibition stores.
 - Create: `src/components/scene/bake/bakedLook.ts` — `useBakedLook(): LookState` where `LookState` is today's `RealismProbeState` reduced to the fields consumers still read; returns `APPROVED_LOOK` (+ the space's `look`/`camera`) when the space is baked AND (the Redux exhibition has a `bake` — published visit, review, bake preview — or the page is in bake mode), else `TODAY_LOOK` (byte-for-byte today's production branch, i.e. `PROBE_OFF`). The editor (`/edit`) always gets `TODAY_LOOK`.
@@ -464,6 +626,7 @@ Runs after Tasks 3–4 are approved (it deletes the A/B flags they need).
 ### Task 20: Local-only assets: served by the app today, R2 tomorrow
 
 **Files:**
+
 - Modify: `src/components/scene/constants.tsx` (Paris `gltfPath` → `/assets/spaces/paris/paris22_noq.glb`), the floor material registry (`parquet-whitewash`), `src/components/scene/bake/*` (plaster paths) — all through `assetUrl`/`spaceGltfUrl`, whose origin fallback serves `public/` when R2 is unreachable.
 
 - [ ] **Step 1:** Make `paris22_noq.glb` (gltf-transform, as `paris21_noq`; node diff vs `paris22.glb` = nothing lost).

@@ -20,7 +20,11 @@ const shape = (id: string, zOrder?: number | null): LayerItem => ({
   artworkType: 'shape',
   zOrder,
 })
-const text = (id: string, zOrder?: number | null): LayerItem => ({ id, artworkType: 'text', zOrder })
+const text = (id: string, zOrder?: number | null): LayerItem => ({
+  id,
+  artworkType: 'text',
+  zOrder,
+})
 const image = (id: string, zOrder?: number | null): LayerItem => ({
   id,
   artworkType: 'image',

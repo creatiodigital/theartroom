@@ -72,14 +72,14 @@ runs the prod schema push alongside the deploy; Claude never does.
 
 ## Rules
 
-| Rule | Where enforced |
-|---|---|
-| Title required, trimmed, ≤ 60 chars | Section API (create + rename) |
-| No two sections in one exhibition with the same title (case-insensitive, after trim) | Section API (create + rename) |
-| A work can only be assigned a section of the **same** exhibition | Artwork PATCH |
-| Reorder payload must be exactly the exhibition's current set of section ids | Section reorder API |
+| Rule                                                                                                 | Where enforced                                                                                                            |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Title required, trimmed, ≤ 60 chars                                                                  | Section API (create + rename)                                                                                             |
+| No two sections in one exhibition with the same title (case-insensitive, after trim)                 | Section API (create + rename)                                                                                             |
+| A work can only be assigned a section of the **same** exhibition                                     | Artwork PATCH                                                                                                             |
+| Reorder payload must be exactly the exhibition's current set of section ids                          | Section reorder API                                                                                                       |
 | Only the exhibition's owner (or an admin impersonating them) or a superAdmin can manage its sections | Every section route, `requireOwnership` — the same check as the exhibition PUT in `src/app/api/exhibitions/[id]/route.ts` |
-| A section with no visible works renders no heading | Public query |
+| A section with no visible works renders no heading                                                   | Public query                                                                                                              |
 
 Validation failures return 400 with a message the UI shows inline, following
 the form validation flow (silent until submit, then all errors, then clear
@@ -89,13 +89,13 @@ live).
 
 All under the exhibition, all save immediately:
 
-| Method | Route | Does |
-|---|---|---|
-| `GET` | `/api/exhibitions/[id]/sections` | Sections in order, each with its artwork count |
-| `POST` | `/api/exhibitions/[id]/sections` | Create `{ title }`; appended (`order = max + 1`) |
-| `PATCH` | `/api/exhibitions/[id]/sections/[sectionId]` | Rename `{ title }` |
-| `DELETE` | `/api/exhibitions/[id]/sections/[sectionId]` | Delete; FK nulls assignments |
-| `PUT` | `/api/exhibitions/[id]/sections/order` | `{ sectionIds: string[] }` → `order = index`, one transaction |
+| Method   | Route                                        | Does                                                          |
+| -------- | -------------------------------------------- | ------------------------------------------------------------- |
+| `GET`    | `/api/exhibitions/[id]/sections`             | Sections in order, each with its artwork count                |
+| `POST`   | `/api/exhibitions/[id]/sections`             | Create `{ title }`; appended (`order = max + 1`)              |
+| `PATCH`  | `/api/exhibitions/[id]/sections/[sectionId]` | Rename `{ title }`                                            |
+| `DELETE` | `/api/exhibitions/[id]/sections/[sectionId]` | Delete; FK nulls assignments                                  |
+| `PUT`    | `/api/exhibitions/[id]/sections/order`       | `{ sectionIds: string[] }` → `order = index`, one transaction |
 
 Every route checks the section belongs to `[id]` — a section id from another
 exhibition is a 404, not a cross-exhibition write.

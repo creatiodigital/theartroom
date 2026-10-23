@@ -25,6 +25,7 @@ import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 
 type VideoObjectProps = {
   artwork: RuntimeArtwork
@@ -564,7 +565,10 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const frameS = showFrame ? (frameSize?.value ?? 3) : 0
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
   const passepartoutS = showPassepartout ? (passepartoutSize?.value ?? 5) : 0
-  const passepartoutDepth = Math.min(3, Math.max(0.2, passepartoutThickness?.value ?? 0.4))
+  const passepartoutDepth = Math.min(
+    PASSEPARTOUT_THICKNESS.max,
+    Math.max(PASSEPARTOUT_THICKNESS.min, passepartoutThickness?.value ?? 0.4),
+  )
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
 
   const passepartoutBorder = passepartoutS / 100

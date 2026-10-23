@@ -6,6 +6,7 @@ import type { SpaceLook } from '@/lib/bake/spaceLooks'
 
 import { buildPropAtlas } from './autoUnwrap'
 import { BAKE_DEBUG } from './bakedLook'
+import { floorBounceAlbedo } from './floorBounce'
 import { hashUnwrap, unwrapStats } from './hashUnwrap'
 import type { BakeReceiver, LightBaker } from './LightBaker'
 
@@ -162,7 +163,11 @@ const buildReceivers = (
       name: 'floor',
       mesh: floor,
       size: 1024,
-      albedo: averageAlbedo(floorMaterial.map).multiply(floorMaterial.color),
+      // What it bounces onto the room: its color at the space's share (it still looks as it is).
+      albedo: floorBounceAlbedo(
+        averageAlbedo(floorMaterial.map).multiply(floorMaterial.color),
+        room.look.floorBounceColor ?? 1,
+      ),
       smoothBounce: true,
     })
 
@@ -244,8 +249,9 @@ const buildReceivers = (
     }
   }
 
-  // Text cards (AR-163, Eduardo 2026-10-22: "bake the cards"): boards on the wall, so baked like
-  // it. Only the artwork image, its paper border and its passepartout ignore the room's light.
+  // Text cards (AR-163, Eduardo 2026-10-22: "bake the cards"): boards on the wall, counted in the
+  // room's light like it. Their map is not shown (AR-165: their rounded edges came out as a dashed
+  // line): a card is shown like a passepartout (`TEXT_CARD_SHADING`).
   // Last, after the panels, for the same reason.
   if (bake.cards) {
     const cards: Mesh[] = []

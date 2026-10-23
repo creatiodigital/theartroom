@@ -28,10 +28,16 @@ export const wallDistance = (walls: Mesh, from: Vector3, direction: Vector3): nu
   return hit ? hit.distance : Infinity
 }
 
-/** True when the free space across x or z at `point` (at eye height) is narrower than a room. */
+/**
+ * True when the free space across x or z at `point` (a ceiling lamp) is narrower than a room. Each
+ * way the nearer wall at eye height or just under the ceiling: an opening (a window, a light well)
+ * is a hole in a wall, never all of it — at eye height alone, Paris's corridor corner saw out
+ * through its end wall's opening and got a room's lamp (AR-165).
+ */
 export const inCorridor = (walls: Mesh, point: Vector3): boolean => {
-  const p = point.clone().setY(1.5)
-  const span = (axis: Vector3) =>
-    wallDistance(walls, p, axis) + wallDistance(walls, p, axis.clone().negate())
+  const heights = [point.clone().setY(1.5), point.clone().setY(point.y - 0.3)]
+  const nearest = (direction: Vector3) =>
+    Math.min(...heights.map((p) => wallDistance(walls, p, direction)))
+  const span = (axis: Vector3) => nearest(axis) + nearest(axis.clone().negate())
   return Math.min(span(new Vector3(1, 0, 0)), span(new Vector3(0, 0, 1))) < CORRIDOR_WIDTH
 }

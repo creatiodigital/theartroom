@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { isPassepartoutThickness } from '@/lib/passepartoutThickness'
 
 import type { RootState } from '@/redux/store'
 import type { TOption } from '@/types/artwork'
@@ -16,7 +17,7 @@ const normalizeFrameThickness = (v?: TOption<number>): TOption<number> =>
   v && inRange(v.value, 1, 20) ? v : DEFAULT_FRAME_THICKNESS
 
 const normalizePassepartoutThickness = (v?: TOption<number>): TOption<number> =>
-  v && inRange(v.value, 0.2, 3) ? v : DEFAULT_PASSEPARTOUT_THICKNESS
+  v && isPassepartoutThickness(v.value) ? v : DEFAULT_PASSEPARTOUT_THICKNESS
 
 export const useArtworkDetails = (currentArtworkId: string) => {
   const artworksById = useSelector((state: RootState) => state.artworks.byId)

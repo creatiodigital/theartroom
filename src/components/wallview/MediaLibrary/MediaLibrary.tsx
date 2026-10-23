@@ -158,7 +158,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
 
   // Filter out artworks already in this exhibition
   const availableArtworks = artworks
-    .filter((artwork) => !exhibitionArtworkIds.includes(artwork.id) || onHiddenPanel.has(artwork.id))
+    .filter(
+      (artwork) => !exhibitionArtworkIds.includes(artwork.id) || onHiddenPanel.has(artwork.id),
+    )
     .filter((artwork) => typeFilter === 'all' || artwork.artworkType === typeFilter)
     .filter((artwork) => {
       if (!searchQuery.trim()) return true

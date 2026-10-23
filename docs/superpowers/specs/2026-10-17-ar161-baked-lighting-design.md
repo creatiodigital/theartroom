@@ -24,16 +24,16 @@ visitors as finished lighting.
 
 All under the dev-only `?ar161=baked-next` probe; production builds never enable it.
 
-| Piece | Where |
-|---|---|
-| Light baker (lamps + shadows, instant-radiosity bounces, window daylight, near-field compensation, directional lightmap) | `src/components/scene/bake/LightBaker.ts`, `bakeShaders.ts` |
-| Room ray-tracing data (BVH in float textures) | `src/components/scene/bake/gatherScene.ts` |
-| Our own lightmap unwrap for walls/ceiling/props | `src/components/scene/bake/autoUnwrap.ts` |
-| Runs the bake after load, swaps materials, meters exposure / white balance | `src/components/scene/bake/LoadTimeBake.tsx` |
-| Look presets + URL flags (`PHYSICAL`, `NEXT`) | `src/components/scene/realismProbe.ts`, `RealismProbePanel.tsx` |
-| Room environment capture for unbaked objects | `src/components/scene/RoomEnvironmentCapture.tsx` |
-| White balance post effect | `src/components/scene/spaces/objects/Effects/WhiteBalanceEffect.ts` |
-| Physically based lamps, floor, displays | edits in `spaces/objects/*` (see `git show c484ef3b --stat`) |
+| Piece                                                                                                                    | Where                                                               |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| Light baker (lamps + shadows, instant-radiosity bounces, window daylight, near-field compensation, directional lightmap) | `src/components/scene/bake/LightBaker.ts`, `bakeShaders.ts`         |
+| Room ray-tracing data (BVH in float textures)                                                                            | `src/components/scene/bake/gatherScene.ts`                          |
+| Our own lightmap unwrap for walls/ceiling/props                                                                          | `src/components/scene/bake/autoUnwrap.ts`                           |
+| Runs the bake after load, swaps materials, meters exposure / white balance                                               | `src/components/scene/bake/LoadTimeBake.tsx`                        |
+| Look presets + URL flags (`PHYSICAL`, `NEXT`)                                                                            | `src/components/scene/realismProbe.ts`, `RealismProbePanel.tsx`     |
+| Room environment capture for unbaked objects                                                                             | `src/components/scene/RoomEnvironmentCapture.tsx`                   |
+| White balance post effect                                                                                                | `src/components/scene/spaces/objects/Effects/WhiteBalanceEffect.ts` |
+| Physically based lamps, floor, displays                                                                                  | edits in `spaces/objects/*` (see `git show c484ef3b --stat`)        |
 
 **The approved looks** (Eduardo, by eye — the flags become the only behaviour; no flags
 in production):
@@ -41,17 +41,17 @@ in production):
 - **Paris** (approved 2026-10-18, "perfect", on both Permanence and Kritzendorf with the
   same settings) and **Vienna** (approved 2026-10-18, "perfect… I love it", Florescere):
   `ar161=baked-next` + `ar161daylight=6&ar161unwrap=1&ar161lambert=1&ar161denoise=1&
-  ar161propsbounce=1&ar161paint=0.9&ar161plastic=0.85&ar161plaster=1&ar161finebias=1&
-  ar161edges=1&ar161nearfield=1&ar161tracklevel=4&ar161fullbounce=1&ar161bounces=8&
-  ar161recessedlm=6800&ar161trackscale=0.5&ar161artbounce=1&ar161floor=parquet-whitewash&
-  ar161floorscale=2.07&ar161floornormal=3&ar161floorrefl=0.09&ar161flooroffy=0.04&
-  ar161floortemp=0&ar161corridor=1&ar161sun=5000&ar161sunportal=1&ar161sunaz=360&
-  ar161glare=1&ar161ceilingcolor=ffffff&ar161emittervpls=4096&ar161artfile=1&ar161glasson=1`
+ar161propsbounce=1&ar161paint=0.9&ar161plastic=0.85&ar161plaster=1&ar161finebias=1&
+ar161edges=1&ar161nearfield=1&ar161tracklevel=4&ar161fullbounce=1&ar161bounces=8&
+ar161recessedlm=6800&ar161trackscale=0.5&ar161artbounce=1&ar161floor=parquet-whitewash&
+ar161floorscale=2.07&ar161floornormal=3&ar161floorrefl=0.09&ar161flooroffy=0.04&
+ar161floortemp=0&ar161corridor=1&ar161sun=5000&ar161sunportal=1&ar161sunaz=360&
+ar161glare=1&ar161ceilingcolor=ffffff&ar161emittervpls=4096&ar161artfile=1&ar161glasson=1`
   — with Permanence's room settings (`ar161lookfrom=the-beauty-of-permanence` on the
   other exhibitions; white walls #f3f1ea-ish are the artists' choice, not the space's).
 - **Madrid** (approved 2026-10-16/17): `ar161daylight=6&ar161unwrap=1&ar161lambert=1&
-  ar161denoise=1&ar161propsbounce=1&ar161paint=0.9&ar161plastic=0.85&ar161plaster=1&
-  ar161finebias=1&ar161edges=1&ar161nearfield=1`. **Must be re-checked** under the
+ar161denoise=1&ar161propsbounce=1&ar161paint=0.9&ar161plastic=0.85&ar161plaster=1&
+ar161finebias=1&ar161edges=1&ar161nearfield=1`. **Must be re-checked** under the
   per-space rules below (the common floor, white ceiling, glass on, file-exact images,
   fixed camera) before it ships.
 

@@ -36,13 +36,20 @@ test('panels are counted into the collision refs a space allocates', () => {
   // Under-allocating silently drops collision: the visitor walks through the
   // panel with nothing in the console. Over-allocating is harmless.
   const nodes = {
-    wall0: {}, wall1: {},
+    wall0: {},
+    wall1: {},
     invisibleWall0: {},
     radiator0: {},
-    panel0: {}, panel1: {}, panel10: {},
+    panel0: {},
+    panel1: {},
+    panel10: {},
     // Must NOT be counted — they are hangable faces, not solid surfaces.
-    panelFront0: {}, panelBack0: {}, panelFront1: {}, panelBack1: {},
-    windowFrame0: {}, windowGlass0: {},
+    panelFront0: {},
+    panelBack0: {},
+    panelFront1: {},
+    panelBack1: {},
+    windowFrame0: {},
+    windowGlass0: {},
   }
   const refs = deriveSpaceRefs(nodes)
 
