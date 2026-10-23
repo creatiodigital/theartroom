@@ -222,7 +222,9 @@ test.describe('the artwork save and exhibition membership', () => {
         'an id owned by another artist must never create a row, silently or otherwise',
       ).toBeNull()
     } finally {
-      await prisma.exhibition.deleteMany({ where: { id: { in: [ownExhibition.id, otherExhibition.id] } } })
+      await prisma.exhibition.deleteMany({
+        where: { id: { in: [ownExhibition.id, otherExhibition.id] } },
+      })
       await prisma.artwork.deleteMany({ where: { id: artwork.id } })
       await prisma.user.deleteMany({ where: { id: otherArtist.id } })
     }

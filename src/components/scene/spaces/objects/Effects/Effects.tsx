@@ -6,8 +6,10 @@ import { Raycaster } from 'three'
 
 import { BAKE_DEBUG, CAMERA_EXPOSURE, useBakedLook } from '@/components/scene/bake/bakedLook'
 import { useMeteredExposure, useMeteredWhiteBalance } from '@/components/scene/bake/bakeState'
+import { ROOM_CAMERA } from '@/components/scene/spaces/objects/Display/artworkFile'
 
 import { ArtworkFileEffect } from './ArtworkFileEffect'
+import { BLOOM_INTENSITY } from './bloomIntensity'
 import { WhiteBalanceEffect } from './WhiteBalanceEffect'
 
 /**
@@ -106,7 +108,6 @@ const ENABLE_FXAA = false
  * `mipmapBlur` is the modern path: wide, cheap, stable glow instead of a fixed kernel.
  */
 const ENABLE_BLOOM = true
-const BLOOM_INTENSITY = 0.6
 const BLOOM_THRESHOLD = 2.0
 
 /**
@@ -191,6 +192,9 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
     }
   }, [gl, exposure])
   const toneMappingMode = look.baked ? ToneMappingMode.NEUTRAL : ToneMappingMode.ACES_FILMIC
+  // A passepartout's face shows a share of what this camera makes of its light (AR-165).
+  ROOM_CAMERA.exposure.value = exposure
+  ROOM_CAMERA.whiteBalance.value.set(...((look.baked && whiteBalanceGain) || [1, 1, 1]))
 
   if (!enabled) return null
 

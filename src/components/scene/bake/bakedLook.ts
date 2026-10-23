@@ -111,7 +111,10 @@ export const lookFor = (
  * too — it showed each exhibition's stored floor, concrete, where every baked room has parquet
  * (AR-164). Null outside a baked space: the exhibition's stored floor.
  */
-export const shownFloor = (look: LookState, spaceId: string | null | undefined): CommonFloor | null => {
+export const shownFloor = (
+  look: LookState,
+  spaceId: string | null | undefined,
+): CommonFloor | null => {
   if (look.baked) return look.space.floor
   return isBakedSpace(spaceId) ? (spaceLooks[spaceId!]?.look.floor ?? null) : null
 }

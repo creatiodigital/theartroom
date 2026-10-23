@@ -25,7 +25,13 @@ export type GlbNode = {
 export type Glb = {
   nodes: GlbNode[]
   meshes: { primitives: { attributes: Record<string, number>; material?: number }[] }[]
-  accessors: { bufferView: number; componentType: number; count: number; type: string; byteOffset?: number }[]
+  accessors: {
+    bufferView: number
+    componentType: number
+    count: number
+    type: string
+    byteOffset?: number
+  }[]
   bufferViews: { byteOffset?: number; byteStride?: number }[]
   materials?: unknown[]
 }
@@ -45,7 +51,14 @@ export type LoadedGlb = {
 }
 
 const FLOAT = 5126
-const COMPONENT_BYTES: Record<number, number> = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, [FLOAT]: 4 }
+const COMPONENT_BYTES: Record<number, number> = {
+  5120: 1,
+  5121: 1,
+  5122: 2,
+  5123: 2,
+  5125: 4,
+  [FLOAT]: 4,
+}
 const TYPE_COUNT: Record<string, number> = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 }
 
 export const loadGlb = (path: string): LoadedGlb => {
@@ -97,7 +110,9 @@ export const loadGlb = (path: string): LoadedGlb => {
       const node = json!.nodes[cur]
       const r = node.rotation
       if (r && (r[0] !== 0 || r[1] !== 0 || r[2] !== 0 || Math.abs(r[3]) !== 1)) {
-        throw new Error(`glb-helpers: '${node.name}' has a rotated ancestor; boxOf is translation-only`)
+        throw new Error(
+          `glb-helpers: '${node.name}' has a rotated ancestor; boxOf is translation-only`,
+        )
       }
       const tr = node.translation ?? [0, 0, 0]
       t = [t[0] + tr[0], t[1] + tr[1], t[2] + tr[2]]

@@ -28,6 +28,7 @@ import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
+import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
@@ -36,6 +37,7 @@ import { ARTWORK_DISPLAY_NAME, artworkUserData } from './artworkId'
 import {
   createArtworkFileMaterial,
   createArtworkSurfaceMaterial,
+  PASSEPARTOUT_FACE_LIT,
   disposeEncodedMap,
   encodedMap,
 } from './artworkFile'
@@ -951,19 +953,26 @@ const Display = ({ artwork }: DisplayProps) => {
   ])
   useDisposable(frameMatObj)
 
-  // AR-163: in the baked look the passepartout and the paper border are part of the image — they
-  // show exactly their color, whatever the room's light (`createArtworkSurfaceMaterial`).
+  // AR-163: in the baked look the passepartout's front face and the paper border are part of the
+  // image — the paper shows exactly its color whatever the room's light, the face half its color
+  // and half the room's light (AR-165; `createArtworkSurfaceMaterial`).
   const filePassepartout = useBakedLook().baked
 
-  // Passepartout material with ambient light applied
-  const passepartoutMaterial = useMemo(() => {
-    if (filePassepartout) return createArtworkSurfaceMaterial(passepartoutColor ?? '#ffffff')
-    return new MeshStandardMaterial({
-      color: passepartoutAmbientColor,
-      roughness: 1,
-    })
-  }, [filePassepartout, passepartoutColor, passepartoutAmbientColor])
+  // Passepartout material with ambient light applied. AR-165: its bevel, edges and back always
+  // take the room's light — shown flat in its exact color, it "lost all 3D dimensionality".
+  const passepartoutMaterial = useMemo(
+    () => new MeshStandardMaterial({ color: passepartoutAmbientColor, roughness: 1 }),
+    [passepartoutAmbientColor],
+  )
   useDisposable(passepartoutMaterial)
+  const passepartoutFaceMaterial = useMemo(
+    () =>
+      filePassepartout
+        ? createArtworkSurfaceMaterial(passepartoutColor ?? '#ffffff', PASSEPARTOUT_FACE_LIT)
+        : null,
+    [filePassepartout, passepartoutColor],
+  )
+  useDisposable(passepartoutFaceMaterial)
 
   const paperMaterial = useMemo(
     () =>
@@ -991,8 +1000,11 @@ const Display = ({ artwork }: DisplayProps) => {
   // frameThickness is for Z-depth, range 1-20
   const frameDepth = Math.min(20, Math.max(1, frameThickness?.value ?? 1))
   const passepartoutS = showPassepartout ? (passepartoutSize?.value ?? 5) : 0
-  // passepartoutThickness is for Z-depth, clamped 0.1-1.0
-  const passepartoutDepth = Math.min(3, Math.max(0.2, passepartoutThickness?.value ?? 0.4))
+  // passepartoutThickness is for Z-depth, clamped to the editor's range
+  const passepartoutDepth = Math.min(
+    PASSEPARTOUT_THICKNESS.max,
+    Math.max(PASSEPARTOUT_THICKNESS.min, passepartoutThickness?.value ?? 0.4),
+  )
   // supportThickness is for Z-depth, clamped 0-10
   const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
   // Paper border (white margin) — extends paper plane around the image
@@ -1087,6 +1099,7 @@ const Display = ({ artwork }: DisplayProps) => {
             thickness={passepartoutBorder}
             depth={passepartoutDepth / 100}
             material={passepartoutMaterial}
+            faceMaterial={passepartoutFaceMaterial ?? undefined}
           />
         </group>
       )}

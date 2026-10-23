@@ -150,7 +150,11 @@ export const wallFont8 = localFont({
     { path: '../../public/fonts/plus-jakarta-sans-regular.ttf', weight: '400', style: 'normal' },
     { path: '../../public/fonts/plus-jakarta-sans-italic.ttf', weight: '400', style: 'italic' },
     { path: '../../public/fonts/plus-jakarta-sans-bold.ttf', weight: '700', style: 'normal' },
-    { path: '../../public/fonts/plus-jakarta-sans-bold-italic.ttf', weight: '700', style: 'italic' },
+    {
+      path: '../../public/fonts/plus-jakarta-sans-bold-italic.ttf',
+      weight: '700',
+      style: 'italic',
+    },
   ],
   variable: '--font-wall-plus-jakarta-sans',
   display: 'swap',

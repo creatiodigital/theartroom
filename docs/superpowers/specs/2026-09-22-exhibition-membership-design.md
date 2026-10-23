@@ -21,7 +21,7 @@ Three behaviors follow from that, all of them unwanted:
    it from the show.
 2. The public grid is built from those same rows, so the grid is always exactly
    the wall contents.
-3. `Exhibition.published` is a single boolean gating the exhibition page *and*
+3. `Exhibition.published` is a single boolean gating the exhibition page _and_
    the `/visit` route. Taking a broken 3D room offline takes the entire
    exhibition with it.
 
@@ -40,15 +40,15 @@ only difference is that the "Enter Virtual Exhibition" button is not there yet.
 
 Settled during design; recorded here so they are not re-litigated.
 
-| Question | Decision |
-|---|---|
-| What decides page visibility? | A per-artwork checkbox, and nothing else. |
-| Does placing a work in 3D put it on the page? | Yes, by default — `showOnPage` defaults to `true`. The 3D-only case is an explicit uncheck and is expected to be rare. |
-| Does removing a work from a wall remove it from the show? | No. Placement is cleared; membership is untouched. |
-| Grid order across multiple exhibitions | Per-exhibition `pageOrder`, falling back to the artist's library order. |
-| 3D switched off — what happens to `/visit`? | Button hidden, route 404s, scene API 404s. |
-| Can the 3D be live while the page is not? | No. `/visit` requires `published && spacePublished`. |
-| Do existing prod exhibitions change on deploy? | No. That constraint drives the migration design below. |
+| Question                                                  | Decision                                                                                                               |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| What decides page visibility?                             | A per-artwork checkbox, and nothing else.                                                                              |
+| Does placing a work in 3D put it on the page?             | Yes, by default — `showOnPage` defaults to `true`. The 3D-only case is an explicit uncheck and is expected to be rare. |
+| Does removing a work from a wall remove it from the show? | No. Placement is cleared; membership is untouched.                                                                     |
+| Grid order across multiple exhibitions                    | Per-exhibition `pageOrder`, falling back to the artist's library order.                                                |
+| 3D switched off — what happens to `/visit`?               | Button hidden, route 404s, scene API 404s.                                                                             |
+| Can the 3D be live while the page is not?                 | No. `/visit` requires `published && spacePublished`.                                                                   |
+| Do existing prod exhibitions change on deploy?            | No. That constraint drives the migration design below.                                                                 |
 
 ## Data model
 
@@ -100,12 +100,12 @@ New exhibitions are page-first: the room is hidden until switched on.
 A row exists when a work is a member, or is placed, or both. A row that is
 neither is deleted.
 
-| State | `showOnPage` | Placement | How it arises |
-|---|---|---|---|
-| Both (normal) | `true` | set | Hang the work in the room. |
-| Page only | `true` | `null` | Check the box without hanging it, or pull a hung work off a wall. |
-| 3D only (rare) | `false` | set | Deliberately uncheck a hung work. |
-| — | `false` | `null` | Row deleted. |
+| State          | `showOnPage` | Placement | How it arises                                                     |
+| -------------- | ------------ | --------- | ----------------------------------------------------------------- |
+| Both (normal)  | `true`       | set       | Hang the work in the room.                                        |
+| Page only      | `true`       | `null`    | Check the box without hanging it, or pull a hung work off a wall. |
+| 3D only (rare) | `false`      | set       | Deliberately uncheck a hung work.                                 |
+| —              | `false`      | `null`    | Row deleted.                                                      |
 
 ## Containing the nullability
 
@@ -245,31 +245,31 @@ where deleting the include is not.
 `published` keeps its exact current meaning and needs no new code. It already
 gates all five public surfaces:
 
-| Surface | Source |
-|---|---|
-| Homepage listing | `src/app/page.tsx:45` |
-| `/exhibitions` listing | `src/app/exhibitions/page.tsx:21` |
+| Surface                    | Source                                           |
+| -------------------------- | ------------------------------------------------ |
+| Homepage listing           | `src/app/page.tsx:45`                            |
+| `/exhibitions` listing     | `src/app/exhibitions/page.tsx:21`                |
 | Artist profile's show list | `src/lib/queries/getPublicArtistByHandler.ts:61` |
-| The exhibition page itself | `getPublicExhibitionByUrl` |
-| Sitemap | `src/app/sitemap.ts:10` |
+| The exhibition page itself | `getPublicExhibitionByUrl`                       |
+| Sitemap                    | `src/app/sitemap.ts:10`                          |
 
 ### The two unpublish operations
 
 "Unpublish" now names two different actions, and the difference must be
 unmistakable in the UI as well as in the data.
 
-| Operation | Switch | Effect |
-|---|---|---|
-| **Unpublish the exhibition** | `published = false` | The whole show leaves the site. The page 404s, it drops out of the homepage, the `/exhibitions` listing, the artist's profile and the sitemap, and `/visit` 404s with it. Nothing public remains. |
-| **Unpublish only the 3D space** | `spacePublished = false` | The room alone goes. The page, its artwork grid and every listing are untouched; only the "Enter Virtual Exhibition" button disappears and `/visit` 404s. |
+| Operation                       | Switch                   | Effect                                                                                                                                                                                            |
+| ------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unpublish the exhibition**    | `published = false`      | The whole show leaves the site. The page 404s, it drops out of the homepage, the `/exhibitions` listing, the artist's profile and the sitemap, and `/visit` 404s with it. Nothing public remains. |
+| **Unpublish only the 3D space** | `spacePublished = false` | The room alone goes. The page, its artwork grid and every listing are untouched; only the "Enter Virtual Exhibition" button disappears and `/visit` 404s.                                         |
 
 The full state matrix:
 
-| `published` | `spacePublished` | What the public sees |
-|---|---|---|
-| `true` | `true` | Page, grid, button, `/visit` — everything. |
-| `true` | `false` | Page and grid. No button, `/visit` 404s. |
-| `false` | either | Nothing. Page 404s, listings drop it, `/visit` 404s. |
+| `published` | `spacePublished` | What the public sees                                 |
+| ----------- | ---------------- | ---------------------------------------------------- |
+| `true`      | `true`           | Page, grid, button, `/visit` — everything.           |
+| `true`      | `false`          | Page and grid. No button, `/visit` 404s.             |
+| `false`     | either           | Nothing. Page 404s, listings drop it, `/visit` 404s. |
 
 `spacePublished` is meaningless while `published` is false, which is why the
 admin control for it is disabled in that state.
@@ -306,7 +306,7 @@ published on Monday with an empty room and finished on Friday would serve
 Monday's empty snapshot. Switching it off leaves the snapshot alone, so
 switching back on after a glitch does not lose the room.
 
-`spaceId` stays required. An exhibition always *has* an associated space; the
+`spaceId` stays required. An exhibition always _has_ an associated space; the
 space is hidden, never detached, so revealing it later is one toggle and never a
 re-association.
 
@@ -356,7 +356,7 @@ the whole show down.
 
 **Ready-but-hidden marker.** The list flags any exhibition that is published, has
 at least one artwork placed in its room, and still has `spacePublished = false`:
-*"3D room ready — not switched on."* Since switching the room on is the norm and
+_"3D room ready — not switched on."_ Since switching the room on is the norm and
 leaving it off the exception, the likelier mistake is finishing a room and
 forgetting to reveal it. The marker only ever appears in that one state.
 

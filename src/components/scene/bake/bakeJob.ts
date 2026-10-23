@@ -96,7 +96,7 @@ export const startBake = (
 
   // Daylight: visible window glass emits what it shows (`brightenWindows`: the same window
   // brightness a stored bake gets).
-  const lit = brightenWindows(scene, room.look.daylightGain)
+  const lit = brightenWindows(scene, room.look.daylightGain, room.look.lightWellDaylight)
   restore.push(lit.undo)
   const emitters: AreaEmitter[] = lit.windows
   const center = new Vector3(0, 1.5, 0)

@@ -205,21 +205,24 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
   ])
 
   // Handle double click - play/stop sound
-  const handleDoubleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation()
-    if (singleClickTimeout.current) {
-      clearTimeout(singleClickTimeout.current)
-      singleClickTimeout.current = null
-    }
+  const handleDoubleClick = useCallback(
+    (event: ThreeEvent<MouseEvent>) => {
+      event.stopPropagation()
+      if (singleClickTimeout.current) {
+        clearTimeout(singleClickTimeout.current)
+        singleClickTimeout.current = null
+      }
 
-    if (!soundUrl || isPlaceholdersShown || !audioRef.current) return
+      if (!soundUrl || isPlaceholdersShown || !audioRef.current) return
 
-    if (isPlaying) {
-      stop()
-    } else {
-      play(id, audioRef.current)
-    }
-  }, [soundUrl, isPlaying, isPlaceholdersShown, id, play, stop])
+      if (isPlaying) {
+        stop()
+      } else {
+        play(id, audioRef.current)
+      }
+    },
+    [soundUrl, isPlaying, isPlaceholdersShown, id, play, stop],
+  )
 
   // Stops propagation for the same reason Display does — see the note there.
   // Without it a work on the far face of a display panel steals the click.

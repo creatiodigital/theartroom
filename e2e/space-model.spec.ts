@@ -57,7 +57,9 @@ test('the model actually has panels to check', () => {
 test('every panel has both of its hangable faces', () => {
   // A box with one face has a side that silently cannot be hung on.
   const incomplete = panels.flatMap((i) =>
-    ['panelFront', 'panelBack'].filter((p) => !glb.names.includes(`${p}${i}`)).map((p) => `${p}${i}`),
+    ['panelFront', 'panelBack']
+      .filter((p) => !glb.names.includes(`${p}${i}`))
+      .map((p) => `${p}${i}`),
   )
   expect(incomplete, `missing faces:\n${incomplete.join('\n')}`).toEqual([])
 })
@@ -78,7 +80,10 @@ test('the two faces of a panel look in opposite directions, away from the box', 
       // Outward = the normal agrees with the direction from box centre to face.
       const outward = faceCentre.map((v, k) => v - centre[k])
       const dot = outward.reduce((acc, v, k) => acc + v * normal![k], 0)
-      expect(dot, `${side}${i} faces INTO its panel — artworks would hang backwards`).toBeGreaterThan(0)
+      expect(
+        dot,
+        `${side}${i} faces INTO its panel — artworks would hang backwards`,
+      ).toBeGreaterThan(0)
     }
 
     const front = glb.normalOf(`panelFront${i}`)!

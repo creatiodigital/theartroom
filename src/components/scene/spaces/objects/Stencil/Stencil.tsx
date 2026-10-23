@@ -1,6 +1,6 @@
 import { Text, RoundedBox, Line } from '@react-three/drei'
 import { WALL_SCALE } from '@/components/wallview/constants'
-import { Suspense, useState, useRef, useEffect, useCallback } from 'react'
+import { Suspense, useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import type { ComponentRef } from 'react'
 import { DoubleSide, Vector2, Vector3, Quaternion } from 'three'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -13,6 +13,13 @@ import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import {
+  ON_ARTWORK_BLENDING,
+  TEXT_CARD_SHADING,
+  createOnArtworkTextMaterial,
+} from '@/components/scene/spaces/objects/Display/artworkFile'
+import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 
 type StencilProps = {
   artwork: RuntimeArtwork
@@ -32,11 +39,14 @@ function PaperBackground({
   height,
   depth,
   tintColor,
+  shownPast,
 }: {
   width: number
   height: number
   depth: number
   tintColor?: string | null
+  /** The baked look: shown like a passepartout (`TEXT_CARD_SHADING`, AR-165). */
+  shownPast: boolean
 }) {
   const textures = usePaperTexture(/* textureRepeat */ 1)
 
@@ -51,6 +61,8 @@ function PaperBackground({
         position={[0, 0, -depth / 2]}
       >
         <meshStandardMaterial
+          key={shownPast ? 'shown' : 'lit'}
+          {...(shownPast ? TEXT_CARD_SHADING : {})}
           map={textures.map}
           normalMap={textures.normalMap}
           normalScale={new Vector2(1.5, 1.5)}
@@ -69,6 +81,8 @@ function PaperBackground({
     <mesh name="textCard" renderOrder={1}>
       <planeGeometry args={[width, height]} />
       <meshStandardMaterial
+        key={shownPast ? 'shown' : 'lit'}
+        {...(shownPast ? TEXT_CARD_SHADING : {})}
         map={textures.map}
         normalMap={textures.normalMap}
         normalScale={new Vector2(1.5, 1.5)}
@@ -91,12 +105,15 @@ function InsetBorder({
   inset = 0.012,
   color = '#c9a96e',
   lineWidth = 1,
+  onCard = false,
 }: {
   width: number
   height: number
   inset?: number
   color?: string
   lineWidth?: number
+  /** The baked look: drawn after the card, keeping its marker (`ON_ARTWORK_BLENDING`). */
+  onCard?: boolean
 }) {
   const hw = width / 2 - inset
   const hh = height / 2 - inset
@@ -110,6 +127,17 @@ function InsetBorder({
     [-hw, hh, z], // close the loop
   ]
 
+  if (onCard)
+    return (
+      <Line
+        points={points}
+        color={color}
+        lineWidth={lineWidth}
+        renderOrder={2}
+        transparent
+        {...ON_ARTWORK_BLENDING}
+      />
+    )
   return <Line points={points} color={color} lineWidth={lineWidth} />
 }
 
@@ -122,11 +150,14 @@ function MonogramOverlay({
   size = 0.04,
   position: pos = 'bottom',
   offset = 0.02,
+  onCard = false,
 }: {
   width: number
   height: number
   color?: string
   opacity?: number
+  /** The baked look: keeps the card's marker under it (`ON_ARTWORK_BLENDING`). */
+  onCard?: boolean
   /** Absolute monogram height in meters */
   size?: number
   position?: 'top' | 'bottom'
@@ -154,7 +185,13 @@ function MonogramOverlay({
   return (
     <mesh renderOrder={3} position={[0, yOffset, 0.0005]}>
       <planeGeometry args={[clampedWidth, clampedHeight]} />
-      <meshBasicMaterial map={texture} transparent depthWrite={false} />
+      <meshBasicMaterial
+        key={onCard ? 'on-card' : 'plain'}
+        map={texture}
+        transparent
+        depthWrite={false}
+        {...(onCard ? ON_ARTWORK_BLENDING : {})}
+      />
     </mesh>
   )
 }
@@ -202,6 +239,15 @@ const Stencil = ({ artwork }: StencilProps) => {
   )
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const dispatch = useDispatch()
+
+  // AR-165: in the baked look the card is shown like a passepartout (`TEXT_CARD_SHADING`) and
+  // what is drawn on it keeps its marker, so the text shows its own color with clean edges.
+  const shownPast = useBakedLook().baked
+  const onCardTextMaterial = useMemo(
+    () => (shownPast ? createOnArtworkTextMaterial() : null),
+    [shownPast],
+  )
+  useDisposable(onCardTextMaterial)
 
   // Refs for click detection
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
@@ -506,6 +552,7 @@ const Stencil = ({ artwork }: StencilProps) => {
                   height={planeHeight}
                   depth={cardDepth}
                   tintColor={textBackgroundColor}
+                  shownPast={shownPast}
                 />
               </Suspense>
               {showTextBorder && (
@@ -514,6 +561,7 @@ const Stencil = ({ artwork }: StencilProps) => {
                   height={planeHeight}
                   inset={(textBorderOffset?.value ?? 1.2) / 100}
                   color={textBorderColor ?? '#c9a96e'}
+                  onCard={shownPast}
                 />
               )}
               {showMonogram && (
@@ -525,6 +573,7 @@ const Stencil = ({ artwork }: StencilProps) => {
                   size={(monogramSize?.value ?? 4) / 100}
                   position={monogramPosition ?? 'bottom'}
                   offset={(monogramOffset?.value ?? 2) / 100}
+                  onCard={shownPast}
                 />
               )}
             </>
@@ -536,7 +585,8 @@ const Stencil = ({ artwork }: StencilProps) => {
 
         if (cardDepth > 0) {
           return (
-            // `textCard`: the bake gives cards the light measured at their artwork (AR-161).
+            // `textCard`: lit by the lamps and the light measured at its artwork (AR-161); in the
+            // baked look shown like a passepartout (AR-165).
             <RoundedBox
               name="textCard"
               args={[planeWidth, planeHeight, cardDepth]}
@@ -545,7 +595,12 @@ const Stencil = ({ artwork }: StencilProps) => {
               renderOrder={1}
               position={[0, 0, -cardDepth / 2]}
             >
-              <meshStandardMaterial color={textBackgroundColor ?? 'white'} roughness={1.0} />
+              <meshStandardMaterial
+                key={shownPast ? 'shown' : 'lit'}
+                {...(shownPast ? TEXT_CARD_SHADING : {})}
+                color={textBackgroundColor ?? 'white'}
+                roughness={1.0}
+              />
             </RoundedBox>
           )
         }
@@ -556,6 +611,8 @@ const Stencil = ({ artwork }: StencilProps) => {
                 painted surface on a wall and has to take the same light. Basic
                 is unlit, so a lamp used to stop at the card's edge. */}
             <meshStandardMaterial
+              key={shownPast ? 'shown' : 'lit'}
+              {...(shownPast ? TEXT_CARD_SHADING : {})}
               color={textBackgroundColor ?? 'white'}
               roughness={1.0}
               side={DoubleSide}
@@ -587,6 +644,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             whiteSpace="normal"
             overflowWrap="break-word"
             onSync={calculateTextDimensions}
+            material={onCardTextMaterial ?? undefined}
             // Troika's SDF glyph atlas is sized by this value, and there is ONE
             // atlas per sdfGlyphSize shared by every font and every <Text> in
             // the scene. It is not a per-label quality knob.

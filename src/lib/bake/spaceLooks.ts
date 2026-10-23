@@ -33,11 +33,21 @@ export interface SpaceLook {
   sunAzimuthDeg: number
   /** Window glass emits this × its display brightness into the room. */
   daylightGain: number
+  /**
+   * A light well (an opening with no glass: its sky panel `windowLight{i}` emits itself) shows
+   * this share of a window's daylight — it opens onto a shaded court, not the open sky. Unset: 1.
+   */
+  lightWellDaylight?: number
   /** Window glass: color and display brightness (the stored `windowLightColor` / `windowLightIntensity` scale). */
   windowColor: string
   windowIntensity: number
   /** White wall paint's reflectance (the wall color scales it). */
   paintReflectance: number
+  /**
+   * The share of the floor's color its bounce carries onto the walls and ceiling, at the same
+   * brightness (`floorBounceAlbedo`); the floor itself looks as it is. Unset: 1, all of it.
+   */
+  floorBounceColor?: number
   /** Switch and socket plastic's reflectance. */
   plasticReflectance: number
   /** Recessed and round lamps: light (and disc) color. */
@@ -80,6 +90,9 @@ const PARIS_VIENNA: SpaceLook = {
   windowColor: '#f5fbff',
   windowIntensity: 4.2,
   paintReflectance: 0.9,
+  // AR-165 (Eduardo 2026-10-23): the warm floor turned the walls and ceiling beige — "just
+  // reduce its influence" (the floor's look stays). First try: half its color.
+  floorBounceColor: 0.5,
   plasticReflectance: 0.85,
   lampColor: '#ffffff',
   trackLampColor: '#fffeeb',
@@ -106,6 +119,9 @@ const MADRID: SpaceLook = {
   windowColor: '#f2f2f2',
   windowIntensity: 4.2,
   paintReflectance: 0.9,
+  // AR-165 (Eduardo 2026-10-23): the warm floor turned the walls and ceiling beige — "just
+  // reduce its influence" (the floor's look stays). First try: half its color.
+  floorBounceColor: 0.5,
   plasticReflectance: 0.85,
   lampColor: '#ffffff',
   trackLampColor: '#ffffff',
@@ -117,7 +133,13 @@ const MADRID: SpaceLook = {
 
 export const spaceLooks: Record<string, { camera: SpaceCamera; look: SpaceLook }> = {
   // AR-161: camera from the approved Permanence bake (seeded), 2026-10-18 — Kritzendorf uses it too.
-  paris: { camera: { exposure: 0.524, whiteBalance: [0.933, 1.01, 1.135] }, look: PARIS_VIENNA },
+  // AR-165: the opening at the end of the exit corridor (paris22, `windowLight1`, no glass) at a
+  // window's full daylight burned the corridor walls white (Eduardo 2026-10-23: "too intense").
+  // It is the only light well in any space; otherwise Paris keeps the look it shares with Vienna.
+  paris: {
+    camera: { exposure: 0.524, whiteBalance: [0.933, 1.01, 1.135] },
+    look: { ...PARIS_VIENNA, lightWellDaylight: 0.25 },
+  },
   // AR-161: camera from the approved Florescere bake (seeded), 2026-10-18.
   vienna: { camera: { exposure: 0.588, whiteBalance: [0.916, 1.014, 1.153] }, look: PARIS_VIENNA },
   // AR-161: approved 2026-10-19 (Vivrière). With the sun the metered camera (0.435) would be set by

@@ -24,14 +24,15 @@ export interface WindowDaylight {
 }
 
 /**
- * Gives every window's sky its physical brightness (× `gain`, the space's daylight gain). Returns
- * the windows the light enters through (the bake's area emitters) and the undo. A sky material is
- * brightened once, however many openings show it. A throw midway puts back what it changed before
- * rethrowing.
+ * Gives every window's sky its physical brightness (× `gain`, the space's daylight gain; a light
+ * well × `lightWell` more, the space's `lightWellDaylight`). Returns the windows the light enters
+ * through (the bake's area emitters) and the undo. A sky material is brightened once, however many
+ * openings show it. A throw midway puts back what it changed before rethrowing.
  */
 export const brightenWindows = (
   scene: Object3D,
   gain: number,
+  lightWell = 1,
 ): { windows: WindowDaylight[]; undo: () => void } => {
   const windows: WindowDaylight[] = []
   const restore: (() => void)[] = []
@@ -59,6 +60,7 @@ export const brightenWindows = (
       }
       // The surface that shows the sky (its brightness) — `m` is where the light enters.
       let sky: Mesh = m
+      let share = 1
       if (!m.visible) {
         // An open window (glass hidden) shows the sky panel behind it: the OPENING emits what
         // that panel shows, so daylight enters only through it — the panel itself, 2 m out and
@@ -72,6 +74,8 @@ export const brightenWindows = (
         // its opening) already emits it. Planes behind an opening with no glass (a light
         // well) emit themselves.
         if (within3m(/^windowGlass\d+$/, false)) return
+        // A light well opens onto a shaded court, not the open sky: it shows the space's share.
+        share = lightWell
       }
       // The glass shows the sky; give it the sky's physical brightness — a window is far
       // brighter than any lamp — and emit exactly what it shows into the room.
@@ -79,7 +83,7 @@ export const brightenWindows = (
       if (!brightened.has(skyMaterial)) {
         brightened.add(skyMaterial)
         const previous = skyMaterial.emissiveIntensity
-        skyMaterial.emissiveIntensity = previous * gain
+        skyMaterial.emissiveIntensity = previous * gain * share
         restore.push(() => {
           skyMaterial.emissiveIntensity = previous
         })
