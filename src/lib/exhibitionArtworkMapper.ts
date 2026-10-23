@@ -1,4 +1,5 @@
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { isPassepartoutThickness } from '@/lib/passepartoutThickness'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 
 /**
@@ -136,12 +137,11 @@ const WEIGHT_LABEL_MAP: Record<string, string> = {
 export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
   const mappedWeight = WEIGHT_MAP[ea.fontWeight] ?? 'regular'
 
-  // Clamp passepartoutThickness to valid range; fall back to 0.6 (a value present in the
-  // dropdown options) so the Select doesn't render blank for legacy 0.3 rows.
-  const passepartoutThicknessVal =
-    ea.passepartoutThickness && ea.passepartoutThickness >= 0.2 && ea.passepartoutThickness <= 3
-      ? ea.passepartoutThickness
-      : 0.6
+  // A thickness the editor can't set reads as the default board, 0.6 cm (AR-165: the range is
+  // shared — this copy's old 0.2 floor turned a saved 0.1 back into 0.6).
+  const passepartoutThicknessVal = isPassepartoutThickness(ea.passepartoutThickness)
+    ? ea.passepartoutThickness
+    : 0.6
 
   return {
     id: ea.artworkId,

@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/Slider'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
+import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 import type { TArtwork } from '@/types/artwork'
 
 type PresentationSectionProps = {
@@ -404,8 +405,8 @@ const PresentationSection = ({
               </span>
             </div>
             <Slider
-              min={0.2}
-              max={3}
+              min={PASSEPARTOUT_THICKNESS.min}
+              max={PASSEPARTOUT_THICKNESS.max}
               step={0.1}
               value={passepartoutThickness?.value ?? 1}
               onChange={(v) =>

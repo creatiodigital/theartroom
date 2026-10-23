@@ -35,38 +35,40 @@
 
 ## File map
 
-| File | Responsibility |
-|---|---|
-| `prisma/schema.prisma` | `ExhibitionSection` model, `Exhibition.sections`, `ExhibitionArtwork.sectionId` |
-| `src/lib/exhibitionSections.ts` (new) | Pure: `SECTION_TITLE_MAX`, `validateSectionTitle`, `groupBySection` |
-| `src/lib/exhibitionSectionAccess.ts` (new) | `requireExhibitionOwner(exhibitionId)` — 404/403 guard for section routes |
-| `src/app/api/exhibitions/[id]/sections/route.ts` (new) | `GET` list, `POST` create |
-| `src/app/api/exhibitions/[id]/sections/[sectionId]/route.ts` (new) | `PATCH` rename, `DELETE` |
-| `src/app/api/exhibitions/[id]/sections/order/route.ts` (new) | `PUT` reorder |
-| `src/app/api/artworks/[id]/route.ts` | `GET` returns `exhibitionSections`; `PUT` validates + writes `sectionId` |
-| `src/app/api/exhibitions/route.ts` | `GET` list includes ordered `sections` |
-| `src/lib/queries/getPublicExhibitionByUrl.ts` | `groups` + flattened `artworks` |
-| `src/components/exhibitions/profile/index.tsx` + `.module.scss` | Render one grid per group with heading |
-| `src/components/dashboard/exhibitions/settings/SectionsEditor.tsx` + `.module.scss` (new) | Add / rename / delete / drag-reorder |
-| `src/components/dashboard/exhibitions/settings/index.tsx` | Mount `SectionsEditor` |
-| `src/components/shared/ArtworkEditForm/index.tsx` | `exhibitionSections` form field + per-exhibition dropdown |
-| `src/components/dashboard/artworks/edit/index.tsx` | Feed `sections` into the exhibitions list; widen change handler |
-| `src/components/wallview/ArtworkEditModal/index.tsx` | Widen change handler type only |
-| `e2e/exhibition-sections-api.spec.ts` (new) | Section routes |
-| `e2e/artwork-exhibition-sections.spec.ts` (new) | Artwork PUT/GET section field |
-| `e2e/exhibition-page-sections.spec.ts` (new) | Public grouping + neighbours |
-| `e2e/exhibition-sections-editor.spec.ts` (new) | Settings UI |
-| `e2e/artwork-section-picker.spec.ts` (new) | Artwork form dropdown |
+| File                                                                                      | Responsibility                                                                  |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `prisma/schema.prisma`                                                                    | `ExhibitionSection` model, `Exhibition.sections`, `ExhibitionArtwork.sectionId` |
+| `src/lib/exhibitionSections.ts` (new)                                                     | Pure: `SECTION_TITLE_MAX`, `validateSectionTitle`, `groupBySection`             |
+| `src/lib/exhibitionSectionAccess.ts` (new)                                                | `requireExhibitionOwner(exhibitionId)` — 404/403 guard for section routes       |
+| `src/app/api/exhibitions/[id]/sections/route.ts` (new)                                    | `GET` list, `POST` create                                                       |
+| `src/app/api/exhibitions/[id]/sections/[sectionId]/route.ts` (new)                        | `PATCH` rename, `DELETE`                                                        |
+| `src/app/api/exhibitions/[id]/sections/order/route.ts` (new)                              | `PUT` reorder                                                                   |
+| `src/app/api/artworks/[id]/route.ts`                                                      | `GET` returns `exhibitionSections`; `PUT` validates + writes `sectionId`        |
+| `src/app/api/exhibitions/route.ts`                                                        | `GET` list includes ordered `sections`                                          |
+| `src/lib/queries/getPublicExhibitionByUrl.ts`                                             | `groups` + flattened `artworks`                                                 |
+| `src/components/exhibitions/profile/index.tsx` + `.module.scss`                           | Render one grid per group with heading                                          |
+| `src/components/dashboard/exhibitions/settings/SectionsEditor.tsx` + `.module.scss` (new) | Add / rename / delete / drag-reorder                                            |
+| `src/components/dashboard/exhibitions/settings/index.tsx`                                 | Mount `SectionsEditor`                                                          |
+| `src/components/shared/ArtworkEditForm/index.tsx`                                         | `exhibitionSections` form field + per-exhibition dropdown                       |
+| `src/components/dashboard/artworks/edit/index.tsx`                                        | Feed `sections` into the exhibitions list; widen change handler                 |
+| `src/components/wallview/ArtworkEditModal/index.tsx`                                      | Widen change handler type only                                                  |
+| `e2e/exhibition-sections-api.spec.ts` (new)                                               | Section routes                                                                  |
+| `e2e/artwork-exhibition-sections.spec.ts` (new)                                           | Artwork PUT/GET section field                                                   |
+| `e2e/exhibition-page-sections.spec.ts` (new)                                              | Public grouping + neighbours                                                    |
+| `e2e/exhibition-sections-editor.spec.ts` (new)                                            | Settings UI                                                                     |
+| `e2e/artwork-section-picker.spec.ts` (new)                                                | Artwork form dropdown                                                           |
 
 ---
 
 ### Task 1: Schema + pure helpers
 
 **Files:**
+
 - Modify: `prisma/schema.prisma` (models `Exhibition` ~line 667, `ExhibitionArtwork` ~line 761)
 - Create: `src/lib/exhibitionSections.ts`
 
 **Interfaces:**
+
 - Produces: Prisma model `exhibitionSection` (`id`, `exhibitionId`, `title`, `order`, `createdAt`); `exhibitionArtwork.sectionId: string | null`.
 - Produces: `SECTION_TITLE_MAX = 60`; `validateSectionTitle(raw: unknown, takenTitles: string[]): { title: string } | { error: string }`; `type SectionGroup<T> = { id: string | null; title: string | null; artworks: T[] }`; `groupBySection<T>(rows: { sectionId: string | null; artwork: T }[], sections: { id: string; title: string }[]): SectionGroup<T>[]`.
 
@@ -186,6 +188,7 @@ Tell the owner the schema has one new table (`ExhibitionSection`) and one new nu
 ### Task 2: Section API routes
 
 **Files:**
+
 - Create: `src/lib/exhibitionSectionAccess.ts`
 - Create: `src/app/api/exhibitions/[id]/sections/route.ts`
 - Create: `src/app/api/exhibitions/[id]/sections/[sectionId]/route.ts`
@@ -193,6 +196,7 @@ Tell the owner the schema has one new table (`ExhibitionSection`) and one new nu
 - Test: `e2e/exhibition-sections-api.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `validateSectionTitle` (Task 1), `requireOwnership` from `@/lib/authUtils` (returns `{ session, error }`, `error` is a 401/403 `NextResponse` or null; allows the owner, someone impersonating them, or a superAdmin).
 - Produces (HTTP, used by Task 5):
   - `GET /api/exhibitions/[id]/sections` → `200 SectionDto[]`
@@ -481,7 +485,12 @@ export function toSectionDto(row: {
   order: number
   _count: { exhibitionArtworks: number }
 }): SectionDto {
-  return { id: row.id, title: row.title, order: row.order, artworkCount: row._count.exhibitionArtworks }
+  return {
+    id: row.id,
+    title: row.title,
+    order: row.order,
+    artworkCount: row._count.exhibitionArtworks,
+  }
 }
 ```
 
@@ -714,10 +723,12 @@ Expected: PASS. Do not commit.
 ### Task 3: Artwork save + load carry the section
 
 **Files:**
+
 - Modify: `src/app/api/artworks/[id]/route.ts` (GET ~line 200–213; PUT membership block ~line 366–457)
 - Test: `e2e/artwork-exhibition-sections.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `exhibitionArtwork.sectionId`, `exhibitionSection` (Task 1).
 - Produces: `GET /api/artworks/[id]` response gains `exhibitionSections: Record<string, string | null>` (keyed by exhibition id, `showOnPage` rows only). `PUT /api/artworks/[id]` accepts optional `exhibitionSections: Record<string, string | null>` alongside `exhibitionIds`; a section id that doesn't belong to its key's exhibition → `400 { error: 'That section belongs to a different exhibition.' }` with nothing written.
 
@@ -846,9 +857,7 @@ test('a section from a different exhibition is a 400 and writes nothing', async 
   }
 })
 
-test('echoing the GET payload back changes nothing (wall-view modal save)', async ({
-  request,
-}) => {
+test('echoing the GET payload back changes nothing (wall-view modal save)', async ({ request }) => {
   const s = await setup()
   await prisma.exhibitionArtwork.create({
     data: {
@@ -920,43 +929,41 @@ In `src/app/api/artworks/[id]/route.ts`, change the `memberOf` query and respons
 Inside `if (Array.isArray(body.exhibitionIds)) {`, directly after `const allowedIds = new Set(ownedExhibitions.map((e) => e.id))`, add:
 
 ```ts
-      // The section per ticked exhibition. Absent → sections are left exactly
-      // as they are. Entries for exhibitions that aren't ticked are ignored.
-      // A section must belong to the exhibition it is filed under — checked
-      // here, before any write is queued, so a bad id fails the whole save.
-      const requestedSections = new Map<string, string | null>()
-      if (body.exhibitionSections && typeof body.exhibitionSections === 'object') {
-        for (const [exhibitionId, sectionId] of Object.entries(
-          body.exhibitionSections as Record<string, unknown>,
-        )) {
-          if (!allowedIds.has(exhibitionId)) continue
-          if (sectionId === null || typeof sectionId === 'string') {
-            requestedSections.set(exhibitionId, sectionId || null)
-          }
-        }
-      }
-      const namedSectionIds = [...requestedSections.values()].filter(
-        (v): v is string => v !== null,
+// The section per ticked exhibition. Absent → sections are left exactly
+// as they are. Entries for exhibitions that aren't ticked are ignored.
+// A section must belong to the exhibition it is filed under — checked
+// here, before any write is queued, so a bad id fails the whole save.
+const requestedSections = new Map<string, string | null>()
+if (body.exhibitionSections && typeof body.exhibitionSections === 'object') {
+  for (const [exhibitionId, sectionId] of Object.entries(
+    body.exhibitionSections as Record<string, unknown>,
+  )) {
+    if (!allowedIds.has(exhibitionId)) continue
+    if (sectionId === null || typeof sectionId === 'string') {
+      requestedSections.set(exhibitionId, sectionId || null)
+    }
+  }
+}
+const namedSectionIds = [...requestedSections.values()].filter((v): v is string => v !== null)
+if (namedSectionIds.length) {
+  const found = await prisma.exhibitionSection.findMany({
+    where: { id: { in: namedSectionIds } },
+    select: { id: true, exhibitionId: true },
+  })
+  const ownerOf = new Map(found.map((s) => [s.id, s.exhibitionId]))
+  for (const [exhibitionId, sectionId] of requestedSections) {
+    if (sectionId !== null && ownerOf.get(sectionId) !== exhibitionId) {
+      return NextResponse.json(
+        { error: 'That section belongs to a different exhibition.' },
+        { status: 400 },
       )
-      if (namedSectionIds.length) {
-        const found = await prisma.exhibitionSection.findMany({
-          where: { id: { in: namedSectionIds } },
-          select: { id: true, exhibitionId: true },
-        })
-        const ownerOf = new Map(found.map((s) => [s.id, s.exhibitionId]))
-        for (const [exhibitionId, sectionId] of requestedSections) {
-          if (sectionId !== null && ownerOf.get(sectionId) !== exhibitionId) {
-            return NextResponse.json(
-              { error: 'That section belongs to a different exhibition.' },
-              { status: 400 },
-            )
-          }
-        }
-      }
-      const sectionData = (exhibitionId: string) =>
-        requestedSections.has(exhibitionId)
-          ? { sectionId: requestedSections.get(exhibitionId) ?? null }
-          : {}
+    }
+  }
+}
+const sectionData = (exhibitionId: string) =>
+  requestedSections.has(exhibitionId)
+    ? { sectionId: requestedSections.get(exhibitionId) ?? null }
+    : {}
 ```
 
 - [ ] **Step 5: PUT writes the section with the membership**
@@ -970,39 +977,39 @@ In the same block, add `sectionId: true` to the `rows` select:
 Replace the `for (const exhibitionId of allowedIds) { ... }` loop with:
 
 ```ts
-      for (const exhibitionId of allowedIds) {
-        const row = rowByExhibition.get(exhibitionId)
-        if (memberIds.has(exhibitionId)) {
-          // Already on the page — only the section may have changed. Skip the
-          // write when it hasn't, so echoing the GET back is a true no-op.
-          const next = sectionData(exhibitionId)
-          if ('sectionId' in next && next.sectionId !== row?.sectionId) {
-            membershipOperations.push(
-              prisma.exhibitionArtwork.update({
-                where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
-                data: next,
-              }),
-            )
-          }
-          continue
-        }
-        if (row) {
-          // Hung but unchecked until now: keep the coordinates, add the page.
-          membershipOperations.push(
-            prisma.exhibitionArtwork.update({
-              where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
-              data: { showOnPage: true, ...sectionData(exhibitionId) },
-            }),
-          )
-        } else {
-          // Brand new membership: on the page, not hung anywhere.
-          membershipOperations.push(
-            prisma.exhibitionArtwork.create({
-              data: { exhibitionId, artworkId: id, showOnPage: true, ...sectionData(exhibitionId) },
-            }),
-          )
-        }
-      }
+for (const exhibitionId of allowedIds) {
+  const row = rowByExhibition.get(exhibitionId)
+  if (memberIds.has(exhibitionId)) {
+    // Already on the page — only the section may have changed. Skip the
+    // write when it hasn't, so echoing the GET back is a true no-op.
+    const next = sectionData(exhibitionId)
+    if ('sectionId' in next && next.sectionId !== row?.sectionId) {
+      membershipOperations.push(
+        prisma.exhibitionArtwork.update({
+          where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
+          data: next,
+        }),
+      )
+    }
+    continue
+  }
+  if (row) {
+    // Hung but unchecked until now: keep the coordinates, add the page.
+    membershipOperations.push(
+      prisma.exhibitionArtwork.update({
+        where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
+        data: { showOnPage: true, ...sectionData(exhibitionId) },
+      }),
+    )
+  } else {
+    // Brand new membership: on the page, not hung anywhere.
+    membershipOperations.push(
+      prisma.exhibitionArtwork.create({
+        data: { exhibitionId, artworkId: id, showOnPage: true, ...sectionData(exhibitionId) },
+      }),
+    )
+  }
+}
 ```
 
 The removal loop below it stays as is.
@@ -1022,12 +1029,14 @@ Expected: PASS. Do not commit.
 ### Task 4: Public page groups works by section
 
 **Files:**
+
 - Modify: `src/lib/queries/getPublicExhibitionByUrl.ts`
 - Modify: `src/components/exhibitions/profile/index.tsx` (~line 104–114)
 - Modify: `src/components/exhibitions/profile/ExhibitionProfile.module.scss`
 - Test: `e2e/exhibition-page-sections.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `groupBySection`, `SectionGroup` (Task 1).
 - Produces: `PublicExhibition.groups: SectionGroup<PublicExhibitionArtwork>[]`; `PublicExhibition.artworks` = groups flattened (display order). `getExhibitionNeighbours` in `src/app/artworks/[slug]/page.tsx` is unchanged and inherits the order.
 
@@ -1086,7 +1095,12 @@ test('groups works under section headings in order, and arrows follow the groups
   await prisma.exhibitionArtwork.createMany({
     data: [
       // Created in the "wrong" order on purpose — the page must not care.
-      { exhibitionId: exhibition.id, artworkId: inSecond.id, showOnPage: true, sectionId: second.id },
+      {
+        exhibitionId: exhibition.id,
+        artworkId: inSecond.id,
+        showOnPage: true,
+        sectionId: second.id,
+      },
       { exhibitionId: exhibition.id, artworkId: inFirst.id, showOnPage: true, sectionId: first.id },
       { exhibitionId: exhibition.id, artworkId: loose.id, showOnPage: true },
     ],
@@ -1201,33 +1215,33 @@ In `getExhibition`, add `sections` beside `exhibitionArtworks` and `sectionId` t
 In `type PublicExhibition`, after `artworks: PublicExhibitionArtwork[]`, add:
 
 ```ts
-  /** The grid's layout: works with no section first (title null), then one
-   *  group per section in the artist's order. Empty groups are left out.
-   *  `artworks` is exactly these groups flattened. */
-  groups: SectionGroup<PublicExhibitionArtwork>[]
+/** The grid's layout: works with no section first (title null), then one
+ *  group per section in the artist's order. Empty groups are left out.
+ *  `artworks` is exactly these groups flattened. */
+groups: SectionGroup < PublicExhibitionArtwork > []
 ```
 
 In `loadPublicExhibition`, replace the `const artworks = ...` chain and its `.map(...)` with:
 
 ```ts
-  const ordered = exhibition.exhibitionArtworks
-    .filter((ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image')
-    .sort((a, b) => {
-      // Per-exhibition order when the artist has set one, otherwise the
-      // artist's library order. Unordered rows sink below ordered ones.
-      const aOrder = a.pageOrder ?? Number.POSITIVE_INFINITY
-      const bOrder = b.pageOrder ?? Number.POSITIVE_INFINITY
-      if (aOrder !== bOrder) return aOrder - bOrder
-      return a.artwork.order - b.artwork.order
-    })
+const ordered = exhibition.exhibitionArtworks
+  .filter((ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image')
+  .sort((a, b) => {
+    // Per-exhibition order when the artist has set one, otherwise the
+    // artist's library order. Unordered rows sink below ordered ones.
+    const aOrder = a.pageOrder ?? Number.POSITIVE_INFINITY
+    const bOrder = b.pageOrder ?? Number.POSITIVE_INFINITY
+    if (aOrder !== bOrder) return aOrder - bOrder
+    return a.artwork.order - b.artwork.order
+  })
 
-  // Sections split the page; the flattened groups are the one display order the
-  // artwork page's previous/next arrows also walk.
-  const groups = groupBySection(
-    ordered.map((ea) => ({ sectionId: ea.sectionId, artwork: toPublicArtwork(ea.artwork) })),
-    exhibition.sections,
-  )
-  const artworks = groups.flatMap((g) => g.artworks)
+// Sections split the page; the flattened groups are the one display order the
+// artwork page's previous/next arrows also walk.
+const groups = groupBySection(
+  ordered.map((ea) => ({ sectionId: ea.sectionId, artwork: toPublicArtwork(ea.artwork) })),
+  exhibition.sections,
+)
+const artworks = groups.flatMap((g) => g.artworks)
 ```
 
 And add `groups,` to the returned object after `artworks,`.
@@ -1237,41 +1251,41 @@ And add `groups,` to the returned object after `artworks,`.
 In `src/components/exhibitions/profile/index.tsx`, replace the block
 
 ```tsx
-        {exhibition.artworks.length > 0 && (
-          <div className={styles.artworksSection}>
-            ...
-          </div>
-        )}
+{
+  exhibition.artworks.length > 0 && <div className={styles.artworksSection}>...</div>
+}
 ```
 
 with:
 
 ```tsx
-        {exhibition.artworks.length > 0 && (
-          <div className={styles.artworksSection}>
-            {/* One grid per section, no-section works first with no heading.
+{
+  exhibition.artworks.length > 0 && (
+    <div className={styles.artworksSection}>
+      {/* One grid per section, no-section works first with no heading.
                 The slug rides along on every card link, so the artwork page
                 can offer arrows through THIS exhibition's sequence. */}
-            {exhibition.groups.map((group) => (
-              <section
-                key={group.id ?? 'unsectioned'}
-                className={styles.group}
-                aria-label={group.title ?? undefined}
-              >
-                {group.title && (
-                  <Text as="h2" className={styles.groupHeading} data-section-heading>
-                    {group.title}
-                  </Text>
-                )}
-                <ArtworkGrid
-                  artworks={group.artworks}
-                  artistName={artistName}
-                  exhibitionSlug={exhibitionSlug}
-                />
-              </section>
-            ))}
-          </div>
-        )}
+      {exhibition.groups.map((group) => (
+        <section
+          key={group.id ?? 'unsectioned'}
+          className={styles.group}
+          aria-label={group.title ?? undefined}
+        >
+          {group.title && (
+            <Text as="h2" className={styles.groupHeading} data-section-heading>
+              {group.title}
+            </Text>
+          )}
+          <ArtworkGrid
+            artworks={group.artworks}
+            artistName={artistName}
+            exhibitionSlug={exhibitionSlug}
+          />
+        </section>
+      ))}
+    </div>
+  )
+}
 ```
 
 If `Text` does not forward `data-*` attributes (check `src/components/ui/Typography`), use a plain `<h2 className={styles.groupHeading} data-section-heading>` instead.
@@ -1333,12 +1347,14 @@ Expected: PASS. Do not commit.
 ### Task 5: Sections editor on the exhibition settings page
 
 **Files:**
+
 - Create: `src/components/dashboard/exhibitions/settings/SectionsEditor.tsx`
 - Create: `src/components/dashboard/exhibitions/settings/SectionsEditor.module.scss`
 - Modify: `src/components/dashboard/exhibitions/settings/index.tsx` (between the Short Description section and the Description section, ~line 372)
 - Test: `e2e/exhibition-sections-editor.spec.ts`
 
 **Interfaces:**
+
 - Consumes: the five routes and `SectionDto` shape from Task 2; `SECTION_TITLE_MAX` (Task 1).
 - Produces: `<SectionsEditor exhibitionId={string} />`.
 
@@ -1421,7 +1437,9 @@ test('add sections, with errors on blank and duplicate names', async ({ page }) 
 
     await input.fill('magnolia')
     await add.click()
-    await expect(page.getByText('This exhibition already has a section with that name.')).toBeVisible()
+    await expect(
+      page.getByText('This exhibition already has a section with that name.'),
+    ).toBeVisible()
 
     await expect.poll(() => titlesInDb(exhibition.id)).toEqual(['Magnolia', 'Mistery'])
     await page.reload()
@@ -1521,7 +1539,9 @@ test('delete asks first, says how many works move, and keeps them', async ({ pag
       .locator(`[data-section-id="${section.id}"]`)
       .getByRole('button', { name: 'Delete' })
       .click()
-    await expect(page.getByText('1 artwork will move to no section. It stays on the page.')).toBeVisible()
+    await expect(
+      page.getByText('1 artwork will move to no section. It stays on the page.'),
+    ).toBeVisible()
     await page.getByRole('button', { name: 'Delete section' }).click()
 
     await expect(page.locator('[data-section-row]')).toHaveCount(0)
@@ -1809,8 +1829,15 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
 
       {sections.length > 0 && (
         <div className={styles.list}>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sections.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
               {sections.map((section) => (
                 <SectionRow
                   key={section.id}
@@ -1931,7 +1958,7 @@ import { SectionsEditor } from './SectionsEditor'
 and insert, immediately before `<div className={dashboardStyles.section}>` whose title is "Description":
 
 ```tsx
-      <SectionsEditor exhibitionId={exhibition.id} />
+<SectionsEditor exhibitionId={exhibition.id} />
 ```
 
 - [ ] **Step 6: Run the spec to verify it passes**
@@ -1949,6 +1976,7 @@ Expected: PASS. Do not commit.
 ### Task 6: Section dropdown on the artwork form
 
 **Files:**
+
 - Modify: `src/components/shared/ArtworkEditForm/index.tsx` (type `Artwork` ~line 108; `ArtworkFormData` ~line 151; `getInitialFormData`/`populateFormData` ~175/205; props ~226–229; Exhibitions block ~1438–1466)
 - Modify: `src/components/shared/ArtworkEditForm/ArtworkEditForm.module.scss`
 - Modify: `src/components/dashboard/artworks/edit/index.tsx` (~43–45, ~120–132, ~149)
@@ -1957,6 +1985,7 @@ Expected: PASS. Do not commit.
 - Test: `e2e/artwork-section-picker.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `GET /api/artworks/[id]` → `exhibitionSections`; `PUT` accepts it (Task 3).
 - Produces: `GET /api/exhibitions` rows gain `sections: { id: string; title: string }[]` (ordered); `export type ArtworkFormValue = string | boolean | string[] | Record<string, string | null>`; `ArtworkFormData.exhibitionSections: Record<string, string | null>`; `exhibitions` prop type `{ id: string; mainTitle: string; published: boolean; sections: { id: string; title: string }[] }[]`.
 
@@ -2121,9 +2150,9 @@ In the local `Artwork` type, after `exhibitionIds?: string[]`, add:
 In `ArtworkFormData`, after `exhibitionIds: string[]`, add:
 
 ```ts
-  /** Section per exhibition, keyed by exhibition id. Only ticked exhibitions'
-   *  entries are applied on save. */
-  exhibitionSections: Record<string, string | null>
+/** Section per exhibition, keyed by exhibition id. Only ticked exhibitions'
+ *  entries are applied on save. */
+exhibitionSections: Record<string, string | null>
 ```
 
 In `getInitialFormData`, after `exhibitionIds: [],` add `exhibitionSections: {},`.
@@ -2165,57 +2194,54 @@ import { SelectDropdown } from '@/components/ui/SelectDropdown/SelectDropdown'
 Replace the `{exhibitions.map((exhibition) => ( <Checkbox ... /> ))}` inside the Exhibitions block with:
 
 ```tsx
-            {exhibitions.map((exhibition) => {
-              const ticked = formData.exhibitionIds.includes(exhibition.id)
-              return (
-                <div key={exhibition.id} data-exhibition-row={exhibition.id}>
-                  <Checkbox
-                    checked={ticked}
-                    onChange={(e) =>
-                      onFormChange(
-                        'exhibitionIds',
-                        e.target.checked
-                          ? [...formData.exhibitionIds, exhibition.id]
-                          : formData.exhibitionIds.filter((id) => id !== exhibition.id),
-                      )
-                    }
-                    label={
-                      exhibition.published
-                        ? exhibition.mainTitle
-                        : `${exhibition.mainTitle} (draft)`
-                    }
-                  />
-                  {/* Only when the work is on this show's page and the show has
+{
+  exhibitions.map((exhibition) => {
+    const ticked = formData.exhibitionIds.includes(exhibition.id)
+    return (
+      <div key={exhibition.id} data-exhibition-row={exhibition.id}>
+        <Checkbox
+          checked={ticked}
+          onChange={(e) =>
+            onFormChange(
+              'exhibitionIds',
+              e.target.checked
+                ? [...formData.exhibitionIds, exhibition.id]
+                : formData.exhibitionIds.filter((id) => id !== exhibition.id),
+            )
+          }
+          label={exhibition.published ? exhibition.mainTitle : `${exhibition.mainTitle} (draft)`}
+        />
+        {/* Only when the work is on this show's page and the show has
                       sections to offer — otherwise the form reads as before. */}
-                  {ticked && exhibition.sections.length > 0 && (
-                    <SelectDropdown
-                      className={styles.sectionSelect}
-                      options={[
-                        { value: '', label: 'No section' },
-                        ...exhibition.sections.map((s) => ({ value: s.id, label: s.title })),
-                      ]}
-                      value={formData.exhibitionSections[exhibition.id] ?? ''}
-                      onChange={(value) =>
-                        onFormChange('exhibitionSections', {
-                          ...formData.exhibitionSections,
-                          [exhibition.id]: value || null,
-                        })
-                      }
-                    />
-                  )}
-                </div>
-              )
-            })}
+        {ticked && exhibition.sections.length > 0 && (
+          <SelectDropdown
+            className={styles.sectionSelect}
+            options={[
+              { value: '', label: 'No section' },
+              ...exhibition.sections.map((s) => ({ value: s.id, label: s.title })),
+            ]}
+            value={formData.exhibitionSections[exhibition.id] ?? ''}
+            onChange={(value) =>
+              onFormChange('exhibitionSections', {
+                ...formData.exhibitionSections,
+                [exhibition.id]: value || null,
+              })
+            }
+          />
+        )}
+      </div>
+    )
+  })
+}
 ```
 
 Change the hint below it to:
 
 ```tsx
-            <span className={dashboardStyles.hint}>
-              Independent of the 3D space. An artwork can appear on the page
-              without hanging in the room. Sections are set up on each
-              exhibition&apos;s settings page.
-            </span>
+<span className={dashboardStyles.hint}>
+  Independent of the 3D space. An artwork can appear on the page without hanging in the room.
+  Sections are set up on each exhibition&apos;s settings page.
+</span>
 ```
 
 Check the file's SCSS import name (`styles` vs another) with `grep -n "module.scss" src/components/shared/ArtworkEditForm/index.tsx` and use it. Append to `ArtworkEditForm.module.scss`:
@@ -2268,6 +2294,7 @@ Expected: build succeeds (new route segments + `SectionsEditor` client component
 - [ ] **Step 3: Hand off to the owner**
 
 Report: what changed, the five new e2e spec files and their results, and the manual test path —
+
 1. `/dashboard/exhibitions/<id>/settings` → add Magnolia / Mistery / Memory, rename one, drag to reorder, delete one with works.
 2. `/dashboard/artworks/<id>/edit` → tick the exhibition, pick a section, Save.
 3. The public exhibition page → headings in order, no-section works first.

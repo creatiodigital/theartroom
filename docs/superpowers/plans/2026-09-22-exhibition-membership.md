@@ -52,6 +52,7 @@ that feeds the editor or the scene so the nullability never escapes the DB
 boundary.
 
 **Files:**
+
 - Modify: `prisma/schema.prisma` (ExhibitionArtwork ~753-864, Exhibition ~667)
 - Modify: `package.json:3`
 - Modify: `src/lib/exhibitionArtworkMapper.ts` (add the narrowing helper)
@@ -61,6 +62,7 @@ boundary.
 - Modify: `src/app/exhibitions/[artistSlug]/[exhibitionSlug]/edit/page.tsx`
 
 **Interfaces:**
+
 - Produces: `toPlacedRows<T extends PlacementColumns>(rows: T[]): Placed<T>[]`
   exported from `src/lib/exhibitionArtworkMapper.ts`. Every later task that
   reads join rows for the editor or the scene calls this.
@@ -235,10 +237,12 @@ ExhibitionArtworkResponse and its ~25 consumers untouched."
 ### Task 2: Taking a work off a wall stops removing it from the show
 
 **Files:**
+
 - Modify: `src/app/api/exhibition-artworks/route.ts:245-256`
 - Test: `e2e/exhibition-membership-wall.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `showOnPage` from Task 1.
 - Produces: nothing new. Behavior change only.
 
@@ -280,9 +284,17 @@ test.describe('the wall save and exhibition membership', () => {
         artworkId: artwork.id,
         showOnPage: true,
         wallId: 'wall0',
-        posX2d: 1, posY2d: 1, width2d: 1, height2d: 1,
-        posX3d: 1, posY3d: 1, posZ3d: 1,
-        quaternionX: 0, quaternionY: 0, quaternionZ: 0, quaternionW: 1,
+        posX2d: 1,
+        posY2d: 1,
+        width2d: 1,
+        height2d: 1,
+        posX3d: 1,
+        posY3d: 1,
+        posZ3d: 1,
+        quaternionX: 0,
+        quaternionY: 0,
+        quaternionZ: 0,
+        quaternionW: 1,
       },
     })
 
@@ -331,9 +343,17 @@ test.describe('the wall save and exhibition membership', () => {
         artworkId: artwork.id,
         showOnPage: false,
         wallId: 'wall0',
-        posX2d: 1, posY2d: 1, width2d: 1, height2d: 1,
-        posX3d: 1, posY3d: 1, posZ3d: 1,
-        quaternionX: 0, quaternionY: 0, quaternionZ: 0, quaternionW: 1,
+        posX2d: 1,
+        posY2d: 1,
+        width2d: 1,
+        height2d: 1,
+        posX3d: 1,
+        posY3d: 1,
+        posZ3d: 1,
+        quaternionX: 0,
+        quaternionY: 0,
+        quaternionZ: 0,
+        quaternionW: 1,
       },
     })
 
@@ -371,36 +391,36 @@ In `src/app/api/exhibition-artworks/route.ts`, replace the block at 245-256
 of the `deleteMany` call) with:
 
 ```ts
-    // A work absent from the payload has been taken off a wall. That clears its
-    // PLACEMENT and nothing else — membership belongs to the artwork form's
-    // checkbox, and an artist tidying a wall is not curating the show. Only a
-    // row that is neither placed nor a member has nothing left worth keeping.
-    const currentArtworkIds = positions.map((p) => p.artworkId)
-    const unplacedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
+// A work absent from the payload has been taken off a wall. That clears its
+// PLACEMENT and nothing else — membership belongs to the artwork form's
+// checkbox, and an artist tidying a wall is not curating the show. Only a
+// row that is neither placed nor a member has nothing left worth keeping.
+const currentArtworkIds = positions.map((p) => p.artworkId)
+const unplacedArtworkIds = existingArtworkIds.filter((id) => !currentArtworkIds.includes(id))
 
-    if (unplacedArtworkIds.length > 0) {
-      await prisma.exhibitionArtwork.updateMany({
-        where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: true },
-        data: {
-          wallId: null,
-          posX2d: null,
-          posY2d: null,
-          width2d: null,
-          height2d: null,
-          posX3d: null,
-          posY3d: null,
-          posZ3d: null,
-          quaternionX: null,
-          quaternionY: null,
-          quaternionZ: null,
-          quaternionW: null,
-        },
-      })
+if (unplacedArtworkIds.length > 0) {
+  await prisma.exhibitionArtwork.updateMany({
+    where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: true },
+    data: {
+      wallId: null,
+      posX2d: null,
+      posY2d: null,
+      width2d: null,
+      height2d: null,
+      posX3d: null,
+      posY3d: null,
+      posZ3d: null,
+      quaternionX: null,
+      quaternionY: null,
+      quaternionZ: null,
+      quaternionW: null,
+    },
+  })
 
-      await prisma.exhibitionArtwork.deleteMany({
-        where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: false },
-      })
-    }
+  await prisma.exhibitionArtwork.deleteMany({
+    where: { exhibitionId, artworkId: { in: unplacedArtworkIds }, showOnPage: false },
+  })
+}
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
@@ -425,10 +445,12 @@ a member is still deleted."
 ### Task 3: The public grid reads live membership
 
 **Files:**
+
 - Modify: `src/lib/queries/getPublicExhibitionByUrl.ts`
 - Test: `e2e/exhibition-page-membership.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `showOnPage`, `pageOrder` from Task 1.
 - Produces: `PublicExhibition.artworks` now sourced from live rows. The exported
   types `PublicExhibition` and `PublicExhibitionArtwork` are unchanged, so
@@ -523,9 +545,17 @@ test.describe('the exhibition page artwork grid', () => {
         artworkId: artwork.id,
         showOnPage: false,
         wallId: 'wall0',
-        posX2d: 1, posY2d: 1, width2d: 1, height2d: 1,
-        posX3d: 1, posY3d: 1, posZ3d: 1,
-        quaternionX: 0, quaternionY: 0, quaternionZ: 0, quaternionW: 1,
+        posX2d: 1,
+        posY2d: 1,
+        width2d: 1,
+        height2d: 1,
+        posX3d: 1,
+        posY3d: 1,
+        posZ3d: 1,
+        quaternionX: 0,
+        quaternionY: 0,
+        quaternionZ: 0,
+        quaternionW: 1,
       },
     })
 
@@ -576,9 +606,7 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
   // have taken effect until the next republish. The snapshot still exists and
   // still freezes the 3D scene for /visit; it simply has no say over the page.
   const artworks = exhibition.exhibitionArtworks
-    .filter(
-      (ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image',
-    )
+    .filter((ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image')
     .sort((a, b) => {
       // Per-exhibition order when the artist has set one, otherwise the
       // artist's library order. Unordered rows sink below ordered ones.
@@ -647,10 +675,12 @@ The snapshot keeps its real job: freezing the 3D scene for /visit."
 Server side only. The checkbox UI arrives in Task 5 and depends on this.
 
 **Files:**
+
 - Modify: `src/app/api/artworks/[id]/route.ts` (the PUT handler, from :214)
 - Test: `e2e/artwork-exhibition-membership.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `showOnPage` from Task 1.
 - Produces: `PUT /api/artworks/[id]` accepts an optional
   `exhibitionIds: string[]` naming the exhibitions this artwork should appear
@@ -685,92 +715,92 @@ In the PUT handler, after `const requesterIsAdmin = ...` and the body
 sanitization, before the artwork update:
 
 ```ts
-    // Exhibition membership. The client sends the full desired set, so this is
-    // a diff rather than an append.
-    //
-    // The requested ids are intersected with exhibitions that still exist AND
-    // belong to this artwork's owner. Both halves matter: an exhibition deleted
-    // while the form was open would otherwise fail the whole save on a foreign
-    // key, and without the ownership check a caller could curate their artwork
-    // into someone else's show. Never trust the list the form sent.
-    if (Array.isArray(body.exhibitionIds)) {
-      const requestedIds = [
-        ...new Set(
-          (body.exhibitionIds as unknown[]).filter(
-            (value): value is string => typeof value === 'string',
-          ),
-        ),
-      ]
+// Exhibition membership. The client sends the full desired set, so this is
+// a diff rather than an append.
+//
+// The requested ids are intersected with exhibitions that still exist AND
+// belong to this artwork's owner. Both halves matter: an exhibition deleted
+// while the form was open would otherwise fail the whole save on a foreign
+// key, and without the ownership check a caller could curate their artwork
+// into someone else's show. Never trust the list the form sent.
+if (Array.isArray(body.exhibitionIds)) {
+  const requestedIds = [
+    ...new Set(
+      (body.exhibitionIds as unknown[]).filter(
+        (value): value is string => typeof value === 'string',
+      ),
+    ),
+  ]
 
-      const ownedExhibitions = requestedIds.length
-        ? await prisma.exhibition.findMany({
-            where: { id: { in: requestedIds }, userId: existing.userId },
-            select: { id: true },
-          })
-        : []
-      const allowedIds = new Set(ownedExhibitions.map((e) => e.id))
-
-      const rows = await prisma.exhibitionArtwork.findMany({
-        where: { artworkId: id },
-        select: { exhibitionId: true, wallId: true, showOnPage: true },
+  const ownedExhibitions = requestedIds.length
+    ? await prisma.exhibition.findMany({
+        where: { id: { in: requestedIds }, userId: existing.userId },
+        select: { id: true },
       })
+    : []
+  const allowedIds = new Set(ownedExhibitions.map((e) => e.id))
 
-      // Membership is `showOnPage`, not row existence — a 3D-only row exists
-      // but is not a member, and re-checking it must flip the flag rather than
-      // create a duplicate the unique constraint would reject.
-      const memberIds = new Set(rows.filter((r) => r.showOnPage).map((r) => r.exhibitionId))
-      const rowByExhibition = new Map(rows.map((r) => [r.exhibitionId, r]))
+  const rows = await prisma.exhibitionArtwork.findMany({
+    where: { artworkId: id },
+    select: { exhibitionId: true, wallId: true, showOnPage: true },
+  })
 
-      const operations = []
+  // Membership is `showOnPage`, not row existence — a 3D-only row exists
+  // but is not a member, and re-checking it must flip the flag rather than
+  // create a duplicate the unique constraint would reject.
+  const memberIds = new Set(rows.filter((r) => r.showOnPage).map((r) => r.exhibitionId))
+  const rowByExhibition = new Map(rows.map((r) => [r.exhibitionId, r]))
 
-      for (const exhibitionId of allowedIds) {
-        if (memberIds.has(exhibitionId)) continue
-        const row = rowByExhibition.get(exhibitionId)
-        if (row) {
-          // Hung but unchecked until now: keep the coordinates, add the page.
-          operations.push(
-            prisma.exhibitionArtwork.update({
-              where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
-              data: { showOnPage: true },
-            }),
-          )
-        } else {
-          // Brand new membership: on the page, not hung anywhere.
-          operations.push(
-            prisma.exhibitionArtwork.create({
-              data: { exhibitionId, artworkId: id, showOnPage: true },
-            }),
-          )
-        }
-      }
+  const operations = []
 
-      for (const row of rows) {
-        if (!row.showOnPage || allowedIds.has(row.exhibitionId)) continue
-        if (row.wallId !== null) {
-          // Still hanging in the room — keep the placement and the styling,
-          // just take it off the page. This is the rare 3D-only state.
-          operations.push(
-            prisma.exhibitionArtwork.update({
-              where: {
-                exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
-              },
-              data: { showOnPage: false },
-            }),
-          )
-        } else {
-          // Neither on the page nor in the room: nothing left worth keeping.
-          operations.push(
-            prisma.exhibitionArtwork.delete({
-              where: {
-                exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
-              },
-            }),
-          )
-        }
-      }
-
-      if (operations.length > 0) await prisma.$transaction(operations)
+  for (const exhibitionId of allowedIds) {
+    if (memberIds.has(exhibitionId)) continue
+    const row = rowByExhibition.get(exhibitionId)
+    if (row) {
+      // Hung but unchecked until now: keep the coordinates, add the page.
+      operations.push(
+        prisma.exhibitionArtwork.update({
+          where: { exhibitionId_artworkId: { exhibitionId, artworkId: id } },
+          data: { showOnPage: true },
+        }),
+      )
+    } else {
+      // Brand new membership: on the page, not hung anywhere.
+      operations.push(
+        prisma.exhibitionArtwork.create({
+          data: { exhibitionId, artworkId: id, showOnPage: true },
+        }),
+      )
     }
+  }
+
+  for (const row of rows) {
+    if (!row.showOnPage || allowedIds.has(row.exhibitionId)) continue
+    if (row.wallId !== null) {
+      // Still hanging in the room — keep the placement and the styling,
+      // just take it off the page. This is the rare 3D-only state.
+      operations.push(
+        prisma.exhibitionArtwork.update({
+          where: {
+            exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
+          },
+          data: { showOnPage: false },
+        }),
+      )
+    } else {
+      // Neither on the page nor in the room: nothing left worth keeping.
+      operations.push(
+        prisma.exhibitionArtwork.delete({
+          where: {
+            exhibitionId_artworkId: { exhibitionId: row.exhibitionId, artworkId: id },
+          },
+        }),
+      )
+    }
+  }
+
+  if (operations.length > 0) await prisma.$transaction(operations)
+}
 ```
 
 Add `exhibitionIds` to the list of keys stripped from `body` before it reaches
@@ -798,6 +828,7 @@ no one can curate a work into another artist's show."
 ### Task 5: The checkbox section on the artwork form
 
 **Files:**
+
 - Modify: `src/components/shared/ArtworkEditForm/index.tsx` (types ~79-115,
   defaults ~153, hydration ~177, render beside the Featured block at ~1397)
 - Modify: `src/components/dashboard/artworks/edit/index.tsx` (fetch the
@@ -805,6 +836,7 @@ no one can curate a work into another artist's show."
 - Test: `e2e/artwork-exhibition-picker.spec.ts`
 
 **Interfaces:**
+
 - Consumes: the `exhibitionIds` contract from Task 4.
 - Produces: `ArtworkEditForm` gains two optional props —
   `exhibitions?: { id: string; mainTitle: string; published: boolean }[]` and
@@ -838,42 +870,41 @@ Insert directly after the Featured Artwork block (the one closing at ~1413),
 matching its structure exactly:
 
 ```tsx
-        {/* Exhibition membership. Deliberately separate from the 3D room: a
+{
+  /* Exhibition membership. Deliberately separate from the 3D room: a
             work appears here because it was chosen for the show, not because
             it happens to hang on a wall. Renders only where the caller supplies
             the artist's exhibitions — the wall-view modal is already inside
-            one show and has no use for it. */}
-        {exhibitions && exhibitions.length > 0 && formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Exhibitions</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Choose which exhibitions show this artwork on their page.
-            </p>
-            {exhibitions.map((exhibition) => (
-              <Checkbox
-                key={exhibition.id}
-                checked={formData.exhibitionIds.includes(exhibition.id)}
-                onChange={(e) =>
-                  onFormChange(
-                    'exhibitionIds',
-                    e.target.checked
-                      ? [...formData.exhibitionIds, exhibition.id]
-                      : formData.exhibitionIds.filter((id) => id !== exhibition.id),
-                  )
-                }
-                label={
-                  exhibition.published
-                    ? exhibition.mainTitle
-                    : `${exhibition.mainTitle} (draft)`
-                }
-              />
-            ))}
-            <span className={dashboardStyles.hint}>
-              Independent of the 3D space. An artwork can appear on the page
-              without hanging in the room.
-            </span>
-          </div>
-        )}
+            one show and has no use for it. */
+}
+{
+  exhibitions && exhibitions.length > 0 && formData.artworkType === 'image' && (
+    <div className={dashboardStyles.section}>
+      <h3 className={dashboardStyles.sectionTitle}>Exhibitions</h3>
+      <p className={dashboardStyles.sectionDescription}>
+        Choose which exhibitions show this artwork on their page.
+      </p>
+      {exhibitions.map((exhibition) => (
+        <Checkbox
+          key={exhibition.id}
+          checked={formData.exhibitionIds.includes(exhibition.id)}
+          onChange={(e) =>
+            onFormChange(
+              'exhibitionIds',
+              e.target.checked
+                ? [...formData.exhibitionIds, exhibition.id]
+                : formData.exhibitionIds.filter((id) => id !== exhibition.id),
+            )
+          }
+          label={exhibition.published ? exhibition.mainTitle : `${exhibition.mainTitle} (draft)`}
+        />
+      ))}
+      <span className={dashboardStyles.hint}>
+        Independent of the 3D space. An artwork can appear on the page without hanging in the room.
+      </span>
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 5: Wire the dashboard page**
@@ -909,6 +940,7 @@ button writes metadata and membership together."
 ### Task 6: Publish and unpublish the 3D space on its own
 
 **Files:**
+
 - Modify: `src/app/api/exhibitions/by-url/[url]/route.ts` (the gate at ~80-104)
 - Modify: `src/app/api/exhibitions/[id]/route.ts` (the publish block at ~299)
 - Modify: `src/components/exhibitions/profile/index.tsx` (render the button
@@ -917,6 +949,7 @@ button writes metadata and membership together."
 - Test: `e2e/exhibition-space-publish.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `spacePublished` from Task 1, `PublicExhibition.spacePublished` from
   Task 3.
 - Produces: `PATCH /api/exhibitions/[id]` accepts `spacePublished: boolean`.
@@ -943,15 +976,15 @@ In `src/app/api/exhibitions/by-url/[url]/route.ts`, change the condition at line
 and add above it:
 
 ```ts
-    // Two switches, one gate. `published` decides whether the exhibition exists
-    // publicly at all; `spacePublished` decides only whether its 3D room is
-    // open. This endpoint serves the room, so either being off closes it.
-    //
-    // Deliberately the same gate rather than a new one: it already lets the
-    // owner and any admin through, which is what makes a room taken offline
-    // for repairs still reachable by the person repairing it. Do NOT add a
-    // notFound() to /visit/page.tsx — it would 404 before this code runs and
-    // lock the owner out of their own room.
+// Two switches, one gate. `published` decides whether the exhibition exists
+// publicly at all; `spacePublished` decides only whether its 3D room is
+// open. This endpoint serves the room, so either being off closes it.
+//
+// Deliberately the same gate rather than a new one: it already lets the
+// owner and any admin through, which is what makes a room taken offline
+// for repairs still reachable by the person repairing it. Do NOT add a
+// notFound() to /visit/page.tsx — it would 404 before this code runs and
+// lock the owner out of their own room.
 ```
 
 Add `spacePublished: true` to the route's `select` if it omits unknown fields.
@@ -961,21 +994,21 @@ Add `spacePublished: true` to the route's `select` if it omits unknown fields.
 In `src/app/api/exhibitions/[id]/route.ts`, after the `body.published` block:
 
 ```ts
-    // --- 3D space publish logic ---
-    if (body.spacePublished !== undefined) {
-      data.spacePublished = body.spacePublished
+// --- 3D space publish logic ---
+if (body.spacePublished !== undefined) {
+  data.spacePublished = body.spacePublished
 
-      if (body.spacePublished === true) {
-        // The snapshot freezes the room at the moment it is published. An
-        // exhibition whose page went live weeks before its room was finished
-        // still carries that empty early snapshot, so revealing the room has
-        // to re-freeze it — otherwise visitors walk into the room as it was,
-        // not as it is. Switching OFF deliberately leaves the snapshot alone,
-        // so a room taken down for repairs is not lost.
-        data.publishedSnapshot = await buildExhibitionSnapshot(id)
-        data.hasPendingChanges = false
-      }
-    }
+  if (body.spacePublished === true) {
+    // The snapshot freezes the room at the moment it is published. An
+    // exhibition whose page went live weeks before its room was finished
+    // still carries that empty early snapshot, so revealing the room has
+    // to re-freeze it — otherwise visitors walk into the room as it was,
+    // not as it is. Switching OFF deliberately leaves the snapshot alone,
+    // so a room taken down for repairs is not lost.
+    data.publishedSnapshot = await buildExhibitionSnapshot(id)
+    data.hasPendingChanges = false
+  }
+}
 ```
 
 - [ ] **Step 5: Hide the button**
@@ -1022,10 +1055,12 @@ through — that is what makes fix-then-verify possible."
 ### Task 7: Stop leaking unpublished exhibition titles
 
 **Files:**
+
 - Modify: `src/app/api/artworks/route.ts:85-91`
 - Test: `e2e/artwork-api-exhibition-leak.spec.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: nothing. Response narrowing only.
 
@@ -1069,9 +1104,9 @@ Above the query, derive the flag from the permission variables the route
 already computes:
 
 ```ts
-    // Mirrors the access rules resolved above: the target's own account, or an
-    // admin acting on an artist, may see draft exhibition titles.
-    const viewerOwnsTarget = requesterId === userId || isAdmin || isSuperAdmin
+// Mirrors the access rules resolved above: the target's own account, or an
+// admin acting on an artist, may see draft exhibition titles.
+const viewerOwnsTarget = requesterId === userId || isAdmin || isSuperAdmin
 ```
 
 - [ ] **Step 4: Run the test to verify it passes**
@@ -1096,11 +1131,13 @@ Owners and admins still see their drafts; nobody else does."
 ### Task 8: Make the two rare states visible
 
 **Files:**
+
 - Modify: `src/components/wallview/RightPanel/ArtisticImagePanel/ArtisticImagePanel.tsx`
 - Modify: `src/components/admin/dashboard/AdminExhibitions.tsx`
 - Test: `e2e/exhibition-state-markers.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `showOnPage` (Task 1), `spacePublished` (Task 6).
 - Produces: nothing.
 
@@ -1124,15 +1161,19 @@ exhibition is published, has at least one placed artwork, and `spacePublished`
 is false:
 
 ```tsx
-{/* Switching the room on is the norm; leaving it off is the exception. So
+{
+  /* Switching the room on is the norm; leaving it off is the exception. So
     the likelier mistake is finishing a room and forgetting to reveal it.
-    This appears in that one state and no other. */}
-{exhibition.published && exhibition.hasPlacedArtworks && !exhibition.spacePublished && (
-  <span className={styles.readyMarker}>
-    <Icon name="box" size={14} strokeWidth={ICON_STROKE_WIDTH} />
-    3D room ready — not switched on
-  </span>
-)}
+    This appears in that one state and no other. */
+}
+{
+  exhibition.published && exhibition.hasPlacedArtworks && !exhibition.spacePublished && (
+    <span className={styles.readyMarker}>
+      <Icon name="box" size={14} strokeWidth={ICON_STROKE_WIDTH} />
+      3D room ready — not switched on
+    </span>
+  )
+}
 ```
 
 Add `hasPlacedArtworks` to the admin list payload in
@@ -1147,15 +1188,19 @@ In `ArtisticImagePanel.tsx`, beside the existing `hiddenFromExhibition`
 checkbox, show a marker when the selected artwork's row has `showOnPage` false:
 
 ```tsx
-{/* Hung in the room but deliberately off the exhibition page. A legitimate
+{
+  /* Hung in the room but deliberately off the exhibition page. A legitimate
     state, and a rare one — so it should read as a decision, not as something
-    forgotten. */}
-{!showOnPage && (
-  <span className={styles.offPageMarker}>
-    <Icon name="eye-off" size={14} strokeWidth={ICON_STROKE_WIDTH} />
-    Not shown on the exhibition page
-  </span>
-)}
+    forgotten. */
+}
+{
+  !showOnPage && (
+    <span className={styles.offPageMarker}>
+      <Icon name="eye-off" size={14} strokeWidth={ICON_STROKE_WIDTH} />
+      Not shown on the exhibition page
+    </span>
+  )
+}
 ```
 
 - [ ] **Step 5: Run the test to verify it passes**
@@ -1193,9 +1238,11 @@ in more than one show, the artist page never listing a draft, and an exhibition
 being deleted without taking artworks with it.
 
 **Files:**
+
 - Test: `e2e/exhibition-membership-invariants.spec.ts`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 1-7. Adds no source changes — if any test
   here fails, the fix belongs in the task that owns that behavior.
 
@@ -1368,9 +1415,11 @@ does, because one default cannot be `false` for new exhibitions and `true` for
 the ones already live.
 
 **Files:**
+
 - Create: `scripts/backfill-space-published.ts`
 
 **Interfaces:**
+
 - Consumes: `spacePublished` from Task 1.
 - Produces: nothing importable. Operator tool.
 

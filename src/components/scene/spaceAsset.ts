@@ -1,3 +1,5 @@
+import { useGLTF } from '@react-three/drei'
+
 import { assetUrl } from '@/lib/assetUrl'
 
 /**
@@ -73,6 +75,14 @@ export const spaceGltfUrl = (path: string): string => {
       // local copy is the only thing that can render the room, so take it.
       resolved.set(path, path)
       console.warn(`[space asset] R2 unreachable for ${remote} — serving ${path}`, error)
+    })
+    .then(() => {
+      // Start the download here, outside render. Suspending on the probe has already mounted
+      // the Suspense fallback (<Loader />, on drei's useProgress); a download first started
+      // by `useGLTF` in render then updates that Loader while the space renders — React's
+      // "Cannot update a component (`Loader`) while rendering a different component". Same
+      // cache entry as `useGLTF(url)`, so render finds it in flight.
+      useGLTF.preload(resolved.get(path)!)
     })
     .finally(() => {
       inflight.delete(path)

@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test'
+import { useGLTF } from '@react-three/drei'
+import { DefaultLoadingManager } from 'three'
 
 import {
   clearSpaceAssetCache,
@@ -23,10 +25,7 @@ const PATH = '/assets/spaces/vienna/vienna14.glb?v=1'
 type Fetch = typeof globalThis.fetch
 
 /** Drive the suspending resolver to completion, as a Suspense boundary would. */
-const resolveThroughSuspense = async (
-  fn: (p: string) => string,
-  path: string,
-): Promise<string> => {
+const resolveThroughSuspense = async (fn: (p: string) => string, path: string): Promise<string> => {
   try {
     return fn(path)
   } catch (thrown) {
@@ -47,12 +46,15 @@ const withFetch = (impl: Fetch) => {
 test.afterEach(() => {
   globalThis.fetch = realFetch
   clearSpaceAssetCache()
+  // The resolved url's download starts with the probe (last test): forget it too.
+  useGLTF.clear(`${REMOTE}${PATH}`)
+  useGLTF.clear(PATH)
 })
 
 test('R2 serving the model is used as-is', async () => {
   const calls: string[] = []
-  withFetch((async (url: string) => {
-    calls.push(String(url))
+  withFetch((async (url: string, init?: RequestInit) => {
+    if (init?.method === 'HEAD') calls.push(String(url))
     return { ok: true, status: 200 } as Response
   }) as unknown as Fetch)
 
@@ -83,8 +85,8 @@ test('an unreachable R2 falls back to the app origin', async () => {
 test('the probe runs once and every caller agrees on one url', async () => {
   // Two urls for one model means the loader parses and uploads it twice.
   let probes = 0
-  withFetch((async () => {
-    probes += 1
+  withFetch((async (_url: string, init?: RequestInit) => {
+    if (init?.method === 'HEAD') probes += 1
     return { ok: true, status: 200 } as Response
   }) as unknown as Fetch)
 
@@ -107,4 +109,33 @@ test('the sync reader names the resolved entry after a fallback', async () => {
   )
   await resolveThroughSuspense(spaceGltfUrl, PATH)
   expect(spaceGltfUrlSync(PATH), 'after a fallback it must name the local copy').toBe(PATH)
+})
+
+test('the model starts downloading as soon as its url is known, before React renders with it', async () => {
+  // AR-165: the probe suspends first, so the Suspense fallback (<Loader />, on drei's useProgress)
+  // is already mounted when the url resolves. A download first started by useGLTF in render then
+  // updated the Loader while Space rendered ("Cannot update a component (`Loader`) while rendering
+  // a different component (`Space`)"). Started here, outside render, useGLTF finds it in flight.
+  for (const [response, expected] of [
+    [{ ok: true, status: 200 }, `${REMOTE}${PATH}`],
+    [{ ok: false, status: 404 }, PATH],
+  ] as const) {
+    const started: string[] = []
+    const itemStart = DefaultLoadingManager.itemStart
+    DefaultLoadingManager.itemStart = (url: string) => {
+      started.push(url)
+    }
+    try {
+      withFetch((async () => response as Response) as unknown as Fetch)
+      try {
+        spaceGltfUrl(PATH)
+      } catch (thrown) {
+        await (thrown as Promise<void>)
+      }
+      expect(started, 'the download must already be under way').toContain(expected)
+      expect(spaceGltfUrl(PATH)).toBe(expected)
+    } finally {
+      DefaultLoadingManager.itemStart = itemStart
+    }
+  }
 })

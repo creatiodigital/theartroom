@@ -121,8 +121,7 @@ export const useLoadExhibitionArtworks = (
           // carry the column regardless; this reads it off the wire without
           // widening the shared mapper type, purely so the panel can mark a
           // work that's hung but curated off the exhibition page.
-          const showOnPage = (ea as ExhibitionArtworkResponse & { showOnPage?: boolean })
-            .showOnPage
+          const showOnPage = (ea as ExhibitionArtworkResponse & { showOnPage?: boolean }).showOnPage
           dispatch(
             createArtworkPosition({
               artworkId: ea.artworkId,
