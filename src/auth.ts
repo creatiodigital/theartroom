@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
@@ -5,6 +6,7 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { rateLimit } from '@/lib/rateLimit'
 import { getClientIpFromHeaders } from '@/lib/getClientIp'
+import { IMPERSONATION_COOKIE, readImpersonation } from '@/lib/impersonation'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -123,48 +125,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
         token.handler = (user as { handler?: string }).handler
         token.userType = (user as { userType?: string }).userType
         token.mustChangePassword =
           (user as { mustChangePassword?: boolean }).mustChangePassword ?? false
-      }
-
-      // Handle impersonation updates from client. The role check MUST live
-      // here, server-side: `update({ impersonating })` is a client-callable
-      // NextAuth API, so the check in useEffectiveUser is UX, not security —
-      // without this gate any signed-in artist could impersonate any user
-      // and inherit their ownership scope (requireOwnership/getEffectiveUserId).
-      if (trigger === 'update' && session) {
-        if (session.impersonating) {
-          // Re-read the REAL caller's role from the DB (token.userType can be
-          // stale after a demotion) and verify the target actually exists.
-          const [realUser, target] = await Promise.all([
-            prisma.user.findUnique({
-              where: { id: token.id as string },
-              select: { userType: true },
-            }),
-            prisma.user.findUnique({
-              where: { id: session.impersonating.id as string },
-              select: { id: true, userType: true },
-            }),
-          ])
-          const callerIsAdmin =
-            realUser?.userType === 'admin' || realUser?.userType === 'superAdmin'
-          // superAdmin accounts can never be impersonated (their scope
-          // includes user management itself).
-          if (callerIsAdmin && target && target.userType !== 'superAdmin') {
-            token.impersonatingId = session.impersonating.id
-            token.impersonatingName = session.impersonating.name
-            token.impersonatingHandler = session.impersonating.handler
-          }
-        } else if (session.impersonating === null) {
-          delete token.impersonatingId
-          delete token.impersonatingName
-          delete token.impersonatingHandler
-        }
       }
 
       return token
@@ -189,16 +156,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
-      // Add impersonation data to session if present
-      if (token.impersonatingId) {
-        session.impersonating = {
-          id: token.impersonatingId as string,
-          name: token.impersonatingName as string,
-          handler: token.impersonatingHandler as string,
-        }
+      // Impersonation comes from its own cookie, re-checked against the real
+      // user on every read — never from the token (see lib/impersonation).
+      if (session.user) {
+        const impersonating = await readImpersonation(session.user.id, session.user.userType)
+        if (impersonating) session.impersonating = impersonating
       }
 
       return session
+    },
+  },
+  events: {
+    // Logging out ends an impersonation too — otherwise the same admin logging
+    // back in, in the same browser session, would resume it.
+    async signOut() {
+      ;(await cookies()).delete(IMPERSONATION_COOKIE)
     },
   },
   pages: {

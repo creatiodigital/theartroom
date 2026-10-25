@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
@@ -29,6 +29,27 @@ export const DashboardLayout = ({
   const { status: sessionStatus } = useSession()
   const { effectiveUser, isImpersonating, stopImpersonation } = useEffectiveUser()
   const router = useRouter()
+  const isAdminArea = usePathname()?.startsWith('/admin') ?? false
+
+  // Admin pages are always the real admin. Landing on one while an
+  // impersonation is still on (Back button, another tab, a typed URL) ends it —
+  // but only in a tab the admin is looking at: next-auth tells every open tab
+  // when the session changes, and a hidden admin tab ending it would cancel the
+  // impersonation the admin just started in another tab.
+  const ending = useRef(false)
+  useEffect(() => {
+    if (!isAdminArea || !isImpersonating) return
+    const endIfSeen = () => {
+      if (document.visibilityState !== 'visible' || ending.current) return
+      ending.current = true
+      void stopImpersonation().finally(() => {
+        ending.current = false
+      })
+    }
+    endIfSeen()
+    document.addEventListener('visibilitychange', endIfSeen)
+    return () => document.removeEventListener('visibilitychange', endIfSeen)
+  }, [isAdminArea, isImpersonating, stopImpersonation])
 
   // Redirect to home if not logged in
   useEffect(() => {
@@ -53,8 +74,8 @@ export const DashboardLayout = ({
 
   return (
     <div className={styles.page}>
-      {/* Impersonation Banner */}
-      {isImpersonating && effectiveUser && (
+      {/* Impersonation Banner — never on admin pages, which end impersonations */}
+      {isImpersonating && effectiveUser && !isAdminArea && (
         <div className={styles.impersonationBanner}>
           <Text font="dashboard" as="span">
             Viewing as <strong>{effectiveUser.name}</strong>
@@ -62,8 +83,8 @@ export const DashboardLayout = ({
           <Button
             variant="ghost"
             font="dashboard"
-            onClick={() => {
-              stopImpersonation()
+            onClick={async () => {
+              await stopImpersonation()
               router.push('/admin/dashboard')
             }}
             label="Stop Impersonating"
