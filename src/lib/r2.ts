@@ -362,6 +362,15 @@ export function buildExhibitionBakeKey(exhibitionId: string, bakeId: string, fil
   return `${getEnvPrefix()}/exhibitions/${exhibitionId}/bakes/${bakeId}/${file}`
 }
 
+/** A print presentation's stored render: one file per fingerprint and size (1800 or 900 px wide). */
+export function buildPresentationKey(
+  artworkId: string,
+  fingerprint: string,
+  widthPx: number,
+): string {
+  return `${getEnvPrefix()}/presentations/${artworkId}/${fingerprint}-${widthPx}.webp`
+}
+
 /** The public URL of a main-bucket object key. */
 export function publicUrlForKey(key: string): string {
   return `${PUBLIC_URL}/${key}`

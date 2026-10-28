@@ -1,6 +1,7 @@
 import { PageLayout } from '@/components/ui/PageLayout'
 
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
+import type { PresentationView } from '@/lib/printPresentation/record'
 
 import { ArtworkMediaGallery } from './ArtworkMediaGallery'
 import { ArtworkStorySection } from './ArtworkStorySection'
@@ -23,6 +24,8 @@ interface ArtworkDetailPageProps {
   media?: ArtworkMediaItem[]
   /** Previous/next in the exhibition the visitor came from, when they did. */
   neighbours?: ArtworkNeighbours | null
+  /** The work as a photo of the real print, when one is current and the switch is on. */
+  presentation?: PresentationView | null
 }
 
 export const ArtworkDetailPage = ({
@@ -31,6 +34,7 @@ export const ArtworkDetailPage = ({
   commerce,
   media = [],
   neighbours,
+  presentation,
 }: ArtworkDetailPageProps) => {
   return (
     <PageLayout>
@@ -43,6 +47,7 @@ export const ArtworkDetailPage = ({
           commerce={commerce}
           layout="page"
           neighbours={neighbours}
+          presentation={presentation}
         />
       </div>
 

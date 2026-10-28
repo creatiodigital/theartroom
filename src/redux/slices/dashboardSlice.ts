@@ -62,6 +62,12 @@ const dashboardSlice = createSlice({
     hidePanelsPanel: (state: TDashboardState) => {
       state.isPanelsPanelOpen = false
     },
+    showFurniturePanel: (state: TDashboardState) => {
+      state.isFurniturePanelOpen = true
+    },
+    hideFurniturePanel: (state: TDashboardState) => {
+      state.isFurniturePanelOpen = false
+    },
     showBakePanel: (state: TDashboardState) => {
       state.isBakePanelOpen = true
     },
@@ -86,6 +92,8 @@ export const {
   closeArtworkModal,
   showPanelsPanel,
   hidePanelsPanel,
+  showFurniturePanel,
+  hideFurniturePanel,
   showLightingPanel,
   hideLightingPanel,
   showFloorPanel,

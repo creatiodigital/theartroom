@@ -97,6 +97,12 @@
   max-height: 600px;
 }
 
+// A work shown as a photo of its print: the render takes the bare image's height cap, so a tall
+// work stays as tall as it was and the frame or sheet fits inside that, centred like the image.
+.presentationRender {
+  max-height: 600px;
+}
+
 .placeholder {
   width: 100%;
   aspect-ratio: 1 / 1;

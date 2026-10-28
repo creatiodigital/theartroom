@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import c from 'classnames'
 
+import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
@@ -14,6 +15,7 @@ import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
 import { reportImageError } from '@/lib/observability/reportImageError'
+import type { PresentationView } from '@/lib/printPresentation/record'
 
 import styles from './ArtworkDetail.module.scss'
 
@@ -92,6 +94,13 @@ interface ArtworkDetailBodyProps {
    * when there is no set, which is the common case.
    */
   neighbours?: ArtworkNeighbours | null
+  /**
+   * The work as a photo of the real print (frame or sheet), when one is current and the switch
+   * is on. The 3D-room pop-up never passes it — it keeps the plain low-res image "for now": the
+   * room hangs the work in the frame the artist chose there, and a different frame over it would
+   * mislead (owner, 2026-10-28).
+   */
+  presentation?: PresentationView | null
 }
 
 /**
@@ -105,6 +114,7 @@ export const ArtworkDetailBody = ({
   commerce,
   layout = 'modal',
   neighbours,
+  presentation,
 }: ArtworkDetailBodyProps) => {
   const [isInquireOpen, setIsInquireOpen] = useState(false)
 
@@ -215,21 +225,39 @@ export const ArtworkDetailBody = ({
             // Raw <img> (not next/image): reuses the image the 3D scene already cached, and
             // sidesteps the known next/image + R2 prod issue. crossOrigin matches THREE's
             // texture request so the same browser-cache entry is reused.
-            <img
-              src={artwork.imageUrl}
-              alt={displayTitle || 'Artwork'}
-              width={imgWidth}
-              height={imgHeight}
-              className={c(styles.image, isTallFormat && styles.imagePortrait)}
-              crossOrigin="anonymous"
-              decoding="async"
-              onError={() =>
-                reportImageError(artwork.imageUrl, {
-                  surface: 'artwork-detail',
-                  alt: displayTitle || undefined,
-                })
-              }
-            />
+            // As a photo of the print, the render takes the bare image's size caps and the image
+            // sits in its window, filling it (the window has the image's own shape).
+            <PrintPresentation
+              view={presentation}
+              size="large"
+              className={styles.presentation}
+              renderClassName={c(
+                styles.presentationRender,
+                isTallFormat && styles.presentationRenderPortrait,
+              )}
+            >
+              {(placement) => (
+                <img
+                  src={artwork.imageUrl ?? undefined}
+                  alt={displayTitle || 'Artwork'}
+                  width={imgWidth}
+                  height={imgHeight}
+                  className={
+                    placement === 'window'
+                      ? undefined
+                      : c(styles.image, isTallFormat && styles.imagePortrait)
+                  }
+                  crossOrigin="anonymous"
+                  decoding="async"
+                  onError={() =>
+                    reportImageError(artwork.imageUrl, {
+                      surface: 'artwork-detail',
+                      alt: displayTitle || undefined,
+                    })
+                  }
+                />
+              )}
+            </PrintPresentation>
           )}
         </div>
 

@@ -78,10 +78,28 @@ function reducePlaced(row: Record<string, unknown>): Record<string, unknown> {
   return out
 }
 
+/**
+ * Gallery benches (AR-167) stand in the bake: they shadow the floor and the walls. Only the benches
+ * switched on count, so a room without one keeps its fingerprint and its bake. `benchSettings` is
+ * deliberately not in LIGHT_FIELDS: an absent field hashes there as null, which would stale every
+ * bake ever made.
+ */
+const shownBenches = (benchSettings: unknown): Record<string, unknown> | null => {
+  if (!benchSettings || typeof benchSettings !== 'object') return null
+  const shown = Object.fromEntries(
+    Object.entries(benchSettings as Record<string, unknown>).filter(
+      ([, b]) => !!b && typeof b === 'object' && (b as { enabled?: unknown }).enabled === true,
+    ),
+  )
+  return Object.keys(shown).length > 0 ? shown : null
+}
+
 /** sha256 hex of everything that decides how the room is lit. */
 export function computeBakeFingerprint(input: BakeFingerprintInput): string {
   const exhibition: Record<string, unknown> = {}
   for (const field of LIGHT_FIELDS) exhibition[field] = input.exhibition[field] ?? null
+
+  const benches = shownBenches(input.exhibition.benchSettings)
 
   const placed = input.placed
     .map(reducePlaced)
@@ -94,6 +112,7 @@ export function computeBakeFingerprint(input: BakeFingerprintInput): string {
         spaceModelVersion: input.spaceModelVersion,
         spaceLookVersion: input.spaceLookVersion,
         ...(showsPanels(exhibition.panelSettings) ? { panelsBaked: PANELS_BAKED } : {}),
+        ...(benches ? { benches } : {}),
         exhibition,
         placed,
       }),

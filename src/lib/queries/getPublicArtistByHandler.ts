@@ -1,5 +1,9 @@
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
+import {
+  getPrintPresentations,
+  type PresentationView,
+} from '@/lib/printPresentation/getPrintPresentations'
 
 export type PublicArtistArtwork = {
   id: string
@@ -16,6 +20,8 @@ export type PublicArtistArtwork = {
   /** What the card says about buying a print. Null = not for sale, so the card
    *  shows no commerce at all. See `resolveArtworkSale`. */
   sale: ArtworkSale | null
+  /** The work as a photo of the real print, when one is current and the switch is on. */
+  presentation: PresentationView | null
 }
 
 export type PublicArtistExhibition = {
@@ -89,6 +95,7 @@ export async function getPublicArtistByHandler(handler: string): Promise<PublicA
   })
 
   if (!artist) return null
+  const presentations = await getPrintPresentations(artist.artworks.map((a) => a.id))
 
   return {
     ...artist,
@@ -99,6 +106,7 @@ export async function getPublicArtistByHandler(handler: string): Promise<PublicA
       const { editionType, printEnabled, printPriceCents, limitedVariants, ...artwork } = row
       return {
         ...artwork,
+        presentation: presentations[artwork.id] ?? null,
         sale: saleFromRow({
           editionType,
           printEnabled,

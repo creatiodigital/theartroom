@@ -11,6 +11,7 @@ export const createDashboardState = (): TDashboardState => ({
   isWallCeilingPanelOpen: false,
   isWindowsPanelOpen: false,
   isPanelsPanelOpen: false,
+  isFurniturePanelOpen: false,
   isBakePanelOpen: false,
   isEditingArtwork: false,
   selectedSpace: { label: 'Paris', value: 'paris' },

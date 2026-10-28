@@ -727,6 +727,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         trackLampDistance: exhibition.trackLampDistance ?? undefined,
         trackLampSettings: exhibition.trackLampSettings ?? undefined,
         panelSettings: exhibition.panelSettings ?? undefined,
+        benchSettings: exhibition.benchSettings ?? undefined,
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import type { NextRequest } from 'next/server'
 import { deleteFromR2 } from '@/lib/r2'
+import { isPrintPresentationRecord } from '@/lib/printPresentation/record'
+import { deletePresentationFiles } from '@/lib/printPresentation/storage'
 
 import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
@@ -631,6 +633,15 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     // Delete high-res original from R2 if exists. Without this, the
     // raw uploaded TIFF/PNG/JPEG (often tens of MB) is orphaned in R2
     // every time an artist removes a piece from their library.
+    // Its print presentation's stored renders (both sizes).
+    if (isPrintPresentationRecord(artwork.printPresentation)) {
+      try {
+        await deletePresentationFiles(artwork.printPresentation, artwork.id)
+      } catch (error) {
+        console.warn('Failed to delete print presentation files:', error)
+      }
+    }
+
     if (artwork.originalImageUrl) {
       try {
         await deleteFromR2(artwork.originalImageUrl)

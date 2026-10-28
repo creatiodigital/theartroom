@@ -3,11 +3,13 @@
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
+import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Text } from '@/components/ui/Typography'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import type { ArtworkSale } from '@/lib/editions/artworkSale'
+import type { PresentationView } from '@/lib/printPresentation/record'
 
 import styles from './ArtworkGrid.module.scss'
 
@@ -44,6 +46,9 @@ type Artwork = {
    * purchasable work.
    */
   sale?: ArtworkSale | null
+  /** The work as a photo of the real print (frame or sheet), when one is current and the
+   *  switch is on. Absent: the bare image, as always. */
+  presentation?: PresentationView | null
 }
 
 interface ArtworkGridProps {
@@ -113,14 +118,32 @@ export const ArtworkGrid = ({
                   href={`/artworks/${artwork.slug}${context}`}
                   className={styles.viewDetailsLink}
                 >
-                  <ProtectedImage
-                    src={artwork.imageUrl}
-                    alt={artwork.title || artwork.name || 'Artwork'}
-                    className={styles.image}
-                    width={w}
-                    height={h}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
+                  <PrintPresentation
+                    view={artwork.presentation}
+                    size="small"
+                    renderClassName={styles.presentationRender}
+                  >
+                    {(placement) =>
+                      placement === 'window' ? (
+                        // In the render's window, which has the image's own shape: it fills it.
+                        <ProtectedImage
+                          src={artwork.imageUrl!}
+                          alt={artwork.title || artwork.name || 'Artwork'}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <ProtectedImage
+                          src={artwork.imageUrl!}
+                          alt={artwork.title || artwork.name || 'Artwork'}
+                          className={styles.image}
+                          width={w}
+                          height={h}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      )
+                    }
+                  </PrintPresentation>
                 </Link>
               ) : (
                 <div className={styles.placeholder}>
