@@ -265,6 +265,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         trackLampDistance: snapshotExhibition.trackLampDistance,
         trackLampSettings: snapshotExhibition.trackLampSettings,
         panelSettings: snapshotExhibition.panelSettings,
+        benchSettings: snapshotExhibition.benchSettings,
         windowLightColor: snapshotExhibition.windowLightColor,
         windowLightIntensity: snapshotExhibition.windowLightIntensity,
         windowTransparency: snapshotExhibition.windowTransparency,

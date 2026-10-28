@@ -2,6 +2,7 @@ import type { TArtworkPosition } from '@/types/artwork'
 import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { ExhibitionArtworkResponse } from '@/lib/exhibitionArtworkMapper'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
+import type { BenchSettings } from '@/components/scene/spaces/objects/Bench/benchSettings'
 import type { BakeRecord } from '@/lib/bake/bakeRecord'
 
 export type TExhibition = {
@@ -46,6 +47,8 @@ export type TExhibition = {
   trackLampSettings?: Record<string, { rotation: number; enabled: boolean; offset?: number }>
   /** Display panels, keyed by panel index. See panelSettings.ts. */
   panelSettings?: Record<string, PanelSettings>
+  /** Gallery benches, keyed by bench index. See benchSettings.ts. */
+  benchSettings?: Record<string, BenchSettings>
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean

@@ -715,6 +715,11 @@ model Exhibition {
   // Absent means no panel has ever been switched on. See
   // src/components/scene/spaces/objects/Panel/panelSettings.ts
   panelSettings          Json?
+  // Gallery benches (AR-167), keyed by bench index (blocks of ten per room):
+  //   { "0": { enabled, model, x, z, rotationY } }
+  // Absent means no bench has ever been switched on. See
+  // src/components/scene/spaces/objects/Bench/benchSettings.ts
+  benchSettings          Json?
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)

@@ -8,6 +8,7 @@ import type { TArtworkPosition } from '@/types/artwork'
 import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { TExhibition } from '@/types/exhibition'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
+import type { BenchSettings } from '@/components/scene/spaces/objects/Bench/benchSettings'
 
 const HISTORY_LIMIT = 20
 
@@ -236,6 +237,17 @@ const exhibitionSlice = createSlice({
       state.panelSettings[key] = { ...state.panelSettings[key], ...patch }
     },
 
+    /** Same shape of patch as the panels: a bench carries five fields, edited one at a time. */
+    setBenchSettings: (
+      state: TExhibitionWithHistory,
+      action: PayloadAction<{ index: number; patch: Partial<BenchSettings> }>,
+    ) => {
+      const { index, patch } = action.payload
+      if (!state.benchSettings) state.benchSettings = {}
+      const key = String(index)
+      state.benchSettings[key] = { ...state.benchSettings[key], ...patch }
+    },
+
     // ── Autofocus group actions ────────────────────────────────────────────
 
     setAutofocusGroups: (
@@ -343,6 +355,7 @@ export const {
   deleteArtworkPosition,
   setArtworkZOrder,
   setPanelSettings,
+  setBenchSettings,
   toggleArtworkLocked,
   setExhibition,
   setExhibitionField,

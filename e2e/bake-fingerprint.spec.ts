@@ -180,6 +180,35 @@ test('a room that shows a panel stales its bakes from before panels were baked',
   expect(computeBakeFingerprint(structuredClone(on))).toBe(computeBakeFingerprint(on))
 })
 
+// AR-167: gallery benches are baked (they shadow the floor and walls). Same contract as the panels:
+// a room without a bench switched on keeps its fingerprint exactly; switching one on, moving,
+// turning or swapping it stales the bake.
+const benches = (patch: Record<string, unknown> = {}) => ({
+  '0': { enabled: true, model: 'odes', x: 0, z: 0, rotationY: 0, ...patch },
+})
+const withBenches = (benchSettings: unknown) =>
+  computeBakeFingerprint({ ...base, exhibition: { ...base.exhibition, benchSettings } })
+
+test('a room without a bench keeps its fingerprint', () => {
+  // In LIGHT_FIELDS an absent field hashes as null, which would stale every bake ever made.
+  expect(LIGHT_FIELDS).not.toContain('benchSettings')
+  const plain = computeBakeFingerprint(base)
+  for (const settings of [undefined, null, {}, benches({ enabled: false })])
+    expect(withBenches(settings)).toBe(plain)
+})
+
+test('a bench switched on, moved, turned or swapped stales the bake', () => {
+  const prints = [
+    computeBakeFingerprint(base),
+    withBenches(benches()),
+    withBenches(benches({ x: 1 })),
+    withBenches(benches({ rotationY: 90 })),
+    withBenches(benches({ model: 'black' })),
+  ]
+  expect(new Set(prints).size).toBe(prints.length)
+  expect(withBenches(benches())).toBe(withBenches(structuredClone(benches())))
+})
+
 test('isBakeRecord accepts a panel map and a card map', () => {
   const map = {
     receiver: 'panels',

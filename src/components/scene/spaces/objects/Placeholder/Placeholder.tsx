@@ -17,6 +17,7 @@ import {
   hideLightingPanel,
   hideCameraPanel,
   hidePanelsPanel,
+  hideFurniturePanel,
 } from '@/redux/slices/dashboardSlice'
 import { snapshotExhibition } from '@/redux/slices/exhibitionSlice'
 import { showWallView } from '@/redux/slices/wallViewSlice'
@@ -88,6 +89,7 @@ const Placeholder: React.FC<PlaceholderProps> = ({ i, name, nodes }) => {
     dispatch(hideLightingPanel())
     dispatch(hideCameraPanel())
     dispatch(hidePanelsPanel())
+    dispatch(hideFurniturePanel())
   }
 
   if (!node) return null
