@@ -2,8 +2,10 @@ import { captureError } from '@/lib/observability/captureError'
 import { getPrintPresentationsEnabled } from '@/lib/settings'
 
 import { isCurrentRecord } from './currentInputs'
+import { pieceArea } from './geometry'
 import { presentationInputs } from './inputs'
 import { loadPresentationSources } from './loadSources'
+import { shotMode } from './look'
 import { presentationView, type PresentationView } from './record'
 
 export type { PresentationView }
@@ -24,8 +26,12 @@ export async function getPrintPresentations(
     const views: Record<string, PresentationView> = {}
     for (const source of sources) {
       if (!source.record) continue
-      if (!isCurrentRecord(source.id, source.record, presentationInputs(source))) continue
-      views[source.id] = presentationView(source.record)
+      const inputs = presentationInputs(source)
+      if (!inputs || !isCurrentRecord(source.id, source.record, inputs)) continue
+      views[source.id] = {
+        ...presentationView(source.record),
+        piece: pieceArea(shotMode(inputs.frame), inputs.ratio, source.record.window),
+      }
     }
     return views
   } catch (err) {

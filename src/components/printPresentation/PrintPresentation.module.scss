@@ -35,3 +35,28 @@
   max-width: 100%;
   pointer-events: none;
 }
+
+// Cropped (`crop`): only the piece and a thin border of wall show. The stand-in sizes the piece;
+// the render behind it is placed (inline) so the cropped area fills it, and what's outside is cut.
+.cropped {
+  overflow: hidden;
+}
+
+.croppedRender {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+}
+
+// Empty, with the cropped area's shape: in flow, it takes the surface's caps the way the render
+// does uncropped.
+.standIn {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  pointer-events: none;
+}

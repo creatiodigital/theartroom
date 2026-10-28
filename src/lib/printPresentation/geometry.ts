@@ -170,6 +170,36 @@ export function paperLift(look: Look, iw: number, ih: number): (x: number, y: nu
   }
 }
 
+/** The wall a page keeps round the piece when it crops the shot to it, metres: room for the
+ *  piece's shadow, which fades within a few centimetres. */
+export const CROP_WALL_M = 0.06
+
+/**
+ * The piece with a thin border of wall round it, as fractions of the shot: what a page that shows
+ * the work as large as it can (the artwork page) crops the square shot to. Worked out from where
+ * the image's window landed in the shot and the piece's own borders round the image, so it needs
+ * nothing a stored render doesn't already have.
+ */
+export function pieceArea(
+  mode: PresentationMode,
+  ratio: number,
+  window: PresentationWindow,
+): PresentationWindow {
+  const [iw] = imageSize(ratio, mode === 'framed' ? FRAMED_IMAGE_LONG_M : IMAGE_LONG_M)
+  // The shot is square, so one scale serves both ways: shot widths per metre.
+  const s = window.w / iw
+  const face = FRAME_FACE_M - LIP_OVERLAP_M
+  const [side, top, bottom] =
+    mode === 'framed'
+      ? [FRAMED_BORDER_M + face, FRAMED_BORDER_M + face, FRAMED_BOTTOM_M + face]
+      : [PAPER_BORDER_M, PAPER_BORDER_M, PAPER_BORDER_M]
+  const x0 = Math.max(0, window.x - (side + CROP_WALL_M) * s)
+  const x1 = Math.min(1, window.x + window.w + (side + CROP_WALL_M) * s)
+  const y0 = Math.max(0, window.y - (top + CROP_WALL_M) * s)
+  const y1 = Math.min(1, window.y + window.h + (bottom + CROP_WALL_M) * s)
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }
+}
+
 /** A pixel rect in the shot, as fractions of it. */
 export function windowFractions(
   rectPx: { x: number; y: number; w: number; h: number },

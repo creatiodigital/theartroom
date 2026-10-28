@@ -59,6 +59,8 @@ export type PresentationView = {
   aspect: number
   large: string
   small: string
+  /** The piece with a thin border of wall, for a page that crops the shot to it (`pieceArea`). */
+  piece?: PresentationWindow
 }
 
 export const presentationView = (record: PrintPresentationRecord): PresentationView => ({
