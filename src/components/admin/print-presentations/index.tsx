@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import {
   listPrintPresentations,
+  setPresentationFrame,
   setPrintPresentationsSwitch,
   type PresentationRow,
   type PresentationStatus,
@@ -12,7 +13,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
+import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
 import { Toggle } from '@/components/ui/Toggle'
+import {
+  FRAME_LABEL,
+  PRESENTATION_FRAMES,
+  type PresentationFrame,
+} from '@/lib/printPresentation/look'
 
 import { supportsWebpAlpha } from './capture'
 import { RenderQueue, type RenderJob } from './RenderQueue'
@@ -27,6 +34,11 @@ const STATUS_LABEL: Record<PresentationStatus, string> = {
 }
 
 const STATUS_ORDER: PresentationStatus[] = ['missing', 'stale', 'current', 'ineligible']
+
+const FRAME_OPTIONS: SelectOption<PresentationFrame>[] = PRESENTATION_FRAMES.map((frame) => ({
+  value: frame,
+  label: FRAME_LABEL[frame],
+}))
 
 type RowOutcome = { result: 'saved' | 'failed'; error?: string }
 
@@ -94,6 +106,13 @@ export const AdminPrintPresentations = () => {
     setStopping(false)
     void load()
   }, [load])
+
+  // Saved as soon as it's picked; the row then reads as out of date until it's rendered in it.
+  const changeFrame = async (artworkId: string, frame: PresentationFrame) => {
+    const res = await setPresentationFrame(artworkId, frame)
+    if (!res.ok) return setError(res.error)
+    await load()
+  }
 
   const toggleSwitch = async () => {
     if (enabled === null) return
@@ -170,12 +189,13 @@ export const AdminPrintPresentations = () => {
         {rows === null ? (
           <p className={dashboardStyles.sectionDescription}>Loading…</p>
         ) : (
-          <table className={dashboardStyles.table}>
+          <table className={`${dashboardStyles.table} ${styles.rows}`}>
             <thead>
               <tr>
                 <th>Preview</th>
                 <th>Work</th>
                 <th>Presentation</th>
+                <th>Frame color</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -214,6 +234,19 @@ export const AdminPrintPresentations = () => {
                         : '—'}
                     </td>
                     <td>
+                      {row.inputs?.frame ? (
+                        <SelectDropdown<PresentationFrame>
+                          className={styles.frameSelect}
+                          options={FRAME_OPTIONS}
+                          value={row.inputs.frame}
+                          onChange={(frame) => void changeFrame(row.artworkId, frame)}
+                          disabled={running}
+                        />
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td>
                       <span data-status="">{STATUS_LABEL[row.status]}</span>
                       {outcome && (
                         <div className={outcome.result === 'failed' ? styles.error : styles.muted}>
@@ -225,7 +258,7 @@ export const AdminPrintPresentations = () => {
                       {row.inputs && (
                         <Button
                           font="dashboard"
-                          variant="ghost"
+                          variant="secondary"
                           label="Re-render"
                           disabled={!canRender || running}
                           onClick={() => start([{ artworkId: row.artworkId, inputs: row.inputs! }])}

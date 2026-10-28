@@ -20,25 +20,31 @@ import {
   EASE_M,
   FRAME_DEPTH_M,
   FRAME_FACE_M,
+  FRAMED_BORDER_M,
+  FRAMED_BOTTOM_M,
   FRAMED_IMAGE_LONG_M,
   LIP_OVERLAP_M,
-  PAPER_BORDER_M,
-  PAPER_BOTTOM_M,
   PAPER_THICKNESS_M,
   frameOcclusion,
   imageSize,
 } from '@/lib/printPresentation/geometry'
-import type { Look } from '@/lib/printPresentation/look'
+import type { Look, PresentationFrame } from '@/lib/printPresentation/look'
 
 import { ArtworkWindow, type WindowRectPx } from './ArtworkWindow'
 
+/** Each frame's wood: the gallery's own textures (its "Dark Wood" is `wooden-frame-dark`). */
+const FRAME_WOOD: Record<PresentationFrame, string> = { 'wood-dark': 'wooden-frame-dark' }
+
 /**
- * The frame's wood (`wooden-frame-medium` — the owner's "oak" for every open edition): a satin
- * finish, so the grain's relief catches the light. Texture scale is set by the geometry's UVs (in
- * metres of board), not here.
+ * The frame's wood, as picked for the work: a satin finish, so the grain's relief catches the
+ * light. Texture scale is set by the geometry's UVs (in metres of board), not here.
+ *
+ * TODO: the other frames — light and medium wood (the gallery's other two textures;
+ * `wooden-frame-light` is 2:1, so its UVs need the texture's aspect), off-white and black painted
+ * wood.
  */
-const useWood = () => {
-  const base = assetUrl('/assets/materials/wooden-frame-medium')
+const useWood = (frame: PresentationFrame) => {
+  const base = assetUrl(`/assets/materials/${FRAME_WOOD[frame]}`)
   const [diffuse, normal, roughness] = useLoader(TextureLoader, [
     `${base}/diffuse.jpg?v=3`,
     `${base}/normal.jpg?v=3`,
@@ -119,15 +125,17 @@ const StudioFrame = ({
   height,
   face,
   depth,
+  frame,
   look,
 }: {
   width: number
   height: number
   face: number
   depth: number
+  frame: PresentationFrame
   look: Look
 }) => {
-  const wood = useWood()
+  const wood = useWood(frame)
   const bars = useMemo(() => {
     const o = (i: number): [number, number] => [
       look.woodOffset[0] + look.barOffsets[i][0] * 4,
@@ -181,18 +189,20 @@ const useFrameOcclusion = (
  */
 export const Framed = ({
   ratio,
+  frame,
   look,
   onWindow,
 }: {
   ratio: number
+  frame: PresentationFrame
   look: Look
   onWindow: (rect: WindowRectPx) => void
 }) => {
   const [iw, ih] = imageSize(ratio, FRAMED_IMAGE_LONG_M)
   // The sheet: the image plus its paper margin (a little more at the bottom, as printed).
-  const sw = iw + 2 * PAPER_BORDER_M
-  const sh = ih + PAPER_BORDER_M + PAPER_BOTTOM_M
-  const sheetY = (PAPER_BORDER_M - PAPER_BOTTOM_M) / 2
+  const sw = iw + 2 * FRAMED_BORDER_M
+  const sh = ih + FRAMED_BORDER_M + FRAMED_BOTTOM_M
+  const sheetY = (FRAMED_BORDER_M - FRAMED_BOTTOM_M) / 2
   // The frame's opening shows the whole margin; its lip just covers the sheet's cut edge.
   const openW = sw - 2 * LIP_OVERLAP_M
   const openH = sh - 2 * LIP_OVERLAP_M
@@ -208,6 +218,7 @@ export const Framed = ({
           height={openH + 2 * FRAME_FACE_M}
           face={FRAME_FACE_M}
           depth={FRAME_DEPTH_M}
+          frame={frame}
           look={look}
         />
         {/* The sheet, behind the glass. */}

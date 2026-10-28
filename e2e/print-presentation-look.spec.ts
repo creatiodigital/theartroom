@@ -5,7 +5,8 @@ import { presentationInputs, type PresentationSource } from '@/lib/printPresenta
 
 /**
  * Print presentations: the approved look is frozen. Each artwork's seed, and every value the
- * seeded generator draws from it, must stay exactly as the owner approved them (2026-10-28).
+ * seeded generator draws from it, must stay exactly as the owner approved them (2026-10-28; the
+ * same day, the unframed sheet's shadow was made crisper: half the softness, same draw).
  * Pure module checks: no server, no WebGL.
  */
 
@@ -17,7 +18,7 @@ const PINNED_LIMITED = {
     { position: [0.021521580708213167, -1.5921578392619267, 2.4], share: 0.01837519744411111 },
     { position: [1.3369788514450192, 0.1722997116856277, 2.4], share: 0.011196241974830627 },
   ],
-  softness: 229.10875702276826,
+  softness: 114.55437851138413,
   standoff: 0.006724045697133988,
   setBack: 0.01939431713661179,
   cornerLift: [

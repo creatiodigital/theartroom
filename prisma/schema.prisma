@@ -219,6 +219,10 @@ model Artwork {
   // src/lib/printPresentation/record.ts. Null = not rendered yet (today's plain image).
   printPresentation Json?
 
+  // The frame this work's framed presentation is rendered in, picked on the admin's print
+  // presentations page (`PRESENTATION_FRAMES` in src/lib/printPresentation/look.ts).
+  presentationFrame String @default("wood-dark")
+
   // The gallery's curated /prints entry, if this work is in the selection.
   selectedPrint SelectedPrint?
 

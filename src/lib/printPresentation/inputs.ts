@@ -1,6 +1,12 @@
 import { canonicalJson, fnv1a } from '@/lib/bake/hash'
 
-import { LOOK_VERSION, seedForArtwork, type PresentationMode } from './look'
+import {
+  LOOK_VERSION,
+  frameOrDefault,
+  seedForArtwork,
+  type PresentationFrame,
+  type PresentationMode,
+} from './look'
 
 /** What an artwork's presentation depends on, read from the database. */
 export type PresentationSource = {
@@ -12,6 +18,8 @@ export type PresentationSource = {
   editionType: string
   /** The edition size of the artwork's mandatory print size (`order: 0`), draft or published. */
   firstVariantEditionSize: number | null
+  /** The frame picked for it (`Artwork.presentationFrame`). */
+  presentationFrame: string | null
 }
 
 /** Everything a render needs, and the fingerprint that says whether a stored one still fits. */
@@ -19,6 +27,8 @@ export type PresentationInputs = {
   mode: PresentationMode
   /** Limited only: N in the pencilled "copy/N". */
   edition: number | null
+  /** Framed only: the frame it's rendered in. */
+  frame: PresentationFrame | null
   /** Image width over height, to 4 decimals. */
   ratio: number
   seed: number
@@ -34,6 +44,8 @@ const positive = (n: number | null): n is number => typeof n === 'number' && n >
  * A numbered sheet only for a limited edition that is for sale and has its print size set up;
  * everything else is framed — open editions, and works not yet for sale (the owner: "treat them
  * as open editions"). Pausing a size for a fix doesn't change the mode.
+ *
+ * TODO: an optional frame for limited editions too (the numbered sheet, framed), picked per work.
  */
 export function presentationInputs(src: PresentationSource): PresentationInputs | null {
   if (src.artworkType !== 'image') return null
@@ -43,8 +55,9 @@ export function presentationInputs(src: PresentationSource): PresentationInputs 
     src.printEnabled && src.editionType === 'limited' && positive(src.firstVariantEditionSize)
   const mode: PresentationMode = limited ? 'limited' : 'framed'
   const edition = limited ? src.firstVariantEditionSize : null
+  const frame = limited ? null : frameOrDefault(src.presentationFrame)
   const ratio = Math.round((src.originalWidth / src.originalHeight) * 10000) / 10000
   const seed = seedForArtwork(src.id)
-  const fingerprint = fnv1a(canonicalJson([LOOK_VERSION, mode, edition, ratio, seed]))
-  return { mode, edition, ratio, seed, fingerprint }
+  const fingerprint = fnv1a(canonicalJson([LOOK_VERSION, mode, edition, ratio, seed, frame]))
+  return { mode, edition, frame, ratio, seed, fingerprint }
 }

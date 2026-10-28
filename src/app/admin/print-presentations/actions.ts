@@ -7,9 +7,11 @@
  */
 import { requireAdminAction } from '@/lib/authUtils'
 import { captureError } from '@/lib/observability/captureError'
+import prisma from '@/lib/prisma'
 import { isCurrentRecord } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs, type PresentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
+import { isPresentationFrame, type PresentationFrame } from '@/lib/printPresentation/look'
 import { presentationView, type PresentationView } from '@/lib/printPresentation/record'
 import { getPrintPresentationsEnabled, setPrintPresentationsEnabled } from '@/lib/settings'
 
@@ -66,6 +68,26 @@ export async function listPrintPresentations(): Promise<
   } catch (err) {
     captureError(err, { flow: 'admin', stage: 'list-print-presentations' })
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to load the list.' }
+  }
+}
+
+/**
+ * The frame a work is rendered in, saved as soon as it's picked. A framed work whose render used
+ * another frame then reads as out of date, so the next render (one by one, or all) uses this one.
+ */
+export async function setPresentationFrame(
+  artworkId: string,
+  frame: PresentationFrame,
+): Promise<{ ok: true } | Failure> {
+  const guard = await requireAdminAction()
+  if (!guard.ok) return { ok: false, error: guard.error }
+  if (!isPresentationFrame(frame)) return { ok: false, error: 'Unknown frame.' }
+  try {
+    await prisma.artwork.update({ where: { id: artworkId }, data: { presentationFrame: frame } })
+    return { ok: true }
+  } catch (err) {
+    captureError(err, { flow: 'admin', stage: 'set-presentation-frame' })
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to save the frame.' }
   }
 }
 

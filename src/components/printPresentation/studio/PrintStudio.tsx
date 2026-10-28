@@ -1,8 +1,8 @@
 'use client'
 
 /**
- * The print-presentation studio: one artwork's SURROUND, shot straight on against a white wall —
- * a wooden frame (open editions, works not for sale) or an unframed sheet with a pencilled
+ * The print-presentation studio: one artwork's SURROUND, shot straight on against a light gray
+ * wall — a wooden frame (open editions, works not for sale) or an unframed sheet with a pencilled
  * "copy/N" (limited editions), with their soft shadows. Rendered in the admin's browser, captured,
  * and stored; public pages show the stored image. See
  * docs/superpowers/specs/2026-10-28-print-presentations-design.md.
@@ -20,13 +20,21 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import type { PerspectiveCamera } from 'three'
 
 import {
+  WALL_COLOR,
   WALL_IRRADIANCE,
   shotFrame,
   windowFractions,
   type ShotFrame,
   type PresentationWindow,
 } from '@/lib/printPresentation/geometry'
-import { makeLook, type Look, type PresentationMode, type Vec3 } from '@/lib/printPresentation/look'
+import {
+  frameOrDefault,
+  makeLook,
+  type Look,
+  type PresentationFrame,
+  type PresentationMode,
+  type Vec3,
+} from '@/lib/printPresentation/look'
 
 import type { WindowRectPx } from './ArtworkWindow'
 import { Limited } from './PaperSheet'
@@ -79,22 +87,15 @@ const Lights = ({ look }: { look: Look }) => {
 }
 
 /**
- * Points the camera at the shot: the full view's proportions, and — when the shot reaches below
- * the margin for a long shadow — the part of that taller view the canvas shows. Set before
- * anything is drawn or projected (a layout effect, ahead of every other component's effects).
+ * Points the camera at the shot: the canvas's proportions. Set before anything is drawn or
+ * projected (a layout effect, ahead of every other component's effects).
  */
-const ShotCamera = ({ frame }: { frame: ShotFrame }) => {
+const ShotCamera = ({ shot }: { shot: ShotFrame }) => {
   const camera = useThree((s) => s.camera) as PerspectiveCamera
   useLayoutEffect(() => {
-    const { fullWidth, fullHeight, offsetY } = frame.view
-    camera.aspect = fullWidth / fullHeight
-    if (offsetY > 0) {
-      camera.setViewOffset(fullWidth, fullHeight, 0, offsetY, frame.widthPx, frame.heightPx)
-    } else {
-      camera.clearViewOffset()
-    }
+    camera.aspect = shot.widthPx / shot.heightPx
     camera.updateProjectionMatrix()
-  }, [camera, frame])
+  }, [camera, shot])
   return null
 }
 
@@ -132,6 +133,7 @@ export function PrintStudio({
   ratio,
   mode,
   edition,
+  frame,
   seed,
   widthPx,
   onReady,
@@ -140,6 +142,8 @@ export function PrintStudio({
   mode: PresentationMode
   /** Limited only: N in the pencilled "copy/N". */
   edition: number | null
+  /** Framed only: the frame it's rendered in. */
+  frame: PresentationFrame | null
   seed: number
   widthPx: number
   /** Called once, when the shot is ready to capture. */
@@ -151,7 +155,7 @@ export function PrintStudio({
   // `edition` only feeds the copy number, which only a limited sheet shows; the draw happens
   // either way, so every value after it stays where it was approved.
   const look = useMemo(() => makeLook(seed, mode, edition ?? 1), [seed, mode, edition])
-  const frame = useMemo(() => shotFrame(mode, ratio, widthPx, look), [mode, ratio, widthPx, look])
+  const shot = useMemo(() => shotFrame(mode, ratio, widthPx, look), [mode, ratio, widthPx, look])
 
   const windowRect = useRef<WindowRectPx | null>(null)
   const onWindow = useCallback((rect: WindowRectPx) => {
@@ -167,7 +171,7 @@ export function PrintStudio({
   const onShot = useCallback((shot: StudioShot) => ready.current(shot), [])
 
   return (
-    <div style={{ width: widthPx, height: frame.heightPx }}>
+    <div style={{ width: widthPx, height: shot.heightPx }}>
       <Canvas
         frameloop="demand"
         flat
@@ -175,19 +179,19 @@ export function PrintStudio({
         dpr={1}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
         camera={{
-          position: [0, 0, frame.distance],
-          fov: frame.fov,
+          position: [0, 0, shot.distance],
+          fov: shot.fov,
           near: 0.05,
           far: 50,
           manual: true,
         }}
       >
-        <ShotCamera frame={frame} />
+        <ShotCamera shot={shot} />
         <Lights look={look} />
-        {/* The wall: big, white, matte. */}
+        {/* The wall: big, light gray, matte. */}
         <mesh position={[0, 0, 0]} receiveShadow>
           <planeGeometry args={[12, 12]} />
-          <meshStandardMaterial color="#ffffff" roughness={1} />
+          <meshStandardMaterial color={WALL_COLOR} roughness={1} />
         </mesh>
         <Suspense fallback={null}>
           <group
@@ -210,7 +214,7 @@ export function PrintStudio({
                 onNumberDrawn={onNumberDrawn}
               />
             ) : (
-              <Framed ratio={ratio} look={look} onWindow={onWindow} />
+              <Framed ratio={ratio} frame={frameOrDefault(frame)} look={look} onWindow={onWindow} />
             )}
           </group>
           {numberDrawn && <TakeShot windowRect={windowRect} onShot={onShot} />}

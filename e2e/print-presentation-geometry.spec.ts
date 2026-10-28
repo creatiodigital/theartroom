@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 import {
+  FOV,
   FRAMED_IMAGE_LONG_M,
-  SHADOW_MARGIN,
+  TILE_FILL,
   frameOcclusion,
   imageSize,
   outerSize,
@@ -20,9 +21,13 @@ import { checkShot } from '@/lib/printPresentation/shotCheck'
  * Pure module checks: no server, no WebGL.
  */
 
+/** The square shot's side, metres, from its camera. */
+const tileSide = (frame: { distance: number }) =>
+  2 * frame.distance * Math.tan((FOV * Math.PI) / 360)
+
 test.describe('print presentation geometry', () => {
-  test('the framed piece keeps its 75 cm frame; the sheet is the image plus its margin', () => {
-    expect(outerSize('framed', 1.5)[0]).toBeCloseTo(0.75, 9)
+  test('the framed piece is the image, a wide paper margin and a thin frame; the sheet is the image plus its margin', () => {
+    expect(outerSize('framed', 1.5)[0]).toBeCloseTo(0.796, 9)
     expect(outerSize('limited', 1.5)[0]).toBeCloseTo(0.62, 9)
     expect(imageSize(1.5, FRAMED_IMAGE_LONG_M)[0]).toBeCloseTo(0.596, 9)
   })
@@ -68,17 +73,11 @@ test.describe('print presentation geometry', () => {
     ['framed', 0.25],
   ] as const) {
     test(`a ${ratio === 4 ? 'panorama' : 'tall work'} (${mode}) keeps its window inside the shot, undistorted`, () => {
-      const [ow, oh] = outerSize(mode, ratio)
-      const pad = SHADOW_MARGIN * Math.max(ow, oh)
       const [iw, ih] = imageSize(ratio, mode === 'framed' ? FRAMED_IMAGE_LONG_M : undefined)
-      const { widthPx, baseHeightPx: heightPx } = shotFrame(
-        mode,
-        ratio,
-        1800,
-        makeLook(7, mode, 50),
-      )
-      const w = iw / (ow + 2 * pad)
-      const h = ih / (oh + 2 * pad)
+      const frame = shotFrame(mode, ratio, 1800, makeLook(7, mode, 50))
+      const { widthPx, heightPx } = frame
+      const w = iw / tileSide(frame)
+      const h = ih / tileSide(frame)
       for (const f of [w, h]) {
         expect(f).toBeGreaterThan(0)
         expect(f).toBeLessThan(1)
@@ -87,32 +86,22 @@ test.describe('print presentation geometry', () => {
     })
   }
 
-  test('a level light throws no long shadow: the shot is just the piece and its margin', () => {
+  test('the shot is a square of wall, the piece filling most of it', () => {
     const level: Look = { ...makeLook(7, 'framed', 50), key: [-1, 0, 2.4] }
     expect(shadowReachBelow('framed', level)).toBe(0)
     const frame = shotFrame('framed', 1.5, 1800, level)
-    expect(frame.heightPx).toBe(frame.baseHeightPx)
-    expect(frame.view.offsetY).toBe(0)
+    expect(frame.heightPx).toBe(frame.widthPx)
+    const [ow, oh] = outerSize('framed', 1.5)
+    expect(Math.max(ow, oh) / tileSide(frame)).toBeCloseTo(TILE_FILL, 9)
   })
 
-  test('the shot extends below the piece as far as its own shadow reaches, and only below', () => {
-    // A tall framed work whose light comes from high up: its shadow ran past the old crop.
+  test('a long shadow makes the square larger instead of running off its foot', () => {
+    // A tall framed work whose light comes from high up: its shadow reaches past the usual wall.
     const look = makeLook(seedForArtwork('41317d60-2192-40f8-bfd7-c457a65a716c'), 'framed', 50)
     const frame = shotFrame('framed', 0.8, 1800, look)
     const [ow, oh] = outerSize('framed', 0.8)
-    const pad = SHADOW_MARGIN * Math.max(ow, oh)
-    const extraRows = frame.heightPx - frame.baseHeightPx
-    expect(extraRows).toBeGreaterThan(0)
-    // Room below the piece, in metres, covers the shadow's reach.
-    const metresPerRow = (oh + 2 * pad) / frame.baseHeightPx
-    expect(pad + extraRows * metresPerRow).toBeGreaterThanOrEqual(shadowReachBelow('framed', look))
-    // Same camera and pixel density: a frustum made taller symmetrically, of which the shot is
-    // the part from the original top down — every pixel of the original crop stays where it was.
-    expect(frame.view).toEqual({
-      fullWidth: 1800,
-      fullHeight: frame.baseHeightPx + 2 * extraRows,
-      offsetY: extraRows,
-    })
+    expect(tileSide(frame)).toBeGreaterThan(Math.max(ow, oh) / TILE_FILL)
+    expect((tileSide(frame) - oh) / 2).toBeCloseTo(shadowReachBelow('framed', look), 9)
   })
 
   test("every seed's shadow fits in its shot", () => {
@@ -124,20 +113,19 @@ test.describe('print presentation geometry', () => {
       ] as const) {
         const look = makeLook(seed, mode, 50)
         const frame = shotFrame(mode, ratio, 900, look)
-        const [ow, oh] = outerSize(mode, ratio)
-        const pad = SHADOW_MARGIN * Math.max(ow, oh)
-        const below =
-          pad + ((frame.heightPx - frame.baseHeightPx) * (oh + 2 * pad)) / frame.baseHeightPx
-        expect(below).toBeGreaterThanOrEqual(shadowReachBelow(mode, look) - 1e-9)
+        const [, oh] = outerSize(mode, ratio)
+        expect((tileSide(frame) - oh) / 2).toBeGreaterThanOrEqual(
+          shadowReachBelow(mode, look) - 1e-9,
+        )
       }
     }
   })
 
-  test('a shot is only stored if it shows a white wall around a transparent window', () => {
-    const wall = [255, 255, 255, 255] as const
+  test('a shot is only stored if it shows the light gray wall around a transparent window', () => {
+    const wall = [241, 241, 241, 255] as const
     const hole = [0, 0, 0, 0] as const
     expect(checkShot({ corner: wall, windowCenter: hole })).toBeNull()
-    expect(checkShot({ corner: [253, 253, 253, 255], windowCenter: hole })).toBeNull()
+    expect(checkShot({ corner: [234, 234, 234, 255], windowCenter: hole })).toBeNull()
     // Nothing drawn: the whole canvas is still transparent.
     expect(checkShot({ corner: hole, windowCenter: hole })).toMatch(/blank/i)
     // A dark or see-through wall, or something where the artwork goes: not a usable shot.
@@ -146,11 +134,11 @@ test.describe('print presentation geometry', () => {
     expect(checkShot({ corner: wall, windowCenter: [250, 250, 250, 255] })).toMatch(/window/i)
   })
 
-  test("a shot whose shadow runs into its edge is not stored: no gray line at a card's foot", () => {
-    const wall = [255, 255, 255, 255] as const
+  test("a shot whose shadow runs into its edge is not stored: no dark line at a tile's foot", () => {
+    const wall = [241, 241, 241, 255] as const
     const hole = [0, 0, 0, 0] as const
-    expect(checkShot({ corner: wall, windowCenter: hole, edgeMin: 253 })).toBeNull()
-    expect(checkShot({ corner: wall, windowCenter: hole, edgeMin: 251 })).toBeNull()
-    expect(checkShot({ corner: wall, windowCenter: hole, edgeMin: 250 })).toMatch(/edge/i)
+    expect(checkShot({ corner: wall, windowCenter: hole, edgeMin: 240 })).toBeNull()
+    expect(checkShot({ corner: wall, windowCenter: hole, edgeMin: 237 })).toBeNull()
+    expect(checkShot({ corner: wall, windowCenter: hole, edgeMin: 236 })).toMatch(/edge/i)
   })
 })

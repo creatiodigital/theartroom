@@ -20,6 +20,10 @@ import type { Look } from '@/lib/printPresentation/look'
 
 import { ArtworkWindow, type WindowRectPx } from './ArtworkWindow'
 
+/** The pencilled number: a light hand, smaller than the print's own, in soft graphite. */
+const PENCIL_SIZE = 0.75
+const PENCIL_COLOR = '#a2a3a4'
+
 /**
  * The limited-edition sheet: flat where the image is, its border easing off the wall towards the
  * corners (paper never lies perfectly flat). Its shadow widens and narrows with it.
@@ -60,7 +64,7 @@ export const Limited = ({
   const { geometry, lift } = usePaperSheet(iw, ih, look)
   const front = look.standoff + PAPER_THICKNESS_M
   const label = `${look.copy}/${edition}`
-  const fontSize = EDITION_NUMBER_FONT_SIZE_CM / 100
+  const fontSize = (EDITION_NUMBER_FONT_SIZE_CM / 100) * PENCIL_SIZE
   const left = -iw / 2 - editionLeftBearingEm(label) * fontSize
   const top = -ih / 2 - EDITION_NUMBER_CLEARANCE_CM / 100 - EDITION_INK_TOP_EM * fontSize
   // The pencil sits on the paper, wherever the paper is there.
@@ -80,7 +84,7 @@ export const Limited = ({
       <Text
         font="/fonts/caveat-regular.ttf"
         fontSize={fontSize}
-        color="#8a8a88"
+        color={PENCIL_COLOR}
         anchorX="left"
         anchorY="top"
         position={[left, top + EDITION_INK_TOP_EM * fontSize, numberZ]}

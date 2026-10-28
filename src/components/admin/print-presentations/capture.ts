@@ -33,7 +33,7 @@ export async function supportsWebpAlpha(): Promise<boolean> {
 
 /**
  * Both stored sizes from one shot: the large one is the shot itself, the small one drawn down.
- * Refuses a shot that isn't a white wall around a transparent window (`checkShot`) — a blank or
+ * Refuses a shot that isn't a wall around a transparent window (`checkShot`) — a blank or
  * broken capture is reported and the work stays as it was.
  */
 export async function encodeShot(

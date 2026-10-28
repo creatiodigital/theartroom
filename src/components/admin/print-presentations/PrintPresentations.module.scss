@@ -36,8 +36,17 @@
   color: var(--color-text-secondary);
 }
 
+// Every cell centred on the row's height, which the preview sets.
+.rows td {
+  vertical-align: middle;
+}
+
 .previewCell {
   width: 140px;
+}
+
+.frameSelect {
+  width: 160px;
 }
 
 // The stored render, small: what the site will show.

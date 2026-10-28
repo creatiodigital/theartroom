@@ -1,13 +1,13 @@
 import { fnv1a } from '@/lib/bake/hash'
 
 /**
- * Print presentations: every artwork shown as a photo of the real print on a white wall. See
+ * Print presentations: every artwork shown as a photo of the real print on a light gray wall. See
  * docs/superpowers/specs/2026-10-28-print-presentations-design.md.
  *
  * Every piece hangs a little differently, so no two shots look alike: a seed (one per artwork)
  * picks the light's exact angle, how soft the shadows are, how far the piece stands off the wall,
  * how the paper curls, which stretch of board the frame is cut from, and the pencilled copy
- * number. The light always adds up to the same white wall.
+ * number. The light always adds up to the same wall brightness.
  *
  * 🔒 The look was approved by the owner on 2026-10-28. Don't retune it. Bump LOOK_VERSION when it
  * changes on purpose (every presentation then reads as out of date), and only ever APPEND draws
@@ -15,10 +15,22 @@ import { fnv1a } from '@/lib/bake/hash'
  */
 
 /** Bumped whenever the rendered look changes, so every presentation re-renders. */
-export const LOOK_VERSION = 2
+export const LOOK_VERSION = 3
 
 /** Framed: open editions and works not for sale. Limited: the numbered sheet. */
 export type PresentationMode = 'framed' | 'limited'
+
+/** The frames a framed work can be shown in, picked per work by the admin. The first is the default. */
+export const PRESENTATION_FRAMES = ['wood-dark'] as const
+export type PresentationFrame = (typeof PRESENTATION_FRAMES)[number]
+export const FRAME_LABEL: Record<PresentationFrame, string> = { 'wood-dark': 'Dark wood' }
+
+export const isPresentationFrame = (value: unknown): value is PresentationFrame =>
+  (PRESENTATION_FRAMES as readonly unknown[]).includes(value)
+
+/** A work's stored frame, or the default for one this code doesn't know. */
+export const frameOrDefault = (value: unknown): PresentationFrame =>
+  isPresentationFrame(value) ? value : PRESENTATION_FRAMES[0]
 
 export type Vec3 = [number, number, number]
 
@@ -46,6 +58,9 @@ export type Look = {
   barOffsets: [number, number][]
 }
 
+/** The unframed sheet's shadow is crisper than the frame's: it hangs only millimetres off the wall. */
+const SHEET_SOFTNESS = 0.5
+
 /** Small, seeded PRNG (mulberry32): the same artwork always gets the same shot. */
 export const random = (seed: number) => () => {
   seed = (seed + 0x6d2b79f5) | 0
@@ -69,7 +84,7 @@ export function makeLook(seed: number, mode: PresentationMode, edition: number):
       { position: [between(-0.2, 0.9), between(-1.9, -1.2), 2.4], share: between(0.01, 0.03) },
       { position: [between(1.2, 1.9), between(-0.2, 0.8), 2.4], share: between(0.01, 0.03) },
     ],
-    softness: between(180, 300),
+    softness: between(180, 300) * (mode === 'limited' ? SHEET_SOFTNESS : 1),
     standoff: mode === 'limited' ? between(0.006, 0.013) : between(0.002, 0.006),
     setBack: between(0.015, 0.025),
     // Most corners lie nearly flat; now and then one curls a few millimetres.

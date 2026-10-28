@@ -3,12 +3,14 @@ import type { Look, PresentationMode } from './look'
 /**
  * The print-presentation studio's geometry, in metres: the piece, its frame or sheet, the shot
  * around it, and the frame's shade on the sheet. 🔒 Approved values (2026-10-28) — don't retune.
+ * Refined the same day after the owner compared them with a gallery's own print photos: a thinner
+ * frame, a wider paper margin, a light gray wall, the piece centred in a square of it.
  */
 
 /** The image's long side, metres: a typical gallery print. */
 export const IMAGE_LONG_M = 0.5
 // Framed (open editions): the sheet straight behind the frame — no mat, just the paper's margin.
-export const FRAME_FACE_M = 0.02
+export const FRAME_FACE_M = 0.013
 export const FRAME_DEPTH_M = 0.05
 /** How far the frame's lip covers the sheet's edge. */
 export const LIP_OVERLAP_M = 0.003
@@ -17,9 +19,11 @@ export const LIP_OVERLAP_M = 0.003
  * sheet; without the mat that room goes to the image (the paper margin stays the same).
  */
 export const FRAMED_IMAGE_LONG_M = IMAGE_LONG_M + 2 * (0.045 + LIP_OVERLAP_M)
-// The paper margin around the image (a little more at the bottom of a framed sheet, as printed).
+/** The limited-edition sheet's paper margin around the image. */
 export const PAPER_BORDER_M = 0.06
-export const PAPER_BOTTOM_M = 0.075
+/** The framed sheet's paper margin: wider, a little more at the bottom, as printed. */
+export const FRAMED_BORDER_M = 0.09
+export const FRAMED_BOTTOM_M = 0.105
 export const PAPER_THICKNESS_M = 0.0004
 
 /**
@@ -27,10 +31,12 @@ export const PAPER_THICKNESS_M = 0.0004
  * E / π, so this lands it just on white (not past it, or the faint shadows clip away).
  */
 export const WALL_IRRADIANCE = Math.PI * 0.995
+/** The wall's paint: a light gray, so the white paper reads against it (it renders ≈ 241). */
+export const WALL_COLOR = '#f2f2f2'
 
 export const FOV = 30
-/** Room around the piece for its shadow, as a share of its longer side. */
-export const SHADOW_MARGIN = 0.06
+/** The piece's longer side, as a share of the square shot's: wall all round it. */
+export const TILE_FILL = 0.82
 
 /** Light the frame's wood sends back onto the paper, of what its inner walls hide. */
 export const WOOD_BOUNCE = 0.3
@@ -51,7 +57,7 @@ export function outerSize(mode: PresentationMode, ratio: number): [number, numbe
   }
   const [iw, ih] = imageSize(ratio, FRAMED_IMAGE_LONG_M)
   const frame = 2 * (FRAME_FACE_M - LIP_OVERLAP_M)
-  return [iw + 2 * PAPER_BORDER_M + frame, ih + PAPER_BORDER_M + PAPER_BOTTOM_M + frame]
+  return [iw + 2 * FRAMED_BORDER_M + frame, ih + FRAMED_BORDER_M + FRAMED_BOTTOM_M + frame]
 }
 
 /**
@@ -69,26 +75,20 @@ export function shadowReachBelow(mode: PresentationMode, look: Look): number {
   return SHADOW_REACH * offWall * Math.max(0, y / z)
 }
 
-/** The shot: canvas size, camera, and the part of a taller view the canvas shows. */
+/** The shot: a square canvas, and the camera that fits it. */
 export type ShotFrame = {
   widthPx: number
   heightPx: number
-  /** The shot without its extension below: the piece and its margin all round. */
-  baseHeightPx: number
   distance: number
-  /** Vertical field of view of the full (symmetric) view, degrees. */
+  /** Vertical field of view, degrees. */
   fov: number
-  /** `camera.setViewOffset(fullWidth, fullHeight, 0, offsetY, widthPx, heightPx)`. */
-  view: { fullWidth: number; fullHeight: number; offsetY: number }
 }
 
 /**
- * The shot is cropped to the piece: its own proportions plus a margin for the shadow, so the
- * piece fills the card. Camera dead-on; the vertical extent fits the frame exactly. Below the
- * piece, the shot reaches as far as its shadow does — a steep light behind a deep frame throws a
- * soft shadow past the margin, and a crop through it would leave a gray line at the card's foot.
- * The extension is the same camera's view made taller: every pixel of the margin-only shot stays
- * where it was; the shot just gains wall at the bottom.
+ * The shot is a square of wall with the piece in its middle, as a gallery photographs its prints.
+ * Camera dead-on. The square grows (the piece gets a little smaller in it) when the piece's shadow
+ * would otherwise run past its foot: a steep light behind a deep frame throws it far, and a crop
+ * through it would leave a dark line at the tile's edge.
  */
 export function shotFrame(
   mode: PresentationMode,
@@ -97,23 +97,12 @@ export function shotFrame(
   look: Look,
 ): ShotFrame {
   const [ow, oh] = outerSize(mode, ratio)
-  const pad = SHADOW_MARGIN * Math.max(ow, oh)
-  const shotW = ow + 2 * pad
-  const shotH = oh + 2 * pad
-  const baseHeightPx = Math.round((widthPx * shotH) / shotW)
-  const distance = shotH / 2 / Math.tan((FOV * Math.PI) / 360)
-  const extraM = Math.max(0, shadowReachBelow(mode, look) - pad)
-  const extraPx = Math.ceil((extraM * baseHeightPx) / shotH)
-  const fullHeight = baseHeightPx + 2 * extraPx
-  const fov = (2 * Math.atan(((shotH / 2) * fullHeight) / baseHeightPx / distance) * 180) / Math.PI
+  const side = Math.max(Math.max(ow, oh) / TILE_FILL, oh + 2 * shadowReachBelow(mode, look))
   return {
     widthPx,
-    heightPx: baseHeightPx + extraPx,
-    baseHeightPx,
-    distance,
-    // Exactly the approved camera when there is nothing to add.
-    fov: extraPx === 0 ? FOV : fov,
-    view: { fullWidth: widthPx, fullHeight, offsetY: extraPx },
+    heightPx: widthPx,
+    distance: side / 2 / Math.tan((FOV * Math.PI) / 360),
+    fov: FOV,
   }
 }
 
