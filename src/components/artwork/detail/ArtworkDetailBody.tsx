@@ -54,6 +54,10 @@ export type Artwork = {
 const FALLBACK_WIDTH = 800
 const FALLBACK_HEIGHT = 800
 
+/** The previous / next arrows beside the work: hidden for now (owner, 2026-10-28), so the work
+ *  takes their room. Flip back to bring them, and their reserved gutters, back as they were. */
+const SHOW_NEIGHBOUR_ARROWS = false
+
 /**
  * Resolved commerce facts for the availability card.
  *
@@ -207,34 +211,34 @@ export const ArtworkDetailBody = ({
             /prints, and the two views of one artwork disagree about its size.
             The gutters cost nothing but air; a work changing size depending on
             how you arrived at it is the more expensive answer. */}
-        {neighbours?.prev ? (
-          <Button
-            variant="bare"
-            icon="arrowLeft"
-            href={neighbours.prev.href}
-            className={styles.navArrow}
-            title={neighbours.prev.title}
-            aria-label={`Previous work: ${neighbours.prev.title}`}
-          />
-        ) : (
-          <span className={styles.navArrowSlot} aria-hidden="true" />
-        )}
+        {SHOW_NEIGHBOUR_ARROWS &&
+          (neighbours?.prev ? (
+            <Button
+              variant="bare"
+              icon="arrowLeft"
+              href={neighbours.prev.href}
+              className={styles.navArrow}
+              title={neighbours.prev.title}
+              aria-label={`Previous work: ${neighbours.prev.title}`}
+            />
+          ) : (
+            <span className={styles.navArrowSlot} aria-hidden="true" />
+          ))}
 
         <div className={styles.imageFrame}>
           {artwork.imageUrl && (
             // Raw <img> (not next/image): reuses the image the 3D scene already cached, and
             // sidesteps the known next/image + R2 prod issue. crossOrigin matches THREE's
             // texture request so the same browser-cache entry is reused.
-            // As a photo of the print, the render takes the bare image's size caps and the image
-            // sits in its window, filling it (the window has the image's own shape).
+            // As a photo of the print, cropped to the piece and a thin border of wall so it can be
+            // as large as the page allows; the image sits in its window, filling it (the window
+            // has the image's own shape).
             <PrintPresentation
               view={presentation}
               size="large"
+              crop
               className={styles.presentation}
-              renderClassName={c(
-                styles.presentationRender,
-                isTallFormat && styles.presentationRenderPortrait,
-              )}
+              renderClassName={styles.presentationRender}
             >
               {(placement) => (
                 <img
@@ -261,18 +265,19 @@ export const ArtworkDetailBody = ({
           )}
         </div>
 
-        {neighbours?.next ? (
-          <Button
-            variant="bare"
-            icon="arrowRight"
-            href={neighbours.next.href}
-            className={styles.navArrow}
-            title={neighbours.next.title}
-            aria-label={`Next work: ${neighbours.next.title}`}
-          />
-        ) : (
-          <span className={styles.navArrowSlot} aria-hidden="true" />
-        )}
+        {SHOW_NEIGHBOUR_ARROWS &&
+          (neighbours?.next ? (
+            <Button
+              variant="bare"
+              icon="arrowRight"
+              href={neighbours.next.href}
+              className={styles.navArrow}
+              title={neighbours.next.title}
+              aria-label={`Next work: ${neighbours.next.title}`}
+            />
+          ) : (
+            <span className={styles.navArrowSlot} aria-hidden="true" />
+          ))}
       </div>
 
       <InquireSidebar
