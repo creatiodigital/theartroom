@@ -21,6 +21,9 @@ export type PresentationRow = {
   artworkId: string
   title: string
   artistName: string
+  /** The artist's account, for the page's artist filter. */
+  artistId: string
+  accountName: string
   imageUrl: string | null
   status: PresentationStatus
   /** What a render needs; null when the work gets no presentation. */
@@ -58,6 +61,8 @@ export async function listPrintPresentations(): Promise<
           artworkId: source.id,
           title: source.title,
           artistName: source.artistName,
+          artistId: source.artistId,
+          accountName: source.accountName,
           imageUrl: source.imageUrl,
           status,
           inputs,

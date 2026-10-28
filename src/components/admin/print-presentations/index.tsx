@@ -58,6 +58,8 @@ export const AdminPrintPresentations = () => {
   const [stopping, setStopping] = useState(false)
   const [outcomes, setOutcomes] = useState<Record<string, RowOutcome>>({})
   const [switching, setSwitching] = useState(false)
+  const [savingFrame, setSavingFrame] = useState(false)
+  const [artist, setArtist] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const res = await listPrintPresentations()
@@ -72,6 +74,29 @@ export const AdminPrintPresentations = () => {
     void supportsWebpAlpha().then(setCanRender)
   }, [load])
 
+  // One option per artist (their account), with how many works they have.
+  const artistOptions = useMemo(() => {
+    const byArtist = new Map<string, { name: string; works: number }>()
+    for (const row of rows ?? []) {
+      const entry = byArtist.get(row.artistId) ?? { name: row.accountName, works: 0 }
+      entry.works += 1
+      byArtist.set(row.artistId, entry)
+    }
+    return [...byArtist]
+      .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+      .map(([id, { name, works }]) => ({ value: id, label: `${name} (${works})` }))
+  }, [rows])
+
+  // Always one artist: the one picked, or the first in alphabetical order.
+  const selected = artistOptions.some((o) => o.value === artist)
+    ? (artist as string)
+    : (artistOptions[0]?.value ?? null)
+
+  const shown = useMemo(
+    () => rows?.filter((row) => row.artistId === selected) ?? null,
+    [rows, selected],
+  )
+
   const counts = useMemo(() => {
     const c: Record<PresentationStatus, number> = {
       missing: 0,
@@ -79,18 +104,19 @@ export const AdminPrintPresentations = () => {
       current: 0,
       ineligible: 0,
     }
-    for (const row of rows ?? []) c[row.status] += 1
+    for (const row of shown ?? []) c[row.status] += 1
     return c
-  }, [rows])
+  }, [shown])
 
+  // The selected artist's works only: rendering is one artist at a time, never every work at once.
   const toRender = useMemo(
     () =>
-      (rows ?? []).flatMap((row) =>
+      (shown ?? []).flatMap((row) =>
         (row.status === 'missing' || row.status === 'stale') && row.inputs
           ? [{ artworkId: row.artworkId, inputs: row.inputs }]
           : [],
       ),
-    [rows],
+    [shown],
   )
 
   const start = (jobs: RenderJob[]) => {
@@ -110,10 +136,17 @@ export const AdminPrintPresentations = () => {
   }, [load])
 
   // Saved as soon as it's picked; the row then reads as out of date until it's rendered in it.
+  // Nothing can render until the list has reloaded with the new frame: a render started before
+  // that would use the old one, and the server would refuse it.
   const changeFrame = async (artworkId: string, frame: FrameChoice) => {
-    const res = await setPresentationFrame(artworkId, frame)
-    if (!res.ok) return setError(res.error)
-    await load()
+    setSavingFrame(true)
+    try {
+      const res = await setPresentationFrame(artworkId, frame)
+      if (!res.ok) return setError(res.error)
+      await load()
+    } finally {
+      setSavingFrame(false)
+    }
   }
 
   const toggleSwitch = async () => {
@@ -155,6 +188,16 @@ export const AdminPrintPresentations = () => {
           </span>
         </div>
 
+        {selected && (
+          <SelectDropdown
+            label="Artist"
+            className={styles.artistFilter}
+            options={artistOptions}
+            value={selected}
+            onChange={setArtist}
+          />
+        )}
+
         <p className={styles.counts}>
           {STATUS_ORDER.map((s) => `${STATUS_LABEL[s]}: ${counts[s]}`).join(' · ')}
         </p>
@@ -178,7 +221,7 @@ export const AdminPrintPresentations = () => {
               font="dashboard"
               variant="primary"
               label={`Render missing and out of date (${toRender.length})`}
-              disabled={!canRender || toRender.length === 0}
+              disabled={!canRender || savingFrame || toRender.length === 0}
               onClick={() => start(toRender)}
             />
           )}
@@ -188,7 +231,7 @@ export const AdminPrintPresentations = () => {
       </section>
 
       <section className={dashboardStyles.section}>
-        {rows === null ? (
+        {shown === null ? (
           <p className={dashboardStyles.sectionDescription}>Loading…</p>
         ) : (
           <table className={`${dashboardStyles.table} ${styles.rows}`}>
@@ -203,7 +246,7 @@ export const AdminPrintPresentations = () => {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {shown.map((row) => {
                 const outcome = outcomes[row.artworkId]
                 return (
                   <tr key={row.artworkId} data-artwork-id={row.artworkId}>
@@ -242,7 +285,7 @@ export const AdminPrintPresentations = () => {
                           options={FRAME_OPTIONS}
                           value={row.inputs.frame ?? NO_FRAME}
                           onChange={(frame) => void changeFrame(row.artworkId, frame)}
-                          disabled={running}
+                          disabled={running || savingFrame}
                         />
                       ) : (
                         '—'
@@ -262,7 +305,7 @@ export const AdminPrintPresentations = () => {
                           font="dashboard"
                           variant="secondary"
                           label="Re-render"
-                          disabled={!canRender || running}
+                          disabled={!canRender || running || savingFrame}
                           onClick={() => start([{ artworkId: row.artworkId, inputs: row.inputs! }])}
                         />
                       )}

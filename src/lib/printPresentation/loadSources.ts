@@ -8,6 +8,9 @@ export type SourceRow = PresentationSource & {
   record: PrintPresentationRecord | null
   title: string
   artistName: string
+  /** The artist's account, and its name (a work's own author line can differ). */
+  artistId: string
+  accountName: string
   imageUrl: string | null
 }
 
@@ -22,6 +25,7 @@ export async function loadPresentationSources(where?: { ids?: string[] }): Promi
     orderBy: [{ userId: 'asc' }, { createdAt: 'asc' }],
     select: {
       id: true,
+      userId: true,
       artworkType: true,
       originalWidth: true,
       originalHeight: true,
@@ -49,6 +53,8 @@ export async function loadPresentationSources(where?: { ids?: string[] }): Promi
     record: isPrintPresentationRecord(r.printPresentation) ? r.printPresentation : null,
     title: r.title || r.name,
     artistName: r.author || [r.user.name, r.user.lastName].filter(Boolean).join(' '),
+    artistId: r.userId,
+    accountName: [r.user.name, r.user.lastName].filter(Boolean).join(' '),
     imageUrl: r.imageUrl,
   }))
 }
