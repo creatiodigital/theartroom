@@ -68,6 +68,8 @@ const source = (patch: Partial<PresentationSource> = {}): PresentationSource => 
   printEnabled: true,
   editionType: 'open',
   firstVariantEditionSize: null,
+  presentationFrame: null,
+  presentationRatio: null,
   ...patch,
 })
 
@@ -122,6 +124,19 @@ test.describe('print presentation inputs', () => {
     expect(presentationInputs(source({ artworkType: 'video' }))).toBeNull()
     expect(presentationInputs(source({ originalWidth: null }))).toBeNull()
     expect(presentationInputs(source({ originalHeight: 0 }))).toBeNull()
+  })
+
+  test("a work with no original file takes its web image's shape", () => {
+    const measured = { originalWidth: null, originalHeight: null, presentationRatio: 0.75 }
+    expect(presentationInputs(source(measured))?.ratio).toBe(0.75)
+    expect(presentationInputs(source({ presentationRatio: 0 }))?.ratio).toBe(1.5)
+    expect(presentationInputs(source({ ...measured, presentationRatio: 0 }))).toBeNull()
+  })
+
+  test("the original file's shape wins over the web image's", () => {
+    const inputs = presentationInputs(source({ presentationRatio: 0.75 }))
+    expect(inputs?.ratio).toBe(1.5)
+    expect(inputs?.fingerprint).toBe(presentationInputs(source())?.fingerprint)
   })
 
   test("the ratio is width over height to 4 decimals, and the seed is the artwork's", () => {

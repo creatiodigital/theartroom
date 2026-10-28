@@ -223,6 +223,11 @@ model Artwork {
   // on the admin's print presentations page (`FrameChoice` in src/lib/printPresentation/look.ts).
   presentationFrame String @default("wood-dark")
 
+  // Width over height of the web image, for a work with no original file (so no originalWidth /
+  // originalHeight): measured once by the admin's print presentations page, and read ONLY by the
+  // print presentation for its shape. Print sizes always come from the original file.
+  presentationRatio Float?
+
   // The gallery's curated /prints entry, if this work is in the selection.
   selectedPrint SelectedPrint?
 

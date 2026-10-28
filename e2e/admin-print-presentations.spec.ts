@@ -124,12 +124,18 @@ test('a work with no render reads "Missing"', async ({ page }) => {
   await expect(statusOf(page)).toHaveText('Missing')
 })
 
-test('an image work of unknown size reads "Not eligible"', async ({ page }) => {
+test('an image work of unknown shape reads "Not eligible"', async ({ page }) => {
+  // No original size and no web image to measure.
   const unknown = await prisma.artwork.findFirst({
-    where: { artworkType: 'image', OR: [{ originalWidth: null }, { originalHeight: null }] },
+    where: {
+      artworkType: 'image',
+      imageUrl: null,
+      presentationRatio: null,
+      OR: [{ originalWidth: null }, { originalHeight: null }],
+    },
     select: { id: true },
   })
-  test.skip(!unknown, 'no image work of unknown size in this database')
+  test.skip(!unknown, 'no image work of unknown shape in this database')
   await page.goto(PAGE)
   await expect(page.locator(`[data-artwork-id="${unknown!.id}"] [data-status]`)).toHaveText(
     'Not eligible',

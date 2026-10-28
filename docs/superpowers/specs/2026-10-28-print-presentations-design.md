@@ -76,7 +76,8 @@ Output per artwork:
 - **Limited** only when the artwork is for sale (`printEnabled`), its `editionType` is `'limited'`, and it has an `order: 0` variant, draft or published. N = that variant's `editionSize`; the owner said N is "just a reference". Sale state beyond that, such as a variant temporarily unblocked by an admin or sold out, does not change the mode.
 - Everything else → **framed**: open editions, artworks not yet for sale (the owner: "for artworks that are not yet being sold, treat them as open editions"), and limited editions with no variant yet.
 - Only `printEnabled`, `editionType`, and the order-0 variant's `editionSize` feed the mode and N, so only those mark a presentation out of date. Those are rare, deliberate changes.
-- Only artworks whose `artworkType` is image, with `originalWidth`/`originalHeight` known, get a presentation. Others keep today's view.
+- Only artworks whose `artworkType` is image, with a known shape, get a presentation. Others keep today's view.
+- The shape is `originalWidth`/`originalHeight`. A work with no original file (older works, and images added in the exhibition editor, which store only a web image) has neither; its web image has the same shape, so the admin's page measures it once and stores it in `Artwork.presentationRatio` (`measureRatios.ts`). Only the presentation reads that field: print sizes always come from the original file. Built 2026-10-28 after prod showed 37 real works (Lucie Bonvalet 31, Elizabeth Mosler 6) with no original file. A changed or removed web image clears it, to be measured again; re-uploading the original makes the original's size win.
 
 ### 3. Fingerprint (what makes a presentation out of date)
 

@@ -12,6 +12,7 @@ import { isCurrentRecord } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs, type PresentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
 import { isFrameChoice, type FrameChoice } from '@/lib/printPresentation/look'
+import { measureMissingRatios } from '@/lib/printPresentation/measureRatios'
 import { presentationView, type PresentationView } from '@/lib/printPresentation/record'
 import { getPrintPresentationsEnabled, setPrintPresentationsEnabled } from '@/lib/settings'
 
@@ -41,10 +42,11 @@ export async function listPrintPresentations(): Promise<
   const guard = await requireAdminAction()
   if (!guard.ok) return { ok: false, error: guard.error }
   try {
-    const [sources, enabled] = await Promise.all([
+    const [loaded, enabled] = await Promise.all([
       loadPresentationSources(),
       getPrintPresentationsEnabled(),
     ])
+    const sources = await measureMissingRatios(loaded)
     const rows = sources
       .filter((s) => s.artworkType === 'image')
       .map((source): PresentationRow => {

@@ -75,6 +75,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { id },
       data: {
         imageUrl: url,
+        // A new web image: its shape is measured again (print presentations).
+        presentationRatio: null,
       },
     })
 
@@ -142,6 +144,7 @@ export async function DELETE(
         originalDpi: null,
         originalFormat: null,
         originalSizeBytes: null,
+        presentationRatio: null,
       },
     })
 
