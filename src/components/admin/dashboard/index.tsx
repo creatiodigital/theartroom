@@ -93,6 +93,11 @@ const NAV_HUBS: Hub[] = [
     href: '/admin/exhibitions',
   },
   {
+    label: 'Print Presentations',
+    description: 'Every work as a photo of its print — render, preview, switch on for the site.',
+    href: '/admin/print-presentations',
+  },
+  {
     label: 'Content',
     description: 'CMS pages — landing, About, Prints, Terms, Privacy, etc.',
     href: '/admin/content',

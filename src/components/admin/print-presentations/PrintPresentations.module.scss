@@ -1,0 +1,62 @@
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+}
+
+.counts {
+  margin-bottom: var(--space-4);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.progress {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+}
+
+.error {
+  margin-top: var(--space-2);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  color: var(--color-error-text);
+}
+
+.muted {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.previewCell {
+  width: 140px;
+}
+
+// The stored render, small: what the site will show.
+.previewRender {
+  max-width: 120px;
+  max-height: 120px;
+}
+
+// No render yet: the plain image.
+.previewImage {
+  display: block;
+  max-width: 120px;
+  max-height: 120px;
+}
+
+// The studio renders here, out of sight. Never `display: none`: the canvas needs a real size.
+.offscreen {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  pointer-events: none;
+}

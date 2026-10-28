@@ -10,6 +10,7 @@ import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler
 import { buildArtworkCommerce, COMMERCE_SELECT } from '@/lib/editions/artworkCommerce'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
+import { getPrintPresentations } from '@/lib/printPresentation/getPrintPresentations'
 
 // Render per request and read straight from the DB so artwork edits appear
 // immediately. No data cache.
@@ -214,6 +215,7 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
   })
 
   const media = await getArtworkMedia(artwork.id)
+  const presentations = await getPrintPresentations([artwork.id])
 
   // Narrowest set first, matching the order ArtworkGrid resolves its context in.
   // Each walker returns null immediately when its own param is absent, so only
@@ -240,6 +242,7 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
       media={media}
       commerce={commerce}
       neighbours={neighbours}
+      presentation={presentations[artwork.id] ?? null}
     />
   )
 }

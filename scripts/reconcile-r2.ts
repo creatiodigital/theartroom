@@ -36,6 +36,7 @@ import { createInterface } from 'node:readline/promises'
 import { PrismaNeon } from '@prisma/adapter-neon'
 
 import { PrismaClient } from '../src/generated/prisma/client'
+import { isPrintPresentationRecord } from '../src/lib/printPresentation/record'
 import { extractR2KeyFromUrl, deleteR2KeyDirect } from '../src/lib/r2'
 
 const FRESH_GRACE_HOURS = 24
@@ -79,7 +80,14 @@ async function collectReferencedKeys(): Promise<Set<string>> {
   // orphan candidates on the next run.
   const [artworks, users, orders, exhibitions, slides, pages] = await Promise.all([
     prisma.artwork.findMany({
-      select: { imageUrl: true, originalImageUrl: true, soundUrl: true, videoUrl: true },
+      select: {
+        imageUrl: true,
+        originalImageUrl: true,
+        soundUrl: true,
+        videoUrl: true,
+        // Print presentations (`<env>/presentations/{artworkId}/…`): both stored sizes.
+        printPresentation: true,
+      },
     }),
     prisma.user.findMany({ select: { profileImageUrl: true, signatureUrl: true } }),
     prisma.printOrder.findMany({ select: { certificateUrl: true } }),
@@ -109,6 +117,10 @@ async function collectReferencedKeys(): Promise<Set<string>> {
     add(a.originalImageUrl)
     add(a.soundUrl)
     add(a.videoUrl)
+    if (isPrintPresentationRecord(a.printPresentation)) {
+      add(a.printPresentation.urls.large)
+      add(a.printPresentation.urls.small)
+    }
   }
   for (const u of users) {
     add(u.profileImageUrl)

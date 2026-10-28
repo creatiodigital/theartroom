@@ -6,11 +6,14 @@ import { useSession } from 'next-auth/react'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { FURNITURE_PANEL_ENABLED } from '@/components/scene/spaces/objects/Bench/benchSettings'
 import {
   showLightingPanel,
   hideLightingPanel,
   showPanelsPanel,
   hidePanelsPanel,
+  showFurniturePanel,
+  hideFurniturePanel,
   showFloorPanel,
   hideFloorPanel,
   showCameraPanel,
@@ -34,6 +37,9 @@ export const Menu = () => {
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isLightingPanelOpen = useSelector((state: RootState) => state.dashboard.isLightingPanelOpen)
   const isPanelsPanelOpen = useSelector((state: RootState) => state.dashboard.isPanelsPanelOpen)
+  const isFurniturePanelOpen = useSelector(
+    (state: RootState) => state.dashboard.isFurniturePanelOpen,
+  )
   const isFloorPanelOpen = useSelector((state: RootState) => state.dashboard.isFloorPanelOpen)
   const isCameraPanelOpen = useSelector((state: RootState) => state.dashboard.isCameraPanelOpen)
 
@@ -70,6 +76,7 @@ export const Menu = () => {
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       if (isBakePanelOpen) dispatch(hideBakePanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showLightingPanel())
     }
   }
@@ -86,6 +93,7 @@ export const Menu = () => {
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       if (isBakePanelOpen) dispatch(hideBakePanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showFloorPanel())
     }
   }
@@ -102,6 +110,7 @@ export const Menu = () => {
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       if (isBakePanelOpen) dispatch(hideBakePanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showCameraPanel())
     }
   }
@@ -117,6 +126,7 @@ export const Menu = () => {
 
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       if (isBakePanelOpen) dispatch(hideBakePanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showWallCeilingPanel())
     }
   }
@@ -132,6 +142,7 @@ export const Menu = () => {
 
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
       if (isBakePanelOpen) dispatch(hideBakePanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showPanelsPanel())
     }
   }
@@ -147,7 +158,23 @@ export const Menu = () => {
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
 
       if (isBakePanelOpen) dispatch(hideBakePanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showWindowsPanel())
+    }
+  }
+
+  const toggleFurniturePanel = () => {
+    if (isFurniturePanelOpen) {
+      dispatch(hideFurniturePanel())
+    } else {
+      if (isLightingPanelOpen) dispatch(hideLightingPanel())
+      if (isFloorPanelOpen) dispatch(hideFloorPanel())
+      if (isCameraPanelOpen) dispatch(hideCameraPanel())
+      if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
+      if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
+      if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isBakePanelOpen) dispatch(hideBakePanel())
+      dispatch(showFurniturePanel())
     }
   }
 
@@ -161,6 +188,7 @@ export const Menu = () => {
       if (isWallCeilingPanelOpen) dispatch(hideWallCeilingPanel())
       if (isPanelsPanelOpen) dispatch(hidePanelsPanel())
       if (isWindowsPanelOpen) dispatch(hideWindowsPanel())
+      if (isFurniturePanelOpen) dispatch(hideFurniturePanel())
       dispatch(showBakePanel())
     }
   }
@@ -195,6 +223,16 @@ export const Menu = () => {
       <Tooltip label="Display panels" placement="right">
         <Button size="regular" variant="secondary" icon="panel-top" onClick={togglePanelsPanel} />
       </Tooltip>
+      {FURNITURE_PANEL_ENABLED && (
+        <Tooltip label="Furniture" placement="right">
+          <Button
+            size="regular"
+            variant="secondary"
+            icon="armchair"
+            onClick={toggleFurniturePanel}
+          />
+        </Tooltip>
+      )}
       <Tooltip label="Walls and Ceiling" placement="right">
         <Button size="regular" variant="secondary" icon="house" onClick={toggleWallCeilingPanel} />
       </Tooltip>

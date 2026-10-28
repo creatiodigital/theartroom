@@ -214,6 +214,11 @@ model Artwork {
   // a paper they've also hard-restricted (validated at write time).
   printRecommendations Json?
 
+  // How the public site shows this work: a photo of the real print (framed, or a numbered
+  // sheet), rendered in the admin's browser and stored on R2. Shape and validation:
+  // src/lib/printPresentation/record.ts. Null = not rendered yet (today's plain image).
+  printPresentation Json?
+
   // The gallery's curated /prints entry, if this work is in the selection.
   selectedPrint SelectedPrint?
 
@@ -715,6 +720,11 @@ model Exhibition {
   // Absent means no panel has ever been switched on. See
   // src/components/scene/spaces/objects/Panel/panelSettings.ts
   panelSettings          Json?
+  // Gallery benches (AR-167), keyed by bench index (blocks of ten per room):
+  //   { "0": { enabled, model, x, z, rotationY } }
+  // Absent means no bench has ever been switched on. See
+  // src/components/scene/spaces/objects/Bench/benchSettings.ts
+  benchSettings          Json?
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)
@@ -1015,6 +1025,10 @@ model SiteSettings {
   // deep links) and refuses new payment intents. Per-artwork print flags are
   // untouched, so switching back restores the previous state exactly.
   purchasesPaused Boolean @default(false)
+
+  // Print presentations go-live switch: when on, grids and artwork pages show
+  // each work as a photo of the real print (where one is rendered and current).
+  printPresentationsEnabled Boolean @default(false)
 
   updatedAt DateTime @updatedAt
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useContext, useMemo, createRef } from 'react'
+import { Suspense, useContext, useMemo, createRef } from 'react'
 import { useSelector } from 'react-redux'
 import type { Mesh } from 'three'
 import { useGLTF } from '@react-three/drei'
@@ -10,6 +10,7 @@ import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
 import { spaceComponents, getSpaceConfig, type SpaceKey } from './constants'
+import Benches from './spaces/objects/Bench/Benches'
 import { deriveSpaceRefs } from './spaces/objects/nodeIndices'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
@@ -62,12 +63,18 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
   if (!SpaceComponent) return null
 
   return (
-    <SpaceComponent
-      onPlaceholderClick={onPlaceholderClick}
-      artworks={artworks}
-      wallRefs={wallRefs.current}
-      windowRefs={windowRefs.current}
-      glassRefs={glassRefs.current}
-    />
+    <>
+      <SpaceComponent
+        onPlaceholderClick={onPlaceholderClick}
+        artworks={artworks}
+        wallRefs={wallRefs.current}
+        windowRefs={windowRefs.current}
+        glassRefs={glassRefs.current}
+      />
+      {/* Not GLB nodes: the artist's benches, the same in every space (AR-167). */}
+      <Suspense fallback={null}>
+        <Benches />
+      </Suspense>
+    </>
   )
 }

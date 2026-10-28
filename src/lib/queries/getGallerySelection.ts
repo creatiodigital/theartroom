@@ -1,5 +1,9 @@
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
+import {
+  getPrintPresentations,
+  type PresentationView,
+} from '@/lib/printPresentation/getPrintPresentations'
 
 /**
  * The gallery's own selection — the entire contents of /prints.
@@ -44,6 +48,8 @@ export type GallerySelectionCard = {
    *  second query and no artist in the list who has nothing on the page. */
   artistName: string
   sale: ArtworkSale
+  /** The work as a photo of the real print, when one is current and the switch is on. */
+  presentation?: PresentationView | null
 }
 
 /** Why an entry is not on the page. `live` means it is. */
@@ -112,9 +118,11 @@ export async function getGallerySelection(): Promise<GallerySelectionCard[]> {
   // where editions have gone is the signal that editions move. Only work that is
   // not for sale at all (prints off, unpriced, every variant paused) is hidden:
   // no story there, and the CTA would be a dead end.
-  return rows
+  const cards = rows
     .map((row) => toCard(row.artwork).card)
     .filter((c): c is GallerySelectionCard => c.sale != null)
+  const presentations = await getPrintPresentations(cards.map((c) => c.id))
+  return cards.map((c) => ({ ...c, presentation: presentations[c.id] ?? null }))
 }
 
 /** Every entry, with the reason any of them is hidden. */
