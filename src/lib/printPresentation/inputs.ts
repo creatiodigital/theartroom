@@ -1,0 +1,50 @@
+import { canonicalJson, fnv1a } from '@/lib/bake/hash'
+
+import { LOOK_VERSION, seedForArtwork, type PresentationMode } from './look'
+
+/** What an artwork's presentation depends on, read from the database. */
+export type PresentationSource = {
+  id: string
+  artworkType: string | null
+  originalWidth: number | null
+  originalHeight: number | null
+  printEnabled: boolean
+  editionType: string
+  /** The edition size of the artwork's mandatory print size (`order: 0`), draft or published. */
+  firstVariantEditionSize: number | null
+}
+
+/** Everything a render needs, and the fingerprint that says whether a stored one still fits. */
+export type PresentationInputs = {
+  mode: PresentationMode
+  /** Limited only: N in the pencilled "copy/N". */
+  edition: number | null
+  /** Image width over height, to 4 decimals. */
+  ratio: number
+  seed: number
+  fingerprint: string
+}
+
+const positive = (n: number | null): n is number => typeof n === 'number' && n > 0
+
+/**
+ * The presentation an artwork gets, or null when it gets none (not an image, or its size is
+ * unknown) and keeps today's plain image.
+ *
+ * A numbered sheet only for a limited edition that is for sale and has its print size set up;
+ * everything else is framed — open editions, and works not yet for sale (the owner: "treat them
+ * as open editions"). Pausing a size for a fix doesn't change the mode.
+ */
+export function presentationInputs(src: PresentationSource): PresentationInputs | null {
+  if (src.artworkType !== 'image') return null
+  if (!positive(src.originalWidth) || !positive(src.originalHeight)) return null
+
+  const limited =
+    src.printEnabled && src.editionType === 'limited' && positive(src.firstVariantEditionSize)
+  const mode: PresentationMode = limited ? 'limited' : 'framed'
+  const edition = limited ? src.firstVariantEditionSize : null
+  const ratio = Math.round((src.originalWidth / src.originalHeight) * 10000) / 10000
+  const seed = seedForArtwork(src.id)
+  const fingerprint = fnv1a(canonicalJson([LOOK_VERSION, mode, edition, ratio, seed]))
+  return { mode, edition, ratio, seed, fingerprint }
+}

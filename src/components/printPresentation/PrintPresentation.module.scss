@@ -1,0 +1,37 @@
+// The piece shrink-wraps its render, so the window's percentages are the render's — whatever the
+// surface around it (a flex column, an inline link, a table cell).
+.presentation {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  line-height: 0;
+}
+
+// The original image's place: exactly the render's transparent window. Whatever image element
+// the surface puts here fills it — placed, never resized out of its proportions (the window has
+// the image's own shape).
+.window {
+  position: absolute;
+  z-index: 0;
+
+  > *,
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+  }
+}
+
+// The render on top: transparent where the image is, and never in the way of a click. Sized by
+// the surface (`renderClassName`); by default as wide as there is room for.
+.render {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  pointer-events: none;
+}

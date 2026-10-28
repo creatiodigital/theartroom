@@ -113,3 +113,5 @@ docs/superpowers/plans/2026-06-19-email-migration-all.md
 # Local MCP server wiring — absolute paths to this machine's Blender extension venv.
 .mcp.json
 .bake-files/
+# Print presentations, local backend (BAKE_STORAGE=local): development only.
+.presentation-files/

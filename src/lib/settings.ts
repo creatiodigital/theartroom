@@ -34,3 +34,32 @@ export async function setPurchasesPaused(paused: boolean): Promise<void> {
     create: { id: 1, purchasesPaused: paused },
   })
 }
+
+/**
+ * Print presentations go-live switch — when true, grids and artwork pages show each work as a
+ * photo of the real print, where a current one is rendered. Off by default, so a release can land
+ * and every work be rendered before anyone sees it.
+ *
+ * FAILS CLOSED (false): if the read errors (e.g. the column isn't there yet because a deploy
+ * landed before the schema sync), the site shows today's plain images.
+ */
+export async function getPrintPresentationsEnabled(): Promise<boolean> {
+  try {
+    const settings = await prisma.siteSettings.findUnique({
+      where: { id: 1 },
+      select: { printPresentationsEnabled: true },
+    })
+    return settings?.printPresentationsEnabled ?? false
+  } catch (err) {
+    captureError(err, { flow: 'content', stage: 'print-presentations-read', level: 'warning' })
+    return false
+  }
+}
+
+export async function setPrintPresentationsEnabled(enabled: boolean): Promise<void> {
+  await prisma.siteSettings.upsert({
+    where: { id: 1 },
+    update: { printPresentationsEnabled: enabled },
+    create: { id: 1, printPresentationsEnabled: enabled },
+  })
+}

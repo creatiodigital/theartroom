@@ -82,6 +82,13 @@ const emailSkipEnv: Record<string, string> = sendEmails
 // send-emails run is unaffected.
 Object.assign(process.env, emailSkipEnv)
 
+// Stored renders and bakes stay on this machine during e2e: the local backend (BAKE_STORAGE=local,
+// files under .presentation-files/ and .bake-files/), never R2 — unless a run asks for it
+// (BAKE_STORAGE=r2 pnpm test:e2e). Same value for the spawned server and this runner, whose specs
+// read and clean those files directly.
+const storageEnv = { BAKE_STORAGE: process.env.BAKE_STORAGE ?? 'local' }
+Object.assign(process.env, storageEnv)
+
 // The reconcile-orders cron route 401s without `Authorization: Bearer
 // <CRON_SECRET>` and 500s if CRON_SECRET is unset. It isn't in .env.local (it's a
 // Vercel-only prod var), so pin a fixed dev value here and inject it into BOTH the
@@ -169,7 +176,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: prodBuild ? 180_000 : 120_000,
     env: prodBuild
-      ? { ...emailSkipEnv, ...gaEnv, ...cronEnv, AUTH_TRUST_HOST: 'true' }
-      : { ...emailSkipEnv, ...gaEnv, ...cronEnv },
+      ? { ...emailSkipEnv, ...gaEnv, ...cronEnv, ...storageEnv, AUTH_TRUST_HOST: 'true' }
+      : { ...emailSkipEnv, ...gaEnv, ...cronEnv, ...storageEnv },
   },
 })

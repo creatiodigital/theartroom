@@ -1,6 +1,10 @@
 import type { Prisma } from '@/generated/prisma'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
+import {
+  getPrintPresentations,
+  type PresentationView,
+} from '@/lib/printPresentation/getPrintPresentations'
 import { captureError } from '@/lib/observability/captureError'
 import { groupBySection, type SectionGroup } from '@/lib/exhibitionSections'
 
@@ -83,6 +87,8 @@ export type PublicExhibitionArtwork = {
   /** What the card says about buying a print. Null = not for sale, so the card
    *  shows no commerce at all. See `resolveArtworkSale`. */
   sale: ArtworkSale | null
+  /** The work as a photo of the real print, when one is current and the switch is on. */
+  presentation: PresentationView | null
 }
 
 export type PublicExhibition = {
@@ -115,7 +121,10 @@ export type PublicExhibition = {
  * and dropped: `printPriceCents` is the ARTIST's cut, not a buyer-facing
  * figure, and must not cross to the client.
  */
-function toPublicArtwork(row: PublicArtworkRow): PublicExhibitionArtwork {
+function toPublicArtwork(
+  row: PublicArtworkRow,
+  presentation: PresentationView | null,
+): PublicExhibitionArtwork {
   return {
     id: row.id,
     slug: row.slug,
@@ -129,6 +138,7 @@ function toPublicArtwork(row: PublicArtworkRow): PublicExhibitionArtwork {
     originalWidth: row.originalWidth,
     originalHeight: row.originalHeight,
     sale: saleFromRow(row),
+    presentation,
   }
 }
 
@@ -181,8 +191,12 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
 
   // Sections split the page; the flattened groups are the one display order the
   // artwork page's previous/next arrows also walk.
+  const presentations = await getPrintPresentations(ordered.map((ea) => ea.artwork.id))
   const groups = groupBySection(
-    ordered.map((ea) => ({ sectionId: ea.sectionId, artwork: toPublicArtwork(ea.artwork) })),
+    ordered.map((ea) => ({
+      sectionId: ea.sectionId,
+      artwork: toPublicArtwork(ea.artwork, presentations[ea.artwork.id] ?? null),
+    })),
     exhibition.sections,
   )
   const artworks = groups.flatMap((g) => g.artworks)
