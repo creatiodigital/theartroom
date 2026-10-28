@@ -27,8 +27,7 @@ Success: a visitor can't tell it's rendered. No two pieces in a grid look identi
 
 - 3D rooms, including the artwork pop-up inside them, the artwork library, admin and dashboard lists, cart and checkout, print wizard, inquire sidebar, emails, OG/social images. These keep the plain image.
 - Automatic rendering when an artist saves an artwork (possible later).
-- Choosing the frame per artwork. **TODO** (owner, 2026-10-28): when rendering an item, choose which frame it is rendered with — "not all artworks will look ok in dark wood". Five frames: the three wood textures we already have (`wooden-frame-light`, `-medium`, `-dark`), plus an off-white and a black painted wood. For now every open edition is framed in dark wood (`wooden-frame-dark`). The per-work pick is built (admin "Frame color" column, `Artwork.presentationFrame`, default `wood-dark`); only the other four frames are left.
-- An optional frame for limited editions. **TODO** (owner, 2026-10-28): the numbered sheet stays unframed by default; later it can be shown framed too, picked per work.
+- ~~Choosing the frame per artwork~~ — BUILT 2026-10-28 (owner: "I don't see why waiting until tomorrow"): the admin's "Frame color" column picks, per work, Dark wood (default for every work), Medium wood, Light wood, Off-white, Black (painted: satin paint, the dark wood's grain faint underneath), or No frame (the bare sheet). The frame does not depend on the edition type; only the pencilled number does (limited editions carry it, framed or not). Saved as soon as it's picked (`Artwork.presentationFrame`, "none" = no frame), part of the fingerprint. Where a frame isn't part of what's sold, the listing should say so ("shown framed; sold as an unframed sheet") — not built.
 - Benches/AR-167 furniture (paused, "we will refine later").
 
 ## Anti-goals (failure even if it "works")

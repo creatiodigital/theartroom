@@ -43,8 +43,52 @@ const usePaperSheet = (iw: number, ih: number, look: Look) => {
 }
 
 /**
- * A limited edition: the unframed sheet held a few millimetres off the wall, the copy number
- * pencilled bottom left ("copy/N"; no signature).
+ * The pencilled "copy/N" (no signature), just under the image's bottom-left corner: on the paper,
+ * whose surface there is at `paperZ`. `imageY` is the image's centre.
+ */
+export const PencilNumber = ({
+  label,
+  iw,
+  ih,
+  imageY = 0,
+  paperZ,
+  onDrawn,
+}: {
+  label: string
+  iw: number
+  ih: number
+  imageY?: number
+  paperZ: (x: number, y: number) => number
+  /** The number is laid out off the main thread; the shot waits for it. */
+  onDrawn: () => void
+}) => {
+  const fontSize = (EDITION_NUMBER_FONT_SIZE_CM / 100) * PENCIL_SIZE
+  const left = -iw / 2 - editionLeftBearingEm(label) * fontSize
+  const top = imageY - ih / 2 - EDITION_NUMBER_CLEARANCE_CM / 100 - EDITION_INK_TOP_EM * fontSize
+  return (
+    <Text
+      font="/fonts/caveat-regular.ttf"
+      fontSize={fontSize}
+      color={PENCIL_COLOR}
+      anchorX="left"
+      anchorY="top"
+      position={[
+        left,
+        top + EDITION_INK_TOP_EM * fontSize,
+        paperZ(left + fontSize, top - fontSize / 2) + 0.0003,
+      ]}
+      material-toneMapped={false}
+      userData={{ noShadow: true }}
+      onSync={onDrawn}
+    >
+      {label}
+    </Text>
+  )
+}
+
+/**
+ * The bare sheet held a few millimetres off the wall; a limited edition's carries its copy number
+ * pencilled bottom left.
  */
 export const Limited = ({
   ratio,
@@ -54,21 +98,15 @@ export const Limited = ({
   onNumberDrawn,
 }: {
   ratio: number
-  edition: number
+  /** N in the pencilled "copy/N"; null for no number. */
+  edition: number | null
   look: Look
   onWindow: (rect: WindowRectPx) => void
-  /** The pencilled number is laid out off the main thread; the shot waits for it. */
   onNumberDrawn: () => void
 }) => {
   const [iw, ih] = imageSize(ratio)
   const { geometry, lift } = usePaperSheet(iw, ih, look)
   const front = look.standoff + PAPER_THICKNESS_M
-  const label = `${look.copy}/${edition}`
-  const fontSize = (EDITION_NUMBER_FONT_SIZE_CM / 100) * PENCIL_SIZE
-  const left = -iw / 2 - editionLeftBearingEm(label) * fontSize
-  const top = -ih / 2 - EDITION_NUMBER_CLEARANCE_CM / 100 - EDITION_INK_TOP_EM * fontSize
-  // The pencil sits on the paper, wherever the paper is there.
-  const numberZ = front + lift(left + fontSize, top - fontSize / 2) + 0.0003
   return (
     <group>
       {/* Casts onto the wall but never onto itself: a thin sheet self-shadowing under soft shadows
@@ -81,19 +119,16 @@ export const Limited = ({
         <meshStandardMaterial color="#f9f8f4" roughness={0.95} />
       </mesh>
       <ArtworkWindow width={iw} height={ih} z={front + 0.0002} onRect={onWindow} />
-      <Text
-        font="/fonts/caveat-regular.ttf"
-        fontSize={fontSize}
-        color={PENCIL_COLOR}
-        anchorX="left"
-        anchorY="top"
-        position={[left, top + EDITION_INK_TOP_EM * fontSize, numberZ]}
-        material-toneMapped={false}
-        userData={{ noShadow: true }}
-        onSync={onNumberDrawn}
-      >
-        {label}
-      </Text>
+      {edition !== null && (
+        <PencilNumber
+          label={`${look.copy}/${edition}`}
+          iw={iw}
+          ih={ih}
+          // The pencil sits on the paper, wherever the paper is there.
+          paperZ={(x, y) => front + lift(x, y)}
+          onDrawn={onNumberDrawn}
+        />
+      )}
     </group>
   )
 }

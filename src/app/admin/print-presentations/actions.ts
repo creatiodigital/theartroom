@@ -11,7 +11,7 @@ import prisma from '@/lib/prisma'
 import { isCurrentRecord } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs, type PresentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
-import { isPresentationFrame, type PresentationFrame } from '@/lib/printPresentation/look'
+import { isFrameChoice, type FrameChoice } from '@/lib/printPresentation/look'
 import { presentationView, type PresentationView } from '@/lib/printPresentation/record'
 import { getPrintPresentationsEnabled, setPrintPresentationsEnabled } from '@/lib/settings'
 
@@ -72,16 +72,16 @@ export async function listPrintPresentations(): Promise<
 }
 
 /**
- * The frame a work is rendered in, saved as soon as it's picked. A framed work whose render used
- * another frame then reads as out of date, so the next render (one by one, or all) uses this one.
+ * The frame a work is rendered in (or none), saved as soon as it's picked. A work whose render used
+ * another one then reads as out of date, so the next render (one by one, or all) uses this one.
  */
 export async function setPresentationFrame(
   artworkId: string,
-  frame: PresentationFrame,
+  frame: FrameChoice,
 ): Promise<{ ok: true } | Failure> {
   const guard = await requireAdminAction()
   if (!guard.ok) return { ok: false, error: guard.error }
-  if (!isPresentationFrame(frame)) return { ok: false, error: 'Unknown frame.' }
+  if (!isFrameChoice(frame)) return { ok: false, error: 'Unknown frame.' }
   try {
     await prisma.artwork.update({ where: { id: artworkId }, data: { presentationFrame: frame } })
     return { ok: true }

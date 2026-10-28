@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
 import { currentPresentation } from '@/lib/printPresentation/currentInputs'
 import { shotFrame } from '@/lib/printPresentation/geometry'
 import type { PresentationInputs } from '@/lib/printPresentation/inputs'
-import { makeLook } from '@/lib/printPresentation/look'
+import { makeLook, shotMode } from '@/lib/printPresentation/look'
 import {
   PRESENTATION_WIDTH_PX,
   isPresentationWindow,
@@ -21,13 +21,9 @@ import {
 
 /** The large render's width over its height — the shot's shape, the same for both sizes. */
 const shotAspect = (inputs: PresentationInputs) => {
-  const look = makeLook(inputs.seed, inputs.mode, inputs.edition ?? 1)
-  const { widthPx, heightPx } = shotFrame(
-    inputs.mode,
-    inputs.ratio,
-    PRESENTATION_WIDTH_PX.large,
-    look,
-  )
+  const mode = shotMode(inputs.frame)
+  const look = makeLook(inputs.seed, mode, inputs.edition ?? 1)
+  const { widthPx, heightPx } = shotFrame(mode, inputs.ratio, PRESENTATION_WIDTH_PX.large, look)
   return widthPx / heightPx
 }
 

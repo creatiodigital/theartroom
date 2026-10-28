@@ -31,20 +31,30 @@ import {
 import type { Look, PresentationFrame } from '@/lib/printPresentation/look'
 
 import { ArtworkWindow, type WindowRectPx } from './ArtworkWindow'
-
-/** Each frame's wood: the gallery's own textures (its "Dark Wood" is `wooden-frame-dark`). */
-const FRAME_WOOD: Record<PresentationFrame, string> = { 'wood-dark': 'wooden-frame-dark' }
+import { PencilNumber } from './PaperSheet'
 
 /**
- * The frame's wood, as picked for the work: a satin finish, so the grain's relief catches the
- * light. Texture scale is set by the geometry's UVs (in metres of board), not here.
- *
- * TODO: the other frames — light and medium wood (the gallery's other two textures;
- * `wooden-frame-light` is 2:1, so its UVs need the texture's aspect), off-white and black painted
- * wood.
+ * Each frame's finish. Woods are the gallery's own textures (its "Dark Wood" is
+ * `wooden-frame-dark`); `aspect` is the texture's width over its height. Painted frames are a
+ * satin paint over wood: their own color, with the dark wood's grain showing faintly through.
  */
-const useWood = (frame: PresentationFrame) => {
-  const base = assetUrl(`/assets/materials/${FRAME_WOOD[frame]}`)
+type Finish = { wood: string; aspect: number } | { paint: string }
+const FINISH: Record<PresentationFrame, Finish> = {
+  'wood-dark': { wood: 'wooden-frame-dark', aspect: 1 },
+  'wood-medium': { wood: 'wooden-frame-medium', aspect: 1 },
+  'wood-light': { wood: 'wooden-frame-light', aspect: 2 },
+  'painted-off-white': { paint: '#ece6da' },
+  'painted-black': { paint: '#1d1c1b' },
+}
+
+/**
+ * The frame's material, as picked for the work: a satin finish, so the grain's relief catches the
+ * light. Texture scale is set by the geometry's UVs (in metres of board), not here; `aspect` keeps
+ * a non-square texture's grain at its true proportions.
+ */
+const useFrameMaterial = (frame: PresentationFrame) => {
+  const finish = FINISH[frame]
+  const base = assetUrl(`/assets/materials/${'wood' in finish ? finish.wood : 'wooden-frame-dark'}`)
   const [diffuse, normal, roughness] = useLoader(TextureLoader, [
     `${base}/diffuse.jpg?v=3`,
     `${base}/normal.jpg?v=3`,
@@ -56,14 +66,28 @@ const useWood = (frame: PresentationFrame) => {
       t.wrapS = t.wrapT = RepeatWrapping
       t.anisotropy = 16
     }
-    return new MeshStandardMaterial({
-      map: diffuse,
-      normalMap: normal,
-      normalScale: new Vector2(0.8, 0.8),
-      roughnessMap: roughness,
-      roughness: 0.55,
-    })
-  }, [diffuse, normal, roughness])
+    if ('paint' in finish) {
+      return {
+        aspect: 1,
+        material: new MeshStandardMaterial({
+          color: finish.paint,
+          normalMap: normal,
+          normalScale: new Vector2(0.2, 0.2),
+          roughness: 0.45,
+        }),
+      }
+    }
+    return {
+      aspect: finish.aspect,
+      material: new MeshStandardMaterial({
+        map: diffuse,
+        normalMap: normal,
+        normalScale: new Vector2(0.8, 0.8),
+        roughnessMap: roughness,
+        roughness: 0.55,
+      }),
+    }
+  }, [finish, diffuse, normal, roughness])
 }
 
 /**
@@ -78,6 +102,7 @@ const barGeometry = (
   depth: number,
   tileM: number,
   offset: [number, number],
+  aspect: number,
 ) => {
   const half = length / 2
   const shape = new Shape()
@@ -112,7 +137,7 @@ const barGeometry = (
     for (let k = 0; k < 3; k++) {
       const p = [a, b, c][k]
       const [u, v] = nz >= nx && nz >= ny ? [p.x, p.y] : ny >= nx ? [p.x, p.z] : [p.y, p.z]
-      uv.setXY(i + k, u / tileM + offset[0], v / tileM + offset[1])
+      uv.setXY(i + k, u / tileM + offset[0], (v * aspect) / tileM + offset[1])
     }
   }
   uv.needsUpdate = true
@@ -135,21 +160,21 @@ const StudioFrame = ({
   frame: PresentationFrame
   look: Look
 }) => {
-  const wood = useWood(frame)
+  const { material, aspect } = useFrameMaterial(frame)
   const bars = useMemo(() => {
     const o = (i: number): [number, number] => [
       look.woodOffset[0] + look.barOffsets[i][0] * 4,
       look.woodOffset[1] + look.barOffsets[i][1] * 4,
     ]
-    const h = (i: number) => barGeometry(width, face, depth, look.woodTileM, o(i))
-    const v = (i: number) => barGeometry(height, face, depth, look.woodTileM, o(i))
+    const h = (i: number) => barGeometry(width, face, depth, look.woodTileM, o(i), aspect)
+    const v = (i: number) => barGeometry(height, face, depth, look.woodTileM, o(i), aspect)
     return [
       { geometry: h(0), position: [0, height / 2, 0], rotation: Math.PI },
       { geometry: h(1), position: [0, -height / 2, 0], rotation: 0 },
       { geometry: v(2), position: [-width / 2, 0, 0], rotation: -Math.PI / 2 },
       { geometry: v(3), position: [width / 2, 0, 0], rotation: Math.PI / 2 },
     ] as const
-  }, [width, height, face, depth, look])
+  }, [width, height, face, depth, look, aspect])
   return (
     <group>
       {bars.map((bar, i) => (
@@ -158,7 +183,7 @@ const StudioFrame = ({
           geometry={bar.geometry}
           position={bar.position as unknown as [number, number, number]}
           rotation={[0, 0, bar.rotation]}
-          material={wood}
+          material={material}
         />
       ))}
     </group>
@@ -184,19 +209,24 @@ const useFrameOcclusion = (
   }, [sheetW, sheetH, openW, openH, wallH])
 
 /**
- * An open edition (or a work not for sale): the sheet — image plus paper margin, no mat — straight
- * behind a wooden frame, deep enough for the frame to shade it.
+ * A framed work: the sheet — image plus paper margin, no mat — straight behind the frame, deep
+ * enough for the frame to shade it. A limited edition's sheet carries its pencilled number.
  */
 export const Framed = ({
   ratio,
   frame,
+  edition,
   look,
   onWindow,
+  onNumberDrawn,
 }: {
   ratio: number
   frame: PresentationFrame
+  /** A limited edition's N, pencilled "copy/N" in the margin; null for no number. */
+  edition: number | null
   look: Look
   onWindow: (rect: WindowRectPx) => void
+  onNumberDrawn: () => void
 }) => {
   const [iw, ih] = imageSize(ratio, FRAMED_IMAGE_LONG_M)
   // The sheet: the image plus its paper margin (a little more at the bottom, as printed).
@@ -234,6 +264,16 @@ export const Framed = ({
         z={look.standoff + sheetFront + 0.0002}
         onRect={onWindow}
       />
+      {edition !== null && (
+        <PencilNumber
+          label={`${look.copy}/${edition}`}
+          iw={iw}
+          ih={ih}
+          imageY={-sheetY}
+          paperZ={() => look.standoff + sheetFront}
+          onDrawn={onNumberDrawn}
+        />
+      )}
     </group>
   )
 }

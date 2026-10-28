@@ -20,17 +20,47 @@ export const LOOK_VERSION = 3
 /** Framed: open editions and works not for sale. Limited: the numbered sheet. */
 export type PresentationMode = 'framed' | 'limited'
 
-/** The frames a framed work can be shown in, picked per work by the admin. The first is the default. */
-export const PRESENTATION_FRAMES = ['wood-dark'] as const
+/**
+ * The frames a work can be shown in, picked per work by the admin (`Artwork.presentationFrame`).
+ * Every work is framed unless "no frame" is picked; the first frame is the default.
+ */
+export const PRESENTATION_FRAMES = [
+  'wood-dark',
+  'wood-medium',
+  'wood-light',
+  'painted-off-white',
+  'painted-black',
+] as const
 export type PresentationFrame = (typeof PRESENTATION_FRAMES)[number]
-export const FRAME_LABEL: Record<PresentationFrame, string> = { 'wood-dark': 'Dark wood' }
+/** Stored when the work is shown as the bare sheet. */
+export const NO_FRAME = 'none'
+export type FrameChoice = PresentationFrame | typeof NO_FRAME
+
+export const FRAME_LABEL: Record<FrameChoice, string> = {
+  'wood-dark': 'Dark wood',
+  'wood-medium': 'Medium wood',
+  'wood-light': 'Light wood',
+  'painted-off-white': 'Off-white',
+  'painted-black': 'Black',
+  none: 'No frame',
+}
 
 export const isPresentationFrame = (value: unknown): value is PresentationFrame =>
   (PRESENTATION_FRAMES as readonly unknown[]).includes(value)
 
-/** A work's stored frame, or the default for one this code doesn't know. */
-export const frameOrDefault = (value: unknown): PresentationFrame =>
-  isPresentationFrame(value) ? value : PRESENTATION_FRAMES[0]
+export const isFrameChoice = (value: unknown): value is FrameChoice =>
+  value === NO_FRAME || isPresentationFrame(value)
+
+/** A work's stored choice: its frame, null for the bare sheet, the default for anything unknown. */
+export const frameOf = (value: unknown): PresentationFrame | null =>
+  value === NO_FRAME ? null : isPresentationFrame(value) ? value : PRESENTATION_FRAMES[0]
+
+/**
+ * The shot a work gets: a piece in its frame, or the bare sheet held off the wall (the geometry's
+ * `'limited'`, whether or not the sheet carries a number).
+ */
+export const shotMode = (frame: PresentationFrame | null): PresentationMode =>
+  frame ? 'framed' : 'limited'
 
 export type Vec3 = [number, number, number]
 

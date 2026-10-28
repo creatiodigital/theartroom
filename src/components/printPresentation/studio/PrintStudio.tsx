@@ -28,8 +28,8 @@ import {
   type PresentationWindow,
 } from '@/lib/printPresentation/geometry'
 import {
-  frameOrDefault,
   makeLook,
+  shotMode,
   type Look,
   type PresentationFrame,
   type PresentationMode,
@@ -142,7 +142,7 @@ export function PrintStudio({
   mode: PresentationMode
   /** Limited only: N in the pencilled "copy/N". */
   edition: number | null
-  /** Framed only: the frame it's rendered in. */
+  /** The frame it's rendered in; null for the bare sheet. */
   frame: PresentationFrame | null
   seed: number
   widthPx: number
@@ -152,16 +152,20 @@ export function PrintStudio({
   if (mode === 'limited' && edition === null) {
     throw new Error('PrintStudio: a limited edition needs its edition size')
   }
-  // `edition` only feeds the copy number, which only a limited sheet shows; the draw happens
-  // either way, so every value after it stays where it was approved.
-  const look = useMemo(() => makeLook(seed, mode, edition ?? 1), [seed, mode, edition])
-  const shot = useMemo(() => shotFrame(mode, ratio, widthPx, look), [mode, ratio, widthPx, look])
+  // A limited edition carries its pencilled number, framed or not.
+  const number = mode === 'limited' ? edition : null
+  // The piece in its frame, or the bare sheet.
+  const kind = shotMode(frame)
+  // `edition` only feeds the copy number; the draw happens either way, so every value after it
+  // stays where it was approved.
+  const look = useMemo(() => makeLook(seed, kind, edition ?? 1), [seed, kind, edition])
+  const shot = useMemo(() => shotFrame(kind, ratio, widthPx, look), [kind, ratio, widthPx, look])
 
   const windowRect = useRef<WindowRectPx | null>(null)
   const onWindow = useCallback((rect: WindowRectPx) => {
     windowRect.current = rect
   }, [])
-  const [numberDrawn, setNumberDrawn] = useState(mode !== 'limited')
+  const [numberDrawn, setNumberDrawn] = useState(number === null)
   const onNumberDrawn = useCallback(() => setNumberDrawn(true), [])
 
   const ready = useRef(onReady)
@@ -205,16 +209,23 @@ export function PrintStudio({
               })
             }
           >
-            {mode === 'limited' ? (
-              <Limited
+            {frame ? (
+              <Framed
                 ratio={ratio}
-                edition={edition as number}
+                frame={frame}
+                edition={number}
                 look={look}
                 onWindow={onWindow}
                 onNumberDrawn={onNumberDrawn}
               />
             ) : (
-              <Framed ratio={ratio} frame={frameOrDefault(frame)} look={look} onWindow={onWindow} />
+              <Limited
+                ratio={ratio}
+                edition={number}
+                look={look}
+                onWindow={onWindow}
+                onNumberDrawn={onNumberDrawn}
+              />
             )}
           </group>
           {numberDrawn && <TakeShot windowRect={windowRect} onShot={onShot} />}

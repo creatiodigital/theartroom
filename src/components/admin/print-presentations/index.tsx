@@ -17,8 +17,9 @@ import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdow
 import { Toggle } from '@/components/ui/Toggle'
 import {
   FRAME_LABEL,
+  NO_FRAME,
   PRESENTATION_FRAMES,
-  type PresentationFrame,
+  type FrameChoice,
 } from '@/lib/printPresentation/look'
 
 import { supportsWebpAlpha } from './capture'
@@ -35,7 +36,8 @@ const STATUS_LABEL: Record<PresentationStatus, string> = {
 
 const STATUS_ORDER: PresentationStatus[] = ['missing', 'stale', 'current', 'ineligible']
 
-const FRAME_OPTIONS: SelectOption<PresentationFrame>[] = PRESENTATION_FRAMES.map((frame) => ({
+const FRAME_CHOICES: FrameChoice[] = [...PRESENTATION_FRAMES, NO_FRAME]
+const FRAME_OPTIONS: SelectOption<FrameChoice>[] = FRAME_CHOICES.map((frame) => ({
   value: frame,
   label: FRAME_LABEL[frame],
 }))
@@ -108,7 +110,7 @@ export const AdminPrintPresentations = () => {
   }, [load])
 
   // Saved as soon as it's picked; the row then reads as out of date until it's rendered in it.
-  const changeFrame = async (artworkId: string, frame: PresentationFrame) => {
+  const changeFrame = async (artworkId: string, frame: FrameChoice) => {
     const res = await setPresentationFrame(artworkId, frame)
     if (!res.ok) return setError(res.error)
     await load()
@@ -133,10 +135,10 @@ export const AdminPrintPresentations = () => {
           <h1 className={dashboardStyles.sectionTitle}>Print presentations</h1>
         </div>
         <p className={dashboardStyles.sectionDescription}>
-          Every work shown as a photo of its print: framed for open editions and works not for sale,
-          a numbered sheet for limited editions. The artwork itself is never in the render — it
-          sits, untouched, in the render&apos;s window. Renders run here, in this browser, one work
-          at a time.
+          Every work shown as a photo of its print: in the frame picked for it (or as the bare
+          sheet), a limited edition with its pencilled number. The artwork itself is never in the
+          render — it sits, untouched, in the render&apos;s window. Renders run here, in this
+          browser, one work at a time.
         </p>
 
         <div className={styles.switchRow}>
@@ -229,16 +231,16 @@ export const AdminPrintPresentations = () => {
                     <td>
                       {row.inputs
                         ? row.inputs.mode === 'limited'
-                          ? `Sheet, edition of ${row.inputs.edition}`
-                          : 'Framed'
+                          ? `Numbered, edition of ${row.inputs.edition}`
+                          : 'Not numbered'
                         : '—'}
                     </td>
                     <td>
-                      {row.inputs?.frame ? (
-                        <SelectDropdown<PresentationFrame>
+                      {row.inputs ? (
+                        <SelectDropdown<FrameChoice>
                           className={styles.frameSelect}
                           options={FRAME_OPTIONS}
-                          value={row.inputs.frame}
+                          value={row.inputs.frame ?? NO_FRAME}
                           onChange={(frame) => void changeFrame(row.artworkId, frame)}
                           disabled={running}
                         />
