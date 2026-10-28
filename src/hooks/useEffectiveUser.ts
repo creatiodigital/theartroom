@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 
 /**
@@ -25,28 +26,24 @@ export function useEffectiveUser() {
       }
     : session?.user
 
-  // Start impersonating a user (admin or superAdmin only)
-  const startImpersonation = async (user: { id: string; name: string; handler: string }) => {
-    const userType = session?.user?.userType
-    if (userType !== 'admin' && userType !== 'superAdmin') {
-      console.error('Only admins can impersonate')
-      return false
-    }
-
-    await update({
-      impersonating: {
-        id: user.id,
-        name: user.name,
-        handler: user.handler,
-      },
+  // Start impersonating a user. The server decides who may (admins only, never
+  // a superAdmin target); true once its cookie is set. The caller should then
+  // load the dashboard fresh — this does not refresh the session in place.
+  const startImpersonation = useCallback(async (userId: string) => {
+    const res = await fetch('/api/admin/impersonation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
     })
-    return true
-  }
+    return res.ok
+  }, [])
 
-  // Stop impersonating and return to admin mode
-  const stopImpersonation = async () => {
-    await update({ impersonating: null })
-  }
+  // Stop impersonating and return to admin mode. Resolves once the server has
+  // forgotten the impersonation AND this tab's session reflects it.
+  const stopImpersonation = useCallback(async () => {
+    await fetch('/api/admin/impersonation', { method: 'DELETE' })
+    await update()
+  }, [update])
 
   return {
     effectiveUser,

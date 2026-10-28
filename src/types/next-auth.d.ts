@@ -30,8 +30,5 @@ declare module 'next-auth/jwt' {
     handler?: string
     userType?: string
     mustChangePassword?: boolean
-    impersonatingId?: string
-    impersonatingName?: string
-    impersonatingHandler?: string
   }
 }

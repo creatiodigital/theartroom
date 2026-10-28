@@ -101,18 +101,14 @@ export const AdminUsers = () => {
 
   const handleImpersonate = useCallback(
     async (user: TUser) => {
-      const fullName = `${user.name} ${user.lastName}`.trim()
-      const success = await startImpersonation({
-        id: user.id,
-        name: fullName,
-        handler: user.handler,
-      })
-      if (success) {
-        router.push('/dashboard')
-        router.refresh()
+      if (await startImpersonation(user.id)) {
+        // A full load, not a client push: becoming another user must start the
+        // whole page over (session, store, caches), and this admin page must
+        // never re-render as "impersonating" — admin pages end impersonations.
+        window.location.assign('/dashboard')
       }
     },
-    [startImpersonation, router],
+    [startImpersonation],
   )
 
   const handleInviteClick = useCallback((user: TUser) => {
