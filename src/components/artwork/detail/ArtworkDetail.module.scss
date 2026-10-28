@@ -183,8 +183,7 @@
     // natural size with white either side.
     .image,
     .imagePortrait,
-    .presentationRender,
-    .presentationRenderPortrait {
+    .presentationRender {
       width: 100%;
       height: auto;
       // The portrait cap answers a desktop problem — a band one screen tall.
@@ -309,22 +308,18 @@
   max-height: min(100%, max(720px, 78vh));
 }
 
-// A work shown as a photo of its print (PrintPresentation): the render takes the same caps as
-// the bare picture. Its parent here is the piece, not the band, so the band's height is spelled
-// out — the container's height less its top and bottom padding — where `.image` says 100%.
-// The piece is never wider than 860px: the large render (1800px) stays sharp at that size on a
-// 2× screen. The cap sits on the piece, not the render — a cap with a percentage in it is
-// ignored when the piece measures its render, and the two would come apart.
+// A work shown as a photo of its print (PrintPresentation), cropped to the piece with a thin
+// border of wall (`crop`): as large as the column allows, but always whole on one screen — no
+// scrolling to see a work (owner, 2026-10-28). The band's height is spelled out — the
+// container's height less its top and bottom padding — where `.image` says 100%, because the
+// render's parent here is the piece, not the band. The width cap sits on the piece, not the
+// render: a cap with a percentage in it is ignored when the piece measures its render.
 .presentation {
-  max-width: min(100%, 860px);
+  max-width: 100%;
 }
 
 .presentationRender {
   max-height: calc(100vh - 200px - var(--space-4) - var(--space-6));
-}
-
-.presentationRenderPortrait {
-  max-height: min(calc(100vh - 200px - var(--space-4) - var(--space-6)), max(720px, 78vh));
 }
 
 .description {
