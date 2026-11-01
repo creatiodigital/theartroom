@@ -38,8 +38,7 @@ export interface SpaceLook {
    * this share of a window's daylight — it opens onto a shaded court, not the open sky. Unset: 1.
    */
   lightWellDaylight?: number
-  /** Window glass: color and display brightness (the stored `windowLightColor` / `windowLightIntensity` scale). */
-  windowColor: string
+  /** Window glass: display brightness (the stored `windowLightIntensity` scale; its color is the artist's, AR-169). */
   windowIntensity: number
   /** White wall paint's reflectance (the wall color scales it). */
   paintReflectance: number
@@ -52,9 +51,8 @@ export interface SpaceLook {
   plasticReflectance: number
   /** Recessed and round lamps: light (and disc) color. */
   lampColor: string
-  /** Track lamps: light color, fixture body color. */
+  /** Track lamps' light color (their body color is the artist's, AR-169). */
   trackLampColor: string
-  trackBodyColor: string
   /** The visitor's eye: vertical field of view (degrees) and height (meters). */
   cameraFOV: number
   cameraElevation: number
@@ -62,90 +60,73 @@ export interface SpaceLook {
 }
 
 /**
- * Paris and Vienna: their approved look (Eduardo 2026-10-18 — Paris on Permanence and Kritzendorf,
- * Vienna on Florescere, the same settings), with the room settings of "The Beauty of Permanence"
- * (lamp colors, window glass, eye) every one of those links used — and stronger lamps.
+ * Every space's look (AR-169, Eduardo 2026-10-30: "a setup that will work nice for all spaces…
+ * I don't want you to calibrate space by space"): one light setup and one camera, for the spaces
+ * of today and those to come. What differs between spaces is their model (its lamps, windows and
+ * light wells), never these numbers.
  *
- * A space's camera is fixed where its brightest (sunlit) work stays below paper white, so a white
- * wall or passepartout shows white only under about 340 lx there; under ordinary gallery light
- * (150–200 lx) they read grey. Eduardo, 2026-10-21: "if an almost white wall and a 100% white
- * passepartout render greyish, we have to improve the lighting". 1.7× the approved light lit the
- * room well but "a little too much"; once the passepartout and the paper border showed their own
- * color like the image (AR-163), 1.35× still left patches of light on the walls and a washed-out
- * floor ("lower the intensity of the light in general"); 1.15× then read a little dim
- * (2026-10-22: "brighten a little more the room"). So 1.25×: downlights 10,000 → 12,500 lm (after
- * 6,800 → 10,000 on 2026-10-20/21), track ×0.5 → ×0.625. The cameras stay; the artist dims from
- * there (50–100%).
+ * History (Paris and Vienna, AR-161 → AR-165): downlights 6,800 → 10,000 → 12,500 lm and track
+ * ×0.5 → ×0.625 while the camera was fixed where the brightest sunlit work stayed below paper
+ * white. AR-169, after the bake matched Cycles (runs.md, session 4b), on Paris: the room at
+ * 12,500 lm was "over lighted… completely incandescent" — the downlights were 72–93 % of every
+ * main-room wall's light; halved, "much better now… the floor is no longer washed out": 6,250 lm.
+ * Then, one value per A/B, to the approved look ("now we're talking!", runs.md "APPROVED LOOK"):
+ * track spots ×¼ (0.625 → 0.15625: "now I don't see the pools on the wall"), the sky ×½
+ * (`daylightGain` 6 → 3, in the bake and on the glass: "the window is still too bright"), the
+ * camera 0.524 → 0.62 (`GALLERY_CAMERA`), bloom on the lamps only and the soft fill
+ * (`softFill.ts`). A space's own geometry decides where each rule acts: recessed vs round
+ * lamps, track or none, glass windows, light wells (`lightWellDaylight`), corridors under 6 m
+ * (`corridorLumens`, recessed lamps only) — Madrid (round lamps only) shares it all.
  */
-const PARIS_VIENNA: SpaceLook = {
-  recessedLumens: 12500,
+const GALLERY_LOOK: SpaceLook = {
+  recessedLumens: 6250,
   corridorLumens: 3000,
   roundLumens: 3000,
+  // AR-169 (Eduardo 2026-10-31: "an interior scene… some shadows and dark corners are to be
+  // expected. We will compensate with the track lamps"): ×2 with the fill lowered (`softFill`), then
+  // "at 93% they are barely noticeable" → ×4: 100% = the editor's realtime spots (ratings err
+  // bright; the artist dims down).
   trackScale: 0.625,
   sunLux: 5000,
   sunElevationDeg: 35,
   // Straight in (360° = 0°, written as the approved links set it).
   sunAzimuthDeg: 360,
-  daylightGain: 6,
-  windowColor: '#f5fbff',
+  daylightGain: 3,
+  // AR-165: an opening with no glass at the end of a passage (paris22's exit corridor, its
+  // `windowLight1`) at a window's full daylight burned the walls white (Eduardo 2026-10-23: "too
+  // intense"). A light well opens onto a shaded court, not the open sky — in any space that has one.
+  lightWellDaylight: 0.25,
   windowIntensity: 4.2,
   paintReflectance: 0.9,
   // AR-165 (Eduardo 2026-10-23): the warm floor turned the walls and ceiling beige — "just
-  // reduce its influence" (the floor's look stays). First try: half its color.
-  floorBounceColor: 0.5,
+  // reduce its influence" (the floor's look stays). First try: half its color. AR-169 (2026-10-29,
+  // the neutral camera showed it as brown-pink walls): "even if the floor is very brown, walls do
+  // not get tinted by it" — none of its color, at the same brightness.
+  floorBounceColor: 0,
   plasticReflectance: 0.85,
   lampColor: '#ffffff',
-  trackLampColor: '#fffeeb',
-  trackBodyColor: '#ffffff',
+  // AR-169 (Eduardo 2026-10-29): every space's light is the same white — "not blue, not yellow:
+  // white… otherwise I will go crazy trying to calibrate each single exhibition". Was #fffeeb.
+  trackLampColor: '#ffffff',
   cameraFOV: 50,
   cameraElevation: 1.6,
   floor: COMMON_FLOOR,
 }
 
 /**
- * Madrid: its approved look (Eduardo 2026-10-16/17, re-checked under the per-space rules
- * 2026-10-19), with Vivrière's room settings. Round lamps only (no recessed or track lamps, no
- * corridor rule): the recessed and track values are the defaults and light nothing here.
+ * Every space's camera. AR-169 (Eduardo 2026-10-29, "not blue, not yellow: white"): a neutral
+ * white balance, so white light shows white — the metered balances (Paris [0.933, 1.01, 1.135],
+ * Vienna [0.916, 1.014, 1.153], Madrid [0.92, 1.015, 1.126]) cooled the room against the warm
+ * bounce and turned the white downlight discs and the sky blue. Exposure 0.62 (Paris was 0.524,
+ * Vienna 0.588, Madrid 0.56): his A/B pick on the approved look (EX1, runs.md). Images are
+ * file-exact whatever the exposure.
  */
-const MADRID: SpaceLook = {
-  recessedLumens: 3000,
-  roundLumens: 3000,
-  trackScale: 0.5,
-  sunLux: 5000,
-  sunElevationDeg: 35,
-  // Straight in (360° = 0°, written as the approved links set it).
-  sunAzimuthDeg: 360,
-  daylightGain: 6,
-  windowColor: '#f2f2f2',
-  windowIntensity: 4.2,
-  paintReflectance: 0.9,
-  // AR-165 (Eduardo 2026-10-23): the warm floor turned the walls and ceiling beige — "just
-  // reduce its influence" (the floor's look stays). First try: half its color.
-  floorBounceColor: 0.5,
-  plasticReflectance: 0.85,
-  lampColor: '#ffffff',
-  trackLampColor: '#ffffff',
-  trackBodyColor: '#ffffff',
-  cameraFOV: 50,
-  cameraElevation: 1.6,
-  floor: COMMON_FLOOR,
-}
+const GALLERY_CAMERA: SpaceCamera = { exposure: 0.62, whiteBalance: [1, 1, 1] }
 
 export const spaceLooks: Record<string, { camera: SpaceCamera; look: SpaceLook }> = {
-  // AR-161: camera from the approved Permanence bake (seeded), 2026-10-18 — Kritzendorf uses it too.
-  // AR-165: the opening at the end of the exit corridor (paris22, `windowLight1`, no glass) at a
-  // window's full daylight burned the corridor walls white (Eduardo 2026-10-23: "too intense").
-  // It is the only light well in any space; otherwise Paris keeps the look it shares with Vienna.
-  paris: {
-    camera: { exposure: 0.524, whiteBalance: [0.933, 1.01, 1.135] },
-    look: { ...PARIS_VIENNA, lightWellDaylight: 0.25 },
-  },
-  // AR-161: camera from the approved Florescere bake (seeded), 2026-10-18.
-  vienna: { camera: { exposure: 0.588, whiteBalance: [0.916, 1.014, 1.153] }, look: PARIS_VIENNA },
-  // AR-161: approved 2026-10-19 (Vivrière). With the sun the metered camera (0.435) would be set by
-  // 2–3 works beside the sunlit windows and darken the whole room ~11%; 0.56 keeps the approved
-  // room brightness. Images are file-exact either way. WB = metered.
-  madrid: { camera: { exposure: 0.56, whiteBalance: [0.92, 1.015, 1.126] }, look: MADRID },
+  paris: { camera: GALLERY_CAMERA, look: GALLERY_LOOK },
+  vienna: { camera: GALLERY_CAMERA, look: GALLERY_LOOK },
+  madrid: { camera: GALLERY_CAMERA, look: GALLERY_LOOK },
 }
 
 /** The room settings an exhibition owns that each approved look was made with. */

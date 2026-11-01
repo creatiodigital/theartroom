@@ -12,7 +12,10 @@ import type { SpaceCamera } from '@/lib/bake/spaceLooks'
 import type { RootState } from '@/redux/store'
 import { useBakedDimmer } from '@/components/scene/spaces/objects/useLampDimmer'
 
-import { BAKE_DEBUG, setBakeAllRooms, useBakedLook } from './bakedLook'
+import { lightShare } from '@/lib/bake/dimmer'
+
+import { BAKE_DEBUG, setBakeAllRooms, useBakedLook, withDaylight } from './bakedLook'
+import { bakeQualityFlag } from './bakeFlags'
 import { BakeWait, bakeFraction, bakeSlice, logBake, startBake, type StartedBake } from './bakeJob'
 import { buildBakeDraft, encodeBakeMaps } from './bakeOutput'
 import { supportsBaking } from './bakeSupport'
@@ -27,6 +30,10 @@ import { measureArtLight } from './receivers'
  *
  * All or nothing: a failure anywhere, or the page going away (unmount aborts every request),
  * saves nothing — the exhibition keeps the draft bake it had.
+ *
+ * AR-169 Quick bake (`?bakequality=quick`): fewer samples, and NEVER stored — its maps are encoded
+ * as a stored bake's are, kept in this tab (`blob:` URLs) and handed to the page (`onPreview`), which
+ * shows them the way review shows a stored bake. Nothing is uploaded or saved: no visitor can get it.
  */
 
 export interface BakeRunnerProgress {
@@ -47,6 +54,8 @@ export interface BakeRunnerProps {
   onProgress: (progress: BakeRunnerProgress) => void
   /** The bake is stored (the saved record, `reviewedAt: null`). */
   onDone: (bake: BakeRecord) => void
+  /** A Quick bake finished: its record, maps in this tab only — nothing was uploaded or saved. */
+  onPreview: (bake: BakeRecord) => void
   /** Nothing was saved. */
   onError: (error: Error) => void
 }
@@ -65,6 +74,8 @@ export const BakeRunner = (props: BakeRunnerProps) => {
   const look = useBakedLook()
   // The ceiling-lamp dimmer, which the corridor's re-rated fixtures keep too (`bakeJob`).
   const recessedDimmer = useBakedDimmer('recessed') ?? 1
+  // AR-169: the artist's daylight share (blinds) — the windows' sky and the sun.
+  const daylight = lightShare(useSelector((state: RootState) => state.exhibition.daylightLevel))
 
   // The latest callbacks and ids, read when they are needed.
   const latest = useRef(props)
@@ -126,6 +137,27 @@ export const BakeRunner = (props: BakeRunnerProps) => {
           encodeMs,
         }),
       )
+      if (bakeQualityFlag() === 'quick') {
+        // Kept in this tab: the maps never leave the browser, the record is never sent.
+        const urls = new Map(maps.map((m) => [m.file, URL.createObjectURL(m.blob)]))
+        const preview: BakeRecord = {
+          ...buildBakeDraft({
+            id: `quick-${Date.now()}`,
+            fingerprint,
+            unwrap: started.unwrap,
+            maps: maps.map((m) => ({ ...m.map, url: urls.get(m.file)! })),
+            artBounce,
+            camera,
+            ms: started.baker.stats.ms,
+          }),
+          bakedBy: 'quick-bake',
+          reviewedAt: null,
+        }
+        if (signal.aborted) return
+        job.current.phase = 'done'
+        latest.current.onPreview(preview)
+        return
+      }
       const saved = await saveBake({
         exhibitionId,
         files: maps.map((m) => ({ file: m.file, blob: m.blob })),
@@ -168,7 +200,12 @@ export const BakeRunner = (props: BakeRunnerProps) => {
         j.started = startBake(
           gl,
           scene,
-          { wall: wallColor, ceiling: ceilingColor, look: look.space, recessedDimmer },
+          {
+            wall: wallColor,
+            ceiling: ceilingColor,
+            look: withDaylight(look.space, daylight),
+            recessedDimmer,
+          },
           j.restore,
         )
         j.phase = 'baking'

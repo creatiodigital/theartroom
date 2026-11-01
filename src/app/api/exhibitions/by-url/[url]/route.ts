@@ -269,6 +269,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         windowLightColor: snapshotExhibition.windowLightColor,
         windowLightIntensity: snapshotExhibition.windowLightIntensity,
         windowTransparency: snapshotExhibition.windowTransparency,
+        daylightLevel: snapshotExhibition.daylightLevel,
+        fillLightLevel: snapshotExhibition.fillLightLevel,
         hdriRotation: snapshotExhibition.hdriRotation,
         // Floor
         floorReflectiveness: snapshotExhibition.floorReflectiveness,

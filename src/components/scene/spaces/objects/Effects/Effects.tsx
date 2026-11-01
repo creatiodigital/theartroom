@@ -1,15 +1,39 @@
 import { EffectComposer, ToneMapping, FXAA, Bloom } from '@react-three/postprocessing'
 import { ToneMappingMode, type BloomEffect } from 'postprocessing'
-import { useEffect, useMemo, type ReactElement } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useEffect, useMemo, useRef, type ReactElement } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+import { useSelector } from 'react-redux'
 import { Raycaster } from 'three'
 
+import {
+  cameraExposureFlag,
+  falseColorFlag,
+  glareFlag,
+  sunbeamStrength,
+} from '@/components/scene/bake/bakeFlags'
 import { BAKE_DEBUG, CAMERA_EXPOSURE, useBakedLook } from '@/components/scene/bake/bakedLook'
-import { useMeteredExposure, useMeteredWhiteBalance } from '@/components/scene/bake/bakeState'
+import { fillNearFlag, windowFillField } from '@/components/scene/bake/fillField'
+import {
+  setFillDirection,
+  setFillField,
+  setSoftFillLevel,
+  windowFillDirection,
+} from '@/components/scene/bake/softFill'
+import { readProbes, type Probe } from '@/components/scene/bake/probes'
+import { useBakePage } from '@/components/scene/bake/bakePage'
+import { SunBeams } from '@/components/scene/bake/SunBeams'
+import { fillShare } from '@/lib/bake/dimmer'
+import type { RootState } from '@/redux/store'
+import {
+  setMeteredExposure,
+  useMeteredExposure,
+  useMeteredWhiteBalance,
+} from '@/components/scene/bake/bakeState'
 import { ROOM_CAMERA } from '@/components/scene/spaces/objects/Display/artworkFile'
 
 import { ArtworkFileEffect } from './ArtworkFileEffect'
-import { BLOOM_INTENSITY } from './bloomIntensity'
+import { BLOOM_INTENSITY, lampGlowScale } from './bloomIntensity'
+import { FalseColorEffect } from './FalseColorEffect'
 import { WhiteBalanceEffect } from './WhiteBalanceEffect'
 
 /**
@@ -168,6 +192,10 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
       __ar161Camera: camera,
       __ar161Scene: scene,
       __ar161Raycaster: Raycaster,
+      // AR-169: light tests render the room at other exposures without a bake.
+      __ar161SetExposure: setMeteredExposure,
+      // AR-169 calibration: the stored bake's light at named points (`probes.ts`).
+      __ar169Probes: (probes: Probe[]) => readProbes(scene, probes),
     })
   }, [camera, scene])
   // The tools switch the glow off to measure what it adds.
@@ -180,11 +208,15 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
   const whiteBalance = useMemo(() => new WhiteBalanceEffect(), [])
   const artworkFile = useMemo(() => new ArtworkFileEffect(), [])
   useEffect(() => () => artworkFile.dispose(), [artworkFile])
+  // AR-169 calibration: exposure bands in the tone curve's place (`?falsecolor=1`).
+  const falseColor = useMemo(() => (falseColorFlag() ? new FalseColorEffect() : null), [])
+  useEffect(() => () => falseColor?.dispose(), [falseColor])
   useEffect(() => () => whiteBalance.dispose(), [whiteBalance])
   if (whiteBalanceGain) whiteBalance.setGain(whiteBalanceGain)
   // Exposure is the renderer's: the ToneMapping effect's shader multiplies by three's
   // `toneMappingExposure` uniform.
-  const exposure = look.baked ? (metered ?? CAMERA_EXPOSURE) : 1
+  // AR-169 phase 7 (dev): `?exposure=` compares the camera's exposure.
+  const exposure = look.baked ? (cameraExposureFlag() ?? metered ?? CAMERA_EXPOSURE) : 1
   useEffect(() => {
     gl.toneMappingExposure = exposure
     return () => {
@@ -192,9 +224,42 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
     }
   }, [gl, exposure])
   const toneMappingMode = look.baked ? ToneMappingMode.NEUTRAL : ToneMappingMode.ACES_FILMIC
+  // AR-169: the artist's share of the soft fill (`softFill.ts`), on screen only — instant.
+  const fill = fillShare(useSelector((state: RootState) => state.exhibition.fillLightLevel))
+  useEffect(() => setSoftFillLevel(fill), [fill])
+  // AR-169: the fill comes from the room's windows (`windowFillDirection`) — read once the model's
+  // glass is in the scene (every 30th frame, for 10 s at most: a room without windows stays even).
+  const direction = useRef({ found: false, frames: 0 })
+  useEffect(() => {
+    direction.current = { found: false, frames: 0 }
+    return () => {
+      setFillDirection(null)
+      setFillField(null)
+    }
+  }, [scene, look.baked])
+  useFrame(() => {
+    const d = direction.current
+    if (!look.baked || d.found || d.frames > 600 || d.frames++ % 30 !== 0) return
+    const towards = windowFillDirection(scene)
+    if (!towards) return
+    d.found = true
+    setFillDirection(towards)
+    // AR-169 trial (`?fillnear=1`): each surface leans toward its own room's windows.
+    if (fillNearFlag()) setFillField(windowFillField(scene))
+  })
   // A passepartout's face shows a share of what this camera makes of its light (AR-165).
   ROOM_CAMERA.exposure.value = exposure
   ROOM_CAMERA.whiteBalance.value.set(...((look.baked && whiteBalanceGain) || [1, 1, 1]))
+
+  // AR-169 phase 8: in a baked room the bulbs and the threshold scaled together — a bulb's glow
+  // is (its brightness − threshold) × intensity, unchanged, while the window and the sun's patch
+  // fall below the threshold.
+  const glow = lampGlowScale(look.baked)
+  // AR-169 trial (`?glare=G`): a very subtle glow on the window and the sun patches too.
+  const glare = look.baked ? glareFlag() : null
+  // AR-169: the sun's beams in a baked room (`SunBeams`), never while it bakes.
+  const bakePage = useBakePage()
+  const sunbeam = look.baked && bakePage?.mode !== 'bake' ? sunbeamStrength() : 0
 
   if (!enabled) return null
 
@@ -210,19 +275,27 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
         key="bloom"
         ref={exposeBloom}
         mipmapBlur
-        intensity={BLOOM_INTENSITY}
-        luminanceThreshold={BLOOM_THRESHOLD}
-        luminanceSmoothing={0.08}
+        intensity={(BLOOM_INTENSITY / glow) * (glare ?? 1)}
+        luminanceThreshold={glare === null ? BLOOM_THRESHOLD * glow : BLOOM_THRESHOLD}
+        luminanceSmoothing={glare === null ? 0.08 * glow : 0.5}
         radius={0.7}
       />,
     )
   }
   if (look.baked && whiteBalanceGain)
     passes.push(<primitive key="white-balance" object={whiteBalance} />)
-  passes.push(<ToneMapping key={`tonemapping-${toneMappingMode}`} mode={toneMappingMode} />)
+  if (falseColor) {
+    falseColor.setExposure(exposure)
+    passes.push(<primitive key="false-color" object={falseColor} />)
+  } else passes.push(<ToneMapping key={`tonemapping-${toneMappingMode}`} mode={toneMappingMode} />)
   if (look.baked) passes.push(<primitive key="artwork-file" object={artworkFile} />)
 
-  return <EffectComposer multisampling={MULTISAMPLING}>{passes}</EffectComposer>
+  return (
+    <>
+      {sunbeam > 0 && <SunBeams strength={sunbeam} />}
+      <EffectComposer multisampling={MULTISAMPLING}>{passes}</EffectComposer>
+    </>
+  )
 }
 
 export default Effects

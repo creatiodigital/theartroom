@@ -19,6 +19,7 @@ import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
 import { lookSpot, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { lampGlowScale } from '@/components/scene/spaces/objects/Effects/bloomIntensity'
 import { useBakedDimmer, useLampLevel } from '@/components/scene/spaces/objects/useLampDimmer'
 import { DIMMER_STANDARD } from '@/lib/bake/dimmer'
 
@@ -142,13 +143,13 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceFeatures = getSpaceFeatures(spaceId)
 
-  // AR-161: in the baked look the fixture — body and light color — is the space's; the beam and
-  // throw are the artist's (stored, baked and fingerprinted).
+  // AR-161: in the baked look the light color is the space's; the beam and throw are the
+  // artist's (stored, baked and fingerprinted). AR-169: so is the body color (white, black…) —
+  // the fixtures are not in the bake, so it never stales one.
   const look = useBakedLook()
-  const storedMaterialColor = useSelector(
+  const materialColor = useSelector(
     (state: RootState) => state.exhibition.trackLampMaterialColor ?? DEFAULT_MATERIAL_COLOR,
   )
-  const materialColor = look.baked ? look.space.trackBodyColor : storedMaterialColor
   const tintedMaterial = useAmbientLightColor(materialColor)
 
   const storedLampColor = useSelector(
@@ -156,7 +157,7 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
   )
   const lampColor = look.baked ? look.space.trackLampColor : storedLampColor
   const storedLevel = useLampLevel('track')
-  // AR-161: in a baked space the track dimmer (50–100%) scales the lamps' light — the space's
+  // AR-161: in a baked space the track dimmer (10–100%) scales the lamps' light — the space's
   // track scale × level/4 of the standard — and, in the baked look, their discs with it (at 100%
   // both are exactly the approved ones). The editor's realtime preview keeps the stored level.
   const dimmer = useBakedDimmer('track')
@@ -207,11 +208,12 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
       new MeshStandardMaterial({
         color: '#000000',
         emissive: lampColor,
-        emissiveIntensity: bulbEmissiveIntensity,
+        // AR-169 phase 8: in a baked room × the bloom threshold's scale (`lampGlowScale`).
+        emissiveIntensity: bulbEmissiveIntensity * lampGlowScale(look.baked),
         toneMapped: false,
         side: DoubleSide,
       }),
-    [lampColor, bulbEmissiveIntensity],
+    [lampColor, bulbEmissiveIntensity, look.baked],
   )
   useDisposable(bulbOnMaterial)
 
@@ -270,8 +272,18 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
           Math.abs(Math.abs(q.w) - 1) < 1e-4
 
         const geometricAim = tiltWasApplied ? bulbNormalAim(bulbNode) : null
+        const authoredTilt = spaceFeatures.trackTiltDeg
 
-        if (geometricAim) {
+        if (geometricAim && authoredTilt !== undefined) {
+          // The space keeps the aim its authored tilt gave (`SpaceFeatures.trackTiltDeg`): the
+          // bulb's dominant horizontal axis, tilted down by it — as the quaternion path does.
+          const t = (authoredTilt * Math.PI) / 180
+          const axis =
+            Math.abs(geometricAim.x) > Math.abs(geometricAim.z)
+              ? new Vector3(Math.sign(geometricAim.x), 0, 0)
+              : new Vector3(0, 0, Math.sign(geometricAim.z))
+          aimDir = axis.multiplyScalar(Math.cos(t)).setY(-Math.sin(t))
+        } else if (geometricAim) {
           aimDir = geometricAim
         } else {
           // Authored tilt present: dominant horizontal axis of the bulb's offset,
@@ -303,7 +315,7 @@ const TrackLamp: React.FC<TrackLampProps> = ({ nodes, count }) => {
     }
 
     return data
-  }, [nodes, lampIndices])
+  }, [nodes, lampIndices, spaceFeatures.trackTiltDeg])
 
   return (
     <>

@@ -4,9 +4,8 @@ import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three'
  * AR-165 — one strip of a passepartout, cut like a real one: mitered at 45° at both ends, and its
  * window bevel-cut through the board, so the bevel shows from the front as a strip around the
  * picture (Eduardo 2026-10-23: the flat, exactly-colored passepartout "lost all 3D
- * dimensionality"). Split in two: `face`, the front face (in the baked look half its own color,
- * `createArtworkSurfaceMaterial`), and `body`, the bevel, the outer edge, the miters and the back
- * (lit by the room).
+ * dimensionality"). In two parts, `face` (the front face) and `body` (the bevel, the outer edge, the
+ * miters and the back) — one material on both since AR-169, lit like the frame.
  *
  * The strip's outer edge runs along x at y = 0, `length` long; the window lies toward −y,
  * `border` in at the back — the picture shows exactly as much as with a straight cut — and the

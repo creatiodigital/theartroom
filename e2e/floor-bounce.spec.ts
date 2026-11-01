@@ -37,10 +37,9 @@ test('the floor’s own color is never changed', () => {
   expect(albedo.equals(WARM_WOOD)).toBe(true)
 })
 
-test('every baked space reduces its floor’s color on the room', () => {
-  for (const space of ['paris', 'vienna', 'madrid']) {
-    const share = spaceLooks[space]!.look.floorBounceColor
-    expect(share, space).toBeGreaterThan(0)
-    expect(share, space).toBeLessThan(1)
-  }
+// AR-169 (2026-10-29): "even if the floor is very brown, walls do not get tinted by it" — every
+// baked space bounces its floor's light, none of its color.
+test('no baked space tints the room with its floor’s color', () => {
+  for (const space of ['paris', 'vienna', 'madrid'])
+    expect(spaceLooks[space]!.look.floorBounceColor, space).toBe(0)
 })

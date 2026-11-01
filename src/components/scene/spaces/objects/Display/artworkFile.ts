@@ -20,11 +20,10 @@ import {
  * file: no light, exposure, white balance, tone curve, tint or glow on it, even where it then
  * doesn't match the room's light. The image writes its texel (the file's linear color) with alpha
  * ARTWORK_FILE_ALPHA as a marker; the last screen effect (`ArtworkFileEffect`) puts that color back
- * over whatever bloom, white balance, exposure and tone mapping made of it. The passepartout's
- * front face and the paper border count as part of the image (AR-163, Eduardo 2026-10-21: "we need
- * to be able to show a perfectly white passepartout as well as an unaltered picture") and show
- * their own color the same way (`createArtworkSurfaceMaterial`). Frame, card, the passepartout's
- * bevel and edges (AR-165: flat, it had no thickness) and the room stay physically lit.
+ * over whatever bloom, white balance, exposure and tone mapping made of it. The paper border counts
+ * as part of the image (AR-163) and shows its own color the same way
+ * (`createArtworkSurfaceMaterial`). Frame, passepartout (AR-169: every face, like the frame), card
+ * and the room stay lit.
  */
 
 /** The alpha an artwork image writes (opaque surfaces write 1; nothing else in the room writes this). */
@@ -78,11 +77,12 @@ export const ROOM_CAMERA = {
 }
 
 /**
- * AR-165 (Eduardo 2026-10-23): a passepartout's face at exactly its color looked "a little fake
- * (too perfect), too white … half baked half white color?". Half (0.5) was "still too gray": a
- * quarter of the room's light, the rest its color.
+ * AR-169 (Eduardo 2026-10-31): the passepartout is lit like the frame, every face, its color × this
+ * in the baked look — "a little brighter than it should be"; 1.3 "brighter but not enough", then
+ * 2.0, then "make it 2.2" (`?matlift=X` compares). (AR-165 showed its face a quarter lit past the
+ * screen effects: "looks unreal".)
  */
-export const PASSEPARTOUT_FACE_LIT = 0.25
+export const PASSEPARTOUT_LIFT = 2.2
 
 /** three's Khronos PBR Neutral (`NeutralToneMapping`, the screen's tone mapping), exposure applied. */
 const ROOM_NEUTRAL = /* glsl */ `
@@ -167,11 +167,12 @@ const shownPastScreenEffects = (lit: number, edges: boolean) => ({
 })
 
 /**
- * AR-165 (Eduardo 2026-10-23): a text card gets "the same treatment we are giving to the
- * passepartout" — baked, its rounded edges were hair-thin strips in the card atlas and showed as a
- * dashed line.
+ * AR-165 (Eduardo 2026-10-23): a text card shows a quarter of the room's light, the rest its own
+ * color — the passepartout's face then ("at exactly its color… a little fake, too white"; half lit
+ * "still too gray"). Baked, its rounded edges were hair-thin strips in the card atlas and showed as
+ * a dashed line.
  */
-export const TEXT_CARD_FACE_LIT = PASSEPARTOUT_FACE_LIT
+export const TEXT_CARD_FACE_LIT = 0.25
 
 /** A text card's material hooks in the baked look: its face like a passepartout's, edges lit. */
 export const TEXT_CARD_SHADING = shownPastScreenEffects(TEXT_CARD_FACE_LIT, true)

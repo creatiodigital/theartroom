@@ -22,6 +22,7 @@ import {
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Monogram from '@/icons/monogram.svg'
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
+import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
@@ -60,7 +61,7 @@ import {
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
-import { isBakeRecord } from '@/lib/bake/bakeRecord'
+import { isBakeRecord, type BakeRecord } from '@/lib/bake/bakeRecord'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { bakePageUrl } from '@/lib/bake/bakePageUrl'
 import { Text } from '@/components/ui/Typography'
@@ -653,12 +654,20 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     draftBake.fingerprint === exhibition.bakeFingerprint
   // The bake the room shows: visitors' published one (or a preview's draft); in review the
   // draft, only when current; in bake mode none (the bake runs on the unlit room).
+  //
+  // AR-169 Quick bake (`?bake=1&bakequality=quick`): once it finishes, the page shows it the way
+  // review shows a stored bake — its maps live in this tab only; nothing was uploaded or saved.
+  const [quickBake, setQuickBake] = useState<BakeRecord | null>(null)
   const roomBake =
-    mode === 'visit'
+    quickBake ??
+    (mode === 'visit'
       ? (exhibition?.bake ?? null)
       : mode === 'review' && draftCurrent
         ? draftBake
-        : null
+        : null)
+  // What the page shows: a finished quick bake is shown like review (the URL stays the bake's, so
+  // nothing marks it reviewed).
+  const shownMode: PageMode = quickBake ? 'review' : mode
 
   // Keyed on the SLUG, not a boolean. As a boolean this ran once per mount ever,
   // and moving between two exhibitions reuses this component — so switching
@@ -696,7 +705,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         exhibition.spaceId,
         shownStoredBake(exhibition.spaceId, roomBake) !== null,
       )
-      preloadFloorMaterial(look.baked ? look.space.floor.material : exhibition.floorMaterial)
+      preloadFloorMaterial(
+        look.baked
+          ? bakedFloor(look.space.floor, exhibition.floorMaterial).material
+          : exhibition.floorMaterial,
+      )
       const exhibitionData: TExhibition = {
         id: exhibition.id,
         userId: exhibition.userId,
@@ -737,6 +750,8 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         windowLightColor: exhibition.windowLightColor ?? undefined,
         windowLightIntensity: exhibition.windowLightIntensity ?? undefined,
         windowTransparency: exhibition.windowTransparency ?? undefined,
+        daylightLevel: exhibition.daylightLevel ?? undefined,
+        fillLightLevel: exhibition.fillLightLevel ?? undefined,
         hdriRotation: exhibition.hdriRotation ?? undefined,
         // Floor customization
         floorReflectiveness: exhibition.floorReflectiveness ?? undefined,
@@ -827,6 +842,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
               setBakeProgress('running', 1)
               window.location.replace(reviewHref)
             },
+            // A quick bake: shown here, never stored.
+            onPreview: (preview) => {
+              setBakeProgress('running', 1)
+              setQuickBake(preview)
+            },
             onError: (bakeFailure) => setBakeError(bakeFailure.message),
           }
         : null,
@@ -839,13 +859,17 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   }, [mode])
   const bakePage = useMemo<BakePage>(
     () =>
-      mode === 'bake' && runner
+      shownMode === 'bake' && runner
         ? { mode: 'bake', runner }
-        : mode === 'review'
+        : shownMode === 'review'
           ? { mode: 'review' }
           : { mode: 'visit' },
-    [mode, runner],
+    [shownMode, runner],
   )
+  // The quick bake's page: Bake (the real one, stored) without the quick parameter.
+  const fullBakeSearch = new URLSearchParams(searchParams.toString())
+  fullBakeSearch.delete('bakequality')
+  const fullBakeHref = `${visitPath}${bakePageUrl(fullBakeSearch.toString(), 'bake')}`
 
   // Review: once the room is revealed with this draft bake on, the admin has reviewed it — said
   // once, for this exact bake (the server refuses a bake that isn't current any more).
@@ -949,13 +973,13 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {webglAvailable !== false && (
         <>
           <NavigationHelpModal
-            hidden={isArtworkPanelOpen || mode === 'bake'}
+            hidden={isArtworkPanelOpen || shownMode === 'bake'}
             exhibitionId={exhibition?.id}
             artworksReady={artworksReady}
           />
           <LoadingOverlay
-            key={mode}
-            mode={mode}
+            key={shownMode}
+            mode={shownMode}
             onRevealed={mode === 'review' ? markReviewed : undefined}
           />
         </>
@@ -963,9 +987,19 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {mode === 'review' && (
         <ReviewBar review={review} bakeHref={bakeHref} editorHref={editorHref} />
       )}
+      {quickBake && (
+        <BakeAdminBar
+          title="Quick bake — a preview on this computer only"
+          status="Not saved: visitors never see it. Bake when the room is right."
+          bakeHref={fullBakeHref}
+          bakeLabel="Bake"
+          editorHref={editorHref}
+        />
+      )}
       {sceneReady && (
-        // Keyed by the mode: a bake and a review never share a scene.
-        <BakePageProvider key={mode} value={bakePage}>
+        // Keyed by the mode: a bake and a review never share a scene (a finished quick bake is
+        // shown in a fresh one, as review shows a stored bake).
+        <BakePageProvider key={shownMode} value={bakePage}>
           <Scene hideLoader />
         </BakePageProvider>
       )}

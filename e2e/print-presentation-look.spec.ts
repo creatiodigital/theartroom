@@ -10,7 +10,8 @@ import { presentationInputs, type PresentationSource } from '@/lib/printPresenta
  * Pure module checks: no server, no WebGL.
  */
 
-// makeLook's output for two real artworks, captured from the approved spike before it moved.
+// makeLook's output for two real artworks, captured from the approved spike before it moved (the
+// copy numbers since 2026-10-29: within the edition's first 20%).
 const PINNED_LIMITED = {
   key: [-1.042328032827936, 1.7257278620731087, 2.4],
   keyShare: 0.09784427749924363,
@@ -27,7 +28,7 @@ const PINNED_LIMITED = {
   edgeLift: 0.00033800776805728675,
   woodOffset: [0.1660285508260131, 0.060766864102333784],
   woodTileM: 0.32024389155209065,
-  copy: 7,
+  copy: 2,
   barOffsets: [
     [0.7673468645662069, 0.9414708772674203],
     [0.2670107623562217, 0.5384989837184548],
@@ -51,7 +52,7 @@ const PINNED_FRAMED = {
   edgeLift: 0.0001681705541908741,
   woodOffset: [0.07825035252608359, 0.7874996587634087],
   woodTileM: 0.30370387219823897,
-  copy: 42,
+  copy: 9,
   barOffsets: [
     [0.06048554158769548, 0.4556464394554496],
     [0.6318723252043128, 0.8558956172782928],
@@ -84,11 +85,18 @@ test.describe('print presentation look', () => {
     expect(makeLook(2812886702, 'framed', 50)).toEqual(PINNED_FRAMED)
   })
 
-  test('the pencilled copy number is always one of the edition', () => {
-    for (let seed = 1; seed <= 200; seed++) {
-      const { copy } = makeLook(seed, 'limited', 25)
-      expect(copy).toBeGreaterThanOrEqual(1)
-      expect(copy).toBeLessThanOrEqual(25)
+  test('the pencilled copy number is never high: within the first 20% of the edition', () => {
+    for (const [edition, highest] of [
+      [5, 1],
+      [25, 5],
+      [50, 10],
+      [100, 20],
+    ]) {
+      for (let seed = 1; seed <= 200; seed++) {
+        const { copy } = makeLook(seed, 'limited', edition)
+        expect(copy).toBeGreaterThanOrEqual(1)
+        expect(copy).toBeLessThanOrEqual(highest)
+      }
     }
   })
 })

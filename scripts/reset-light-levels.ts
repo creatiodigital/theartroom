@@ -6,7 +6,7 @@
  * a white ceiling).
  *
  * The stored levels were tuned blind, under the old fake light (vivrière ceiling lamps 8,
- * kritzendorf track lamps 1.4…). In a baked space the dimmers now mean 50–100% of the space's
+ * kritzendorf track lamps 1.4…). In a baked space the dimmers mean 50–100% (10–100% since AR-169) of the space's
  * calibrated lamps (slider 2–4, 4 = 100%), so the rollout puts every exhibition at 4 and the
  * artist dims from there. The beam, throw and ceiling were the space's until 2026-10-20 (every
  * approved bake used the values above, whatever the exhibition stored); now the artist owns them

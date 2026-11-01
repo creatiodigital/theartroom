@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 import prisma from '@/lib/prisma'
+import { SHOW_NEIGHBOUR_ARROWS } from '@/components/artwork/detail/neighbourArrows'
 
 /**
  * The public exhibition page splits its grid by section: works with no section
@@ -75,18 +76,20 @@ test('groups works under section headings in order, and arrows follow the groups
     await expect(firstRegion.getByText(loose.title!)).toHaveCount(0)
     await expect(secondRegion.getByText(loose.title!)).toHaveCount(0)
 
-    // Arrows walk loose → first section → second section.
-    const context = `?exhibition=${encodeURIComponent(exhibition.url)}`
-    await page.goto(`/artworks/${loose.slug}${context}`)
-    await expect(page.getByRole('link', { name: /^Next work:/ })).toHaveAttribute(
-      'href',
-      `/artworks/${inFirst.slug}${context}`,
-    )
-    await page.goto(`/artworks/${inFirst.slug}${context}`)
-    await expect(page.getByRole('link', { name: /^Next work:/ })).toHaveAttribute(
-      'href',
-      `/artworks/${inSecond.slug}${context}`,
-    )
+    // Arrows walk loose → first section → second section (while they are shown: AR-168 hid them).
+    if (SHOW_NEIGHBOUR_ARROWS) {
+      const context = `?exhibition=${encodeURIComponent(exhibition.url)}`
+      await page.goto(`/artworks/${loose.slug}${context}`)
+      await expect(page.getByRole('link', { name: /^Next work:/ })).toHaveAttribute(
+        'href',
+        `/artworks/${inFirst.slug}${context}`,
+      )
+      await page.goto(`/artworks/${inFirst.slug}${context}`)
+      await expect(page.getByRole('link', { name: /^Next work:/ })).toHaveAttribute(
+        'href',
+        `/artworks/${inSecond.slug}${context}`,
+      )
+    }
   } finally {
     await prisma.exhibition.delete({ where: { id: exhibition.id } })
     await prisma.artwork.deleteMany({ where: { id: { in: [loose.id, inFirst.id, inSecond.id] } } })

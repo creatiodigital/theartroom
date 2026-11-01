@@ -49,8 +49,13 @@ export const SPOT_FRAGMENT = /* glsl */ `
   // A diffuser's exact cosine (Lambertian) emission, I(θ) = I₀·cosθ, instead of three's
   // smoothstep falloff — same flux (both integrate to π·I₀), more light toward the horizon.
   uniform float uLambert;
+  // AR-169: 1 = the receiver takes light on its front face only (BakeReceiver.frontOnly).
+  uniform float uFrontOnly;
   // 1: light only the room side of a surface (the sun): the side facing uRoomCenter.
   uniform float uOneSided;
+  // AR-169 (BUG 7): 1 = parallel light (the sun): every receiver sees it along -uLightDir. The
+  // shadow map is orthographic; uLightPos is only the map's origin (distances are measured to it).
+  uniform float uDirectional;
   uniform vec3 uRoomCenter;
   // 1: the light enters only through a window (the sun): the ray from the surface to the light
   // must cross the glass rectangle (centre, half-extent axes in its plane).
@@ -122,7 +127,7 @@ export const SPOT_FRAGMENT = /* glsl */ `
   void main() {
     vec3 toLight = uLightPos - vWorldPos;
     float d = length(toLight);
-    vec3 L = toLight / d;
+    vec3 L = uDirectional > 0.5 ? -uLightDir : toLight / d;
     vec3 n = normalize(vWorldNormal);
     float ndl = dot(n, L);
     if (uOneSided > 0.5) {
@@ -158,7 +163,8 @@ export const SPOT_FRAGMENT = /* glsl */ `
       : uCubeShadow > 0.5
         ? cubeVisibility(n, ndl)
         : visibility(vWorldPos + n * sign(ndl) * 0.005, d);
-    vec3 E = uLightColor * spot * atten * abs(ndl) * vis * uWeight;
+    float facing = uFrontOnly > 0.5 ? max(ndl, 0.0) : abs(ndl);
+    vec3 E = uLightColor * spot * atten * facing * vis * uWeight;
     if (uDirMode == 1) {
       float lum = dot(E, vec3(0.2126, 0.7152, 0.0722));
       gl_FragColor = vec4(L * lum, lum);
@@ -175,6 +181,7 @@ export const SPOT_FRAGMENT = /* glsl */ `
  */
 export const VPL_FRAGMENT = /* glsl */ `
   uniform vec3 uVplPos;
+  uniform float uFrontOnly;
   uniform vec3 uVplNormal;
   uniform vec3 uVplIntensity;
   uniform samplerCube uVplShadow;
@@ -204,7 +211,8 @@ export const VPL_FRAGMENT = /* glsl */ `
     float occluder = inv > 0.0 ? 1.0 / inv : 1e9;
     float bias = uBias + dp * 0.03 / max(abs(ndl), 0.2);
     float vis = dp - bias > occluder ? 0.0 : 1.0;
-    vec3 E = uVplIntensity * cosV * abs(ndl) / max(d2, uMinDist2) * vis;
+    float facing = uFrontOnly > 0.5 ? max(ndl, 0.0) : abs(ndl);
+    vec3 E = uVplIntensity * cosV * facing / max(d2, uMinDist2) * vis;
     if (uDirMode == 1) {
       float lum = dot(E, vec3(0.2126, 0.7152, 0.0722));
       gl_FragColor = vec4(L * lum, lum);
@@ -481,8 +489,10 @@ const TRACE_GLSL = /* glsl */ `
     return normalize(t * r * cos(phi) + b * r * sin(phi) + n * sqrt(max(0.0, 1.0 - u1)));
   }
 
+  // AR-169 calibration (?bakeseed=N): another seed, other rays; 0 (unset) is the bake's own.
+  uniform int uSeed;
   vec2 texelRotation() {
-    uvec2 h = pcg2d(uvec2(gl_FragCoord.xy));
+    uvec2 h = pcg2d(uvec2(gl_FragCoord.xy) + uvec2(uint(uSeed) * 7919u, uint(uSeed) * 104729u));
     return vec2(h) * 2.3283064365386963e-10;
   }
 `

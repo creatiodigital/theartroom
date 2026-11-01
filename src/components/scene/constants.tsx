@@ -33,6 +33,8 @@ export const spaceConfigs: Record<SpaceKey, SpaceConfig> = {
   paris: {
     displayName: 'Paris',
     // AR-161: paris22 = corridor-end opening + windowLight1, as a meshopt `_noq` (no quantize).
+    // AR-169: paris23 = taller window (glass 0.58 → 3.36 m, was → 2.53); paris24 = floor0 under the
+    // west wall (it stopped 3 cm short: the background showed as a white stripe).
     // On R2 (uploaded BEFORE any push — AR-127 outage); public/ copy is the origin fallback only.
     gltfPath: spaceGltfPaths.paris!,
     camera: spaceLooks.paris!.camera,

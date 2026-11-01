@@ -69,9 +69,12 @@ const BakePanel = () => {
     message = `Bake is current — baked ${formatDate(bake.bakedAt)}${bake.reviewedAt ? ', reviewed' : ''}`
   } else if (status === 'stale') message = 'The room changed since the last bake.'
 
-  const open = (mode: 'bake' | 'review') => {
+  // AR-169 Quick bake: the bake page at `bakequality=quick` — fewer samples, shown in that tab
+  // only, never uploaded or saved (`BakeRunner`).
+  const open = (mode: 'bake' | 'quick' | 'review') => {
     if (!url || !loaded?.artistSlug) return
-    window.open(bakePageHref(loaded.artistSlug, url, mode), '_blank', 'noopener')
+    const href = bakePageHref(loaded.artistSlug, url, mode === 'quick' ? 'bake' : mode)
+    window.open(mode === 'quick' ? `${href}&bakequality=quick` : href, '_blank', 'noopener')
   }
 
   const ready = Boolean(loaded?.artistSlug)
@@ -98,12 +101,24 @@ const BakePanel = () => {
           <Button
             size="regular"
             variant="secondary"
+            label="Quick bake"
+            fullWidth
+            disabled={!ready}
+            onClick={() => open('quick')}
+          />
+          <Button
+            size="regular"
+            variant="secondary"
             label="View baked room"
             fullWidth
             disabled={!ready || !bake}
             onClick={() => open('review')}
           />
         </div>
+        <Text font="dashboard" as="p" size="xs" className={styles.hint}>
+          Quick bake: a fast, rougher preview on this computer only — never saved, never shown to
+          visitors.
+        </Text>
       </div>
     </SettingsPanel>
   )

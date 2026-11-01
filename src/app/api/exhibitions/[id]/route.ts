@@ -10,6 +10,7 @@ import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { deleteBakeObjects } from '@/lib/bake/bakeStorage'
 import { BAKE_GATE_MESSAGES } from '@/lib/bake/publishGate'
 import { clampTrackThrow } from '@/lib/bake/trackThrow'
+import { FILL_MAX } from '@/lib/bake/dimmer'
 import { exhibitionUpdateRoles } from '@/lib/exhibitionUpdateRoles'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
@@ -59,6 +60,8 @@ type ExhibitionUpdateBody = {
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
+  daylightLevel?: number
+  fillLightLevel?: number
   hdriRotation?: number
   floorReflectiveness?: number
   floorMaterial?: string
@@ -297,6 +300,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity
     if (body.windowTransparency !== undefined) data.windowTransparency = body.windowTransparency
+    // AR-169: shares of the space's daylight and soft fill, 0–1.
+    if (body.daylightLevel !== undefined)
+      data.daylightLevel = Math.max(0, Math.min(1, body.daylightLevel))
+    if (body.fillLightLevel !== undefined)
+      data.fillLightLevel = Math.max(0, Math.min(FILL_MAX, body.fillLightLevel))
     if (body.hdriRotation !== undefined) data.hdriRotation = body.hdriRotation
     if (body.floorReflectiveness !== undefined) data.floorReflectiveness = body.floorReflectiveness
     if (body.floorMaterial !== undefined) data.floorMaterial = body.floorMaterial

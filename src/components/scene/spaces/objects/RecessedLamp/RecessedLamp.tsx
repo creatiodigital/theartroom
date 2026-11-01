@@ -17,6 +17,8 @@ import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { useBakedDimmer, useLampLevel } from '@/components/scene/spaces/objects/useLampDimmer'
 import { lookSpot, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { RECESSED_LAMP } from '@/components/scene/bake/lampKind'
+import { lampGlowScale } from '@/components/scene/spaces/objects/Effects/bloomIntensity'
 
 interface RecessedLampProps {
   nodes: Record<string, Mesh & { geometry: BufferGeometry }>
@@ -50,7 +52,7 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
   )
   const lampColor = look.baked ? look.space.lampColor : storedLampColor
   const lampIntensity = useLampLevel('recessed')
-  // AR-161: in a baked space the ceiling-lamp dimmer (50–100%) scales the lamps' light and, in
+  // AR-161: in a baked space the ceiling-lamp dimmer (10–100%) scales the lamps' light and, in
   // the baked look, their discs with it (at 100% both are exactly the approved ones).
   const dimmer = useBakedDimmer('recessed')
   const discShare = look.baked && dimmer !== undefined ? dimmer : 1
@@ -115,11 +117,12 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
       new MeshStandardMaterial({
         color: '#000000',
         emissive: lampColor,
-        emissiveIntensity: bulbEmissiveIntensity,
+        // AR-169 phase 8: in a baked room × the bloom threshold's scale (`lampGlowScale`).
+        emissiveIntensity: bulbEmissiveIntensity * lampGlowScale(look.baked),
         toneMapped: false,
         side: DoubleSide,
       }),
-    [lampColor, bulbEmissiveIntensity],
+    [lampColor, bulbEmissiveIntensity, look.baked],
   )
   useDisposable(bulbMaterial)
 
@@ -241,6 +244,7 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
                   penumbra={bulbSpot.penumbra}
                   distance={bulbSpot.distance}
                   decay={2}
+                  userData={RECESSED_LAMP}
                   castShadow={false}
                 />
               </>
@@ -271,6 +275,7 @@ const RecessedLamp: React.FC<RecessedLampProps> = ({
               angle={plainSpot.angle}
               penumbra={plainSpot.penumbra}
               distance={plainSpot.distance}
+              userData={RECESSED_LAMP}
               decay={2}
               castShadow={false}
             />

@@ -131,9 +131,9 @@ test('placed row order does not matter', () => {
   expect(two(['a1', 'a2'])).toBe(two(['a2', 'a1']))
 })
 
-test('spaceLookVersion is stable and differs per calibrated space', () => {
+// One look for every space since AR-169 (`GALLERY_LOOK`): the version no longer differs per space.
+test('spaceLookVersion is stable', () => {
   expect(spaceLookVersion('paris')).toBe(spaceLookVersion('paris'))
-  expect(spaceLookVersion('paris')).not.toBe(spaceLookVersion('vienna'))
   expect(spaceLookVersion('paris')).toMatch(/^[0-9a-f]{8}$/)
 })
 

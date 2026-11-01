@@ -40,16 +40,22 @@ export const BakeActions = ({
 )
 
 interface BakeAdminBarProps extends BakeActionsProps {
+  /** What this room is (default: the stored bake, as visitors will get it). */
+  title?: string
   /** Where the review stands: shown next to the actions. */
   status: string
 }
 
 /** The review page's bar: what this room is, where its review stands, and what to do next. */
-export const BakeAdminBar = ({ status, ...actions }: BakeAdminBarProps) => (
+export const BakeAdminBar = ({
+  title = 'Baked room — exactly what visitors will see',
+  status,
+  ...actions
+}: BakeAdminBarProps) => (
   <div className={styles.bar} data-testid="bake-admin-bar">
     <div className={styles.text}>
       <Text as="p" size="sm" className={styles.title}>
-        Baked room — exactly what visitors will see
+        {title}
       </Text>
       <Text as="p" size="xs" className={styles.status} aria-live="polite">
         {status}

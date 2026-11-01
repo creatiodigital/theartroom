@@ -1,7 +1,10 @@
 import { createHash } from 'node:crypto'
 
 import { BAKER_VERSION } from './bakeRecord'
+import { bakedFloor, bakedFloorTone } from './commonFloor'
+import { lightShare } from './dimmer'
 import { canonicalJson } from './hash'
+import { spaceLooks } from './spaceLooks'
 
 /**
  * The exhibition columns that change how the room is lit — only what an artist may still
@@ -22,6 +25,8 @@ export const LIGHT_FIELDS: readonly string[] = [
   'panelSettings',
   'windowFrameColor',
   'radiatorColor',
+  // AR-169: the glass color is the artist's, and the color of the daylight it lets in.
+  'windowLightColor',
 ]
 
 // Placed-row columns that never touch the light: page membership and playback.
@@ -94,12 +99,53 @@ const shownBenches = (benchSettings: unknown): Record<string, unknown> | null =>
   return Object.keys(shown).length > 0 ? shown : null
 }
 
+/**
+ * The floor's tone (AR-169) bounces light onto the room. Only a tone other than the space's own
+ * counts, so a room that keeps the space's floor keeps its fingerprint. Like the benches, not in
+ * LIGHT_FIELDS (`floorTemperature` is ignored outside it, and an unset one would hash as null).
+ */
+const floorTone = (exhibition: Record<string, unknown>): number | null => {
+  const space = spaceLooks[String(exhibition.spaceId)]?.look.floor
+  if (!space) return null
+  const floor = bakedFloor(space, exhibition.floorMaterial as string | null | undefined)
+  const tone = bakedFloorTone(floor, {
+    floorMaterial: exhibition.floorMaterial as string | null | undefined,
+    floorTemperature: exhibition.floorTemperature as number | null | undefined,
+  })
+  return tone === floor.tone ? null : tone
+}
+
+/**
+ * The artist's daylight share (AR-169, blinds) is baked. Only a share below 1 counts, so a room
+ * with all the space's daylight — every room before the control existed — keeps its fingerprint.
+ * The soft fill (`fillLightLevel`) is on screen only: not here.
+ */
+const daylightShare = (exhibition: Record<string, unknown>): number | null => {
+  const share = lightShare(exhibition.daylightLevel as number | null | undefined)
+  return share === 1 ? null : share
+}
+
+/**
+ * AR-169: the floor an artist chose among the baked floors (`bakedFloor`) — its color bounces onto
+ * the room. Only a floor other than the space's own counts (every room before the choice keeps
+ * its fingerprint).
+ */
+const chosenFloor = (exhibition: Record<string, unknown>): string | null => {
+  const space = spaceLooks[String(exhibition.spaceId)]?.look.floor
+  if (!space) return null
+  const floor = bakedFloor(space, exhibition.floorMaterial as string | null | undefined)
+  return floor.material === space.material ? null : floor.material
+}
+
 /** sha256 hex of everything that decides how the room is lit. */
 export function computeBakeFingerprint(input: BakeFingerprintInput): string {
   const exhibition: Record<string, unknown> = {}
   for (const field of LIGHT_FIELDS) exhibition[field] = input.exhibition[field] ?? null
 
   const benches = shownBenches(input.exhibition.benchSettings)
+  const tone = floorTone(input.exhibition)
+  const floor = chosenFloor(input.exhibition)
+  const daylight = daylightShare(input.exhibition)
 
   const placed = input.placed
     .map(reducePlaced)
@@ -113,6 +159,9 @@ export function computeBakeFingerprint(input: BakeFingerprintInput): string {
         spaceLookVersion: input.spaceLookVersion,
         ...(showsPanels(exhibition.panelSettings) ? { panelsBaked: PANELS_BAKED } : {}),
         ...(benches ? { benches } : {}),
+        ...(tone !== null ? { floorTone: tone } : {}),
+        ...(floor !== null ? { floor } : {}),
+        ...(daylight !== null ? { daylight } : {}),
         exhibition,
         placed,
       }),

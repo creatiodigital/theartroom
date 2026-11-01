@@ -2,6 +2,7 @@ import type { Object3D } from 'three'
 
 import type { BakeRecord } from '@/lib/bake/bakeRecord'
 import { requestRoomRecapture } from '@/components/scene/RoomEnvironmentCapture'
+import { GLASS_ON_SCREEN } from '@/components/scene/spaces/objects/Effects/bloomIntensity'
 
 import {
   applyBakedLighting,
@@ -10,6 +11,7 @@ import {
   type PlasterTextures,
 } from './applyBake'
 import { BAKE_DEBUG } from './bakedLook'
+import { bakeScaleFlag } from './bakeFlags'
 import { setMeteredExposure, setMeteredWhiteBalance } from './bakeState'
 import { brightenWindows } from './daylight'
 import { unwrapMatches } from './hashUnwrap'
@@ -88,7 +90,16 @@ export const applyStoredBake = (
         '[AR-161 unwrap] tolerant match',
         JSON.stringify({ stored: bake.unwrapHash, local: prepared.unwrapHash }),
       )
-    undos.push(brightenWindows(scene, room.look.daylightGain, room.look.lightWellDaylight).undo)
+    // The glass as the camera shows it: a share of the daylight it let in (`GLASS_ON_SCREEN`).
+    // AR-169 trial: `?bakescale=window:F` dims the sky on screen as it dimmed it in the bake.
+    const sky = bakeScaleFlag()?.window ?? 1
+    undos.push(
+      brightenWindows(
+        scene,
+        room.look.daylightGain * GLASS_ON_SCREEN * sky,
+        room.look.lightWellDaylight,
+      ).undo,
+    )
     // The light the bake measured at each artwork, found by the artwork's id.
     const baked = applyBakedLighting(
       scene,

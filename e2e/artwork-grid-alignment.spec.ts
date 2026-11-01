@@ -49,7 +49,9 @@ async function readCards(page: Page): Promise<CardBox[]> {
 
     const cards = [...grid.children].map((card) => {
       const info = [...card.querySelectorAll('div')].find((e) => isPart(e, 'info'))
-      const img = card.querySelector('img')
+      // A print presentation (AR-167) is the piece as shown — the render, framed; its first img is
+      // the work inside the frame's window, off-centre wherever the mount is deeper at the foot.
+      const img = card.querySelector('[data-print-presentation]') ?? card.querySelector('img')
       const i = img?.getBoundingClientRect()
       return {
         cardTop: Math.round(card.getBoundingClientRect().top),
@@ -79,7 +81,14 @@ function multiCardRows(cards: CardBox[]): Map<number, CardBox[]> {
 
 async function assertAlignment(page: Page, where: string) {
   // Images settle their layout only once loaded; an unsettled row reports
-  // stale boxes and would make this pass for the wrong reason.
+  // stale boxes and would make this pass for the wrong reason. Grid images load
+  // lazily, so walk the page first: a deep row's unloaded image has no height.
+  test.setTimeout(60_000) // a profile can hang hundreds of works
+  const height = await page.evaluate(() => document.body.scrollHeight)
+  for (let y = 0; y < height; y += 600) {
+    await page.evaluate((top) => window.scrollTo(0, top), y)
+    await page.waitForTimeout(50)
+  }
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(500)
 
@@ -94,7 +103,10 @@ async function assertAlignment(page: Page, where: string) {
       `${where} row ${row}: dividers must sit on one line — ${titles}`,
     ).toBeLessThanOrEqual(1)
 
-    const mids = group.map((c) => c.imgMid).filter((m): m is number => m !== null)
+    // Only works that have loaded: an image still loading has no height to centre yet.
+    const mids = group
+      .filter((c) => c.imgTop !== null && c.imgBottom !== null && c.imgBottom - c.imgTop > 0)
+      .map((c) => c.imgMid as number)
     if (mids.length > 1) {
       expect(
         spread(mids),
