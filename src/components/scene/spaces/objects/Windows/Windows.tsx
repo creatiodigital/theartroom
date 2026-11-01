@@ -7,6 +7,8 @@ import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
 
+import { frostedGlassPatch } from './frostedGlass'
+
 const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
 const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
 // The off-white every frame had before the color became editable.
@@ -38,12 +40,15 @@ const Windows: React.FC<WindowsProps> = ({
   const storedTransparency = useSelector(
     (state: RootState) => state.exhibition.windowTransparency ?? false,
   )
-  // AR-161: in the baked look the window is the space's — glass always on (no "show sky" view),
-  // its color and brightness the space's daylight.
+  // AR-161: in the baked look the glass is always on (no "show sky" view) at the space's daylight
+  // brightness. AR-169: its color is the artist's — and so the color of the daylight the bake
+  // brings into the room (`brightenWindows` reads it here; it is in the fingerprint).
   const look = useBakedLook()
   const windowLightIntensity = look.baked ? look.space.windowIntensity : storedLightIntensity
-  const windowLightColor = look.baked ? look.space.windowColor : storedLightColor
+  const windowLightColor = storedLightColor
   const windowTransparency = look.baked ? false : storedTransparency
+  // AR-169: in a baked room the glass shows frosted glass (`frostedGlass.ts`).
+  const glassPatch = look.baked ? frostedGlassPatch : {}
   const windowFrameColor = useSelector(
     (state: RootState) => state.exhibition.windowFrameColor ?? DEFAULT_WINDOW_FRAME_COLOR,
   )
@@ -79,11 +84,11 @@ const Windows: React.FC<WindowsProps> = ({
             name={`windowGlass${i}`}
             geometry={glassNode.geometry}
             visible={!windowTransparency}
-            position={[
-              glassNode.position.x,
-              glassNode.position.y,
-              glassNode.position.z - 0.05, // Push back behind frames
-            ]}
+            // Where the model has it: in the middle of the frame, as real glass sits (owner
+            // 2026-10-30). It was pushed 5 cm back (behind the frame) since the first Paris model —
+            // the frame then shaded 3–10 % of the daylight near the window, and in Vienna, whose
+            // side windows face x, the push slid their glass 5 cm sideways.
+            position={glassNode.position}
             rotation={glassNode.rotation}
             scale={glassNode.scale}
           >
@@ -92,6 +97,7 @@ const Windows: React.FC<WindowsProps> = ({
               emissive={windowLightColor}
               emissiveIntensity={windowLightIntensity * 0.3}
               envMapIntensity={0}
+              {...glassPatch}
             />
           </mesh>
         )

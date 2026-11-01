@@ -132,6 +132,8 @@ export const ExhibitionEditPage = ({
         windowLightColor: exhibition.windowLightColor ?? undefined,
         windowLightIntensity: exhibition.windowLightIntensity ?? undefined,
         windowTransparency: exhibition.windowTransparency ?? undefined,
+        daylightLevel: exhibition.daylightLevel ?? undefined,
+        fillLightLevel: exhibition.fillLightLevel ?? undefined,
         hdriRotation: exhibition.hdriRotation ?? undefined,
         // Floor customization
         floorReflectiveness: exhibition.floorReflectiveness ?? undefined,

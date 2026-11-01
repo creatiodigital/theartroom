@@ -31,13 +31,14 @@ import { assetUrl } from '@/lib/assetUrl'
 import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import { matLiftFlag } from '@/components/scene/bake/bakeFlags'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 
 import { ARTWORK_DISPLAY_NAME, artworkUserData } from './artworkId'
 import {
   createArtworkFileMaterial,
   createArtworkSurfaceMaterial,
-  PASSEPARTOUT_FACE_LIT,
+  PASSEPARTOUT_LIFT,
   disposeEncodedMap,
   encodedMap,
 } from './artworkFile'
@@ -53,6 +54,9 @@ type ArtworkImageProps = {
   /** Written on the image mesh (`artworkIdOf`): per-artwork data finds the work by it. */
   artworkId: string
 }
+
+/** Wood textures' width over height (`wooden-frame-light` is 2048 × 1024; the others square). */
+const WOOD_ASPECT: Record<string, number> = { 'wood-light': 2 }
 
 // Placeholder shown while texture loads
 const ImagePlaceholder = ({ width, height }: { width: number; height: number }) => (
@@ -885,8 +889,11 @@ const Display = ({ artwork }: DisplayProps) => {
     }
   }, [frameMaterial])
 
-  // Apply wood texture control properties reactively
+  // Apply wood texture control properties reactively. The frame's UVs are in tiles of real board
+  // (`WOOD_TILE_M`, AR-169): the artist's scale at its default (2.0) shows the wood at its real
+  // size; a 2:1 texture (light wood) covers half as much board across the grain.
   const texScale = frameTextureScale ?? 2.0
+  const woodAspect = WOOD_ASPECT[frameMaterial ?? ''] ?? 1
   const texRotation = ((frameTextureRotation ?? 0) * Math.PI) / 180
 
   // Per-artwork seed offset so adjacent wood frames don't have identical grain patterns
@@ -905,7 +912,7 @@ const Display = ({ artwork }: DisplayProps) => {
   useMemo(() => {
     if (!woodTextures) return
     ;[woodTextures.diffuse, woodTextures.normal, woodTextures.roughnessMap].forEach((tex) => {
-      tex.repeat.set(1 / texScale, 1 / texScale)
+      tex.repeat.set(2 / texScale, (2 / texScale) * woodAspect)
       tex.offset.set(artworkSeedOffset.x, artworkSeedOffset.y)
       tex.rotation = texRotation
       tex.center.set(0.5, 0.5)
@@ -914,7 +921,7 @@ const Display = ({ artwork }: DisplayProps) => {
       // also flags `texture.source`, which is now shared — one artwork changing
       // its frame scale would re-upload a 2048² map for every artwork using it.
     })
-  }, [woodTextures, texScale, texRotation, artworkSeedOffset])
+  }, [woodTextures, texScale, woodAspect, texRotation, artworkSeedOffset])
 
   // Frame material: plastic PBR or wood PBR based on dropdown
   const frameMaterialType = frameMaterial ?? 'plastic'
@@ -953,33 +960,33 @@ const Display = ({ artwork }: DisplayProps) => {
   ])
   useDisposable(frameMatObj)
 
-  // AR-163: in the baked look the passepartout's front face and the paper border are part of the
-  // image — the paper shows exactly its color whatever the room's light, the face half its color
-  // and half the room's light (AR-165; `createArtworkSurfaceMaterial`).
-  const filePassepartout = useBakedLook().baked
+  // AR-163: in the baked look the paper border is part of the image — it shows exactly its color
+  // whatever the room's light (`createArtworkSurfaceMaterial`).
+  const baked = useBakedLook().baked
 
-  // Passepartout material with ambient light applied. AR-165: its bevel, edges and back always
-  // take the room's light — shown flat in its exact color, it "lost all 3D dimensionality".
+  // The passepartout: every face lit like the frame — the lamps and, in the baked look, the light
+  // the bake measured at its work (`patchArtBounce`). AR-169 (Eduardo 2026-10-31: its face shown
+  // past the screen effects "looks unreal"; "treat the passepartout as the frame, but make it just a
+  // little brighter than it should be"): in the baked look its color is lifted by
+  // `PASSEPARTOUT_LIFT` (`?matlift=X` compares).
   const passepartoutMaterial = useMemo(
-    () => new MeshStandardMaterial({ color: passepartoutAmbientColor, roughness: 1 }),
-    [passepartoutAmbientColor],
+    () =>
+      new MeshStandardMaterial({
+        color: passepartoutAmbientColor
+          .clone()
+          .multiplyScalar(baked ? (matLiftFlag() ?? PASSEPARTOUT_LIFT) : 1),
+        roughness: 1,
+      }),
+    [passepartoutAmbientColor, baked],
   )
   useDisposable(passepartoutMaterial)
-  const passepartoutFaceMaterial = useMemo(
-    () =>
-      filePassepartout
-        ? createArtworkSurfaceMaterial(passepartoutColor ?? '#ffffff', PASSEPARTOUT_FACE_LIT)
-        : null,
-    [filePassepartout, passepartoutColor],
-  )
-  useDisposable(passepartoutFaceMaterial)
 
   const paperMaterial = useMemo(
     () =>
-      filePassepartout
+      baked
         ? createArtworkSurfaceMaterial('#ffffff')
         : new MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, side: DoubleSide }),
-    [filePassepartout],
+    [baked],
   )
   useDisposable(paperMaterial)
 
@@ -1099,7 +1106,6 @@ const Display = ({ artwork }: DisplayProps) => {
             thickness={passepartoutBorder}
             depth={passepartoutDepth / 100}
             material={passepartoutMaterial}
-            faceMaterial={passepartoutFaceMaterial ?? undefined}
           />
         </group>
       )}

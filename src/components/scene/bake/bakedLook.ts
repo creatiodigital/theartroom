@@ -7,7 +7,7 @@ import type { MeshLambertMaterial, Texture } from 'three'
 
 import { isBakeRecord, type BakeRecord } from '@/lib/bake/bakeRecord'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
-import type { CommonFloor } from '@/lib/bake/commonFloor'
+import { bakedFloor, type CommonFloor } from '@/lib/bake/commonFloor'
 import { spaceLooks, type SpaceLook } from '@/lib/bake/spaceLooks'
 import type { RootState } from '@/redux/store'
 
@@ -107,16 +107,19 @@ export const lookFor = (
 }
 
 /**
- * The floor a room shows: in a baked space always the space's own (`COMMON_FLOOR`), in the editor
- * too — it showed each exhibition's stored floor, concrete, where every baked room has parquet
- * (AR-164). Null outside a baked space: the exhibition's stored floor.
+ * The floor a room shows: in a baked space one of its floors (`bakedFloor`: the stored one when
+ * it is a baked floor, AR-169, else the space's own), in the editor too — it showed each
+ * exhibition's stored floor, concrete, where every baked room has parquet (AR-164). Null outside a
+ * baked space: the exhibition's stored floor.
  */
 export const shownFloor = (
   look: LookState,
   spaceId: string | null | undefined,
+  stored?: string | null,
 ): CommonFloor | null => {
-  if (look.baked) return look.space.floor
-  return isBakedSpace(spaceId) ? (spaceLooks[spaceId!]?.look.floor ?? null) : null
+  if (look.baked) return bakedFloor(look.space.floor, stored)
+  const space = isBakedSpace(spaceId) ? spaceLooks[spaceId!]?.look.floor : undefined
+  return space ? bakedFloor(space, stored) : null
 }
 
 /** The look this room renders with (see `lookFor`). */
@@ -143,11 +146,20 @@ export const LUX_PER_UNIT = 200 / 2.81
 const TRACK_PENUMBRA = 0.4
 
 /**
+ * The space's look with the artist's daylight share (AR-169, `daylightLevel`: blinds) — the sky
+ * through the windows and the sun, in the bake and on the glass alike. All of it: the look itself.
+ */
+export const withDaylight = (look: SpaceLook, share: number): SpaceLook =>
+  share === 1
+    ? look
+    : { ...look, daylightGain: look.daylightGain * share, sunLux: look.sunLux * share }
+
+/**
  * A spotlight as the look lights it. Today's look: as authored. The approved look, in absolute
  * units:
  * - downlights (`recessed`, round lamps) are diffused ceiling fixtures at the space's rating — a
  *   90° field whose smoothstep falloff integrates to π·I₀, so Φ = π·I₀ (lm → cd → three units) —
- *   times the artist's ceiling-lamp `dimmer` (50–100%; the stored level no longer switches them);
+ *   times the artist's ceiling-lamp `dimmer` (10–100%; the stored level no longer switches them);
  * - track heads keep their aim, beam and throw (the artist's) at the space's scale, with a crisp
  *   edge — the throw is three's `distance` (`trackThrow.ts`; 0, no cut-off, by default), which
  *   the bake applies exactly as three does;

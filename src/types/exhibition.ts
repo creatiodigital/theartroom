@@ -52,6 +52,10 @@ export type TExhibition = {
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
+  /** AR-169, baked spaces: the share of the space's daylight (blinds), 0–1; unset: 1. */
+  daylightLevel?: number
+  /** AR-169, baked spaces: the share of the space's soft fill light, 0–1; unset: 1. */
+  fillLightLevel?: number
   hdriRotation?: number
   floorReflectiveness?: number
   floorMaterial?:

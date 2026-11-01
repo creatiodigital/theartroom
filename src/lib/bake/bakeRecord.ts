@@ -1,6 +1,9 @@
 // Bump whenever bake or display code changes the result. 2: text cards are baked (AR-163).
 // 3: text cards no longer light the wall behind them, the glow around every card (AR-164).
-export const BAKER_VERSION = 3
+// 4: AR-169 — the baker matched to Cycles (parallel sun, bounce grid 256 + near field at every
+// bounce, front-only walls, emitters facing their modelled normal, glass in its frame) and the
+// approved look's light (one `GALLERY_LOOK`; the corridor rule on recessed lamps only).
+export const BAKER_VERSION = 4
 
 export type BakeSurface = 'wall' | 'ceiling' | 'floor' | 'props' | 'panels' | 'cards'
 /**

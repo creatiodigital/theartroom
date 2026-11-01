@@ -14,7 +14,9 @@ import { artworkIdOf } from '@/components/scene/spaces/objects/Display/artworkId
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 
 import { PLASTER, configurePlaster, type BakedMapTexture } from './applyBake'
-import { BAKE_DEBUG, markStoredBakeFailed, useBakedLook } from './bakedLook'
+import { lightShare } from '@/lib/bake/dimmer'
+
+import { BAKE_DEBUG, markStoredBakeFailed, useBakedLook, withDaylight } from './bakedLook'
 import { resetBakeProgress, setBakeProgress } from './bakeProgress'
 import { LightmapLoader } from './lightmapLoader'
 import { shownArtworkImages } from './receivers'
@@ -93,6 +95,8 @@ const StoredBake = ({ bake }: { bake: BakeRecord }) => {
   // Only mounted in the approved look (`RoomBake`): the space's look is the one baked.
   const look = useBakedLook()
   const space = look.baked ? look.space : null
+  // AR-169: the artist's daylight share (blinds): the glass shows the daylight the room was baked with.
+  const daylight = lightShare(useSelector((state: RootState) => state.exhibition.daylightLevel))
 
   const urls = bake.maps.map((m) => m.url)
   const textures = useLoader(LightmapLoader, urls, (loader) => loader.describe(bake.maps))
@@ -111,8 +115,17 @@ const StoredBake = ({ bake }: { bake: BakeRecord }) => {
   }))
 
   // Everything the apply needs, read when it happens (it happens once per mount).
-  const latest = useRef({ bake, maps, plaster, wallColor, ceilingColor, space, floorMaterial })
-  latest.current = { bake, maps, plaster, wallColor, ceilingColor, space, floorMaterial }
+  const latest = useRef({
+    bake,
+    maps,
+    plaster,
+    wallColor,
+    ceilingColor,
+    space,
+    floorMaterial,
+    daylight,
+  })
+  latest.current = { bake, maps, plaster, wallColor, ceilingColor, space, floorMaterial, daylight }
   const job = useRef({
     applied: false,
     undo: null as (() => void) | null,
@@ -177,7 +190,7 @@ const StoredBake = ({ bake }: { bake: BakeRecord }) => {
       const result = applyStoredBake(scene, now.bake, now.maps, now.plaster, {
         wall: now.wallColor,
         ceiling: now.ceilingColor,
-        look: now.space,
+        look: withDaylight(now.space, now.daylight),
       })
       if (result.ok) {
         j.undo = result.undo

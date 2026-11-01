@@ -25,6 +25,7 @@ test.describe.configure({ mode: 'serial' })
 test.use({ storageState: 'e2e/.auth/admin.json' })
 
 let artworkId: string
+let artistLabel: string
 let switchWas: boolean
 let record: PrintPresentationRecord
 
@@ -38,8 +39,9 @@ test.beforeAll(async () => {
   test.skip(bakeBackend() !== 'local', 'stores renders: run with BAKE_STORAGE=local, never on R2')
   const owner = await prisma.user.findUniqueOrThrow({
     where: { handler: fixtures.artistSlug },
-    select: { id: true },
+    select: { id: true, name: true, lastName: true },
   })
+  artistLabel = [owner.name, owner.lastName].filter(Boolean).join(' ')
   // Sweep what a crashed earlier run left behind.
   await prisma.artwork.deleteMany({ where: { slug: { startsWith: 'e2e-presentation-admin-' } } })
   const artwork = await prisma.artwork.create({
@@ -77,12 +79,23 @@ test.afterAll(async () => {
   await setPrintPresentationsEnabled(switchWas)
 })
 
+/** The page shows one artist at a time (AR-167): open it on the fixture artist's works. */
+const openPage = async (page: import('@playwright/test').Page) => {
+  await page.goto(PAGE)
+  await page
+    .getByText('Artist', { exact: true })
+    .locator('xpath=..')
+    .locator('[aria-haspopup="listbox"]')
+    .click()
+  await page.getByRole('option', { name: new RegExp(`^${artistLabel} \\(`) }).click()
+}
+
 const statusOf = (page: import('@playwright/test').Page) =>
   page.locator(`[data-artwork-id="${artworkId}"] [data-status]`)
 
 test('a work with a current render reads "Up to date"', async ({ page }) => {
   await setRecord(record)
-  await page.goto(PAGE)
+  await openPage(page)
   await expect(page.getByRole('heading', { name: 'Print presentations' })).toBeVisible()
   await expect(statusOf(page)).toHaveText('Up to date')
   await expect(page.getByText(/Up to date: \d+/)).toBeVisible()
@@ -90,7 +103,7 @@ test('a work with a current render reads "Up to date"', async ({ page }) => {
 
 test('its preview is the render, fitted around the window', async ({ page }) => {
   await setRecord(record)
-  await page.goto(PAGE)
+  await openPage(page)
   const piece = page.locator(`[data-artwork-id="${artworkId}"] [data-print-presentation]`)
   const render = piece.locator('img[aria-hidden="true"]')
   const win = piece.locator('[data-print-presentation-window]')
@@ -108,26 +121,27 @@ test('a render stored on another backend reads "Out of date"', async ({ page }) 
     ...record,
     urls: { large: '/elsewhere/x-1800.webp', small: '/elsewhere/x-900.webp' },
   })
-  await page.goto(PAGE)
+  await openPage(page)
   await expect(statusOf(page)).toHaveText('Out of date')
 })
 
 test('a work whose render no longer fits reads "Out of date"', async ({ page }) => {
   await setRecord({ ...record, fingerprint: 'deadbeef' })
-  await page.goto(PAGE)
+  await openPage(page)
   await expect(statusOf(page)).toHaveText('Out of date')
 })
 
 test('a work with no render reads "Missing"', async ({ page }) => {
   await setRecord(null)
-  await page.goto(PAGE)
+  await openPage(page)
   await expect(statusOf(page)).toHaveText('Missing')
 })
 
 test('an image work of unknown shape reads "Not eligible"', async ({ page }) => {
-  // No original size and no web image to measure.
+  // No original size and no web image to measure — the fixture artist's: the page shows one artist.
   const unknown = await prisma.artwork.findFirst({
     where: {
+      user: { handler: fixtures.artistSlug },
       artworkType: 'image',
       imageUrl: null,
       presentationRatio: null,
@@ -136,7 +150,7 @@ test('an image work of unknown shape reads "Not eligible"', async ({ page }) => 
     select: { id: true },
   })
   test.skip(!unknown, 'no image work of unknown shape in this database')
-  await page.goto(PAGE)
+  await openPage(page)
   await expect(page.locator(`[data-artwork-id="${unknown!.id}"] [data-status]`)).toHaveText(
     'Not eligible',
   )
@@ -144,7 +158,7 @@ test('an image work of unknown shape reads "Not eligible"', async ({ page }) => 
 
 test('the switch turns the presentations on and off for the site', async ({ page }) => {
   await setPrintPresentationsEnabled(false)
-  await page.goto(PAGE)
+  await openPage(page)
   const toggle = page.getByLabel('Show print presentations on the site')
   await expect(toggle).not.toBeChecked()
   await page.locator('label', { has: toggle }).click()

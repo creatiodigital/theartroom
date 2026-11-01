@@ -9,6 +9,7 @@ import { useActiveRoom } from '@/components/scene/spaces/objects/useActiveRoom'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { useBakedDimmer, useLampLevel } from '@/components/scene/spaces/objects/useLampDimmer'
 import { lookSpot, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { lampGlowScale } from '@/components/scene/spaces/objects/Effects/bloomIntensity'
 import { DIMMER_STANDARD } from '@/lib/bake/dimmer'
 
 interface RoundLampProps {
@@ -58,7 +59,7 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
   )
   const lampColor = look.baked ? look.space.lampColor : storedLampColor
   const lampIntensity = useLampLevel('recessed')
-  // AR-161: in a baked space the ceiling-lamp dimmer (50–100%) scales the lamps' light and, in
+  // AR-161: in a baked space the ceiling-lamp dimmer (10–100%) scales the lamps' light and, in
   // the baked look, their discs with it (at 100% both are exactly the approved ones).
   const dimmer = useBakedDimmer('recessed')
   const bulbEmissiveIntensity =
@@ -96,11 +97,12 @@ const RoundLamp: React.FC<RoundLampProps> = ({ nodes, count }) => {
       new MeshStandardMaterial({
         color: '#000000',
         emissive: lampColor,
-        emissiveIntensity: bulbEmissiveIntensity,
+        // AR-169 phase 8: in a baked room × the bloom threshold's scale (`lampGlowScale`).
+        emissiveIntensity: bulbEmissiveIntensity * lampGlowScale(look.baked),
         toneMapped: false,
         side: DoubleSide,
       }),
-    [lampColor, bulbEmissiveIntensity],
+    [lampColor, bulbEmissiveIntensity, look.baked],
   )
   useDisposable(bulbMaterial)
 

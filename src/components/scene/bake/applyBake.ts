@@ -13,6 +13,18 @@ import { assetUrl } from '@/lib/assetUrl'
 import type { BakeMapKind, BakeSurface } from '@/lib/bake/bakeRecord'
 import { artworkDisplayOf, artworkIdOf } from '@/components/scene/spaces/objects/Display/artworkId'
 
+import { bakeClayFlag, CLAY_ALBEDO } from './bakeFlags'
+import {
+  FLOOR_MIRROR,
+  floorMirrorFlag,
+  IBL_RADIANCE,
+  MIRROR_FRAGMENT_PARS,
+  MIRROR_RADIANCE,
+  MIRROR_VERTEX,
+  MIRROR_VERTEX_PARS,
+} from './floorMirror'
+import { fillNearFlag } from './fillField'
+import { softFillGlsl, softFillTerm, softFillUniforms } from './softFill'
 import { BAKE_DEBUG } from './bakedLook'
 import type { BakeReceiver } from './LightBaker'
 import { shownArtworkImages } from './receivers'
@@ -90,15 +102,48 @@ const REFLECTION_OFF = `#include <lights_fragment_end>
   reflectedLight.indirectSpecular = vec3(0.0);`
 
 /**
- * A Standard material keeps its maps and reflections; its diffuse light comes from the bake (×
- * `intensity`). `matte`: its reflections go too (`REFLECTION_OFF`). Its own shader hooks, if any (a
- * panel's `panelSurface`), give way while the bake is on and come back with the undo.
+ * The bake's light shaded by a surface's normal map through its directional lightmap (Unity's
+ * encoding): half-Lambert of the PERTURBED normal against the stored direction, divided by the
+ * same for the flat surface normal. A flat patch gets exactly the baked light; relief brightens
+ * where it faces the light and darkens where it turns away — strongest under grazing light,
+ * nothing where the light is soft bounce (directionality ≈ 0).
+ */
+const RELIEF_LIGHT = `vec3 bakedDir = ( viewMatrix * vec4( texture2D( bakedDirection, vLightMapUv ).xyz, 0.0 ) ).xyz;
+            float bakedFlat = dot( nonPerturbedNormal, bakedDir ) + 0.5;
+            float bakedRelief = dot( geometryNormal, bakedDir ) + 0.5;
+            irradiance += lightMapIrradiance * clamp( bakedRelief / max( bakedFlat, 1e-3 ), 0.0, 2.0 );`
+
+/**
+ * The lightmap's light, then the soft fill (`softFill.ts`, AR-169) where three's environment diffuse
+ * was — outside three's `USE_ENVMAP` block, so it holds before the room capture exists too.
+ */
+const LIGHTMAP_LIGHT = 'irradiance += lightMapIrradiance;'
+const IBL_DIFFUSE = 'iblIrradiance += getIBLIrradiance( geometryNormal );'
+const bakedDiffuse = (relief: boolean) =>
+  ShaderChunk.lights_fragment_maps
+    .replace(IBL_DIFFUSE, '')
+    .replace(LIGHTMAP_LIGHT, `${relief ? RELIEF_LIGHT : LIGHTMAP_LIGHT}\n${softFillTerm()}`)
+
+interface StandardPatch {
+  /** × the bake's light. */
+  intensity?: number
+  /** Its reflections go too (`REFLECTION_OFF`). */
+  matte?: boolean
+  /** The bake's directional lightmap: the material's normal map shades that light (`RELIEF_LIGHT`). */
+  direction?: Texture | null
+  /** AR-169 trial: its reflection from the planar mirror (`floorMirror.ts`), the floor only. */
+  mirror?: boolean
+}
+
+/**
+ * A Standard material keeps its maps and reflections; its diffuse light comes from the bake
+ * (`StandardPatch`: the floor's boards are shaded by the light's direction, AR-169). Its own shader hooks, if any (a panel's `panelSurface`), give way while
+ * the bake is on and come back with the undo.
  */
 const patchStandard = (
   material: MeshStandardMaterial,
   lightMap: Texture,
-  intensity = 1,
-  matte = false,
+  { intensity = 1, matte = false, direction = null, mirror = false }: StandardPatch = {},
 ) => {
   const own = (key: 'onBeforeCompile' | 'customProgramCacheKey') =>
     Object.prototype.hasOwnProperty.call(material, key) ? { value: material[key] } : null
@@ -106,22 +151,33 @@ const patchStandard = (
   material.lightMap = lightMap
   material.lightMapIntensity = intensity
   material.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, softFillUniforms())
+    shader.fragmentShader = `${softFillGlsl()}\n${shader.fragmentShader}`
+    if (direction) {
+      shader.uniforms.bakedDirection = { value: direction }
+      shader.fragmentShader = `uniform sampler2D bakedDirection;\n${shader.fragmentShader}`
+    }
+    let maps = bakedDiffuse(direction !== null)
+    if (mirror) {
+      Object.assign(shader.uniforms, FLOOR_MIRROR)
+      shader.vertexShader = `${MIRROR_VERTEX_PARS}${shader.vertexShader}`.replace(
+        '#include <project_vertex>',
+        MIRROR_VERTEX,
+      )
+      shader.fragmentShader = `${MIRROR_FRAGMENT_PARS}${shader.fragmentShader}`
+      maps = `${maps.replace(IBL_RADIANCE, '')}\n${MIRROR_RADIANCE}`
+    }
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <lights_fragment_begin>', LIGHTS_OFF)
-      .replace(
-        '#include <lights_fragment_maps>',
-        ShaderChunk.lights_fragment_maps.replace(
-          'iblIrradiance += getIBLIrradiance( geometryNormal );',
-          '',
-        ),
-      )
+      .replace('#include <lights_fragment_maps>', maps)
     if (matte)
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <lights_fragment_end>',
         REFLECTION_OFF,
       )
   }
-  material.customProgramCacheKey = () => `baked-${matte ? 'matte' : 'standard'}-${lightMap.channel}`
+  material.customProgramCacheKey = () =>
+    `baked-${matte ? 'matte' : 'standard'}${direction ? '-relief' : ''}${mirror ? '-mirror' : ''}${fillNearFlag() ? '-near' : ''}-${lightMap.channel}`
   material.needsUpdate = true
   return () => {
     material.lightMap = null
@@ -137,34 +193,20 @@ const patchStandard = (
   }
 }
 
-/**
- * Plaster walls: the bake's light, shaded by the plaster's normals through the directional
- * lightmap (Unity's encoding): half-Lambert of the PERTURBED normal against the stored direction,
- * divided by the same for the flat surface normal. A flat patch gets exactly the baked light;
- * relief brightens where it faces the light and darkens where it turns away — strongest under
- * grazing light, nothing where the light is soft bounce (directionality ≈ 0).
- */
+/** Plaster walls: the bake's light, shaded by the plaster's normals (`RELIEF_LIGHT`). */
 const patchPlaster = (material: MeshStandardMaterial, lightMap: Texture, direction: Texture) => {
   material.lightMap = lightMap
   material.lightMapIntensity = 1
   material.onBeforeCompile = (shader) => {
     shader.uniforms.bakedDirection = { value: direction }
-    shader.fragmentShader = `uniform sampler2D bakedDirection;\n${shader.fragmentShader}`
-      .replace('#include <lights_fragment_begin>', LIGHTS_OFF)
-      .replace(
-        '#include <lights_fragment_maps>',
-        ShaderChunk.lights_fragment_maps
-          .replace('iblIrradiance += getIBLIrradiance( geometryNormal );', '')
-          .replace(
-            'irradiance += lightMapIrradiance;',
-            `vec3 bakedDir = ( viewMatrix * vec4( texture2D( bakedDirection, vLightMapUv ).xyz, 0.0 ) ).xyz;
-            float bakedFlat = dot( nonPerturbedNormal, bakedDir ) + 0.5;
-            float bakedRelief = dot( geometryNormal, bakedDir ) + 0.5;
-            irradiance += lightMapIrradiance * clamp( bakedRelief / max( bakedFlat, 1e-3 ), 0.0, 2.0 );`,
-          ),
-      )
+    Object.assign(shader.uniforms, softFillUniforms())
+    shader.fragmentShader =
+      `${softFillGlsl()}uniform sampler2D bakedDirection;\n${shader.fragmentShader}`
+        .replace('#include <lights_fragment_begin>', LIGHTS_OFF)
+        .replace('#include <lights_fragment_maps>', bakedDiffuse(true))
   }
-  material.customProgramCacheKey = () => `baked-plaster-${lightMap.channel}`
+  material.customProgramCacheKey = () =>
+    `baked-plaster${fillNearFlag() ? '-near' : ''}-${lightMap.channel}`
   material.needsUpdate = true
 }
 
@@ -256,6 +298,24 @@ export const applyBakedLighting = (
   return { undo, updateArtworks: () => void artworks.update() }
 }
 
+/**
+ * AR-169 calibration clay (`?bakeclay=1`): a material that keeps its own look (the floor, the
+ * fixtures, the panels) shows the clay grey instead — no texture, its shape maps kept. The undo
+ * puts its own color and texture back.
+ */
+const showClay = (material: MeshStandardMaterial) => {
+  const { map } = material
+  const color = material.color.clone()
+  material.map = null
+  material.color.setScalar(CLAY_ALBEDO)
+  material.needsUpdate = true
+  return () => {
+    material.map = map
+    material.color.copy(color)
+    material.needsUpdate = true
+  }
+}
+
 const swapBakedLighting = (
   receivers: BakeReceiver[],
   maps: BakedMapTexture[],
@@ -271,7 +331,17 @@ const swapBakedLighting = (
     // light measured at its artwork (`patchArtworks`). The bake still counts it in the room.
     if (!lightMap || r.name === 'cards') return
     if (r.name === 'floor') {
-      restore.push(patchStandard(r.mesh.material as MeshStandardMaterial, lightMap))
+      // Its boards' relief shaded by where the light comes from (bakes since AR-169 carry the
+      // floor's direction; earlier ones light it flat).
+      const direction = mapOf(r.name, 'direction')
+      if (direction) direction.channel = lightMap.channel
+      restore.push(
+        patchStandard(r.mesh.material as MeshStandardMaterial, lightMap, {
+          direction,
+          mirror: floorMirrorFlag() !== null,
+        }),
+      )
+      if (bakeClayFlag()) restore.push(showClay(r.mesh.material as MeshStandardMaterial))
       return
     }
     if (r.name === 'props' || r.name === 'panels') {
@@ -279,16 +349,15 @@ const swapBakedLighting = (
       // A panel is matte: only that light, like the walls — nothing that follows the eye.
       lightMap.channel = 1
       const matte = r.name === 'panels'
-      ;(r.sources as Mesh[]).forEach((source) =>
+      ;(r.sources as Mesh[]).forEach((source) => {
         restore.push(
-          patchStandard(
-            source.material as MeshStandardMaterial,
-            lightMap,
-            r.lightMapIntensity,
+          patchStandard(source.material as MeshStandardMaterial, lightMap, {
+            intensity: r.lightMapIntensity,
             matte,
-          ),
-        ),
-      )
+          }),
+        )
+        if (bakeClayFlag()) restore.push(showClay(source.material as MeshStandardMaterial))
+      })
       return
     }
     // Walls / ceiling: on our own unwrap the receiver stands for its scene mesh, read via uv1.

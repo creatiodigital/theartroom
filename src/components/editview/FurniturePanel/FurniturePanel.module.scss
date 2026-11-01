@@ -5,6 +5,11 @@
   padding: var(--space-4) var(--space-5) 0;
 }
 
+// A one-room space has no room section around its benches: the same insets as that section's body.
+.singleRoom {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
 .benchRow {
   display: flex;
   flex-direction: column;

@@ -28,6 +28,13 @@ export type SpaceFeatures = {
    * a loop — the same numbering `getNodeIndices` returns, which tolerates gaps.
    */
   alwaysLitLamps?: Record<string, readonly number[]>
+  /**
+   * AR-169: the track fixtures' body tilt as authored in Blender, in degrees. An export that
+   * applies it (Ctrl+A) leaves the body's quaternion at identity; with this set, the lamp still
+   * aims as it did with the authored tilt (its bulb's horizontal axis, tilted down by this),
+   * instead of along the bulb's normals. Paris keeps its aim (owner 2026-10-30); unset = normals.
+   */
+  trackTiltDeg?: number
 }
 
 export const spaceConfig: Record<string, SpaceFeatures> = {
@@ -38,6 +45,8 @@ export const spaceConfig: Record<string, SpaceFeatures> = {
     hasRecessedLamps: true,
     hasWindows: true,
     hasReflectiveFloor: true,
+    // paris23 re-exported with transforms applied (2026-10-30): the bodies' 25° tilt.
+    trackTiltDeg: 25,
     // Lamps 0-7 face walls along Z, lamps 8-13 face walls along X
     trackLampOffsetAxes: {
       0: 'x',

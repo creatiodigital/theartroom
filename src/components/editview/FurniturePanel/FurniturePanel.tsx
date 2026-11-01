@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { SettingsPanel } from '@/components/editview/SettingsPanel'
@@ -147,7 +147,14 @@ const FurniturePanel = () => {
           )
         })
 
-        if (rooms.length < 2) return <Fragment key={room}>{rows}</Fragment>
+        // One room: no room section around the benches, so they take its insets themselves.
+        if (rooms.length < 2) {
+          return (
+            <div key={room} className={styles.singleRoom}>
+              {rows}
+            </div>
+          )
+        }
 
         return (
           <CollapsibleSection

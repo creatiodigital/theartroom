@@ -183,6 +183,9 @@
   display: inline-block;
   margin-top: var(--space-4);
   text-decoration: none;
+  // No text line: the image's inline-block wrapper rested on one, a 6.6 px gap under the bare work
+  // that a print presentation (a block) doesn't have — side by side, the bare work sat 3.3 px high.
+  line-height: 0;
 }
 
 // Edition tag shown with the Order Print CTA — on every grid, wherever the

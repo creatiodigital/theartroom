@@ -17,6 +17,18 @@ import { fnv1a } from '@/lib/bake/hash'
 /** Bumped whenever the rendered look changes, so every presentation re-renders. */
 export const LOOK_VERSION = 3
 
+/**
+ * The pencilled copy number is never high: within the edition's first 20% — 4/30 or 20/100, never
+ * 47/50 (owner, 2026-10-29: "I don't want to give users the impression that we are running out of
+ * copies"); 1 when 20% is less than one copy. Bump COPY_NUMBERS when the rule changes: only the
+ * numbered presentations then read as out of date (`presentationInputs`).
+ */
+export const COPY_SHARE = 0.2
+export const COPY_NUMBERS = 2
+
+/** The highest copy number a presentation may pencil for an edition of `edition`. */
+export const highestCopy = (edition: number) => Math.max(1, Math.floor(edition * COPY_SHARE))
+
 /** Framed: open editions and works not for sale. Limited: the numbered sheet. */
 export type PresentationMode = 'framed' | 'limited'
 
@@ -82,7 +94,7 @@ export type Look = {
   /** Framed: where on the board the frame's wood was cut, and how much board one texture tile is. */
   woodOffset: [number, number]
   woodTileM: number
-  /** Limited: which copy this is (the pencilled "copy/N"). */
+  /** Limited: which copy this is (the pencilled "copy/N"), within the first 20% (`highestCopy`). */
   copy: number
   /** Framed: each of the four bars comes from its own stretch of board. */
   barOffsets: [number, number][]
@@ -124,7 +136,7 @@ export function makeLook(seed: number, mode: PresentationMode, edition: number):
     edgeLift: between(0, 0.0008),
     woodOffset: [r(), r()],
     woodTileM: between(0.26, 0.36),
-    copy: 1 + Math.floor(r() * edition),
+    copy: 1 + Math.floor(r() * highestCopy(edition)),
     barOffsets: [0, 1, 2, 3].map(() => [r(), r()]),
   }
 }
