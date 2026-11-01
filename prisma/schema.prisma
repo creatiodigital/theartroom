@@ -737,6 +737,10 @@ model Exhibition {
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)
+  // AR-169: in a baked space, the artist's share (0–1) of the space's daylight — blinds: the sky
+  // through the windows and the sun, baked — and of its soft fill light (on screen only).
+  daylightLevel          Float?   @default(1.0)
+  fillLightLevel         Float?   @default(1.0)
   hdriRotation           Float?   @default(128)
   floorReflectiveness    Float?   @default(0.3)
   floorMaterial          String?  @default("concrete")

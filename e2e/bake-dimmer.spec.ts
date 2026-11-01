@@ -7,6 +7,7 @@ import {
   dimmerFraction,
   dimmerLevel,
   dimmerPercent,
+  wholePercentStep,
 } from '@/lib/bake/dimmer'
 import { APPROVED_ROOM_SETTINGS, spaceLooks } from '@/lib/bake/spaceLooks'
 import {
@@ -24,8 +25,8 @@ import {
   type LookState,
 } from '@/components/scene/bake/bakedLook'
 
-// AR-161 Task 18 (spec rule 7): the artist's dimmers in a baked space are 50–100% of the
-// space's calibrated lamps (slider 2–4, 4 = 100%, never above).
+// AR-161 Task 18 (spec rule 7): the artist's dimmers in a baked space are 10–100% of the
+// space's calibrated lamps (slider 0.4–4, 4 = 100%, never above; AR-169: down to a tenth, 1% steps).
 
 test('a missing level is the standard', () => {
   expect(dimmerLevel(undefined)).toBe(DIMMER_STANDARD)
@@ -34,11 +35,11 @@ test('a missing level is the standard', () => {
   expect(dimmerFraction(undefined)).toBe(1)
 })
 
-test('levels clamp to 2–4: never above the standard, never below half', () => {
+test('levels clamp to 0.4–4: never above the standard, never below a tenth', () => {
   expect(dimmerLevel(8)).toBe(4) // vivrière's blind-tuned ceiling lamps
   expect(dimmerLevel(4.8)).toBe(4)
-  expect(dimmerLevel(1.4)).toBe(2) // kritzendorf's blind-tuned track lamps
-  expect(dimmerLevel(0)).toBe(2)
+  expect(dimmerLevel(1.4)).toBe(1.4) // kritzendorf's blind-tuned track lamps: in range now
+  expect(dimmerLevel(0)).toBe(0.4)
   expect(dimmerLevel(3.3)).toBe(3.3)
 })
 
@@ -48,11 +49,12 @@ test('the standard is exactly 100%, slider 2 exactly half', () => {
   expect(dimmerFraction(3)).toBe(0.75)
 })
 
-test('every slider position reads as a whole 5% step from 50% to 100%', () => {
+test('every slider position reads as a whole 1% step from 10% to 100%', () => {
   const percents: number[] = []
   for (let v = DIMMER_MIN; v <= DIMMER_STANDARD + 1e-9; v += DIMMER_STEP)
-    percents.push(dimmerPercent(v))
-  expect(percents).toEqual([50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100])
+    percents.push(dimmerPercent(wholePercentStep(v)))
+  expect(percents).toEqual(Array.from({ length: 91 }, (_, i) => 10 + i))
+  expect(wholePercentStep(0.4 + 9 * DIMMER_STEP)).toBe(0.76) // no float noise stored
   expect(dimmerPercent(3.3)).toBe(83) // a level stored before the rollout
 })
 

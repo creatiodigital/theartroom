@@ -5,6 +5,7 @@ import { BAKE_SURFACES, type BakeSurface } from '@/lib/bake/bakeRecord'
 import type { SpaceLook } from '@/lib/bake/spaceLooks'
 
 import { buildPropAtlas } from './autoUnwrap'
+import { bakeClayFlag, bakeTwoSidedFlag, CLAY_ALBEDO } from './bakeFlags'
 import { BAKE_DEBUG } from './bakedLook'
 import { floorBounceAlbedo } from './floorBounce'
 import { hashUnwrap, unwrapStats } from './hashUnwrap'
@@ -120,6 +121,8 @@ const buildReceivers = (
     restores.push(atlas.restore)
     return atlas
   }
+  // The building's shell takes light on its front face only (`BakeReceiver.frontOnly`).
+  const frontOnly = !bakeTwoSidedFlag()
   const wall = scene.getObjectByName('wall0') as Mesh | undefined
   const ceiling = scene.getObjectByName('ceiling') as Mesh | undefined
   const floor = scene.getObjectByName('floor') as Mesh | undefined
@@ -142,6 +145,7 @@ const buildReceivers = (
       size: atlas.size,
       albedo: new Color(room.wall).multiplyScalar(room.look.paintReflectance),
       directional: true,
+      frontOnly,
       sources: [wall],
     })
   }
@@ -155,6 +159,7 @@ const buildReceivers = (
       albedo: new Color(room.ceiling).multiplyScalar(CEILING_ALBEDO),
       smoothBounce: true,
       directional: true,
+      frontOnly,
       sources: [ceiling],
     })
   }
@@ -169,6 +174,9 @@ const buildReceivers = (
         room.look.floorBounceColor ?? 1,
       ),
       smoothBounce: true,
+      // AR-169: its boards' relief is shaded by where the light comes from, like the plaster.
+      directional: true,
+      frontOnly,
     })
 
   // Artworks: one atlas, measured (daylight + bounce) but not re-emitted, and not given
@@ -274,6 +282,16 @@ const buildReceivers = (
       })
     }
   }
+
+  // AR-169 calibration clay (`?bakeclay=1`): every surface the bake lights a neutral grey — what
+  // it bounces, and (walls, ceiling) what it shows. The artworks are only measured: left as they are.
+  if (bakeClayFlag())
+    for (const r of receivers) {
+      if (r.noEmit) continue
+      r.albedo = new Color(CLAY_ALBEDO, CLAY_ALBEDO, CLAY_ALBEDO)
+      // A panel or card shows its paint × the paint reflectance: clay is the albedo itself.
+      r.lightMapIntensity = undefined
+    }
 
   // A receiver on our own unwrap stands for its `sources`: their `uv1` is the layout its map
   // is read through (the floor keeps its own UVs: no sources).

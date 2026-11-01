@@ -2,14 +2,17 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import type { ComponentRef } from 'react'
 import { useSelector } from 'react-redux'
 import { MeshReflectorMaterial } from '@react-three/drei'
-import { Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
+import { Color, Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
 import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
 import { assetUrl } from '@/lib/assetUrl'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 import { shownFloor, useBakedLook } from '@/components/scene/bake/bakedLook'
-import { bakedFloorTiling } from '@/lib/bake/commonFloor'
+import { floorMirrorFlag } from '@/components/scene/bake/floorMirror'
+import { bakedFloorTiling, bakedFloorTone, floorToneColor } from '@/lib/bake/commonFloor'
+
+import { FloorMirror } from './FloorMirror'
 
 // Re-enabled 2026-09-07, after the fill-rate work (dpr ladder + MSAA) landed.
 //
@@ -157,7 +160,7 @@ const MATERIAL_CONFIG: Record<
     metallic: null,
     ao: null,
   },
-  // ⚠️ AR-161: the common floor of every baked space (`COMMON_FLOOR`) — parquet-light with two
+  // AR-161: the common floor of every baked space until AR-169 (`white-oak`) — parquet-light with two
   // thirds of its orange taken out and lifted to a pale oak (linear albedo 0.40, R/B 1.37 vs 0.30,
   // 2.76): every floor bounce was painting the room beige-brown. On R2 like the other sets
   // (public/ copy is local-only, never commit).
@@ -168,6 +171,39 @@ const MATERIAL_CONFIG: Record<
     roughness: 'roughness.jpg',
     metallic: null,
     ao: null,
+  },
+  // ⚠️ AR-169: the common floor of every baked space since (`COMMON_FLOOR`) — Design Connected's
+  // European White Oak 02, laid into one seamless 8 m tile. On R2 like the other sets (public/
+  // copy is local-only, never commit).
+  'white-oak': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: null,
+  },
+  // AR-169: a second baked floor (`PARQUET_MEDIUM`) — ambientCG's WoodFloor051 (CC0, 2K: color,
+  // OpenGL normal, its own roughness, ambient occlusion). On R2 like the other sets (public/ copy
+  // is local-only, never commit).
+  'parquet-medium': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.jpg',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
+  },
+  // AR-169: a third baked floor (`PARQUET_ASH`) — Poliigon's Wood Floor Ash 4186 (2K), light ash
+  // planks; its normal map as Poliigon ships it, a PNG. On R2 like the other sets (public/ copy is
+  // local-only, never commit).
+  'parquet-ash': {
+    diffuse: 'diffuse.jpg',
+    normal: 'normal.png',
+    bump: null,
+    roughness: 'roughness.jpg',
+    metallic: null,
+    ao: 'ao.jpg',
   },
   'concrete-tiles': {
     diffuse: 'diffuse.jpg',
@@ -289,9 +325,8 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
 
   const storedOffsetY = useSelector((state: RootState) => state.exhibition.floorTextureOffsetY ?? 0)
 
-  const storedTemperature = useSelector(
-    (state: RootState) => state.exhibition.floorTemperature ?? 0,
-  )
+  // Raw: in a baked space an unset tone is the space's own (`bakedFloorTone`), elsewhere 0.
+  const storedTemperature = useSelector((state: RootState) => state.exhibition.floorTemperature)
 
   const storedNormalScale = useSelector(
     (state: RootState) => state.exhibition.floorNormalScale ?? 1.0,
@@ -302,10 +337,11 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   // AR-161: a baked space has one floor, the space's (`COMMON_FLOOR`), whatever the exhibition
   // stores — in the editor too (AR-164): matte, with no mirror pass — its gloss is the captured
   // room's reflection (the environment's split-sum specular, Fresnel- and roughness-correct). The
-  // boards' size and placement are the artist's (AR-163, `bakedFloorTiling`).
+  // boards' size and placement are the artist's (AR-163, `bakedFloorTiling`), and so is the
+  // wood's tone (AR-169, `bakedFloorTone`).
   const look = useBakedLook()
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
-  const common = shownFloor(look, spaceId)
+  const common = shownFloor(look, spaceId, storedFloorMaterial)
   const tiling = common
     ? bakedFloorTiling(common, {
         floorMaterial: storedFloorMaterial,
@@ -319,7 +355,13 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   const floorTextureScale = tiling?.textureScale ?? storedTextureScale
   const floorTextureOffsetX = tiling?.offsetX ?? storedOffsetX
   const floorTextureOffsetY = tiling?.offsetY ?? storedOffsetY
-  const floorTemperature = common?.temperature ?? storedTemperature
+  const floorTemperature = storedTemperature ?? 0
+  const floorTone = common
+    ? bakedFloorTone(common, {
+        floorMaterial: storedFloorMaterial,
+        floorTemperature: storedTemperature,
+      })
+    : 0
   const floorNormalScale = common?.normalScale ?? storedNormalScale
   const floorRotation = tiling?.rotation ?? storedRotation
 
@@ -328,10 +370,17 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
 
   const validMaterial = resolveFloorMaterial(floorMaterial)
 
-  // Temperature-tinted multiplier (white at neutral, unless the floor darkens)
-  const floorColor = getTemperatureColor(
-    floorTemperature,
-    MATERIAL_CONFIG[validMaterial].darken ? NEUTRAL_COLOR : WHITE,
+  // Temperature-tinted multiplier (white at neutral, unless the floor darkens); a baked space's
+  // floor: its stain at the tone (linear — the bake reads this color for the floor's bounce).
+  const floorColor = useMemo(
+    () =>
+      common
+        ? new Color().setRGB(...floorToneColor(common, floorTone))
+        : getTemperatureColor(
+            floorTemperature,
+            MATERIAL_CONFIG[validMaterial].darken ? NEUTRAL_COLOR : WHITE,
+          ),
+    [common, floorTone, floorTemperature, validMaterial],
   )
   // Repeats per meter: one tile spans 10 / scale meters.
   const tileRepeat = clampedScale / 10
@@ -386,84 +435,90 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
     [floorNormalScale],
   )
 
+  // AR-169 trial (`?floormirror=K`): the floor's gloss from a planar reflection (`FloorMirror`).
+  const mirror = common && look.baked ? floorMirrorFlag() : null
+
   return (
-    <mesh
-      ref={meshRef}
-      name="floor"
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={position}
-      receiveShadow
-    >
-      <planeGeometry
-        args={[width, depth]}
-        onUpdate={(geo) => {
-          // AO maps require uv2 (attribute index 1). PlaneGeometry only has uv.
-          if (!geo.attributes.uv2 && geo.attributes.uv) {
-            geo.setAttribute('uv2', geo.attributes.uv)
-          }
-        }}
-      />
-      {common ? (
-        <meshStandardMaterial
-          key={`floor-common-${floorMaterial}`}
-          color={floorColor}
-          map={textures.map}
-          normalMap={textures.normalMap}
-          normalScale={normalScaleVec}
-          bumpMap={textures.bumpMap}
-          bumpScale={floorNormalScale}
-          roughnessMap={textures.roughnessMap}
-          aoMap={textures.aoMap}
-          aoMapIntensity={1.0}
-          envMapIntensity={1.0}
-          roughness={common.roughness}
-          metalness={common.metalness}
+    <>
+      {mirror !== null && <FloorMirror floor={meshRef} blur={mirror} />}
+      <mesh
+        ref={meshRef}
+        name="floor"
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={position}
+        receiveShadow
+      >
+        <planeGeometry
+          args={[width, depth]}
+          onUpdate={(geo) => {
+            // AO maps require uv2 (attribute index 1). PlaneGeometry only has uv.
+            if (!geo.attributes.uv2 && geo.attributes.uv) {
+              geo.setAttribute('uv2', geo.attributes.uv)
+            }
+          }}
         />
-      ) : ENABLE_REFLECTIONS ? (
-        <MeshReflectorMaterial
-          ref={reflectorRef}
-          blur={[600, 400]} // Higher blur for maximum stability
-          resolution={1024} // Full resolution for smooth reflections
-          mixBlur={0.9} // High blend for stable reflections
-          mixStrength={reflectiveness * 1.5} // Reduced from *3 to let normal map show
-          mixContrast={1}
-          roughness={1 - reflectiveness * 0.2}
-          depthScale={0}
-          minDepthThreshold={0.9}
-          maxDepthThreshold={1}
-          color={floorColor}
-          metalness={0.05}
-          mirror={reflectiveness * 0.03}
-          map={textures.map}
-          normalMap={textures.normalMap}
-          normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
-          bumpMap={textures.bumpMap}
-          bumpScale={floorNormalScale}
-          roughnessMap={textures.roughnessMap}
-          metalnessMap={textures.metalnessMap}
-          aoMap={textures.aoMap}
-          aoMapIntensity={1.0}
-          envMapIntensity={1.0}
-        />
-      ) : (
-        <meshStandardMaterial
-          key={`floor-mat-${floorMaterial}`}
-          color={floorColor}
-          map={textures.map}
-          normalMap={textures.normalMap}
-          normalScale={normalScaleVec}
-          bumpMap={textures.bumpMap}
-          bumpScale={floorNormalScale}
-          roughnessMap={textures.roughnessMap}
-          metalnessMap={textures.metalnessMap}
-          aoMap={textures.aoMap}
-          aoMapIntensity={1.0}
-          envMapIntensity={1.0}
-          roughness={1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
-          metalness={0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
-        />
-      )}
-    </mesh>
+        {common ? (
+          <meshStandardMaterial
+            key={`floor-common-${floorMaterial}`}
+            color={floorColor}
+            map={textures.map}
+            normalMap={textures.normalMap}
+            normalScale={normalScaleVec}
+            bumpMap={textures.bumpMap}
+            bumpScale={floorNormalScale}
+            roughnessMap={textures.roughnessMap}
+            aoMap={textures.aoMap}
+            aoMapIntensity={1.0}
+            envMapIntensity={1.0}
+            roughness={common.roughness}
+            metalness={common.metalness}
+          />
+        ) : ENABLE_REFLECTIONS ? (
+          <MeshReflectorMaterial
+            ref={reflectorRef}
+            blur={[600, 400]} // Higher blur for maximum stability
+            resolution={1024} // Full resolution for smooth reflections
+            mixBlur={0.9} // High blend for stable reflections
+            mixStrength={reflectiveness * 1.5} // Reduced from *3 to let normal map show
+            mixContrast={1}
+            roughness={1 - reflectiveness * 0.2}
+            depthScale={0}
+            minDepthThreshold={0.9}
+            maxDepthThreshold={1}
+            color={floorColor}
+            metalness={0.05}
+            mirror={reflectiveness * 0.03}
+            map={textures.map}
+            normalMap={textures.normalMap}
+            normalScale={[floorNormalScale, floorNormalScale]} // Controlled by Floor Details slider
+            bumpMap={textures.bumpMap}
+            bumpScale={floorNormalScale}
+            roughnessMap={textures.roughnessMap}
+            metalnessMap={textures.metalnessMap}
+            aoMap={textures.aoMap}
+            aoMapIntensity={1.0}
+            envMapIntensity={1.0}
+          />
+        ) : (
+          <meshStandardMaterial
+            key={`floor-mat-${floorMaterial}`}
+            color={floorColor}
+            map={textures.map}
+            normalMap={textures.normalMap}
+            normalScale={normalScaleVec}
+            bumpMap={textures.bumpMap}
+            bumpScale={floorNormalScale}
+            roughnessMap={textures.roughnessMap}
+            metalnessMap={textures.metalnessMap}
+            aoMap={textures.aoMap}
+            aoMapIntensity={1.0}
+            envMapIntensity={1.0}
+            roughness={1 - reflectiveness * 0.7} // 0→1.0 (matte), 1→0.3 (shiny)
+            metalness={0.05 + reflectiveness * 0.25} // More metallic at high reflectiveness
+          />
+        )}
+      </mesh>
+    </>
   )
 }
 

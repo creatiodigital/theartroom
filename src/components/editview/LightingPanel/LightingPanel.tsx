@@ -17,8 +17,12 @@ import {
   DIMMER_MIN,
   DIMMER_STANDARD,
   DIMMER_STEP,
+  wholePercentStep,
   dimmerLevel,
   dimmerPercent,
+  lightShare,
+  fillShare,
+  FILL_MAX,
 } from '@/lib/bake/dimmer'
 import {
   TRACK_THROW_MIN,
@@ -160,6 +164,13 @@ const LightingPanel = () => {
   const windowTransparency = useSelector(
     (state: RootState) => state.exhibition.windowTransparency ?? false,
   )
+  // AR-169, baked spaces: the artist's shares of the space's daylight (blinds) and soft fill.
+  const daylightLevel = lightShare(
+    useSelector((state: RootState) => state.exhibition.daylightLevel),
+  )
+  const fillLightLevel = fillShare(
+    useSelector((state: RootState) => state.exhibition.fillLightLevel),
+  )
   const hdriEnvironment = useSelector(
     (state: RootState) => state.exhibition.hdriEnvironment ?? 'soil',
   )
@@ -224,6 +235,10 @@ const LightingPanel = () => {
                 trackLampDistance,
                 trackLampSettings: trackLampSettings ?? null,
                 recessedLampIntensity,
+                trackLampMaterialColor,
+                windowLightColor: windowColor,
+                daylightLevel,
+                fillLightLevel,
               }
             : {
                 ambientLightColor: ambientColor,
@@ -402,10 +417,31 @@ const LightingPanel = () => {
   )
 
   if (bakedSpace) {
-    // Dimmers: 50–100% of the space's calibrated lamps (slider 2–4, 4 = 100%, never above).
+    // Dimmers: 10–100% of the space's calibrated lamps (slider 0.4–4, 4 = 100%, never above).
     // A level stored before the rollout outside that range shows, and bakes, clamped.
+    // AR-169: the soft light (on screen at once) 0–200%, the daylight (blinds, baked) 0–100%.
     return (
       <SettingsPanel title="Lighting" onClose={handleClose}>
+        {/* AR-169: the room's soft light (the even environment, `softFill.ts`) — first, and up to
+            twice the space's own (Eduardo 2026-10-31: "add a knob… the sphere we created"). On
+            screen at once, never baked. */}
+        <Section title="Soft Light">
+          <div className={styles.field}>
+            <div className={styles.sliderHeader}>
+              <label className={styles.label}>Intensity</label>
+              <span className={styles.sliderValue}>{Math.round(fillLightLevel * 100)}%</span>
+            </div>
+            <Slider
+              min={0}
+              max={FILL_MAX}
+              step={0.01}
+              value={fillLightLevel}
+              onChange={(v) => set('fillLightLevel', wholePercentStep(v))}
+              aria-label="Soft Light Intensity"
+            />
+          </div>
+        </Section>
+
         {showPlafond && (
           <Section title="Ceiling">
             <div className={styles.field}>
@@ -418,7 +454,7 @@ const LightingPanel = () => {
                 max={DIMMER_STANDARD}
                 step={DIMMER_STEP}
                 value={dimmerLevel(recessedLampIntensity)}
-                onChange={(v) => set('recessedLampIntensity', v)}
+                onChange={(v) => set('recessedLampIntensity', wholePercentStep(v))}
                 aria-label="Plafond Intensity"
               />
             </div>
@@ -437,14 +473,50 @@ const LightingPanel = () => {
                 max={DIMMER_STANDARD}
                 step={DIMMER_STEP}
                 value={dimmerLevel(trackLampIntensity)}
-                onChange={(v) => set('trackLampIntensity', v)}
+                onChange={(v) => set('trackLampIntensity', wholePercentStep(v))}
                 aria-label="Track Lamp Intensity"
               />
             </div>
 
             {trackBeamControls}
 
+            {/* AR-169: the fixture's body color is the artist's again (it is not in the bake). */}
+            <div className={styles.field}>
+              <label className={styles.label}>Material Color</label>
+              <ColorPicker
+                textColor={trackLampMaterialColor}
+                onColorSelect={(color) => set('trackLampMaterialColor', color)}
+              />
+            </div>
+
             {trackLampControls}
+          </Section>
+        )}
+
+        {/* AR-169: the glass color is the artist's — the daylight's color in the bake too. */}
+        {hasWindows && (
+          <Section title="Window">
+            <div className={styles.field}>
+              <label className={styles.label}>Glass Color</label>
+              <ColorPicker
+                textColor={windowColor}
+                onColorSelect={(color) => set('windowLightColor', color)}
+              />
+            </div>
+            <div className={styles.field}>
+              <div className={styles.sliderHeader}>
+                <label className={styles.label}>Daylight</label>
+                <span className={styles.sliderValue}>{Math.round(daylightLevel * 100)}%</span>
+              </div>
+              <Slider
+                min={0}
+                max={1}
+                step={0.01}
+                value={daylightLevel}
+                onChange={(v) => set('daylightLevel', wholePercentStep(v))}
+                aria-label="Daylight"
+              />
+            </div>
           </Section>
         )}
 

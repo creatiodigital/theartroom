@@ -16,11 +16,15 @@ import type { RootState } from '@/redux/store'
  * of ten per room, like the panels — room 0 uses 0–3, room 1 uses 10–13.
  *
  * Every model is at its exact real size; the GLBs are converted from the
- * manufacturer's centimeters and never rescaled.
+ * manufacturer's centimeters and never rescaled (Design Connected models,
+ * `.superpowers/ar167/tools/make_dc_bench_glb.py`).
  */
 export const BENCH_MODELS = [
-  { value: 'odes', label: 'Odes' },
-  { value: 'black', label: 'Black' },
+  // Ligne Roset Eaton: solid wood, 185 × 41 × 45 cm.
+  { value: 'eaton', label: 'Eaton' },
+  // Minotti Helion: upholstered, on steel legs, 167 × 90 × 44 cm — in both its finishes.
+  { value: 'helion', label: 'Helion fabric' },
+  { value: 'helion-leather', label: 'Helion leather' },
 ] as const
 
 export type BenchModel = (typeof BENCH_MODELS)[number]['value']
@@ -42,7 +46,7 @@ export const BENCHES_PER_ROOM = 4
  * 2026-10-28: "we will refine later"); the code ships with the print presentations, hidden.
  * Design Connected has OK'd their models for the online gallery in writing (2026-10-28).
  */
-export const FURNITURE_PANEL_ENABLED = false
+export const FURNITURE_PANEL_ENABLED = true
 
 /**
  * Where a room's benches start: a 2 × 2 group around its centre, in metres. A row of four

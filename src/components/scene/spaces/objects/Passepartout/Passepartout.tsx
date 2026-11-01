@@ -9,10 +9,8 @@ interface PassepartoutProps {
   height: number
   thickness: number // This is the border width, not depth
   depth?: number // Z-depth (how much it protrudes)
-  /** The bevel, edges and back — and the front face too unless `faceMaterial` is given. */
+  /** Every face: front, bevel, edges and back (AR-169: lit like the frame). */
   material: Material
-  /** The front face alone (AR-165: in the baked look it shows exactly its color, like the image). */
-  faceMaterial?: Material
 }
 
 /** The four strips: where each sits and how it turns (the top strip's window faces −y). */
@@ -29,7 +27,6 @@ const Passepartout: React.FC<PassepartoutProps> = ({
   thickness,
   depth = 0.02,
   material,
-  faceMaterial,
 }) => {
   // Passepartout sits ON TOP of the artwork/support, extending forward (positive Z)
   // The back face touches the support surface, mat body extends toward viewer
@@ -60,12 +57,7 @@ const Passepartout: React.FC<PassepartoutProps> = ({
             rotation={[0, 0, rotation]}
           >
             <mesh geometry={piece.body} material={material} castShadow receiveShadow />
-            <mesh
-              geometry={piece.face}
-              material={faceMaterial ?? material}
-              castShadow
-              receiveShadow
-            />
+            <mesh geometry={piece.face} material={material} castShadow receiveShadow />
           </group>
         )
       })}

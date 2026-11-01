@@ -10,6 +10,7 @@ import {
   LinearFilter,
   Matrix3,
   Mesh,
+  MeshBasicMaterial,
   OneFactor,
   AddEquation,
   NearestFilter,
@@ -17,6 +18,7 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   PlaneGeometry,
+  Raycaster,
   RGBAFormat,
   Scene,
   ShaderMaterial,
@@ -24,6 +26,7 @@ import {
   Vector3,
   WebGLCubeRenderTarget,
   WebGLRenderTarget,
+  ZeroFactor,
   type BufferGeometry,
   type Material,
   type Object3D,
@@ -52,6 +55,7 @@ import {
 } from './bakeShaders'
 import { isWorldVisible } from './daylight'
 import { buildGatherScene, TriangleKind, type GatherSource } from './gatherScene'
+import { RECESSED_LAMP } from './lampKind'
 import { BAKE_SURFACES, type BakeMapKind, type BakeSurface } from '@/lib/bake/bakeRecord'
 
 /**
@@ -83,6 +87,13 @@ const LAMP_JITTER = 12
 const LAMP_APERTURE = 0.03 // metres — an LED track head
 const DIFFUSER_APERTURE = 0.15 // metres — a plafond / opal downlight's diffuser (Ø 30 cm)
 const LAMP_FRONT_OFFSET = 0.04 // metres — the emitting face sits in front of the fixture's origin
+// AR-169: a window's lights sit ON the glass (1 mm off it) and their shadow cube sees from 0.5 mm:
+// glass sits in the middle of its frame, so 2 cm out (and a 2 cm near plane) put them in front of
+// the frame's bars, which then shaded nothing (+22 % daylight, run R18).
+const EMITTER_OFFSET = 0.001
+const EMITTER_NEAR = 0.0005
+// The bounce lights' shadow cube near plane (they sit 2 cm off their surface).
+const VPL_NEAR = 0.02
 const SHADOW_SIZE = 2048
 // Bounce lights: 4,096 per bounce, each jittered within its texel (noise ∝ 1/√N; a regular grid
 // of them showed as rows of spots near corners), 8 bounces, accumulated in float.
@@ -103,6 +114,32 @@ const RAYS_PER_PASS = 8
 // each bake of a room lands 1–2% apart (Eduardo 2026-10-18: no per-exhibition drift).
 const BAKE_SEED = 0x161
 
+/**
+ * How many samples a bake takes. `full` is the bake every look was approved on (the constants
+ * above). `quick` (AR-169 calibration, `?bakequality=quick` on the bake page) takes 8× fewer
+ * bounce lights over 3 bounces (the bounces it leaves out still come back as the tail), fewer
+ * lamp-shadow and corner samples: the same light, noisier, in a fraction of the time.
+ */
+export interface BakeQuality {
+  vpls: number
+  bounces: number
+  emitterVpls: number
+  lampJitter: number
+  nearSpp: number
+  /** AR-169 calibration (`?bakevplcube=`): the bounce lights' shadow cube size (else VPL_CUBE_SIZE). */
+  vplCube?: number
+}
+export const BAKE_QUALITY: Record<'full' | 'quick', BakeQuality> = {
+  full: {
+    vpls: VPL_COUNT,
+    bounces: VPL_BOUNCES,
+    emitterVpls: EMITTER_VPLS,
+    lampJitter: LAMP_JITTER,
+    nearSpp: NEAR_SPP,
+  },
+  quick: { vpls: 512, bounces: 3, emitterVpls: 1024, lampJitter: 4, nearSpp: 64 },
+}
+
 /** mulberry32 — a small seeded generator, uniform in [0, 1). */
 const seededRandom = (seed: number) => {
   let a = seed >>> 0
@@ -117,8 +154,18 @@ const seededRandom = (seed: number) => {
 // How far past a window's glass its wall still stands (the reveal shading the sun); anything
 // further out is outdoors and casts no sun shadow. Paris/Vienna walls: ~0.32 m outside the glass.
 const PORTAL_WALL_DEPTH = 0.5
+// The sun's shadow map sits this far back along its rays from the window it comes through. Its
+// light is parallel (AR-169 BUG 7: a point this far out fanned its rays, and the window's patch
+// came out 11 % larger, 12 % more light, than a real sun's — Cycles, C6).
+const SUN_DISTANCE = 60
 
-const GRID = 128
+// AR-169 BUG 8: 256 (was 128) — at 128 a cell straddling a junction (≈ 17 cm on the floor and
+// ceiling) put its centre on one side only, and every bounce lost that strip's light (E10).
+let GRID = 256
+/** AR-169 calibration (`?bakegrid=`): the bounce grid's size for the next bake; 256 by default. */
+export const setBakeGrid = (size: number) => {
+  GRID = size
+}
 
 /**
  * A surface that emits light into the room — window glass showing the sky. It faces the room
@@ -149,6 +196,13 @@ export interface BakeReceiver {
   noLampDirect?: boolean
   /** Not a bounce source (small, measured only — e.g. the artworks). */
   noEmit?: boolean
+  /**
+   * AR-169: light counts only on its front face (the side its normal points to, as modelled).
+   * Walls, ceiling and floor are the building's single-plane shell: one texel stands for both
+   * faces, so light reaching the outer face (a light well's panel on a corridor wall's back) showed
+   * on the room face. A thick wall's outer face is its own front.
+   */
+  frontOnly?: boolean
   /** Scene meshes this receiver stands for (its proxy replaces them in the near-field rays). */
   sources?: Object3D[]
 }
@@ -158,6 +212,8 @@ interface ReceiverState extends BakeReceiver {
   accum: WebGLRenderTarget
   accumBounce: WebGLRenderTarget
   grid: WebGLRenderTarget[] // one per bounce source: [direct, bounce1, ...]
+  /** AR-169 BUG 8: each bounce's corner light (`nearBounce`), summed — the final near field reads it. */
+  nearGrid: WebGLRenderTarget
   position: Float32Array
   normal: Float32Array
   texelArea: number
@@ -181,6 +237,8 @@ interface Lamp {
   aperture: number
   /** A 90° field: shadows from a cube map, not a (170°) perspective one. */
   wide: boolean
+  /** A recessed downlight (`RECESSED_LAMP`), not a round lamp: both are wide. */
+  recessed: boolean
   /**
    * Lights only the room side of a surface (the sun). Walls and ceiling are single planes whose
    * outer face shares the inner face's texels: a sun on the roof would light the ceiling.
@@ -191,6 +249,13 @@ interface Lamp {
    * crosses this rectangle — centre and half-extent axes in the glass plane.
    */
   portal?: { center: Vector3; u: Vector3; v: Vector3 }
+  /**
+   * Parallel light (the sun): one direction for every surface, an orthographic shadow map
+   * `reach` (half-width) around the window, `position` its origin SUN_DISTANCE back; `aperture`
+   * is the disc's radius at that distance (its angular size).
+   */
+  directional?: boolean
+  reach?: number
 }
 
 const isLampPart = (object: Object3D) => {
@@ -251,7 +316,25 @@ export class LightBaker {
   private scene: Scene
   private receivers: ReceiverState[] = []
   private lamps: Lamp[] = []
+  /** Set before `prepare` (it sizes the bounce targets). */
+  quality: BakeQuality = BAKE_QUALITY.full
+  /** AR-169 calibration: another sequence of random numbers (`?bakeseed=`); 0 = the bake's own. */
+  seed = 0
+  /**
+   * The bounces not simulated, added as the radiosity tail. AR-169 calibration (`?bakebounces=N`)
+   * turns it off: exactly N bounces, as Cycles renders N.
+   */
+  tail = true
+  /** The bounce lights' singularity clamp (m); AR-169 calibration `?bakevplclamp=` changes it. */
+  vplMinDist = VPL_MIN_DIST
+  /**
+   * AR-169 BUG 8: add each bounce's corner light (what the clamp drops) to the grid the next
+   * bounce's lights are drawn from, instead of only once at the end (Cycles: full GI −7.5 % → 0.75 %
+   * median, R21). `?bakenearbounce=0` turns it off for A/B.
+   */
+  nearPerBounce = true
   private casters: Mesh[] = []
+  private shell: Mesh[] | null = null
   private random: () => number = seededRandom(BAKE_SEED)
   private bakeScene = new Scene()
   private quadScene = new Scene()
@@ -259,6 +342,7 @@ export class LightBaker {
   private quadCamera = new OrthographicCamera(-1, 1, 1, -1, 0, 1)
   private dummyCamera = new PerspectiveCamera()
   private shadowCamera = new PerspectiveCamera(60, 1, 0.02, 80)
+  private sunCamera = new OrthographicCamera(-1, 1, 1, -1, 0.02, 80)
   private shadowRT = new WebGLRenderTarget(SHADOW_SIZE, SHADOW_SIZE, {
     type: FloatType,
     minFilter: NearestFilter,
@@ -270,7 +354,7 @@ export class LightBaker {
     magFilter: NearestFilter,
     generateMipmaps: false,
   })
-  private cubeCamera = new CubeCamera(0.02, 80, this.cubeRT)
+  private cubeCamera = new CubeCamera(VPL_NEAR, 80, this.cubeRT)
   private lampCubeRT = new WebGLCubeRenderTarget(LAMP_CUBE_SIZE, {
     type: FloatType,
     minFilter: NearestFilter,
@@ -309,6 +393,8 @@ export class LightBaker {
         uCubeTexel: { value: Math.PI / 2 / LAMP_CUBE_SIZE },
         uLambert: { value: 0 },
         uOneSided: { value: 0 },
+        uDirectional: { value: 0 },
+        uFrontOnly: { value: 0 },
         uRoomCenter: { value: new Vector3() },
         uPortal: { value: 0 },
         uPortalCenter: { value: new Vector3() },
@@ -336,7 +422,18 @@ export class LightBaker {
         uDirMode: { value: 0 },
         uBias: { value: 0.03 },
         uAlphaMode: { value: 0 },
+        uFrontOnly: { value: 0 },
       },
+    }),
+  )
+  // Marks every texel a receiver's charts cover (alpha 1, no light): `compose` keeps only covered
+  // texels, and the lamps' own writes were the only mark — a bake with no lamps (daylight alone)
+  // kept nothing (AR-169 calibration, run R2).
+  private coverageMat = additive(
+    new ShaderMaterial({
+      vertexShader: UV_SPACE_VERTEX,
+      fragmentShader: /* glsl */ `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`,
+      uniforms: { uNormalWorld: { value: new Matrix3() } },
     }),
   )
   private geometryMat = new ShaderMaterial({
@@ -411,11 +508,24 @@ export class LightBaker {
     this.cubeCamera.children.forEach((c) => c.layers.set(CASTER_LAYER))
     this.lampCubeCamera.children.forEach((c) => c.layers.set(CASTER_LAYER))
     this.shadowCamera.layers.set(CASTER_LAYER)
+    this.sunCamera.layers.set(CASTER_LAYER)
   }
 
   /** Gather receivers, lamps and casters from the live scene. */
   prepare(receivers: BakeReceiver[], emitters: AreaEmitter[] = [], roomCenter?: Vector3) {
-    this.random = seededRandom(BAKE_SEED)
+    this.random = seededRandom(BAKE_SEED + this.seed * 0x9e3779b9)
+    const cube = this.quality.vplCube ?? VPL_CUBE_SIZE
+    if (cube !== this.cubeRT.width) {
+      this.cubeRT.dispose()
+      this.cubeRT = new WebGLCubeRenderTarget(cube, {
+        type: FloatType,
+        minFilter: NearestFilter,
+        magFilter: NearestFilter,
+        generateMipmaps: false,
+      })
+      this.cubeCamera = new CubeCamera(VPL_NEAR, 80, this.cubeRT)
+      this.cubeCamera.children.forEach((c) => c.layers.set(CASTER_LAYER))
+    }
     this.scene.updateMatrixWorld(true)
     this.emitters = emitters
     if (roomCenter) this.roomCenter.copy(roomCenter)
@@ -438,6 +548,7 @@ export class LightBaker {
           // A 90° field is a diffused fixture (see lookSpot); anything narrower is a lensed head.
           aperture: light.angle >= Math.PI / 2 - 1e-3 ? DIFFUSER_APERTURE : LAMP_APERTURE,
           wide: light.angle >= Math.PI / 2 - 1e-3,
+          recessed: light.userData.lampKind === RECESSED_LAMP.lampKind,
         })
       }
       const mesh = object as Mesh
@@ -485,7 +596,7 @@ export class LightBaker {
         magFilter: LinearFilter,
       })
       const grid = Array.from(
-        { length: VPL_BOUNCES + 1 },
+        { length: this.quality.bounces + 1 },
         () => new WebGLRenderTarget(GRID, GRID, { type: FloatType, format: RGBAFormat }),
       )
       return {
@@ -494,6 +605,7 @@ export class LightBaker {
         accum,
         accumBounce,
         grid,
+        nearGrid: new WebGLRenderTarget(GRID, GRID, { type: FloatType, format: RGBAFormat }),
         position: new Float32Array(GRID * GRID * 4),
         normal: new Float32Array(GRID * GRID * 4),
         texelArea: 0,
@@ -526,16 +638,32 @@ export class LightBaker {
     this.stats.casters = this.casters.length
   }
 
+  /** Takes lamps out of the bake (their discs still glow on screen): `test` picks them. */
+  dropLamps(test: (lamp: { position: Vector3; wide: boolean }) => boolean) {
+    this.lamps = this.lamps.filter((l) => !test({ position: l.position, wide: l.wide }))
+    this.stats.lamps = this.lamps.length
+  }
+
   /**
    * Re-rates mounted lamps after `prepare` — per-zone lighting design (a corridor keeps standard
    * fixtures). `rate` returns the lamp's new luminous intensity, or null.
    */
   rateLamps(
-    rate: (lamp: { position: Vector3; wide: boolean; intensity: number }) => number | null,
+    rate: (lamp: {
+      position: Vector3
+      wide: boolean
+      recessed: boolean
+      intensity: number
+    }) => number | null,
   ) {
     for (const l of this.lamps) {
       const lum = l.color.r * 0.2126 + l.color.g * 0.7152 + l.color.b * 0.0722
-      const target = rate({ position: l.position, wide: l.wide, intensity: lum })
+      const target = rate({
+        position: l.position,
+        wide: l.wide,
+        recessed: l.recessed,
+        intensity: lum,
+      })
       if (target !== null && lum > 0) l.color.multiplyScalar(target / lum)
     }
   }
@@ -553,7 +681,7 @@ export class LightBaker {
     reach: number,
     portal?: Lamp['portal'],
   ) {
-    const distance = 60
+    const distance = SUN_DISTANCE
     const dir = direction.clone().normalize()
     const angle = Math.atan(reach / distance)
     this.lamps.push({
@@ -567,8 +695,11 @@ export class LightBaker {
       angle,
       aperture: distance * Math.tan((0.27 * Math.PI) / 180),
       wide: false,
+      recessed: false,
       oneSided: true,
       portal,
+      directional: true,
+      reach,
     })
     this.stats.lamps = this.lamps.length
   }
@@ -581,6 +712,7 @@ export class LightBaker {
 
   private renderReceiver(r: ReceiverState, material: ShaderMaterial, target: WebGLRenderTarget) {
     material.uniforms.uNormalWorld.value = r.normalWorld
+    if (material.uniforms.uFrontOnly) material.uniforms.uFrontOnly.value = r.frontOnly ? 1 : 0
     r.proxy.material = material
     this.bakeScene.add(r.proxy)
     this.renderer.setRenderTarget(target)
@@ -609,11 +741,15 @@ export class LightBaker {
   totalSteps(): number {
     const receivers = this.receivers.length
     let steps = 1 // geometry maps
-    steps += this.lamps.length * LAMP_JITTER // 1. direct light
+    steps += this.lamps.length * this.quality.lampJitter // 1. direct light
     steps += this.emitterTris().vpls // 1b. daylight
-    steps += VPL_BOUNCES * VPL_COUNT // 2. bounces
-    steps += 1 + receivers // 4. near field: room build, chart sides
-    steps += Math.max(1, Math.round(NEAR_SPP / RAYS_PER_PASS)) * receivers
+    steps += this.quality.bounces * this.quality.vpls // 2. bounces
+    if (this.nearPerBounce && this.quality.nearSpp > 0)
+      steps += this.quality.bounces * this.receivers.filter((r) => r.frontOnly).length // 2b.
+    if (this.quality.nearSpp > 0) {
+      steps += 1 + receivers // 4. near field: room build, chart sides
+      steps += Math.max(1, Math.round(this.quality.nearSpp / RAYS_PER_PASS)) * receivers
+    }
     return steps
   }
 
@@ -647,6 +783,7 @@ export class LightBaker {
       this.clear(r.accumBounce)
       if (r.dirAccum) this.clear(r.dirAccum)
       r.grid.forEach((g) => this.clear(g))
+      this.clear(r.nearGrid)
       for (const [what, buffer] of [
         [0, r.position],
         [1, r.normal],
@@ -664,11 +801,19 @@ export class LightBaker {
     end()
     yield
 
+    // --- coverage: every chart texel, whether or not a lamp reaches it ---------------------
+    begin()
+    for (const r of this.receivers) {
+      if (!r.noLampDirect) this.renderReceiver(r, this.coverageMat, r.accum)
+    }
+    end()
+
     // --- 1. direct light from the real lamps, with shadows ------------------------------
     const s = this.spotMat.uniforms
     const v = this.vplMat.uniforms
+    v.uMinDist2.value = this.vplMinDist * this.vplMinDist
     for (const lamp of this.lamps) {
-      for (let j = 0; j < LAMP_JITTER; j++) {
+      for (let j = 0; j < this.quality.lampJitter; j++) {
         begin()
         // The LED's emitting surface: a small disc facing the aim direction, just in front of
         // the fixture. (A sphere put half the samples BEHIND the fixture — for recessed lamps
@@ -679,11 +824,26 @@ export class LightBaker {
         const bitangent = lamp.direction.clone().cross(tangent).normalize()
         const radius = lamp.aperture * Math.sqrt(this.random())
         const theta = this.random() * Math.PI * 2
-        const position = lamp.position
-          .clone()
-          .addScaledVector(lamp.direction, LAMP_FRONT_OFFSET)
-          .addScaledVector(tangent, Math.cos(theta) * radius)
-          .addScaledVector(bitangent, Math.sin(theta) * radius)
+        let lightDir = lamp.direction
+        let position: Vector3
+        if (lamp.directional) {
+          // The sun's disc as directions (parallel rays per sample), the map's origin kept
+          // SUN_DISTANCE back from the window along this sample's direction.
+          const through = lamp.position.clone().addScaledVector(lamp.direction, SUN_DISTANCE)
+          lightDir = lamp.direction
+            .clone()
+            .multiplyScalar(SUN_DISTANCE)
+            .addScaledVector(tangent, Math.cos(theta) * radius)
+            .addScaledVector(bitangent, Math.sin(theta) * radius)
+            .normalize()
+          position = through.addScaledVector(lightDir, -SUN_DISTANCE)
+        } else {
+          position = lamp.position
+            .clone()
+            .addScaledVector(lamp.direction, LAMP_FRONT_OFFSET)
+            .addScaledVector(tangent, Math.cos(theta) * radius)
+            .addScaledVector(bitangent, Math.sin(theta) * radius)
+        }
 
         // Shadow map from the lamp: inverse distance of the nearest caster. Wide diffusers
         // get a cube (even texels in every direction); lensed heads a perspective map.
@@ -706,6 +866,23 @@ export class LightBaker {
           renderer.autoClear = false
           this.scene.overrideMaterial = savedOverride
           this.stats.renders += 6
+        } else if (lamp.directional) {
+          const half = lamp.reach ?? 5
+          const cam = this.sunCamera
+          cam.left = -half
+          cam.right = half
+          cam.top = half
+          cam.bottom = -half
+          cam.position.copy(position)
+          cam.lookAt(position.clone().add(lightDir))
+          cam.updateProjectionMatrix()
+          cam.updateMatrixWorld()
+          this.scene.overrideMaterial = this.distanceMat
+          this.clear(this.shadowRT)
+          renderer.setRenderTarget(this.shadowRT)
+          renderer.render(this.scene, cam)
+          this.scene.overrideMaterial = savedOverride
+          this.stats.renders++
         } else {
           this.shadowCamera.fov = Math.min(170, ((lamp.angle * 2) / Math.PI) * 180 + 10)
           this.shadowCamera.position.copy(position)
@@ -734,17 +911,19 @@ export class LightBaker {
         s.uShadowCube.value = this.lampCubeRT.texture
 
         s.uLightPos.value.copy(position)
-        s.uLightDir.value.copy(lamp.direction)
+        s.uLightDir.value.copy(lightDir)
+        s.uDirectional.value = lamp.directional ? 1 : 0
         s.uLightColor.value.copy(lamp.color)
         s.uConeCos.value = lamp.coneCos
         s.uPenumbraCos.value = lamp.penumbraCos
         s.uDecay.value = lamp.decay
         s.uCutoff.value = lamp.cutoff
         s.uShadowMap.value = this.shadowRT.texture
-        s.uShadowMatrix.value = this.shadowCamera.projectionMatrix
+        const shadowCam = lamp.directional ? this.sunCamera : this.shadowCamera
+        s.uShadowMatrix.value = shadowCam.projectionMatrix
           .clone()
-          .multiply(this.shadowCamera.matrixWorldInverse)
-        s.uWeight.value = 1 / LAMP_JITTER
+          .multiply(shadowCam.matrixWorldInverse)
+        s.uWeight.value = 1 / this.quality.lampJitter
         for (const r of this.receivers) {
           if (r.noLampDirect) continue
           s.uAlphaMode.value = 0
@@ -765,7 +944,7 @@ export class LightBaker {
     // --- 1b. daylight: window glass as area emitters (into the room, with shadows) -------
     for (const vpl of this.sampleEmitters()) {
       begin()
-      this.renderVplShadow(vpl.position, savedOverride)
+      this.renderVplShadow(vpl.position, savedOverride, EMITTER_NEAR)
       v.uVplPos.value.copy(vpl.position)
       v.uVplNormal.value.copy(vpl.normal)
       v.uVplIntensity.value.copy(vpl.intensity)
@@ -787,14 +966,15 @@ export class LightBaker {
     }
 
     // --- 2. bounces: instant radiosity --------------------------------------------------
-    for (let bounce = 0; bounce < VPL_BOUNCES; bounce++) {
+    const perBounce = this.nearPerBounce && this.quality.nearSpp > 0 ? this.buildNearBounce() : null
+    for (let bounce = 0; bounce < this.quality.bounces; bounce++) {
       const vpls = this.sampleVpls(bounce)
       this.stats.vpls += vpls.length
       // The bounces not simulated, as the classic radiosity ambient term: each bounce re-emits
       // a fraction r of the previous one, so everything after the last is that bounce ×
       // r/(1 − r). r is measured from the bake's own last two bounces. In a white room
       // (r ≈ 0.6) stopping at three bounces otherwise loses ~20% of the indirect light.
-      if (bounce === VPL_BOUNCES - 1 && bounce > 0) {
+      if (this.tail && bounce === this.quality.bounces - 1 && bounce > 0) {
         const r = Math.min(0.9, this.bounceFlux[bounce]! / this.bounceFlux[bounce - 1]!)
         if (r > 0) {
           const tail = 1 / (1 - r)
@@ -819,6 +999,14 @@ export class LightBaker {
         end()
         yield
       }
+      // 2b. AR-169 BUG 8: this bounce's corner light, what the clamp dropped, into the grid the
+      // next bounce's lights are drawn from (Kollig & Keller at every bounce, not once at the end).
+      if (perBounce) yield* this.nearBounce(perBounce, bounce, begin, end)
+    }
+    if (perBounce) {
+      perBounce.material.dispose()
+      perBounce.room.triangles.dispose()
+      perBounce.room.nodes.dispose()
     }
 
     // --- 3. resolve + dilate into the final lightmaps -----------------------------------
@@ -830,7 +1018,8 @@ export class LightBaker {
     end()
 
     // --- 4. near field: add back what the bounce lights' clamp dropped near surfaces --------
-    yield* this.nearField(begin, end)
+    // (none for a direct-only calibration bake, `?bakebounces=0`: its light is a bounce's)
+    if (this.quality.nearSpp > 0) yield* this.nearField(begin, end)
 
     // Casters back to normal.
     this.casters.forEach((m) => m.layers.disable(CASTER_LAYER))
@@ -922,14 +1111,119 @@ export class LightBaker {
     return { room: buildGatherScene(sources), sampled }
   }
 
-  /** `uLM0…uLM5`: the current lightmaps of the receivers a ray can read. */
-  private lightmapUniforms(sampled: ReceiverState[]) {
+  /** `uLM0…uLM5`: the current lightmaps of the receivers a ray can read (or `maps`, per slot). */
+  private lightmapUniforms(sampled: ReceiverState[], maps?: (Texture | null)[]) {
     return Object.fromEntries(
       [0, 1, 2, 3, 4, 5].map((k) => [
         `uLM${k}`,
-        { value: sampled[k] ? this.outputs[this.receivers.indexOf(sampled[k])]!.texture : null },
+        {
+          value: maps
+            ? (maps[k] ?? null)
+            : sampled[k]
+              ? this.outputs[this.receivers.indexOf(sampled[k])]!.texture
+              : null,
+        },
       ]),
     )
+  }
+
+  /**
+   * AR-169 BUG 8: the per-bounce near field's room — the sampled receivers send their bounce's
+   * light (their grid, slot by slot); everything else only blocks (a bounce's light leaves lit
+   * receivers only; the windows' own light is the direct light's, compensated in `nearField`).
+   */
+  private buildNearBounce() {
+    const sampled = nearFieldReceivers(this.receivers)
+    const black = new Color(0, 0, 0)
+    const sources: GatherSource[] = sampled.map((r, slot) => ({
+      geometry: r.mesh.geometry,
+      matrixWorld: r.proxy.matrixWorld,
+      kind: TriangleKind.Receiver,
+      slot,
+      color: r.albedo,
+    }))
+    const represented = new Set<Object3D>()
+    for (const r of this.receivers) {
+      ;(r.sources ?? [r.mesh]).forEach((m) => represented.add(m))
+      if (!sampled.includes(r))
+        sources.push({
+          geometry: r.mesh.geometry,
+          matrixWorld: r.proxy.matrixWorld,
+          kind: TriangleKind.Constant,
+          color: black,
+        })
+    }
+    for (const mesh of this.casters) {
+      if (represented.has(mesh)) continue
+      const material = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as
+        | Material
+        | undefined
+      sources.push({
+        geometry: mesh.geometry,
+        matrixWorld: mesh.matrixWorld,
+        kind: TriangleKind.Constant,
+        color: black,
+        coverage: material?.transparent ? material.opacity : 1,
+      })
+    }
+    const room = buildGatherScene(sources)
+    const material = new ShaderMaterial({
+      vertexShader: NEAR_VERTEX,
+      fragmentShader: NEAR_FRAGMENT,
+      uniforms: {
+        uNormalWorld: { value: new Matrix3() },
+        uTris: { value: room.triangles },
+        uNodes: { value: room.nodes },
+        uOffset: { value: 0.002 },
+        uMaxDist: { value: this.vplMinDist },
+        ...this.lightmapUniforms(sampled, []),
+        uSeed: { value: this.seed },
+        uSide: { value: 1 },
+        uPass: { value: 0 },
+        uRaysPerPass: { value: RAYS_PER_PASS },
+        uTotalRays: { value: this.quality.nearSpp },
+      },
+    })
+    // Adds light (RGB) and keeps the grid's alpha: the lit side that `sampleVpls` reads.
+    material.blending = CustomBlending
+    material.blendEquation = AddEquation
+    material.blendSrc = OneFactor
+    material.blendDst = OneFactor
+    material.blendEquationAlpha = AddEquation
+    material.blendSrcAlpha = ZeroFactor
+    material.blendDstAlpha = OneFactor
+    material.depthTest = false
+    material.depthWrite = false
+    material.side = DoubleSide
+    // The shell's receivers are front-only: their room side is the front face (`uSide` 1).
+    const defaults = material as unknown as { defaultAttributeValues: Record<string, number[]> }
+    defaults.defaultAttributeValues = { ...defaults.defaultAttributeValues, chartSide: [0] }
+    return { room, sampled, material }
+  }
+
+  /** One bounce's corner light, on the shell's grid: read from bounce `bounce`, added to the next. */
+  private *nearBounce(
+    gen: ReturnType<LightBaker['buildNearBounce']>,
+    bounce: number,
+    begin: () => void,
+    end: () => void,
+  ): Generator<void, void, void> {
+    const u = gen.material.uniforms
+    for (let k = 0; k < 6; k++) u[`uLM${k}`]!.value = gen.sampled[k]?.grid[bounce]!.texture ?? null
+    // The grid only seeds the next bounce's lights: a quarter of the final pass's rays.
+    const passes = Math.max(1, Math.round(this.quality.nearSpp / 4 / RAYS_PER_PASS))
+    u.uTotalRays!.value = passes * RAYS_PER_PASS
+    for (const r of this.receivers) {
+      if (!r.frontOnly) continue
+      begin()
+      for (let pass = 0; pass < passes; pass++) {
+        u.uPass!.value = pass
+        this.renderReceiver(r, gen.material, r.grid[bounce + 1]!)
+        this.renderReceiver(r, gen.material, r.nearGrid)
+      }
+      end()
+      yield
+    }
   }
 
   /**
@@ -989,12 +1283,30 @@ export class LightBaker {
     const t0 = performance.now()
     begin()
     const { room, sampled } = this.buildRoom()
+    // AR-169 BUG 8: with the per-bounce near field, the light a ray reads is the lightmap plus
+    // every bounce's corner light (on the grid) — so corner light that bounces again counts too.
+    const sources = this.nearPerBounce
+      ? sampled.map((r) => {
+          const i = this.receivers.indexOf(r)
+          const sum = new WebGLRenderTarget(r.size, r.size, { type: FloatType })
+          this.addMat.uniforms.uA.value = this.outputs[i]!.texture
+          this.addMat.uniforms.uB.value = r.nearGrid.texture
+          this.quad.material = this.addMat
+          this.clear(sum)
+          renderer.setRenderTarget(sum)
+          renderer.render(this.quadScene, this.quadCamera)
+          return sum
+        })
+      : []
     const shared = {
       uTris: { value: room.triangles },
       uNodes: { value: room.nodes },
       uOffset: { value: 0.002 },
       uMaxDist: { value: 1e30 },
-      ...this.lightmapUniforms(sampled),
+      ...this.lightmapUniforms(
+        sampled,
+        this.nearPerBounce ? sources.map((t) => t.texture) : undefined,
+      ),
     }
     const sideMat = new ShaderMaterial({
       vertexShader: UV_SPACE_VERTEX,
@@ -1009,20 +1321,58 @@ export class LightBaker {
     yield
     // Each chart's room side, as a vertex attribute (a uniform for receivers with no charts).
     const sides: number[] = []
+    // AR-169: a front-only receiver's charts should all face the room as modelled (vote +1).
+    const behind: Record<string, string> = {}
     for (const r of this.receivers) {
       begin()
       const votes = this.chartSides(r, sideMat)
+      if (r.frontOnly) {
+        const back = [...votes].filter(([, v]) => v < 0).map(([id]) => id)
+        behind[r.name] = `${back.length}/${votes.size}`
+        // Where they are (centre, area), to tell a window reveal from a wall.
+        const chart = r.mesh.geometry.getAttribute('chart')
+        const pos = r.mesh.geometry.getAttribute('position')
+        if (chart && back.length) {
+          const at = new Map(back.map((id) => [id, { c: new Vector3(), area: 0 }]))
+          const [a, b, c] = [new Vector3(), new Vector3(), new Vector3()]
+          for (let i = 0; i + 2 < pos.count; i += 3) {
+            const slot = at.get(Math.round(chart.getX(i)))
+            if (!slot) continue
+            a.fromBufferAttribute(pos, i).applyMatrix4(r.mesh.matrixWorld)
+            b.fromBufferAttribute(pos, i + 1).applyMatrix4(r.mesh.matrixWorld)
+            c.fromBufferAttribute(pos, i + 2).applyMatrix4(r.mesh.matrixWorld)
+            const area = b.clone().sub(a).cross(c.clone().sub(a)).length() / 2
+            slot.c.addScaledVector(a.clone().add(b).add(c), area / 3)
+            slot.area += area
+          }
+          behind[`${r.name} where`] = [...at.values()]
+            .map(
+              ({ c: centre, area }) =>
+                `${centre
+                  .divideScalar(area || 1)
+                  .toArray()
+                  .map((v) => v.toFixed(2))
+                  .join(',')} ${area.toFixed(2)}m²`,
+            )
+            .join(' | ')
+        }
+      }
+      // A front-only receiver's room side is its front face, as modelled: the vote is fooled where
+      // the ceiling and floor planes run on outside the walls (Paris's corridor wall gathered
+      // the light outside it). Its votes are only logged.
+      const sideOf = (id: number) => (r.frontOnly ? 1 : (votes.get(id) ?? 1))
       const chart = r.mesh.geometry.getAttribute('chart')
       if (chart) {
         const side = new Float32Array(chart.count)
-        for (let i = 0; i < chart.count; i++) side[i] = votes.get(Math.round(chart.getX(i))) ?? 1
+        for (let i = 0; i < chart.count; i++) side[i] = sideOf(Math.round(chart.getX(i)))
         r.mesh.geometry.setAttribute('chartSide', new BufferAttribute(side, 1))
         sides.push(0)
-      } else sides.push(votes.get(0) ?? 1)
+      } else sides.push(sideOf(0))
       end()
       yield
     }
     sideMat.dispose()
+    console.info('[AR-169 front-only charts facing away from the room]', JSON.stringify(behind))
 
     const material = additive(
       new ShaderMaterial({
@@ -1031,11 +1381,12 @@ export class LightBaker {
         uniforms: {
           uNormalWorld: { value: new Matrix3() },
           ...shared,
-          uMaxDist: { value: VPL_MIN_DIST },
+          uMaxDist: { value: this.vplMinDist },
+          uSeed: { value: this.seed },
           uSide: { value: 1 },
           uPass: { value: 0 },
           uRaysPerPass: { value: RAYS_PER_PASS },
-          uTotalRays: { value: NEAR_SPP },
+          uTotalRays: { value: this.quality.nearSpp },
         },
       }),
     )
@@ -1047,7 +1398,7 @@ export class LightBaker {
     )
     targets.forEach((t) => this.clear(t))
     const sync = new Float32Array(4)
-    const passes = Math.max(1, Math.round(NEAR_SPP / RAYS_PER_PASS))
+    const passes = Math.max(1, Math.round(this.quality.nearSpp / RAYS_PER_PASS))
     material.uniforms.uTotalRays.value = passes * RAYS_PER_PASS
     for (let pass = 0; pass < passes; pass++) {
       for (const [i, r] of this.receivers.entries()) {
@@ -1091,16 +1442,22 @@ export class LightBaker {
     material.dispose()
     room.triangles.dispose()
     room.nodes.dispose()
+    sources.forEach((t) => t.dispose())
     ;(this.stats as unknown as { nearField: Record<string, number> }).nearField = {
       spp: passes * RAYS_PER_PASS,
-      radius: VPL_MIN_DIST,
+      radius: this.vplMinDist,
       ms: Math.round(performance.now() - t0),
     }
   }
 
   /** Cube distance map from a point emitter, for its shadows. */
-  private renderVplShadow(position: Vector3, savedOverride: Material | null) {
+  private renderVplShadow(position: Vector3, savedOverride: Material | null, near = VPL_NEAR) {
     const renderer = this.renderer
+    for (const camera of this.cubeCamera.children as PerspectiveCamera[]) {
+      if (camera.near === near) continue
+      camera.near = near
+      camera.updateProjectionMatrix()
+    }
     this.cubeCamera.position.copy(position)
     this.distanceMat.uniforms.uLightPos.value.copy(position)
     this.scene.overrideMaterial = this.distanceMat
@@ -1114,14 +1471,18 @@ export class LightBaker {
 
   /**
    * Window glass → point emitters. A Lambertian surface of radiance L and area A emits flux
-   * πLA, i.e. radiant intensity L·A along its normal; split evenly across its samples. The
-   * normal is turned to face the room (glass planes are single-sided either way round).
+   * πLA, i.e. radiant intensity L·A along its normal; split evenly across its samples. Each emits
+   * from its front face, as modelled (its winding; a mirroring transform flips it): every window
+   * plane in Paris, Vienna and Madrid faces into the building. AR-169: turning them toward the
+   * room's centre faced Paris's light well, whose panel has the centre on its outer side, out of
+   * the building.
    */
   private emitterTris() {
     type Tri = { a: Vector3; b: Vector3; c: Vector3; area: number; normal: Vector3; e: AreaEmitter }
     const tris: Tri[] = []
     for (const e of this.emitters) {
       e.mesh.updateMatrixWorld(true)
+      const mirrored = e.mesh.matrixWorld.determinant() < 0
       const pos = e.mesh.geometry.getAttribute('position')
       const index = e.mesh.geometry.getIndex()
       const count = index ? index.count : pos.count
@@ -1135,7 +1496,7 @@ export class LightBaker {
         const area = cross.length() / 2
         if (area <= 0) continue
         const normal = cross.normalize()
-        if (normal.dot(this.roomCenter.clone().sub(a)) < 0) normal.negate()
+        if (mirrored) normal.negate()
         tris.push({ a, b, c, area, normal, e })
       }
     }
@@ -1144,10 +1505,61 @@ export class LightBaker {
     const counts =
       total > 0
         ? tris.map((t) =>
-            Math.max(1, Math.round((EMITTER_VPLS * t.area * lum(t.e.radiance)) / total)),
+            Math.max(
+              1,
+              Math.round((this.quality.emitterVpls * t.area * lum(t.e.radiance)) / total),
+            ),
           )
         : []
     return { tris, counts, total, vpls: counts.reduce((sum, n) => sum + n, 0) }
+  }
+
+  /**
+   * AR-169 diagnostics: every lamp as the bake models it (the closed-form tests rebuild their light
+   * from this): position, aim, intensity (luminance of color × intensity, three units), cone,
+   * decay, distance cutoff, emitting disc and the disc's offset in front of the fixture.
+   */
+  lampTable() {
+    const r = (v: Vector3) => v.toArray().map((x) => +x.toFixed(4))
+    return this.lamps.map((l) => ({
+      position: r(l.position),
+      direction: r(l.direction),
+      intensity: +(l.color.r * 0.2126 + l.color.g * 0.7152 + l.color.b * 0.0722).toFixed(5),
+      coneCos: +l.coneCos.toFixed(6),
+      penumbraCos: +l.penumbraCos.toFixed(6),
+      decay: l.decay,
+      cutoff: l.cutoff,
+      wide: l.wide,
+      aperture: l.aperture,
+      front: LAMP_FRONT_OFFSET,
+      portal: !!l.portal,
+      directional: !!l.directional,
+    }))
+  }
+
+  /** Diagnostics: each emitter's area-weighted facing (the side it emits from) and centre. */
+  emitterFacing() {
+    const { tris } = this.emitterTris()
+    return this.emitters.map((e) => {
+      const n = new Vector3()
+      const c = new Vector3()
+      let area = 0
+      for (const t of tris) {
+        if (t.e !== e) continue
+        n.addScaledVector(t.normal, t.area)
+        c.addScaledVector(t.a.clone().add(t.b).add(t.c).divideScalar(3), t.area)
+        area += t.area
+      }
+      const r = (v: Vector3) => v.toArray().map((x) => +x.toFixed(2))
+      return {
+        name: e.mesh.name,
+        area: +area.toFixed(2),
+        radiance: +e.radiance.r.toFixed(3),
+        facing: r(n.normalize()),
+        centre: r(c.divideScalar(area || 1)),
+        roomCenter: r(this.roomCenter),
+      }
+    })
   }
 
   private sampleEmitters() {
@@ -1167,7 +1579,7 @@ export class LightBaker {
           .clone()
           .addScaledVector(t.b.clone().sub(t.a), u)
           .addScaledVector(t.c.clone().sub(t.a), w)
-          .addScaledVector(t.normal, 0.02)
+          .addScaledVector(t.normal, EMITTER_OFFSET)
         vpls.push({
           position,
           normal: t.normal,
@@ -1180,6 +1592,27 @@ export class LightBaker {
   }
 
   /** Importance-sample lit surface patches (radiosity × area) as bounce emitters. */
+  /**
+   * AR-169: the building's shell (front-only receivers) as two-sided raycast targets: a bounce
+   * light's jitter must not carry it through a wall (`sampleVpls`).
+   */
+  private shellTargets(): Mesh[] {
+    if (!this.shell) {
+      const material = new MeshBasicMaterial({ side: DoubleSide })
+      this.shell = this.receivers
+        .filter((r) => r.frontOnly)
+        .map((r) => {
+          r.mesh.updateMatrixWorld(true)
+          const target = new Mesh(r.mesh.geometry, material)
+          target.matrixAutoUpdate = false
+          target.matrix.copy(r.mesh.matrixWorld)
+          target.matrixWorld.copy(r.mesh.matrixWorld)
+          return target
+        })
+    }
+    return this.shell
+  }
+
   private sampleVpls(bounce: number) {
     type Candidate = { r: ReceiverState; i: number; weight: number; flux: Color; sign: number }
     const candidates: Candidate[] = []
@@ -1228,13 +1661,15 @@ export class LightBaker {
 
     // Stratified sampling over the CDF.
     const vpls: { position: Vector3; normal: Vector3; intensity: Color }[] = []
+    const shellRay = new Raycaster()
+    let clipped = 0
     let acc = 0
     let k = 0
-    const step = total / VPL_COUNT
+    const step = total / this.quality.vpls
     let next = this.random() * step
     for (const c of candidates) {
       acc += c.weight
-      while (acc >= next && k < VPL_COUNT) {
+      while (acc >= next && k < this.quality.vpls) {
         const p = c.i * 4
         const normal = new Vector3(c.r.normal[p], c.r.normal[p + 1], c.r.normal[p + 2])
           .normalize()
@@ -1251,16 +1686,29 @@ export class LightBaker {
         if (tangent.lengthSq() < 1e-6) tangent.set(1, 0, 0)
         tangent.normalize()
         const bitangent = normal.clone().cross(tangent)
-        position
-          .addScaledVector(tangent, (this.random() - 0.5) * size)
+        const jitter = tangent
+          .multiplyScalar((this.random() - 0.5) * size)
           .addScaledVector(bitangent, (this.random() - 0.5) * size)
+        // AR-169: unless that carries it through the shell — the ceiling and floor planes run on
+        // past the walls, and a light just behind a wall lit only the wall's back (BUG 4).
+        const reach = jitter.length()
+        if (reach > 0) {
+          shellRay.set(position, jitter.clone().divideScalar(reach))
+          shellRay.far = reach
+          if (shellRay.intersectObjects(this.shellTargets(), false).length) clipped++
+          else position.add(jitter)
+        }
         // Each VPL carries flux × total/(weight × N); radiant intensity = Φ/π.
-        const intensity = c.flux.clone().multiplyScalar(total / (c.weight * VPL_COUNT) / Math.PI)
+        const intensity = c.flux
+          .clone()
+          .multiplyScalar(total / (c.weight * this.quality.vpls) / Math.PI)
         vpls.push({ position, normal, intensity })
         k++
         next += step
       }
     }
+    const stats = this.stats as unknown as { clipped?: number[] }
+    ;(stats.clipped ??= [])[bounce] = clipped
     return vpls
   }
 
@@ -1539,6 +1987,7 @@ export class LightBaker {
       r.accum.dispose()
       r.accumBounce.dispose()
       r.grid.forEach((g) => g.dispose())
+      r.nearGrid.dispose()
       r.dirAccum?.dispose()
     })
     this.outputs.forEach((o) => o.dispose())
@@ -1550,6 +1999,7 @@ export class LightBaker {
       this.distanceMat,
       this.spotMat,
       this.vplMat,
+      this.coverageMat,
       this.geometryMat,
       this.resolveMat,
       this.dilateMat,

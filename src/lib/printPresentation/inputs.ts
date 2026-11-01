@@ -1,6 +1,7 @@
 import { canonicalJson, fnv1a } from '@/lib/bake/hash'
 
 import {
+  COPY_NUMBERS,
   LOOK_VERSION,
   frameOf,
   seedForArtwork,
@@ -73,6 +74,17 @@ export function presentationInputs(src: PresentationSource): PresentationInputs 
   const frame = frameOf(src.presentationFrame)
   const ratio = Math.round(shape * 10000) / 10000
   const seed = seedForArtwork(src.id)
-  const fingerprint = fnv1a(canonicalJson([LOOK_VERSION, mode, edition, ratio, seed, frame]))
+  // The copy-number rule counts only where a number is pencilled: a new rule re-renders just those.
+  const fingerprint = fnv1a(
+    canonicalJson([
+      LOOK_VERSION,
+      mode,
+      edition,
+      ratio,
+      seed,
+      frame,
+      ...(edition !== null ? [COPY_NUMBERS] : []),
+    ]),
+  )
   return { mode, edition, frame, ratio, seed, fingerprint }
 }

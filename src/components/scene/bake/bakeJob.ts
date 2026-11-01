@@ -4,7 +4,26 @@ import type { Mesh, Scene, WebGLRenderer } from 'three'
 import type { SpaceLook } from '@/lib/bake/spaceLooks'
 
 import { BAKE_DEBUG, LUX_PER_UNIT, setBakeAllRooms } from './bakedLook'
-import { LightBaker, type AreaEmitter, type BakeReceiver } from './LightBaker'
+import {
+  BAKE_QUALITY,
+  LightBaker,
+  setBakeGrid,
+  type AreaEmitter,
+  type BakeReceiver,
+} from './LightBaker'
+import {
+  bakeBouncesFlag,
+  bakeClayFlag,
+  bakeGroupsFlag,
+  bakeQualityFlag,
+  bakeSeedFlag,
+  bakeVplCubeFlag,
+  bakeVplClampFlag,
+  bakeGridFlag,
+  bakeNearBounceFlag,
+  bakeScaleFlag,
+} from './bakeFlags'
+import { spaceSunDirection, sunEnters } from './spaceSun'
 import { brightenWindows } from './daylight'
 import { luminance, type BakeMeter } from './meter'
 import { prepareReceivers } from './receivers'
@@ -106,7 +125,25 @@ export const startBake = (
     center.y = 1.5
   }
 
+  setBakeGrid(bakeGridFlag() ?? 256)
   const baker = new LightBaker(gl, scene)
+  baker.quality = BAKE_QUALITY[bakeQualityFlag()]
+  const bounces = bakeBouncesFlag()
+  if (bounces !== null) {
+    baker.quality = {
+      ...baker.quality,
+      bounces,
+      nearSpp: bounces === 0 ? 0 : baker.quality.nearSpp,
+    }
+    // Exactly N bounces, as Cycles renders N: no tail for the ones left out.
+    baker.tail = false
+  }
+  baker.nearPerBounce = bakeNearBounceFlag()
+  const vplClamp = bakeVplClampFlag()
+  if (vplClamp !== null) baker.vplMinDist = vplClamp
+  const vplCube = bakeVplCubeFlag()
+  if (vplCube !== null) baker.quality = { ...baker.quality, vplCube }
+  baker.seed = bakeSeedFlag()
   try {
     return {
       baker,
@@ -134,26 +171,78 @@ const gatherInto = (
   const { look } = room
   baker.prepare(receivers, emitters, center)
   // Corridors keep standard fixtures where the rooms' recessed lamps are rated up, on the same
-  // dimmer (the space's `corridorLumens`).
+  // dimmer (`corridorLumens`). Recessed lamps only (AR-169): a round lamp is a standard fixture
+  // everywhere, on its own dimmer — Madrid's entrance and a plafond-lit Paris or Vienna corridor.
   if (wall && look.corridorLumens !== undefined) {
     const walls = raycastableWalls(wall)
     const standard = (look.corridorLumens / Math.PI / LUX_PER_UNIT) * room.recessedDimmer
     let corridorLamps = 0
     baker.rateLamps((lamp) => {
-      if (!lamp.wide || !inCorridor(walls, lamp.position)) return null
+      if (!lamp.recessed || !inCorridor(walls, lamp.position)) return null
       corridorLamps++
       return standard
     })
     console.info('[AR-161 corridor]', JSON.stringify({ lamps: corridorLamps }))
   }
+  // AR-169 calibration: one light group's output scaled (`?bakescale=`), to see what each adds.
+  const scale = bakeScaleFlag()
+  if (scale) {
+    const walls = wall ? raycastableWalls(wall) : null
+    baker.rateLamps((lamp) => {
+      const group = !lamp.wide
+        ? 'track'
+        : walls && inCorridor(walls, lamp.position)
+          ? 'corridor'
+          : 'downlights'
+      const factor = scale[group]
+      return factor === undefined ? null : lamp.intensity * factor
+    })
+    const factor = scale.window
+    if (factor !== undefined) emitters.forEach((e) => e.radiance.multiplyScalar(factor))
+  }
+  // AR-169 calibration: only the light groups asked for (`bakeFlags`).
+  const groups = bakeGroupsFlag()
+  if (groups) {
+    baker.dropLamps((lamp) => !groups.has(lamp.wide ? 'downlights' : 'track'))
+    // `prepare` holds this array: emptied in place.
+    if (!groups.has('window')) emitters.splice(0)
+  }
+  console.info(
+    '[AR-169 bake setup]',
+    JSON.stringify({
+      quality: bakeQualityFlag(),
+      bounces: baker.quality.bounces,
+      tail: baker.tail,
+      nearSpp: baker.quality.nearSpp,
+      vplCube: baker.quality.vplCube ?? 'default',
+      vplClamp: baker.vplMinDist,
+      grid: bakeGridFlag() ?? 256,
+      nearPerBounce: baker.nearPerBounce,
+      scale: bakeScaleFlag(),
+      seed: baker.seed,
+      clay: bakeClayFlag(),
+      frontOnly: receivers.filter((r) => r.frontOnly).map((r) => r.name),
+      groups: groups ? [...groups] : 'all',
+      lamps: baker.stats.lamps,
+      emitters: emitters.map((e) => e.mesh.name),
+      // The material table this bake ran on: each receiver's linear albedo (what it bounces).
+      albedo: Object.fromEntries(
+        receivers.map((r) => [r.name, r.albedo.toArray().map((c) => +c.toFixed(3))]),
+      ),
+    }),
+  )
+  // Which way each emitter faces (`LightBaker.emitterTris`: its front face, as modelled).
+  console.info('[AR-169 emitters]', JSON.stringify(baker.emitterFacing()))
+  // Every lamp as baked, for the closed-form tests (`bakeFlags`, phase 2).
+  if (BAKE_DEBUG) console.info('[AR-169 lamps]', JSON.stringify(baker.lampTable()))
   // Direct sun through each window (the space's illuminance on a surface facing it — outdoors
   // ~50–80 klx — elevation, and azimuth off straight in).
-  if (look.sunLux > 0) {
-    const elevation = (look.sunElevationDeg * Math.PI) / 180
-    const azimuth = (look.sunAzimuthDeg * Math.PI) / 180
-    // Sunlight ~5,800 K (near neutral), scaled so its luminance is the asked illuminance (three units).
-    const tint = new Color(1, 0.98, 0.95)
-    const illuminance = tint.multiplyScalar(look.sunLux / LUX_PER_UNIT / luminance(tint))
+  if (look.sunLux > 0 && (!groups || groups.has('sun'))) {
+    // Sunlight, white like every light in the room (AR-169: was 5,800 K, (1, 0.98, 0.95)), scaled
+    // so its luminance is the asked illuminance (three units).
+    const tint = new Color(1, 1, 1)
+    const sunLux = look.sunLux * (scale?.sun ?? 1)
+    const illuminance = tint.multiplyScalar(sunLux / LUX_PER_UNIT / luminance(tint))
     let suns = 0
     // The sun comes through every window opening — its glass rectangle, shown or not (an open
     // window hides it) — only through it (a portal), and not down a light well (a narrow shaft
@@ -162,30 +251,40 @@ const gatherInto = (
     scene.traverse((o) => {
       if ((o as Mesh).isMesh && /^windowGlass\d+$/.test(o.name)) openings.push(o as Mesh)
     })
-    for (const mesh of openings) {
+    // Each opening's glass rectangle and its inward horizontal normal (its thinnest horizontal axis,
+    // pointing at the room centre).
+    const windows = openings.map((mesh) => {
       mesh.updateMatrixWorld(true)
       mesh.geometry.computeBoundingBox()
       const box = mesh.geometry.boundingBox!.clone().applyMatrix4(mesh.matrixWorld)
       const through = box.getCenter(new Vector3())
       const size = box.getSize(new Vector3())
-      // The glass plane's inward horizontal normal: its thinnest horizontal axis, pointing
-      // at the room centre.
       const acrossX = size.x < size.z
       const inward = acrossX ? new Vector3(1, 0, 0) : new Vector3(0, 0, 1)
       if (inward.dot(center.clone().sub(through)) < 0) inward.negate()
-      const horizontal = inward.applyAxisAngle(new Vector3(0, 1, 0), azimuth)
-      const direction = horizontal
-        .multiplyScalar(Math.cos(elevation))
-        .add(new Vector3(0, -Math.sin(elevation), 0))
+      return { through, size, acrossX, inward, area: size.y * (acrossX ? size.z : size.x) }
+    })
+    // AR-169: ONE sun for the space (`spaceSun`) — through the windows it can enter.
+    const direction = spaceSunDirection(windows, look.sunElevationDeg, look.sunAzimuthDeg)
+    for (const { through, size, acrossX, inward } of windows) {
+      if (!direction || !sunEnters(direction, inward)) continue
       const portal = {
         center: through.clone(),
         u: acrossX ? new Vector3(0, 0, size.z / 2) : new Vector3(size.x / 2, 0, 0),
         v: new Vector3(0, size.y / 2, 0),
       }
-      baker.addSun(direction, illuminance, through, Math.max(size.x, size.y, size.z) + 2, portal)
+      baker.addSun(
+        direction.clone(),
+        illuminance,
+        through,
+        Math.max(size.x, size.y, size.z) + 2,
+        portal,
+      )
       suns++
     }
-    console.info('[AR-161 sun]', JSON.stringify({ lux: look.sunLux, windows: suns }))
+    // AR-169 (BUG 7): how many suns the baker holds as parallel light (one per window).
+    const parallel = baker.lampTable().filter((l) => l.directional).length
+    console.info('[AR-161 sun]', JSON.stringify({ lux: sunLux, windows: suns, parallel }))
   }
   // Lamps are captured as data: culling can resume.
   setBakeAllRooms(false)
