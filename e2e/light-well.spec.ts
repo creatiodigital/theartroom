@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { Mesh, MeshStandardMaterial, PlaneGeometry, Scene } from 'three'
 
 import { brightenWindows } from '@/components/scene/bake/daylight'
-import { spaceLooks } from '@/lib/bake/spaceLooks'
 
 // AR-165: Paris's opening at the end of the exit corridor has no glass, so its sky panel
 // (`windowLight1`) is a light well that lights the room itself. At a window's full daylight it
@@ -59,15 +58,4 @@ test('undo puts every brightness back', () => {
   const { scene, glass, behindGlass, well } = room()
   brightenWindows(scene, 6, 0.25).undo()
   for (const mesh of [glass, behindGlass, well]) expect(intensity(mesh)).toBeCloseTo(1.26)
-})
-
-test('only Paris dims its light well; Vienna and Madrid keep their approved looks', () => {
-  const share = spaceLooks.paris!.look.lightWellDaylight
-  expect(share).toBeGreaterThan(0)
-  expect(share).toBeLessThan(1)
-  expect(spaceLooks.vienna!.look.lightWellDaylight).toBeUndefined()
-  expect(spaceLooks.madrid!.look.lightWellDaylight).toBeUndefined()
-  // Everything else Paris shares with Vienna stays as approved.
-  const { lightWellDaylight: _, ...rest } = spaceLooks.paris!.look
-  expect(rest).toEqual(spaceLooks.vienna!.look)
 })

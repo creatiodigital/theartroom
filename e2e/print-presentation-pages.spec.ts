@@ -33,6 +33,7 @@ const WINDOW = { x: 0.2, y: 0.2, w: 0.6, h: 0.6 }
 test.describe.configure({ mode: 'serial' })
 
 let artworkId: string
+let artworkSlug: string
 let imageUrl: string
 let saved: Prisma.JsonValue | null
 let switchWas: boolean
@@ -61,9 +62,12 @@ const present = async (shape: BlankShape, patch: Partial<PrintPresentationRecord
 const presentation = (page: Page) =>
   page.locator('[data-print-presentation]').filter({ has: page.locator(`img[src*="${imageUrl}"]`) })
 
+/** The render image (a cropped piece also holds a blank stand-in that sizes it). */
+const renderOf = (piece: Locator) => piece.locator('img[aria-hidden="true"]:not([src^="data:"])')
+
 /** The render sits exactly over its piece, and the window where the record says. */
 const expectFitted = async (piece: Locator) => {
-  const render = piece.locator('img[aria-hidden="true"]')
+  const render = renderOf(piece)
   const win = piece.locator('[data-print-presentation-window]')
   const [p, r, w] = [await piece.boundingBox(), await render.boundingBox(), await win.boundingBox()]
   expect(p && r && w).toBeTruthy()
@@ -77,13 +81,34 @@ const expectFitted = async (piece: Locator) => {
   return r!
 }
 
+/**
+ * AR-168: the artwork page crops the presentation to the piece — a thin border of wall round it,
+ * the render overflowing that area on purpose — and shows it whole within one screen.
+ */
+const expectCropped = async (page: Page, piece: Locator) => {
+  const p = await piece.boundingBox()
+  const w = await piece.locator('[data-print-presentation-window]').boundingBox()
+  expect(p && w).toBeTruthy()
+  expect(p!.width).toBeGreaterThan(50)
+  // The original sits inside the cropped piece.
+  expect(w!.x).toBeGreaterThanOrEqual(p!.x - 1)
+  expect(w!.y).toBeGreaterThanOrEqual(p!.y - 1)
+  expect(w!.x + w!.width).toBeLessThanOrEqual(p!.x + p!.width + 1)
+  expect(w!.y + w!.height).toBeLessThanOrEqual(p!.y + p!.height + 1)
+  // Whole within one screen.
+  expect(p!.height).toBeLessThanOrEqual(page.viewportSize()!.height + 0.5)
+  return p!
+}
+
 test.beforeAll(async () => {
   test.skip(bakeBackend() !== 'local', 'stores renders: run with BAKE_STORAGE=local, never on R2')
+  // A work the fixture exhibition hangs: the exhibition grid must show it.
   const artwork = await prisma.artwork.findFirstOrThrow({
-    where: { slug: fixtures.artworkSlug },
-    select: { id: true, imageUrl: true, printPresentation: true },
+    where: { slug: fixtures.exhibitionArtworkSlug },
+    select: { id: true, slug: true, imageUrl: true, printPresentation: true },
   })
   artworkId = artwork.id
+  artworkSlug = artwork.slug
   imageUrl = artwork.imageUrl!
   saved = artwork.printPresentation
   switchWas = await getPrintPresentationsEnabled()
@@ -111,7 +136,7 @@ test('switch on: the exhibition grid shows the work in its render, the original 
   await page.goto(routes.exhibition())
   const card = presentation(page)
   await expect(card).toHaveCount(1)
-  await expect(card.locator('img[aria-hidden="true"]')).toHaveAttribute('src', record.urls.small)
+  await expect(renderOf(card)).toHaveAttribute('src', record.urls.small)
   const render = await expectFitted(card)
   expect(Math.abs(render.width / render.height - 1.25)).toBeLessThan(0.02)
   // The original file, unchanged, inside the window.
@@ -123,11 +148,11 @@ test('switch on: the exhibition grid shows the work in its render, the original 
 test('switch on: the artwork page shows the large render', async ({ page }) => {
   const record = await present('wide')
   await setPrintPresentationsEnabled(true)
-  await page.goto(routes.artwork())
+  await page.goto(routes.artwork(artworkSlug))
   const picture = presentation(page)
   await expect(picture).toHaveCount(1)
-  await expect(picture.locator('img[aria-hidden="true"]')).toHaveAttribute('src', record.urls.large)
-  await expectFitted(picture)
+  await expect(renderOf(picture)).toHaveAttribute('src', record.urls.large)
+  await expectCropped(page, picture)
 })
 
 test('a tall render stays fitted where its height is capped: grid and artwork page', async ({
@@ -138,11 +163,11 @@ test('a tall render stays fitted where its height is capped: grid and artwork pa
   await page.goto(routes.exhibition())
   const card = await expectFitted(presentation(page))
   expect(card.height).toBeLessThanOrEqual(600.5) // the grid's height cap binds: 600 × 0.5 wide
-  await page.goto(routes.artwork())
-  await expectFitted(presentation(page))
+  await page.goto(routes.artwork(artworkSlug))
+  await expectCropped(page, presentation(page))
 })
 
-test('on a wide retina screen the artwork page keeps the render within the size it was made for', async ({
+test('on a wide retina screen the artwork page shows the whole piece within one screen', async ({
   browser,
 }) => {
   await present('wide')
@@ -152,9 +177,8 @@ test('on a wide retina screen the artwork page keeps the render within the size 
     deviceScaleFactor: 2,
   })
   const page = await context.newPage()
-  await page.goto(routes.artwork())
-  const render = await expectFitted(presentation(page))
-  expect(render.width).toBeLessThanOrEqual(860.5)
+  await page.goto(routes.artwork(artworkSlug))
+  await expectCropped(page, presentation(page))
   await context.close()
 })
 
@@ -164,7 +188,7 @@ test('switch off: the pages are as they were', async ({ page }) => {
   await page.goto(routes.exhibition())
   await expect(page.locator(`img[src*="${imageUrl}"]`).first()).toBeVisible()
   await expect(page.locator('[data-print-presentation]')).toHaveCount(0)
-  await page.goto(routes.artwork())
+  await page.goto(routes.artwork(artworkSlug))
   await expect(page.locator('[data-print-presentation]')).toHaveCount(0)
 })
 
@@ -176,7 +200,7 @@ test('an out-of-date render is not shown: the page falls back to the plain image
   await page.goto(routes.exhibition())
   await expect(page.locator(`img[src*="${imageUrl}"]`).first()).toBeVisible()
   await expect(presentation(page)).toHaveCount(0)
-  await page.goto(routes.artwork())
+  await page.goto(routes.artwork(artworkSlug))
   await expect(presentation(page)).toHaveCount(0)
 })
 
@@ -199,7 +223,7 @@ test('a render file that will not load leaves the plain image, never an empty ca
   await present('wide')
   await removeRenderFiles(artworkId, fingerprint)
   await setPrintPresentationsEnabled(true)
-  for (const url of [routes.exhibition(), routes.artwork()]) {
+  for (const url of [routes.exhibition(), routes.artwork(artworkSlug)]) {
     await page.goto(url)
     const image = page.locator(`img[src*="${imageUrl}"]`).first()
     await expect(image).toBeVisible()

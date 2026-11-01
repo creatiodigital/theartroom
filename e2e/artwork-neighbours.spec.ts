@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 
+import { SHOW_NEIGHBOUR_ARROWS } from '@/components/artwork/detail/neighbourArrows'
 import { getGallerySelection } from '@/lib/queries/getGallerySelection'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
 import prisma from '@/lib/prisma'
@@ -96,6 +97,7 @@ test.describe('prints previous/next arrows', () => {
   })
 
   test('the arrows walk the selection, carrying the context each hop', async ({ page }) => {
+    test.skip(!SHOW_NEIGHBOUR_ARROWS, 'the arrows are hidden for now (AR-168)')
     const selection = await getGallerySelection()
     const slugs = selection.map((c) => c.slug)
     const [first, second, third] = fixtures
@@ -132,6 +134,7 @@ test.describe('prints previous/next arrows', () => {
   })
 
   test('the last work in the selection offers no next', async ({ page }) => {
+    test.skip(!SHOW_NEIGHBOUR_ARROWS, 'the arrows are hidden for now (AR-168)')
     const last = fixtures[2]
     await page.goto(`/artworks/${last.slug}?from=prints`)
 
@@ -210,6 +213,7 @@ test.describe('artist profile previous/next arrows', () => {
   })
 
   test("the arrows walk the artist's works, carrying the context each hop", async ({ page }) => {
+    test.skip(!SHOW_NEIGHBOUR_ARROWS, 'the arrows are hidden for now (AR-168)')
     const artist = await getPublicArtistByHandler(fixtures.artistSlug)
     const works = artist?.artworks ?? []
     expect(works.length, 'the seeded featured works must reach the profile').toBeGreaterThanOrEqual(
@@ -243,6 +247,7 @@ test.describe('artist profile previous/next arrows', () => {
   })
 
   test('the last work on the profile offers no next', async ({ page }) => {
+    test.skip(!SHOW_NEIGHBOUR_ARROWS, 'the arrows are hidden for now (AR-168)')
     const artist = await getPublicArtistByHandler(fixtures.artistSlug)
     const works = artist?.artworks ?? []
     test.skip(works.length < 2, 'needs at least two featured works')

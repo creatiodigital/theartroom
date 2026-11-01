@@ -14,6 +14,7 @@ import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
+import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
@@ -53,10 +54,6 @@ export type Artwork = {
 
 const FALLBACK_WIDTH = 800
 const FALLBACK_HEIGHT = 800
-
-/** The previous / next arrows beside the work: hidden for now (owner, 2026-10-28), so the work
- *  takes their room. Flip back to bring them, and their reserved gutters, back as they were. */
-const SHOW_NEIGHBOUR_ARROWS = false
 
 /**
  * Resolved commerce facts for the availability card.

@@ -13,8 +13,11 @@
  */
 export const fixtures = {
   artistSlug: process.env.E2E_ARTIST_SLUG ?? 'john-doe',
-  exhibitionSlug: process.env.E2E_EXHIBITION_SLUG ?? 'landscapes',
+  // The Beauty of Permanence (a published dev copy) since 2026-11-01: `landscapes` was deleted.
+  exhibitionSlug: process.env.E2E_EXHIBITION_SLUG ?? 'the-beauty-of-permanence',
   artworkSlug: process.env.E2E_ARTWORK_SLUG ?? 'landscape-and-river-52416',
+  // A work the fixture exhibition hangs (its grid shows it): Paseos en la arena.
+  exhibitionArtworkSlug: process.env.E2E_EXHIBITION_ARTWORK_SLUG ?? 'paseos-en-la-arena-93927',
 } as const
 
 export const routes = {

@@ -63,7 +63,8 @@ const madrid: LookState = { baked: true, space: spaceLooks.madrid!.look }
 const paris: LookState = { baked: true, space: spaceLooks.paris!.look }
 const downlight = { intensity: 8, angle: 0.45, penumbra: 0.8, distance: 15 }
 const round = 3000 / Math.PI / LUX_PER_UNIT
-const recessed = 12500 / Math.PI / LUX_PER_UNIT
+// AR-169 (2026-10-30, the gallery look): 12,500 → 6,250 lm — "much better… floor no longer washed out".
+const recessed = 6250 / Math.PI / LUX_PER_UNIT
 
 test('a baked space dims the ceiling lamps from their rating; 100% is the rating exactly', () => {
   expect(lookSpot(madrid, downlight, 'downlight', 1).intensity).toBe(round)
