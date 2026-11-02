@@ -14,6 +14,7 @@ import { BAKE_DEBUG } from './bakedLook'
 import { bakeScaleFlag } from './bakeFlags'
 import { setMeteredExposure, setMeteredWhiteBalance } from './bakeState'
 import { brightenWindows } from './daylight'
+import { floorSheenFlag, sheenWindows } from './floorSheen'
 import { unwrapMatches } from './hashUnwrap'
 import { prepareReceivers, type RoomPaint } from './receivers'
 
@@ -93,13 +94,15 @@ export const applyStoredBake = (
     // The glass as the camera shows it: a share of the daylight it let in (`GLASS_ON_SCREEN`).
     // AR-169 trial: `?bakescale=window:F` dims the sky on screen as it dimmed it in the bake.
     const sky = bakeScaleFlag()?.window ?? 1
-    undos.push(
-      brightenWindows(
-        scene,
-        room.look.daylightGain * GLASS_ON_SCREEN * sky,
-        room.look.lightWellDaylight,
-      ).undo,
+    const daylight = brightenWindows(
+      scene,
+      room.look.daylightGain * GLASS_ON_SCREEN * sky,
+      room.look.lightWellDaylight,
     )
+    undos.push(daylight.undo)
+    // AR-170: the floor's finish gives back the daylight those windows let in (the glass shows
+    // `GLASS_ON_SCREEN` of it) — `floorSheen.ts`.
+    const sheen = floorSheenFlag() > 0 ? sheenWindows(daylight.windows, 1 / GLASS_ON_SCREEN) : null
     // The light the bake measured at each artwork, found by the artwork's id.
     const baked = applyBakedLighting(
       scene,
@@ -107,6 +110,7 @@ export const applyStoredBake = (
       maps,
       plaster,
       artLightById(bake.artLight),
+      sheen,
     )
     undos.push(baked.undo)
     // The space's fixed camera, as recorded with the bake.

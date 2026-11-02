@@ -24,6 +24,12 @@ import {
   MIRROR_VERTEX_PARS,
 } from './floorMirror'
 import { fillNearFlag } from './fillField'
+import {
+  floorSheenUniforms,
+  SHEEN_FRAGMENT_PARS,
+  SHEEN_LIGHT,
+  type SheenWindow,
+} from './floorSheen'
 import { softFillGlsl, softFillTerm, softFillUniforms } from './softFill'
 import { BAKE_DEBUG } from './bakedLook'
 import type { BakeReceiver } from './LightBaker'
@@ -133,6 +139,8 @@ interface StandardPatch {
   direction?: Texture | null
   /** AR-169 trial: its reflection from the planar mirror (`floorMirror.ts`), the floor only. */
   mirror?: boolean
+  /** AR-170: the windows' daylight on its finish (`floorSheen.ts`), the floor only. */
+  sheen?: SheenWindow[] | null
 }
 
 /**
@@ -143,7 +151,13 @@ interface StandardPatch {
 const patchStandard = (
   material: MeshStandardMaterial,
   lightMap: Texture,
-  { intensity = 1, matte = false, direction = null, mirror = false }: StandardPatch = {},
+  {
+    intensity = 1,
+    matte = false,
+    direction = null,
+    mirror = false,
+    sheen = null,
+  }: StandardPatch = {},
 ) => {
   const own = (key: 'onBeforeCompile' | 'customProgramCacheKey') =>
     Object.prototype.hasOwnProperty.call(material, key) ? { value: material[key] } : null
@@ -167,8 +181,14 @@ const patchStandard = (
       shader.fragmentShader = `${MIRROR_FRAGMENT_PARS}${shader.fragmentShader}`
       maps = `${maps.replace(IBL_RADIANCE, '')}\n${MIRROR_RADIANCE}`
     }
+    let lights = LIGHTS_OFF
+    if (sheen?.length) {
+      Object.assign(shader.uniforms, floorSheenUniforms(sheen))
+      shader.fragmentShader = `${SHEEN_FRAGMENT_PARS}${shader.fragmentShader}`
+      lights = `${lights}${SHEEN_LIGHT}`
+    }
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <lights_fragment_begin>', LIGHTS_OFF)
+      .replace('#include <lights_fragment_begin>', lights)
       .replace('#include <lights_fragment_maps>', maps)
     if (matte)
       shader.fragmentShader = shader.fragmentShader.replace(
@@ -177,7 +197,7 @@ const patchStandard = (
       )
   }
   material.customProgramCacheKey = () =>
-    `baked-${matte ? 'matte' : 'standard'}${direction ? '-relief' : ''}${mirror ? '-mirror' : ''}${fillNearFlag() ? '-near' : ''}-${lightMap.channel}`
+    `baked-${matte ? 'matte' : 'standard'}${direction ? '-relief' : ''}${mirror ? '-mirror' : ''}${sheen?.length ? `-sheen${sheen.length}` : ''}${fillNearFlag() ? '-near' : ''}-${lightMap.channel}`
   material.needsUpdate = true
   return () => {
     material.lightMap = null
@@ -282,12 +302,14 @@ export const applyBakedLighting = (
   maps: BakedMapTexture[],
   plaster: PlasterTextures | null,
   artLight: (work: Mesh) => Color | undefined,
+  /** AR-170: the windows' daylight on the floor's finish (`floorSheen.ts`); null: none. */
+  sheen: SheenWindow[] | null = null,
 ): BakedRoom => {
   const restore: (() => void)[] = []
   const undo = () => restore.splice(0).forEach((step) => step())
   const artworks = trackArtworks(scene, artLight)
   try {
-    swapBakedLighting(receivers, maps, plaster, restore)
+    swapBakedLighting(receivers, maps, plaster, restore, sheen)
     restore.push(artworks.undo)
     artworks.update()
   } catch (error) {
@@ -321,6 +343,7 @@ const swapBakedLighting = (
   maps: BakedMapTexture[],
   plaster: PlasterTextures | null,
   restore: (() => void)[],
+  sheen: SheenWindow[] | null,
 ) => {
   const mapOf = (receiver: string, kind: BakeMapKind) =>
     maps.find((m) => m.receiver === receiver && m.kind === kind)?.texture ?? null
@@ -339,6 +362,7 @@ const swapBakedLighting = (
         patchStandard(r.mesh.material as MeshStandardMaterial, lightMap, {
           direction,
           mirror: floorMirrorFlag() !== null,
+          sheen,
         }),
       )
       if (bakeClayFlag()) restore.push(showClay(r.mesh.material as MeshStandardMaterial))
