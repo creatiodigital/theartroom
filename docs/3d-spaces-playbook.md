@@ -88,6 +88,11 @@ and `ceiling`. Don't author these.
 - **Panel numbering**, for the same reason.
 - Lock placeholders in Blender (`lock_location/rotation/scale`). Locks stop Object-Mode drags only,
   not Edit-Mode edits, renames or deletion.
+- **Model a new placeholder flush on its wall**: on the surface, parallel to it, facing into the
+  room. The scene draws each work 1 mm off the wall found behind it (`ArtObjects/wallContact.ts`:
+  rays from the work to the model's `wall<n>` meshes, up to 25 cm either side of the placeholder),
+  so a placeholder standing off its wall no longer leaves works floating; flush, the saved
+  positions and the drawn ones agree. Panel faces are flush already.
 
 Everything else can change freely: fixtures, the ceiling height, more lamps, new openings. Eduardo
 may change geometry as long as the placeholders stay. A new model version makes every bake in the
