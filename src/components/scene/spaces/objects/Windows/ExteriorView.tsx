@@ -28,7 +28,7 @@ import { isFallbackTexture, useResilientTexture } from '@/components/scene/useRe
  * only: the glass's emissive values (the bake's daylight) are untouched and the exterior is never
  * in a bake (not on the bake page), so every stored bake stays valid.
  *
- * The facade is a model with the photo on it (`FACADE`), its depth real geometry (Eduardo: "my issue
+ * The facade is a model with the photo on it (`FACADES`), its depth real geometry (Eduardo: "my issue
  * is the depth"; "all flat looks really cheap"). Before it, a flat photo with parallax occlusion
  * (a height map): its railings showed twice and speckled, or smeared at a slant (2026-11-02 on
  * staging, "it's a real mess") — a height map cannot hold see-through ironwork.
@@ -40,10 +40,10 @@ import { isFallbackTexture, useResilientTexture } from '@/components/scene/useRe
  * glass scatters.
  *
  * As Eduardo approved it (2026-11-01, "looks perfect now"), the same in every space and window:
- * - `FACADE` across every street, mirrored copies either side making the row. Vienna's second room
- *   (its windows face another way) had its own photo for a day; Eduardo 2026-11-02: "I don't like
- *   at all the second image. So let's use the same we used on paris… Same distance" — "in vienna
- *   model we will have twice the same image in all window views".
+ * - `FACADES`, a facade across each street, mirrored copies either side making the row: the first
+ *   street (its first pane's) haussmann4, every other haussmann6 — Paris and Madrid face one way,
+ *   Vienna's second room another (Eduardo 2026-11-02: "in vienna space we want 2 different
+ *   facades"; its second photo of 2026-11-01, flat, he had turned down).
  * - STREET_BELOW: the room's floor over the street — a fourth floor (Eduardo: "pretend our gallery
  *   is on the 3rd or 4th floor", so the view never reaches the street).
  * - FACADE_DISTANCE: glass to facade, a narrow Paris street. The sun comes straight in at 35°: from
@@ -82,35 +82,55 @@ const GLASS_VEIL = 0.1
 const SKY = { horizon: [0.92, 0.96, 1.0], zenith: [0.42, 0.58, 0.92] } as const
 
 /**
- * The facade: haussmann4 (Eduardo's photo, 2026-11-01; 1000 × 1500 px, 14.9 m wide) built in Blender
- * by `.superpowers/ar170/tools/facade_build.py` (Eduardo 2026-11-02: "create a facade… you can use
- * that same exact photo as model, and textures"; the scene is his ~/Desktop/haussmann.blend). Real
- * geometry from the photo's measured grid — windows set back 25 cm (French windows down to their
- * balcony floors), balcony slabs, consoles, cornices and pediments out 20–68 cm, thin stone parapets,
- * the bay 60 cm out, the mansard sloping back with its dormers and chimneys — the photo projected
+ * The facades, each built from one of Eduardo's photos in Blender by
+ * `.superpowers/ar170/tools/facade_build.py` with its `facades/<name>.py` (Eduardo 2026-11-02:
+ * "create a facade… you can use that same exact photo as model, and textures"; each its own scene in
+ * his ~/Desktop/haussmann.blend). Real geometry from the photo's measured grid, the photo projected
  * straight on (head-on it is the photo), faces turned away one plain stone tone from it, a shade in
- * their vertex colours. Its lowest 4.5 m repeat once down to the street. `model` (glTF, y up, x
- * across, +z toward the street): `facade` and `railings`, the latter cut-out planes at the slabs'
- * front edges, so the ironwork stands in front of the wall and the wall shows between its bars (and
- * the stone balustrades' faces, opaque, before their parapets).
+ * their vertex colours. Both at the same scale (14.9 m per 1000 px):
+ * - haussmann4 (2026-11-01; 1000 × 1500 px, 14.9 m wide): windows set back 25 cm (French windows
+ *   down to their balcony floors), balcony slabs, consoles, cornices and pediments out 20–68 cm, thin
+ *   stone parapets, the bay 60 cm out, the mansard sloping back with its dormers and chimneys. Its
+ *   lowest 4.5 m repeat once down to the street.
+ * - haussmann6 (2026-11-02; 1200 × 1600 px): the main building only, x 98–1112 (Eduardo: "only
+ *   capture the main building… not the adjacent ones"), 15.1 m wide, its party walls joining the
+ *   mirrored copies; window balconettes with their flower boxes, the second floor's balcony, the
+ *   shop fronts — down to the pavement, nothing repeated.
  *
- * `wall`: the photo with the railings and balustrades taken off (the wall behind each continued from
- * the rows above it) and its sky cut out; `railing`: the ironwork alone, a soft alpha (thin bars fade
- * in as in the photo), and the balustrades — both by `.superpowers/ar170/tools/make_textures.py`.
- * `bottom`: the photo's lower edge over the street, the model's origin; `stone`: the photo's
- * 75th-percentile linear luminance (the lit stone, not the dark windows).
+ * `model` (glTF, y up, x across, +z toward the street): `facade` and `railings`, the latter cut-out
+ * planes at the slabs' front edges, so the ironwork stands in front of the wall and the wall shows
+ * between its bars (and the stone balustrades' faces and the flower boxes, opaque).
+ *
+ * `wall`: the photo with the railings, balustrades and flower boxes taken off (the wall behind each
+ * continued from the rows above it) and its sky cut out; `railing`: the ironwork alone, a soft alpha
+ * (thin bars fade in as in the photo), and the balustrades and flower boxes — both by
+ * `.superpowers/ar170/tools/make_textures.py`. `width`: the model's, its copies' spacing; `bottom`:
+ * the photo's lower edge over the street, the model's origin; `stone`: the lit stone's linear
+ * luminance in the photo — photo 4's 75th percentile (not the dark windows), photo 6's that × their
+ * warm stone's medians (0.393 / 0.348), so both streets' stone shows alike.
  *
  * On R2 (`app/assets/views/`, `scripts/upload-3d-assets.ts`), like every 3D asset. The CDN caches
  * them as immutable: a file rebuilt under its name bumps its `?v=`.
  */
-const FACADE = {
-  model: '/assets/views/haussmann4-facade.glb?v=3',
-  wall: '/assets/views/haussmann4-wall.webp?v=3',
-  railing: '/assets/views/haussmann4-railing.webp?v=3',
-  width: 14.9,
-  bottom: 4.5,
-  stone: 0.61,
-} as const
+const FACADES = [
+  {
+    model: '/assets/views/haussmann4-facade.glb?v=3',
+    wall: '/assets/views/haussmann4-wall.webp?v=3',
+    railing: '/assets/views/haussmann4-railing.webp?v=3',
+    width: 14.9,
+    bottom: 4.5,
+    stone: 0.61,
+  },
+  {
+    model: '/assets/views/haussmann6-facade.glb',
+    wall: '/assets/views/haussmann6-wall.webp?v=2',
+    railing: '/assets/views/haussmann6-railing.webp',
+    width: 15.109,
+    bottom: 0,
+    stone: 0.69,
+  },
+] as const
+type Facade = (typeof FACADES)[number]
 /**
  * A shaded limestone facade's stone over the sky's radiance: albedo ≈ 0.6 under about half the
  * sky, ρ·E/π ≈ 0.3 (research §2). (With the first photo it shows as before: 0.2 × its mean.)
@@ -120,7 +140,7 @@ const STONE_SHADE = 0.3
 const STREET_SHADE = 0.075
 /**
  * The copies of the facade across the row, mirrored every other one: a middle one, five either side
- * (164 m). Eduardo 2026-11-02: "make the model twice wide, so if angled we don't see the end of it
+ * (~165 m). Eduardo 2026-11-02: "make the model twice wide, so if angled we don't see the end of it
  * from the window… we don't want to see any of the ends". A window's reveal keeps a sightline within
  * about 80° of straight out (its width over the wall's depth), which meets the facade at most ~70 m
  * along at 12 m; three copies (45 m) ended within view. Odd, so a whole copy, not a seam, faces each
@@ -237,6 +257,8 @@ ${shader.fragmentShader}`.replace(
   }
 
 interface StreetProps {
+  /** The facade across this street (`FACADES`). */
+  building: Facade
   center: Vector3
   outward: Vector3
   /** The room's middle (the shell's), or null. */
@@ -245,16 +267,24 @@ interface StreetProps {
   floor: number
   /** The sky's radiance in the bake. */
   sky: Color
-  /** Once the facade has loaded: the glass may stop drawing. */
+  /** Once its facade has loaded. */
   onShown: () => void
 }
 
 /** One street: the facade across it, the street below, the sky over the roofs. */
-const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onShown }) => {
-  const { nodes } = useGLTF(assetUrl(FACADE.model))
+const Street: React.FC<StreetProps> = ({
+  building,
+  center,
+  outward,
+  room,
+  floor,
+  sky,
+  onShown,
+}) => {
+  const { nodes } = useGLTF(assetUrl(building.model))
   const { wall, railing } = useResilientTexture({
-    wall: assetUrl(FACADE.wall),
-    railing: assetUrl(FACADE.railing),
+    wall: assetUrl(building.wall),
+    railing: assetUrl(building.railing),
   })
   // A map that failed for good comes back as the loader's shared stand-in, never to be changed:
   // without the wall no street (the glass stays as it was), without the railing no ironwork.
@@ -283,7 +313,7 @@ const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onSh
       map.flipY = false
       map.needsUpdate = true
     }
-    const color = sky.clone().multiplyScalar(STONE_SHADE / FACADE.stone)
+    const color = sky.clone().multiplyScalar(STONE_SHADE / building.stone)
     const shared = { color, vertexColors: true }
     const wallMaterial = new MeshBasicMaterial({ ...shared, map: wall, alphaTest: 0.5 })
     const ironMaterial =
@@ -302,7 +332,7 @@ const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onSh
       material.customProgramCacheKey = () => 'exterior-glass'
     }
     return { wall: wallMaterial, iron: ironMaterial }
-  }, [loaded, ironwork, facade, railings, wall, railing, sky, glass])
+  }, [loaded, ironwork, facade, railings, wall, railing, sky, glass, building.stone])
   useDisposable(stone?.wall)
   useDisposable(stone?.iron)
   useLayoutEffect(() => {
@@ -319,7 +349,7 @@ const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onSh
   if (room) {
     const lateral = (center.x - room.x) * Math.cos(yaw) - (center.z - room.z) * Math.sin(yaw)
     const depth = (center.x - room.x) * outward.x + (center.z - room.z) * outward.z
-    const reach = Math.max(0, FACADE.width / 2 - 2.5)
+    const reach = Math.max(0, building.width / 2 - 2.5)
     along = depth > 0 ? Math.max(-reach, Math.min(reach, (lateral * FACADE_DISTANCE) / depth)) : 0
   }
   const copies = Array.from({ length: FACADE_COPIES }, (_, i) => i - (FACADE_COPIES - 1) / 2)
@@ -333,7 +363,7 @@ const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onSh
         <group
           key={k}
           // The wall's face at the facade's distance, the photo's lower edge at its height.
-          position={[along + k * FACADE.width, FACADE.bottom, -FACADE_DISTANCE]}
+          position={[along + k * building.width, building.bottom, -FACADE_DISTANCE]}
           scale={[k % 2 === 0 ? 1 : -1, 1, 1]}
         >
           <mesh geometry={facade} material={stone.wall} />
@@ -341,7 +371,7 @@ const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onSh
         </group>
       ))}
       <mesh position={[along, 0, -FACADE_DISTANCE / 2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[FACADE.width * FACADE_COPIES, FACADE_DISTANCE]} />
+        <planeGeometry args={[building.width * FACADE_COPIES, FACADE_DISTANCE]} />
         <meshBasicMaterial
           color={streetColor}
           onBeforeCompile={glass}
@@ -375,7 +405,7 @@ interface ExteriorViewProps {
   /** The space's window brightness and daylight gain: the sky's radiance in the bake. */
   windowIntensity: number
   daylightGain: number
-  /** Once the facade has loaded: the glass may stop drawing. */
+  /** Once every street's facade has loaded: the glass may stop drawing. */
   onShown: () => void
 }
 
@@ -397,18 +427,29 @@ const ExteriorView: React.FC<ExteriorViewProps> = ({
     [nodes],
   )
   const rows = useMemo(() => streets(nodes, room), [nodes, room])
+  // The glass stops drawing once every street has its facade: one whose maps never load leaves the
+  // glass of every window as it was, never a pane with nothing behind it.
+  const streetShown = useMemo(() => {
+    const shown = new Set<number>()
+    return rows.map((_, i) => () => {
+      shown.add(i)
+      if (shown.size === rows.length) onShown()
+    })
+  }, [rows, onShown])
 
   return (
     <StreetErrorBoundary>
       {rows.map(({ center, outward }, i) => (
         <Street
           key={`exterior-${i}`}
+          // The first street haussmann4, any other haussmann6.
+          building={FACADES[Math.min(i, FACADES.length - 1)]}
           center={center}
           outward={outward}
           room={room}
           floor={floor}
           sky={sky}
-          onShown={onShown}
+          onShown={streetShown[i]}
         />
       ))}
     </StreetErrorBoundary>
