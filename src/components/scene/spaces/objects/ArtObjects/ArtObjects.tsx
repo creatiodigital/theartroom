@@ -16,6 +16,8 @@ import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
+import { depthToWall, wallContactFlag, wallSurfaces } from './wallContact'
+
 type ArtworkWithPosition = TArtwork & {
   position: Vector3
   quaternion: Quaternion
@@ -51,6 +53,9 @@ const ArtObjects = () => {
     }
     return transforms
   }, [nodes, panelSettings])
+
+  // The walls the works rest on (`wallContact`); none with `?wallcontact=0`.
+  const walls = useMemo(() => (wallContactFlag() ? wallSurfaces(nodes) : []), [nodes])
 
   const artworksWithPosition: ArtworkWithPosition[] = useMemo(() => {
     // Rank each item within its OWN wall. Only items sharing a wall are
@@ -97,6 +102,15 @@ const ArtObjects = () => {
           quaternion.premultiply(new Quaternion().setFromRotationMatrix(transform))
         }
 
+        // On a room wall: back onto the wall itself, its placeholder's gap closed (`wallContact`).
+        // A panel's faces are flush already.
+        if (panelIndex === null) {
+          position.addScaledVector(
+            new Vector3(0, 0, 1).applyQuaternion(quaternion),
+            -depthToWall(walls, position, quaternion, pos.width3d || 1, pos.height3d || 1),
+          )
+        }
+
         // Lift the item off the wall by its rank so the 3D depth matches the
         // 2D stacking instead of z-fighting against whatever shares its plane.
         // The quaternion maps local +z onto the wall normal.
@@ -114,7 +128,7 @@ const ArtObjects = () => {
         }
       })
       .filter((a): a is ArtworkWithPosition => a !== null)
-  }, [allArtworkIds, artworksById, exhibitionArtworksById, panelSettings, panelTransforms])
+  }, [allArtworkIds, artworksById, exhibitionArtworksById, panelSettings, panelTransforms, walls])
 
   return (
     <>

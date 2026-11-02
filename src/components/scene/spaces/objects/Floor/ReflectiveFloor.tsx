@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import type { ComponentRef } from 'react'
 import { useSelector } from 'react-redux'
 import { MeshReflectorMaterial } from '@react-three/drei'
-import { Color, Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
+import { BufferGeometry, Color, Mesh, RepeatWrapping, SRGBColorSpace, Vector2 } from 'three'
 import type { Vector3Tuple } from 'three'
 import type { RootState } from '@/redux/store'
 import { useResilientTexture } from '@/components/scene/useResilientTexture'
@@ -40,6 +40,8 @@ interface ReflectiveFloorProps {
   position?: Vector3Tuple
   width?: number
   depth?: number
+  /** AR-170: the floor's own shape when it is not its bounding rectangle (`floorOutline`). */
+  outline?: BufferGeometry | null
 }
 
 const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
@@ -304,6 +306,7 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
   position = [0, 0, 0],
   width = 100,
   depth = 100,
+  outline = null,
 }) => {
   const meshRef = useRef<Mesh>(null)
   const reflectorRef = useRef<ComponentRef<typeof MeshReflectorMaterial>>(null)
@@ -448,15 +451,19 @@ const ReflectiveFloor: React.FC<ReflectiveFloorProps> = ({
         position={position}
         receiveShadow
       >
-        <planeGeometry
-          args={[width, depth]}
-          onUpdate={(geo) => {
-            // AO maps require uv2 (attribute index 1). PlaneGeometry only has uv.
-            if (!geo.attributes.uv2 && geo.attributes.uv) {
-              geo.setAttribute('uv2', geo.attributes.uv)
-            }
-          }}
-        />
+        {outline ? (
+          <primitive object={outline} attach="geometry" />
+        ) : (
+          <planeGeometry
+            args={[width, depth]}
+            onUpdate={(geo) => {
+              // AO maps require uv2 (attribute index 1). PlaneGeometry only has uv.
+              if (!geo.attributes.uv2 && geo.attributes.uv) {
+                geo.setAttribute('uv2', geo.attributes.uv)
+              }
+            }}
+          />
+        )}
         {common ? (
           <meshStandardMaterial
             key={`floor-common-${floorMaterial}`}

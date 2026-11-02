@@ -1,10 +1,14 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { DoubleSide } from 'three'
+import { useLoader, useThree } from '@react-three/fiber'
+import { DoubleSide, TextureLoader, type WebGLProgramParametersWithUniforms } from 'three'
 
 import type { RootState } from '@/redux/store'
+import { configurePlaster, PLASTER } from '@/components/scene/bake/applyBake'
+import { BAKE_DEBUG, useBakedLook } from '@/components/scene/bake/bakedLook'
+import { PLASTER_TILE } from '@/components/scene/bake/receivers'
 import {
   chooseCurrentArtworkId,
   addArtworkToGroup,
@@ -19,6 +23,65 @@ type ShapeObjectProps = {
 
 /** Matte paint: fully diffuse, no specular highlight. */
 const SHAPE_ROUGHNESS = 0.95
+
+/**
+ * The wall's plaster under the paint, where it continues (the bake's unwrap, `autoUnwrap`): the
+ * point's world position on the plane it faces, in plaster tiles — the wall's own uv2 there, so
+ * the relief runs on through the shape at the same size and place.
+ */
+const PLASTER_UV = /* glsl */ `#include <uv_vertex>
+  {
+    vec3 plasterNormal = normalize( mat3( modelMatrix ) * vec3( 0.0, 0.0, 1.0 ) );
+    vec3 plasterHelper = abs( plasterNormal.y ) < 0.9 ? vec3( 0.0, 1.0, 0.0 ) : vec3( 1.0, 0.0, 0.0 );
+    vec3 plasterU = normalize( cross( plasterHelper, plasterNormal ) );
+    vec3 plasterV = normalize( cross( plasterNormal, plasterU ) );
+    vec3 plasterAt = ( modelMatrix * vec4( position, 1.0 ) ).xyz;
+    vec2 plasterUv = vec2( dot( plasterAt, plasterU ), dot( plasterAt, plasterV ) ) / ${PLASTER_TILE.toFixed(2)};
+    vNormalMapUv = plasterUv;
+    vRoughnessMapUv = plasterUv;
+  }`
+
+const plasterUnderPaint = (shader: WebGLProgramParametersWithUniforms) => {
+  shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', PLASTER_UV)
+}
+
+/**
+ * Eduardo 2026-11-02: a shape "looks fake, because there is no texture at all. This shape is
+ * supposed to be paint on the wall… the shape should look like a 'continuation' of the wall" —
+ * "I don't want to see a different bump size, but just as if the wall was painted with this
+ * color". In a baked room (the walls' plaster, `applyBake`): the wall's own normal and roughness
+ * maps, at the wall's own coordinates (`PLASTER_UV`), so only the color changes. The rest of its
+ * light as before.
+ *
+ * In development and staging (`BAKE_DEBUG`), to compare: `?shapeplaster=0` the flat paint.
+ */
+const plasterUnderShapes = (): boolean =>
+  typeof window !== 'undefined' &&
+  !(BAKE_DEBUG && new URLSearchParams(window.location.search).get('shapeplaster') === '0')
+
+const PaintOnPlaster = ({ color, opacity }: { color: string; opacity: number }) => {
+  const gl = useThree((s) => s.gl)
+  const [normal, roughness] = useLoader(TextureLoader, [PLASTER.normal, PLASTER.roughness])
+  // The walls' very textures (the loader's cache), set up as the walls read them.
+  const plaster = useMemo(
+    () => configurePlaster({ normal: normal!, roughness: roughness! }, gl),
+    [normal, roughness, gl],
+  )
+  return (
+    <meshStandardMaterial
+      color={color}
+      normalMap={plaster.normal}
+      roughnessMap={plaster.roughness}
+      roughness={1}
+      metalness={0}
+      side={DoubleSide}
+      transparent={opacity < 1}
+      opacity={opacity}
+      onBeforeCompile={plasterUnderPaint}
+      customProgramCacheKey={() => 'shape-plaster'}
+    />
+  )
+}
 
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
@@ -62,6 +125,8 @@ const ShapeObject = ({ artwork }: ShapeObjectProps) => {
     [isEditMode, id, dispatch],
   )
 
+  const look = useBakedLook()
+  const onPlaster = useMemo(() => look.baked && plasterUnderShapes(), [look.baked])
   const color = shapeColor ?? '#000000'
   const opacity = shapeOpacity ?? 1
   const type = shapeType ?? 'rectangle'
@@ -96,14 +161,18 @@ const ShapeObject = ({ artwork }: ShapeObjectProps) => {
             falls across the shape properly rather than being interpolated
             between a plane's four corners. High roughness, no metalness: matte
             paint, no sheen. */}
-        <meshStandardMaterial
-          color={color}
-          roughness={SHAPE_ROUGHNESS}
-          metalness={0}
-          side={DoubleSide}
-          transparent={opacity < 1}
-          opacity={opacity}
-        />
+        {onPlaster ? (
+          <PaintOnPlaster color={color} opacity={opacity} />
+        ) : (
+          <meshStandardMaterial
+            color={color}
+            roughness={SHAPE_ROUGHNESS}
+            metalness={0}
+            side={DoubleSide}
+            transparent={opacity < 1}
+            opacity={opacity}
+          />
+        )}
       </mesh>
     </group>
   )

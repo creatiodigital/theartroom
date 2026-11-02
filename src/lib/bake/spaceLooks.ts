@@ -87,7 +87,12 @@ const GALLERY_LOOK: SpaceLook = {
   // "at 93% they are barely noticeable" → ×4: 100% = the editor's realtime spots (ratings err
   // bright; the artist dims down).
   trackScale: 0.625,
-  sunLux: 5000,
+  // AR-170 (Eduardo 2026-11-02): no sun in the rooms — "as we added some 3D buildings behind, I
+  // don't think showing some light patches make sense anymore. Where would the sun be?"; "we will
+  // do this for ALL spaces". The facade 12 m across (`ExteriorView`, haussmann4's roofline ~27 m
+  // over the street, the sill 16.6 m) leaves a 35° sun no way in: the rooms take the sky's light
+  // alone. Was 5000 lx (elevation and azimuth kept: the sun's direction, should it come back).
+  sunLux: 0,
   sunElevationDeg: 35,
   // Straight in (360° = 0°, written as the approved links set it).
   sunAzimuthDeg: 360,

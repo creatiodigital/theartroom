@@ -11,6 +11,7 @@ import { ArtObjects } from '@/components/scene/spaces/objects/ArtObjects'
 import { Ceiling } from '@/components/scene/spaces/objects/Ceiling'
 
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
+import { floorOutline, floorPlane } from '@/components/scene/spaces/objects/Floor/floorOutline'
 import { Windows } from '@/components/scene/spaces/objects/Windows'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
 import { Radiator } from '@/components/scene/spaces/objects/Radiator'
@@ -102,6 +103,12 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
 
   const ceilingMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(ceilingMaterial)
+  // AR-170: the floor's own shape where it is not its bounding rectangle (`floorOutline`).
+  const floorShape = useMemo(
+    () => (nodes.floor0 ? floorOutline(nodes.floor0, floorPlane(nodes.floor0)) : null),
+    [nodes.floor0],
+  )
+  useDisposable(floorShape)
 
   // Apply ambient light tinting + independent wall/ceiling color
   // Lambert compensation: Lambert lacks PBR specular, so walls appear dimmer.
@@ -223,6 +230,7 @@ const ParisSpace: React.FC<ParisSpaceProps> = ({ wallRefs, windowRefs, glassRefs
                 position={[centerX, floorSurfaceY, centerZ]}
                 width={floorWidth}
                 depth={floorDepth}
+                outline={floorShape}
               />
             </>
           )

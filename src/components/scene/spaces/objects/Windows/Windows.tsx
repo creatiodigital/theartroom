@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { DoubleSide, Mesh, BufferGeometry } from 'three'
 import type { RootState } from '@/redux/store'
@@ -6,8 +6,12 @@ import type { RootState } from '@/redux/store'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import { useBakePage } from '@/components/scene/bake/bakePage'
+import { spaceLooks } from '@/lib/bake/spaceLooks'
 
+import ExteriorView, { exteriorShown, panelsBehindGlass } from './ExteriorView'
 import { frostedGlassPatch } from './frostedGlass'
+import GlassReflection, { glassReflectionShown } from './GlassReflection'
 
 const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
 const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
@@ -49,6 +53,28 @@ const Windows: React.FC<WindowsProps> = ({
   const windowTransparency = look.baked ? false : storedTransparency
   // AR-169: in a baked room the glass shows frosted glass (`frostedGlass.ts`).
   const glassPatch = look.baked ? frostedGlassPatch : {}
+  // AR-170 (`ExteriorView`): the street behind clear glass in every room of a baked space on the
+  // visit and review pages, on screen only — never on the bake page, so no bake sees it. Also while
+  // such a room is unbaked (its bake older than the model, or none yet), with the space's daylight:
+  // every window shows a building (Eduardo tested the views that way on vienna16). Once the facade
+  // has loaded the glass keeps its emissive (the daylight) but draws nothing; until then, or if it
+  // never loads, the glass stays as it was.
+  const bakePage = useBakePage()
+  const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
+  const spaceLook = look.baked ? look.space : spaceId ? spaceLooks[spaceId]?.look : undefined
+  const exterior = useMemo(
+    () => Boolean(spaceLook && bakePage && bakePage.mode !== 'bake' && exteriorShown()),
+    [spaceLook, bakePage],
+  )
+  const [facadeLoaded, setFacadeLoaded] = useState(false)
+  const onFacadeShown = useCallback(() => setFacadeLoaded(true), [])
+  const street = exterior && facadeLoaded
+  // The room reflected in the clear glass (`GlassReflection`), while the street shows.
+  const reflection = useMemo(() => glassReflectionShown(), [])
+  const hiddenPanels = useMemo(
+    () => (street ? panelsBehindGlass(nodes) : new Set<number>()),
+    [street, nodes],
+  )
   const windowFrameColor = useSelector(
     (state: RootState) => state.exhibition.windowFrameColor ?? DEFAULT_WINDOW_FRAME_COLOR,
   )
@@ -97,11 +123,25 @@ const Windows: React.FC<WindowsProps> = ({
               emissive={windowLightColor}
               emissiveIntensity={windowLightIntensity * 0.3}
               envMapIntensity={0}
+              colorWrite={!street}
+              depthWrite={!street}
               {...glassPatch}
             />
           </mesh>
         )
       })}
+
+      {exterior && spaceLook && (
+        <Suspense fallback={null}>
+          <ExteriorView
+            nodes={nodes}
+            windowIntensity={spaceLook.windowIntensity}
+            daylightGain={spaceLook.daylightGain}
+            onShown={onFacadeShown}
+          />
+        </Suspense>
+      )}
+      {street && reflection && <GlassReflection nodes={nodes} />}
 
       {panelsArray.map((_, i) => {
         const panelNode = nodes[`windowLight${i}`]
@@ -110,6 +150,7 @@ const Windows: React.FC<WindowsProps> = ({
           <mesh
             key={`daylight-${i}`}
             name={`windowLight${i}`}
+            visible={!hiddenPanels.has(i)}
             geometry={panelNode.geometry}
             position={panelNode.position}
             rotation={panelNode.rotation}

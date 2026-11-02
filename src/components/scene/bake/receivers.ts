@@ -18,7 +18,7 @@ import type { BakeReceiver, LightBaker } from './LightBaker'
  */
 
 /** Meters of wall one plaster texture tile covers. */
-const PLASTER_TILE = 0.7 // Eduardo, 2026-10-16: "decrease the size of the map a little" (was 1)
+export const PLASTER_TILE = 0.7 // Eduardo, 2026-10-16: "decrease the size of the map a little" (was 1)
 
 /** Static fixtures baked into one shared atlas: their authored UVs are for tiling. */
 const PROP_NAME = /^(windowFrame|windowHandle|radiator|singleSocket|doubleSwitch)\d+$/
