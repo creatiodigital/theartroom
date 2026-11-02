@@ -157,7 +157,7 @@ const PANEL_REACH = 3
 
 type Nodes = Record<string, Mesh & { geometry: BufferGeometry }>
 
-const nodeBox = (node: Mesh & { geometry: BufferGeometry }): Box3 => {
+export const nodeBox = (node: Mesh & { geometry: BufferGeometry }): Box3 => {
   if (!node.geometry.boundingBox) node.geometry.computeBoundingBox()
   const local = new Matrix4().compose(node.position, node.quaternion, node.scale)
   return node.geometry.boundingBox!.clone().applyMatrix4(local)
@@ -178,12 +178,20 @@ export const panelsBehindGlass = (nodes: Nodes): Set<number> => {
   return behind
 }
 
+/** The room's middle: the shell's (`wall0`), or null. */
+export const roomMiddle = (nodes: Nodes): Vector3 | null =>
+  nodes.wall0 ? nodeBox(nodes.wall0).getCenter(new Vector3()) : null
+
 /**
- * One street per way the panes face, in the order of their first pane: their mean centre and the
- * horizontal way out — toward the pane's sky panel, or away from the room's middle.
+ * One street per way the panes face, in the order of their first pane: their mean centre, the
+ * horizontal way out — toward the pane's sky panel, or away from the room's middle — and the panes
+ * (`windowGlass{i}`). In the model's frame (the nodes').
  */
-const streets = (nodes: Nodes, room: Vector3 | null): { center: Vector3; outward: Vector3 }[] => {
-  const facings: { center: Vector3; outward: Vector3; count: number }[] = []
+export const streets = (
+  nodes: Nodes,
+  room: Vector3 | null,
+): { center: Vector3; outward: Vector3; panes: number[] }[] => {
+  const facings: { center: Vector3; outward: Vector3; panes: number[] }[] = []
   const panels = Array.from({ length: countNodes(nodes, 'windowLight') }, (_, j) =>
     nodes[`windowLight${j}`] ? nodeBox(nodes[`windowLight${j}`]).getCenter(new Vector3()) : null,
   )
@@ -205,11 +213,11 @@ const streets = (nodes: Nodes, room: Vector3 | null): { center: Vector3; outward
     const same = facings.find((f) => f.outward.dot(outward) > 0.99)
     if (same) {
       same.center
-        .multiplyScalar(same.count)
+        .multiplyScalar(same.panes.length)
         .add(center)
-        .divideScalar(same.count + 1)
-      same.count++
-    } else facings.push({ center, outward, count: 1 })
+        .divideScalar(same.panes.length + 1)
+      same.panes.push(i)
+    } else facings.push({ center, outward, panes: [i] })
   }
   return facings
 }
@@ -422,10 +430,7 @@ const ExteriorView: React.FC<ExteriorViewProps> = ({
     [windowIntensity, daylightGain],
   )
   const floor = nodes.floor0 ? nodeBox(nodes.floor0).max.y : 0
-  const room = useMemo(
-    () => (nodes.wall0 ? nodeBox(nodes.wall0).getCenter(new Vector3()) : null),
-    [nodes],
-  )
+  const room = useMemo(() => roomMiddle(nodes), [nodes])
   const rows = useMemo(() => streets(nodes, room), [nodes, room])
   // The glass stops drawing once every street has its facade: one whose maps never load leaves the
   // glass of every window as it was, never a pane with nothing behind it.

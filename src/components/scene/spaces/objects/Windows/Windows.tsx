@@ -11,6 +11,7 @@ import { spaceLooks } from '@/lib/bake/spaceLooks'
 
 import ExteriorView, { exteriorShown, panelsBehindGlass } from './ExteriorView'
 import { frostedGlassPatch } from './frostedGlass'
+import GlassReflection, { glassReflectionShown } from './GlassReflection'
 
 const DEFAULT_WINDOW_LIGHT_INTENSITY = 4.0
 const DEFAULT_WINDOW_LIGHT_COLOR = '#ffffff'
@@ -68,6 +69,8 @@ const Windows: React.FC<WindowsProps> = ({
   const [facadeLoaded, setFacadeLoaded] = useState(false)
   const onFacadeShown = useCallback(() => setFacadeLoaded(true), [])
   const street = exterior && facadeLoaded
+  // The room reflected in the clear glass (`GlassReflection`), while the street shows.
+  const reflection = useMemo(() => glassReflectionShown(), [])
   const hiddenPanels = useMemo(
     () => (street ? panelsBehindGlass(nodes) : new Set<number>()),
     [street, nodes],
@@ -138,6 +141,7 @@ const Windows: React.FC<WindowsProps> = ({
           />
         </Suspense>
       )}
+      {street && reflection && <GlassReflection nodes={nodes} />}
 
       {panelsArray.map((_, i) => {
         const panelNode = nodes[`windowLight${i}`]

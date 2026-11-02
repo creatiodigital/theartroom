@@ -5,11 +5,8 @@ import {
   HalfFloatType,
   LinearFilter,
   Matrix4,
-  PerspectiveCamera,
-  Plane,
   Vector2,
   Vector3,
-  Vector4,
   WebGLRenderTarget,
   type Mesh,
 } from 'three'
@@ -19,6 +16,7 @@ import {
   mirrorReliefFlag,
   mirrorStrengthFlag,
 } from '@/components/scene/bake/floorMirror'
+import { mirrorCamera, mirrorScratch } from '@/components/scene/spaces/objects/planarMirror'
 import { GLASS_GAIN } from '@/components/scene/spaces/objects/Windows/frostedGlass'
 
 /**
@@ -68,18 +66,11 @@ export const FloorMirror = ({ floor, blur }: { floor: RefObject<Mesh | null>; bl
   }, [gl, blur])
   const work = useMemo(
     () => ({
-      virtual: new PerspectiveCamera(),
+      mirror: mirrorScratch(),
       buffer: new Vector2(),
       planePoint: new Vector3(),
       normal: new Vector3(),
-      cameraPosition: new Vector3(),
-      view: new Vector3(),
-      lookAt: new Vector3(),
-      aim: new Vector3(),
       rotation: new Matrix4(),
-      plane: new Plane(),
-      clip: new Vector4(),
-      q: new Vector4(),
       glassGain: MIRROR_GLASS_GAIN,
     }),
     [],
@@ -116,45 +107,11 @@ export const FloorMirror = ({ floor, blur }: { floor: RefObject<Mesh | null>; bl
     w.planePoint.setFromMatrixPosition(mesh.matrixWorld)
     w.rotation.extractRotation(mesh.matrixWorld)
     w.normal.set(0, 0, 1).applyMatrix4(w.rotation)
-    w.cameraPosition.setFromMatrixPosition(camera.matrixWorld)
-    w.view.subVectors(w.planePoint, w.cameraPosition)
-    if (w.view.dot(w.normal) > 0) return // under the floor: nothing to reflect
-    w.view.reflect(w.normal).negate().add(w.planePoint)
-    w.rotation.extractRotation(camera.matrixWorld)
-    w.lookAt.set(0, 0, -1).applyMatrix4(w.rotation).add(w.cameraPosition)
-    w.aim.subVectors(w.planePoint, w.lookAt).reflect(w.normal).negate().add(w.planePoint)
-
-    const virtual = w.virtual
-    virtual.position.copy(w.view)
-    virtual.up.set(0, 1, 0).applyMatrix4(w.rotation).reflect(w.normal)
-    virtual.lookAt(w.aim)
-    virtual.far = (camera as PerspectiveCamera).far
-    virtual.layers.mask = camera.layers.mask
-    virtual.updateMatrixWorld()
-    virtual.projectionMatrix.copy(camera.projectionMatrix)
-
-    // World → the mirror image's UV.
-    FLOOR_MIRROR.floorMirrorMatrix.value
-      .set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1)
-      .multiply(virtual.projectionMatrix)
-      .multiply(virtual.matrixWorldInverse)
-
-    // The near plane on the floor (Lengyel's oblique projection), as three's Reflector.
-    w.plane.setFromNormalAndCoplanarPoint(w.normal, w.planePoint)
-    w.plane.applyMatrix4(virtual.matrixWorldInverse)
-    w.clip.set(w.plane.normal.x, w.plane.normal.y, w.plane.normal.z, w.plane.constant)
-    const p = virtual.projectionMatrix.elements
-    w.q.set(
-      (Math.sign(w.clip.x) + p[8]!) / p[0]!,
-      (Math.sign(w.clip.y) + p[9]!) / p[5]!,
-      -1,
-      (1 + p[10]!) / p[14]!,
+    // Under the floor: nothing to reflect.
+    if (
+      !mirrorCamera(camera, w.planePoint, w.normal, w.mirror, FLOOR_MIRROR.floorMirrorMatrix.value)
     )
-    w.clip.multiplyScalar(2 / w.clip.dot(w.q))
-    p[2] = w.clip.x
-    p[6] = w.clip.y
-    p[10] = w.clip.z + 1
-    p[14] = w.clip.w
+      return
 
     const previous = gl.getRenderTarget()
     const shadows = gl.shadowMap.autoUpdate
@@ -164,7 +121,7 @@ export const FloorMirror = ({ floor, blur }: { floor: RefObject<Mesh | null>; bl
     gl.setRenderTarget(target)
     gl.state.buffers.depth.setMask(true)
     gl.clear()
-    gl.render(scene, virtual)
+    gl.render(scene, w.mirror.virtual)
     blurPass.render(gl, target, blurred)
     gl.setRenderTarget(previous)
     gl.shadowMap.autoUpdate = shadows
