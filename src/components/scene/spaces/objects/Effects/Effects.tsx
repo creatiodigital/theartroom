@@ -257,9 +257,11 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
   const glow = lampGlowScale(look.baked)
   // AR-169 trial (`?glare=G`): a very subtle glow on the window and the sun patches too.
   const glare = look.baked ? glareFlag() : null
-  // AR-169: the sun's beams in a baked room (`SunBeams`), never while it bakes.
+  // AR-169: the sun's beams in a baked room (`SunBeams`), never while it bakes — and only with a sun
+  // (AR-170: none in the rooms, `spaceLooks`).
   const bakePage = useBakePage()
-  const sunbeam = look.baked && bakePage?.mode !== 'bake' ? sunbeamStrength() : 0
+  const sunbeam =
+    look.baked && look.space.sunLux > 0 && bakePage?.mode !== 'bake' ? sunbeamStrength() : 0
 
   if (!enabled) return null
 
