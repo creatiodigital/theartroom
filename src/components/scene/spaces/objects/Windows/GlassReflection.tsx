@@ -19,6 +19,7 @@ import {
   type BufferGeometry,
   type Group,
   type Mesh,
+  type Object3D,
 } from 'three'
 
 import { BAKE_DEBUG } from '@/components/scene/bake/bakedLook'
@@ -39,12 +40,20 @@ import { nodeBox, roomMiddle, streets } from './ExteriorView'
  * clearer over its shaded windows.
  *
  * While a window wall is on screen, the room is drawn mirrored in its glass's plane every frame
- * (`planarMirror`, as the floor's trial mirror) at half the screen's resolution: exact as the visitor
- * walks, where the captured room (`RoomEnvironmentCapture`, one cube from the eye) would slide. It is
- * softened a touch, as a real pane's slight waviness does: a lamp's highlight, smaller than a pixel
- * there, twinkled as the visitor moved (Eduardo: "they just flicker a little when I move"); spread
- * over a few pixels it glides. On
- * each pane, the mirror image × the glass's reflectance over the street × what the glass lets
+ * (`planarMirror`) at half the screen's resolution: exact as the visitor walks, where the captured
+ * room (`RoomEnvironmentCapture`, one cube from the eye) would slide. The lamps' highlights in it
+ * flickered as the visitor moved (Eduardo: "they just flicker a little when I move", "in
+ * Florescere, those lights still flicker… some lights flicker, and others do not"), from two causes:
+ * - the oblique near plane (three's `Reflector`, the floor's mirror) tilts the far plane and squeezes
+ *   the depth range: a lamp, by its distance and angle, blinked in and out of the image. Here a plain
+ *   mirrored camera, and what lies beyond the glass (the street, `exteriorStreet`) hidden while it
+ *   draws — so nothing outside comes between it and the room;
+ * - a lamp's lens is smaller than a pixel of the mirror image: it was in a pixel or not. Drawn with
+ *   4× MSAA (its share of each pixel), then softened a touch as a pane's slight waviness does.
+ * Measured on Florescere's room-1 window (the mirror alone, the camera 3 mm a step): a highlight's
+ * jump between frames 51 % → 8 % (worst 98 % → 22 %).
+ *
+ * On each pane, the mirror image × the glass's reflectance over the street × what the glass lets
  * through. On screen only, and only while the street shows (frosted glass, acid-etched, gives no
  * image back): the bake never sees it. The alpha underneath (the artwork marker) is kept.
  *
@@ -56,8 +65,9 @@ export const glassReflectionShown = (): boolean =>
 
 /** Glass's reflectance head-on, one face: ((n − 1) / (n + 1))², n = 1.5. */
 const GLASS_F0 = 0.04
-/** The mirror image at this share of the drawing buffer. */
+/** The mirror image at this share of the drawing buffer, and its MSAA samples. */
 const MIRROR_SCALE = 0.5
+const MIRROR_SAMPLES = 4
 /** The run order: after the camera moves (priority 0), before the composer draws (1), as `FloorMirror`. */
 const MIRROR_PRIORITY = 0.5
 
@@ -118,7 +128,7 @@ const GlassReflection = ({
         point: center,
         inward: outward.clone().negate(),
         boxes: panes.map((i) => nodeBox(nodes[`windowGlass${i}`]!)),
-        target: new WebGLRenderTarget(1, 1, { type: HalfFloatType }),
+        target: new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: MIRROR_SAMPLES }),
         blurred: new WebGLRenderTarget(1, 1, {
           type: HalfFloatType,
           depthBuffer: false,
@@ -198,7 +208,8 @@ const GlassReflection = ({
       w.point.copy(m.point).applyMatrix4(root.matrixWorld)
       w.normal.copy(m.inward).transformDirection(root.matrixWorld)
       const uniforms = m.material.uniforms
-      if (!mirrorCamera(camera, w.point, w.normal, m.scratch, uniforms.mirrorMatrix!.value))
+      // A plain mirrored camera (no oblique near plane: see above).
+      if (!mirrorCamera(camera, w.point, w.normal, m.scratch, uniforms.mirrorMatrix!.value, false))
         continue
       uniforms.inward!.value.copy(w.normal)
       if (m.target.width !== width || m.target.height !== height) {
@@ -210,6 +221,10 @@ const GlassReflection = ({
       const previous = gl.getRenderTarget()
       const shadows = gl.shadowMap.autoUpdate
       root.visible = false
+      // What lies beyond the glass, hidden: nothing outside between the mirrored camera and the room.
+      const streets: Object3D[] = []
+      scene.traverse((o) => o.name === 'exteriorStreet' && o.visible && streets.push(o))
+      for (const s of streets) s.visible = false
       gl.shadowMap.autoUpdate = false
       gl.setRenderTarget(m.target)
       gl.state.buffers.depth.setMask(true)
@@ -218,6 +233,7 @@ const GlassReflection = ({
       m.blur.render(gl, m.target, m.blurred)
       gl.setRenderTarget(previous)
       gl.shadowMap.autoUpdate = shadows
+      for (const s of streets) s.visible = true
       root.visible = true
     }
   }, MIRROR_PRIORITY)

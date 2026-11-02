@@ -28,6 +28,7 @@ export const mirrorCamera = (
   normal: Vector3,
   w: MirrorScratch,
   textureMatrix: Matrix4,
+  oblique = true,
 ): boolean => {
   w.cameraPosition.setFromMatrixPosition(camera.matrixWorld)
   w.view.subVectors(planePoint, w.cameraPosition)
@@ -51,6 +52,7 @@ export const mirrorCamera = (
     .set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1)
     .multiply(virtual.projectionMatrix)
     .multiply(virtual.matrixWorldInverse)
+  if (!oblique) return true
 
   // The near plane on the mirror (Lengyel's oblique projection), as three's Reflector.
   w.plane.setFromNormalAndCoplanarPoint(normal, planePoint)

@@ -363,6 +363,7 @@ const Street: React.FC<StreetProps> = ({
   const copies = Array.from({ length: FACADE_COPIES }, (_, i) => i - (FACADE_COPIES - 1) / 2)
   return (
     <group
+      name="exteriorStreet"
       // Local −z is out of the window; y 0 is the street.
       position={[center.x, floor - STREET_BELOW, center.z]}
       rotation={[0, yaw, 0]}
