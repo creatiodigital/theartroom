@@ -62,12 +62,12 @@ const Windows: React.FC<WindowsProps> = ({
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const spaceLook = look.baked ? look.space : spaceId ? spaceLooks[spaceId]?.look : undefined
   const exterior = useMemo(
-    () => (spaceLook && bakePage && bakePage.mode !== 'bake' ? exteriorShown() : null),
+    () => Boolean(spaceLook && bakePage && bakePage.mode !== 'bake' && exteriorShown()),
     [spaceLook, bakePage],
   )
   const [facadeLoaded, setFacadeLoaded] = useState(false)
   const onFacadeShown = useCallback(() => setFacadeLoaded(true), [])
-  const street = exterior !== null && facadeLoaded
+  const street = exterior && facadeLoaded
   const hiddenPanels = useMemo(
     () => (street ? panelsBehindGlass(nodes) : new Set<number>()),
     [street, nodes],
@@ -132,7 +132,6 @@ const Windows: React.FC<WindowsProps> = ({
         <Suspense fallback={null}>
           <ExteriorView
             nodes={nodes}
-            relief={exterior.relief}
             windowIntensity={spaceLook.windowIntensity}
             daylightGain={spaceLook.daylightGain}
             onShown={onFacadeShown}

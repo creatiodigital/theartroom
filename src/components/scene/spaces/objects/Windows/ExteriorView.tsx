@@ -1,15 +1,14 @@
-import { useLayoutEffect, useMemo } from 'react'
+import { Component, useLayoutEffect, useMemo, type ReactNode } from 'react'
+import { useGLTF } from '@react-three/drei'
 import {
   BufferGeometry,
   Color,
   Matrix4,
   Mesh,
-  MirroredRepeatWrapping,
+  MeshBasicMaterial,
   SRGBColorSpace,
-  Vector2,
   Vector3,
   type Box3,
-  type Texture,
   type WebGLProgramParametersWithUniforms,
 } from 'three'
 
@@ -17,16 +16,22 @@ import { assetUrl } from '@/lib/assetUrl'
 import { BAKE_DEBUG } from '@/components/scene/bake/bakedLook'
 import { GLASS_ON_SCREEN } from '@/components/scene/spaces/objects/Effects/bloomIntensity'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
+import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { isFallbackTexture, useResilientTexture } from '@/components/scene/useResilientTexture'
 
 /**
  * AR-170 — Eduardo 2026-11-01: "give the impression there are buildings behind, not super detailed
  * models"; then "all windows will now show a building behind" (so the glass is clear: no tint, its
- * color option hidden). A facade photo on a plane across the street at its true distance (research
- * 2026-10-31 §2, option d): the panorama tried on 2026-10-31 sat at infinity and slid the wrong way
- * as the visitor walked; a plane at its depth moves against the window frame like the real
- * building. On screen only: the glass's emissive values (the bake's daylight) are untouched and the
- * exterior is never in a bake (not on the bake page), so every stored bake stays valid.
+ * color option hidden). A facade across the street at its true distance (research 2026-10-31 §2,
+ * option d): the panorama tried on 2026-10-31 sat at infinity and slid the wrong way as the visitor
+ * walked; a facade at its depth moves against the window frame like the real building. On screen
+ * only: the glass's emissive values (the bake's daylight) are untouched and the exterior is never
+ * in a bake (not on the bake page), so every stored bake stays valid.
+ *
+ * The facade is a model with the photo on it (`FACADE`), its depth real geometry (Eduardo: "my issue
+ * is the depth"; "all flat looks really cheap"). Before it, a flat photo with parallax occlusion
+ * (a height map): its railings showed twice and speckled, or smeared at a slant (2026-11-02 on
+ * staging, "it's a real mess") — a height map cannot hold see-through ironwork.
  *
  * The facade is in shade (the sun comes in over its roof) and the room's camera shows it: its stone
  * at STONE_SHADE × the sky's radiance, through exposure, white balance and the tone curve. Seen
@@ -50,21 +55,16 @@ import { isFallbackTexture, useResilientTexture } from '@/components/scene/useRe
  *   photo, "make the glass clearer, it's too blurred now" — blur 0.25, veil 0.1.
  * - SKY: a clear sky over the roofs, by the direction it is seen in. On screen only: the bake's
  *   daylight stays white.
- * - The facade's relief (Eduardo, on a flat photo seen at a slant: "my issue is the depth").
  *
- * In development and staging (`BAKE_DEBUG`), to compare: `?exterior=0` the frosted glass as before,
- * `?exteriordepth=0` the facade flat.
+ * In development and staging (`BAKE_DEBUG`), to compare: `?exterior=0` the frosted glass as before.
  *
  * Keyed on the model, never the space: every pane (`windowGlass{i}`) shows a street, out the way
  * its sky panel (`windowLight{j}`, within 3 m) faces — or, with none (Madrid), away from the
  * shell's (`wall0`) middle.
  */
-export const exteriorShown = (): { relief: boolean } | null => {
-  if (typeof window === 'undefined') return null
-  const query = BAKE_DEBUG ? new URLSearchParams(window.location.search) : null
-  if (query?.get('exterior') === '0') return null
-  return { relief: query?.get('exteriordepth') !== '0' }
-}
+export const exteriorShown = (): boolean =>
+  typeof window !== 'undefined' &&
+  !(BAKE_DEBUG && new URLSearchParams(window.location.search).get('exterior') === '0')
 
 /** The room's floor over the street (m). */
 const STREET_BELOW = 16
@@ -82,39 +82,35 @@ const GLASS_VEIL = 0.1
 const SKY = { horizon: [0.92, 0.96, 1.0], zenith: [0.42, 0.58, 0.92] } as const
 
 /**
- * The facade: haussmann4 (Eduardo's, 2026-11-01), a 1000 × 1500 px photo. Scale from the floor
- * pitch (≈ 3.1 m a storey); `bottom`: the photo's lower edge over the street (continuous balconies
- * on the 2nd and 5th floors place it); `stone`: its 75th-percentile linear luminance (the lit
- * stone, not the dark windows). `-cut`: the photo's own sky cut out (flood fill), ours behind.
+ * The facade: haussmann4 (Eduardo's photo, 2026-11-01; 1000 × 1500 px, 14.9 m wide) built in Blender
+ * by `.superpowers/ar170/tools/facade_build.py` (Eduardo 2026-11-02: "create a facade… you can use
+ * that same exact photo as model, and textures"; the scene is his ~/Desktop/haussmann.blend). Real
+ * geometry from the photo's measured grid — windows set back 25 cm (French windows down to their
+ * balcony floors), balcony slabs, consoles, cornices and pediments out 20–68 cm, thin stone parapets,
+ * the bay 60 cm out, the mansard sloping back with its dormers and chimneys — the photo projected
+ * straight on (head-on it is the photo), faces turned away one plain stone tone from it, a shade in
+ * their vertex colours. Its lowest 4.5 m repeat once down to the street. `model` (glTF, y up, x
+ * across, +z toward the street): `facade` and `railings`, the latter cut-out planes at the slabs'
+ * front edges, so the ironwork stands in front of the wall and the wall shows between its bars (and
+ * the stone balustrades' faces, opaque, before their parapets).
  *
- * `depth`: the facade's relief, drawn on the photo's measured grid
- * (`.superpowers/ar170/tools/depth4.mjs`). Red: the solid relief in metres toward the street,
- * RELIEF_IN … RELIEF_OUT over 0 … 255 — windows set back 25 cm, the mansard sloping back to 0.6 m,
- * cornices and pediments out 20–35 cm, balcony slabs 55–60 cm. Green, blue: the ironwork of the
- * railings (RAIL_OUT) and balconettes (BALCONETTE_OUT) — thin layers a ray passes through between
- * the bars (as solids they read as dark slabs at a slant).
+ * `wall`: the photo with the railings and balustrades taken off (the wall behind each continued from
+ * the rows above it) and its sky cut out; `railing`: the ironwork alone, a soft alpha (thin bars fade
+ * in as in the photo), and the balustrades — both by `.superpowers/ar170/tools/make_textures.py`.
+ * `bottom`: the photo's lower edge over the street, the model's origin; `stone`: the photo's
+ * 75th-percentile linear luminance (the lit stone, not the dark windows).
  *
- * On R2 (`app/assets/views/`, `scripts/upload-3d-assets.ts`), like every 3D asset. Replacing a
- * file needs a new name: the CDN caches them as immutable.
+ * On R2 (`app/assets/views/`, `scripts/upload-3d-assets.ts`), like every 3D asset. The CDN caches
+ * them as immutable: a file rebuilt under its name bumps its `?v=`.
  */
 const FACADE = {
-  url: '/assets/views/haussmann4-cut.webp',
-  depth: '/assets/views/haussmann4-depth.png',
+  model: '/assets/views/haussmann4-facade.glb?v=3',
+  wall: '/assets/views/haussmann4-wall.webp?v=3',
+  railing: '/assets/views/haussmann4-railing.webp?v=3',
   width: 14.9,
   bottom: 4.5,
   stone: 0.61,
 } as const
-/** The relief's front and back (m from the wall), as the height maps encode them. */
-const RELIEF_OUT = 0.6
-const RELIEF_IN = -0.7
-/** The railings' and balconettes' ironwork, out from the wall (m). */
-const RAIL_OUT = 0.55
-const BALCONETTE_OUT = 0.33
-/**
- * The most steps a view ray takes through the relief: at a grazing angle (1.4 cm each); a third of
- * them head-on, where it travels least sideways. Too few left combs on steep edges at a slant.
- */
-const RELIEF_STEPS = 96
 /**
  * A shaded limestone facade's stone over the sky's radiance: albedo ≈ 0.6 under about half the
  * sky, ρ·E/π ≈ 0.3 (research §2). (With the first photo it shows as before: 0.2 × its mean.)
@@ -122,8 +118,20 @@ const RELIEF_STEPS = 96
 const STONE_SHADE = 0.3
 /** The street in shade: asphalt albedo ≈ 0.15 under half the sky. */
 const STREET_SHADE = 0.075
-/** The mirrored copies of the photo across the row: one either side. */
-const FACADE_COPIES = 3
+/**
+ * The copies of the facade across the row, mirrored every other one: a middle one, five either side
+ * (164 m). Eduardo 2026-11-02: "make the model twice wide, so if angled we don't see the end of it
+ * from the window… we don't want to see any of the ends". A window's reveal keeps a sightline within
+ * about 80° of straight out (its width over the wall's depth), which meets the facade at most ~70 m
+ * along at 12 m; three copies (45 m) ended within view. Odd, so a whole copy, not a seam, faces each
+ * window.
+ */
+const FACADE_COPIES = 11
+/**
+ * The sky behind the roofs: a plane far enough for no parallax against them and wide enough that no
+ * sightline through a window passes its edge (±900 m at 92 m: 84°), inside the camera's 1000 m.
+ */
+const SKY_PLANE = { distance: 80, width: 1800, height: 700 }
 /** A sky panel this close to a pane is that window's sky (as `brightenWindows` reads it). */
 const PANEL_REACH = 3
 
@@ -186,102 +194,23 @@ const streets = (nodes: Nodes, room: Vector3 | null): { center: Vector3; outward
   return facings
 }
 
-/** The photo sampled out of focus (`exteriorBlur`: mip bias), flat. */
+/** The photo sampled out of focus (`exteriorBlur`: mip bias). */
 const FLAT_MAP = /* glsl */ `#ifdef USE_MAP
 	diffuseColor *= texture2D( map, vMapUv, exteriorBlur );
 #endif`
 
-/**
- * Parallax occlusion: from the relief's front (the plane, RELIEF_OUT before the wall) the view ray
- * steps into the height map until it passes under the surface, then is refined between the last
- * two steps; the photo is read where it landed. Balconies hide what is behind them and window
- * reveals open as the visitor moves. Gradients from the plane's own uv: no seams at the steps.
- */
-const RELIEF_MAP = /* glsl */ `#ifdef USE_MAP
-	vec2 facadeUv = vMapUv;
-	vec2 facadeDx = dFdx( vMapUv ), facadeDy = dFdy( vMapUv );
-	{
-		vec3 view = normalize( cameraPosition - vFacadeWorld );
-		vec3 tangent = vec3( dot( view, vFacadeT ), dot( view, vFacadeB ), max( dot( view, vFacadeN ), 0.1 ) );
-		// The uv the ray travels sideways per metre it goes in.
-		vec2 perMeter = - tangent.xy / tangent.z * facadeUvPerMeter;
-		int steps = int( mix( float( RELIEF_STEPS ), float( RELIEF_STEPS ) / 3.0, tangent.z ) );
-		float stepDepth = RELIEF_RANGE / float( steps );
-		float rayDepth = 0.0;
-		float surface = ( 1.0 - textureGrad( facadeHeight, facadeUv, facadeDx, facadeDy ).r ) * RELIEF_RANGE;
-		vec2 previousUv = facadeUv;
-		float previousGap = surface;
-		for ( int i = 0; i < RELIEF_STEPS; i ++ ) {
-			if ( i >= steps || rayDepth >= surface ) break;
-			previousUv = facadeUv;
-			previousGap = surface - rayDepth;
-			rayDepth += stepDepth;
-			facadeUv = vMapUv + perMeter * rayDepth;
-			surface = ( 1.0 - textureGrad( facadeHeight, facadeUv, facadeDx, facadeDy ).r ) * RELIEF_RANGE;
-		}
-		float gap = surface - rayDepth;
-		float hitDepth = rayDepth;
-		if ( previousGap > 0.0 && gap < 0.0 ) {
-			float w = gap / ( gap - previousGap );
-			facadeUv = mix( facadeUv, previousUv, w );
-			hitDepth = rayDepth - stepDepth * w;
-		}
-		// The ironwork, in front of what the ray met: where it crosses a bar, the bar.
-		float railDepth = RELIEF_OUT - RAIL_OUT;
-		vec2 railUv = vMapUv + perMeter * railDepth;
-		float balconetteDepth = RELIEF_OUT - BALCONETTE_OUT;
-		vec2 balconetteUv = vMapUv + perMeter * balconetteDepth;
-		if ( railDepth < hitDepth && textureGrad( facadeHeight, railUv, facadeDx, facadeDy ).g > 0.5 ) facadeUv = railUv;
-		else if ( balconetteDepth < hitDepth && textureGrad( facadeHeight, balconetteUv, facadeDx, facadeDy ).b > 0.5 ) facadeUv = balconetteUv;
-	}
-	float facadeBlur = exp2( exteriorBlur );
-	diffuseColor *= textureGrad( map, facadeUv, facadeDx * facadeBlur, facadeDy * facadeBlur );
-#endif`
-
-/**
- * Seen through the glass: the photo a little out of focus, the sky's light laid over it — with the
- * facade's relief when it has a height map.
- */
+/** Seen through the glass: the photo a little out of focus, the sky's light laid over it. */
 const throughGlass =
-  (blur: number, veil: number, veilColor: Color, relief?: { map: Texture; uvPerMeter: Vector2 }) =>
+  (blur: number, veil: number, veilColor: Color) =>
   (shader: WebGLProgramParametersWithUniforms) => {
     shader.uniforms.exteriorBlur = { value: blur }
     shader.uniforms.exteriorVeil = { value: veil }
     shader.uniforms.exteriorVeilColor = { value: veilColor }
-    let head = `uniform float exteriorBlur;
+    shader.fragmentShader = `uniform float exteriorBlur;
 uniform float exteriorVeil;
 uniform vec3 exteriorVeilColor;
-`
-    if (relief) {
-      shader.uniforms.facadeHeight = { value: relief.map }
-      shader.uniforms.facadeUvPerMeter = { value: relief.uvPerMeter }
-      head += `#define RELIEF_STEPS ${RELIEF_STEPS}
-#define RELIEF_RANGE ${(RELIEF_OUT - RELIEF_IN).toFixed(4)}
-#define RELIEF_OUT ${RELIEF_OUT.toFixed(4)}
-#define RAIL_OUT ${RAIL_OUT.toFixed(4)}
-#define BALCONETTE_OUT ${BALCONETTE_OUT.toFixed(4)}
-uniform sampler2D facadeHeight;
-uniform vec2 facadeUvPerMeter;
-varying vec3 vFacadeWorld;
-varying vec3 vFacadeT;
-varying vec3 vFacadeB;
-varying vec3 vFacadeN;
-`
-      shader.vertexShader = `varying vec3 vFacadeWorld;
-varying vec3 vFacadeT;
-varying vec3 vFacadeB;
-varying vec3 vFacadeN;
-${shader.vertexShader}`.replace(
-        '#include <project_vertex>',
-        `#include <project_vertex>
-	vFacadeWorld = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;
-	vFacadeT = normalize( mat3( modelMatrix ) * vec3( 1.0, 0.0, 0.0 ) );
-	vFacadeB = normalize( mat3( modelMatrix ) * vec3( 0.0, 1.0, 0.0 ) );
-	vFacadeN = normalize( mat3( modelMatrix ) * vec3( 0.0, 0.0, 1.0 ) );`,
-      )
-    }
-    shader.fragmentShader = `${head}${shader.fragmentShader}`
-      .replace('#include <map_fragment>', relief ? RELIEF_MAP : FLAT_MAP)
+${shader.fragmentShader}`
+      .replace('#include <map_fragment>', FLAT_MAP)
       .replace(
         '#include <opaque_fragment>',
         '#include <opaque_fragment>\n\tgl_FragColor.rgb = mix( gl_FragColor.rgb, exteriorVeilColor, exteriorVeil );',
@@ -308,8 +237,6 @@ ${shader.fragmentShader}`.replace(
   }
 
 interface StreetProps {
-  /** The facade's relief, or flat. */
-  relief: boolean
   center: Vector3
   outward: Vector3
   /** The room's middle (the shell's), or null. */
@@ -323,46 +250,18 @@ interface StreetProps {
 }
 
 /** One street: the facade across it, the street below, the sky over the roofs. */
-const Street: React.FC<StreetProps> = ({
-  relief: withRelief,
-  center,
-  outward,
-  room,
-  floor,
-  sky,
-  onShown,
-}) => {
-  const { photo, heights } = useResilientTexture({
-    photo: assetUrl(FACADE.url),
-    heights: assetUrl(FACADE.depth),
+const Street: React.FC<StreetProps> = ({ center, outward, room, floor, sky, onShown }) => {
+  const { nodes } = useGLTF(assetUrl(FACADE.model))
+  const { wall, railing } = useResilientTexture({
+    wall: assetUrl(FACADE.wall),
+    railing: assetUrl(FACADE.railing),
   })
   // A map that failed for good comes back as the loader's shared stand-in, never to be changed:
-  // without the photo no street (the glass stays as it was), without the heights a flat facade.
-  const loaded = !isFallbackTexture(photo)
-  const relief = withRelief && !isFallbackTexture(heights) ? heights : null
-  const facade = useMemo(() => {
-    if (!loaded) return null
-    const image = photo.image as { width: number; height: number }
-    const height = (FACADE.width * image.height) / image.width
-    // From the street up: the photo from its lower edge, its bottom row drawn down to the street.
-    const total = FACADE.bottom + height
-    photo.colorSpace = SRGBColorSpace
-    photo.wrapS = MirroredRepeatWrapping
-    // The middle copy as photographed, a mirrored one either side.
-    photo.repeat.set(FACADE_COPIES, total / height)
-    photo.offset.set(-(FACADE_COPIES - 1) / 2, -FACADE.bottom / height)
-    photo.needsUpdate = true
-    // The heights are read at the photo's uv, mirrored the same way.
-    if (relief) {
-      relief.wrapS = MirroredRepeatWrapping
-      relief.needsUpdate = true
-    }
-    return {
-      width: FACADE.width * FACADE_COPIES,
-      height: total,
-      uvPerMeter: new Vector2(1 / FACADE.width, 1 / height),
-    }
-  }, [loaded, photo, relief])
+  // without the wall no street (the glass stays as it was), without the railing no ironwork.
+  const loaded = !isFallbackTexture(wall)
+  const ironwork = loaded && !isFallbackTexture(railing)
+  const facade = (nodes.facade as Mesh | undefined)?.geometry ?? null
+  const railings = (nodes.railings as Mesh | undefined)?.geometry ?? null
 
   // On screen the sky shows about as bright as today's frosted glass (its emissive × 2), shaded
   // from the horizon up (`SKY`).
@@ -373,26 +272,49 @@ const Street: React.FC<StreetProps> = ({
       shown.clone().multiply(new Color(...SKY.zenith)),
     )
   }, [sky])
-  const facadeColor = useMemo(() => sky.clone().multiplyScalar(STONE_SHADE / FACADE.stone), [sky])
   const streetColor = useMemo(() => sky.clone().multiplyScalar(STREET_SHADE), [sky])
   const glass = useMemo(() => throughGlass(GLASS_BLUR, GLASS_VEIL, sky), [sky])
-  const facadeGlass = useMemo(
-    () =>
-      relief && facade
-        ? throughGlass(GLASS_BLUR, GLASS_VEIL, sky, { map: relief, uvPerMeter: facade.uvPerMeter })
-        : glass,
-    [sky, relief, facade, glass],
-  )
+  // The model's materials: unlit, the photo × the stone's shade × each face's own (vertex colours).
+  // The maps follow glTF's uv (no flip).
+  const stone = useMemo(() => {
+    if (!loaded || !facade) return null
+    for (const map of ironwork ? [wall, railing] : [wall]) {
+      map.colorSpace = SRGBColorSpace
+      map.flipY = false
+      map.needsUpdate = true
+    }
+    const color = sky.clone().multiplyScalar(STONE_SHADE / FACADE.stone)
+    const shared = { color, vertexColors: true }
+    const wallMaterial = new MeshBasicMaterial({ ...shared, map: wall, alphaTest: 0.5 })
+    const ironMaterial =
+      ironwork && railings
+        ? new MeshBasicMaterial({
+            ...shared,
+            map: railing,
+            transparent: true,
+            depthWrite: false,
+            alphaTest: 0.02,
+          })
+        : null
+    for (const material of [wallMaterial, ironMaterial]) {
+      if (!material) continue
+      material.onBeforeCompile = glass
+      material.customProgramCacheKey = () => 'exterior-glass'
+    }
+    return { wall: wallMaterial, iron: ironMaterial }
+  }, [loaded, ironwork, facade, railings, wall, railing, sky, glass])
+  useDisposable(stone?.wall)
+  useDisposable(stone?.iron)
   useLayoutEffect(() => {
-    if (loaded) onShown()
-  }, [loaded, onShown])
-  if (!facade) return null
+    if (stone) onShown()
+  }, [stone, onShown])
+  if (!stone || !facade) return null
 
   const yaw = Math.atan2(-outward.x, -outward.z)
   // Seen from inside, the street lies on the far side of the window from the room's middle: the
-  // photo's middle copy goes where the line from the room's middle through the window meets the
-  // facade — its mirrored seams out of the usual view — yet always 2.5 m or more either side of the
-  // window, so a visitor looking straight out never sees one.
+  // facade's middle copy goes where the line from the room's middle through the window meets it —
+  // its mirrored seams out of the usual view — yet always 2.5 m or more either side of the window,
+  // so a visitor looking straight out never sees one.
   let along = 0
   if (room) {
     const lateral = (center.x - room.x) * Math.cos(yaw) - (center.z - room.z) * Math.sin(yaw)
@@ -400,46 +322,56 @@ const Street: React.FC<StreetProps> = ({
     const reach = Math.max(0, FACADE.width / 2 - 2.5)
     along = depth > 0 ? Math.max(-reach, Math.min(reach, (lateral * FACADE_DISTANCE) / depth)) : 0
   }
+  const copies = Array.from({ length: FACADE_COPIES }, (_, i) => i - (FACADE_COPIES - 1) / 2)
   return (
     <group
       // Local −z is out of the window; y 0 is the street.
       position={[center.x, floor - STREET_BELOW, center.z]}
       rotation={[0, yaw, 0]}
     >
-      <mesh
-        // With relief the plane is its front: the wall stays at the street's width.
-        position={[along, facade.height / 2, -FACADE_DISTANCE + (relief ? RELIEF_OUT : 0)]}
-      >
-        <planeGeometry args={[facade.width, facade.height]} />
-        <meshBasicMaterial
-          map={photo}
-          color={facadeColor}
-          // The cut-out sky: ours shows through.
-          alphaTest={0.5}
-          onBeforeCompile={facadeGlass}
-          customProgramCacheKey={() => (relief ? 'exterior-glass-relief' : 'exterior-glass')}
-        />
-      </mesh>
+      {copies.map((k) => (
+        <group
+          key={k}
+          // The wall's face at the facade's distance, the photo's lower edge at its height.
+          position={[along + k * FACADE.width, FACADE.bottom, -FACADE_DISTANCE]}
+          scale={[k % 2 === 0 ? 1 : -1, 1, 1]}
+        >
+          <mesh geometry={facade} material={stone.wall} />
+          {railings && stone.iron && <mesh geometry={railings} material={stone.iron} />}
+        </group>
+      ))}
       <mesh position={[along, 0, -FACADE_DISTANCE / 2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[facade.width, FACADE_DISTANCE]} />
+        <planeGeometry args={[FACADE.width * FACADE_COPIES, FACADE_DISTANCE]} />
         <meshBasicMaterial
           color={streetColor}
           onBeforeCompile={glass}
           customProgramCacheKey={() => 'exterior-glass'}
         />
       </mesh>
-      <mesh position={[0, 100, -FACADE_DISTANCE - 80]}>
-        <planeGeometry args={[600, 300]} />
+      <mesh position={[0, 100, -FACADE_DISTANCE - SKY_PLANE.distance]}>
+        <planeGeometry args={[SKY_PLANE.width, SKY_PLANE.height]} />
         <meshBasicMaterial onBeforeCompile={skyLook} customProgramCacheKey={() => 'exterior-sky'} />
       </mesh>
     </group>
   )
 }
 
+/** A facade that cannot load leaves the glass as it was — never the room (the HDRI's way). */
+class StreetErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  componentDidCatch(error: Error) {
+    console.warn('The street view failed to load; the windows keep their glass:', error.message)
+  }
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
+}
+
 interface ExteriorViewProps {
   nodes: Nodes
-  /** The facade's relief, or flat (`exteriorShown`). */
-  relief: boolean
   /** The space's window brightness and daylight gain: the sky's radiance in the bake. */
   windowIntensity: number
   daylightGain: number
@@ -449,7 +381,6 @@ interface ExteriorViewProps {
 
 const ExteriorView: React.FC<ExteriorViewProps> = ({
   nodes,
-  relief,
   windowIntensity,
   daylightGain,
   onShown,
@@ -468,11 +399,10 @@ const ExteriorView: React.FC<ExteriorViewProps> = ({
   const rows = useMemo(() => streets(nodes, room), [nodes, room])
 
   return (
-    <>
+    <StreetErrorBoundary>
       {rows.map(({ center, outward }, i) => (
         <Street
           key={`exterior-${i}`}
-          relief={relief}
           center={center}
           outward={outward}
           room={room}
@@ -481,7 +411,7 @@ const ExteriorView: React.FC<ExteriorViewProps> = ({
           onShown={onShown}
         />
       ))}
-    </>
+    </StreetErrorBoundary>
   )
 }
 
