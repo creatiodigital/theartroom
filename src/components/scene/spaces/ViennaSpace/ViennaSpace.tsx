@@ -14,6 +14,7 @@ import { ContinueSign } from '@/components/scene/spaces/objects/ContinueSign'
 import { ExitSign } from '@/components/scene/spaces/objects/ExitSign'
 import { ExitTrigger } from '@/components/scene/spaces/objects/ExitTrigger'
 import { ReflectiveFloor } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
+import { floorOutline, floorPlane } from '@/components/scene/spaces/objects/Floor/floorOutline'
 import { Windows } from '@/components/scene/spaces/objects/Windows'
 import { Panel } from '@/components/scene/spaces/objects/Panel'
 import { Placeholder } from '@/components/scene/spaces/objects/Placeholder'
@@ -135,6 +136,12 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
   useDisposable(wallMaterial)
   const ceilingMaterial = useMemo(() => new MeshLambertMaterial({ side: 2 }), [])
   useDisposable(ceilingMaterial)
+  // AR-170: the floor's own shape where it is not its bounding rectangle (`floorOutline`).
+  const floorShape = useMemo(
+    () => (nodes.floor0 ? floorOutline(nodes.floor0, floorPlane(nodes.floor0)) : null),
+    [nodes.floor0],
+  )
+  useDisposable(floorShape)
 
   // Lambert compensation: it lacks PBR specular, so walls read dimmer. Boost
   // wall/ceiling brightness rather than cranking ambient, which would over-light
@@ -237,6 +244,7 @@ const ViennaSpace: React.FC<ViennaSpaceProps> = ({ wallRefs, windowRefs, glassRe
                 position={[centerX, floorSurfaceY, centerZ]}
                 width={floorWidth}
                 depth={floorDepth}
+                outline={floorShape}
               />
             </>
           )

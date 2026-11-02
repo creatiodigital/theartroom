@@ -2,7 +2,7 @@
 // Bare paths, not URLs — see spaceConfigs in src/components/scene/constants.tsx.
 export const spaceGltfPaths: Record<string, string> = {
   paris: '/assets/spaces/paris/paris24_noq.glb',
-  vienna: '/assets/spaces/vienna/vienna15.glb',
+  vienna: '/assets/spaces/vienna/vienna16.glb',
   madrid: '/assets/spaces/madrid/madrid12_noq.glb',
 }
 

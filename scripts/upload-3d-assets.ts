@@ -44,7 +44,7 @@ const KEY_PREFIX = 'app/assets'
 
 // 3D scope only — 2D UI assets (email-logo, landing, helpers, person.png)
 // stay on Vercel by design. (objects/sofa was deleted, not migrated.)
-const INCLUDE_DIRS = ['materials', 'spaces', 'hdri']
+const INCLUDE_DIRS = ['materials', 'spaces', 'hdri', 'views']
 const INCLUDE_FILES = ['human.glb']
 
 const CONTENT_TYPES: Record<string, string> = {

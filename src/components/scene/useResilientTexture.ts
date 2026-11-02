@@ -21,6 +21,9 @@ function getFallbackTexture(): Texture {
   return fallbackTexture
 }
 
+/** Whether a loaded texture is that shared stand-in — read it, never change it. */
+export const isFallbackTexture = (texture: Texture): boolean => texture === fallbackTexture
+
 /**
  * A `TextureLoader` that survives transient or aborted requests.
  *
