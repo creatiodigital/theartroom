@@ -62,6 +62,13 @@ const DEFAULT_TRACK_LAMP_ANGLE = 0.45
 const DEFAULT_TRACK_LAMP_DISTANCE = 5.0
 const DEFAULT_WINDOW_COLOR = '#ffffff'
 const DEFAULT_WINDOW_INTENSITY = 4.0
+/**
+ * AR-170 (Eduardo 2026-11-01): "no more tinted glasses… all windows will now show a building
+ * behind, so hide the glass color option for now. Do not destroy that picked in case, in the
+ * future, an artist does not want to show the building behind." Hidden only: each exhibition's
+ * stored glass color stays as it is.
+ */
+const SHOW_GLASS_COLOR = false
 const DEFAULT_HDRI_ROTATION = 128
 const DEFAULT_SHADOW_BLUR = 0.025
 const DEFAULT_SHADOW_SPREAD = 1.2
@@ -493,16 +500,19 @@ const LightingPanel = () => {
           </Section>
         )}
 
-        {/* AR-169: the glass color is the artist's — the daylight's color in the bake too. */}
+        {/* AR-169: the glass color is the artist's — the daylight's color in the bake too. AR-170:
+            hidden while every window shows the street behind clear glass (`SHOW_GLASS_COLOR`). */}
         {hasWindows && (
           <Section title="Window">
-            <div className={styles.field}>
-              <label className={styles.label}>Glass Color</label>
-              <ColorPicker
-                textColor={windowColor}
-                onColorSelect={(color) => set('windowLightColor', color)}
-              />
-            </div>
+            {SHOW_GLASS_COLOR && (
+              <div className={styles.field}>
+                <label className={styles.label}>Glass Color</label>
+                <ColorPicker
+                  textColor={windowColor}
+                  onColorSelect={(color) => set('windowLightColor', color)}
+                />
+              </div>
+            )}
             <div className={styles.field}>
               <div className={styles.sliderHeader}>
                 <label className={styles.label}>Daylight</label>
