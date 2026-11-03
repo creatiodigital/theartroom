@@ -28,7 +28,7 @@ type ExhibitionUpdateBody = {
   shortDescription?: string
   status?: string // 'current' | 'past'
   published?: boolean
-  // Gates the 3D room alone (the "Enter 3D room" button + the
+  // Gates the 3D room alone (the "Enter Virtual Exhibition" button + the
   // scene API) — independent of `published`, which gates the page.
   spacePublished?: boolean
   previewEnabled?: boolean

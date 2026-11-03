@@ -48,7 +48,7 @@ export function exhibitionOfUrl(
 /**
  * For each slide link that opens a published exhibition whose 3D space is published too, the way
  * straight into that space on this site (`…/visit`), by link. Links to anything else are absent,
- * and their slides get no "Enter 3D room" button.
+ * and their slides get no "Enter Virtual Exhibition" button.
  */
 export async function visitUrlsFor(urls: string[]): Promise<Record<string, string>> {
   const targets = urls.flatMap((url) => {

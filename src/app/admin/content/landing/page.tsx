@@ -476,8 +476,8 @@ export default function LandingContentPage() {
                   onColorSelect={(color) => updateField('ctaTextColor', color)}
                 />
                 <Text font="dashboard" as="p" size="sm" className={styles.hint}>
-                  The &ldquo;Enter 3D room&rdquo; button shows on laptops and desktops when the
-                  exhibition&apos;s 3D space is published, and opens it directly.
+                  The &ldquo;Enter Virtual Exhibition&rdquo; button shows on laptops and desktops
+                  when the exhibition&apos;s 3D space is published, and opens it directly.
                 </Text>
               </div>
             </div>

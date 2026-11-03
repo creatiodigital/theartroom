@@ -8,9 +8,9 @@ import { fixtures } from './fixtures'
 test.use({ storageState: 'e2e/.auth/admin.json' })
 
 /**
- * The homepage hero offers each slide's exhibition in 3D: an "Enter 3D room" button (its colors
- * picked per slide), straight into /visit, only when the exhibition's 3D space is published, and
- * only on laptops and desktops. Never a link inside a link: the slide still opens the exhibition
+ * The homepage hero offers each slide's exhibition in 3D: an "Enter Virtual Exhibition" button
+ * (its colors picked per slide), straight into /visit, only when the exhibition's 3D space is
+ * published, and only on laptops and desktops. Never a link inside a link: the slide still opens the exhibition
  * page, the button its 3D space. Never enters it (WebGL).
  *
  * On two exhibitions of its own (the fixture artist's), one with its 3D space published and one
@@ -97,7 +97,7 @@ test("the hero slide offers its exhibition's 3D room, in the colors picked for i
   await page.goto('/')
   const enter = slideBox(page, withSpace).locator(`a[href="${withSpace}/visit"]`)
   await expect(enter).toBeVisible()
-  await expect(enter).toHaveText(/Enter 3D room/)
+  await expect(enter).toHaveText(/Enter Virtual Exhibition/)
   await expect(enter).toHaveCSS('background-color', 'rgb(18, 52, 86)')
   await expect(enter).toHaveCSS('color', 'rgb(254, 220, 186)')
   // Two links side by side, never one inside the other.
@@ -122,7 +122,7 @@ test('no button when the 3D space is not published, or the slide opens something
 })
 
 test('an exhibition card keeps its one link, to the exhibition page', async ({ page }) => {
-  // A second "Enter 3D room" line under "Visit exhibition" was tried and dropped (owner,
+  // A second line into the 3D room under "Visit exhibition" was tried and dropped (owner,
   // 2026-11-03: "looks hideous"): the cards lead to the page, whose button opens the room.
   await page.goto('/exhibitions')
   await expect(page.locator(`a[href="${withSpace}"]`)).toHaveCount(1)

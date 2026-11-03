@@ -98,7 +98,7 @@ export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
                   <Button
                     variant="primary"
                     size="bigSquared"
-                    label="Enter 3D room"
+                    label="Enter Virtual Exhibition"
                     href={slide.visitUrl}
                     icon="arrowRight"
                     className={styles.ctaButton}

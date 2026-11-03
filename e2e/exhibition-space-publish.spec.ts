@@ -6,7 +6,7 @@ import { giveReviewedBake } from './bake-helpers'
 import { fixtures } from './fixtures'
 
 /**
- * `spacePublished` gates the 3D room alone — the "Enter 3D room"
+ * `spacePublished` gates the 3D room alone — the "Enter Virtual Exhibition"
  * button on the public profile page, and the scene API that feeds /visit
  * (`GET /api/exhibitions/by-url/[url]`). The exhibition page, its artwork
  * grid, and every listing read `published` only and must never notice this
@@ -61,7 +61,7 @@ test.describe('the exhibition page and scene API when the 3D space alone is unpu
       await page.goto(`/exhibitions/${owner.handler}/${exhibition.url}`)
       await expect(page.getByText('E2E Space Publish Off')).toBeVisible()
       await expect(page.getByText(`E2E Space Off ${s}`)).toBeVisible()
-      await expect(page.getByRole('link', { name: 'Enter 3D room' })).toHaveCount(0)
+      await expect(page.getByRole('link', { name: 'Enter Virtual Exhibition' })).toHaveCount(0)
     } finally {
       await prisma.exhibition.delete({ where: { id: exhibition.id } })
       await prisma.artwork.delete({ where: { id: artwork.id } })
