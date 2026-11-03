@@ -71,7 +71,7 @@ const jsonLd = {
   logo: `${SITE_URL}/avatar.png`,
   description:
     'Virtual exhibition space dedicated to showcasing contemporary art in immersive 3D environments.',
-  sameAs: [SOCIAL_LINKS.instagram, SOCIAL_LINKS.facebook],
+  sameAs: [SOCIAL_LINKS.instagram, SOCIAL_LINKS.facebook, SOCIAL_LINKS.pinterest],
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {

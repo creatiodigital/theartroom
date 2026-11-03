@@ -43,6 +43,8 @@ type Slide = {
   exhibitionUrl: string
   isActive: boolean
   textColor: string
+  ctaBackgroundColor: string
+  ctaTextColor: string
 }
 
 // `desktop` is the main image; `mobile` is the optional portrait one used on
@@ -161,6 +163,8 @@ export default function LandingContentPage() {
       exhibitionUrl: '',
       isActive: true,
       textColor: '#ffffff',
+      ctaBackgroundColor: '#ffffff',
+      ctaTextColor: '#000000',
     })
     setIsNewSlide(true)
     setUploadErrors({})
@@ -459,6 +463,22 @@ export default function LandingContentPage() {
                   textColor={editingSlide.textColor || '#ffffff'}
                   onColorSelect={(color) => updateField('textColor', color)}
                 />
+
+                <label className={styles.label}>Enter button background</label>
+                <ColorPicker
+                  textColor={editingSlide.ctaBackgroundColor || '#ffffff'}
+                  onColorSelect={(color) => updateField('ctaBackgroundColor', color)}
+                />
+
+                <label className={styles.label}>Enter button text</label>
+                <ColorPicker
+                  textColor={editingSlide.ctaTextColor || '#000000'}
+                  onColorSelect={(color) => updateField('ctaTextColor', color)}
+                />
+                <Text font="dashboard" as="p" size="sm" className={styles.hint}>
+                  The &ldquo;Enter Virtual Exhibition&rdquo; button shows on laptops and desktops
+                  when the exhibition&apos;s 3D space is published, and opens it directly.
+                </Text>
               </div>
             </div>
 

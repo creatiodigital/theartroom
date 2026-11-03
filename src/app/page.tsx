@@ -8,7 +8,9 @@ import { Intro } from '@/components/landing/Intro/Intro'
 import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
+import { visitUrlsFor } from '@/lib/slideVisitUrls'
 
 import styles from './page.module.scss'
 
@@ -27,6 +29,14 @@ const getSlides = async () => {
     where: { isActive: true },
     orderBy: { order: 'asc' },
   })
+  // A slide whose exhibition has its 3D space published gets a way straight in. If that can't be
+  // looked up, the slides show as they always have, without the button.
+  const visitUrls = await visitUrlsFor(slidesData.map((slide) => slide.exhibitionUrl)).catch(
+    (err) => {
+      captureError(err, { flow: 'content', stage: 'slide-visit-urls', level: 'warning' })
+      return {} as Record<string, string>
+    },
+  )
   return slidesData.map((slide) => ({
     id: slide.id,
     imageUrl: slide.imageUrl,
@@ -36,6 +46,9 @@ const getSlides = async () => {
     title: slide.title,
     subtitle: slide.subtitle,
     textColor: slide.textColor,
+    visitUrl: visitUrls[slide.exhibitionUrl] ?? null,
+    ctaBackgroundColor: slide.ctaBackgroundColor,
+    ctaTextColor: slide.ctaTextColor,
   }))
 }
 

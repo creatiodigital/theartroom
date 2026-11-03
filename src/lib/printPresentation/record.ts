@@ -1,5 +1,5 @@
 import type { PresentationWindow } from './geometry'
-import type { PresentationMode } from './look'
+import { isFrameChoice, type FrameChoice, type PresentationMode } from './look'
 
 /** The two stored sizes: the artwork page's, and the grids'. */
 export type PresentationSize = 'large' | 'small'
@@ -23,6 +23,14 @@ export type PrintPresentationRecord = {
   aspect: number
   urls: Record<PresentationSize, string>
   renderedAt: string
+  /**
+   * What the shot shows, so a page can still place it once the work's settings have moved on (a
+   * render stays up until it's re-rendered): the frame it was shot in, whether it held a
+   * passepartout, and the image's shape. Absent on renders saved before 2026-11-03.
+   */
+  frame?: FrameChoice
+  passepartout?: boolean
+  ratio?: number
 }
 
 const fraction = (v: unknown): v is number =>
@@ -49,7 +57,11 @@ export function isPrintPresentationRecord(x: unknown): x is PrintPresentationRec
     !!urls &&
     typeof urls.large === 'string' &&
     typeof urls.small === 'string' &&
-    typeof r.renderedAt === 'string'
+    typeof r.renderedAt === 'string' &&
+    (r.frame === undefined || isFrameChoice(r.frame)) &&
+    (r.passepartout === undefined || typeof r.passepartout === 'boolean') &&
+    (r.ratio === undefined ||
+      (typeof r.ratio === 'number' && Number.isFinite(r.ratio) && r.ratio > 0))
   )
 }
 
