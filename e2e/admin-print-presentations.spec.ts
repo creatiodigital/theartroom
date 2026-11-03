@@ -93,6 +93,10 @@ const openPage = async (page: import('@playwright/test').Page) => {
 const statusOf = (page: import('@playwright/test').Page) =>
   page.locator(`[data-artwork-id="${artworkId}"] [data-status]`)
 
+/** The work's passepartout switch (labelled with its title, which this one's is "Untitled"). */
+const passepartoutOf = (page: import('@playwright/test').Page) =>
+  page.locator(`[data-artwork-id="${artworkId}"]`).getByLabel(/^Passepartout for /)
+
 test('a work with a current render reads "Up to date"', async ({ page }) => {
   await setRecord(record)
   await openPage(page)
@@ -136,9 +140,10 @@ test('the passepartout switch saves at once: the work reads "Out of date" until 
 }) => {
   await setRecord(record)
   await openPage(page)
-  const toggle = page.getByRole('checkbox', { name: 'Passepartout for E2E Presentation Admin' })
+  const toggle = passepartoutOf(page)
   await expect(toggle).not.toBeChecked()
-  await toggle.check({ force: true })
+  await toggle.locator('xpath=..').click()
+  await expect(toggle).toBeChecked()
   await expect(statusOf(page)).toHaveText('Out of date')
   const saved = await prisma.artwork.findUniqueOrThrow({
     where: { id: artworkId },
@@ -147,7 +152,8 @@ test('the passepartout switch saves at once: the work reads "Out of date" until 
   expect(saved.presentationPassepartout).toBe(true)
   // The render it had (saved before records said their shot) now says what it shows.
   expect(saved.printPresentation).toMatchObject({ frame: 'wood-dark', passepartout: false })
-  await toggle.uncheck({ force: true })
+  await toggle.locator('xpath=..').click()
+  await expect(toggle).not.toBeChecked()
   await expect(statusOf(page)).toHaveText('Up to date')
 })
 
@@ -156,9 +162,7 @@ test('with "No frame" there is no passepartout to switch on', async ({ page }) =
   await prisma.artwork.update({ where: { id: artworkId }, data: { presentationFrame: 'none' } })
   try {
     await openPage(page)
-    await expect(
-      page.getByRole('checkbox', { name: 'Passepartout for E2E Presentation Admin' }),
-    ).toBeDisabled()
+    await expect(passepartoutOf(page)).toBeDisabled()
   } finally {
     await prisma.artwork.update({
       where: { id: artworkId },

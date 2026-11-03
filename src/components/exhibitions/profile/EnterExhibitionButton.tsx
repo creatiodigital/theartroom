@@ -54,7 +54,7 @@ export const EnterExhibitionButton = ({
           <Button
             variant="primary"
             size="bigSquared"
-            label="Enter Virtual Exhibition"
+            label="Enter 3D room"
             href={visitUrl}
             icon="arrowRight"
             className={className}

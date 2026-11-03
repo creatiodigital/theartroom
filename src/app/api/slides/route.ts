@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 
 import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { ctaColors } from '@/lib/slideVisitUrls'
 
 // GET all slides (public - needed for landing page)
 export async function GET() {
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
         order: slideOrder,
         isActive: isActive ?? true,
         ...(textColor ? { textColor } : {}),
+        ...ctaColors(body),
       },
     })
 

@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import c from 'classnames'
 import { ArrowRight } from 'lucide-react'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
+import { EnterVirtualLink } from '@/components/exhibitions/EnterVirtualLink'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Text } from '@/components/ui/Typography'
@@ -15,6 +17,8 @@ type Exhibition = {
   shortDescription?: string | null
   artistLabel: string
   href: string
+  /** Straight into its 3D space, when that's published; null or absent for none. */
+  visitHref?: string | null
 }
 
 interface ExhibitionGridProps {
@@ -25,7 +29,9 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
   return (
     <div className={styles.grid}>
       {exhibitions.map((exhibition) => (
-        <Link key={exhibition.id} href={exhibition.href} className={styles.card}>
+        // The whole card opens the exhibition (its "Visit exhibition" link is stretched over it);
+        // "Enter 3D room" is a link of its own on top, never inside that one.
+        <div key={exhibition.id} className={styles.card}>
           <div className={styles.imageWrapper}>
             {exhibition.featuredImageUrl ? (
               <ProtectedImage
@@ -50,11 +56,18 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
               {exhibition.shortDescription}
             </Text>
           )}
-          <span className={styles.visitLink}>
+          <Link
+            href={exhibition.href}
+            className={c(styles.visitLink, styles.stretched)}
+            aria-label={`Visit exhibition: ${exhibition.mainTitle}`}
+          >
             <ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />
             <span>Visit exhibition</span>
-          </span>
-        </Link>
+          </Link>
+          {exhibition.visitHref && (
+            <EnterVirtualLink href={exhibition.visitHref} className={styles.enterLink} />
+          )}
+        </div>
       ))}
     </div>
   )

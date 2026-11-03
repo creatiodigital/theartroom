@@ -22,16 +22,16 @@
 .slide {
   position: absolute;
   inset: 0;
-  display: block;
   opacity: 0;
   z-index: 1;
-  text-decoration: none;
-  color: inherit;
   transition: opacity 800ms ease;
+}
 
-  &:hover {
-    text-decoration: none;
-  }
+// The whole slide opens the exhibition page; the text sits over it (see .container).
+.slideLink {
+  position: absolute;
+  inset: 0;
+  display: block;
 }
 
 .slideActive {
@@ -58,6 +58,9 @@
   padding: 0 var(--space-6);
   display: flex;
   align-items: flex-end;
+  // Clicks on the text go through to the slide's link underneath; only the Enter button takes its
+  // own.
+  pointer-events: none;
 
   @include breakpoint(lg) {
     padding: 0 var(--site-padding);
@@ -97,4 +100,20 @@
   position: relative;
   color: inherit;
   margin-top: var(--space-2);
+}
+
+// "Enter 3D room": straight into the 3D space, on laptops and desktops only (as on
+// the exhibition page), so a phone never sees it flash in. Its colors come from the slide.
+.cta {
+  display: none;
+  margin-top: var(--space-6);
+  pointer-events: auto;
+
+  @include walkthrough-device {
+    display: block;
+  }
+}
+
+.ctaButton:hover {
+  opacity: 0.85;
 }

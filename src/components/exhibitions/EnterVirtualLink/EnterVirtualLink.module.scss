@@ -1,0 +1,12 @@
+@use '@/styles/mixins' as *;
+
+// Above the card's stretched link (its ::after), and only where the walk-through runs.
+.gate {
+  position: relative;
+  z-index: 1;
+  display: none;
+
+  @include walkthrough-device {
+    display: block;
+  }
+}
