@@ -1,12 +1,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import c from 'classnames'
 import { ArrowRight } from 'lucide-react'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
 
-import { EnterVirtualLink } from '@/components/exhibitions/EnterVirtualLink'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageLayout } from '@/components/ui/PageLayout'
@@ -21,8 +19,6 @@ type Exhibition = {
   status: string
   featuredImageUrl: string | null
   shortDescription: string | null
-  /** Its 3D space is published: the card offers a way straight in. */
-  spacePublished: boolean
   user: {
     name: string
     lastName: string
@@ -42,9 +38,10 @@ const ExhibitionCard = ({
   priority?: boolean
 }) => (
   <li className={styles.listItem}>
-    {/* The whole card opens the exhibition (its "Visit exhibition" link is stretched over it);
-        "Enter 3D room" is a link of its own on top, never inside that one. */}
-    <div className={styles.exhibitionLink}>
+    <Link
+      href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
+      className={styles.exhibitionLink}
+    >
       <div className={styles.imageWrapper}>
         {exhibition.featuredImageUrl && isSafeImageSrc(exhibition.featuredImageUrl) ? (
           <Image
@@ -74,22 +71,12 @@ const ExhibitionCard = ({
             {exhibition.shortDescription}
           </Text>
         )}
-        <Link
-          href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}`}
-          className={c(styles.visitLink, styles.stretched)}
-          aria-label={`Visit exhibition: ${exhibition.mainTitle}`}
-        >
+        <span className={styles.visitLink}>
           <ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} />
           <span>Visit exhibition</span>
-        </Link>
-        {exhibition.spacePublished && (
-          <EnterVirtualLink
-            href={`/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit`}
-            className={styles.enterLink}
-          />
-        )}
+        </span>
       </div>
-    </div>
+    </Link>
   </li>
 )
 

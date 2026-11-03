@@ -97,7 +97,6 @@ type ExhibitionWithUser = {
   url: string
   featuredImageUrl: string | null
   shortDescription: string | null
-  spacePublished: boolean
   user: { name: string; lastName: string; handler: string }
 }
 
@@ -135,9 +134,6 @@ export default async function Home() {
                 shortDescription: exhibition.shortDescription,
                 artistLabel: `${exhibition.user.name} ${exhibition.user.lastName}`,
                 href: `/exhibitions/${exhibition.user.handler}/${exhibition.url}`,
-                visitHref: exhibition.spacePublished
-                  ? `/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit`
-                  : null,
               }))}
             />
           )}

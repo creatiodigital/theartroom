@@ -26,9 +26,9 @@
 }
 
 .exhibitionLink {
-  position: relative;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
   gap: var(--space-6);
 
   @include breakpoint(lg) {
@@ -36,13 +36,10 @@
     gap: var(--space-10);
     align-items: center;
   }
-}
 
-// The card's "Visit exhibition" link covers the whole card, so a click anywhere opens it.
-.stretched::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .imageWrapper {
@@ -91,27 +88,13 @@
   margin-top: var(--space-2);
 }
 
-.visitLink,
-.enterLink {
+.visitLink {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin-top: var(--space-6);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   letter-spacing: 0.05em;
   color: var(--color-text-primary);
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: none;
-  }
-}
-
-.visitLink {
-  margin-top: var(--space-6);
-}
-
-// The second line, right under "Visit exhibition" (the info column's own gap sits between).
-.enterLink {
-  margin-top: var(--space-1);
 }

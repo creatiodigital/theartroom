@@ -16,16 +16,13 @@
 }
 
 .card {
-  position: relative;
   display: flex;
   flex-direction: column;
-}
+  text-decoration: none;
 
-// The card's "Visit exhibition" link covers the whole card, so a click anywhere opens it.
-.stretched::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .imageWrapper {
@@ -67,28 +64,14 @@
   margin-top: var(--space-2);
 }
 
-.visitLink,
-.enterLink {
+.visitLink {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-8);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   letter-spacing: 0.05em;
   color: var(--color-text-primary);
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: none;
-  }
-}
-
-.visitLink {
-  margin-top: auto;
-  padding-top: var(--space-8);
-}
-
-// The second line, right under "Visit exhibition".
-.enterLink {
-  margin-top: var(--space-3);
 }

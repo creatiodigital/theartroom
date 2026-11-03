@@ -28,7 +28,6 @@ const getPublicExhibitions = () =>
       status: true,
       featuredImageUrl: true,
       shortDescription: true,
-      spacePublished: true,
       user: {
         select: {
           name: true,
