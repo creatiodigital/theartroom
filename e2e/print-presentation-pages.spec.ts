@@ -18,10 +18,11 @@ import {
 } from './presentation-helpers'
 
 /**
- * Print presentations on the public pages: with the switch on, a work with a CURRENT stored render
- * shows as a photo of the print — the render (frame or sheet) over the original image, which sits
- * untouched in the render's window. Switch off, no render, a render that's out of date or stored
- * elsewhere, or a render file that won't load: the page shows the plain image, as before.
+ * Print presentations on the public pages: with the switch on, a work with a stored render shows
+ * as a photo of the print — the render (frame or sheet) over the original image, which sits
+ * untouched in the render's window. An out-of-date render stays up until it's re-rendered, unless
+ * it would show the work wrongly (another edition, another shape). Switch off, no render, a render
+ * stored elsewhere, or a render file that won't load: the page shows the plain image, as before.
  *
  * The renders are blank transparent WebPs at the stored sizes, written on the local backend
  * (BAKE_STORAGE=local) under the work's real file names; whatever real render was there is put
@@ -57,6 +58,13 @@ const present = async (shape: BlankShape, patch: Partial<PrintPresentationRecord
   await prisma.artwork.update({ where: { id: artworkId }, data: { printPresentation: record } })
   return record
 }
+
+/** What a render saved now says about its shot: the work's current frame, passepartout, shape. */
+const shotOf = (i: typeof inputs): Partial<PrintPresentationRecord> => ({
+  frame: i.frame ?? 'none',
+  passepartout: i.passepartout,
+  ratio: i.ratio,
+})
 
 /** The fixture work's presentation (grid card or artwork-page picture). */
 const presentation = (page: Page) =>
@@ -192,16 +200,48 @@ test('switch off: the pages are as they were', async ({ page }) => {
   await expect(page.locator('[data-print-presentation]')).toHaveCount(0)
 })
 
-test('an out-of-date render is not shown: the page falls back to the plain image', async ({
+test('an out-of-date render stays up until it is re-rendered', async ({ page }) => {
+  // e.g. its frame or passepartout changed since: the old shot, under its own file names.
+  const old = 'deadbeef'
+  const urls = await writeBlankRender(artworkId, old, 'wide')
+  try {
+    await present('wide', { fingerprint: old, urls, ...shotOf(inputs) })
+    await setPrintPresentationsEnabled(true)
+    await page.goto(routes.exhibition())
+    const card = presentation(page)
+    await expect(card).toHaveCount(1)
+    await expect(renderOf(card)).toHaveAttribute('src', urls.small)
+    await expectFitted(card)
+    await page.goto(routes.artwork(artworkSlug))
+    const picture = presentation(page)
+    await expect(renderOf(picture)).toHaveAttribute('src', urls.large)
+    await expectCropped(page, picture)
+  } finally {
+    await removeRenderFiles(artworkId, old)
+  }
+})
+
+test('an out-of-date render that would show the work wrongly gives way to the plain image', async ({
   page,
 }) => {
-  await present('wide', { fingerprint: 'deadbeef' })
-  await setPrintPresentationsEnabled(true)
-  await page.goto(routes.exhibition())
-  await expect(page.locator(`img[src*="${imageUrl}"]`).first()).toBeVisible()
-  await expect(presentation(page)).toHaveCount(0)
-  await page.goto(routes.artwork(artworkSlug))
-  await expect(presentation(page)).toHaveCount(0)
+  const old = 'deadbeef'
+  const urls = await writeBlankRender(artworkId, old, 'wide')
+  try {
+    for (const wrong of [
+      // Another edition: a wrong pencilled number.
+      { mode: 'limited' as const, edition: (inputs.edition ?? 0) + 30 },
+      // Another shape: the original would no longer fill the window.
+      { ratio: inputs.ratio * 1.25 },
+    ]) {
+      await present('wide', { fingerprint: old, urls, ...shotOf(inputs), ...wrong })
+      await setPrintPresentationsEnabled(true)
+      await page.goto(routes.exhibition())
+      await expect(page.locator(`img[src*="${imageUrl}"]`).first()).toBeVisible()
+      await expect(presentation(page)).toHaveCount(0)
+    }
+  } finally {
+    await removeRenderFiles(artworkId, old)
+  }
 })
 
 test('a render stored on another backend is not this one: the page shows the plain image', async ({

@@ -1,13 +1,24 @@
 import { test, expect } from '@playwright/test'
 
 import {
+  EDITION_INK_HEIGHT_EM,
+  EDITION_NUMBER_CLEARANCE_CM,
+  EDITION_NUMBER_FONT_SIZE_CM,
+} from '@/components/PrintWizard/editionNumberMetrics'
+import {
   FOV,
+  FRAMED_BORDER_M,
+  FRAMED_BOTTOM_M,
   FRAMED_IMAGE_LONG_M,
+  PASSEPARTOUT_REVEAL_M,
+  PASSEPARTOUT_THICKNESS_M,
   TILE_FILL,
+  cutShade,
   frameOcclusion,
   imageSize,
   outerSize,
   paperLift,
+  passepartoutCut,
   shadowReachBelow,
   shotFrame,
   windowFractions,
@@ -47,6 +58,60 @@ test.describe('print presentation geometry', () => {
     expect(red(mid, mid)).toBeGreaterThanOrEqual(254)
     expect(red(0, mid)).toBeLessThan(190)
     for (let i = 1; i <= mid; i++) expect(red(i, mid)).toBeGreaterThanOrEqual(red(i - 1, mid))
+  })
+
+  test('the passepartout is a 4 mm board that never covers the image', () => {
+    expect(PASSEPARTOUT_THICKNESS_M).toBe(0.004)
+    for (const ratio of [1.5, 0.75, 4]) {
+      const [iw, ih] = imageSize(ratio, FRAMED_IMAGE_LONG_M)
+      const imageY = (FRAMED_BOTTOM_M - FRAMED_BORDER_M) / 2
+      for (const numbered of [false, true]) {
+        const cut = passepartoutCut(iw, ih, imageY, numbered)
+        // A strip of paper between the board and the image, 3 cm on every side…
+        expect(PASSEPARTOUT_REVEAL_M).toBe(0.03)
+        expect(-iw / 2 - cut.x0).toBeCloseTo(PASSEPARTOUT_REVEAL_M, 9)
+        expect(cut.x1 - iw / 2).toBeCloseTo(PASSEPARTOUT_REVEAL_M, 9)
+        expect(cut.y1 - (imageY + ih / 2)).toBeCloseTo(PASSEPARTOUT_REVEAL_M, 9)
+        expect(imageY - ih / 2 - cut.y0).toBeCloseTo(PASSEPARTOUT_REVEAL_M, 9)
+        // …and the board's bevel still well inside the sheet's margin.
+        expect(imageY - ih / 2 - cut.y0 + PASSEPARTOUT_THICKNESS_M).toBeLessThan(FRAMED_BOTTOM_M)
+      }
+    }
+  })
+
+  test('below a numbered print the passepartout leaves the pencilled number room, and a little paper under it', () => {
+    const [iw, ih] = imageSize(1.5, FRAMED_IMAGE_LONG_M)
+    const cut = passepartoutCut(iw, ih, 0, true)
+    // The number: 3 mm under the image, its ink EDITION_INK_HEIGHT_EM of its size (PaperSheet's
+    // PENCIL_SIZE, 0.75, of EDITION_NUMBER_FONT_SIZE_CM).
+    const fontM = (EDITION_NUMBER_FONT_SIZE_CM / 100) * 0.75
+    const inkBottom = -ih / 2 - EDITION_NUMBER_CLEARANCE_CM / 100 - EDITION_INK_HEIGHT_EM * fontM
+    expect(inkBottom - cut.y0).toBeGreaterThanOrEqual(0.005)
+  })
+
+  test("the passepartout's cut shades the paper in a thin line at its foot, and nowhere else", () => {
+    const texels = 512
+    const sheet = 0.8
+    const cut = { x0: -0.3, x1: 0.3, y0: -0.25, y1: 0.25 }
+    const shade = cutShade({
+      sheetW: sheet,
+      sheetH: sheet,
+      cut,
+      thickness: PASSEPARTOUT_THICKNESS_M,
+      texels,
+    })
+    const at = (x: number, y: number) =>
+      shade[
+        Math.floor((y / sheet + 0.5) * texels) * texels + Math.floor((x / sheet + 0.5) * texels)
+      ]
+    // Right at the cut's foot: a visible shade (a few percent of the room's light)…
+    expect(at(-0.299, 0)).toBeLessThan(0.95)
+    // …gone within a centimetre, and none in the middle or under the board.
+    expect(at(-0.29, 0)).toBeGreaterThan(0.98)
+    expect(at(0, 0)).toBeGreaterThan(0.999)
+    expect(at(-0.35, 0)).toBe(1)
+    // Darkest in the window's corners, where two sides meet.
+    expect(at(-0.299, -0.249)).toBeLessThan(at(-0.299, 0))
   })
 
   test('the paper lies flat under the image and only curls in its border', () => {

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   listPrintPresentations,
   setPresentationFrame,
+  setPresentationPassepartout,
   setPrintPresentationsSwitch,
   type PresentationRow,
   type PresentationStatus,
@@ -58,7 +59,7 @@ export const AdminPrintPresentations = () => {
   const [stopping, setStopping] = useState(false)
   const [outcomes, setOutcomes] = useState<Record<string, RowOutcome>>({})
   const [switching, setSwitching] = useState(false)
-  const [savingFrame, setSavingFrame] = useState(false)
+  const [savingSetting, setSavingSetting] = useState(false)
   const [artist, setArtist] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -135,17 +136,17 @@ export const AdminPrintPresentations = () => {
     void load()
   }, [load])
 
-  // Saved as soon as it's picked; the row then reads as out of date until it's rendered in it.
-  // Nothing can render until the list has reloaded with the new frame: a render started before
-  // that would use the old one, and the server would refuse it.
-  const changeFrame = async (artworkId: string, frame: FrameChoice) => {
-    setSavingFrame(true)
+  // A frame or passepartout is saved as soon as it's picked; the row then reads as out of date
+  // until it's rendered with it. Nothing can render until the list has reloaded with the new
+  // setting: a render started before that would use the old one, and the server would refuse it.
+  const saveSetting = async (save: () => Promise<{ ok: true } | { ok: false; error: string }>) => {
+    setSavingSetting(true)
     try {
-      const res = await setPresentationFrame(artworkId, frame)
+      const res = await save()
       if (!res.ok) return setError(res.error)
       await load()
     } finally {
-      setSavingFrame(false)
+      setSavingSetting(false)
     }
   }
 
@@ -168,10 +169,11 @@ export const AdminPrintPresentations = () => {
           <h1 className={dashboardStyles.sectionTitle}>Print presentations</h1>
         </div>
         <p className={dashboardStyles.sectionDescription}>
-          Every work shown as a photo of its print: in the frame picked for it (or as the bare
-          sheet), a limited edition with its pencilled number. The artwork itself is never in the
-          render — it sits, untouched, in the render&apos;s window. Renders run here, in this
-          browser, one work at a time.
+          Every work shown as a photo of its print: in the frame picked for it, with or without a
+          passepartout (or as the bare sheet), a limited edition with its pencilled number. The
+          artwork itself is never in the render — it sits, untouched, in the render&apos;s window.
+          Renders run here, in this browser, one work at a time. A work that&apos;s out of date
+          keeps its last render on the site until it&apos;s re-rendered.
         </p>
 
         <div className={styles.switchRow}>
@@ -221,7 +223,7 @@ export const AdminPrintPresentations = () => {
               font="dashboard"
               variant="primary"
               label={`Render missing and out of date (${toRender.length})`}
-              disabled={!canRender || savingFrame || toRender.length === 0}
+              disabled={!canRender || savingSetting || toRender.length === 0}
               onClick={() => start(toRender)}
             />
           )}
@@ -241,6 +243,7 @@ export const AdminPrintPresentations = () => {
                 <th>Work</th>
                 <th>Presentation</th>
                 <th>Frame color</th>
+                <th>Passepartout</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -284,8 +287,26 @@ export const AdminPrintPresentations = () => {
                           className={styles.frameSelect}
                           options={FRAME_OPTIONS}
                           value={row.inputs.frame ?? NO_FRAME}
-                          onChange={(frame) => void changeFrame(row.artworkId, frame)}
-                          disabled={running || savingFrame}
+                          onChange={(frame) =>
+                            void saveSetting(() => setPresentationFrame(row.artworkId, frame))
+                          }
+                          disabled={running || savingSetting}
+                        />
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td>
+                      {/* A passepartout needs a frame to hold it: off with "No frame". */}
+                      {row.inputs ? (
+                        <Toggle
+                          checked={row.inputs.passepartout}
+                          onChange={(e) => {
+                            const on = e.target.checked
+                            void saveSetting(() => setPresentationPassepartout(row.artworkId, on))
+                          }}
+                          disabled={!row.inputs.frame || running || savingSetting}
+                          aria-label={`Passepartout for ${row.title}`}
                         />
                       ) : (
                         '—'
@@ -305,7 +326,7 @@ export const AdminPrintPresentations = () => {
                           font="dashboard"
                           variant="secondary"
                           label="Re-render"
-                          disabled={!canRender || running || savingFrame}
+                          disabled={!canRender || running || savingSetting}
                           onClick={() => start([{ artworkId: row.artworkId, inputs: row.inputs! }])}
                         />
                       )}

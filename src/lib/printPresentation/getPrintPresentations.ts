@@ -1,7 +1,7 @@
 import { captureError } from '@/lib/observability/captureError'
 import { getPrintPresentationsEnabled } from '@/lib/settings'
 
-import { isCurrentRecord } from './currentInputs'
+import { shownRecord } from './currentInputs'
 import { pieceArea } from './geometry'
 import { presentationInputs } from './inputs'
 import { loadPresentationSources } from './loadSources'
@@ -12,8 +12,9 @@ export type { PresentationView }
 
 /**
  * The print presentations public pages show, by artwork id: only while the go-live switch is on,
- * and only renders that still fit the work and are served from here (`isCurrentRecord`). A work
- * that's missing, out of date or not eligible is simply absent — its page shows the plain image.
+ * and only renders served from here that still show the work truly — its latest render, up to
+ * date or not (`shownRecord`). A work with none, or not eligible, is simply absent: its page shows
+ * the plain image.
  *
  * FAILS CLOSED: if anything goes wrong reading them, pages show today's plain images.
  */
@@ -26,11 +27,11 @@ export async function getPrintPresentations(
     const views: Record<string, PresentationView> = {}
     for (const source of sources) {
       if (!source.record) continue
-      const inputs = presentationInputs(source)
-      if (!inputs || !isCurrentRecord(source.id, source.record, inputs)) continue
+      const shot = shownRecord(source.id, source.record, presentationInputs(source))
+      if (!shot) continue
       views[source.id] = {
         ...presentationView(source.record),
-        piece: pieceArea(shotMode(inputs.frame), inputs.ratio, source.record.window),
+        piece: pieceArea(shotMode(shot.frame), shot.ratio, source.record.window),
       }
     }
     return views

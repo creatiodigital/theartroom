@@ -61,6 +61,9 @@ const PINNED_FRAMED = {
   ],
 }
 
+/** `source()`'s fingerprints as the code before the passepartout computed them. */
+const PINNED_FINGERPRINT = { open: '7d0df61e', limited: '017c236b', sheet: 'b45930b3' }
+
 const source = (patch: Partial<PresentationSource> = {}): PresentationSource => ({
   id: '683e76c1-2c50-4ed0-93d1-444fa8edef7f',
   artworkType: 'image',
@@ -70,6 +73,7 @@ const source = (patch: Partial<PresentationSource> = {}): PresentationSource => 
   editionType: 'open',
   firstVariantEditionSize: null,
   presentationFrame: null,
+  presentationPassepartout: false,
   presentationRatio: null,
   ...patch,
 })
@@ -165,6 +169,33 @@ test.describe('print presentation inputs', () => {
       presentationInputs(source({ editionType: 'limited', firstVariantEditionSize: 30 }))!
         .fingerprint,
     ).not.toBe(limited)
+  })
+
+  test('a passepartout counts only when it is on, and only in a frame', () => {
+    const base = presentationInputs(source())!
+    expect(base.passepartout).toBe(false)
+    const matted = presentationInputs(source({ presentationPassepartout: true }))!
+    expect(matted.passepartout).toBe(true)
+    expect(matted.fingerprint).not.toBe(base.fingerprint)
+    // The bare sheet has no frame to hold one, whatever is stored.
+    const sheet = presentationInputs(source({ presentationFrame: 'none' }))!
+    const sheetMatted = presentationInputs(
+      source({ presentationFrame: 'none', presentationPassepartout: true }),
+    )!
+    expect(sheetMatted.passepartout).toBe(false)
+    expect(sheetMatted.fingerprint).toBe(sheet.fingerprint)
+  })
+
+  test('works without a passepartout keep the fingerprint they were rendered with', () => {
+    // Pinned before the passepartout existed (2026-11-03): their renders stay up to date.
+    expect(presentationInputs(source())!.fingerprint).toBe(PINNED_FINGERPRINT.open)
+    expect(
+      presentationInputs(source({ editionType: 'limited', firstVariantEditionSize: 50 }))!
+        .fingerprint,
+    ).toBe(PINNED_FINGERPRINT.limited)
+    expect(presentationInputs(source({ presentationFrame: 'none' }))!.fingerprint).toBe(
+      PINNED_FINGERPRINT.sheet,
+    )
   })
 
   test('panoramas and tall works are accepted', () => {

@@ -223,6 +223,10 @@ model Artwork {
   // on the admin's print presentations page (`FrameChoice` in src/lib/printPresentation/look.ts).
   presentationFrame String @default("wood-dark")
 
+  // Whether that framed print presentation has a passepartout (in the paper's own white) between
+  // the frame and the print; set on the same admin page. Ignored for the bare sheet (no frame).
+  presentationPassepartout Boolean @default(false)
+
   // Width over height of the web image, for a work with no original file (so no originalWidth /
   // originalHeight): measured once by the admin's print presentations page, and read ONLY by the
   // print presentation for its shape. Print sizes always come from the original file.

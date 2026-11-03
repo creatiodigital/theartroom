@@ -8,7 +8,7 @@
 import { requireAdminAction } from '@/lib/authUtils'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
-import { isCurrentRecord } from '@/lib/printPresentation/currentInputs'
+import { isCurrentRecord, shotFacts } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs, type PresentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
 import { isFrameChoice, type FrameChoice } from '@/lib/printPresentation/look'
@@ -79,8 +79,20 @@ export async function listPrintPresentations(): Promise<
 }
 
 /**
+ * A render saved before 2026-11-03 doesn't say which frame it was shot in. Saved along with a
+ * setting that changes the shot: the work's current render gets it written in, so pages still
+ * place it as the shot it is while it waits to be re-rendered (`shownRecord`).
+ */
+async function withShotFacts(artworkId: string) {
+  const [source] = await loadPresentationSources({ ids: [artworkId] })
+  const record = source ? shotFacts(artworkId, source.record, presentationInputs(source)) : null
+  return record ? { printPresentation: record } : {}
+}
+
+/**
  * The frame a work is rendered in (or none), saved as soon as it's picked. A work whose render used
  * another one then reads as out of date, so the next render (one by one, or all) uses this one.
+ * Its old render stays on the site until then.
  */
 export async function setPresentationFrame(
   artworkId: string,
@@ -90,11 +102,40 @@ export async function setPresentationFrame(
   if (!guard.ok) return { ok: false, error: guard.error }
   if (!isFrameChoice(frame)) return { ok: false, error: 'Unknown frame.' }
   try {
-    await prisma.artwork.update({ where: { id: artworkId }, data: { presentationFrame: frame } })
+    await prisma.artwork.update({
+      where: { id: artworkId },
+      data: { presentationFrame: frame, ...(await withShotFacts(artworkId)) },
+    })
     return { ok: true }
   } catch (err) {
     captureError(err, { flow: 'admin', stage: 'set-presentation-frame' })
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to save the frame.' }
+  }
+}
+
+/**
+ * Whether a work's frame holds a passepartout, saved as soon as it's switched; like the frame, the
+ * work then reads as out of date until it's re-rendered, its old render staying on the site.
+ */
+export async function setPresentationPassepartout(
+  artworkId: string,
+  passepartout: boolean,
+): Promise<{ ok: true } | Failure> {
+  const guard = await requireAdminAction()
+  if (!guard.ok) return { ok: false, error: guard.error }
+  if (typeof passepartout !== 'boolean') return { ok: false, error: 'Passepartout is on or off.' }
+  try {
+    await prisma.artwork.update({
+      where: { id: artworkId },
+      data: { presentationPassepartout: passepartout, ...(await withShotFacts(artworkId)) },
+    })
+    return { ok: true }
+  } catch (err) {
+    captureError(err, { flow: 'admin', stage: 'set-presentation-passepartout' })
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Failed to save the passepartout.',
+    }
   }
 }
 

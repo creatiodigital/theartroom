@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
 import { currentPresentation } from '@/lib/printPresentation/currentInputs'
 import { shotFrame } from '@/lib/printPresentation/geometry'
 import type { PresentationInputs } from '@/lib/printPresentation/inputs'
-import { makeLook, shotMode } from '@/lib/printPresentation/look'
+import { NO_FRAME, makeLook, shotMode } from '@/lib/printPresentation/look'
 import {
   PRESENTATION_WIDTH_PX,
   isPresentationWindow,
@@ -73,6 +73,9 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ artwork
       aspect: shotAspect(current.inputs),
       urls: presentationPublicUrls(artworkId, fingerprint),
       renderedAt: new Date().toISOString(),
+      frame: current.inputs.frame ?? NO_FRAME,
+      passepartout: current.inputs.passepartout,
+      ratio: current.inputs.ratio,
     }
     await prisma.artwork.update({ where: { id: artworkId }, data: { printPresentation: record } })
 
