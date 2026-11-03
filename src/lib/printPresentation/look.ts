@@ -26,6 +26,14 @@ export const LOOK_VERSION = 3
 export const COPY_SHARE = 0.2
 export const COPY_NUMBERS = 2
 
+/**
+ * The passepartout's look (its board, its cut, the paper it leaves: geometry.ts). Bump it when
+ * that changes on purpose: only the works with a passepartout then read as out of date.
+ * 2 (2026-11-03): 3 cm of paper round the image instead of 1 cm, a 4 mm board instead of 3, white
+ * instead of off-white. 3: the board in the paper's own white. 4: its cut shades the paper.
+ */
+export const PASSEPARTOUT_LOOK = 4
+
 /** The highest copy number a presentation may pencil for an edition of `edition`. */
 export const highestCopy = (edition: number) => Math.max(1, Math.floor(edition * COPY_SHARE))
 

@@ -27,12 +27,40 @@ export const FRAMED_BOTTOM_M = 0.105
 export const PAPER_THICKNESS_M = 0.0004
 
 /**
+ * A framed work's optional passepartout (owner, 2026-11-03: "roughly the same size as the current
+ * border", "as thin as possible, at most 3 mm"; white, see Passepartout.tsx): a museum board on
+ * the sheet, behind the glass, its window cut at 45°. The frame, the sheet and the image
+ * keep their size, so the artwork doesn't shrink. The board covers the paper's margin up to a
+ * strip of paper round the image, so it never covers the artwork, and below a numbered print it
+ * leaves the pencilled number showing. First 1 cm of paper ("reduce the border to be at min"),
+ * then, seeing it, "make the border bigger, and the passepartout smaller" — a little more paper
+ * and a little less board than White Cube's framed prints: 3 cm. Thick enough to read as a board
+ * ("the idea is to be able to 'see' it's a passepartout, some thickness is expected"; then, after
+ * 3 mm, "a little thicker"): its bevel catches a line of light. Changing any of this: bump
+ * PASSEPARTOUT_LOOK.
+ */
+export const PASSEPARTOUT_THICKNESS_M = 0.004
+export const PASSEPARTOUT_REVEAL_M = 0.03
+/**
+ * The least paper below a numbered print: the pencilled number's room (3 mm under the image,
+ * 13.4 mm of ink at its 1.65 cm size: see editionNumberMetrics and PaperSheet's PENCIL_SIZE) and a
+ * little paper between it and the board ("give enough space for the number… and a little
+ * spacing").
+ */
+export const PASSEPARTOUT_NUMBER_REVEAL_M = 0.024
+
+/**
  * What the wall receives in total, in three.js irradiance units: a white matte wall reflects
  * E / π, so this lands it just on white (not past it, or the faint shadows clip away).
  */
 export const WALL_IRRADIANCE = Math.PI * 0.995
 /** The wall's paint: a light gray, so the white paper reads against it (it renders ≈ 241). */
 export const WALL_COLOR = '#f2f2f2'
+/**
+ * The framed sheet's paper, and its passepartout's board: one white, never two (owner,
+ * 2026-11-03: "they cannot be different").
+ */
+export const FRAMED_PAPER_COLOR = '#fcfbf8'
 
 export const FOV = 30
 /** The piece's longer side, as a share of the square shot's: wall all round it. */
@@ -43,11 +71,66 @@ export const WOOD_BOUNCE = 0.3
 /** Eased edges: a real moulding is never knife-sharp, and its edges catch a line of light. */
 export const EASE_M = 0.0008
 
+/** Light the passepartout's white board sends back onto the paper, of what its cut hides. */
+export const BOARD_BOUNCE = 0.5
+
 /** Where the artwork's window sits in the shot, as fractions of its width and height. */
 export type PresentationWindow = { x: number; y: number; w: number; h: number }
 
 export const imageSize = (ratio: number, long = IMAGE_LONG_M): [number, number] =>
   ratio >= 1 ? [long, long / ratio] : [long * ratio, long]
+
+/** An axis-aligned rectangle by its edges, metres. */
+export type Rect = { x0: number; y0: number; x1: number; y1: number }
+
+/**
+ * Where the passepartout's window meets the paper, round an `iw` × `ih` image centred on
+ * (0, `imageY`): the image plus the strip of paper it leaves (more below a pencilled number). The
+ * 45° bevel opens out from there to the board's face, one board thickness wider on every side.
+ */
+export function passepartoutCut(iw: number, ih: number, imageY: number, numbered: boolean): Rect {
+  const reveal = PASSEPARTOUT_REVEAL_M
+  const below = numbered ? Math.max(reveal, PASSEPARTOUT_NUMBER_REVEAL_M) : reveal
+  return {
+    x0: -iw / 2 - reveal,
+    x1: iw / 2 + reveal,
+    y0: imageY - ih / 2 - below,
+    y1: imageY + ih / 2 + reveal,
+  }
+}
+
+/**
+ * The passepartout's shade on the paper in its window, as a factor per texel over the sheet (1 =
+ * none; texels as `frameOcclusion`'s). Each side of the 45° cut, `thickness` high and leaning back
+ * from the window, hides (1 − cos α) / 2 of the room's light from a point on the paper a distance d
+ * from its foot, α being the elevation of the cut's top edge there (`thickness` up, d + `thickness`
+ * away) — half of the frame's vertical-wall rule. The board bounces some back. A soft line of shade
+ * a few millimetres wide all round the window: the board's thickness, seen ("a little line or
+ * shadow around the passepartout, so I know there is some thickness there").
+ */
+export function cutShade(o: {
+  sheetW: number
+  sheetH: number
+  cut: Rect
+  thickness: number
+  texels: number
+}): Float32Array {
+  const { sheetW, sheetH, cut, thickness: h, texels: n } = o
+  const shade = new Float32Array(n * n).fill(1)
+  const hidden = (d: number) => (1 - (d + h) / Math.hypot(d + h, h)) / 2
+  for (let j = 0; j < n; j++) {
+    const y = ((j + 0.5) / n - 0.5) * sheetH
+    if (y < cut.y0 || y > cut.y1) continue
+    for (let i = 0; i < n; i++) {
+      const x = ((i + 0.5) / n - 0.5) * sheetW
+      // Outside the window the paper is under the board.
+      if (x < cut.x0 || x > cut.x1) continue
+      const lost = hidden(x - cut.x0) + hidden(cut.x1 - x) + hidden(y - cut.y0) + hidden(cut.y1 - y)
+      shade[j * n + i] = 1 - (1 - BOARD_BOUNCE) * Math.min(lost, 0.75)
+    }
+  }
+  return shade
+}
 
 /** Outer size of the piece, metres: what the camera has to fit. */
 export function outerSize(mode: PresentationMode, ratio: number): [number, number] {

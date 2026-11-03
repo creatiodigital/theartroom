@@ -23,15 +23,21 @@ import {
   FRAMED_BORDER_M,
   FRAMED_BOTTOM_M,
   FRAMED_IMAGE_LONG_M,
+  FRAMED_PAPER_COLOR,
   LIP_OVERLAP_M,
   PAPER_THICKNESS_M,
+  PASSEPARTOUT_THICKNESS_M,
+  cutShade,
   frameOcclusion,
   imageSize,
+  passepartoutCut,
+  type Rect,
 } from '@/lib/printPresentation/geometry'
 import type { Look, PresentationFrame } from '@/lib/printPresentation/look'
 
 import { ArtworkWindow, type WindowRectPx } from './ArtworkWindow'
 import { PencilNumber } from './PaperSheet'
+import { Passepartout } from './Passepartout'
 
 /**
  * Each frame's finish. Woods are the gallery's own textures (its "Dark Wood" is
@@ -199,22 +205,66 @@ const useFrameOcclusion = (
   openW: number,
   openH: number,
   wallH: number,
+  /** On the paper under a passepartout: its window, whose cut shades the paper too (`cutShade`). */
+  cut: Rect | null = null,
 ) =>
   useMemo(() => {
     const data = frameOcclusion({ sheetW, sheetH, openW, openH, wallH, texels: AO_TEXELS })
+    if (cut) {
+      const thickness = PASSEPARTOUT_THICKNESS_M
+      const shade = cutShade({ sheetW, sheetH, cut, thickness, texels: AO_TEXELS })
+      for (let k = 0; k < shade.length; k++) {
+        for (let c = 0; c < 3; c++) data[k * 4 + c] = Math.round(data[k * 4 + c] * shade[k])
+      }
+    }
     const t = new DataTexture(data, AO_TEXELS, AO_TEXELS)
     t.magFilter = t.minFilter = LinearFilter
     t.needsUpdate = true
     return t
-  }, [sheetW, sheetH, openW, openH, wallH])
+  }, [sheetW, sheetH, openW, openH, wallH, cut])
 
 /**
- * A framed work: the sheet — image plus paper margin, no mat — straight behind the frame, deep
- * enough for the frame to shade it. A limited edition's sheet carries its pencilled number.
+ * The passepartout on the framed sheet (see `Passepartout`), in the frame's shade: its face is one
+ * board nearer the glass than the paper's, so the frame's inner walls rise that much less over it.
+ */
+const FramedPassepartout = ({
+  sheetW,
+  sheetH,
+  openW,
+  openH,
+  setBack,
+  cut,
+}: {
+  sheetW: number
+  sheetH: number
+  openW: number
+  openH: number
+  setBack: number
+  cut: Rect
+}) => {
+  const occlusion = useFrameOcclusion(
+    sheetW,
+    sheetH,
+    openW,
+    openH,
+    setBack - PASSEPARTOUT_THICKNESS_M,
+  )
+  const outer = useMemo(
+    () => ({ x0: -sheetW / 2, y0: -sheetH / 2, x1: sheetW / 2, y1: sheetH / 2 }),
+    [sheetW, sheetH],
+  )
+  return <Passepartout outer={outer} cut={cut} occlusion={occlusion} />
+}
+
+/**
+ * A framed work: the sheet — image plus paper margin — straight behind the frame, deep enough for
+ * the frame to shade it, with a passepartout on it if the work has one. A limited edition's sheet
+ * carries its pencilled number.
  */
 export const Framed = ({
   ratio,
   frame,
+  passepartout,
   edition,
   look,
   onWindow,
@@ -222,6 +272,7 @@ export const Framed = ({
 }: {
   ratio: number
   frame: PresentationFrame
+  passepartout: boolean
   /** A limited edition's N, pencilled "copy/N" in the margin; null for no number. */
   edition: number | null
   look: Look
@@ -237,7 +288,11 @@ export const Framed = ({
   const openW = sw - 2 * LIP_OVERLAP_M
   const openH = sh - 2 * LIP_OVERLAP_M
   const sheetFront = FRAME_DEPTH_M - look.setBack
-  const occlusion = useFrameOcclusion(sw, sh, openW, openH, look.setBack)
+  const cut = useMemo(
+    () => passepartoutCut(iw, ih, -sheetY, edition !== null),
+    [iw, ih, sheetY, edition],
+  )
+  const occlusion = useFrameOcclusion(sw, sh, openW, openH, look.setBack, passepartout ? cut : null)
   // Centred on the frame; the image sits a little above its middle (the deeper bottom margin).
   return (
     <group>
@@ -254,8 +309,20 @@ export const Framed = ({
         {/* The sheet, behind the glass. */}
         <mesh position={[0, 0, sheetFront - PAPER_THICKNESS_M / 2]}>
           <boxGeometry args={[sw, sh, PAPER_THICKNESS_M]} />
-          <meshStandardMaterial color="#fcfbf8" roughness={0.95} aoMap={occlusion} />
+          <meshStandardMaterial color={FRAMED_PAPER_COLOR} roughness={0.95} aoMap={occlusion} />
         </mesh>
+        {passepartout && (
+          <group position={[0, 0, sheetFront + 0.0001]}>
+            <FramedPassepartout
+              sheetW={sw}
+              sheetH={sh}
+              openW={openW}
+              openH={openH}
+              setBack={look.setBack}
+              cut={cut}
+            />
+          </group>
+        )}
       </group>
       <ArtworkWindow
         width={iw}

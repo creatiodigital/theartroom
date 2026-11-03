@@ -3,6 +3,7 @@ import { canonicalJson, fnv1a } from '@/lib/bake/hash'
 import {
   COPY_NUMBERS,
   LOOK_VERSION,
+  PASSEPARTOUT_LOOK,
   frameOf,
   seedForArtwork,
   type PresentationFrame,
@@ -21,6 +22,8 @@ export type PresentationSource = {
   firstVariantEditionSize: number | null
   /** The frame picked for it (`Artwork.presentationFrame`). */
   presentationFrame: string | null
+  /** Whether its frame holds a passepartout (`Artwork.presentationPassepartout`). */
+  presentationPassepartout: boolean
   /** No original file: its web image's width over height (`Artwork.presentationRatio`). */
   presentationRatio: number | null
 }
@@ -32,6 +35,8 @@ export type PresentationInputs = {
   edition: number | null
   /** The frame it's rendered in; null for the bare sheet. */
   frame: PresentationFrame | null
+  /** A passepartout in the frame; never for the bare sheet. */
+  passepartout: boolean
   /** Image width over height, to 4 decimals. */
   ratio: number
   seed: number
@@ -60,7 +65,8 @@ export function shapeOf(
  * The pencilled number only for a limited edition that is for sale and has its print size set
  * up; everything else carries none — open editions, and works not yet for sale (the owner: "treat
  * them as open editions"). Pausing a size for a fix doesn't change the mode. Any work is framed
- * (dark wood unless another frame is picked) or, if "no frame" is picked, the bare sheet.
+ * (dark wood unless another frame is picked), with or without a passepartout, or, if "no frame" is
+ * picked, the bare sheet.
  */
 export function presentationInputs(src: PresentationSource): PresentationInputs | null {
   if (src.artworkType !== 'image') return null
@@ -72,10 +78,21 @@ export function presentationInputs(src: PresentationSource): PresentationInputs 
   const mode: PresentationMode = limited ? 'limited' : 'framed'
   const edition = limited ? src.firstVariantEditionSize : null
   const frame = frameOf(src.presentationFrame)
+  const passepartout = frame !== null && src.presentationPassepartout
   const ratio = Math.round(shape * 10000) / 10000
   const seed = seedForArtwork(src.id)
-  // The copy-number rule counts only where a number is pencilled: a new rule re-renders just those.
-  const fingerprint = fnv1a(
+  const shot = { mode, edition, frame, passepartout, ratio, seed }
+  return { ...shot, fingerprint: presentationFingerprint(shot) }
+}
+
+/**
+ * What a render of this shot is called: changes whenever the shot would look different. The
+ * copy-number rule counts only where a number is pencilled (a new rule re-renders just those); the
+ * passepartout only where there is one, so the works without it kept their renders.
+ */
+export function presentationFingerprint(shot: Omit<PresentationInputs, 'fingerprint'>): string {
+  const { mode, edition, ratio, seed, frame, passepartout } = shot
+  return fnv1a(
     canonicalJson([
       LOOK_VERSION,
       mode,
@@ -84,7 +101,7 @@ export function presentationInputs(src: PresentationSource): PresentationInputs 
       seed,
       frame,
       ...(edition !== null ? [COPY_NUMBERS] : []),
+      ...(passepartout ? ['passepartout', PASSEPARTOUT_LOOK] : []),
     ]),
   )
-  return { mode, edition, frame, ratio, seed, fingerprint }
 }

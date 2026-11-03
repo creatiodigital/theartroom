@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test'
 
+import { shotFacts, shownRecord } from '@/lib/printPresentation/currentInputs'
 import { shotFrame } from '@/lib/printPresentation/geometry'
 import { makeLook } from '@/lib/printPresentation/look'
-import { presentationInputs } from '@/lib/printPresentation/inputs'
+import { presentationFingerprint, presentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
-import { isPrintPresentationRecord } from '@/lib/printPresentation/record'
-import { deletePresentationFiles } from '@/lib/printPresentation/storage'
+import {
+  isPrintPresentationRecord,
+  type PrintPresentationRecord,
+} from '@/lib/printPresentation/record'
+import { deletePresentationFiles, presentationPublicUrls } from '@/lib/printPresentation/storage'
 import prisma from '@/lib/prisma'
 
 import { fixtures } from './fixtures'
@@ -140,6 +144,12 @@ test('an admin stores a print presentation; nothing partial, nothing out of date
     expect(record.urls.large).toBe(uploads.large.publicUrl)
     expect(record.urls.small).toBe(uploads.small.publicUrl)
     expect(record.window).toEqual(WINDOW)
+    // What the shot shows, so pages can still place it once the work's settings move on.
+    expect(record).toMatchObject({
+      frame: inputs!.frame ?? 'none',
+      passepartout: inputs!.passepartout,
+      ratio: inputs!.ratio,
+    })
     // The shot's shape, computed by the server from the look (the large render's pixels).
     const shot = shotFrame(
       inputs!.mode,
@@ -185,4 +195,86 @@ test('a record must be well formed', () => {
   expect(isPrintPresentationRecord({ ...good, mode: 'poster' })).toBe(false)
   expect(isPrintPresentationRecord({ ...good, aspect: 0 })).toBe(false)
   expect(isPrintPresentationRecord(null)).toBe(false)
+  // What the shot shows: optional (renders saved before 2026-11-03 don't say), valid if there.
+  const told = { ...good, frame: 'wood-light', passepartout: true, ratio: 1.5 }
+  expect(isPrintPresentationRecord(told)).toBe(true)
+  expect(isPrintPresentationRecord({ ...told, frame: 'none' })).toBe(true)
+  expect(isPrintPresentationRecord({ ...told, frame: 'gold' })).toBe(false)
+  expect(isPrintPresentationRecord({ ...told, passepartout: 'yes' })).toBe(false)
+  expect(isPrintPresentationRecord({ ...told, ratio: -1 })).toBe(false)
+})
+
+test.describe('the render a page shows', () => {
+  const id = '683e76c1-2c50-4ed0-93d1-444fa8edef7f'
+  const inputs = presentationInputs({
+    id,
+    artworkType: 'image',
+    originalWidth: 6240,
+    originalHeight: 4160,
+    printEnabled: true,
+    editionType: 'open',
+    firstVariantEditionSize: null,
+    presentationFrame: 'wood-dark',
+    presentationPassepartout: false,
+    presentationRatio: null,
+  })!
+  /** A stored render of this 3:2 work, at its own file names; its window has the image's shape. */
+  const recordOf = (
+    fingerprint: string,
+    patch: Partial<PrintPresentationRecord> = {},
+  ): PrintPresentationRecord => ({
+    fingerprint,
+    mode: inputs.mode,
+    edition: inputs.edition,
+    window: { x: 0.2, y: 0.3, w: 0.6, h: 0.4 },
+    aspect: 1,
+    urls: presentationPublicUrls(id, fingerprint),
+    renderedAt: '2026-11-03T00:00:00.000Z',
+    ...patch,
+  })
+
+  test('an up-to-date render, as the shot the work is now', () => {
+    expect(shownRecord(id, recordOf(inputs.fingerprint), inputs)).toEqual({
+      frame: 'wood-dark',
+      ratio: 1.5,
+    })
+  })
+
+  test('an out-of-date render stays up, placed as the shot it is', () => {
+    const before = recordOf('deadbeef', { frame: 'none', passepartout: false, ratio: 1.5 })
+    expect(shownRecord(id, before, inputs)).toEqual({ frame: null, ratio: 1.5 })
+  })
+
+  test('one saved before records said their shot: only when its frame can be told for sure', () => {
+    // Rendered in black, the work since switched to dark wood: its fingerprint says black.
+    const black = presentationFingerprint({ ...inputs, frame: 'painted-black' })
+    expect(shownRecord(id, recordOf(black), inputs)).toEqual({ frame: 'painted-black', ratio: 1.5 })
+    const sheet = presentationFingerprint({ ...inputs, frame: null })
+    expect(shownRecord(id, recordOf(sheet), inputs)).toEqual({ frame: null, ratio: 1.5 })
+    // Out of date for anything else (another look, another shape): not shown, as before.
+    expect(shownRecord(id, recordOf('deadbeef'), inputs)).toBe(null)
+  })
+
+  test('not when it would show the work wrongly, or lives on another backend', () => {
+    // Another edition: a wrong pencilled number.
+    const rendered = { frame: 'wood-dark' as const, passepartout: false, ratio: 1.5 }
+    const limited = { ...rendered, mode: 'limited' as const, edition: 30 }
+    expect(shownRecord(id, recordOf('deadbeef', limited), inputs)).toBe(null)
+    // Another shape: the original would no longer fill the window.
+    expect(shownRecord(id, recordOf('deadbeef', { ...rendered, ratio: 1.25 }), inputs)).toBe(null)
+    // Files this deployment can't serve, current or not.
+    const elsewhere = { large: '/elsewhere/x-1800.webp', small: '/elsewhere/x-900.webp' }
+    expect(shownRecord(id, recordOf(inputs.fingerprint, { urls: elsewhere }), inputs)).toBe(null)
+  })
+
+  test("before a setting changes, a current render that doesn't say its shot gets it written in", () => {
+    expect(shotFacts(id, recordOf(inputs.fingerprint), inputs)).toMatchObject({
+      frame: 'wood-dark',
+      passepartout: false,
+      ratio: 1.5,
+    })
+    // Already says it, or out of date (no telling what it shows): left as it is.
+    expect(shotFacts(id, recordOf(inputs.fingerprint, { frame: 'wood-dark' }), inputs)).toBe(null)
+    expect(shotFacts(id, recordOf('deadbeef'), inputs)).toBe(null)
+  })
 })

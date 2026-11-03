@@ -125,6 +125,7 @@ export function RenderQueue({
           mode={job.inputs.mode}
           edition={job.inputs.edition}
           frame={job.inputs.frame}
+          passepartout={job.inputs.passepartout}
           seed={job.inputs.seed}
           widthPx={PRESENTATION_WIDTH_PX.large}
           onReady={onReady}

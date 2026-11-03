@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 
 import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { ctaColors } from '@/lib/slideVisitUrls'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -47,6 +48,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         order,
         isActive,
         ...(textColor ? { textColor } : {}),
+        ...ctaColors(body),
       },
     })
 

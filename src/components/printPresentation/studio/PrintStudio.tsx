@@ -134,6 +134,7 @@ export function PrintStudio({
   mode,
   edition,
   frame,
+  passepartout,
   seed,
   widthPx,
   onReady,
@@ -144,6 +145,8 @@ export function PrintStudio({
   edition: number | null
   /** The frame it's rendered in; null for the bare sheet. */
   frame: PresentationFrame | null
+  /** A passepartout in the frame. */
+  passepartout: boolean
   seed: number
   widthPx: number
   /** Called once, when the shot is ready to capture. */
@@ -213,6 +216,7 @@ export function PrintStudio({
               <Framed
                 ratio={ratio}
                 frame={frame}
+                passepartout={passepartout}
                 edition={number}
                 look={look}
                 onWindow={onWindow}
