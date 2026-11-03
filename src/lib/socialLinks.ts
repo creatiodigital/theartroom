@@ -4,6 +4,7 @@
 export const SOCIAL_LINKS = {
   instagram: 'https://www.instagram.com/theartroom.gallery/',
   facebook: 'https://www.facebook.com/theartroomspace',
+  pinterest: 'https://www.pinterest.com/theartroomgallery/',
 } as const
 
 export const CONTACT_EMAIL = 'contact@theartroom.gallery'

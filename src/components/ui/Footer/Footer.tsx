@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
 
-// Lucide's brand icons are deprecated (removed in v1.0), so the two logos are
+// Lucide's brand icons are deprecated (removed in v1.0), so the brand logos are
 // the official glyphs from Simple Icons (CC0), kept as local SVGs.
 import FacebookIcon from '@/icons/facebook.svg'
 import InstagramIcon from '@/icons/instagram.svg'
 import Monogram from '@/icons/monogram.svg'
+import PinterestIcon from '@/icons/pinterest.svg'
 
 import { Text } from '@/components/ui/Typography'
 
@@ -44,6 +45,10 @@ export const Footer = () => {
         <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer">
           <FacebookIcon className={styles.brandIcon} aria-hidden />
           Facebook
+        </a>
+        <a href={SOCIAL_LINKS.pinterest} target="_blank" rel="noopener noreferrer">
+          <PinterestIcon className={styles.brandIcon} aria-hidden />
+          Pinterest
         </a>
         <a href={`mailto:${CONTACT_EMAIL}`}>
           <Mail size={18} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
