@@ -3,7 +3,10 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-8);
+  // Rows need clearly more air than columns: each card ends in "View Exhibition",
+  // which otherwise sits right on top of the next row's image. 80px (64 was still tight).
+  row-gap: calc(var(--space-10) * 2);
+  column-gap: var(--space-8);
 
   @include breakpoint(md) {
     grid-template-columns: repeat(2, 1fr);
@@ -11,11 +14,17 @@
 
   @include breakpoint(lg) {
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6);
+    column-gap: var(--space-6);
   }
 }
 
 .card {
+  display: flex;
+  flex-direction: column;
+}
+
+// The picture and text: one link to the exhibition page.
+.cardLink {
   display: flex;
   flex-direction: column;
   text-decoration: none;
@@ -64,14 +73,9 @@
   margin-top: var(--space-2);
 }
 
-.visitLink {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+// The "View Exhibition | Enter 3D Room" row (ExhibitionActions), lined up at the foot of every
+// card in a row.
+.actions {
   margin-top: auto;
   padding-top: var(--space-8);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  letter-spacing: 0.05em;
-  color: var(--color-text-primary);
 }

@@ -89,7 +89,8 @@ const ExitTrigger: React.FC<ExitTriggerProps> = ({ nodes, name = 'invisibleWall0
 
   useFrame(() => {
     if (!wallBox || isExitPromptOpen) return
-    if (wallBox.distanceToPoint(camera.position) <= PROMPT_DISTANCE) dispatch(openExitPrompt())
+    if (wallBox.distanceToPoint(camera.position) <= PROMPT_DISTANCE)
+      dispatch(openExitPrompt('walk'))
   })
 
   return null

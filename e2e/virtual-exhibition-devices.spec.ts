@@ -61,7 +61,7 @@ async function setTouchPoints(page: Page, points: number) {
   }, points)
 }
 
-const enterButton = (page: Page) => page.getByRole('link', { name: 'Enter Virtual Exhibition' })
+const enterButton = (page: Page) => page.getByRole('link', { name: 'Enter 3D Room' })
 const laptopNote = (page: Page) => page.getByText(/open this page on a laptop or desktop/i)
 
 async function expectInvitedIn(page: Page) {

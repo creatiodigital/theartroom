@@ -6,6 +6,7 @@ import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { isBakeRecord } from '@/lib/bake/bakeRecord'
 import { fingerprintRoom } from '@/lib/bake/loadBakeFingerprint'
 import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
+import { getPrintPresentations } from '@/lib/printPresentation/getPrintPresentations'
 import prisma from '@/lib/prisma'
 
 // Public exhibition read (snapshot path). No data cache: read fresh so edits
@@ -243,6 +244,10 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
           return !live?.hiddenFromExhibition
         })
 
+      // Each work as a photo of the print, for the pop-ups a double tap and "View Details" open
+      // (AR-174); the grids' rule, so a work without a current render shows its plain image.
+      const presentations = await getPrintPresentations(artworks.map((a) => a.id as string))
+
       return NextResponse.json({
         ...exhibition,
         // Exhibition content comes from live DB (via ...exhibition spread above)
@@ -304,6 +309,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         // directly by the 3D scene (no second request).
         exhibitionArtworks: enrichedExhibitionArtworks,
         artworks,
+        presentations,
       })
     }
 
@@ -312,6 +318,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
     const artworks = placedExhibitionArtworks
       .map((ea) => ea.artwork)
       .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
+    const presentations = await getPrintPresentations(artworks.map((a) => a.id))
 
     return NextResponse.json({
       ...exhibition,
@@ -322,6 +329,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       // branch above: this feeds the 3D scene directly.
       exhibitionArtworks: placedExhibitionArtworks,
       artworks,
+      presentations,
     })
   } catch (error) {
     console.error('[GET /api/exhibitions/by-url/[url]] error:', JSON.stringify(error, null, 2))
@@ -339,12 +347,13 @@ type PublicExhibitionRow = NonNullable<Awaited<ReturnType<typeof getExhibition>>
  * `Cache-Control: no-cache` for all of /api/exhibitions/:path* (the query string is not part
  * of that match, so it covers `?preview=`).
  */
-function getBakePreviewResponse(exhibition: PublicExhibitionRow) {
+async function getBakePreviewResponse(exhibition: PublicExhibitionRow) {
   const { publishedSnapshot: _publishedSnapshot, ...live } = exhibition
   const placedExhibitionArtworks = toPlacedRows(exhibition.exhibitionArtworks)
   const artworks = placedExhibitionArtworks
     .map((ea) => ea.artwork)
     .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
+  const presentations = await getPrintPresentations(artworks.map((a) => a.id))
 
   const draft = exhibition.bake
   const bakeStatus = !isBakeRecord(draft)
@@ -359,6 +368,7 @@ function getBakePreviewResponse(exhibition: PublicExhibitionRow) {
     bakeStatus,
     exhibitionArtworks: placedExhibitionArtworks,
     artworks,
+    presentations,
   })
 }
 

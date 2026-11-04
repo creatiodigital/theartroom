@@ -4,6 +4,7 @@ import type { ExhibitionArtworkResponse } from '@/lib/exhibitionArtworkMapper'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 import type { BenchSettings } from '@/components/scene/spaces/objects/Bench/benchSettings'
 import type { BakeRecord } from '@/lib/bake/bakeRecord'
+import type { PresentationView } from '@/lib/printPresentation/record'
 
 export type TExhibition = {
   id: string
@@ -101,6 +102,11 @@ export type TExhibition = {
 
   // Autofocus groups
   autofocusGroups?: AutofocusGroup[]
+  /**
+   * Visitor reads only (by-url): each work as a photo of the print, by artwork id, for the room's
+   * pop-ups. A work without a current render is absent and shows its plain image.
+   */
+  presentations?: Record<string, PresentationView>
 
   /** AR-161: the baked light — the published bake for visitors, the draft in edit mode. */
   bake?: BakeRecord | null

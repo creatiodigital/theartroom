@@ -4,13 +4,13 @@ import { Header } from '@/components/ui/Header'
 import { Footer } from '@/components/ui/Footer'
 import { Text } from '@/components/ui/Typography'
 import { Slideshow } from '@/components/landing/Slideshow'
+import { Announcement } from '@/components/landing/Announcement/Announcement'
 import { Intro } from '@/components/landing/Intro/Intro'
 import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
-import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
-import { visitUrlsFor } from '@/lib/slideVisitUrls'
+import { getHomepageAnnouncement } from '@/lib/queries/getHomepageAnnouncement'
 
 import styles from './page.module.scss'
 
@@ -29,14 +29,6 @@ const getSlides = async () => {
     where: { isActive: true },
     orderBy: { order: 'asc' },
   })
-  // A slide whose exhibition has its 3D space published gets a way straight in. If that can't be
-  // looked up, the slides show as they always have, without the button.
-  const visitUrls = await visitUrlsFor(slidesData.map((slide) => slide.exhibitionUrl)).catch(
-    (err) => {
-      captureError(err, { flow: 'content', stage: 'slide-visit-urls', level: 'warning' })
-      return {} as Record<string, string>
-    },
-  )
   return slidesData.map((slide) => ({
     id: slide.id,
     imageUrl: slide.imageUrl,
@@ -46,9 +38,6 @@ const getSlides = async () => {
     title: slide.title,
     subtitle: slide.subtitle,
     textColor: slide.textColor,
-    visitUrl: visitUrls[slide.exhibitionUrl] ?? null,
-    ctaBackgroundColor: slide.ctaBackgroundColor,
-    ctaTextColor: slide.ctaTextColor,
   }))
 }
 
@@ -97,6 +86,7 @@ type ExhibitionWithUser = {
   url: string
   featuredImageUrl: string | null
   shortDescription: string | null
+  spacePublished: boolean
   user: { name: string; lastName: string; handler: string }
 }
 
@@ -104,6 +94,7 @@ export default async function Home() {
   const slides = await getSlides()
   const exhibitions = await getExhibitions()
   const featuredArtists = await getFeaturedArtists()
+  const announcement = await getHomepageAnnouncement()
 
   return (
     <main id="main-content" className={styles.home}>
@@ -117,6 +108,9 @@ export default async function Home() {
 
       <div className={styles.content}>
         <Intro />
+
+        {/* Hidden when there's no announcement to show (AR-174). */}
+        {announcement && <Announcement announcement={announcement} />}
 
         <NiceTitle title="Current Exhibitions" />
 
@@ -134,6 +128,10 @@ export default async function Home() {
                 shortDescription: exhibition.shortDescription,
                 artistLabel: `${exhibition.user.name} ${exhibition.user.lastName}`,
                 href: `/exhibitions/${exhibition.user.handler}/${exhibition.url}`,
+                // Same rule as the exhibition page's Enter button: only once its 3D room is out.
+                visitUrl: exhibition.spacePublished
+                  ? `/exhibitions/${exhibition.user.handler}/${exhibition.url}/visit`
+                  : null,
               }))}
             />
           )}

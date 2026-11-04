@@ -4,7 +4,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  margin-bottom: var(--space-10);
+  // More air under every section title (AR-174): 48px on phones and tablets, 64px from lg up.
+  margin-bottom: var(--space-12);
+
+  @include breakpoint(lg) {
+    margin-bottom: var(--space-16);
+  }
 }
 
 .line {

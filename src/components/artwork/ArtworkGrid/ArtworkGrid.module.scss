@@ -20,6 +20,11 @@
     gap: var(--space-16) var(--space-10);
     margin-bottom: var(--space-18);
   }
+
+  // `flushBottom`: the page after it sets the spacing.
+  &.flushBottom {
+    margin-bottom: 0;
+  }
 }
 
 .card {

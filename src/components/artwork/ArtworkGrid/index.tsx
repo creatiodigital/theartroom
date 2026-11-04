@@ -73,6 +73,12 @@ interface ArtworkGridProps {
    * by the handler that already addresses the profile page.
    */
   artistHandler?: string
+  /**
+   * No space of its own below the last row: for a page where something follows the grid and sets
+   * the spacing itself (the artist page, where "Artist's Exhibitions" comes next). By default the
+   * grid keeps its bottom margin, which holds it off the footer where it ends the page.
+   */
+  flushBottom?: boolean
 }
 
 // Fallback ratio for legacy artworks uploaded before EXIF capture.
@@ -87,6 +93,7 @@ export const ArtworkGrid = ({
   exhibitionSlug,
   fromPrints,
   artistHandler,
+  flushBottom,
 }: ArtworkGridProps) => {
   // Admin kill switch. Hides the whole commerce block — price, CTA and the
   // sold-out badge alike — across every grid that uses this component. The
@@ -105,7 +112,7 @@ export const ArtworkGrid = ({
         : ''
 
   return (
-    <div className={styles.grid}>
+    <div className={flushBottom ? `${styles.grid} ${styles.flushBottom}` : styles.grid}>
       {artworks.map((artwork) => {
         const w = artwork.originalWidth ?? FALLBACK_WIDTH
         const h = artwork.originalHeight ?? FALLBACK_HEIGHT

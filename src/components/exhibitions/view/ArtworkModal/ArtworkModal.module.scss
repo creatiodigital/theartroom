@@ -8,7 +8,10 @@
   overflow-y: auto;
 }
 
-.close {
+// "CLOSE ×" (AR-174), lettered as the double-tap panel's. A bare Button, so no padding of its own:
+// its right edge is the content's (the image's), 24px in on a phone, 40px from lg up. Scoped to the
+// overlay so it outranks the bare reset (same weight otherwise; load order would decide).
+.overlay .close {
   position: fixed;
   top: var(--space-6);
   right: var(--space-6);
@@ -17,11 +20,18 @@
   z-index: 999;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
+  gap: var(--space-2);
   cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  letter-spacing: var(--space-1);
+  text-transform: uppercase;
   color: var(--color-text-primary);
+
+  @include breakpoint(lg) {
+    top: var(--space-8);
+    right: var(--space-10);
+  }
 }
 
 // Holds the same three sections the artwork page does, at the same width, so

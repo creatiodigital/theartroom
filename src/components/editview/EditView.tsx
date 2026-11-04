@@ -58,6 +58,7 @@ function EditView() {
   // camera for as long as `isExitPromptOpen` is set, and only this dialog
   // clears it — without it the artist reaches the corridor and simply stops.
   const isExitPromptOpen: boolean = useSelector((state: RootState) => state.scene.isExitPromptOpen)
+  const exitPromptSource = useSelector((state: RootState) => state.scene.exitPromptSource)
 
   // Leaving the editor means the same thing here as it does on `Menu`'s close
   // button: back to the dashboard, wall view reset so the next exhibition does
@@ -86,6 +87,7 @@ function EditView() {
 
           <ExitPrompt
             open={isExitPromptOpen}
+            restartsAtEntrance={exitPromptSource === 'walk'}
             onLeave={leave}
             onCancel={() => dispatch(declineExit())}
           />

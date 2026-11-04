@@ -25,10 +25,10 @@
   padding: 0;
 }
 
-.exhibitionLink {
+// Picture beside the text on desktop, above it below that. Not a link itself: see ExhibitionCard.
+.exhibition {
   display: flex;
   flex-direction: column;
-  text-decoration: none;
   gap: var(--space-6);
 
   @include breakpoint(lg) {
@@ -36,13 +36,10 @@
     gap: var(--space-10);
     align-items: center;
   }
-
-  &:hover {
-    text-decoration: none;
-  }
 }
 
 .imageWrapper {
+  display: block;
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -69,7 +66,18 @@
 .info {
   display: flex;
   flex-direction: column;
+}
+
+// The text: one link to the exhibition page.
+.infoLink {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .exhibitionTitle {
@@ -88,13 +96,7 @@
   margin-top: var(--space-2);
 }
 
-.visitLink {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+// The "View Exhibition | Enter 3D Room" row (ExhibitionActions).
+.actions {
   margin-top: var(--space-6);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  letter-spacing: 0.05em;
-  color: var(--color-text-primary);
 }

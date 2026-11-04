@@ -7,9 +7,14 @@
   justify-content: center;
   text-align: center;
   padding-top: 20px;
-  margin-bottom: 60px;
+  // Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
+  margin-bottom: var(--space-12);
 
   @include breakpoint(md) {
     display: flex;
+  }
+
+  @include breakpoint(lg) {
+    margin-bottom: var(--space-16);
   }
 }
