@@ -23,15 +23,19 @@ import type { RootState } from '@/redux/store'
 import {
   createMouseState,
   handleMouseMove,
-  handleTouchMove,
   handleKeyPress,
   attachMouseHandlers,
-  attachTouchHandlers,
   detachMouseHandlers,
-  detachTouchHandlers,
   calculateMovementVector,
   type MouseState,
 } from './helpers'
+import {
+  TOUCH_GLIDE_DECAY,
+  beginTouch,
+  createTouchGesture,
+  endTouch,
+  moveTouch,
+} from './touchGestures'
 
 function detectCollisions(
   camera: PerspectiveCamera,
@@ -92,6 +96,10 @@ function detectCollisions(
 const FOCUS_DURATION = 1.2 // Animation duration in seconds
 const FOCUS_PADDING = 1.08 // Padding factor to ensure artwork fits comfortably in view
 const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
+// Longest step one frame may take, whatever asks for it (the trackpad, a slide
+// on a phone): the collision rays reach 0.7 m, so a step this short can never
+// carry the camera past a wall they have not seen.
+const MAX_STEP = 0.15
 
 // Ease-out cubic: smooth deceleration, reaches target exactly at t=1
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
@@ -112,6 +120,13 @@ const MainCamera = () => {
   const initialPositionSet = useRef(false)
   const rotationVelocity = useRef(0)
   const isReturningToElevation = useRef(false)
+
+  // Touch (AR-172): the slide in progress, the meters it has asked to walk
+  // since the last frame, and the walk's speed (meters per frame), kept so the
+  // walk can ease out after the finger lifts.
+  const touchGesture = useRef(createTouchGesture())
+  const touchWalk = useRef(0)
+  const walkVelocity = useRef(0)
 
   // Focus animation state
   const isAnimating = useRef(false)
@@ -201,21 +216,50 @@ const MainCamera = () => {
           ? ((width / 2) * FOCUS_PADDING) / Math.tan(horizontalHalfFov)
           : FOCUS_MIN_DISTANCE
 
-      // Use the larger distance to ensure artwork fits both horizontally and vertically
+      // Use the larger distance to ensure artwork fits both horizontally and vertically.
+      //
+      // Except on a screen taller than it is wide — a phone or tablet held
+      // upright. It sees so little across that fitting the width means backing
+      // far away (a 2 m-wide work wants about 5 m on an upright phone, 1.45 m on
+      // a laptop), so there it frames the height and lets the sides crop.
+      const fitsWidth = aspectRatio >= 1
       const optimalDistance = Math.max(
         distanceForVertical,
-        distanceForHorizontal,
+        fitsWidth ? distanceForHorizontal : 0,
         FOCUS_MIN_DISTANCE,
       )
 
       // Calculate target camera position: offset from artwork along its normal
       const artworkPos = new Vector3(position.x, position.y, position.z)
-      const normalVec = new Vector3(normal.x, normal.y, normal.z)
+      const normalVec = new Vector3(normal.x, normal.y, normal.z).normalize()
+
+      // The glide flies straight there and checks no walls on the way, so the
+      // spot itself must be inside the room: stop short of the first wall behind
+      // the viewer, as far from it as walking would.
+      const roomMeshes = [
+        ...(wallRefs.current ?? []),
+        ...(windowRefs.current ?? []),
+        ...(glassRefs.current ?? []),
+      ]
+        .map((ref) => ref.current)
+        .filter(Boolean) as Mesh[]
+      const behind = new Raycaster(
+        artworkPos.clone().add(normalVec.clone().multiplyScalar(0.05)),
+        normalVec,
+        0,
+        optimalDistance + collisionDistance,
+      ).intersectObjects(roomMeshes, true)[0]
+      const viewingDistance = behind
+        ? Math.max(
+            FOCUS_MIN_DISTANCE,
+            Math.min(optimalDistance, behind.distance + 0.05 - collisionDistance),
+          )
+        : optimalDistance
 
       // Camera positioned in front of artwork at the calculated distance
       const cameraTargetPos = artworkPos
         .clone()
-        .add(normalVec.clone().multiplyScalar(optimalDistance))
+        .add(normalVec.clone().multiplyScalar(viewingDistance))
       // Move camera to artwork center Y for perfect centering
       cameraTargetPos.y = position.y
 
@@ -246,18 +290,20 @@ const MainCamera = () => {
     (event: MouseEvent) => detachMouseHandlers(onMouseMove, mouseState)(event),
     [onMouseMove],
   )
-  const onTouchMove = useCallback(
-    (event: TouchEvent) => handleTouchMove(mouseState, setTick)(event),
-    [mouseState],
-  )
-  const onTouchStart = useCallback(
-    (event: TouchEvent) => attachTouchHandlers(onTouchMove, mouseState)(event),
-    [onTouchMove],
-  )
-  const onTouchEnd = useCallback(
-    () => detachTouchHandlers(onTouchMove, mouseState)(),
-    [onTouchMove],
-  )
+  // One finger on the room: slide up or down to walk, left or right to turn
+  // (see touchGestures). A turn rides the mouse drag's own path, momentum and all.
+  const onTouchStart = useCallback((event: TouchEvent) => {
+    // A finger landing stops a walk still easing out from the last slide.
+    if (beginTouch(touchGesture.current, event)) walkVelocity.current = 0
+  }, [])
+  const onTouchMove = useCallback((event: TouchEvent) => {
+    const { walk, turn } = moveTouch(touchGesture.current, event)
+    touchWalk.current += walk
+    if (turn && mouseState.current) mouseState.current.deltaX += turn
+  }, [])
+  const onTouchEnd = useCallback((event: TouchEvent) => {
+    endTouch(touchGesture.current, event)
+  }, [])
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => handleKeyPress(keysPressed, event.key, true),
     [],
@@ -296,8 +342,10 @@ const MainCamera = () => {
       window.addEventListener('keyup', onKeyUp)
       window.addEventListener('mousedown', onMouseDown)
       window.addEventListener('mouseup', onMouseUp)
-      window.addEventListener('touchstart', onTouchStart)
-      window.addEventListener('touchend', onTouchEnd)
+      window.addEventListener('touchstart', onTouchStart, { passive: true })
+      window.addEventListener('touchmove', onTouchMove, { passive: true })
+      window.addEventListener('touchend', onTouchEnd, { passive: true })
+      window.addEventListener('touchcancel', onTouchEnd, { passive: true })
       window.addEventListener('wheel', onWheel, { passive: false })
     }
 
@@ -307,30 +355,17 @@ const MainCamera = () => {
       window.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mouseup', onMouseUp)
       window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
+      window.removeEventListener('touchcancel', onTouchEnd)
       window.removeEventListener('wheel', onWheel)
     }
 
-    const handleResize = () => {
-      const isMobile = window.innerWidth < 1024
-      if (isMobile) {
-        detachHandlers()
-      } else {
-        attachHandlers()
-      }
-    }
-
-    // Initial check
-    handleResize()
-
-    // Listen for resize
-    window.addEventListener('resize', handleResize)
-
-    return () => {
-      detachHandlers()
-      window.removeEventListener('resize', handleResize)
-    }
-  }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, onWheel])
+    // Every device, every size (AR-172): this used to stand down below 1024px,
+    // when phones and tablets were never let into the room.
+    attachHandlers()
+    return detachHandlers
+  }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchMove, onTouchEnd, onWheel])
 
   useFrame(({ camera, invalidate }, delta) => {
     const cam = camera as PerspectiveCamera
@@ -347,6 +382,8 @@ const MainCamera = () => {
     if (isExitPromptOpen) {
       keysPressed.current = {}
       rotationVelocity.current = 0
+      touchWalk.current = 0
+      walkVelocity.current = 0
       if (mouseState.current) {
         mouseState.current.deltaX = 0
         mouseState.current.wheelZ = 0
@@ -472,7 +509,10 @@ const MainCamera = () => {
         dispatch(clearFocusTarget())
       }
 
-      // Skip normal controls during animation
+      // Skip normal controls during animation — and drop what a finger asked
+      // for meanwhile, rather than lurching once the glide ends.
+      touchWalk.current = 0
+      walkVelocity.current = 0
       return
     }
 
@@ -495,9 +535,30 @@ const MainCamera = () => {
       const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
       forward.y = 0
       forward.normalize()
-      const clampedWheel = Math.max(-0.15, Math.min(0.15, -mouseState.current.wheelZ))
+      const clampedWheel = Math.max(-MAX_STEP, Math.min(MAX_STEP, -mouseState.current.wheelZ))
       moveVector.add(forward.clone().multiplyScalar(clampedWheel))
       mouseState.current.wheelZ = 0
+    }
+
+    // Touch walking: while the finger is down, exactly the distance it slid;
+    // once it lifts, the slide's speed easing out.
+    let touchStep = 0
+    if (touchGesture.current.active) {
+      touchStep = touchWalk.current
+      // Smoothed, because move events and frames don't arrive in step: a frame
+      // that saw no move would otherwise zero the speed the lift glides on.
+      walkVelocity.current = walkVelocity.current * 0.5 + touchStep * 0.5
+    } else if (walkVelocity.current !== 0) {
+      touchStep = walkVelocity.current
+      walkVelocity.current *= Math.pow(TOUCH_GLIDE_DECAY, Math.min(delta, MAX_FRAME_DELTA) * 60)
+      if (Math.abs(walkVelocity.current) < 0.0005) walkVelocity.current = 0
+    }
+    touchWalk.current = 0
+    if (touchStep !== 0) {
+      const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
+      forward.y = 0
+      forward.normalize()
+      moveVector.add(forward.multiplyScalar(Math.max(-MAX_STEP, Math.min(MAX_STEP, touchStep))))
     }
 
     const wallRefsArray = wallRefs.current ?? []
@@ -515,6 +576,9 @@ const MainCamera = () => {
       )
     ) {
       cam.position.add(moveVector)
+    } else {
+      // Walked into a wall: a glide stops there rather than pressing on.
+      walkVelocity.current = 0
     }
 
     if (mouseState.current) {
@@ -525,6 +589,7 @@ const MainCamera = () => {
     const hasMovement =
       moveVector.lengthSq() > 0.00001 ||
       Math.abs(rotationVelocity.current) > 0.0001 ||
+      walkVelocity.current !== 0 ||
       isAnimating.current ||
       isReturningToElevation.current
     if (hasMovement) {

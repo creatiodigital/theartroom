@@ -25,11 +25,6 @@
   top: var(--space-6);
   right: var(--space-6);
   z-index: 1000;
-  display: none;
-
-  @include media-up(lg) {
-    display: block;
-  }
 }
 
 .navigationButton {
@@ -49,67 +44,13 @@
   }
 }
 
-.mobileOverlay {
+// Over the room, under the artwork panel (z-index 2) and the details: see the
+// note where it is rendered.
+.touchShield {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 30px;
-  background-color: var(--color-surface-subtle);
-  // No width rule here: this is rendered only when useCanEnterWalkthrough says
-  // the device cannot walk the room, and that includes laptop-wide iPads.
-}
-
-.mobileOverlayContent {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  background-color: rgba(255, 255, 255, 0.95);
-  padding: var(--space-8);
-  border-radius: 14px;
-  max-width: 100%;
-  height: 90vh;
-}
-
-.mobileOverlayTitle {
-  margin-bottom: var(--space-3);
-  color: var(--color-black);
-}
-
-.mobileOverlayText {
-  // A reading measure: on a laptop-wide iPad the card spans the screen, and
-  // one 1,300px line is hard to follow.
-  max-width: 32rem;
-  margin-bottom: var(--space-4);
-  color: var(--color-text-primary);
-  line-height: 1.5;
-  font-size: var(--text-sm);
-}
-
-.mobileOverlayButton {
-  display: inline-block;
-  padding: var(--space-3) var(--space-6);
-  background-color: var(--color-text-primary);
-  color: var(--color-white);
-  border: none;
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  border-radius: 6px;
-
-  &:hover {
-    background-color: var(--color-black);
-  }
+  inset: 0;
+  z-index: 1;
+  touch-action: none;
 }
 
 .infoButton {
@@ -117,7 +58,7 @@
   bottom: var(--space-6);
   right: var(--space-6);
   z-index: 1000;
-  display: none;
+  display: flex;
   justify-content: center;
   align-items: center;
   width: 36px;
@@ -127,10 +68,6 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-
-  @include media-up(lg) {
-    display: flex;
-  }
 
   svg {
     color: var(--color-black);
@@ -158,6 +95,17 @@
   padding: var(--space-8);
   max-width: 440px;
   width: 90%;
+  // Never taller than the screen: a phone held sideways is ~350px high, and the
+  // guide scrolls inside rather than running off it.
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+
+  // A phone held sideways: wider, so the touch guide's two columns fit, and a
+  // tighter frame so more of it shows at once.
+  @media (orientation: landscape) and (max-height: 500px) {
+    max-width: 640px;
+    padding: var(--space-6);
+  }
 }
 
 .infoPanelClose {
@@ -189,6 +137,11 @@
   margin-bottom: var(--space-6);
   padding-bottom: var(--space-6);
   border-bottom: 1px solid var(--color-border-light);
+
+  @media (orientation: landscape) and (max-height: 500px) {
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
 }
 
 .welcomeMonogram {
@@ -277,8 +230,7 @@
 
 .navigationButton,
 .infoButton,
-.infoPanelClose,
-.mobileOverlayButton {
+.infoPanelClose {
   &:focus {
     outline: none;
   }

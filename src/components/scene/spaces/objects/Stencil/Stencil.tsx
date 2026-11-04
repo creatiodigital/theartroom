@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
+import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
@@ -253,6 +254,7 @@ const Stencil = ({ artwork }: StencilProps) => {
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
   const pointerDownTime = useRef<number>(0)
   const singleClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const taps = useTapTracker()
 
   // Calculate the normal vector from artwork's quaternion (facing direction)
   const getNormalFromQuaternion = useCallback((q: Quaternion): Vector3 => {
@@ -354,35 +356,44 @@ const Stencil = ({ artwork }: StencilProps) => {
     artworksById,
   ])
 
-  // Handle double click for info panel
+  // Double click (or double tap) opens the info panel
+  const showInfo = useCallback(() => {
+    if (!isPlaceholdersShown && showArtworkInformation) {
+      dispatch(showArtworkPanel())
+      dispatch(setCurrentArtwork(artwork.id))
+    }
+  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+
   const handleDoubleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
       event.stopPropagation()
+      // A finger's double tap is counted in handlePointerUp (see tapTracker).
+      if (taps.touch) return
       if (singleClickTimeout.current) {
         clearTimeout(singleClickTimeout.current)
         singleClickTimeout.current = null
       }
-
-      if (!isPlaceholdersShown && showArtworkInformation) {
-        dispatch(showArtworkPanel())
-        dispatch(setCurrentArtwork(artwork.id))
-      }
+      showInfo()
     },
-    [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation],
+    [taps, showInfo],
   )
 
   // Stops propagation for the same reason Display does — see the note there.
   // Without it a work on the far face of a display panel steals the click.
   // Pointer down
-  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
-    event.stopPropagation()
-    if (singleClickTimeout.current) {
-      clearTimeout(singleClickTimeout.current)
-      singleClickTimeout.current = null
-    }
-    pointerDownPos.current = { x: event.clientX, y: event.clientY }
-    pointerDownTime.current = Date.now()
-  }, [])
+  const handlePointerDown = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation()
+      if (singleClickTimeout.current) {
+        clearTimeout(singleClickTimeout.current)
+        singleClickTimeout.current = null
+      }
+      pointerDownPos.current = { x: event.clientX, y: event.clientY }
+      pointerDownTime.current = Date.now()
+      taps.down(event.pointerType)
+    },
+    [taps],
+  )
 
   // Pointer up
   const handlePointerUp = useCallback(
@@ -397,14 +408,19 @@ const Stencil = ({ artwork }: StencilProps) => {
 
       pointerDownPos.current = null
 
-      if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+      if (distance < taps.slop(CLICK_MAX_DISTANCE) && duration < CLICK_MAX_DURATION) {
+        // A finger's second tap: the details (its first tap's focus was cancelled on press).
+        if (taps.touch && taps.secondTap()) {
+          showInfo()
+          return
+        }
         singleClickTimeout.current = setTimeout(() => {
           handleSingleClick()
           singleClickTimeout.current = null
         }, DOUBLE_CLICK_DELAY)
       }
     },
-    [handleSingleClick],
+    [handleSingleClick, showInfo, taps],
   )
 
   // Font size maps to pixels in the 2D wall view.

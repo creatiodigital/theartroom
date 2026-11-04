@@ -25,6 +25,7 @@ import { Support } from '@/components/scene/spaces/objects/Support'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
+import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
@@ -622,6 +623,7 @@ const Display = ({ artwork }: DisplayProps) => {
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
   const pointerDownTime = useRef<number>(0)
   const singleClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const taps = useTapTracker()
 
   // Use the ambient light hook for frame and passepartout colors
   const frameAmbientColor = useAmbientLightColor(frameColor ?? '#000000')
@@ -750,22 +752,27 @@ const Display = ({ artwork }: DisplayProps) => {
     artworksById,
   ])
 
-  // Handle double click for info panel (existing behavior)
+  // Double click (or double tap) opens the info panel
+  const showInfo = useCallback(() => {
+    if (!isPlaceholdersShown && showArtworkInformation) {
+      dispatch(showArtworkPanel())
+      dispatch(setCurrentArtwork(artwork.id))
+    }
+  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+
   const handleDoubleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
       event.stopPropagation()
+      // A finger's double tap is counted in handlePointerUp (see tapTracker).
+      if (taps.touch) return
       // Cancel any pending single-click action
       if (singleClickTimeout.current) {
         clearTimeout(singleClickTimeout.current)
         singleClickTimeout.current = null
       }
-
-      if (!isPlaceholdersShown && showArtworkInformation) {
-        dispatch(showArtworkPanel())
-        dispatch(setCurrentArtwork(artwork.id))
-      }
+      showInfo()
     },
-    [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation],
+    [taps, showInfo],
   )
 
   // Every pointer handler stops propagation, because a display panel put two
@@ -784,16 +791,20 @@ const Display = ({ artwork }: DisplayProps) => {
   // panel, which is why this survived every wall in the building — a room wall
   // has hangable art on one side only.
   // Pointer down - start tracking (and clear any pending single-click to support double-click)
-  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
-    event.stopPropagation()
-    // Clear any pending single-click timeout (this is the start of a potential double-click)
-    if (singleClickTimeout.current) {
-      clearTimeout(singleClickTimeout.current)
-      singleClickTimeout.current = null
-    }
-    pointerDownPos.current = { x: event.clientX, y: event.clientY }
-    pointerDownTime.current = Date.now()
-  }, [])
+  const handlePointerDown = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation()
+      // Clear any pending single-click timeout (this is the start of a potential double-click)
+      if (singleClickTimeout.current) {
+        clearTimeout(singleClickTimeout.current)
+        singleClickTimeout.current = null
+      }
+      pointerDownPos.current = { x: event.clientX, y: event.clientY }
+      pointerDownTime.current = Date.now()
+      taps.down(event.pointerType)
+    },
+    [taps],
+  )
 
   // Pointer up - check if it qualifies as a click
   const handlePointerUp = useCallback(
@@ -810,7 +821,13 @@ const Display = ({ artwork }: DisplayProps) => {
       pointerDownPos.current = null
 
       // Check if this qualifies as a click (minimal movement + short duration)
-      if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+      if (distance < taps.slop(CLICK_MAX_DISTANCE) && duration < CLICK_MAX_DURATION) {
+        // A finger's second tap: the details. Its first tap's pending focus was
+        // already cancelled when this press came down.
+        if (taps.touch && taps.secondTap()) {
+          showInfo()
+          return
+        }
         // Delay single-click action to see if a double-click follows
         singleClickTimeout.current = setTimeout(() => {
           handleSingleClick()
@@ -818,7 +835,7 @@ const Display = ({ artwork }: DisplayProps) => {
         }, DOUBLE_CLICK_DELAY)
       }
     },
-    [handleSingleClick],
+    [handleSingleClick, showInfo, taps],
   )
 
   const planeWidth = width || 1
