@@ -1,0 +1,69 @@
+// The welcome guide's controls on phones and tablets: one row per gesture, its
+// pictogram in the same grey tile the laptop guide puts its keys in.
+
+.gestures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+
+  // A phone held sideways is short: two columns keep the guide on one screen.
+  @media (orientation: landscape) and (max-height: 500px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6);
+  }
+}
+
+.gesture {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background-color: var(--color-border-light);
+  border-radius: 4px;
+  color: var(--color-black);
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 500;
+}
+
+.action {
+  color: var(--color-text-secondary);
+}
+
+.rotateHint {
+  display: none;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+
+  @media (orientation: portrait) {
+    display: flex;
+  }
+}

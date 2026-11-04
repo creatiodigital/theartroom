@@ -6,11 +6,6 @@
   z-index: 1000;
   background: var(--color-white);
   overflow-y: auto;
-
-  // Resize safety: never show the modal at mobile widths.
-  @include media-down(lg) {
-    display: none;
-  }
 }
 
 .close {

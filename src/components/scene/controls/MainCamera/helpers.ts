@@ -3,18 +3,14 @@ import { Vector3, Camera, Mesh, Raycaster, Quaternion } from 'three'
 
 export type MouseState = {
   isLeftButtonPressed: boolean
-  isTouchActive: boolean
   lastMouseX: number | null
-  lastTouchX: number | null
   deltaX: number
   wheelZ: number
 }
 
 export const createMouseState = (): MouseState => ({
   isLeftButtonPressed: false,
-  isTouchActive: false,
   lastMouseX: null,
-  lastTouchX: null,
   deltaX: 0,
   wheelZ: 0,
 })
@@ -28,27 +24,6 @@ export const handleMouseMove =
     const deltaX = currentX - mouseState.current.lastMouseX
     mouseState.current.deltaX = deltaX
     mouseState.current.lastMouseX = currentX
-    setTick((tick) => tick + 1)
-  }
-
-export const handleTouchMove =
-  (mouseState: RefObject<MouseState>, setTick: Dispatch<SetStateAction<number>>) =>
-  (event: TouchEvent) => {
-    if (
-      !mouseState.current?.isTouchActive ||
-      mouseState.current.lastTouchX == null ||
-      event.touches.length === 0
-    ) {
-      return
-    }
-
-    const touch = event.touches[0]
-    if (!touch) return
-
-    const currentX = touch.clientX
-    const deltaX = currentX - mouseState.current.lastTouchX
-    mouseState.current.deltaX = deltaX
-    mouseState.current.lastTouchX = currentX
     setTick((tick) => tick + 1)
   }
 
@@ -85,30 +60,6 @@ export const detachMouseHandlers =
       mouseState.current.isLeftButtonPressed = false
       mouseState.current.deltaX = 0
       window.removeEventListener('mousemove', onMouseMove)
-    }
-  }
-
-export const detachTouchHandlers =
-  (onTouchMove: (event: TouchEvent) => void, mouseState: RefObject<MouseState>) => () => {
-    if (mouseState.current) {
-      mouseState.current.isTouchActive = false
-      mouseState.current.deltaX = 0
-      window.removeEventListener('touchmove', onTouchMove)
-    }
-  }
-
-export const attachTouchHandlers =
-  (onTouchMove: (event: TouchEvent) => void, mouseState: RefObject<MouseState>) =>
-  (event: TouchEvent) => {
-    if (event.touches.length >= 2 && mouseState.current) {
-      const firstTouch = event.touches[0]
-      if (!firstTouch) return
-
-      mouseState.current.isTouchActive = true
-      mouseState.current.lastTouchX = firstTouch.clientX
-      mouseState.current.deltaX = 0
-
-      window.addEventListener('touchmove', onTouchMove)
     }
   }
 

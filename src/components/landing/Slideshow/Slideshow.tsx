@@ -5,7 +5,6 @@ import Link from 'next/link'
 import c from 'classnames'
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
-import { useCanEnterWalkthrough } from '@/hooks/useCanEnterWalkthrough'
 import { reportImageError } from '@/lib/observability/reportImageError'
 
 import styles from './Slideshow.module.scss'
@@ -36,9 +35,6 @@ type SlideshowProps = {
 
 export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
   const [activeIndex, setActiveIndex] = useState(0)
-  // The 3D walk-through is for laptops and desktops (as on the exhibition page): CSS hides the
-  // button elsewhere from the first paint, this settles the iPad with a trackpad after hydration.
-  const canEnter = useCanEnterWalkthrough()
 
   useEffect(() => {
     if (slides.length <= 1) return
@@ -93,7 +89,7 @@ export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
               <Text as="p" size="xl" font="serif" className={styles.subtitle}>
                 {slide.subtitle}
               </Text>
-              {slide.visitUrl && canEnter && (
+              {slide.visitUrl && (
                 <div className={styles.cta}>
                   <Button
                     variant="primary"

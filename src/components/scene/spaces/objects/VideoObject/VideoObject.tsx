@@ -22,6 +22,7 @@ import { useSceneAudioActions } from '@/contexts/SceneAudioContext'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
+import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
@@ -80,6 +81,9 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
   const pointerDownTime = useRef<number>(0)
   const singleClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Double clicks are counted from pointer events below, so a finger's double
+  // tap already works; the tracker only loosens how still a finger must be.
+  const taps = useTapTracker()
 
   // ── Video element — created once, starts paused at frame 0 ──
   const [video] = useState(() => {
@@ -525,11 +529,15 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     dispatch(showArtworkPanel())
   }, [dispatch, artwork.id])
 
-  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    pointerDownPos.current = { x: e.clientX, y: e.clientY }
-    pointerDownTime.current = Date.now()
-  }, [])
+  const handlePointerDown = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      pointerDownPos.current = { x: e.clientX, y: e.clientY }
+      pointerDownTime.current = Date.now()
+      taps.down(e.pointerType)
+    },
+    [taps],
+  )
 
   const handlePointerUp = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
@@ -542,7 +550,8 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       const duration = Date.now() - pointerDownTime.current
       pointerDownPos.current = null
 
-      if (distance > CLICK_MAX_DISTANCE || duration > CLICK_MAX_DURATION) return
+      if (taps.pinched || distance > taps.slop(CLICK_MAX_DISTANCE) || duration > CLICK_MAX_DURATION)
+        return
 
       if (singleClickTimeout.current) {
         clearTimeout(singleClickTimeout.current)
@@ -555,7 +564,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         }, DOUBLE_CLICK_DELAY)
       }
     },
-    [handleSingleClick, handleDoubleClick],
+    [handleSingleClick, handleDoubleClick, taps],
   )
 
   // Computed dimensions

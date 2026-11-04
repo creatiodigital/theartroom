@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { useSceneAudio } from '@/contexts/SceneAudioContext'
 import { setFocusTarget, setCurrentArtwork } from '@/redux/slices/sceneSlice'
+import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useIconTexture } from './useIconTexture'
@@ -57,6 +58,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
   const pointerDownTime = useRef<number>(0)
   const singleClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const taps = useTapTracker()
 
   const planeWidth = width || 0.4
   const planeHeight = height || 0.4
@@ -204,38 +206,48 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
     artworksById,
   ])
 
-  // Handle double click - play/stop sound
+  // Double click (or double tap) plays or stops the sound
+  const togglePlay = useCallback(() => {
+    if (!soundUrl || isPlaceholdersShown || !audioRef.current) return
+
+    if (isPlaying) {
+      stop()
+    } else {
+      play(id, audioRef.current)
+    }
+  }, [soundUrl, isPlaying, isPlaceholdersShown, id, play, stop])
+
   const handleDoubleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
       event.stopPropagation()
+      // A finger's double tap is counted in handlePointerUp (see tapTracker) —
+      // acting on the browser's too would start the sound and stop it again.
+      if (taps.touch) return
       if (singleClickTimeout.current) {
         clearTimeout(singleClickTimeout.current)
         singleClickTimeout.current = null
       }
-
-      if (!soundUrl || isPlaceholdersShown || !audioRef.current) return
-
-      if (isPlaying) {
-        stop()
-      } else {
-        play(id, audioRef.current)
-      }
+      togglePlay()
     },
-    [soundUrl, isPlaying, isPlaceholdersShown, id, play, stop],
+    [taps, togglePlay],
   )
 
   // Stops propagation for the same reason Display does — see the note there.
   // Without it a work on the far face of a display panel steals the click.
   // Pointer down
-  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
-    event.stopPropagation()
-    if (singleClickTimeout.current) {
-      clearTimeout(singleClickTimeout.current)
-      singleClickTimeout.current = null
-    }
-    pointerDownPos.current = { x: event.clientX, y: event.clientY }
-    pointerDownTime.current = Date.now()
-  }, [])
+  const handlePointerDown = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation()
+      if (singleClickTimeout.current) {
+        clearTimeout(singleClickTimeout.current)
+        singleClickTimeout.current = null
+      }
+      pointerDownPos.current = { x: event.clientX, y: event.clientY }
+      pointerDownTime.current = Date.now()
+      taps.down(event.pointerType)
+    },
+    [taps],
+  )
 
   // Pointer up
   const handlePointerUp = useCallback(
@@ -250,14 +262,23 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
 
       pointerDownPos.current = null
 
-      if (distance < CLICK_MAX_DISTANCE && duration < CLICK_MAX_DURATION) {
+      if (
+        !taps.pinched &&
+        distance < taps.slop(CLICK_MAX_DISTANCE) &&
+        duration < CLICK_MAX_DURATION
+      ) {
+        // A finger's second tap plays or stops (its first tap's focus was cancelled on press).
+        if (taps.touch && taps.secondTap()) {
+          togglePlay()
+          return
+        }
         singleClickTimeout.current = setTimeout(() => {
           handleSingleClick()
           singleClickTimeout.current = null
         }, DOUBLE_CLICK_DELAY)
       }
     },
-    [handleSingleClick],
+    [handleSingleClick, togglePlay, taps],
   )
 
   return (
