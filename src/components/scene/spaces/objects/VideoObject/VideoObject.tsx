@@ -550,7 +550,8 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       const duration = Date.now() - pointerDownTime.current
       pointerDownPos.current = null
 
-      if (distance > taps.slop(CLICK_MAX_DISTANCE) || duration > CLICK_MAX_DURATION) return
+      if (taps.pinched || distance > taps.slop(CLICK_MAX_DISTANCE) || duration > CLICK_MAX_DURATION)
+        return
 
       if (singleClickTimeout.current) {
         clearTimeout(singleClickTimeout.current)

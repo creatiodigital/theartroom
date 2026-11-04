@@ -408,7 +408,11 @@ const Stencil = ({ artwork }: StencilProps) => {
 
       pointerDownPos.current = null
 
-      if (distance < taps.slop(CLICK_MAX_DISTANCE) && duration < CLICK_MAX_DURATION) {
+      if (
+        !taps.pinched &&
+        distance < taps.slop(CLICK_MAX_DISTANCE) &&
+        duration < CLICK_MAX_DURATION
+      ) {
         // A finger's second tap: the details (its first tap's focus was cancelled on press).
         if (taps.touch && taps.secondTap()) {
           showInfo()

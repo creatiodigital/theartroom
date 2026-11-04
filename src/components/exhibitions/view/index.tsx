@@ -367,7 +367,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
               </Text>
               <Text as="p" size="sm" className={styles.welcomeText}>
                 {isTouch
-                  ? 'You are about to enter an immersive virtual exhibition. Use one finger to explore the space freely.'
+                  ? 'You are about to enter an immersive virtual exhibition. Use your fingers to explore the space freely.'
                   : 'You are about to enter an immersive virtual exhibition. Use the controls below to explore the space freely.'}
               </Text>
             </div>

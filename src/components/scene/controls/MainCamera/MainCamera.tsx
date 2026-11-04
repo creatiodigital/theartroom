@@ -30,11 +30,13 @@ import {
   type MouseState,
 } from './helpers'
 import {
+  MAX_PINCH_ZOOM,
   TOUCH_GLIDE_DECAY,
   beginTouch,
   createTouchGesture,
   endTouch,
   moveTouch,
+  touching,
 } from './touchGestures'
 
 function detectCollisions(
@@ -96,6 +98,17 @@ function detectCollisions(
 const FOCUS_DURATION = 1.2 // Animation duration in seconds
 const FOCUS_PADDING = 1.08 // Padding factor to ensure artwork fits comfortably in view
 const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
+// When the room is too shallow to step back far enough to frame a work (an
+// upright phone sees little across, so a wide work or group wants several
+// meters), the lens widens instead — down to this zoom (a 50° lens opens to
+// about 75°), past which the sides crop rather than bend.
+const MIN_FOCUS_ZOOM = 0.6
+// On a screen taller than wide, the farthest a glide steps back from a work.
+// Fitting a 3 m wall text across an upright phone would want ~7.5 m: far from
+// the work, and where no wall stands behind (an open doorway) nothing else
+// would stop it. The lens widens for the rest. A laptop never needs this much
+// room, so it is left alone.
+const MAX_TALL_FOCUS_DISTANCE = 4
 // Longest step one frame may take, whatever asks for it (the trackpad, a slide
 // on a phone): the collision rays reach 0.7 m, so a step this short can never
 // carry the camera past a wall they have not seen.
@@ -103,6 +116,14 @@ const MAX_STEP = 0.15
 
 // Ease-out cubic: smooth deceleration, reaches target exactly at t=1
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+
+/**
+ * The lens at a zoom: `zoom` scales how much the camera sees (2 shows half as
+ * much, across and up), 1 is the room's own lens, below 1 wider. Exactly
+ * `fov` at 1, so a camera nobody zoomed is untouched.
+ */
+const zoomedFov = (fov: number, zoom: number) =>
+  zoom === 1 ? fov : (2 * Math.atan(Math.tan((fov * Math.PI) / 360) / zoom) * 180) / Math.PI
 
 const MainCamera = () => {
   const [, setTick] = useState(0)
@@ -127,6 +148,12 @@ const MainCamera = () => {
   const touchGesture = useRef(createTouchGesture())
   const touchWalk = useRef(0)
   const walkVelocity = useRef(0)
+  // The lens zoom (see `zoomedFov`): a pinch's, or the one a glide to a work in a
+  // shallow room needed. It stays while the visitor looks around, and eases back
+  // to the room's own lens once they walk on.
+  const lensZoom = useRef(1)
+  const focusZoomFrom = useRef(1)
+  const focusZoomTo = useRef(1)
 
   // Focus animation state
   const isAnimating = useRef(false)
@@ -216,16 +243,11 @@ const MainCamera = () => {
           ? ((width / 2) * FOCUS_PADDING) / Math.tan(horizontalHalfFov)
           : FOCUS_MIN_DISTANCE
 
-      // Use the larger distance to ensure artwork fits both horizontally and vertically.
-      //
-      // Except on a screen taller than it is wide — a phone or tablet held
-      // upright. It sees so little across that fitting the width means backing
-      // far away (a 2 m-wide work wants about 5 m on an upright phone, 1.45 m on
-      // a laptop), so there it frames the height and lets the sides crop.
-      const fitsWidth = aspectRatio >= 1
+      // Use the larger distance to ensure artwork fits both horizontally and vertically
+      // (the whole work, or the whole group, on every screen).
       const optimalDistance = Math.max(
         distanceForVertical,
-        fitsWidth ? distanceForHorizontal : 0,
+        distanceForHorizontal,
         FOCUS_MIN_DISTANCE,
       )
 
@@ -249,12 +271,18 @@ const MainCamera = () => {
         0,
         optimalDistance + collisionDistance,
       ).intersectObjects(roomMeshes, true)[0]
-      const viewingDistance = behind
-        ? Math.max(
-            FOCUS_MIN_DISTANCE,
-            Math.min(optimalDistance, behind.distance + 0.05 - collisionDistance),
-          )
-        : optimalDistance
+      const roomLimit = behind ? behind.distance + 0.05 - collisionDistance : Infinity
+      const screenLimit = aspectRatio < 1 ? MAX_TALL_FOCUS_DISTANCE : Infinity
+      const viewingDistance = Math.max(
+        FOCUS_MIN_DISTANCE,
+        Math.min(optimalDistance, roomLimit, screenLimit),
+      )
+      // Where the room (or a tall screen's limit) stops the camera short, a wider
+      // lens still frames the whole work — an upright phone, mostly: a 2 m work
+      // wants ~5 m there. The glide also undoes any pinch: the work arrives
+      // framed, at the room's lens.
+      focusZoomFrom.current = lensZoom.current
+      focusZoomTo.current = Math.max(MIN_FOCUS_ZOOM, Math.min(1, viewingDistance / optimalDistance))
 
       // Camera positioned in front of artwork at the calculated distance
       const cameraTargetPos = artworkPos
@@ -290,16 +318,23 @@ const MainCamera = () => {
     (event: MouseEvent) => detachMouseHandlers(onMouseMove, mouseState)(event),
     [onMouseMove],
   )
-  // One finger on the room: slide up or down to walk, left or right to turn
-  // (see touchGestures). A turn rides the mouse drag's own path, momentum and all.
+  // Fingers on the room: one slides to walk or turn, two pinch to zoom (see
+  // touchGestures). A turn rides the mouse drag's own path, momentum and all.
   const onTouchStart = useCallback((event: TouchEvent) => {
+    beginTouch(touchGesture.current, event, lensZoom.current)
     // A finger landing stops a walk still easing out from the last slide.
-    if (beginTouch(touchGesture.current, event)) walkVelocity.current = 0
+    if (touching(touchGesture.current)) walkVelocity.current = 0
   }, [])
   const onTouchMove = useCallback((event: TouchEvent) => {
-    const { walk, turn } = moveTouch(touchGesture.current, event)
+    const { walk, turn, zoom } = moveTouch(touchGesture.current, event)
     touchWalk.current += walk
-    if (turn && mouseState.current) mouseState.current.deltaX += turn
+    // Zoomed in, the same slide turns less, so the room still follows the finger.
+    if (turn && mouseState.current) mouseState.current.deltaX += turn / lensZoom.current
+    if (zoom !== null) {
+      // Never wider than the lens the pinch began from, nor the room's own.
+      const widest = Math.min(1, touchGesture.current.zoomFrom)
+      lensZoom.current = Math.max(widest, Math.min(MAX_PINCH_ZOOM, zoom))
+    }
   }, [])
   const onTouchEnd = useCallback((event: TouchEvent) => {
     endTouch(touchGesture.current, event)
@@ -370,7 +405,7 @@ const MainCamera = () => {
   useFrame(({ camera, invalidate }, delta) => {
     const cam = camera as PerspectiveCamera
 
-    cam.fov = cameraFOV
+    cam.fov = zoomedFov(cameraFOV, lensZoom.current)
     cam.updateProjectionMatrix()
 
     // Freeze the visitor while the "Leave the exhibition?" dialog is up.
@@ -493,6 +528,8 @@ const MainCamera = () => {
 
       // Smoothly interpolate rotation from start to target
       cam.quaternion.slerpQuaternions(startQuaternion.current, targetQuat, t)
+      // And the lens, to the one that frames the work from there.
+      lensZoom.current = focusZoomFrom.current + (focusZoomTo.current - focusZoomFrom.current) * t
 
       // Check if animation is complete
       if (animationProgress.current >= 1) {
@@ -543,7 +580,7 @@ const MainCamera = () => {
     // Touch walking: while the finger is down, exactly the distance it slid;
     // once it lifts, the slide's speed easing out.
     let touchStep = 0
-    if (touchGesture.current.active) {
+    if (touchGesture.current.mode === 'slide') {
       touchStep = touchWalk.current
       // Smoothed, because move events and frames don't arrive in step: a frame
       // that saw no move would otherwise zero the speed the lift glides on.
@@ -583,6 +620,14 @@ const MainCamera = () => {
 
     if (mouseState.current) {
       mouseState.current.deltaX = 0
+    }
+
+    // Walking on puts the room's own lens back, gently (a pinch, or the wider
+    // lens a glide in a shallow room needed). Turning keeps it.
+    if (lensZoom.current !== 1 && moveVector.lengthSq() > 0) {
+      lensZoom.current +=
+        (1 - lensZoom.current) * (1 - Math.pow(0.9, Math.min(delta, MAX_FRAME_DELTA) * 60))
+      if (Math.abs(lensZoom.current - 1) < 0.002) lensZoom.current = 1
     }
 
     // Request next frame when there's active movement (frameloop="demand")

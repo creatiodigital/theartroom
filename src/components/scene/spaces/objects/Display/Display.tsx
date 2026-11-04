@@ -821,7 +821,11 @@ const Display = ({ artwork }: DisplayProps) => {
       pointerDownPos.current = null
 
       // Check if this qualifies as a click (minimal movement + short duration)
-      if (distance < taps.slop(CLICK_MAX_DISTANCE) && duration < CLICK_MAX_DURATION) {
+      if (
+        !taps.pinched &&
+        distance < taps.slop(CLICK_MAX_DISTANCE) &&
+        duration < CLICK_MAX_DURATION
+      ) {
         // A finger's second tap: the details. Its first tap's pending focus was
         // already cancelled when this press came down.
         if (taps.touch && taps.secondTap()) {

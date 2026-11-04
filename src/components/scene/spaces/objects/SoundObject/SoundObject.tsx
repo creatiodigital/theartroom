@@ -262,7 +262,11 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
 
       pointerDownPos.current = null
 
-      if (distance < taps.slop(CLICK_MAX_DISTANCE) && duration < CLICK_MAX_DURATION) {
+      if (
+        !taps.pinched &&
+        distance < taps.slop(CLICK_MAX_DISTANCE) &&
+        duration < CLICK_MAX_DURATION
+      ) {
         // A finger's second tap plays or stops (its first tap's focus was cancelled on press).
         if (taps.touch && taps.secondTap()) {
           togglePlay()

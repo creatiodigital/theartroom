@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from 'react'
 
 import { Text } from '@/components/ui/Typography'
 import DoubleTap from '@/icons/gesture-double-tap.svg'
+import Pinch from '@/icons/gesture-pinch.svg'
 import SlideHorizontal from '@/icons/gesture-slide-horizontal.svg'
 import SlideVertical from '@/icons/gesture-slide-vertical.svg'
 import Tap from '@/icons/gesture-tap.svg'
@@ -16,10 +17,12 @@ type Gesture = {
 }
 
 // The finger's controls (AR-172), in the order a visitor needs them: move,
-// look, then the artworks. See MainCamera/touchGestures and tapTracker.
+// look, then the artworks. See MainCamera/touchGestures and tapTracker. The room
+// follows the finger: sliding down draws it toward you, so you walk forward.
 const GESTURES: Gesture[] = [
-  { Icon: SlideVertical, gesture: 'Slide up or down', action: 'Walk forward or back' },
+  { Icon: SlideVertical, gesture: 'Slide down or up', action: 'Walk forward or back' },
   { Icon: SlideHorizontal, gesture: 'Slide left or right', action: 'Turn to look around' },
+  { Icon: Pinch, gesture: 'Pinch with two fingers', action: 'Zoom in or out' },
   { Icon: Tap, gesture: 'Tap an artwork', action: 'Go up to it' },
   {
     Icon: DoubleTap,
