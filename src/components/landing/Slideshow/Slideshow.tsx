@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import c from 'classnames'
-import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { reportImageError } from '@/lib/observability/reportImageError'
 
@@ -22,10 +21,6 @@ type Slide = {
   title: string
   meta: string
   textColor?: string
-  /** Straight into the exhibition's 3D space, when it's published; null for none. */
-  visitUrl?: string | null
-  ctaBackgroundColor?: string
-  ctaTextColor?: string
 }
 
 type SlideshowProps = {
@@ -33,7 +28,8 @@ type SlideshowProps = {
   interval?: number
 }
 
-export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
+// 8s a slide (5s felt rushed, AR-174).
+export const Slideshow = ({ slides, interval = 8000 }: SlideshowProps) => {
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
@@ -52,7 +48,7 @@ export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
           className={c(styles.slide, index === activeIndex && styles.slideActive)}
         >
           {/* The whole slide opens the exhibition page. The text lies over it and lets clicks
-              through; the Enter button is a link of its own on top, never inside this one. */}
+              through. (Its "Enter Virtual Exhibition" button was removed in AR-174: too invasive.) */}
           <Link
             href={slide.exhibitionUrl}
             className={styles.slideLink}
@@ -83,29 +79,15 @@ export const Slideshow = ({ slides, interval = 5000 }: SlideshowProps) => {
                   {slide.meta}
                 </Text>
               )}
+              <Text as="p" size="sm" font="sans" className={styles.nowOpen}>
+                Now open
+              </Text>
               <Text as="h2" size="huge" font="serif" className={styles.title}>
                 {slide.title}
               </Text>
               <Text as="p" size="xl" font="serif" className={styles.subtitle}>
                 {slide.subtitle}
               </Text>
-              {slide.visitUrl && (
-                <div className={styles.cta}>
-                  <Button
-                    variant="primary"
-                    size="bigSquared"
-                    label="Enter Virtual Exhibition"
-                    href={slide.visitUrl}
-                    icon="arrowRight"
-                    className={styles.ctaButton}
-                    style={{
-                      backgroundColor: slide.ctaBackgroundColor,
-                      borderColor: slide.ctaBackgroundColor,
-                      color: slide.ctaTextColor,
-                    }}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>

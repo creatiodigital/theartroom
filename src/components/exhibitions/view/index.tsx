@@ -77,6 +77,7 @@ const NavigationButton = () => {
   // Shared with the in-scene exit threshold: walking out of the corridor and
   // clicking this button raise the same single dialog.
   const promptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
+  const promptSource = useSelector((state: RootState) => state.scene.exitPromptSource)
 
   // Every in-scene exit lands here — the prompt's Leave button, the corner X
   // (which only opens that prompt), and walking into the exit corridor.
@@ -99,7 +100,7 @@ const NavigationButton = () => {
         <Tooltip label="Leave Exhibition" placement="left">
           <Button
             variant="ghost"
-            onClick={() => dispatch(openExitPrompt())}
+            onClick={() => dispatch(openExitPrompt('button'))}
             className={styles.navigationButton}
             aria-label="Leave Exhibition"
           >
@@ -108,7 +109,12 @@ const NavigationButton = () => {
         </Tooltip>
       </div>
 
-      <ExitPrompt open={promptOpen} onLeave={leave} onCancel={() => dispatch(declineExit())} />
+      <ExitPrompt
+        open={promptOpen}
+        restartsAtEntrance={promptSource === 'walk'}
+        onLeave={leave}
+        onCancel={() => dispatch(declineExit())}
+      />
     </>
   )
 }
@@ -590,6 +596,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const searchParams = useSearchParams()
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
+  const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const isTouch = useIsTouchDevice()
 
   // AR-161: `?bake=1` bakes the room on the admin's machine and stores it as the draft bake;
@@ -621,6 +628,10 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const fresh = !adminPage || (fulfilledTimeStamp ?? 0) >= openedAt
   const exhibition = fresh ? data : undefined
   const isApiLoading = sessionPending || isLoading || !fresh
+  // The open work as a photo of the print, for its pop-ups (AR-174); none → its plain image.
+  const currentPresentation = currentArtworkId
+    ? exhibition?.presentations?.[currentArtworkId]
+    : undefined
 
   // AR-161: the draft bake, and whether it is a bake of the room as saved now.
   const draftBake = adminPage && isBakeRecord(exhibition?.bake) ? exhibition.bake : null
@@ -980,8 +991,10 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {isTouch && (isArtworkPanelOpen || isArtworkModalOpen) && (
         <div className={styles.touchShield} aria-hidden />
       )}
-      {isArtworkPanelOpen && <ArtworkPanel />}
-      {isArtworkModalOpen && <ArtworkModal />}
+      {/* Both show the work as a photo of the print, as the grids do, or its plain image when it
+          has no current render (AR-174). */}
+      {isArtworkPanelOpen && <ArtworkPanel presentation={currentPresentation} />}
+      {isArtworkModalOpen && <ArtworkModal presentation={currentPresentation} />}
     </>
   )
 }

@@ -9,6 +9,7 @@ export const sceneFactory = (): TScene => ({
   initialCameraPosition: null,
   initialCameraDirection: null,
   isExitPromptOpen: false,
+  exitPromptSource: null,
   exitRespawnNonce: 0,
   trackLampGroups: [],
 })

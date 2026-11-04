@@ -44,7 +44,8 @@
     max-height: calc(100dvh - 2 * var(--space-6) - var(--space-12));
   }
 
-  .preview {
+  .preview,
+  .presentationRender {
     max-height: calc(100dvh - 2 * var(--space-6) - var(--space-12));
   }
 }
@@ -89,6 +90,13 @@
   object-fit: contain;
 }
 
+// The work as a photo of the print (PrintPresentation): its stand-in is wider than the panel, so
+// the piece fills it. The width cap sits on the piece, not the render, as on the artwork page; the
+// render's own size stays auto so its shape (and the window's place in it) never stretches.
+.presentation {
+  max-width: 100%;
+}
+
 .info {
   display: flex;
   flex-direction: column;
@@ -97,8 +105,9 @@
   padding-bottom: var(--space-4);
 }
 
+// Tight to the title below it (AR-174): name and work read as one line of identity.
 .author {
-  margin-bottom: var(--space-4);
+  margin-bottom: 0;
 }
 
 .titleWrapper {

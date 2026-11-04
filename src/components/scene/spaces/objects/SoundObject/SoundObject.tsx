@@ -13,7 +13,7 @@ import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useIconTexture } from './useIconTexture'
-import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+import { useTapFocusGroups } from '@/hooks/useTapFocusGroups'
 
 type SoundObjectProps = {
   artwork: RuntimeArtwork
@@ -43,7 +43,8 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const autofocusGroups = useSelector(selectAutofocusGroups)
+  // None on phones: a tap there frames just this piece, not its group (AR-174).
+  const autofocusGroups = useTapFocusGroups()
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )

@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 import { sceneFactory } from '@/factories/sceneFactory'
-import type { TScene, TLampGroup, TFocusTarget } from '@/types/scene'
+import type { TScene, TLampGroup, TFocusTarget, TExitPromptSource } from '@/types/scene'
 
 const sceneSlice = createSlice({
   name: 'scene',
@@ -60,20 +60,22 @@ const sceneSlice = createSlice({
       state.initialCameraDirection = action.payload.direction
     },
 
-    openExitPrompt: (state: TScene) => {
+    openExitPrompt: (state: TScene, action: PayloadAction<TExitPromptSource>) => {
       state.isExitPromptOpen = true
+      state.exitPromptSource = action.payload
     },
 
     /**
-     * Declined to leave. Every way of saying no lands here — the Stay button,
-     * Escape and a backdrop click — so they all behave identically, and the
-     * visit always restarts from the entrance regardless of where the prompt
-     * was raised. One rule, stated plainly in the dialog, instead of a
-     * behaviour that changes depending on how you got there.
+     * Declined to leave. Every way of saying no lands here — the Stay button, Escape and a
+     * backdrop click — so they all behave identically. Where the visitor goes depends on what
+     * raised the prompt (AR-174): having walked up to the exit, they restart from the entrance
+     * (off the threshold, so it can't fire again under them); having pressed the close button,
+     * anywhere in the room, they stay exactly where they are. The dialog says which.
      */
     declineExit: (state: TScene) => {
+      if (state.exitPromptSource === 'walk') state.exitRespawnNonce += 1
       state.isExitPromptOpen = false
-      state.exitRespawnNonce += 1
+      state.exitPromptSource = null
     },
   },
 })

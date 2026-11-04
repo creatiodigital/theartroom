@@ -48,18 +48,22 @@
     padding-top: var(--space-6);
   }
 
+  // The same column as the Header and PageLayout (--site-padding each side), so the logo, the
+  // menu and the content line up. It was 32px each side here against the header's 48 (AR-174).
   @include breakpoint(lg) {
-    max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+    width: calc(100% - var(--site-padding) * 2);
+    max-width: var(--content-max-width);
     margin: 0 auto;
-    padding: var(--space-8);
+    padding: var(--space-8) 0;
   }
 }
 
+// Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
 .exhibitionsSection {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
 
   @include breakpoint(lg) {
-    margin-bottom: 120px;
+    margin-bottom: var(--space-16);
   }
 }
 

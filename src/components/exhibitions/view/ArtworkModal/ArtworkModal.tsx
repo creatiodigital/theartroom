@@ -15,6 +15,7 @@ import { ArtworkStorySection } from '@/components/artwork/detail/ArtworkStorySec
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import { Button } from '@/components/ui/Button'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+import type { PresentationView } from '@/lib/printPresentation/record'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
 
@@ -30,7 +31,12 @@ type FetchedDetail = {
   media: ArtworkMediaItem[]
 }
 
-export const ArtworkModal = () => {
+interface ArtworkModalProps {
+  /** The work as a photo of the print, as the grids show it (AR-174); none → its plain image. */
+  presentation?: PresentationView | null
+}
+
+export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const reduxArtwork = useSelector((state: RootState) =>
@@ -92,13 +98,14 @@ export const ArtworkModal = () => {
       // inside it scroll independently instead of the scene swallowing the scroll.
       data-panel-overlay
     >
+      {/* "CLOSE ×", as the panel it opens from has it (AR-174), its right edge on the content's. */}
       <Button
-        variant="ghost"
+        variant="bare"
         className={styles.close}
         onClick={() => dispatch(closeArtworkModal())}
         aria-label="Close artwork"
       >
-        <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+        CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
       </Button>
       {/* Mirrors the standalone artwork page section for section: the
           two-column zone, then the story, then the imagery. `layout="page"` is
@@ -111,6 +118,7 @@ export const ArtworkModal = () => {
             artist={artist}
             commerce={fetched?.commerce}
             layout="page"
+            presentation={presentation}
           />
         </div>
 

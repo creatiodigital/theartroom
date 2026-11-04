@@ -13,6 +13,8 @@ export type TFocusTarget = {
  *  which is how Paris and Madrid behave — they keep a flat, ungrouped list. */
 export type TLampGroup = { room: string | null; indices: number[] }
 
+export type TExitPromptSource = 'walk' | 'button'
+
 export type TScene = {
   isArtworkPanelOpen: boolean
   isPlaceholdersShown: boolean
@@ -31,11 +33,16 @@ export type TScene = {
    */
   isExitPromptOpen: boolean
   /**
-   * Bumped when the visitor declines to leave. Choosing to stay returns them to
-   * the entrance rather than leaving them standing on the exit threshold —
-   * which also means the threshold can never re-fire under them, so no
-   * arm/disarm bookkeeping is needed. A counter rather than a boolean so
-   * repeated declines each register.
+   * What raised the open prompt (AR-174): walking up to the exit, or the corner close button.
+   * Only a walk-up sends a visitor who stays back to the entrance; after the button they stay
+   * exactly where they were. Null while it's closed.
+   */
+  exitPromptSource: TExitPromptSource | null
+  /**
+   * Bumped when a visitor who WALKED to the exit declines to leave. Staying returns them to the
+   * entrance rather than leaving them on the exit threshold, which also means the threshold can
+   * never re-fire under them, so no arm/disarm bookkeeping is needed. A counter rather than a
+   * boolean so repeated declines each register.
    */
   /** Track lamps present in the loaded space, in GLB order. Derived from the
    *  model at load, never persisted — the GLB is the source of truth for how

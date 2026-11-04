@@ -13,7 +13,7 @@ import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
-import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+import { useTapFocusGroups } from '@/hooks/useTapFocusGroups'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import {
   ON_ARTWORK_BLENDING,
@@ -234,7 +234,8 @@ const Stencil = ({ artwork }: StencilProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const autofocusGroups = useSelector(selectAutofocusGroups)
+  // None on phones: a tap there frames just this piece, not its group (AR-174).
+  const autofocusGroups = useTapFocusGroups()
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )

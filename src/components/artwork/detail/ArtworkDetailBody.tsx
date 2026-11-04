@@ -97,9 +97,8 @@ interface ArtworkDetailBodyProps {
   neighbours?: ArtworkNeighbours | null
   /**
    * The work as a photo of the real print (frame or sheet), when one is current and the switch
-   * is on. The 3D-room pop-up never passes it — it keeps the plain low-res image "for now": the
-   * room hangs the work in the frame the artist chose there, and a different frame over it would
-   * mislead (owner, 2026-10-28).
+   * is on. The 3D room's "View Details" passes it too since AR-174 (owner, 2026-11-04: show the
+   * rendered image, as the grids do); until then it kept the plain image there (2026-10-28).
    */
   presentation?: PresentationView | null
 }

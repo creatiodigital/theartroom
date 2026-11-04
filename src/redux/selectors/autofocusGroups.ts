@@ -10,7 +10,7 @@ import type { AutofocusGroup } from '@/types/autofocusGroup'
  * room. React-Redux warns about exactly this. Returning the same frozen array
  * makes the comparison stable.
  */
-const NO_GROUPS: readonly AutofocusGroup[] = Object.freeze([])
+export const NO_GROUPS: readonly AutofocusGroup[] = Object.freeze([])
 
 export const selectAutofocusGroups = (state: RootState): readonly AutofocusGroup[] =>
   state.exhibition.autofocusGroups ?? NO_GROUPS

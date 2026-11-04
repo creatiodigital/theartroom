@@ -19,12 +19,17 @@
   }
 }
 
+// A true crossfade (AR-174): the incoming slide fades in on top (z-index 2) while the outgoing one
+// stays fully opaque underneath, and only then drops away (the delay). Fading both at once let
+// the page background show through mid-way, which read as a fade-out then a fade-in.
+$crossfade: 1500ms;
+
 .slide {
   position: absolute;
   inset: 0;
   opacity: 0;
   z-index: 1;
-  transition: opacity 800ms ease;
+  transition: opacity 0ms linear $crossfade;
 }
 
 // The whole slide opens the exhibition page; the text sits over it (see .container).
@@ -37,6 +42,7 @@
 .slideActive {
   opacity: 1;
   z-index: 2;
+  transition: opacity $crossfade ease-in-out;
 }
 
 .background {
@@ -51,19 +57,20 @@
 
 .container {
   position: relative;
-  width: 100%;
+  // Exactly the Header's column (same width rule, same max-width), so the text starts under the
+  // logo at every width. Padding inside a max-width box put it 48px right of the logo on screens
+  // wider than the max-width (AR-174).
+  width: calc(100% - var(--space-6) * 2);
   height: 100%;
   max-width: var(--header-max-width);
   margin: 0 auto;
-  padding: 0 var(--space-6);
   display: flex;
   align-items: flex-end;
-  // Clicks on the text go through to the slide's link underneath; only the Enter button takes its
-  // own.
+  // Clicks on the text go through to the slide's link underneath.
   pointer-events: none;
 
   @include breakpoint(lg) {
-    padding: 0 var(--site-padding);
+    width: calc(100% - var(--site-padding) * 2);
   }
 }
 
@@ -90,6 +97,15 @@
   width: fit-content;
 }
 
+// "NOW OPEN" over the artist's name: small tracked sans capitals, in the title's color.
+.nowOpen {
+  position: relative;
+  color: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: var(--space-3);
+}
+
 .title {
   position: relative;
   color: inherit;
@@ -100,15 +116,4 @@
   position: relative;
   color: inherit;
   margin-top: var(--space-2);
-}
-
-// "Enter Virtual Exhibition": straight into the 3D space, on every device (AR-172), as on the
-// exhibition page. Its colors come from the slide.
-.cta {
-  margin-top: var(--space-6);
-  pointer-events: auto;
-}
-
-.ctaButton:hover {
-  opacity: 0.85;
 }

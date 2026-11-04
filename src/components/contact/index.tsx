@@ -50,9 +50,11 @@ export const ContactPage = () => {
               SUBMISSION
             </Text>
             <Text as="p" font="serif" className={styles.value}>
-              Artists from anywhere in the world are welcome to ask to participate. Write to us with
-              a link to your work and a short bio. Every request is reviewed by the gallery, and
-              participation is subject to acceptance.
+              The Art Room is currently accepting exhibition proposals from artists anywhere in the
+              world, working in any medium. Write to us with a short introduction, a link to your
+              portfolio or a selection of images, and a few words about the body of work you would
+              like to show. Every proposal is reviewed by the gallery, and exhibitions are subject
+              to acceptance.
             </Text>
             <Text as="p" size="sm" className={styles.note}>
               For institutional partnerships and curatorial inquiries, please direct correspondence
