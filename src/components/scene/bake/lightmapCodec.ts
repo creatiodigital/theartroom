@@ -153,10 +153,8 @@ const paeth = (a: number, b: number, c: number): number => {
   return pa <= pb && pa <= pc ? a : pb <= pc ? b : c
 }
 
-/** PNG bytes (16-bit RGB, non-interlaced, any filters) to words. Anything else throws. */
-export async function decodePng16(
-  bytes: Uint8Array,
-): Promise<{ width: number; height: number; words: Uint16Array }> {
+/** A 16-bit RGB PNG's size and its compressed image data, every chunk checked. Anything else throws. */
+const readPng16 = (bytes: Uint8Array): { width: number; height: number; idats: Uint8Array[] } => {
   if (bytes.length < 8 || SIGNATURE.some((b, i) => bytes[i] !== b)) {
     throw new Error('decodePng16: not a PNG')
   }
@@ -196,24 +194,31 @@ export async function decodePng16(
   if (!sawHeader || !idats.length || !sawEnd || !width || !height) {
     throw new Error('decodePng16: incomplete PNG')
   }
-  const joined = new Uint8Array(idats.reduce((n, p) => n + p.length, 0))
-  let o = 0
-  for (const p of idats) {
-    joined.set(p, o)
-    o += p.length
-  }
-  const raw = await pipe(joined, new DecompressionStream('deflate'))
+  return { width, height, idats }
+}
+
+/**
+ * Inflates a 16-bit RGB PNG's image data and hands over its rows one at a time, top first, each
+ * unfiltered into the same buffer (`row`: big-endian 16-bit R, G, B per pixel, valid only during
+ * the call). Streamed (AR-175): only two rows are ever held, never the whole inflated image — a
+ * phone's tab memory is what runs out first.
+ */
+async function readRows16(
+  { width, height, idats }: ReturnType<typeof readPng16>,
+  onRow: (row: Uint8Array, y: number) => void,
+): Promise<void> {
   const stride = width * BPP
-  if (raw.length !== height * (stride + 1)) throw new Error('decodePng16: bad image data size')
-  const pixels = new Uint8Array(height * stride)
-  for (let y = 0; y < height; y++) {
-    const filter = raw[y * (stride + 1)]!
+  let row = new Uint8Array(stride)
+  let previous = new Uint8Array(stride) // zeros: the row above the first
+  let y = 0
+  let filter = -1 // this row's filter byte, -1 until it has arrived
+  let filled = 0
+  const finishRow = () => {
     if (filter > 4) throw new Error('decodePng16: bad filter type')
     for (let i = 0; i < stride; i++) {
-      const x = raw[y * (stride + 1) + 1 + i]!
-      const a = i >= BPP ? pixels[y * stride + i - BPP]! : 0
-      const b = y > 0 ? pixels[(y - 1) * stride + i]! : 0
-      const c = y > 0 && i >= BPP ? pixels[(y - 1) * stride + i - BPP]! : 0
+      const a = i >= BPP ? row[i - BPP]! : 0
+      const b = previous[i]!
+      const c = i >= BPP ? previous[i - BPP]! : 0
       const add =
         filter === 0
           ? 0
@@ -224,13 +229,52 @@ export async function decodePng16(
               : filter === 3
                 ? (a + b) >> 1
                 : paeth(a, b, c)
-      pixels[y * stride + i] = (x + add) & 0xff
+      row[i] = (row[i]! + add) & 0xff
+    }
+    onRow(row, y)
+    const done = previous
+    previous = row
+    row = done
+    y++
+    filter = -1
+    filled = 0
+  }
+  const inflated = new Blob(idats as Uint8Array<ArrayBuffer>[])
+    .stream()
+    .pipeThrough(new DecompressionStream('deflate'))
+  const reader = inflated.getReader()
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    let at = 0
+    while (at < value.length) {
+      if (y === height) throw new Error('decodePng16: bad image data size')
+      if (filter < 0) {
+        filter = value[at++]!
+        continue
+      }
+      const take = Math.min(stride - filled, value.length - at)
+      row.set(value.subarray(at, at + take), filled)
+      filled += take
+      at += take
+      if (filled === stride) finishRow()
     }
   }
-  const out = new Uint16Array(width * height * 3)
-  const px = new DataView(pixels.buffer)
-  for (let i = 0; i < out.length; i++) out[i] = px.getUint16(i * 2)
-  return { width, height, words: out }
+  if (y !== height || filter >= 0) throw new Error('decodePng16: bad image data size')
+}
+
+/** PNG bytes (16-bit RGB, non-interlaced, any filters) to words. Anything else throws. */
+export async function decodePng16(
+  bytes: Uint8Array,
+): Promise<{ width: number; height: number; words: Uint16Array }> {
+  const png = readPng16(bytes)
+  const { width, height } = png
+  const words = new Uint16Array(width * height * 3)
+  await readRows16(png, (row, y) => {
+    const at = y * width * 3
+    for (let i = 0; i < row.length; i += 2) words[at + i / 2] = (row[i]! << 8) | row[i + 1]!
+  })
+  return { width, height, words }
 }
 
 const flipRows = <T extends Uint16Array | Float32Array>(
@@ -259,14 +303,45 @@ export async function encodeLightmapPng(
 }
 
 /**
+ * Every 16-bit word an encoding can store, as the half float `dequantize` makes of it (its float32
+ * value, as the Float32Array it writes holds it): 65 536 curve evaluations per map instead of three
+ * per texel.
+ */
+const halfFloatTable = (encoding: LightmapEncoding): Uint16Array => {
+  const { format, max, knee } = encoding
+  const inv = Math.log(1 + max / knee) / WORD
+  const table = new Uint16Array(WORD + 1)
+  for (let w = 0; w <= WORD; w++) {
+    const value = format === 'signed16' ? w / WORD - 0.5 : knee * (Math.exp(w * inv) - 1)
+    table[w] = DataUtils.toHalfFloat(Math.fround(value))
+  }
+  return table
+}
+
+/**
  * PNG to a half-float texture. Rows are flipped back to bake order here, so the texture is
  * uploaded with `flipY = false` and matches the baked targets. The caller sets `channel`.
+ *
+ * AR-175: each row goes straight from the PNG stream into the texture's half floats, bit for bit
+ * what `decodePng16` → row flip → `dequantize` → `toHalfFloat` gives (e2e/lightmap-codec.spec.ts),
+ * without those whole-map copies along the way: ~200 MB at once for a 2048² map, which on a phone
+ * was enough on its own to have the tab killed while the room loaded.
  */
 export async function decodeLightmapPng(buffer: ArrayBuffer, map: BakeMap): Promise<DataTexture> {
-  const { width, height, words } = await decodePng16(new Uint8Array(buffer))
-  const floats = dequantize(flipRows(words, width * 3, height), map.encoding)
-  const half = new Uint16Array(floats.length)
-  for (let i = 0; i < floats.length; i++) half[i] = DataUtils.toHalfFloat(floats[i]!)
+  const png = readPng16(new Uint8Array(buffer))
+  const { width, height } = png
+  const table = halfFloatTable(map.encoding)
+  const one = DataUtils.toHalfFloat(1)
+  const half = new Uint16Array(width * height * 4)
+  await readRows16(png, (row, y) => {
+    let at = (height - 1 - y) * width * 4
+    for (let i = 0; i < row.length; i += BPP, at += 4) {
+      half[at] = table[(row[i]! << 8) | row[i + 1]!]!
+      half[at + 1] = table[(row[i + 2]! << 8) | row[i + 3]!]!
+      half[at + 2] = table[(row[i + 4]! << 8) | row[i + 5]!]!
+      half[at + 3] = one
+    }
+  })
   const texture = new DataTexture(half, width, height, RGBAFormat, HalfFloatType)
   texture.minFilter = LinearFilter
   texture.magFilter = LinearFilter

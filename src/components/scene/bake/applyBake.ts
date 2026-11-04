@@ -34,6 +34,7 @@ import { softFillGlsl, softFillTerm, softFillUniforms } from './softFill'
 import { BAKE_DEBUG } from './bakedLook'
 import type { BakeReceiver } from './LightBaker'
 import { shownArtworkImages } from './receivers'
+import { savesPhoneMemory } from '@/components/scene/phoneMemory'
 
 /**
  * ⚠️ AR-161 — the baked light onto the room, the same way whether the maps come from the bake
@@ -417,6 +418,10 @@ const swapBakedLighting = (
       })
     }
     display.material = baked
+    // AR-175: on a phone the space's own baked light (its KTX2 lightmap, 22 MB a surface in Paris
+    // and Vienna) leaves the GPU while the stored bake replaces it. Undone, it uploads again.
+    const replaced = (previous as { lightMap?: Texture | null }).lightMap
+    if (replaced && savesPhoneMemory('bakedlight')) replaced.dispose()
     restore.push(() => {
       display.material = previous
       baked.dispose()

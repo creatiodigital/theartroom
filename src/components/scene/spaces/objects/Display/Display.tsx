@@ -12,7 +12,10 @@ import {
   Texture,
   CanvasTexture,
   LinearMipmapLinearFilter,
+  type Group,
   type Mesh,
+  type Object3D,
+  type PerspectiveCamera,
 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -24,6 +27,7 @@ import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 import { Support } from '@/components/scene/spaces/objects/Support'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { isTouchDevice } from '@/hooks/useIsTouchDevice'
+import { savesPhoneMemory } from '@/components/scene/phoneMemory'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
@@ -213,29 +217,231 @@ const queueTouchLoad = (load: (done: () => void) => void) => {
   else touchLoadQueue.push(start)
 }
 
-/** The loaded texture at no more than REDUCED_MAX px, its full-size decode let go. */
-const shrinkForTouch = (loaded: Texture): Texture => {
-  const img = loaded.image as HTMLImageElement | undefined
-  const w = img?.naturalWidth || img?.width || 0
-  const h = img?.naturalHeight || img?.height || 0
-  if (!img || !w || !h || Math.max(w, h) <= REDUCED_MAX) return loaded
+/** An image's or canvas's own pixel size (0 × 0 when it has none yet). */
+const pixelSize = (source: unknown): { w: number; h: number } => {
+  const s = source as {
+    naturalWidth?: number
+    naturalHeight?: number
+    width?: number
+    height?: number
+  } | null
+  return { w: s?.naturalWidth || s?.width || 0, h: s?.naturalHeight || s?.height || 0 }
+}
 
-  const scale = REDUCED_MAX / Math.max(w, h)
+/**
+ * `source` drawn into a new canvas whose longest side is at most `max` px — never enlarged. The
+ * browser's high-quality downscale averages the file's own (encoded) values, as every image viewer
+ * does; colors are untouched.
+ */
+const drawScaled = (source: CanvasImageSource, max: number): HTMLCanvasElement | null => {
+  const { w, h } = pixelSize(source)
+  if (!w || !h) return null
+  const scale = Math.min(1, max / Math.max(w, h))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.round(w * scale))
   canvas.height = Math.max(1, Math.round(h * scale))
   const ctx = canvas.getContext('2d')
-  if (!ctx) return loaded
+  if (!ctx) return null
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
+  return canvas
+}
 
-  // WebKit keeps an image's decoded pixels until the element lets go of its
-  // source; clearing it frees them now rather than at some later collection.
-  // (The loader has already taken its load/error listeners off.)
-  img.src = ''
-  loaded.dispose()
-  return new CanvasTexture(canvas)
+/**
+ * The loaded image as a canvas of at most `max` px, its decode let go. WebKit keeps an image's
+ * decoded pixels until the element lets go of its source; clearing it frees them now rather than
+ * at some later collection. (The loader has already taken its load/error listeners off.)
+ */
+const canvasOf = (loaded: Texture, max: number): HTMLCanvasElement | null => {
+  const img = loaded.image as HTMLImageElement | undefined
+  const canvas = img ? drawScaled(img, max) : null
+  if (canvas && img) {
+    img.src = ''
+    loaded.dispose()
+  }
+  return canvas
+}
+
+/** The loaded texture at no more than REDUCED_MAX px, its full-size decode let go. */
+const shrinkForTouch = (loaded: Texture): Texture => {
+  const { w, h } = pixelSize(loaded.image)
+  if (!w || !h || Math.max(w, h) <= REDUCED_MAX) return loaded
+  const canvas = canvasOf(loaded, REDUCED_MAX)
+  return canvas ? new CanvasTexture(canvas) : loaded
+}
+
+// ---------------------------------------------------------------------------
+// Phones and tablets: each work held at the size it is seen (AR-175)
+//
+// AR-173 held every work at 1024 px on a touch screen: ~4 MB on the GPU plus a 2.8 MB canvas each,
+// whatever its size on screen. That is the one cost of a room that grows with the exhibition —
+// Florescere's 50 works were ~340 MB of it, which an iPhone 15 could not hold with the rest of the
+// room. Most works, most of the time, cover a few hundred pixels of a phone's screen.
+//
+// So each work holds one copy, the smallest of TOUCH_SIZES that its on-screen size needs (its
+// longest side in drawing-buffer pixels, so a pinch's lens zoom counts), measured as the visitor
+// moves. Walking up to a work (or a tap framing it) brings the larger copy: the file comes again
+// (the browser's cache, usually) and is drawn down to that size; walking away draws the copy in
+// memory down — nothing to download. The larger copy replaces the smaller only once it is there,
+// so a work never blanks. A work's memory then follows what is near, not how many works hang.
+const TOUCH_SIZES = [256, 512, 1024] as const
+type TouchSize = (typeof TOUCH_SIZES)[number]
+/** A copy is replaced by the next larger once the work shows this much larger than it… */
+const TOUCH_UP = 0.85
+/** …and by the next smaller only once the work shows well below that one (no flip-flopping). */
+const TOUCH_DOWN = 0.7
+
+const touchKey = (url: string, size: TouchSize) => `${url}#${size}`
+
+/** Each file's longest side, once downloaded: no copy is made larger than the file itself. */
+const touchFileSize = new Map<string, number>()
+
+/** The smallest size that holds the whole file. */
+const touchCeiling = (url: string): TouchSize => {
+  const file = touchFileSize.get(url)
+  return (
+    TOUCH_SIZES.find((s) => file !== undefined && s >= file) ?? TOUCH_SIZES[TOUCH_SIZES.length - 1]!
+  )
+}
+
+/** The size a work showing `onScreen` px needs, from the one it has (`null`: none yet). */
+const pickTouchSize = (
+  current: TouchSize | null,
+  onScreen: number,
+  ceiling: TouchSize,
+): TouchSize => {
+  const last = TOUCH_SIZES.length - 1
+  // The first pick follows the same rule as the climb, so it is not climbed from at once.
+  let i = current === null ? 0 : TOUCH_SIZES.indexOf(current)
+  while (i < last && onScreen > TOUCH_SIZES[i]! * TOUCH_UP) i++
+  if (current !== null) while (i > 0 && onScreen < TOUCH_SIZES[i - 1]! * TOUCH_DOWN) i--
+  return Math.min(TOUCH_SIZES[i]!, ceiling) as TouchSize
+}
+
+/**
+ * The work's copy at `size`: drawn down from a larger copy already in memory, or the file
+ * downloaded (a few at a time, `queueTouchLoad`) and drawn down.
+ */
+const loadTouchCopy = (
+  url: string,
+  size: TouchSize,
+  isWanted: () => boolean,
+  onLoad: (texture: Texture) => void,
+  onError: (error: unknown) => void,
+) => {
+  for (const larger of TOUCH_SIZES) {
+    if (larger <= size) continue
+    const source = textureCache.get(touchKey(url, larger))?.texture.image
+    if (!(source instanceof HTMLCanvasElement)) continue
+    const canvas = drawScaled(source, size)
+    if (canvas) return onLoad(new CanvasTexture(canvas))
+  }
+  queueTouchLoad((done) => {
+    // Its turn came after the work stopped needing it.
+    if (!isWanted()) return done()
+    new TextureLoader().load(
+      url,
+      (loaded) => {
+        done()
+        const { w, h } = pixelSize(loaded.image)
+        if (w && h) touchFileSize.set(url, Math.max(w, h))
+        const canvas = canvasOf(loaded, size)
+        onLoad(canvas ? new CanvasTexture(canvas) : loaded)
+      },
+      undefined,
+      (error) => {
+        done()
+        onError(error)
+      },
+    )
+  })
+}
+
+/**
+ * The texture of a work on a touch screen: the copy its on-screen size needs (see above), from
+ * the cache shared with every other Display (reference counted; off-screen copies freed at once).
+ * `anchor` sits where the image does.
+ */
+const useTouchArtwork = (
+  url: string,
+  anchor: React.RefObject<Object3D | null>,
+  width: number,
+  height: number,
+): Texture | null => {
+  const [size, setSize] = useState<TouchSize | null>(null)
+  const sizeRef = useRef<TouchSize | null>(null)
+  const [texture, setTexture] = useState<Texture | null>(null)
+  // The cache key of the copy on screen: it holds one reference until another replaces it.
+  const shown = useRef<string | null>(null)
+  const lastSample = useRef(-Infinity)
+  const worldPos = useRef(new Vector3())
+  const buffer = useRef(new Vector2())
+
+  useFrame(({ camera, gl, clock }) => {
+    const now = clock.elapsedTime * 1000
+    if (!anchor.current || now - lastSample.current < LOD_SAMPLE_MS) return
+    lastSample.current = now
+    anchor.current.getWorldPosition(worldPos.current)
+    const distance = Math.max(0.05, camera.position.distanceTo(worldPos.current))
+    const lens = camera as PerspectiveCamera
+    const fov = ((lens.fov ?? 50) * Math.PI) / 180
+    gl.getDrawingBufferSize(buffer.current)
+    const pxPerMetre = (buffer.current.y / (2 * distance * Math.tan(fov / 2))) * (lens.zoom ?? 1)
+    const next = pickTouchSize(
+      sizeRef.current,
+      Math.max(width, height) * pxPerMetre,
+      touchCeiling(url),
+    )
+    if (next !== sizeRef.current) {
+      sizeRef.current = next
+      setSize(next)
+    }
+  })
+
+  useEffect(() => {
+    if (size === null) return
+    const key = touchKey(url, size)
+    let active = true
+    const show = (next: Texture) => {
+      const previous = shown.current
+      shown.current = key
+      setTexture(next)
+      // The copy it replaces goes (a tick later, `releaseTexture`), now that this one shows.
+      if (previous) releaseTexture(previous)
+    }
+    const cached = acquireTexture(key)
+    if (cached) {
+      show(cached)
+    } else {
+      loadTouchCopy(
+        url,
+        size,
+        () => active,
+        (loaded) => {
+          configureTexture(loaded)
+          const stored = storeTexture(key, loaded, active)
+          if (active) show(stored)
+        },
+        (error) => console.warn('Failed to load texture:', url, error),
+      )
+    }
+    return () => {
+      active = false
+    }
+  }, [url, size])
+
+  // The work leaves (or its file changes): its copy goes.
+  useEffect(
+    () => () => {
+      if (shown.current) releaseTexture(shown.current)
+      shown.current = null
+      setTexture(null)
+    },
+    [url],
+  )
+
+  return texture
 }
 
 // Shared texture loader for both blob: and regular URLs, with ref-counted caching.
@@ -639,6 +845,31 @@ const RegularImageMesh = ({
   )
 }
 
+/** A phone's or tablet's artwork image: held at the size it is seen (AR-175, `useTouchArtwork`). */
+const TouchImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
+  const anchor = useRef<Group>(null)
+  const meshRef = useRef<Mesh>(null)
+  const texture = useTouchArtwork(url, anchor, width, height)
+  const ambientColor = useAmbientLightColor('#ffffff', 1.0)
+
+  return (
+    <group ref={anchor}>
+      {texture ? (
+        <RegularImageMesh
+          meshRef={meshRef}
+          texture={texture}
+          width={width}
+          height={height}
+          artworkId={artworkId}
+          tint={ambientColor}
+        />
+      ) : (
+        <ImagePlaceholder width={width} height={height} />
+      )}
+    </group>
+  )
+}
+
 const ArtworkImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
   // Skip rendering if URL is empty or invalid
   if (!url || url === '') {
@@ -648,6 +879,11 @@ const ArtworkImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
   // Use custom loader for blob URLs (temporary local previews)
   if (url.startsWith('blob:')) {
     return <BlobImage url={url} width={width} height={height} artworkId={artworkId} />
+  }
+
+  // A finger-driven device holds each work at the size it is seen (AR-175).
+  if (savesPhoneMemory('artworks')) {
+    return <TouchImage url={url} width={width} height={height} artworkId={artworkId} />
   }
 
   // Use custom loader for regular URLs (with error handling)
