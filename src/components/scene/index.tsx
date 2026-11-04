@@ -17,6 +17,7 @@ import {
   useSceneAudioActions,
 } from '@/contexts/SceneAudioContext'
 import SceneContext from '@/contexts/SceneContext'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 
@@ -107,10 +108,15 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
     setDprStep((step) => Math.max(0, step - 1))
   }, [ladderLocked])
 
+  // A phone or tablet stays on the floor (AR-173): the climb to 2 grows every
+  // full-screen buffer the effects keep (anti-aliasing, bloom, the mirror floor,
+  // the glass) by 78%, and memory, not frame rate, is what runs out there — iOS
+  // kills a tab that exceeds it.
+  const isTouch = useIsTouchDevice()
   const handlePerformanceIncline = useCallback(() => {
-    if (ladderLocked) return
+    if (ladderLocked || isTouch) return
     setDprStep((step) => Math.min(DPR_STEPS.length - 1, step + 1))
-  }, [ladderLocked])
+  }, [ladderLocked, isTouch])
 
   // drei's default bounds are `[50, refreshRate]`, and `onIncline` only fires
   // when the AVERAGE fps exceeds the upper bound. On a vsync-capped display the

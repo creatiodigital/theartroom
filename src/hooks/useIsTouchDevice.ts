@@ -19,7 +19,9 @@ const isIPad = () =>
   /iPad/.test(navigator.userAgent) ||
   (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
 
-const isTouchDevice = () => window.matchMedia(COARSE_POINTER).matches || isIPad()
+/** The same answer outside React (in a loader callback, say). False on the server. */
+export const isTouchDevice = () =>
+  typeof window !== 'undefined' && (window.matchMedia(COARSE_POINTER).matches || isIPad())
 
 const subscribe = (onChange: () => void) => {
   const query = window.matchMedia(COARSE_POINTER)

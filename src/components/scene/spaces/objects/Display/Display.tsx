@@ -23,6 +23,7 @@ import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
 import { Support } from '@/components/scene/spaces/objects/Support'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
+import { isTouchDevice } from '@/hooks/useIsTouchDevice'
 import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
 import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
@@ -117,11 +118,12 @@ const touchTexture = (url: string, entry: TextureCacheEntry) => {
 }
 
 // Dispose least-recently-used, currently-unmounted textures until within budget.
-// Called only on new loads, so leaving an exhibition never triggers disposal.
-const pruneTextureCache = () => {
-  if (textureCache.size <= MAX_RETAINED_TEXTURES) return
+// Called on new loads — and, on a phone or tablet, on leaving (budget 0, see
+// releaseTexture).
+const pruneTextureCache = (budget = MAX_RETAINED_TEXTURES) => {
+  if (textureCache.size <= budget) return
   for (const [url, entry] of textureCache) {
-    if (textureCache.size <= MAX_RETAINED_TEXTURES) break
+    if (textureCache.size <= budget) break
     if (entry.refs === 0) {
       disposeEncodedMap(entry.texture)
       entry.texture.dispose()
@@ -154,15 +156,86 @@ const storeTexture = (url: string, texture: Texture, active: boolean): Texture =
     return existing.texture
   }
   textureCache.set(url, { texture, refs: active ? 1 : 0 })
-  pruneTextureCache()
+  // A phone or tablet keeps nothing that is off screen (AR-173): one that
+  // arrived after its room closed goes at once.
+  pruneTextureCache(isTouchDevice() ? 0 : MAX_RETAINED_TEXTURES)
   return texture
 }
 
 // Release one on-screen reference. Does not dispose — pruning handles that on the
 // next load, so leaving a scene never frees textures we may immediately return to.
+//
+// Except on a phone or tablet (AR-173): there the textures a room leaves behind
+// are what crashed the tab, so leaving frees them all. The prune waits a tick, so
+// a component that remounts at once (React's development double mount) takes its
+// texture back before anything is freed.
 const releaseTexture = (url: string) => {
   const entry = textureCache.get(url)
   if (entry) entry.refs = Math.max(0, entry.refs - 1)
+  if (isTouchDevice()) setTimeout(() => pruneTextureCache(0))
+}
+
+// ---------------------------------------------------------------------------
+// Phones and tablets (AR-173)
+//
+// An iPhone gives a browser tab far less memory than a laptop, and iOS kills the
+// tab outright when it is exceeded: Chrome reloads it once, then shows "Can't
+// open this page". Every artwork kept its 2048 px file decoded (~17 MB) plus a
+// full-size upload when near; with 45 works (Vivrière) the images alone passed
+// 760 MB, before the room, its lightmaps and its effects.
+//
+// So on a touch screen each artwork is shrunk to REDUCED_MAX the moment it
+// arrives and the full-size decode is let go: the work is never held, or
+// uploaded, above 1024 px — sharp on a phone, whose whole view is ~1300 px
+// across at the room's resolution (a laptop keeps full resolution up close, see
+// the level-of-detail note below). The shrink is the same canvas copy the LOD
+// already shows from a distance, so the image's colors are untouched.
+//
+// And the images load a few at a time, so 45 full-size decodes never sit in
+// memory together on their way to being shrunk.
+const TOUCH_CONCURRENT_LOADS = 3
+let touchLoadsRunning = 0
+const touchLoadQueue: (() => void)[] = []
+
+/** Runs `load` when a slot is free; it calls `done` when its image has arrived (or failed). */
+const queueTouchLoad = (load: (done: () => void) => void) => {
+  const start = () => {
+    touchLoadsRunning += 1
+    let finished = false
+    load(() => {
+      if (finished) return
+      finished = true
+      touchLoadsRunning -= 1
+      touchLoadQueue.shift()?.()
+    })
+  }
+  if (touchLoadsRunning < TOUCH_CONCURRENT_LOADS) start()
+  else touchLoadQueue.push(start)
+}
+
+/** The loaded texture at no more than REDUCED_MAX px, its full-size decode let go. */
+const shrinkForTouch = (loaded: Texture): Texture => {
+  const img = loaded.image as HTMLImageElement | undefined
+  const w = img?.naturalWidth || img?.width || 0
+  const h = img?.naturalHeight || img?.height || 0
+  if (!img || !w || !h || Math.max(w, h) <= REDUCED_MAX) return loaded
+
+  const scale = REDUCED_MAX / Math.max(w, h)
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(w * scale))
+  canvas.height = Math.max(1, Math.round(h * scale))
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return loaded
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+  // WebKit keeps an image's decoded pixels until the element lets go of its
+  // source; clearing it frees them now rather than at some later collection.
+  // (The loader has already taken its load/error listeners off.)
+  img.src = ''
+  loaded.dispose()
+  return new CanvasTexture(canvas)
 }
 
 // Shared texture loader for both blob: and regular URLs, with ref-counted caching.
@@ -184,20 +257,30 @@ const useCachedTexture = (url: string, accept: (u: string) => boolean): Texture 
     }
 
     let active = true
-    const loader = new TextureLoader()
-    loader.load(
-      url,
-      (loaded) => {
-        configureTexture(loaded)
-        const stored = storeTexture(url, loaded, active)
-        if (active) setTexture(stored)
-      },
-      undefined,
-      (error) => {
-        console.warn('Failed to load texture:', url, error)
-        if (active) setTexture(null)
-      },
-    )
+    // Phones and tablets: shrunk on arrival, a few at a time (see above).
+    const touch = isTouchDevice()
+    const load = (done: () => void) => {
+      // Left before its turn in the queue came: nothing to load.
+      if (!active) return done()
+      new TextureLoader().load(
+        url,
+        (loaded) => {
+          done()
+          const texture = touch ? shrinkForTouch(loaded) : loaded
+          configureTexture(texture)
+          const stored = storeTexture(url, texture, active)
+          if (active) setTexture(stored)
+        },
+        undefined,
+        (error) => {
+          done()
+          console.warn('Failed to load texture:', url, error)
+          if (active) setTexture(null)
+        },
+      )
+    }
+    if (touch) queueTouchLoad(load)
+    else load(() => {})
 
     return () => {
       active = false
