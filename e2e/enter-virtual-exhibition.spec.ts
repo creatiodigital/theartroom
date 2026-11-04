@@ -10,8 +10,8 @@ test.use({ storageState: 'e2e/.auth/admin.json' })
 /**
  * The homepage hero offers each slide's exhibition in 3D: an "Enter Virtual Exhibition" button
  * (its colors picked per slide), straight into /visit, only when the exhibition's 3D space is
- * published, and only on laptops and desktops. Never a link inside a link: the slide still opens the exhibition
- * page, the button its 3D space. Never enters it (WebGL).
+ * published, on every device (phones and tablets too since AR-172). Never a link inside a link:
+ * the slide still opens the exhibition page, the button its 3D space. Never enters it (WebGL).
  *
  * On two exhibitions of its own (the fixture artist's), one with its 3D space published and one
  * without, and slides of its own, all deleted afterwards.
@@ -146,11 +146,10 @@ test("the slide's Enter colors are saved only as #rrggbb colors", async ({ page 
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
 
-  test('the hero offers no 3D room', async ({ page }) => {
+  // Phones walk the room with their own touch controls (AR-172); until then the hero hid it.
+  test('the hero offers the 3D room too', async ({ page }) => {
     await createSlide(withSpace, -1003)
-    for (const url of ['/', '/exhibitions']) {
-      await page.goto(url)
-      await expect(page.locator(`a[href="${withSpace}/visit"]`)).toHaveCount(0)
-    }
+    await page.goto('/')
+    await expect(slideBox(page, withSpace).locator(`a[href="${withSpace}/visit"]`)).toBeVisible()
   })
 })

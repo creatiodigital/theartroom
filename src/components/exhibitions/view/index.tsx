@@ -3,7 +3,6 @@
 import { useProgress } from '@react-three/drei'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
@@ -28,7 +27,7 @@ import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/Artwork
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
 import { useWebGLAvailable } from '@/components/scene/webglSupport'
-import { useCanEnterWalkthrough } from '@/hooks/useCanEnterWalkthrough'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
 import { useLoadExhibitionArtworks } from '@/hooks/useLoadExhibitionArtworks'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
@@ -68,6 +67,7 @@ import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip/Tooltip'
 import { BakeActions, BakeAdminBar } from './BakeAdmin/BakeAdmin'
+import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 
@@ -227,35 +227,6 @@ const ReviewBar = ({
   return <BakeAdminBar status={status} bakeHref={bakeHref} editorHref={editorHref} />
 }
 
-const MobileExhibitionView = ({
-  artistSlug,
-  exhibitionSlug,
-}: {
-  artistSlug: string
-  exhibitionSlug: string
-}) => {
-  return (
-    <div className={styles.mobileOverlay}>
-      <div className={styles.mobileOverlayContent}>
-        <Text as="h2" size="lg" font="serif" className={styles.mobileOverlayTitle}>
-          Step inside on a bigger screen
-        </Text>
-        <Text as="p" size="md" className={styles.mobileOverlayText}>
-          This immersive space is best explored on a laptop or desktop, where there&apos;s room to
-          roam — but you won&apos;t miss a thing in the meantime. The full exhibition, with every
-          artwork, is right here on the exhibition page.
-        </Text>
-        <Link
-          href={`/exhibitions/${artistSlug}/${exhibitionSlug}`}
-          className={styles.mobileOverlayButton}
-        >
-          View the full exhibition
-        </Link>
-      </div>
-    </div>
-  )
-}
-
 // Nav help is dismissed globally — once a visitor learns the controls,
 // they don't need to re-learn them per exhibition.
 const NAVIGATION_HELP_STORAGE_KEY = 'the-art-room:navigation-help-dismissed'
@@ -280,6 +251,9 @@ interface NavigationHelpModalProps {
 type ModalStep = 'none' | 'help' | 'media'
 
 const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: NavigationHelpModalProps) => {
+  // Phones and tablets are taught their finger's controls; everything else the
+  // keyboard, mouse and trackpad (AR-172).
+  const isTouch = useIsTouchDevice()
   const [currentStep, setCurrentStep] = useState<ModalStep>('none')
   const [helpDismissed, setHelpDismissed] = useState(false)
   const [mediaDismissed, setMediaDismissed] = useState(false)
@@ -318,9 +292,6 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
     if (!exhibitionId || !artworksReady || !consentSettled) return
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
-
-    const isMobile = window.innerWidth < 1024
-    if (isMobile) return
 
     try {
       const helpDone = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY) === 'true'
@@ -395,118 +366,123 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 Welcome visitor
               </Text>
               <Text as="p" size="sm" className={styles.welcomeText}>
-                You are about to enter an immersive virtual exhibition. Use the controls below to
-                explore the space freely.
+                {isTouch
+                  ? 'You are about to enter an immersive virtual exhibition. Use one finger to explore the space freely.'
+                  : 'You are about to enter an immersive virtual exhibition. Use the controls below to explore the space freely.'}
               </Text>
             </div>
             <Text as="h3" size="md" font="sans" className={styles.infoPanelTitle}>
               Controls
             </Text>
-            <div className={styles.infoPanelContent}>
-              <div className={styles.infoItem}>
-                <div className={styles.infoKeysColumn}>
-                  <div className={styles.infoKeys}>
-                    <Text as="span" size="sm" className={styles.infoKey}>
-                      W
-                    </Text>
-                    <Text as="span" size="sm" className={styles.infoKey}>
-                      A
-                    </Text>
-                    <Text as="span" size="sm" className={styles.infoKey}>
-                      S
-                    </Text>
-                    <Text as="span" size="sm" className={styles.infoKey}>
-                      D
-                    </Text>
+            {isTouch ? (
+              <TouchControlsGuide />
+            ) : (
+              <div className={styles.infoPanelContent}>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoKeysColumn}>
+                    <div className={styles.infoKeys}>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        W
+                      </Text>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        A
+                      </Text>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        S
+                      </Text>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        D
+                      </Text>
+                    </div>
+                    <div className={styles.infoKeys}>
+                      <span className={styles.infoKey}>
+                        <ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                      </span>
+                      <span className={styles.infoKey}>
+                        <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                      </span>
+                      <span className={styles.infoKey}>
+                        <ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                      </span>
+                      <span className={styles.infoKey}>
+                        <ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                      </span>
+                    </div>
                   </div>
-                  <div className={styles.infoKeys}>
-                    <span className={styles.infoKey}>
-                      <ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                    </span>
-                    <span className={styles.infoKey}>
-                      <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                    </span>
-                    <span className={styles.infoKey}>
-                      <ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                    </span>
-                    <span className={styles.infoKey}>
-                      <ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                    </span>
-                  </div>
+                  <Text as="span" size="sm">
+                    Walk inside the room
+                  </Text>
                 </div>
-                <Text as="span" size="sm">
-                  Walk inside the room
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Hold + Drag
+                    </Text>
+                  </span>
                   <Text as="span" size="sm">
-                    Hold + Drag
+                    Rotate the view
                   </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Rotate the view
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Swipe Left / Right
+                    </Text>
+                  </span>
                   <Text as="span" size="sm">
-                    Swipe Left / Right
+                    Rotate the view
                   </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Rotate the view
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Swipe Up / Down
+                    </Text>
+                  </span>
                   <Text as="span" size="sm">
-                    Swipe Up / Down
+                    Walk forward / backward
                   </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Walk forward / backward
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Single Click
+                    </Text>
+                  </span>
                   <Text as="span" size="sm">
-                    Single Click
+                    Auto focus on any artwork
                   </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Auto focus on any artwork
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Double Click
+                    </Text>
+                  </span>
                   <Text as="span" size="sm">
-                    Double Click
+                    Show artwork details
                   </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Show artwork details
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Double Click
+                    </Text>
+                  </span>
                   <Text as="span" size="sm">
-                    Double Click
+                    Play sound
                   </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Play sound
-                </Text>
+                </div>
               </div>
-            </div>
+            )}
             <Text as="p" size="xs" className={styles.infoHint}>
-              You can reopen this guide anytime by clicking the{' '}
+              You can reopen this guide anytime by {isTouch ? 'tapping' : 'clicking'} the{' '}
               <Info size={12} strokeWidth={ICON_STROKE_WIDTH} style={{ verticalAlign: 'middle' }} />{' '}
               icon in the bottom-right corner.
             </Text>
@@ -563,7 +539,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 <span className={styles.infoKeyWide}>
                   <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
                   <Text as="span" size="sm">
-                    Click
+                    {isTouch ? 'Tap' : 'Click'}
                   </Text>
                 </span>
                 <Text as="span" size="sm">
@@ -574,7 +550,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 <span className={styles.infoKeyWide}>
                   <VolumeX size={14} strokeWidth={ICON_STROKE_WIDTH} />
                   <Text as="span" size="sm">
-                    Click
+                    {isTouch ? 'Tap' : 'Click'}
                   </Text>
                 </span>
                 <Text as="span" size="sm">
@@ -614,7 +590,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const searchParams = useSearchParams()
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
-  const canEnterWalkthrough = useCanEnterWalkthrough()
+  const isTouch = useIsTouchDevice()
 
   // AR-161: `?bake=1` bakes the room on the admin's machine and stores it as the draft bake;
   // `?review=1` shows the draft bake exactly as visitors will get it. Admins only — anyone else
@@ -783,13 +759,12 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   }, [exhibition, dispatch, roomBake, mode])
 
   // AR-161: a stored bake's files download with the room's, not after it (`preloadStoredBake`) —
-  // only where the room will be shown (never on a phone, or without WebGL).
+  // only where the room will be shown (never without WebGL).
   const webglAvailable = useWebGLAvailable()
   const preloadBake = exhibition ? shownStoredBake(exhibition.spaceId, roomBake) : null
   useEffect(() => {
-    if (preloadBake && canEnterWalkthrough && webglAvailable !== false)
-      preloadStoredBake(preloadBake)
-  }, [preloadBake, canEnterWalkthrough, webglAvailable])
+    if (preloadBake && webglAvailable !== false) preloadStoredBake(preloadBake)
+  }, [preloadBake, webglAvailable])
 
   // by-url already delivers the (snapshot + live-enriched) exhibition
   // artworks — pass them through so the hook skips its own fetch. The bake
@@ -958,12 +933,6 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
     }
   }
 
-  // Device, not just width: a 13" iPad held sideways is laptop-wide but has no
-  // keyboard or mouse to walk the room with.
-  if (!canEnterWalkthrough) {
-    return <MobileExhibitionView artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
-  }
-
   // Bake mode mounts the scene once this computer is known to be able to bake.
   const sceneReady = !!exhibition && (mode !== 'bake' || canBake === true)
 
@@ -1002,6 +971,14 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         <BakePageProvider key={shownMode} value={bakePage}>
           <Scene hideLoader />
         </BakePageProvider>
+      )}
+      {/* On a phone or tablet the room holds still while an artwork's details are
+          open: a slide or tap on the room around the panel would walk away from
+          the work being read about. This catches those touches; the panel and
+          the details sit above it. (A laptop keeps its click-to-switch: a click
+          on another work while the panel is open moves to it.) */}
+      {isTouch && (isArtworkPanelOpen || isArtworkModalOpen) && (
+        <div className={styles.touchShield} aria-hidden />
       )}
       {isArtworkPanelOpen && <ArtworkPanel />}
       {isArtworkModalOpen && <ArtworkModal />}

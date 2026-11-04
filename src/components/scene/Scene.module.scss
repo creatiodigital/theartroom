@@ -2,9 +2,19 @@
 
 .scene {
   width: 100vw;
-  height: 100vh;
+  // The visible height. On a phone 100vh is the height with Safari's bars
+  // tucked away, so the room ran under them, with its bottom-corner buttons.
+  height: 100dvh;
   background-color: rgba(255, 255, 255, 0.95);
   position: relative;
+  // A finger on the room walks and turns it (MainCamera/touchGestures), so the
+  // browser must not also scroll, bounce or zoom the page — Safari spends a
+  // double tap on zooming, and a double tap opens an artwork's details here.
+  // Nor select or offer to save the canvas on a long press.
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 // Position the performance stats panel at bottom-right
@@ -26,15 +36,11 @@
   background-color: rgba(255, 255, 255, 0.85);
   border: none;
   cursor: pointer;
-  display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   transition: background-color 0.15s ease;
-
-  @include media-up(lg) {
-    display: flex;
-  }
+  display: flex;
 
   svg {
     color: var(--color-black);

@@ -14,7 +14,6 @@ import { ArtworkMediaGallery } from '@/components/artwork/detail/ArtworkMediaGal
 import { ArtworkStorySection } from '@/components/artwork/detail/ArtworkStorySection'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import { Button } from '@/components/ui/Button'
-import { useIsMobile } from '@/hooks/useIsMobile'
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
@@ -33,7 +32,6 @@ type FetchedDetail = {
 
 export const ArtworkModal = () => {
   const dispatch = useDispatch()
-  const isMobile = useIsMobile()
   const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const reduxArtwork = useSelector((state: RootState) =>
     currentArtworkId ? state.artworks.byId[currentArtworkId] : null,
@@ -75,7 +73,9 @@ export const ArtworkModal = () => {
     }
   }, [])
 
-  if (isMobile || !reduxArtwork) return null
+  // Every width (AR-172): phones and tablets enter the room now, and the
+  // content below stacks as the artwork page does on a small screen.
+  if (!reduxArtwork) return null
 
   const base = mapReduxArtwork(reduxArtwork)
   const artwork: Artwork = { ...base.artwork, ...(fetched?.artwork ?? {}) }
