@@ -1,0 +1,52 @@
+@use '@/styles/mixins' as *;
+
+// Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
+.section {
+  margin-bottom: var(--space-12);
+
+  @include breakpoint(lg) {
+    margin-bottom: var(--space-16);
+  }
+}
+
+// Photo above the text on phones and tablets; side by side, half and half, from lg up.
+.row {
+  display: grid;
+  grid-template-columns: 1fr;
+
+  @include breakpoint(lg) {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+.photo {
+  min-width: 0;
+}
+
+// Always a landscape rectangle (3:2, the reference's shape) whatever the upload's shape: the photo
+// fills it, centered, and what doesn't fit is cropped evenly.
+.image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: center;
+}
+
+// The inner padding: room around the text inside its half. Its rules are scoped to it so they
+// outrank the Text and RichText components' own margins.
+.content {
+  min-width: 0;
+  padding: var(--space-6) 0 0;
+
+  @include breakpoint(lg) {
+    padding: var(--space-10) var(--space-16);
+  }
+}
+
+.content .title {
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  margin-bottom: var(--space-6);
+}

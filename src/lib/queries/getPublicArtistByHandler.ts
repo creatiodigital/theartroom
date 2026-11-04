@@ -31,6 +31,7 @@ export type PublicArtistExhibition = {
   handler: string | null
   featuredImageUrl: string | null
   shortDescription: string | null
+  spacePublished: boolean
 }
 
 export type PublicArtist = {
@@ -72,6 +73,7 @@ export async function getPublicArtistByHandler(handler: string): Promise<PublicA
           handler: true,
           featuredImageUrl: true,
           shortDescription: true,
+          spacePublished: true,
         },
         orderBy: { createdAt: 'desc' },
       },

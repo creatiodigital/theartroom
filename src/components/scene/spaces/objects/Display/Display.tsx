@@ -34,7 +34,7 @@ import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { matLiftFlag } from '@/components/scene/bake/bakeFlags'
-import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+import { useTapFocusGroups } from '@/hooks/useTapFocusGroups'
 
 import { ARTWORK_DISPLAY_NAME, artworkUserData } from './artworkId'
 import {
@@ -691,7 +691,8 @@ const Display = ({ artwork }: DisplayProps) => {
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const autofocusGroups = useSelector(selectAutofocusGroups)
+  // None on phones: a tap there frames just this piece, not its group (AR-174).
+  const autofocusGroups = useTapFocusGroups()
   const shadowBlur = useSelector((state: RootState) => state.exhibition.shadowBlur ?? 0.025)
   const shadowSpread = useSelector((state: RootState) => state.exhibition.shadowSpread ?? 1.2)
   const shadowOpacity = useSelector((state: RootState) => state.exhibition.shadowOpacity ?? 0.25)

@@ -86,6 +86,7 @@ export const ArtistProfilePage = ({ artist, exhibitions, artworks }: ArtistProfi
             artworks={artworks}
             artistName={artistFullName}
             artistHandler={artist.handler}
+            flushBottom
           />
         </div>
       )}
@@ -103,6 +104,7 @@ export const ArtistProfilePage = ({ artist, exhibitions, artworks }: ArtistProfi
               shortDescription: ex.shortDescription,
               artistLabel: artistFullName,
               href: `/exhibitions/${artist.handler}/${ex.url}`,
+              visitUrl: ex.spacePublished ? `/exhibitions/${artist.handler}/${ex.url}/visit` : null,
             }))}
           />
         )}

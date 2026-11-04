@@ -1037,6 +1037,20 @@ model PageContent {
   updatedAt      DateTime @updatedAt
 }
 
+// Homepage announcements (AR-174), managed in admin → Content → Announcements. The homepage shows
+// the newest active one that has a title and a photo, between the intro and Current Exhibitions;
+// with none, the section is hidden. New rows start hidden (isActive false) so a draft never shows.
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String   @default("")
+  content   String   @default("") // HTML from TipTap
+  // R2 public URL; null until a photo is uploaded. The homepage needs it to show the announcement.
+  imageUrl  String?
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Single-row site-wide switches, read per request. Row id is always 1 —
 // absence of the row means every flag is at its default.
 model SiteSettings {

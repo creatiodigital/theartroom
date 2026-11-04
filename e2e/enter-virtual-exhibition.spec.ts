@@ -3,15 +3,16 @@ import { test, expect, type Page } from '@playwright/test'
 import prisma from '@/lib/prisma'
 import { ctaColors, exhibitionOfUrl } from '@/lib/slideVisitUrls'
 
-import { fixtures } from './fixtures'
+import { fixtures, routes } from './fixtures'
 
 test.use({ storageState: 'e2e/.auth/admin.json' })
 
 /**
- * The homepage hero offers each slide's exhibition in 3D: an "Enter Virtual Exhibition" button
- * (its colors picked per slide), straight into /visit, only when the exhibition's 3D space is
- * published, on every device (phones and tablets too since AR-172). Never a link inside a link:
- * the slide still opens the exhibition page, the button its 3D space. Never enters it (WebGL).
+ * The way into an exhibition's 3D room from the homepage. The hero had an "Enter Virtual
+ * Exhibition" button per slide (colors picked per slide); the owner removed it from the hero in
+ * AR-174 ("too invasive"), so the slide leads to the exhibition page. The homepage's exhibition
+ * cards offer "View Exhibition | Enter 3D Room" instead, the room only once its space is
+ * published. The slide's Enter colors are still saved from admin. Never enters the room (WebGL).
  *
  * On two exhibitions of its own (the fixture artist's), one with its 3D space published and one
  * without, and slides of its own, all deleted afterwards.
@@ -90,19 +91,13 @@ test("a slide's link names its exhibition whatever site it's on, and only an exh
   expect(exhibitionOfUrl(`${path}/visit`)).toBeNull()
 })
 
-test("the hero slide offers its exhibition's 3D room, in the colors picked for it", async ({
-  page,
-}) => {
+test('the hero slide has no Enter button and opens its exhibition page', async ({ page }) => {
+  // Removed from the homepage hero in AR-174 (owner: "too invasive"), even when the exhibition's
+  // 3D space is published; the exhibition page keeps its own button.
   await createSlide(withSpace)
   await page.goto('/')
-  const enter = slideBox(page, withSpace).locator(`a[href="${withSpace}/visit"]`)
-  await expect(enter).toBeVisible()
-  await expect(enter).toHaveText(/Enter Virtual Exhibition/)
-  await expect(enter).toHaveCSS('background-color', 'rgb(18, 52, 86)')
-  await expect(enter).toHaveCSS('color', 'rgb(254, 220, 186)')
-  // Two links side by side, never one inside the other.
-  await expect(page.locator('a a')).toHaveCount(0)
-  // The slide itself still opens the exhibition page: a click on the image, away from the button.
+  await expect(slideBox(page, withSpace)).toBeVisible()
+  await expect(slideBox(page, withSpace).locator('a[href$="/visit"]')).toHaveCount(0)
   await page
     .locator(`a[href="${withSpace}"]`)
     .first()
@@ -110,24 +105,44 @@ test("the hero slide offers its exhibition's 3D room, in the colors picked for i
   await expect(page).toHaveURL(new RegExp(`${withSpace}$`))
 })
 
-test('no button when the 3D space is not published, or the slide opens something else', async ({
+test('a homepage card offers its exhibition page, and its 3D room only once published', async ({
   page,
 }) => {
-  await createSlide(withoutSpace, -1001)
-  await createSlide('/about', -1002)
+  // Both test exhibitions are the newest current ones, so they're among the homepage's six.
   await page.goto('/')
-  for (const url of [withoutSpace, '/about']) {
-    await expect(slideBox(page, url).locator('a[href$="/visit"]')).toHaveCount(0)
-  }
+  const roomLink = page.locator(`a[href="${withSpace}/visit"]`)
+  await expect(roomLink).toHaveCount(1)
+  await expect(roomLink).toHaveText('Enter 3D Room')
+  await expect(
+    page.getByRole('link', { name: 'View Exhibition' }).and(page.locator(`[href="${withSpace}"]`)),
+  ).toHaveCount(1)
+  await expect(page.locator(`a[href="${withoutSpace}"]`).first()).toBeVisible()
+  await expect(page.locator(`a[href="${withoutSpace}/visit"]`)).toHaveCount(0)
+  // Links side by side, never one inside another.
+  await expect(page.locator('a a')).toHaveCount(0)
 })
 
-test('an exhibition card keeps its one link, to the exhibition page', async ({ page }) => {
-  // A second line into the 3D room under "Visit exhibition" was tried and dropped (owner,
-  // 2026-11-03: "looks hideous"): the cards lead to the page, whose button opens the room.
-  await page.goto('/exhibitions')
-  await expect(page.locator(`a[href="${withSpace}"]`)).toHaveCount(1)
-  await expect(page.locator(`a[href="${withSpace}/visit"]`)).toHaveCount(0)
-})
+for (const [where, path] of [
+  ['the exhibitions list', '/exhibitions'],
+  ['the artist page', routes.artistProfile()],
+] as const) {
+  // A second LINE into the 3D room under the card's link was tried and dropped (owner,
+  // 2026-11-03: "looks hideous"); one row, "View Exhibition | Enter 3D Room", came in AR-174.
+  test(`${where} offers each exhibition's page, and its 3D room only once published`, async ({
+    page,
+  }) => {
+    await page.goto(path)
+    await expect(page.locator(`a[href="${withSpace}/visit"]`)).toHaveText('Enter 3D Room')
+    await expect(
+      page
+        .getByRole('link', { name: 'View Exhibition' })
+        .and(page.locator(`[href="${withSpace}"]`)),
+    ).toHaveCount(1)
+    await expect(page.locator(`a[href="${withoutSpace}"]`).first()).toBeVisible()
+    await expect(page.locator(`a[href="${withoutSpace}/visit"]`)).toHaveCount(0)
+    await expect(page.locator('a a')).toHaveCount(0)
+  })
+}
 
 test("the slide's Enter colors are saved only as #rrggbb colors", async ({ page }) => {
   expect(ctaColors({ ctaBackgroundColor: '#000000', ctaTextColor: 'red; display:none' })).toEqual({
@@ -141,15 +156,4 @@ test("the slide's Enter colors are saved only as #rrggbb colors", async ({ page 
   const row = await prisma.slide.findUniqueOrThrow({ where: { id: slide.id } })
   expect(row.ctaBackgroundColor).toBe('#ABCDEF')
   expect(row.ctaTextColor, 'not a color: left as it was').toBe('#fedcba')
-})
-
-test.describe('on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
-
-  // Phones walk the room with their own touch controls (AR-172); until then the hero hid it.
-  test('the hero offers the 3D room too', async ({ page }) => {
-    await createSlide(withSpace, -1003)
-    await page.goto('/')
-    await expect(slideBox(page, withSpace).locator(`a[href="${withSpace}/visit"]`)).toBeVisible()
-  })
 })
