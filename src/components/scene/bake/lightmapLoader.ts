@@ -3,8 +3,32 @@ import { Loader } from 'three'
 import type { DataTexture } from 'three'
 
 import type { BakeMap } from '@/lib/bake/bakeRecord'
+import { savesPhoneMemory } from '@/components/scene/phoneMemory'
 
 import { decodeLightmapPng } from './lightmapCodec'
+
+/**
+ * AR-175: the maps download together but decode one after the other, so a room's maps are never
+ * all being decoded at once (each its PNG, its rows and its texture).
+ */
+let decoding: Promise<unknown> = Promise.resolve()
+const decodeInTurn = (buffer: ArrayBuffer, map: BakeMap): Promise<DataTexture> => {
+  const turn = decoding.then(() => decodeLightmapPng(buffer, map))
+  decoding = turn.catch(() => {})
+  return turn
+}
+
+/**
+ * AR-175, phones and tablets: once a map is on the GPU, its half floats (8 bytes a texel — 33 MB
+ * for a 2048² map, ~110 MB for a room) are let go. Nothing uploads a map twice; only the admin's
+ * light probes read them back (`probes.ts`, a laptop tool), and they say "no lightmap" instead.
+ */
+const releaseAfterUpload = (texture: DataTexture) => {
+  texture.onUpdate = () => {
+    texture.onUpdate = null
+    ;(texture.image as { data: ArrayBufferView | null }).data = null
+  }
+}
 
 /**
  * A map download that receives nothing — no response, then no bytes — for this long is given up:
@@ -175,9 +199,10 @@ export class LightmapLoader extends Loader<DataTexture> {
     )
       .then((buffer) => {
         note(url, { loaded: buffer.byteLength, total: buffer.byteLength, done: true }, true)
-        return decodeLightmapPng(buffer, map)
+        return decodeInTurn(buffer, map)
       })
       .then((texture) => {
+        if (savesPhoneMemory('lightmaps')) releaseAfterUpload(texture)
         onLoad(texture)
         this.manager.itemEnd(resolved)
       })
