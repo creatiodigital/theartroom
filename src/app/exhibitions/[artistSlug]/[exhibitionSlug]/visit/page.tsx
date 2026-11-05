@@ -1,7 +1,20 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 import { ExhibitionViewPage } from '@/components/exhibitions/view'
 import prisma from '@/lib/prisma'
+
+/**
+ * AR-176: the room reaches every edge of the screen. Without `cover`, a phone held sideways keeps
+ * the page clear of the notch and the rounded corners, and the room shows white bands at both
+ * sides (Safari and Chrome alike: both are WebKit on an iPhone). The room's own buttons and panels
+ * keep clear of those areas themselves (`env(safe-area-inset-*)`). This page only: every other
+ * page is laid out for the safe area.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
 
 interface ExhibitionVisitProps {
   params: Promise<{ artistSlug: string; exhibitionSlug: string }>

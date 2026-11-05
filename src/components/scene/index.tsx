@@ -62,8 +62,11 @@ interface SceneProps {
 const FloatingMuteButton = () => {
   const { hasActiveAudio, isMuted } = useSceneAudioState()
   const { toggleMute } = useSceneAudioActions()
+  // The artwork panel covers the room's corner buttons: the leave and help buttons give way to it,
+  // so this one does too — it sat on top of the panel (AR-176).
+  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
 
-  if (!hasActiveAudio) return null
+  if (!hasActiveAudio || isArtworkPanelOpen) return null
 
   return (
     <Button

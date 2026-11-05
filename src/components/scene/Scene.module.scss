@@ -27,8 +27,8 @@
 
 .stopButton {
   position: fixed;
-  bottom: var(--space-6);
-  right: calc(var(--space-6) + 36px + var(--space-3));
+  bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+  right: calc(var(--space-6) + 36px + var(--space-3) + env(safe-area-inset-right));
   width: 36px;
   height: 36px;
   padding: 0;
@@ -52,5 +52,18 @@
 
   &:focus {
     outline: none;
+  }
+
+  // Beside the help button wherever it goes: on a phone it moves to 8px from the corner
+  // (ExhibitionView `.infoButton`), so the pair keeps one bottom line and an 8px gap; both keep
+  // clear of the notch and the home indicator (the visit page is edge to edge, AR-176).
+  @media #{$phone-room} {
+    bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    right: calc(var(--space-2) + 36px + var(--space-2) + env(safe-area-inset-right));
+  }
+
+  // On its side, beside the help button at the edge (`.infoButton`, AR-176).
+  @media #{$phone-sideways} {
+    right: calc(var(--space-2) + 36px + var(--space-2));
   }
 }
