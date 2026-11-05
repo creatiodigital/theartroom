@@ -1,31 +1,113 @@
-import type { RefObject, Dispatch, SetStateAction } from 'react'
-import { Vector3, Camera, Mesh, Raycaster, Quaternion } from 'three'
+import type { RefObject } from 'react'
+import { Vector3, Camera, Quaternion } from 'three'
 
+import { CLICK_MAX_MOVE_PX, TAP_MAX_MS } from './navigation'
+
+/**
+ * The mouse on the room (see `navigation`): a click walks (or stands in front of the artwork
+ * under it), a press and drag looks around, turning and tilting at once, as a head does (AR-177, owner,
+ * 2026-11-05: tried one way at a time, then "bring back the mixed axis movement"; a finger keeps its
+ * lock, where a slide is never straight). The tilt stops at `PITCH_LIMIT` (MainCamera).
+ *
+ * The drag grabs the room, as in Google Street View: what was under the mouse stays under it.
+ * Drag right and the room comes right (the head turns left); drag up and it goes up (the head looks
+ * down). The pixels dragged are kept here; MainCamera turns them into the angle that keeps the room
+ * under the mouse on this screen, with this lens (AR-177, owner, 2026-11-05: the room turned "way more"
+ * than the mouse moved).
+ */
 export type MouseState = {
-  isLeftButtonPressed: boolean
-  lastMouseX: number | null
-  deltaX: number
+  /** A left press that began on the room and has not lifted. */
+  pressed: boolean
+  /** The press began on the canvas itself (not a button or panel over it): it may be a click. */
+  onRoom: boolean
+  startX: number
+  startY: number
+  startedAt: number
+  lastX: number
+  lastY: number
+  /** The press has moved past a click's slop: it is looking around. */
+  looking: boolean
+  /**
+   * The room grabbed and dragged since the last frame (px), right and down positive: by the mouse,
+   * a finger (MainCamera adds a finger's here) or the trackpad's sideways swipe.
+   */
+  grabX: number
+  grabY: number
+  /** The trackpad's walk. */
   wheelZ: number
+  /** Where the mouse rests over the room (client px), for the floor ring; null when off it. */
+  hover: { x: number; y: number } | null
+  hoverMoved: boolean
 }
 
 export const createMouseState = (): MouseState => ({
-  isLeftButtonPressed: false,
-  lastMouseX: null,
-  deltaX: 0,
+  pressed: false,
+  onRoom: false,
+  startX: 0,
+  startY: 0,
+  startedAt: 0,
+  lastX: 0,
+  lastY: 0,
+  looking: false,
+  grabX: 0,
+  grabY: 0,
   wheelZ: 0,
+  hover: null,
+  hoverMoved: false,
 })
 
-export const handleMouseMove =
-  (mouseState: RefObject<MouseState>, setTick: Dispatch<SetStateAction<number>>) =>
-  (event: MouseEvent) => {
-    if (!mouseState.current?.isLeftButtonPressed || mouseState.current.lastMouseX == null) return
+/** A press: `onRoom` when it landed on the canvas, `now` in ms. */
+export const pressMouse = (
+  state: MouseState,
+  x: number,
+  y: number,
+  onRoom: boolean,
+  now: number,
+) => {
+  state.pressed = true
+  state.onRoom = onRoom
+  state.startX = state.lastX = x
+  state.startY = state.lastY = y
+  state.startedAt = now
+  state.looking = false
+  state.grabX = 0
+  state.grabY = 0
+  state.hover = null
+}
 
-    const currentX = event.clientX
-    const deltaX = currentX - mouseState.current.lastMouseX
-    mouseState.current.deltaX = deltaX
-    mouseState.current.lastMouseX = currentX
-    setTick((tick) => tick + 1)
+/** The mouse moved: a drag's turn and tilt, or (no button down) where the floor ring goes. */
+export const moveMouse = (state: MouseState, x: number, y: number, overRoom: boolean) => {
+  if (!state.pressed) {
+    state.hover = overRoom ? { x, y } : null
+    state.hoverMoved = true
+    return
   }
+  if (!state.looking) {
+    if (Math.hypot(x - state.startX, y - state.startY) < CLICK_MAX_MOVE_PX) return
+    // lastX/lastY still hold the start, so the travel past the slop counts too.
+    state.looking = true
+  }
+  state.grabX += x - state.lastX
+  state.grabY += y - state.lastY
+  state.lastX = x
+  state.lastY = y
+}
+
+/** The press lifted, at `now` (ms): where a click landed (client px), or null for a drag. */
+export const releaseMouse = (state: MouseState, now: number) => {
+  const click =
+    state.pressed && state.onRoom && !state.looking && now - state.startedAt <= TAP_MAX_MS
+      ? { x: state.startX, y: state.startY }
+      : null
+  state.pressed = false
+  state.looking = false
+  state.grabX = 0
+  state.grabY = 0
+  return click
+}
+
+/** A drag is under way that has begun to look around (past a click's slop). */
+export const dragging = (state: MouseState) => state.pressed && state.looking
 
 export const handleKeyPress = (
   keysPressed: RefObject<Record<string, boolean>>,
@@ -36,32 +118,8 @@ export const handleKeyPress = (
   keysPressed.current[key.toLowerCase()] = isPressed
 }
 
-export const attachMouseHandlers =
-  (onMouseMove: (event: MouseEvent) => void, mouseState: RefObject<MouseState>) =>
-  (event: MouseEvent) => {
-    // Check if click originated from a UI panel overlay - don't activate camera controls
-    const target = event.target as HTMLElement | null
-    if (target?.closest('[data-panel-overlay]')) {
-      return
-    }
-
-    if (event.button === 0 && mouseState.current) {
-      mouseState.current.isLeftButtonPressed = true
-      mouseState.current.lastMouseX = event.clientX
-      mouseState.current.deltaX = 0
-      window.addEventListener('mousemove', onMouseMove)
-    }
-  }
-
-export const detachMouseHandlers =
-  (onMouseMove: (event: MouseEvent) => void, mouseState: RefObject<MouseState>) =>
-  (event: MouseEvent) => {
-    if (event.button === 0 && mouseState.current) {
-      mouseState.current.isLeftButtonPressed = false
-      mouseState.current.deltaX = 0
-      window.removeEventListener('mousemove', onMouseMove)
-    }
-  }
+/** The keys that walk: W S A D and the arrows. */
+export const MOVEMENT_KEYS = ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright']
 
 export const calculateMovementVector = (
   keysPressed: RefObject<Record<string, boolean>>,
@@ -77,32 +135,12 @@ export const calculateMovementVector = (
 
   if (moveVector.lengthSq() > 0) {
     moveVector.normalize().multiplyScalar(moveSpeed)
+    // Along the floor whatever the head's tilt: the camera's heading alone.
     moveVector.applyQuaternion(camera.quaternion)
+    const length = moveVector.length()
+    moveVector.y = 0
+    if (moveVector.lengthSq() > 0) moveVector.setLength(length)
   }
 
   return moveVector
-}
-
-export const detectCollisions = (
-  camera: Camera,
-  moveVector: Vector3,
-  wallRefs: RefObject<Mesh>[] = [],
-  windowRefs: RefObject<Mesh>[] = [],
-  glassRefs: RefObject<Mesh>[] = [],
-  collisionDistance: number,
-): boolean => {
-  if (moveVector.lengthSq() === 0) return false
-
-  const direction = new Vector3().copy(moveVector).normalize()
-  const raycaster = new Raycaster(camera.position, direction, 0, 3)
-
-  const checkCollision = (refs: RefObject<Mesh>[]) =>
-    Array.isArray(refs) &&
-    refs.some(
-      (ref) =>
-        ref.current &&
-        raycaster.intersectObject(ref.current, true).some((i) => i.distance <= collisionDistance),
-    )
-
-  return checkCollision(wallRefs) || checkCollision(windowRefs) || checkCollision(glassRefs)
 }

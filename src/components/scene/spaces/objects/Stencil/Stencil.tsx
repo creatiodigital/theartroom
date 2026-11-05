@@ -8,9 +8,9 @@ import { usePaperTexture } from './usePaperTexture'
 import { useMonogramTexture } from './useMonogramTexture'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
-import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
+import { useShowArtworkInfo } from '@/components/scene/spaces/objects/artworkInfo'
+import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useTapFocusGroups } from '@/hooks/useTapFocusGroups'
@@ -29,7 +29,6 @@ type StencilProps = {
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
 const CLICK_MAX_DURATION = 300
-const DOUBLE_CLICK_DELAY = 250
 
 /**
  * Inner component for paper-textured background.
@@ -358,12 +357,13 @@ const Stencil = ({ artwork }: StencilProps) => {
   ])
 
   // Double click (or double tap) opens the info panel
+  const showArtworkInfo = useShowArtworkInfo()
   const showInfo = useCallback(() => {
     if (!isPlaceholdersShown && showArtworkInformation) {
-      dispatch(showArtworkPanel())
       dispatch(setCurrentArtwork(artwork.id))
+      showArtworkInfo()
     }
-  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation, showArtworkInfo])
 
   const handleDoubleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
@@ -391,7 +391,7 @@ const Stencil = ({ artwork }: StencilProps) => {
       }
       pointerDownPos.current = { x: event.clientX, y: event.clientY }
       pointerDownTime.current = Date.now()
-      taps.down(event.pointerType)
+      taps.down(event)
     },
     [taps],
   )
@@ -410,7 +410,7 @@ const Stencil = ({ artwork }: StencilProps) => {
       pointerDownPos.current = null
 
       if (
-        !taps.pinched &&
+        !taps.ignored &&
         distance < taps.slop(CLICK_MAX_DISTANCE) &&
         duration < CLICK_MAX_DURATION
       ) {
@@ -422,7 +422,7 @@ const Stencil = ({ artwork }: StencilProps) => {
         singleClickTimeout.current = setTimeout(() => {
           handleSingleClick()
           singleClickTimeout.current = null
-        }, DOUBLE_CLICK_DELAY)
+        }, DOUBLE_TAP_MS)
       }
     },
     [handleSingleClick, showInfo, taps],

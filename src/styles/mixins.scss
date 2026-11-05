@@ -106,11 +106,20 @@ $breakpoint-lg: map.get($breakpoints, lg);
 $breakpoint-xl: map.get($breakpoints, xl);
 $breakpoint-2xl: map.get($breakpoints, xxl);
 
-// Phones in the 3D room, upright (narrow) or on their side (short): the room needs every pixel, so
-// its corner buttons sit 8px from the edges instead of 24 (AR-174). Under 600px wide, like
-// useIsPhone, so no iPad matches (the mini is 744); a landscape phone is under 500px tall.
+// A phone in the 3D room, by its size: upright (under 600px wide, like useIsPhone, so no iPad
+// matches; the mini is 744) or on its side (under 500px tall).
 $phone-sideways: '(orientation: landscape) and (max-height: 500px)';
 $phone-room: '(max-width: 599.98px), #{$phone-sideways}';
+// The 3D room under a finger: the room needs every pixel, so its corner buttons sit 8px from the
+// edges instead of 24, on phones (AR-174) and tablets (AR-177) alike. A tablet goes by its coarse
+// pointer, so a laptop keeps 24.
+$touch-room: '#{$phone-room}, (pointer: coarse)';
+// A tablet in the room: a finger, on a screen past a phone's size either way up (AR-177).
+$tablet-room: '(pointer: coarse) and (min-width: 600px) and (min-height: 500.02px)';
+// The room's corner buttons (leave, help, sound): the room shows through them (AR-177).
+$room-button-bg: rgba(255, 255, 255, 0.6);
+// Under the room's overlays (the shared Modal, the details: 1000), so a veil covers all three.
+$room-button-z: 999;
 
 @function bp($name) {
   @if not map.has-key($breakpoints, $name) {
