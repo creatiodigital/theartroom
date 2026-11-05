@@ -61,8 +61,9 @@ test('two fingers sliding right drag the room right: a step left, the whole slid
     ],
   )
   expect(g.mode).toBe('step')
-  // 100 px at 0.01 m a pixel, including the travel that decided it was a step; + is right.
-  expect(step).toBeCloseTo(-1, 5)
+  // 100 px at a third of a walk's 0.01 m a pixel, including the travel that decided it was a
+  // step; + is right.
+  expect(step).toBeCloseTo(-1 / 3, 5)
   expect(walk).toBe(0)
   expect(turn).toBe(0)
   expect(zoom).toBeNull()
@@ -79,7 +80,7 @@ test('two fingers sliding left step right', () => {
       [310, 300],
     ],
   )
-  expect(step).toBeCloseTo(0.5, 5)
+  expect(step).toBeCloseTo(0.5 / 3, 5)
 })
 
 test('fingers spreading apart pinch to zoom, even with one finger still', () => {
@@ -151,7 +152,7 @@ test('a step stays a step when the fingers then drift apart', () => {
   expect(g.mode).toBe('step')
   expect(zoom).toBeNull()
   // The midpoint moved 30 px right, then 35 more as one finger drifted: a step left.
-  expect(step).toBeCloseTo(-0.65, 5)
+  expect(step).toBeCloseTo(-0.65 / 3, 5)
 })
 
 test('lifting one of two fingers ends the gesture; the finger left behind moves nothing', () => {

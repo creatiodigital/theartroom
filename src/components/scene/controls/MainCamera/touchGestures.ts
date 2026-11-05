@@ -52,8 +52,12 @@ const TURN_PER_PX = 0.8
  */
 const TWO_FINGER_LOCK_PX = 12
 
-/** Meters stepped sideways per pixel two fingers slide: as far as a walk. */
-const STEP_PER_PX = WALK_PER_PX
+/**
+ * Meters stepped sideways per pixel two fingers slide: a third of a walk's. At a walk's rate a
+ * slide across a phone held sideways (~300px) went 3 m, past the next work to the one after
+ * (owner, 2026-11-05); now it is about a metre, one work along the wall.
+ */
+const STEP_PER_PX = WALK_PER_PX / 3
 
 /** The room follows the finger: down walks forward, right to left turns right. */
 const WALK_SIGN = 1 // screen y grows downward, and down is forward
@@ -68,6 +72,12 @@ export const MAX_PINCH_ZOOM = 3
  * page flicked on a phone. The share of the speed kept per 60fps frame.
  */
 export const TOUCH_GLIDE_DECAY = 0.9
+
+/**
+ * Two fingers' step eases out far sooner than a walk (AR-176): the visitor is lining up with a
+ * work, so it stops close to where the fingers stopped. The share of the speed kept per frame.
+ */
+export const STEP_GLIDE_DECAY = 0.7
 
 export type TouchGesture = {
   /**

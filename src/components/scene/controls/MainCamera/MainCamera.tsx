@@ -31,6 +31,7 @@ import {
 } from './helpers'
 import {
   MAX_PINCH_ZOOM,
+  STEP_GLIDE_DECAY,
   TOUCH_GLIDE_DECAY,
   beginTouch,
   createTouchGesture,
@@ -594,7 +595,12 @@ const MainCamera = () => {
     // Touch walking, and two fingers' step aside (AR-176): while the fingers are
     // down, exactly the distance they slid; once they lift, the slide's speed
     // easing out. Each along the floor: forward, or to the camera's right.
-    const glide = (asked: number, velocity: { current: number }, sliding: boolean) => {
+    const glide = (
+      asked: number,
+      velocity: { current: number },
+      sliding: boolean,
+      decay: number,
+    ) => {
       if (sliding) {
         // Smoothed, because move events and frames don't arrive in step: a frame
         // that saw no move would otherwise zero the speed the lift glides on.
@@ -602,7 +608,7 @@ const MainCamera = () => {
         return asked
       }
       const carried = velocity.current
-      velocity.current *= Math.pow(TOUCH_GLIDE_DECAY, Math.min(delta, MAX_FRAME_DELTA) * 60)
+      velocity.current *= Math.pow(decay, Math.min(delta, MAX_FRAME_DELTA) * 60)
       if (Math.abs(velocity.current) < 0.0005) velocity.current = 0
       return carried
     }
@@ -614,8 +620,14 @@ const MainCamera = () => {
       moveVector.add(local.multiplyScalar(Math.max(-MAX_STEP, Math.min(MAX_STEP, meters))))
     }
     const mode = touchGesture.current.mode
-    alongFloor(new Vector3(0, 0, -1), glide(touchWalk.current, walkVelocity, mode === 'slide'))
-    alongFloor(new Vector3(1, 0, 0), glide(touchStep.current, stepVelocity, mode === 'step'))
+    alongFloor(
+      new Vector3(0, 0, -1),
+      glide(touchWalk.current, walkVelocity, mode === 'slide', TOUCH_GLIDE_DECAY),
+    )
+    alongFloor(
+      new Vector3(1, 0, 0),
+      glide(touchStep.current, stepVelocity, mode === 'step', STEP_GLIDE_DECAY),
+    )
     touchWalk.current = 0
     touchStep.current = 0
 
