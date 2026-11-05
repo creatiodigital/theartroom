@@ -144,10 +144,13 @@ const MainCamera = () => {
 
   // Touch (AR-172): the slide in progress, the meters it has asked to walk
   // since the last frame, and the walk's speed (meters per frame), kept so the
-  // walk can ease out after the finger lifts.
+  // walk can ease out after the finger lifts. The same for two fingers' step to
+  // the side (AR-176).
   const touchGesture = useRef(createTouchGesture())
   const touchWalk = useRef(0)
   const walkVelocity = useRef(0)
+  const touchStep = useRef(0)
+  const stepVelocity = useRef(0)
   // The lens zoom (see `zoomedFov`): a pinch's, or the one a glide to a work in a
   // shallow room needed. It stays while the visitor looks around, and eases back
   // to the room's own lens once they walk on.
@@ -318,16 +321,21 @@ const MainCamera = () => {
     (event: MouseEvent) => detachMouseHandlers(onMouseMove, mouseState)(event),
     [onMouseMove],
   )
-  // Fingers on the room: one slides to walk or turn, two pinch to zoom (see
-  // touchGestures). A turn rides the mouse drag's own path, momentum and all.
+  // Fingers on the room: one slides to walk or turn, two pinch to zoom or slide
+  // to step aside (see touchGestures). A turn rides the mouse drag's own path,
+  // momentum and all.
   const onTouchStart = useCallback((event: TouchEvent) => {
     beginTouch(touchGesture.current, event, lensZoom.current)
-    // A finger landing stops a walk still easing out from the last slide.
-    if (touching(touchGesture.current)) walkVelocity.current = 0
+    // A finger landing stops a walk or a step still easing out from the last.
+    if (touching(touchGesture.current)) {
+      walkVelocity.current = 0
+      stepVelocity.current = 0
+    }
   }, [])
   const onTouchMove = useCallback((event: TouchEvent) => {
-    const { walk, turn, zoom } = moveTouch(touchGesture.current, event)
+    const { walk, step, turn, zoom } = moveTouch(touchGesture.current, event)
     touchWalk.current += walk
+    touchStep.current += step
     // Zoomed in, the same slide turns less, so the room still follows the finger.
     if (turn && mouseState.current) mouseState.current.deltaX += turn / lensZoom.current
     if (zoom !== null) {
@@ -419,6 +427,8 @@ const MainCamera = () => {
       rotationVelocity.current = 0
       touchWalk.current = 0
       walkVelocity.current = 0
+      touchStep.current = 0
+      stepVelocity.current = 0
       if (mouseState.current) {
         mouseState.current.deltaX = 0
         mouseState.current.wheelZ = 0
@@ -490,6 +500,8 @@ const MainCamera = () => {
       keysPressed.current?.['d'] ||
       keysPressed.current?.['arrowleft'] ||
       keysPressed.current?.['arrowright'] ||
+      touchStep.current !== 0 ||
+      stepVelocity.current !== 0 ||
       Math.abs(mouseState.current?.deltaX ?? 0) > 0.5
 
     if (hasLateralInput && Math.abs(cam.position.y - cameraElevation) > 0.01) {
@@ -550,6 +562,8 @@ const MainCamera = () => {
       // for meanwhile, rather than lurching once the glide ends.
       touchWalk.current = 0
       walkVelocity.current = 0
+      touchStep.current = 0
+      stepVelocity.current = 0
       return
     }
 
@@ -577,26 +591,33 @@ const MainCamera = () => {
       mouseState.current.wheelZ = 0
     }
 
-    // Touch walking: while the finger is down, exactly the distance it slid;
-    // once it lifts, the slide's speed easing out.
-    let touchStep = 0
-    if (touchGesture.current.mode === 'slide') {
-      touchStep = touchWalk.current
-      // Smoothed, because move events and frames don't arrive in step: a frame
-      // that saw no move would otherwise zero the speed the lift glides on.
-      walkVelocity.current = walkVelocity.current * 0.5 + touchStep * 0.5
-    } else if (walkVelocity.current !== 0) {
-      touchStep = walkVelocity.current
-      walkVelocity.current *= Math.pow(TOUCH_GLIDE_DECAY, Math.min(delta, MAX_FRAME_DELTA) * 60)
-      if (Math.abs(walkVelocity.current) < 0.0005) walkVelocity.current = 0
+    // Touch walking, and two fingers' step aside (AR-176): while the fingers are
+    // down, exactly the distance they slid; once they lift, the slide's speed
+    // easing out. Each along the floor: forward, or to the camera's right.
+    const glide = (asked: number, velocity: { current: number }, sliding: boolean) => {
+      if (sliding) {
+        // Smoothed, because move events and frames don't arrive in step: a frame
+        // that saw no move would otherwise zero the speed the lift glides on.
+        velocity.current = velocity.current * 0.5 + asked * 0.5
+        return asked
+      }
+      const carried = velocity.current
+      velocity.current *= Math.pow(TOUCH_GLIDE_DECAY, Math.min(delta, MAX_FRAME_DELTA) * 60)
+      if (Math.abs(velocity.current) < 0.0005) velocity.current = 0
+      return carried
     }
+    const alongFloor = (local: Vector3, meters: number) => {
+      if (meters === 0) return
+      local.applyQuaternion(cam.quaternion)
+      local.y = 0
+      local.normalize()
+      moveVector.add(local.multiplyScalar(Math.max(-MAX_STEP, Math.min(MAX_STEP, meters))))
+    }
+    const mode = touchGesture.current.mode
+    alongFloor(new Vector3(0, 0, -1), glide(touchWalk.current, walkVelocity, mode === 'slide'))
+    alongFloor(new Vector3(1, 0, 0), glide(touchStep.current, stepVelocity, mode === 'step'))
     touchWalk.current = 0
-    if (touchStep !== 0) {
-      const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
-      forward.y = 0
-      forward.normalize()
-      moveVector.add(forward.multiplyScalar(Math.max(-MAX_STEP, Math.min(MAX_STEP, touchStep))))
-    }
+    touchStep.current = 0
 
     const wallRefsArray = wallRefs.current ?? []
     const windowRefsArray = windowRefs.current ?? []
@@ -616,6 +637,7 @@ const MainCamera = () => {
     } else {
       // Walked into a wall: a glide stops there rather than pressing on.
       walkVelocity.current = 0
+      stepVelocity.current = 0
     }
 
     if (mouseState.current) {
@@ -635,6 +657,7 @@ const MainCamera = () => {
       moveVector.lengthSq() > 0.00001 ||
       Math.abs(rotationVelocity.current) > 0.0001 ||
       walkVelocity.current !== 0 ||
+      stepVelocity.current !== 0 ||
       isAnimating.current ||
       isReturningToElevation.current
     if (hasMovement) {

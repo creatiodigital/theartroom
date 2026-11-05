@@ -6,6 +6,7 @@ import Pinch from '@/icons/gesture-pinch.svg'
 import SlideHorizontal from '@/icons/gesture-slide-horizontal.svg'
 import SlideVertical from '@/icons/gesture-slide-vertical.svg'
 import Tap from '@/icons/gesture-tap.svg'
+import TwoFingerSlide from '@/icons/gesture-two-finger-slide.svg'
 import PhoneLandscape from '@/icons/phone-landscape.svg'
 
 import styles from './TouchControlsGuide.module.scss'
@@ -19,9 +20,11 @@ type Gesture = {
 // The finger's controls (AR-172), in the order a visitor needs them: move,
 // look, then the artworks. See MainCamera/touchGestures and tapTracker. The room
 // follows the finger: sliding down draws it toward you, so you walk forward.
+// Two fingers move you the way they slide (AR-176).
 const GESTURES: Gesture[] = [
   { Icon: SlideVertical, gesture: 'Slide down or up', action: 'Walk forward or back' },
   { Icon: SlideHorizontal, gesture: 'Slide left or right', action: 'Turn to look around' },
+  { Icon: TwoFingerSlide, gesture: 'Slide two fingers left or right', action: 'Step sideways' },
   { Icon: Pinch, gesture: 'Pinch with two fingers', action: 'Zoom in or out' },
   { Icon: Tap, gesture: 'Tap an artwork', action: 'Go up to it' },
   {

@@ -364,7 +364,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
               className={styles.infoPanelClose}
               aria-label="Close"
             >
-              <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
+              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
             </Button>
             <div className={styles.welcomeSection}>
               <Monogram className={styles.welcomeMonogram} />
@@ -391,13 +391,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                         W
                       </Text>
                       <Text as="span" size="sm" className={styles.infoKey}>
-                        A
-                      </Text>
-                      <Text as="span" size="sm" className={styles.infoKey}>
                         S
-                      </Text>
-                      <Text as="span" size="sm" className={styles.infoKey}>
-                        D
                       </Text>
                     </div>
                     <div className={styles.infoKeys}>
@@ -405,10 +399,29 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                         <ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} />
                       </span>
                       <span className={styles.infoKey}>
-                        <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                      </span>
-                      <span className={styles.infoKey}>
                         <ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                      </span>
+                    </div>
+                  </div>
+                  <Text as="span" size="sm">
+                    Walk forward / backward
+                  </Text>
+                </div>
+                {/* AR-176: these always stepped sideways without turning (only the mouse
+                    and trackpad turn); one "walk" row hid it. */}
+                <div className={styles.infoItem}>
+                  <div className={styles.infoKeysColumn}>
+                    <div className={styles.infoKeys}>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        A
+                      </Text>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        D
+                      </Text>
+                    </div>
+                    <div className={styles.infoKeys}>
+                      <span className={styles.infoKey}>
+                        <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
                       </span>
                       <span className={styles.infoKey}>
                         <ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} />
@@ -416,7 +429,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     </div>
                   </div>
                   <Text as="span" size="sm">
-                    Walk inside the room
+                    Step left / right
                   </Text>
                 </div>
                 <div className={styles.infoItem}>
@@ -523,7 +536,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
               className={styles.infoPanelClose}
               aria-label="Close"
             >
-              <X size={16} strokeWidth={ICON_STROKE_WIDTH} />
+              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
             </Button>
             <div className={styles.welcomeSection}>
               <Volume2
@@ -591,6 +604,12 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
 }
 
 export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
+  // AR-176: the page behind the room, so a phone held sideways can paint Safari's strip above it
+  // black (globals.scss, `room-page`).
+  useEffect(() => {
+    document.documentElement.classList.add('room-page')
+    return () => document.documentElement.classList.remove('room-page')
+  }, [])
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef<string | null>(null)
   const searchParams = useSearchParams()

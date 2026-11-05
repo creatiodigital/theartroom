@@ -13,8 +13,18 @@
  * once would weave like a drunk.
  *
  * Two fingers pinch to zoom, as on any photo: spread them to look closer,
- * bring them together to come back. Only fingers that land on the room itself
- * move the camera — never one on a button, a panel or a dialog over it.
+ * bring them together to come back. Or they slide together, left or right, and
+ * the visitor steps that way without turning (AR-176): facing a work, the next
+ * one along the wall is a step aside, not a turn, a walk and a turn back. Two
+ * fingers move the visitor the way they slide — right steps right (owner's
+ * call: unlike one finger, they don't drag the room).
+ *
+ * Which of the two, the fingers' first travel decides, and it holds until one
+ * lifts: their spread changing more than their midpoint moves is a pinch; their
+ * midpoint moving sideways is a step. Moving up or down together does nothing.
+ *
+ * Only fingers that land on the room itself move the camera — never one on a
+ * button, a panel or a dialog over it.
  */
 
 /** How far the finger travels before the slide is read as a walk or a turn. */
@@ -34,9 +44,20 @@ const WALK_PER_PX = 0.01
  */
 const TURN_PER_PX = 0.8
 
+/**
+ * How far two fingers travel (together, or apart) before they are read as a
+ * pinch or a step: a pinch rarely keeps its midpoint still, nor a two-finger
+ * slide its spread, so the first few pixels of either are ambiguous.
+ */
+const TWO_FINGER_LOCK_PX = 12
+
+/** Meters stepped sideways per pixel two fingers slide: as far as a walk. */
+const STEP_PER_PX = WALK_PER_PX
+
 /** The room follows the finger: down walks forward, right to left turns right. */
 const WALK_SIGN = 1 // screen y grows downward, and down is forward
 const TURN_SIGN = -1 // the mouse turns right on a positive x; the finger on a negative one
+const STEP_SIGN = 1 // two fingers move the visitor the way they slide: right steps right
 
 /** How far a pinch may zoom in (and never wider than the room's own lens). */
 export const MAX_PINCH_ZOOM = 3
@@ -48,13 +69,18 @@ export const MAX_PINCH_ZOOM = 3
 export const TOUCH_GLIDE_DECAY = 0.9
 
 export type TouchGesture = {
-  mode: 'none' | 'slide' | 'pinch'
+  /**
+   * `two`: two fingers down, not yet a pinch or a step. `held`: two fingers
+   * that moved up or down together — nothing, until they lift.
+   */
+  mode: 'none' | 'slide' | 'two' | 'pinch' | 'step' | 'held'
   axis: 'walk' | 'turn' | null
+  /** One finger: where it landed and was last. Two: their midpoint. */
   startX: number
   startY: number
   lastX: number
   lastY: number
-  /** The pinch's opening spread (px) and the zoom it began from. */
+  /** Two fingers' opening spread (px), and the zoom a pinch would begin from. */
   pinchFrom: number
   zoomFrom: number
 }
@@ -76,6 +102,11 @@ const onRoom = (touch: Touch | undefined): touch is Touch =>
 
 const spread = (a: Touch, b: Touch) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
 
+const midpoint = (a: Touch, b: Touch) => ({
+  x: (a.clientX + b.clientX) / 2,
+  y: (a.clientY + b.clientY) / 2,
+})
+
 const end = (gesture: TouchGesture) => {
   gesture.mode = 'none'
   gesture.axis = null
@@ -93,10 +124,14 @@ export const beginTouch = (gesture: TouchGesture, event: TouchEvent, zoom: numbe
     return
   }
 
-  // The second finger turns a slide into a pinch (whatever the first had done).
+  // The second finger ends a slide (whatever the first had done): a pinch or a
+  // step, once the two have moved far enough to tell (`moveTouch`).
   if (event.touches.length === 2 && onRoom(first) && onRoom(second)) {
-    gesture.mode = 'pinch'
+    const middle = midpoint(first, second)
+    gesture.mode = 'two'
     gesture.axis = null
+    gesture.startX = gesture.lastX = middle.x
+    gesture.startY = gesture.lastY = middle.y
     gesture.pinchFrom = spread(first, second)
     gesture.zoomFrom = zoom
     return
@@ -108,20 +143,41 @@ export const beginTouch = (gesture: TouchGesture, event: TouchEvent, zoom: numbe
 export type TouchMove = {
   /** Meters to walk, + is forward. */
   walk: number
+  /** Meters to step sideways, + is to the right. */
+  step: number
   /** Turn, in mouse units. */
   turn: number
   /** The zoom a pinch asks for, or null. */
   zoom: number | null
 }
 
-const STILL: TouchMove = { walk: 0, turn: 0, zoom: null }
+const STILL: TouchMove = { walk: 0, step: 0, turn: 0, zoom: null }
 
-/** One move of the fingers: how far to walk and turn, or how far to zoom. */
+/** One move of the fingers: how far to walk, step and turn, or how far to zoom. */
 export const moveTouch = (gesture: TouchGesture, event: TouchEvent): TouchMove => {
-  if (gesture.mode === 'pinch') {
+  if (gesture.mode === 'two' || gesture.mode === 'pinch' || gesture.mode === 'step') {
     const [first, second] = [event.touches[0], event.touches[1]]
     if (!first || !second || gesture.pinchFrom <= 0) return STILL
-    return { ...STILL, zoom: gesture.zoomFrom * (spread(first, second) / gesture.pinchFrom) }
+    const middle = midpoint(first, second)
+
+    if (gesture.mode === 'two') {
+      const opened = Math.abs(spread(first, second) - gesture.pinchFrom)
+      const dx = middle.x - gesture.startX
+      const dy = middle.y - gesture.startY
+      const travelled = Math.hypot(dx, dy)
+      if (Math.max(opened, travelled) < TWO_FINGER_LOCK_PX) return STILL
+      // A pinch with one finger still moves its midpoint half as far as its
+      // spread opens; a slide moves its midpoint and keeps its spread.
+      gesture.mode = opened > travelled ? 'pinch' : Math.abs(dx) > Math.abs(dy) ? 'step' : 'held'
+      // lastX still holds the start, so the travel that decided counts too.
+    }
+
+    if (gesture.mode === 'pinch')
+      return { ...STILL, zoom: gesture.zoomFrom * (spread(first, second) / gesture.pinchFrom) }
+    if (gesture.mode !== 'step') return STILL
+    const dx = middle.x - gesture.lastX
+    gesture.lastX = middle.x
+    return { ...STILL, step: dx * STEP_PER_PX * STEP_SIGN }
   }
 
   const touch = event.touches[0]
@@ -150,13 +206,13 @@ export const moveTouch = (gesture: TouchGesture, event: TouchEvent): TouchMove =
 }
 
 /**
- * A finger lifted (or the browser took the touch away). A pinch ends when
- * either finger lifts, and the one left on the glass does nothing until it
+ * A finger lifted (or the browser took the touch away). Two fingers' gesture
+ * ends when either lifts, and the one left on the glass does nothing until it
  * lifts too — it would otherwise lurch the room the moment the pinch ended.
  */
 export const endTouch = (gesture: TouchGesture, event: TouchEvent) => {
-  if (event.touches.length === 0 || gesture.mode === 'pinch') end(gesture)
+  if (event.touches.length === 0 || gesture.mode !== 'slide') end(gesture)
 }
 
-/** Whether a finger is on the room, walking, turning or pinching. */
+/** Whether fingers are on the room: walking, turning, stepping or pinching. */
 export const touching = (gesture: TouchGesture) => gesture.mode !== 'none'

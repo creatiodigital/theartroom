@@ -47,6 +47,17 @@ html {
   }
 }
 
+// AR-176: a phone held sideways shows the 3D room edge to edge, but Safari keeps a strip of its own
+// above the page (20pt), and paints it with the page's background. On the room's page that is
+// black there, so the strip reads as the phone's bezel instead of a white band. Upright, Safari
+// does not tint its top from the page, so the page keeps its own color.
+html.room-page,
+html.room-page body {
+  @media #{$phone-sideways} {
+    background-color: var(--color-black);
+  }
+}
+
 body {
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: var(--text-md-mobile);
