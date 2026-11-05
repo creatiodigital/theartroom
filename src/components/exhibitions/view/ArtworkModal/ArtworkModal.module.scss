@@ -6,6 +6,10 @@
   z-index: 1000;
   background: var(--color-white);
   overflow-y: auto;
+  // The visit page reaches the screen's edges (`viewport-fit=cover`, AR-176): the details keep
+  // clear of the notch, the rounded corners and the home indicator. 0 everywhere else.
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }
 
 // "CLOSE ×" (AR-174), lettered as the double-tap panel's. A bare Button, so no padding of its own:
@@ -13,8 +17,8 @@
 // overlay so it outranks the bare reset (same weight otherwise; load order would decide).
 .overlay .close {
   position: fixed;
-  top: var(--space-6);
-  right: var(--space-6);
+  top: calc(var(--space-6) + env(safe-area-inset-top));
+  right: calc(var(--space-6) + env(safe-area-inset-right));
   // Below the InquireSidebar (z-index 1000) so it doesn't show a second X over the
   // sidebar's own CLOSE; still paints above the (non-positioned) artwork body.
   z-index: 999;
@@ -29,8 +33,8 @@
   color: var(--color-text-primary);
 
   @include breakpoint(lg) {
-    top: var(--space-8);
-    right: var(--space-10);
+    top: calc(var(--space-8) + env(safe-area-inset-top));
+    right: calc(var(--space-10) + env(safe-area-inset-right));
   }
 }
 

@@ -20,20 +20,25 @@
   background-color: var(--color-surface-subtle);
 }
 
-// Phones, upright (narrow) or on their side (short): the room needs every pixel, so the leave and
-// help buttons sit 8px from their corners instead of 24 (AR-174). Under 600px wide, like
-// useIsPhone, so no iPad matches (the mini is 744); a landscape phone is under 500px tall, the
-// same test as the rest of this file.
-$phone-room: '(max-width: 599.98px), (orientation: landscape) and (max-height: 500px)';
+// Phones (`$phone-room`, mixins): the leave and help buttons sit 8px from their corners (AR-174).
+// The room reaches every edge of the screen (the visit page's `viewport-fit=cover`, AR-176), so
+// each corner button also keeps clear of the notch, the rounded corners and the home indicator
+// (`env(safe-area-inset-*)`: 0 where there are none).
 
 .navigationButtonWrapper {
   position: fixed;
-  top: var(--space-6);
-  right: var(--space-6);
+  top: calc(var(--space-6) + env(safe-area-inset-top));
+  right: calc(var(--space-6) + env(safe-area-inset-right));
   z-index: 1000;
 
   @media #{$phone-room} {
-    top: var(--space-2);
+    top: calc(var(--space-2) + env(safe-area-inset-top));
+    right: calc(var(--space-2) + env(safe-area-inset-right));
+  }
+
+  // A phone on its side (AR-176): iOS keeps the notch's width clear on BOTH sides (47pt), but the
+  // notch sits mid-edge and this button is in a corner, so it goes right by the edge, as upright.
+  @media #{$phone-sideways} {
     right: var(--space-2);
   }
 }
@@ -66,8 +71,8 @@ $phone-room: '(max-width: 599.98px), (orientation: landscape) and (max-height: 5
 
 .infoButton {
   position: fixed;
-  bottom: var(--space-6);
-  right: var(--space-6);
+  bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+  right: calc(var(--space-6) + env(safe-area-inset-right));
   z-index: 1000;
   display: flex;
   justify-content: center;
@@ -85,7 +90,13 @@ $phone-room: '(max-width: 599.98px), (orientation: landscape) and (max-height: 5
   }
 
   @media #{$phone-room} {
-    bottom: var(--space-2);
+    bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    right: calc(var(--space-2) + env(safe-area-inset-right));
+  }
+
+  // A phone on its side (AR-176): iOS keeps the notch's width clear on BOTH sides (47pt), but the
+  // notch sits mid-edge and this button is in a corner, so it goes right by the edge, as upright.
+  @media #{$phone-sideways} {
     right: var(--space-2);
   }
 }

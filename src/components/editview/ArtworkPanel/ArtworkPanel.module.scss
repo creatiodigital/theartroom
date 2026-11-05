@@ -20,10 +20,15 @@
   // the room, or more than all of it, so it covers the screen instead and
   // closes back to the room. A phone held sideways is wide but short, so it
   // takes the same full-screen form, laid out across rather than down.
+  // On the visit page the screen's edges include the notch and the rounded corners
+  // (`viewport-fit=cover`, AR-176): the panel's content keeps clear of them.
   @media (max-width: 900px), (orientation: landscape) and (max-height: 500px) {
     width: 100%;
     height: 100dvh;
-    padding: var(--space-6);
+    padding: calc(var(--space-6) + env(safe-area-inset-top))
+      calc(var(--space-6) + env(safe-area-inset-right))
+      calc(var(--space-6) + env(safe-area-inset-bottom))
+      calc(var(--space-6) + env(safe-area-inset-left));
   }
 }
 
@@ -40,13 +45,19 @@
   .imageWrapper {
     grid-row: 1 / span 2;
     margin-bottom: 0;
-    // The screen's height, less the panel's padding and its CLOSE row.
-    max-height: calc(100dvh - 2 * var(--space-6) - var(--space-12));
+    // The screen's height, less the panel's padding (with the safe area) and its CLOSE row.
+    max-height: calc(
+      100dvh - 2 *
+        var(--space-6) - var(--space-12) - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
   }
 
   .preview,
   .presentationRender {
-    max-height: calc(100dvh - 2 * var(--space-6) - var(--space-12));
+    max-height: calc(
+      100dvh - 2 *
+        var(--space-6) - var(--space-12) - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
   }
 }
 

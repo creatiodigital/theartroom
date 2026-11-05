@@ -106,6 +106,12 @@ $breakpoint-lg: map.get($breakpoints, lg);
 $breakpoint-xl: map.get($breakpoints, xl);
 $breakpoint-2xl: map.get($breakpoints, xxl);
 
+// Phones in the 3D room, upright (narrow) or on their side (short): the room needs every pixel, so
+// its corner buttons sit 8px from the edges instead of 24 (AR-174). Under 600px wide, like
+// useIsPhone, so no iPad matches (the mini is 744); a landscape phone is under 500px tall.
+$phone-sideways: '(orientation: landscape) and (max-height: 500px)';
+$phone-room: '(max-width: 599.98px), #{$phone-sideways}';
+
 @function bp($name) {
   @if not map.has-key($breakpoints, $name) {
     @error "Unknown breakpoint `#{$name}`. Valid names: #{map.keys($breakpoints)}.";
