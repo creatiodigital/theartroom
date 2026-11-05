@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  margin: 0 0 var(--space-6);
+  margin: 0;
   padding: 0;
   list-style: none;
 
@@ -59,7 +59,7 @@
   display: none;
   align-items: center;
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-top: var(--space-6);
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-border-light);
 

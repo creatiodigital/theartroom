@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import type { Ray } from 'three'
+
+import { TAP_MAX_MOVE_PX } from '@/components/scene/controls/MainCamera/navigation'
+import { roomBlocks } from '@/components/scene/controls/MainCamera/roomRays'
 
 /**
  * Taps on a phone or tablet (AR-172), for the objects that answer a click and
@@ -12,10 +16,14 @@ import { useState } from 'react'
  */
 
 /** A fingertip lands less precisely than a mouse: a tap may drift this far and still be one. */
-const TOUCH_TAP_SLOP = 12
+const TOUCH_TAP_SLOP = TAP_MAX_MOVE_PX
 
-/** Two taps whose lifts are this close together (ms) make a double tap. */
-const DOUBLE_TAP_WINDOW = 350
+/**
+ * Two taps (or clicks) this close together (ms) make a double tap, which opens a work's details.
+ * A single tap on a work waits this long before going to it, in case a second follows; taps on the
+ * floor and walls never wait.
+ */
+export const DOUBLE_TAP_MS = 300
 
 /**
  * Fingers on the screen, counted for the whole page. A pinch puts two down, and
@@ -51,18 +59,28 @@ const createTapTracker = () => {
   countFingers()
   let pointerType = 'mouse'
   let lastTapAt = 0
+  let behindWall = false
   return {
-    /** Call on pointer down. */
-    down(type: string) {
-      pointerType = type
+    /**
+     * Call on pointer down. The scene's pointer events reach every object the ray passes, walls
+     * or no walls, so a press whose object lies behind a wall (a work in the next room, seen
+     * through nothing) is the wall's: the visitor walks up to the wall instead.
+     */
+    down(event: { pointerType: string; ray?: Ray; distance?: number }) {
+      pointerType = event.pointerType
+      behindWall =
+        !!event.ray && event.distance !== undefined && roomBlocks(event.ray, event.distance)
     },
     /** The last press came from a finger. */
     get touch() {
       return pointerType === 'touch'
     },
-    /** More than one finger has been down since this touch began: a pinch, not a tap. */
-    get pinched() {
-      return pointerType === 'touch' && severalFingers
+    /**
+     * Not this object's tap, however short: more than one finger has been down since this touch
+     * began (a pinch), or the object is behind a wall.
+     */
+    get ignored() {
+      return behindWall || (pointerType === 'touch' && severalFingers)
     },
     /** How far the press may move and still be a tap. */
     slop(mouseSlop: number) {
@@ -71,7 +89,7 @@ const createTapTracker = () => {
     /** Call on each tap by a finger: true when it completes a double tap. */
     secondTap() {
       const now = performance.now()
-      if (now - lastTapAt < DOUBLE_TAP_WINDOW) {
+      if (now - lastTapAt < DOUBLE_TAP_MS) {
         lastTapAt = 0
         return true
       }

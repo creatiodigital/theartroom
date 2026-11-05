@@ -143,8 +143,10 @@ const ShapeObject = ({ artwork }: ShapeObjectProps) => {
       <mesh
         rotation={[0, 0, rotationRad]}
         scale={type === 'circle' ? [width, height, 1] : undefined}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
+        // Only the editor answers a shape's click. Elsewhere it has no handlers at all, so the room
+        // reads it as the wall it is painted on: a tap there walks up to the wall.
+        onPointerDown={isEditMode ? handlePointerDown : undefined}
+        onPointerUp={isEditMode ? handlePointerUp : undefined}
       >
         {type === 'circle' ? (
           <circleGeometry args={[0.5, 64]} />

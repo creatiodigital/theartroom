@@ -20,7 +20,7 @@
   background-color: var(--color-surface-subtle);
 }
 
-// Phones (`$phone-room`, mixins): the leave and help buttons sit 8px from their corners (AR-174).
+// Phones and tablets (`$touch-room`, mixins): the leave and help buttons sit 8px from the edges.
 // The room reaches every edge of the screen (the visit page's `viewport-fit=cover`, AR-176), so
 // each corner button also keeps clear of the notch, the rounded corners and the home indicator
 // (`env(safe-area-inset-*)`: 0 where there are none).
@@ -29,9 +29,9 @@
   position: fixed;
   top: calc(var(--space-6) + env(safe-area-inset-top));
   right: calc(var(--space-6) + env(safe-area-inset-right));
-  z-index: 1000;
+  z-index: $room-button-z;
 
-  @media #{$phone-room} {
+  @media #{$touch-room} {
     top: calc(var(--space-2) + env(safe-area-inset-top));
     right: calc(var(--space-2) + env(safe-area-inset-right));
   }
@@ -50,7 +50,7 @@
   width: 36px;
   height: 36px;
   padding: 0;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: $room-button-bg;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -73,14 +73,14 @@
   position: fixed;
   bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
   right: calc(var(--space-6) + env(safe-area-inset-right));
-  z-index: 1000;
+  z-index: $room-button-z;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 36px;
   height: 36px;
   padding: 0;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: $room-button-bg;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -89,9 +89,15 @@
     color: var(--color-black);
   }
 
-  @media #{$phone-room} {
+  @media #{$touch-room} {
     bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
     right: calc(var(--space-2) + env(safe-area-inset-right));
+  }
+
+  // A tablet's home indicator is a thin line mid-edge, nowhere near this corner, so the button
+  // comes down to 8px, the same as from the side (AR-177).
+  @media #{$tablet-room} {
+    bottom: var(--space-2);
   }
 
   // A phone on its side (AR-176): iOS keeps the notch's width clear on BOTH sides (47pt), but the
@@ -152,13 +158,6 @@
   }
 }
 
-.infoPanelTitle {
-  margin-bottom: var(--space-4);
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
 .welcomeSection {
   text-align: center;
   margin-bottom: var(--space-6);
@@ -171,15 +170,6 @@
   }
 }
 
-.welcomeMonogram {
-  width: 36px;
-  height: auto;
-  color: var(--color-brand);
-  margin: 0 auto var(--space-4);
-  display: block;
-  overflow: visible;
-}
-
 .welcomeTitle {
   margin-bottom: var(--space-3);
 }
@@ -189,19 +179,16 @@
   line-height: 1.6;
 }
 
-.infoHint {
-  text-align: center;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-top: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
 .infoPanelContent {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   margin-bottom: var(--space-6);
+
+  // Last in the panel: only the panel's own padding below, the same as above it.
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .infoItem {
@@ -251,8 +238,17 @@
   white-space: nowrap;
 
   svg {
+    // Never squeezed by a long label: every pill's icon at its own size.
+    flex-shrink: 0;
     color: var(--color-black);
   }
+}
+
+// The help button's finger (phones and tablets): the guide's own tap pictogram, drawn larger
+// than a 20px line icon would be, as its hand is drawn at 80% inside the frame.
+.infoButtonIcon {
+  width: 26px;
+  height: 26px;
 }
 
 .navigationButton,

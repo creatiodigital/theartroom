@@ -11,49 +11,78 @@ import {
   type RefObject,
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Vector3, Quaternion, PerspectiveCamera, Mesh, Raycaster } from 'three'
+import { Vector2, Vector3, Quaternion, PerspectiveCamera, Mesh, Raycaster, type Ray } from 'three'
 
 import SceneContext from '@/contexts/SceneContext'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { getSpaceConfig } from '@/components/scene/constants'
+import { useIsPhone } from '@/hooks/useIsPhone'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
 import { clearFocusTarget } from '@/redux/slices/sceneSlice'
 import { clearReturnFromWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
+import FloorMarks, { createFloorMarks, type WalkHint } from './FloorMarks'
 import {
   createMouseState,
-  handleMouseMove,
+  dragging,
   handleKeyPress,
-  attachMouseHandlers,
-  detachMouseHandlers,
+  moveMouse,
+  pressMouse,
+  releaseMouse,
   calculateMovementVector,
+  MOVEMENT_KEYS,
   type MouseState,
 } from './helpers'
 import {
-  MAX_PINCH_ZOOM,
-  STEP_GLIDE_DECAY,
-  TOUCH_GLIDE_DECAY,
-  beginTouch,
-  createTouchGesture,
-  endTouch,
-  moveTouch,
-  touching,
-} from './touchGestures'
+  FLOOR_Y,
+  FOCUS_GLIDE_MIN_S,
+  FOCUS_MIN_DISTANCE,
+  GLIDE_MAX_S,
+  HINT_BEYOND,
+  HINT_DISTANCE,
+  HINT_MAX_S,
+  LOOK_GRAB_SCALE,
+  MIN_TOUCH_SLIDE_TURN,
+  LOOK_INERTIA_S,
+  LOOK_REST_SPEED,
+  LOOK_SMOOTHING_S,
+  LOOK_VELOCITY_SMOOTHING_S,
+  MAX_LOOK_SPEED,
+  MAX_PAN_SPEED,
+  MAX_TALL_FOCUS_DISTANCE,
+  NO_SHIFT,
+  PITCH_LEVEL_RATE,
+  PINCH_SMOOTHING_S,
+  PITCH_LIMIT,
+  SHIFT_RELEASE_RATE,
+  SHOW_FLOOR_RINGS,
+  WALL_CLEARANCE,
+  clamp,
+  easeInOutCubic,
+  easeOutCubic,
+  fitDistance,
+  glideDuration,
+  isShifted,
+  lensShiftFor,
+  rightOf,
+  createSwipe,
+  readSwipe,
+  viewOffsetFor,
+  wrapAngle,
+  yawOf,
+  type LensShift,
+} from './navigation'
+import { firstRoomHit, setRoomMeshes, settleBeside, tapDestination } from './roomRays'
+import { beginTouch, createTouchGesture, endTouch, looking, moveTouch } from './touchGestures'
 
 function detectCollisions(
   camera: PerspectiveCamera,
   movementVector: Vector3,
-  wallRefs: RefObject<Mesh | null>[],
-  windowRefs: RefObject<Mesh | null>[],
-  glassRefs: RefObject<Mesh | null>[],
+  meshes: Mesh[],
   collisionDistance: number,
 ): boolean {
   if (movementVector.lengthSq() === 0) return false
-
-  const meshes = [...wallRefs, ...windowRefs, ...glassRefs]
-    .map((ref) => ref.current)
-    .filter(Boolean) as Mesh[]
-
   if (meshes.length === 0) return false
 
   const raycaster = new Raycaster()
@@ -95,39 +124,50 @@ function detectCollisions(
   return false
 }
 
-// Animation constants
-const FOCUS_DURATION = 1.2 // Animation duration in seconds
-const FOCUS_PADDING = 1.08 // Padding factor to ensure artwork fits comfortably in view
-const FOCUS_MIN_DISTANCE = 0.4 // Minimum distance from artwork
-// When the room is too shallow to step back far enough to frame a work (an
-// upright phone sees little across, so a wide work or group wants several
-// meters), the lens widens instead — down to this zoom (a 50° lens opens to
-// about 75°), past which the sides crop rather than bend.
-const MIN_FOCUS_ZOOM = 0.6
-// On a screen taller than wide, the farthest a glide steps back from a work.
-// Fitting a 3 m wall text across an upright phone would want ~7.5 m: far from
-// the work, and where no wall stands behind (an open doorway) nothing else
-// would stop it. The lens widens for the rest. A laptop never needs this much
-// room, so it is left alone.
-const MAX_TALL_FOCUS_DISTANCE = 4
-// Longest step one frame may take, whatever asks for it (the trackpad, a slide
-// on a phone): the collision rays reach 0.7 m, so a step this short can never
-// carry the camera past a wall they have not seen.
+// Longest step one frame may take, whatever asks for it (the trackpad, a pinch): the collision
+// rays reach 0.7 m, so a step this short can never carry the camera past a wall they have not seen.
 const MAX_STEP = 0.15
 
-// Ease-out cubic: smooth deceleration, reaches target exactly at t=1
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+/** A mouse event this soon after a touch (ms) is the browser's echo of the tap, not a mouse. */
+const TOUCH_ECHO_MS = 800
 
 /**
- * The lens at a zoom: `zoom` scales how much the camera sees (2 shows half as
- * much, across and up), 1 is the room's own lens, below 1 wider. Exactly
- * `fov` at 1, so a camera nobody zoomed is untouched.
+ * A walk or a turn to stand in front of a work, eased from where the camera was to where it goes.
+ * A walk keeps the heading (the visitor may look around as they go); the glide to a work turns to
+ * face it. Either levels the head and eases the lens shift to what the end wants.
  */
-const zoomedFov = (fov: number, zoom: number) =>
-  zoom === 1 ? fov : (2 * Math.atan(Math.tan((fov * Math.PI) / 360) / zoom) * 180) / Math.PI
+type Glide = {
+  kind: 'walk' | 'focus'
+  fromX: number
+  fromZ: number
+  toX: number
+  toZ: number
+  elapsed: number
+  duration: number
+  ease: (t: number) => number
+  yawFrom: number
+  yawTo: number
+  pitchFrom: number
+  shiftFrom: LensShift
+  shiftTo: LensShift
+  /** A glide to a work: the Artwork View it arrives in. */
+  view: ArtworkViewState | null
+}
+
+/** Standing in front of a work: which, facing it along `yaw`. */
+type ArtworkViewState = {
+  artworkId: string
+  yaw: number
+  /** How far the eye stands from the work's wall (m): a finger's slide along it moves this much wall. */
+  depth: number
+}
+
+const lerpShift = (a: LensShift, b: LensShift, t: number): LensShift => ({
+  x: a.x + (b.x - a.x) * t,
+  y: a.y + (b.y - a.y) * t,
+})
 
 const MainCamera = () => {
-  const [, setTick] = useState(0)
   const dispatch = useDispatch()
 
   const context = useContext(SceneContext)
@@ -140,34 +180,59 @@ const MainCamera = () => {
   const keysPressed = useRef<Record<string, boolean>>({})
   const mouseState: RefObject<MouseState> = useRef(createMouseState())
   const initialPositionSet = useRef(false)
-  const rotationVelocity = useRef(0)
   const isReturningToElevation = useRef(false)
 
-  // Touch (AR-172): the slide in progress, the meters it has asked to walk
-  // since the last frame, and the walk's speed (meters per frame), kept so the
-  // walk can ease out after the finger lifts. The same for two fingers' step to
-  // the side (AR-176).
+  // Where the camera looks: its heading and its head's tilt, applied every frame, each easing
+  // toward where the hand has turned it (`LOOK_SMOOTHING_S`). Anything else that turns the camera
+  // (the entrance respawn, the return from wall view) is adopted: the orientation last applied is
+  // kept to notice it.
+  const yaw = useRef(0)
+  const pitch = useRef(0)
+  const yawTarget = useRef(0)
+  const pitchTarget = useRef(0)
+  // How fast a drag is turning and tilting the head (radians per second), read while it drags and
+  // carried on, slowing, once it lets go (`LOOK_INERTIA_S`).
+  const turnVelocity = useRef(0)
+  const tiltVelocity = useRef(0)
+  const applied = useRef(new Quaternion())
+  /** A finger's grab of the room since the last frame (px), right and down positive. */
+  const touchGrab = useRef({ x: 0, y: 0 })
+  // A phone in Artwork View: a slide that set off sideways walks along the wall instead of turning.
+  // The pixels slid since the last frame, the meters asked and not yet walked (eased, as every look
+  // is), and the slide's speed (m/s), carried on and slowing once the finger lifts.
+  const panGrab = useRef(0)
+  const panPending = useRef(0)
+  const panVelocity = useRef(0)
+  // The swipe in progress (one finger on a Magic Mouse, two on a trackpad), read by `readSwipe`.
+  const swipe = useRef(createSwipe())
+
+  const glide = useRef<Glide | null>(null)
+  const artworkView = useRef<ArtworkViewState | null>(null)
+  const shift = useRef<LensShift>(NO_SHIFT)
+  /** A drag, a pinch or a key asked to step back from the work (handled next frame). */
+  const leaveAsked = useRef(false)
+  /** A tap or click on the room waiting for the frame (client px). */
+  const pendingTap = useRef<{ x: number; y: number } | null>(null)
+
+  // Touch: the gesture in progress, and the meters a pinch has asked to walk and not yet walked
+  // (taken a share each frame, `PINCH_SMOOTHING_S`, so the step glides and eases to a stop).
   const touchGesture = useRef(createTouchGesture())
-  const touchWalk = useRef(0)
-  const walkVelocity = useRef(0)
-  const touchStep = useRef(0)
-  const stepVelocity = useRef(0)
-  // The lens zoom (see `zoomedFov`): a pinch's, or the one a glide to a work in a
-  // shallow room needed. It stays while the visitor looks around, and eases back
-  // to the room's own lens once they walk on.
-  const lensZoom = useRef(1)
-  const focusZoomFrom = useRef(1)
-  const focusZoomTo = useRef(1)
+  const pinchPending = useRef(0)
+  const lastTouchAt = useRef(-Infinity)
 
-  // Focus animation state
-  const isAnimating = useRef(false)
-  const targetPosition = useRef<Vector3 | null>(null)
-  const targetLookAt = useRef<Vector3 | null>(null)
-  const startPosition = useRef<Vector3 | null>(null)
-  const startQuaternion = useRef<Quaternion | null>(null)
-  const animationProgress = useRef(0)
+  const marks = useRef(createFloorMarks())
+  // The entry hint: unchecked, due at `hintAt` (s, the scene clock), showing, or done (timed out,
+  // or the visitor already walked).
+  const [hint, setHint] = useState<WalkHint | null>(null)
+  const hintPhase = useRef<'unchecked' | 'due' | 'showing' | 'done'>('unchecked')
+  const hintAt = useRef(0)
+  /** How long the hint has been seen (s): it counts only while nothing covers the room. */
+  const hintSeen = useRef(0)
+  /** Whether the room is uncovered (no notice or guide over it), checked a few times a second. */
+  const roomUncovered = useRef(false)
+  const uncoveredCheckedAt = useRef(-Infinity)
+  const isTouch = useIsTouchDevice()
 
-  const dampingFactor = 0.6
   const collisionDistance = 0.7
   // Distance per frame AT 60fps — so 0.04 is ~2.4 units/second. Scaled by delta
   // below so walking speed is the same on every machine; it used to be applied
@@ -194,6 +259,7 @@ const MainCamera = () => {
   const returnFromWallView = useSelector((state: RootState) => state.wallView.returnFromWallView)
   const focusTarget = useSelector((state: RootState) => state.scene.focusTarget)
   const isExitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
+  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
 
@@ -205,6 +271,28 @@ const MainCamera = () => {
 
   // Get camera ref for immediate positioning before first paint
   const camera = useThree((state) => state.camera) as PerspectiveCamera
+  const gl = useThree((state) => state.gl)
+  const getThree = useThree((state) => state.get)
+
+  // What the handlers (stable callbacks) need of the latest render.
+  const isPhone = useIsPhone()
+  const latest = useRef({ isArtworkPanelOpen, isExitPromptOpen, isPhone })
+  useEffect(() => {
+    latest.current = { isArtworkPanelOpen, isExitPromptOpen, isPhone }
+  })
+
+  // The room's solid surfaces, for the taps' walks and the works' taps alike (`roomRays`).
+  const meshesOfRoom = useCallback(
+    () =>
+      [...(wallRefs.current ?? []), ...(windowRefs.current ?? []), ...(glassRefs.current ?? [])]
+        .map((ref) => ref.current)
+        .filter(Boolean) as Mesh[],
+    [wallRefs, windowRefs, glassRefs],
+  )
+  useEffect(() => {
+    setRoomMeshes(meshesOfRoom)
+    return () => setRoomMeshes(() => [])
+  }, [meshesOfRoom])
 
   // Set camera position immediately when GLB data arrives — before paint, no visible jump
   useLayoutEffect(() => {
@@ -225,138 +313,286 @@ const MainCamera = () => {
     }
   }, [cameraElevation])
 
-  // Handle focus target changes - start animation
+  // ---------------------------------------------------------------------------
+  // Artwork View
+
+  /** The work the visitor stands in front of, or is gliding to. */
+  const currentView = useCallback(() => glide.current?.view ?? artworkView.current, [])
+
+  /** Steps back from the work: the lens shift eases home in the frame loop (`SHIFT_RELEASE_RATE`). */
+  const leaveArtworkView = useCallback(() => {
+    if (glide.current?.kind === 'focus') {
+      glide.current = null
+      dispatch(clearFocusTarget())
+    }
+    artworkView.current = null
+  }, [dispatch])
+
+  // A tap on a work: stand in front of it, level, at eye height, squarely facing its wall, as close
+  // as frames all of it on this screen, and let the lens shift center it (no rising to a high work,
+  // no tilting down to a low one, so nothing floats or keystones and leaving changes no height).
   useEffect(() => {
-    if (focusTarget) {
-      const { position, normal, width, height } = focusTarget
+    if (!focusTarget) return
+    const { position, normal, width, height } = focusTarget
 
-      // Calculate optimal viewing distance based on artwork size and camera FOV
-      // Use the camera's real aspect ratio so the calculation adapts to any window shape
-      const fovRad = (cameraFOV * Math.PI) / 180
-      const halfFov = fovRad / 2
-      const aspectRatio = camera.aspect // actual viewport width / height
+    const n = new Vector3(normal.x, 0, normal.z)
+    if (n.lengthSq() < 1e-6) return
+    n.normalize()
+    const center = new Vector3(position.x, position.y, position.z)
 
-      // Distance needed so the artwork height fits in view
-      const distanceForVertical =
-        height / 2 > 0 ? ((height / 2) * FOCUS_PADDING) / Math.tan(halfFov) : FOCUS_MIN_DISTANCE
+    const optimalDistance = fitDistance(width, height, cameraFOV, camera.aspect)
 
-      // Distance needed so the artwork width fits in view
-      const horizontalHalfFov = Math.atan(Math.tan(halfFov) * aspectRatio)
-      const distanceForHorizontal =
-        width / 2 > 0
-          ? ((width / 2) * FOCUS_PADDING) / Math.tan(horizontalHalfFov)
-          : FOCUS_MIN_DISTANCE
+    // The glide flies straight there and checks no walls on the way, so the spot itself must be
+    // inside the room: stop short of the first wall behind the viewer, as far from it as walking
+    // would.
+    const behind = firstRoomHit(
+      center.clone().addScaledVector(n, 0.05),
+      n,
+      optimalDistance + WALL_CLEARANCE,
+      meshesOfRoom(),
+    )
+    const roomLimit = behind ? behind.distance + 0.05 - WALL_CLEARANCE : Infinity
+    // An upright phone would step far back to fit a wide work across: it stops at a limit and the
+    // work's sides crop, as they would for an eye (no lens widens).
+    const screenLimit = camera.aspect < 1 ? MAX_TALL_FOCUS_DISTANCE : Infinity
+    const viewingDistance = Math.max(
+      FOCUS_MIN_DISTANCE,
+      Math.min(optimalDistance, roomLimit, screenLimit),
+    )
 
-      // Use the larger distance to ensure artwork fits both horizontally and vertically
-      // (the whole work, or the whole group, on every screen).
-      const optimalDistance = Math.max(
-        distanceForVertical,
-        distanceForHorizontal,
-        FOCUS_MIN_DISTANCE,
-      )
+    const yawTo = yawOf(-n.x, -n.z)
+    const right = rightOf(yawTo)
+    const spot = settleBeside(
+      new Vector3(
+        center.x + n.x * viewingDistance,
+        cameraElevation,
+        center.z + n.z * viewingDistance,
+      ),
+      new Vector3(right.x, 0, right.z),
+    )
 
-      // Calculate target camera position: offset from artwork along its normal
-      const artworkPos = new Vector3(position.x, position.y, position.z)
-      const normalVec = new Vector3(normal.x, normal.y, normal.z).normalize()
-
-      // The glide flies straight there and checks no walls on the way, so the
-      // spot itself must be inside the room: stop short of the first wall behind
-      // the viewer, as far from it as walking would.
-      const roomMeshes = [
-        ...(wallRefs.current ?? []),
-        ...(windowRefs.current ?? []),
-        ...(glassRefs.current ?? []),
-      ]
-        .map((ref) => ref.current)
-        .filter(Boolean) as Mesh[]
-      const behind = new Raycaster(
-        artworkPos.clone().add(normalVec.clone().multiplyScalar(0.05)),
-        normalVec,
-        0,
-        optimalDistance + collisionDistance,
-      ).intersectObjects(roomMeshes, true)[0]
-      const roomLimit = behind ? behind.distance + 0.05 - collisionDistance : Infinity
-      const screenLimit = aspectRatio < 1 ? MAX_TALL_FOCUS_DISTANCE : Infinity
-      const viewingDistance = Math.max(
-        FOCUS_MIN_DISTANCE,
-        Math.min(optimalDistance, roomLimit, screenLimit),
-      )
-      // Where the room (or a tall screen's limit) stops the camera short, a wider
-      // lens still frames the whole work — an upright phone, mostly: a 2 m work
-      // wants ~5 m there. The glide also undoes any pinch: the work arrives
-      // framed, at the room's lens.
-      focusZoomFrom.current = lensZoom.current
-      focusZoomTo.current = Math.max(MIN_FOCUS_ZOOM, Math.min(1, viewingDistance / optimalDistance))
-
-      // Camera positioned in front of artwork at the calculated distance
-      const cameraTargetPos = artworkPos
-        .clone()
-        .add(normalVec.clone().multiplyScalar(viewingDistance))
-      // Move camera to artwork center Y for perfect centering
-      cameraTargetPos.y = position.y
-
-      // Look straight at the artwork center
-      const lookAtTarget = new Vector3(position.x, position.y, position.z)
-
-      targetPosition.current = cameraTargetPos
-      targetLookAt.current = lookAtTarget
-      // Capture start state for smooth interpolation
-      startPosition.current = camera.position.clone()
-      startQuaternion.current = camera.quaternion.clone()
-      animationProgress.current = 0
-      isAnimating.current = true
-      isReturningToElevation.current = false
+    const turn = wrapAngle(yawTo - yaw.current)
+    const distance = Math.hypot(spot.x - camera.position.x, spot.z - camera.position.z)
+    const interrupted = !!glide.current
+    turnVelocity.current = 0
+    tiltVelocity.current = 0
+    glide.current = {
+      kind: 'focus',
+      fromX: camera.position.x,
+      fromZ: camera.position.z,
+      toX: spot.x,
+      toZ: spot.z,
+      elapsed: 0,
+      // Long enough for the walk and for the turn: half a turn takes the longest glide.
+      duration: Math.max(
+        glideDuration(distance, FOCUS_GLIDE_MIN_S),
+        (Math.abs(turn) / Math.PI) * GLIDE_MAX_S,
+      ),
+      ease: interrupted ? easeOutCubic : easeInOutCubic,
+      yawFrom: yaw.current,
+      yawTo: yaw.current + turn,
+      pitchFrom: pitch.current,
+      shiftFrom: shift.current,
+      shiftTo: lensShiftFor(spot, yawTo, center),
+      view: { artworkId: focusTarget.artworkId, yaw: yawTo, depth: viewingDistance },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusTarget])
 
-  const onMouseMove = useCallback(
-    (event: MouseEvent) => handleMouseMove(mouseState, setTick)(event),
-    [mouseState],
+  // ---------------------------------------------------------------------------
+  // Walking where a tap lands
+
+  const raycaster = useRef(new Raycaster())
+  const pointer = useRef(new Vector2())
+
+  /** The ray from the eye through a point on the screen (client px), as the visitor sees it. */
+  const rayAt = useCallback(
+    (x: number, y: number): Ray => {
+      const rect = gl.domElement.getBoundingClientRect()
+      pointer.current.set(
+        ((x - rect.left) / rect.width) * 2 - 1,
+        -((y - rect.top) / rect.height) * 2 + 1,
+      )
+      // The camera's own projection, lens shift and all, so a tap lands where it is seen.
+      raycaster.current.setFromCamera(pointer.current, camera)
+      return raycaster.current.ray
+    },
+    [gl, camera],
   )
-  const onMouseDown = useCallback(
-    (event: MouseEvent) => attachMouseHandlers(onMouseMove, mouseState)(event),
-    [onMouseMove],
+
+  /**
+   * Whether an object that answers taps (a work, a text, a sound) is the first thing along a ray,
+   * before the floor and the walls: its own tap handles it, the room does nothing.
+   */
+  const objectFirst = useCallback(
+    (ray: Ray) => {
+      const objects = getThree().internal.interaction
+      if (objects.length === 0) return false
+      raycaster.current.ray.copy(ray)
+      raycaster.current.near = 0
+      raycaster.current.far = Infinity
+      const object = raycaster.current.intersectObjects(objects, true)[0]
+      if (!object) return false
+      const wall = firstRoomHit(ray.origin, ray.direction, object.distance, meshesOfRoom())
+      const toFloor =
+        ray.direction.y < -1e-4 ? (FLOOR_Y - ray.origin.y) / ray.direction.y : Infinity
+      return !wall && object.distance <= toFloor + 0.01
+    },
+    [getThree, meshesOfRoom],
   )
-  const onMouseUp = useCallback(
-    (event: MouseEvent) => detachMouseHandlers(onMouseMove, mouseState)(event),
-    [onMouseMove],
+
+  const dismissHint = useCallback(() => {
+    if (hintPhase.current === 'done') return
+    if (hintPhase.current === 'showing') {
+      // Fades out (`leaving`), then goes.
+      setHint((shown) => shown && { ...shown, leaving: true })
+      setTimeout(() => setHint(null), 700)
+    }
+    hintPhase.current = 'done'
+  }, [])
+
+  /** Glides to a spot on the floor, keeping the heading, the head levelling as it goes. */
+  const walkTo = useCallback(
+    (spot: Vector3, now: number) => {
+      leaveArtworkView()
+      const interrupted = !!glide.current
+      glide.current = {
+        kind: 'walk',
+        fromX: camera.position.x,
+        fromZ: camera.position.z,
+        toX: spot.x,
+        toZ: spot.z,
+        elapsed: 0,
+        duration: glideDuration(Math.hypot(spot.x - camera.position.x, spot.z - camera.position.z)),
+        // Taken over from a glide already moving, it starts at speed rather than from rest.
+        ease: interrupted ? easeOutCubic : easeInOutCubic,
+        yawFrom: yaw.current,
+        yawTo: yaw.current,
+        pitchFrom: pitch.current,
+        shiftFrom: shift.current,
+        shiftTo: NO_SHIFT,
+        view: null,
+      }
+      pinchPending.current = 0
+      marks.current.tap = { x: spot.x, z: spot.z, at: now }
+      dismissHint()
+    },
+    [camera, leaveArtworkView, dismissHint],
   )
-  // Fingers on the room: one slides to walk or turn, two pinch to zoom or slide
-  // to step aside (see touchGestures). A turn rides the mouse drag's own path,
-  // momentum and all.
+
+  /** A tap or click on the room: walk where it landed, unless a work there answers it. */
+  const handleTap = useCallback(
+    (x: number, y: number, now: number) => {
+      const ray = rayAt(x, y)
+      if (objectFirst(ray)) return
+      const spot = tapDestination(ray.clone(), camera.position.clone())
+      if (spot) walkTo(spot, now)
+    },
+    [rayAt, objectFirst, camera, walkTo],
+  )
+
+  // ---------------------------------------------------------------------------
+  // Input
+
+  const onMouseDown = useCallback((event: MouseEvent) => {
+    if (performance.now() - lastTouchAt.current < TOUCH_ECHO_MS) return
+    // A press on a UI panel over the room is the panel's.
+    const target = event.target as HTMLElement | null
+    if (target?.closest('[data-panel-overlay]')) return
+    if (event.button !== 0 || !mouseState.current) return
+    // A hand on the room stops a turn still carrying on from the last drag.
+    turnVelocity.current = 0
+    tiltVelocity.current = 0
+    pressMouse(
+      mouseState.current,
+      event.clientX,
+      event.clientY,
+      event.target instanceof HTMLCanvasElement,
+      performance.now(),
+    )
+  }, [])
+  const onMouseMove = useCallback((event: MouseEvent) => {
+    if (performance.now() - lastTouchAt.current < TOUCH_ECHO_MS || !mouseState.current) return
+    moveMouse(
+      mouseState.current,
+      event.clientX,
+      event.clientY,
+      event.target instanceof HTMLCanvasElement,
+    )
+  }, [])
+  const onMouseUp = useCallback((event: MouseEvent) => {
+    if (event.button !== 0 || !mouseState.current) return
+    if (performance.now() - lastTouchAt.current < TOUCH_ECHO_MS) {
+      mouseState.current.pressed = false
+      return
+    }
+    const click = releaseMouse(mouseState.current, performance.now())
+    if (click) pendingTap.current = click
+  }, [])
+
   const onTouchStart = useCallback((event: TouchEvent) => {
-    beginTouch(touchGesture.current, event, lensZoom.current)
-    // A finger landing stops a walk or a step still easing out from the last.
-    if (touching(touchGesture.current)) {
-      walkVelocity.current = 0
-      stepVelocity.current = 0
-    }
+    lastTouchAt.current = performance.now()
+    beginTouch(touchGesture.current, event, performance.now())
+    // A finger landing stops a pinch's step, a turn or a slide along the wall still easing out.
+    pinchPending.current = 0
+    panPending.current = 0
+    panVelocity.current = 0
+    turnVelocity.current = 0
+    tiltVelocity.current = 0
   }, [])
-  const onTouchMove = useCallback((event: TouchEvent) => {
-    const { walk, step, turn, zoom } = moveTouch(touchGesture.current, event)
-    touchWalk.current += walk
-    touchStep.current += step
-    // Zoomed in, the same slide turns less, so the room still follows the finger.
-    if (turn && mouseState.current) mouseState.current.deltaX += turn / lensZoom.current
-    if (zoom !== null) {
-      // Never wider than the lens the pinch began from, nor the room's own.
-      const widest = Math.min(1, touchGesture.current.zoomFrom)
-      lensZoom.current = Math.max(widest, Math.min(MAX_PINCH_ZOOM, zoom))
-    }
-  }, [])
+  const onTouchMove = useCallback(
+    (event: TouchEvent) => {
+      lastTouchAt.current = performance.now()
+      const { walk, grabX, grabY, leave } = moveTouch(touchGesture.current, event)
+      pinchPending.current += walk
+      // A phone, in front of a work: a slide that set off sideways walks along the wall, the work
+      // staying square on (AR-177, owner, 2026-11-05: phones only, "otherwise we have no way to see the next
+      // artwork"). Any other move looks around as usual, and steps back from the work.
+      const gesture = touchGesture.current
+      if (latest.current.isPhone && gesture.looking && gesture.sideways && currentView()) {
+        panGrab.current += grabX
+        return
+      }
+      if (leave) leaveAsked.current = true
+      // A finger grabs the room as the mouse does.
+      touchGrab.current.x += grabX
+      touchGrab.current.y += grabY
+    },
+    [currentView],
+  )
   const onTouchEnd = useCallback((event: TouchEvent) => {
-    endTouch(touchGesture.current, event)
+    lastTouchAt.current = performance.now()
+    const tap = endTouch(touchGesture.current, event, performance.now())
+    if (tap) pendingTap.current = tap
   }, [])
+
   const onKeyDown = useCallback(
-    (event: KeyboardEvent) => handleKeyPress(keysPressed, event.key, true),
-    [],
+    (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase()
+      const target = event.target as HTMLElement | null
+      const typing = !!target?.closest('input, textarea, select, [contenteditable="true"]')
+      // In front of a work, Escape steps back; every walking key walks on (and leaves the work).
+      // Which work comes next is the visitor's choice: nothing steps along the wall for them
+      // (AR-177, owner, 2026-11-05).
+      if (
+        !typing &&
+        key === 'escape' &&
+        currentView() &&
+        !latest.current.isExitPromptOpen &&
+        !latest.current.isArtworkPanelOpen
+      ) {
+        leaveArtworkView()
+        return
+      }
+      handleKeyPress(keysPressed, event.key, true)
+    },
+    [currentView, leaveArtworkView],
   )
   const onKeyUp = useCallback(
     (event: KeyboardEvent) => handleKeyPress(keysPressed, event.key, false),
     [],
   )
-  // Trackpad two-finger horizontal swipe → camera rotation
+  // A swipe on the Magic Mouse (one finger) or trackpad (two): turn, walk, or walk along a wall
   const onWheel = useCallback(
     (event: WheelEvent) => {
       // Ignore if event is on a UI panel
@@ -364,39 +600,45 @@ const MainCamera = () => {
       if (target?.closest('[data-panel-overlay]')) return
 
       event.preventDefault()
+      if (!mouseState.current) return
 
-      // Horizontal swipe → rotation, vertical swipe → movement
-      if (mouseState.current) {
-        if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
-          // Horizontal dominant: rotate
-          mouseState.current.deltaX += event.deltaX * -0.5
-        } else if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-          // Vertical dominant: walk forward/backward
-          mouseState.current.wheelZ = (mouseState.current.wheelZ ?? 0) + event.deltaY * 0.002
-        }
-        setTick((tick) => tick + 1)
-      }
+      // The swipe's way is read from its last moments (`readSwipe`), so a turn's momentum never keeps
+      // the next swipe from walking, nor a walk's from turning; a wobble midway changes nothing.
+      const { grabX, along, walkY, leave } = readSwipe(
+        swipe.current,
+        event.deltaX,
+        event.deltaY,
+        performance.now(),
+        !!currentView(),
+      )
+      // The trackpad brings its own momentum: a turn carrying on from a drag gives way to it.
+      turnVelocity.current = 0
+      tiltVelocity.current = 0
+      if (leave) leaveAsked.current = true
+      // In front of a work, sideways walks along the wall (as a phone's slide does); else it turns.
+      if (along) panGrab.current += grabX
+      else mouseState.current.grabX += grabX
+      mouseState.current.wheelZ += walkY * 0.002
     },
-    [mouseState],
+    [currentView],
   )
 
   useEffect(() => {
-    const attachHandlers = () => {
-      window.addEventListener('keydown', onKeyDown)
-      window.addEventListener('keyup', onKeyUp)
-      window.addEventListener('mousedown', onMouseDown)
-      window.addEventListener('mouseup', onMouseUp)
-      window.addEventListener('touchstart', onTouchStart, { passive: true })
-      window.addEventListener('touchmove', onTouchMove, { passive: true })
-      window.addEventListener('touchend', onTouchEnd, { passive: true })
-      window.addEventListener('touchcancel', onTouchEnd, { passive: true })
-      window.addEventListener('wheel', onWheel, { passive: false })
-    }
-
-    const detachHandlers = () => {
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    window.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
@@ -404,36 +646,90 @@ const MainCamera = () => {
       window.removeEventListener('touchcancel', onTouchEnd)
       window.removeEventListener('wheel', onWheel)
     }
+  }, [
+    onKeyDown,
+    onKeyUp,
+    onMouseDown,
+    onMouseMove,
+    onMouseUp,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
+    onWheel,
+  ])
 
-    // Every device, every size (AR-172): this used to stand down below 1024px,
-    // when phones and tablets were never let into the room.
-    attachHandlers()
-    return detachHandlers
-  }, [onKeyDown, onKeyUp, onMouseDown, onMouseUp, onTouchStart, onTouchMove, onTouchEnd, onWheel])
+  // Leaving the room puts the cursor back.
+  useEffect(
+    () => () => {
+      gl.domElement.style.cursor = ''
+    },
+    [gl],
+  )
 
-  useFrame(({ camera, invalidate }, delta) => {
-    const cam = camera as PerspectiveCamera
+  /** Adopts a heading something else gave the camera (`lookAt`): level, and nothing under way. */
+  const adoptHeading = (cam: PerspectiveCamera) => {
+    const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
+    yaw.current = yawTarget.current = yawOf(forward.x, forward.z)
+    pitch.current = pitchTarget.current = 0
+    turnVelocity.current = 0
+    tiltVelocity.current = 0
+    if (glide.current?.kind === 'focus') dispatch(clearFocusTarget())
+    glide.current = null
+    artworkView.current = null
+    shift.current = NO_SHIFT
+  }
 
-    cam.fov = zoomedFov(cameraFOV, lensZoom.current)
-    cam.updateProjectionMatrix()
+  /** The lens as it should be this frame: the eye's own, shifted in Artwork View. */
+  const applyLens = (cam: PerspectiveCamera, width: number, height: number) => {
+    cam.fov = cameraFOV
+    if (isShifted(shift.current) && width > 0 && height > 0) {
+      const offset = viewOffsetFor(shift.current, cam.fov, width, height)
+      cam.setViewOffset(width, height, offset.x, offset.y, width, height)
+    } else if (cam.view?.enabled) {
+      cam.clearViewOffset()
+    } else {
+      cam.updateProjectionMatrix()
+    }
+  }
+
+  useFrame((state, delta) => {
+    const cam = state.camera as PerspectiveCamera
+    const { width, height } = state.size
+    const dt = Math.min(delta, MAX_FRAME_DELTA)
+    const frames = dt * 60
+    const now = state.clock.elapsedTime
+
+    // Something else turned the camera since the last frame: carry on from its heading.
+    if (!cam.quaternion.equals(applied.current)) adoptHeading(cam)
+
+    const finish = () => {
+      cam.rotation.set(pitch.current, yaw.current, 0, 'YXZ')
+      applied.current.copy(cam.quaternion)
+      applyLens(cam, width, height)
+    }
 
     // Freeze the visitor while the "Leave the exhibition?" dialog is up.
     // Window-level key and mouse listeners keep firing behind a modal, so
     // without this the scene drifts under the dialog while they read it.
     // Keys held when it opened are cleared too: their keyup may land on the
     // dialog and never reach us, which would leave the visitor walking the
-    // moment it closes.
+    // moment it closes. A walk under way stops where it is.
     if (isExitPromptOpen) {
       keysPressed.current = {}
-      rotationVelocity.current = 0
-      touchWalk.current = 0
-      walkVelocity.current = 0
-      touchStep.current = 0
-      stepVelocity.current = 0
+      yawTarget.current = yaw.current
+      pitchTarget.current = pitch.current
+      turnVelocity.current = 0
+      tiltVelocity.current = 0
+      pinchPending.current = 0
+      touchGrab.current = { x: 0, y: 0 }
+      pendingTap.current = null
+      if (glide.current?.kind === 'walk') glide.current = null
       if (mouseState.current) {
-        mouseState.current.deltaX = 0
         mouseState.current.wheelZ = 0
+        mouseState.current.grabX = 0
+        mouseState.current.grabY = 0
       }
+      finish()
       return
     }
 
@@ -447,9 +743,10 @@ const MainCamera = () => {
         const cameraPosition = lookAt.clone().add(offset)
         cam.position.set(cameraPosition.x, cameraElevation, cameraPosition.z)
         cam.lookAt(lookAt)
-        cam.updateProjectionMatrix()
+        adoptHeading(cam)
         initialPositionSet.current = true
       }
+      finish()
       return
     }
 
@@ -472,7 +769,7 @@ const MainCamera = () => {
 
         cam.position.set(cameraPosition.x, cameraElevation, cameraPosition.z)
         cam.lookAt(lookAt)
-        cam.updateProjectionMatrix()
+        adoptHeading(cam)
         initialPositionSet.current = true
       } else if (initialCameraPosition && initialCameraDirection) {
         // GLB initialPoint data arrived — set position (also handled by useLayoutEffect)
@@ -480,35 +777,70 @@ const MainCamera = () => {
         const [dx, dz] = initialCameraDirection
         cam.position.set(px, cameraElevation, pz)
         cam.lookAt(new Vector3(px + dx, cameraElevation, pz + dz))
-        cam.updateProjectionMatrix()
+        adoptHeading(cam)
         initialPositionSet.current = true
       } else if (spaceConfig.defaultCameraPosition) {
         // Fallback: static space config
         const [x, z] = spaceConfig.defaultCameraPosition
         cam.position.set(x, cameraElevation, z)
         cam.lookAt(new Vector3(x, cameraElevation, z - 5))
-        cam.updateProjectionMatrix()
+        adoptHeading(cam)
         initialPositionSet.current = true
       }
       // If none matched, skip — don't default to (0,0,0), wait for data
+      if (!initialPositionSet.current) return
+      finish()
       return
     }
 
-    // Smoothly return to default elevation only on lateral movement (turning/strafing)
-    // Forward/backward movement keeps the focused elevation
-    const hasLateralInput =
-      keysPressed.current?.['a'] ||
-      keysPressed.current?.['d'] ||
-      keysPressed.current?.['arrowleft'] ||
-      keysPressed.current?.['arrowright'] ||
-      touchStep.current !== 0 ||
-      stepVelocity.current !== 0 ||
-      Math.abs(mouseState.current?.deltaX ?? 0) > 0.5
-
-    if (hasLateralInput && Math.abs(cam.position.y - cameraElevation) > 0.01) {
-      isReturningToElevation.current = true
+    // Every entry (AR-177, owner, 2026-11-05: "always"): a word on how to walk, a little after the room
+    // appears; gone at the first walk, or after a while. It waits while a notice or the guide
+    // covers the room (the Sound & Video notice opens on entry), and its time runs only while seen.
+    if (hintPhase.current === 'unchecked') {
+      hintPhase.current = 'due'
+      hintAt.current = now + 1.2
+    }
+    if (
+      (hintPhase.current === 'due' || hintPhase.current === 'showing') &&
+      now - uncoveredCheckedAt.current > 0.25
+    ) {
+      uncoveredCheckedAt.current = now
+      const rect = gl.domElement.getBoundingClientRect()
+      const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+      roomUncovered.current = top === gl.domElement
+    }
+    if (hintPhase.current === 'due' && now >= hintAt.current && roomUncovered.current) {
+      hintPhase.current = 'showing'
+      hintSeen.current = 0
+      // On the floor's nearest stretch the eye sees (the screen's bottom edge is that far ahead,
+      // eye height over the half lens), a little beyond it, or short of a wall nearer than that.
+      const ahead = new Vector3(-Math.sin(yaw.current), 0, -Math.cos(yaw.current))
+      const nearestSeen = cameraElevation / Math.tan((cameraFOV * Math.PI) / 360)
+      const wanted = Math.max(HINT_DISTANCE, nearestSeen + HINT_BEYOND)
+      const wall = firstRoomHit(cam.position, ahead, wanted + WALL_CLEARANCE, meshesOfRoom())
+      const reach = wall ? Math.max(1, wall.distance - WALL_CLEARANCE) : wanted
+      setHint({
+        x: cam.position.x + ahead.x * reach,
+        z: cam.position.z + ahead.z * reach,
+        // Anywhere in the room moves you: the floor walks there, a wall walks up to it (AR-177, owner,
+        // 2026-11-05).
+        lines: isTouch
+          ? [
+              { gesture: 'tap', text: 'Tap anywhere in the room to move' },
+              { gesture: 'drag-finger', text: 'Drag to look around' },
+            ]
+          : [
+              { gesture: 'click', text: 'Click anywhere in the room to move' },
+              { gesture: 'drag-mouse', text: 'Drag to look around' },
+            ],
+      })
+    } else if (hintPhase.current === 'showing') {
+      if (roomUncovered.current) hintSeen.current += dt
+      if (hintSeen.current > HINT_MAX_S) dismissHint()
     }
 
+    // When the Eye Level slider changes, the camera settles at the new height. Nothing else moves
+    // it up or down: Artwork View frames a high work with the lens, not by rising.
     if (isReturningToElevation.current) {
       cam.position.y += (cameraElevation - cam.position.y) * 0.03
       if (Math.abs(cam.position.y - cameraElevation) < 0.005) {
@@ -517,167 +849,223 @@ const MainCamera = () => {
       }
     }
 
-    // Handle focus animation
-    if (
-      isAnimating.current &&
-      targetPosition.current &&
-      targetLookAt.current &&
-      startPosition.current &&
-      startQuaternion.current
-    ) {
-      // Advance progress based on real time
-      animationProgress.current = Math.min(1, animationProgress.current + delta / FOCUS_DURATION)
-      const t = easeOutCubic(animationProgress.current)
+    const mouse = mouseState.current
 
-      // Smoothly interpolate position from start to target
-      cam.position.lerpVectors(startPosition.current, targetPosition.current, t)
+    // A tap or click waiting since the last frame: the camera is still where the visitor saw it.
+    if (pendingTap.current) {
+      const { x, y } = pendingTap.current
+      pendingTap.current = null
+      handleTap(x, y, now)
+    }
 
-      // Compute target quaternion (what the camera would look like at the target)
-      const tempCamPos = cam.position.clone()
-      cam.position.copy(targetPosition.current)
-      cam.lookAt(targetLookAt.current)
-      const targetQuat = cam.quaternion.clone()
-      cam.position.copy(tempCamPos)
+    // Anything that looks around or walks steps back from the work.
+    const keyWalking = MOVEMENT_KEYS.some((key) => keysPressed.current?.[key])
+    if (leaveAsked.current || keyWalking || (mouse && dragging(mouse))) {
+      leaveAsked.current = false
+      if (currentView()) leaveArtworkView()
+    }
 
-      // Smoothly interpolate rotation from start to target
-      cam.quaternion.slerpQuaternions(startQuaternion.current, targetQuat, t)
-      // And the lens, to the one that frames the work from there.
-      lensZoom.current = focusZoomFrom.current + (focusZoomTo.current - focusZoomFrom.current) * t
-
-      // Check if animation is complete
-      if (animationProgress.current >= 1) {
-        cam.position.copy(targetPosition.current)
-        cam.lookAt(targetLookAt.current)
-
-        // Clean up
-        isAnimating.current = false
-        targetPosition.current = null
-        targetLookAt.current = null
-        startPosition.current = null
-        startQuaternion.current = null
-        animationProgress.current = 0
-        dispatch(clearFocusTarget())
+    // The glide in progress.
+    const g = glide.current
+    if (g) {
+      g.elapsed += dt
+      const t = Math.min(1, g.elapsed / g.duration)
+      const e = g.ease(t)
+      const x = g.fromX + (g.toX - g.fromX) * e
+      const z = g.fromZ + (g.toZ - g.fromZ) * e
+      if (g.kind === 'walk') {
+        // The way there was checked before setting off; this is the last word, should a corner
+        // the straight line grazed come too near: the walk ends at the last safe point.
+        const step = new Vector3(x - cam.position.x, 0, z - cam.position.z)
+        if (detectCollisions(cam, step, meshesOfRoom(), collisionDistance)) glide.current = null
+        else cam.position.set(x, cam.position.y, z)
+      } else {
+        cam.position.set(x, cam.position.y, z)
+        yaw.current = yawTarget.current = g.yawFrom + (g.yawTo - g.yawFrom) * e
+        // A focus glide turns the camera itself: a drag meanwhile is dropped, not saved up.
+        if (mouse) {
+          mouse.grabX = 0
+          mouse.grabY = 0
+        }
+        touchGrab.current = { x: 0, y: 0 }
       }
-
-      // Skip normal controls during animation — and drop what a finger asked
-      // for meanwhile, rather than lurching once the glide ends.
-      touchWalk.current = 0
-      walkVelocity.current = 0
-      touchStep.current = 0
-      stepVelocity.current = 0
-      return
+      pitch.current = pitchTarget.current = g.pitchFrom * (1 - e)
+      shift.current = lerpShift(g.shiftFrom, g.shiftTo, e)
+      if (t >= 1 && glide.current === g) {
+        glide.current = null
+        if (g.view) {
+          yaw.current = yawTarget.current = g.yawTo
+          artworkView.current = g.view
+          dispatch(clearFocusTarget())
+        }
+      }
+    } else if (!artworkView.current && isShifted(shift.current)) {
+      // Stepped back from a work some other way: the lens comes home, gently.
+      const keep = Math.pow(1 - SHIFT_RELEASE_RATE, frames)
+      shift.current = { x: shift.current.x * keep, y: shift.current.y * keep }
+      if (!isShifted(shift.current)) shift.current = NO_SHIFT
     }
 
-    if (Math.abs(mouseState.current?.deltaX ?? 0) > 0.5) {
-      rotationVelocity.current += (mouseState.current?.deltaX ?? 0) * 0.002
-    }
-
-    rotationVelocity.current *= dampingFactor
-    const rotationDelta = -rotationVelocity.current
-    cam.rotateY(rotationDelta)
+    // Turning: a drag, a finger, the trackpad's swipe, each grabbing the room. Where the head is
+    // headed; the view eases after it below, every frame alike. A pixel dragged turns the head by
+    // the angle a pixel spans at the middle of this screen with this lens (`LOOK_GRAB_SCALE` of it).
+    const grabRate =
+      height > 0 ? (Math.tan((cameraFOV * Math.PI) / 360) / (height / 2)) * LOOK_GRAB_SCALE : 0
+    // A finger turns at least `MIN_TOUCH_SLIDE_TURN` for a slide across the screen.
+    const touchTurnRate = width > 0 ? Math.max(grabRate, MIN_TOUCH_SLIDE_TURN / width) : grabRate
+    const turned = (mouse?.grabX ?? 0) * grabRate + touchGrab.current.x * touchTurnRate
+    yawTarget.current += turned
 
     // Frame-rate independent: `moveSpeed` is the per-frame distance at 60fps,
     // so scale it by how long this frame actually took. Clamped, or a hitch
     // becomes one huge step that tunnels through collision.
-    const frameSpeed = moveSpeed * Math.min(delta, MAX_FRAME_DELTA) * 60
+    const frameSpeed = moveSpeed * frames
     const moveVector = calculateMovementVector(keysPressed, frameSpeed, cam)
 
     // Add wheel-based forward/backward movement (clamped to prevent wall pass-through)
-    if (mouseState.current?.wheelZ) {
-      const forward = new Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
-      forward.y = 0
-      forward.normalize()
-      const clampedWheel = Math.max(-MAX_STEP, Math.min(MAX_STEP, -mouseState.current.wheelZ))
-      moveVector.add(forward.clone().multiplyScalar(clampedWheel))
-      mouseState.current.wheelZ = 0
+    const forward = new Vector3(-Math.sin(yaw.current), 0, -Math.cos(yaw.current))
+    if (mouse?.wheelZ) {
+      const clampedWheel = Math.max(-MAX_STEP, Math.min(MAX_STEP, -mouse.wheelZ))
+      moveVector.addScaledVector(forward, clampedWheel)
+      mouse.wheelZ = 0
     }
 
-    // Touch walking, and two fingers' step aside (AR-176): while the fingers are
-    // down, exactly the distance they slid; once they lift, the slide's speed
-    // easing out. Each along the floor: forward, or to the camera's right.
-    const glide = (
-      asked: number,
-      velocity: { current: number },
-      sliding: boolean,
-      decay: number,
-    ) => {
-      if (sliding) {
-        // Smoothed, because move events and frames don't arrive in step: a frame
-        // that saw no move would otherwise zero the speed the lift glides on.
-        velocity.current = velocity.current * 0.5 + asked * 0.5
-        return asked
+    // A pinch's step: the distance the fingers spread, walked a share each frame, so it glides
+    // evenly however the touch events fall, and eases to a stop once they lift. Along the heading,
+    // never the tilt.
+    if (pinchPending.current !== 0) {
+      const share = 1 - Math.exp(-dt / PINCH_SMOOTHING_S)
+      const pinchStep = clamp(pinchPending.current * share, -MAX_STEP, MAX_STEP)
+      pinchPending.current -= pinchStep
+      if (Math.abs(pinchPending.current) < 0.0005) pinchPending.current = 0
+      moveVector.addScaledVector(forward, pinchStep)
+    }
+
+    // In Artwork View, the walk along the wall: a phone's sideways slide, or a Magic Mouse or
+    // trackpad sideways swipe. A pixel slid moves the eye the width a pixel spans on the wall at this
+    // distance, so the wall keeps (nearly, `LOOK_GRAB_SCALE`) under the finger: a slide right brings
+    // the wall right, the eye steps left. Eased as every look is; a phone's slide carries on, slowing,
+    // once the finger lifts (a swipe has the Mac's own momentum). Not while the glide to the work is
+    // arriving.
+    const view = artworkView.current
+    if (view && !glide.current) {
+      const asked = -panGrab.current * grabRate * view.depth
+      const sliding = looking(touchGesture.current) && touchGesture.current.sideways
+      if (sliding && dt > 0) {
+        const read = 1 - Math.exp(-dt / LOOK_VELOCITY_SMOOTHING_S)
+        panVelocity.current += (asked / dt - panVelocity.current) * read
+        panVelocity.current = clamp(panVelocity.current, -MAX_PAN_SPEED, MAX_PAN_SPEED)
+      } else if (panVelocity.current !== 0) {
+        panPending.current += panVelocity.current * dt
+        panVelocity.current *= Math.exp(-dt / LOOK_INERTIA_S)
+        if (Math.abs(panVelocity.current) < 0.01) panVelocity.current = 0
       }
-      const carried = velocity.current
-      velocity.current *= Math.pow(decay, Math.min(delta, MAX_FRAME_DELTA) * 60)
-      if (Math.abs(velocity.current) < 0.0005) velocity.current = 0
-      return carried
-    }
-    const alongFloor = (local: Vector3, meters: number) => {
-      if (meters === 0) return
-      local.applyQuaternion(cam.quaternion)
-      local.y = 0
-      local.normalize()
-      moveVector.add(local.multiplyScalar(Math.max(-MAX_STEP, Math.min(MAX_STEP, meters))))
-    }
-    const mode = touchGesture.current.mode
-    alongFloor(
-      new Vector3(0, 0, -1),
-      glide(touchWalk.current, walkVelocity, mode === 'slide', TOUCH_GLIDE_DECAY),
-    )
-    alongFloor(
-      new Vector3(1, 0, 0),
-      glide(touchStep.current, stepVelocity, mode === 'step', STEP_GLIDE_DECAY),
-    )
-    touchWalk.current = 0
-    touchStep.current = 0
-
-    const wallRefsArray = wallRefs.current ?? []
-    const windowRefsArray = windowRefs.current ?? []
-    const glassRefsArray = glassRefs.current ?? []
-
-    if (
-      !detectCollisions(
-        cam,
-        moveVector,
-        wallRefsArray,
-        windowRefsArray,
-        glassRefsArray,
-        collisionDistance,
-      )
-    ) {
-      cam.position.add(moveVector)
+      panPending.current += asked
+      if (panPending.current !== 0) {
+        const step = clamp(
+          panPending.current * (1 - Math.exp(-dt / LOOK_SMOOTHING_S)),
+          -MAX_STEP,
+          MAX_STEP,
+        )
+        panPending.current -= step
+        if (Math.abs(panPending.current) < 0.0005) panPending.current = 0
+        const along = rightOf(view.yaw)
+        moveVector.add(new Vector3(along.x * step, 0, along.z * step))
+      }
     } else {
-      // Walked into a wall: a glide stops there rather than pressing on.
-      walkVelocity.current = 0
-      stepVelocity.current = 0
+      panPending.current = 0
+      panVelocity.current = 0
+    }
+    panGrab.current = 0
+
+    if (moveVector.lengthSq() > 0) {
+      // Walking another way takes over from a glide.
+      if (glide.current) {
+        if (glide.current.kind === 'focus') dispatch(clearFocusTarget())
+        glide.current = null
+      }
+      if (detectCollisions(cam, moveVector, meshesOfRoom(), collisionDistance)) {
+        // Walked into a wall: a pinch's glide, or a slide along the wall, stops there.
+        pinchPending.current = 0
+        panPending.current = 0
+        panVelocity.current = 0
+      } else {
+        cam.position.add(moveVector)
+      }
     }
 
-    if (mouseState.current) {
-      mouseState.current.deltaX = 0
+    // The head: it tilts only while the visitor stands still, and levels as soon as they move.
+    const moving = !!glide.current || moveVector.lengthSq() > 0 || pinchPending.current !== 0
+    const tilt = ((mouse?.grabY ?? 0) + touchGrab.current.y) * grabRate
+    if (mouse) mouse.grabY = 0
+    touchGrab.current = { x: 0, y: 0 }
+    let tilted = 0
+    if (!moving && tilt !== 0) {
+      const before = pitchTarget.current
+      pitchTarget.current = clamp(pitchTarget.current + tilt, -PITCH_LIMIT, PITCH_LIMIT)
+      tilted = pitchTarget.current - before
+    } else if (moving && !glide.current && pitchTarget.current !== 0) {
+      pitchTarget.current *= Math.pow(1 - PITCH_LEVEL_RATE, frames)
+      if (Math.abs(pitchTarget.current) < 0.001) pitchTarget.current = 0
     }
 
-    // Walking on puts the room's own lens back, gently (a pinch, or the wider
-    // lens a glide in a shallow room needed). Turning keeps it.
-    if (lensZoom.current !== 1 && moveVector.lengthSq() > 0) {
-      lensZoom.current +=
-        (1 - lensZoom.current) * (1 - Math.pow(0.9, Math.min(delta, MAX_FRAME_DELTA) * 60))
-      if (Math.abs(lensZoom.current - 1) < 0.002) lensZoom.current = 1
+    // Inertia: while a drag looks around, its speed is read (eased, so a drag held still before
+    // letting go comes to rest); once it lets go, the head carries on at that speed, slowing.
+    const handOn = (!!mouse && dragging(mouse)) || looking(touchGesture.current)
+    if (handOn && dt > 0) {
+      const read = 1 - Math.exp(-dt / LOOK_VELOCITY_SMOOTHING_S)
+      turnVelocity.current += (turned / dt - turnVelocity.current) * read
+      tiltVelocity.current += (tilted / dt - tiltVelocity.current) * read
+      turnVelocity.current = clamp(turnVelocity.current, -MAX_LOOK_SPEED, MAX_LOOK_SPEED)
+      tiltVelocity.current = clamp(tiltVelocity.current, -MAX_LOOK_SPEED, MAX_LOOK_SPEED)
+    } else if (turnVelocity.current !== 0 || tiltVelocity.current !== 0) {
+      yawTarget.current += turnVelocity.current * dt
+      if (moving) {
+        tiltVelocity.current = 0
+      } else {
+        const before = pitchTarget.current
+        pitchTarget.current = clamp(before + tiltVelocity.current * dt, -PITCH_LIMIT, PITCH_LIMIT)
+        // At the tilt's limit the head stops there, rather than pressing on.
+        if (pitchTarget.current === before) tiltVelocity.current = 0
+      }
+      const keep = Math.exp(-dt / LOOK_INERTIA_S)
+      turnVelocity.current *= keep
+      tiltVelocity.current *= keep
+      if (Math.abs(turnVelocity.current) < LOOK_REST_SPEED) turnVelocity.current = 0
+      if (Math.abs(tiltVelocity.current) < LOOK_REST_SPEED) tiltVelocity.current = 0
     }
 
-    // Request next frame when there's active movement (frameloop="demand")
-    const hasMovement =
-      moveVector.lengthSq() > 0.00001 ||
-      Math.abs(rotationVelocity.current) > 0.0001 ||
-      walkVelocity.current !== 0 ||
-      stepVelocity.current !== 0 ||
-      isAnimating.current ||
-      isReturningToElevation.current
-    if (hasMovement) {
-      invalidate()
+    // The view follows the head's heading and tilt, eased over time: the same share of the way
+    // each frame for the same time passed, so it moves evenly however the input arrived.
+    const follow = 1 - Math.exp(-dt / LOOK_SMOOTHING_S)
+    yaw.current += (yawTarget.current - yaw.current) * follow
+    if (Math.abs(yawTarget.current - yaw.current) < 1e-5) yaw.current = yawTarget.current
+    pitch.current += (pitchTarget.current - pitch.current) * follow
+    if (Math.abs(pitchTarget.current - pitch.current) < 1e-5) pitch.current = pitchTarget.current
+
+    if (mouse) mouse.grabX = 0
+
+    // Under the mouse, where a click would walk (laptops and desktops): the ring follows it (when
+    // the floor shows rings), or over a work, the cursor says it can be clicked.
+    if (!isTouch && mouse && (mouse.hoverMoved || moving)) {
+      mouse.hoverMoved = false
+      let spot: Vector3 | null = null
+      let overObject = false
+      if (mouse.hover && !mouse.pressed) {
+        const ray = rayAt(mouse.hover.x, mouse.hover.y)
+        overObject = objectFirst(ray)
+        if (!overObject && SHOW_FLOOR_RINGS)
+          spot = tapDestination(ray.clone(), cam.position.clone())
+      }
+      marks.current.hover = spot ? { x: spot.x, z: spot.z } : null
+      const cursor = overObject ? 'pointer' : ''
+      if (gl.domElement.style.cursor !== cursor) gl.domElement.style.cursor = cursor
     }
+
+    finish()
   })
 
-  return null
+  return <FloorMarks marks={marks.current} hint={hint} />
 }
 
 export default MainCamera

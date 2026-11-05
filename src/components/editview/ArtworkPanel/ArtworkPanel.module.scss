@@ -16,13 +16,14 @@
   gap: var(--space-6);
   overflow-y: auto;
 
-  // Phones, and tablets held upright (AR-172): a 400px side panel would cover
-  // the room, or more than all of it, so it covers the screen instead and
-  // closes back to the room. A phone held sideways is wide but short, so it
-  // takes the same full-screen form, laid out across rather than down.
+  // Phones (AR-172): a 400px side panel would cover the room, or more than all
+  // of it, so it covers the screen instead and closes back to the room. A phone
+  // held sideways is wide but short, so it takes the same full-screen form, laid
+  // out across rather than down. A tablet has the room for the side panel, either
+  // way up, as a laptop does (AR-177).
   // On the visit page the screen's edges include the notch and the rounded corners
   // (`viewport-fit=cover`, AR-176): the panel's content keeps clear of them.
-  @media (max-width: 900px), (orientation: landscape) and (max-height: 500px) {
+  @media #{$phone-room} {
     width: 100%;
     height: 100dvh;
     padding: calc(var(--space-6) + env(safe-area-inset-top))

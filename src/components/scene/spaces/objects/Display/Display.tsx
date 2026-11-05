@@ -28,9 +28,9 @@ import { Support } from '@/components/scene/spaces/objects/Support'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
 import { isTouchDevice } from '@/hooks/useIsTouchDevice'
 import { savesPhoneMemory } from '@/components/scene/phoneMemory'
-import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
-import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
+import { useShowArtworkInfo } from '@/components/scene/spaces/objects/artworkInfo'
+import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
@@ -893,7 +893,6 @@ const ArtworkImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5 // Max pixels of mouse movement to qualify as click
 const CLICK_MAX_DURATION = 300 // Max ms between pointer down and up for a click
-const DOUBLE_CLICK_DELAY = 250 // Delay to wait for potential double-click
 
 const Display = ({ artwork }: DisplayProps) => {
   const {
@@ -1073,12 +1072,13 @@ const Display = ({ artwork }: DisplayProps) => {
   ])
 
   // Double click (or double tap) opens the info panel
+  const showArtworkInfo = useShowArtworkInfo()
   const showInfo = useCallback(() => {
     if (!isPlaceholdersShown && showArtworkInformation) {
-      dispatch(showArtworkPanel())
       dispatch(setCurrentArtwork(artwork.id))
+      showArtworkInfo()
     }
-  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation])
+  }, [dispatch, artwork.id, isPlaceholdersShown, showArtworkInformation, showArtworkInfo])
 
   const handleDoubleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
@@ -1121,7 +1121,7 @@ const Display = ({ artwork }: DisplayProps) => {
       }
       pointerDownPos.current = { x: event.clientX, y: event.clientY }
       pointerDownTime.current = Date.now()
-      taps.down(event.pointerType)
+      taps.down(event)
     },
     [taps],
   )
@@ -1142,7 +1142,7 @@ const Display = ({ artwork }: DisplayProps) => {
 
       // Check if this qualifies as a click (minimal movement + short duration)
       if (
-        !taps.pinched &&
+        !taps.ignored &&
         distance < taps.slop(CLICK_MAX_DISTANCE) &&
         duration < CLICK_MAX_DURATION
       ) {
@@ -1156,7 +1156,7 @@ const Display = ({ artwork }: DisplayProps) => {
         singleClickTimeout.current = setTimeout(() => {
           handleSingleClick()
           singleClickTimeout.current = null
-        }, DOUBLE_CLICK_DELAY)
+        }, DOUBLE_TAP_MS)
       }
     },
     [handleSingleClick, showInfo, taps],

@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Info,
   Mouse,
   Touchpad,
   Volume2,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
-import Monogram from '@/icons/monogram.svg'
+import TapIcon from '@/icons/gesture-tap.svg'
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
@@ -233,10 +232,6 @@ const ReviewBar = ({
   return <BakeAdminBar status={status} bakeHref={bakeHref} editorHref={editorHref} />
 }
 
-// Nav help is dismissed globally — once a visitor learns the controls,
-// they don't need to re-learn them per exhibition.
-const NAVIGATION_HELP_STORAGE_KEY = 'the-art-room:navigation-help-dismissed'
-
 // Media notice is dismissed PER exhibition: each exhibition with audio /
 // video needs to warn the visitor fresh, since sound is exhibition-
 // specific (the user has to know which rooms to turn the volume up for).
@@ -261,7 +256,6 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
   // keyboard, mouse and trackpad (AR-172).
   const isTouch = useIsTouchDevice()
   const [currentStep, setCurrentStep] = useState<ModalStep>('none')
-  const [helpDismissed, setHelpDismissed] = useState(false)
   const [mediaDismissed, setMediaDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
 
@@ -291,55 +285,39 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
     return () => window.removeEventListener(CONSENT_CHANGE_EVENT, onDecision)
   }, [])
 
-  // Auto-show on mount: help first, then media. Gated on `artworksReady`
-  // so navigating exhibition A → B doesn't trigger the media modal for B
-  // based on A's still-cached artworks in Redux.
+  // On entry, only the media notice, where there is sound or video. The controls guide no longer
+  // opens by itself: words on the floor teach the walk on every entry (MainCamera's hint), and the
+  // guide waits behind the help button. Gated on `artworksReady` so navigating exhibition A → B
+  // doesn't trigger the media modal for B based on A's still-cached artworks in Redux.
   useEffect(() => {
     if (!exhibitionId || !artworksReady || !consentSettled) return
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
 
     try {
-      const helpDone = localStorage.getItem(NAVIGATION_HELP_STORAGE_KEY) === 'true'
       const mediaKey = `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`
       const mediaDone = localStorage.getItem(mediaKey) === 'true'
-
-      if (helpDone) setHelpDismissed(true)
       if (mediaDone) setMediaDismissed(true)
-
-      if (!helpDone) {
-        const timer = setTimeout(() => setCurrentStep('help'), 500)
-        return () => clearTimeout(timer)
-      } else if (!mediaDone && hasMediaArtworks) {
+      if (!mediaDone && hasMediaArtworks) {
         const timer = setTimeout(() => setCurrentStep('media'), 500)
         return () => clearTimeout(timer)
       }
     } catch {
-      setCurrentStep('help')
+      if (hasMediaArtworks) setCurrentStep('media')
     }
   }, [exhibitionId, artworksReady, hasMediaArtworks, consentSettled])
 
-  // Track if the current flow was manually triggered (info button)
-  const manualTriggerRef = useRef(false)
-
   const handleCloseHelp = () => {
     setCurrentStep('none')
-    // After help closes, show media notice if exhibition has media
-    if (hasMediaArtworks && (manualTriggerRef.current || !mediaDismissed)) {
+    // After help closes, the media notice follows, unless the visitor asked not to see it again.
+    if (hasMediaArtworks && !mediaDismissed) {
       setTimeout(() => setCurrentStep('media'), 300)
     }
-    manualTriggerRef.current = false
   }
 
-  const handleCloseMedia = () => {
-    setCurrentStep('none')
-    manualTriggerRef.current = false
-  }
+  const handleCloseMedia = () => setCurrentStep('none')
 
-  const handleInfoClick = () => {
-    manualTriggerRef.current = true
-    setCurrentStep('help')
-  }
+  const handleInfoClick = () => setCurrentStep('help')
 
   if (hidden) return null
 
@@ -350,8 +328,14 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
         onClick={handleInfoClick}
         className={styles.infoButton}
         aria-label="Navigation help"
+        title="Navigation help"
       >
-        <Info size={20} strokeWidth={ICON_STROKE_WIDTH} />
+        {/* A finger tapping on a phone or tablet; the mouse elsewhere. */}
+        {isTouch ? (
+          <TapIcon className={styles.infoButtonIcon} aria-hidden focusable="false" />
+        ) : (
+          <Mouse size={20} strokeWidth={ICON_STROKE_WIDTH} />
+        )}
       </Button>
 
       {/* Help Modal */}
@@ -366,24 +350,23 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
             >
               <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
             </Button>
-            <div className={styles.welcomeSection}>
-              <Monogram className={styles.welcomeMonogram} />
-              <Text as="h2" size="lg" font="sans" className={styles.welcomeTitle}>
-                Welcome visitor
-              </Text>
-              <Text as="p" size="sm" className={styles.welcomeText}>
-                {isTouch
-                  ? 'You are about to enter an immersive virtual exhibition. Use your fingers to explore the space freely.'
-                  : 'You are about to enter an immersive virtual exhibition. Use the controls below to explore the space freely.'}
-              </Text>
-            </div>
-            <Text as="h3" size="md" font="sans" className={styles.infoPanelTitle}>
-              Controls
-            </Text>
+            {/* The controls alone, no welcome and no title: the guide no longer greets visitors on
+                entry (the floor's hint does), it opens from the help button (AR-177, owner, 2026-11-05). */}
             {isTouch ? (
               <TouchControlsGuide />
             ) : (
               <div className={styles.infoPanelContent}>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Click anywhere
+                    </Text>
+                  </span>
+                  <Text as="span" size="sm">
+                    Move there
+                  </Text>
+                </div>
                 <div className={styles.infoItem}>
                   <div className={styles.infoKeysColumn}>
                     <div className={styles.infoKeys}>
@@ -440,7 +423,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     </Text>
                   </span>
                   <Text as="span" size="sm">
-                    Rotate the view
+                    Look around, up or down
                   </Text>
                 </div>
                 <div className={styles.infoItem}>
@@ -452,6 +435,18 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                   </span>
                   <Text as="span" size="sm">
                     Rotate the view
+                  </Text>
+                </div>
+                {/* Facing a work, a sideways swipe walks along the wall (MainCamera). */}
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Swipe Left / Right
+                    </Text>
+                  </span>
+                  <Text as="span" size="sm">
+                    Facing a work: walk along the wall
                   </Text>
                 </div>
                 <div className={styles.infoItem}>
@@ -473,7 +468,16 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     </Text>
                   </span>
                   <Text as="span" size="sm">
-                    Auto focus on any artwork
+                    Stand in front of an artwork
+                  </Text>
+                </div>
+                {/* In front of a work (Artwork View, see MainCamera), Escape steps back. */}
+                <div className={styles.infoItem}>
+                  <Text as="span" size="sm" className={styles.infoKey}>
+                    Esc
+                  </Text>
+                  <Text as="span" size="sm">
+                    Step back from the work
                   </Text>
                 </div>
                 <div className={styles.infoItem}>
@@ -499,28 +503,6 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                   </Text>
                 </div>
               </div>
-            )}
-            <Text as="p" size="xs" className={styles.infoHint}>
-              You can reopen this guide anytime by {isTouch ? 'tapping' : 'clicking'} the{' '}
-              <Info size={12} strokeWidth={ICON_STROKE_WIDTH} style={{ verticalAlign: 'middle' }} />{' '}
-              icon in the bottom-right corner.
-            </Text>
-            {!helpDismissed && (
-              <Button
-                variant="primary"
-                size="regularSquared"
-                label="Don't show this again"
-                className={styles.dismissButton}
-                onClick={() => {
-                  try {
-                    localStorage.setItem(NAVIGATION_HELP_STORAGE_KEY, 'true')
-                  } catch {
-                    // localStorage not available, ignore
-                  }
-                  setHelpDismissed(true)
-                  handleCloseHelp()
-                }}
-              />
             )}
           </div>
         </div>
