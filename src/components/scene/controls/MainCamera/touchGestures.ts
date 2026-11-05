@@ -14,10 +14,11 @@
  *
  * Two fingers pinch to zoom, as on any photo: spread them to look closer,
  * bring them together to come back. Or they slide together, left or right, and
- * the visitor steps that way without turning (AR-176): facing a work, the next
- * one along the wall is a step aside, not a turn, a walk and a turn back. Two
- * fingers move the visitor the way they slide — right steps right (owner's
- * call: unlike one finger, they don't drag the room).
+ * the visitor steps aside without turning (AR-176): facing a work, the next
+ * one along the wall is a step aside, not a turn, a walk and a turn back. Like
+ * one finger, two drag the room: sliding them right brings the room right, so
+ * the visitor steps left (owner, after trying it: the first version, right
+ * steps right, was the wrong way round).
  *
  * Which of the two, the fingers' first travel decides, and it holds until one
  * lifts: their spread changing more than their midpoint moves is a pinch; their
@@ -57,7 +58,7 @@ const STEP_PER_PX = WALK_PER_PX
 /** The room follows the finger: down walks forward, right to left turns right. */
 const WALK_SIGN = 1 // screen y grows downward, and down is forward
 const TURN_SIGN = -1 // the mouse turns right on a positive x; the finger on a negative one
-const STEP_SIGN = 1 // two fingers move the visitor the way they slide: right steps right
+const STEP_SIGN = -1 // two fingers drag the room, as one does: sliding right steps left
 
 /** How far a pinch may zoom in (and never wider than the room's own lens). */
 export const MAX_PINCH_ZOOM = 3
