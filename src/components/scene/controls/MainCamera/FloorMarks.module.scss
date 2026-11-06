@@ -1,0 +1,150 @@
+// The entry hint's words, on the floor ahead: quiet, white, set like a wall label, never a game's
+// prompt. Above the ring (it lies low on the screen, the floor's nearest visible stretch), so the
+// ring itself stays clear: the words' own half height up, and a little more.
+.hintAnchor {
+  transform: translateY(calc(-50% - 28px));
+}
+
+.hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  animation: hintIn 0.8s ease-out both;
+  transition: opacity 0.6s ease-in;
+}
+
+// Going: fades out rather than vanishing.
+.hintLeaving {
+  opacity: 0;
+}
+
+.hintLine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  background-color: rgba(0, 0, 0, 0.42);
+  color: var(--color-white);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+
+  & + & {
+    background-color: rgba(0, 0, 0, 0.28);
+    font-size: 12px;
+    opacity: 0.9;
+  }
+}
+
+// The gesture beside each line, acted out in a slow loop.
+.gesture {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--color-white);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// A finger (or the pointer) pressing down, then lifting.
+.press svg {
+  animation: press 2s ease-in-out infinite;
+}
+
+// Where it lands: a ring spreading and fading, as the press lands.
+.ripple {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--color-white);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: ripple 2s ease-out infinite;
+}
+
+// The hand's fingertip in `gesture-tap.svg`, and the pointer's tip.
+.fingertip {
+  top: 4.5px;
+  left: 8.5px;
+}
+
+.tip {
+  top: 4px;
+  left: 4px;
+}
+
+// A hand (or the mouse) drawn side to side, as a drag looks around.
+.sway svg {
+  animation: sway 2.4s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press svg,
+  .sway svg,
+  .ripple {
+    animation: none;
+  }
+}
+
+@keyframes press {
+  0%,
+  35%,
+  100% {
+    transform: none;
+  }
+
+  18% {
+    transform: translate(0.5px, 1.5px) scale(0.9);
+  }
+}
+
+@keyframes ripple {
+  0%,
+  15% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  20% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+
+  70%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4);
+  }
+}
+
+@keyframes sway {
+  from {
+    transform: translateX(-3px);
+  }
+
+  to {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

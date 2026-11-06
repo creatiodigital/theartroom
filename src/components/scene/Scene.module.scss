@@ -33,12 +33,12 @@
   height: 36px;
   padding: 0;
   border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: $room-button-bg;
   border: none;
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: $room-button-z;
   transition: background-color 0.15s ease;
   display: flex;
 
@@ -46,20 +46,29 @@
     color: var(--color-black);
   }
 
-  &:hover {
-    background-color: var(--color-white);
+  // Only where a pointer can hover: a phone keeps a tapped button "hovered" until the next tap, and
+  // this one stayed solid white, unlike the room's other corner buttons (AR-177, owner, 2026-11-05).
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--color-white);
+    }
   }
 
   &:focus {
     outline: none;
   }
 
-  // Beside the help button wherever it goes: on a phone it moves to 8px from the corner
+  // Beside the help button wherever it goes: under a finger it moves to 8px from the corner
   // (ExhibitionView `.infoButton`), so the pair keeps one bottom line and an 8px gap; both keep
   // clear of the notch and the home indicator (the visit page is edge to edge, AR-176).
-  @media #{$phone-room} {
+  @media #{$touch-room} {
     bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
     right: calc(var(--space-2) + 36px + var(--space-2) + env(safe-area-inset-right));
+  }
+
+  // Level with the help button on a tablet (`.infoButton`, AR-177).
+  @media #{$tablet-room} {
+    bottom: var(--space-2);
   }
 
   // On its side, beside the help button at the edge (`.infoButton`, AR-176).

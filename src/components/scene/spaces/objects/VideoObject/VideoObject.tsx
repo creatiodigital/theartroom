@@ -20,9 +20,9 @@ import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
 import { Support } from '@/components/scene/spaces/objects/Support'
 import { useSceneAudioActions } from '@/contexts/SceneAudioContext'
 import { useAmbientLightColor } from '@/hooks/useAmbientLight'
-import { showArtworkPanel } from '@/redux/slices/dashboardSlice'
 import { setCurrentArtwork, setFocusTarget } from '@/redux/slices/sceneSlice'
-import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
+import { useShowArtworkInfo } from '@/components/scene/spaces/objects/artworkInfo'
+import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
@@ -35,7 +35,6 @@ type VideoObjectProps = {
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
 const CLICK_MAX_DURATION = 300
-const DOUBLE_CLICK_DELAY = 250
 
 const VideoObject = ({ artwork }: VideoObjectProps) => {
   const {
@@ -524,17 +523,18 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   ])
 
   // Handle double click to open artwork panel
+  const showArtworkInfo = useShowArtworkInfo()
   const handleDoubleClick = useCallback(() => {
     dispatch(setCurrentArtwork(artwork.id))
-    dispatch(showArtworkPanel())
-  }, [dispatch, artwork.id])
+    showArtworkInfo()
+  }, [dispatch, artwork.id, showArtworkInfo])
 
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation()
       pointerDownPos.current = { x: e.clientX, y: e.clientY }
       pointerDownTime.current = Date.now()
-      taps.down(e.pointerType)
+      taps.down(e)
     },
     [taps],
   )
@@ -550,7 +550,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       const duration = Date.now() - pointerDownTime.current
       pointerDownPos.current = null
 
-      if (taps.pinched || distance > taps.slop(CLICK_MAX_DISTANCE) || duration > CLICK_MAX_DURATION)
+      if (taps.ignored || distance > taps.slop(CLICK_MAX_DISTANCE) || duration > CLICK_MAX_DURATION)
         return
 
       if (singleClickTimeout.current) {
@@ -561,7 +561,7 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
         singleClickTimeout.current = setTimeout(() => {
           singleClickTimeout.current = null
           handleSingleClick()
-        }, DOUBLE_CLICK_DELAY)
+        }, DOUBLE_TAP_MS)
       }
     },
     [handleSingleClick, handleDoubleClick, taps],

@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { useSceneAudio } from '@/contexts/SceneAudioContext'
 import { setFocusTarget, setCurrentArtwork } from '@/redux/slices/sceneSlice'
-import { useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
+import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import type { RootState } from '@/redux/store'
 import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { useIconTexture } from './useIconTexture'
@@ -22,7 +22,6 @@ type SoundObjectProps = {
 // Constants for click detection
 const CLICK_MAX_DISTANCE = 5
 const CLICK_MAX_DURATION = 300
-const DOUBLE_CLICK_DELAY = 250
 
 const SoundObject = ({ artwork }: SoundObjectProps) => {
   const {
@@ -245,7 +244,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
       }
       pointerDownPos.current = { x: event.clientX, y: event.clientY }
       pointerDownTime.current = Date.now()
-      taps.down(event.pointerType)
+      taps.down(event)
     },
     [taps],
   )
@@ -264,7 +263,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
       pointerDownPos.current = null
 
       if (
-        !taps.pinched &&
+        !taps.ignored &&
         distance < taps.slop(CLICK_MAX_DISTANCE) &&
         duration < CLICK_MAX_DURATION
       ) {
@@ -276,7 +275,7 @@ const SoundObject = ({ artwork }: SoundObjectProps) => {
         singleClickTimeout.current = setTimeout(() => {
           handleSingleClick()
           singleClickTimeout.current = null
-        }, DOUBLE_CLICK_DELAY)
+        }, DOUBLE_TAP_MS)
       }
     },
     [handleSingleClick, togglePlay, taps],
