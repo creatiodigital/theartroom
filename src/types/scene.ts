@@ -6,6 +6,11 @@ export type TFocusTarget = {
   normal: { x: number; y: number; z: number }
   width: number
   height: number
+  /**
+   * How far the work's face stands out from `position` toward the viewer (m): an unframed print on
+   * its support (up to 10 cm). Artwork View frames the face, not the wall behind it. 0 if absent.
+   */
+  front?: number
 }
 
 /** Lamps of one kind, grouped by the room Empty they are parented under in the
@@ -16,6 +21,16 @@ export type TLampGroup = { room: string | null; indices: number[] }
 export type TExitPromptSource = 'walk' | 'button'
 
 export type TScene = {
+  /**
+   * The visitor stands in Artwork View, the owner's "Wall View" (MainCamera): a tap on a work frames
+   * it, and every move then travels over its wall. Shows the Exit Wall View button.
+   */
+  inArtworkView: boolean
+  /**
+   * Bumped by the Exit Wall View button: MainCamera steps back from the wall. A counter rather than
+   * a boolean so every press registers.
+   */
+  artworkViewExitNonce: number
   isArtworkPanelOpen: boolean
   isPlaceholdersShown: boolean
   currentArtworkId: string | null

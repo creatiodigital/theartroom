@@ -5,12 +5,28 @@ import {
   moveMouse,
   pressMouse,
   releaseMouse,
+  wallMoveKeys,
 } from '@/components/scene/controls/MainCamera/helpers'
 import {
+  CLOSE_UP_WALL_GAP,
+  FOCUS_MIN_DISTANCE,
   GLIDE_MAX_S,
   GLIDE_MIN_S,
+  PHONE_FOCUS_MIN_DISTANCE,
   PITCH_LIMIT,
+  WALL_VIEW_EXIT_BACK,
+  WALL_VIEW_EXIT_DEPTH,
+  artworkViewNearest,
+  artworkViewPadding,
+  closeUpBlocks,
+  exitDepth,
   fitDistance,
+  WALL_VIEW_EDGE_BUFFER,
+  limitStep,
+  wallExtent,
+  wallViewLimits,
+  viewingDistance,
+  wallScroll,
   forwardOf,
   glideDuration,
   lensShiftFor,
@@ -51,13 +67,14 @@ const event = (type: string, ...points: Point[]) =>
 const gesture = (from: Point[], path: Point[][]) => {
   const g = createTouchGesture()
   beginTouch(g, event('touchstart', ...from), 0)
-  const sum = { walk: 0, grabX: 0, grabY: 0, leave: false }
+  const sum = { walk: 0, grabX: 0, grabY: 0, slideX: 0, slideY: 0 }
   for (const points of path) {
     const move = moveTouch(g, event('touchmove', ...points))
     sum.walk += move.walk
     sum.grabX += move.grabX
     sum.grabY += move.grabY
-    sum.leave ||= move.leave
+    sum.slideX += move.slideX
+    sum.slideY += move.slideY
   }
   return { g, ...sum }
 }
@@ -92,8 +109,8 @@ test('two fingers are never a tap, even when the last one lifts quickly', () => 
   expect(endTouch(g, event('touchend'), 90)).toBeNull()
 })
 
-test('one finger sliding right to left grabs the room left, all of the slide (and leaves a work)', () => {
-  const { grabX, grabY, walk, leave } = finger(
+test('one finger sliding right to left grabs the room left, all of the slide', () => {
+  const { grabX, grabY, walk } = finger(
     [300, 300],
     [
       [290, 300],
@@ -104,9 +121,8 @@ test('one finger sliding right to left grabs the room left, all of the slide (an
   // The room is dragged 100 px left (the head turns right), the slop's first pixels too.
   expect(grabX).toBe(-100)
   expect(grabY).toBe(2)
+  // In Wall View the same grab moves over the wall instead of turning (MainCamera).
   expect(walk).toBe(0)
-  // Looking around steps back from a work: where to look next is the visitor's choice.
-  expect(leave).toBe(true)
 })
 
 test('one finger sliding diagonally turns and tilts at once', () => {
@@ -120,14 +136,6 @@ test('one finger sliding diagonally turns and tilts at once', () => {
   )
   expect(grabX).toBe(40)
   expect(grabY).toBe(100)
-})
-
-test('a slide that sets off within ~31° of level is sideways (a phone facing a work walks along the wall)', () => {
-  expect(finger([300, 300], [[315, 305]]).g.sideways).toBe(true)
-  expect(finger([300, 300], [[288, 296]]).g.sideways).toBe(true)
-  // Steeper than the slope, or up and down: it looks around as usual.
-  expect(finger([300, 300], [[310, 309]]).g.sideways).toBe(false)
-  expect(finger([300, 300], [[302, 315]]).g.sideways).toBe(false)
 })
 
 test('one finger no longer walks: sliding up or down only tilts', () => {
@@ -155,7 +163,7 @@ test('fingers spreading apart step forward; coming together step back', () => {
   expect(pinching(apart.g)).toBe(true)
   // 100 px of spread, all of it counted (the opening that decided too): 1 m.
   expect(apart.walk).toBeCloseTo(1, 5)
-  expect(apart.leave).toBe(true)
+  expect(apart.slideX + apart.slideY).toBe(0)
 
   const together = gesture(
     [
@@ -172,8 +180,8 @@ test('fingers spreading apart step forward; coming together step back', () => {
   expect(together.walk).toBeLessThan(0)
 })
 
-test('two fingers moving together without pinching do nothing', () => {
-  const { walk, grabX, grabY, g } = gesture(
+test('two fingers moving together without pinching neither walk nor look: they slide (over the wall, in Wall View)', () => {
+  const { walk, grabX, grabY, slideX, slideY, g } = gesture(
     [
       [200, 300],
       [260, 300],
@@ -191,6 +199,10 @@ test('two fingers moving together without pinching do nothing', () => {
   )
   expect(g.mode).toBe('held')
   expect(walk + grabX + grabY).toBe(0)
+  // Their midpoint's whole travel, the stretch that told them from a pinch too (AR-178, owner, 2026-11-07:
+  // "move over the wall will exactly work the same if done with 2 fingers").
+  expect(slideX).toBe(100)
+  expect(slideY).toBe(4)
 })
 
 test('the mouse: a click barely moves, a drag grabs the room both ways at once', () => {
@@ -247,20 +259,68 @@ test('Artwork View stands back far enough for the whole work on a tall screen an
   expect(tall).toBeGreaterThan(wide)
 })
 
+/** Where Artwork View stands from a work of `width` × `height` (m) on a screen of `aspect`. */
+const standsAt = (width: number, height: number, aspect: number, phone: boolean) => {
+  const nearest = artworkViewNearest(phone)
+  const fitted = fitDistance(width, height, 50, aspect, nearest, artworkViewPadding(phone))
+  return viewingDistance(fitted, Infinity, aspect, nearest)
+}
+
+/** The share of the screen's height a work `height` m tall fills from `distance` m (a 50° lens). */
+const heightFilled = (height: number, distance: number) =>
+  height / (2 * distance * Math.tan((50 * Math.PI) / 360))
+
+test('a phone held sideways stands close enough to read a small wall text; a laptop keeps its distance', () => {
+  // A 30 × 17 cm wall text, an iPhone held sideways (874 × 338): it wants 19 cm (AR-178, owner,
+  // 2026-11-07: "I want to at least read the text when zooming in with rotated view").
+  const sideways = 874 / 338
+  const phone = standsAt(0.296, 0.166, sideways, true)
+  expect(phone).toBeCloseTo(PHONE_FOCUS_MIN_DISTANCE, 2)
+  expect(heightFilled(0.166, phone)).toBeGreaterThan(0.85)
+  // A 53 × 40 cm framed photo fills it too, as close as it needs and no closer.
+  const photo = standsAt(0.529, 0.402, sideways, true)
+  expect(photo).toBeGreaterThan(0.4)
+  expect(heightFilled(0.402, photo)).toBeGreaterThan(0.9)
+  // A laptop's window: no nearer than any walk (AR-178, owner, 2026-11-07: "no need to zoom THAT much in desktop").
+  expect(standsAt(0.296, 0.166, 16 / 10, false)).toBe(FOCUS_MIN_DISTANCE)
+  // Upright, the photo's width keeps a phone well back, as before.
+  expect(standsAt(0.529, 0.402, 402 / 760, true)).toBeGreaterThan(1)
+})
+
+test("on a laptop a large work never touches the window's edges: a clear margin all round", () => {
+  // A 1.0 × 0.67 m unframed print (Florescere's), a window 1.95 times as wide as tall.
+  const aspect = 1.95
+  const distance = standsAt(1.003, 0.668, aspect, false)
+  const filled = heightFilled(0.668, distance)
+  const across = 1.003 / (2 * distance * Math.tan((50 * Math.PI) / 360) * aspect)
+  expect(filled).toBeLessThan(0.9)
+  expect(across).toBeLessThan(0.9)
+})
+
+test('up close on a phone, a wall stops only a move toward it, and never lets the eye nearer than its gap', () => {
+  // The wall's normal faces the eye (which stands on its +z side).
+  const wall = { x: 0, z: 1 }
+  // Sliding along it 20 cm away, to the next work: free.
+  expect(closeUpBlocks({ x: 0.1, z: 0 }, wall, 0.2)).toBe(false)
+  expect(closeUpBlocks({ x: -0.1, z: 0 }, wall, 0.2)).toBe(false)
+  // Stepping back or away along it: free, however near.
+  expect(closeUpBlocks({ x: 0.05, z: 0.1 }, wall, 0.12)).toBe(false)
+  // Into it: stopped.
+  expect(closeUpBlocks({ x: 0.1, z: -0.05 }, wall, 0.5)).toBe(true)
+  expect(closeUpBlocks({ x: 0, z: -0.01 }, wall, 0.5)).toBe(true)
+  // A slide half a degree off square drifts in, but only down to the gap.
+  const drift = { x: 0.1, z: -0.1 * Math.tan((0.5 * Math.PI) / 180) }
+  expect(closeUpBlocks(drift, wall, 0.2)).toBe(false)
+  expect(closeUpBlocks(drift, wall, CLOSE_UP_WALL_GAP + 0.0005)).toBe(true)
+})
+
 /** Scrolls one swipe's events (each [deltaX, deltaY]) every 16 ms from `from`; the moves summed. */
-const scroll = (
-  swipe: ReturnType<typeof createSwipe>,
-  events: [number, number][],
-  artworkView = false,
-  from = 0,
-) => {
-  const sum = { grabX: 0, along: 0, walkY: 0, leave: false }
+const scroll = (swipe: ReturnType<typeof createSwipe>, events: [number, number][], from = 0) => {
+  const sum = { grabX: 0, walkY: 0 }
   events.forEach(([dx, dy], i) => {
-    const move = readSwipe(swipe, dx, dy, from + i * 16, artworkView)
-    if (move.along) sum.along += move.grabX
-    else sum.grabX += move.grabX
+    const move = readSwipe(swipe, dx, dy, from + i * 16)
+    sum.grabX += move.grabX
     sum.walkY += move.walkY
-    sum.leave ||= move.leave
   })
   return sum
 }
@@ -280,10 +340,10 @@ test('a turn, then a walk straight after, its momentum still coming: the walk wa
   const swipe = createSwipe()
   // A turn, then its momentum fading, then fingers swiping forward with no pause in between.
   scroll(swipe, [...repeat(10, [-8, 0]), ...repeat(10, [-1, 0])])
-  const walk = scroll(swipe, repeat(12, [0, 8]), false, 320)
+  const walk = scroll(swipe, repeat(12, [0, 8]), 320)
   expect(walk.walkY).toBeGreaterThan(50)
   // And a turn straight after the walk.
-  const turn = scroll(swipe, repeat(12, [-8, 0]), false, 520)
+  const turn = scroll(swipe, repeat(12, [-8, 0]), 520)
   expect(turn.grabX).toBeGreaterThan(50)
 })
 
@@ -299,14 +359,72 @@ test('a swipe ignores its first noisy scroll and empty events', () => {
   expect(move.grabX).toBeGreaterThan(70)
 })
 
-test('facing a work, a swipe sideways walks along the wall and stays; up or down walks and leaves', () => {
-  const along = scroll(createSwipe(), repeat(10, [-8, 1]), true)
-  expect(along.along).toBeGreaterThan(70)
-  expect(along.grabX).toBe(0)
-  expect(along.leave).toBe(false)
-  const away = scroll(createSwipe(), repeat(10, [1, 8]), true)
-  expect(away.walkY).toBeGreaterThan(70)
-  expect(away.leave).toBe(true)
+// ---------------------------------------------------------------------------
+// Wall View (Artwork View): stuck to the wall, every move travels over it, never turning (AR-178, owner,
+// 2026-11-07: "you can walk the wall up and down, left and right, like a spider").
+
+test('in Wall View a swipe or a wheel drags the wall as a page scrolls, both ways at once', () => {
+  // Natural scrolling: fingers sliding up and to the right send deltaY > 0 and deltaX < 0; the wall
+  // follows them, up and right, as the room does under a finger (grab px, right and down positive).
+  const grab = wallScroll(-30, 20)
+  expect(grab.x).toBe(30)
+  expect(grab.y).toBe(-20)
+})
+
+test('in Wall View the arrows and W A S D move over the wall: up and down, left and right', () => {
+  expect(wallMoveKeys({ current: { arrowup: true } })).toEqual({ x: 0, y: 1 })
+  expect(wallMoveKeys({ current: { s: true, a: true } })).toEqual({ x: -1, y: -1 })
+  expect(wallMoveKeys({ current: { d: true, arrowright: true } })).toEqual({ x: 1, y: 0 })
+  // Both ways at once cancel out.
+  expect(wallMoveKeys({ current: { w: true, arrowdown: true } })).toEqual({ x: 0, y: 0 })
+})
+
+test("a wall's extent is its own, along it and up it, however it stands in the room", () => {
+  // A 4 × 3 m wall standing at 45°, from 0.2 m to 3.2 m up, its middle at (2, 2): measured along
+  // the floor's way across it (the view's right) and up.
+  const right = { x: Math.SQRT1_2, z: -Math.SQRT1_2 }
+  const corner = (along: number, y: number) => ({
+    x: 2 + along * right.x,
+    y,
+    z: 2 + along * right.z,
+  })
+  const extent = wallExtent(
+    [corner(-2, 0.2), corner(2, 0.2), corner(2, 3.2), corner(-2, 3.2)],
+    right,
+  )
+  expect(extent!.right - extent!.left).toBeCloseTo(4)
+  expect(extent!.bottom).toBeCloseTo(0.2)
+  expect(extent!.top).toBeCloseTo(3.2)
+  expect(wallExtent([], right)).toBeNull()
+})
+
+test('in Wall View the eye stays on its placeholder: four clear limits, a buffer off the floor and the ceiling', () => {
+  // A placeholder 4 m long (0 to 4 along) from the floor to a 3.2 m ceiling.
+  const { along, height } = wallViewLimits({ left: 0, right: 4, bottom: 0, top: 3.2 })
+  expect(along).toEqual({ min: 0, max: 4 })
+  expect(height.min).toBeGreaterThanOrEqual(WALL_VIEW_EDGE_BUFFER)
+  expect(height.max).toBeCloseTo(3.2 - WALL_VIEW_EDGE_BUFFER)
+  // A step stops at a limit; at the limit only the way back is open.
+  expect(limitStep(3.9, 0.3, along)).toBeCloseTo(0.1)
+  expect(limitStep(0.1, -0.3, along)).toBeCloseTo(-0.1)
+  expect(limitStep(2, 0.3, along)).toBeCloseTo(0.3)
+  expect(limitStep(4, 0.2, along)).toBe(0)
+  expect(limitStep(4, -0.2, along)).toBeCloseTo(-0.2)
+  // Somewhere outside (framed off the placeholder's edge): no push back in, only a way back.
+  expect(limitStep(4.3, 0.1, along)).toBe(0)
+  expect(limitStep(4.3, -0.1, along)).toBeCloseTo(-0.1)
+  // A placeholder too short for both buffers holds the eye at its middle.
+  expect(wallViewLimits({ left: 0, right: 1, bottom: 1.4, top: 1.8 }).height).toEqual({
+    min: 1.6,
+    max: 1.6,
+  })
+})
+
+test('leaving Wall View steps a little farther back, and never ends right against the wall', () => {
+  // From a hand's width away (a wall text on a phone): a comfortable step back.
+  expect(exitDepth(0.2)).toBeCloseTo(WALL_VIEW_EXIT_DEPTH)
+  // From a large work, already well back: a little farther.
+  expect(exitDepth(2)).toBeCloseTo(2 + WALL_VIEW_EXIT_BACK)
 })
 
 test('a double tap goes straight to the details on a phone; elsewhere it opens the side panel', () => {

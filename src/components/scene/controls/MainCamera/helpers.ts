@@ -121,6 +121,19 @@ export const handleKeyPress = (
 /** The keys that walk: W S A D and the arrows. */
 export const MOVEMENT_KEYS = ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright']
 
+/**
+ * In Wall View the same keys move over the wall instead, never turning (AR-178, owner, 2026-11-07: "the up
+ * and down arrows will move the camera up and down WITHOUT rotating the camera"): which way, right
+ * and up positive.
+ */
+export const wallMoveKeys = (keysPressed: RefObject<Record<string, boolean>>) => {
+  const down = (key: string) => (keysPressed.current?.[key] ? 1 : 0)
+  return {
+    x: Math.sign(down('d') + down('arrowright')) - Math.sign(down('a') + down('arrowleft')),
+    y: Math.sign(down('w') + down('arrowup')) - Math.sign(down('s') + down('arrowdown')),
+  }
+}
+
 export const calculateMovementVector = (
   keysPressed: RefObject<Record<string, boolean>>,
   moveSpeed: number,

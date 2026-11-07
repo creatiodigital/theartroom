@@ -8,8 +8,11 @@
  *   and never more than `PITCH_LIMIT`). Any move levels the head again; a walk always follows
  *   the heading, never the tilt.
  * - A tap on an artwork stands in front of it, centered and level, the work framed by a shift of
- *   the lens (as an architect's shift lens does), not by raising the eye: Artwork View. Where to
- *   look next is the visitor's choice: nothing steps along the wall for them.
+ *   the lens (as an architect's shift lens does), not by raising the eye: Artwork View, the owner's
+ *   "Wall View". There the visitor is stuck to the wall: every move travels over it, up, down and
+ *   along, the works square on (AR-178, owner, 2026-11-07: "like a spider"), until they leave it (the Exit
+ *   Wall View button, Escape, a pinch), stepping a little back and floating down to eye height.
+ *   Where to look next is the visitor's choice: nothing steps along the wall for them.
  * - Pinching steps forward or back (a person's eye does not zoom).
  *
  * Every tunable number is here. The pure math is here too, so it can be tested without WebGL.
@@ -119,8 +122,41 @@ export const PINCH_SMOOTHING_S = 0.12
 /** Where Artwork View stands relative to the work: close enough to fill the screen, with this margin. */
 export const FOCUS_PADDING = 1.08
 
+/**
+ * Larger screens (laptops, desktops, tablets) keep a wider margin round the work, 7.5% a side: it
+ * never touches the window's edges (AR-178, owner, 2026-11-07: "I need to see at least some padding between
+ * the artwork and the borders of the browser window", "don't allow it to touch the window browser
+ * edges"). A phone keeps `FOCUS_PADDING`, so a small work or a wall text still fills it.
+ */
+export const LARGE_SCREEN_FOCUS_PADDING = 1.15
+
+/** The margin Artwork View keeps round a work on this screen (the work's size times this). */
+export const artworkViewPadding = (phone: boolean) =>
+  phone ? FOCUS_PADDING : LARGE_SCREEN_FOCUS_PADDING
+
 /** The closest Artwork View stands to a work (m): never nearer a wall than any walk. */
 export const FOCUS_MIN_DISTANCE = WALL_CLEARANCE
+
+/**
+ * On a phone, the closest Artwork View stands to a work (m). Held sideways, a phone's screen is
+ * short: a small work or a wall text fills it only from a hand's width away (a 30 × 17 cm text
+ * wants 19 cm), and from `FOCUS_MIN_DISTANCE` its words were too small to read (AR-178, owner, 2026-11-07:
+ * "I want to at least read the text when zooming in with rotated view"). Nearer than the walls'
+ * clearance, so a phone's wall checks let it move from there (`closeUpBlocks`). Larger screens
+ * keep `FOCUS_MIN_DISTANCE` (owner: "no need to zoom THAT much in desktop and bigger devices").
+ */
+export const PHONE_FOCUS_MIN_DISTANCE = 0.2
+
+/** The closest Artwork View stands to a work on this screen (m). */
+export const artworkViewNearest = (phone: boolean) =>
+  phone ? PHONE_FOCUS_MIN_DISTANCE : FOCUS_MIN_DISTANCE
+
+/**
+ * A phone turned in Artwork View steps to where the work fits its new shape (AR-178, owner, 2026-11-07:
+ * "rotating re-fits is a great idea"), once the screen has kept that shape this long (s): Safari
+ * resizes a turning phone in steps as its bars move.
+ */
+export const REFIT_SETTLE_S = 0.25
 
 /**
  * On a screen taller than wide, the farthest Artwork View steps back (m). Fitting a 3 m wall text
@@ -129,16 +165,100 @@ export const FOCUS_MIN_DISTANCE = WALL_CLEARANCE
  */
 export const MAX_TALL_FOCUS_DISTANCE = 4
 
-/**
- * On a phone in Artwork View, a slide that sets off within this slope of level (|dy| ≤ |dx| × it,
- * about 31°) walks along the wall instead of turning: facing a work, the next one is a step to the
- * side (AR-177, owner, 2026-11-05: "otherwise we have no way to see the next artwork"). Any other first move
- * looks around as usual and steps back from the work.
- */
-export const SIDEWAYS_SLOPE = 0.6
+// ---------------------------------------------------------------------------
+// Wall View: Artwork View's moves over the wall (AR-178, owner, 2026-11-07: "wall mode will 'stick' the
+// camera to the wall in x and y"). A finger, two fingers, the mouse, a swipe or the keys: up and
+// down, left and right, never turning, so every work comes square on; on all devices. The eye
+// walks along the wall and rises or sinks up it, the lens shift kept, inside four clear limits:
+// the placeholder's left and right, its top and bottom (owner: "just constrain the camera to the
+// placeholder, which will always be a plane, with 4 clear limits"). Never the room around it: "do
+// not rely on 'next' wall geometry ... we could perfectly have an isolated wall", nor a ceiling ray
+// ("I could have, for example, a floating ceiling"). The placeholder is the work's hanging surface
+// (or a panel's face), as the 2D wall view shows it.
 
-/** The fastest a slide along the wall carries on once the finger lifts (m/s). */
+/** The fastest a move over the wall carries on once the finger or mouse lets go (m/s). */
 export const MAX_PAN_SPEED = 3
+
+/** The keys move over the wall this many screen heights a second: the nearer, the slower. */
+export const WALL_VIEW_KEY_SPEED = 0.6
+
+/** A wall's extent (m): along it (`left` to `right`, measured along the view's right) and up it. */
+export type WallExtent = { left: number; right: number; bottom: number; top: number }
+
+/** The extent of a wall's points (world), along `right` (the floor's way along it) and up. */
+export const wallExtent = (
+  points: readonly { x: number; y: number; z: number }[],
+  right: { x: number; z: number },
+): WallExtent | null => {
+  if (points.length === 0) return null
+  const extent = { left: Infinity, right: -Infinity, bottom: Infinity, top: -Infinity }
+  for (const p of points) {
+    const along = p.x * right.x + p.z * right.z
+    extent.left = Math.min(extent.left, along)
+    extent.right = Math.max(extent.right, along)
+    extent.bottom = Math.min(extent.bottom, p.y)
+    extent.top = Math.max(extent.top, p.y)
+  }
+  return extent
+}
+
+/** A step from `at` that stops at a range's ends; never one that pushes back in from outside it. */
+export const limitStep = (at: number, step: number, range: Range) =>
+  step > 0
+    ? Math.max(0, Math.min(step, range.max - at))
+    : Math.min(0, Math.max(step, range.min - at))
+
+/**
+ * In Wall View the screen keeps this far (m) inside the placeholder's top and bottom: a placeholder
+ * may run from the floor to the ceiling, and the eye never touches either (AR-178, owner, 2026-11-07: "leave
+ * some buffer up and down, we don't want the camera to touch the floor or the ceiling").
+ */
+export const WALL_VIEW_EDGE_BUFFER = 0.25
+
+/** In Wall View the eye never sinks nearer the floor than this (m), whatever the placeholder. */
+export const WALL_VIEW_FLOOR_GAP = 0.3
+
+export type Range = { min: number; max: number }
+
+/**
+ * Wall View's four limits for the eye on a placeholder of `extent`: its left and right ends, and
+ * its bottom and top, each `WALL_VIEW_EDGE_BUFFER` inside (never nearer the floor than
+ * `WALL_VIEW_FLOOR_GAP`). A placeholder too short for the buffers holds the eye at its middle.
+ */
+export const wallViewLimits = (extent: WallExtent): { along: Range; height: Range } => {
+  const bottom = Math.max(extent.bottom + WALL_VIEW_EDGE_BUFFER, FLOOR_Y + WALL_VIEW_FLOOR_GAP)
+  const top = extent.top - WALL_VIEW_EDGE_BUFFER
+  const middle = (extent.bottom + extent.top) / 2
+  return {
+    along: { min: extent.left, max: extent.right },
+    height: bottom <= top ? { min: bottom, max: top } : { min: middle, max: middle },
+  }
+}
+
+/** A work whose wall can't be found: how far above eye height the eye may still rise (m). */
+export const WALL_VIEW_UNKNOWN_RISE = 1.5
+
+/**
+ * In Wall View a swipe (Magic Mouse, trackpad) or a wheel drags the wall as it scrolls a page,
+ * both ways at once: the grab, as px dragged, right and down positive. With the Mac's natural
+ * scrolling, fingers sliding up and right send deltaY > 0 and deltaX < 0: the wall follows them.
+ */
+export const wallScroll = (deltaX: number, deltaY: number) => ({ x: -deltaX, y: -deltaY })
+
+/**
+ * Leaving Wall View steps back from the wall, from where the visitor is on it, floating down to eye
+ * height (AR-178, owner, 2026-11-07: "the same position he was on the wall, but make it 'float' down to the
+ * ground and a little farther back"): `WALL_VIEW_EXIT_BACK` farther, and at least
+ * `WALL_VIEW_EXIT_DEPTH` from it, so a close-up (a wall text on a phone) ends in comfortable sight.
+ */
+export const WALL_VIEW_EXIT_BACK = 0.6
+export const WALL_VIEW_EXIT_DEPTH = 1.2
+
+export const exitDepth = (depth: number) =>
+  Math.max(depth + WALL_VIEW_EXIT_BACK, WALL_VIEW_EXIT_DEPTH)
+
+/** How long the eye takes to float back down to its height on leaving Wall View (s, an ease). */
+export const FLOAT_DOWN_S = 0.3
 
 /**
  * A swipe (one finger on a Magic Mouse, two on a trackpad) arrives as a stream of scroll events,
@@ -167,7 +287,7 @@ export type Swipe = {
   deciding: boolean
   heldX: number
   heldY: number
-  /** Sideways (turn, or walk along a wall) or up and down (walk). */
+  /** Sideways (turn) or up and down (walk). */
   sideways: boolean
   /** Scrolls in a row clearly the other way. */
   against: number
@@ -183,23 +303,15 @@ export const createSwipe = (): Swipe => ({
 })
 
 /**
- * What one scroll of a swipe asks: the room (or, `along`, the wall) dragged across `grabX` px, or a
- * walk of `walkY` px (+ is back, as the wheel's deltaY), and whether it steps back from a work.
- * Sideways in front of a work walks along the wall, as a phone's slide does; sideways elsewhere
- * turns; up or down walks forward or back (and leaves the work). With the Mac's natural scrolling,
- * fingers sliding right send a negative deltaX: the room is dragged right.
+ * What one scroll of a swipe asks, out of Wall View (`wallScroll` there): the room dragged across
+ * `grabX` px (a turn), or a walk of `walkY` px (+ is back, as the wheel's deltaY). With the Mac's
+ * natural scrolling, fingers sliding right send a negative deltaX: the room is dragged right.
  */
-export type SwipeMove = { grabX: number; along: boolean; walkY: number; leave: boolean }
+export type SwipeMove = { grabX: number; walkY: number }
 
-const NO_SWIPE: SwipeMove = { grabX: 0, along: false, walkY: 0, leave: false }
+const NO_SWIPE: SwipeMove = { grabX: 0, walkY: 0 }
 
-export const readSwipe = (
-  swipe: Swipe,
-  deltaX: number,
-  deltaY: number,
-  now: number,
-  artworkView: boolean,
-): SwipeMove => {
+export const readSwipe = (swipe: Swipe, deltaX: number, deltaY: number, now: number): SwipeMove => {
   if (deltaX === 0 && deltaY === 0) return NO_SWIPE
   const gap = now - swipe.at
   swipe.at = now
@@ -229,8 +341,8 @@ export const readSwipe = (
     }
   }
 
-  if (swipe.sideways) return { grabX: -x, along: artworkView, walkY: 0, leave: !artworkView }
-  return { grabX: 0, along: false, walkY: y, leave: true }
+  if (swipe.sideways) return { grabX: -x, walkY: 0 }
+  return { grabX: 0, walkY: y }
 }
 
 /** Share of the lens shift given back per 60fps frame on leaving Artwork View: ~0.5 s. */
@@ -333,15 +445,55 @@ export const viewOffsetFor = (shift: LensShift, fovDeg: number, width: number, h
 }
 
 /**
- * How far from a work Artwork View stands so all of it, and a margin, fits a screen of `aspect`
- * with the eye's own field of view — before the room and a tall screen have their say.
+ * How far from a work Artwork View stands so all of it, and a margin (`padding`), fits a screen of
+ * `aspect` with the eye's own field of view, no nearer than `nearest` — before the room and a tall
+ * screen have their say.
  */
-export const fitDistance = (width: number, height: number, fovDeg: number, aspect: number) => {
+export const fitDistance = (
+  width: number,
+  height: number,
+  fovDeg: number,
+  aspect: number,
+  nearest = FOCUS_MIN_DISTANCE,
+  padding = FOCUS_PADDING,
+) => {
   const tanV = Math.tan((fovDeg * Math.PI) / 360)
   const tanH = tanV * aspect
-  return Math.max(
-    ((height / 2) * FOCUS_PADDING) / tanV,
-    ((width / 2) * FOCUS_PADDING) / tanH,
-    FOCUS_MIN_DISTANCE,
-  )
+  return Math.max(((height / 2) * padding) / tanV, ((width / 2) * padding) / tanH, nearest)
+}
+
+/**
+ * Where Artwork View stands from a work (m): where it fits (`fitted`), short of the wall behind
+ * (`roomLimit`), on a screen taller than wide no farther than `MAX_TALL_FOCUS_DISTANCE`, and never
+ * nearer than `nearest`.
+ */
+export const viewingDistance = (
+  fitted: number,
+  roomLimit: number,
+  aspect: number,
+  nearest: number,
+) => Math.max(nearest, Math.min(fitted, roomLimit, aspect < 1 ? MAX_TALL_FOCUS_DISTANCE : Infinity))
+
+/** Up close on a phone, the least the eye keeps from a wall (m): beyond the lens's near plane (0.1 m). */
+export const CLOSE_UP_WALL_GAP = 0.15
+
+/** A move steeper than this toward a wall (the sine of 2°) is a move into it, not along it. */
+const INTO_WALL = Math.sin((2 * Math.PI) / 180)
+
+/**
+ * On a phone, which may stand nearer a wall than the walls' clearance (`PHONE_FOCUS_MIN_DISTANCE`),
+ * whether a wall a collision ray met stops a move: only a move toward it (`normal` faces the eye,
+ * `gap` is how far the eye stands from it, straight out). A slide along the wall to the next work
+ * and a step away from it go on; a slide a hair off square drifts in only down to
+ * `CLOSE_UP_WALL_GAP`. Elsewhere a ray's wall stops any move with a share along the ray, and from up
+ * close the rays reaching the wall faced would stop the slide along it.
+ */
+export const closeUpBlocks = (
+  move: { x: number; z: number },
+  normal: { x: number; z: number },
+  gap: number,
+) => {
+  const nearer = -(move.x * normal.x + move.z * normal.z)
+  if (nearer <= 0) return false
+  return nearer > Math.hypot(move.x, move.z) * INTO_WALL || gap - nearer < CLOSE_UP_WALL_GAP
 }

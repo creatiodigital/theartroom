@@ -19,6 +19,10 @@
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   font-size: var(--text-xs);
+  // As wide as its words, up to `max-width`: a fixed box placed by its left edge (`left` placement
+  // shifts it back by its own width) is otherwise sized to the room between that edge and the
+  // window's, and beside a corner button that broke "Exit Wall View" into a word a line.
+  width: max-content;
   max-width: 240px;
   white-space: normal;
   text-align: left;

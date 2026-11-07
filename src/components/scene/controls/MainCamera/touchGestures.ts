@@ -7,17 +7,16 @@
  * right, sliding down tilts the head up. A drag turns and tilts at once, as the mouse's does
  * (AR-177, owner, 2026-11-05: "bring back the mixed vertical and horizontal axis rotate").
  *
- * In Artwork View any move (a turn, a tilt, a pinch) leaves it: where to look next is the
- * visitor's to choose, nothing steps along the wall for them (AR-177, owner, 2026-11-05). Except on a phone,
- * where a slide that sets off sideways (`sideways`) walks along the wall instead (MainCamera).
- *
  * Two fingers pinch to step forward or back: spreading them walks toward what is ahead, as if
- * drawing it closer. Two fingers that move together without pinching do nothing.
+ * drawing it closer. Two fingers that move together without pinching slide (`slideX`, `slideY`).
+ *
+ * In Artwork View, the owner's "Wall View" (MainCamera), the same moves mean other things: a finger's
+ * drag and two fingers' slide both move over the wall, the work square on; a pinch leaves it.
  *
  * Only fingers that land on the room itself count — never one on a button, a panel or a dialog.
  */
 
-import { PINCH_WALK_PER_PX, SIDEWAYS_SLOPE, TAP_MAX_MOVE_PX, TAP_MAX_MS } from './navigation'
+import { PINCH_WALK_PER_PX, TAP_MAX_MOVE_PX, TAP_MAX_MS } from './navigation'
 
 /**
  * How far two fingers travel (together, or apart) before they are read as a pinch or not: a pinch
@@ -26,15 +25,10 @@ import { PINCH_WALK_PER_PX, SIDEWAYS_SLOPE, TAP_MAX_MOVE_PX, TAP_MAX_MS } from '
 const TWO_FINGER_LOCK_PX = 12
 
 export type TouchGesture = {
-  /** `two`: two fingers down, not yet a pinch. `held`: two that moved without pinching. */
+  /** `two`: two fingers down, not yet a pinch. `held`: two sliding together without pinching. */
   mode: 'none' | 'one' | 'two' | 'pinch' | 'held'
   /** One finger past a tap's slop: it is looking around, and can no longer be a tap. */
   looking: boolean
-  /**
-   * The slide set off sideways (within `SIDEWAYS_SLOPE` of level): on a phone in Artwork View it
-   * walks along the wall (MainCamera).
-   */
-  sideways: boolean
   /** One finger: where it landed and was last. Two: their midpoint. */
   startX: number
   startY: number
@@ -52,7 +46,6 @@ export type TouchGesture = {
 export const createTouchGesture = (): TouchGesture => ({
   mode: 'none',
   looking: false,
-  sideways: false,
   startX: 0,
   startY: 0,
   lastX: 0,
@@ -77,7 +70,6 @@ const midpoint = (a: Touch, b: Touch) => ({
 const end = (gesture: TouchGesture) => {
   gesture.mode = 'none'
   gesture.looking = false
-  gesture.sideways = false
 }
 
 /** A finger landed, at `now` (ms). */
@@ -87,7 +79,6 @@ export const beginTouch = (gesture: TouchGesture, event: TouchEvent, now: number
   if (event.touches.length === 1 && onRoom(first)) {
     gesture.mode = 'one'
     gesture.looking = false
-    gesture.sideways = false
     gesture.several = false
     gesture.startedAt = now
     gesture.startX = gesture.lastX = first.clientX
@@ -103,7 +94,6 @@ export const beginTouch = (gesture: TouchGesture, event: TouchEvent, now: number
     const middle = midpoint(first, second)
     gesture.mode = 'two'
     gesture.looking = false
-    gesture.sideways = false
     gesture.startX = gesture.lastX = middle.x
     gesture.startY = gesture.lastY = middle.y
     gesture.startSpread = gesture.spread = spreadOf(first, second)
@@ -123,34 +113,42 @@ export type TouchMove = {
    */
   grabX: number
   grabY: number
-  /** This move leaves Artwork View: any turn, tilt or pinch. */
-  leave: boolean
+  /** Two fingers sliding together without pinching (px, their midpoint), right and down positive. */
+  slideX: number
+  slideY: number
 }
 
-const STILL: TouchMove = { walk: 0, grabX: 0, grabY: 0, leave: false }
+const STILL: TouchMove = { walk: 0, grabX: 0, grabY: 0, slideX: 0, slideY: 0 }
 
 /** One move of the fingers. */
 export const moveTouch = (gesture: TouchGesture, event: TouchEvent): TouchMove => {
-  if (gesture.mode === 'two' || gesture.mode === 'pinch') {
+  if (gesture.mode === 'two' || gesture.mode === 'pinch' || gesture.mode === 'held') {
     const [first, second] = [event.touches[0], event.touches[1]]
     if (!first || !second || gesture.startSpread <= 0) return STILL
     const spread = spreadOf(first, second)
+    const middle = midpoint(first, second)
 
     if (gesture.mode === 'two') {
       const opened = Math.abs(spread - gesture.startSpread)
-      const middle = midpoint(first, second)
       const travelled = Math.hypot(middle.x - gesture.startX, middle.y - gesture.startY)
       if (Math.max(opened, travelled) < TWO_FINGER_LOCK_PX) return STILL
       // A pinch with one finger still moves its midpoint half as far as its spread opens; two
-      // fingers sliding together move their midpoint and keep their spread.
+      // fingers sliding together move their midpoint and keep their spread. Either way, `spread`
+      // and `lastX`/`lastY` still hold the start, so the stretch that decided counts too.
       gesture.mode = opened > travelled ? 'pinch' : 'held'
-      if (gesture.mode !== 'pinch') return STILL
-      // `spread` still holds the start, so the opening that decided counts too.
+    }
+
+    if (gesture.mode === 'held') {
+      const slideX = middle.x - gesture.lastX
+      const slideY = middle.y - gesture.lastY
+      gesture.lastX = middle.x
+      gesture.lastY = middle.y
+      return { ...STILL, slideX, slideY }
     }
 
     const walk = (spread - gesture.spread) * PINCH_WALK_PER_PX
     gesture.spread = spread
-    return { ...STILL, walk, leave: true }
+    return { ...STILL, walk }
   }
 
   const touch = event.touches[0]
@@ -160,10 +158,7 @@ export const moveTouch = (gesture: TouchGesture, event: TouchEvent): TouchMove =
   const y = touch.clientY
 
   if (!gesture.looking) {
-    const fromX = x - gesture.startX
-    const fromY = y - gesture.startY
-    if (Math.hypot(fromX, fromY) < TAP_MAX_MOVE_PX) return STILL
-    gesture.sideways = Math.abs(fromY) <= Math.abs(fromX) * SIDEWAYS_SLOPE
+    if (Math.hypot(x - gesture.startX, y - gesture.startY) < TAP_MAX_MOVE_PX) return STILL
     // lastX/lastY still hold the start, so the travel past the slop counts too: no dead patch at
     // the beginning of every drag.
     gesture.looking = true
@@ -174,7 +169,7 @@ export const moveTouch = (gesture: TouchGesture, event: TouchEvent): TouchMove =
   gesture.lastX = x
   gesture.lastY = y
 
-  return { ...STILL, grabX: dx, grabY: dy, leave: true }
+  return { ...STILL, grabX: dx, grabY: dy }
 }
 
 /**
@@ -202,6 +197,9 @@ export const endTouch = (
 
 /** Whether one finger is dragging to look around (turning or tilting), not yet lifted. */
 export const looking = (gesture: TouchGesture) => gesture.mode === 'one' && gesture.looking
+
+/** Whether two fingers are sliding together without pinching (over the wall, in Wall View). */
+export const sliding = (gesture: TouchGesture) => gesture.mode === 'held'
 
 /** Whether two fingers are pinching (a step that eases out once they lift). */
 export const pinching = (gesture: TouchGesture) => gesture.mode === 'pinch'

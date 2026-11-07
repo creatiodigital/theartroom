@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Minimize2,
   Mouse,
   Touchpad,
   Volume2,
@@ -54,6 +55,7 @@ import {
   declineExit,
   hidePlaceholders,
   openExitPrompt,
+  requestArtworkViewExit,
   resetScene,
 } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
@@ -70,7 +72,33 @@ import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 
-const NavigationButton = () => {
+/**
+ * While the visitor stands in Wall View (a tap on a work frames it, and every move then travels
+ * over its wall), the way out: the one a mouse and keyboard have, with no pinch (AR-178, owner, 2026-11-07:
+ * "that button 'Exit Wall View' is paramount"). Its icon alone, minimize-2 ("self explanatory"),
+ * where the leave button stands and as it looks (owner: "where the 'exit exhibition' was", "white
+ * background, black icon, same size ... semi transparent"): Wall View hides the leave button.
+ */
+const ExitWallViewButton = () => {
+  const dispatch = useDispatch()
+  return (
+    <div className={styles.navigationButtonWrapper}>
+      <Tooltip label="Exit Wall View" placement="left">
+        <Button
+          variant="ghost"
+          onClick={() => dispatch(requestArtworkViewExit())}
+          className={styles.navigationButton}
+          aria-label="Exit Wall View"
+        >
+          <Minimize2 size={20} strokeWidth={ICON_STROKE_WIDTH} />
+        </Button>
+      </Tooltip>
+    </div>
+  )
+}
+
+/** The leave button (`buttonHidden`: its dialog stays, the button goes) and the leave dialog. */
+const NavigationButton = ({ buttonHidden }: { buttonHidden: boolean }) => {
   const router = useRouter()
   const dispatch = useDispatch()
   // Shared with the in-scene exit threshold: walking out of the corridor and
@@ -95,18 +123,20 @@ const NavigationButton = () => {
 
   return (
     <>
-      <div className={styles.navigationButtonWrapper}>
-        <Tooltip label="Leave Exhibition" placement="left">
-          <Button
-            variant="ghost"
-            onClick={() => dispatch(openExitPrompt('button'))}
-            className={styles.navigationButton}
-            aria-label="Leave Exhibition"
-          >
-            <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
-          </Button>
-        </Tooltip>
-      </div>
+      {!buttonHidden && (
+        <div className={styles.navigationButtonWrapper}>
+          <Tooltip label="Leave Exhibition" placement="left">
+            <Button
+              variant="ghost"
+              onClick={() => dispatch(openExitPrompt('button'))}
+              className={styles.navigationButton}
+              aria-label="Leave Exhibition"
+            >
+              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+            </Button>
+          </Tooltip>
+        </div>
+      )}
 
       <ExitPrompt
         open={promptOpen}
@@ -437,18 +467,6 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     Rotate the view
                   </Text>
                 </div>
-                {/* Facing a work, a sideways swipe walks along the wall (MainCamera). */}
-                <div className={styles.infoItem}>
-                  <span className={styles.infoKeyWide}>
-                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                    <Text as="span" size="sm">
-                      Swipe Left / Right
-                    </Text>
-                  </span>
-                  <Text as="span" size="sm">
-                    Facing a work: walk along the wall
-                  </Text>
-                </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
                     <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
@@ -468,16 +486,28 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     </Text>
                   </span>
                   <Text as="span" size="sm">
-                    Stand in front of an artwork
+                    Wall View: stand in front of an artwork
                   </Text>
                 </div>
-                {/* In front of a work (Artwork View, see MainCamera), Escape steps back. */}
+                {/* Wall View (MainCamera): the mouse's drag, a swipe and the keys all move over the
+                    wall, never turning; Escape or the Exit Wall View button leaves it. */}
+                <div className={styles.infoItem}>
+                  <span className={styles.infoKeyWide}>
+                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <Text as="span" size="sm">
+                      Drag, Swipe or Arrows
+                    </Text>
+                  </span>
+                  <Text as="span" size="sm">
+                    In Wall View: move over the wall
+                  </Text>
+                </div>
                 <div className={styles.infoItem}>
                   <Text as="span" size="sm" className={styles.infoKey}>
                     Esc
                   </Text>
                   <Text as="span" size="sm">
-                    Step back from the work
+                    Leave Wall View
                   </Text>
                 </div>
                 <div className={styles.infoItem}>
@@ -598,6 +628,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
   const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
+  const inArtworkView = useSelector((state: RootState) => state.scene.inArtworkView)
   const isTouch = useIsTouchDevice()
 
   // AR-161: `?bake=1` bakes the room on the admin's machine and stores it as the draft bake;
@@ -950,11 +981,15 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
 
   return (
     <>
-      {!isArtworkPanelOpen && <NavigationButton />}
+      {/* Wall View is a mode of its own: its Exit button alone, every other button hidden (AR-178, owner,
+          2026-11-07: "while in wall mode, hide all other buttons"; "we are in a special mode on its
+          own"). The sound button gives way too (Scene). */}
+      {!isArtworkPanelOpen && <NavigationButton buttonHidden={inArtworkView} />}
+      {inArtworkView && !isArtworkPanelOpen && !isArtworkModalOpen && <ExitWallViewButton />}
       {webglAvailable !== false && (
         <>
           <NavigationHelpModal
-            hidden={isArtworkPanelOpen || shownMode === 'bake'}
+            hidden={isArtworkPanelOpen || inArtworkView || shownMode === 'bake'}
             exhibitionId={exhibition?.id}
             artworksReady={artworksReady}
           />
