@@ -1,7 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
 
 import { Text } from '@/components/ui/Typography'
-import { useIsPhone } from '@/hooks/useIsPhone'
 import DoubleTap from '@/icons/gesture-double-tap.svg'
 import Pinch from '@/icons/gesture-pinch.svg'
 import SlideHorizontal from '@/icons/gesture-slide-horizontal.svg'
@@ -15,8 +14,6 @@ type Gesture = {
   Icon: ComponentType<SVGProps<SVGSVGElement>>
   gesture: string
   action: string
-  /** Shown on phones only. */
-  phoneOnly?: boolean
 }
 
 // The finger's controls, in the order a visitor needs them: move, look, then the
@@ -27,14 +24,15 @@ const GESTURES: Gesture[] = [
   { Icon: SlideHorizontal, gesture: 'Slide left or right', action: 'Look around' },
   { Icon: SlideVertical, gesture: 'Slide up or down', action: 'Look up or down' },
   { Icon: Pinch, gesture: 'Pinch with two fingers', action: 'Step forward or back' },
-  { Icon: Tap, gesture: 'Tap an artwork', action: 'Stand in front of it' },
-  // Phones only (MainCamera): facing a work, a sideways slide walks along the wall.
+  { Icon: Tap, gesture: 'Tap an artwork', action: 'Wall View: stand in front of it' },
+  // Wall View (MainCamera): one finger or two move over the wall, the works square on; a pinch, or
+  // the Exit Wall View button, leaves it.
   {
     Icon: SlideHorizontal,
-    gesture: 'Facing a work, slide sideways',
-    action: 'Walk along the wall',
-    phoneOnly: true,
+    gesture: 'In Wall View, slide one or two fingers',
+    action: 'Move over the wall: up, down and along',
   },
+  { Icon: Pinch, gesture: 'In Wall View, pinch', action: 'Leave Wall View' },
   {
     Icon: DoubleTap,
     gesture: 'Double-tap an artwork',
@@ -44,11 +42,10 @@ const GESTURES: Gesture[] = [
 
 /** The controls section of the welcome guide, on phones and tablets. */
 export const TouchControlsGuide = () => {
-  const isPhone = useIsPhone()
   return (
     <>
       <ul className={styles.gestures}>
-        {GESTURES.filter((row) => isPhone || !row.phoneOnly).map(({ Icon, gesture, action }) => (
+        {GESTURES.map(({ Icon, gesture, action }) => (
           <li key={gesture} className={styles.gesture}>
             <span className={styles.icon}>
               <Icon aria-hidden focusable="false" />

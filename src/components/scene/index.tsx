@@ -63,10 +63,12 @@ const FloatingMuteButton = () => {
   const { hasActiveAudio, isMuted } = useSceneAudioState()
   const { toggleMute } = useSceneAudioActions()
   // The artwork panel covers the room's corner buttons: the leave and help buttons give way to it,
-  // so this one does too — it sat on top of the panel (AR-176).
+  // so this one does too — it sat on top of the panel (AR-176). Wall View is a mode of its own:
+  // its Exit button alone (AR-178, owner, 2026-11-07: "while in wall mode, hide all other buttons").
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const inArtworkView = useSelector((state: RootState) => state.scene.inArtworkView)
 
-  if (!hasActiveAudio || isArtworkPanelOpen) return null
+  if (!hasActiveAudio || isArtworkPanelOpen || inArtworkView) return null
 
   return (
     <Button

@@ -65,6 +65,10 @@ type ArtworkImageProps = {
 const WOOD_ASPECT: Record<string, number> = { 'wood-light': 2 }
 
 // Placeholder shown while texture loads
+/** A support's depth (cm), as drawn: the artist's thickness, 2 cm by default, 0 to 10. */
+const supportDepthCm = (thickness: { value?: number } | undefined) =>
+  Math.min(10, Math.max(0, thickness?.value ?? 2))
+
 const ImagePlaceholder = ({ width, height }: { width: number; height: number }) => (
   <mesh renderOrder={2}>
     <planeGeometry args={[width, height]} />
@@ -1016,6 +1020,14 @@ const Display = ({ artwork }: DisplayProps) => {
         const centerZ = (minZ + maxZ) / 2
         const groupWidth = Math.max(maxX - minX, maxZ - minZ)
         const groupHeight = maxY - minY
+        // The group's face: its deepest member's support (unframed prints stand out on theirs).
+        const groupFront = Math.max(
+          0,
+          ...group.artworkIds.map((id) => {
+            const member = artworksById[id]
+            return member?.showSupport ? supportDepthCm(member.supportThickness) / 100 : 0
+          }),
+        )
 
         dispatch(
           setFocusTarget({
@@ -1024,6 +1036,7 @@ const Display = ({ artwork }: DisplayProps) => {
             normal: { x: normal.x, y: normal.y, z: normal.z },
             width: Math.max(groupWidth, 0.1),
             height: Math.max(groupHeight, 0.1),
+            front: groupFront,
           }),
         )
       } else {
@@ -1041,6 +1054,10 @@ const Display = ({ artwork }: DisplayProps) => {
             normal: { x: normal.x, y: normal.y, z: normal.z },
             width: displayWidth,
             height: displayHeight,
+            // An unframed print stands out on its support: Artwork View frames its face (AR-178, owner,
+            // 2026-11-07: "the zoom on unframed artworks it's too much"; up to 10 cm nearer than
+            // the wall, it overflowed the screen's margin).
+            front: showSupport ? supportDepthCm(supportThickness) / 100 : 0,
           }),
         )
       }
@@ -1066,6 +1083,8 @@ const Display = ({ artwork }: DisplayProps) => {
     paperBorderSize,
     showFrame,
     frameSize,
+    showSupport,
+    supportThickness,
     autofocusGroups,
     exhibitionArtworksById,
     artworksById,
@@ -1354,7 +1373,7 @@ const Display = ({ artwork }: DisplayProps) => {
     Math.max(PASSEPARTOUT_THICKNESS.min, passepartoutThickness?.value ?? 0.4),
   )
   // supportThickness is for Z-depth, clamped 0-10
-  const supportDepth = Math.min(10, Math.max(0, supportThickness?.value ?? 2))
+  const supportDepth = supportDepthCm(supportThickness)
   // Paper border (white margin) — extends paper plane around the image
   const paperBorderS = showPaperBorder ? (paperBorderSize?.value ?? 0) : 0
 

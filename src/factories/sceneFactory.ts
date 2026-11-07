@@ -1,6 +1,8 @@
 import type { TScene } from '@/types/scene'
 
 export const sceneFactory = (): TScene => ({
+  inArtworkView: false,
+  artworkViewExitNonce: 0,
   isArtworkPanelOpen: false,
   isPlaceholdersShown: true,
   currentArtworkId: null,
