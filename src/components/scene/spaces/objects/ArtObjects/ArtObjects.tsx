@@ -1,5 +1,5 @@
 import { useGLTF } from '@react-three/drei'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { Vector3, Quaternion, type Matrix4, type Mesh } from 'three'
 
@@ -15,6 +15,9 @@ import { LAYER_DEPTH_STEP, layerRankById, type LayerItem } from '@/components/wa
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
+import { setHangingSurfaces } from '@/components/scene/controls/MainCamera/hangingSurfaces'
+
+import { worldMatrixOf } from '@/components/scene/spaces/objects/nodeIndices'
 
 import { depthToWall, wallContactFlag, wallSurfaces } from './wallContact'
 
@@ -53,6 +56,27 @@ const ArtObjects = () => {
     }
     return transforms
   }, [nodes, panelSettings])
+
+  // Wall View travels over the surface a work hangs on, as far as its own ends (`hangingSurfaces`):
+  // its placeholder's points in the room, or a panel face's, standing where the panel stands now.
+  // Measured as the 2D wall view measures it (`worldMatrixOf`): a space whose placeholders hang off
+  // a room Empty has that offset baked into the node already, and `matrixWorld` counted it twice
+  // (Vienna's room 1, ~20 m off: the eye began outside its limits, and could only move one way).
+  useEffect(() => {
+    setHangingSurfaces((wallId) => {
+      const node = nodes[wallId]
+      const positions = node?.isMesh ? node.geometry?.getAttribute('position') : undefined
+      if (!positions) return null
+      const matrix = worldMatrixOf(node).clone()
+      const panelIndex = panelIndexOfFace(wallId)
+      const transform = panelIndex === null ? undefined : panelTransforms.get(panelIndex)
+      if (transform) matrix.premultiply(transform)
+      return Array.from({ length: positions.count }, (_, i) =>
+        new Vector3().fromBufferAttribute(positions, i).applyMatrix4(matrix),
+      )
+    })
+    return () => setHangingSurfaces(() => null)
+  }, [nodes, panelTransforms])
 
   // The walls the works rest on (`wallContact`); none with `?wallcontact=0`.
   const walls = useMemo(() => (wallContactFlag() ? wallSurfaces(nodes) : []), [nodes])

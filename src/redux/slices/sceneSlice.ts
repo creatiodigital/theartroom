@@ -42,6 +42,16 @@ const sceneSlice = createSlice({
       state.focusTarget = null
     },
 
+    /** MainCamera: the visitor entered or left Artwork View ("Wall View"). */
+    setInArtworkView: (state: TScene, action: PayloadAction<boolean>) => {
+      state.inArtworkView = action.payload
+    },
+
+    /** The Exit Wall View button: MainCamera steps back from the wall. */
+    requestArtworkViewExit: (state: TScene) => {
+      state.artworkViewExitNonce += 1
+    },
+
     resetScene: () => {
       // Return fresh initial state to prevent stale data between exhibitions
       return sceneFactory()
@@ -88,6 +98,8 @@ export const {
   editWallName,
   setFocusTarget,
   clearFocusTarget,
+  setInArtworkView,
+  requestArtworkViewExit,
   resetScene,
   setInitialCameraFromNode,
   setTrackLampGroups,

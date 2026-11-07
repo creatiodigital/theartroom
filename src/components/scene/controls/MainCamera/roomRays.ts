@@ -42,7 +42,7 @@ export const roomBlocks = (ray: Ray, distance: number) =>
 const normalMatrix = new Matrix3()
 
 /** A hit's surface normal, in the world, along the floor and facing back along the ray. */
-const wallNormal = (hit: Intersection, along: Vector3): Vector3 | null => {
+export const surfaceNormal = (hit: Intersection, along: Vector3): Vector3 | null => {
   if (!hit.face) return null
   normalMatrix.getNormalMatrix(hit.object.matrixWorld)
   const n = hit.face.normal.clone().applyMatrix3(normalMatrix)
@@ -115,7 +115,7 @@ export const tapDestination = (ray: Ray, eye: Vector3) => {
     return safeDestination(eye, x, z)
   }
   if (!wall || WALL_TAP === 'ignore') return null
-  const n = wallNormal(wall, ray.direction)
+  const n = surfaceNormal(wall, ray.direction)
   if (!n) return null
   return safeDestination(
     eye,
