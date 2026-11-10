@@ -11,6 +11,9 @@ import {
   CLOSE_UP_WALL_GAP,
   FOCUS_MIN_DISTANCE,
   GLIDE_MAX_S,
+  GROUP_FOCUS_MIN_DISTANCE,
+  LARGE_SCREEN_FOCUS_PADDING,
+  LARGE_SCREEN_GROUP_FOCUS_PADDING,
   GLIDE_MIN_S,
   PHONE_FOCUS_MIN_DISTANCE,
   PITCH_LIMIT,
@@ -259,10 +262,13 @@ test('Artwork View stands back far enough for the whole work on a tall screen an
   expect(tall).toBeGreaterThan(wide)
 })
 
-/** Where Artwork View stands from a work of `width` × `height` (m) on a screen of `aspect`. */
-const standsAt = (width: number, height: number, aspect: number, phone: boolean) => {
-  const nearest = artworkViewNearest(phone)
-  const fitted = fitDistance(width, height, 50, aspect, nearest, artworkViewPadding(phone))
+/**
+ * Where Artwork View stands from a work (or a `group`) of `width` × `height` (m) on a screen of
+ * `aspect`.
+ */
+const standsAt = (width: number, height: number, aspect: number, phone: boolean, group = false) => {
+  const nearest = artworkViewNearest(phone, group)
+  const fitted = fitDistance(width, height, 50, aspect, nearest, artworkViewPadding(phone, group))
   return viewingDistance(fitted, Infinity, aspect, nearest)
 }
 
@@ -295,6 +301,28 @@ test("on a laptop a large work never touches the window's edges: a clear margin 
   const across = 1.003 / (2 * distance * Math.tan((50 * Math.PI) / 360) * aspect)
   expect(filled).toBeLessThan(0.9)
   expect(across).toBeLessThan(0.9)
+})
+
+test('on a laptop a wall text grouped with its photo comes nearer than a single work, phones as before', () => {
+  // Kritzendorf's Group 1: a 30 × 17 cm text beside a framed 53 × 40 cm photo, 86 × 40 cm in all,
+  // in a window 1.72 times as wide as tall (AR-178, owner, 2026-11-10: "we still can get closer on
+  // that text + photo group"). At the walls' clearance (0.75 m) it filled 70% of the width.
+  const aspect = 1.72
+  const distance = standsAt(0.855, 0.402, aspect, false, true)
+  expect(distance).toBeGreaterThan(GROUP_FOCUS_MIN_DISTANCE)
+  expect(distance).toBeLessThan(0.6)
+  const across = 0.855 / (2 * distance * Math.tan((50 * Math.PI) / 360) * aspect)
+  expect(across).toBeCloseTo(1 / LARGE_SCREEN_GROUP_FOCUS_PADDING, 2)
+  // Out of the walk's slanted feelers' reach (0.7 m at 45°), so moves from there need no close-up checks.
+  expect(GROUP_FOCUS_MIN_DISTANCE).toBeGreaterThan(0.7 * Math.SQRT1_2)
+  // A single work keeps its distance and margin (owner: "for individual works, it's already very good").
+  expect(standsAt(0.296, 0.166, aspect, false)).toBe(FOCUS_MIN_DISTANCE)
+  expect(artworkViewPadding(false, false)).toBe(LARGE_SCREEN_FOCUS_PADDING)
+  // A phone: the same for a group as for a single work ("do not touch mobile").
+  const sideways = 874 / 338
+  expect(artworkViewNearest(true, true)).toBe(artworkViewNearest(true, false))
+  expect(artworkViewPadding(true, true)).toBe(artworkViewPadding(true, false))
+  expect(standsAt(0.855, 0.402, sideways, true, true)).toBe(standsAt(0.855, 0.402, sideways, true))
 })
 
 test('up close on a phone, a wall stops only a move toward it, and never lets the eye nearer than its gap', () => {

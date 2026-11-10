@@ -130,9 +130,20 @@ export const FOCUS_PADDING = 1.08
  */
 export const LARGE_SCREEN_FOCUS_PADDING = 1.15
 
-/** The margin Artwork View keeps round a work on this screen (the work's size times this). */
-export const artworkViewPadding = (phone: boolean) =>
-  phone ? FOCUS_PADDING : LARGE_SCREEN_FOCUS_PADDING
+/**
+ * On a larger screen, the margin round a group (works framed together, as a wall text beside its
+ * photo): 5% a side, a little closer than a single work's (AR-178, owner, 2026-11-10, Kritzendorf:
+ * "we still can get closer on that text + photo group", "little closer please"; a single work's
+ * "is already very good").
+ */
+export const LARGE_SCREEN_GROUP_FOCUS_PADDING = 1.1
+
+/**
+ * The margin Artwork View keeps round a work, or a group, on this screen (its size times this). A
+ * phone keeps one margin for both.
+ */
+export const artworkViewPadding = (phone: boolean, group: boolean) =>
+  phone ? FOCUS_PADDING : group ? LARGE_SCREEN_GROUP_FOCUS_PADDING : LARGE_SCREEN_FOCUS_PADDING
 
 /** The closest Artwork View stands to a work (m): never nearer a wall than any walk. */
 export const FOCUS_MIN_DISTANCE = WALL_CLEARANCE
@@ -147,9 +158,19 @@ export const FOCUS_MIN_DISTANCE = WALL_CLEARANCE
  */
 export const PHONE_FOCUS_MIN_DISTANCE = 0.2
 
-/** The closest Artwork View stands to a work on this screen (m). */
-export const artworkViewNearest = (phone: boolean) =>
-  phone ? PHONE_FOCUS_MIN_DISTANCE : FOCUS_MIN_DISTANCE
+/**
+ * On a larger screen, the closest Artwork View stands to a group (m). The walls' clearance
+ * (`FOCUS_MIN_DISTANCE`) held a wall text and the photo grouped beside it well short of their margin
+ * (AR-178, owner, 2026-11-10, Kritzendorf: 86 × 40 cm, it fits at ~0.58 m and filled 70% of the
+ * window's width). Still beyond the reach of the walk's slanted feelers (0.7 m at 45°: 0.49 m
+ * straight out), so every move from here goes on as from farther back, with no phone close-up
+ * checks.
+ */
+export const GROUP_FOCUS_MIN_DISTANCE = 0.55
+
+/** The closest Artwork View stands to a work, or a group, on this screen (m). */
+export const artworkViewNearest = (phone: boolean, group: boolean) =>
+  phone ? PHONE_FOCUS_MIN_DISTANCE : group ? GROUP_FOCUS_MIN_DISTANCE : FOCUS_MIN_DISTANCE
 
 /**
  * A phone turned in Artwork View steps to where the work fits its new shape (AR-178, owner, 2026-11-07:
