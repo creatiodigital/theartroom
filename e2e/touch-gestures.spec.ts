@@ -455,9 +455,10 @@ test('leaving Wall View steps a little farther back, and never ends right agains
   expect(exitDepth(2)).toBeCloseTo(2 + WALL_VIEW_EXIT_BACK)
 })
 
-test('a double tap goes straight to the details on a phone; elsewhere it opens the side panel', () => {
-  expect(artworkInfoAction(true, false)).toEqual(openArtworkModal())
-  expect(artworkInfoAction(false, false)).toEqual(showArtworkPanel())
-  // The editor has no details screen: a phone there keeps the panel.
-  expect(artworkInfoAction(true, true)).toEqual(showArtworkPanel())
+test('a double tap or click goes straight to the details on every screen; the editor keeps its panel', () => {
+  // Phones first (AR-177), then tablets and laptops (owner, 2026-11-10: "this drawer sidebar is
+  // redundant in desktop and tablet").
+  expect(artworkInfoAction(false)).toEqual(openArtworkModal())
+  // The editor has no details screen: it keeps the panel.
+  expect(artworkInfoAction(true)).toEqual(showArtworkPanel())
 })
