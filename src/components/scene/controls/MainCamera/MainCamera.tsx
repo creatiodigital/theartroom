@@ -333,6 +333,7 @@ const MainCamera = () => {
   const exitNonce = useSelector((state: RootState) => state.scene.artworkViewExitNonce)
   const isExitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
 
@@ -349,9 +350,11 @@ const MainCamera = () => {
 
   // What the handlers (stable callbacks) need of the latest render.
   const isPhone = useIsPhone()
-  const latest = useRef({ isArtworkPanelOpen, isExitPromptOpen, isPhone })
+  // A work's information (the editor's panel, or the room's details) is open over the room.
+  const infoOpen = isArtworkPanelOpen || isArtworkModalOpen
+  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone })
   useEffect(() => {
-    latest.current = { isArtworkPanelOpen, isExitPromptOpen, isPhone }
+    latest.current = { infoOpen, isExitPromptOpen, isPhone }
   })
 
   // The room's solid surfaces, for the taps' walks and the works' taps alike (`roomRays`).
@@ -727,13 +730,14 @@ const MainCamera = () => {
       const target = event.target as HTMLElement | null
       const typing = !!target?.closest('input, textarea, select, [contenteditable="true"]')
       // In Wall View, Escape leaves it, as the Exit Wall View button does; the walking keys move
-      // over the wall instead (the frame reads them, `wallMoveKeys`).
+      // over the wall instead (the frame reads them, `wallMoveKeys`). Not while a work's details
+      // are open: there Escape closes them, and the visitor stays at the wall.
       if (
         !typing &&
         key === 'escape' &&
         currentView() &&
         !latest.current.isExitPromptOpen &&
-        !latest.current.isArtworkPanelOpen
+        !latest.current.infoOpen
       ) {
         exitAsked.current = true
         return

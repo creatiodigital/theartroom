@@ -22,7 +22,6 @@ import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import TapIcon from '@/icons/gesture-tap.svg'
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
-import { ArtworkPanel } from '@/components/editview/ArtworkPanel'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
@@ -50,7 +49,7 @@ import { preloadStoredBake } from '@/components/scene/bake/BakedLighting'
 import { useLightmapBytes } from '@/components/scene/bake/lightmapLoader'
 import { useSceneFailed } from '@/components/scene/sceneFailure'
 import { MonogramLoader } from '@/components/ui/MonogramLoader'
-import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
+import { closeArtworkModal, hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import {
   declineExit,
   hidePlaceholders,
@@ -625,7 +624,6 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const dispatch = useDispatch<AppDispatch>()
   const hasResetRef = useRef<string | null>(null)
   const searchParams = useSearchParams()
-  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
   const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const inArtworkView = useSelector((state: RootState) => state.scene.inArtworkView)
@@ -700,9 +698,12 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       dispatch(resetScene())
       // Close any stale artwork modal: isArtworkModalOpen lives in dashboardSlice and is
       // only cleared by the modal's own Close. Leaving via Order Print (router.push) leaves
-      // it true, and Redux survives client navigation — so without this, the first
-      // double-click after re-entering would render the modal instead of the sidebar.
+      // it true, and Redux survives client navigation — so without this, the room would
+      // open with a work's details already over it.
       dispatch(closeArtworkModal())
+      // The editor's side panel, should it come here still open: the room never shows it
+      // (its details open straight away), and it would keep the room's buttons hidden.
+      dispatch(hideArtworkPanel())
       // Note: Do NOT call resetArtworks() here - artworks should persist across
       // same-exhibition navigation (e.g., when viewing artwork details and returning).
       // The useLoadExhibitionArtworks hook handles loading artworks when needed.
@@ -984,12 +985,12 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
       {/* Wall View is a mode of its own: its Exit button alone, every other button hidden (AR-178, owner,
           2026-11-07: "while in wall mode, hide all other buttons"; "we are in a special mode on its
           own"). The sound button gives way too (Scene). */}
-      {!isArtworkPanelOpen && <NavigationButton buttonHidden={inArtworkView} />}
-      {inArtworkView && !isArtworkPanelOpen && !isArtworkModalOpen && <ExitWallViewButton />}
+      <NavigationButton buttonHidden={inArtworkView} />
+      {inArtworkView && !isArtworkModalOpen && <ExitWallViewButton />}
       {webglAvailable !== false && (
         <>
           <NavigationHelpModal
-            hidden={isArtworkPanelOpen || inArtworkView || shownMode === 'bake'}
+            hidden={inArtworkView || shownMode === 'bake'}
             exhibitionId={exhibition?.id}
             artworksReady={artworksReady}
           />
@@ -1020,16 +1021,11 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
         </BakePageProvider>
       )}
       {/* On a phone or tablet the room holds still while an artwork's details are
-          open: a slide or tap on the room around the panel would walk away from
-          the work being read about. This catches those touches; the panel and
-          the details sit above it. (A laptop keeps its click-to-switch: a click
-          on another work while the panel is open moves to it.) */}
-      {isTouch && (isArtworkPanelOpen || isArtworkModalOpen) && (
-        <div className={styles.touchShield} aria-hidden />
-      )}
-      {/* Both show the work as a photo of the print, as the grids do, or its plain image when it
-          has no current render (AR-174). */}
-      {isArtworkPanelOpen && <ArtworkPanel presentation={currentPresentation} />}
+          open: a slide or tap would walk away from the work being read about. This
+          catches those touches; the details sit above it. */}
+      {isTouch && isArtworkModalOpen && <div className={styles.touchShield} aria-hidden />}
+      {/* The work as a photo of the print, as the grids show it, or its plain image when it has no
+          current render (AR-174). */}
       {isArtworkModalOpen && <ArtworkModal presentation={currentPresentation} />}
     </>
   )
