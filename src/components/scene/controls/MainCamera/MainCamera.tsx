@@ -427,14 +427,16 @@ const MainCamera = () => {
 
     // A phone may stand nearer than walking does: held sideways its screen is short, and a small
     // work or a wall text fills it, readable, only from close up.
-    const nearest = artworkViewNearest(isPhone)
+    // On a larger screen a group comes nearer than a single work.
+    const group = !!target.group
+    const nearest = artworkViewNearest(isPhone, group)
     const fitted = fitDistance(
       width,
       height,
       cameraFOV,
       camera.aspect,
       nearest,
-      artworkViewPadding(isPhone),
+      artworkViewPadding(isPhone, group),
     )
 
     // The glide flies straight there and checks no walls on the way, so the spot itself must be

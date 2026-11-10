@@ -322,6 +322,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             normal: { x: normal.x, y: normal.y, z: normal.z },
             width: Math.max(groupWidth, 0.1),
             height: Math.max(groupHeight, 0.1),
+            group: true,
           }),
         )
       } else {

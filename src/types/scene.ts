@@ -11,6 +11,11 @@ export type TFocusTarget = {
    * its support (up to 10 cm). Artwork View frames the face, not the wall behind it. 0 if absent.
    */
   front?: number
+  /**
+   * The target is a group's works framed together (an autofocus group), not one work: on a larger
+   * screen Artwork View comes nearer a group than a single work (`artworkViewNearest`).
+   */
+  group?: boolean
 }
 
 /** Lamps of one kind, grouped by the room Empty they are parented under in the

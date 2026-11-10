@@ -1037,6 +1037,7 @@ const Display = ({ artwork }: DisplayProps) => {
             width: Math.max(groupWidth, 0.1),
             height: Math.max(groupHeight, 0.1),
             front: groupFront,
+            group: true,
           }),
         )
       } else {
