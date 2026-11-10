@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import { isPaymentIntentId } from '@/lib/stripe/paymentIntentId'
 import { ensureOrderForPaymentIntent } from './ensureOrderForPaymentIntent'
 import { formatOrderRef } from './orderRef'
 
@@ -23,6 +24,7 @@ import { formatOrderRef } from './orderRef'
 export async function ensureOrderAction(
   paymentIntentId: string,
 ): Promise<{ ok: boolean; orderRef?: string; hasLimitedEdition?: boolean }> {
+  if (!isPaymentIntentId(paymentIntentId)) return { ok: false }
   const res = await ensureOrderForPaymentIntent(paymentIntentId)
   if (!res.ok) return { ok: false }
   // An edition number bound to the order is the fact itself — truer than

@@ -1,9 +1,14 @@
+// Local backend only (BAKE_STORAGE=local, never production). Its paths are
+// dynamic, so each fs call carries `turbopackIgnore`: without it the build
+// traces the whole project — public/ included — into every function that
+// imports this module.
 import { mkdir, readFile, rm, rmdir, stat, writeFile } from 'fs/promises'
 import path from 'path'
 
 import { bakeBackend } from '@/lib/bake/bakeStorage'
 import { BAKE_CACHE_CONTROL } from '@/lib/bake/bakeUpload'
 import {
+  R2_ENV_PREFIXES,
   buildPresentationKey,
   deleteR2KeyDirect,
   getPresignedUploadUrl,
@@ -68,6 +73,34 @@ export function presentationPublicUrls(
   return { large: url('large'), small: url('small') }
 }
 
+/**
+ * Whether a stored render's files load on this deployment's pages, whichever environment stored
+ * them (owner, 2026-11-10: pointed at production's data, a local server must show exactly what
+ * production shows). Every environment's R2 files sit on the bucket's one public host, so they
+ * load anywhere; local-backend files exist only on the machine that rendered them.
+ */
+export function presentationFilesLoadHere(
+  artworkId: string,
+  record: PrintPresentationRecord,
+): boolean {
+  const { fingerprint, urls } = record
+  const matches = (url: (size: PresentationSize) => string) =>
+    urls.large === url('large') && urls.small === url('small')
+  try {
+    const own = presentationPublicUrls(artworkId, fingerprint)
+    if (matches((size) => own[size])) return true
+    return R2_ENV_PREFIXES.some((env) =>
+      matches((size) =>
+        publicUrlForKey(
+          buildPresentationKey(artworkId, fingerprint, PRESENTATION_WIDTH_PX[size], env),
+        ),
+      ),
+    )
+  } catch {
+    return false
+  }
+}
+
 /** One upload URL per size (a presigned R2 PUT, or the local route), and where each is served. */
 export async function createPresentationUploads(
   artworkId: string,
@@ -109,14 +142,14 @@ export function localPresentationPath(key: string[]): string | null {
 
 export async function writeLocalPresentationFile(filePath: string, bytes: Buffer): Promise<void> {
   assertLocalAllowed()
-  await mkdir(path.dirname(filePath), { recursive: true })
-  await writeFile(filePath, bytes)
+  await mkdir(/*turbopackIgnore: true*/ path.dirname(filePath), { recursive: true })
+  await writeFile(/*turbopackIgnore: true*/ filePath, bytes)
 }
 
 export async function readLocalPresentationFile(filePath: string): Promise<Buffer | null> {
   assertLocalAllowed()
   try {
-    return await readFile(filePath)
+    return await readFile(/*turbopackIgnore: true*/ filePath)
   } catch {
     return null
   }
@@ -132,7 +165,11 @@ export async function presentationObjectSize(
   if (bakeBackend() === 'local') {
     assertLocalAllowed()
     try {
-      return (await stat(path.join(LOCAL_ROOT, artworkId, fileName(fingerprint, size)))).size
+      return (
+        await stat(
+          /*turbopackIgnore: true*/ path.join(LOCAL_ROOT, artworkId, fileName(fingerprint, size)),
+        )
+      ).size
     } catch {
       return null
     }
@@ -151,11 +188,18 @@ export async function deletePresentationFiles(
     assertLocalAllowed()
     await Promise.all(
       SIZES.map((size) =>
-        rm(path.join(LOCAL_ROOT, artworkId, fileName(record.fingerprint, size)), { force: true }),
+        rm(
+          /*turbopackIgnore: true*/ path.join(
+            LOCAL_ROOT,
+            artworkId,
+            fileName(record.fingerprint, size),
+          ),
+          { force: true },
+        ),
       ),
     )
     // Drop the artwork's folder once its last render is gone (fails harmlessly if not empty).
-    await rmdir(path.join(LOCAL_ROOT, artworkId)).catch(() => {})
+    await rmdir(/*turbopackIgnore: true*/ path.join(LOCAL_ROOT, artworkId)).catch(() => {})
     return
   }
   await Promise.all(

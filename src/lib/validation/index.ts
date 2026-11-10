@@ -192,4 +192,3 @@ export const validateShippingField = (
 // Re-export password validation so client forms and server routes import all
 // validation from one place (the rules themselves live in utils/password.ts).
 export { validatePassword } from '@/utils/password'
-export type { PasswordValidationResult } from '@/utils/password'

@@ -4,7 +4,6 @@
  * but never bound to an order — the orphaned-reservation leak.
  *
  * These rows are out of reach of every other release path:
- *  - the cart-hold TTL sweep (`sweepExpiredCartHolds`) skips rows with a PI;
  *  - the normal release (`releaseEditionNumberForPaymentIntent`) only runs from
  *    the Stripe `payment_intent.canceled`/`payment_failed` webhook — which is the
  *    thing that's down when this leak happens.

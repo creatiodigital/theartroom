@@ -97,6 +97,10 @@ const buildPrintsWhere = (
   ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
 })
 
+// Far above any real gallery selection; stops a caller from sending tens of
+// thousands of ids into a NOT IN.
+const MAX_EXCLUDED_IDS = 1000
+
 type GetPrintsCatalogPageArgs = {
   page?: number
   artistId?: string
@@ -124,8 +128,18 @@ export async function getPrintsCatalogPage({
   search = '',
   excludeIds = [],
 }: GetPrintsCatalogPageArgs): Promise<{ items: PrintArtwork[]; totalCount: number }> {
+  // A server action is a public endpoint and its arguments arrive as whatever
+  // the caller sent, so the types above are not a guarantee. Normalize before
+  // anything reaches the query: strings only, bounded lengths, and a bounded
+  // exclusion list (the admin picker sends its current selection here).
   const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1
-  const where = buildPrintsWhere(artistId, edition, search, excludeIds)
+  const safeArtistId = typeof artistId === 'string' ? artistId.slice(0, 100) : ''
+  const safeEdition: EditionFilter = edition === 'open' || edition === 'limited' ? edition : ''
+  const safeSearch = typeof search === 'string' ? search.slice(0, 100) : ''
+  const safeExcludeIds = Array.isArray(excludeIds)
+    ? excludeIds.filter((id): id is string => typeof id === 'string').slice(0, MAX_EXCLUDED_IDS)
+    : []
+  const where = buildPrintsWhere(safeArtistId, safeEdition, safeSearch, safeExcludeIds)
 
   const [rows, totalCount] = await Promise.all([
     prisma.artwork.findMany({

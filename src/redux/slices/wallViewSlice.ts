@@ -174,9 +174,6 @@ const wallViewSlice = createSlice({
         state.artworkGroupIds.push(action.payload)
       }
     },
-    removeArtworkFromGroup: (state: TWallView, action: PayloadAction<string>) => {
-      state.artworkGroupIds = state.artworkGroupIds.filter((id) => id !== action.payload)
-    },
     createArtworkGroup: (state: TWallView, action: PayloadAction<TArtworkGroup>) => {
       state.artworkGroup = action.payload
     },
@@ -189,12 +186,6 @@ const wallViewSlice = createSlice({
     },
     removeGroup: (state: TWallView) => {
       state.artworkGroupIds = []
-    },
-    setGroupHovered: (state: TWallView) => {
-      state.isGroupHovered = true
-    },
-    setGroupNotHovered: (state: TWallView) => {
-      state.isGroupHovered = false
     },
     openArtworkEditModal: (state: TWallView, action: PayloadAction<string>) => {
       state.editingArtworkId = action.payload
@@ -268,12 +259,9 @@ export const {
   createArtworkGroup,
   editArtworkGroup,
   addArtworkToGroup,
-  removeArtworkFromGroup,
   setShiftKeyDown,
   setSizeLocked,
   removeGroup,
-  setGroupHovered,
-  setGroupNotHovered,
   openArtworkEditModal,
   closeArtworkEditModal,
   toggleSnap,

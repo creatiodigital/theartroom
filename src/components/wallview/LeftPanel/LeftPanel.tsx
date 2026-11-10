@@ -45,6 +45,7 @@ import { toRuntimeArtwork } from '@/utils/artworkTransform'
 
 import styles from './LeftPanel.module.scss'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+import { isTypingTarget } from '@/utils/isTypingTarget'
 
 export const LeftPanel = () => {
   const dispatch = useDispatch()
@@ -120,9 +121,9 @@ export const LeftPanel = () => {
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // When editing text in a contentEditable element, let the browser's
-      // native undo/redo handle typing changes instead of our global handler
-      if (e.target instanceof HTMLElement && e.target.isContentEditable) {
+      // When typing in a field or contentEditable text, let the browser's
+      // native undo/redo handle it instead of our global handler.
+      if (isTypingTarget(e.target)) {
         return
       }
 

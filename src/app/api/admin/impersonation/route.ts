@@ -36,9 +36,8 @@ export async function POST(request: Request) {
   if (!target) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
-  // superAdmin accounts can never be impersonated (their scope includes user
-  // management itself).
-  if (!canBeImpersonated(target.userType)) {
+  // superAdmin accounts can never be impersonated, admins only by a superAdmin.
+  if (!canBeImpersonated(session!.user.userType, target.userType)) {
     return NextResponse.json({ error: 'This user cannot be impersonated' }, { status: 403 })
   }
 

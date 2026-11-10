@@ -34,7 +34,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
     prisma.artwork.findUnique({
       where: { slug },
       include: {
-        user: { select: { name: true, lastName: true } },
+        user: { select: { name: true, lastName: true, published: true } },
         // Live priced variants — what makes a LIMITED edition purchasable.
         _count: { select: { limitedVariants: { where: LIVE_VARIANT_WHERE } } },
       },
@@ -45,7 +45,8 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
     return <PurchasesPausedNotice title="Checkout" />
   }
 
-  if (!artwork || !artwork.imageUrl) notFound()
+  // An unpublished artist's works are not for sale (nor shown) anywhere.
+  if (!artwork || !artwork.imageUrl || !artwork.user.published) notFound()
   // Limited editions are priced PER VARIANT and carry no artwork-level price;
   // gating on `printPriceCents` closed the flow for every one of them.
   if (

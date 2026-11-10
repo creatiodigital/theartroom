@@ -19,7 +19,10 @@ import styles from './reset-password.module.scss'
 const ResetPasswordForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const token = searchParams.get('token')
+  // Held in state, then removed from the address bar on mount (below): a live
+  // reset credential should not sit in the URL, where analytics page views and
+  // shared screenshots pick it up. State keeps it once the URL no longer has it.
+  const [token] = useState(() => searchParams.get('token'))
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -36,7 +39,9 @@ const ResetPasswordForm = () => {
   useEffect(() => {
     if (!token) {
       setError('Invalid reset link. Please request a new password reset.')
+      return
     }
+    window.history.replaceState(null, '', window.location.pathname)
   }, [token])
 
   // Strength via the shared `validatePassword` (one rule, client + server) plus

@@ -3,9 +3,9 @@
  * contract. Built up incrementally as the user supplies catalog data
  * (papers, frames, sizes, substrates, hangings) and the price tables.
  *
- * The wizard never imports from this folder directly. Page route
- * dispatches via `getProvider('printspace')` (see ../registry / the
- * loadProviderCatalog dispatcher).
+ * The catalog reaches the wizard through `loadProviderCatalog`
+ * (../loadCatalog.ts); the wizard also imports this folder's static data and
+ * size helpers directly.
  */
 import type { LoadCatalogInput, PrintProvider } from '../types'
 import { buildPrintspaceAvailability, buildPrintspaceCatalog } from './buildCatalog'
@@ -30,6 +30,5 @@ export const printspaceProvider: PrintProvider = {
 
 export { buildPrintspaceAvailability, buildPrintspaceCatalog } from './buildCatalog'
 export { getPrintspaceQuote } from './getQuote'
-export { loadPrintspaceCatalog } from './loadCatalog'
 export * from './data'
 export * from './sizeBounds'

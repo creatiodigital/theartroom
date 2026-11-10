@@ -6,6 +6,7 @@ import { deleteArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import { removeGroup, setShiftKeyDown, chooseCurrentArtworkId } from '@/redux/slices/wallViewSlice'
 import { hideWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
+import { isTypingTarget } from '@/utils/isTypingTarget'
 
 export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: boolean) => {
   const dispatch = useDispatch()
@@ -17,7 +18,11 @@ export const useKeyboardEvents = (currentArtworkId: string | null, isMouseOver: 
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === 'Delete' || e.key === 'Backspace') && !isEditingArtwork) {
+      if (
+        (e.key === 'Delete' || e.key === 'Backspace') &&
+        !isEditingArtwork &&
+        !isTypingTarget(e.target)
+      ) {
         // Delete group if a group is selected and mouse is over the wall
         if (artworkGroupIds.length > 0 && isMouseOver) {
           artworkGroupIds.forEach((artworkId) => {

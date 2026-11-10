@@ -1,5 +1,5 @@
 // Re-export shared types from fonts.ts for backward compatibility
-export type { TFontFamily, TFontWeight, TTextAlign, TOption } from '@/types/fonts'
+export type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 

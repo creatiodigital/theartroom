@@ -3,7 +3,7 @@
 /**
  * Dev/staging-ONLY cleanup actions for clearing test noise off the admin
  * dashboard. Every action is double-gated: requireAdminAction (auth) AND
- * devCleanupAllowed (NEXT_PUBLIC_APP_ENV !== 'production'). In production
+ * devCleanupAllowed (staging and local development only). In production
  * these return an error without touching anything — issued invoices are
  * legal documents there and orders are business records.
  */

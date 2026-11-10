@@ -19,5 +19,3 @@ export const FormLabel = ({ children, htmlFor, required, className }: FormLabelP
     </label>
   )
 }
-
-export default FormLabel

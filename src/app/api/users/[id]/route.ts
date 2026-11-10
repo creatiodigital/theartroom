@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { revalidateTag, revalidatePath } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 import type { Prisma } from '@/generated/prisma'
 import { UserType as UserTypeEnum } from '@/generated/prisma'
@@ -97,8 +97,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     // Check if actor can modify target user based on role hierarchy
-    if (!canModifyUser(session.user.userType, targetUser.userType)) {
-      return NextResponse.json({ error: 'Forbidden - Cannot modify Super Admin' }, { status: 403 })
+    if (!canModifyUser(session.user.userType, targetUser.userType, targetUser.id === session.user.id)) {
+      return NextResponse.json({ error: 'Forbidden - Cannot modify this user' }, { status: 403 })
     }
 
     const userTypeEnum = toUserType(body.userType)
@@ -192,11 +192,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       })
     }
 
-    // Revalidate artist caches
-    revalidateTag('artists', { expire: 0 })
-    if (updated.handler) {
-      revalidateTag(`artist-${updated.handler}`, { expire: 0 })
-    }
     revalidatePath('/')
 
     return NextResponse.json(updated)
@@ -228,11 +223,6 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     await prisma.user.delete({ where: { id } })
 
-    // Revalidate artist caches
-    revalidateTag('artists', { expire: 0 })
-    if (targetUser.handler) {
-      revalidateTag(`artist-${targetUser.handler}`, { expire: 0 })
-    }
     revalidatePath('/')
 
     return NextResponse.json({ success: true })

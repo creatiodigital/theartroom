@@ -75,8 +75,3 @@ export function authorizationHold(order: {
 
   return { days, daysLeft, status }
 }
-
-/** Whether this hold is worth an admin's attention today. */
-export function needsAttention(hold: AuthorizationHold | null): boolean {
-  return hold !== null && hold.status !== 'fresh'
-}

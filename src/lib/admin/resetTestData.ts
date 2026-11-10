@@ -9,12 +9,13 @@
  * are business records — this exists ONLY to clear test noise on the shared
  * dev database (localhost + staging).
  */
+import { DEV_CLEANUP_ALLOWED } from '@/lib/admin/devCleanup'
 import prisma from '@/lib/prisma'
 import { deletePrivateR2Key } from '@/lib/r2'
 
-/** Cleanup is allowed everywhere EXCEPT production. */
+/** Cleanup is allowed on staging and local development only. */
 export function devCleanupAllowed(): boolean {
-  return process.env.NEXT_PUBLIC_APP_ENV !== 'production'
+  return DEV_CLEANUP_ALLOWED
 }
 
 export type TestDataCounts = {

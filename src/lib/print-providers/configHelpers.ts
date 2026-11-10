@@ -9,7 +9,6 @@
  */
 import type {
   AvailabilityCheck,
-  BorderDimension,
   Catalog,
   Dimension,
   EnumDimension,
@@ -118,12 +117,6 @@ export function findEnumDimension(catalog: Catalog, id: string): EnumDimension |
 
 export function findSizeDimension(catalog: Catalog): SizeDimension | undefined {
   return catalog.dimensions.find((d) => d.kind === 'size') as SizeDimension | undefined
-}
-
-export function findBorderDimension(catalog: Catalog, id?: string): BorderDimension | undefined {
-  return catalog.dimensions.find(
-    (d) => d.kind === 'border' && (id === undefined || d.id === id),
-  ) as BorderDimension | undefined
 }
 
 /**
@@ -344,97 +337,4 @@ export function configShipsTo(
     if (!availability(dim.id, value, config, country)) return false
   }
   return true
-}
-
-/**
- * Find a config that ships to `country`, staying as close as possible
- * to `preferred`. Iterates allowed options per dimension; returns null
- * when nothing satisfies (availability × restrictions).
- */
-export function findShippableConfig(
-  catalog: Catalog,
-  preferred: WizardConfig,
-  country: string,
-  availability: AvailabilityCheck,
-  restrictions?: PrintRestrictions | null,
-): WizardConfig | null {
-  // Cartesian product over visible dimensions; exits early once a
-  // shipping config is found. With ~6 dimensions and a handful of
-  // options each this is fast enough for an interactive wizard.
-  const dims = catalog.dimensions
-
-  type Candidate = { config: WizardConfig; cost: number }
-  let best: Candidate | null = null
-
-  const recurse = (idx: number, working: WizardConfig) => {
-    if (idx >= dims.length) {
-      if (!configShipsTo(catalog, working, country, availability)) return
-      const cost = diffCost(working, preferred)
-      if (!best || cost < best.cost) best = { config: working, cost }
-      return
-    }
-    const dim = dims[idx]
-    if (!isDimensionVisible(dim, working, catalog)) {
-      // Dimension hidden under current values → carry through.
-      recurse(idx + 1, working)
-      return
-    }
-    const candidates = enumerateOptions(dim, working, restrictions)
-    for (const optionId of candidates) {
-      recurse(idx + 1, {
-        ...working,
-        values: { ...working.values, [dim.id]: optionId },
-      })
-    }
-  }
-
-  recurse(0, { ...preferred, values: { ...preferred.values } })
-  return best ? (best as Candidate).config : null
-}
-
-function enumerateOptions(
-  dim: Dimension,
-  config: WizardConfig,
-  restrictions: PrintRestrictions | null | undefined,
-): string[] {
-  if (dim.kind === 'enum') {
-    return dim.options
-      .filter((o) => isOptionVisible(o, config))
-      .filter((o) => isOptionAllowed(o.id, dim.id, restrictions))
-      .map((o) => o.id)
-  }
-  if (dim.kind === 'size') {
-    return dim.options
-      .filter((o) => o.printEligible)
-      .filter((o) => isOptionAllowed(o.id, dim.id, restrictions))
-      .map((o) => o.id)
-  }
-  return []
-}
-
-/**
- * Distance between two configs (number of dimensions that differ),
- * weighted so we prefer changing superficial choices over structural
- * ones. Used to pick the shippable config closest to the buyer's
- * current selection when they change country.
- */
-function diffCost(a: WizardConfig, b: WizardConfig): number {
-  let cost = 0
-  const keys = new Set([...Object.keys(a.values), ...Object.keys(b.values)])
-  // Heuristic weights — generic across providers. Adapter-specific
-  // dimensions just fall through to the default weight.
-  const WEIGHT: Record<string, number> = {
-    paper: 16,
-    printType: 16,
-    format: 8,
-    frame: 8,
-    size: 4,
-    mount: 2,
-    color: 1,
-    frameColor: 1,
-  }
-  for (const k of keys) {
-    if (a.values[k] !== b.values[k]) cost += WEIGHT[k] ?? 5
-  }
-  return cost
 }

@@ -6,11 +6,13 @@ import { makeLook } from '@/lib/printPresentation/look'
 import { presentationFingerprint, presentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
 import {
+  PRESENTATION_WIDTH_PX,
   isPrintPresentationRecord,
   type PrintPresentationRecord,
 } from '@/lib/printPresentation/record'
 import { deletePresentationFiles, presentationPublicUrls } from '@/lib/printPresentation/storage'
 import prisma from '@/lib/prisma'
+import { R2_ENV_PREFIXES, buildPresentationKey, publicUrlForKey, type R2EnvPrefix } from '@/lib/r2'
 
 import { fixtures } from './fixtures'
 
@@ -262,9 +264,34 @@ test.describe('the render a page shows', () => {
     expect(shownRecord(id, recordOf('deadbeef', limited), inputs)).toBe(null)
     // Another shape: the original would no longer fill the window.
     expect(shownRecord(id, recordOf('deadbeef', { ...rendered, ratio: 1.25 }), inputs)).toBe(null)
-    // Files this deployment can't serve, current or not.
+    // Files that load only on another machine (its local backend), current or not.
     const elsewhere = { large: '/elsewhere/x-1800.webp', small: '/elsewhere/x-900.webp' }
     expect(shownRecord(id, recordOf(inputs.fingerprint, { urls: elsewhere }), inputs)).toBe(null)
+  })
+
+  test("any environment's R2 render is shown: pointed at production's data, a page is production's", () => {
+    // Owner, 2026-11-10: a local server reading production's database showed every work plain.
+    // `env` is a plain string so a prefix no environment stores under can be tried too.
+    const onR2 = (env: string, artworkId = id, fingerprint = inputs.fingerprint) => {
+      const url = (width: number) =>
+        publicUrlForKey(buildPresentationKey(artworkId, fingerprint, width, env as R2EnvPrefix))
+      return { large: url(PRESENTATION_WIDTH_PX.large), small: url(PRESENTATION_WIDTH_PX.small) }
+    }
+    for (const env of R2_ENV_PREFIXES) {
+      expect(shownRecord(id, recordOf(inputs.fingerprint, { urls: onR2(env) }), inputs)).toEqual({
+        frame: 'wood-dark',
+        ratio: 1.5,
+      })
+    }
+    // Only this work's own files at its own fingerprint, on a prefix an environment stores under.
+    const other = '00000000-0000-0000-0000-000000000000'
+    for (const urls of [
+      onR2('production', other),
+      onR2('staging/prod-copy'),
+      onR2('production', id, 'deadbeef'),
+    ]) {
+      expect(shownRecord(id, recordOf(inputs.fingerprint, { urls }), inputs)).toBe(null)
+    }
   })
 
   test("before a setting changes, a current render that doesn't say its shot gets it written in", () => {

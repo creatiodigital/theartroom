@@ -42,8 +42,7 @@ export type BenchSettings = {
 export const BENCHES_PER_ROOM = 4
 
 /**
- * Whether artists see the Furniture panel in the 3D editor. Off while benches are paused (owner,
- * 2026-10-28: "we will refine later"); the code ships with the print presentations, hidden.
+ * Whether artists see the Furniture panel in the 3D editor. On since AR-169 (2026-11-01).
  * Design Connected has OK'd their models for the online gallery in writing (2026-10-28).
  */
 export const FURNITURE_PANEL_ENABLED = true

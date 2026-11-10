@@ -110,5 +110,3 @@ export async function freezeExhibition(exhibitionId: string) {
 
   return { snapshot, bakeRefusal }
 }
-
-export type ExhibitionSnapshot = Awaited<ReturnType<typeof buildExhibitionSnapshot>>

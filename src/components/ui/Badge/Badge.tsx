@@ -17,5 +17,3 @@ type BadgeProps = {
 export const Badge = ({ label, variant = 'neutral', size = 'small', className }: BadgeProps) => {
   return <span className={c(styles.badge, styles[variant], styles[size], className)}>{label}</span>
 }
-
-export default Badge

@@ -1,5 +1,3 @@
-import prisma from '@/lib/prisma'
-
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
 
 /**
@@ -43,31 +41,4 @@ export function exhibitionOfUrl(
   } catch {
     return null
   }
-}
-
-/**
- * For each slide link that opens a published exhibition whose 3D space is published too, the way
- * straight into that space on this site (`…/visit`), by link. Links to anything else are absent,
- * and their slides get no "Enter Virtual Exhibition" button.
- */
-export async function visitUrlsFor(urls: string[]): Promise<Record<string, string>> {
-  const targets = urls.flatMap((url) => {
-    const target = exhibitionOfUrl(url)
-    return target ? [{ url, ...target }] : []
-  })
-  if (targets.length === 0) return {}
-  const open = await prisma.exhibition.findMany({
-    where: {
-      published: true,
-      spacePublished: true,
-      OR: targets.map((t) => ({ url: t.exhibitionSlug, user: { handler: t.artistSlug } })),
-    },
-    select: { url: true, user: { select: { handler: true } } },
-  })
-  const isOpen = new Set(open.map((e) => `${e.user.handler}/${e.url}`))
-  return Object.fromEntries(
-    targets
-      .filter((t) => isOpen.has(`${t.artistSlug}/${t.exhibitionSlug}`))
-      .map((t) => [t.url, `${t.path}/visit`]),
-  )
 }

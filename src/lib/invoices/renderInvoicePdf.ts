@@ -13,8 +13,6 @@ import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer'
 import { InvoiceDocument } from './InvoiceDocument'
 import type { InvoiceDocumentProps } from './InvoiceDocument'
 
-export type { InvoiceDocumentProps as RenderInput }
-
 export async function renderInvoicePdf(input: InvoiceDocumentProps): Promise<Buffer> {
   // createElement produces the correct ReactElement at runtime; the cast
   // satisfies @react-pdf/renderer's renderToBuffer type signature which

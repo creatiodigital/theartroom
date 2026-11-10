@@ -120,5 +120,3 @@ export const RoomEnvironmentCapture = ({ intensity = 1 }: { intensity?: number }
 
   return null
 }
-
-export default RoomEnvironmentCapture

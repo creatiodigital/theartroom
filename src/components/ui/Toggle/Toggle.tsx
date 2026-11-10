@@ -38,5 +38,3 @@ export const Toggle = ({
     </label>
   )
 }
-
-export default Toggle

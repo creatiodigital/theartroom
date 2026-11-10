@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { revalidateTag } from 'next/cache'
 import type { NextRequest } from 'next/server'
 import { deleteFromR2 } from '@/lib/r2'
 import { isPrintPresentationRecord } from '@/lib/printPresentation/record'
@@ -83,21 +82,6 @@ function sanitizePrintRecommendations(
   return out.length === 0 ? null : { paper: out }
 }
 
-// The exhibition profile API (/api/exhibitions/by-url/[url]) caches its
-// merged snapshot+live response under `exhibition-${url}` with a 1-hour
-// revalidate window. Artwork edits (title, image, etc.) would otherwise
-// stay invisible on the public page until that window expired — bust
-// every exhibition tag that currently includes this artwork.
-async function revalidateLinkedExhibitions(artworkId: string) {
-  const linked = await prisma.exhibitionArtwork.findMany({
-    where: { artworkId },
-    select: { exhibition: { select: { url: true } } },
-  })
-  for (const { exhibition } of linked) {
-    if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, { expire: 0 })
-  }
-}
-
 // GET single artwork
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -115,7 +99,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
         // with the artwork's OWN artist rather than whoever is signed in. Adds
         // nothing private to this public read — an artist's first and last name
         // is already on their public portfolio page.
-        user: { select: { name: true, lastName: true } },
+        user: { select: { name: true, lastName: true, published: true } },
       },
     })
 
@@ -133,6 +117,10 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       isAdminOrAbove(session?.user?.userType) || session?.user?.id === artwork.userId
 
     if (!privileged) {
+      // An unpublished artist's works are hidden from the public.
+      if (!artwork.user.published) {
+        return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+      }
       // `printPriceCents` is the artist's cut. Public callers get the artwork
       // and its ON-SALE variants only, stripped of pricing and admin state.
       const { printPriceCents: _artistCut, ...publicArtwork } = artwork
@@ -276,21 +264,21 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const titleChanged = body.title && body.title !== existing.title
     const slug = titleChanged ? await generateUniqueSlug(body.title) : undefined
 
-    // Tags for cache busting below — by-id + by-slug (old + new if slug changed).
-    const slugTags = [existing.slug, slug].filter(
-      (s): s is string => typeof s === 'string' && s.length > 0,
-    )
-
     // Normalize print-sales inputs. `printPriceCents` is an integer in
     // minor units (cents); null means "price not set". `printEnabled`
     // without a price still persists — the checkout gate checks for both.
     const rawPrice = body.printPriceCents
     const parsedPrice =
       rawPrice === null || rawPrice === undefined || rawPrice === '' ? null : Number(rawPrice)
-    const printPriceCents =
-      parsedPrice !== null && Number.isFinite(parsedPrice) && parsedPrice >= 0
-        ? Math.round(parsedPrice)
-        : null
+    // A price, when given, must be a positive amount. A €0 cut showed the work
+    // as buyable in the catalog while checkout refused it.
+    if (parsedPrice !== null && !(Number.isFinite(parsedPrice) && Math.round(parsedPrice) >= 1)) {
+      return NextResponse.json(
+        { error: 'The print price must be greater than 0.' },
+        { status: 400 },
+      )
+    }
+    const printPriceCents = parsedPrice === null ? null : Math.round(parsedPrice)
 
     // Limited-edition fields. `printEditionTotal` is an integer count
     // of prints in the series; meaningful only when the flag is on.
@@ -548,17 +536,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // line rather than below it.
       if (membershipOperations.length > 0) await prisma.$transaction(membershipOperations)
 
-      // Bust caches that include this artwork's data. `page-prints` and
-      // `artworks` are global listing tags — without busting them, the
-      // /prints page and the artist profile can show stale presence/
-      // absence (e.g. just-enabled print artwork missing for up to an
-      // hour after the toggle).
-      revalidateTag(`artwork-${id}`, { expire: 0 })
-      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, { expire: 0 })
-      revalidateTag('page-prints', { expire: 0 })
-      revalidateTag('artworks', { expire: 0 })
-      await revalidateLinkedExhibitions(id)
-
       return NextResponse.json(artwork)
     } catch (innerError) {
       // If new field fails, try without it (fallback for schema mismatch)
@@ -572,13 +549,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // only after the artwork row itself is safely saved, so a fallback
       // that still fails here never leaves membership changed behind it.
       if (membershipOperations.length > 0) await prisma.$transaction(membershipOperations)
-
-      // Bust caches that include this artwork's data
-      revalidateTag(`artwork-${id}`, { expire: 0 })
-      for (const s of slugTags) revalidateTag(`artwork-slug-${s}`, { expire: 0 })
-      revalidateTag('page-prints', { expire: 0 })
-      revalidateTag('artworks', { expire: 0 })
-      await revalidateLinkedExhibitions(id)
 
       return NextResponse.json(artwork)
     }
@@ -596,12 +566,17 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
   try {
     const { id } = await context.params
 
-    // Get artwork first to check for image and verify ownership.
-    // Pulling user.handler so we can revalidate the artist profile cache
-    // tag after the row is gone.
     const artwork = await prisma.artwork.findUnique({
       where: { id },
-      include: { user: { select: { handler: true } } },
+      select: {
+        id: true,
+        userId: true,
+        imageUrl: true,
+        originalImageUrl: true,
+        soundUrl: true,
+        videoUrl: true,
+        printPresentation: true,
+      },
     })
 
     if (!artwork) {
@@ -612,28 +587,67 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     const { error: authError } = await requireOwnership(artwork.userId)
     if (authError) return authError
 
-    // Snapshot linked exhibition urls before the cascade wipes the
-    // ExhibitionArtwork join rows — we need them to bust caches after
-    // the delete completes.
-    const linkedExhibitions = await prisma.exhibitionArtwork.findMany({
-      where: { artworkId: id },
-      select: { exhibition: { select: { url: true } } },
-    })
-
-    // Delete web-optimized image from R2 if exists
-    if (artwork.imageUrl) {
-      try {
-        await deleteFromR2(artwork.imageUrl)
-      } catch (error) {
-        console.warn('Failed to delete image blob:', error)
-        // Continue anyway - file might not exist
+    // The row goes FIRST, files after. Orders reference the artwork with
+    // `onDelete: Restrict`, so the delete of a work that has sold is refused —
+    // and with the files removed first, that refusal came after the web image
+    // and the print master were already gone.
+    //
+    // Strip the artwork from every exhibition's autofocus groups in the same
+    // transaction. `autofocusGroups` is a JSON column holding raw artworkIds,
+    // so no foreign key reaches inside it and the cascade cannot clean it —
+    // without this, every exhibition that grouped this piece keeps a dead id
+    // forever. Surgical on purpose: the group survives with its other members,
+    // because losing one artwork is not a reason to lose the grouping.
+    try {
+      await prisma.$transaction(async (tx) => {
+        const groupedIn = await tx.exhibition.findMany({
+          where: { autofocusGroups: { not: Prisma.DbNull } },
+          select: { id: true, autofocusGroups: true },
+        })
+        for (const ex of groupedIn) {
+          const groups = ex.autofocusGroups as unknown as AutofocusGroupJson[] | null
+          if (!Array.isArray(groups)) continue
+          if (!groups.some((g) => Array.isArray(g?.artworkIds) && g.artworkIds.includes(id))) {
+            continue
+          }
+          const cleaned = groups.map((g) => ({
+            ...g,
+            artworkIds: Array.isArray(g?.artworkIds)
+              ? g.artworkIds.filter((aid) => aid !== id)
+              : g?.artworkIds,
+          }))
+          await tx.exhibition.update({
+            where: { id: ex.id },
+            data: { autofocusGroups: cleaned as unknown as Prisma.InputJsonValue },
+          })
+        }
+        await tx.artwork.delete({ where: { id } })
+      })
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'This artwork has orders, so it cannot be deleted.' },
+          { status: 409 },
+        )
       }
+      throw error
     }
 
-    // Delete high-res original from R2 if exists. Without this, the
-    // raw uploaded TIFF/PNG/JPEG (often tens of MB) is orphaned in R2
-    // every time an artist removes a piece from their library.
-    // Its print presentation's stored renders (both sizes).
+    // The row is gone; now its files. Each is best-effort: an orphaned file is
+    // a cost, never a reason to report a completed delete as failed.
+    //
+    // The web image, the print presentation's stored renders (both sizes), the
+    // high-res original (the raw TIFF/PNG/JPEG, often tens of MB — orphaned
+    // in R2 every time an artist removed a piece without this), sound, video.
+    const deleteFile = async (url: string | null, what: string) => {
+      if (!url) return
+      try {
+        await deleteFromR2(url)
+      } catch (error) {
+        console.warn(`Failed to delete ${what}:`, error)
+      }
+    }
+    await deleteFile(artwork.imageUrl, 'image blob')
     if (isPrintPresentationRecord(artwork.printPresentation)) {
       try {
         await deletePresentationFiles(artwork.printPresentation, artwork.id)
@@ -641,75 +655,9 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
         console.warn('Failed to delete print presentation files:', error)
       }
     }
-
-    if (artwork.originalImageUrl) {
-      try {
-        await deleteFromR2(artwork.originalImageUrl)
-      } catch (error) {
-        console.warn('Failed to delete original image blob:', error)
-      }
-    }
-
-    // Delete associated sound from R2 if exists
-    if (artwork.soundUrl) {
-      try {
-        await deleteFromR2(artwork.soundUrl)
-      } catch (error) {
-        console.warn('Failed to delete sound blob:', error)
-      }
-    }
-
-    // Delete associated video from R2 if exists
-    if (artwork.videoUrl) {
-      try {
-        await deleteFromR2(artwork.videoUrl)
-      } catch (error) {
-        console.warn('Failed to delete video blob:', error)
-      }
-    }
-
-    // Strip the artwork from every exhibition's autofocus groups BEFORE the
-    // row goes. `autofocusGroups` is a JSON column holding raw artworkIds, so
-    // no foreign key reaches inside it and the cascade below cannot clean it —
-    // without this, every exhibition that grouped this piece keeps a dead id
-    // forever. Surgical on purpose: the group survives with its other members,
-    // because losing one artwork is not a reason to lose the grouping.
-    const groupedIn = await prisma.exhibition.findMany({
-      where: { autofocusGroups: { not: Prisma.DbNull } },
-      select: { id: true, autofocusGroups: true },
-    })
-    for (const ex of groupedIn) {
-      const groups = ex.autofocusGroups as unknown as AutofocusGroupJson[] | null
-      if (!Array.isArray(groups)) continue
-      if (!groups.some((g) => Array.isArray(g?.artworkIds) && g.artworkIds.includes(id))) continue
-      const cleaned = groups.map((g) => ({
-        ...g,
-        artworkIds: Array.isArray(g?.artworkIds)
-          ? g.artworkIds.filter((aid) => aid !== id)
-          : g?.artworkIds,
-      }))
-      await prisma.exhibition.update({
-        where: { id: ex.id },
-        data: { autofocusGroups: cleaned as unknown as Prisma.InputJsonValue },
-      })
-    }
-
-    // Delete artwork record
-    await prisma.artwork.delete({
-      where: { id },
-    })
-
-    // Bust detail page cache + any exhibition pages that showed it +
-    // the artist profile page that lists the artwork.
-    revalidateTag(`artwork-${id}`, { expire: 0 })
-    for (const { exhibition } of linkedExhibitions) {
-      if (exhibition?.url) revalidateTag(`exhibition-${exhibition.url}`, { expire: 0 })
-    }
-    if (artwork.user?.handler) {
-      revalidateTag(`artist-${artwork.user.handler}`, { expire: 0 })
-    }
-    revalidateTag('artists', { expire: 0 })
-    revalidateTag('artworks', { expire: 0 })
+    await deleteFile(artwork.originalImageUrl, 'original image blob')
+    await deleteFile(artwork.soundUrl, 'sound blob')
+    await deleteFile(artwork.videoUrl, 'video blob')
 
     return NextResponse.json({ success: true })
   } catch (error) {

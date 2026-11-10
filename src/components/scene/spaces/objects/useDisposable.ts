@@ -28,5 +28,3 @@ export const useDisposable = <T extends Disposable | null | undefined>(object: T
   }, [object])
   return object
 }
-
-export default useDisposable

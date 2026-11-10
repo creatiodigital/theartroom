@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
@@ -16,7 +17,10 @@ import { getPrintPresentations } from '@/lib/printPresentation/getPrintPresentat
 // immediately. No data cache.
 export const dynamic = 'force-dynamic'
 
-const getArtwork = (slug: string) =>
+// Wrapped in React's per-request `cache()` so generateMetadata and the page
+// share one query. It lives for the duration of a single request only —
+// nothing is kept between visits.
+const getArtwork = cache((slug: string) =>
   prisma.artwork.findUnique({
     where: { slug },
     select: {
@@ -51,10 +55,12 @@ const getArtwork = (slug: string) =>
           name: true,
           lastName: true,
           handler: true,
+          published: true,
         },
       },
     },
-  })
+  }),
+)
 
 interface ArtworkPageProps {
   params: Promise<{ slug: string }>
@@ -166,16 +172,9 @@ async function getArtistNeighbours(
 export async function generateMetadata({ params }: ArtworkPageProps): Promise<Metadata> {
   const { slug } = await params
 
-  const artwork = await prisma.artwork.findUnique({
-    where: { slug },
-    select: {
-      title: true,
-      description: true,
-      user: { select: { name: true, lastName: true } },
-    },
-  })
+  const artwork = await getArtwork(slug)
 
-  if (!artwork) {
+  if (!artwork || !artwork.user.published) {
     return { title: 'Artwork Not Found' }
   }
 
@@ -198,7 +197,9 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
   const { exhibition: exhibitionSlug, artist: artistHandler, from } = await searchParams
 
   const artwork = await getArtwork(slug)
-  if (!artwork) notFound()
+  // An unpublished artist is hidden everywhere public, their works included —
+  // the same rule as the artist page.
+  if (!artwork || !artwork.user.published) notFound()
 
   // `printPriceCents` is pulled out rather than spread onward: it is the
   // ARTIST's cut, the pricing INPUT, and the gallery's margin is one
@@ -206,34 +207,34 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
   // must never see it.
   const { user, limitedVariants, printPriceCents, ...artworkData } = artwork
 
-  // The same resolved payload the exhibition modal receives, so the two
-  // surfaces describe a sale identically.
-  const commerce = await buildArtworkCommerce(artwork.id, {
-    ...artworkData,
-    printPriceCents,
-    limitedVariants,
-  })
-
-  const media = await getArtworkMedia(artwork.id)
-  const presentations = await getPrintPresentations([artwork.id])
-
-  // Narrowest set first, matching the order ArtworkGrid resolves its context in.
-  // Each walker returns null immediately when its own param is absent, so only
-  // the one that applies costs a query.
-  const neighbours =
-    (await getExhibitionNeighbours(slug, exhibitionSlug)) ??
-    (await getArtistNeighbours(slug, artistHandler)) ??
-    (await getPrintsNeighbours(slug, from))
-
-  // How many numbers are left across the live variants. Live variants can all
-  // exist while every copy is gone — that is sold out, not unpurchasable, and
-  // the page says so rather than offering a button the wizard would refuse.
-  const availableNumberCount =
+  // Everything below depends only on the artwork row, so it is read in
+  // parallel rather than one query after another.
+  const [commerce, media, presentations, neighbours, availableNumberCount] = await Promise.all([
+    // The same resolved payload the exhibition modal receives, so the two
+    // surfaces describe a sale identically.
+    buildArtworkCommerce(artwork.id, {
+      ...artworkData,
+      printPriceCents,
+      limitedVariants,
+    }),
+    getArtworkMedia(artwork.id),
+    getPrintPresentations([artwork.id]),
+    // Narrowest set first, matching the order ArtworkGrid resolves its context
+    // in. Each walker returns null immediately when its own param is absent, so
+    // only the one that applies costs a query.
+    (async () =>
+      (await getExhibitionNeighbours(slug, exhibitionSlug)) ??
+      (await getArtistNeighbours(slug, artistHandler)) ??
+      (await getPrintsNeighbours(slug, from)))(),
+    // How many numbers are left across the live variants. Live variants can all
+    // exist while every copy is gone — that is sold out, not unpurchasable, and
+    // the page says so rather than offering a button the wizard would refuse.
     limitedVariants.length > 0
-      ? await prisma.editionNumber.count({
+      ? prisma.editionNumber.count({
           where: { variantId: { in: limitedVariants.map((v) => v.id) }, state: 'available' },
         })
-      : 0
+      : 0,
+  ])
 
   return (
     <ArtworkDetailPage

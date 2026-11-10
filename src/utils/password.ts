@@ -55,13 +55,31 @@ export function generateProvisionalPassword(): string {
   const digits = '23456789' // No 0, 1 to avoid confusion
 
   const pick = (chars: string, count: number) =>
-    Array.from({ length: count }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    Array.from({ length: count }, () => chars[randomIndex(chars.length)]).join('')
 
-  const parts = pick(upper, 2) + pick(lower, 4) + pick(digits, 2)
+  const chars = (pick(upper, 2) + pick(lower, 4) + pick(digits, 2)).split('')
 
-  // Shuffle
-  return parts
-    .split('')
-    .sort(() => Math.random() - 0.5)
-    .join('')
+  // Fisher–Yates shuffle (a sort with a random comparator is biased).
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomIndex(i + 1)
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
+  }
+  return chars.join('')
+}
+
+/**
+ * Uniform random integer in [0, n) from the platform CSPRNG. A provisional
+ * password logs its holder straight in (no email code), so it must not be
+ * predictable from Math.random's engine state. Rejection sampling keeps every
+ * index equally likely.
+ */
+function randomIndex(n: number): number {
+  const buffer = new Uint32Array(1)
+  const limit = Math.floor(0x1_0000_0000 / n) * n
+  let value: number
+  do {
+    globalThis.crypto.getRandomValues(buffer)
+    value = buffer[0]
+  } while (value >= limit)
+  return value % n
 }

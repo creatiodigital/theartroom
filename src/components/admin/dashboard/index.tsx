@@ -21,7 +21,7 @@ import { AnalyticsSection } from './AnalyticsSection'
 // time, so on production this is a compile-time false and the whole section
 // (plus its imports' code paths) never renders. The server actions carry the
 // authoritative guard — this flag is just UI.
-const DEV_CLEANUP_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== 'production'
+import { DEV_CLEANUP_ALLOWED } from '@/lib/admin/devCleanup'
 
 // Shown when an action never got an answer (timeout, offline, mid-deploy) —
 // distinct from the action's own `error`, which means it ran and said no.

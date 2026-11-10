@@ -95,5 +95,3 @@ export const Slideshow = ({ slides, interval = 8000 }: SlideshowProps) => {
     </div>
   )
 }
-
-export default Slideshow

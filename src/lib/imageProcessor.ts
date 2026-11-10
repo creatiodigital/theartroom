@@ -62,19 +62,6 @@ export async function processImage(buffer: Buffer): Promise<Buffer> {
 }
 
 /**
- * Get image metadata
- */
-export async function getImageMetadata(buffer: Buffer) {
-  const metadata = await sharp(buffer).metadata()
-  return {
-    width: metadata.width,
-    height: metadata.height,
-    format: metadata.format,
-    size: buffer.length,
-  }
-}
-
-/**
  * Validate image file type by checking magic bytes
  */
 export function isValidImageType(buffer: Buffer): boolean {

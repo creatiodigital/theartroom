@@ -12,13 +12,9 @@ import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
 /**
  * Preload images and track progress
  */
-const preloadImages = (
-  imageUrls: string[],
-  onProgress: (loaded: number, total: number) => void,
-): Promise<void> => {
+const preloadImages = (imageUrls: string[]): Promise<void> => {
   return new Promise((resolve) => {
     if (imageUrls.length === 0) {
-      onProgress(0, 0)
       resolve()
       return
     }
@@ -35,7 +31,6 @@ const preloadImages = (
       img.crossOrigin = 'anonymous'
       img.onload = img.onerror = () => {
         loaded++
-        onProgress(loaded, total)
         if (loaded === total) {
           resolve()
         }
@@ -57,7 +52,6 @@ export const useLoadExhibitionArtworks = (
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const [imagesLoading, setImagesLoading] = useState(false)
-  const [imageProgress, setImageProgress] = useState({ loaded: 0, total: 0 })
 
   // Which exhibition's artworks are currently in `state.byId`. Tracked as
   // state (not a ref) so consumers can react when it flips — e.g. the
@@ -137,10 +131,10 @@ export const useLoadExhibitionArtworks = (
         setLoading(false)
         setLoadedExhibitionId(exhibitionId)
 
-        // Preload all images
-        await preloadImages(imageUrls, (loaded, total) => {
-          setImageProgress({ loaded, total })
-        })
+        // Preload all images. No per-image progress state: nothing displayed
+        // it, and setting it re-rendered the whole page — the 3D room
+        // included — once per image while the room was loading.
+        await preloadImages(imageUrls)
       } catch (error) {
         console.error('Error loading exhibition artworks:', error)
       } finally {
@@ -155,7 +149,6 @@ export const useLoadExhibitionArtworks = (
   return {
     loading,
     imagesLoading,
-    imageProgress,
     // Combined ready state - false until both data and images are loaded
     isReady: !loading && !imagesLoading,
     /** ID of the exhibition whose artworks currently populate Redux.

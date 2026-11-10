@@ -6,6 +6,7 @@ import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { isBakeRecord } from '@/lib/bake/bakeRecord'
 import { fingerprintRoom } from '@/lib/bake/loadBakeFingerprint'
 import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
+import { captureError } from '@/lib/observability/captureError'
 import { getPrintPresentations } from '@/lib/printPresentation/getPrintPresentations'
 import prisma from '@/lib/prisma'
 
@@ -164,6 +165,14 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         })
         .filter(Boolean)
 
+      // The print presentations are looked up alongside the live rows rather
+      // than after them: keyed by id, they are trimmed to the final list below.
+      const presentationsPromise = getPrintPresentations(
+        snapshotArtworkObjects.map((a) => a.id as string),
+      )
+      // Observed now so that, if the read below throws first, this promise
+      // can't reject unhandled; awaiting it later still surfaces its error.
+      presentationsPromise.catch(() => {})
       const liveArtworks = await prisma.artwork.findMany({
         where: { id: { in: allSnapshotArtworkIds } },
         select: {
@@ -246,10 +255,21 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
       // Each work as a photo of the print, for the pop-ups a double tap and "View Details" open
       // (AR-174); the grids' rule, so a work without a current render shows its plain image.
-      const presentations = await getPrintPresentations(artworks.map((a) => a.id as string))
+      const allPresentations = await presentationsPromise
+      const presentations = Object.fromEntries(
+        artworks
+          .map((a) => a.id as string)
+          .filter((id) => id in allPresentations)
+          .map((id) => [id, allPresentations[id]]),
+      )
+
+      // The frozen snapshot itself is not part of the answer: what the room
+      // needs from it is copied out field by field below, and sending it as
+      // well roughly doubled what every visitor's phone downloads and parses.
+      const { publishedSnapshot: _snapshot, ...liveExhibition } = exhibition
 
       return NextResponse.json({
-        ...exhibition,
+        ...liveExhibition,
         // Exhibition content comes from live DB (via ...exhibition spread above)
         // Only 3D scene settings come from the snapshot
         spaceId: snapshotExhibition.spaceId,
@@ -319,9 +339,10 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       .map((ea) => ea.artwork)
       .filter((artwork) => !artwork.hiddenFromExhibition && artwork.artworkType === 'image')
     const presentations = await getPrintPresentations(artworks.map((a) => a.id))
+    const { publishedSnapshot: _snapshot, ...liveExhibition } = exhibition
 
     return NextResponse.json({
-      ...exhibition,
+      ...liveExhibition,
       // No snapshot, no published bake; the live column is a draft.
       bake: null,
       // Override the raw (already placed-only, per the query's `where`)
@@ -332,7 +353,13 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
       presentations,
     })
   } catch (error) {
-    console.error('[GET /api/exhibitions/by-url/[url]] error:', JSON.stringify(error, null, 2))
+    // The error itself, not JSON.stringify(error) — that prints `{}` for any Error.
+    console.error('[GET /api/exhibitions/by-url/[url]] error:', error)
+    captureError(error, {
+      flow: 'content',
+      stage: 'exhibition-by-url',
+      fingerprint: ['content:exhibition-by-url'],
+    })
     return NextResponse.json({ error: 'Failed to fetch exhibition' }, { status: 500 })
   }
 }

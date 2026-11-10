@@ -10,6 +10,10 @@ type RouteParams = { params: Promise<{ id: string }> }
 // GET single slide
 export async function GET(_request: Request, { params }: RouteParams) {
   try {
+    // Admin-only, like the list: a slide may be an unannounced draft.
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const { id } = await params
     const slide = await prisma.slide.findUnique({
       where: { id },

@@ -44,45 +44,6 @@ export const spotIrradiance = (light: SpotLight, point: Vector3, normal: Vector3
 
 export const luminance = (c: Color) => c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
 
-/** Diagnostics: mean irradiance (lamps direct + room bounce) on every artwork, with its place. */
-export const artworkIrradiances = (scene: Object3D, bounce: Color) => {
-  const lights: SpotLight[] = []
-  const works: Mesh[] = []
-  scene.traverse((o) => {
-    const light = o as SpotLight
-    if (light.isSpotLight && light.visible && light.intensity > 0) lights.push(light)
-    if ((o as Mesh).isMesh && o.name === 'artworkImage') works.push(o as Mesh)
-  })
-  return works.map((work) => {
-    work.updateMatrixWorld(true)
-    work.geometry.computeBoundingBox()
-    const box = work.geometry.boundingBox!
-    const normal = new Vector3(0, 0, 1)
-      .applyMatrix3(new Matrix3().getNormalMatrix(work.matrixWorld))
-      .normalize()
-    let sum = 0
-    for (const u of [0.1, 0.5, 0.9]) {
-      for (const v of [0.1, 0.5, 0.9]) {
-        const point = new Vector3(
-          box.min.x + (box.max.x - box.min.x) * u,
-          box.min.y + (box.max.y - box.min.y) * v,
-          0,
-        ).applyMatrix4(work.matrixWorld)
-        sum += luminance(
-          lights.reduce((e, l) => e.add(spotIrradiance(l, point, normal)), bounce.clone()),
-        )
-      }
-    }
-    const centre = new Vector3()
-    box.getCenter(centre).applyMatrix4(work.matrixWorld)
-    return {
-      at: centre.toArray().map((n) => +n.toFixed(2)),
-      normal: normal.toArray().map((n) => +n.toFixed(1)),
-      lux: Math.round((sum / 9) * LUX_PER_UNIT),
-    }
-  })
-}
-
 /**
  * The light on the brightest-lit artwork: every mounted lamp's direct light at 9 points across
  * each work, plus the room's bounce light (`bounce`, RGB — the lamps' direct light is summed

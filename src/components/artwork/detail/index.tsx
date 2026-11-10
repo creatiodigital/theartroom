@@ -4,6 +4,7 @@ import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
 import { ArtworkMediaGallery } from './ArtworkMediaGallery'
+import { ArtworkTechnique } from './ArtworkRichText'
 import { ArtworkStorySection } from './ArtworkStorySection'
 
 import {
@@ -45,9 +46,9 @@ export const ArtworkDetailPage = ({
           artwork={artwork}
           artist={artist}
           commerce={commerce}
-          layout="page"
           neighbours={neighbours}
           presentation={presentation}
+          technique={artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null}
         />
       </div>
 

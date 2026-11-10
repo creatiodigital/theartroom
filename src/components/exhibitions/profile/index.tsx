@@ -1,11 +1,11 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { RichText } from '@/components/ui/RichText'
 import { Share } from '@/components/ui/Share'
 import { Text } from '@/components/ui/Typography'
 import { isRichTextEmpty } from '@/lib/textUtils'
@@ -19,6 +19,8 @@ interface ExhibitionProfilePageProps {
   artistSlug: string
   exhibitionSlug: string
   exhibition: PublicExhibition
+  /** `exhibition.description`, rendered on the server (see ExhibitionDescription). */
+  description?: ReactNode
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
@@ -27,6 +29,7 @@ export const ExhibitionProfilePage = ({
   artistSlug,
   exhibitionSlug,
   exhibition,
+  description,
 }: ExhibitionProfilePageProps) => {
   const shareUrl = `${SITE_URL}/exhibitions/${artistSlug}/${exhibitionSlug}`
   const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
@@ -97,9 +100,7 @@ export const ExhibitionProfilePage = ({
           </Text>
         )}
 
-        {!isRichTextEmpty(exhibition.description) && (
-          <RichText content={exhibition.description!} className={styles.description} />
-        )}
+        {!isRichTextEmpty(exhibition.description) && description}
 
         {exhibition.artworks.length > 0 && (
           <div className={styles.artworksSection}>

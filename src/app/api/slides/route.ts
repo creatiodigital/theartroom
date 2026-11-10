@@ -5,9 +5,13 @@ import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { ctaColors } from '@/lib/slideVisitUrls'
 
-// GET all slides (public - needed for landing page)
+// GET all slides — the admin landing editor's list, drafts (inactive slides)
+// included, so admin-only. The homepage reads active slides from the DB itself.
 export async function GET() {
   try {
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const slides = await prisma.slide.findMany({
       orderBy: { order: 'asc' },
     })

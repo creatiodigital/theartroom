@@ -1,6 +1,3 @@
-import type { TRequestStatus } from './api'
-import type { TExhibition } from './exhibition'
-
 export type TUser = {
   id: string
   name: string
@@ -12,11 +9,4 @@ export type TUser = {
   profileImageUrl?: string
   isFeatured?: boolean
   published?: boolean
-}
-
-export type TUserState = TUser & {
-  status: TRequestStatus
-  error: string | null
-  exhibitionsById: Record<string, TExhibition>
-  allExhibitionIds: string[]
 }

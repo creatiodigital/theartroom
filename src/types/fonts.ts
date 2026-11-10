@@ -28,8 +28,6 @@ export const FONT_FAMILY_WEIGHTS: Record<TFontFamily, readonly TFontWeight[]> = 
   'plus-jakarta-sans': ['regular', 'italic', 'bold', 'bold-italic'],
 }
 
-export type TTextAlign = 'left' | 'center' | 'right'
-
 export type TOption<T> = {
   value: T
   label: string

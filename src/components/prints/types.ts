@@ -36,8 +36,6 @@ export type PrintArtwork = {
   }
 }
 
-export type SortValue = 'date-desc' | 'date-asc'
-
 // Numbered-pagination page size for the /prints catalog. Locked at 24 (design
 // 2026-06-21). Shared by the server action (skip/take + count), the SSR'd first
 // page, and the client (page-count math) so all three agree on one source.
@@ -51,9 +49,3 @@ export type EditionFilter = '' | 'open' | 'limited'
 // `count` is how many of that artist's works currently qualify — the admin
 // picker's artist list badge.
 export type PrintArtistOption = { value: string; label: string; count: number }
-
-export const displayArtist = (artwork: PrintArtwork): string => {
-  if (artwork.author && artwork.author.trim()) return artwork.author.trim()
-  const { name, lastName } = artwork.user
-  return [name, lastName].filter(Boolean).join(' ').trim()
-}

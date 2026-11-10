@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag } from 'next/cache'
 
 import { auth } from '@/auth'
 import {
@@ -218,7 +217,6 @@ export async function POST(request: NextRequest) {
         select: { id: true, kind: true, url: true, width: true, height: true, caption: true },
       })
 
-      revalidateTag(`artwork-${artworkId}`, { expire: 0 })
       return NextResponse.json(created)
     }
 
@@ -265,7 +263,6 @@ export async function DELETE(request: NextRequest) {
       console.warn('[DELETE /api/artwork-media] object not removed:', e),
     )
 
-    revalidateTag(`artwork-${row.artworkId}`, { expire: 0 })
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[DELETE /api/artwork-media] error:', error)

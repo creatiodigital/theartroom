@@ -26,6 +26,10 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_MIN_AGE_MINUTES = 30
 
+// Most PaymentIntents one run will read (Stripe pages of 100). Far above the
+// gallery's real daily volume; see the listing below.
+const MAX_RECONCILE_PIS = 5000
+
 /**
  * Safety-net cron (Layer 3 of guaranteed order capture). Four phases:
  *
@@ -108,13 +112,22 @@ export async function GET(req: NextRequest) {
 
   let stripePIs: Awaited<ReturnType<typeof stripe.paymentIntents.list>>['data'] = []
   try {
-    // Single page is enough — 100 PIs in 24h is well above expected
-    // launch volume. If that ever stops being true, paginate.
-    const list = await stripe.paymentIntents.list({
-      created: { gte: since },
-      limit: 100,
-    })
-    stripePIs = list.data
+    // Every PaymentIntent in the window, not one page of 100. The filter below
+    // runs AFTER the listing, so a single page let ~100 junk checkouts (cheap
+    // to script) push a real paid order off the page — never recovered, and
+    // the health email still reporting success. Capped so a flood cannot make
+    // the job run unbounded; reaching the cap is reported, not silent.
+    stripePIs = await stripe.paymentIntents
+      .list({ created: { gte: since }, limit: 100 })
+      .autoPagingToArray({ limit: MAX_RECONCILE_PIS })
+    if (stripePIs.length >= MAX_RECONCILE_PIS) {
+      captureError(new Error(`Reconcile listed the ${MAX_RECONCILE_PIS}-PaymentIntent cap`), {
+        flow: 'cron',
+        stage: 'reconcile-orders-list-pis',
+        level: 'warning',
+        fingerprint: ['cron:reconcile-list-pis-cap'],
+      })
+    }
   } catch (err) {
     captureError(err instanceof Error ? err : new Error(String(err)), {
       flow: 'cron',
@@ -204,8 +217,8 @@ export async function GET(req: NextRequest) {
       reservationsReleased += 1
     } else if (pi.status === 'requires_payment_method' || pi.status === 'requires_confirmation') {
       // These are LIVE, still-confirmable statuses — the buyer may be typing
-      // card details right now (reservedAt dates from add-to-cart, not from
-      // reaching checkout). Cancel the PI FIRST so a later confirm can't
+      // card details right now (reservedAt dates from the start of checkout).
+      // Cancel the PI FIRST so a later confirm can't
       // succeed against a number we are about to free; release only when the
       // cancel actually lands.
       try {

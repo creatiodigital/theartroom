@@ -22,12 +22,7 @@ export const makeStore = () => {
       [baseApi.reducerPath]: baseApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
-        serializableCheck: {
-          ignoredActions: ['artworks/editArtworkTextureImage'],
-          ignoredPaths: ['artworks.artworks.texture'],
-        },
-      }).concat(baseApi.middleware),
+      getDefaultMiddleware().concat(baseApi.middleware),
   })
 }
 

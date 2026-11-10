@@ -84,9 +84,19 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
     setQuery('')
     setArtistWorks([])
     setLoadingWorks(true)
+    // A slower answer for the artist clicked BEFORE must not land after this
+    // one's and fill the list with their prints.
+    let stale = false
     void fetchAllPrints({ artistId, excludeIds })
-      .then(setArtistWorks)
-      .finally(() => setLoadingWorks(false))
+      .then((works) => {
+        if (!stale) setArtistWorks(works)
+      })
+      .finally(() => {
+        if (!stale) setLoadingWorks(false)
+      })
+    return () => {
+      stale = true
+    }
   }, [artistId, excludeIds])
 
   // Title search across everyone — the only unbounded case, so debounced.
@@ -98,12 +108,20 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
       return
     }
     setLoadingWorks(true)
+    let stale = false
     const t = setTimeout(() => {
       void fetchAllPrints({ search: query.trim(), excludeIds })
-        .then(setNameResults)
-        .finally(() => setLoadingWorks(false))
+        .then((results) => {
+          if (!stale) setNameResults(results)
+        })
+        .finally(() => {
+          if (!stale) setLoadingWorks(false)
+        })
     }, 250)
-    return () => clearTimeout(t)
+    return () => {
+      stale = true
+      clearTimeout(t)
+    }
   }, [mode, query, excludeIds])
 
   const visibleArtists = useMemo(

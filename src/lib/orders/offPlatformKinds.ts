@@ -1,7 +1,7 @@
 /**
  * Kinds of off-platform edition copies — numbers consumed by hand from the
  * admin ledger without a Stripe order (gallery gifts, artist-retained copies,
- * test prints). Shared by the server action (`markOffPlatformCopy`) and the
+ * test prints). Shared by the server action (`createOffPlatformOrder`) and the
  * admin UI. Lives outside the `'use server'` actions module, which may only
  * export async functions.
  */

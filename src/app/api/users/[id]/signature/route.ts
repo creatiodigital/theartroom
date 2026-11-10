@@ -16,6 +16,9 @@ const MAX_FILE_SIZE = 3 * 1024 * 1024 // 3MB
 const MIN_WIDTH = 600
 const MIN_HEIGHT = 200
 
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+const isPng = (buffer: Buffer) => PNG_SIGNATURE.every((byte, i) => buffer[i] === byte)
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -36,9 +39,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const buffer = Buffer.from(await file.arrayBuffer())
 
     // PNG-only so we keep the transparent background that makes the
-    // signature look like an actual signature on the certificate.
-    const meta = await sharp(buffer).metadata()
-    if (meta.format !== 'png') {
+    // signature look like an actual signature on the certificate. The bytes
+    // are checked BEFORE sharp sees them: sharp's metadata() would otherwise
+    // parse whatever was sent — SVG, AVIF — with the decoders behind them.
+    const meta = isPng(buffer) ? await sharp(buffer).metadata() : null
+    if (meta?.format !== 'png') {
       return NextResponse.json(
         { error: 'Signature must be a transparent PNG. Please export your signature as PNG.' },
         { status: 400 },
@@ -69,19 +74,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Delete the prior signature if we had one, so R2 doesn't accumulate dead files.
-    if (user.signatureUrl) {
+    const key = await buildSignatureImageKey(id)
+    const url = await uploadToR2(key, buffer, 'image/png')
+
+    await prisma.user.update({ where: { id }, data: { signatureUrl: url } })
+
+    // Retire the prior signature so R2 doesn't accumulate dead files — only
+    // now, so a failed upload or save never leaves the certificate without one.
+    if (user.signatureUrl && user.signatureUrl !== url) {
       try {
         await deleteFromR2(user.signatureUrl)
       } catch (err) {
         console.warn('[POST /api/users/[id]/signature] failed to delete old signature:', err)
       }
     }
-
-    const key = await buildSignatureImageKey(id)
-    const url = await uploadToR2(key, buffer, 'image/png')
-
-    await prisma.user.update({ where: { id }, data: { signatureUrl: url } })
 
     return NextResponse.json({ url })
   } catch (err) {
