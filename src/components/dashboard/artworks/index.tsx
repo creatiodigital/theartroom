@@ -438,7 +438,8 @@ export const ArtworkLibraryPage = () => {
         fetchArtworks()
         setDeleteTarget(null)
       } else {
-        setActionError('Failed to delete artwork')
+        const data = await response.json().catch(() => ({}))
+        setActionError(data.error || 'Failed to delete artwork')
       }
     } catch (error) {
       console.error('Delete error:', error)

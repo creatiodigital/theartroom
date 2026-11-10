@@ -44,8 +44,6 @@ export const resetBakeProgress = () => {
   emit()
 }
 
-export const getBakeProgress = (): BakeProgress => state
-
 /** The wait is over: the bake is on, or it failed and the room keeps today's look. */
 export const bakeSettled = (progress: BakeProgress) =>
   progress.phase === 'finished' || progress.phase === 'failed'

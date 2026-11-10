@@ -59,7 +59,6 @@ export const Wall = () => {
   const [wallHeight, setWallHeight] = useState('')
   const [hoveredArtworkId, setHoveredArtworkId] = useState<string | null>(null)
 
-  const isArtworkUploaded = useSelector((state: RootState) => state.wizard.isArtworkUploaded)
   const isHumanVisible = useSelector((state: RootState) => state.wallView.isHumanVisible)
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
 
@@ -221,8 +220,9 @@ export const Wall = () => {
         }),
       )
     }
+    // Once, on mount (it was keyed on an upload flag that nothing ever set).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isArtworkUploaded, dispatch])
+  }, [dispatch])
 
   const { handleDeselect } = useDeselectArtwork()
 

@@ -145,7 +145,9 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
         // Use effectiveUser.id to fetch artworks of the impersonated artist (not the admin)
         const response = await fetch(`/api/artworks?userId=${effectiveUser.id}`)
         const data = await response.json()
-        setArtworks(data)
+        // An error answer (a session that ended, say) is `{ error }`, not a
+        // list — filtering it below would crash the whole wall editor.
+        setArtworks(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error('Failed to fetch artworks:', error)
       } finally {

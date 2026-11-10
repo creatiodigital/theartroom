@@ -9,7 +9,7 @@ interface ExhibitionEditProps {
 }
 
 const ExhibitionEdit = async ({ params, searchParams }: ExhibitionEditProps) => {
-  // Server-side auth gate (defense-in-depth alongside middleware). Ownership
+  // Server-side auth gate (defense-in-depth alongside src/proxy.ts). Ownership
   // itself is enforced by the mutation APIs and the client shell; this just
   // ensures no unauthenticated visitor ever renders the authoring surface.
   const session = await auth()

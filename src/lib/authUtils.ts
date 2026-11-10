@@ -23,18 +23,20 @@ export function isAdminOrAbove(userType: string | undefined): boolean {
 /**
  * Determine if actor can modify target user based on role hierarchy
  * - superAdmin can modify anyone
- * - admin can modify anyone EXCEPT superAdmin
+ * - admin can modify non-admin users, and their own account — not another
+ *   admin (changing their email or role is a takeover) nor a superAdmin
  * - others cannot modify users
  */
 export function canModifyUser(
   actorUserType: string | undefined,
   targetUserType: string | undefined,
+  isSelf = false,
 ): boolean {
   if (isSuperAdmin(actorUserType)) {
     return true
   }
   if (actorUserType === 'admin') {
-    return !isSuperAdmin(targetUserType)
+    return isSelf || !isAdminOrAbove(targetUserType)
   }
   return false
 }

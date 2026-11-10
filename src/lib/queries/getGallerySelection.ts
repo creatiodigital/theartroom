@@ -42,8 +42,8 @@ export type GallerySelectionCard = {
   imageUrl: string | null
   originalWidth: number | null
   originalHeight: number | null
-  /** Display name of the artist, `author` winning over the account name the
-   *  same way `displayArtist` resolves it elsewhere. Carried on the card so
+  /** Display name of the artist, `author` winning over the account name.
+   *  Carried on the card so
    *  /prints can build its artist filter from the selection itself, with no
    *  second query and no artist in the list who has nothing on the page. */
   artistName: string
@@ -72,7 +72,7 @@ const orderedRows = () =>
       artwork: {
         select: {
           ...CARD_SELECT,
-          user: { select: { name: true, lastName: true } },
+          user: { select: { name: true, lastName: true, published: true } },
         },
       },
     },
@@ -96,14 +96,18 @@ function toCard(row: Awaited<ReturnType<typeof orderedRows>>[number]['artwork'])
     card: {
       ...rest,
       artistName,
-      sale: saleFromRow({
-        editionType,
-        printEnabled,
-        printPriceCents,
-        originalWidth: rest.originalWidth,
-        originalHeight: rest.originalHeight,
-        limitedVariants,
-      }),
+      // An unpublished artist's works are not for sale (checkout refuses them),
+      // so the page hides them and the admin list says why.
+      sale: user.published
+        ? saleFromRow({
+            editionType,
+            printEnabled,
+            printPriceCents,
+            originalWidth: rest.originalWidth,
+            originalHeight: rest.originalHeight,
+            limitedVariants,
+          })
+        : null,
     },
     artistName,
   }

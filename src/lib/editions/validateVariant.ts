@@ -37,6 +37,20 @@ import {
  * frame it themselves. Tunable — confirm against the print lab. (The
  * open-edition border min is 0; limited deliberately forces a margin.)
  */
+
+/**
+ * Largest edition a variant may have. Publishing creates one EditionNumber row
+ * per copy, so an unbounded size let one save create millions of rows (or run
+ * the function out of memory). Far above any real limited edition.
+ */
+export const MAX_EDITION_SIZE = 1000
+
+export const isValidEditionSize = (size: number) =>
+  Number.isInteger(size) && size >= 1 && size <= MAX_EDITION_SIZE
+
+export const isValidVariantPrice = (priceCents: number) =>
+  Number.isInteger(priceCents) && priceCents >= 1
+
 export const LIMITED_BORDER_MIN_CM = 3
 
 /** Max variants per limited artwork: 1 mandatory + 3 optional. */
@@ -153,11 +167,14 @@ export function validateVariantInput(args: ValidateVariantArgs): ValidateVariant
     }
   }
 
-  if (!Number.isInteger(variant.editionSize) || variant.editionSize < 1) {
-    return { ok: false, error: 'Edition size must be a whole number of at least 1.' }
+  if (!isValidEditionSize(variant.editionSize)) {
+    return {
+      ok: false,
+      error: `Edition size must be a whole number from 1 to ${MAX_EDITION_SIZE}.`,
+    }
   }
 
-  if (!Number.isInteger(variant.priceCents) || variant.priceCents < 1) {
+  if (!isValidVariantPrice(variant.priceCents)) {
     return { ok: false, error: 'Each variant needs a price greater than 0.' }
   }
 

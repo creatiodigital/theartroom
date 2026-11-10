@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ExhibitionProfilePage } from '@/components/exhibitions/profile'
+import { ExhibitionDescription } from '@/components/exhibitions/profile/ExhibitionDescription'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
-import prisma from '@/lib/prisma'
 
 // Render per request and read straight from the DB so artwork reordering and
 // metadata edits show immediately (the 3D scene itself still comes from the
@@ -17,20 +17,10 @@ interface ExhibitionProfileProps {
 export async function generateMetadata({ params }: ExhibitionProfileProps): Promise<Metadata> {
   const { artistSlug, exhibitionSlug } = await params
 
-  const exhibition = await prisma.exhibition.findFirst({
-    where: {
-      url: exhibitionSlug,
-      user: { handler: artistSlug },
-      published: true,
-    },
-    select: {
-      mainTitle: true,
-      shortDescription: true,
-      user: { select: { name: true, lastName: true } },
-    },
-  })
+  // The page's own read (deduplicated per request): published, and this artist's.
+  const exhibition = await getPublicExhibitionByUrl(exhibitionSlug)
 
-  if (!exhibition) {
+  if (!exhibition || exhibition.user.handler !== artistSlug) {
     return { title: 'Exhibition Not Found' }
   }
 
@@ -61,6 +51,11 @@ const ExhibitionProfile = async ({ params }: ExhibitionProfileProps) => {
       artistSlug={artistSlug}
       exhibitionSlug={exhibitionSlug}
       exhibition={exhibition}
+      description={
+        exhibition.description ? (
+          <ExhibitionDescription description={exhibition.description} />
+        ) : null
+      }
     />
   )
 }

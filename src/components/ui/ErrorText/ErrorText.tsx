@@ -20,5 +20,3 @@ export const ErrorText = ({ children, className }: ErrorTextProps) => {
     </Text>
   )
 }
-
-export default ErrorText

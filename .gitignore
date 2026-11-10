@@ -107,3 +107,7 @@ docs/superpowers/plans/2026-06-19-email-migration-all.md
 .bake-files/
 # Print presentations, local backend (BAKE_STORAGE=local): development only.
 .presentation-files/
+
+# Written and re-written by `next dev` (Next 16.4+) when an AI agent runs it: a local
+# pointer to the bundled Next docs, not project source.
+/AGENTS.md

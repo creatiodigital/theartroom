@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import { captureError } from '@/lib/observability/captureError'
 import { getPrintPresentationsEnabled } from '@/lib/settings'
 
@@ -10,6 +12,11 @@ import { presentationView, type PresentationView } from './record'
 
 export type { PresentationView }
 
+// One read of the go-live switch per request: a page can ask for presentations
+// two or three times (the work, then its neighbours' set). React's `cache()`
+// is per request only — outside a render it does not memoize at all.
+const presentationsEnabled = cache(getPrintPresentationsEnabled)
+
 /**
  * The print presentations public pages show, by artwork id: only while the go-live switch is on,
  * and only renders served from here that still show the work truly — its latest render, up to
@@ -21,7 +28,7 @@ export type { PresentationView }
 export async function getPrintPresentations(
   artworkIds: string[],
 ): Promise<Record<string, PresentationView>> {
-  if (artworkIds.length === 0 || !(await getPrintPresentationsEnabled())) return {}
+  if (artworkIds.length === 0 || !(await presentationsEnabled())) return {}
   try {
     const sources = await loadPresentationSources({ ids: artworkIds })
     const views: Record<string, PresentationView> = {}

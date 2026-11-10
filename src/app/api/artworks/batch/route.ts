@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag } from 'next/cache'
 
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
         technique?: string
         dimensions?: string
         description?: string
-        imageUrl?: string
         textContent?: string
         featured?: boolean
         hiddenFromExhibition?: boolean
@@ -54,7 +52,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use upsert to avoid duplicates (if artwork already exists, update it)
+    // Use upsert to avoid duplicates (if artwork already exists, update it).
+    //
+    // `imageUrl` is deliberately NOT written here, even though the wall editor
+    // sends it: the upload routes store it server-side, so the editor only ever
+    // echoes that value back. Accepting it let any signed-in artist point their
+    // artwork at someone else's file — and the next image replace or delete
+    // would then delete that file from the bucket.
     const results = await Promise.all(
       artworks.map(async (artwork) => {
         const slug = await generateUniqueSlug(artwork.title || artwork.name || 'Untitled')
@@ -72,7 +76,6 @@ export async function POST(request: NextRequest) {
             technique: artwork.technique || undefined,
             dimensions: artwork.dimensions || undefined,
             description: artwork.description || undefined,
-            imageUrl: artwork.imageUrl || undefined,
             textContent: artwork.textContent || undefined,
             featured: artwork.featured ?? false,
             hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
@@ -88,7 +91,6 @@ export async function POST(request: NextRequest) {
             technique: artwork.technique || undefined,
             dimensions: artwork.dimensions || undefined,
             description: artwork.description || undefined,
-            imageUrl: artwork.imageUrl || undefined,
             textContent: artwork.textContent || undefined,
             featured: artwork.featured ?? false,
             hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
@@ -98,11 +100,6 @@ export async function POST(request: NextRequest) {
         })
       }),
     )
-
-    // Bust detail page caches for each upserted artwork
-    results.forEach((artwork) => {
-      revalidateTag(`artwork-${artwork.id}`, { expire: 0 })
-    })
 
     return NextResponse.json({ count: results.length, artworks: results }, { status: 201 })
   } catch (error) {

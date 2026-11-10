@@ -163,9 +163,7 @@ test('publish keys need an admin, other keys the owner, and a body mixing both n
   expect(exhibitionUpdateRoles({ published: true, hasPendingChanges: true })).toEqual(both)
 })
 
-// The one snapshot builder: the PUT route and POST /api/admin/migrate-snapshots both freeze
-// with it. That route is not called here: it migrates every published exhibition without a
-// snapshot in the shared dev DB, not just this spec's fixtures.
+// The one snapshot builder: the exhibition PUT route freezes with it.
 test('a frozen snapshot carries a baked space’s draft bake only when it is current and reviewed', async () => {
   const created: string[] = []
   const make = async (tag: string, spaceId = 'paris') => {

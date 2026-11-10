@@ -40,4 +40,3 @@ const ArtworkMeasurements = memo(({ width2d, height2d }: ArtworkMeasurementsProp
 ArtworkMeasurements.displayName = 'ArtworkMeasurements'
 
 export { ArtworkMeasurements }
-export default ArtworkMeasurements

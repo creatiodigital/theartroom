@@ -104,14 +104,12 @@ export async function createCartPaymentIntent(
   // can fold it together with the resolved edition numbers below.
   const pricedByLine = new Map(totals.perItem.map((p) => [p.lineId, p]))
 
-  // ── 2. Edition re-verify + replace (per spec §§3/5) ──────────────
-  // For each LIMITED line we need exactly `quantity` valid held numbers.
-  // We REUSE the client's still-valid cart holds and only reserve the
-  // deficit fresh — never double-consuming stock.
+  // ── 2. Edition numbers ───────────────────────────────────────────
+  // For each LIMITED line, reserve exactly `quantity` numbers now — the cart
+  // holds nothing (see below).
   //
   // `freshlyReservedIds` tracks only the numbers WE reserved in THIS call,
-  // so on a later failure we release exactly those and leave the buyer's
-  // pre-existing holds intact for a retry.
+  // so on a later failure we release exactly those.
   const freshlyReservedIds: string[] = []
   // lineId → the final set of number ids for that line (length === quantity).
   const lineNumberIds = new Map<string, string[]>()
@@ -340,14 +338,13 @@ export async function createCartPaymentIntent(
       await releaseFreshlyReserved(freshlyReservedIds.filter((id) => !boundIds.has(id)))
       // Numbers already carry the PI; nothing to (re-)attach.
     } else {
-      // First call. Bind every held number across all limited lines to this
-      // PI, moving them out of cart-hold state so the TTL sweep no longer
-      // touches them. Attach is GUARDED (see reserveEditionNumber.ts): if a
-      // hold lapsed and another buyer claimed the row during the Stripe
-      // round-trip, the attach reports failure instead of clobbering their
-      // reservation. In that case unwind OUR rows only and bail — the buyer
-      // re-runs checkout with fresh holds; the untouched PI is reused by the
-      // idempotency key on retry.
+      // First call. Bind every number reserved across all limited lines to
+      // this PI. Attach is GUARDED (see reserveEditionNumber.ts): if a row was
+      // released and another buyer claimed it during the Stripe round-trip,
+      // the attach reports failure instead of clobbering their reservation. In
+      // that case unwind OUR rows only and bail — the buyer re-runs checkout
+      // and gets fresh numbers; the untouched PI is reused by the idempotency
+      // key on retry.
       const attachedIds = new Set<string>()
       let lostHold = false
       for (const ids of lineNumberIds.values()) {

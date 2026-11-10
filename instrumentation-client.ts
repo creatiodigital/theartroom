@@ -28,10 +28,6 @@ Sentry.init({
   // Only send errors in production
   enabled: process.env.NODE_ENV === 'production',
 
-  // Replay for session recording (errors only)
-  replaysOnErrorSampleRate: 1.0,
-  replaysSessionSampleRate: 0,
-
   // Drop errors whose top frame is Google Analytics / Tag Manager. These are
   // third-party scripts blocked by ad-blockers or failing on flaky networks —
   // unactionable noise, not bugs in our code.

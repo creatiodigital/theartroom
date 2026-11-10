@@ -61,6 +61,8 @@ export const ExhibitionModal = React.memo(
         return
       }
 
+      // The answer for a URL typed BEFORE must not overwrite the current one's.
+      let stale = false
       const checkUrl = async () => {
         setChecking(true)
         try {
@@ -68,6 +70,7 @@ export const ExhibitionModal = React.memo(
             `/api/exhibitions/check-url?userId=${userId}&url=${encodeURIComponent(customUrl)}`,
           )
           const data = await response.json()
+          if (stale) return
 
           if (!data.available) {
             setUrlError('This URL is already in use. Please choose a different name.')
@@ -76,15 +79,18 @@ export const ExhibitionModal = React.memo(
           }
         } catch {
           // Silently fail - backend will catch duplicates anyway
-          setUrlError('')
+          if (!stale) setUrlError('')
         } finally {
-          setChecking(false)
+          if (!stale) setChecking(false)
         }
       }
 
       // Debounce the check
       const timeout = setTimeout(checkUrl, 300)
-      return () => clearTimeout(timeout)
+      return () => {
+        stale = true
+        clearTimeout(timeout)
+      }
     }, [customUrl, userId])
 
     const handleUrlChange = (value: string) => {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag, revalidatePath } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 import { auth } from '@/auth'
 import type { Exhibition, Prisma } from '@/generated/prisma'
@@ -26,16 +26,15 @@ export async function POST(request: NextRequest) {
     const { mainTitle, handler, url, spaceId } = body
 
     // Validate required fields
-    if (!url) {
+    if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL slug is required' }, { status: 400 })
     }
 
-    // Check if URL already exists for this user
+    // Check if the URL is taken. `url` is unique across all artists, so a
+    // per-artist check let a clash through to the insert as a 500.
     const existing = await prisma.exhibition.findFirst({
-      where: {
-        userId,
-        url,
-      },
+      where: { url },
+      select: { id: true },
     })
 
     if (existing) {
@@ -60,8 +59,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Revalidate caches
-    revalidateTag('exhibitions', { expire: 0 })
     revalidatePath('/')
 
     return NextResponse.json(exhibition, { status: 201 })
@@ -148,6 +145,15 @@ export async function GET(request: NextRequest) {
 
     const exhibitions = await prisma.exhibition.findMany({
       where,
+      // The frozen snapshot is the 3D scene's state; no list consumer reads it
+      // and it is the bulk of every row. The preview token is a live credential
+      // (on a published baked show it opens the unreviewed draft) and the draft
+      // bake is unreviewed — only AdminExhibitions needs the token, and it is
+      // admin-only.
+      omit:
+        isAdmin || isSuperAdmin
+          ? { publishedSnapshot: true }
+          : { publishedSnapshot: true, previewToken: true, bake: true },
       include: {
         user: {
           select: {

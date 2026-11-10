@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -55,24 +54,29 @@ type CartProviderProps = {
 
 export const CartProvider = ({ children }: CartProviderProps) => {
   const [items, setItems] = useState<CartItem[]>([])
-  // Avoid clobbering localStorage before hydration has populated state.
-  const hydrated = useRef(false)
+  // Avoid clobbering localStorage before hydration has populated state. State,
+  // not a ref: a ref flips at once, so the write-through below ran in the same
+  // commit with the initial empty list and overwrote the stored cart — and
+  // React's dev double-run of effects then re-read that empty value, losing
+  // the cart on every load. As state it turns true together with the hydrated
+  // items, so the first write is always the real cart.
+  const [hydrated, setHydrated] = useState(false)
 
   // Hydrate from localStorage on mount (client only).
   useEffect(() => {
     setItems(readStored())
-    hydrated.current = true
+    setHydrated(true)
   }, [])
 
   // Write through on every change, but only after initial hydration.
   useEffect(() => {
-    if (!hydrated.current) return
+    if (!hydrated) return
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
     } catch {
       // localStorage may be unavailable (private mode / quota); ignore.
     }
-  }, [items])
+  }, [items, hydrated])
 
   // Nothing is reserved when a line is added. The cart is a list of intents;
   // stock is settled once, atomically, when payment starts — see

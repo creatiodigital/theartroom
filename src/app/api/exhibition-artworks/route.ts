@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { requireOwnership, isSuperAdmin } from '@/lib/authUtils'
+import { isAdminOrAbove, isSuperAdmin, requireAuth, requireOwnership } from '@/lib/authUtils'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
 import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
 import prisma from '@/lib/prisma'
@@ -22,17 +22,19 @@ export async function GET(request: NextRequest) {
     // no mode → serve snapshot if available (for visit/public)
     const mode = searchParams.get('mode')
 
-    if (mode !== 'edit') {
-      const exhibition = await prisma.exhibition.findUnique({
-        where: { id: exhibitionId },
-        select: { published: true, previewEnabled: true, publishedSnapshot: true },
-      })
+    const exhibition = await prisma.exhibition.findUnique({
+      where: { id: exhibitionId },
+      select: { userId: true, published: true, publishedSnapshot: true },
+    })
+    if (!exhibition) {
+      return NextResponse.json({ error: 'Exhibition not found' }, { status: 404 })
+    }
 
-      // Serve snapshot for published or preview-enabled exhibitions
-      const hasSnapshot = !!exhibition?.publishedSnapshot
-      const shouldServeSnapshot =
-        hasSnapshot && (exhibition?.published || exhibition?.previewEnabled)
-      if (shouldServeSnapshot) {
+    if (mode !== 'edit') {
+      // The published snapshot is public — it is what the visit page shows.
+      // A preview-enabled DRAFT is not: the visit page reaches it through
+      // by-url, which checks the preview token; this route never did.
+      if (exhibition.published && exhibition.publishedSnapshot) {
         const snapshot = exhibition.publishedSnapshot as Record<string, unknown>
         const snapshotArtworks = (snapshot.artworks ?? []) as Array<Record<string, unknown>>
 
@@ -47,6 +49,25 @@ export async function GET(request: NextRequest) {
 
         const liveArtworks = await prisma.artwork.findMany({
           where: { id: { in: artworkIds } },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            artworkType: true,
+            title: true,
+            author: true,
+            year: true,
+            technique: true,
+            dimensions: true,
+            description: true,
+            imageUrl: true,
+            textContent: true,
+            soundUrl: true,
+            videoUrl: true,
+            originalWidth: true,
+            originalHeight: true,
+            featured: true,
+          },
         })
         const liveById = Object.fromEntries(liveArtworks.map((a) => [a.id, a]))
 
@@ -87,10 +108,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Editor or no snapshot → return live data. Strip the full-res master
-    // URL / metadata from the joined artwork — this endpoint is
-    // unauthenticated and would otherwise leak every placed artwork's
-    // 60MB+ print original (see /api/artworks GET).
+    // Editor or no published snapshot → live data: the draft hangings and the
+    // full artwork rows (the artist's own print price included), so only the
+    // owner — or an admin, impersonating or not (the bake/review pages load
+    // this with an admin session) — may read it. The master URL / metadata
+    // stay stripped even then (see /api/artworks GET).
+    const { session, error: authError } = await requireAuth()
+    if (authError) return authError
+    const effectiveUserId = session!.impersonating?.id || session!.user.id
+    if (!isAdminOrAbove(session!.user.userType) && effectiveUserId !== exhibition.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     //
     // Placed rows only. This is the wall editor's live load (mode=edit) — a
     // work that is in the show but not hung yet has no wall to draw it on.

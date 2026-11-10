@@ -1,12 +1,13 @@
 'use client'
 
+import type { ReactNode } from 'react'
+
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { Text } from '@/components/ui/Typography'
-import { RichText } from '@/components/ui/RichText'
 import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
 import type {
@@ -34,9 +35,16 @@ interface ArtistProfilePageProps {
   artist: Artist
   exhibitions: Exhibition[]
   artworks: Artwork[]
+  /** `artist.biography`, rendered on the server (see ArtistBiography). */
+  biography?: ReactNode
 }
 
-export const ArtistProfilePage = ({ artist, exhibitions, artworks }: ArtistProfilePageProps) => {
+export const ArtistProfilePage = ({
+  artist,
+  exhibitions,
+  artworks,
+  biography,
+}: ArtistProfilePageProps) => {
   const artistFullName = `${artist.name} ${artist.lastName}`
 
   return (
@@ -67,11 +75,7 @@ export const ArtistProfilePage = ({ artist, exhibitions, artworks }: ArtistProfi
       </div>
 
       <div className={styles.section}>
-        {artist.biography ? (
-          <RichText content={artist.biography} variant="compact" className={styles.biography} />
-        ) : (
-          <EmptyState message="No biography yet." />
-        )}
+        {artist.biography ? biography : <EmptyState message="No biography yet." />}
       </div>
 
       {artworks.length > 0 && <NiceTitle title="Featured Works" align="left" />}

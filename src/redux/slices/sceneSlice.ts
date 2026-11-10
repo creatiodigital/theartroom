@@ -26,14 +26,6 @@ const sceneSlice = createSlice({
       state.walls.push({ id: wallId, name: readableName })
     },
 
-    editWallName: (state: TScene, action: PayloadAction<{ wallId: string; newName: string }>) => {
-      const { wallId, newName } = action.payload
-      const wall = state.walls.find((w) => w.id === wallId)
-      if (wall) {
-        wall.name = newName
-      }
-    },
-
     setFocusTarget: (state: TScene, action: PayloadAction<TFocusTarget>) => {
       state.focusTarget = action.payload
     },
@@ -95,7 +87,6 @@ export const {
   showPlaceholders,
   hidePlaceholders,
   addWall,
-  editWallName,
   setFocusTarget,
   clearFocusTarget,
   setInArtworkView,

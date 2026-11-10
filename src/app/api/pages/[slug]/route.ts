@@ -7,10 +7,15 @@ import prisma from '@/lib/prisma'
 
 type RouteParams = { params: Promise<{ slug: string }> }
 
-// GET page content by slug (public) — read fresh so the admin editor always
-// reflects the latest save.
+// GET page content by slug — the admin editor's load, read fresh so it always
+// reflects the latest save. Admin-only: it creates the row for an unknown slug,
+// and anonymously that was an unbounded INSERT from the URL. Public pages read
+// through getStaticPageContent, not this route.
 export async function GET(_request: Request, { params }: RouteParams) {
   try {
+    const { error: authError } = await requireAdmin()
+    if (authError) return authError
+
     const { slug } = await params
 
     let page = await prisma.pageContent.findUnique({

@@ -72,35 +72,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    // Generate secure reset token
-    const resetToken = crypto.randomBytes(32).toString('hex')
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
-
-    // Store token in database (using magicLink fields)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        magicLinkToken: resetToken,
-        magicLinkExpiry: tokenExpiry,
-      },
-    })
-
-    // Build reset URL
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://theartroom.gallery'
-    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
-
-    // Send the reset email AFTER the response. Awaiting the provider
-    // round-trip only for existing accounts makes the response measurably
-    // slower for real users than for unknown emails — a timing oracle for
-    // account existence. `after()` defers the send past the response (so the
-    // client-observed latency matches the unknown-email branch) while the
-    // platform keeps the function alive to actually deliver it — unlike a bare
-    // fire-and-forget, which a serverless runtime may freeze before it sends.
+    // Everything account-specific happens AFTER the response. Awaiting the
+    // token write or the provider round-trip only for existing accounts would
+    // make the response measurably slower for real users than for unknown
+    // emails — a timing oracle for account existence. `after()` defers it past
+    // the response while the platform keeps the function alive to finish —
+    // unlike a bare fire-and-forget, which a serverless runtime may freeze.
     after(async () => {
       try {
         // Site-wide ceiling on reset emails actually sent — the backstop when
-        // many IPs AND many addresses are in play. Counted here, after the
-        // response, so it adds no account-dependent latency.
+        // many IPs AND many addresses are in play. Checked BEFORE the token is
+        // rotated: rotating first meant that once the cap was burned, every
+        // request (the owner's own included) still replaced the token and sent
+        // nothing, killing links already delivered.
         const daily = await rateLimit({
           name: 'forgot-password-daily',
           key: 'global',
@@ -111,6 +95,20 @@ export async function POST(request: NextRequest) {
           console.error('[forgot-password] daily cap reached, reset email not sent')
           return
         }
+
+        // Generate secure reset token, valid for 1 hour (stored in the
+        // magicLink fields).
+        const resetToken = crypto.randomBytes(32).toString('hex')
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            magicLinkToken: resetToken,
+            magicLinkExpiry: new Date(Date.now() + 60 * 60 * 1000),
+          },
+        })
+
+        const baseUrl = process.env.NEXTAUTH_URL || 'https://theartroom.gallery'
+        const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
         await sendForgotPasswordEmail({ to: email, name: user.name, resetUrl })
       } catch (err) {
         console.error('Error sending forgot-password email:', err)

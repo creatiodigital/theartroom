@@ -85,25 +85,6 @@ export function getPrintMaxSize(meta: ImageMeta | null): PrintSize | null {
   }
 }
 
-/**
- * Convert a long-edge value (cm) into a full H × W size, aspect-locked
- * to the supplied bounds. Used by the wizard's size slider.
- */
-export function sizeFromLongEdge(
-  longCm: number,
-  bounds: Pick<PrintLongEdgeBounds, 'aspect' | 'isPortrait'>,
-): PrintSize {
-  const shortCm = longCm * bounds.aspect
-  return {
-    widthCm: bounds.isPortrait ? shortCm : longCm,
-    heightCm: bounds.isPortrait ? longCm : shortCm,
-  }
-}
-
-export function longEdgeOf(size: PrintSize): number {
-  return Math.max(size.widthCm, size.heightCm)
-}
-
 export function formatPrintSize(heightCm: number, widthCm: number): string {
   // Match the size-input format exactly (0.1 cm step → always one
   // decimal, including trailing .0 on whole-cm values), so the

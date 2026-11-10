@@ -42,7 +42,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
     prisma.artwork.findUnique({
       where: { slug },
       include: {
-        user: { select: { name: true, lastName: true } },
+        user: { select: { name: true, lastName: true, published: true } },
         // Buyers only see published variants that are currently blocked (on
         // sale). An admin-unblocked variant is mid-edit and paused from sale.
         limitedVariants: { where: LIVE_VARIANT_WHERE, orderBy: { order: 'asc' } },
@@ -54,7 +54,8 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
     return <PurchasesPausedNotice title="Order a print" />
   }
 
-  if (!artwork || !artwork.imageUrl) {
+  // An unpublished artist's works are not for sale (nor shown) anywhere.
+  if (!artwork || !artwork.imageUrl || !artwork.user.published) {
     notFound()
   }
   // A LIMITED edition has no artwork-level price — it is priced per variant, so

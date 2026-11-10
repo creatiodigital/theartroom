@@ -41,13 +41,21 @@ const getSlides = async () => {
   }))
 }
 
-const getExhibitions = async () => {
-  const exhibitionData = await prisma.exhibition.findMany({
+// Only the columns the cards use: a whole Exhibition row carries the frozen
+// 3D snapshot and the bake, the bulk of its size.
+const getExhibitions = () =>
+  prisma.exhibition.findMany({
     where: {
       status: 'current',
       published: true,
     },
-    include: {
+    select: {
+      id: true,
+      mainTitle: true,
+      url: true,
+      featuredImageUrl: true,
+      shortDescription: true,
+      spacePublished: true,
       user: {
         select: {
           name: true,
@@ -59,8 +67,6 @@ const getExhibitions = async () => {
     orderBy: { createdAt: 'desc' },
     take: 6,
   })
-  return exhibitionData as unknown as ExhibitionWithUser[]
-}
 
 const getFeaturedArtists = async () => {
   return prisma.user.findMany({
@@ -80,21 +86,14 @@ const getFeaturedArtists = async () => {
   })
 }
 
-type ExhibitionWithUser = {
-  id: string
-  mainTitle: string
-  url: string
-  featuredImageUrl: string | null
-  shortDescription: string | null
-  spacePublished: boolean
-  user: { name: string; lastName: string; handler: string }
-}
-
 export default async function Home() {
-  const slides = await getSlides()
-  const exhibitions = await getExhibitions()
-  const featuredArtists = await getFeaturedArtists()
-  const announcement = await getHomepageAnnouncement()
+  // Independent reads, so in parallel rather than one after another.
+  const [slides, exhibitions, featuredArtists, announcement] = await Promise.all([
+    getSlides(),
+    getExhibitions(),
+    getFeaturedArtists(),
+    getHomepageAnnouncement(),
+  ])
 
   return (
     <main id="main-content" className={styles.home}>

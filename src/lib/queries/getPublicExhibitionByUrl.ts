@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import type { Prisma } from '@/generated/prisma'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
@@ -45,7 +47,20 @@ type PublicArtworkRow = Prisma.ArtworkGetPayload<{ select: typeof PUBLIC_ARTWORK
 const getExhibition = (url: string) =>
   prisma.exhibition.findUnique({
     where: { url },
-    include: {
+    // The columns the page uses — a whole row carries the frozen 3D snapshot
+    // and the bake, the bulk of its size.
+    select: {
+      id: true,
+      published: true,
+      mainTitle: true,
+      shortDescription: true,
+      description: true,
+      featuredImageUrl: true,
+      url: true,
+      status: true,
+      startDate: true,
+      endDate: true,
+      spacePublished: true,
       user: {
         select: {
           id: true,
@@ -61,8 +76,13 @@ const getExhibition = (url: string) =>
       },
       exhibitionArtworks: {
         // Membership, not placement. A work with no coordinates at all belongs
-        // here; a work hung in the room but unchecked does not.
-        where: { showOnPage: true },
+        // here; a work hung in the room but unchecked does not. Only images the
+        // grid shows — text, sound, video and shape placements are members too,
+        // and each would otherwise be fetched with its sale data to be dropped.
+        where: {
+          showOnPage: true,
+          artwork: { hiddenFromExhibition: false, artworkType: 'image' },
+        },
         select: {
           pageOrder: true,
           sectionId: true,
@@ -151,7 +171,12 @@ function toPublicArtwork(
  * snapshot — see `loadPublicExhibition`. The snapshot still exists, but only
  * to freeze the 3D scene for /visit.
  */
-export async function getPublicExhibitionByUrl(url: string): Promise<PublicExhibition | null> {
+// Wrapped in React's per-request `cache()` so generateMetadata and the page
+// share one read. It lives for a single request only — nothing persists
+// between visits.
+export const getPublicExhibitionByUrl = cache(async function getPublicExhibitionByUrl(
+  url: string,
+): Promise<PublicExhibition | null> {
   // Report DB/read failures with flow context — they'd otherwise bubble to the
   // Next error boundary (a 500 page) with no operator signal. Re-throw so the
   // route's existing notFound/error handling is unchanged. (Observability
@@ -168,7 +193,7 @@ export async function getPublicExhibitionByUrl(url: string): Promise<PublicExhib
     })
     throw error
   }
-}
+})
 
 async function loadPublicExhibition(url: string): Promise<PublicExhibition | null> {
   const exhibition = await getExhibition(url)

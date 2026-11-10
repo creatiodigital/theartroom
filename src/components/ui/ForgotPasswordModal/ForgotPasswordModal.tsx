@@ -115,5 +115,3 @@ export const ForgotPasswordModal = ({ onClose, onBack }: ForgotPasswordModalProp
     </div>
   )
 }
-
-export default ForgotPasswordModal

@@ -1,6 +1,7 @@
 'use server'
 
 import { stripe } from '@/lib/stripe/client'
+import { isPaymentIntentId } from '@/lib/stripe/paymentIntentId'
 
 /**
  * Verify a cart PaymentIntent server-side after a 3DS redirect back to
@@ -17,6 +18,7 @@ export type VerifyCartPaymentResult = { ok: true; paymentIntentId: string } | { 
 export async function verifyCartPaymentAction(
   paymentIntentId: string,
 ): Promise<VerifyCartPaymentResult> {
+  if (!isPaymentIntentId(paymentIntentId)) return { ok: false }
   try {
     const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
     if (pi.metadata?.kind !== 'cart') return { ok: false }

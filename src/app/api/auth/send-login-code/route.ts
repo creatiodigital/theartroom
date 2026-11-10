@@ -1,8 +1,8 @@
 import crypto from 'node:crypto'
 
 import { NextRequest, NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
 
+import { verifyPassword } from '@/lib/auth/verifyPassword'
 import prisma from '@/lib/prisma'
 import { getClientIp } from '@/lib/getClientIp'
 import { rateLimit } from '@/lib/rateLimit'
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!email || !password) {
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
@@ -50,14 +50,12 @@ export async function POST(request: NextRequest) {
       where: { email },
     })
 
-    if (!user || !user.password) {
-      // Return generic error to prevent email enumeration
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
-    }
-
-    // Verify password
-    const passwordMatch = await bcrypt.compare(password, user.password)
-    if (!passwordMatch) {
+    // Verify password. One generic error for an unknown email and a wrong
+    // password alike, and the same bcrypt cost for both (verifyPassword compares
+    // against a dummy hash when there is no account), so neither the message
+    // nor the response time tells which emails have accounts.
+    const passwordMatch = await verifyPassword(password, user?.password)
+    if (!user || !passwordMatch) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 

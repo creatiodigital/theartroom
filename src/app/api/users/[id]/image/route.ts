@@ -48,15 +48,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const processedBuffer = await processImage(buffer)
 
-    // Delete old image if exists
-    if (user.profileImageUrl) {
-      try {
-        await deleteFromR2(user.profileImageUrl)
-      } catch (error) {
-        console.warn('Failed to delete old profile image:', error)
-      }
-    }
-
     // Upload to Cloudflare R2
     const key = await buildProfileImageKey(id)
     const url = await uploadToR2(key, processedBuffer, 'image/webp')
@@ -66,6 +57,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { id },
       data: { profileImageUrl: url },
     })
+
+    // Only now retire the old image: deleted first, a failed upload or save
+    // left the profile pointing at nothing.
+    if (user.profileImageUrl && user.profileImageUrl !== url) {
+      try {
+        await deleteFromR2(user.profileImageUrl)
+      } catch (error) {
+        console.warn('Failed to delete old profile image:', error)
+      }
+    }
 
     return NextResponse.json({ url })
   } catch (error) {

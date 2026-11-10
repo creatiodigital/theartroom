@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag, revalidatePath } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { deleteFromR2 } from '@/lib/r2'
 
 import { Prisma } from '@/generated/prisma'
@@ -240,10 +240,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       const newUrl = body.url ? slugify(body.url) : slugify(body.mainTitle)
       data.url = newUrl
 
-      // Check if another exhibition by this user already uses this URL
+      // Check if another exhibition already uses this URL. `url` is unique
+      // across all artists, not per artist.
       const conflict = await prisma.exhibition.findFirst({
         where: {
-          userId: currentExhibition.userId,
           url: newUrl,
           id: { not: id },
         },
@@ -490,14 +490,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     if (frozen && previousBakeId) await deleteReplacedBake(id, previousBakeId)
 
-    // Revalidate caches
-    revalidateTag(`exhibition-${updated.url}`, { expire: 0 })
+    // Re-render the homepage, which lists current exhibitions.
     if (
       body.published !== undefined ||
       body.mainTitle !== undefined ||
       data.hasPendingChanges !== undefined
     ) {
-      revalidateTag('exhibitions', { expire: 0 })
       revalidatePath('/')
     }
 
@@ -535,8 +533,6 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
 
     await prisma.exhibition.delete({ where: { id } })
 
-    // Revalidate caches
-    revalidateTag('exhibitions', { expire: 0 })
     revalidatePath('/')
 
     return NextResponse.json({ success: true, id })

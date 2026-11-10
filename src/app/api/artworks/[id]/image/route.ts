@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag } from 'next/cache'
 
 import { requireOwnership } from '@/lib/authUtils'
 import { MAX_UPLOAD_SIZE } from '@/lib/imageConfig'
@@ -8,7 +7,7 @@ import { processImage, isValidImageType } from '@/lib/imageProcessor'
 import prisma from '@/lib/prisma'
 import { uploadToR2, deleteFromR2, buildArtworkImageKey } from '@/lib/r2'
 
-const MAX_FILE_SIZE = MAX_UPLOAD_SIZE // 5MB from centralized config
+const MAX_FILE_SIZE = MAX_UPLOAD_SIZE
 
 // POST - Upload image for artwork (requires auth + ownership)
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 })
+      return NextResponse.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` }, { status: 400 })
     }
 
     // Convert to buffer
@@ -56,16 +55,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Process image (resize + convert to WebP)
     const processedBuffer = await processImage(buffer)
 
-    // Delete old image if exists
-    if (artwork.imageUrl) {
-      try {
-        await deleteFromR2(artwork.imageUrl)
-      } catch (error) {
-        console.warn('Failed to delete old image:', error)
-        // Continue anyway - old image might not exist
-      }
-    }
-
     // Upload to Cloudflare R2
     const key = await buildArtworkImageKey(artwork.userId, id)
     const url = await uploadToR2(key, processedBuffer, 'image/webp')
@@ -80,8 +69,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    // Bust detail page cache
-    revalidateTag(`artwork-${id}`, { expire: 0 })
+    // Only now retire the old image: deleted first, a failed upload or save
+    // left the artwork pointing at nothing.
+    if (artwork.imageUrl && artwork.imageUrl !== url) {
+      try {
+        await deleteFromR2(artwork.imageUrl)
+      } catch (error) {
+        console.warn('Failed to delete old image:', error)
+      }
+    }
+
 
     return NextResponse.json({
       url,
@@ -148,8 +145,6 @@ export async function DELETE(
       },
     })
 
-    // Bust detail page cache
-    revalidateTag(`artwork-${id}`, { expire: 0 })
 
     return NextResponse.json({ message: 'Image deleted' })
   } catch (error) {

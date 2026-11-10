@@ -29,8 +29,7 @@ type AddressAutocompleteProps = {
   /** Fired when a suggestion is chosen — fills the rest of the form. */
   onPlaceSelected: (address: MappedAddress) => void
   /** Suggestions have stopped working — the parent switches to manual entry and
-   *  explains why. Separate from `onEnterManually` because one is the buyer's
-   *  choice and the other is our failure, and they read differently. */
+   *  explains why (our failure, worded as such — not the buyer's choice). */
   onUnavailable: (reason: LookupFailure) => void
   invalid?: boolean
   inputId: string

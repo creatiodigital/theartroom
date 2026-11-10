@@ -248,15 +248,6 @@ const exhibitionSlice = createSlice({
       state.benchSettings[key] = { ...state.benchSettings[key], ...patch }
     },
 
-    // ── Autofocus group actions ────────────────────────────────────────────
-
-    setAutofocusGroups: (
-      state: TExhibitionWithHistory,
-      action: PayloadAction<AutofocusGroup[]>,
-    ) => {
-      state.autofocusGroups = action.payload
-    },
-
     addAutofocusGroup: (state: TExhibitionWithHistory, action: PayloadAction<AutofocusGroup>) => {
       if (!state.autofocusGroups) state.autofocusGroups = []
       state.autofocusGroups.push(action.payload)
@@ -265,33 +256,6 @@ const exhibitionSlice = createSlice({
     removeAutofocusGroup: (state: TExhibitionWithHistory, action: PayloadAction<string>) => {
       if (state.autofocusGroups) {
         state.autofocusGroups = state.autofocusGroups.filter((g) => g.id !== action.payload)
-      }
-    },
-
-    addArtworkToAutofocusGroup: (
-      state: TExhibitionWithHistory,
-      action: PayloadAction<{ groupId: string; artworkId: string }>,
-    ) => {
-      if (state.autofocusGroups) {
-        for (const g of state.autofocusGroups) {
-          if (g.id !== action.payload.groupId) {
-            g.artworkIds = g.artworkIds.filter((id) => id !== action.payload.artworkId)
-          }
-        }
-      }
-      const group = state.autofocusGroups?.find((g) => g.id === action.payload.groupId)
-      if (group && !group.artworkIds.includes(action.payload.artworkId)) {
-        group.artworkIds.push(action.payload.artworkId)
-      }
-    },
-
-    removeArtworkFromAutofocusGroup: (
-      state: TExhibitionWithHistory,
-      action: PayloadAction<{ groupId: string; artworkId: string }>,
-    ) => {
-      const group = state.autofocusGroups?.find((g) => g.id === action.payload.groupId)
-      if (group) {
-        group.artworkIds = group.artworkIds.filter((id) => id !== action.payload.artworkId)
       }
     },
 
@@ -362,11 +326,8 @@ export const {
   setTrackLampRotation,
   setTrackLampEnabled,
   setTrackLampOffset,
-  setAutofocusGroups,
   addAutofocusGroup,
   removeAutofocusGroup,
-  addArtworkToAutofocusGroup,
-  removeArtworkFromAutofocusGroup,
   snapshotExhibition,
   restoreSnapshot,
   clearSnapshot,

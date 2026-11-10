@@ -33,9 +33,8 @@ export type ReserveResult =
 export async function reserveNextEditionNumber(args: {
   variantId: string
   buyerEmail: string
-  // Cart-hold session binding (AR-132). Set for anonymous cart holds so only
-  // the owning session can extend/release. NULL for server-side reservations
-  // (single-print / cart checkout) that attach a PI immediately.
+  // Cart-hold session binding (AR-132). Cart holds were removed in AR-135; no
+  // caller passes this any more, so it is always NULL.
   cartSessionId?: string | null
 }): Promise<ReserveResult> {
   const { variantId, buyerEmail, cartSessionId = null } = args
@@ -55,7 +54,8 @@ export async function reserveNextEditionNumber(args: {
   // Ownership columns are reset on claim so an `available` row that ever
   // carried a stale PI/order link (however it got there) starts clean —
   // otherwise the previous buyer's PI would corrupt bind/mark-sold matching.
-  // holdStartedAt stamps the absolute-lifetime anchor for cart holds.
+  // holdStartedAt is left over from cart holds (removed in AR-135): still
+  // stamped, read by nothing.
   const claimed = await prisma.$queryRaw<{ id: string; number: number }[]>(Prisma.sql`
     UPDATE "EditionNumber"
     SET "state" = 'reserved', "reservedAt" = now(), "buyerEmail" = ${buyerEmail},
@@ -78,13 +78,12 @@ export async function reserveNextEditionNumber(args: {
 }
 
 /** Attach the Stripe PI id to a freshly reserved number. Also restarts the
- *  reservation clock: reservedAt was stamped at add-to-cart, and the
- *  reconcile cron's abandonment cutoff must count from checkout start — not
- *  from browsing — or a slow browser can lose their number mid-payment.
+ *  reservation clock, so the reconcile cron's abandonment cutoff counts from
+ *  the moment the PaymentIntent exists.
  *
- *  Guarded, not update-by-id: between the caller's hold verification and
- *  this attach sits a multi-second Stripe round-trip, during which the TTL
- *  sweep can free the row and another buyer can re-reserve it. The WHERE
+ *  Guarded, not update-by-id: between the caller's reservation and this
+ *  attach sits a multi-second Stripe round-trip, during which the row could
+ *  be released and another buyer re-reserve it. The WHERE
  *  ensures we only ever stamp a row that is still an un-attached, un-bound
  *  hold — never one that now belongs to someone else's checkout. Returns
  *  false when the hold was lost so the caller can bail out cleanly. */

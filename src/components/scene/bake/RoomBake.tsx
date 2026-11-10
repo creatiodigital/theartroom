@@ -28,5 +28,3 @@ export const RoomBake = () => {
   if (!page || !bake) return null
   return <BakedLighting key={bake.id} bake={bake} />
 }
-
-export default RoomBake

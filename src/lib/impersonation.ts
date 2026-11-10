@@ -36,7 +36,17 @@ export const impersonationCookieOptions = {
 export const impersonationCookieValue = (adminId: string, targetId: string) =>
   `${adminId}:${targetId}`
 
-export const canBeImpersonated = (userType: string) => userType !== 'superAdmin'
+/**
+ * Who may view as whom — the same rule the admin users menu shows. A
+ * superAdmin can never be impersonated (their scope includes user management
+ * itself); another admin only by a superAdmin, so one admin cannot act as, and
+ * with the powers of, another.
+ */
+export const canBeImpersonated = (actorUserType: string | undefined, targetUserType: string) => {
+  if (targetUserType === 'superAdmin') return false
+  if (targetUserType === 'admin') return actorUserType === 'superAdmin'
+  return true
+}
 
 /**
  * Whom the logged-in user is viewing as, or null. Called from the session
@@ -61,7 +71,7 @@ export async function readImpersonation(realUserId: string, realUserType: string
     where: { id: targetId },
     select: { id: true, name: true, lastName: true, handler: true, userType: true },
   })
-  if (!target || !canBeImpersonated(target.userType)) return null
+  if (!target || !canBeImpersonated(realUserType, target.userType)) return null
 
   return {
     id: target.id,

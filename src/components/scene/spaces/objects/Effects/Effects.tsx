@@ -299,5 +299,3 @@ export const Effects: React.FC<EffectsProps> = ({ enabled = false }) => {
     </>
   )
 }
-
-export default Effects

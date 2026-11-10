@@ -146,6 +146,12 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
   const _artworkPosRef = useRef(new Vector3())
   const _forwardRef = useRef(new Vector3())
   const _upRef = useRef(new Vector3())
+  // Which frame is already on the canvas (the canvas itself + the video time
+  // drawn), so a paused video is not redrawn and re-uploaded every few frames.
+  const lastDrawnRef = useRef<{ canvas: HTMLCanvasElement | null; time: number }>({
+    canvas: null,
+    time: -1,
+  })
 
   // Create offscreen canvas + texture once the video metadata is available
   useEffect(() => {
@@ -343,12 +349,17 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
     }
   }, [focusTarget, playMode, video, videoUrl])
 
-  // Clean up video element on unmount — only pause, don't destroy src
+  // Clean up video element on unmount — only pause, don't destroy src. Close
+  // its audio graph too: an AudioContext lives until closed, holding the
+  // video element and the audio hardware, and browsers cap how many may exist
+  // (iOS strictly) — one per played video piled up across room visits. Each
+  // mount creates its own <video>, so a later mount builds a fresh graph.
   useEffect(() => {
     return () => {
       if (video) {
         video.pause()
       }
+      audioCtxRef.current?.close().catch(() => {})
     }
   }, [video])
 
@@ -445,9 +456,19 @@ const VideoObject = ({ artwork }: VideoObjectProps) => {
       if (inView && frameCountRef.current % updateInterval === 0) {
         const ctx = canvasCtxRef.current
         const canvas = canvasRef.current
-        if (ctx && canvas) {
+        // A paused video whose current frame is decoded and already on this
+        // canvas shows nothing new: skip the draw and the GPU upload. A new
+        // canvas, a new time, or a frame not decoded yet is always drawn.
+        const frameDecoded = video.readyState >= 2 // HAVE_CURRENT_DATA
+        const sameFrame =
+          video.paused &&
+          frameDecoded &&
+          lastDrawnRef.current.canvas === canvas &&
+          lastDrawnRef.current.time === video.currentTime
+        if (ctx && canvas && !sameFrame) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
           videoTexture.needsUpdate = true
+          lastDrawnRef.current = { canvas, time: frameDecoded ? video.currentTime : -1 }
           // Request next frame for video texture updates (frameloop="demand")
           invalidate()
         }

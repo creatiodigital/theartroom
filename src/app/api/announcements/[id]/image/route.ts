@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 })
     }
     if (file.size > MAX_UPLOAD_SIZE) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 })
+      return NextResponse.json({ error: `File too large. Maximum size is ${MAX_UPLOAD_SIZE / (1024 * 1024)}MB.` }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
@@ -40,16 +40,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     const processed = await processImage(buffer)
 
-    if (announcement.imageUrl) {
+    const url = await uploadToR2(buildAnnouncementImageKey(id), processed, 'image/webp')
+    await prisma.announcement.update({ where: { id }, data: { imageUrl: url } })
+
+    // Only now retire the previous photo: deleted first, a failed upload or
+    // save left the announcement pointing at nothing.
+    if (announcement.imageUrl && announcement.imageUrl !== url) {
       try {
         await deleteFromR2(announcement.imageUrl)
       } catch (error) {
         console.warn('Failed to delete previous announcement photo:', error)
       }
     }
-
-    const url = await uploadToR2(buildAnnouncementImageKey(id), processed, 'image/webp')
-    await prisma.announcement.update({ where: { id }, data: { imageUrl: url } })
     revalidatePath('/')
     return NextResponse.json({ url })
   } catch (error) {

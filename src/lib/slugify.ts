@@ -39,12 +39,3 @@ export async function generateUniqueSlug(title: string): Promise<string> {
   // Fallback: use timestamp to guarantee uniqueness
   return `${base}-${Date.now()}`
 }
-
-/**
- * Simple sync version for scripts that handle uniqueness externally.
- */
-export function generateSlug(title: string): string {
-  const base = slugifyBase(title)
-  const suffix = Math.floor(10000 + Math.random() * 90000)
-  return `${base}-${suffix}`
-}

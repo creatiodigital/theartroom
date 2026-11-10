@@ -334,5 +334,3 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
     </>
   )
 }
-
-export default InquireSidebar

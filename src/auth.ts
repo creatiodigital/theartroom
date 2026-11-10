@@ -1,12 +1,15 @@
 import { cookies } from 'next/headers'
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 
+import { verifyPassword } from '@/lib/auth/verifyPassword'
 import prisma from '@/lib/prisma'
 import { rateLimit } from '@/lib/rateLimit'
 import { getClientIpFromHeaders } from '@/lib/getClientIp'
 import { IMPERSONATION_COOKIE, readImpersonation } from '@/lib/impersonation'
+
+// Signed in for at most 30 days from login, however actively the session is used.
+const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -18,13 +21,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         loginCode: { label: 'Login Code', type: 'text' },
       },
       async authorize(credentials, request) {
-        if (!credentials?.email || !credentials?.password) {
+        if (typeof credentials?.email !== 'string' || typeof credentials?.password !== 'string') {
+          return null
+        }
+        if (!credentials.email || !credentials.password) {
           return null
         }
 
-        const email = credentials.email as string
-        const password = credentials.password as string
-        const loginCode = credentials.loginCode as string | undefined
+        const email = credentials.email
+        const password = credentials.password
+        const loginCode =
+          typeof credentials.loginCode === 'string' ? credentials.loginCode : undefined
 
         // Brute-force protection on the credentials callback — otherwise
         // unthrottled, so an attacker could hammer this endpoint to guess a
@@ -52,13 +59,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email },
         })
 
-        if (!user || !user.password) {
-          return null
-        }
+        // Same bcrypt cost whether or not the account exists (see
+        // verifyPassword), so response time can't reveal which emails do.
+        const passwordMatch = await verifyPassword(password, user?.password)
 
-        const passwordMatch = await bcrypt.compare(password, user.password)
-
-        if (!passwordMatch) {
+        if (!user || !passwordMatch) {
           return null
         }
 
@@ -125,13 +130,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    // Returning null ends the session: Auth.js clears the cookie and `auth()`
+    // then has no session at all, so every `!session?.user` guard refuses.
     async jwt({ token, user }) {
+      const now = Math.floor(Date.now() / 1000)
+
       if (user) {
         token.id = user.id
         token.handler = (user as { handler?: string }).handler
         token.userType = (user as { userType?: string }).userType
         token.mustChangePassword =
           (user as { mustChangePassword?: boolean }).mustChangePassword ?? false
+        token.loginAt = now
+        return token
+      }
+
+      // Absolute lifetime. The cookie is re-signed with a fresh expiry on every
+      // read, so on its own a session in regular use never ends. A token from
+      // before this cap has no login time: it starts counting now.
+      const loginAt = typeof token.loginAt === 'number' ? token.loginAt : now
+      token.loginAt = loginAt
+      if (now - loginAt > SESSION_MAX_AGE_SECONDS) return null
+
+      // Fresh role from the database, so role changes take effect immediately —
+      // and a deleted account ends its session instead of carrying the role the
+      // token was issued with. A failed lookup (DB unreachable) keeps the token's
+      // values rather than logging everyone out.
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { userType: true, mustChangePassword: true },
+        })
+        if (!dbUser) return null
+        token.userType = dbUser.userType
+        token.mustChangePassword = dbUser.mustChangePassword
+      } catch {
+        // Keep the token's values.
       }
 
       return token
@@ -140,20 +174,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.handler = token.handler as string
-
-        // Fetch fresh userType from database to ensure role changes take effect immediately
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: { userType: true, mustChangePassword: true },
-          })
-          session.user.userType = dbUser?.userType ?? (token.userType as string)
-          session.user.mustChangePassword =
-            dbUser?.mustChangePassword ?? (token.mustChangePassword as boolean) ?? false
-        } catch {
-          // Fallback to token if DB lookup fails
-          session.user.userType = token.userType as string
-        }
+        session.user.userType = token.userType as string
+        session.user.mustChangePassword = (token.mustChangePassword as boolean) ?? false
       }
 
       // Impersonation comes from its own cookie, re-checked against the real
@@ -178,5 +200,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    maxAge: SESSION_MAX_AGE_SECONDS,
   },
 })

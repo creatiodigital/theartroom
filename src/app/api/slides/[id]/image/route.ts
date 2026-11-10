@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 })
+      return NextResponse.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` }, { status: 400 })
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -51,16 +51,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const processedBuffer = await processImage(buffer)
 
-    // Delete old image if it's hosted on R2 or Vercel Blob
-    const previousUrl = slide[field]
-    if (previousUrl) {
-      try {
-        await deleteFromR2(previousUrl)
-      } catch (error) {
-        console.warn('Failed to delete old slide image:', error)
-      }
-    }
-
     // Upload to Cloudflare R2
     const key = await buildSlideImageKey(id)
     const url = await uploadToR2(key, processedBuffer, 'image/webp')
@@ -70,6 +60,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { id },
       data: { [field]: url },
     })
+
+    // Only now retire the old image: deleted first, a failed upload or save
+    // left the slide pointing at nothing.
+    const previousUrl = slide[field]
+    if (previousUrl && previousUrl !== url) {
+      try {
+        await deleteFromR2(previousUrl)
+      } catch (error) {
+        console.warn('Failed to delete old slide image:', error)
+      }
+    }
 
     return NextResponse.json({ url })
   } catch (error) {

@@ -448,5 +448,3 @@ export const Ruler = () => {
     </div>
   )
 }
-
-export default Ruler
