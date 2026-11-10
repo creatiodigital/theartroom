@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag } from 'next/cache'
 
 import { auth } from '@/auth'
 import { MAX_ARTWORK_UPLOAD_SIZE } from '@/lib/imageConfig'
@@ -225,6 +224,12 @@ export async function POST(request: NextRequest) {
       }
 
       if (!isValidImageType(originalBuffer)) {
+        // The bytes are already in the public bucket under an image name; a
+        // rejected upload must not stay there. Never the live master, though —
+        // the key comes from the client and could name it.
+        if (originalUrl !== previousOriginalUrl) {
+          await deleteFromR2(originalUrl).catch(() => {})
+        }
         return NextResponse.json(
           { error: 'Invalid file type. Please upload a JPG, PNG, or TIFF image.' },
           { status: 400 },
@@ -307,7 +312,6 @@ export async function POST(request: NextRequest) {
       }
       mark('deleteOldImages')
 
-      revalidateTag(`artwork-${artworkId}`, { expire: 0 })
 
       return NextResponse.json({
         imageUrl: webUrl,

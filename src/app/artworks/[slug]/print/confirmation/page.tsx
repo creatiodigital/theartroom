@@ -5,6 +5,7 @@ import { PrintConfirmation } from '@/components/checkout/PrintConfirmation'
 import { ensureOrderForPaymentIntent } from '@/lib/orders/ensureOrderForPaymentIntent'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
+import { isPaymentIntentId } from '@/lib/stripe/paymentIntentId'
 
 interface ConfirmationPageProps {
   params: Promise<{ slug: string }>
@@ -54,7 +55,9 @@ const ConfirmationPage = async ({ params, searchParams }: ConfirmationPageProps)
   const paymentIntentId = pickString(sp.payment_intent) ?? null
   let verifiedStatus: 'succeeded' | 'processing' | 'failed' | 'unknown' = 'unknown'
 
-  if (paymentIntentId) {
+  if (paymentIntentId && !isPaymentIntentId(paymentIntentId)) {
+    verifiedStatus = 'failed'
+  } else if (paymentIntentId) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
       const piSlug = pi.metadata?.artworkSlug

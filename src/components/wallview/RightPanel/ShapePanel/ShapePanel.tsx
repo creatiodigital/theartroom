@@ -99,4 +99,3 @@ const ShapePanel = ({ disabled }: { disabled?: boolean }) => {
 }
 
 export { ShapePanel }
-export default ShapePanel

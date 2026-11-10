@@ -2,10 +2,9 @@
  * ISO 3166-1 alpha-2 country code → international dial code (E.164
  * country calling code, no leading `+`) and English country name.
  *
- * Used by the checkout form's phone-prefix dropdown. The dropdown is
- * independent of the shipping country (a buyer might keep a foreign
- * phone after relocating, or be sending a gift to another country) so
- * we expose every code, not just the catalog's supported-shipping list.
+ * The checkout's country names (`COUNTRY_NAMES`, `getCountryName`) live here;
+ * `DIAL_CODES` itself is kept as the source `scripts/generate-country-names.ts`
+ * reads to regenerate them. Every code, not just the shipping list.
  *
  * Country names are STATIC (not from `Intl.DisplayNames`) on purpose:
  * Node's and the browser's ICU data disagree for politically-sensitive

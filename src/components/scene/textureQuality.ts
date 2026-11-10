@@ -1,5 +1,3 @@
-import type { Texture } from 'three'
-
 /**
  * Anisotropic filtering level for every surface texture in the gallery.
  *
@@ -23,8 +21,3 @@ import type { Texture } from 'three'
  * does not add a pass, so it should not move the dpr ladder.
  */
 export const MAX_ANISOTROPY = 16
-
-/** Apply the gallery's filtering standard to a loaded texture. */
-export const applyAnisotropy = (texture: Texture) => {
-  texture.anisotropy = MAX_ANISOTROPY
-}

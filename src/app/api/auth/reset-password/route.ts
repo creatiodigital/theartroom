@@ -7,6 +7,8 @@ import { rateLimit } from '@/lib/rateLimit'
 import { MAX_LENGTHS, tooLong } from '@/lib/validation'
 import { validatePassword } from '@/utils/password'
 
+const RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting (durable, trusted x-real-ip not the spoofable first hop).
@@ -34,7 +36,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Token and password are required' }, { status: 400 })
     }
 
-    // Reject oversized input before the token lookup and bcrypt.hash.
+    // Both must be strings, and the token must look like one we mint
+    // (forgot-password: randomBytes(32) as hex). A JSON object here would
+    // reach the `findFirst` below as a Prisma filter — `{"not": ""}` matches
+    // whichever account has a pending reset and hands its password to the
+    // caller.
+    if (
+      typeof token !== 'string' ||
+      typeof password !== 'string' ||
+      !RESET_TOKEN_PATTERN.test(token)
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid or expired reset link. Please request a new one.' },
+        { status: 400 },
+      )
+    }
+
+    // Reject oversized input before bcrypt.hash.
     if (tooLong(token, MAX_LENGTHS.token) || tooLong(password, MAX_LENGTHS.password)) {
       return NextResponse.json({ error: 'Invalid token or password' }, { status: 400 })
     }

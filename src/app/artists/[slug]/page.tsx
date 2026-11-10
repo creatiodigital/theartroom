@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ArtistProfilePage } from '@/components/artists/profile'
+import { ArtistBiography } from '@/components/artists/profile/ArtistBiography'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
-import prisma from '@/lib/prisma'
 
 // Render per request and read straight from the DB so artist edits, new
 // exhibitions and featured-artwork changes appear immediately. No data cache.
@@ -16,10 +16,8 @@ interface ArtistProfileProps {
 export async function generateMetadata({ params }: ArtistProfileProps): Promise<Metadata> {
   const { slug } = await params
 
-  const artist = await prisma.user.findFirst({
-    where: { handler: slug, published: true },
-    select: { name: true, lastName: true, biography: true },
-  })
+  // The page's own read (deduplicated per request): published artists only.
+  const artist = await getPublicArtistByHandler(slug)
 
   if (!artist) {
     return { title: 'Artist Not Found' }
@@ -53,7 +51,14 @@ const ArtistProfile = async ({ params }: ArtistProfileProps) => {
   if (!artist) notFound()
 
   const { exhibitions, artworks, ...artistData } = artist
-  return <ArtistProfilePage artist={artistData} exhibitions={exhibitions} artworks={artworks} />
+  return (
+    <ArtistProfilePage
+      artist={artistData}
+      exhibitions={exhibitions}
+      artworks={artworks}
+      biography={artistData.biography ? <ArtistBiography biography={artistData.biography} /> : null}
+    />
+  )
 }
 
 export default ArtistProfile

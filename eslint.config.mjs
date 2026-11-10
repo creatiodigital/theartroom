@@ -15,6 +15,8 @@ export default [
       'coverage/**',
       '.prisma/**',
       'src/generated/**',
+      // Local scratch tooling (gitignored), not part of the app.
+      '.superpowers/**',
     ],
   },
   ...tseslint.configs.recommended,

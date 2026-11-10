@@ -8,15 +8,21 @@
     "incremental": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2020"
+    ],
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "plugins": [
       {
@@ -28,10 +34,16 @@
     "strict": true,
     "strictNullChecks": true,
     "target": "ES2020",
-    "types": ["@types/react", "@types/node"],
+    "types": [
+      "@types/react",
+      "@types/node"
+    ],
     "verbatimModuleSyntax": true
   },
-  "exclude": ["node_modules", "prisma/seed.ts"],
+  "exclude": [
+    "node_modules",
+    "prisma/seed.ts"
+  ],
   "include": [
     "next-env.d.ts",
     "src/**/*.ts",

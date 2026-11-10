@@ -55,7 +55,11 @@ const PRIVATE_BUCKET = process.env.R2_PRIVATE_BUCKET_NAME || BUCKET
 
 // ── Environment prefix ───────────────────────────────────────────────────────
 
-function getEnvPrefix(): string {
+/** Every environment's prefix in the main bucket: each stores its files under its own. */
+export const R2_ENV_PREFIXES = ['production', 'staging'] as const
+export type R2EnvPrefix = (typeof R2_ENV_PREFIXES)[number]
+
+function getEnvPrefix(): R2EnvPrefix {
   return process.env.NEXT_PUBLIC_APP_ENV === 'production' ? 'production' : 'staging'
 }
 
@@ -194,7 +198,14 @@ export async function deleteFromR2(url: string): Promise<void> {
     console.info('[R2] Skipping Vercel Blob URL (legacy):', url)
     return
   }
-  const key = extractR2KeyFromUrl(url) ?? url
+  // Only a URL on one of our R2 hosts names an object. Anything else (a bare
+  // key, a foreign URL) is not ours to delete — every caller passes a URL the
+  // server itself stored, so this is a guard, not a behavior change.
+  const key = extractR2KeyFromUrl(url)
+  if (!key) {
+    console.warn('[R2] Refusing to delete a non-R2 URL:', url)
+    return
+  }
   await r2.send(
     new DeleteObjectCommand({
       Bucket: BUCKET,
@@ -362,13 +373,17 @@ export function buildExhibitionBakeKey(exhibitionId: string, bakeId: string, fil
   return `${getEnvPrefix()}/exhibitions/${exhibitionId}/bakes/${bakeId}/${file}`
 }
 
-/** A print presentation's stored render: one file per fingerprint and size (1800 or 900 px wide). */
+/**
+ * A print presentation's stored render: one file per fingerprint and size (1800 or 900 px wide),
+ * under this environment's prefix — or another's, to recognise the files it stored.
+ */
 export function buildPresentationKey(
   artworkId: string,
   fingerprint: string,
   widthPx: number,
+  env: R2EnvPrefix = getEnvPrefix(),
 ): string {
-  return `${getEnvPrefix()}/presentations/${artworkId}/${fingerprint}-${widthPx}.webp`
+  return `${env}/presentations/${artworkId}/${fingerprint}-${widthPx}.webp`
 }
 
 /** The public URL of a main-bucket object key. */

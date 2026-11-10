@@ -17,6 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Get the exhibition to verify it exists
     const exhibition = await prisma.exhibition.findUnique({
       where: { id },
+      select: { userId: true, featuredImageUrl: true },
     })
 
     if (!exhibition) {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 })
+      return NextResponse.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` }, { status: 400 })
     }
 
     // Convert to buffer
@@ -55,15 +56,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Process image (resize + convert to WebP)
     const processedBuffer = await processImage(buffer)
 
-    // Delete old image if exists
-    if (exhibition.featuredImageUrl) {
-      try {
-        await deleteFromR2(exhibition.featuredImageUrl)
-      } catch (error) {
-        console.warn('Failed to delete old image:', error)
-      }
-    }
-
     // Upload to Cloudflare R2
     const key = await buildExhibitionImageKey(id)
     const url = await uploadToR2(key, processedBuffer, 'image/webp')
@@ -73,6 +65,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { id },
       data: { featuredImageUrl: url },
     })
+
+    // Only now retire the old image: deleted first, a failed upload or save
+    // left the exhibition pointing at nothing.
+    if (exhibition.featuredImageUrl && exhibition.featuredImageUrl !== url) {
+      try {
+        await deleteFromR2(exhibition.featuredImageUrl)
+      } catch (error) {
+        console.warn('Failed to delete old image:', error)
+      }
+    }
 
     return NextResponse.json({
       url,
@@ -94,6 +96,7 @@ export async function DELETE(
 
     const exhibition = await prisma.exhibition.findUnique({
       where: { id },
+      select: { userId: true, featuredImageUrl: true },
     })
 
     if (!exhibition) {

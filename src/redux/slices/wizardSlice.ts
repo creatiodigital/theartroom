@@ -13,13 +13,6 @@ const wizardSlice = createSlice({
     hideWizard: (state: TWizard) => {
       state.isWizardOpen = false
     },
-    setArtworkUploadedTrue: (state: TWizard) => {
-      state.isArtworkUploaded = true
-    },
-    setArtworkUploadedFalse: (state: TWizard) => {
-      state.isArtworkUploaded = false
-    },
-
     resetWizard: () => {
       // Return fresh initial state to prevent stale data between exhibitions
       return wizardFactory()
@@ -30,8 +23,6 @@ const wizardSlice = createSlice({
 export const {
   showWizard,
   hideWizard,
-  setArtworkUploadedTrue,
-  setArtworkUploadedFalse,
   resetWizard,
 } = wizardSlice.actions
 

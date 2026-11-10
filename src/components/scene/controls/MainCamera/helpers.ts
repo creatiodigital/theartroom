@@ -118,9 +118,6 @@ export const handleKeyPress = (
   keysPressed.current[key.toLowerCase()] = isPressed
 }
 
-/** The keys that walk: W S A D and the arrows. */
-export const MOVEMENT_KEYS = ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright']
-
 /**
  * In Wall View the same keys move over the wall instead, never turning (AR-178, owner, 2026-11-07: "the up
  * and down arrows will move the camera up and down WITHOUT rotating the camera"): which way, right

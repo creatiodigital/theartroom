@@ -83,21 +83,22 @@ export async function POST(req: NextRequest) {
     const countryCode = typeof body.countryCode === 'string' ? body.countryCode.slice(0, 2) : ''
     if (!input.trim() || !countryCode) return NextResponse.json({ ok: true, suggestions: [] })
 
-    const [perIp, daily] = await Promise.all([
-      rateLimit({
-        name: 'address-suggest-ip',
-        key: ip,
-        limit: IP_SUGGEST_LIMIT,
-        windowSeconds: IP_WINDOW_SECONDS,
-      }),
-      rateLimit({
-        name: 'address-suggest-daily',
-        key: 'global',
-        limit: DAILY_SUGGEST_CAP,
-        windowSeconds: DAY_SECONDS,
-      }),
-    ])
-    if (!perIp.success || !daily.success) return fail('rate_limited', 429)
+    // Per-IP first: the site-wide cap is spent only by a call that is about to
+    // reach Google, or one client could exhaust it for every buyer.
+    const perIp = await rateLimit({
+      name: 'address-suggest-ip',
+      key: ip,
+      limit: IP_SUGGEST_LIMIT,
+      windowSeconds: IP_WINDOW_SECONDS,
+    })
+    if (!perIp.success) return fail('rate_limited', 429)
+    const daily = await rateLimit({
+      name: 'address-suggest-daily',
+      key: 'global',
+      limit: DAILY_SUGGEST_CAP,
+      windowSeconds: DAY_SECONDS,
+    })
+    if (!daily.success) return fail('rate_limited', 429)
 
     try {
       const res = await fetch(AUTOCOMPLETE_URL, {
@@ -156,21 +157,22 @@ export async function POST(req: NextRequest) {
     const placeId = typeof body.placeId === 'string' ? body.placeId.slice(0, 300) : ''
     if (!placeId) return fail('unavailable', 400)
 
-    const [perIp, daily] = await Promise.all([
-      rateLimit({
-        name: 'address-details-ip',
-        key: ip,
-        limit: IP_DETAILS_LIMIT,
-        windowSeconds: IP_WINDOW_SECONDS,
-      }),
-      rateLimit({
-        name: 'address-details-daily',
-        key: 'global',
-        limit: DAILY_DETAILS_CAP,
-        windowSeconds: DAY_SECONDS,
-      }),
-    ])
-    if (!perIp.success || !daily.success) return fail('rate_limited', 429)
+    // Per-IP first: the site-wide cap is spent only by a call that is about to
+    // reach Google, or one client could exhaust it for every buyer.
+    const perIp = await rateLimit({
+      name: 'address-details-ip',
+      key: ip,
+      limit: IP_DETAILS_LIMIT,
+      windowSeconds: IP_WINDOW_SECONDS,
+    })
+    if (!perIp.success) return fail('rate_limited', 429)
+    const daily = await rateLimit({
+      name: 'address-details-daily',
+      key: 'global',
+      limit: DAILY_DETAILS_CAP,
+      windowSeconds: DAY_SECONDS,
+    })
+    if (!daily.success) return fail('rate_limited', 429)
 
     try {
       const url = new URL(`${DETAILS_URL}/${encodeURIComponent(placeId)}`)

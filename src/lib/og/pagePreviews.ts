@@ -15,8 +15,8 @@ export async function exhibitionSharePreview(artistSlug: string, exhibitionSlug:
 }
 
 export async function artworkSharePreview(slug: string) {
-  const artwork = await prisma.artwork.findUnique({
-    where: { slug },
+  const artwork = await prisma.artwork.findFirst({
+    where: { slug, user: { published: true } },
     select: { imageUrl: true },
   })
   return renderSharePreview(artwork?.imageUrl)

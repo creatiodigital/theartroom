@@ -1,6 +1,5 @@
 export type TWizard = {
   isWizardOpen: boolean
-  isArtworkUploaded: boolean
 }
 
 export type TAlign =

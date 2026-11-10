@@ -43,7 +43,7 @@ import { formatOrderRef } from '@/lib/orders/orderRef'
 
 // Order hard-delete is a dev/staging cleanup tool only — in production the
 // Danger zone does not render (and the server action refuses regardless).
-const DEV_CLEANUP_ALLOWED = process.env.NEXT_PUBLIC_APP_ENV !== 'production'
+import { DEV_CLEANUP_ALLOWED } from '@/lib/admin/devCleanup'
 
 const formatDateTime = (iso: string | null) => {
   if (!iso) return '—'

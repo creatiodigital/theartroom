@@ -3,9 +3,7 @@
  * fulfillment service (currently theprintspace, but the abstraction is
  * preserved so swapping in a future adapter stays low-risk).
  *
- * The wizard imports ONLY this file. The adapter lives under its own
- * folder (`printspace/`) and exposes nothing the wizard sees beyond what's
- * declared here.
+ * The adapter lives under its own folder (`printspace/`).
  */
 
 export type ProviderId = 'printspace'

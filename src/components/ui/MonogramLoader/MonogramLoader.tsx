@@ -78,5 +78,3 @@ export const MonogramLoader = ({ progress, title, note, done, className }: Monog
     </div>
   )
 }
-
-export default MonogramLoader

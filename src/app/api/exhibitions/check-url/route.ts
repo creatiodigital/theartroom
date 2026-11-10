@@ -1,27 +1,33 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { requireAuth } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-// GET check if exhibition URL is available for a user
+// GET check if an exhibition URL is available. Signed-in only: both callers are
+// dashboard screens, and the answer reveals whether any exhibition — a draft
+// included — already holds that URL.
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
     const url = searchParams.get('url')
     const excludeId = searchParams.get('excludeId')
 
-    if (!userId || !url) {
-      return NextResponse.json({ error: 'userId and url are required' }, { status: 400 })
+    if (!url) {
+      return NextResponse.json({ error: 'url is required' }, { status: 400 })
     }
 
-    // Check if an exhibition with this URL already exists for this user
-    // Optionally exclude a specific exhibition (for edit scenarios)
+    // `Exhibition.url` is unique across ALL artists, so availability is global
+    // — checked per user, two artists could both be told "available" and the
+    // second save would fail with a 500. Optionally exclude the exhibition
+    // being edited.
     const existing = await prisma.exhibition.findFirst({
       where: {
-        userId,
         url,
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },

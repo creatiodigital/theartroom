@@ -11,6 +11,7 @@ import {
   type ArtworkCommerce,
 } from '@/components/artwork/detail/ArtworkDetailBody'
 import { ArtworkMediaGallery } from '@/components/artwork/detail/ArtworkMediaGallery'
+import { ArtworkTechnique } from '@/components/artwork/detail/ArtworkRichText'
 import { ArtworkStorySection } from '@/components/artwork/detail/ArtworkStorySection'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import { Button } from '@/components/ui/Button'
@@ -108,17 +109,18 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
         CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
       </Button>
       {/* Mirrors the standalone artwork page section for section: the
-          two-column zone, then the story, then the imagery. `layout="page"` is
-          what moves the description out of the metadata column and into its own
-          full-width section, exactly as it does there. */}
+          two-column zone, then the story (its own full-width section), then
+          the imagery. */}
       <div className={styles.content}>
         <div className={styles.body}>
           <ArtworkDetailBody
             artwork={artwork}
             artist={artist}
             commerce={fetched?.commerce}
-            layout="page"
             presentation={presentation}
+            technique={
+              artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null
+            }
           />
         </div>
 
@@ -129,5 +131,3 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
     </div>
   )
 }
-
-export default ArtworkModal

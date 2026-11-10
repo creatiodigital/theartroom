@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag } from 'next/cache'
 
 import { requireOwnership } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { isValidAudioType } from '@/lib/audioType'
 import { uploadToR2, deleteFromR2, buildArtworkSoundKey } from '@/lib/r2'
 
 // 3MB max for audio files
@@ -78,13 +78,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Delete old sound if exists
-    if (artwork.soundUrl) {
-      try {
-        await deleteFromR2(artwork.soundUrl)
-      } catch (error) {
-        console.warn('Failed to delete old sound:', error)
-      }
+    // The declared type is only what the browser sent; check the bytes before
+    // they land in the public bucket.
+    if (!isValidAudioType(buffer)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Accepted formats: MP3, M4A, OGG, WebM, WAV, AAC, FLAC.' },
+        { status: 400 },
+      )
     }
 
     // Upload to Cloudflare R2
@@ -99,8 +99,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    // Bust cache
-    revalidateTag(`artwork-${id}`, { expire: 0 })
+    // Only now retire the old file: deleted first, a failed upload or save
+    // left the artwork pointing at nothing.
+    if (artwork.soundUrl && artwork.soundUrl !== url) {
+      try {
+        await deleteFromR2(artwork.soundUrl)
+      } catch (error) {
+        console.warn('Failed to delete old sound:', error)
+      }
+    }
+
 
     return NextResponse.json({
       url,
@@ -149,8 +157,6 @@ export async function DELETE(
       data: { soundUrl: null },
     })
 
-    // Bust cache
-    revalidateTag(`artwork-${id}`, { expire: 0 })
 
     return NextResponse.json({ message: 'Sound deleted' })
   } catch (error) {

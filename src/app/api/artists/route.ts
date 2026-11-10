@@ -7,28 +7,6 @@ import { requireAdminOrAbove, isSuperAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { generateProvisionalPassword, validatePassword } from '@/utils/password'
 
-// GET all artists — read fresh so new/edited artists appear immediately.
-export async function GET() {
-  try {
-    const artists = await prisma.user.findMany({
-      where: { userType: 'artist', published: true },
-      select: {
-        id: true,
-        name: true,
-        lastName: true,
-        handler: true,
-        biography: true,
-        profileImageUrl: true,
-      },
-      orderBy: { name: 'asc' },
-    })
-    return NextResponse.json(artists)
-  } catch (error) {
-    console.error('[GET /api/artists] error:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
-  }
-}
-
 // POST create new artist — admin only (sole consumer: AddArtistModal in the
 // admin dashboard). userType is an allowlist; creating an 'admin' requires
 // superAdmin (mirrors the modal, which only offers it to superAdmins), and

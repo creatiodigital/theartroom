@@ -111,6 +111,7 @@ export async function validateAndPriceItem(
       originalWidth: true,
       originalHeight: true,
       editionType: true,
+      user: { select: { published: true } },
       limitedVariants: {
         where: { published: true },
         select: {
@@ -128,7 +129,9 @@ export async function validateAndPriceItem(
   if (!artwork) {
     return { ok: false, error: 'Artwork not found.' }
   }
-  if (!artwork.printEnabled) {
+  // An unpublished artist's works are hidden everywhere public, so not for
+  // sale either — a stale tab or a cart line must not still buy one.
+  if (!artwork.printEnabled || !artwork.user.published) {
     return { ok: false, error: 'This artwork is not currently available as a print.' }
   }
   // Open editions need an artwork-level price; limited editions are priced
@@ -152,7 +155,8 @@ export async function validateAndPriceItem(
     if (!pinnedVariant) {
       return { ok: false, error: 'That edition variant is no longer available.' }
     }
-    if (!pinnedVariant.priceCents) {
+    // Positive, not merely truthy: a negative price is truthy.
+    if (!(pinnedVariant.priceCents && pinnedVariant.priceCents > 0)) {
       return { ok: false, error: 'That edition variant is not currently available.' }
     }
     effectiveConfig = variantToWizardConfig(pinnedVariant)

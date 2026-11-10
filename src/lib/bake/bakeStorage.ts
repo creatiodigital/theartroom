@@ -1,3 +1,7 @@
+// Local backend only (BAKE_STORAGE=local, never production). Its paths are
+// dynamic, so each fs call carries `turbopackIgnore`: without it the build
+// traces the whole project — public/ included — into every function that
+// imports this module.
 import { mkdir, readFile, rm, rmdir, stat, writeFile } from 'fs/promises'
 import path from 'path'
 
@@ -96,14 +100,14 @@ export function localBakePath(key: string[]): string | null {
 
 export async function writeLocalBakeFile(filePath: string, bytes: Buffer): Promise<void> {
   assertLocalAllowed()
-  await mkdir(path.dirname(filePath), { recursive: true })
-  await writeFile(filePath, bytes)
+  await mkdir(/*turbopackIgnore: true*/ path.dirname(filePath), { recursive: true })
+  await writeFile(/*turbopackIgnore: true*/ filePath, bytes)
 }
 
 export async function readLocalBakeFile(filePath: string): Promise<Buffer | null> {
   assertLocalAllowed()
   try {
-    return await readFile(filePath)
+    return await readFile(/*turbopackIgnore: true*/ filePath)
   } catch {
     return null
   }
@@ -144,7 +148,7 @@ export async function bakeObjectSize(publicUrl: string): Promise<number | null> 
     const filePath = localBakePath(publicUrl.slice(LOCAL_URL_ROOT.length + 1).split('/'))
     if (!filePath) return null
     try {
-      return (await stat(filePath)).size
+      return (await stat(/*turbopackIgnore: true*/ filePath)).size
     } catch {
       return null
     }
@@ -158,9 +162,12 @@ export async function deleteBakeObjects(exhibitionId: string, bakeId: string): P
   assertSegments(exhibitionId, bakeId)
   if (bakeBackend() === 'local') {
     assertLocalAllowed()
-    await rm(path.join(LOCAL_ROOT, exhibitionId, bakeId), { recursive: true, force: true })
+    await rm(/*turbopackIgnore: true*/ path.join(LOCAL_ROOT, exhibitionId, bakeId), {
+      recursive: true,
+      force: true,
+    })
     // Drop the exhibition folder once its last bake is gone (fails harmlessly if not empty).
-    await rmdir(path.join(LOCAL_ROOT, exhibitionId)).catch(() => {})
+    await rmdir(/*turbopackIgnore: true*/ path.join(LOCAL_ROOT, exhibitionId)).catch(() => {})
     return
   }
   const keys = await listAllR2Keys(buildExhibitionBakeKey(exhibitionId, bakeId, ''))

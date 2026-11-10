@@ -260,5 +260,3 @@ export const BakedLighting = ({ bake }: { bake: BakeRecord }) => {
     </StoredBakeBoundary>
   )
 }
-
-export default BakedLighting

@@ -39,4 +39,3 @@ const Measurements = memo(({ width, height, floorOffset = 0 }: MeasurementsProps
 Measurements.displayName = 'Measurements'
 
 export { Measurements }
-export default Measurements

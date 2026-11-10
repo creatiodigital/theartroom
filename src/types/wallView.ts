@@ -67,7 +67,6 @@ export type TWallView = {
   sizeLockedById: Record<string, boolean> // Lock proportions per artwork
   artworkGroupIds: string[]
   artworkGroup: TArtworkGroup
-  isGroupHovered: boolean
   alignedPairs: TAlignmentPair[]
   isGridVisible: boolean
   isSnapEnabled: boolean

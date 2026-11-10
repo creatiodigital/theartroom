@@ -21,10 +21,3 @@ export const STORED_IMAGE = {
   MAX_FILE_SIZE: 1 * 1024 * 1024, // 1MB target for stored WebP
   MIN_QUALITY: 70,
 }
-
-// Vercel Image Optimization presets
-export const IMAGE_PRESETS = {
-  gallery3D: { width: 1536, quality: 80 },
-  isolated: { width: 2048, quality: 100 },
-  thumbnail: { width: 400, quality: 70 },
-} as const

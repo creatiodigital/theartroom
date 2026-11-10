@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { revalidateTag } from 'next/cache'
 
 import { auth } from '@/auth'
 import { captureError } from '@/lib/observability/captureError'
@@ -189,8 +188,15 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         )
       }
-      // Delete old video if exists
-      if (artwork.videoUrl) {
+      // Update artwork with new video URL
+      await prisma.artwork.update({
+        where: { id: artworkId },
+        data: { videoUrl: url },
+      })
+
+      // Only now retire the old video: deleted first, a failed save left the
+      // artwork pointing at nothing.
+      if (artwork.videoUrl && artwork.videoUrl !== url) {
         try {
           await deleteFromR2(artwork.videoUrl)
         } catch (error) {
@@ -198,13 +204,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update artwork with new video URL
-      await prisma.artwork.update({
-        where: { id: artworkId },
-        data: { videoUrl: url },
-      })
-
-      revalidateTag(`artwork-${artworkId}`, { expire: 0 })
 
       return NextResponse.json({ url })
     }

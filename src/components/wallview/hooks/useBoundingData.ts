@@ -121,7 +121,13 @@ export const useBoundingData = (
     retryCount.current = 0
     setBoundingData(null)
 
+    // A retry still pending from the previous wall must not land after the
+    // switch and write that wall's dimensions.
+    let cancelled = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+
     const computeBoundingData = () => {
+      if (cancelled) return
       // Match by name instead of uuid for stable identification across page loads
       const currentWall = Object.values(nodes).find((obj) => obj.name === currentWallId)
 
@@ -129,7 +135,7 @@ export const useBoundingData = (
       if (!currentWall?.geometry || !currentWall.geometry.attributes?.normal?.array) {
         if (retryCount.current < maxRetries) {
           retryCount.current++
-          setTimeout(computeBoundingData, 100)
+          retryTimer = setTimeout(computeBoundingData, 100)
         }
         return
       }
@@ -141,13 +147,18 @@ export const useBoundingData = (
         setBoundingData(data)
       } else if (retryCount.current < maxRetries) {
         retryCount.current++
-        setTimeout(computeBoundingData, 100)
+        retryTimer = setTimeout(computeBoundingData, 100)
       } else {
         console.warn('useBoundingData: could not compute face geometry', { currentWallId })
       }
     }
 
     computeBoundingData()
+
+    return () => {
+      cancelled = true
+      clearTimeout(retryTimer)
+    }
   }, [currentWallId, nodes, panelIndex, panelSettings])
 
   return boundingData

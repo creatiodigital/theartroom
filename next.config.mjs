@@ -1,4 +1,4 @@
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -18,22 +18,34 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA || 'dev',
   },
+  // `pnpm dev` blocks requests from other origins (Next 16.2+). Testing on a
+  // phone over the home network reaches the dev server by its LAN address;
+  // `*` matches exactly one part of the address. Dev server only.
+  allowedDevOrigins: ['192.168.1.*'],
+  experimental: {
+    // Next 16.4 turned this on by default: a `next/dynamic` import with
+    // `ssr: false` then calls React 19.3's `use(ReactDOM.browser(…))`. Our 3D
+    // spaces are such imports rendered INSIDE the R3F <Canvas>, whose own React
+    // reconciler (@react-three/fiber 9.5) predates that and throws "An
+    // unsupported type was passed to use()" — every exhibition visit crashed.
+    // Off = Next's earlier bailout, as before 16.4. Revisit with the R3F
+    // upgrade (its own ticket).
+    reactBrowserBailout: false,
+  },
   images: {
-    dangerouslyAllowSVG: true,
+    // No `dangerouslyAllowSVG`: nothing optimizes an SVG (icons are inlined via
+    // SVGR, uploads are re-encoded to WebP), and letting the optimizer accept
+    // SVG is its riskiest input. The CSP stays as a backstop.
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // Custom sizes for our image optimization presets (thumbnail: 400, gallery3D: 1024, isolated: 2048)
     deviceSizes: [640, 750, 828, 1024, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 400],
+    // Our own assets only. (A `*.public.blob.vercel-storage.com` wildcard used
+    // to sit here for legacy Vercel Blob URLs; none are left, and anyone can
+    // create a Blob store under that wildcard.)
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'assets.theartroom.gallery',
-        pathname: '/**',
-      },
-      {
-        // Legacy: dev DB still has old Vercel Blob URLs
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com',
         pathname: '/**',
       },
     ],
@@ -56,11 +68,6 @@ const nextConfig = {
       // Static 3D assets - cache forever (1 year)
       {
         source: '/assets/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-      // Draco decoder files - cache forever
-      {
-        source: '/draco/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // Visit routes - revalidate on each visit (exhibition data may change after publish)

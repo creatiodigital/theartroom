@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
 import {
@@ -54,7 +56,12 @@ export type PublicArtist = {
  * without a browser, and so this sits beside `getPublicExhibitionByUrl`, whose
  * grid has to answer exactly the same question.
  */
-export async function getPublicArtistByHandler(handler: string): Promise<PublicArtist | null> {
+// Wrapped in React's per-request `cache()` so generateMetadata and the page
+// share one read. It lives for a single request only — nothing persists
+// between visits.
+export const getPublicArtistByHandler = cache(async function getPublicArtistByHandler(
+  handler: string,
+): Promise<PublicArtist | null> {
   const artist = await prisma.user.findFirst({
     where: { handler, published: true },
     select: {
@@ -120,4 +127,4 @@ export async function getPublicArtistByHandler(handler: string): Promise<PublicA
       }
     }),
   }
-}
+})

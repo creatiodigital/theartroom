@@ -23,7 +23,13 @@
  */
 import prisma from '@/lib/prisma'
 import { TPS_PAPERS } from '@/lib/print-providers/printspace'
-import { validateVariantInput, MAX_LIMITED_VARIANTS } from './validateVariant'
+import {
+  isValidEditionSize,
+  isValidVariantPrice,
+  MAX_EDITION_SIZE,
+  MAX_LIMITED_VARIANTS,
+  validateVariantInput,
+} from './validateVariant'
 
 export type IncomingVariant = {
   id?: string
@@ -152,9 +158,24 @@ export async function saveLimitedVariants(args: {
     // Name the variant: every variant is checked on every save, so an
     // unattributed message sends the artist looking at whichever one they just
     // touched rather than the one that actually broke a rule.
-    if (!result.ok) {
-      const label = v.name?.trim()
-      return { ok: false, error: label ? `“${label}”: ${result.error}` : result.error }
+    const label = v.name?.trim()
+    const named = (error: string) => ({
+      ok: false as const,
+      error: label ? `“${label}”: ${error}` : error,
+    })
+    if (!result.ok) return named(result.error)
+
+    // Grandfathering spares an untouched variant the full rule set, but what
+    // this save CHANGES on it must still be valid. Without this, a variant
+    // whose measurements stayed put took any price — negative included — and
+    // any edition size straight onto a live edition.
+    if (grandfatheredPrintType && prior) {
+      if (v.priceCents !== prior.priceCents && !isValidVariantPrice(v.priceCents)) {
+        return named('Each variant needs a price greater than 0.')
+      }
+      if (v.editionSize !== prior.editionSize && !isValidEditionSize(v.editionSize)) {
+        return named(`Edition size must be a whole number from 1 to ${MAX_EDITION_SIZE}.`)
+      }
     }
 
     // Lock guard for published variants.

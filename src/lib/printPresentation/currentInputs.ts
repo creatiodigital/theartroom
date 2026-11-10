@@ -2,12 +2,13 @@ import { presentationFingerprint, presentationInputs, type PresentationInputs } 
 import { loadPresentationSources, type SourceRow } from './loadSources'
 import { PRESENTATION_FRAMES, frameOf, type PresentationFrame } from './look'
 import type { PrintPresentationRecord } from './record'
-import { presentationPublicUrls } from './storage'
+import { presentationFilesLoadHere, presentationPublicUrls } from './storage'
 
 /**
- * Whether this deployment serves a stored render's files. Local renders (development) and staging
- * share one database; a record whose files live on the other backend can't be shown here. Nor one
- * whose fingerprint couldn't name a file — one bad record mustn't take every page's renders down.
+ * Whether this deployment stored a render's files itself: where it would store that render now.
+ * Local renders (development) and staging share one database; a render made on the other backend
+ * is out of date here, so this deployment renders its own. Nor one whose fingerprint couldn't
+ * name a file — one bad record mustn't take every page's renders down.
  */
 const servedHere = (artworkId: string, record: PrintPresentationRecord) => {
   try {
@@ -41,14 +42,16 @@ const SHAPE_TOLERANCE = 0.005
  * back to the raw default image, but to the latest rendered version"; they update them little by
  * little): a new frame, a passepartout, a new look. Not when it would show the work wrongly: its
  * image changed shape (the original would no longer fill the window) or its edition changed (a
- * wrong pencilled number). Never a render this deployment can't serve.
+ * wrong pencilled number). Never one whose files don't load here — another machine's local
+ * renders; any environment's R2 renders do, so pointed at production's data a local server shows
+ * exactly what production shows.
  */
 export function shownRecord(
   artworkId: string,
   record: PrintPresentationRecord,
   inputs: PresentationInputs | null,
 ): { frame: PresentationFrame | null; ratio: number } | null {
-  if (!inputs || !servedHere(artworkId, record)) return null
+  if (!inputs || !presentationFilesLoadHere(artworkId, record)) return null
   if (record.fingerprint === inputs.fingerprint) return { frame: inputs.frame, ratio: inputs.ratio }
   if (record.mode !== inputs.mode || record.edition !== inputs.edition) return null
   if (record.frame === undefined || record.ratio === undefined) {

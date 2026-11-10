@@ -10,7 +10,9 @@ import { sanitizeLine } from '@/utils/sanitizeLine'
 
 export const dynamic = 'force-dynamic'
 
-// GET artworks for a user (public - needed for artist profiles)
+// GET artworks for a user — the dashboard list and the wall editor's media
+// library. Public reads are allowed (published artists only) but get no print
+// pricing internals.
 export async function GET(request: NextRequest) {
   try {
     const session = await auth()
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
     // Fetch target user's type to check permissions
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { userType: true },
+      select: { userType: true, published: true },
     })
 
     if (!targetUser) {
@@ -48,6 +50,12 @@ export async function GET(request: NextRequest) {
     // Mirrors the access rules resolved below: the target's own account, or an
     // admin acting on an artist, may see draft exhibition titles.
     const viewerOwnsTarget = requesterId === userId || isAdmin || isSuperAdmin
+
+    // An unpublished artist is hidden everywhere public — their works too.
+    // Answered exactly like a missing user.
+    if (!viewerOwnsTarget && !targetUser.published) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     // Check access permissions
     if (session?.user) {
@@ -97,10 +105,10 @@ export async function GET(request: NextRequest) {
           // The owner and admins still see their own drafts; everyone else
           // sees published shows only.
           where: viewerOwnsTarget ? {} : { exhibition: { published: true } },
-          include: {
-            exhibition: {
-              select: { id: true, mainTitle: true },
-            },
+          select: {
+            id: true,
+            exhibitionId: true,
+            exhibition: { select: { id: true, mainTitle: true } },
           },
         },
         // Live variants only — `published && blocked` is what buyers can
@@ -116,13 +124,24 @@ export async function GET(request: NextRequest) {
     // the checkout enforces (`validateAndPriceItem`): print sales on, and
     // either a live priced variant (limited) or an artwork-level price (open).
     // Only images print, so nothing else can qualify.
+    //
+    // The artist's cut and the print setup stay with the owner and admins:
+    // `printPriceCents` is the gallery's margin one subtraction away.
     const withSellingState = artworks.map((a) => {
       const { limitedVariants, ...rest } = a
       const sellingNow =
         a.artworkType === 'image' &&
         a.printEnabled === true &&
         (a.editionType === 'limited' ? limitedVariants.length > 0 : Boolean(a.printPriceCents))
-      return { ...rest, sellingNow }
+      if (viewerOwnsTarget) return { ...rest, sellingNow }
+      const {
+        printPriceCents: _printPriceCents,
+        printOptions: _printOptions,
+        printPresentation: _printPresentation,
+        printRecommendations: _printRecommendations,
+        ...publicFields
+      } = rest
+      return { ...publicFields, sellingNow }
     })
 
     return NextResponse.json(withSellingState)

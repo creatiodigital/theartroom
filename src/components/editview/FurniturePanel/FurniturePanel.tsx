@@ -55,6 +55,10 @@ const FurniturePanel = () => {
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
       }
+    } catch (error) {
+      // As the other panels do: a network failure must not surface as an
+      // unhandled rejection.
+      console.error('Failed to save furniture settings:', error)
     } finally {
       setSaving(false)
     }

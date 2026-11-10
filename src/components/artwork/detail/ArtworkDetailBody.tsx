@@ -1,18 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import c from 'classnames'
 
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
-import { RichText } from '@/components/ui/RichText'
 import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
-import { isRichTextEmpty } from '@/lib/textUtils'
 import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
@@ -85,10 +83,6 @@ interface ArtworkDetailBodyProps {
   artwork: Artwork
   artist: Artist
   commerce?: ArtworkCommerce | null
-  /** `page` moves the story and the commerce band out to full-width sections
-   *  below the image. `modal` keeps everything in the metadata column, which is
-   *  all an overlay over a 3D room can hold. */
-  layout?: 'page' | 'modal'
   /**
    * Previous/next in the set the visitor came from. Plain links — following one
    * is an ordinary navigation to that artwork's URL, not a carousel. Absent
@@ -101,6 +95,11 @@ interface ArtworkDetailBodyProps {
    * rendered image, as the grids do); until then it kept the plain image there (2026-10-28).
    */
   presentation?: PresentationView | null
+  /**
+   * The technique, already rendered — see ArtworkRichText for why the caller
+   * renders it. Shown when the artwork's own field has content, as before.
+   */
+  technique?: ReactNode
 }
 
 /**
@@ -112,9 +111,9 @@ export const ArtworkDetailBody = ({
   artwork,
   artist,
   commerce,
-  layout = 'modal',
   neighbours,
   presentation,
+  technique,
 }: ArtworkDetailBodyProps) => {
   const [isInquireOpen, setIsInquireOpen] = useState(false)
 
@@ -154,20 +153,11 @@ export const ArtworkDetailBody = ({
             {displayAuthor}
           </Text>
         )}
-        {artwork.technique && (
-          <RichText content={artwork.technique} variant="compact" className={styles.technique} />
-        )}
+        {artwork.technique && technique}
         {artwork.dimensions && (
           <Text as="p" size="sm" className={styles.dimensions}>
             {artwork.dimensions}
           </Text>
-        )}
-        {layout === 'modal' && !isRichTextEmpty(artwork.description) && (
-          <RichText
-            content={artwork.description!}
-            variant="compact"
-            className={styles.description}
-          />
         )}
         {commerce && !purchasesPaused && (
           <ArtworkAvailabilityCard

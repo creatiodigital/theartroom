@@ -43,11 +43,14 @@ export const Guides = () => {
   useEffect(() => {
     if (!exhibitionId || !currentWallId) return
 
+    // A previous wall's guides arriving after the switch must not replace these.
+    let stale = false
     const fetchGuides = async () => {
       try {
         const res = await fetch(`/api/exhibitions/${exhibitionId}/guides?wallId=${currentWallId}`)
         if (res.ok) {
           const data = await res.json()
+          if (stale) return
           dispatch(
             setGuides(
               data.map(
@@ -67,6 +70,9 @@ export const Guides = () => {
     }
 
     fetchGuides()
+    return () => {
+      stale = true
+    }
   }, [exhibitionId, currentWallId, dispatch])
 
   // ---- Delete selected guide with Delete/Backspace ----
@@ -275,5 +281,3 @@ export const Guides = () => {
     </>
   )
 }
-
-export default Guides
