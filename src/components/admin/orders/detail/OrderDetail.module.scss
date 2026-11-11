@@ -434,14 +434,15 @@ textarea.input {
   color: var(--color-red-70);
 }
 
-// ── Two columns from 900px; the side column follows the main one on phones ──
+// ── Two columns from 1100px (questions.md Q28: next to the menu, 900px left the
+// main column too narrow); below that the side column follows the main one ──
 .columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
 
-  @include media-up(tablet) {
+  @include media-up(wide) {
     grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
   }
 }

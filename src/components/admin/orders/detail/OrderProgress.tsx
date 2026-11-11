@@ -64,15 +64,18 @@ function stageSentence(order: Detail, bucket: Bucket): ReactNode {
     case 'delivered':
       return order.isCart ? (
         <>
-          Pay each artist in <a href="#pay-artists">Pay the artists</a> below.
+          Pay each artist in the <a href="#pay-artists">Pay the artists</a> section below.
         </>
       ) : (
         <>
-          Pay the artist in <a href="#pay-artists">Pay the artist</a> below.
+          Pay the artist in the <a href="#pay-artists">Pay the artist</a> section below.
         </>
       )
     case 'done':
-      return 'Complete. Delivered and the artist is paid. Nothing left to do.'
+      // questions.md Q28.
+      return new Set(order.items.map((it) => it.artistName)).size > 1
+        ? 'Done: delivered and every artist paid.'
+        : 'Done: delivered and the artist paid.'
     case 'cancelled':
       return order.paymentStatus === 'succeeded'
         ? 'Canceled after the card was charged: refund the buyer.'
