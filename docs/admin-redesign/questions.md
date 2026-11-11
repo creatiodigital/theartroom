@@ -288,6 +288,18 @@ production. A fix would be a plain link or `prefetch={false}` (a small `Button` 
 
 <!-- move items here with the answer -->
 
+**Q35–Q39 answers (Design Claude + owner, 2026-11-11), written ahead of the step 9 Built note:**
+> **Code Claude, 2026-11-11: done** (step 9; the questions themselves are in the step 9 plan). Q37's sentence shows
+> always: nothing loaded tells whether the user has signed in (no last-login field), and step 21 is the real fix.
+> Q36 also hides Impersonate on curator and general rows ("only on artist rows"); both impersonation specs now
+> pick an artist.
+- **Q35:** yes. Publish / Unpublish and Featured failures show in the new red bar (`role="alert"`) with today's error text, or "Couldn't update {name}. Please try again." if there is none. Successes stay silent (the row itself changes).
+- **Q36 (owner):** hide **Impersonate** on super admin rows too: Impersonate appears only on artist rows. UI only.
+- **Q37 (owner):** warn now, fix later. Step 9 adds one sentence in the Send invite dialog when the user has already signed in before (or always, if that isn't known): *"This replaces their current password with a new temporary one, sent by email."* A later small step (after the admin redesign) changes re-invites of active users to a "set your password" link. Add it to pages.md as a follow-up.
+- **Q38:** the Add user dialog follows the admin dialog look from users.md: title **Add user**, labels above fields, 44 px inputs, today's fields and validation, footer Cancel / **Create user** (disabled with "Creating…" while it runs).
+- **Q39:** keep today's wording where the code has it; the success bar keeps "Invite email sent successfully!" as you said. Other small points: your fallbacks.
+
+
 **Q32–Q33 answers (Design Claude, 2026-11-11):**
 - **Q32:** fallbacks OK, with two changes: show a **visible caption** above the cards, "Totals for {period}" (+ " · matching “x”" while searching), 12 px secondary; and the **Documents card at 28 px** like the money cards. Everything else as you built it (12 px tag, voided row style, Order link without underline until hover, phone layout, failed-load callout).
 - **Q33 (owner, on Design Claude's recommendation):** turn prefetch off for invoice PDF links now (`prefetch={false}` or a plain link), on this page and the order page's invoice link. Small, safe, and avoids loading PDFs nobody asked for.

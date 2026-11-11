@@ -27,7 +27,7 @@ test.use({ storageState: 'e2e/.auth/admin.json' })
 /** A user the admin is allowed to impersonate — not an admin, not a superAdmin. */
 async function anArtist() {
   const user = await prisma.user.findFirstOrThrow({
-    where: { userType: { notIn: ['admin', 'superAdmin'] } },
+    where: { userType: 'artist' },
     select: { name: true, lastName: true },
     orderBy: { id: 'asc' },
   })
@@ -45,7 +45,7 @@ async function impersonate(page: Page, fullName: string) {
   await page.goto('/admin/users')
   await page.waitForLoadState('networkidle')
   const row = page.locator('tbody tr', { hasText: fullName }).first()
-  await row.locator('button[aria-label="Actions"]').click()
+  await row.getByRole('button', { name: `Actions for ${fullName}` }).click()
   await page.locator('button:has-text("Impersonate")').first().click()
   await page.waitForURL((url) => url.pathname === '/dashboard')
   await expect(page.getByText(`Viewing as ${fullName}`)).toBeVisible()

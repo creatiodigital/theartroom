@@ -32,6 +32,7 @@ export type RowMenuItem = {
 export type RowMenuGroup = {
   /** A small caption over the group. Groups after the first sit under a divider. */
   label?: string
+  /** A group with no items is left out. */
   items: RowMenuItem[]
 }
 
@@ -72,6 +73,8 @@ export function RowMenu({ label, groups, disabled = false, width = 190 }: RowMen
   // ArrowUp on the trigger opens the menu on its last item.
   const focusOnOpen = useRef<'first' | 'last'>('first')
   const groupId = useId()
+  // A group whose items are all conditional may end up empty: no caption, no divider.
+  const listed = groups.filter((group) => group.items.length > 0)
 
   const trigger = () => wrapRef.current?.querySelector('button') ?? null
   const menuItems = () =>
@@ -211,7 +214,7 @@ export function RowMenu({ label, groups, disabled = false, width = 190 }: RowMen
           className={styles.menu}
           style={{ minWidth: width }}
         >
-          {groups.map((group, index) => (
+          {listed.map((group, index) => (
             <Fragment key={group.label ?? index}>
               {index > 0 && <div role="separator" className={styles.separator} />}
               <div

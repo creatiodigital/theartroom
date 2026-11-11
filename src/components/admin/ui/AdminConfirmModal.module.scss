@@ -126,3 +126,8 @@
 .actions .button:disabled {
   opacity: 0.7;
 }
+
+// `confirmDisabled` (not busy): plainly off until the condition is met.
+.actions .off:disabled {
+  opacity: 0.4;
+}

@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 
-import { Button } from '@/components/ui/Button'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
 import { useFormValidation } from '@/hooks/useFormValidation'
 import { email, required, validatePassword } from '@/lib/validation'
 
@@ -32,6 +31,10 @@ const addArtistValidators = {
     return result.valid ? undefined : `Password must include ${result.errors.join(', ')}.`
   },
 }
+
+// The confirm button sits outside the <form> (in the dialog's button row) and
+// submits it through this id.
+const FORM_ID = 'add-user-form'
 
 type AddArtistModalProps = {
   onClose: () => void
@@ -137,159 +140,159 @@ export const AddArtistModal = ({
     }
   }
 
-  return (
-    <div className={styles.modal}>
-      {provisionalPassword ? (
-        <>
-          <Text font="dashboard" as="h2">
-            User Created Successfully
-          </Text>
-          <div className={styles.section}>
-            <Text font="dashboard" as="p" style={{ marginBottom: '16px' }}>
-              The following temporary password was generated. Please share it with the artist:
-            </Text>
-            <div className={styles.provisionalPassword}>
-              <code>{provisionalPassword}</code>
-            </div>
-            <Text
-              font="dashboard"
-              as="p"
-              style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '12px' }}
-            >
-              The artist will be asked to set a new password on their first login.
-            </Text>
+  // One dialog for both screens (same element type in the same place, so React
+  // keeps it): the admin dialog layer holds once, and focus goes back to
+  // "Add user" when it closes.
+  return provisionalPassword ? (
+    <AdminConfirmModal
+      icon={null}
+      title="User created"
+      message={
+        <div className={styles.created}>
+          <p>The following temporary password was generated. Please share it with the artist:</p>
+          <div className={styles.provisionalPassword}>
+            <code className={styles.code}>{provisionalPassword}</code>
           </div>
-          <div className={styles.actions}>
-            <Button
-              font="dashboard"
-              variant="primary"
-              label="Done"
-              onClick={() => {
-                onSuccess()
-                onClose()
-              }}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <Text font="dashboard" as="h2">
-            Add New User
-          </Text>
-          <form onSubmit={handleSubmit} autoComplete="off" noValidate>
-            <div className={styles.section}>
+          <p className={styles.note}>
+            The artist will be asked to set a new password on their first login.
+          </p>
+        </div>
+      }
+      confirmLabel="Done"
+      cancelLabel={null}
+      onConfirm={() => {
+        onSuccess()
+        onClose()
+      }}
+      onCancel={onClose}
+    />
+  ) : (
+    <AdminConfirmModal
+      size="wide"
+      icon={null}
+      title="Add user"
+      message={
+        <form
+          id={FORM_ID}
+          className={styles.form}
+          onSubmit={handleSubmit}
+          autoComplete="off"
+          noValidate
+        >
+          <div className={styles.pair}>
+            <div className={styles.field}>
               <label className={styles.label} htmlFor="name">
-                First Name
+                First name
               </label>
               <Input
                 id="name"
                 type="text"
-                size="medium"
+                size="bare"
+                inputClassName={styles.input}
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 invalid={!!fieldError('name')}
                 required
               />
-              <ErrorText>{fieldError('name')}</ErrorText>
+              <ErrorText className={styles.error}>{fieldError('name')}</ErrorText>
+            </div>
 
+            <div className={styles.field}>
               <label className={styles.label} htmlFor="lastName">
-                Last Name
+                Last name
               </label>
               <Input
                 id="lastName"
                 type="text"
-                size="medium"
+                size="bare"
+                inputClassName={styles.input}
                 value={formData.lastName}
                 onChange={(e) => handleChange('lastName', e.target.value)}
                 invalid={!!fieldError('lastName')}
                 required
               />
-              <ErrorText>{fieldError('lastName')}</ErrorText>
+              <ErrorText className={styles.error}>{fieldError('lastName')}</ErrorText>
+            </div>
+          </div>
 
+          <div className={styles.pair}>
+            <div className={styles.field}>
               <label className={styles.label} htmlFor="handler">
                 Handler (URL slug)
               </label>
               <Input
                 id="handler"
                 type="text"
-                size="medium"
+                size="bare"
+                inputClassName={styles.input}
                 value={formData.handler}
                 onChange={(e) => handleChange('handler', e.target.value)}
                 invalid={!!fieldError('handler')}
                 required
               />
-              <ErrorText>{fieldError('handler')}</ErrorText>
+              <ErrorText className={styles.error}>{fieldError('handler')}</ErrorText>
+            </div>
 
+            <div className={styles.field}>
               <label className={styles.label} htmlFor="email">
                 Email
               </label>
               <Input
                 id="email"
                 type="email"
-                size="medium"
+                size="bare"
+                inputClassName={styles.input}
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 invalid={!!fieldError('email')}
                 autoComplete="off"
                 required
               />
-              <ErrorText>{fieldError('email')}</ErrorText>
+              <ErrorText className={styles.error}>{fieldError('email')}</ErrorText>
+            </div>
+          </div>
 
+          <div className={styles.pair}>
+            <div className={styles.field}>
               <label className={styles.label} htmlFor="password">
-                Password{' '}
-                <span
-                  style={{
-                    fontWeight: 'normal',
-                    fontSize: '12px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  (optional — auto-generated if empty)
-                </span>
+                Password <span className={styles.hint}>(optional — auto-generated if empty)</span>
               </label>
               <Input
                 id="password"
                 type="password"
-                size="medium"
+                size="bare"
+                inputClassName={`${styles.input} ${styles.passwordInput}`}
                 value={formData.password}
                 onChange={(e) => handleChange('password', e.target.value)}
                 autoComplete="new-password"
                 showPasswordToggle
                 invalid={!!fieldError('password')}
               />
-              <ErrorText>{fieldError('password')}</ErrorText>
-
-              <label className={styles.label} htmlFor="userType">
-                Type
-              </label>
-              <Select
-                options={userTypeOptions}
-                value={formData.userType}
-                onChange={(val) => handleChange('userType', val as string)}
-                size="medium"
-              />
+              <ErrorText className={styles.error}>{fieldError('password')}</ErrorText>
             </div>
 
-            <ErrorText>{error}</ErrorText>
-
-            <div className={styles.actions}>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={onClose}
-                type="button"
-              />
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={loading ? 'Creating...' : 'Create User'}
-                type="submit"
-              />
-            </div>
-          </form>
-        </>
-      )}
-    </div>
+            <AdminSelect
+              id="userType"
+              label="Type"
+              size="form"
+              value={formData.userType}
+              onChange={(val) => handleChange('userType', val)}
+            >
+              {userTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </AdminSelect>
+          </div>
+        </form>
+      }
+      warning={error || undefined}
+      confirmLabel="Create user"
+      busyLabel="Creating…"
+      busy={loading}
+      form={FORM_ID}
+      onCancel={onClose}
+    />
   )
 }

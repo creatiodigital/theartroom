@@ -36,7 +36,7 @@ const renderedExhibitions = (page: Page) =>
 /** Two published artists who each own at least one exhibition. */
 function twoArtistsWithExhibitions() {
   return prisma.user.findMany({
-    where: { userType: { notIn: ['admin', 'superAdmin'] }, exhibitions: { some: {} } },
+    where: { userType: 'artist', exhibitions: { some: {} } },
     select: { id: true, name: true },
     orderBy: { id: 'asc' },
     take: 2,
@@ -53,7 +53,7 @@ function twoArtistsWithExhibitions() {
  */
 async function impersonate(page: Page, name: string) {
   const row = page.locator('tbody tr', { hasText: name }).first()
-  await row.locator('button[aria-label="Actions"]').click()
+  await row.getByRole('button', { name: `Actions for ${name}` }).click()
   const impersonateItem = page.locator('button:has-text("Impersonate")').first()
   await expect(impersonateItem).toBeEnabled()
   await impersonateItem.click()

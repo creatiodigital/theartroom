@@ -17,8 +17,10 @@ type AdminConfirmModalProps = {
   /** An amber box under the message (e.g. "Artist payout already released"). */
   warning?: ReactNode
   confirmLabel: string
-  /** The dismiss button's label, e.g. "Go back" or "Keep order". */
-  cancelLabel?: string
+  /** The dismiss button's label, e.g. "Go back" or "Keep order". `null`: no dismiss button (e.g. a lone "Done"). */
+  cancelLabel?: string | null
+  /** Confirm is off without being busy, e.g. until "CONFIRM" is typed. */
+  confirmDisabled?: boolean
   /** Shown on the confirm button while `busy`, e.g. "Pausing…". */
   busyLabel?: string
   destructive?: boolean
@@ -31,9 +33,19 @@ type AdminConfirmModalProps = {
    * scrolled out of sight.
    */
   size?: 'regular' | 'wide'
-  onConfirm: () => void
   onCancel: () => void
-}
+} & (
+  | { form?: undefined; onConfirm: () => void }
+  | {
+      /**
+       * The id of a <form> inside `message`: the confirm button becomes its
+       * submit button (so Enter in a field submits too), and the form's own
+       * onSubmit does the work instead of `onConfirm`.
+       */
+      form: string
+      onConfirm?: undefined
+    }
+)
 
 /**
  * The admin's confirmation dialog (dashboard-states.dc.html §4): icon circle,
@@ -52,6 +64,8 @@ export function AdminConfirmModal({
   busy = false,
   icon: DialogIcon = Warning,
   size = 'regular',
+  confirmDisabled = false,
+  form,
   onConfirm,
   onCancel,
 }: AdminConfirmModalProps) {
@@ -92,21 +106,25 @@ export function AdminConfirmModal({
         {wide && <div className={styles.body}>{message}</div>}
         {wide && warning && <div className={styles.warning}>{warning}</div>}
         <div className={styles.actions}>
-          <Button
-            variant="secondary"
-            font="dashboard"
-            className={styles.button}
-            label={cancelLabel}
-            disabled={busy}
-            onClick={onCancel}
-          />
+          {cancelLabel !== null && (
+            <Button
+              variant="secondary"
+              font="dashboard"
+              className={styles.button}
+              label={cancelLabel}
+              disabled={busy}
+              onClick={onCancel}
+            />
+          )}
           <Button
             variant={destructive ? 'danger' : 'primary'}
             font="dashboard"
-            className={styles.button}
+            className={c(styles.button, confirmDisabled && !busy && styles.off)}
             label={busy ? busyLabel : confirmLabel}
-            disabled={busy}
-            onClick={onConfirm}
+            disabled={busy || confirmDisabled}
+            type={form ? 'submit' : 'button'}
+            form={form}
+            onClick={form ? undefined : onConfirm}
           />
         </div>
       </div>

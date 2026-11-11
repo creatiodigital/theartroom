@@ -151,6 +151,8 @@
   --admin-backdrop: rgba(26, 26, 26, 0.55); // behind admin dialogs
   --admin-dialog-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
   --admin-menu-shadow: 0 10px 28px rgba(0, 0, 0, 0.12); // row menus (ui/RowMenu)
+  --admin-published-dot: #2e8b57; // the "Published" dot (ui/PublishState)
+  --admin-success-border: #b7dfc2; // the success feedback bar (ui/FeedbackBar)
   // Donut / chart grays, darkest first (dashboard "Traffic channels").
   --admin-chart-1: var(--color-dark-surface);
   --admin-chart-2: var(--color-gray-70);

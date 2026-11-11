@@ -17,7 +17,7 @@ Do these in order, one PR each.
 | 6 | Gift orders | gift-orders (spec: sales.md §2) | Built | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
 | 7 | Invoices | invoices (spec: invoices.md) | Built | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
 | 8 | Payouts | payouts (spec: payouts.md) | Built | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
-| 9 | Users | users (spec: users.md) | Designed · approved by owner | UI only + NEW type filter (approved). |
+| 9 | Users | users (spec: users.md) | Built | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Designed · approved by owner | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Designed · approved by owner | UI only. |
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Designed · approved by owner | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
@@ -30,6 +30,7 @@ Do these in order, one PR each.
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
+| 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Approved by owner | After the admin redesign. Small, behaviour change. |
 
 ## Built notes
 
@@ -315,6 +316,39 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; browser on my ow
 read-only) at 1440 and 390 px: cards = table = totals row = exported CSV, Year and Artist filters, no
 console errors, no horizontal scroll. The dev DB has one payout (manual) and no delivered-unpaid orders,
 so the Stripe tag with its transfer ID and the waiting reminder were not seen live. No e2e opens this page.
+
+### Step 9 · Users — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-users.md` + answers Q35–Q39. Files: `admin/AdminUsers/index.tsx`
++ new `Users.module.scss`, `admin/AddArtistModal/*`, `app/admin/users/page.tsx` (`<Suspense>`, title "Users —
+The Art Room Admin"), new `ui/FeedbackBar`, `ui/PublishState`, `ui/initials.ts` (moved from `AdminUserCard`),
+additions to `ui/AdminConfirmModal`, `ui/AdminSelect`, `ui/StatusPill`, `ui/RowMenu`; tokens
+`--admin-published-dot`, `--admin-success-border`.
+
+1. **Kept**: every state, effect, handler, request, refetch and confirm (incl. the type-CONFIRM delete), the
+   Add user fields, validation and submit, the auth guard, today's success text "Invite email sent
+   successfully!" (now in a dismissible bar, 4 s as before). The row menu's own open / close state moved into
+   `RowMenu` (as Gift orders); the inline Featured handler became `handleToggleFeatured` (same request).
+2. **NEW, built**: the Type filter (All / Artists / Admins, Curators only if any exist) in `?type=`; the count.
+3. **Answers applied**: failed Publish / Featured show in a red bar with the server's text or "Couldn't update
+   {name}. Please try again." (Q35); Impersonate only on artist rows (Q36); the Send invite dialog says "This
+   replaces their current password with a new temporary one, sent by email." (Q37: always, since nothing
+   loaded tells whether the user has signed in; the real fix is step 21); Add user / Create user /
+   "Creating…" (Q38).
+4. **Menu** (`RowMenu`, groups): Account (Send invite…, Impersonate / Impersonating), Profile (Publish /
+   Unpublish, Set as featured / Remove featured), then Delete user… in red (super admin only). The trigger is
+   "Actions for {name}". Sentence case: "Send invite email", "Delete user…", etc.; "Super Admin" stays.
+5. **Dialogs** are `AdminConfirmModal` (focus trapped): they can't be closed while their request runs, and
+   Create user is disabled while it runs (today a second press got a 409).
+6. **Phone**: one card per user on the same `<tr>`; the page is 390 px wide at 390 (was 617 px).
+7. **e2e**: both impersonation specs find the trigger by its new name and pick an *artist* (Q36 hides
+   Impersonate elsewhere).
+
+Verified: typecheck, lint, prettier; the logic diffed against HEAD (the changes listed above only);
+`impersonation-session` + `impersonation-dashboard` 6 passed, 1 skipped (it needs two artists with
+exhibitions; the dev DB has one); browser on my own `pnpm dev` (dev DB, read-only: menus and dialogs
+opened and canceled) at 1440 and 390 px: filter and `?type=`, both row menus, the Send invite dialog's
+sentence, the Add user dialog, no console errors, no horizontal scroll.
 
 ### Step 20 · Visitor room menu + Exit wall view — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 

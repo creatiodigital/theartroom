@@ -320,3 +320,24 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `Button`: `aria-disabled` pass-through.
 - `Button` (step 7): `prefetch?: boolean`, passed to Next's `Link` with `href`; `false` for links to files
   (invoice PDFs).
+
+## User pieces (step 9)
+
+### `FeedbackBar`
+- **Built** · `ui/FeedbackBar.tsx` · `{ tone: 'success' | 'error'; children; onDismiss() }` (`role="status"` /
+  `role="alert"`, check / warning icon, 32 px × close; green on `--admin-success-border`, red as Callout).
+
+### `PublishState`
+- **Built** · `ui/PublishState.tsx` · `{ published: boolean }` (8 px dot `--admin-published-dot` + "Published" 600,
+  or gray dot + "Unpublished" secondary).
+
+### `initialsOf`
+- `ui/initials.ts` · `initialsOf(name): string` (shared by the user card and the Users avatars).
+
+### Additions
+- `AdminConfirmModal`: `confirmDisabled?` (0.4 opacity, e.g. until CONFIRM is typed); `cancelLabel?: string | null`
+  (`null` = no Cancel, e.g. a "Done" screen); `form?: string` instead of `onConfirm` (the confirm button submits
+  that form, so Enter works in its fields).
+- `AdminSelect`: `size?: 'toolbar' | 'form'` (`form` = 44 px at every width, for dialog fields).
+- `StatusPill`: `icon?: Icon` (12 px filled mark before the label, e.g. Star on "Featured").
+- `RowMenu`: groups with no items are left out (no caption, no divider).

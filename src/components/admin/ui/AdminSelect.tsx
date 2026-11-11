@@ -18,6 +18,8 @@ type AdminSelectProps = {
   title?: string
   /** Desktop floor width in px (phones go full width). */
   minWidth?: number
+  /** toolbar: 36px, 44px under 900px (default); form: 44px at every width (a dialog field). */
+  size?: 'toolbar' | 'form'
   /** The <option>s. */
   children: ReactNode
 }
@@ -35,6 +37,7 @@ export function AdminSelect({
   disabled = false,
   title,
   minWidth,
+  size = 'toolbar',
   children,
 }: AdminSelectProps) {
   const autoId = useId()
@@ -43,7 +46,7 @@ export function AdminSelect({
   const select = (
     <select
       id={selectId}
-      className={styles.select}
+      className={c(styles.select, size === 'form' && styles.form)}
       value={value}
       disabled={disabled}
       title={title}

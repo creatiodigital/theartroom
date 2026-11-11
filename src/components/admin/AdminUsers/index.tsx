@@ -1,23 +1,70 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { MoreVertical } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { EnvelopeSimple, Plus, Star } from '@phosphor-icons/react'
 
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
+import { DataTable } from '@/components/admin/ui/DataTable'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
+import { initialsOf } from '@/components/admin/ui/initials'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { PublishState } from '@/components/admin/ui/PublishState'
+import { RowMenu, type RowMenuGroup, type RowMenuItem } from '@/components/admin/ui/RowMenu'
+import { SegmentedControl } from '@/components/admin/ui/SegmentedControl'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { ErrorText } from '@/components/ui/ErrorText'
 import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useUsers } from '@/hooks/useUsers'
 import type { TUser } from '@/types/user'
+
+import styles from './Users.module.scss'
+
+const PAGE_PATH = '/admin/users'
+
+// The Type filter (users.md, NEW): client-side over the loaded users, kept in
+// the URL as ?type= so a filtered view survives Back (as Kind on Gift orders).
+type TypeFilter = 'artists' | 'admins' | 'curators'
+
+const matchesType = (user: TUser, type: TypeFilter) =>
+  type === 'artists'
+    ? user.userType === 'artist'
+    : type === 'admins'
+      ? user.userType === 'admin' || user.userType === 'superAdmin'
+      : user.userType === 'curator'
+
+/** Today's Type labels; any other value (e.g. "general") shows as it is. */
+const typeLabel = (userType: string | undefined) =>
+  ({
+    superAdmin: 'Super Admin',
+    admin: 'Admin',
+    artist: 'Artist',
+    curator: 'Curator',
+  })[userType ?? ''] || userType
+
+const fullName = (user: TUser) => `${user.name} ${user.lastName}`.trim()
+
+const usersCount = (n: number) => `${n} ${n === 1 ? 'user' : 'users'}`
+
+// Q35: the red bar's text for a failed Publish / Featured.
+const couldNotUpdate = (userName: string) => `Couldn't update ${userName}. Please try again.`
+
+/** The server's own `{ error }` text when it sends one, else `couldNotUpdate`. */
+const rowErrorText = async (response: Response, userName: string) => {
+  const data: unknown = await response.json().catch(() => null)
+  const serverError =
+    data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+      ? data.error
+      : ''
+  return serverError || couldNotUpdate(userName)
+}
 
 export const AdminUsers = () => {
   const { data: session, status: sessionStatus } = useSession()
@@ -35,21 +82,12 @@ export const AdminUsers = () => {
     name: string
     email: string
   } | null>(null)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!openMenuId) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [openMenuId])
+  // Q35: a failed Publish / Featured shows in the page's red bar. Kept apart
+  // from `actionError`, which belongs to the invite / delete dialogs, so one
+  // error never shows twice. Cleared when the next row action starts.
+  const [rowError, setRowError] = useState('')
 
   useEffect(() => {
     if (!actionSuccess) return
@@ -74,7 +112,7 @@ export const AdminUsers = () => {
   }, [refetch])
 
   const handleTogglePublished = useCallback(
-    async (userId: string, currentPublished: boolean) => {
+    async (userId: string, currentPublished: boolean, userName: string) => {
       const newPublished = !currentPublished
       try {
         const response = await fetch(`/api/users/${userId}`, {
@@ -84,9 +122,31 @@ export const AdminUsers = () => {
         })
         if (response.ok) {
           refetch()
+        } else {
+          setRowError(await rowErrorText(response, userName))
         }
       } catch (err) {
         console.error('Failed to update published status:', err)
+        setRowError(couldNotUpdate(userName))
+      }
+    },
+    [refetch],
+  )
+
+  // Was inline in the row menu; same request, same refetch, same logging.
+  const handleToggleFeatured = useCallback(
+    async (user: TUser) => {
+      try {
+        const response = await fetch(`/api/users/${user.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isFeatured: !user.isFeatured }),
+        })
+        if (!response.ok) setRowError(await rowErrorText(response, fullName(user)))
+        refetch()
+      } catch (err) {
+        console.error('Failed to update featured status:', err)
+        setRowError(couldNotUpdate(fullName(user)))
       }
     },
     [refetch],
@@ -164,284 +224,303 @@ export const AdminUsers = () => {
     }
   }, [deleteTarget, refetch])
 
-  if (sessionStatus === 'loading' || loading)
+  // ── The Type filter (NEW) ──
+  const searchParams = useSearchParams()
+  const hasCurators = users.some((u) => u.userType === 'curator')
+  const typeParam = searchParams.get('type')
+  // Curators is only offered when there are curators; anything else reads as All.
+  const typeFilter: TypeFilter | '' =
+    typeParam === 'artists' || typeParam === 'admins' || (typeParam === 'curators' && hasCurators)
+      ? typeParam
+      : ''
+  const setTypeFilter = useCallback(
+    (type: TypeFilter | '') => {
+      router.replace(type ? `${PAGE_PATH}?type=${type}` : PAGE_PATH, { scroll: false })
+    },
+    [router],
+  )
+  const typeOptions: { id: TypeFilter | 'all'; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'artists', label: 'Artists' },
+    { id: 'admins', label: 'Admins' },
+    ...(hasCurators ? [{ id: 'curators' as const, label: 'Curators' }] : []),
+  ]
+  const visibleUsers = useMemo(
+    () => (typeFilter ? users.filter((u) => matchesType(u, typeFilter)) : users),
+    [users, typeFilter],
+  )
+
+  // The shell shows its own loading bar first; this only covers a session that
+  // is still loading under it.
+  if (sessionStatus === 'loading')
     return (
-      <div className={dashboardStyles.page}>
+      <div className={styles.page}>
         <LoadingBar />
       </div>
     )
 
   const userType = session?.user?.userType
   if (sessionStatus === 'unauthenticated' || (userType !== 'admin' && userType !== 'superAdmin')) {
-    return <div className={dashboardStyles.page}>Not authorized</div>
+    return <div className={styles.page}>Not authorized</div>
   }
 
   const isSuperAdminUser = userType === 'superAdmin'
 
-  if (error) return <div className={dashboardStyles.page}>Error: {error}</div>
+  // ── Render-only derivations ──
+  // "Loading…" only while there is nothing to show: a refetch (after every
+  // action) keeps the table on screen, marked busy.
+  const listed = users.length > 0
+  const firstLoad = loading && !listed
+  // The first read failed: the list gives way to the error.
+  const loadFailed = !loading && error !== null && !listed
 
   return (
-    <>
-      <div className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h1 className={dashboardStyles.pageTitle} style={{ margin: 0 }}>
-            Users
-          </h1>
+    <div className={styles.page}>
+      <AdminPageHeader
+        eyebrow="Gallery"
+        title="Users"
+        description="Artists, admins and curators: invite, publish, feature, impersonate."
+        actions={
           <Button
+            variant="bare"
             font="dashboard"
-            variant="primary"
-            label="Add New User"
+            className={styles.add}
             onClick={() => setShowAddModal(true)}
-          />
-        </div>
-
-        {actionSuccess && (
-          <Text
-            font="dashboard"
-            as="p"
-            style={{ color: 'var(--color-success)', marginBottom: '1rem' }}
           >
-            {actionSuccess}
-          </Text>
-        )}
+            <Plus size={16} weight="light" aria-hidden />
+            Add user
+          </Button>
+        }
+      />
 
-        <table className={dashboardStyles.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Type</th>
-              <th>Visibility</th>
-              <th>Featured</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>
-                  {user.name} {user.lastName}
-                </td>
-                <td>{user.email || '-'}</td>
-                <td>
-                  {{
-                    superAdmin: 'Super Admin',
-                    admin: 'Admin',
-                    artist: 'Artist',
-                    curator: 'Curator',
-                  }[user.userType ?? ''] || user.userType}
-                </td>
-                <td>
-                  <Badge
-                    label={user.published ? 'Published' : 'Unpublished'}
-                    variant={user.published ? 'published' : 'unpublished'}
-                  />
-                </td>
-                <td>{user.isFeatured && <Badge label="Featured" variant="current" />}</td>
-                <td>
-                  <div
-                    className={dashboardStyles.kebabWrapper}
-                    ref={openMenuId === user.id ? menuRef : undefined}
-                  >
-                    <Button
-                      variant="ghost"
-                      className={dashboardStyles.kebabButton}
-                      onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
-                      aria-label="Actions"
-                      aria-haspopup="menu"
-                      aria-expanded={openMenuId === user.id}
-                    >
-                      <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
-                    </Button>
-                    {openMenuId === user.id && (
-                      <div className={dashboardStyles.kebabMenu} role="menu">
-                        {isSuperAdminUser && user.email && (
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleInviteClick(user)
-                            }}
-                            label="Invite"
-                          />
-                        )}
-                        <Button
-                          variant="menuItem"
-                          role="menuitem"
-                          className={dashboardStyles.kebabMenuItem}
-                          onClick={() => {
-                            setOpenMenuId(null)
-                            handleTogglePublished(user.id, user.published ?? false)
-                          }}
-                          label={user.published ? 'Unpublish' : 'Publish'}
-                        />
-                        <Button
-                          variant="menuItem"
-                          role="menuitem"
-                          className={dashboardStyles.kebabMenuItem}
-                          onClick={async () => {
-                            setOpenMenuId(null)
-                            try {
-                              await fetch(`/api/users/${user.id}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ isFeatured: !user.isFeatured }),
-                              })
-                              refetch()
-                            } catch (err) {
-                              console.error('Failed to update featured status:', err)
-                            }
-                          }}
-                          label={user.isFeatured ? 'Remove Featured' : 'Set as Featured'}
-                        />
-                        {user.id !== session?.user?.id &&
-                          (isSuperAdminUser ||
-                            (user.userType !== 'admin' && user.userType !== 'superAdmin')) && (
-                            <Button
-                              variant="menuItem"
-                              role="menuitem"
-                              className={dashboardStyles.kebabMenuItem}
-                              disabled={isImpersonating && session?.impersonating?.id === user.id}
-                              style={
-                                isImpersonating && session?.impersonating?.id === user.id
-                                  ? { opacity: 0.5, cursor: 'default' }
-                                  : undefined
-                              }
-                              onClick={() => {
-                                setOpenMenuId(null)
-                                handleImpersonate(user)
-                              }}
-                              label={
-                                isImpersonating && session?.impersonating?.id === user.id
-                                  ? 'Impersonating'
-                                  : 'Impersonate'
-                              }
-                            />
+      {actionSuccess && (
+        <FeedbackBar tone="success" onDismiss={() => setActionSuccess('')}>
+          {actionSuccess}
+        </FeedbackBar>
+      )}
+
+      {rowError && (
+        <FeedbackBar tone="error" onDismiss={() => setRowError('')}>
+          {rowError}
+        </FeedbackBar>
+      )}
+
+      {error && <Callout tone="red">{error}</Callout>}
+
+      {!loadFailed && (
+        <ListPanel
+          label="Users"
+          toolbar={
+            listed ? (
+              <div className={styles.filters}>
+                <SegmentedControl
+                  label="Type"
+                  options={typeOptions}
+                  value={typeFilter || 'all'}
+                  onChange={(id) => setTypeFilter(id === 'all' ? '' : id)}
+                />
+              </div>
+            ) : undefined
+          }
+          count={listed ? usersCount(visibleUsers.length) : undefined}
+        >
+          {firstLoad ? (
+            <p className={styles.loading}>Loading…</p>
+          ) : !listed ? (
+            <EmptyState title="No users yet." />
+          ) : visibleUsers.length === 0 ? (
+            <EmptyState title="No users of this type." />
+          ) : (
+            <div aria-busy={loading || undefined}>
+              <DataTable className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">Person</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Profile</th>
+                    <th scope="col">Featured</th>
+                    <th scope="col" className={styles.actionsHead}>
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleUsers.map((user) => {
+                    const name = fullName(user)
+                    const impersonatingThis =
+                      isImpersonating && session?.impersonating?.id === user.id
+                    // Today's conditions, except Impersonate (Q36); a group left
+                    // empty drops. Every row action first clears the row error (Q35).
+                    const account: RowMenuItem[] = []
+                    if (isSuperAdminUser && user.email) {
+                      account.push({
+                        id: 'invite',
+                        label: 'Send invite…',
+                        onSelect: () => {
+                          setRowError('')
+                          handleInviteClick(user)
+                        },
+                      })
+                    }
+                    // Q36 (owner): artist rows only, never yourself.
+                    if (user.id !== session?.user?.id && user.userType === 'artist') {
+                      account.push({
+                        id: 'impersonate',
+                        label: impersonatingThis ? 'Impersonating' : 'Impersonate',
+                        disabled: impersonatingThis,
+                        onSelect: () => {
+                          setRowError('')
+                          handleImpersonate(user)
+                        },
+                      })
+                    }
+                    const danger: RowMenuItem[] = []
+                    if (isSuperAdminUser && user.id !== session?.user?.id) {
+                      danger.push({
+                        id: 'delete',
+                        label: 'Delete user…',
+                        tone: 'danger',
+                        onSelect: () => {
+                          setRowError('')
+                          handleDeleteClick(user.id, `${user.name} ${user.lastName}`)
+                        },
+                      })
+                    }
+                    const groups: RowMenuGroup[] = [
+                      { label: 'Account', items: account },
+                      {
+                        label: 'Profile',
+                        items: [
+                          {
+                            id: 'publish',
+                            label: user.published ? 'Unpublish' : 'Publish',
+                            onSelect: () => {
+                              setRowError('')
+                              handleTogglePublished(user.id, user.published ?? false, name)
+                            },
+                          },
+                          {
+                            id: 'featured',
+                            label: user.isFeatured ? 'Remove featured' : 'Set as featured',
+                            onSelect: () => {
+                              setRowError('')
+                              handleToggleFeatured(user)
+                            },
+                          },
+                        ],
+                      },
+                      { items: danger },
+                    ]
+                    return (
+                      <tr key={user.id} className={styles.row}>
+                        <td className={styles.cellPerson}>
+                          <div className={styles.person}>
+                            <span aria-hidden className={styles.avatar}>
+                              {initialsOf(name)}
+                            </span>
+                            <span className={styles.who}>
+                              <span className={styles.name}>{name}</span>
+                              <span className={styles.email}>{user.email || '—'}</span>
+                            </span>
+                          </div>
+                        </td>
+                        <td className={styles.cellType}>{typeLabel(user.userType)}</td>
+                        <td className={styles.cellProfile}>
+                          <PublishState published={!!user.published} />
+                        </td>
+                        <td className={styles.cellFeatured}>
+                          {user.isFeatured && (
+                            <StatusPill tone="amber" shape="tag" icon={Star} label="Featured" />
                           )}
-                        {isSuperAdminUser && user.id !== session?.user?.id && (
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleDeleteClick(user.id, `${user.name} ${user.lastName}`)
-                            }}
-                            label="Delete"
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                        </td>
+                        <td className={styles.cellAction}>
+                          <RowMenu label={`Actions for ${name}`} width={230} groups={groups} />
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </DataTable>
+            </div>
+          )}
+        </ListPanel>
+      )}
 
       {showAddModal && (
-        <Modal onClose={() => setShowAddModal(false)}>
-          <AddArtistModal
-            onClose={() => setShowAddModal(false)}
-            onSuccess={handleAddSuccess}
-            isSuperAdmin={isSuperAdminUser}
-          />
-        </Modal>
+        <AddArtistModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleAddSuccess}
+          isSuperAdmin={isSuperAdminUser}
+        />
       )}
 
       {deleteTarget && (
-        <Modal
-          onClose={() => {
+        <AdminConfirmModal
+          title="Delete user"
+          message={
+            <div className={styles.form}>
+              <p>
+                Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action
+                cannot be undone.
+              </p>
+              <div className={styles.field}>
+                <label htmlFor="confirm-delete-user" className={styles.fieldLabel}>
+                  Type <strong>CONFIRM</strong> to enable deletion:
+                </label>
+                <Input
+                  id="confirm-delete-user"
+                  type="text"
+                  size="bare"
+                  inputClassName={styles.input}
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                />
+              </div>
+            </div>
+          }
+          warning={actionError || 'This action is not reversible. Please be certain.'}
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          destructive
+          busy={deleting}
+          confirmDisabled={confirmText !== 'CONFIRM'}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => {
             setDeleteTarget(null)
             setConfirmText('')
             setActionError('')
           }}
-        >
-          <div className={dashboardStyles.deleteModal}>
-            <h2>Delete User</h2>
-            <p>
-              Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action
-              cannot be undone.
-            </p>
-            <div className={dashboardStyles.deleteWarning}>
-              This action is not reversible. Please be certain.
-            </div>
-            <div className={dashboardStyles.confirmInput}>
-              <label htmlFor="confirm-delete-user">
-                Type <strong>CONFIRM</strong> to enable deletion:
-              </label>
-              <Input
-                id="confirm-delete-user"
-                type="text"
-                variant="table"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-              />
-            </div>
-            <ErrorText>{actionError}</ErrorText>
-            <div className={dashboardStyles.deleteActions}>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => {
-                  setDeleteTarget(null)
-                  setConfirmText('')
-                  setActionError('')
-                }}
-              />
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={deleting ? 'Deleting...' : 'Delete'}
-                onClick={handleDeleteConfirm}
-                disabled={deleting || confirmText !== 'CONFIRM'}
-              />
-            </div>
-          </div>
-        </Modal>
+        />
       )}
 
       {inviteTarget && (
-        <Modal
-          onClose={() => {
+        <AdminConfirmModal
+          icon={EnvelopeSimple}
+          title="Send invite email"
+          message={
+            <>
+              <p>
+                Send an invitation email to <strong>{inviteTarget.name}</strong>?
+              </p>
+              <p>
+                The email will be sent to: <strong>{inviteTarget.email}</strong>
+              </p>
+              {/* Q37 (owner): the invite route replaces the password. Shown always:
+                  nothing this page loads says whether the user has signed in. */}
+              <p>This replaces their current password with a new temporary one, sent by email.</p>
+            </>
+          }
+          warning={actionError || undefined}
+          confirmLabel="Send invite"
+          busyLabel="Sending…"
+          busy={invitingId === inviteTarget.id}
+          onConfirm={handleInviteConfirm}
+          onCancel={() => {
             setInviteTarget(null)
             setActionError('')
           }}
-        >
-          <div className={dashboardStyles.deleteModal}>
-            <h2>Send Invite Email</h2>
-            <p>
-              Send an invitation email to <strong>{inviteTarget.name}</strong>?
-            </p>
-            <p>
-              The email will be sent to: <strong>{inviteTarget.email}</strong>
-            </p>
-            <ErrorText>{actionError}</ErrorText>
-            <div className={dashboardStyles.deleteActions}>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => {
-                  setInviteTarget(null)
-                  setActionError('')
-                }}
-              />
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={invitingId === inviteTarget.id ? 'Sending...' : 'Send Invite'}
-                onClick={handleInviteConfirm}
-                disabled={invitingId === inviteTarget.id}
-              />
-            </div>
-          </div>
-        </Modal>
+        />
       )}
-    </>
+    </div>
   )
 }

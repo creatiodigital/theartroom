@@ -58,3 +58,10 @@
     min-height: 36px;
   }
 }
+
+// size="form": a dialog field, 44px at every width (users.md, Add user).
+@include media-up(tablet) {
+  .form {
+    min-height: 44px;
+  }
+}

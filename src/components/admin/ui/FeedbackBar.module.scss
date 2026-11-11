@@ -1,0 +1,63 @@
+@use '@/styles/mixins' as *;
+
+// designs/users.dc.html (the role="status" bar under the header).
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.success {
+  background: var(--color-green-30);
+  border-color: var(--admin-success-border);
+  color: var(--color-green-70);
+}
+
+.error {
+  background: var(--color-red-30);
+  border-color: var(--color-red-40);
+  color: var(--color-red-70);
+}
+
+.icon {
+  flex: 0 0 auto;
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  strong {
+    font-weight: var(--font-semibold);
+  }
+}
+
+// Two classes, so these beat Button's own one-class `bare` rules.
+// 44px touch target below 900px, the drawn 32px above (questions.md Q7).
+.bar .dismiss {
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px calc(-1 * var(--space-2)) -10px 0;
+  border-radius: var(--radius-sm);
+  color: inherit;
+
+  &:hover {
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    width: 32px;
+    height: 32px;
+    margin: -6px calc(-1 * var(--space-1)) -6px 0;
+  }
+}

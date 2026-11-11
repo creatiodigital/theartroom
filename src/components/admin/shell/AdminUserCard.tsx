@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { SignOut } from '@phosphor-icons/react'
 import c from 'classnames'
 
+import { initialsOf } from '@/components/admin/ui/initials'
 import { Button } from '@/components/ui/Button'
 import { signOutAndVerify } from '@/lib/auth/signOutAndVerify'
 
@@ -12,14 +13,6 @@ import styles from './AdminUserCard.module.scss'
 type AdminUserCardProps = {
   /** `sidebar` = raised card with an icon button; `drawer` = row with a "Log out" text button. */
   layout: 'sidebar' | 'drawer'
-}
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
 }
 
 export function AdminUserCard({ layout }: AdminUserCardProps) {
