@@ -55,12 +55,7 @@ import { useLightmapBytes } from '@/components/scene/bake/lightmapLoader'
 import { useSceneFailed } from '@/components/scene/sceneFailure'
 import { MonogramLoader } from '@/components/ui/MonogramLoader'
 import { closeArtworkModal, hideArtworkPanel } from '@/redux/slices/dashboardSlice'
-import {
-  declineExit,
-  hidePlaceholders,
-  openExitPrompt,
-  resetScene,
-} from '@/redux/slices/sceneSlice'
+import { declineExit, hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
@@ -77,31 +72,32 @@ import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 
 /**
- * The leave dialog, always mounted: the menu's Leave exhibition raises it (`openExitPrompt('button')`,
- * as the corner X did), and so does walking into the exit corridor.
+ * Leaving the exhibition, from the menu's Leave exhibition and from the leave dialog's Leave.
+ *
+ * It goes to the exhibitions index, NOT back to the exhibition just left.
+ * Someone who has decided to leave a show has finished with it; returning them
+ * to its own page offers the one thing they already declined. The index is
+ * where the other exhibitions are.
+ *
+ * This also replaces a `sessionStorage` round trip that read back a
+ * `returnUrl` written on entry — which was always this exhibition's own page,
+ * so both branches landed in the same place anyway.
+ */
+const useLeaveExhibition = () => {
+  const router = useRouter()
+  return useCallback(() => router.push('/exhibitions'), [router])
+}
+
+/**
+ * The leave dialog, always mounted, raised by walking into the exit corridor: that walk can happen by
+ * accident, so leaving that way stays a decision. The menu's Leave exhibition leaves at once: it is
+ * already two deliberate clicks (owner, 2026-11-11).
  */
 const LeavePrompt = () => {
-  const router = useRouter()
   const dispatch = useDispatch()
-  // Shared with the in-scene exit threshold: walking out of the corridor and
-  // choosing Leave exhibition in the menu raise the same single dialog.
   const promptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
   const promptSource = useSelector((state: RootState) => state.scene.exitPromptSource)
-
-  // Every in-scene exit lands here — the prompt's Leave button, the menu's Leave exhibition
-  // (which only opens that prompt), and walking into the exit corridor.
-  //
-  // It goes to the exhibitions index, NOT back to the exhibition just left.
-  // Someone who has decided to leave a show has finished with it; returning them
-  // to its own page offers the one thing they already declined. The index is
-  // where the other exhibitions are.
-  //
-  // This also replaces a `sessionStorage` round trip that read back a
-  // `returnUrl` written on entry — which was always this exhibition's own page,
-  // so both branches landed in the same place anyway.
-  const leave = () => {
-    router.push('/exhibitions')
-  }
+  const leave = useLeaveExhibition()
 
   return (
     <ExitPrompt
@@ -590,6 +586,7 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const isTouch = useIsTouchDevice()
   // The room menu's "How to move around" opens the controls guide through this.
   const helpRef = useRef<NavigationHelpHandle>(null)
+  const leaveExhibition = useLeaveExhibition()
 
   // AR-161: `?bake=1` bakes the room on the admin's machine and stores it as the draft bake;
   // `?review=1` shows the draft bake exactly as visitors will get it. Admins only — anyone else
@@ -946,13 +943,13 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   // buttons; the same in the room and in Wall View (Q30):
   // - Sound: always (Q29), inside the room's audio provider; never without WebGL (nothing plays).
   // - How to move around: where the help button was (WebGL not unavailable, not the bake page).
-  // - Leave exhibition: always, as the X (in Wall View too, Q30).
+  // - Leave exhibition: always (in Wall View too, Q30); it leaves at once, without the dialog.
   const helpShown = webglAvailable !== false && shownMode !== 'bake'
   const roomMenu = (sound: boolean) => (
     <RoomMenu
       sound={sound}
       onHelp={helpShown ? () => helpRef.current?.open() : undefined}
-      onLeave={() => dispatch(openExitPrompt('button'))}
+      onLeave={leaveExhibition}
     />
   )
 

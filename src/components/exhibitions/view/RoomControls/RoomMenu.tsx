@@ -19,7 +19,7 @@ interface RoomMenuProps {
   sound: boolean
   /** Opens the controls guide. Left out where today's help button was not shown (no WebGL, bake). */
   onHelp?: () => void
-  /** Raises the leave dialog, as the corner X did; in Wall View too (Q30). */
+  /** Leaves the exhibition at once (no dialog: the menu is already two clicks); in Wall View too (Q30). */
   onLeave: () => void
 }
 
@@ -80,7 +80,7 @@ export const RoomMenu = ({ sound, onHelp, onLeave }: RoomMenuProps) => {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [open])
 
-  // Focus is back on the button BEFORE the action runs: the leave dialog records the focused
+  // Focus is back on the button BEFORE the action runs: a window it opens may record the focused
   // element to return to, and this item is unmounting.
   const choose = (action: () => void) => {
     close()

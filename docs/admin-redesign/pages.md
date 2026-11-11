@@ -286,6 +286,10 @@ Nothing inside the three.js `<Canvas>` changed.
    `--color-toggle-off`. Item hover / keyboard focus: `--color-gray-20`.
 7. **Sound & Video notice** (Q31): "…You can mute all sounds at any time with **Sound** in the menu, top
    right."; the two "Click · Mute / Unmute" rows are gone.
+8. **Owner follow-up (2026-11-11, own commit):** the menu's Leave exhibition leaves at once, with no
+   "Leave the exhibition?" dialog: the dialog was there because the single-click X was easy to hit by
+   accident, and the menu is already two clicks. Walking out through the exit corridor still raises
+   the dialog (Stay restarts at the entrance), unchanged.
 
 Verified: typecheck, lint, prettier; browser on my own `pnpm dev` (dev DB, read-only, the Vivrière room):
 after the Q29–Q31 answers, two rooms (with and without media): Sound listed and switching in both,
