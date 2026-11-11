@@ -10,7 +10,6 @@ import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArt
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
 import PresentationSection from '@/components/wallview/RightPanel/PresentationSection/PresentationSection'
 import PresetSection from '@/components/wallview/RightPanel/PresetSection/PresetSection'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import type { RootState } from '@/redux/store'
 
 import styles from './ArtisticImage.module.scss'
@@ -81,7 +80,7 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
             decision, not as something forgotten. */}
         {!showOnPage && (
           <span className={styles.offPageMarker}>
-            <Icon name="eyeOff" size={14} strokeWidth={ICON_STROKE_WIDTH} />
+            <Icon name="eyeOff" size={14} />
             Not shown on the exhibition page
           </span>
         )}

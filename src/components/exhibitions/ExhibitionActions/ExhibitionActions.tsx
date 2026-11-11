@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import c from 'classnames'
-import { ArrowRight, Box } from 'lucide-react'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+// The SSR entry: this renders inside server components (home, /exhibitions, artist profiles).
+import { ArrowRight, Cube } from '@phosphor-icons/react/dist/ssr'
 
 import styles from './ExhibitionActions.module.scss'
 
@@ -20,7 +20,7 @@ interface ExhibitionActionsProps {
  */
 export const ExhibitionActions = ({ href, visitUrl, className }: ExhibitionActionsProps) => (
   <div className={c(styles.actions, className)}>
-    <ArrowRight size={16} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+    <ArrowRight size={16} weight="light" aria-hidden />
     <Link href={href} className={styles.action}>
       View Exhibition
     </Link>
@@ -28,7 +28,7 @@ export const ExhibitionActions = ({ href, visitUrl, className }: ExhibitionActio
       <>
         <span className={styles.separator} aria-hidden />
         <Link href={visitUrl} className={c(styles.action, styles.roomAction)}>
-          <Box size={16} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+          <Cube size={16} weight="light" aria-hidden />
           <span>Enter 3D Room</span>
         </Link>
       </>

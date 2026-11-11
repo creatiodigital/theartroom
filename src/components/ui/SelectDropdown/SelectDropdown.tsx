@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { CaretDown } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { HelpTooltip } from '@/components/ui/HelpTooltip'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import styles from './SelectDropdown.module.scss'
 
@@ -161,9 +160,9 @@ export const SelectDropdown = <V extends string = string>({
           {selected ? selected.label : (placeholder ?? 'Select…')}
         </span>
         {selected?.badge && <span className={styles.controlBadge}>{selected.badge}</span>}
-        <ChevronDown
+        <CaretDown
           size={16}
-          strokeWidth={ICON_STROKE_WIDTH}
+          weight="light"
           className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
           aria-hidden
         />

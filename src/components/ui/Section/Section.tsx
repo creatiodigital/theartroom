@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useCallback, type ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { CaretRight } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import styles from './Section.module.scss'
 
@@ -65,10 +64,11 @@ export const Section = ({
   return (
     <div className={styles.section}>
       <Button variant="bare" onClick={toggle} className={styles.header} aria-expanded={isOpen}>
-        <ChevronRight
+        <CaretRight
           size={12}
-          strokeWidth={ICON_STROKE_WIDTH}
+          weight="light"
           className={`${styles.chevron} ${isOpen ? styles.open : ''}`}
+          aria-hidden
         />
         <span className={styles.title}>{title}</span>
       </Button>

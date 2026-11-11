@@ -1,6 +1,6 @@
 'use client'
 
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag } from '@phosphor-icons/react'
 
 import { CartLine } from '@/components/cart/CartLine'
 import { Button } from '@/components/ui/Button'
@@ -10,7 +10,6 @@ import { Text } from '@/components/ui/Typography'
 import { cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
 import { LIMITED_NOT_RESERVED_NOTICE } from '@/lib/cart/notices'
 import { useCart } from '@/lib/cart/useCart'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { formatEuro } from '@/lib/print-providers'
 
 import styles from './CartPage.module.scss'
@@ -30,12 +29,7 @@ export const CartPage = () => {
             from every page, so an empty cart is a real arrival, not a dead
             end tucked into the left column. */}
         <div className={styles.empty}>
-          <ShoppingBag
-            size={40}
-            strokeWidth={ICON_STROKE_WIDTH}
-            className={styles.emptyIcon}
-            aria-hidden="true"
-          />
+          <ShoppingBag size={40} weight="light" className={styles.emptyIcon} aria-hidden="true" />
           <Text as="p" font="serif" size="2xl" className={styles.emptyText}>
             Your cart is empty
           </Text>

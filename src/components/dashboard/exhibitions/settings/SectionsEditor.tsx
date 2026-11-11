@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { DotsSixVertical } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -27,7 +27,6 @@ import { ErrorText } from '@/components/ui/ErrorText'
 import { FormLabel } from '@/components/ui/FormLabel'
 import { Input } from '@/components/ui/Input'
 import { SECTION_TITLE_MAX } from '@/lib/exhibitionSections'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
 import styles from './SectionsEditor.module.scss'
@@ -89,7 +88,7 @@ function SectionRow({
         {...listeners}
         aria-label={`Drag to reorder ${section.title}`}
       >
-        <GripVertical size={18} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+        <DotsSixVertical size={18} weight="bold" aria-hidden />
       </div>
 
       {editing ? (

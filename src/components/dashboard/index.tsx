@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 
-import { MoreVertical } from 'lucide-react'
+import { DotsThreeVertical } from '@phosphor-icons/react'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -13,7 +13,6 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectExhibitionsForUser } from '@/redux/selectors/userSelectors'
@@ -297,7 +296,7 @@ export const DashboardPage = () => {
                         aria-haspopup="menu"
                         aria-expanded={openMenuId === ex.id}
                       >
-                        <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                        <DotsThreeVertical size={16} weight="bold" aria-hidden />
                       </Button>
                       {openMenuId === ex.id && (
                         <div className={dashboardStyles.kebabMenu} role="menu">

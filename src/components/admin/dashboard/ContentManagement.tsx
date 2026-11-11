@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreVertical } from 'lucide-react'
+import { DotsThreeVertical } from '@phosphor-icons/react'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 const contentPages = [
   { label: 'Landing Page', route: '/admin/content/landing' },
@@ -67,7 +66,7 @@ export const ContentManagement = () => {
                     aria-haspopup="menu"
                     aria-expanded={openMenuId === page.route}
                   >
-                    <MoreVertical size={16} strokeWidth={ICON_STROKE_WIDTH} />
+                    <DotsThreeVertical size={16} weight="bold" aria-hidden />
                   </Button>
                   {openMenuId === page.route && (
                     <div className={dashboardStyles.kebabMenu} role="menu">

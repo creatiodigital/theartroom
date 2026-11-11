@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { formatCm } from '@/lib/print-providers/format'
-import { ChevronDown } from 'lucide-react'
+import { CaretDown } from '@phosphor-icons/react'
 
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { ErrorText } from '@/components/ui/ErrorText'
@@ -581,9 +580,9 @@ export const LimitedVariantsEditor = ({
               {soldCount === 0 && !isLive && hasSales && (
                 <span className={styles.variantLockedBadge}>paused</span>
               )}
-              <ChevronDown
+              <CaretDown
                 size={16}
-                strokeWidth={ICON_STROKE_WIDTH}
+                weight="light"
                 className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
                 aria-hidden
               />

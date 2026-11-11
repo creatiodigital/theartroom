@@ -28,8 +28,9 @@
       transform: translateY(0);
     }
 
+    // Phosphor icons are filled shapes: colour, not stroke.
     svg {
-      stroke: var(--color-text-primary);
+      color: var(--color-text-primary);
     }
   }
 }

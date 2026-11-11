@@ -1,62 +1,63 @@
+import type { Icon as PhosphorIcon, IconWeight } from '@phosphor-icons/react'
+// The SSR entry: this module has no 'use client', and Phosphor's default entry creates a React
+// context when it loads, which a server component can't do. Its icons work on the client too.
 import {
-  AlertCircle,
-  Armchair,
-  ArrowDownFromLine,
+  ArrowClockwise,
+  ArrowCounterClockwise,
   ArrowLeft,
-  ArrowLeftFromLine,
-  ArrowRightFromLine,
-  ArrowUpFromLine,
+  ArrowLineDown,
+  ArrowLineLeft,
+  ArrowLineRight,
+  ArrowLineUp,
   ArrowRight,
-  BrickWall,
-  BringToFront,
-  Box,
+  ArrowsHorizontal,
+  ArrowsVertical,
+  Armchair,
   Camera,
   CheckCircle,
+  CircleNotch,
+  Cube,
   Eye,
-  EyeOff,
-  FolderDown,
-  Grid2x2,
+  EyeSlash,
+  FolderSimplePlus,
+  GearSix,
+  GridFour,
   Headphones,
   House,
   Image,
   Info,
-  LampCeiling,
-  Link as LinkIcon,
-  LoaderCircle,
-  Lock,
+  Lightbulb,
+  LinkSimple,
+  LockSimple,
   Magnet,
   Monitor,
-  MoveHorizontal,
-  MoveVertical,
-  Music,
-  PanelBottomDashed,
-  PanelTop,
+  MusicNotes,
   Pause,
-  Plus,
-  PersonStanding,
+  PencilSimple,
+  // Aliased: the custom `person.svg` below is imported as `Person`.
+  Person as PersonStanding,
   Play,
+  Plus,
   Printer,
-  Redo2,
+  Rectangle,
+  Rows,
   Ruler,
-  SendToBack,
-  Settings,
+  Selection,
+  SelectionBackground,
+  SelectionForeground,
   Shapes,
+  SpeakerHigh,
+  SpeakerLow,
   Square,
-  SquarePen,
-  Trash2,
-  Type,
-  Undo2,
-  Video,
-  Volume1,
-  Volume2,
+  TextT,
+  Trash,
+  VideoCamera,
+  WarningCircle,
   X,
-  type LucideIcon,
-} from 'lucide-react'
+} from '@phosphor-icons/react/dist/ssr'
 import type { FC, SVGProps } from 'react'
 
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
-
-// Custom SVG imports (for icons not available in Lucide)
+// Custom SVG icons, kept as they are (not in Phosphor, or kept by the redesign's step 19)
 import ChevronDown from '@/icons/chevron-down.svg'
 import DistributeHorizontal from '@/icons/distribute-horizontal.svg'
 import DistributeVertical from '@/icons/distribute-vertical.svg'
@@ -97,59 +98,61 @@ import ZoomOut from '@/icons/zoom-out.svg'
 // Type for custom SVG icons
 type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 
-// Lucide icons registry (add Lucide icons here as needed)
-const lucideIcons: Record<string, LucideIcon> = {
-  'alert-circle': AlertCircle,
+// Phosphor icons registry. The keys are the names callers (and stored sound works) use: never
+// rename one.
+const phosphorIcons: Record<string, PhosphorIcon> = {
+  'alert-circle': WarningCircle,
   armchair: Armchair,
   arrowLeft: ArrowLeft,
   arrowRight: ArrowRight,
-  arrowTopFromLine: ArrowUpFromLine,
-  arrowBottomFromLine: ArrowDownFromLine,
-  arrowLeftFromLine: ArrowLeftFromLine,
-  arrowRightFromLine: ArrowRightFromLine,
-  'brick-wall': BrickWall,
-  box: Box,
+  arrowTopFromLine: ArrowLineUp,
+  arrowBottomFromLine: ArrowLineDown,
+  arrowLeftFromLine: ArrowLineLeft,
+  arrowRightFromLine: ArrowLineRight,
+  'brick-wall': Rows,
+  box: Cube,
   camera: Camera,
   'check-circle': CheckCircle,
   close: X,
   eye: Eye,
-  eyeOff: EyeOff,
-  gallery: FolderDown,
-  'grid-2x2': Grid2x2,
+  eyeOff: EyeSlash,
+  gallery: FolderSimplePlus,
+  'grid-2x2': GridFour,
   headphones: Headphones,
   house: House,
   'human-standing': PersonStanding,
   image: Image,
   info: Info,
-  light: LampCeiling,
-  link: LinkIcon,
-  loaderCircle: LoaderCircle,
-  lock: Lock,
+  light: Lightbulb,
+  link: LinkSimple,
+  loaderCircle: CircleNotch,
+  lock: LockSimple,
   magnet: Magnet,
   monitor: Monitor,
-  moveHorizontal: MoveHorizontal,
-  moveVertical: MoveVertical,
-  music: Music,
-  'panel-bottom-dashed': PanelBottomDashed,
+  moveHorizontal: ArrowsHorizontal,
+  moveVertical: ArrowsVertical,
+  music: MusicNotes,
+  'panel-bottom-dashed': Selection,
   pause: Pause,
   plus: Plus,
   play: Play,
-  'bring-to-front': BringToFront,
-  'panel-top': PanelTop,
+  'bring-to-front': SelectionForeground,
+  // Not Rows: the editor's Floor button (brick-wall) already has it (Q49).
+  'panel-top': Rectangle,
   printer: Printer,
-  redo: Redo2,
+  redo: ArrowClockwise,
   ruler: Ruler,
-  'send-to-back': SendToBack,
-  settings: Settings,
+  'send-to-back': SelectionBackground,
+  settings: GearSix,
   shapes: Shapes,
   square: Square,
-  'square-pen': SquarePen,
-  'trash-2': Trash2,
-  type: Type,
-  undo: Undo2,
-  video: Video,
-  'volume-1': Volume1,
-  'volume-2': Volume2,
+  'square-pen': PencilSimple,
+  'trash-2': Trash,
+  type: TextT,
+  undo: ArrowCounterClockwise,
+  video: VideoCamera,
+  'volume-1': SpeakerLow,
+  'volume-2': SpeakerHigh,
 }
 
 // Custom SVG icons registry
@@ -193,7 +196,7 @@ const customIcons: Record<string, CustomSvgIcon> = {
 }
 
 // Merge both registries for type inference
-const _allIcons = { ...lucideIcons, ...customIcons }
+const _allIcons = { ...phosphorIcons, ...customIcons }
 
 export type IconName = keyof typeof _allIcons
 
@@ -201,19 +204,15 @@ export type IconProps = {
   name: IconName
   size?: number
   color?: string
-  strokeWidth?: number
+  weight?: IconWeight
 }
 
-const Icon = ({
-  name,
-  size = 24,
-  color = 'currentColor',
-  strokeWidth = ICON_STROKE_WIDTH,
-}: IconProps) => {
-  // Check if it's a Lucide icon
-  const LucideIconComponent = lucideIcons[name as keyof typeof lucideIcons]
-  if (LucideIconComponent) {
-    return <LucideIconComponent size={size} color={color} strokeWidth={strokeWidth} />
+const Icon = ({ name, size = 24, color = 'currentColor', weight = 'light' }: IconProps) => {
+  // Check if it's a Phosphor icon
+  const PhosphorIconComponent = phosphorIcons[name as keyof typeof phosphorIcons]
+  if (PhosphorIconComponent) {
+    // Every Icon is decorative: hidden from screen readers (Phosphor doesn't do it on its own).
+    return <PhosphorIconComponent size={size} color={color} weight={weight} aria-hidden />
   }
 
   // Fallback to custom SVG icon

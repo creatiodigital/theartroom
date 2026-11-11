@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Check, ChevronLeft, ChevronRight, ImageOff } from 'lucide-react'
+import { CaretLeft, CaretRight, Check, ImageBroken } from '@phosphor-icons/react'
 
 import { getPrintArtistOptions, getPrintsCatalogPage } from '@/app/prints/actions'
 import { Badge } from '@/components/ui/Badge'
@@ -11,7 +11,6 @@ import { ButtonGroup } from '@/components/ui/ButtonGroup'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import {
   PRINTS_PAGE_SIZE,
   type PrintArtistOption,
@@ -184,16 +183,16 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
             {w.imageUrl ? (
               <img src={w.imageUrl} alt="" className={styles.pickerThumbImg} />
             ) : (
-              <ImageOff
+              <ImageBroken
                 size={20}
-                strokeWidth={ICON_STROKE_WIDTH}
+                weight="light"
                 aria-hidden
                 className={styles.pickerThumbEmpty}
               />
             )}
             {on && (
               <span className={styles.pickerCheck}>
-                <Check size={14} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+                <Check size={14} weight="bold" aria-hidden />
               </span>
             )}
           </span>
@@ -241,7 +240,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
               <span>{a.label}</span>
               <span className={styles.pickerArtistMeta}>
                 <Badge label={`${a.count} prints`} variant="neutral" />
-                <ChevronRight size={16} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+                <CaretRight size={16} weight="light" aria-hidden />
               </span>
             </Button>
           ))}
@@ -286,7 +285,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
                   variant="secondary"
                   size="small"
                   label="All artists"
-                  iconLeft={<ChevronLeft size={14} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />}
+                  iconLeft={<CaretLeft size={14} weight="light" aria-hidden />}
                   onClick={() => {
                     setArtistId(null)
                     setQuery('')

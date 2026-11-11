@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Video } from 'lucide-react'
+import { VideoCamera } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { MAX_ARTWORK_MEDIA, type ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 
 import styles from './ArtworkMediaManager.module.scss'
@@ -158,7 +157,7 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
               )}
               {item.kind === 'video' && (
                 <span className={styles.badge}>
-                  <Video size={12} strokeWidth={ICON_STROKE_WIDTH} aria-hidden /> Video
+                  <VideoCamera size={12} weight="light" aria-hidden /> Video
                 </span>
               )}
               <Button

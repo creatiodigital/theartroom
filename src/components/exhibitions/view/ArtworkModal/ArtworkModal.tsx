@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { X } from 'lucide-react'
+import { X } from '@phosphor-icons/react'
 
 import {
   ArtworkDetailBody,
@@ -15,7 +15,6 @@ import { ArtworkTechnique } from '@/components/artwork/detail/ArtworkRichText'
 import { ArtworkStorySection } from '@/components/artwork/detail/ArtworkStorySection'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
@@ -106,7 +105,7 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
         onClick={() => dispatch(closeArtworkModal())}
         aria-label="Close artwork"
       >
-        CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
+        CLOSE <X size={14} weight="light" aria-hidden />
       </Button>
       {/* Mirrors the standalone artwork page section for section: the
           two-column zone, then the story (its own full-width section), then

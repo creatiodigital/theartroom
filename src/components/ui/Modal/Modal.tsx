@@ -2,9 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type { ReactNode, MouseEvent } from 'react'
-import { X } from 'lucide-react'
-
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+import { X } from '@phosphor-icons/react'
 
 type ModalProps = {
   children: ReactNode
@@ -129,7 +127,7 @@ const Modal = ({
       >
         {showClose && (
           <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
-            <X size={20} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+            <X size={20} weight="light" aria-hidden />
           </button>
         )}
         {children}

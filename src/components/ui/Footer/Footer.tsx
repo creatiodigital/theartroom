@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Mail } from 'lucide-react'
+import { Envelope } from '@phosphor-icons/react'
 
-// Lucide's brand icons are deprecated (removed in v1.0), so the brand logos are
-// the official glyphs from Simple Icons (CC0), kept as local SVGs.
+// The brand logos are the official glyphs from Simple Icons (CC0), kept as local
+// SVGs.
 import FacebookIcon from '@/icons/facebook.svg'
 import InstagramIcon from '@/icons/instagram.svg'
 import Monogram from '@/icons/monogram.svg'
@@ -13,7 +13,6 @@ import PinterestIcon from '@/icons/pinterest.svg'
 import { Text } from '@/components/ui/Typography'
 
 import { openCookieSettings } from '@/lib/consent'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { CONTACT_EMAIL, SOCIAL_LINKS } from '@/lib/socialLinks'
 
 import styles from './Footer.module.scss'
@@ -51,7 +50,7 @@ export const Footer = () => {
           Pinterest
         </a>
         <a href={`mailto:${CONTACT_EMAIL}`}>
-          <Mail size={18} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+          <Envelope size={18} weight="light" aria-hidden />
           Email
         </a>
       </div>
