@@ -163,7 +163,7 @@ test.describe('Cancel/refund → credit note — full chain (captured order)', (
 
       // ── 4. Refund through the real admin UI (CAPTURED branch). ───────────
       await page.reload()
-      await page.getByRole('button', { name: /Refund buyer/ }).click()
+      await page.getByRole('button', { name: 'Refund the buyer…', exact: true }).click()
       await page
         .getByLabel(/Reason/)
         .fill('e2e chain test — buyer cancelled after production start')

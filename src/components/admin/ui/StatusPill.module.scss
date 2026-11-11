@@ -1,0 +1,32 @@
+// designs/order-detail.dc.html (the pill after the h1).
+.pill {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-normal);
+  white-space: nowrap;
+}
+
+.dark {
+  background: var(--color-dark-surface);
+  border-color: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+.red {
+  background: var(--color-red-50);
+  border-color: var(--color-red-50);
+  color: var(--color-white);
+}
+
+.outline {
+  background: var(--color-white);
+  border-color: var(--color-gray-60);
+  color: var(--color-text-primary);
+}

@@ -14,7 +14,11 @@ import styles from './AdminConfirmModal.module.scss'
 type AdminConfirmModalProps = {
   title: string
   message: ReactNode
+  /** An amber box under the message (e.g. "Artist payout already released"). */
+  warning?: ReactNode
   confirmLabel: string
+  /** The dismiss button's label, e.g. "Go back" or "Keep order". */
+  cancelLabel?: string
   /** Shown on the confirm button while `busy`, e.g. "Pausing…". */
   busyLabel?: string
   destructive?: boolean
@@ -34,7 +38,9 @@ type AdminConfirmModalProps = {
 export function AdminConfirmModal({
   title,
   message,
+  warning,
   confirmLabel,
+  cancelLabel = 'Cancel',
   busyLabel = 'Working…',
   destructive = false,
   busy = false,
@@ -64,6 +70,7 @@ export function AdminConfirmModal({
               {title}
             </h2>
             <div className={styles.message}>{message}</div>
+            {warning && <div className={styles.warning}>{warning}</div>}
           </div>
         </div>
         <div className={styles.actions}>
@@ -71,7 +78,7 @@ export function AdminConfirmModal({
             variant="secondary"
             font="dashboard"
             className={styles.button}
-            label="Cancel"
+            label={cancelLabel}
             disabled={busy}
             onClick={onCancel}
           />

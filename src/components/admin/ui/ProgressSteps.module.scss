@@ -1,0 +1,200 @@
+@use '@/styles/mixins' as *;
+
+// orders.md §2 ProgressSteps; designs/order-detail.dc.html (steps: dot / labelStyle / lineL / lineR).
+.root {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+// ── Phone: one line, a thin bar, the full list in a disclosure ──
+.compact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  @include media-up(tablet) {
+    display: none;
+  }
+}
+
+// globals.scss sizes every <p> for reading (16px+); admin text is 14px.
+.compactLine {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+
+  strong {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}
+
+.compactLine .compactEnd {
+  color: var(--color-red-50);
+}
+
+.disclosure {
+  font-size: 13px;
+}
+
+// Stays a list-item so the disclosure triangle shows; 12 + 20 + 12 = a 44px target.
+.summary {
+  padding: var(--space-3) 0;
+  line-height: 20px;
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+
+  .step {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .when {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+// ── Desktop: the horizontal track ──
+.track {
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include media-up(tablet) {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+
+    // The 2px line, drawn as two halves so each step colors its own side.
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 13px;
+      height: 2px;
+      background: var(--color-gray-25);
+    }
+
+    &::before {
+      left: 0;
+      right: 50%;
+    }
+
+    &::after {
+      left: 50%;
+      right: 0;
+    }
+  }
+
+  .inDark::before,
+  .outDark::after {
+    background: var(--color-dark-surface);
+  }
+
+  .first::before,
+  .last::after {
+    display: none;
+  }
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.label {
+  font-size: 13px;
+}
+
+// May wrap: next to the menu, a 900px screen leaves each step ~75px.
+.when {
+  min-height: 18px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.done {
+  .dot {
+    background: var(--color-dark-surface);
+    color: var(--color-white);
+  }
+
+  .label {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}
+
+.current {
+  .dot {
+    background: var(--color-white);
+    border: 2px solid var(--color-dark-surface);
+    box-shadow: 0 0 0 4px var(--color-gray-20);
+    color: var(--color-black);
+  }
+
+  .label {
+    font-weight: var(--font-bold);
+    color: var(--color-black);
+  }
+}
+
+// The drawn #999 number fails 4.5:1 on white, so it takes the secondary gray.
+.future {
+  .dot {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-55);
+    color: var(--color-text-secondary);
+  }
+
+  .label {
+    color: var(--color-text-secondary);
+  }
+}
+
+.end {
+  .dot {
+    background: var(--color-red-50);
+    color: var(--color-white);
+  }
+
+  .label {
+    font-weight: var(--font-semibold);
+    color: var(--color-red-50);
+  }
+}

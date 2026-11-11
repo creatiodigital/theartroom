@@ -12,7 +12,7 @@ Do these in order, one PR each.
 | 1 | **Shell**: tokens, Phosphor check, `AdminLayout`, `AdminSidebar`, `AdminNavItem`, `AdminTopBar` + drawer, `StorefrontSwitch`, `PausedBanner`, `usePurchasesPaused`. Switch **every** admin page from `DashboardLayout` to `AdminLayout` and delete their back links. Page bodies stay as they are. | dashboard, states, phone, phone-menu | Built | Biggest visible win: every page gets the new frame at once. See Built notes. |
 | 2 | **Dashboard** body: `AdminPageHeader`, `Panel`, `AttentionCard`, `PipelineList`, `BarList`, `DonutChart`, analytics states, cleanup panel, `ConfirmModal` admin look. Remove the "Manage" hub cards (the menu replaces them). | dashboard, states, phone | Built | Analytics data unchanged (`AnalyticsSection` logic). See Built notes. |
 | 3 | Orders list | orders (spec: orders.md §1) | Built | Sets the pattern for every list page. Closes Q1 (`?stage=`). Read counts/rows from the shell (Q2). |
-| 4 | Order detail | order-detail (spec: orders.md §2) | Designed · approved by owner | Re-layout only: keep every action, guard and confirm as today. |
+| 4 | Order detail | order-detail (spec: orders.md §2) | Built | Re-layout only: keep every action, guard and confirm as today. |
 | 5 | Edition sales | edition-sales (spec: sales.md §1) | Designed · approved by owner | Adds summary cards + status filter (NEW, approved). |
 | 6 | Gift orders | gift-orders (spec: sales.md §2) | Designed · approved by owner | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
 | 7 | Invoices | invoices (spec: invoices.md) | Designed · approved by owner | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
@@ -26,6 +26,10 @@ Do these in order, one PR each.
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
+| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
+| 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
+| 19 | **Lucide → Phosphor, whole site**: swap the name→icon map in `components/ui/Icon/Icon.tsx` (light weight, size as today), then the ~25 files that import `lucide-react` directly; remove `lucide-react` and `ICON_STROKE_WIDTH` when nothing uses them | — | Approved by owner | Do after step 18 so the editor and the public site switch together. Check every public page and the 3D room afterwards. |
+| 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Designed · approved by owner | Public side, independent of the admin work: can be done any time. |
 
 ## Built notes
 
@@ -156,3 +160,33 @@ Geist Mono as `--font-admin-mono` (its own variable: public pages already read `
 Verified: typecheck, lint, prettier; browser (dev DB, 1440 / 390): tabs, arrow keys, `?stage=`, search,
 empty search, phone cards, no horizontal scroll, no console errors. e2e for the list
 (`order-payout-bucket`, `order-reorder`, `order-capture-place`) not run yet: they need port 3001 free.
+
+### Step 4 · Order detail — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Files: `src/components/admin/orders/detail/*` (replaces `OrderDetail.tsx`): `AdminOrderDetail.tsx` holds
+every state, handler, guard and dialog (moved verbatim: all 256 lines of the old state/handler block are
+in it), plus render-only sections (header, warnings, progress + next step, items, pay the artists, TPS
+placement, timeline, buyer, money, invoice, recovery, test data). New pieces: `AdminBreadcrumb`,
+`StatusPill`, `ProgressSteps`, `CopyField` (+ `CopyButton`). `AdminConfirmModal` gains `warning` and
+`cancelLabel`; all six dialogs use it (titles, messages and labels unchanged). `bucketOf` accepts the
+three fields it reads (type change only).
+
+1. **Renamed per orders.md**: "Refund buyer (€X)" → "Refund the buyer…", "Re-order (reprint)" →
+   "Reprint as a replacement…". The Refund-needed callout's "Refund the buyer" opens the same refund
+   panel, scrolls to it and focuses its reason. e2e updated (`order-refund`, `order-cancel-refund-creditnote`,
+   `order-reorder`); `invoice-ui` now finds the number inside the Invoice panel (it moved after the timeline).
+2. **Warnings**: emoji dropped; "the Danger zone below" → "the Test data panel below" (the panel's new
+   name; it exists only outside production, as before). Hold title from orders.md, today's body after it.
+3. **Invoice badge** (Q12): one badge: Voided (credit note) / Email failed (this visit) / Issued. "Send
+   invoice again" keeps its label (the design says "Send again").
+4. **Money**: for carts, Artist cut, Gallery cut and Production are summed from the lines (the old page
+   showed them only per line). State line wording is new (Q28).
+5. **Next step sentence** per stage is new copy, except "To place" (Q28). Delivered links to
+   "Pay the artist(s)" below.
+6. **Narrow desktop**: two columns from 900 px leave the main column ~256–450 px next to the menu, so
+   copy fields, item lines and the timeline use container queries. If it feels cramped, moving the
+   switch to 1100 px is one line.
+7. Header thumbnail is `object-fit: contain` (never crops the artwork); future step numbers use
+   `--color-text-secondary` (the drawn #999 fails contrast); the safe-window glyphs became icons.
+8. Kept as today (Q15): Cancel trigger visible with its panel open; Pay/Refund/Invoice not gated by a
+   terminal payment; cart Pay ignores onboarding; "Send credit note again" without confirm.

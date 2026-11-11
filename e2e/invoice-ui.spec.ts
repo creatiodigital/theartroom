@@ -66,10 +66,12 @@ test.describe('Invoice — send button UI', () => {
       // invoice section switches to the "invoice exists" branch which renders
       // the number in a monospace <span> and a "See invoice" button.
       // The number format is AR-MM-YYYY-NNN.
-      // The number appears in several places once the section reloads (the
-      // invoice span + event-log rows/payloads) — assert the first match to
-      // stay strict-mode safe.
-      const numberLocator = page.getByText(/AR-\d{2}-\d{4}-\d{3}/)
+      // The number also appears in the timeline (rows and raw payloads), which
+      // comes BEFORE the side column's Invoice panel in the DOM — so look inside
+      // that panel, and take the first match to stay strict-mode safe.
+      const numberLocator = page
+        .getByRole('region', { name: 'Invoice' })
+        .getByText(/AR-\d{2}-\d{4}-\d{3}/)
       await expect(numberLocator.first()).toBeVisible({ timeout: 30_000 })
 
       // Capture the actual number text so we can assert it in the register.

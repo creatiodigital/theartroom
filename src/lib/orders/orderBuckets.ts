@@ -29,7 +29,9 @@ export const BUCKET_ORDER: Bucket[] = [
   'attention',
 ]
 
-export function bucketOf(o: AdminOrderRow): Bucket {
+export function bucketOf(
+  o: Pick<AdminOrderRow, 'fulfillmentStatus' | 'paymentStatus' | 'payoutComplete'>,
+): Bucket {
   const f = o.fulfillmentStatus
   const p = o.paymentStatus
 

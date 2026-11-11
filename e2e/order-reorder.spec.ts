@@ -48,7 +48,7 @@ test.describe('Re-order / reprint (real admin UI)', () => {
       await seedCookieConsent(page)
       await page.goto(`/admin/orders/${bought.orderId}`)
 
-      await page.getByRole('button', { name: 'Re-order (reprint)' }).click()
+      await page.getByRole('button', { name: 'Reprint as a replacement…' }).click()
       await page.getByLabel(/Reason/i).selectOption('damaged')
       await page.getByRole('button', { name: 'Confirm re-order' }).click()
 
@@ -106,7 +106,7 @@ test.describe('Re-order / reprint (real admin UI)', () => {
 
       await seedCookieConsent(page)
       await page.goto(`/admin/orders/${bought.orderId}`)
-      await page.getByRole('button', { name: 'Re-order (reprint)' }).click()
+      await page.getByRole('button', { name: 'Reprint as a replacement…' }).click()
 
       await expect(
         page.getByText(/already been reprinted/i),

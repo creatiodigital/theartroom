@@ -250,3 +250,23 @@ like the real Pause switch). Logic and dialogs unchanged.
   `--color-gray-20` dividers, top-aligned, sideways scroll). Pages write their own rows and may turn
   them into phone cards through `className` (see `orders/Orders.module.scss`).
 - `ui/EmptyState.tsx` · `{ title; text? }` (Tray in a circle).
+
+## Detail pieces (step 4)
+
+### `AdminBreadcrumb`
+- **Built** · `ui/AdminBreadcrumb.tsx` · `{ items: { label; href?; mono? }[] }` (Q4: `<nav aria-label="Breadcrumb"><ol>`,
+  current item `aria-current="page"`; phones show only "← {parent}").
+
+### `StatusPill`
+- **Built** · `ui/StatusPill.tsx` · `{ label; tone?: 'dark' | 'red' | 'outline' }`.
+
+### `ProgressSteps`
+- **Built** · `ui/ProgressSteps.tsx` · `{ label; steps: { label; state: 'done' | 'current' | 'future'; when? }[]; end? }`
+  (`end` = e.g. the red "Canceled" marker). Phones: "Step n of 7 · Label" + thin bar, full list in `<details>`.
+
+### `CopyField` + `CopyButton`
+- **Built** · `ui/CopyField.tsx` · `CopyField { label; value: ReactNode; copyValue; buttonLabel?; align?; className? }`
+  (label 150 px, value mono, "Copied" for 2 s); `CopyButton { value; label; srSuffix?; size? }`.
+
+### `AdminConfirmModal` (additions)
+- `warning?: ReactNode` (amber box under the message) and `cancelLabel?: string` (default "Cancel").

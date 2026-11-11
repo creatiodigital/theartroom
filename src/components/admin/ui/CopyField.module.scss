@@ -1,0 +1,91 @@
+@use '@/styles/mixins' as *;
+
+// designs/order-detail.dc.html ("For TPS placement" rows).
+.field {
+  container-type: inline-size;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+}
+
+// Narrow: label + Copy on one line, the value under them.
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label button'
+    'value value';
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+}
+
+// Wide enough for the drawn row: label 150px · value · Copy.
+@container (min-width: 440px) {
+  .row {
+    grid-template-columns: 150px minmax(0, 1fr) auto;
+    grid-template-areas: 'label value button';
+    gap: var(--space-3);
+    padding: 6px var(--space-2) 6px 14px;
+  }
+
+  .alignStart {
+    align-items: start;
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+  }
+}
+
+.label {
+  grid-area: label;
+  color: var(--color-text-secondary);
+}
+
+.value {
+  grid-area: value;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  color: var(--color-black);
+}
+
+.buttonWrap {
+  grid-area: button;
+  display: inline-flex;
+  justify-self: end;
+}
+
+// Two classes, so these beat Button's own one-class `bare` rules.
+.buttonWrap .button {
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) 14px;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  // 44px touch target below 900px, the drawn size above (questions.md Q7).
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.buttonWrap .compact {
+  padding: var(--space-1) 10px;
+  border-color: var(--color-gray-25);
+  font-size: var(--text-xs);
+
+  @include media-up(tablet) {
+    min-height: 28px;
+  }
+}

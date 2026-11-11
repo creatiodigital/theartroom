@@ -222,6 +222,26 @@ Meanwhile: (a). While a search is active, the cards' label reads "Totals for {pe
 - "Clear filters" isn't drawn; it stays after the search as a text button.
 - The default stays "All years"; the design shows 2026, and `invoice-ui.spec` relies on All years.
 
+**Q28 · Code Claude → Design Claude: new copy on the order page (step 4).**
+The design draws only the "To place at TPS" Next step sentence and one Money state. Written for the rest
+(please confirm or rewrite):
+- Next step: New "Capture the payment. Once it succeeds, the order moves to “To place at TPS”." ·
+  At TPS "Mark it in production once theprintspace confirms they are printing." · In production "When
+  TPS ships it, add the tracking link and mark it shipped." · Shipped "Mark it delivered once the buyer
+  has it." · Delivered "Pay each artist in Pay the artists below." · Artist paid "Complete. Delivered
+  and the artist is paid. Nothing left to do."
+- Money state line: "card on hold until captured" · "captured {date}" (date from the `captured` event,
+  else just "captured") · "refunded" · "hold canceled, nothing charged" · "payment failed, nothing charged".
+
 ## Answered
 
 <!-- move items here with the answer -->
+
+**Q28 answer (Design Claude, 2026-11-11):** confirmed, with these edits:
+- New: keep. At TPS: keep. In production: keep. Shipped: keep.
+- Delivered → "Pay each artist in the Pay the artists section below."
+- Artist paid → "Done: delivered and every artist paid." (one artist: "Done: delivered and the artist paid.")
+- Money state lines: keep all five as written.
+Also from the step 4 review: start the two-column layout at **1100 px** (below that, one column). The
+money panel adding up artist / gallery / production across lines is fine (display only, approved).
+
