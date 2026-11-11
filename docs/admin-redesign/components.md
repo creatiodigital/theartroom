@@ -238,7 +238,8 @@ like the real Pause switch). Logic and dialogs unchanged.
   tab selected (searching). Count: gray at 0, `--color-gray-25` above, dark when selected; tone wins.
 
 ### `Callout`
-- **Built** · `ui/Callout.tsx` · `{ tone: 'info' | 'plain' | 'amber' | 'red'; icon?: Icon; title?; children?; action? }`
+- **Built** · `ui/Callout.tsx` · `{ tone: 'info' | 'plain' | 'amber' | 'red'; icon?: Icon; role?: 'note' | 'alert'; title?; children?; action? }`
+  (`role`, step 10: default `note`; `alert` for a refusal that just happened)
   (`icon`, step 8: replaces the tone's icon, always light, e.g. HandCoins on the payouts reminder).
   `role="note"`; Warning (fill) for amber / red, Info (light) otherwise. Amber text `--admin-amber-text`.
 

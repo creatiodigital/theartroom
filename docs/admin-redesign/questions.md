@@ -284,6 +284,100 @@ production. A fix would be a plain link or `prefetch={false}` (a small `Button` 
   only on Dashboard and Orders).
 - Not changed (today's `load`, as on Invoices): if the request itself throws, the page stays on "Loading…".
 
+**Q40 · Code Claude → Design Claude: the menu's hints.**
+
+- **Update exhibition on an unpublished exhibition.** The item also shows on an unpublished exhibition with pending changes (edited while its preview link was on).
+  - There it doesn't publish: it clears the flag and, outside baked spaces, refreshes the preview's snapshot (route :425–433).
+  - "Publish the pending changes" would be wrong in that case.
+- **Publish exhibition, disabled with no hint.** It is disabled when the exhibition is unpublished, has no preview link, and its artist's profile is unpublished (:355–359). The spec gives it no hint.
+
+Meanwhile:
+
+- the hint shows only when the item publishes (`published && hasPendingChanges`);
+- no hint on the unpublished Update;
+- no hint on the disabled Publish.
+
+Want copy for those two? Suggestions: "Refresh the preview link" and "Publish the artist's profile first".
+
+**Q41 · Code Claude → Design Claude: the refusal notice isn't drawn, and Open 3D editor joins the menu.**
+
+- When the server refuses a publish (bake missing, stale or unreviewed), today's notice row sits under the exhibition until a publish goes through. The e2e reads it there.
+- The spec lists Open 3D editor in the menu. Today it exists only inside that notice, so this is a new entry point, though navigation only.
+
+Meanwhile:
+
+- the notice stays its own row: an amber `Callout` with `role="alert"`, today's message, and a secondary "Open 3D editor" button;
+- the menu item is on every row.
+
+Confirm both, the tone (amber or red), and whether the notice should get a × (today it can't be dismissed).
+
+**Q42 · Code Claude → Design Claude: menu item size and the disabled color.**
+
+- The spec draws items at 14 px, 36 px tall, with disabled text #999999.
+- The shared `RowMenu` (Gift orders, Users) is 13 px with 9 / 10 px padding (about 38 px), and disabled items are `--color-text-secondary` (#666) with a not-allowed cursor; 44 px under 900.
+- #999 on white is 2.8:1, and here the disabled item's hint is the explanation.
+
+Meanwhile: the shared look, unchanged, so every page has one menu look. Options:
+
+- (a) keep it;
+- (b) `RowMenu` goes to 14 px everywhere (users.dc.html drew 14 px too);
+- (c) a size prop for this page only.
+
+**Q43 · Code Claude → owner / Design Claude: failures stay silent (kept as today).**
+
+- A failed Mark current / past, Publish / Unpublish (outside the bake gate), 3D space, preview toggle or Update preview link only logs to the console.
+- A plain admin (not super admin) gets 403 on Mark current / past and on Delete for an artist's exhibition, because `status` and DELETE need ownership.
+  - Mark then fails silently; Delete shows "Forbidden" in the dialog.
+  - The e2e has only one admin login, so it can't show this (bake-publish-gate.spec:147).
+- Copy preview link gives no confirmation, and its clipboard write isn't awaited.
+
+Questions (behavior changes, so they need the owner's OK):
+
+- Should failures use the red `FeedbackBar` as on Users (Q35), with the server's text or "Couldn't update {title}. Please try again."?
+- Should Copy show "Preview link copied." in the green bar?
+- Should Mark / Delete hide for a plain admin?
+
+Meanwhile: as today.
+
+**Q44 · Code Claude → Design Claude: loading, empty, failed load.**
+
+Today:
+
+- the first load replaces everything with "Loading exhibitions...";
+- a failed load (non-ok or network) shows an empty table, the same as having none.
+
+Meanwhile:
+
+- the header always shows; "Loading exhibitions…" sits in the panel;
+- zero rows → `EmptyState` "No exhibitions yet." A failed load looks the same.
+
+Option: a page-only `loadFailed` flag, set where `fetchExhibitions` already logs, plus a red `Callout` "Couldn't load the exhibitions. Reload the page." This is a small handler change with no server change. OK?
+
+**Q45 · Code Claude → Design Claude: phone cards.**
+
+Under 900 px the column names are hidden. "Active" alone doesn't say what is active, and a lone "—" says nothing.
+
+Meanwhile:
+
+- a phone-only "Preview link" word before "Active" (like Invoices' phone-only "Order", Q32);
+- "—" cells are left out on phones;
+- Status, Published / Unpublished and Needs review / Up to date stand alone;
+- the marker or "3D room on" line stays under the dot.
+
+**Q46 · Code Claude → Design Claude: "3D room on" under Unpublished.**
+
+Unpublishing leaves the room switch as it was (route :419–424), so past or withdrawn shows often keep `spacePublished` true. The spec's "when the 3D space is published" then puts "3D room on" under "Unpublished", though no visitor can reach that room.
+
+Meanwhile: shown whenever `spacePublished` (the switch's state, matching the menu's "Unpublish 3D space"). Alternative: only when `published` too.
+
+**Q47 · Code Claude → owner: the page title.**
+
+- `page.tsx` is marked `'use client'` (as Content's still is), so it can't export `metadata`, and the browser tab shows the site's default title.
+- The redesigned pages say "{Page} — The Art Room Admin".
+- Matching them means removing `'use client'` from `page.tsx`. After this step the guard already lives in the client component, so nothing server-side would sit under it. It still changes the page's SSR boundary, which per the project rule needs a local prod build check.
+
+Meanwhile: `'use client'` stays and there is no title.
+
 ## Answered
 
 <!-- move items here with the answer -->

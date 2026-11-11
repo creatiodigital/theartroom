@@ -20,14 +20,19 @@ type CalloutProps = {
   children?: ReactNode
   /** A button or link after the text (e.g. "Refund the buyer"). */
   action?: ReactNode
+  /**
+   * note (default): guidance that is simply there. alert: the result of an
+   * action the admin just took, e.g. a publish the server refused.
+   */
+  role?: 'note' | 'alert'
 }
 
 /** Guidance or warning box: icon, bold first sentence, the rest (orders.md). */
-export function Callout({ tone, icon, title, children, action }: CalloutProps) {
+export function Callout({ tone, icon, title, children, action, role = 'note' }: CalloutProps) {
   const loud = tone === 'amber' || tone === 'red'
   const CalloutIcon = icon ?? (loud ? Warning : Info)
   return (
-    <div role="note" className={c(styles.callout, styles[tone])}>
+    <div role={role} className={c(styles.callout, styles[tone])}>
       <CalloutIcon
         size={18}
         weight={!icon && loud ? 'fill' : 'light'}

@@ -18,7 +18,7 @@ Do these in order, one PR each.
 | 7 | Invoices | invoices (spec: invoices.md) | Built | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
 | 8 | Payouts | payouts (spec: payouts.md) | Built | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
 | 9 | Users | users (spec: users.md) | Built | UI only + NEW type filter (approved). |
-| 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Designed · approved by owner | UI only, no logic changes. |
+| 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Built | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Designed · approved by owner | UI only. |
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Designed · approved by owner | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
@@ -349,6 +349,32 @@ Verified: typecheck, lint, prettier; the logic diffed against HEAD (the changes 
 exhibitions; the dev DB has one); browser on my own `pnpm dev` (dev DB, read-only: menus and dialogs
 opened and canceled) at 1440 and 390 px: filter and `?type=`, both row menus, the Send invite dialog's
 sentence, the Add user dialog, no console errors, no horizontal scroll.
+
+### Step 10 · Exhibitions — Built 2026-11-11 · committed after my checks (owner: steps 10, 11, 13 reviewed together later)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-exhibitions.md`. Files: new `src/components/admin/exhibitions/`
+(`index.tsx` = today's page guard, `ExhibitionsList.tsx`, `Exhibitions.module.scss`), `app/admin/exhibitions/page.tsx`
+(renders it; still `'use client'`, Q47), `ui/Callout` (`role`); `admin/dashboard/AdminExhibitions.tsx` removed (moved).
+
+1. **Kept**: today's logic (state, load, every handler and request, the delete dialog's CONFIRM rule and
+   messages, the bake refusal notice) moved verbatim — diffed: the only removals are the kebab's open state
+   and outside-click effect, which `RowMenu` owns now. The guard moved verbatim.
+2. **Layout per exhibitions.md**: Exhibition (title link + "artist · space") · Status (Current green, Past
+   gray, Draft outlined, other values blue) · On the site (Published / Unpublished dot, then today's "3D room
+   ready, not switched on" marker or "3D room on") · Preview link · Changes ("Needs review" amber, the colour
+   fix) · ⋮ "Actions for {title}".
+3. **Menu** (`RowMenu`, groups Exhibition / 3D room / Preview / Delete exhibition…): every item's label rule
+   and shown / disabled condition is today's; sentence case; hints "Publish the pending changes" (only when it
+   publishes, Q40) and "Publish the exhibition first" (on the disabled 3D item). **Open 3D editor** joins the
+   menu, as the spec lists (today only in the refusal notice; navigation only, Q41).
+4. **Refusal notice** (a publish refused over the bake): not drawn; kept as the next row, now an amber
+   `Callout` with `role="alert"` and today's text + Open 3D editor (Q41).
+5. **Phone**: one card per exhibition on the same `<tr>`. The 200 px bottom padding stays (Content's menus).
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-gate` + `exhibition-state-markers`
+15/15 on port 3001 (unchanged specs); browser on my own `pnpm dev` (dev DB, read-only: one menu opened and
+closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
+scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
 
 ### Step 20 · Visitor room menu + Exit wall view — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 
