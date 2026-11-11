@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home Page Prints</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f9f9f9}a{color:#333}</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 0 0 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<span style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></span>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Gallery</span>
+<span style="padding: 10px 12px; color: #e0e0e0">Exhibitions</span>
+<span style="padding: 10px 12px; color: #e0e0e0">Print presentations</span>
+<span style="padding: 10px 12px; border-radius: 8px; background: #2a2a2a; color: #ffffff; font-weight: 600">Content</span>
+<span style="padding: 10px 12px; color: #e0e0e0">Users</span>
+</div>
+<span style="padding: 0 12px; font-size: 12px; color: #777777">(menu shortened on this board)</span>
+</nav>
+
+<main style="flex: 1 1 auto; min-width: 0; padding: 28px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<nav aria-label="Breadcrumb" style="font-size: 13px; color: #666666">Content <span style="color: #a3a3a3">/</span> <span style="color: #333333">Home page prints</span></nav>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px; max-width: 640px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Home page prints</h1>
+<span style="color: #666666">The artworks that rotate in the homepage's Fine-art prints section, in this order. Drag to reorder. They only show there, not on the Prints page.</span>
+</div>
+<div style="display: flex; gap: 8px">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff">View homepage ↗</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; box-sizing: border-box; background: #1a1a1a; color: #ffffff; border-radius: 4px">+ Add artworks</span>
+</div>
+</header>
+
+<section aria-label="Prints" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #eaeaea"><span style="font-size: 13px; color: #666666">5 artworks</span></div>
+<ol style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<li style="display: flex; align-items: center; gap: 14px; padding: 10px 20px 10px 8px; border-top: 1px solid #f0f0f0">
+<span aria-label="{{r.drag}}" style="width: 32px; height: 44px; display: flex; align-items: center; justify-content: center; color: #999999">⠿</span>
+<span style="width: 22px; text-align: center; font-size: 13px; font-weight: 600; color: #999999">{{r.i}}</span>
+<span style="{{r.thumb}}"><sc-if value="{{r.img}}" hint-placeholder-val="{{true}}"><img src="{{r.img}}" alt="" style="width: 100%; height: 100%; object-fit: contain; display: block"></sc-if></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-weight: 600; color: #000000">{{r.title}}</span><span style="font-size: 13px; color: #666666">{{r.artist}}</span></span>
+<span style="{{r.badge}}">{{r.state}}</span>
+<span style="display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px">Remove</span>
+</li>
+</sc-for>
+</ol>
+<div style="padding: 12px 20px; border-top: 1px solid #eaeaea; font-size: 12px; color: #666666">Same as Gallery selection. Artworks without a print presentation render are skipped on the homepage until they're rendered.</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const R = [
+      ['Magnolia I', 'Beatriz Salvatierra · 2026', '/_blob/585ff0dc94e345cde79b0ba7e2abd09c', true],
+      ['Hiver', 'Mathias Heizmann · 2023', '/_blob/6f4c27b9acf1616d4c9c9c6a66ac3f69', true],
+      ['Oculus', 'Elizabeth Mosler · 2025', '/_blob/e724ac75e39581c0af43199749b8cecb', true],
+      ['Blossoms', 'Lucie Bonvalet · 2020', '/_blob/a47b6b1fb2362fd42f9d912f484eb049', true],
+      ["Le saut de l'ange I", 'Mathias Heizmann · 2021', '', false]
+    ];
+    const B = [['Beatriz Salvatierra', 1], ['Mathias Heizmann', 2], ['Elizabeth Mosler', 1], ['Lucie Bonvalet', 1]];
+    return {
+      balance: B.map(([name, n]) => ({ name, n, style: { fontSize: '13px', padding: '4px 10px', borderRadius: '9999px', border: '1px solid ' + (n > 1 ? '#f3e1a6' : '#e3e3e3'), background: n > 1 ? '#fff8e1' : '#f7f7f7', color: '#333' } })),
+      rows: R.map(([title, artist, img, ok], k) => ({ i: k + 1, title, artist, img: img || false, drag: 'Reorder ' + title,
+        thumb: { width: '72px', height: '72px', flex: '0 0 auto', borderRadius: '4px', background: '#f2f2f2', overflow: 'hidden' },
+        state: ok ? 'Render ready' : 'No render yet',
+        badge: { fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: ok ? '#d4edda' : '#fff3cd', color: ok ? '#155724' : '#856404', whiteSpace: 'nowrap' } }))
+    };
+  }
+}
+</script>
+</body>
+</html>

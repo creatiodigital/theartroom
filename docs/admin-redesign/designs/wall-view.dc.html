@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wall View</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e2e2e2}</style>
+</helmet>
+<div style="position: relative; display: flex; width: 100%; height: 100vh; min-height: 900px; overflow: hidden; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; color: #333333; background: #e2e2e2">
+
+<aside aria-label="Wall options" style="flex: 0 0 320px; height: 100%; box-sizing: border-box; background: #ffffff; border-right: 1px solid #e6e6e6; display: flex; flex-direction: column">
+
+<header style="padding: 18px 16px 14px; border-bottom: 1px solid #efefef; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Editing wall</span><h1 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Quimigramas · 1303 cm</h1></div>
+<div style="display: flex; gap: 6px">
+<button type="button" title="Discard all changes and exit" style="font: inherit; font-size: 13px; font-weight: 600; padding: 0 12px; height: 38px; background: none; border: 0; border-radius: 8px; color: #555555">Cancel</button>
+<button type="button" title="Save all changes and continue editing" style="font: inherit; font-size: 13px; font-weight: 600; padding: 0 14px; height: 38px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px">Save</button>
+<button type="button" title="Save all changes and exit" style="flex: 1 1 auto; font: inherit; font-size: 13px; font-weight: 600; height: 38px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Save &amp; close</button>
+</div>
+</header>
+
+<div style="flex: 1 1 auto; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: flex; align-items: center; gap: 4px; padding: 4px; background: #f5f5f5; border-radius: 10px">
+<button type="button" aria-label="Undo (⌘Z)" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 0; border-radius: 7px; color: #333333; box-shadow: 0 1px 2px rgba(0,0,0,0.06)"><svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.undo}}"></path></svg></button>
+<button type="button" aria-label="Redo (⌘⇧Z)" disabled style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 7px; color: #bbbbbb"><svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.redo}}"></path></svg></button>
+<span aria-hidden="true" style="width: 1px; height: 20px; background: #dddddd; margin: 0 4px"></span>
+<button type="button" aria-label="Zoom out" style="width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #333333"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.minus}}"></path></svg></button>
+<span aria-live="polite" style="font-family: 'Geist Mono', monospace; font-size: 12px; min-width: 40px; text-align: center; color: #000000">35%</span>
+<button type="button" aria-label="Zoom in" style="width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #333333"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.plus}}"></path></svg></button>
+<button type="button" style="margin-left: auto; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; padding: 0 10px; height: 34px; background: #ffffff; border: 0; border-radius: 7px; box-shadow: 0 1px 2px rgba(0,0,0,0.06)"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.fit}}"></path></svg>Fit</button>
+</div>
+
+<section aria-labelledby="h-help" style="display: flex; flex-direction: column; gap: 2px">
+<h2 id="h-help" style="margin: 0 4px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #666666">Helpers</h2>
+<sc-for list="{{helpers}}" as="h" hint-placeholder-count="4">
+<label style="{{h.row}}">
+<span aria-hidden="true" style="{{h.tile}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{h.icon}}"></path></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 13px; font-weight: 500">{{h.label}}</span><span style="font-size: 11.5px; color: #888888">{{h.sub}}</span></span>
+<span role="switch" aria-checked="{{h.checked}}" aria-label="{{h.label}}" style="{{h.sw}}"><span style="{{h.knob}}"></span></span>
+</label>
+</sc-for>
+</section>
+
+<section aria-labelledby="h-items" style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin: 0 4px"><h2 id="h-items" style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #666666">On this wall</h2><span style="font-size: 12px; color: #888888">8 items</span></div>
+<div role="group" aria-label="Show" style="display: flex; gap: 4px; padding: 3px; background: #f5f5f5; border-radius: 8px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="5"><button type="button" aria-pressed="{{f.on}}" style="{{f.style}}">{{f.label}}</button></sc-for>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+<li><button type="button" aria-current="{{it.cur}}" style="{{it.row}}">
+<sc-if value="{{it.img}}" hint-placeholder-val="{{false}}"><img src="{{it.img}}" alt="" style="width: 36px; height: 27px; object-fit: cover; border-radius: 3px; flex: 0 0 auto"></sc-if>
+<sc-if value="{{it.icon}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="width: 36px; height: 27px; flex: 0 0 auto; border-radius: 3px; background: #f2f2f2; display: flex; align-items: center; justify-content: center; color: #666666"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="{{it.icon}}"></path></svg></span></sc-if>
+<span style="flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{it.name}}</span>
+<span style="font-size: 11px; color: #999999">{{it.kind}}</span>
+</button></li>
+</sc-for>
+</ul>
+</section>
+
+<section aria-labelledby="h-groups" style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px; border-top: 1px solid #f0f0f0">
+<div style="display: flex; align-items: center; justify-content: space-between; margin: 8px 4px 0"><h2 id="h-groups" style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #666666">Autofocus groups</h2>
+<button type="button" style="display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 12px; font-weight: 600; padding: 4px 8px; background: none; border: 1px solid #dcdcdc; border-radius: 6px"><svg width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>New group</button></div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; background: #f7f7f7; border-radius: 8px">
+<span style="display: flex; margin-right: 2px"><img src="/_blob/4b57b147d3838c013ed716443b2e427a" alt="" style="width: 24px; height: 18px; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 2px #f7f7f7"><img src="/_blob/0c144ad2600749008030888c3edfb22a" alt="" style="width: 24px; height: 18px; object-fit: cover; border-radius: 2px; margin-left: -8px; box-shadow: 0 0 0 2px #f7f7f7"></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 13px; font-weight: 600; color: #000000">Group 1</span><span style="font-size: 11.5px; color: #888888">2 works</span></span>
+<button type="button" aria-label="Show group 1 outline" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #666666"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.eyeSlash}}"></path></svg></button>
+<button type="button" aria-label="Remove group 1" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #666666"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.x}}"></path></svg></button>
+</div>
+</section>
+
+</div>
+</aside>
+
+<main aria-label="Wall" style="position: relative; flex: 1 1 auto; height: 100%; background: #e2e2e2 url('/_blob/7a30a11bd2d537d6002a22ad830cd214') left top / 1120px auto no-repeat">
+
+<nav aria-label="Add to the wall" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 6px; background: #ffffff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.04)">
+<button type="button" title="Add artwork from your library" style="display: flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; padding: 0 14px 0 12px; height: 52px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 10px"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.library}}"></path></svg>From library</button>
+<span aria-hidden="true" style="width: 1px; height: 32px; background: #ececec; margin: 0 6px"></span>
+<sc-for list="{{adds}}" as="a" hint-placeholder-count="5">
+<button type="button" draggable="true" title="{{a.tip}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 58px; height: 52px; font: inherit; background: none; border: 0; border-radius: 10px; color: #333333; cursor: grab"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{a.icon}}"></path></svg><span style="font-size: 11px; font-weight: 500">{{a.label}}</span></button>
+</sc-for>
+</nav>
+<span style="position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); font-size: 11px; color: #777777; white-space: nowrap">Click to add in the middle of the wall, or drag onto the wall.</span>
+</main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ic = {
+      undo: 'M222,128a94,94,0,0,1-92.74,94H128a93.43,93.43,0,0,1-64.5-25.65,6,6,0,1,1,8.24-8.72A82,82,0,1,0,70,70l-.19.19L39.44,98H72a6,6,0,0,1,0,12H24a6,6,0,0,1-6-6V56a6,6,0,0,1,12,0V90.34L61.63,61.4A94,94,0,0,1,222,128Z',
+      redo: 'M238,56v48a6,6,0,0,1-6,6H184a6,6,0,0,1,0-12h32.55l-30.38-27.8c-.06-.06-.12-.13-.19-.19a82,82,0,1,0-1.7,117.65,6,6,0,0,1,8.24,8.73A93.46,93.46,0,0,1,128,222h-1.28A94,94,0,1,1,194.37,61.4L226,90.35V56a6,6,0,1,1,12,0Z',
+      minus: 'M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128Z',
+      plus: 'M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z',
+      fit: 'M214,48V88a6,6,0,0,1-12,0V54H168a6,6,0,0,1,0-12h40A6,6,0,0,1,214,48ZM88,202H54V168a6,6,0,0,0-12,0v40a6,6,0,0,0,6,6H88a6,6,0,0,0,0-12Zm120-40a6,6,0,0,0-6,6v34H168a6,6,0,0,0,0,12h40a6,6,0,0,0,6-6V168A6,6,0,0,0,208,162ZM88,42H48a6,6,0,0,0-6,6V88a6,6,0,0,0,12,0V54H88a6,6,0,0,0,0-12Z',
+      ruler: 'M233.91,74.79,181.22,22.1a14,14,0,0,0-19.8,0L22.09,161.410a14,14,0,0,0,0,19.8L74.78,233.9a14,14,0,0,0,19.8,0L233.91,94.59A14,14,0,0,0,233.91,74.79ZM225.42,86.1,86.1,225.41h0a2,2,0,0,1-2.83,0L30.58,172.73a2,2,0,0,1,0-2.83L64,136.48l27.76,27.76a6,6,0,1,0,8.48-8.48L72.48,128,96,104.48l27.76,27.76a6,6,0,0,0,8.48-8.48L104.48,96,128,72.49l27.76,27.75a6,6,0,0,0,8.48-8.48L136.49,64,169.9,30.59a2,2,0,0,1,2.83,0l52.69,52.68A2,2,0,0,1,225.42,86.1Z',
+      lock: 'M208,82H174V56a46,46,0,0,0-92,0V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82ZM94,56a34,34,0,0,1,68,0V82H94ZM210,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      magnet: 'M205.56,51.65A85.5,85.5,0,0,0,144.6,26h-.33A85.45,85.45,0,0,0,83.42,51.22L22,113.39a14,14,0,0,0,.06,19.74l28.66,28.66a13.89,13.89,0,0,0,9.9,4.1h.08a13.9,13.9,0,0,0,9.94-4.21l60.87-62.4A18.1,18.1,0,0,1,156.76,99a17.63,17.63,0,0,1,5.34,12.62,19,19,0,0,1-5.44,13.44L94.37,185.31a14,14,0,0,0-.15,19.95l28.67,28.66a14.05,14.05,0,0,0,19.7.1l61.8-60.49C238.07,139.86,238.6,85.18,205.56,51.65ZM62.08,153.29a2,2,0,0,1-1.42.6,2.15,2.15,0,0,1-1.42-.58L30.57,124.65a2,2,0,0,1,0-2.82L55.79,96.28l31.34,31.34Zm72.11,72.15a2,2,0,0,1-2.82,0l-28.66-28.66a2,2,0,0,1-.59-1.43,2,2,0,0,1,.6-1.41L128.51,169l31.34,31.33ZM196,165l-27.52,26.94-31.29-31.29,27.9-27,.07-.08a30.93,30.93,0,0,0,9-22.06,29.47,29.47,0,0,0-9-21.15,30.17,30.17,0,0,0-42.08.46L95.51,119,64.22,87.74,91.94,59.68A73.47,73.47,0,0,1,144.27,38h.28A73.52,73.52,0,0,1,197,60.08C225.44,88.92,224.94,136,196,165Z',
+      person: 'M128,70A30,30,0,1,0,98,40,30,30,0,0,0,128,70Zm0-48a18,18,0,1,1-18,18A18,18,0,0,1,128,22Zm88.88,113.42L171.67,84.16A30,30,0,0,0,149.17,74H106.83a30,30,0,0,0-22.5,10.15L39.12,135.42A18,18,0,0,0,64.46,161l21.11-16.93L67.44,212.92a18,18,0,0,0,32.75,14.94L128,180l27.81,47.91a18,18,0,0,0,32.75-14.94l-18.13-68.87L191.54,161a18,18,0,0,0,25.34-25.56Zm-8.63,16.82a6,6,0,0,1-8.49,0,4.15,4.15,0,0,0-.49-.44l-35.51-28.48a6,6,0,0,0-9.56,6.2l22.87,86.93a7.66,7.66,0,0,0,.37,1,6,6,0,0,1-10.88,5.07,4.37,4.37,0,0,0-.25-.48L133.19,165a6,6,0,0,0-10.38,0L89.69,222.05a4.37,4.37,0,0,0-.25.48,6,6,0,0,1-10.88-5.07,7.66,7.66,0,0,0,.37-1l22.87-86.93A6,6,0,0,0,99.27,123,6.07,6.07,0,0,0,96,122a6,6,0,0,0-3.76,1.32L56.73,151.8a4.15,4.15,0,0,0-.49.44,6,6,0,0,1-8.49-8.49l.26-.27L93.33,92.09A18,18,0,0,1,106.83,86h42.34a18,18,0,0,1,13.5,6.09L208,143.48l.26.27A6,6,0,0,1,208.25,152.24Z',
+      library: 'M216,74H130L101.73,52.8a14,14,0,0,0-8.4-2.8H40A14,14,0,0,0,26,64V200a14,14,0,0,0,14,14H216.89A13.12,13.12,0,0,0,230,200.89V88A14,14,0,0,0,216,74Zm2,126.89a1.11,1.11,0,0,1-1.11,1.11H40a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H93.33a2,2,0,0,1,1.2.4L124.4,84.8A6,6,0,0,0,128,86h88a2,2,0,0,1,2,2ZM158,144a6,6,0,0,1-6,6H134v18a6,6,0,0,1-12,0V150H104a6,6,0,0,1,0-12h18V120a6,6,0,0,1,12,0v18h18A6,6,0,0,1,158,144Z',
+      image: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42ZM40,54H216a2,2,0,0,1,2,2V163.57L188.53,134.1a14,14,0,0,0-19.8,0l-21.42,21.42L101.9,110.1a14,14,0,0,0-19.8,0L38,154.2V56A2,2,0,0,1,40,54ZM38,200V171.17l52.58-52.58a2,2,0,0,1,2.84,0L176.83,202H40A2,2,0,0,1,38,200Zm178,2H193.8l-38-38,21.41-21.42a2,2,0,0,1,2.83,0l38,38V200A2,2,0,0,1,216,202ZM146,100a10,10,0,1,1,10,10A10,10,0,0,1,146,100Z',
+      text: 'M206,56V88a6,6,0,0,1-12,0V62H134V194h26a6,6,0,0,1,0,12H96a6,6,0,0,1,0-12h26V62H62V88a6,6,0,0,1-12,0V56a6,6,0,0,1,6-6H200A6,6,0,0,1,206,56Z',
+      shapes: 'M69.69,62.1a6,6,0,0,0-11.38,0l-40,120A6,6,0,0,0,24,190h80a6,6,0,0,0,5.69-7.9ZM32.32,178,64,83l31.68,95ZM206,76a50,50,0,1,0-50,50A50.06,50.06,0,0,0,206,76Zm-88,0a38,38,0,1,1,38,38A38,38,0,0,1,118,76Zm106,70H136a6,6,0,0,0-6,6v56a6,6,0,0,0,6,6h88a6,6,0,0,0,6-6V152A6,6,0,0,0,224,146Zm-6,56H142V158h76Z',
+      video: 'M250.83,74.71a6,6,0,0,0-6.16.3L206,100.79V72a14,14,0,0,0-14-14H32A14,14,0,0,0,18,72V184a14,14,0,0,0,14,14H192a14,14,0,0,0,14-14V155.21L244.67,181a6,6,0,0,0,9.33-5V80A6,6,0,0,0,250.83,74.71ZM194,184a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V72a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2Zm48-19.21-36-24V115.21l36-24Z',
+      sound: 'M154.64,26.61a6,6,0,0,0-6.32.65L77.94,82H32A14,14,0,0,0,18,96v64a14,14,0,0,0,14,14H77.94l70.38,54.74A6,6,0,0,0,158,224V32A6,6,0,0,0,154.64,26.61ZM30,160V96a2,2,0,0,1,2-2H74v68H32A2,2,0,0,1,30,160Zm116,51.73L86,165.07V90.93l60-46.66Zm50.53-108.85a38,38,0,0,1,0,50.24,6,6,0,1,1-9-7.94,26,26,0,0,0,0-34.37,6,6,0,0,1,9-7.93ZM246,128a77.86,77.86,0,0,1-19.86,52,6,6,0,1,1-8.94-8,66,66,0,0,0,0-88,6,6,0,1,1,8.94-8A77.86,77.86,0,0,1,246,128Z',
+      eyeSlash: 'M52.44,36A6,6,0,0,0,43.56,44L64.44,67c-37.28,21.9-53.23,57-53.92,58.57a6,6,0,0,0,0,4.88c.34.77,8.66,19.22,27.24,37.8C55,185.47,84.62,206,128,206a124.91,124.91,0,0,0,52.57-11.25l23,25.29a6,6,0,0,0,8.88-8.08Zm48.62,71.32,45,49.52a34,34,0,0,1-45-49.52ZM128,194c-31.38,0-58.78-11.42-81.45-33.93A134.57,134.57,0,0,1,22.69,128c4.29-8.2,20.1-35.18,50-51.91L92.89,98.3a46,46,0,0,0,61.35,67.48l17.81,19.6A113.47,113.47,0,0,1,128,194Zm6.4-99.4a6,6,0,0,1,2.25-11.79,46.17,46.17,0,0,1,37.15,40.87,6,6,0,0,1-5.42,6.53l-.56,0a6,6,0,0,1-6-5.45A34.1,34.1,0,0,0,134.4,94.6Zm111.08,35.85c-.41.92-10.37,23-32.86,43.12a6,6,0,1,1-8-8.94A134.07,134.07,0,0,0,233.31,128a134.67,134.67,0,0,0-23.86-32.07C186.78,73.42,159.38,62,128,62a120.19,120.19,0,0,0-19.69,1.6,6,6,0,1,1-2-11.83A131.12,131.12,0,0,1,128,50c43.38,0,73,20.54,90.24,37.76,18.58,18.58,26.9,37,27.240,37.81A6,6,0,0,1,245.48,130.45Z',
+      x: 'M204.24,195.76a6,6,0,1,1-8.48,8.48L128,136.49,60.24,204.24a6,6,0,0,1-8.48-8.48L119.51,128,51.76,60.24a6,6,0,0,1,8.48-8.48L128,119.51l67.76-67.75a6,6,0,0,1,8.48,8.48L136.49,128Z'
+    };
+    const H = [
+      ['Rulers & guides', 'Measure and line things up', ic.ruler, false],
+      ['Lock guides', 'Turn on rulers first', ic.lock, false, true],
+      ['Snap to align', 'Works snap to edges and centres', ic.magnet, true],
+      ['Person for scale', 'A 1.70 m figure on the wall', ic.person, false]
+    ];
+    const seg = (on) => ({ flex: '1 1 auto', font: 'inherit', fontSize: '12px', fontWeight: on ? 600 : 400, padding: '5px 0', background: on ? '#ffffff' : 'transparent', color: on ? '#000000' : '#555555', border: 0, borderRadius: '6px', boxShadow: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none', cursor: 'pointer' });
+    const I = [
+      ['Shape 1', 'Shape', null, ic.shapes],
+      ['Exhibition title', 'Text', null, ic.text],
+      ['Text 1', 'Text', null, ic.text],
+      ['Text 2', 'Text', null, ic.text],
+      ['Text 3', 'Text', null, ic.text],
+      ['Alas para tres', 'Image', '/_blob/4b57b147d3838c013ed716443b2e427a', null, true],
+      ['Huída', 'Image', '/_blob/0c144ad2600749008030888c3edfb22a'],
+      ['Ibiza', 'Image', '/_blob/2edff1869e3899cbbd99695588d819f5']
+    ];
+    return {
+      ic,
+      helpers: H.map(([label, sub, icon, on, disabled]) => ({ label, sub, icon, checked: on ? 'true' : 'false',
+        row: { display: 'flex', alignItems: 'center', gap: '10px', padding: disabled ? '6px 8px 6px 26px' : '8px', borderRadius: '8px', opacity: disabled ? 0.5 : 1, cursor: 'pointer' },
+        tile: { width: '30px', height: '30px', flex: '0 0 auto', borderRadius: '8px', background: on ? '#1a1a1a' : '#f2f2f2', color: on ? '#ffffff' : '#333333', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        sw: { width: '34px', height: '20px', flex: '0 0 auto', borderRadius: '10px', background: on ? '#1a1a1a' : '#d6d6d6', position: 'relative' },
+        knob: { position: 'absolute', top: '3px', left: on ? '17px' : '3px', width: '14px', height: '14px', borderRadius: '50%', background: '#ffffff' } })),
+      filters: ['All', 'Images', 'Text', 'Video', 'Sound'].map((label, i) => ({ label, on: i ? 'false' : 'true', style: seg(!i) })),
+      items: I.map(([name, kind, img, icon, cur]) => ({ name, kind, img: img || false, icon: icon || false, cur: cur ? 'true' : 'false',
+        row: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '6px 8px', font: 'inherit', fontSize: '13px', textAlign: 'left', background: cur ? '#eef3fb' : 'transparent', color: cur ? '#1a3f73' : '#333333', fontWeight: cur ? 600 : 400, border: 0, borderRadius: '8px', boxShadow: cur ? 'inset 3px 0 0 #3b6fd8' : 'none', cursor: 'pointer' } })),
+      adds: [
+        { label: 'Image', icon: ic.image, tip: 'Click to create image in the middle of the wall, or drag and drop anywhere on the wall' },
+        { label: 'Text', icon: ic.text, tip: 'Click to create text in the middle of the wall, or drag and drop anywhere on the wall' },
+        { label: 'Shape', icon: ic.shapes, tip: 'Click to create a decorative shape, or drag and drop anywhere on the wall' },
+        { label: 'Video', icon: ic.video, tip: 'Click to create video in the middle of the wall, or drag and drop anywhere on the wall' },
+        { label: 'Sound', icon: ic.sound, tip: 'Click to create sound in the middle of the wall, or drag and drop anywhere on the wall' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wall View Panels</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e2e2e2}
+.p{width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.1);display:flex;flex-direction:column;overflow:hidden}
+.hd{padding:16px;border-bottom:1px solid #efefef;display:flex;flex-direction:column;gap:12px}
+.bd{padding:14px 16px 18px;display:flex;flex-direction:column;gap:18px}
+.cap{margin:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#666}
+.ib{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #e3e3e3;border-radius:8px;color:#333;padding:0}
+.ib.on{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.seg{display:flex;gap:2px;padding:3px;background:#f3f3f3;border-radius:8px}
+.seg button{flex:1 1 0;height:32px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:6px;color:#444;padding:0}
+.seg button.on{background:#fff;color:#000;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.tabs{display:flex;gap:2px;padding:3px;background:#f3f3f3;border-radius:9px}
+.tabs button{flex:1 1 0;font:inherit;font-size:13px;font-weight:500;height:32px;background:none;border:0;border-radius:7px;color:#555}
+.tabs button.on{background:#fff;color:#000;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.num{display:flex;align-items:center;height:36px;padding:0 10px;border:1px solid #dcdcdc;border-radius:8px;background:#fff;font-family:'Geist Mono',monospace;font-size:13px;color:#000;gap:6px;box-sizing:border-box}
+.num small{font-family:Geist,sans-serif;font-size:11px;color:#888;margin-left:auto}
+.lbl{font-size:12px;color:#666}
+.sel{display:flex;align-items:center;justify-content:space-between;height:36px;padding:0 10px;border:1px solid #dcdcdc;border-radius:8px;background:#fff;font-size:13px;color:#000;box-sizing:border-box}
+.row{display:flex;align-items:center;gap:10px}
+.sw{width:34px;height:20px;flex:0 0 auto;border-radius:10px;background:#d6d6d6;position:relative}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+.sw.on{background:#1a1a1a}.sw.on::after{left:17px}
+.tg{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f7f7f7;border-radius:10px}
+.tg span.t{flex:1 1 auto;display:flex;flex-direction:column;line-height:1.3}
+.tg b{font-size:13px;font-weight:600;color:#000}.tg i{font-style:normal;font-size:11.5px;color:#888}
+.box{position:relative;height:150px;border:1px dashed #cfcfcf;border-radius:10px;background:#fafafa}
+.box .in{position:absolute;left:50%;top:50%;width:84px;height:54px;transform:translate(-50%,-50%);background:#fff;border:1.5px solid #3b6fd8;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#3b6fd8}
+.box .v{position:absolute;width:64px;height:28px;display:flex;align-items:center;justify-content:center;gap:4px;background:#fff;border:1px solid #dcdcdc;border-radius:6px;font-family:'Geist Mono',monospace;font-size:12px;color:#000}
+.ft{margin-top:auto;padding:12px 16px;border-top:1px solid #efefef;display:flex;gap:8px}
+.btn{flex:1 1 auto;font:inherit;font-size:13px;font-weight:600;height:38px;background:#fff;border:1px solid #dcdcdc;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;color:#000}
+.lnk{font:inherit;font-size:12px;font-weight:600;background:none;border:0;padding:0;color:#333;text-decoration:underline;text-underline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100vh; padding: 32px 12px; box-sizing: border-box; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; color: #333333; display: flex; justify-content: center; gap: 24px; align-items: flex-start">
+
+<!-- A · artwork, Layout -->
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="cap" style="color:#555">Artwork · Layout tab</span>
+<aside class="p" aria-label="Alas para tres">
+<div class="hd">
+<div class="row"><img src="/_blob/4b57b147d3838c013ed716443b2e427a" alt="" style="width: 48px; height: 36px; object-fit: cover; border-radius: 4px"><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><b style="font-size: 15px; color: #000">Alas para tres</b><span style="font-size: 12px; color: #888">Image · 130 × 98 cm</span></span></div>
+<div class="row" style="gap: 6px">
+<button class="ib" aria-pressed="false" title="Lock artwork"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.unlock}}"></path></svg></button>
+<button class="ib" title="Move to front"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.front}}"></path></svg></button>
+<button class="ib" title="Move to back"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.back}}"></path></svg></button>
+<span style="flex: 1 1 auto"></span>
+<button class="btn" style="flex: 0 0 auto; height: 34px; padding: 0 12px">View details</button>
+</div>
+<div class="tabs" role="tablist"><button class="on" role="tab" aria-selected="true">Layout</button><button role="tab" aria-selected="false">Look</button></div>
+</div>
+<div class="bd">
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Size</h3>
+<div class="row" style="gap: 6px"><label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">Width</span><span class="num">130<small>cm</small></span></label>
+<button class="ib" aria-pressed="false" title="Lock proportions when resizing" style="margin-top: 20px; width: 30px"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.link}}"></path></svg></button>
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">Height</span><span class="num">98<small>cm</small></span></label></div>
+<button class="lnk" style="align-self: flex-start">Use image proportions</button>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Place on the wall</h3>
+<div class="seg" role="group" aria-label="Place on the wall">
+<sc-for list="{{wallAlign}}" as="a" hint-placeholder-count="6"><button title="{{a.t}}" aria-label="{{a.t}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{a.d}}"></path></svg></button></sc-for>
+</div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Distance to the wall edges</h3>
+<div class="box"><span class="in">artwork</span>
+<span class="v" style="left: 50%; top: 8px; transform: translateX(-50%)">194</span>
+<span class="v" style="left: 50%; bottom: 8px; transform: translateX(-50%)">161</span>
+<span class="v" style="left: 8px; top: 50%; transform: translateY(-50%)">664</span>
+<span class="v" style="right: 8px; top: 50%; transform: translateY(-50%)">638</span>
+</div>
+<span class="lbl" style="font-size: 11.5px">All in cm. Type a number to move the artwork.</span>
+</section>
+</div>
+</aside></div>
+
+<!-- B · artwork, Look -->
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="cap" style="color:#555">Artwork · Look tab</span>
+<aside class="p" aria-label="Alas para tres, look">
+<div class="hd">
+<div class="row"><img src="/_blob/4b57b147d3838c013ed716443b2e427a" alt="" style="width: 48px; height: 36px; object-fit: cover; border-radius: 4px"><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><b style="font-size: 15px; color: #000">Alas para tres</b><span style="font-size: 12px; color: #888">Image · 130 × 98 cm</span></span></div>
+<div class="tabs" role="tablist"><button role="tab" aria-selected="false">Layout</button><button class="on" role="tab" aria-selected="true">Look</button></div>
+</div>
+<div class="bd" style="gap: 14px">
+<h3 class="cap">How it hangs</h3>
+<div style="background: #f7f7f7; border-radius: 10px; overflow: hidden">
+<div class="tg" style="border-radius: 0"><span class="t"><b>Frame</b><i>A picture frame, visible in the 3D room</i></span><span class="sw on" role="switch" aria-checked="true"></span></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 12px"><label style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">Material</span><span class="sel">Dark wood<svg width="12" height="12" viewBox="0 0 256 256" fill="#666"><path d="{{ic.down}}"></path></svg></span></label><label style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">Corner</span><span class="sel">Mitered<svg width="12" height="12" viewBox="0 0 256 256" fill="#666"><path d="{{ic.down}}"></path></svg></span></label></div>
+</div>
+<div class="tg"><span class="t"><b>Passepartout</b><i>A mat border between artwork and frame</i></span><span class="sw" role="switch" aria-checked="false"></span></div>
+<div class="tg"><span class="t"><b>Paper border</b><i>A white margin around the print</i></span><span class="sw" role="switch" aria-checked="false"></span></div>
+<div class="tg"><span class="t"><b>Support</b><i>Canvas or panel depth behind the work</i></span><span class="sw" role="switch" aria-checked="false"></span></div>
+<h3 class="cap" style="margin-top: 6px">In the exhibition</h3>
+<div class="tg"><span class="t"><b>Show information</b><i>Visitors double-click to see details</i></span><span class="sw on" role="switch" aria-checked="true"></span></div>
+<div class="tg"><span class="t"><b>Hide on the exhibition page</b><i>Only in the 3D room, not in the list</i></span><span class="sw" role="switch" aria-checked="false"></span></div>
+<div class="tg"><span class="t"><b>Hide shadow</b><i>No drop shadow behind it in 3D</i></span><span class="sw" role="switch" aria-checked="false"></span></div>
+<h3 class="cap" style="margin-top: 6px">Preset</h3>
+<span class="sel" style="color: #666">Apply a preset…<svg width="12" height="12" viewBox="0 0 256 256" fill="#666"><path d="{{ic.down}}"></path></svg></span>
+<div class="row" style="gap: 14px"><button class="lnk">Save as new preset</button><button class="lnk">Update</button><button class="lnk" style="color: #bd1622">Delete</button></div>
+</div>
+</aside></div>
+
+<!-- C · text, Look -->
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="cap" style="color:#555">Text · Look tab</span>
+<aside class="p" aria-label="Text 2">
+<div class="hd">
+<div class="row"><span aria-hidden="true" style="width: 48px; height: 36px; border-radius: 4px; background: #f2f2f2; display: flex; align-items: center; justify-content: center; color: #555"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.textT}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><b style="font-size: 15px; color: #000">Text 2</b><span style="font-size: 12px; color: #888">Text · 126 × 105 cm</span></span></div>
+<div class="tabs" role="tablist"><button role="tab" aria-selected="false">Layout</button><button class="on" role="tab" aria-selected="true">Look</button></div>
+</div>
+<div class="bd" style="gap: 16px">
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Type</h3>
+<span class="sel">Manrope<svg width="12" height="12" viewBox="0 0 256 256" fill="#666"><path d="{{ic.down}}"></path></svg></span>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<sc-for list="{{typeFields}}" as="f" hint-placeholder-count="4"><label style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">{{f.l}}</span><span class="sel">{{f.v}}<svg width="12" height="12" viewBox="0 0 256 256" fill="#666"><path d="{{ic.down}}"></path></svg></span></label></sc-for>
+</div></section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Alignment</h3>
+<div class="row" style="gap: 6px">
+<div class="seg" style="flex: 4 1 0" role="group" aria-label="Text align"><sc-for list="{{textAlign}}" as="a" hint-placeholder-count="4"><button class="{{a.c}}" aria-label="{{a.t}}" title="{{a.t}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{a.d}}"></path></svg></button></sc-for></div>
+<div class="seg" style="flex: 3 1 0" role="group" aria-label="Vertical align"><sc-for list="{{vAlign}}" as="a" hint-placeholder-count="3"><button class="{{a.c}}" aria-label="{{a.t}}" title="{{a.t}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{a.d}}"></path></svg></button></sc-for></div>
+</div></section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Colours</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">Text</span><span class="sel" style="justify-content: flex-start; gap: 8px"><span style="width: 18px; height: 18px; border-radius: 4px; background: #000"></span><span style="font-family: 'Geist Mono', monospace; font-size: 12px">#000000</span></span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">Background</span><span class="sel" style="justify-content: flex-start; gap: 8px; color: #666"><span style="width: 18px; height: 18px; border-radius: 4px; background: linear-gradient(135deg,#fff 45%,#bd1622 45% 55%,#fff 55%); box-shadow: inset 0 0 0 1px #ccc"></span>None</span></div>
+</div></section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Inner spacing</h3>
+<div class="box" style="height: 120px"><span class="in" style="width: 96px; height: 44px; border-style: dashed; border-color: #999; color: #666">text</span>
+<span class="v" style="left: 50%; top: 6px; transform: translateX(-50%); width: 52px">0</span>
+<span class="v" style="left: 50%; bottom: 6px; transform: translateX(-50%); width: 52px">0</span>
+<span class="v" style="left: 6px; top: 50%; transform: translateY(-50%); width: 52px">0</span>
+<span class="v" style="right: 6px; top: 50%; transform: translateY(-50%); width: 52px">0</span>
+</div></section>
+<section style="display: flex; flex-direction: column; gap: 6px"><h3 class="cap">Extras</h3>
+<sc-for list="{{extras}}" as="x" hint-placeholder-count="3"><div class="row" style="justify-content: space-between; padding: 4px 2px"><span style="font-size: 13px">{{x}}</span><span class="sw" role="switch" aria-checked="false"></span></div></sc-for>
+</section>
+</div>
+</aside></div>
+
+<!-- D · multi -->
+<div style="display: flex; flex-direction: column; gap: 10px"><span class="cap" style="color:#555">Two or more selected</span>
+<aside class="p" aria-label="2 works selected">
+<div class="hd">
+<div class="row"><span style="display: flex"><img src="/_blob/4b57b147d3838c013ed716443b2e427a" alt="" style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px; box-shadow: 0 0 0 2px #fff"><img src="/_blob/0c144ad2600749008030888c3edfb22a" alt="" style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px; margin-left: -14px; box-shadow: 0 0 0 2px #fff"></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><b style="font-size: 15px; color: #000">2 works selected</b><span style="font-size: 12px; color: #888">Alas para tres, Huída</span></span>
+<button class="ib" title="Lock all"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.lock}}"></path></svg></button></div>
+</div>
+<div class="bd">
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Line them up</h3>
+<div class="seg" role="group" aria-label="Align to each other"><sc-for list="{{alignEach}}" as="a" hint-placeholder-count="6"><button title="{{a.t}}" aria-label="{{a.t}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{a.d}}"></path></svg></button></sc-for></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<button class="btn" style="height: 36px; font-weight: 500"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.distH}}"></path></svg>Even gaps ↔</button>
+<button class="btn" style="height: 36px; font-weight: 500"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.distV}}"></path></svg>Even gaps ↕</button>
+</div></section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Place the group on the wall</h3>
+<div class="seg" role="group" aria-label="Place on the wall"><sc-for list="{{wallAlign}}" as="a" hint-placeholder-count="6"><button title="{{a.t}}" aria-label="{{a.t}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{a.d}}"></path></svg></button></sc-for></div>
+<div class="box"><span class="in" style="width: 110px">group</span>
+<span class="v" style="left: 50%; top: 8px; transform: translateX(-50%)">194</span>
+<span class="v" style="left: 50%; bottom: 8px; transform: translateX(-50%)">161</span>
+<span class="v" style="left: 8px; top: 50%; transform: translateY(-50%); width: 52px">773</span>
+<span class="v" style="right: 8px; top: 50%; transform: translateY(-50%); width: 52px">530</span>
+</div></section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Preset for all</h3>
+<span class="sel" style="color: #666">Apply a preset to all…<svg width="12" height="12" viewBox="0 0 256 256" fill="#666"><path d="{{ic.down}}"></path></svg></span></section>
+</div>
+</aside></div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = {"AlignTop":"M222,40a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,40ZM206,80v96a14,14,0,0,1-14,14H152a14,14,0,0,1-14-14V80a14,14,0,0,1,14-14h40A14,14,0,0,1,206,80Zm-12,0a2,2,0,0,0-2-2H152a2,2,0,0,0-2,2v96a2,2,0,0,0,2,2h40a2,2,0,0,0,2-2Zm-76,0V216a14,14,0,0,1-14,14H64a14,14,0,0,1-14-14V80A14,14,0,0,1,64,66h40A14,14,0,0,1,118,80Zm-12,0a2,2,0,0,0-2-2H64a2,2,0,0,0-2,2V216a2,2,0,0,0,2,2h40a2,2,0,0,0,2-2Z","AlignCenterVertical":"M224,122H206V72a14,14,0,0,0-14-14H152a14,14,0,0,0-14,14v50H118V48a14,14,0,0,0-14-14H64A14,14,0,0,0,50,48v74H32a6,6,0,0,0,0,12H50v74a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V134h20v50a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V134h18a6,6,0,0,0,0-12ZM106,208a2,2,0,0,1-2,2H64a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2Zm88-24a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V72a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2Z","AlignBottom":"M222,216a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,216Zm-84-40V80a14,14,0,0,1,14-14h40a14,14,0,0,1,14,14v96a14,14,0,0,1-14,14H152A14,14,0,0,1,138,176Zm12,0a2,2,0,0,0,2,2h40a2,2,0,0,0,2-2V80a2,2,0,0,0-2-2H152a2,2,0,0,0-2,2ZM50,176V40A14,14,0,0,1,64,26h40a14,14,0,0,1,14,14V176a14,14,0,0,1-14,14H64A14,14,0,0,1,50,176Zm12,0a2,2,0,0,0,2,2h40a2,2,0,0,0,2-2V40a2,2,0,0,0-2-2H64a2,2,0,0,0-2,2Z","AlignLeft":"M46,40V216a6,6,0,0,1-12,0V40a6,6,0,0,1,12,0Zm20,64V64A14,14,0,0,1,80,50h96a14,14,0,0,1,14,14v40a14,14,0,0,1-14,14H80A14,14,0,0,1,66,104Zm12,0a2,2,0,0,0,2,2h96a2,2,0,0,0,2-2V64a2,2,0,0,0-2-2H80a2,2,0,0,0-2,2Zm152,48v40a14,14,0,0,1-14,14H80a14,14,0,0,1-14-14V152a14,14,0,0,1,14-14H216A14,14,0,0,1,230,152Zm-12,0a2,2,0,0,0-2-2H80a2,2,0,0,0-2,2v40a2,2,0,0,0,2,2H216a2,2,0,0,0,2-2Z","AlignCenterHorizontal":"M208,138H134V118h50a14,14,0,0,0,14-14V64a14,14,0,0,0-14-14H134V32a6,6,0,0,0-12,0V50H72A14,14,0,0,0,58,64v40a14,14,0,0,0,14,14h50v20H48a14,14,0,0,0-14,14v40a14,14,0,0,0,14,14h74v18a6,6,0,0,0,12,0V206h74a14,14,0,0,0,14-14V152A14,14,0,0,0,208,138ZM70,104V64a2,2,0,0,1,2-2H184a2,2,0,0,1,2,2v40a2,2,0,0,1-2,2H72A2,2,0,0,1,70,104Zm140,88a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z","AlignRight":"M222,40V216a6,6,0,0,1-12,0V40a6,6,0,0,1,12,0ZM190,64v40a14,14,0,0,1-14,14H80a14,14,0,0,1-14-14V64A14,14,0,0,1,80,50h96A14,14,0,0,1,190,64Zm-12,0a2,2,0,0,0-2-2H80a2,2,0,0,0-2,2v40a2,2,0,0,0,2,2h96a2,2,0,0,0,2-2Zm12,88v40a14,14,0,0,1-14,14H40a14,14,0,0,1-14-14V152a14,14,0,0,1,14-14H176A14,14,0,0,1,190,152Zm-12,0a2,2,0,0,0-2-2H40a2,2,0,0,0-2,2v40a2,2,0,0,0,2,2H176a2,2,0,0,0,2-2Z","TextAlignLeft":"M34,64a6,6,0,0,1,6-6H216a6,6,0,0,1,0,12H40A6,6,0,0,1,34,64Zm6,46H168a6,6,0,0,0,0-12H40a6,6,0,0,0,0,12Zm176,28H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Zm-48,40H40a6,6,0,0,0,0,12H168a6,6,0,0,0,0-12Z","TextAlignCenter":"M34,64a6,6,0,0,1,6-6H216a6,6,0,0,1,0,12H40A6,6,0,0,1,34,64ZM64,98a6,6,0,0,0,0,12H192a6,6,0,0,0,0-12Zm152,40H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Zm-24,40H64a6,6,0,0,0,0,12H192a6,6,0,0,0,0-12Z","TextAlignRight":"M34,64a6,6,0,0,1,6-6H216a6,6,0,0,1,0,12H40A6,6,0,0,1,34,64ZM216,98H88a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Zm0,40H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Zm0,40H88a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z","TextAlignJustify":"M34,64a6,6,0,0,1,6-6H216a6,6,0,0,1,0,12H40A6,6,0,0,1,34,64ZM216,98H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Zm0,40H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Zm0,40H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z","AlignTopSimple":"M206,32a6,6,0,0,1-6,6H56a6,6,0,0,1,0-12H200A6,6,0,0,1,206,32ZM174,72V224a14,14,0,0,1-14,14H96a14,14,0,0,1-14-14V72A14,14,0,0,1,96,58h64A14,14,0,0,1,174,72Zm-12,0a2,2,0,0,0-2-2H96a2,2,0,0,0-2,2V224a2,2,0,0,0,2,2h64a2,2,0,0,0,2-2Z","AlignCenterVerticalSimple":"M208,122H174V48a14,14,0,0,0-14-14H96A14,14,0,0,0,82,48v74H48a6,6,0,0,0,0,12H82v74a14,14,0,0,0,14,14h64a14,14,0,0,0,14-14V134h34a6,6,0,0,0,0-12Zm-46,86a2,2,0,0,1-2,2H96a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h64a2,2,0,0,1,2,2Z","AlignBottomSimple":"M206,232a6,6,0,0,1-6,6H56a6,6,0,0,1,0-12H200A6,6,0,0,1,206,232ZM82,192V40A14,14,0,0,1,96,26h64a14,14,0,0,1,14,14V192a14,14,0,0,1-14,14H96A14,14,0,0,1,82,192Zm12,0a2,2,0,0,0,2,2h64a2,2,0,0,0,2-2V40a2,2,0,0,0-2-2H96a2,2,0,0,0-2,2Z"};
+    const ic = {
+      unlock: 'M208,82H94V56a34,34,0,0,1,34-34c16.3,0,31,11.69,34.12,27.19a6,6,0,0,0,11.76-2.38C169.55,25.48,150.26,10,128,10A46.06,46.06,0,0,0,82,56V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82Zm2,126a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      lock: 'M208,82H174V56a46,46,0,0,0-92,0V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82ZM94,56a34,34,0,0,1,68,0V82H94ZM210,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      front: 'M62,216a6,6,0,0,1-6,6H48a14,14,0,0,1-14-14v-8a6,6,0,0,1,12,0v8a2,2,0,0,0,2,2h8A6,6,0,0,1,62,216Zm50-6H96a6,6,0,0,0,0,12h16a6,6,0,0,0,0-12ZM40,166a6,6,0,0,0,6-6V144a6,6,0,0,0-12,0v16A6,6,0,0,0,40,166Zm128,28a6,6,0,0,0-6,6v8a2,2,0,0,1-2,2h-8a6,6,0,0,0,0,12h8a14,14,0,0,0,14-14v-8A6,6,0,0,0,168,194Zm0-84a6,6,0,0,0,6-6V96a14,14,0,0,0-14-14h-8a6,6,0,0,0,0,12h8a2,2,0,0,1,2,2v8A6,6,0,0,0,168,110ZM56,82H48A14,14,0,0,0,34,96v8a6,6,0,0,0,12,0V96a2,2,0,0,1,2-2h8a6,6,0,0,0,0-12ZM208,34H96A14,14,0,0,0,82,48V88h0a6,6,0,0,0,6,6h24a6,6,0,0,0,0-12H94V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2V160a2,2,0,0,1-2,2H174V144a6,6,0,0,0-12,0v24a6,6,0,0,0,6,6h40a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34Z',
+      back: 'M160,82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H160a14,14,0,0,0,14-14V96A14,14,0,0,0,160,82Zm2,126a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H160a2,2,0,0,1,2,2ZM138,40a6,6,0,0,1,6-6h16a6,6,0,0,1,0,12H144A6,6,0,0,1,138,40Zm84,8v8a6,6,0,0,1-12,0V48a2,2,0,0,0-2-2h-8a6,6,0,0,1,0-12h8A14,14,0,0,1,222,48Zm0,48v16a6,6,0,0,1-12,0V96a6,6,0,0,1,12,0Zm0,56v8a14,14,0,0,1-14,14h-8a6,6,0,0,1,0-12h8a2,2,0,0,0,2-2v-8a6,6,0,0,1,12,0ZM82,56V48A14,14,0,0,1,96,34h8a6,6,0,0,1,0,12H96a2,2,0,0,0-2,2v8a6,6,0,0,1-12,0Z',
+      link: 'M164.25,91.75a6,6,0,0,1,0,8.49l-64,64a6,6,0,0,1-8.49-8.48l64-64A6,6,0,0,1,164.25,91.75ZM214.2,41.8a54.07,54.07,0,0,0-76.38,0L107.75,71.85a6,6,0,0,0,8.49,8.49l30.07-30.06a42,42,0,0,1,59.41,59.41l-30.08,30.07a6,6,0,1,0,8.49,8.49l30.07-30.07A54,54,0,0,0,214.2,41.8ZM139.76,175.64l-30.07,30.08a42,42,0,0,1-59.41-59.41l30.06-30.07a6,6,0,0,0-8.49-8.49l-30,30.07a54,54,0,0,0,76.38,76.39l30.07-30.08a6,6,0,0,0-8.49-8.49Z',
+      down: 'M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z',
+      textT: 'M206,56V88a6,6,0,0,1-12,0V62H134V194h26a6,6,0,0,1,0,12H96a6,6,0,0,1,0-12h26V62H62V88a6,6,0,0,1-12,0V56a6,6,0,0,1,6-6H200A6,6,0,0,1,206,56Z',
+      distH: 'M134,40V216a6,6,0,0,1-12,0V40a6,6,0,0,1,12,0ZM96,122H30.49l21.75-21.76a6,6,0,0,0-8.48-8.48l-32,32a6,6,0,0,0,0,8.48l32,32a6,6,0,0,0,8.48-8.48L30.49,134H96a6,6,0,0,0,0-12Zm148.24,1.76-32-32a6,6,0,0,0-8.48,8.48L225.51,122H160a6,6,0,0,0,0,12h65.51l-21.75,21.76a6,6,0,1,0,8.48,8.48l32-32A6,6,0,0,0,244.24,123.76Z',
+      distV: 'M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM100.24,52.24,122,30.49V96a6,6,0,0,0,12,0V30.49l21.76,21.75a6,6,0,0,0,8.48-8.48l-32-32a6,6,0,0,0-8.48,0l-32,32a6,6,0,0,0,8.48,8.48Zm55.52,151.52L134,225.51V160a6,6,0,0,0-12,0v65.51l-21.76-21.75a6,6,0,0,0-8.48,8.48l32,32a6,6,0,0,0,8.48,0l32-32a6,6,0,0,0-8.48-8.48Z'
+    };
+    const wallAlign = [['Top of the wall', P.AlignTopSimple], ['Middle of the wall (height)', P.AlignCenterVerticalSimple], ['Bottom of the wall', P.AlignBottomSimple], ['Left of the wall', P.AlignLeft], ['Centre of the wall', P.AlignCenterHorizontal], ['Right of the wall', P.AlignRight]].map(([t, d]) => ({ t, d }));
+    return {
+      ic, wallAlign,
+      alignEach: [['Align left edges', P.AlignLeft], ['Align centres', P.AlignCenterHorizontal], ['Align right edges', P.AlignRight], ['Align tops', P.AlignTop], ['Align middles', P.AlignCenterVertical], ['Align bottoms', P.AlignBottom]].map(([t, d]) => ({ t, d })),
+      textAlign: [['Align left', P.TextAlignLeft, 1], ['Centre', P.TextAlignCenter], ['Align right', P.TextAlignRight], ['Justify', P.TextAlignJustify]].map(([t, d, on]) => ({ t, d, c: on ? 'on' : '' })),
+      vAlign: [['Top', P.AlignTopSimple, 1], ['Middle', P.AlignCenterVerticalSimple], ['Bottom', P.AlignBottomSimple]].map(([t, d, on]) => ({ t, d, c: on ? 'on' : '' })),
+      typeFields: [{ l: 'Size (cm)', v: '18' }, { l: 'Line height', v: '1.6' }, { l: 'Style', v: 'Regular' }, { l: 'Letter spacing', v: '1' }],
+      extras: ['Paper texture', 'Border', 'Monogram']
+    };
+  }
+}
+</script>
+</body>
+</html>

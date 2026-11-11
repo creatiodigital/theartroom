@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home Prints Picker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#7a7a7a}</style>
+</helmet>
+<div style="min-height: 100vh; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; padding: 40px; box-sizing: border-box; font-family: Geist, -apple-system, sans-serif; font-size: 14px; color: #333333">
+<div role="dialog" aria-labelledby="dlg-h" style="width: 860px; max-width: 100%; background: #ffffff; border-radius: 12px; box-shadow: 0 24px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden">
+<header style="display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid #eeeeee"><h2 id="dlg-h" style="margin: 0; font-size: 18px; font-weight: 700; color: #000">Add artworks to the home page</h2><span style="font-size: 20px; color: #666">×</span></header>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 24px; border-bottom: 1px solid #f0f0f0">
+<span style="flex: 1 1 260px; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border: 1px solid #dcdcdc; border-radius: 4px; color: #888">🔍 Search title or artist</span>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 18px; height: 36px; padding: 0 12px; border: 1px solid #dcdcdc; border-radius: 4px">All artists ▾</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="width: 34px; height: 20px; border-radius: 10px; background: #1a1a1a; position: relative; display: inline-block"><span style="position: absolute; top: 3px; left: 17px; width: 14px; height: 14px; border-radius: 50%; background: #fff"></span></span>Only with a render</span>
+</div>
+<div style="padding: 18px 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-height: 520px; overflow: hidden">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="8">
+<div style="{{c.box}}">
+<div style="position: relative; aspect-ratio: 1 / 1; background: #f2f2f2; border-radius: 4px; overflow: hidden"><sc-if value="{{c.img}}" hint-placeholder-val="{{true}}"><img src="{{c.img}}" alt="" style="width: 100%; height: 100%; object-fit: contain; display: block"></sc-if><span style="{{c.check}}">{{c.mark}}</span></div>
+<span style="font-weight: 600; color: #000; font-size: 13px">{{c.title}}</span>
+<span style="font-size: 12px; color: #666">{{c.artist}}</span>
+<sc-if value="{{c.note}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; color: #888">{{c.note}}</span></sc-if>
+</div>
+</sc-for>
+</div>
+<footer style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-top: 1px solid #eeeeee"><span style="margin-right: auto; font-size: 13px; color: #555">2 selected</span><span style="font-size: 13px; font-weight: 600; padding: 8px 14px; border: 1px solid #dcdcdc; border-radius: 4px">Cancel</span><span style="font-size: 13px; font-weight: 600; padding: 8px 14px; background: #1a1a1a; color: #fff; border-radius: 4px">Add 2 artworks</span></footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const C = [
+      ['Magnolia I', 'Beatriz Salvatierra', '/_blob/585ff0dc94e345cde79b0ba7e2abd09c', 'added'],
+      ['Hiver', 'Mathias Heizmann', '/_blob/6f4c27b9acf1616d4c9c9c6a66ac3f69', 'added'],
+      ['Oculus', 'Elizabeth Mosler', '/_blob/e724ac75e39581c0af43199749b8cecb', 'added'],
+      ['Blossoms', 'Lucie Bonvalet', '/_blob/a47b6b1fb2362fd42f9d912f484eb049', 'added'],
+      ['Memoria II', 'Beatriz Salvatierra', '', 'sel'],
+      ['Infancia', 'Elizabeth Mosler', '', 'sel'],
+      ['Japanese Maple', 'Lucie Bonvalet', '', ''],
+      ['Chassé-croisé', 'Mathias Heizmann', '', '']
+    ];
+    return { cards: C.map(([title, artist, img, st]) => ({ title, artist, img: img || false,
+      note: st === 'added' ? 'Already on the home page' : false,
+      mark: st === 'sel' ? '✓' : (st === 'added' ? '✓' : ''),
+      box: { display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px', borderRadius: '8px', border: st === 'sel' ? '2px solid #1a1a1a' : '1px solid #eeeeee', opacity: st === 'added' ? 0.5 : 1 },
+      check: { position: 'absolute', top: '8px', right: '8px', width: '22px', height: '22px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, background: st === 'sel' ? '#1a1a1a' : (st === 'added' ? '#999' : '#ffffff'), color: '#ffffff', border: st ? 'none' : '1.5px solid #bbbbbb' } })) };
+  }
+}
+</script>
+</body>
+</html>

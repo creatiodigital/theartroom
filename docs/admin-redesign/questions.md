@@ -721,7 +721,19 @@ Fix them in a later pass?
 - **Q93 · The menu foot on long pages.** The side menu grows with the page, so on a long page (this one, Orders) the
   Developer link sits at the very bottom, with the user card. _Meanwhile:_ as specified.
 
+
 ## Answered
+
+**Owner answers, 2026-11-11 (relayed to Code Claude):**
+- **Q43:** yes to all three. Exhibitions: failures show in a red `FeedbackBar` (the server's text, else "Couldn't update {title}. Please try again."); Copy preview link confirms with a green "Preview link copied."; Mark current / past and Delete are hidden for plain admins (super admin only, as the server rules).
+- **Q52:** keep the 3D sound object's texture as is; a later 3D ticket.
+- **Q55:** do (b) now (drop the Icon map's unused keys); (c) a light-only local icon set is a follow-up ticket.
+- **Q59:** yes, the "Shown on the site" switch asks first, with `AdminConfirmModal`.
+- **Q66:** (b), hide the Gallery selection row for non-super-admins.
+- **Q74:** fix in the next pass. Priority: the slides.map crash on a failed load, the unchecked `res.ok` on save, and an upload publishing an unsaved slide.
+- **Q80:** the 2xx gate is OK; add a red `FeedbackBar` "The page could not be saved. Please try again." on a refused save.
+- **Q81:** add `beforeunload` now (unsaved changes); the in-app link guard later.
+- **Q82:** fix the failed load NOW: a non-2xx load shows "The page could not be loaded." and no editor. The Remove confirm and `link: false` (the duplicate Link extension) in the next pass.
 
 <!-- move items here with the answer -->
 

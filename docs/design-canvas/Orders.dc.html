@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Orders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<!-- Side menu (as built in step 1) -->
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<sc-for list="{{nav}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-if value="{{g.label}}" hint-placeholder-val="{{true}}"><span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">{{g.label}}</span></sc-if>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="4">
+<a href="{{i.href}}" aria-current="{{i.current}}" style="{{i.style}}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{i.d}}"></path></svg><span style="flex: 1 1 auto">{{i.label}}</span><sc-if value="{{i.badge}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 700; min-width: 20px; text-align: center; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000000; box-sizing: border-box">{{i.badge}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid #333333">
+<span style="padding: 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Storefront</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a"></span><span style="font-size: 13px; color: #e0e0e0">Purchases open</span></div>
+<button type="button" style="margin: 0 12px; font: inherit; font-size: 13px; font-weight: 600; color: #ffffff; background: #bd1622; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left">Pause all purchases</button>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 36px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">Sales</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Orders</h1>
+<span style="color: #666666">Every buyer order, from payment to artist payout.</span>
+</header>
+
+<!-- Stage tabs -->
+<nav aria-label="Order stages" style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px 24px; border-bottom: 1px solid #eaeaea">
+<div role="tablist" aria-label="Fulfillment stages" style="display: flex; gap: 2px; overflow-x: auto">
+<sc-for list="{{stages}}" as="t" hint-placeholder-count="7">
+<button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}"><span style="{{t.stepStyle}}">{{t.step}}</span><span>{{t.label}}</span><span style="{{t.countStyle}}">{{t.n}}</span></button>
+</sc-for>
+</div>
+<div role="tablist" aria-label="Other" style="display: flex; gap: 2px; margin-left: auto; padding-left: 16px; border-left: 1px solid #eaeaea">
+<sc-for list="{{others}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}"><span>{{t.label}}</span><span style="{{t.countStyle}}">{{t.n}}</span></button>
+</sc-for>
+</div>
+</nav>
+
+<!-- Stage guidance -->
+<div role="note" style="{{noteStyle}}">
+<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><path d="{{noteIcon}}"></path></svg>
+<span><strong>{{noteTitle}}</strong> {{noteText}}</span>
+</div>
+
+<!-- Table panel -->
+<section aria-label="{{tabLabel}}" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #eaeaea">
+<label style="position: relative; flex: 0 1 380px; display: flex">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search orders</span>
+<svg width="16" height="16" viewBox="0 0 256 256" fill="#666666" aria-hidden="true" style="position: absolute; left: 12px; top: 10px"><path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.090,74.090,0,0,1,38,112Z"></path></svg>
+<input type="search" placeholder="Search reference, payment ID, buyer or artwork" style="width: 100%; font: inherit; font-size: 14px; padding: 8px 12px 8px 36px; min-height: 36px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff; box-sizing: border-box">
+</label>
+<span style="margin-left: auto; font-size: 13px; color: #666666">{{countLabel}}</span>
+</div>
+
+<sc-if value="{{hasRows}}" hint-placeholder-val="{{true}}">
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 760px">
+<thead>
+<tr style="background: #f6f6f6; text-align: left">
+<th scope="col" style="padding: 10px 20px; font-size: 12px; font-weight: 600; color: #666666; width: 130px">Date</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Order</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Buyer</th>
+<sc-if value="{{showShipped}}" hint-placeholder-val="{{false}}"><th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Shipped</th></sc-if>
+<sc-if value="{{showPayout}}" hint-placeholder-val="{{false}}"><th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Artist payout</th></sc-if>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666; text-align: right">Total</th>
+<th scope="col" style="padding: 10px 20px; font-size: 12px; font-weight: 600; color: #666666; text-align: right">Next step</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<tr style="border-top: 1px solid #f0f0f0; vertical-align: top">
+<td style="padding: 14px 20px">
+<div style="white-space: nowrap">{{r.date}}</div>
+<sc-if value="{{r.hold}}" hint-placeholder-val="{{false}}"><div style="{{r.holdStyle}}">{{r.hold}}</div></sc-if>
+</td>
+<td style="padding: 14px 12px">
+<a href="OrderDetail.dc.html" style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; color: #000000">{{r.ref}}</a>
+<div style="margin-top: 2px; color: #000000">{{r.art}} <span style="color: #666666">· {{r.variant}}</span><sc-if value="{{r.ed}}" hint-placeholder-val="{{false}}"> <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: #666666">{{r.ed}}</span></sc-if></div>
+<sc-if value="{{r.replacement}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: #cce5ff; color: #004085">Replacement</span></sc-if>
+</td>
+<td style="padding: 14px 12px"><div style="color: #000000">{{r.buyer}}</div><div style="font-size: 12px; color: #666666">{{r.email}}</div></td>
+<sc-if value="{{showShipped}}" hint-placeholder-val="{{false}}"><td style="padding: 14px 12px; white-space: nowrap">{{r.shipped}}</td></sc-if>
+<sc-if value="{{showPayout}}" hint-placeholder-val="{{false}}"><td style="padding: 14px 12px"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px"><span style="{{r.payDot}}"></span>{{r.payout}}</span></td></sc-if>
+<td style="padding: 14px 12px; text-align: right; font-variant-numeric: tabular-nums; color: #000000; white-space: nowrap">{{r.total}}</td>
+<td style="padding: 10px 20px; text-align: right"><a href="OrderDetail.dc.html" style="{{actionStyle}}">{{action}}<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M180.24,132.24l-80,80a6,6,0,0,1-8.48-8.48L167.51,128,91.76,52.24a6,6,0,0,1,8.48-8.48l80,80A6,6,0,0,1,180.24,132.24Z"></path></svg></a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+<div style="margin: 20px; padding: 48px 24px; background: #f9f9f9; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+<span style="width: 44px; height: 44px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666666"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM48,46H208a2,2,0,0,1,2,2V154H179.31a13.94,13.94,0,0,0-9.9,4.1L150.1,177.41a2,2,0,0,1-1.41.59H107.31a2,2,0,0,1-1.41-.58L86.59,158.1a13.94,13.94,0,0,0-9.9-4.1H46V48A2,2,0,0,1,48,46ZM208,210H48a2,2,0,0,1-2-2V166H76.69a2,2,0,0,1,1.41.58L97.41,185.9a13.94,13.94,0,0,0,9.9,4.1h41.38a13.94,13.94,0,0,0,9.9-4.1l19.31-19.31a2,2,0,0,1,1.41-.59H210v42A2,2,0,0,1,208,210Z"></path></svg></span>
+<strong style="font-size: 15px; color: #000000">{{emptyTitle}}</strong>
+<span style="color: #666666; max-width: 420px">{{emptyText}}</span>
+</div>
+</sc-if>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["new","to-place","at-tps","production","shipped","delivered","done","cancelled","refunded","attention"],"default":"to-place"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: null }; }
+  renderVals() {
+    const tab = this.state.tab ?? this.props.tab ?? 'to-place';
+    const counts = { 'new': 2, 'to-place': 6, 'at-tps': 0, 'production': 6, 'shipped': 1, 'delivered': 2, 'done': 1, 'cancelled': 0, 'refunded': 1, 'attention': 1 };
+    const meta = {
+      'new': { label: 'New', title: 'Capture the payment first.', text: 'The buyer paid and the card is on hold. Once the capture succeeds the order moves to “To place at TPS”. Never place at TPS before capturing.', action: 'Capture payment', tone: 'amber', empty: ['No new orders right now.', 'New paid orders appear here as soon as a buyer checks out.'] },
+      'to-place': { label: 'To place at TPS', title: 'Place and pay the order at TPS.', text: 'Payment is captured, so you hold the buyer’s money. Order it on theprintspace, then mark it placed.', action: 'Mark placed at TPS', tone: 'info', empty: ['Nothing to place.', 'Captured orders wait here until you order them at theprintspace.'] },
+      'at-tps': { label: 'At TPS', title: 'Waiting for TPS.', text: 'Mark it in production once theprintspace confirms they are printing.', action: 'Mark in production', tone: 'info', empty: ['Nothing waiting at TPS.', 'Orders you placed at theprintspace wait here until printing starts.'] },
+      'production': { label: 'In production', title: 'TPS is printing.', text: 'When they ship, add the tracking link and mark it shipped.', action: 'Mark shipped', tone: 'info', empty: ['Nothing in production.', ''] },
+      'shipped': { label: 'Shipped', title: 'On its way.', text: 'Mark delivered once the buyer has it.', action: 'Mark delivered', tone: 'info', empty: ['Nothing on its way.', ''] },
+      'delivered': { label: 'Delivered', title: 'Pay the artist.', text: 'You can pay any time. The 14-day count is only a hint for buyer-dispute risk.', action: 'Pay the artist', tone: 'info', empty: ['No artist waiting for payment.', ''] },
+      'done': { label: 'Artist paid', title: 'Complete.', text: 'Delivered and the artist is paid. Nothing left to do.', action: 'View', tone: 'plain', empty: ['No completed orders yet.', ''] },
+      'cancelled': { label: 'Canceled', title: 'Pulled out before delivery.', text: 'Buyer canceled, TPS rejected the file, prints disabled… Refunds, if needed, are on the order page.', action: 'View', tone: 'plain', empty: ['No canceled orders.', 'Orders stopped before delivery would show here.'] },
+      'refunded': { label: 'Refunded', title: 'Money returned.', text: 'The buyer was refunded. Nothing left to do.', action: 'View', tone: 'plain', empty: ['No refunds.', ''] },
+      'attention': { label: 'Needs attention', title: 'Something went wrong.', text: 'Failed payments, rejected orders, refunds owed. Each case differs: open the order to sort it out.', action: 'Resolve', tone: 'red', empty: ['Nothing needs attention.', 'Failed payments and problems would show here.'] }
+    };
+    const stageKeys = ['new', 'to-place', 'at-tps', 'production', 'shipped', 'delivered', 'done'];
+    const otherKeys = ['cancelled', 'refunded', 'attention'];
+    const tabStyle = (on) => ({ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px 12px', minHeight: '44px', boxSizing: 'border-box', background: 'none', border: 0, borderBottom: '2px solid ' + (on ? '#1a1a1a' : 'transparent'), marginBottom: '-1px', font: 'inherit', fontSize: '14px', fontWeight: on ? 600 : 400, color: on ? '#000000' : '#555555', cursor: 'pointer', whiteSpace: 'nowrap' });
+    const countStyle = (k, on) => {
+      const n = counts[k];
+      const red = k === 'attention' && n > 0;
+      return { fontSize: '11px', fontWeight: 700, minWidth: '20px', textAlign: 'center', padding: '1px 7px', borderRadius: '9999px', boxSizing: 'border-box', background: red ? '#bd1622' : (n > 0 ? (on ? '#1a1a1a' : '#e2e2e2') : '#f0f0f0'), color: red || (n > 0 && on) ? '#ffffff' : (n > 0 ? '#000000' : '#999999') };
+    };
+    const mk = (k, i) => ({ label: meta[k].label, n: counts[k], step: i + 1, selected: tab === k ? 'true' : 'false', pick: () => this.setState({ tab: k }), style: tabStyle(tab === k), countStyle: countStyle(k, tab === k), stepStyle: { width: '20px', height: '20px', borderRadius: '50%', border: '1px solid ' + (tab === k ? '#1a1a1a' : '#d0d0d0'), display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, color: tab === k ? '#000000' : '#666666' } });
+    const m = meta[tab];
+    const tones = {
+      amber: { bg: '#fffbeb', border: '#f5d68a', fg: '#5c4503', icon: 'M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z' },
+      red: { bg: '#fef2f2', border: '#fecaca', fg: '#721c24', icon: 'M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z' },
+      info: { bg: '#ffffff', border: '#eaeaea', fg: '#333333', icon: 'M142,176a6,6,0,0,1-6,6,14,14,0,0,1-14-14V128a2,2,0,0,0-2-2,6,6,0,0,1,0-12,14,14,0,0,1,14,14v40a2,2,0,0,0,2,2A6,6,0,0,1,142,176ZM124,94a10,10,0,1,0-10-10A10,10,0,0,0,124,94Zm106,34A102,102,0,1,1,128,26,102.12,102.12,0,0,1,230,128Zm-12,0a90,90,0,1,0-90,90A90.1,90.1,0,0,0,218,128Z' }
+    };
+    tones.plain = tones.info;
+    const t = tones[m.tone];
+    const B = (buyer, email) => ({ buyer, email });
+    const data = {
+      'new': [
+        { date: '10 Nov 2026', hold: 'Hold 1 day · ~6 days left', urgent: false, ref: 'B71C02A9', art: 'Magnolia I', variant: '40×50 Baryta', ed: '#4/30', ...B('Clara Méndez', 'clara.m@example.com'), total: '€412.00' },
+        { date: '5 Nov 2026', hold: 'Hold 6 days · ~1 day left', urgent: true, ref: 'D0E5F311', art: 'Infancia', variant: 'Small 20', ed: '#9/50', ...B('Jonas Weber', 'jonas.w@example.com'), total: '€226.63' }
+      ],
+      'to-place': [
+        { date: '22 Aug 2026', ref: 'A6977CB4', art: 'Passeur', variant: 'Small Edition Variant', ed: '#2/2', ...B('Anna Keller', 'anna.k@example.com'), total: '€189.43' },
+        { date: '22 Aug 2026', ref: '65EE6176', art: 'Passeur', variant: 'Small Edition Variant', ed: '#1/2', ...B('Marc Duval', 'marc.d@example.com'), total: '€226.63' },
+        { date: '22 Aug 2026', ref: 'CCBFC8FC', art: 'Rive', variant: '40×50 Baryta', ed: '#1/100', ...B('Lucía Romero', 'lucia.r@example.com'), total: '€557.36' },
+        { date: '22 Aug 2026', ref: '40CA8015', art: 'High Res', variant: 'Small 20', ed: '#6/50', ...B('Anna Keller', 'anna.k@example.com'), total: '€801.84' },
+        { date: '18 Aug 2026', ref: 'E9377085', art: 'Puerta Verde', variant: '× 2', ed: '', ...B('Thomas Brandt', 'thomas.b@example.com'), total: '€1,063.11', replacement: true },
+        { date: '17 Aug 2026', ref: '4DD4055E', art: 'Lucie 1', variant: 'Open edition', ed: '', ...B('Marc Duval', 'marc.d@example.com'), total: '€387.95' }
+      ],
+      'delivered': [
+        { date: '2 Oct 2026', ref: '9B241080', art: 'Insouciance', variant: '40×50 Baryta', ed: '#1/100', ...B('Sofía Lago', 'sofia.l@example.com'), total: '€557.36', shipped: '9 Oct 2026', payout: '33 days since delivery · safe to pay', paySafe: true },
+        { date: '28 Oct 2026', ref: 'FEA60921', art: 'Landscape and River', variant: 'Medium', ed: '#3/30', ...B('Peter Lang', 'peter.l@example.com'), total: '€640.00', shipped: '3 Nov 2026', payout: '8 days since delivery · 6 to go', paySafe: false }
+      ],
+      'attention': [
+        { date: '1 Nov 2026', ref: 'C33A9E70', art: 'Hiver 2', variant: 'Small 20', ed: '#2/50', ...B('Ines Vidal', 'ines.v@example.com'), total: '€226.63', hold: 'Payment failed: card declined', urgent: true }
+      ]
+    };
+    const rows = (data[tab] || []).map((r) => ({
+      ...r, hold: r.hold || '', ed: r.ed || '', replacement: !!r.replacement,
+      holdStyle: { marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: r.urgent ? 600 : 400, color: r.urgent ? '#bd1622' : '#666666' },
+      payDot: { width: '8px', height: '8px', borderRadius: '50%', background: r.paySafe ? '#2e8b57' : '#f59e0b', flex: '0 0 auto' }
+    }));
+    const red = tab === 'attention';
+    const strong = ['new', 'to-place', 'at-tps', 'production', 'shipped', 'delivered', 'attention'].includes(tab);
+    return {
+      tabLabel: m.label + ' orders',
+      stages: stageKeys.map((k, i) => mk(k, i)),
+      others: otherKeys.map((k, i) => mk(k, i)),
+      noteStyle: { display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '12px 16px', background: t.bg, border: '1px solid ' + t.border, borderRadius: '8px', color: t.fg, fontSize: '14px' },
+      noteIcon: t.icon, noteTitle: m.title, noteText: m.text,
+      countLabel: counts[tab] + (counts[tab] === 1 ? ' order' : ' orders'),
+      hasRows: rows.length > 0, isEmpty: rows.length === 0, rows,
+      showShipped: tab === 'shipped' || tab === 'delivered',
+      showPayout: tab === 'delivered' || tab === 'done',
+      emptyTitle: m.empty[0], emptyText: m.empty[1],
+      action: m.action,
+      actionStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', minHeight: '36px', boxSizing: 'border-box', borderRadius: '4px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', background: red ? '#bd1622' : (strong ? '#1a1a1a' : '#ffffff'), color: red || strong ? '#ffffff' : '#333333', border: '1px solid ' + (red ? '#bd1622' : (strong ? '#1a1a1a' : '#dcdcdc')) },
+      nav: this.nav('/admin/orders', counts['new'] + counts['to-place'] + counts['attention'])
+    };
+  }
+  nav(active, badge) {
+    const P = {
+      dash: 'M104,42H56A14,14,0,0,0,42,56v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,104,42Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm-98,34H56a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,104,138Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,200,138Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Z',
+      orders: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z',
+      ordersFill: 'M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm-88,96A48.05,48.05,0,0,1,80,88a8,8,0,0,1,16,0,32,32,0,0,0,64,0,8,8,0,0,1,16,0A48.05,48.05,0,0,1,128,136Z',
+      editions: 'M222,128a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM104,70H216a6,6,0,0,0,0-12H104a6,6,0,0,0,0,12ZM216,186H104a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12ZM42.68,53.37,50,49.71V104a6,6,0,0,0,12,0V40a6,6,0,0,0-8.68-5.37l-16,8a6,6,0,0,0,5.36,10.74ZM72,202H52l21.48-28.74A21.5,21.5,0,0,0,77.79,157,21.75,21.75,0,0,0,69,142.38a22.86,22.86,0,0,0-31.35,4.31,22.18,22.18,0,0,0-3.28,5.92,6,6,0,0,0,11.28,4.11,9.87,9.87,0,0,1,1.48-2.67,10.78,10.78,0,0,1,14.78-2,9.89,9.89,0,0,1,4,6.61,9.64,9.64,0,0,1-2,7.28l-.06.09L35.2,204.41A6,6,0,0,0,40,214H72a6,6,0,0,0,0-12Z',
+      gift: 'M216,74H174.74a46.41,46.41,0,0,0,6-4.48,27.56,27.56,0,0,0,9.22-20A30.63,30.63,0,0,0,158.5,18a27.56,27.56,0,0,0-20,9.22A57.1,57.1,0,0,0,128,45.76a57.1,57.1,0,0,0-10.48-18.53A27.56,27.56,0,0,0,97.5,18,30.63,30.63,0,0,0,66,49.51a27.56,27.56,0,0,0,9.22,20,45.74,45.74,0,0,0,6,4.48H40A14,14,0,0,0,26,88v32a14,14,0,0,0,14,14h2v66a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V134h2a14,14,0,0,0,14-14V88A14,14,0,0,0,216,74ZM135.77,63c2.25-12.12,6.29-21.75,11.69-27.85A15.68,15.68,0,0,1,158.86,30h.55A18.6,18.6,0,0,1,178,49.14a15.68,15.68,0,0,1-5.18,11.4C162.1,70,143.92,72.83,134.34,73.65,134.59,70.76,135,67.08,135.77,63ZM83.45,35.45A18.69,18.69,0,0,1,96.59,30h.55a15.68,15.68,0,0,1,11.4,5.18C118,45.9,120.83,64.08,121.65,73.66c-2.89-.25-6.57-.68-10.61-1.43C98.92,70,89.29,65.94,83.19,60.53A15.64,15.64,0,0,1,78,49.14,18.65,18.65,0,0,1,83.45,35.45ZM38,120V88a2,2,0,0,1,2-2h82v36H40A2,2,0,0,1,38,120Zm16,80V134h68v68H56A2,2,0,0,1,54,200Zm148,0a2,2,0,0,1-2,2H134V134h68Zm16-80a2,2,0,0,1-2,2H134V86h82a2,2,0,0,1,2,2Z',
+      invoice: 'M28,126a6,6,0,0,1,0-12H56a10,10,0,0,0,0-20H40a22,22,0,0,1,0-44h2V48a6,6,0,0,1,12,0v2H64a6,6,0,0,1,0,12H40a10,10,0,0,0,0,20H56a22,22,0,0,1,0,44H54v2a6,6,0,0,1-12,0v-2ZM230,56V192a14,14,0,0,1-14,14H40a14,14,0,0,1-14-14V152a6,6,0,0,1,12,0v40a2,2,0,0,0,2,2H162V158H80a6,6,0,0,1,0-12h82V110H104a6,6,0,0,1,0-12H218V62H96a6,6,0,0,1,0-12H224A6,6,0,0,1,230,56Zm-56,90h44V110H174Zm44,46V158H174v36h42A2,2,0,0,0,218,192Z',
+      wallet: 'M216,66H56a10,10,0,0,1,0-20H192a6,6,0,0,0,0-12H56A22,22,0,0,0,34,56V184a22,22,0,0,0,22,22H216a14,14,0,0,0,14-14V80A14,14,0,0,0,216,66Zm2,126a2,2,0,0,1-2,2H56a10,10,0,0,1-10-10V75.59A21.84,21.84,0,0,0,56,78H216a2,2,0,0,1,2,2Zm-28-60a10,10,0,1,1-10-10A10,10,0,0,1,190,132Z',
+      door: 'M232,218H206V40a14,14,0,0,0-14-14H64A14,14,0,0,0,50,40V218H24a6,6,0,0,0,0,12H232a6,6,0,0,0,0-12ZM62,40a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2V218H62Zm104,92a10,10,0,1,1-10-10A10,10,0,0,1,166,132Z',
+      image: 'M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM46,208V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v82.2l-28.1-28.1a14,14,0,0,0-19.8,0L54.2,210H48A2,2,0,0,1,46,208Zm162,2H71.17l99.41-99.41a2,2,0,0,1,2.83,0L210,147.17V208A2,2,0,0,1,208,210ZM96,118A22,22,0,1,0,74,96,22,22,0,0,0,96,118Zm0-32A10,10,0,1,1,86,96,10,10,0,0,1,96,86Z',
+      article: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM182,96a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,96Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,128Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,160Z',
+      users: 'M112.6,158.43a58,58,0,1,0-57.2,0A93.83,93.83,0,0,0,5.21,196.72a6,6,0,0,0,10.05,6.56,82,82,0,0,1,137.48,0,6,6,0,0,0,10-6.56A93.83,93.83,0,0,0,112.6,158.43ZM38,108a46,46,0,1,1,46,46A46.06,46.06,0,0,1,38,108Zm211,97a6,6,0,0,1-8.3-1.74A81.8,81.8,0,0,0,172,166a6,6,0,0,1,0-12,46,46,0,1,0-17.08-88.73,6,6,0,1,1-4.46-11.14,58,58,0,0,1,50.14,104.3,93.83,93.83,0,0,1,50.19,38.29A6,6,0,0,1,249,205Z'
+    };
+    const item = (label, href, d, dFill, b) => {
+      const on = active === href;
+      return { label, href: href === '/admin/dashboard' ? 'Main.dc.html' : (href === '/admin/orders' ? 'Orders.dc.html' : '#'), current: on ? 'page' : 'false', d: on && dFill ? dFill : d, badge: b || 0,
+        style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', textDecoration: 'none', background: on ? '#2a2a2a' : 'transparent', color: on ? '#ffffff' : '#e0e0e0', fontWeight: on ? 600 : 400 } };
+    };
+    return [
+      { label: '', items: [item('Dashboard', '/admin/dashboard', P.dash)] },
+      { label: 'Sales', items: [item('Orders', '/admin/orders', P.orders, P.ordersFill, badge), item('Edition sales', '/admin/edition-sales', P.editions), item('Gift orders', '/admin/gift-orders', P.gift), item('Invoices', '/admin/invoices', P.invoice), item('Payouts', '/admin/payouts', P.wallet)] },
+      { label: 'Gallery', items: [item('Exhibitions', '/admin/exhibitions', P.door), item('Print presentations', '/admin/print-presentations', P.image), item('Content', '/admin/content', P.article), item('Users', '/admin/users', P.users)] }
+    ];
+  }
+}
+</script>
+</body>
+</html>
