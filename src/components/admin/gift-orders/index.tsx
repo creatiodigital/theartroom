@@ -7,7 +7,6 @@ import { Gift, Palette, PrinterCheck, type LucideIcon } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -170,7 +169,7 @@ export const AdminGiftOrders = () => {
   }
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Gift orders</h1>
       <p className={dashboardStyles.sectionDescription}>
         Gifts, artist copies and test prints — parcels produced at The Print Space outside the paid
@@ -516,6 +515,6 @@ export const AdminGiftOrders = () => {
           }}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

@@ -8,7 +8,6 @@ import { Gift, Palette, PrinterCheck, type LucideIcon } from 'lucide-react'
 
 import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -353,7 +352,7 @@ export const AdminEditionSales = () => {
   }
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Limited edition sales</h1>
       <p className={dashboardStyles.sectionDescription}>
         Every numbered copy that&apos;s been reserved or sold — who holds it, for which artwork and
@@ -791,6 +790,6 @@ export const AdminEditionSales = () => {
           onCancel={closeRelease}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

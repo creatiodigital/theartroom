@@ -1,0 +1,48 @@
+@use '@/styles/mixins' as *;
+
+// dashboard.dc.html, the role="status" bar at the top of <main>.
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-red-50);
+  color: var(--color-white);
+
+  @include media-up(tablet) {
+    padding: var(--space-3) var(--space-10);
+  }
+
+  svg {
+    flex: 0 0 auto;
+  }
+}
+
+.text {
+  flex: 1 1 320px;
+}
+
+.banner .resume {
+  align-items: center;
+  min-height: 36px;
+  padding: var(--space-2) 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-black);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+
+  &:hover {
+    background: var(--color-gray-35);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.error {
+  flex: 1 0 100%;
+  font-size: var(--text-xs);
+}

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import styles from './page.module.scss'
@@ -150,7 +149,7 @@ export default function PageContentEditor({ params }: PageProps) {
   const showBanner = SLUGS_WITH_BANNER.has(slug)
 
   return (
-    <DashboardLayout backLink="/admin/dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Edit: {slugLabels[slug] || slug}</h1>
 
       {showBanner && (
@@ -209,6 +208,6 @@ export default function PageContentEditor({ params }: PageProps) {
           onClick={handleSave}
         />
       </div>
-    </DashboardLayout>
+    </>
   )
 }

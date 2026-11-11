@@ -27,7 +27,6 @@ import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import styles from './page.module.scss'
@@ -348,7 +347,7 @@ export default function LandingContentPage() {
   }
 
   return (
-    <DashboardLayout backLink="/admin/dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Landing Page - Slideshow</h1>
 
       <div className={dashboardStyles.sectionHeader}>
@@ -527,6 +526,6 @@ export default function LandingContentPage() {
           </div>
         </Modal>
       )}
-    </DashboardLayout>
+    </>
   )
 }

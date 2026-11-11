@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -91,7 +90,7 @@ export default function AnnouncementsAdminPage() {
   const shownId = rows?.find(showable)?.id
 
   return (
-    <DashboardLayout backLink="/admin/content" backLabel="← Back to Content">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Announcements</h1>
 
       <div className={dashboardStyles.section}>
@@ -183,6 +182,6 @@ export default function AnnouncementsAdminPage() {
           onCancel={() => setDeleting(null)}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

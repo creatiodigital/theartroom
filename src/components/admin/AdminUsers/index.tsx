@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { MoreVertical } from 'lucide-react'
 
 import { AddArtistModal } from '@/components/admin/AddArtistModal'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -182,7 +181,7 @@ export const AdminUsers = () => {
   if (error) return <div className={dashboardStyles.page}>Error: {error}</div>
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <div className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>
           <h1 className={dashboardStyles.pageTitle} style={{ margin: 0 }}>
@@ -443,6 +442,6 @@ export const AdminUsers = () => {
           </div>
         </Modal>
       )}
-    </DashboardLayout>
+    </>
   )
 }

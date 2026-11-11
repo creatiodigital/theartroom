@@ -1,0 +1,97 @@
+// Side menu: dashboard.dc.html, the card pinned to the bottom of the <nav>.
+// Drawer: dashboard-phone-menu.dc.html, the bottom row.
+// Buttons are styled through `.card .x` so they outrank Button's own one-class rules.
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-white);
+}
+
+.sidebar {
+  margin-top: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-dark-surface-raised);
+}
+
+.drawer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-gray-80);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-dark-button-hover-bg);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+
+  .drawer & {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.who {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .drawer & {
+    font-size: var(--text-sm);
+  }
+}
+
+.role {
+  font-size: var(--text-xs);
+  color: var(--color-dark-text-muted);
+}
+
+.card .iconButton {
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--admin-nav-text);
+
+  &:hover {
+    color: var(--color-white);
+    background: var(--admin-nav-hover);
+  }
+}
+
+.card .textButton {
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: var(--space-2) 14px;
+  border: 1px solid var(--color-dark-border);
+  border-radius: var(--radius-sm);
+  color: var(--admin-nav-text);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+
+  &:hover {
+    color: var(--color-white);
+    background: var(--admin-nav-hover);
+  }
+}

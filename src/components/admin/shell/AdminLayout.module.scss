@@ -1,0 +1,99 @@
+@use '@/styles/mixins' as *;
+
+// docs/admin-redesign/README.md (layout) and dashboard.dc.html.
+.loading {
+  min-height: 100vh;
+  background: var(--color-gray-10);
+}
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: var(--color-gray-10);
+  color: var(--color-text-primary);
+}
+
+// The shell's own pieces are all in the dashboard font. Page content keeps
+// what it had under DashboardLayout until each page is redesigned.
+.sidebarSlot,
+.topBarSlot,
+.onDark {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.sidebarSlot {
+  display: none;
+
+  @include media-up(tablet) {
+    display: flex;
+  }
+}
+
+.topBarSlot {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  @include media-up(tablet) {
+    display: none;
+  }
+}
+
+.column {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// Bottom padding stays DashboardLayout's 200px (not the design's 56 / 40) until the
+// list pages are redesigned: the kebab menus on the last rows of Users, Exhibitions
+// and Content open downward and need the room (47dadb64). questions.md Q6.
+.content {
+  padding: var(--space-6) var(--space-4) 200px;
+  box-sizing: border-box;
+
+  @include media-up(tablet) {
+    padding: 36px var(--space-10) 200px;
+  }
+
+  // Same rule DashboardLayout's `.page` applied: headings inside admin pages
+  // read in the dashboard font, not the site's editorial serif.
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  }
+}
+
+.contentInner {
+  max-width: var(--admin-content-max-width);
+  margin: 0 auto;
+}
+
+// Keyboard focus (README, Accessibility; questions.md Q3). globals.scss removes
+// every outline site-wide; inside the admin, links and buttons get a ring back
+// on :focus-visible only, so a mouse click never shows it. Fields keep their own
+// focus styling. Black with a 2px gap on light surfaces, white on the dark ones.
+// Scoped to `.root` so the shell's dialog (outside `.shell`) gets it too.
+.root :is(a, button, [role='button']):focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+.root .onDark :is(a, button, [role='button']):focus-visible {
+  outline-color: var(--color-white);
+}

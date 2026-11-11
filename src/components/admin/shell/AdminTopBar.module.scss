@@ -1,0 +1,84 @@
+// dashboard-phone.dc.html, the <header> top bar. Sticky via its slot in AdminLayout.
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-3) 10px var(--space-4);
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+.wordmark {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--color-white);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-white);
+    text-decoration: none;
+  }
+}
+
+.wordmarkName {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-weight: var(--font-medium);
+  font-size: 20px;
+  line-height: var(--leading-tight);
+}
+
+.wordmarkTag {
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-dark-text-muted);
+}
+
+.menuButtonWrap {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.bar .menuButton {
+  position: relative;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-white);
+
+  &:hover {
+    background: var(--admin-nav-hover);
+  }
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  box-sizing: border-box;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge_amber {
+  background: var(--color-amber-50);
+  color: var(--color-black);
+}
+
+.badge_red {
+  background: var(--color-red-50);
+  color: var(--color-white);
+}

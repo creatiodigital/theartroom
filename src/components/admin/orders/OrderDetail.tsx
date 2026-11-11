@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Input } from '@/components/ui/Input'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { editionTypeLabel } from '@/lib/editions/editionLabel'
 import { AUTHORIZATION_LIFETIME_DAYS, authorizationHold } from '@/lib/orders/authorizationPolicy'
 import { daysSinceDelivered, PAYOUT_SAFE_WINDOW_DAYS } from '@/lib/orders/payoutPolicy'
@@ -747,17 +746,17 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
 
   if (loading) {
     return (
-      <DashboardLayout backLink="/admin/orders" backLabel="← Back to Orders">
+      <>
         <p className={dashboardStyles.sectionDescription}>Loading…</p>
-      </DashboardLayout>
+      </>
     )
   }
 
   if (error || !order) {
     return (
-      <DashboardLayout backLink="/admin/orders" backLabel="← Back to Orders">
+      <>
         <p className={dashboardStyles.sectionDescription}>⚠️ {error ?? 'Order not found.'}</p>
-      </DashboardLayout>
+      </>
     )
   }
 
@@ -876,7 +875,7 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
   const authExpiringSoon = hold !== null && hold.status !== 'fresh'
 
   return (
-    <DashboardLayout backLink="/admin/orders" backLabel="← Back to Orders">
+    <>
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', marginBottom: 8 }}>
         {order.thumbnailUrl && (
           <img
@@ -2375,6 +2374,6 @@ export const AdminOrderDetail = ({ orderId }: { orderId: string }) => {
           onCancel={() => setDeleteConfirmOpen(false)}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

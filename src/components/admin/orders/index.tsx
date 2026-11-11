@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { authorizationHold } from '@/lib/orders/authorizationPolicy'
@@ -223,7 +222,7 @@ export const AdminOrders = () => {
   const activeMeta = BUCKET_META[activeBucket]
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Orders</h1>
 
       {error && (
@@ -502,7 +501,7 @@ export const AdminOrders = () => {
           )
         })()}
       </div>
-    </DashboardLayout>
+    </>
   )
 }
 

@@ -31,6 +31,10 @@ const nextConfig = {
     // Off = Next's earlier bailout, as before 16.4. Revisit with the R3F
     // upgrade (its own ticket).
     reactBrowserBailout: false,
+    // The admin's icon set. Lucide is on Next's built-in list; Phosphor is not,
+    // and its barrel re-exports every icon (thousands), so name it here to get
+    // per-icon imports.
+    optimizePackageImports: ['@phosphor-icons/react'],
   },
   images: {
     // No `dangerouslyAllowSVG`: nothing optimizes an SVG (icons are inlined via

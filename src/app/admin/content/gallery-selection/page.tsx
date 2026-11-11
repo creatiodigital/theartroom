@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { GallerySelection } from '@/components/admin/GallerySelection'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 
@@ -33,10 +32,10 @@ const GallerySelectionPage = () => {
   }
 
   return (
-    <DashboardLayout backLink="/admin/content" backLabel="← Back to Content">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Gallery Selection</h1>
       <GallerySelection />
-    </DashboardLayout>
+    </>
   )
 }
 

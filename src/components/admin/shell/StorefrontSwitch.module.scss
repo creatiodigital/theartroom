@@ -1,0 +1,146 @@
+// dashboard-states.dc.html §3 and the "Storefront switch" block of dashboard.dc.html.
+// Buttons are styled through `.switch .x` so they outrank Button's own one-class rules.
+.switch {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-gray-80);
+}
+
+.heading {
+  padding: 0 var(--space-3);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-dark-text-muted);
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 var(--space-3);
+}
+
+.pausedBox {
+  margin: 0 var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--admin-paused-surface);
+  border: 1px solid var(--admin-paused-border);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.dot_open {
+  background: var(--admin-live);
+}
+
+.dot_paused {
+  background: var(--admin-paused-dot);
+}
+
+.dot_loading {
+  background: var(--color-dark-border);
+}
+
+.dot_unknown {
+  background: var(--color-amber-50);
+}
+
+.statusText {
+  font-size: 13px;
+  color: var(--admin-nav-text);
+}
+
+.statusMuted {
+  font-size: 13px;
+  color: var(--color-dark-text-muted);
+}
+
+.statusStrong {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-white);
+}
+
+.pausedNote,
+.error {
+  font-size: var(--text-xs);
+  color: var(--admin-paused-text);
+}
+
+// Shared shape of the switch's buttons: 44 px tall, left-aligned label. `align-items` is
+// restated because Button's `bare` variant resets it to stretch.
+.switch .pause,
+.switch .resume,
+.switch .loadingButton,
+.switch .retry {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+}
+
+.switch .pause {
+  color: var(--color-white);
+  background: var(--color-red-50);
+  border: 1px solid var(--color-red-50);
+
+  &:hover {
+    background: var(--color-red-70);
+    border-color: var(--color-red-70);
+  }
+}
+
+.switch .resume {
+  color: var(--color-black);
+  background: var(--color-white);
+  border: 1px solid var(--color-white);
+
+  &:hover {
+    background: var(--color-gray-35);
+  }
+}
+
+// A disabled pause/resume (mid-toggle) dims a little; the loading button has its own look.
+.switch .pause:disabled,
+.switch .resume:disabled {
+  opacity: 0.6;
+}
+
+.switch .loadingButton {
+  color: var(--color-dark-text-muted);
+  background: var(--color-dark-surface-raised);
+  border: 1px solid var(--color-dark-button-hover-bg);
+  opacity: 1;
+}
+
+.switch .retry {
+  min-height: 40px;
+  padding: var(--space-2) 14px;
+  color: var(--admin-nav-text);
+  border: 1px solid var(--color-dark-border);
+
+  &:hover {
+    color: var(--color-white);
+    background: var(--admin-nav-hover);
+  }
+}

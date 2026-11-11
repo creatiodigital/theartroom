@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { ContentManagement } from '@/components/admin/dashboard/ContentManagement'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 
@@ -36,10 +35,10 @@ const AdminContentPage = () => {
   }
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Content</h1>
       <ContentManagement />
-    </DashboardLayout>
+    </>
   )
 }
 

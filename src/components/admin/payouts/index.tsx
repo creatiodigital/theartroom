@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatEuro } from '@/lib/print-providers/format'
 
@@ -53,7 +52,7 @@ export const AdminPayouts = () => {
   const totalCents = useMemo(() => payouts.reduce((sum, p) => sum + p.amountCents, 0), [payouts])
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Artist payouts</h1>
       <p className={dashboardStyles.sectionDescription}>
         Every payout that&apos;s been released from your Stripe balance to an artist. Use this for
@@ -128,6 +127,6 @@ export const AdminPayouts = () => {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </>
   )
 }

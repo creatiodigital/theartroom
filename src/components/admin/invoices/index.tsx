@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Input } from '@/components/ui/Input'
@@ -179,7 +178,7 @@ export const AdminInvoices = () => {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Invoice Register</h1>
 
       {error && (
@@ -500,6 +499,6 @@ export const AdminInvoices = () => {
           )
         })()}
       </div>
-    </DashboardLayout>
+    </>
   )
 }

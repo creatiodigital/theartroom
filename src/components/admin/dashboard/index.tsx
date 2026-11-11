@@ -5,15 +5,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { useAttentionCounts, useStorefrontSwitch } from '@/components/admin/shell'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { listOrders } from '@/app/admin/orders/actions'
 import { clearAllTestData, getTestDataCounts } from '@/app/admin/dev-cleanup/actions'
-import { getPurchasesPausedState, togglePurchasesPaused } from '@/app/admin/settings/actions'
-import { type AttentionMetric, countAttentionMetrics } from '@/lib/orders/orderBuckets'
+import type { AttentionMetric } from '@/lib/orders/orderBuckets'
 
 import { AnalyticsSection } from './AnalyticsSection'
 
@@ -119,14 +117,17 @@ export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
 
-  const [metrics, setMetrics] = useState<Record<AttentionMetric, number> | null>(null)
-
-  // Purchases kill switch — null until the current state loads.
-  const [purchasesPaused, setPurchasesPaused] = useState<boolean | null>(null)
-  const [pauseConfirmOpen, setPauseConfirmOpen] = useState(false)
-  const [pauseToggling, setPauseToggling] = useState(false)
-  const [pauseError, setPauseError] = useState<string | null>(null)
-  const [countsError, setCountsError] = useState<string | null>(null)
+  // The attention counts and the purchases kill switch live in the admin shell
+  // (one read per visit, shared with the side menu and the paused banner).
+  // The pause / resume confirmation is the shell's too.
+  const { metrics, error: countsError, reload: loadCounts } = useAttentionCounts()
+  const {
+    paused: purchasesPaused,
+    error: pauseError,
+    toggling: pauseToggling,
+    requestToggle: requestPurchasesToggle,
+    reload: loadPausedState,
+  } = useStorefrontSwitch()
 
   // Dev-cleanup state (section only renders outside production).
   const [cleanupConfirmOpen, setCleanupConfirmOpen] = useState(false)
@@ -145,66 +146,12 @@ export const DashboardAdmin = () => {
     }
   }, [sessionStatus, session, router])
 
-  // Live counts for the "Needs your attention" cards. Reuses the orders
-  // list's bucketOf so the dashboard never drifts from the tab badges.
-  //
   // Every action call on this page catches TRANSPORT failures too, not just
   // `ok: false`: a 504 or a rolling deploy rejects the promise before the
   // action's own try/catch runs. Uncaught, that surfaced in Sentry as
   // "An unexpected response was received from the server" — tagged with
   // whatever admin page was open by then, because Next queues actions and
   // posts each one to the CURRENT url, so a slow one outlives the dashboard.
-  const loadCounts = useCallback(async () => {
-    setCountsError(null)
-    try {
-      const res = await listOrders()
-      if (res.ok) setMetrics(countAttentionMetrics(res.orders))
-      else setCountsError(res.error)
-    } catch {
-      setCountsError(UNREACHABLE)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (sessionStatus === 'authenticated') void loadCounts()
-  }, [sessionStatus, loadCounts])
-
-  // Extracted so the error state can offer a retry — during an incident the
-  // kill switch must not dead-end on one failed read.
-  const loadPausedState = useCallback(async () => {
-    setPauseError(null)
-    try {
-      const res = await getPurchasesPausedState()
-      if (res.ok) setPurchasesPaused(res.paused)
-      else setPauseError(res.error)
-    } catch {
-      setPauseError(UNREACHABLE)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (sessionStatus !== 'authenticated') return
-    void loadPausedState()
-  }, [sessionStatus, loadPausedState])
-
-  const handleTogglePurchases = useCallback(async () => {
-    if (purchasesPaused === null) return
-    setPauseToggling(true)
-    setPauseError(null)
-    try {
-      const res = await togglePurchasesPaused(!purchasesPaused)
-      if (res.ok) setPurchasesPaused(res.paused)
-      else setPauseError(res.error)
-    } catch {
-      // The switch may or may not have flipped server-side — say so rather
-      // than guess, and leave the shown state as it was.
-      setPauseError(`${UNREACHABLE} Reload to see the current state before trying again.`)
-    } finally {
-      setPauseToggling(false)
-      setPauseConfirmOpen(false)
-    }
-  }, [purchasesPaused])
-
   const openCleanupConfirm = useCallback(async () => {
     setCleanupResult(null)
     setCleanupCounts(null)
@@ -262,7 +209,7 @@ export const DashboardAdmin = () => {
   }
 
   return (
-    <DashboardLayout>
+    <>
       <h1 className={dashboardStyles.pageTitle}>Admin Dashboard</h1>
 
       {/* Urgent — what needs attention right now. Counters are
@@ -378,7 +325,7 @@ export const DashboardAdmin = () => {
                 : 'Pause all purchases'
           }
           disabled={purchasesPaused === null || pauseToggling}
-          onClick={() => setPauseConfirmOpen(true)}
+          onClick={requestPurchasesToggle}
         />
         {pauseError && (
           <p className={dashboardStyles.sectionDescription} style={{ margin: '12px 0 0 0' }}>
@@ -394,22 +341,6 @@ export const DashboardAdmin = () => {
           </p>
         )}
       </section>
-
-      {pauseConfirmOpen && (
-        <ConfirmModal
-          title={purchasesPaused ? 'Resume purchases?' : 'Pause ALL purchases?'}
-          message={
-            purchasesPaused
-              ? 'The prints catalog, Order Print buttons, cart and checkout become available to the public again immediately.'
-              : 'The public site becomes read-only immediately: prints catalog, every Order Print button, cart and checkout disappear (bookmarked links included) and new payments are refused. Orders already placed are not affected. You can resume at any time.'
-          }
-          confirmLabel={purchasesPaused ? 'Resume purchases' : 'Pause all purchases'}
-          destructive={!purchasesPaused}
-          busy={pauseToggling}
-          onConfirm={() => void handleTogglePurchases()}
-          onCancel={() => setPauseConfirmOpen(false)}
-        />
-      )}
 
       {cleanupConfirmOpen && (
         <ConfirmModal
@@ -433,6 +364,6 @@ export const DashboardAdmin = () => {
           onCancel={() => setCleanupConfirmOpen(false)}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

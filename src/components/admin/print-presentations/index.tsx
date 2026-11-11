@@ -10,7 +10,6 @@ import {
   type PresentationRow,
   type PresentationStatus,
 } from '@/app/admin/print-presentations/actions'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
@@ -163,7 +162,7 @@ export const AdminPrintPresentations = () => {
   const done = Object.keys(outcomes).length
 
   return (
-    <DashboardLayout backLink="/admin/dashboard">
+    <>
       <section className={dashboardStyles.section}>
         <div className={dashboardStyles.sectionHeader}>
           <h1 className={dashboardStyles.sectionTitle}>Print presentations</h1>
@@ -347,6 +346,6 @@ export const AdminPrintPresentations = () => {
           onFinished={onFinished}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

@@ -1,8 +1,8 @@
 'use client'
 
 import { use, useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
 import { ImageUploader } from '@/components/ui/ImageUploader'
@@ -118,7 +118,12 @@ export default function AnnouncementEditor({ params }: PageProps) {
   }
 
   return (
-    <DashboardLayout backLink="/admin/content/announcements" backLabel="← Back to Announcements">
+    <>
+      {/* Interim, until the admin breadcrumb is designed (docs/admin-redesign/questions.md
+          Q4): Announcements is not in the admin menu, so this is the only way back. */}
+      <Link href="/admin/content/announcements" className={dashboardStyles.backLink}>
+        ← Back to Announcements
+      </Link>
       <h1 className={dashboardStyles.pageTitle}>Edit Announcement</h1>
 
       {loadError && <p className={styles.error}>{loadError}</p>}
@@ -190,6 +195,6 @@ export default function AnnouncementEditor({ params }: PageProps) {
           </div>
         </>
       )}
-    </DashboardLayout>
+    </>
   )
 }

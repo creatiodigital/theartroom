@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard states and components</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f0f0f0}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 2280px; box-sizing: border-box; padding: 56px 64px; background: #f0f0f0; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 40px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">The Art Room admin · reference</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; color: #000000">Dashboard states &amp; components</h1>
+<p style="margin: 0; color: #666666; max-width: 760px">Every state the dashboard code can show today, drawn once. Names in <code style="font-size: 13px">mono</code> are the proposed component names.</p>
+</header>
+
+<!-- 1. AttentionCard -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">1 · Attention card</h2><code style="font-size: 12px; color: #666666">AttentionCard tone="red|amber" count</code></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #666666">Loading (counts not back yet)</span>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 8px; background: #f0f0f0"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">New</span></div>
+<span style="font-size: 32px; font-weight: 700; line-height: 1; color: #cccccc">–</span>
+<span style="font-size: 12px; color: #666666">Loading…</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #666666">Zero: neutral, never coloured</span>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 8px; background: #f0f0f0"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">New</span></div>
+<span style="font-size: 32px; font-weight: 700; line-height: 1; color: #666666">0</span>
+<span style="font-size: 12px; color: #155724">None to capture</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #666666">Amber tone, count &gt; 0</span>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; background: #fffbeb; border: 1px solid #f5d68a; border-radius: 8px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 8px; background: #fff3cd"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">New</span></div>
+<span style="font-size: 32px; font-weight: 700; line-height: 1; color: #856404">3</span>
+<span style="font-size: 12px; font-weight: 600; color: #856404">Review now →</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; color: #666666">Red tone, count &gt; 0</span>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 8px; background: #fecaca"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Refund still owed</span></div>
+<span style="font-size: 32px; font-weight: 700; line-height: 1; color: #bd1622">1</span>
+<span style="font-size: 12px; font-weight: 600; color: #721c24">Review now →</span>
+</div>
+</div>
+
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; max-width: 560px">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #bd1622"></span>
+<span style="flex: 1 1 auto">Could not reach the server.</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; background: none; border: 1px solid #dcdcdc; border-radius: 4px; padding: 6px 12px; min-height: 32px; cursor: pointer">Retry</button>
+</div>
+<span style="font-size: 12px; color: #666666">Counts failed to load: cards keep “–”, this line sits under the row. Red cards: Refund still owed, Needs attention. Amber: New, Awaiting placement at TPS, Delivered artist not paid.</span>
+</section>
+
+<!-- 2. Sidebar items -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">2 · Side menu item</h2><code style="font-size: 12px; color: #666666">AdminNavItem active badge</code></div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; padding: 24px; background: #1a1a1a; border-radius: 8px; color: #ffffff">
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #999999">Default</span><span style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #e0e0e0"><span style="width: 18px; height: 18px; border-radius: 4px; border: 1.25px solid currentColor; box-sizing: border-box"></span>Orders</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #999999">Hover</span><span style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #222222; color: #ffffff"><span style="width: 18px; height: 18px; border-radius: 4px; border: 1.25px solid currentColor; box-sizing: border-box"></span>Orders</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #999999">Active (current page)</span><span style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #2a2a2a; color: #ffffff; font-weight: 600"><span style="width: 18px; height: 18px; border-radius: 4px; background: #ffffff"></span>Orders</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #999999">Keyboard focus</span><span style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #ffffff; box-shadow: 0 0 0 2px #1a1a1a, 0 0 0 4px #ffffff"><span style="width: 18px; height: 18px; border-radius: 4px; border: 1.25px solid currentColor; box-sizing: border-box"></span>Orders</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #999999">Badge, amber only</span><span style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #e0e0e0"><span style="width: 18px; height: 18px; border-radius: 4px; border: 1.25px solid currentColor; box-sizing: border-box"></span><span style="flex: 1 1 auto">Orders</span><span style="font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000000">4</span></span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; color: #999999">Badge, any red</span><span style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #e0e0e0"><span style="width: 18px; height: 18px; border-radius: 4px; border: 1.25px solid currentColor; box-sizing: border-box"></span><span style="flex: 1 1 auto">Orders</span><span style="font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 9999px; background: #bd1622; color: #ffffff">9</span></span></div>
+</div>
+<span style="font-size: 12px; color: #666666">Badge = sum of the five attention counts; hidden at 0. Icon squares are stand-ins. Icons: Phosphor, weight “light” at 18px; the active item switches to weight “fill”.</span>
+</section>
+
+<!-- 3. Storefront switch -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">3 · Storefront switch (side menu) and paused banner</h2><code style="font-size: 12px; color: #666666">StorefrontSwitch · PausedBanner</code></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 24px; background: #1a1a1a; border-radius: 8px; color: #ffffff">
+
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; color: #999999">Loading</span>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #555555"></span><span style="font-size: 13px; color: #999999">Checking…</span></div>
+<button type="button" disabled style="font: inherit; font-size: 13px; font-weight: 600; color: #999999; background: #2a2a2a; border: 1px solid #444444; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left">Loading…</button></div>
+
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; color: #999999">Open</span>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a"></span><span style="font-size: 13px; color: #e0e0e0">Purchases open</span></div>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; color: #ffffff; background: #bd1622; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left; cursor: pointer">Pause all purchases</button></div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: #3a1316; border: 1px solid #7a1c22"><span style="font-size: 12px; color: #e0b4b7">Paused</span>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #ff6b6b"></span><span style="font-size: 13px; font-weight: 600">Purchases paused</span></div>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; color: #000000; background: #ffffff; border: 1px solid #ffffff; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left; cursor: pointer">Resume purchases</button></div>
+
+<div style="display: flex; flex-direction: column; gap: 10px"><span style="font-size: 12px; color: #999999">Error</span>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b"></span><span style="font-size: 13px; color: #e0e0e0">State unknown</span></div>
+<span style="font-size: 12px; color: #e0b4b7">Could not reach the server. Reload to see the current state before trying again.</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; color: #e0e0e0; background: none; border: 1px solid #555555; border-radius: 4px; padding: 8px 14px; min-height: 40px; text-align: left; cursor: pointer">Retry</button></div>
+
+</div>
+<div role="status" style="display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: #bd1622; color: #ffffff; border-radius: 8px">
+<span style="width: 18px; height: 18px; border: 1.5px solid #ffffff; border-radius: 3px; box-sizing: border-box"></span>
+<span style="flex: 1 1 auto"><strong>Purchases are paused.</strong> The public site is read-only and new payments are refused. Orders already placed are not affected.</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; color: #000000; background: #ffffff; border: 0; border-radius: 4px; padding: 8px 14px; min-height: 36px; cursor: pointer">Resume purchases</button>
+</div>
+<span style="font-size: 12px; color: #666666">While paused, the red banner sits at the top of EVERY admin page (inside AdminLayout), not only the dashboard. Both buttons open the confirm dialog below.</span>
+</section>
+
+<!-- 4. Confirm dialogs -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">4 · Confirm dialog</h2><code style="font-size: 12px; color: #666666">ConfirmModal destructive busy (restyle only)</code></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 40px; background: rgba(26,26,26,0.55); border-radius: 8px">
+
+<div role="dialog" aria-labelledby="dlg1" style="background: #ffffff; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 16px 48px rgba(0,0,0,0.25)">
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<span style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 50%; background: #fef2f2; color: #bd1622; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M235.07,189.09,147.61,37.22h0a22.75,22.75,0,0,0-39.22,0L20.93,189.09a21.53,21.53,0,0,0,0,21.72A22.35,22.35,0,0,0,40.55,222h174.9a22.35,22.35,0,0,0,19.6-11.19A21.53,21.53,0,0,0,235.07,189.09ZM224.66,204.8a10.46,10.46,0,0,1-9.21,5.2H40.55a10.46,10.46,0,0,1-9.21-5.2,9.51,9.51,0,0,1,0-9.72L118.79,43.21a10.75,10.75,0,0,1,18.42,0l87.46,151.87A9.51,9.51,0,0,1,224.66,204.8ZM122,144V104a6,6,0,0,1,12,0v40a6,6,0,0,1-12,0Zm16,36a10,10,0,1,1-10-10A10,10,0,0,1,138,180Z"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h3 id="dlg1" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Pause all purchases?</h3>
+<p style="margin: 0; color: #666666">The public site becomes read-only immediately: prints catalog, every Order Print button, cart and checkout disappear (bookmarked links included) and new payments are refused. Orders already placed are not affected. You can resume at any time.</p>
+</div>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 10px">
+<button type="button" style="font: inherit; font-weight: 600; background: #ffffff; color: #333333; border: 1px solid #dcdcdc; border-radius: 4px; padding: 10px 16px; min-height: 44px; cursor: pointer">Cancel</button>
+<button type="button" style="font: inherit; font-weight: 600; background: #bd1622; color: #ffffff; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 16px; min-height: 44px; cursor: pointer">Pause all purchases</button>
+</div>
+</div>
+
+<div role="dialog" aria-labelledby="dlg2" style="background: #ffffff; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 16px 48px rgba(0,0,0,0.25); align-self: start">
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<span style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 50%; background: #f0f0f0; color: #000000; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h3 id="dlg2" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Resume purchases?</h3>
+<p style="margin: 0; color: #666666">The prints catalog, Order Print buttons, cart and checkout become available to the public again immediately.</p>
+</div>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 10px">
+<button type="button" style="font: inherit; font-weight: 600; background: #ffffff; color: #333333; border: 1px solid #dcdcdc; border-radius: 4px; padding: 10px 16px; min-height: 44px; cursor: pointer">Cancel</button>
+<button type="button" disabled style="font: inherit; font-weight: 600; background: #333333; color: #ffffff; border: 1px solid #333333; border-radius: 4px; padding: 10px 16px; min-height: 44px; opacity: 0.7">Resuming…</button>
+</div>
+<span style="font-size: 12px; color: #666666">Shown in its busy state: confirm button disabled with a progress label.</span>
+</div>
+
+</div>
+</section>
+
+<!-- 5. Analytics states -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">5 · Analytics panels</h2><code style="font-size: 12px; color: #666666">Panel · BarList · DonutChart</code></div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #666666">Loading</span>
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 14px" aria-busy="true">
+<span style="width: 60%; height: 12px; border-radius: 4px; background: #ececec"></span>
+<span style="width: 100%; height: 8px; border-radius: 4px; background: #f0f0f0"></span>
+<span style="width: 80%; height: 8px; border-radius: 4px; background: #f0f0f0"></span>
+<span style="width: 65%; height: 8px; border-radius: 4px; background: #f0f0f0"></span>
+<span style="width: 40%; height: 8px; border-radius: 4px; background: #f0f0f0"></span>
+<span style="font-size: 12px; color: #666666">Loading analytics…</span>
+</div></div>
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #666666">Not configured</span>
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<span style="align-self: flex-start; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #cce5ff; color: #004085">Setup needed</span>
+<p style="margin: 0; color: #333333">GA4 is not configured. Set <code style="font-size: 12px">GA4_PROPERTY_ID</code> and <code style="font-size: 12px">GA_SERVICE_ACCOUNT_KEY</code> to enable this section.</p>
+</div></div>
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #666666">Error</span>
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<span style="align-self: flex-start; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #f8d7da; color: #721c24">Unavailable</span>
+<p style="margin: 0; color: #333333">Could not load analytics. Reload to retry.</p>
+</div></div>
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #666666">Empty list</span>
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Most viewed artworks</span>
+<p style="margin: 0; padding: 24px 12px; text-align: center; background: #f9f9f9; border-radius: 4px; color: #666666">No artwork views recorded yet.</p>
+</div></div>
+
+</div>
+<span style="font-size: 12px; color: #666666">Loading / not configured / error replace all four analytics panels with ONE full-width panel (the data comes from one request). Empty applies per list.</span>
+</section>
+
+<!-- 6. Dev cleanup -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px"><h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">6 · Test-data cleanup (localhost + staging only)</h2><code style="font-size: 12px; color: #666666">DEV_CLEANUP_ALLOWED</code></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 20px 24px; background: #ffffff; border: 1px dashed #d0d0d0; border-radius: 8px; max-width: 1100px">
+<div style="flex: 1 1 520px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #fff3cd; color: #856404">Test environment · staging</span><strong style="color: #000000">Clear test data</strong></div>
+<p style="margin: 0; color: #666666">Wipes all orders, invoices (and their PDFs), staged carts, and resets every limited-edition series. Localhost and staging share this database. Not shown in production.</p>
+</div>
+<button type="button" style="font: inherit; font-weight: 600; background: #ffffff; color: #bd1622; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 16px; min-height: 44px; cursor: pointer">Clear all test orders &amp; invoices</button>
+</div>
+<span style="font-size: 12px; color: #666666">Sits last on the dashboard, after analytics. Outline-red so it never competes with the real Pause switch.</span>
+</section>
+
+<!-- 7. Tokens -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #000000">7 · Tokens used (from variables.scss unless marked NEW)</h2>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{swatches}}" as="w" hint-placeholder-count="16">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="{{w.chip}}"></span>
+<span style="font-size: 12px; font-weight: 600; color: #000000">{{w.hex}}</span>
+<span style="font-size: 11px; color: #666666; line-height: 1.35">{{w.name}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 32px; padding: 20px 24px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: #000000">Page title</span><span style="font-size: 12px; color: #666666">Geist 700 · 30px (--text-2xl) · -0.02em</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #000000; line-height: 2.3">Panel title</span><span style="font-size: 12px; color: #666666">Geist 700 · 13px · caps · 0.08em</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 32px; font-weight: 700; line-height: 1.2; color: #000000">128</span><span style="font-size: 12px; color: #666666">Metric · Geist 700 · 32px · tabular</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; line-height: 2.6">Body text</span><span style="font-size: 12px; color: #666666">Geist 400 · 14px (--text-sm)</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; line-height: 3.3">Eyebrow</span><span style="font-size: 12px; color: #666666">Geist 600 · 11px · caps · 0.1em</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'EB Garamond', Georgia, serif; font-size: 24px; font-weight: 500; line-height: 1.6">The Art Room</span><span style="font-size: 12px; color: #666666">Wordmark only · EB Garamond 500</span></div>
+</div>
+<span style="font-size: 12px; color: #666666">Spacing on the 4px scale (--space-*). Radius: 4px controls (--radius-sm), 8px cards (--radius-md), full for pills. Side menu 248px; content max-width 1180px; page padding 36/40px.</span>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2280}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = [
+      ['#1a1a1a', '--color-dark-surface · side menu'], ['#2a2a2a', '--color-dark-surface-raised · active item'],
+      ['#222222', 'NEW --admin-nav-hover'], ['#999999', '--color-dark-text-muted'],
+      ['#f9f9f9', '--color-gray-10 · page'], ['#ffffff', '--color-white · panels'],
+      ['#eaeaea', '--color-border-default'], ['#000000', '--color-black · titles, metrics'],
+      ['#bd1622', '--color-red-50 · pause, red tone'], ['#fef2f2', '--color-red-30 · red card'],
+      ['#fecaca', '--color-red-40 · red border'], ['#f59e0b', '--color-amber-50 · amber badge'],
+      ['#fffbeb', 'NEW --admin-amber-bg'], ['#f5d68a', 'NEW --admin-amber-border'],
+      ['#856404', '--color-yellow-70 · amber text'], ['#4cc38a', 'NEW --admin-live · open dot']
+    ];
+    return { swatches: s.map(([hex, name]) => ({ hex, name, chip: { height: '48px', borderRadius: '8px', background: hex, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)' } })) };
+  }
+}
+</script>
+</body>
+</html>
