@@ -3,7 +3,10 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 9999;
+  // Under every dialog (the shared Modal, the artwork details, the room's help and Sound & Video
+  // windows, the add-to-cart confirmation: 1000 and up), so an open dialog is never covered by it;
+  // over the page and the 3D room's controls (998).
+  z-index: 999;
 
   display: flex;
   flex-direction: column;

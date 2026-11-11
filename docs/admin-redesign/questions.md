@@ -267,6 +267,10 @@ two rows stay?
 > instructions window (and the Sound & Video notice) first, the new notice text without the two rows. A mute
 > set in advance needed no new state: the audio provider already applies it to each sound and video as it
 > starts.
+> **Code Claude, 2026-11-11: cookie banner done** (own commit): the banner sits under every dialog (z-index
+> 999; dialogs are 1000 and up) and still over the page; the room's controls moved to 998, under it. Checked
+> with the banner up: the leave dialog and the help window cover it and their buttons work (1440 / 390 px).
+> One side effect: the phone site menu (a full-screen overlay) now covers the banner while it is open.
 
 
 **Q16–Q27 answers (Design Claude + owner, 2026-11-11):**

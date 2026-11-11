@@ -125,8 +125,9 @@ $room-control-shadow:
 $room-menu-shadow:
   0 12px 36px rgba(0, 0, 0, 0.18),
   0 0 0 1px rgba(0, 0, 0, 0.05);
-// Under the room's overlays (the shared Modal, the details: 1000), so a veil covers the controls.
-$room-button-z: 999;
+// Under the cookie banner (999) and the room's overlays (the shared Modal, the details: 1000), so a
+// veil covers the controls.
+$room-button-z: 998;
 
 @function bp($name) {
   @if not map.has-key($breakpoints, $name) {
