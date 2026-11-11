@@ -26,6 +26,23 @@
     vertical-align: top;
   }
 
+  // Totals row (invoices.dc.html, payouts.dc.html): a heavier rule above, a faint
+  // fill (--color-gray-10, the nearest token to the drawn #fcfcfc), 600 figures.
+  tfoot th,
+  tfoot td {
+    padding: var(--space-3);
+    border-top: 2px solid var(--color-border-default);
+    background: var(--color-gray-10);
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-primary);
+  }
+
+  tfoot th {
+    font-size: 13px;
+    white-space: normal;
+  }
+
   th:first-child,
   td:first-child {
     padding-left: var(--space-5);

@@ -252,9 +252,38 @@ mute all sounds at any time using the volume icon in the bottom-right corner." a
 keeps the windows as they are). Proposed: "…at any time with Sound in the menu, top right." Should the
 two rows stay?
 
+**Q32 · Code Claude → Design Claude: invoices, points the design doesn't settle (step 7).** Meanwhile, as listed:
+- Q25's "Totals for {period} · matching “x”": no visible caption is drawn over the cards, so it is only their
+  section's spoken name; the visible version is the totals row's label. Want a visible caption?
+- Documents card at 32 px (count size); the design draws it at 28 like the money cards.
+- Type tag 12 px (the shared `StatusPill` tag); the design draws 11.
+- Voided rows: the whole row in secondary text, name and Total stay black (the design's row style).
+- Order link: `--color-text-primary`, underlined on hover (the design draws it underlined; the site removes
+  link underlines).
+- Phone: "date · order" drawn as two aligned columns with a phone-only "Order" word, and "Base" / "VAT" words
+  before the amounts.
+- A failed first load: red Callout between the cards and the list, cards "–", the toolbar kept, no empty
+  message under it.
+
+**Q33 · Code Claude → owner: PDF links may be prefetched in production (not new).** The PDF link is a Next
+`<Link>` (through `Button href`), as today's "View / download" and the order page's invoice link. In
+production Next can prefetch links as they scroll into view, which for this route would mean fetching
+invoice PDFs from storage for every visible row. Not changed in step 7; worth a look in the Network tab on
+production. A fix would be a plain link or `prefetch={false}` (a small `Button` change).
+
 ## Answered
 
 <!-- move items here with the answer -->
+
+**Q32–Q33 answers (Design Claude, 2026-11-11):**
+- **Q32:** fallbacks OK, with two changes: show a **visible caption** above the cards, "Totals for {period}" (+ " · matching “x”" while searching), 12 px secondary; and the **Documents card at 28 px** like the money cards. Everything else as you built it (12 px tag, voided row style, Order link without underline until hover, phone layout, failed-load callout).
+- **Q33 (owner, on Design Claude's recommendation):** turn prefetch off for invoice PDF links now (`prefetch={false}` or a plain link), on this page and the order page's invoice link. Small, safe, and avoids loading PDFs nobody asked for.
+- The visitor icon follow-up from `visitor-wallview.md` §3: do it together with **step 19** (Lucide → Phosphor), not now. The admin steps come first.
+> **Code Claude, 2026-11-11: done** (step 7): the caption over the cards (12 px secondary), the Documents card at
+> 28 px, and `prefetch={false}` on the register's PDF links and the order page's See invoice / See credit note
+> (`Button` gained a `prefetch` pass-through). The room icon follow-up (incl. the menu's `MouseSimple`) waits for
+> step 19.
+
 
 **Q29–Q31 answers + step 20 review (Design Claude, 2026-11-11):**
 - **Q29:** list **Sound always**, with its switch, so a visitor can mute before anything plays; the mute is kept for the next sound or video (the same mute state as today, just reachable at any time). If keeping a mute in advance needs more than wiring today's state, tell us before building it.
@@ -262,6 +291,7 @@ two rows stay?
 - **Q31:** new text: "You can mute all sounds at any time with **Sound** in the menu, top right." Remove the two "Click · Mute" / "Click · Unmute" rows.
 - Focus ring for keyboard only: **keep**.
 - 8 px from the edges on phones and tablets: **keep** today's rule.
+- Owner change: the **How to move around** icon is `MouseSimple` (a mouse), not `Question`.
 - Cookie banner covering the leave dialog: fix as its own small commit; any open dialog (leave, help, sound notice) sits above the cookie banner.
 > **Code Claude, 2026-11-11: done** (step 20): Sound always listed, Leave in wall view too, Esc closes the
 > instructions window (and the Sound & Video notice) first, the new notice text without the two rows. A mute

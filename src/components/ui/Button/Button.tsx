@@ -32,6 +32,8 @@ type ButtonProps = {
   iconLeft?: ReactNode
   iconRight?: ReactNode
   href?: string
+  /** With `href`: Next's prefetch (default on). Off for links to files, e.g. invoice PDFs (Q33). */
+  prefetch?: boolean
   title?: string
   draggable?: boolean
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void
@@ -68,6 +70,7 @@ export const Button = React.memo(
     iconLeft,
     iconRight,
     href,
+    prefetch,
     title,
     draggable,
     onDragStart,
@@ -116,6 +119,7 @@ export const Button = React.memo(
       return (
         <Link
           href={href}
+          prefetch={prefetch}
           className={classNames}
           title={title}
           style={style}

@@ -15,7 +15,7 @@ Do these in order, one PR each.
 | 4 | Order detail | order-detail (spec: orders.md §2) | Built | Re-layout only: keep every action, guard and confirm as today. |
 | 5 | Edition sales | edition-sales (spec: sales.md §1) | Built | Adds summary cards + status filter (NEW, approved). |
 | 6 | Gift orders | gift-orders (spec: sales.md §2) | Built | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
-| 7 | Invoices | invoices (spec: invoices.md) | Designed · approved by owner | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
+| 7 | Invoices | invoices (spec: invoices.md) | Built | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
 | 8 | Payouts | payouts (spec: payouts.md) | Designed · approved by owner | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
 | 9 | Users | users (spec: users.md) | Designed · approved by owner | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Designed · approved by owner | UI only, no logic changes. |
@@ -28,7 +28,7 @@ Do these in order, one PR each.
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
-| 19 | **Lucide → Phosphor, whole site**: swap the name→icon map in `components/ui/Icon/Icon.tsx` (light weight, size as today), then the ~25 files that import `lucide-react` directly; remove `lucide-react` and `ICON_STROKE_WIDTH` when nothing uses them | — | Approved by owner | Do after step 18 so the editor and the public site switch together. Check every public page and the 3D room afterwards. |
+| 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
 
 ## Built notes
@@ -250,6 +250,41 @@ rows, menu and dialogs).
 after production): "This gift was canceled after production, so its edition number stays used. It can’t be
 deleted." No other change. `edition-off-platform.spec` now tries Delete on its canceled-after-shipping gift and
 expects the refusal and the order to remain.
+
+### Step 7 · Invoices — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-invoices.md` + answers Q25–Q27. Files:
+`src/components/admin/invoices/index.tsx` + new `Invoices.module.scss`, `ui/DataTable.module.scss` (`tfoot`),
+`app/admin/invoices/page.tsx` (title "Invoices — The Art Room Admin"), `ui/Button` (`prefetch` pass-through),
+`orders/detail/InvoicePanel.tsx` (prefetch off).
+
+1. **Kept**: the whole logic block (state, auth redirect, `load`, both exports with their file names, busy
+   labels, disabled rules and `alert()`s, Hide voided) is byte-identical to before (diffed); the filters'
+   handlers, the year-clears-month rule, Clear filters, the three empty messages and the PDF URL are
+   today's. No server, query or route change.
+2. **NEW, built**: totals cards under a visible caption "Totals for {period}" (+ "· matching “x”"), all four
+   at 28 px (Q25 (a), Q32: what the exports would export; never Hide voided), the Order column
+   (mono link to the order), the `tfoot` totals row for the rows shown ("Total for {November 2026 | 2026 |
+   all years}", "· matching “x”" while searching), the footnote always shown.
+3. **Number cell**: mono number + Invoice / Credit note tag; a voided invoice is struck through with "Voided by
+   {credit note}"; a credit note says "Cancels {invoice}" when known. The number's text appears once per
+   row (the PDF link names it through `aria-label` only), so `invoice-ui.spec`'s strict lookup still works.
+   A voided invoice's number does appear twice on the page (its row and its credit note's "Cancels" line).
+4. **Order** stays correlative, as the CSV and ZIP (Q26). Default All years; Clear filters as a text button;
+   `alert()` on export failure; the per-keystroke search (Q27).
+5. **Loading**: "Loading…" only while there is nothing to show; a reload keeps rows, cards and totals on
+   screen with the list `aria-busy`. A failed first load: red Callout, cards "–", no empty message (today said
+   "No invoices yet." under the error); the toolbar stays, since a filter change re-runs the load.
+6. **PDF links never prefetch** (Q33): the register's PDF links and the order page's "See invoice" / "See
+   credit note" pass `prefetch={false}`, so production never fetches a PDF before the click.
+7. **Phone** (< 900 px): the same `<tr>` as cards (number + tag, client, date and order, Base / VAT and Total,
+   full-width PDF); the totals row becomes a summary block.
+
+Verified: typecheck, lint, prettier; the logic block diffed against HEAD; `e2e/invoice-ui.spec.ts` 1/1 on
+port 3001 (again after Q32 / Q33); browser on my own `pnpm dev` (dev DB, read-only), 1440 and 390 px: cards = the Total column =
+the totals row = the exported CSV (€1,303.82, 3 rows), Year enables Month and clearing it clears Month,
+Nov 2026 empty state, no-match message + Clear filters, Hide voided, no console errors, no horizontal
+scroll. The dev DB has no credit notes, so the "Voided by" / "Cancels" lines were not seen live.
 
 ### Step 20 · Visitor room menu + Exit wall view — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 

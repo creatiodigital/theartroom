@@ -249,6 +249,8 @@ like the real Pause switch). Logic and dialogs unchanged.
 - **Built** · `ui/DataTable.tsx` · `{ children; className? }`: the table shell (gray header row, 14 px rows,
   `--color-gray-20` dividers, top-aligned, sideways scroll). Pages write their own rows and may turn
   them into phone cards through `className` (see `orders/Orders.module.scss`).
+  `<tfoot>` (step 7): 2 px `--color-border-default` top rule, `--color-gray-10` fill, 600, tabular figures;
+  its `th` is 13 px and wraps (Invoices' "Total for {period}" row; Payouts reuses it).
 - `ui/EmptyState.tsx` · `{ title; text? }` (Tray in a circle).
 
 ## Detail pieces (step 4)
@@ -315,3 +317,5 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `CopyButton`: `icon?: Icon`; "Copied" only after the clipboard write succeeds.
 - `EmptyState`: `text` takes a `ReactNode`.
 - `Button`: `aria-disabled` pass-through.
+- `Button` (step 7): `prefetch?: boolean`, passed to Next's `Link` with `href`; `false` for links to files
+  (invoice PDFs).

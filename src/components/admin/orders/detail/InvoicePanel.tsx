@@ -69,6 +69,7 @@ export function InvoicePanel({
               className={outline}
               label="See invoice"
               href={`/admin/invoices/${order.invoice.id}/download`}
+              prefetch={false}
             />
             {!order.creditNote && (
               <>
@@ -110,6 +111,7 @@ export function InvoicePanel({
                   className={outline}
                   label="See credit note"
                   href={`/admin/invoices/${order.creditNote.id}/download`}
+                  prefetch={false}
                 />
                 <Button
                   variant="bare"
