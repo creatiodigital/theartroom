@@ -127,6 +127,15 @@ test('gift order: create, buyers skip its number, stages advance, shipped cancel
         return states.find((n) => n.number === 1)?.state
       })
       .toBe('sold')
+
+    // … and that canceled gift can't be deleted: deleting it would leave copy 1
+    // order-less in the ledger, where Release could put the number back on sale
+    // while the printed copy exists (questions.md Q24).
+    await giftRow.getByRole('button', { name: `Actions for ${RECIPIENT}` }).click()
+    await giftRow.getByRole('menuitem', { name: 'Delete…' }).click()
+    await page.getByRole('button', { name: 'Yes, delete permanently' }).click()
+    await expect(page.getByText(/edition number stays used/i)).toBeVisible()
+    expect(await prisma.offPlatformOrder.count({ where: { recipientName: RECIPIENT } })).toBe(1)
   } finally {
     if (bought) {
       await cancelPaymentIntent(bought.paymentIntentId).catch(() => {})

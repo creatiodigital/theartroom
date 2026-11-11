@@ -243,3 +243,10 @@ takes a node; `Button` passes `aria-disabled`; token `--admin-menu-shadow`.
 Verified: typecheck, lint, prettier; `edition-off-platform` e2e 1/1; browser (dev DB, 1440 / 390,
 read-only): no console errors, no horizontal scroll (the dev DB had no gift orders; the e2e run covers
 rows, menu and dialogs).
+
+### Q24 fix — 2026-11-11 (own commit after step 6)
+
+`deleteCancelledOffPlatformOrder` refuses a canceled gift whose edition number is still bound to it (canceled
+after production): "This gift was canceled after production, so its edition number stays used. It can’t be
+deleted." No other change. `edition-off-platform.spec` now tries Delete on its canceled-after-shipping gift and
+expects the refusal and the order to remain.

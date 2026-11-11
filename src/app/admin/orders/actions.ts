@@ -780,8 +780,11 @@ export async function markOffPlatformArtistPaid(
 
 /**
  * Hard-delete a CANCELLED gift order so failed experiments don't clutter the
- * list. Only cancelled rows qualify (their numbers were already released on
- * cancel, and no money ever touched an off-platform order).
+ * list. Only cancelled rows whose number went back to the pool qualify (no
+ * money ever touched an off-platform order). A gift canceled after production
+ * keeps its number bound to it; deleting the order would leave that copy
+ * order-less in the ledger, where Release could put the number back on sale
+ * while a printed copy carrying it exists (questions.md Q24) — so refuse.
  */
 export async function deleteCancelledOffPlatformOrder(
   id: string,
@@ -796,6 +799,14 @@ export async function deleteCancelledOffPlatformOrder(
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus !== STAGE_CANCELLED) {
     return { ok: false, error: 'Only canceled gift orders can be deleted — cancel it first.' }
+  }
+  const keptNumbers = await prisma.editionNumber.count({ where: { offPlatformOrderId: id } })
+  if (keptNumbers > 0) {
+    return {
+      ok: false,
+      error:
+        'This gift was canceled after production, so its edition number stays used. It can’t be deleted.',
+    }
   }
 
   await prisma.offPlatformOrder.delete({ where: { id } })
