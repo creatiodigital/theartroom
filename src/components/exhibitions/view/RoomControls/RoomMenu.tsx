@@ -2,11 +2,20 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useSelector } from 'react-redux'
-import { List, Question, SignOut, SpeakerHigh, SpeakerSlash, X } from '@phosphor-icons/react'
+import {
+  HandTap,
+  List,
+  MouseSimple,
+  SignOut,
+  SpeakerHigh,
+  SpeakerSlash,
+  X,
+} from '@phosphor-icons/react'
 import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
 import { useSceneAudioActions, useSceneAudioState } from '@/contexts/SceneAudioContext'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
 import type { RootState } from '@/redux/store'
 
 import styles from './RoomControls.module.scss'
@@ -46,6 +55,8 @@ export const RoomMenu = ({ sound, onHelp, onLeave }: RoomMenuProps) => {
   if (open && exitPromptOpen) setOpen(false)
   const { isMuted } = useSceneAudioState()
   const { toggleMute } = useSceneAudioActions()
+  // The same switch the instructions window uses: a finger's controls, or the mouse's.
+  const isTouch = useIsTouchDevice()
 
   // Button takes no ref: the wrapper finds the trigger (its own button) and the items.
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -166,7 +177,7 @@ export const RoomMenu = ({ sound, onHelp, onLeave }: RoomMenuProps) => {
               className={styles.item}
               onClick={() => choose(onHelp)}
             >
-              <Question {...ICON} />
+              {isTouch ? <HandTap {...ICON} /> : <MouseSimple {...ICON} />}
               How to move around
             </Button>
           )}

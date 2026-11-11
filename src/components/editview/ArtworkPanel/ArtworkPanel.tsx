@@ -3,13 +3,12 @@
 import { useRef, useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { X } from 'lucide-react'
+import { X } from '@phosphor-icons/react'
 
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { hideArtworkPanel, openArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import type { RootState } from '@/redux/store'
@@ -69,7 +68,7 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
         className={styles.closeButton}
         aria-label="Close"
       >
-        CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
+        CLOSE <X size={14} weight="light" aria-hidden />
       </Button>
       <div className={styles.header}>
         {thumbnailUrl && (

@@ -18,13 +18,13 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Mouse,
-  Touchpad,
-  Volume2,
+  HandArrowUp,
+  HandSwipeRight,
+  MouseSimple,
+  SpeakerHigh,
   X,
-} from 'lucide-react'
+} from '@phosphor-icons/react'
 
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
@@ -357,7 +357,7 @@ const NavigationHelpModal = ({
               className={styles.infoPanelClose}
               aria-label="Close"
             >
-              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+              <X size={20} weight="light" aria-hidden />
             </Button>
             {/* The controls alone, no welcome and no title: the guide no longer greets visitors on
                 entry (the floor's hint does), it opens from the help button (AR-177, owner, 2026-11-05). */}
@@ -367,7 +367,7 @@ const NavigationHelpModal = ({
               <div className={styles.infoPanelContent}>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Click anywhere
                     </Text>
@@ -388,10 +388,10 @@ const NavigationHelpModal = ({
                     </div>
                     <div className={styles.infoKeys}>
                       <span className={styles.infoKey}>
-                        <ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowUp size={14} weight="light" aria-hidden />
                       </span>
                       <span className={styles.infoKey}>
-                        <ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowDown size={14} weight="light" aria-hidden />
                       </span>
                     </div>
                   </div>
@@ -413,10 +413,10 @@ const NavigationHelpModal = ({
                     </div>
                     <div className={styles.infoKeys}>
                       <span className={styles.infoKey}>
-                        <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowLeft size={14} weight="light" aria-hidden />
                       </span>
                       <span className={styles.infoKey}>
-                        <ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowRight size={14} weight="light" aria-hidden />
                       </span>
                     </div>
                   </div>
@@ -426,7 +426,7 @@ const NavigationHelpModal = ({
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Hold + Drag
                     </Text>
@@ -437,7 +437,7 @@ const NavigationHelpModal = ({
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <HandSwipeRight size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Swipe Left / Right
                     </Text>
@@ -448,7 +448,7 @@ const NavigationHelpModal = ({
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <HandArrowUp size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Swipe Up / Down
                     </Text>
@@ -459,7 +459,7 @@ const NavigationHelpModal = ({
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Single Click
                     </Text>
@@ -472,7 +472,7 @@ const NavigationHelpModal = ({
                     wall, never turning; Escape or the Exit Wall View button leaves it. */}
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Drag, Swipe or Arrows
                     </Text>
@@ -491,7 +491,7 @@ const NavigationHelpModal = ({
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Double Click
                     </Text>
@@ -502,7 +502,7 @@ const NavigationHelpModal = ({
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <SpeakerHigh size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Double Click
                     </Text>
@@ -527,13 +527,14 @@ const NavigationHelpModal = ({
               className={styles.infoPanelClose}
               aria-label="Close"
             >
-              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+              <X size={20} weight="light" aria-hidden />
             </Button>
             <div className={styles.welcomeSection}>
-              <Volume2
+              <SpeakerHigh
                 size={32}
-                strokeWidth={ICON_STROKE_WIDTH}
+                weight="light"
                 style={{ margin: '0 auto var(--space-4)', display: 'block' }}
+                aria-hidden
               />
               <Text as="h2" size="lg" font="sans" className={styles.welcomeTitle}>
                 Sound & Video

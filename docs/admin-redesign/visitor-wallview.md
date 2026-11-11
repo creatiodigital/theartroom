@@ -5,7 +5,7 @@ resolve on the canvas): `designs/visitor-room-menu.dc.html` (room, menu open and
 `designs/visitor-wall-exit.dc.html` (wall view).
 
 Public visitor side: use the public site's look (Lato), not the admin style. Icons: Phosphor light
-(`List`, `X`, `SpeakerHigh` / `SpeakerSlash`, `Question`, `SignOut`, `ArrowLeft`), 18–20 px.
+(`List`, `X`, `SpeakerHigh` / `SpeakerSlash`, `MouseSimple`, `SignOut`, `ArrowLeft`), 18–20 px.
 
 Shared button style (both buttons): 44 px high, **radius 10 px** (not a pill),
 `rgba(255,255,255,.96)`, shadow `0 4px 16px rgba(0,0,0,.12)` + 1 px hairline `rgba(0,0,0,.05)`,
@@ -22,7 +22,7 @@ text `#1a1a1a`.
   shadow `0 12px 36px rgba(0,0,0,.18)`. Items 46 px, 15 px text, icon 20 px, gap 12:
   1. **Sound** (`SpeakerHigh`, or `SpeakerSlash` when off) with a 34×20 switch on the right
      showing today's on/off state, `role="menuitemcheckbox"`. Same handler as today's sound button.
-  2. **How to move around** (`Question`): opens today's instructions window, unchanged.
+  2. **How to move around**: `MouseSimple` on mouse/trackpad devices, `HandTap` on touch devices (same `isTouch` switch the instructions window uses): opens today's instructions window, unchanged.
   3. a 1 px divider, then **Leave exhibition** (`SignOut`): today's exit handler.
 - Closes on Esc, on a click outside, and after choosing Help or Leave (Sound keeps it open). Focus
   goes to the first item on open and back to the button on close. Clicks on the panel must not reach
@@ -36,3 +36,18 @@ text `#1a1a1a`.
 - The menu button stays top-right in wall view too.
 - No hints, no Esc label on the button, and clicking the empty wall does not exit. Keep Esc and
   pinch working as today.
+
+## 3 · Icons in the "How to move around" window (owner request)
+
+Swap the icons for Phosphor (light, size as today). Layout, texts and rows unchanged.
+
+- Desktop guide (`exhibitions/view/index.tsx`, today Lucide): `Mouse` → `MouseSimple`; the arrow keys
+  `ArrowUp` / `ArrowDown` / `ArrowLeft` / `ArrowRight` → Phosphor's arrows of the same name;
+  `Touchpad` (Swipe Left / Right) → `HandSwipeRight`; `Touchpad` (Swipe Up / Down) → `HandArrowUp`;
+  `Volume2` → `SpeakerHigh`; `X` → `X`.
+- Touch guide (`TouchControlsGuide`, today ad-hoc SVGs in `src/icons/`): `gesture-tap` → `HandTap`;
+  `gesture-slide-horizontal` → `HandSwipeRight`; `gesture-slide-vertical` → `HandArrowUp`;
+  `phone-landscape` → `DeviceRotate`. **Keep the custom `gesture-pinch` and `gesture-double-tap`**:
+  Phosphor has no pinch and no double tap. Give them the same stroke weight and size as the Phosphor
+  icons around them so the set looks like one family.
+- Delete the replaced SVG files from `src/icons/` only if nothing else imports them.
