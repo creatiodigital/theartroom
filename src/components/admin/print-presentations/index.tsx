@@ -11,6 +11,7 @@ import {
   type PresentationRow,
   type PresentationStatus,
 } from '@/app/admin/print-presentations/actions'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
 import { AdminSelect } from '@/components/admin/ui/AdminSelect'
 import { Bar } from '@/components/admin/ui/Bar'
@@ -64,6 +65,27 @@ const SWITCH_ID = 'print-presentations-switch'
 const SWITCH_NAME_ID = 'print-presentations-switch-name'
 const SWITCH_LINE_ID = 'print-presentations-switch-line'
 
+/**
+ * The site switch asks first (Q59). Off: public pages get no presentations at all
+ * (`getPrintPresentations` returns none). On: each work with a render shows its latest
+ * one, up to date or not (`shownRecord`).
+ */
+const SWITCH_CONFIRM = {
+  hide: {
+    title: 'Hide print presentations on the site?',
+    message: 'Grids and artwork pages go back to the plain images until you switch this on again.',
+    confirmLabel: 'Hide them',
+    busyLabel: 'Hiding…',
+  },
+  show: {
+    title: 'Show print presentations on the site?',
+    message:
+      'Grids and artwork pages use the presentations, where a work has one: its latest render, up to date or not.',
+    confirmLabel: 'Show them',
+    busyLabel: 'Showing…',
+  },
+} as const
+
 type RowOutcome = { result: 'saved' | 'failed'; error?: string }
 
 /**
@@ -80,6 +102,8 @@ export const AdminPrintPresentations = () => {
   const [stopping, setStopping] = useState(false)
   const [outcomes, setOutcomes] = useState<Record<string, RowOutcome>>({})
   const [switching, setSwitching] = useState(false)
+  // The switch's confirm dialog, by the way it would turn (fixed while it's open).
+  const [switchConfirm, setSwitchConfirm] = useState<keyof typeof SWITCH_CONFIRM | null>(null)
   const [savingSetting, setSavingSetting] = useState(false)
   const [artist, setArtist] = useState<string | null>(null)
 
@@ -180,6 +204,21 @@ export const AdminPrintPresentations = () => {
     else setError(res.error)
   }
 
+  // Q59: the switch only opens the dialog; the controlled input stays as it was.
+  const askSwitch = () => {
+    if (enabled === null) return
+    setSwitchConfirm(enabled ? 'hide' : 'show')
+  }
+
+  // As Pause: the dialog stays open, busy, until the switch has answered.
+  const confirmSwitch = async () => {
+    try {
+      await toggleSwitch()
+    } finally {
+      setSwitchConfirm(null)
+    }
+  }
+
   const running = queue !== null
   const done = Object.keys(outcomes).length
 
@@ -211,7 +250,7 @@ export const AdminPrintPresentations = () => {
             tone="admin"
             id={SWITCH_ID}
             checked={enabled ?? false}
-            onChange={() => void toggleSwitch()}
+            onChange={askSwitch}
             disabled={enabled === null || switching}
             aria-labelledby={SWITCH_NAME_ID}
             aria-describedby={SWITCH_LINE_ID}
@@ -465,6 +504,15 @@ export const AdminPrintPresentations = () => {
           stopping={stopping}
           onRowDone={onRowDone}
           onFinished={onFinished}
+        />
+      )}
+
+      {switchConfirm && (
+        <AdminConfirmModal
+          {...SWITCH_CONFIRM[switchConfirm]}
+          busy={switching}
+          onConfirm={() => void confirmSwitch()}
+          onCancel={() => setSwitchConfirm(null)}
         />
       )}
     </div>

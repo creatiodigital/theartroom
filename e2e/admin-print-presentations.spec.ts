@@ -191,15 +191,32 @@ test('an image work of unknown shape reads "Not eligible"', async ({ page }) => 
   )
 })
 
-test('the switch turns the presentations on and off for the site', async ({ page }) => {
+test('the switch asks first, then turns the presentations on and off for the site', async ({
+  page,
+}) => {
   await setPrintPresentationsEnabled(false)
   await openPage(page)
   const toggle = page.getByRole('switch', { name: 'Shown on the site' })
   await expect(toggle).not.toBeChecked()
+
+  // Cancel leaves it as it was.
   await page.locator('label', { has: toggle }).click()
+  const show = page.getByRole('dialog', { name: 'Show print presentations on the site?' })
+  await show.getByRole('button', { name: 'Cancel' }).click()
+  await expect(show).toHaveCount(0)
+  await expect(toggle).not.toBeChecked()
+  expect(await getPrintPresentationsEnabled()).toBe(false)
+
+  await page.locator('label', { has: toggle }).click()
+  await show.getByRole('button', { name: 'Show them' }).click()
+  await expect(show).toHaveCount(0)
   await expect(toggle).toBeChecked()
   await expect.poll(() => getPrintPresentationsEnabled()).toBe(true)
+
   await page.locator('label', { has: toggle }).click()
+  const hide = page.getByRole('dialog', { name: 'Hide print presentations on the site?' })
+  await hide.getByRole('button', { name: 'Hide them' }).click()
+  await expect(hide).toHaveCount(0)
   await expect(toggle).not.toBeChecked()
   await expect.poll(() => getPrintPresentationsEnabled()).toBe(false)
 })
