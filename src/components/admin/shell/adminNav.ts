@@ -1,5 +1,6 @@
 import {
   Article,
+  Code,
   Door,
   Gift,
   ImageSquare,
@@ -20,10 +21,12 @@ export type AdminNavItemDef = {
   icon: Icon
   /** Orders carries the attention badge (sum of the dashboard's five counts). */
   showsOrdersBadge?: boolean
+  /** A quieter item: 13 px with a smaller icon (the Developer group, api-reference.dc.html). */
+  compact?: boolean
 }
 
 export type AdminNavSection = {
-  label: 'Sales' | 'Gallery'
+  label: 'Sales' | 'Gallery' | 'Developer'
   items: AdminNavItemDef[]
 }
 
@@ -56,6 +59,24 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     ],
   },
 ]
+
+/**
+ * The Developer group (developer.md): at the foot of the menu, above the user
+ * card. Only for admins and up (`showsDeveloperSection`).
+ */
+export const ADMIN_DEVELOPER_SECTION: AdminNavSection = {
+  label: 'Developer',
+  items: [{ label: 'API reference', href: '/admin/api-reference', icon: Code, compact: true }],
+}
+
+/**
+ * Who sees the Developer group: the roles the API reference page's own gate
+ * lets in (`isAdminOrAbove`, lib/authUtils.ts). That module imports `@/auth`
+ * and stays out of client code, so the two roles are spelled out here.
+ */
+export function showsDeveloperSection(userType: string | undefined): boolean {
+  return userType === 'admin' || userType === 'superAdmin'
+}
 
 /** An item is lit for its own page and everything under it (/admin/orders/123 → Orders). */
 export function isNavItemActive(pathname: string, href: string): boolean {

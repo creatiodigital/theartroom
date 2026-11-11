@@ -19,6 +19,9 @@ type AdminNavItemProps = {
   onNavigate?: () => void
 }
 
+// 18 px in the side menu, 20 px in the drawer; a compact item's icon is 2 px smaller.
+const ICON_SIZE = { menu: 18, drawer: 20 } as const
+
 export function AdminNavItem({
   item,
   active,
@@ -35,9 +38,18 @@ export function AdminNavItem({
         onNavigate?.()
       }}
       aria-current={active ? 'page' : undefined}
-      className={c(styles.item, styles[size], active && styles.active)}
+      className={c(
+        styles.item,
+        item.compact && styles.compact,
+        styles[size],
+        active && styles.active,
+      )}
     >
-      <ItemIcon size={size === 'drawer' ? 20 : 18} weight={active ? 'fill' : 'light'} aria-hidden />
+      <ItemIcon
+        size={ICON_SIZE[size] - (item.compact ? 2 : 0)}
+        weight={active ? 'fill' : 'light'}
+        aria-hidden
+      />
       <span className={styles.label}>{item.label}</span>
       {badge && (
         <>

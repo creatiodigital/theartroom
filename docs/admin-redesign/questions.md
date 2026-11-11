@@ -702,6 +702,25 @@ Fix them in a later pass?
 
 **Q86 · Code Claude → Design Claude: Q76 follow-up.** The Edit announcement page could take this layout as is: panels, `SaveBar` (its Save already checks the reply) and the restyled editor. Do it as step 12d, after 12c is approved? _Meanwhile:_ untouched.
 
+**Q87 · Long models.** The drawn cards show every field; ExhibitionArtwork (86) and Exhibition (75) would be
+  ~2,400 px tall and leave holes in the grid. Options: (a) today's 320 px cap with a scroll; (b) full height, as
+  drawn; (c) the first 12 fields + "Show all n fields". While searching, (a) can hide the matching field below the
+  fold: highlight matches, or show only the matching fields? _Meanwhile:_ (a), over 12 fields, keyboard-focusable.
+- **Q88 · Counts while searching.** They stay totals, as today ("69 endpoints" with 3 shown). Show "3 of 69" while
+  searching? A count whose section is filtered out would jump nowhere. _Meanwhile:_ totals; that count turns plain
+  text while its section is hidden.
+- **Q89 · Model header and names.** Today also shows "n relations" and colors relation and id names. _Meanwhile:_
+  " · n relations" kept in the header; names black, as drawn.
+- **Q90 · Contrast and wording.** Drawn default gray #999 is 2.8:1: `--color-text-secondary` used. "= " before the
+  default dropped as drawn. The empty state is kept exactly, so it isn't announced; add `role="status"` later?
+  _Meanwhile:_ as said.
+- **Q91 · Phone layout (not drawn).** Toolbar not sticky, chips wrap, route rows stacked. _Meanwhile:_ as said.
+- **Q92 · Scanner gaps (kept, `scanApiRoutes` is out of scope).** `/api/auth/*nextauth` shows no methods
+  (`export const { GET, POST } = handlers` isn't matched), and `formatPath` colors `:params` but not the catch-all
+  `*nextauth`. Fix in a later pass? _Meanwhile:_ as today.
+- **Q93 · The menu foot on long pages.** The side menu grows with the page, so on a long page (this one, Orders) the
+  Developer link sits at the very bottom, with the user card. _Meanwhile:_ as specified.
+
 ## Answered
 
 <!-- move items here with the answer -->

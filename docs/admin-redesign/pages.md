@@ -21,7 +21,7 @@ Do these in order, one PR each.
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Built | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Built | UI only. |
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Built (12a, 12b, 12c) | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
-| 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
+| 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Built | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
@@ -375,6 +375,27 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-ga
 15/15 on port 3001 (unchanged specs); browser on my own `pnpm dev` (dev DB, read-only: one menu opened and
 closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
 scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
+
+### Step 13 · API reference — Built 2026-11-11 · committed after my checks (owner: steps 10, 11, 13 reviewed together later)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-api-reference.md`. Files: `app/admin/api-reference/*` (page title +
+noindex, `ReferenceContent`, `SearchFilter` on `ui/SearchField`, SCSS), the shell's menu (`adminNav.ts`, `AdminNavItem`,
+`AdminSidebar`, `AdminMenuDrawer`), tokens `--admin-code-param`, `--admin-code-type`.
+
+1. **Kept**: the gate, `scanApiRoutes()` / `parseSchema()`, the three filters and the "No results matching …" state
+   (diffed: identical). `SearchFilter` takes the text from `SearchField` instead of the event (same state and callback).
+   The page's own "← Dashboard" link is gone (the menu replaces it).
+2. **NEW menu link**: a **Developer** group at the foot of the menu (side menu and phone drawer), one item **API
+   reference** (Code), 13 px, for admin and super admin only (the page's roles).
+3. **Layout per developer.md**: header; sticky toolbar (from 900 px) with the search and the four counts as chips
+   (endpoints / models / enums jump to their sections; a chip goes plain while its section is filtered out); endpoint
+   panels with method badges and `:params` coloured; model cards (PK / UQ, types, defaults with today's tooltip; long
+   models keep today's 320 px cap and scroll, Q87); enum cards. Defaults in secondary gray (the drawn #999 fails
+   contrast, Q90).
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; browser on my own `pnpm dev` (dev DB, read-only) at
+1440 and 390 px: chips, search, the empty state, the menu link on the side menu and in the phone drawer, no console
+errors, no horizontal scroll. No e2e opens this page.
 
 ### Step 12c · Page editor — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 

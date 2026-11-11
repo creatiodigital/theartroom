@@ -20,6 +20,14 @@
   }
 }
 
+// A compact item (the Developer group, api-reference.dc.html): 13 px, 8 px top and
+// bottom. Before `.drawer`, so the drawer keeps its own padding and 48 px rows.
+.compact {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  font-size: 13px;
+}
+
 .drawer {
   gap: 14px;
   padding: var(--space-3);

@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import c from 'classnames'
 
 import { AdminNavItem } from './AdminNavItem'
 import { AdminUserCard } from './AdminUserCard'
@@ -9,10 +11,12 @@ import { blurOnPointerClick } from './blurOnPointerClick'
 import { useAttentionCounts } from './AdminShellContext'
 import {
   ADMIN_DASHBOARD_ITEM,
+  ADMIN_DEVELOPER_SECTION,
   ADMIN_HOME,
   ADMIN_NAV_SECTIONS,
   isNavItemActive,
   ordersBadge,
+  showsDeveloperSection,
 } from './adminNav'
 import { StorefrontSwitch } from './StorefrontSwitch'
 
@@ -23,6 +27,8 @@ export function AdminSidebar() {
   const pathname = usePathname() ?? ''
   const { metrics } = useAttentionCounts()
   const badge = ordersBadge(metrics)
+  const { data: session } = useSession()
+  const showsDeveloper = showsDeveloperSection(session?.user?.userType)
 
   return (
     <nav aria-label="Admin" className={styles.sidebar}>
@@ -54,7 +60,22 @@ export function AdminSidebar() {
 
       <StorefrontSwitch />
 
-      <AdminUserCard layout="sidebar" />
+      {/* The foot: the Developer group sits on the user card, both at the bottom. */}
+      <div className={styles.foot}>
+        {showsDeveloper && (
+          <div className={c(styles.group, styles.developer)}>
+            <span className={styles.groupLabel}>{ADMIN_DEVELOPER_SECTION.label}</span>
+            {ADMIN_DEVELOPER_SECTION.items.map((item) => (
+              <AdminNavItem
+                key={item.href}
+                item={item}
+                active={isNavItemActive(pathname, item.href)}
+              />
+            ))}
+          </div>
+        )}
+        <AdminUserCard layout="sidebar" />
+      </div>
     </nav>
   )
 }

@@ -2,14 +2,23 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { X } from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
 
 import { AdminNavItem } from './AdminNavItem'
 import { AdminUserCard } from './AdminUserCard'
 import { useAttentionCounts } from './AdminShellContext'
-import { ADMIN_DASHBOARD_ITEM, ADMIN_NAV_SECTIONS, isNavItemActive, ordersBadge } from './adminNav'
+import {
+  ADMIN_DASHBOARD_ITEM,
+  ADMIN_DEVELOPER_SECTION,
+  ADMIN_NAV_SECTIONS,
+  isNavItemActive,
+  ordersBadge,
+  showsDeveloperSection,
+} from './adminNav'
 
 import styles from './AdminMenuDrawer.module.scss'
 
@@ -27,6 +36,8 @@ export function AdminMenuDrawer({ onClose }: AdminMenuDrawerProps) {
   const pathname = usePathname() ?? ''
   const { metrics } = useAttentionCounts()
   const badge = ordersBadge(metrics)
+  const { data: session } = useSession()
+  const showsDeveloper = showsDeveloperSection(session?.user?.userType)
   const closeWrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -86,6 +97,20 @@ export function AdminMenuDrawer({ onClose }: AdminMenuDrawerProps) {
             ))}
           </div>
         ))}
+        {showsDeveloper && (
+          <div className={c(styles.group, styles.developer)}>
+            <span className={styles.groupLabel}>{ADMIN_DEVELOPER_SECTION.label}</span>
+            {ADMIN_DEVELOPER_SECTION.items.map((item) => (
+              <AdminNavItem
+                key={item.href}
+                item={item}
+                active={isNavItemActive(pathname, item.href)}
+                size="drawer"
+                onNavigate={onClose}
+              />
+            ))}
+          </div>
+        )}
       </nav>
 
       <AdminUserCard layout="drawer" />

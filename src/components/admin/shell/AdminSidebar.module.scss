@@ -55,3 +55,18 @@
   text-transform: uppercase;
   color: var(--color-dark-text-muted);
 }
+
+// The bottom of the menu: the Developer group, then the user card (whose own
+// `margin-top: auto` has no room to take in here), pushed down together.
+.foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+// api-reference.dc.html, the Developer group: a rule above it, like the storefront switch.
+.developer {
+  padding-top: 14px;
+  border-top: 1px solid var(--color-gray-80);
+}

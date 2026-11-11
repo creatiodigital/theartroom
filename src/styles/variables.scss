@@ -155,6 +155,8 @@
   --admin-success-border: #b7dfc2; // the success feedback bar (ui/FeedbackBar)
   --admin-preview-tile: #f0efec; // behind a work's render (print presentations)
   --admin-save-bar-shadow: 0 -6px 16px rgba(0, 0, 0, 0.04); // the fixed save bar (ui/SaveBar)
+  --admin-code-param: #9a5b00; // a route's :param (API reference)
+  --admin-code-type: #2e6b8a; // a model field's type (API reference)
   // Donut / chart grays, darkest first (dashboard "Traffic channels").
   --admin-chart-1: var(--color-dark-surface);
   --admin-chart-2: var(--color-gray-70);

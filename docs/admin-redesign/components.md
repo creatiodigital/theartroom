@@ -371,3 +371,9 @@ like the real Pause switch). Logic and dialogs unchanged.
   'default' | 'page'`, `labelledBy?`, `describedBy?`, `onReady?(html)` (the editor's own form of the loaded text).
 - `ImageUploader`: `tone?: 'default' | 'admin'` (preview + Replace / Remove), `note?: ReactNode`.
 - `Input`: `aria-describedby?`.
+
+## Menu addition (step 13)
+
+- `shell/adminNav.ts`: a Developer group (`API reference`, Code) shown when `showsDeveloperSection(userType)` (admin,
+  super admin); `AdminNavItem` gains `compact` (13 px, 16 px icon; 18 px in the drawer). The side menu's foot holds the
+  Developer group, then the user card; the drawer shows it as its last group.
