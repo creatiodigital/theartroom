@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 import { AdminNavItem } from './AdminNavItem'
 import { AdminUserCard } from './AdminUserCard'
+import { blurOnPointerClick } from './blurOnPointerClick'
 import { useAttentionCounts } from './AdminShellContext'
 import {
   ADMIN_DASHBOARD_ITEM,
@@ -25,7 +26,7 @@ export function AdminSidebar() {
 
   return (
     <nav aria-label="Admin" className={styles.sidebar}>
-      <Link href={ADMIN_HOME} className={styles.wordmark}>
+      <Link href={ADMIN_HOME} className={styles.wordmark} onClick={blurOnPointerClick}>
         <span className={styles.wordmarkName}>The Art Room</span>
         <span className={styles.wordmarkTag}>Admin</span>
       </Link>

@@ -10,6 +10,7 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { AdminMenuDrawer } from './AdminMenuDrawer'
 import { AdminShellProvider } from './AdminShellContext'
 import { AdminSidebar } from './AdminSidebar'
+import { inertOutside } from './inertOutside'
 import { AdminTopBar } from './AdminTopBar'
 import { PausedBanner } from './PausedBanner'
 
@@ -71,6 +72,14 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const openMenu = useCallback(() => setMenuOpenOn(pathname), [pathname])
   const closeMenu = useCallback(() => setMenuOpenOn(null), [])
   const menuButtonRef = useRef<HTMLDivElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
+
+  // `.column` goes inert at render; this also covers what the root layout
+  // renders around the admin (skip link, cookie banner), so Tab stays in the drawer.
+  useEffect(() => {
+    if (!menuOpen || !drawerRef.current) return
+    return inertOutside(drawerRef.current)
+  }, [menuOpen])
 
   // Past 900px the side menu takes over (an iPad turned sideways): an open
   // drawer must close, or the page behind it would stay inert.
@@ -150,7 +159,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           </div>
 
           {menuOpen && (
-            <div className={styles.onDark}>
+            <div ref={drawerRef} className={styles.onDark}>
               <AdminMenuDrawer onClose={closeMenu} />
             </div>
           )}

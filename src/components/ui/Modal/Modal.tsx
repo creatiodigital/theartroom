@@ -30,11 +30,23 @@ type ModalProps = {
    * touch screen, so any modal a buyer meets on a phone should set this.
    */
   showClose?: boolean
+  /**
+   * `admin`: the admin redesign's dialog look (dark backdrop, 8px corners,
+   * deeper shadow). Opt-in so every other modal keeps its look.
+   */
+  tone?: 'default' | 'admin'
 }
 
 import styles from './Modal.module.scss'
 
-const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) => {
+const Modal = ({
+  children,
+  onClose,
+  titleId,
+  maxWidth,
+  showClose,
+  tone = 'default',
+}: ModalProps) => {
   const mouseDownOnBackdrop = useRef(false)
   const mouseDownAt = useRef<{ x: number; y: number } | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -96,7 +108,7 @@ const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) 
 
   return (
     <div
-      className={styles.modal}
+      className={tone === 'admin' ? `${styles.modal} ${styles.admin}` : styles.modal}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       data-no-deselect="true"

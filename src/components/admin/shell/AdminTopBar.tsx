@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 
 import { useAttentionCounts } from './AdminShellContext'
 import { ADMIN_HOME, ordersBadge } from './adminNav'
+import { blurOnPointerClick } from './blurOnPointerClick'
 
 import styles from './AdminTopBar.module.scss'
 
@@ -26,7 +27,7 @@ export function AdminTopBar({ menuOpen, onOpenMenu, menuButtonRef }: AdminTopBar
 
   return (
     <header className={styles.bar}>
-      <Link href={ADMIN_HOME} className={styles.wordmark}>
+      <Link href={ADMIN_HOME} className={styles.wordmark} onClick={blurOnPointerClick}>
         <span className={styles.wordmarkName}>The Art Room</span>
         <span className={styles.wordmarkTag}>Admin</span>
       </Link>

@@ -13,10 +13,19 @@ import {
 import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 
-import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
+import { Play } from '@phosphor-icons/react'
+
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { listOrders } from '@/app/admin/orders/actions'
 import { getPurchasesPausedState, togglePurchasesPaused } from '@/app/admin/settings/actions'
-import { type AttentionMetric, countAttentionMetrics } from '@/lib/orders/orderBuckets'
+import {
+  type AttentionMetric,
+  type Bucket,
+  countAttentionMetrics,
+  countByBucket,
+} from '@/lib/orders/orderBuckets'
+
+import { AdminDialogProvider } from './AdminDialogContext'
 
 // Shown when an action never got an answer (timeout, offline, mid-deploy) —
 // distinct from the action's own `error`, which means it ran and said no.
@@ -40,6 +49,8 @@ export type StorefrontSwitchState = {
 export type AttentionCountsState = {
   /** null while loading and after a failed read — never a guessed 0. */
   metrics: Record<AttentionMetric, number> | null
+  /** Orders per workflow bucket (the dashboard pipeline), from the same read. */
+  buckets: Record<Bucket, number> | null
   error: string | null
   reload: () => Promise<void>
 }
@@ -114,7 +125,10 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
   }, [paused])
 
   // ── Attention counts ───────────────────────────────────────────────
-  const [metrics, setMetrics] = useState<Record<AttentionMetric, number> | null>(null)
+  const [orderCounts, setOrderCounts] = useState<{
+    metrics: Record<AttentionMetric, number>
+    buckets: Record<Bucket, number>
+  } | null>(null)
   const [countsError, setCountsError] = useState<string | null>(null)
   const countsSeq = useRef(0)
 
@@ -125,14 +139,17 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
       const res = await listOrders()
       if (seq !== countsSeq.current) return
       if (res.ok) {
-        setMetrics(countAttentionMetrics(res.orders))
+        setOrderCounts({
+          metrics: countAttentionMetrics(res.orders),
+          buckets: countByBucket(res.orders),
+        })
       } else {
-        setMetrics(null)
+        setOrderCounts(null)
         setCountsError(res.error)
       }
     } catch {
       if (seq !== countsSeq.current) return
-      setMetrics(null)
+      setOrderCounts(null)
       setCountsError(UNREACHABLE)
     }
   }, [])
@@ -156,31 +173,38 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
     [paused, pauseError, toggling, requestToggle, loadPaused],
   )
   const counts = useMemo<AttentionCountsState>(
-    () => ({ metrics, error: countsError, reload: loadCounts }),
-    [metrics, countsError, loadCounts],
+    () => ({
+      metrics: orderCounts?.metrics ?? null,
+      buckets: orderCounts?.buckets ?? null,
+      error: countsError,
+      reload: loadCounts,
+    }),
+    [orderCounts, countsError, loadCounts],
   )
 
   return (
     <StorefrontContext.Provider value={storefront}>
       <CountsContext.Provider value={counts}>
-        {/* While the dialog is open everything else is inert, which keeps Tab
-            inside it (the shared Modal does not trap focus on its own; Q5). */}
-        <div inert={confirmOpen}>{children}</div>
-        {confirmOpen && (
-          <ConfirmModal
-            title={paused ? 'Resume purchases?' : 'Pause ALL purchases?'}
-            message={
-              paused
-                ? 'The prints catalog, Order Print buttons, cart and checkout become available to the public again immediately.'
-                : 'The public site becomes read-only immediately: prints catalog, every Order Print button, cart and checkout disappear (bookmarked links included) and new payments are refused. Orders already placed are not affected. You can resume at any time.'
-            }
-            confirmLabel={paused ? 'Resume purchases' : 'Pause all purchases'}
-            destructive={!paused}
-            busy={toggling}
-            onConfirm={() => void confirmToggle()}
-            onCancel={() => setConfirmOpen(false)}
-          />
-        )}
+        <AdminDialogProvider>
+          {children}
+          {confirmOpen && (
+            <AdminConfirmModal
+              title={paused ? 'Resume purchases?' : 'Pause ALL purchases?'}
+              message={
+                paused
+                  ? 'The prints catalog, Order Print buttons, cart and checkout become available to the public again immediately.'
+                  : 'The public site becomes read-only immediately: prints catalog, every Order Print button, cart and checkout disappear (bookmarked links included) and new payments are refused. Orders already placed are not affected. You can resume at any time.'
+              }
+              confirmLabel={paused ? 'Resume purchases' : 'Pause all purchases'}
+              busyLabel={paused ? 'Resuming…' : 'Pausing…'}
+              destructive={!paused}
+              icon={paused ? Play : undefined}
+              busy={toggling}
+              onConfirm={() => void confirmToggle()}
+              onCancel={() => setConfirmOpen(false)}
+            />
+          )}
+        </AdminDialogProvider>
       </CountsContext.Provider>
     </StorefrontContext.Provider>
   )

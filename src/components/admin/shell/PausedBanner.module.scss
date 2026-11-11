@@ -23,9 +23,10 @@
   flex: 1 1 320px;
 }
 
+// 44px on touch widths, the drawn 36px from 900px (questions.md Q7).
 .banner .resume {
   align-items: center;
-  min-height: 36px;
+  min-height: 44px;
   padding: var(--space-2) 14px;
   border-radius: var(--radius-sm);
   background: var(--color-white);
@@ -39,6 +40,10 @@
 
   &:disabled {
     opacity: 0.6;
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
   }
 }
 

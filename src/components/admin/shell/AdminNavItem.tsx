@@ -4,6 +4,7 @@ import Link from 'next/link'
 import c from 'classnames'
 
 import type { AdminNavItemDef, OrdersBadge } from './adminNav'
+import { blurOnPointerClick } from './blurOnPointerClick'
 
 import styles from './AdminNavItem.module.scss'
 
@@ -29,7 +30,10 @@ export function AdminNavItem({
   return (
     <Link
       href={item.href}
-      onClick={onNavigate}
+      onClick={(event) => {
+        blurOnPointerClick(event)
+        onNavigate?.()
+      }}
       aria-current={active ? 'page' : undefined}
       className={c(styles.item, styles[size], active && styles.active)}
     >

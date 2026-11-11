@@ -147,6 +147,14 @@
   --admin-paused-border: #7a1c22;
   --admin-paused-text: #e0b4b7;
   --admin-paused-dot: #ff6b6b;
+  --admin-backdrop: rgba(26, 26, 26, 0.55); // behind admin dialogs
+  --admin-dialog-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  // Donut / chart grays, darkest first (dashboard "Traffic channels").
+  --admin-chart-1: var(--color-dark-surface);
+  --admin-chart-2: var(--color-gray-70);
+  --admin-chart-3: #a3a3a3;
+  --admin-chart-4: var(--color-gray-65);
+  --admin-chart-5: #e6e6e6;
 
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;

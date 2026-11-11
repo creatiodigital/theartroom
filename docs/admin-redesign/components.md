@@ -125,20 +125,31 @@ button (opens the same confirm dialog).
 Eyebrow (optional), `h1` title, one-line description (optional), actions slot on the right.
 Wraps under 900 px.
 
+- **Built** · `src/components/admin/ui/AdminPageHeader.tsx` · `{ eyebrow?: ReactNode; title: string;
+  description?: ReactNode; actions?: ReactNode }`. Title 26 px on phone.
+
 ### `Panel`
 
 White card: border `--color-border-default`, radius 8, padding 24, gap 18. Header = panel title
 (13 px caps) + optional subtitle + optional action on the right (e.g. "All orders >" outline
 link 32 px tall). Used for every block on the dashboard and, later, around every table.
 
+- **Built** · `ui/Panel.tsx` · `Panel { title: string; subtitle?: ReactNode; action?: ReactNode;
+  children; className? }` (a `<section aria-labelledby>`), and `PanelLink { href; children }` for the
+  "All orders >" action (outlined on desktop, plain text on phone). Phone: padding 18 px and the
+  subtitle hidden, as in `dashboard-phone.dc.html`.
+
 ### `AttentionCard`
 
 Design: states §1. Props: `label`, `icon`, `count: number | null`, `tone: 'red' | 'amber'`,
 `zeroHint`, `href`.
 
+- **Built** · `ui/AttentionCard.tsx` · `{ label; icon: Icon; count: number | null; failed?: boolean;
+  tone: 'red' | 'amber'; zeroHint; href }` (`failed` turns the null-count hint into "Unavailable"). Phone: no icon, number first (`dashboard-phone.dc.html`).
+
 | Case | Look |
 | --- | --- |
-| `count === null` (loading or failed) | number "–" in `--color-gray-65`, hint "Loading…" |
+| `count === null` | number "–" in `--color-gray-65`; hint "Loading…" while loading, "Unavailable" after a failure |
 | `0` | white card, number `--color-text-secondary`, hint in green (e.g. "None to capture") |
 | `> 0`, amber | bg `--admin-amber-bg`, border `--admin-amber-border`, number + hint `--color-yellow-70`, hint "Review now →" 600 |
 | `> 0`, red | bg `--color-red-30`, border `--color-red-40`, number `--color-red-50`, hint `--color-red-70` |
@@ -157,6 +168,9 @@ at 0, black above). Each row links to that stage on the Orders page. Under the l
 Canceled (red pill when > 0) and Refunded. Counts come from `countByBucket()` on the same
 `listOrders()` result the attention cards already use, so no new request.
 
+- **Built** · `ui/PipelineList.tsx` · `{ buckets: Record<Bucket, number> | null; href: string }`. Counts
+  come from `useAttentionCounts().buckets` (the shell's one `listOrders()`). Phone: no bars.
+
 Stage labels: New · To place at TPS · At TPS · In production · Shipped · Delivered · Artist paid.
 
 ### `BarList`
@@ -166,6 +180,11 @@ on a `--color-gray-20` track, width relative to the first (largest) row. Used fo
 artworks" (as a table: Artwork / Share / Views, artist on the second line, "no prints" flag in
 `--color-yellow-70`) and "Visitors by country".
 
+- **Built** · `ui/BarList.tsx` · `{ rows: { key; label; sublabel?; value }[]; emptyMessage;
+  variant?: 'list' | 'table'; columns?: { label; share; value } }`; `table` renders the desktop table
+  and the phone's stacked rows. The bar itself is `ui/Bar.tsx` (`{ value; max; size?: 'regular' | 'thin' }`,
+  min 3% when > 0).
+
 ### `DonutChart`
 
 Plain CSS `conic-gradient`, 168 px, 22 px ring, total in the middle ("577 / sessions"), legend
@@ -173,12 +192,19 @@ on the right with colour square, name, "n (pct%)". Greys from dark to light:
 `#1a1a1a, #666666, #a3a3a3, #cccccc, #e6e6e6` (each square gets a 1px inner outline).
 Needs `role="img"` with an `aria-label` that lists the values. No chart library.
 
+- **Built** · `ui/DonutChart.tsx` · `{ title; segments: { label; value }[]; totalLabel }`. Grays are
+  tokens `--admin-chart-1…5`. More than five segments: the fifth becomes "Other" (Q8). 120 px on phone.
+
 ### Analytics states
 
 Design: states §5. Loading, not configured and error replace the four analytics panels with **one**
 full-width panel (they share one request). Copy stays as in `AnalyticsSection.tsx`. "Empty" is per list.
 The footnote ("Google Analytics, consenting visitors plus Google's modeling… Updated …") sits
 under the panels in 12 px secondary text.
+
+- **Built** · `src/components/admin/dashboard/AnalyticsPanels.tsx` (`TrafficChannelsPanel`,
+  `ArtworkViewsPanel`, `CountriesPanel`, `AnalyticsStatePanel`, `AnalyticsFootnote`) fed by
+  `useDashboardAnalytics()` (one request, module cache as before). `AnalyticsSection.tsx` is gone.
 
 ### `ConfirmModal` (restyle, admin only)
 
@@ -188,8 +214,17 @@ resume), 18 px title, secondary message, buttons right-aligned: Cancel (secondar
 "Working…". `ConfirmModal` is shared with the public site and artist dashboard: add the look
 behind a prop or an admin wrapper. Don't restyle it everywhere.
 
+- **Built** as a separate `ui/AdminConfirmModal.tsx` · `{ title; message: ReactNode; confirmLabel;
+  busyLabel?; destructive?; busy?; icon?: Icon (default Warning); onConfirm(); onCancel() }`. It uses
+  the shared `Modal` with a new opt-in `tone="admin"` (dark backdrop, 8 px corners, dialog shadow);
+  `ConfirmModal` and every other `Modal` are unchanged. It renders into the shell's dialog layer
+  (`shell/AdminDialogContext.tsx`), which makes the rest of the page `inert` while it is open (Q5).
+  The pause / resume dialog and the cleanup dialog both use it.
+
 ### Test-data cleanup
 
 Design: states §6. Last thing on the dashboard, only when `DEV_CLEANUP_ALLOWED`. Dashed border
 panel, amber "Test environment · {env}" badge, outline-red button (not filled, so it never looks
 like the real Pause switch). Logic and dialogs unchanged.
+
+- **Built** · `src/components/admin/dashboard/DevCleanupPanel.tsx` · `{ environment; result; onClear }`.

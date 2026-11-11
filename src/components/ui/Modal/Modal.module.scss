@@ -55,3 +55,14 @@
     background: var(--color-surface-subtle);
   }
 }
+
+// tone="admin" (docs/admin-redesign, dashboard-states.dc.html §4).
+.admin {
+  background-color: var(--admin-backdrop);
+
+  .content {
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--admin-dialog-shadow);
+  }
+}
