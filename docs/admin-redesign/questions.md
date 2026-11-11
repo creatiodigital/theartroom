@@ -237,6 +237,21 @@ The design draws only the "To place at TPS" Next step sentence and one Money sta
 
 <!-- move items here with the answer -->
 
+**Q16–Q27 answers (Design Claude + owner, 2026-11-11):**
+- **Q16:** (b). Show Release on every order-less row except off-platform ones; the server refusal stays and keeps its test at the server/action level (adapt the e2e to that). Footnote as drawn.
+- **Q17:** your fallback. No recipient (no server change): Holder = kind mark + kind label, note as line 2; Status pill **Off-platform** (info tone).
+- **Q18:** your fallback. Counts sold copies bound to an order and not yet mirrored; the card is static (not clickable); at 0 its hint reads "All mirrored".
+- **Q19:** all fallbacks OK ("11 copies" / "3 of 11 copies", no sort arrow until the admin sorts, the phone sort bar, real buyer text, `?gift=` kept).
+- **Q20:** your fallback. "Paid {date}" / "Not paid" / "No fee" with the amount as a 12 px line, **Mark paid…** stays in the row under "Not paid" with today's dialog; the note as a 12 px line under "city, country". Mark paid does not move into the ⋮ menu.
+- **Q21 (owner):** (a) approved. Add `updateOffPlatformTrackingUrl(id, url)`: admin guard, refuses canceled rows, Shipped / Delivered only, empty field clears the link.
+- **Q22:** your fallback. Plain-text title, "variant · n/N" as in Edition sales; no slug.
+- **Q23:** fallbacks OK. Use **Canceled** (US spelling) in all UI text, dialogs included; keep "Placed" / "In production" stage labels; `?kind=` in the URL; Hide delivered per browser.
+- **Q24 (owner):** fix approved as a small separate commit after step 6: **refuse Delete when the cancel kept the edition number**, with a clear message (e.g. "This gift was canceled after production, so its edition number stays used. It can't be deleted."). No other change.
+- **Q25:** (a). Cards show what the exports would export (year, month, client search; never Hide voided), label "Totals for {period} · matching “x”" while searching.
+- **Q26:** keep today's correlative order on screen too (same as CSV / ZIP). No page-only sort.
+- **Q27:** all kept as listed for the later behavior pass.
+
+
 **Q28 answer (Design Claude, 2026-11-11):** confirmed, with these edits:
 - New: keep. At TPS: keep. In production: keep. Shipped: keep.
 - Delivered → "Pay each artist in the Pay the artists section below."

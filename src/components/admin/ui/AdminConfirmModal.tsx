@@ -23,8 +23,14 @@ type AdminConfirmModalProps = {
   busyLabel?: string
   destructive?: boolean
   busy?: boolean
-  /** Defaults to Warning; e.g. Play for "Resume purchases?". */
-  icon?: Icon
+  /** Defaults to Warning; e.g. Play for "Resume purchases?". `null`: no icon circle (a form). */
+  icon?: Icon | null
+  /**
+   * wide: a form dialog, 760px. The title and buttons stay put and the body
+   * scrolls between them; the warning sits under the body, so an error is never
+   * scrolled out of sight.
+   */
+  size?: 'regular' | 'wide'
   onConfirm: () => void
   onCancel: () => void
 }
@@ -45,6 +51,7 @@ export function AdminConfirmModal({
   destructive = false,
   busy = false,
   icon: DialogIcon = Warning,
+  size = 'regular',
   onConfirm,
   onCancel,
 }: AdminConfirmModalProps) {
@@ -55,24 +62,35 @@ export function AdminConfirmModal({
 
   if (!layer) return null
 
+  const wide = size === 'wide'
+
   return createPortal(
-    <Modal tone="admin" titleId={titleId} onClose={busy ? () => {} : onCancel}>
-      <div className={styles.dialog}>
+    <Modal
+      tone="admin"
+      titleId={titleId}
+      maxWidth={wide ? '760px' : undefined}
+      onClose={busy ? () => {} : onCancel}
+    >
+      <div className={c(styles.dialog, wide && styles.wide)}>
         <div className={styles.head}>
-          <span
-            aria-hidden
-            className={c(styles.iconCircle, destructive ? styles.iconDanger : styles.iconNeutral)}
-          >
-            <DialogIcon size={20} weight="light" />
-          </span>
+          {DialogIcon && (
+            <span
+              aria-hidden
+              className={c(styles.iconCircle, destructive ? styles.iconDanger : styles.iconNeutral)}
+            >
+              <DialogIcon size={20} weight="light" />
+            </span>
+          )}
           <div className={styles.text}>
             <h2 id={titleId} className={styles.title}>
               {title}
             </h2>
-            <div className={styles.message}>{message}</div>
-            {warning && <div className={styles.warning}>{warning}</div>}
+            {!wide && <div className={styles.message}>{message}</div>}
+            {!wide && warning && <div className={styles.warning}>{warning}</div>}
           </div>
         </div>
+        {wide && <div className={styles.body}>{message}</div>}
+        {wide && warning && <div className={styles.warning}>{warning}</div>}
         <div className={styles.actions}>
           <Button
             variant="secondary"

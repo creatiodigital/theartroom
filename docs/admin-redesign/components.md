@@ -270,3 +270,27 @@ like the real Pause switch). Logic and dialogs unchanged.
 
 ### `AdminConfirmModal` (additions)
 - `warning?: ReactNode` (amber box under the message) and `cancelLabel?: string` (default "Cancel").
+
+## Sales pieces (step 5)
+
+### `StatCard`
+- **Built** · `ui/StatCard.tsx` · `{ label; value: ReactNode | null; hint?; tone?: 'plain' | 'amber'; size?: 'count' | 'money';
+  pressed?; onSelect? }`. `null` shows "–". With `onSelect` it is a button with `aria-pressed` (pressed = 2 px dark edge).
+  Count 32 px / money 28 px (26 / 22 on phones).
+
+### `AdminSelect`
+- **Built** · `ui/AdminSelect.tsx` · `{ label; hideLabel?; id?; value; onChange(value); disabled?; title?; minWidth?; children }`
+  (native `<select>`; 36 px, 44 px under 900 px; full width on phones).
+
+### `ListPanel`
+- **Built** · `ui/ListPanel.tsx` · `{ label; toolbar?; count?; footnote?; children }` (`<section aria-label>`, toolbar row only
+  when there is a toolbar or a count).
+
+### `OffPlatformKindMark`
+- **Built** · `ui/OffPlatformKindMark.tsx` · `{ kind: string }` (Gift / Palette / Printer, 16 px light, aria-hidden).
+
+### Additions
+- `AdminConfirmModal`: `size?: 'regular' | 'wide'` (760 px, body scrolls, title and buttons stay) and `icon?: Icon | null`
+  (`null` = no icon circle).
+- `StatusPill`: `tone` also `'green' | 'amber' | 'info' | 'gray'`; `shape?: 'pill' | 'tag'` (4 px corners).
+- `EmptyState`: `action?: ReactNode`.

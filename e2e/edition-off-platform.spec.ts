@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { editionReleaseRefusal } from '@/lib/editions/releaseRefusal'
 import prisma from '@/lib/prisma'
 
 import { deletePrintOrderById } from './cleanup-helpers'
@@ -68,11 +69,23 @@ test('gift order: create, buyers skip its number, stages advance, shipped cancel
       })
       .toBe('sold')
 
-    // The ledger's own Release refuses gift-bound rows (cancel instead).
-    await row.getByRole('button', { name: 'Release' }).click()
-    await page.getByRole('button', { name: 'Yes, release it' }).click()
-    await expect(page.getByText(/gift \/ artist-copy order/i)).toBeVisible()
-    await page.getByRole('button', { name: 'Keep it' }).click()
+    // Gift-bound rows offer no Release in the ledger (questions.md Q16) …
+    await expect(row.getByRole('button', { name: 'Release' })).toHaveCount(0)
+    // … and the server's rule behind Release still refuses them (cancel instead).
+    const giftCopy = await prisma.editionNumber.findFirstOrThrow({
+      where: { variantId: fixture.variantId, number: 1 },
+      include: {
+        order: { select: { id: true } },
+        orderItem: { select: { order: { select: { id: true } } } },
+      },
+    })
+    expect(
+      editionReleaseRefusal({
+        state: giftCopy.state,
+        boundOrderId: giftCopy.order?.id ?? giftCopy.orderItem?.order?.id ?? null,
+        offPlatformOrderId: giftCopy.offPlatformOrderId,
+      }),
+    ).toMatch(/gift \/ artist-copy order/i)
 
     // ── A real buyer gets #2 — the hand-consumed #1 is never sellable ─
     bought = await buyExistingLimited(fixture, { tag: 'off-platform-skip' })

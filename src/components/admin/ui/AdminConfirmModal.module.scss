@@ -83,6 +83,32 @@
   color: var(--admin-amber-text);
 }
 
+// size="wide": a form. Capped at the viewport less the Modal's backdrop inset and
+// panel padding, so the title and buttons stay on screen and only the body scrolls.
+.wide {
+  max-height: calc(100dvh - 2 * (var(--space-4) + var(--space-6)));
+
+  > .head,
+  > .warning,
+  > .actions {
+    flex: 0 0 auto;
+  }
+
+  > .warning {
+    margin-top: 0;
+  }
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  // Room for the scrollbar, taken from the panel's own padding.
+  margin-right: calc(-1 * var(--space-2));
+  padding-right: var(--space-2);
+  color: var(--color-text-primary);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

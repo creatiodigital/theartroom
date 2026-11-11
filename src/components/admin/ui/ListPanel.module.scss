@@ -1,0 +1,45 @@
+@use '@/styles/mixins' as *;
+
+// designs/edition-sales.dc.html (the "Copies" section); the same frame Orders drew.
+.panel {
+  min-width: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+
+  @include media-up(tablet) {
+    padding: 14px var(--space-5);
+  }
+}
+
+.count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.footnote {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border-default);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+
+  @include media-up(tablet) {
+    padding: var(--space-3) var(--space-5);
+  }
+}

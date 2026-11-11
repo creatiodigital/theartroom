@@ -23,6 +23,7 @@ import { REORDER_REASONS, type ReorderReason } from '@/lib/orders/reorderReasons
 import { computeOrderPayout } from '@/lib/orders/orderPayout'
 import { devCleanupAllowed } from '@/lib/admin/resetTestData'
 import { releaseEditionNumberForPaymentIntent } from '@/lib/editions/releaseEditionNumber'
+import { editionReleaseRefusal } from '@/lib/editions/releaseRefusal'
 import { captureError } from '@/lib/observability/captureError'
 import { EMAIL_BRAND } from '@/lib/emails/brand'
 import { logOrderEvent, type OrderEventActor } from '@/lib/orders/logOrderEvent'
@@ -38,7 +39,6 @@ import { renderInvoicePdf } from '@/lib/invoices/renderInvoicePdf'
 import { buildInvoiceKey, deletePrivateR2Key, uploadPrivateToR2, r2ObjectExists } from '@/lib/r2'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
-import { formatOrderRef } from '@/lib/orders/orderRef'
 
 export type AdminOrderRow = {
   id: string
@@ -935,24 +935,14 @@ export async function releaseOrphanedEditionNumber(
     },
   })
   if (!row) return { ok: false, error: 'Edition number not found.' }
-  if (row.state === 'available') {
-    return { ok: false, error: 'This number is already available — nothing to release.' }
-  }
 
-  const boundOrderId = row.order?.id ?? row.orderItem?.order?.id ?? null
-  if (boundOrderId) {
-    return {
-      ok: false,
-      error: `This copy is attached to order ${formatOrderRef(boundOrderId)}. Cancel or refund that order instead.`,
-    }
-  }
-  if (row.offPlatformOrderId) {
-    return {
-      ok: false,
-      error:
-        'This copy belongs to a gift / artist-copy order. Cancel it from the Gift orders page instead — that releases the number.',
-    }
-  }
+  // Same checks and messages as before, in the same order; shared with e2e.
+  const refusal = editionReleaseRefusal({
+    state: row.state,
+    boundOrderId: row.order?.id ?? row.orderItem?.order?.id ?? null,
+    offPlatformOrderId: row.offPlatformOrderId,
+  })
+  if (refusal) return { ok: false, error: refusal }
 
   try {
     // Reserved OR sold orphan → back to available, all bindings cleared. The

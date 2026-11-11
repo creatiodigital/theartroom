@@ -13,7 +13,7 @@ Do these in order, one PR each.
 | 2 | **Dashboard** body: `AdminPageHeader`, `Panel`, `AttentionCard`, `PipelineList`, `BarList`, `DonutChart`, analytics states, cleanup panel, `ConfirmModal` admin look. Remove the "Manage" hub cards (the menu replaces them). | dashboard, states, phone | Built | Analytics data unchanged (`AnalyticsSection` logic). See Built notes. |
 | 3 | Orders list | orders (spec: orders.md §1) | Built | Sets the pattern for every list page. Closes Q1 (`?stage=`). Read counts/rows from the shell (Q2). |
 | 4 | Order detail | order-detail (spec: orders.md §2) | Built | Re-layout only: keep every action, guard and confirm as today. |
-| 5 | Edition sales | edition-sales (spec: sales.md §1) | Designed · approved by owner | Adds summary cards + status filter (NEW, approved). |
+| 5 | Edition sales | edition-sales (spec: sales.md §1) | Built | Adds summary cards + status filter (NEW, approved). |
 | 6 | Gift orders | gift-orders (spec: sales.md §2) | Designed · approved by owner | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
 | 7 | Invoices | invoices (spec: invoices.md) | Designed · approved by owner | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
 | 8 | Payouts | payouts (spec: payouts.md) | Designed · approved by owner | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
@@ -190,3 +190,30 @@ three fields it reads (type change only).
    `--color-text-secondary` (the drawn #999 fails contrast); the safe-window glyphs became icons.
 8. Kept as today (Q15): Cancel trigger visible with its panel open; Pay/Refund/Invoice not gated by a
    terminal payment; cart Pay ignores onboarding; "Send credit note again" without confirm.
+
+### Step 5 · Edition sales — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-edition-sales.md` (its contract and fallbacks; Q16–Q19 open).
+Files: `src/components/admin/edition-sales/*`, new `ui/StatCard`, `ui/AdminSelect`, `ui/ListPanel`,
+`ui/OffPlatformKindMark`; `AdminConfirmModal` gains `size="wide"` and `icon={null}`; `StatusPill` gains
+green / amber / info / gray tones and a `tag` shape; `EmptyState` gains `action`.
+
+1. **Kept**: every state, effect and handler (checked line by line: the only differences are the
+   artwork / variant filters, which moved into the URL), both dialogs' copy, every form id and check.
+   `e2e/edition-off-platform.spec.ts` passes unchanged.
+2. **NEW, built**: summary cards (Sold / Reserved / Off-platform set the Status filter, pressing again
+   clears it; "Not mirrored in TPS" amber above 0, not clickable per Q18's fallback); Status filter;
+   filters in the URL (`?artwork=&variant=&status=`, keeps `?gift=`); empty / no-match / failed states;
+   phone cards on the same `<tr>` with a "Sort by Date · Number" bar.
+3. **Release** (Q16 answer (b)): on every order-less row except off-platform ones, which the server always
+   refuses. That refusal now lives in `lib/editions/releaseRefusal.ts` (same checks and messages, used by the
+   action) and `edition-off-platform.spec` checks it there, plus that gift rows show no Release.
+   Off-platform rows: kind mark + label + note, pill "Off-platform" (Q17). Count "{n} copies" /
+   "{v} of {n} copies" (Q19).
+4. **Sort**: the column name is the button's name and `aria-sort` carries the direction (was "Sort by
+   date (desc)").
+5. One status per copy: anything with an off-platform kind counts as Off-platform, so the three cards
+   always add up to the ledger.
+
+Verified: typecheck, lint, prettier; `edition-off-platform` e2e 1/1 (before and after Q16); browser (dev DB,
+1440 / 390, read-only): no console errors, no horizontal scroll, the Sold card sets `?status=sold`.

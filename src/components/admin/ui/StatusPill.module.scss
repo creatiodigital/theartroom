@@ -30,3 +30,35 @@
   border-color: var(--color-gray-60);
   color: var(--color-text-primary);
 }
+
+// List statuses (sales.md §1: Sold, Reserved, off-platform; §2: the other gift stages).
+.green {
+  background: var(--color-green-30);
+  border-color: var(--color-green-30);
+  color: var(--color-green-70);
+}
+
+.amber {
+  background: var(--color-yellow-30);
+  border-color: var(--color-yellow-30);
+  color: var(--color-yellow-70);
+}
+
+.info {
+  background: var(--color-badge-info-bg);
+  border-color: var(--color-badge-info-bg);
+  color: var(--color-badge-info-text);
+}
+
+.gray {
+  background: var(--color-gray-20);
+  border-color: var(--color-gray-20);
+  color: var(--color-text-primary);
+}
+
+// Inside a list row (edition-sales.dc.html, gift-orders.dc.html): 4px corners, the
+// drawn 2px 8px less the 1px border.
+.tag {
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+}
