@@ -16,7 +16,7 @@ Do these in order, one PR each.
 | 5 | Edition sales | edition-sales (spec: sales.md §1) | Built | Adds summary cards + status filter (NEW, approved). |
 | 6 | Gift orders | gift-orders (spec: sales.md §2) | Built | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
 | 7 | Invoices | invoices (spec: invoices.md) | Built | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
-| 8 | Payouts | payouts (spec: payouts.md) | Designed · approved by owner | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
+| 8 | Payouts | payouts (spec: payouts.md) | Built | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
 | 9 | Users | users (spec: users.md) | Designed · approved by owner | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Designed · approved by owner | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Designed · approved by owner | UI only. |
@@ -285,6 +285,36 @@ port 3001 (again after Q32 / Q33); browser on my own `pnpm dev` (dev DB, read-on
 the totals row = the exported CSV (€1,303.82, 3 rows), Year enables Month and clearing it clears Month,
 Nov 2026 empty state, no-match message + Clear filters, Hide voided, no console errors, no horizontal
 scroll. The dev DB has no credit notes, so the "Voided by" / "Cancels" lines were not seen live.
+
+### Step 8 · Payouts — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-payouts.md`. Files: `src/components/admin/payouts/index.tsx`
++ new `Payouts.module.scss`, `app/admin/payouts/page.tsx` (title "Payouts — The Art Room Admin"), new
+`src/lib/csv.ts` (the invoice register's two CSV field helpers, moved unchanged; `invoiceCsv.ts` imports
+them), new `src/lib/payouts/payoutCsv.ts`, `ui/Callout` (`icon`).
+
+1. **Kept**: the session redirect, `load()` and its effect are byte-identical; data is still
+   `listArtistPayouts()` (no server change); today's empty message; the order link.
+2. **NEW, built**: Export CSV (in the browser, from the filtered rows: Date paid, Artist, Artist email,
+   Artwork, Source, Method, Transfer ID, Amount, Currency, Order); the waiting reminder (amber, HandCoins,
+   only when the shell's delivered-unpaid count > 0, singular / plural, link to Orders · Delivered);
+   summary cards (Released, Payouts, Via Stripe; 28 px like Invoices); Year (default this year) and
+   Artist filters; the totals row ("Total released in {year}" / "Total released").
+3. **Method**: Stripe (info tag) with the transfer ID under it in mono 11 px, shortened in the middle, full
+   ID on hover; Manual (gray tag). "· cart line" (was "· cart item").
+4. **One set of rows** (year + artist) feeds the cards, the count, the totals row and the CSV.
+5. **States**: "Loading…"; a failed load → red Callout, cards "–", no empty message; filtered to nothing →
+   "No payouts match these filters.".
+6. **Phone** (< 900 px): the same `<tr>` as cards (date + amount, artist, artwork, method, order); the
+   totals row becomes a summary block.
+7. **CSV safety**: artist-controlled text goes through the register's formula neutralization; CRLF, no
+   BOM, as the invoice register. The invoice register's export is byte-identical before and after the
+   helper move (exported on the dev DB both times).
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; browser on my own `pnpm dev` (dev DB,
+read-only) at 1440 and 390 px: cards = table = totals row = exported CSV, Year and Artist filters, no
+console errors, no horizontal scroll. The dev DB has one payout (manual) and no delivered-unpaid orders,
+so the Stripe tag with its transfer ID and the waiting reminder were not seen live. No e2e opens this page.
 
 ### Step 20 · Visitor room menu + Exit wall view — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 

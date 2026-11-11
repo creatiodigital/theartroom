@@ -13,23 +13,8 @@
  * notes) are exempt: "-84.70" is a number, not a formula.
  */
 
+import { csvField, csvTextField } from '@/lib/csv'
 import type { InvoiceRow } from '@/lib/invoices/queryInvoices'
-
-/** Escape a single CSV field value per RFC 4180. */
-function csvField(value: string | number | null | undefined): string {
-  const s = value == null ? '' : String(value)
-  if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
-    return `"${s.replace(/"/g, '""')}"`
-  }
-  return s
-}
-
-/** RFC 4180 escaping + formula neutralization for buyer-controlled text. */
-function csvTextField(value: string | null | undefined): string {
-  const s = value == null ? '' : String(value)
-  const looksLikeFormula = /^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)
-  return csvField(looksLikeFormula ? `'${s}` : s)
-}
 
 /** Cents → decimal euros string, e.g. 10050 → "100.50". */
 function centsToEur(cents: number): string {

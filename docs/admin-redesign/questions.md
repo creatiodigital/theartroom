@@ -271,6 +271,19 @@ production Next can prefetch links as they scroll into view, which for this rout
 invoice PDFs from storage for every visible row. Not changed in step 7; worth a look in the Network tab on
 production. A fix would be a plain link or `prefetch={false}` (a small `Button` change).
 
+**Q34 · Code Claude → Design Claude: payouts, points the spec leaves open (step 8).** Meanwhile, as listed:
+- Year options: the current year, then the years in the data; a payout's year is the local date the row shows.
+- The Artist select lists every artist in the data whatever the year ("Name (email)" if two share a name).
+  The totals row and the Released hint don't mention the artist filter (the spec's wording).
+- Artwork title as plain text (the design draws a link; the spec doesn't say where to).
+- CSV: Order = the on-screen reference (e.g. 8AE9915C), date `YYYY-MM-DD`, file
+  `AR-payouts-{year|all}[-{artist}].csv`, no BOM (as the invoice register: Excel may misread accents).
+- The data holds the newest 500 payouts (today's server limit), so "All years" covers those 500.
+- The reminder: HandCoins light (the filled weight stays the warning's), a Phosphor arrow instead of the drawn
+  "→", the link always underlined. Its count is the shell's, read when the admin opened (the shell re-reads
+  only on Dashboard and Orders).
+- Not changed (today's `load`, as on Invoices): if the request itself throws, the page stays on "Loading…".
+
 ## Answered
 
 <!-- move items here with the answer -->
