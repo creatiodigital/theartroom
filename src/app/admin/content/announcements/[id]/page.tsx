@@ -1,8 +1,8 @@
 'use client'
 
 import { use, useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
 
+import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { Button } from '@/components/ui/Button'
 import { ImageUploader } from '@/components/ui/ImageUploader'
@@ -119,11 +119,18 @@ export default function AnnouncementEditor({ params }: PageProps) {
 
   return (
     <>
-      {/* Interim, until the admin breadcrumb is designed (docs/admin-redesign/questions.md
-          Q4): Announcements is not in the admin menu, so this is the only way back. */}
-      <Link href="/admin/content/announcements" className={dashboardStyles.backLink}>
-        ← Back to Announcements
-      </Link>
+      {/* gallery.md §2 (Q4). Announcements is not in the admin menu, so this is the way back. */}
+      <div className={styles.crumbs}>
+        <AdminBreadcrumb
+          items={[
+            { label: 'Content', href: '/admin/content' },
+            { label: 'Announcements', href: '/admin/content/announcements' },
+            {
+              label: announcement ? announcement.title.trim() || 'Untitled' : 'Edit announcement',
+            },
+          ]}
+        />
+      </div>
       <h1 className={dashboardStyles.pageTitle}>Edit Announcement</h1>
 
       {loadError && <p className={styles.error}>{loadError}</p>}

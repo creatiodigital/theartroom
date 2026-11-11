@@ -20,7 +20,7 @@ Do these in order, one PR each.
 | 9 | Users | users (spec: users.md) | Built | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Built | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Built | UI only. |
-| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Building: 12a built | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
+| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Building: 12a, 12b built | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
@@ -375,6 +375,33 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-ga
 15/15 on port 3001 (unchanged specs); browser on my own `pnpm dev` (dev DB, read-only: one menu opened and
 closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
 scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
+
+### Step 12b · Sortable lists + Announcements — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-content-lists.md`. Files: new `ui/SortableList` (the one dnd-kit list both
+pages use), `app/admin/content/landing/page.tsx` + SCSS, `admin/GallerySelection/{index,SelectionList}.tsx` + SCSS,
+`app/admin/content/gallery-selection/page.tsx`, `app/admin/content/announcements/page.tsx` + SCSS, the edit page
+`announcements/[id]/page.tsx` (breadcrumb only), `e2e/gallery-selection-admin.spec.ts` (one line).
+
+1. **Kept**: each page's logic in place and diffed against HEAD: the landing page's 232 lines differ only by the
+   sensors block (now in `SortableList`, same sensors, collision rule, strategy, drag style); gallery selection's
+   load / reorder / remove and picker mount, the announcements' gate / load / create / delete and the four status
+   texts are unchanged. Delete dialogs moved to `AdminConfirmModal` with their messages. The slide editor and the
+   Add artworks picker keep today's dialogs (Q77).
+2. **Layout per gallery.md §2a / §2b**: breadcrumbs Content / Landing page · Gallery selection · Announcements ·
+   Announcements / {title} (replaces "← Back to Announcements", Q4); headers with View homepage ↗ (Gallery
+   selection: View Prints page ↗, Q70) and the primary action; rows with a drag handle ("Reorder {title}"),
+   position, thumbnail, title + line, Edit / trash or Remove; the keyboard footnote (the keyboard sensor was
+   already on). Announcements: photo, title, status ("On the homepage" green, the rest gray), Edit, trash.
+3. **Phone**: two-line rows, 44 px controls, `touch-action: none` on the handle (Q72; check on a real phone).
+4. **Found, not fixed (Q74, owner)**: reorder-then-edit can undo the move; an image uploaded to an unsaved slide
+   goes live at once; reorder / save / delete ignore the server's reply; a failed slide load crashes the page;
+   deleting a slide leaves its R2 images; gallery selection fails silently.
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; `gallery-selection-admin` + `gallery-selection`
+16/16; browser on my own `pnpm dev` (dev DB, read-only: no drag, nothing pressed) at 1440 and 390 px: breadcrumbs,
+headings, handle names, the announcement statuses, the edit page's breadcrumb, no console errors, no horizontal
+scroll.
 
 ### Step 12a · Content list — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 

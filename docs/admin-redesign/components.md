@@ -350,3 +350,11 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `StatusPill`: tone `'redSoft'` (light red, e.g. "Missing").
 - `Bar`: `surface?: 'white' | 'gray'` (the track's colour; gray inside a gray status row).
 - Token `--admin-preview-tile: #f0efec` (the work preview tile).
+
+## Content list pieces (step 12b)
+
+### `SortableList`
+- **Built** · `ui/SortableList.tsx` · `{ rows: { id; title; sub?: ReactNode; thumb: ReactNode; actions: ReactNode;
+  className?; marker? (a data-* attribute name put on the row) }[]; onDragEnd(event: DragEndEvent) }`. dnd-kit (pointer + keyboard
+  sensors, closest-center, vertical strategy); each row: handle (`aria-label="Reorder {title}"`, DotsSixVertical bold,
+  `touch-action: none`), position, thumb, title + sub, actions. `SORTABLE_KEYBOARD_HINT` is the footnote text.

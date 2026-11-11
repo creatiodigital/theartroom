@@ -1,15 +1,22 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { ArrowSquareOut, Plus } from '@phosphor-icons/react'
 
+import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { SORTABLE_KEYBOARD_HINT } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { Text } from '@/components/ui/Typography'
 import type { AdminSelectionRow } from '@/lib/queries/getGallerySelection'
 
 import { AddArtworksModal } from './AddArtworksModal'
 import { SelectionList } from './SelectionList'
 import styles from './GallerySelection.module.scss'
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 export const GallerySelection = () => {
   const [rows, setRows] = useState<AdminSelectionRow[]>([])
@@ -79,37 +86,78 @@ export const GallerySelection = () => {
   const soldOutCount = rows.filter((r) => r.status === 'sold-out').length
   const withdrawnCount = rows.filter((r) => r.status === 'not-for-sale').length
 
+  const perArtistLine = Object.entries(perArtist)
+    .map(([name, n]) => `${name} ${n}`)
+    .join(' · ')
+
   return (
     <div className={styles.screen}>
-      {/* Tally left, the one action right. As a plain child of `.screen` — a
-          flex column — the button stretched to a full-width black slab across
-          the bottom of the page. */}
-      <div className={styles.toolbar}>
-        <div className={styles.header}>
-          <Text font="dashboard" as="p" className={styles.tally}>
-            {rows.length} works · {Object.keys(perArtist).length} artists
-            {soldOutCount > 0 ? ` · ${soldOutCount} sold out` : ''}
-            {withdrawnCount > 0 ? ` · ${withdrawnCount} hidden` : ''}
-          </Text>
-          <Text font="dashboard" as="p" className={styles.tallyDetail}>
-            {Object.entries(perArtist)
-              .map(([name, n]) => `${name} ${n}`)
-              .join(' · ')}
-          </Text>
-        </div>
-
-        <Button
-          font="dashboard"
-          variant="primary"
-          label="Add artworks"
-          onClick={() => setPickerOpen(true)}
-        />
-      </div>
+      {/* gallery.md §2 (Q4): Content / Gallery selection, in place of an eyebrow. */}
+      <AdminBreadcrumb
+        items={[{ label: 'Content', href: '/admin/content' }, { label: 'Gallery selection' }]}
+      />
+      <AdminPageHeader
+        title="Gallery selection"
+        description={
+          <>
+            <span className={styles.sub}>
+              The works on the Prints page, in this order. Drag to reorder.
+            </span>
+            {/* The tally, once loaded (it read "0 works · 0 artists" while loading). */}
+            {!loading && (
+              <span className={styles.tally}>
+                {plural(rows.length, 'work', 'works')} ·{' '}
+                {plural(Object.keys(perArtist).length, 'artist', 'artists')}
+                {soldOutCount > 0 ? ` · ${soldOutCount} sold out` : ''}
+                {withdrawnCount > 0 ? ` · ${withdrawnCount} hidden` : ''}
+              </span>
+            )}
+            {!loading && perArtistLine && (
+              <span className={styles.tallyDetail}>{perArtistLine}</span>
+            )}
+          </>
+        }
+        actions={
+          <>
+            <Link
+              href="/prints"
+              target="_blank"
+              rel="noopener noreferrer"
+              prefetch={false}
+              className={styles.view}
+            >
+              View Prints page
+              <ArrowSquareOut size={16} weight="light" aria-hidden />
+              <span className="sr-only">(opens in a new tab)</span>
+            </Link>
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.add}
+              onClick={() => setPickerOpen(true)}
+            >
+              <Plus size={16} weight="light" aria-hidden />
+              Add artworks
+            </Button>
+          </>
+        }
+      />
 
       {loading ? null : rows.length === 0 ? (
-        <EmptyState message="Nothing selected yet — /prints is showing its empty state." />
+        <ListPanel label="Works">
+          <EmptyState
+            title="Nothing selected yet."
+            text="The Prints page is showing its empty state."
+          />
+        </ListPanel>
       ) : (
-        <SelectionList rows={rows} onReorder={handleReorder} onRemove={handleRemove} />
+        <ListPanel
+          label="Works"
+          count={plural(rows.length, 'work', 'works')}
+          footnote={SORTABLE_KEYBOARD_HINT}
+        >
+          <SelectionList rows={rows} onReorder={handleReorder} onRemove={handleRemove} />
+        </ListPanel>
       )}
 
       {pickerOpen && (

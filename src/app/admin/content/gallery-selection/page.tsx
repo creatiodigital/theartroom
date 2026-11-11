@@ -31,12 +31,8 @@ const GallerySelectionPage = () => {
     return <div className={dashboardStyles.page}>Not authorized</div>
   }
 
-  return (
-    <>
-      <h1 className={dashboardStyles.pageTitle}>Gallery Selection</h1>
-      <GallerySelection />
-    </>
-  )
+  // The title and breadcrumb are GallerySelection's (its tally sits under the title).
+  return <GallerySelection />
 }
 
 export default GallerySelectionPage

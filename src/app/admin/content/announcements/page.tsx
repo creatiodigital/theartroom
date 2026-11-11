@@ -2,10 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { PencilSimple, Plus, Trash } from '@phosphor-icons/react'
 
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 
 import styles from './page.module.scss'
@@ -21,6 +27,8 @@ type AnnouncementRow = {
 
 /** What the homepage needs to show an announcement: switched on, a title and a photo. */
 const showable = (a: AnnouncementRow) => a.isActive && !!a.title.trim() && !!a.imageUrl
+
+const announcementsCount = (n: number) => (n === 1 ? '1 announcement' : `${n} announcements`)
 
 /**
  * Admin → Content → Announcements (AR-174). The homepage shows the newest announcement that is
@@ -81,7 +89,7 @@ export default function AnnouncementsAdminPage() {
 
   if (sessionLoading || !isAdmin) {
     return (
-      <div className={dashboardStyles.page}>
+      <div className={styles.page}>
         <LoadingBar />
       </div>
     )
@@ -89,99 +97,120 @@ export default function AnnouncementsAdminPage() {
 
   const shownId = rows?.find(showable)?.id
 
-  return (
-    <>
-      <h1 className={dashboardStyles.pageTitle}>Announcements</h1>
+  // Today's Status cell rule, verbatim.
+  const statusOf = (row: AnnouncementRow) =>
+    row.id === shownId
+      ? 'On the homepage'
+      : !row.isActive
+        ? 'Off'
+        : showable(row)
+          ? 'On (a newer one shows)'
+          : 'On, but needs a title and a photo'
 
-      <div className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>Homepage announcements</h2>
+  return (
+    <div className={styles.page}>
+      {/* gallery.md §2 (Q4): Content / Announcements, in place of an eyebrow. */}
+      <AdminBreadcrumb
+        items={[{ label: 'Content', href: '/admin/content' }, { label: 'Announcements' }]}
+      />
+      <AdminPageHeader
+        title="Announcements"
+        description="Only the newest switched-on announcement with a title and a photo shows on the homepage."
+        actions={
           <Button
+            variant="bare"
             font="dashboard"
-            variant="primary"
-            label={creating ? 'Creating...' : 'New Announcement'}
+            className={styles.add}
             onClick={create}
             disabled={creating}
-          />
-        </div>
-        <p className={dashboardStyles.sectionDescription}>
-          Shown on the homepage between the introduction and Current Exhibitions. Only one shows:
-          the newest that is switched on and has a title and a photo. With none, the section is
-          hidden.
-        </p>
+          >
+            <Plus size={16} weight="light" aria-hidden />
+            {creating ? 'Creating…' : 'New announcement'}
+          </Button>
+        }
+      />
 
-        {error && <p className={styles.error}>{error}</p>}
+      {/* No ×: a dismissed load error would bring the loading bar back (Q75). */}
+      {error && (
+        <Callout tone="red" role="alert">
+          {error}
+        </Callout>
+      )}
 
-        {rows === null ? (
-          !error && <LoadingBar />
-        ) : rows.length === 0 ? (
-          <p className={dashboardStyles.sectionDescription}>No announcements yet.</p>
-        ) : (
-          <table className={dashboardStyles.table}>
-            <thead>
-              <tr>
-                <th>Photo</th>
-                <th>Title</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td>
+      {rows === null ? (
+        !error && <LoadingBar />
+      ) : (
+        <ListPanel
+          label="Announcements"
+          count={rows.length > 0 ? announcementsCount(rows.length) : undefined}
+          footnote="Shown between the introduction and Current Exhibitions. With none, the section is hidden."
+        >
+          {rows.length === 0 ? (
+            <EmptyState title="No announcements yet." />
+          ) : (
+            <ul className={styles.list}>
+              {rows.map((row) => {
+                const title = row.title.trim() || 'Untitled'
+                const shown = row.id === shownId
+                return (
+                  <li key={row.id} className={styles.row}>
                     {row.imageUrl ? (
-                      <img src={row.imageUrl} alt="" className={styles.thumbnail} />
+                      <img src={row.imageUrl} alt="" className={styles.thumb} />
                     ) : (
-                      <span className={styles.noPhoto}>No photo</span>
+                      <span className={`${styles.thumb} ${styles.noPhoto}`}>No photo</span>
                     )}
-                  </td>
-                  <td>{row.title.trim() || <span className={styles.untitled}>Untitled</span>}</td>
-                  <td>
-                    {row.id === shownId
-                      ? 'On the homepage'
-                      : !row.isActive
-                        ? 'Off'
-                        : showable(row)
-                          ? 'On (a newer one shows)'
-                          : 'On, but needs a title and a photo'}
-                  </td>
-                  <td>
-                    <div className={styles.rowActions}>
-                      <Button
-                        font="dashboard"
-                        variant="secondary"
-                        size="small"
-                        label="Edit"
-                        href={`/admin/content/announcements/${row.id}`}
-                      />
-                      <Button
-                        font="dashboard"
-                        variant="ghost"
-                        size="small"
-                        label="Delete"
-                        onClick={() => setDeleting(row)}
-                      />
+                    <div className={styles.text}>
+                      <span className={row.title.trim() ? styles.title : styles.untitled}>
+                        {title}
+                      </span>
+                      <span>
+                        <StatusPill
+                          shape="tag"
+                          tone={shown ? 'green' : 'gray'}
+                          label={statusOf(row)}
+                        />
+                      </span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    <div className={styles.actions}>
+                      <Button
+                        variant="bare"
+                        font="dashboard"
+                        className={styles.edit}
+                        href={`/admin/content/announcements/${row.id}`}
+                      >
+                        <PencilSimple size={16} weight="light" aria-hidden />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="bare"
+                        font="dashboard"
+                        className={styles.trash}
+                        aria-label={`Delete announcement ${title}`}
+                        onClick={() => setDeleting(row)}
+                      >
+                        <Trash size={16} weight="light" aria-hidden />
+                      </Button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </ListPanel>
+      )}
 
       {deleting && (
-        <ConfirmModal
+        <AdminConfirmModal
           title="Delete this announcement?"
           message={`"${deleting.title.trim() || 'Untitled'}" and its photo will be deleted. This can't be undone.`}
           confirmLabel="Delete"
+          busyLabel="Deleting…"
           destructive
           busy={busy}
           onConfirm={confirmDelete}
           onCancel={() => setDeleting(null)}
         />
       )}
-    </>
+    </div>
   )
 }

@@ -531,6 +531,82 @@ _Meanwhile:_ **The works on the Prints page**. The other eight hints are as draw
 Exhibitions and Gift orders use `RowMenu`, which flips upward). Per Q6 the shell's bottom padding goes 200 px → 56 px
 (40 px on phone). That touches every admin page, so it should be its own commit. _Meanwhile:_ 200 px kept.
 
+**Q70 · Code Claude → Design Claude: Gallery selection's header.** The spec gives the pattern both lists share, but **View homepage ↗** doesn't show the selection: the selection is the whole of `/prints` (Q67). Its sub isn't written either. _Meanwhile:_
+
+- **View Prints page ↗** → `/prints`, in a new tab;
+- sub _The works on the Prints page, in this order. Drag to reorder._;
+- under it, today's tally (singulars fixed) and the per-artist line.
+
+The panel count "n works" repeats the tally's first figure. Keep both?
+
+**Q71 · Code Claude → Design Claude: rows, points the design doesn't draw.** _Meanwhile:_
+
+- **Gallery selection's reasons**, verbatim as a 12 px line under "artist · edition":
+  - "Sold out · shown on the page" in secondary;
+  - "Not for sale · hidden from the page" in amber text, 600.
+  - Only the thumbnail is dimmed. Today the whole row sits at 0.55 opacity, which puts its text near 3.4:1.
+- **Handle and position:** `--color-text-secondary`. The drawn #999 is 2.8:1, under 3:1 for the icon and 4.5:1 for the number.
+- **Hover:** no row fill (rows aren't controls; the drawn #fcfcfc row reads as a sample). While dragging, today's 0.5 opacity.
+- **Slide sub line:** "subtitle · meta". Today these were two lines; the design draws one.
+- **Blank titles:** "Untitled" in the row and in the handle and trash names.
+- **Images:** thumbnails get `alt=""` (the title sits next to them). A missing image shows an empty gray tile.
+- **Count:** on the right of the toolbar row (`ListPanel`, as on Exhibitions and Users). It is drawn on the left.
+- **Edit** stays a button that opens today's dialog (drawn as a link). On Announcements it was already a link and stays one.
+
+**Q72 · Code Claude → Design Claude: phone layout (not drawn).** _Meanwhile:_
+
+- Line 1: handle 44×44, position, thumb, text. Line 2: the actions, right-aligned, 44 px.
+- Thumbs 96×58 / 56×56 / 72×48.
+- The keyboard footnote stays.
+- `touch-action: none` on the handle only. Without it, dnd-kit's pointer sensor loses a finger drag to page scrolling, which is likely today's behavior on phones. It is CSS on today's setup and needs a real-phone check. Keep it?
+
+**Q73 · Code Claude → Design Claude: what a screen reader hears.**
+
+- **The handle element.** It stays dnd-kit's `<div role="button" tabindex="0">`, as in the studio's `SectionsEditor`. The design draws a `<button>`, and the house rule is `Button`, which can't pass dnd-kit's pointer / key listeners and ARIA through. Option: a pass-through on `Button`.
+- **Announcements.** dnd-kit's default live messages read the row's id: "Picked up draggable item 3f2c9a…", "…was moved over droppable area …". Option: `DndContext accessibility.announcements` naming the title and position, e.g. "Picked up Sunsets. Position 2 of 5." This is screen-reader text only.
+
+_Meanwhile:_ the `<div>` and the default announcements, as today.
+
+**Q74 · Code Claude → owner: behavior found while reading (kept as today, not fixed in a re-layout).**
+
+- **Landing, an edit can undo a reorder.** After a drag, each slide keeps its old `order` in the page, and Save PUTs the whole slide.
+  - Example: A, B, C; C is dragged first; then C is edited and saved. C goes back to `order` 2 and ties with B.
+  - Fix: refetch after a successful reorder, or leave `order` out of the PUT.
+- **Landing, uploading publishes a new slide.** Uploading an image to a slide that has never been saved creates it switched on. It is then on the homepage, with whatever title has been typed (maybe none), before Save. Canceling leaves it there.
+- **Landing, unchecked replies.**
+  - Reorder, Save and Delete don't check `res.ok`. A refused save closes the dialog as if it had saved.
+  - A failed list load stores the error object as the slides, and the page crashes (`slides.map`).
+  - Deleting a slide leaves its R2 images behind.
+- **Gallery selection, silent failures.**
+  - Failures are console only.
+  - A thrown first load leaves the list blank.
+  - Remove has no confirm.
+  - A failed Add leaves the picker open with no message.
+
+These are behavior changes, so they need your OK. Fix them in a later pass (e.g. the red `FeedbackBar`, as on Users)?
+
+**Q75 · Code Claude → Design Claude: Announcements, small points.** _Meanwhile:_
+
+- **Footnote:** the part of today's description the new sub drops: _Shown between the introduction and Current Exhibitions. With none, the section is hidden._
+- **Errors:** a red `Callout` (`role="alert"`) with no ×. A dismissed load error would bring the loading bar back.
+- **Delete:** "Deleting…" while busy (the shared dialog said "Working…").
+- **Statuses:** the status pill sits under the title.
+- **No photo:** the "No photo" tile.
+
+**Q76 · Code Claude → Design Claude: the Edit announcement page.**
+
+- **The breadcrumb's last item** is the title as typed: it follows the field, shows "Untitled" when blank, and "Edit announcement" until loaded. Option: the title as loaded (a small new state).
+- **The page itself** (h1 "Edit Announcement", the four sections, Save) isn't in any design. §2c lists the six `[slug]` pages, not this one. Give it §2c's layout (panels, save bar) in step 12c?
+
+_Meanwhile:_ only the breadcrumb changes.
+
+**Q77 · Code Claude → Design Claude: the two editing dialogs.** Neither is drawn:
+
+- the slide editor (Add / Edit slide: two image uploaders, five fields, three colors);
+- the Add artworks picker.
+
+Both keep the shared `Modal`: today's look, and no focus trap (Q5 wants one in every admin dialog). _Meanwhile:_ unchanged, apart from the slide editor's sentence case. Should they be designed, or get only `tone="admin"` + the dialog layer's `inert`?
+
 ## Answered
 
 <!-- move items here with the answer -->

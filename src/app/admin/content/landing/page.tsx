@@ -1,33 +1,25 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove } from '@dnd-kit/sortable'
+import { ArrowSquareOut, PencilSimple, Plus, Trash } from '@phosphor-icons/react'
 
+import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import styles from './page.module.scss'
 
@@ -58,56 +50,13 @@ const IMAGE_FIELD = {
 const slideImageEndpoint = (slideId: string, variant: SlideImageVariant) =>
   `/api/slides/${slideId}/image${variant === 'mobile' ? '?variant=mobile' : ''}`
 
-type SortableSlideItemProps = {
-  slide: Slide
-  onEdit: (slide: Slide) => void
-  onDelete: (slide: Slide) => void
-}
+/** A slide's name in the list, the handle and the delete dialog (questions.md Q71). */
+const slideTitle = (slide: Slide) => slide.title.trim() || 'Untitled'
 
-function SortableSlideItem({ slide, onEdit, onDelete }: SortableSlideItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: slide.id,
-  })
+const slidesCount = (n: number) => (n === 1 ? '1 slide' : `${n} slides`)
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} className={styles.slideItem}>
-      <div className={styles.dragHandle} {...attributes} {...listeners}>
-        <span className={styles.dragIcon}>⠿</span>
-      </div>
-      <div className={styles.slidePreview}>
-        {slide.imageUrl && (
-          <img src={slide.imageUrl} alt={slide.title} className={styles.slideImage} />
-        )}
-      </div>
-      <div className={styles.slideInfo}>
-        <Text font="dashboard" as="h3">
-          {slide.title}
-        </Text>
-        <Text font="dashboard" as="p" className={styles.subtitle}>
-          {slide.subtitle}
-        </Text>
-        <Text font="dashboard" as="p" className={styles.meta}>
-          {slide.meta}
-        </Text>
-      </div>
-      <div className={styles.slideActions}>
-        <Button font="dashboard" variant="secondary" label="Edit" onClick={() => onEdit(slide)} />
-        <Button
-          font="dashboard"
-          variant="secondary"
-          label="Delete"
-          onClick={() => onDelete(slide)}
-        />
-      </div>
-    </div>
-  )
-}
+const TITLE = 'Homepage slideshow'
+const DESCRIPTION = 'The slides at the top of the homepage, in this order. Drag to reorder.'
 
 export default function LandingContentPage() {
   const router = useRouter()
@@ -309,13 +258,6 @@ export default function LandingContentPage() {
     setEditingSlide({ ...editingSlide, [field]: value })
   }
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
@@ -342,38 +284,111 @@ export default function LandingContentPage() {
     }
   }
 
+  // gallery.md §2 (Q4): Content / Landing page, in place of an eyebrow.
+  const breadcrumb = (
+    <AdminBreadcrumb
+      items={[{ label: 'Content', href: '/admin/content' }, { label: 'Landing page' }]}
+    />
+  )
+
+  // Add slide waits for the list (it numbers the new slide after the last).
   if (status === 'loading' || loading) {
-    return <div className={styles.page}>Loading...</div>
+    return (
+      <div className={styles.page}>
+        {breadcrumb}
+        <AdminPageHeader title={TITLE} description={DESCRIPTION} />
+        <p className={styles.status}>Loading slides…</p>
+      </div>
+    )
   }
 
   return (
-    <>
-      <h1 className={dashboardStyles.pageTitle}>Landing Page - Slideshow</h1>
-
-      <div className={dashboardStyles.sectionHeader}>
-        <div></div>
-        <Button font="dashboard" variant="primary" label="Add Slide" onClick={handleAddSlide} />
-      </div>
+    <div className={styles.page}>
+      {breadcrumb}
+      <AdminPageHeader
+        title={TITLE}
+        description={DESCRIPTION}
+        actions={
+          <>
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              prefetch={false}
+              className={styles.view}
+            >
+              View homepage
+              <ArrowSquareOut size={16} weight="light" aria-hidden />
+              <span className="sr-only">(opens in a new tab)</span>
+            </Link>
+            <Button variant="bare" font="dashboard" className={styles.add} onClick={handleAddSlide}>
+              <Plus size={16} weight="light" aria-hidden />
+              Add slide
+            </Button>
+          </>
+        }
+      />
 
       {slides.length === 0 ? (
-        <Text font="dashboard" as="p" className={styles.empty}>
-          No slides yet. Click &quot;Add Slide&quot; to create one.
-        </Text>
+        <ListPanel label="Slides">
+          <EmptyState
+            title="No slides yet."
+            text={
+              <>
+                Click <strong>Add slide</strong> to create one.
+              </>
+            }
+          />
+        </ListPanel>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            <div className={styles.slideList}>
-              {slides.map((slide) => (
-                <SortableSlideItem
-                  key={slide.id}
-                  slide={slide}
-                  onEdit={handleEditSlide}
-                  onDelete={setDeleteTarget}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <ListPanel
+          label="Slides"
+          count={slidesCount(slides.length)}
+          footnote={SORTABLE_KEYBOARD_HINT}
+        >
+          <SortableList
+            onDragEnd={handleDragEnd}
+            rows={slides.map((slide) => {
+              const title = slideTitle(slide)
+              return {
+                id: slide.id,
+                title,
+                sub:
+                  [slide.subtitle, slide.meta]
+                    .map((part) => part.trim())
+                    .filter(Boolean)
+                    .join(' · ') || undefined,
+                thumb: slide.imageUrl ? (
+                  <img src={slide.imageUrl} alt="" className={styles.thumb} />
+                ) : (
+                  <span className={styles.thumb} />
+                ),
+                actions: (
+                  <>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.edit}
+                      onClick={() => handleEditSlide(slide)}
+                    >
+                      <PencilSimple size={16} weight="light" aria-hidden />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.trash}
+                      aria-label={`Delete slide ${title}`}
+                      onClick={() => setDeleteTarget(slide)}
+                    >
+                      <Trash size={16} weight="light" aria-hidden />
+                    </Button>
+                  </>
+                ),
+              }
+            })}
+          />
+        </ListPanel>
       )}
 
       {/* Edit/Add Modal */}
@@ -381,7 +396,7 @@ export default function LandingContentPage() {
         <Modal onClose={() => setEditingSlide(null)} maxWidth="720px">
           <div className={styles.slideModal}>
             <Text font="dashboard" as="h2" className={styles.slideModalTitle}>
-              {isNewSlide ? 'Add Slide' : 'Edit Slide'}
+              {isNewSlide ? 'Add slide' : 'Edit slide'}
             </Text>
 
             {/* Only this middle part scrolls: the title and Save stay in view
@@ -491,7 +506,7 @@ export default function LandingContentPage() {
               <Button
                 font="dashboard"
                 variant="primary"
-                label={saving ? 'Saving...' : 'Save'}
+                label={saving ? 'Saving…' : 'Save'}
                 onClick={handleSaveSlide}
               />
             </div>
@@ -499,33 +514,16 @@ export default function LandingContentPage() {
         </Modal>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <Modal onClose={() => setDeleteTarget(null)}>
-          <div className={styles.modal}>
-            <Text font="dashboard" as="h2">
-              Delete Slide?
-            </Text>
-            <Text font="dashboard" as="p">
-              Are you sure you want to delete the slide "{deleteTarget.title}"?
-            </Text>
-            <div className={styles.modalActions}>
-              <Button
-                font="dashboard"
-                variant="primary"
-                label="Yes, Delete"
-                onClick={handleDeleteSlide}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
-            </div>
-          </div>
-        </Modal>
+        <AdminConfirmModal
+          title="Delete slide?"
+          message={`Are you sure you want to delete the slide "${slideTitle(deleteTarget)}"?`}
+          confirmLabel="Yes, delete"
+          destructive
+          onConfirm={handleDeleteSlide}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
-    </>
+    </div>
   )
 }
