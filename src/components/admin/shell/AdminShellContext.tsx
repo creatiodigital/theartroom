@@ -16,7 +16,7 @@ import { usePathname } from 'next/navigation'
 import { Play } from '@phosphor-icons/react'
 
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
-import { listOrders } from '@/app/admin/orders/actions'
+import { listOrders, type AdminOrderRow } from '@/app/admin/orders/actions'
 import { getPurchasesPausedState, togglePurchasesPaused } from '@/app/admin/settings/actions'
 import {
   type AttentionMetric,
@@ -51,6 +51,11 @@ export type AttentionCountsState = {
   metrics: Record<AttentionMetric, number> | null
   /** Orders per workflow bucket (the dashboard pipeline), from the same read. */
   buckets: Record<Bucket, number> | null
+  /**
+   * The rows behind those counts: the Orders page lists these instead of making
+   * a second listOrders() call (questions.md Q2).
+   */
+  orders: AdminOrderRow[] | null
   error: string | null
   reload: () => Promise<void>
 }
@@ -128,6 +133,7 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
   const [orderCounts, setOrderCounts] = useState<{
     metrics: Record<AttentionMetric, number>
     buckets: Record<Bucket, number>
+    orders: AdminOrderRow[]
   } | null>(null)
   const [countsError, setCountsError] = useState<string | null>(null)
   const countsSeq = useRef(0)
@@ -142,6 +148,7 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
         setOrderCounts({
           metrics: countAttentionMetrics(res.orders),
           buckets: countByBucket(res.orders),
+          orders: res.orders,
         })
       } else {
         setOrderCounts(null)
@@ -176,6 +183,7 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
     () => ({
       metrics: orderCounts?.metrics ?? null,
       buckets: orderCounts?.buckets ?? null,
+      orders: orderCounts?.orders ?? null,
       error: countsError,
       reload: loadCounts,
     }),

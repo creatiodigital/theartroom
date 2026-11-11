@@ -144,7 +144,7 @@ test.describe('Re-order / reprint (real admin UI)', () => {
 
       const row = page.getByRole('row', { name: new RegExp(bought.address.fullName) })
       await expect(
-        row.getByText(/⟳ Replacement/),
+        row.getByText(/Replacement/),
         'the re-ordered order is flagged in the list',
       ).toBeVisible()
     } finally {

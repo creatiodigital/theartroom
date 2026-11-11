@@ -1,0 +1,316 @@
+@use '@/styles/mixins' as *;
+
+// /admin/orders — docs/admin-redesign/orders.md §1, designs/orders.dc.html.
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+.panel {
+  min-width: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 14px var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+
+  @include media-up(tablet) {
+    padding: 14px var(--space-5);
+  }
+}
+
+.count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.toolbar .clear {
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  text-decoration: underline;
+
+  @include media-up(tablet) {
+    min-height: 32px;
+  }
+}
+
+.loading {
+  margin: 0;
+  padding: var(--space-6) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+// ── Cells ──
+.colDate {
+  width: 130px;
+}
+
+// Two classes: DataTable's `th` rule (left-aligned) would win over one.
+.table .alignRight {
+  text-align: right;
+}
+
+.date {
+  white-space: nowrap;
+}
+
+.meta {
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.metaUrgent {
+  font-weight: var(--font-semibold);
+  color: var(--color-red-50);
+}
+
+.redDot,
+.dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.redDot {
+  background: var(--color-red-50);
+}
+
+.dotGreen {
+  background: var(--admin-live);
+}
+
+.dotAmber {
+  background: var(--color-amber-50);
+}
+
+.ref {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 13px;
+  font-weight: var(--font-medium);
+  color: var(--color-black);
+}
+
+.item {
+  margin-top: 2px;
+  color: var(--color-black);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+}
+
+.edition {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.more {
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.replacement {
+  display: inline-flex;
+  margin-top: var(--space-1);
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-badge-info-bg);
+  color: var(--color-badge-info-text);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+}
+
+.buyer {
+  color: var(--color-black);
+}
+
+.email {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.cellShipped {
+  white-space: nowrap;
+}
+
+.payout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.cellTotal {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-black);
+}
+
+.cellAction {
+  text-align: right;
+}
+
+// The row's doorway to the order page: dark for working stages, outline once
+// nothing is left to do, red for Needs attention. 44px tall below 900px.
+.next {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.next_dark,
+.next_dark:hover {
+  background: var(--color-dark-surface);
+  border-color: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+.next_outline,
+.next_outline:hover {
+  background: var(--color-white);
+  border-color: var(--color-gray-60);
+  color: var(--color-text-primary);
+}
+
+.next_red,
+.next_red:hover {
+  background: var(--color-red-50);
+  border-color: var(--color-red-50);
+  color: var(--color-white);
+}
+
+// ── Desktop: a real table that scrolls sideways when the panel is narrow ──
+@include media-up(tablet) {
+  .table {
+    min-width: 760px;
+  }
+}
+
+// ── Phone: each row becomes a card (same <tr>, so one copy in the DOM) ──
+// ref + total / artwork / buyer / hold or payout / full-width next step.
+@media (max-width: #{bp(tablet) - 0.02px}) {
+  .table {
+    display: block;
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    tbody {
+      display: block;
+    }
+
+    td,
+    td:first-child,
+    td:last-child {
+      padding: 0;
+      border-top: 0;
+    }
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'order total'
+      'buyer buyer'
+      'date date'
+      'payout payout'
+      'action action';
+    column-gap: var(--space-3);
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-gray-20);
+
+    &:first-child {
+      border-top: 0;
+    }
+  }
+
+  .cellOrder {
+    grid-area: order;
+  }
+
+  .cellTotal {
+    grid-area: total;
+    font-weight: var(--font-semibold);
+  }
+
+  .cellBuyer {
+    grid-area: buyer;
+    margin-top: var(--space-1);
+  }
+
+  .email,
+  .date,
+  .cellShipped {
+    display: none;
+  }
+
+  .cellDate {
+    grid-area: date;
+  }
+
+  .cellPayout {
+    grid-area: payout;
+    margin-top: var(--space-1);
+  }
+
+  .cellAction {
+    grid-area: action;
+    margin-top: var(--space-3);
+  }
+
+  .next {
+    width: 100%;
+    justify-content: center;
+  }
+}

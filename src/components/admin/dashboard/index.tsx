@@ -22,7 +22,7 @@ import { PipelineList } from '@/components/admin/ui/PipelineList'
 import { Button } from '@/components/ui/Button'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { clearAllTestData, getTestDataCounts } from '@/app/admin/dev-cleanup/actions'
-import type { AttentionMetric } from '@/lib/orders/orderBuckets'
+import type { AttentionMetric, Bucket } from '@/lib/orders/orderBuckets'
 
 // Dev/staging-only cleanup controls. NEXT_PUBLIC_APP_ENV is inlined at build
 // time, so on production this is a compile-time false and the whole section
@@ -47,9 +47,10 @@ import styles from './AdminDashboard.module.scss'
 // distinct from the action's own `error`, which means it ran and said no.
 const UNREACHABLE = 'Could not reach the server.'
 
-// Every card and pipeline row opens the Orders page. Per-stage links wait for
-// the Orders page to take a stage in its URL (questions.md Q1, step 3).
+// Cards, pipeline rows and pills open the Orders page on the matching tab
+// (?stage=, questions.md Q1).
 const ORDERS_HREF = '/admin/orders'
+const stageHref = (bucket: Bucket) => `${ORDERS_HREF}?stage=${bucket}`
 
 // Counter cards surface what needs the admin's attention right now. Each
 // carries a `metric` and reads its live count from countAttentionMetrics
@@ -63,6 +64,8 @@ const URGENT_COUNTERS: {
   icon: Icon
   tone: 'red' | 'amber'
   zeroHint: string
+  /** The Orders tab these orders sit in (refund-owed orders are in Canceled). */
+  stage: Bucket
 }[] = [
   {
     label: 'Refund still owed',
@@ -70,6 +73,7 @@ const URGENT_COUNTERS: {
     icon: ArrowUUpLeft,
     tone: 'red',
     zeroHint: 'Nothing owed',
+    stage: 'cancelled',
   },
   {
     label: 'Needs attention',
@@ -77,14 +81,23 @@ const URGENT_COUNTERS: {
     icon: Flag,
     tone: 'red',
     zeroHint: 'No flagged orders',
+    stage: 'attention',
   },
-  { label: 'New', metric: 'new', icon: Tray, tone: 'amber', zeroHint: 'None to capture' },
+  {
+    label: 'New',
+    metric: 'new',
+    icon: Tray,
+    tone: 'amber',
+    zeroHint: 'None to capture',
+    stage: 'new',
+  },
   {
     label: 'Awaiting placement at TPS',
     metric: 'toPlace',
     icon: PaperPlaneTilt,
     tone: 'amber',
     zeroHint: 'All placed',
+    stage: 'to-place',
   },
   {
     label: 'Delivered, artist not paid',
@@ -92,6 +105,7 @@ const URGENT_COUNTERS: {
     icon: HandCoins,
     tone: 'amber',
     zeroHint: 'All artists paid',
+    stage: 'delivered',
   },
 ]
 
@@ -226,7 +240,7 @@ export const DashboardAdmin = () => {
               failed={countsError !== null}
               tone={counter.tone}
               zeroHint={counter.zeroHint}
-              href={ORDERS_HREF}
+              href={stageHref(counter.stage)}
             />
           ))}
         </div>
@@ -251,7 +265,7 @@ export const DashboardAdmin = () => {
           subtitle="Every order by fulfillment stage"
           action={<PanelLink href={ORDERS_HREF}>All orders</PanelLink>}
         >
-          <PipelineList buckets={buckets} href={ORDERS_HREF} />
+          <PipelineList buckets={buckets} stageHref={stageHref} />
         </Panel>
         {analytics?.ok && <TrafficChannelsPanel data={analytics.data} />}
       </div>

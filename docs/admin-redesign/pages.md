@@ -11,17 +11,21 @@ Do these in order, one PR each.
 | --- | --- | --- | --- | --- |
 | 1 | **Shell**: tokens, Phosphor check, `AdminLayout`, `AdminSidebar`, `AdminNavItem`, `AdminTopBar` + drawer, `StorefrontSwitch`, `PausedBanner`, `usePurchasesPaused`. Switch **every** admin page from `DashboardLayout` to `AdminLayout` and delete their back links. Page bodies stay as they are. | dashboard, states, phone, phone-menu | Built | Biggest visible win: every page gets the new frame at once. See Built notes. |
 | 2 | **Dashboard** body: `AdminPageHeader`, `Panel`, `AttentionCard`, `PipelineList`, `BarList`, `DonutChart`, analytics states, cleanup panel, `ConfirmModal` admin look. Remove the "Manage" hub cards (the menu replaces them). | dashboard, states, phone | Built | Analytics data unchanged (`AnalyticsSection` logic). See Built notes. |
-| 3 | Orders list | orders (spec: orders.md §1) | Designed · approved by owner | Sets the pattern for every list page. Closes Q1 (`?stage=`). Read counts/rows from the shell (Q2). |
+| 3 | Orders list | orders (spec: orders.md §1) | Built | Sets the pattern for every list page. Closes Q1 (`?stage=`). Read counts/rows from the shell (Q2). |
 | 4 | Order detail | order-detail (spec: orders.md §2) | Designed · approved by owner | Re-layout only: keep every action, guard and confirm as today. |
-| 5 | Edition sales | | To design | Reuses list pattern. |
-| 6 | Gift orders | | To design | Reuses list pattern. |
-| 7 | Invoices + invoice detail | | To design | Reuses list pattern + export actions. |
-| 8 | Payouts | | To design | |
-| 9 | Users | | To design | Reuses list pattern + row menu. |
-| 10 | Exhibitions | | To design | Reuses list pattern + row menu. |
-| 11 | Print presentations | | To design | Thumbnails, inline selects, toggles, render progress: needs its own design. |
-| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | | To design | Forms: needs its own design. |
-| 13 | Settings, API reference, analytics, dev-cleanup routes | | To design | Check what each one is first. |
+| 5 | Edition sales | edition-sales (spec: sales.md §1) | Designed · approved by owner | Adds summary cards + status filter (NEW, approved). |
+| 6 | Gift orders | gift-orders (spec: sales.md §2) | Designed · approved by owner | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
+| 7 | Invoices | invoices (spec: invoices.md) | Designed · approved by owner | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
+| 8 | Payouts | payouts (spec: payouts.md) | Designed · approved by owner | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
+| 9 | Users | users (spec: users.md) | Designed · approved by owner | UI only + NEW type filter (approved). |
+| 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Designed · approved by owner | UI only, no logic changes. |
+| 11 | Print presentations | print-presentations (spec: gallery.md §1) | Designed · approved by owner | UI only. |
+| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Designed · approved by owner | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
+| 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
+| 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
+| 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
+| 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
+| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
 
 ## Built notes
 
@@ -123,3 +127,32 @@ Verified: `pnpm typecheck`, `pnpm lint`, prettier, and in a real browser on the 
 (1440 px and 390 px): no console errors, no horizontal scroll on the dashboard, Tab stays inside the
 cleanup dialog and the drawer, Escape closes both and focus returns to the opener. Seen in passing,
 not part of this step: `/admin/users` is 617 px wide on a 390 px phone (its table; step 9).
+
+### Step 3 · Orders list — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Files: `src/components/admin/orders/index.tsx` + `Orders.module.scss`, `src/app/admin/orders/page.tsx`
+(Suspense), new pieces `ui/StageTabs`, `ui/Callout`, `ui/SearchField`, `ui/DataTable`, `ui/EmptyState`,
+Geist Mono as `--font-admin-mono` (its own variable: public pages already read `--font-mono`),
+`Button` gains a `tabIndex` pass-through (roving tabindex in the tabs).
+
+1. **`?stage=<Bucket>`** selects the tab (`router.replace`, no history entries; anything else → New).
+   Dashboard cards, pipeline rows and pills link with it (refund owed → Canceled, where those
+   orders sit). Closes Q1.
+2. **Rows come from the shell** (Q2): the shell's one `listOrders()` feeds the menu badge, the tab
+   counts and the list; it re-reads on arriving here, and the previous rows stay on screen meanwhile.
+3. **Search** spans every stage (Q9): no tab looks selected, the callout becomes today's line
+   ("N orders matching “x” — across every stage."), "Clear search" after the count, and the empty
+   result keeps today's hint. Clicking a tab ends the search.
+4. **Phone cards** are the same `<tr>` restyled with CSS grid (one copy in the DOM, so screen readers
+   and e2e locators see one row): ref + total / items / buyer / hold or payout / full-width button.
+   The date and email hide there.
+5. **Needs-attention reason** under the date (Q10): Payment failed / Authorization canceled / Needs a look.
+6. **Hold line** spelled out: "Hold 1 day · ~6 days left" / "Hold expired" (tooltips kept).
+7. **Payout column** keeps today's text ("9d since delivered · 5d to safe window").
+8. **Replacement badge** reads "Replacement" (×n); `e2e/order-reorder.spec.ts` updated to match.
+9. Tab accessible names stay "To place at TPS 6" (the step circle is hidden from screen readers), so
+   the specs' tab lookups are unchanged.
+
+Verified: typecheck, lint, prettier; browser (dev DB, 1440 / 390): tabs, arrow keys, `?stage=`, search,
+empty search, phone cards, no horizontal scroll, no console errors. e2e for the list
+(`order-payout-bucket`, `order-reorder`, `order-capture-place`) not run yet: they need port 3001 free.

@@ -5,6 +5,7 @@ import {
   bodyFont,
   headingFont,
   dashboardFont,
+  adminMonoFont,
   editionNumberFont,
   wallFont1,
   wallFont2,
@@ -78,7 +79,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`${bodyFont.variable} ${headingFont.variable} ${dashboardFont.variable} ${editionNumberFont.variable} ${wallFont1.variable} ${wallFont2.variable} ${wallFont3.variable} ${wallFont4.variable} ${wallFont5.variable} ${wallFont6.variable} ${wallFont7.variable} ${wallFont8.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${dashboardFont.variable} ${adminMonoFont.variable} ${editionNumberFont.variable} ${wallFont1.variable} ${wallFont2.variable} ${wallFont3.variable} ${wallFont4.variable} ${wallFont5.variable} ${wallFont6.variable} ${wallFont7.variable} ${wallFont8.variable}`}
     >
       <body>
         {/* Preconnect to the image CDN so the hero image's TLS handshake

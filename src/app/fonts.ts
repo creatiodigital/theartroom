@@ -1,4 +1,14 @@
-import { Lato, EB_Garamond, Geist, Roboto, Lora, Alegreya, Manrope, Caveat } from 'next/font/google'
+import {
+  Lato,
+  EB_Garamond,
+  Geist,
+  Geist_Mono,
+  Roboto,
+  Lora,
+  Alegreya,
+  Manrope,
+  Caveat,
+} from 'next/font/google'
 import localFont from 'next/font/local'
 
 /**
@@ -66,6 +76,20 @@ export const dashboardFont = Geist({
   // Used across dashboard/admin (and Button/Typography). Keep it available
   // sitewide via the CSS var, but don't eagerly preload it on public routes —
   // it loads on demand. (AR-132 perf)
+  preload: false,
+})
+
+/**
+ * Admin monospace - order references, payment ids, edition numbers in the admin
+ * (docs/admin-redesign). Its own variable, NOT --font-mono: public pages already
+ * read `var(--font-mono, monospace)` and must keep the system monospace.
+ * preload: false, like the dashboard font — admin-only, loads on demand.
+ */
+export const adminMonoFont = Geist_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-admin-mono',
+  display: 'swap',
   preload: false,
 })
 

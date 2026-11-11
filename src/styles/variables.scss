@@ -142,6 +142,7 @@
   --admin-nav-text: var(--color-gray-35); // menu item text on the dark menu
   --admin-amber-bg: #fffbeb; // amber attention card
   --admin-amber-border: #f5d68a;
+  --admin-amber-text: #5c4503; // text on the amber callout
   --admin-live: #4cc38a; // "Purchases open" dot
   --admin-paused-surface: #3a1316; // paused box inside the dark menu
   --admin-paused-border: #7a1c22;
@@ -159,6 +160,7 @@
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;
   --font-dashboard-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-admin-mono-fallback: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --text-xs: 12px;
   --text-sm: 14px;

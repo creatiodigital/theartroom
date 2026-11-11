@@ -24,12 +24,12 @@ const STAGES: { bucket: Bucket; label: string }[] = [
 type PipelineListProps = {
   /** null while loading or after a failed read: every count shows "–". */
   buckets: Record<Bucket, number> | null
-  /** Where each row and pill leads (the Orders page; per-stage links wait for Q1). */
-  href: string
+  /** Where a row or pill leads, e.g. the Orders page on that stage's tab. */
+  stageHref: (bucket: Bucket) => string
 }
 
 /** The order pipeline (components.md, PipelineList). */
-export function PipelineList({ buckets, href }: PipelineListProps) {
+export function PipelineList({ buckets, stageHref }: PipelineListProps) {
   const max = buckets ? Math.max(1, ...STAGES.map((s) => buckets[s.bucket])) : 1
   const canceled = buckets?.cancelled ?? null
   const refunded = buckets?.refunded ?? null
@@ -41,7 +41,7 @@ export function PipelineList({ buckets, href }: PipelineListProps) {
           const n = buckets ? buckets[stage.bucket] : null
           return (
             <li key={stage.bucket} className={styles.item}>
-              <Link href={href} className={styles.row}>
+              <Link href={stageHref(stage.bucket)} className={styles.row}>
                 <span aria-hidden className={styles.step}>
                   {i + 1}
                 </span>
@@ -59,12 +59,12 @@ export function PipelineList({ buckets, href }: PipelineListProps) {
       </ol>
       <div className={styles.pills}>
         <Link
-          href={href}
+          href={stageHref('cancelled')}
           className={c(styles.pill, canceled !== null && canceled > 0 && styles.pillRed)}
         >
           Canceled · {canceled ?? '–'}
         </Link>
-        <Link href={href} className={styles.pill}>
+        <Link href={stageHref('refunded')} className={styles.pill}>
           Refunded · {refunded ?? '–'}
         </Link>
       </div>

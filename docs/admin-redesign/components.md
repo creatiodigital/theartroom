@@ -168,7 +168,7 @@ at 0, black above). Each row links to that stage on the Orders page. Under the l
 Canceled (red pill when > 0) and Refunded. Counts come from `countByBucket()` on the same
 `listOrders()` result the attention cards already use, so no new request.
 
-- **Built** · `ui/PipelineList.tsx` · `{ buckets: Record<Bucket, number> | null; href: string }`. Counts
+- **Built** · `ui/PipelineList.tsx` · `{ buckets: Record<Bucket, number> | null; stageHref: (bucket: Bucket) => string }`. Counts
   come from `useAttentionCounts().buckets` (the shell's one `listOrders()`). Phone: no bars.
 
 Stage labels: New · To place at TPS · At TPS · In production · Shipped · Delivered · Artist paid.
@@ -228,3 +228,25 @@ panel, amber "Test environment · {env}" badge, outline-red button (not filled, 
 like the real Pause switch). Logic and dialogs unchanged.
 
 - **Built** · `src/components/admin/dashboard/DevCleanupPanel.tsx` · `{ environment; result; onClear }`.
+
+## List pieces (step 3)
+
+### `StageTabs`
+- **Built** · `ui/StageTabs.tsx` · `{ label; groups: { label; tabs: { id; label; count; step?; countTone?: 'red' | 'amber' }[] }[];
+  selected: string | null; onSelect(id) }`. One `role="tablist"` per group, roving tabindex, arrow keys /
+  Home / End across all groups, scrolls the selected tab into view under 900 px. `selected: null` = no
+  tab selected (searching). Count: gray at 0, `--color-gray-25` above, dark when selected; tone wins.
+
+### `Callout`
+- **Built** · `ui/Callout.tsx` · `{ tone: 'info' | 'plain' | 'amber' | 'red'; title?; children?; action? }`.
+  `role="note"`; Warning (fill) for amber / red, Info (light) otherwise. Amber text `--admin-amber-text`.
+
+### `SearchField`
+- **Built** · `ui/SearchField.tsx` · `{ value; onChange(value); placeholder; label }` (label visually
+  hidden, magnifier inside, 44 px below 900 px / 36 px above).
+
+### `DataTable` + `EmptyState`
+- **Built** · `ui/DataTable.tsx` · `{ children; className? }`: the table shell (gray header row, 14 px rows,
+  `--color-gray-20` dividers, top-aligned, sideways scroll). Pages write their own rows and may turn
+  them into phone cards through `className` (see `orders/Orders.module.scss`).
+- `ui/EmptyState.tsx` · `{ title; text? }` (Tray in a circle).

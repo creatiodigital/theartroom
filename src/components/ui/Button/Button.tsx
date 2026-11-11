@@ -48,6 +48,8 @@ type ButtonProps = {
   'aria-invalid'?: boolean
   'aria-current'?: React.AriaAttributes['aria-current']
   role?: string
+  /** Roving tabindex in composite widgets (e.g. admin stage tabs). */
+  tabIndex?: number
 }
 
 export const Button = React.memo(
@@ -80,6 +82,7 @@ export const Button = React.memo(
     'aria-invalid': ariaInvalid,
     'aria-current': ariaCurrent,
     role,
+    tabIndex,
   }: ButtonProps) => {
     const isIconOnly = icon && !label && !children
 
@@ -133,6 +136,7 @@ export const Button = React.memo(
         onDragStart={onDragStart}
         form={form}
         role={role}
+        tabIndex={tabIndex}
         aria-label={ariaLabel}
         aria-expanded={ariaExpanded}
         aria-pressed={ariaPressed}

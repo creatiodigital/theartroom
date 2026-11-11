@@ -41,6 +41,20 @@ only inside the canvas, so read the source.
 | `designs/dashboard-states.dc.html` | Every component state, side by side, plus the token sheet. |
 | `designs/dashboard-phone.dc.html` | Dashboard at 390 px: top bar instead of side menu. |
 | `designs/dashboard-phone-menu.dc.html` | Phone menu drawer, open. |
+| `designs/orders.dc.html` | Orders list. Its `tab` prop shows every stage. Spec: `orders.md`. |
+| `designs/order-detail.dc.html` | Order detail, "To place at TPS" stage. Spec: `orders.md`. |
+| `designs/edition-sales.dc.html` | Edition sales. Spec: `sales.md`. |
+| `designs/gift-orders.dc.html` | Gift orders, row menu open. Spec: `sales.md`. |
+| `designs/invoices.dc.html` | Invoices. Spec: `invoices.md`. |
+| `designs/payouts.dc.html` | Payouts. Spec: `payouts.md`. |
+| `designs/print-presentations.dc.html` | Print presentations, render progress shown. Spec: `gallery.md`. |
+| `designs/content.dc.html` | Content page list. Spec: `gallery.md`. |
+| `designs/content-slideshow.dc.html` | Landing slideshow (pattern for Gallery selection). Spec: `gallery.md`. |
+| `designs/content-editor.dc.html` | Page editor (About, Prints, legal pages). Spec: `gallery.md`. |
+| `designs/users.dc.html` | Users, actions menu open. Spec: `users.md`. |
+| `designs/exhibitions.dc.html` | Exhibitions, actions menu open. Spec: `exhibitions.md`. |
+| `designs/artist-*.dc.html` | Artist studio (`/dashboard/*`): home (its `impersonating` prop shows the menu card), artworks, artwork editor, profile, payouts (both states), exhibition settings. Spec: `artist.md`. |
+| `designs/api-reference.dc.html` | Developer: API & database reference. Spec: `developer.md`. |
 
 ## Look and feel
 
