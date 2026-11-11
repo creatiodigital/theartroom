@@ -31,7 +31,14 @@
   color: var(--color-text-primary);
 }
 
-// List statuses (sales.md §1: Sold, Reserved, off-platform; §2: the other gift stages).
+// List statuses (sales.md §1: Sold, Reserved, off-platform; §2: the other gift stages;
+// gallery.md §1: Missing is redSoft).
+.redSoft {
+  background: var(--color-red-30);
+  border-color: var(--color-red-30);
+  color: var(--color-red-70);
+}
+
 .green {
   background: var(--color-green-30);
   border-color: var(--color-green-30);

@@ -342,3 +342,11 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `AdminSelect`: `size?: 'toolbar' | 'form'` (`form` = 44 px at every width, for dialog fields).
 - `StatusPill`: `icon?: Icon` (12 px filled mark before the label, e.g. Star on "Featured").
 - `RowMenu`: groups with no items are left out (no caption, no divider).
+
+## Print presentation pieces (step 11)
+
+- `ui/Toggle` (public, shared): opt-in `tone?: 'default' | 'admin'` (40×24 admin switch), plus `id?`,
+  `'aria-labelledby'?`, `'aria-describedby'?`; the default look is unchanged for the editor panels and Announcements.
+- `StatusPill`: tone `'redSoft'` (light red, e.g. "Missing").
+- `Bar`: `surface?: 'white' | 'gray'` (the track's colour; gray inside a gray status row).
+- Token `--admin-preview-tile: #f0efec` (the work preview tile).

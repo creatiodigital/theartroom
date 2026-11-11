@@ -445,6 +445,71 @@ site". phosphor.md says the admin already uses the SSR entry; it doesn't, and st
 in the two modules without `'use client'`, plus a `next.config.mjs` `optimizePackageImports` entry for
 it (README: "if not, add it in next.config.mjs").
 
+**Q58 · Code Claude → Design Claude: the site switch's name and lines.**
+
+- The switch is now named by its visible label **Shown on the site**. Today it was named "Show print presentations on the site", so one e2e line follows.
+- The drawn on-line drops today's "Shown on the site:" lead, which is now the label.
+- The off line isn't drawn.
+- While loading, today's code shows the off line next to a disabled switch.
+
+_Meanwhile:_
+
+- on: "Grids and artwork pages use the presentations.";
+- off: today's "Not shown on the site yet: grids and artwork pages show the plain images.", verbatim;
+- the loading case as today.
+
+Option: off "Grids and artwork pages show the plain images.", to mirror the on line.
+
+**Q59 · Code Claude → owner: no confirm on the site switch.** One click turns every grid and artwork page over to (or away from) the presentations. Unlike Pause, there is no dialog. Add an `AdminConfirmModal` (a behavior change)? _Meanwhile:_ none, as today.
+
+**Q60 · Code Claude → Design Claude: reason lines.**
+
+The page knows two reasons:
+
+- (a) this visit's render outcome (today's "Rendered" / error);
+- (b) Not eligible, which in this list always means the shape is unknown: no original size, and the web image couldn't be measured.
+
+It doesn't know why a work is Out of date. That can be a frame, passepartout, look, edition or shape change, or a render stored on another backend. "Frame changed since the last render" would need the server to compare the stored shot with the work: a read-only addition to `listPrintPresentations`, and a server change. "Not sold as a print" isn't a reason here.
+
+_Meanwhile:_ (a), and (b) as "Its shape is unknown."; nothing for Out of date. Want the server reason?
+
+**Q61 · Code Claude → Design Claude: the tile without a render.**
+
+- Today it shows the plain image, also when the stored render can't load here (e.g. stored on another backend).
+- A work with no web image shows nothing.
+
+_Meanwhile:_ "No render" in both render cases (`PrintPresentation`'s fallback); "No image" when there is no web image. Option: the plain image, small, with a "No render" caption.
+
+**Q62 · Code Claude → Design Claude: states.**
+
+- Chips show "–" until loaded (today 0).
+- A failed first load:
+  - today: "Loading…" forever + the red line;
+  - meanwhile: the red `Callout` (`role="alert"`) with the server's text and no Works panel.
+- No image works: `EmptyState` "No image works yet."
+- The batch button stays visible, disabled, while rendering (drawn); today it was replaced.
+- A thrown request (not a refusal) still leaves "Loading…" or a stuck-disabled switch, as today. Changing that is a handler change, so it is not done.
+
+_Meanwhile:_ as listed.
+
+**Q63 · Code Claude → Design Claude: sizes and colors.**
+
+- The spec's 40 px selects and batch button: the shared `AdminSelect` and admin buttons are 36 px, 44 px under 900 (Q7).
+  - _Meanwhile:_ 36 / 44 on this page too; row buttons 36 (drawn).
+- The switch's off track is `--color-toggle-off` (#cccccc; drawn #d0d0d0). That is 1.6:1 on white, under the 3:1 minimum for controls.
+  - Option: a 1 px `--color-gray-70` edge when off.
+- The bar shows finished works over the total, so it is empty during the first work. The drawn 35 % at "1 of 2" isn't a value the page has.
+  - _Meanwhile:_ finished / total.
+
+**Q64 · Code Claude → Design Claude: How it works copy.** Kept unchanged as asked. It says "pencilled" (house rule: American "penciled") and uses an em dash (the design writes a colon). _Meanwhile:_ unchanged. Fix both?
+
+**Q65 · Code Claude → Design Claude: phone cards.** Column names are hidden under 900 px. _Meanwhile:_
+
+- a phone-only "Passepartout" word before the switch;
+- no word before Frame (its value already names a frame, "No frame" included);
+- Not-eligible cards leave out the "—" cells (Q45);
+- the lines as in Decision 6.
+
 ## Answered
 
 <!-- move items here with the answer -->

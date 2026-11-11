@@ -19,7 +19,7 @@ Do these in order, one PR each.
 | 8 | Payouts | payouts (spec: payouts.md) | Built | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
 | 9 | Users | users (spec: users.md) | Built | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Built | UI only, no logic changes. |
-| 11 | Print presentations | print-presentations (spec: gallery.md §1) | Designed · approved by owner | UI only. |
+| 11 | Print presentations | print-presentations (spec: gallery.md §1) | Built | UI only. |
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Designed · approved by owner | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
@@ -375,6 +375,31 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-ga
 15/15 on port 3001 (unchanged specs); browser on my own `pnpm dev` (dev DB, read-only: one menu opened and
 closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
 scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
+
+### Step 11 · Print presentations — Built 2026-11-11 · committed after my checks (owner: steps 10, 11, 13 reviewed together later)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-print-presentations.md`. Files: `admin/print-presentations/index.tsx`
++ its SCSS, `ui/Toggle` (opt-in `tone="admin"`, `id`, `aria-labelledby`, `aria-describedby`), `ui/StatusPill`
+(`redSoft`), `ui/Bar` (`surface="gray"`), token `--admin-preview-tile`, `e2e/admin-print-presentations.spec.ts`.
+
+1. **Kept**: the whole logic block (state, `load`, `saveSetting`, `toggleSwitch`, the render queue's
+   start / row done / finished, every disabled rule) is byte-identical (diffed), and so is the `<RenderQueue>`
+   wiring. The render pipeline, the studio canvas, capture, the preview component, the server actions and the
+   API were not touched. Today's explanation is unchanged, now in a closed "How it works".
+2. **Layout per gallery.md §1**: the "Shown on the site" switch row (no confirm, as today, Q59), the Artist
+   select (now the admin's native select), the four counts as chips (Missing / Out of date tinted above 0),
+   Render missing and out of date (stays visible but disabled while rendering), the status row with a bar
+   and Stop; the table Work (104 px tile with today's render, "No render" / "No image") · Frame · Passepartout
+   · Status · Render / Re-render.
+3. **Reason lines** only where the code knows the reason: this visit's render result, and Not eligible =
+   "Its shape is unknown." (in this list a work is ineligible only when its shape can't be read; Q60).
+4. **e2e**: the Artist filter is a native select now (`selectOption(artistId)`), the count reads "n Up to
+   date", the switch is found by its visible name.
+
+Verified: typecheck, lint, prettier; logic and queue wiring diffed against HEAD; `admin-print-presentations`
+9 passed, 1 skipped (no image work of unknown shape on the dev DB); browser on my own `pnpm dev` (dev DB,
+strictly read-only: no switch, select or button touched) at 1440 and 390 px: chips, statuses, How it works,
+no console errors, no horizontal scroll. The render status row is checked in code only (rendering writes).
 
 ### Step 19 · Lucide → Phosphor, whole site — Built 2026-11-11 (done right after step 10, owner) · not committed yet
 
