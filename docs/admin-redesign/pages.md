@@ -376,6 +376,33 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-ga
 closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
 scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
 
+### Step 19 · Lucide → Phosphor, whole site — Built 2026-11-11 (done right after step 10, owner) · not committed yet
+
+Plan: `docs/superpowers/plans/2026-11-11-icons-phosphor.md` (inventory, mapping table, Q48–Q57). Three parts,
+three commits after the owner's look: (1) `ui/Icon` map + public / studio / admin files, (2) the room (menu
+help icon MouseSimple / HandTap by touch, the desktop and touch guides, the Sound & Video notice per
+visitor-wallview.md §3), the editors / wall view chrome and the floor hint, (3) `lucide-react` removed
+(package.json + lockfile: only its three blocks), `src/lib/iconConfig.ts` deleted, Phosphor's SSR entry in
+`optimizePackageImports`.
+
+1. **Same icons, Phosphor's drawing**: light at today's sizes; dot icons (⋮, drag handles) and check marks
+   bold (Q48). `Icon` keeps every key (sound works store `volume-2` / `headphones`); `strokeWidth` → `weight`.
+   Every icon is `aria-hidden` (Lucide added it by itself). Server-rendered files use the SSR entry.
+2. **Inside the 3D canvas**: only the floor hint (an HTML overlay): `Cursor` + `MouseSimple` (regular, Q53)
+   and the ripple aimed at the new tip (4 → 3.85 px). The sound object's 3D texture is untouched (Q52).
+3. **SVGs**: pinch and double-tap restroked to Phosphor light's weight; `gesture-slide-vertical` and
+   `phone-landscape` deleted (no other importer); `gesture-tap` / `gesture-slide-horizontal` stay (floor hint).
+4. **Page weight** (Q55): +29 KB JS on every page measured (production builds, before vs after).
+
+Verified: typecheck, lint, prettier, no `lucide` left in `src` or `package.json`; production build (tree-shaking
+works: no unused Phosphor icon in the output); 19 e2e specs that show icons, 92/92; the 3D suite: in its
+default production mode 3 room tests fail on the Vercel analytics scripts (`/_vercel/*`, 404 outside Vercel,
+nothing to do with this step), in dev mode 4/4; browser on my own `pnpm dev` (dev DB, read-only) at 1440 and
+390 px across public pages, the artist studio, admin, the room (hint, menu, both guides) and the editor:
+no Lucide left, no console errors, no horizontal scroll. Seen in passing (as before): the desktop guide's
+"Drag, Swipe or Arrows" pill is narrower than its label. Docs note for Design Claude: README's Icons section
+still says "Lucide stays on the public site".
+
 ### Step 20 · Visitor room menu + Exit wall view — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 
 Plan: `docs/superpowers/plans/2026-11-11-visitor-room-menu.md`. Files: new

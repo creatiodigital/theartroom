@@ -378,6 +378,73 @@ Meanwhile: shown whenever `spacePublished` (the switch's state, matching the men
 
 Meanwhile: `'use client'` stays and there is no title.
 
+**Q48 · Code Claude → Design Claude: dot icons weight.** At 16 px, Phosphor's light dots
+(`DotsThreeVertical`, kebabs on `/dashboard` and admin Content) are 1.25 px across, vs ~2.2 px today.
+The 18 px drag handle (`DotsSixVertical`) is 1.4 px vs 2.4 px. Bold is ~2 px, and it's what the admin's
+`RowMenu` already uses. *Meanwhile:* bold for these three dot icons.
+
+**Q49 · Code Claude → Design Claude: three table entries.** (a) **PanelTop → Rows** gives Panels the
+same icon as Floor (BrickWall → Rows) in one toolbar that has no labels until step 18.
+*Meanwhile:* Panels = `Rectangle` (editor3d.md allows "Rows/Rectangle"), Floor = `Rows`.
+(b) **Mail → Envelope**: the admin (`EnvelopeSimple`) and the public footer spec (home.md) use
+`EnvelopeSimple`, which is also the closer shape to Lucide's Mail. *Meanwhile:* `Envelope`, as the
+table says. (c) **Undo2 / Redo2 → ArrowCounterClockwise / ArrowClockwise**: closer shapes are
+`ArrowUUpLeft` / `ArrowUUpRight` (Lucide's are U-turn arrows). *Meanwhile:* the table.
+
+**Q50 · Code Claude → Design Claude: `HandArrowUp` for swipe up / down.** Phosphor's `HandArrowUp` is
+an open, palm-up hand with an arrow above it (a "lift" pictogram). `HandSwipeRight` and `HandTap` are
+pointing hands, so the guide shows two kinds of hand. Options: (a) as specified; (b) keep
+`gesture-slide-vertical` as a third custom icon, restroked like pinch; (c) another Phosphor icon.
+*Meanwhile:* (a), as specified.
+
+**Q51 · Code Claude → Design Claude: pinch and double tap "as one family".** Restroking gives them
+Phosphor light's weight (1.125 in the 24 box = 12/256) at any size. Their hand is still our own
+drawing, not Phosphor's. Option: rebuild both from Phosphor's `HandTap` light outline (double tap =
+HandTap + a second arc; pinch = HandTap's hand + today's two diagonal arrows), MIT. *Meanwhile:*
+weight only.
+
+**Q52 · Code Claude → owner: the 3D sound object's icon.** In the room, a sound work's icon (speaker /
+headphones) is drawn into a texture from Lucide path data (`SoundObject/useIconTexture.ts`, inside the
+3D scene). The wall view's tile for the same work becomes Phosphor, so the editor preview and the
+room no longer match. *Meanwhile:* the 3D texture stays as it is (3D rule). A later 3D ticket can
+redraw it from Phosphor's light paths (filled outlines, so it needs `fill` instead of `stroke`).
+
+**Q53 · Code Claude → Design Claude: floor hint weight (inside the canvas).** The entry hint's mouse
+and pointer (FloorMarks, a drei `<Html>` overlay in the 3D canvas) are white lines over the room at
+`strokeWidth 1.5` (1.25 px at 20 px), heavier than the house 1.25 on purpose. Phosphor `regular` is
+exactly 1.25 px there; light would be 0.94 px. *Meanwhile:* `regular` for these two.
+
+**Q54 · Code Claude → Design Claude: floor hint finger icons.** On touch devices the hint uses the
+custom tap and slide hands (`gesture-tap`, `gesture-slide-horizontal`). §3 covers only the guide, so
+these two SVGs stay and are not deleted. Swap them to `HandTap` / `HandSwipeRight` as in the guide
+(then delete both SVGs and re-aim `.fingertip`)? *Meanwhile:* keep them (not in §3, inside the canvas).
+
+**Q55 · Code Claude → owner: page weight.** *Measured (production builds of HEAD vs this step, JS transferred): `/` 273 → 302 KB, `/exhibitions` 272 → 300 KB, `/prints` 277 → 306 KB, i.e. +29 KB (~+11 %) on every page.* Each Phosphor icon module carries all six weights. The
+`Icon` map (~52 icons, loaded wherever `Button` is, so on every page) grows from ≈4.4 KB to ≈29 KB
+gzipped (+≈25 KB gz, ~120 KB more to parse). Options: (a) accept; (b) drop the map keys nothing uses
+(`loaderCircle`, `monitor`, `moveHorizontal`, `moveVertical`, `settings`, `info`; GearSix alone is
+2.7 KB gz) and keep `music` / `volume-1` in case they are stored sound icons; (c) a light-only local
+set generated from Phosphor's MIT paths (no package). *Meanwhile:* (a). I'll measure `/` before and
+after in the prod build and report the number.
+
+**Q56 · Code Claude → Design Claude: three old slips the swap shows (not fixed: icons only).** (a)
+MediaLibrary asks for `name="eye-off"`, which is not a key, so the "on a hidden panel" badge has been
+empty all along. Fixing it (`eyeOff`) adds a 12 px `EyeSlash`. (b) StepsPanel passes
+`aria-label="Recommended by the artist"` to `Icon`, which drops it (today and after). (c) `IconName`
+is effectively `string`, so typos compile; `satisfies` would type-check every name. That would also
+flag ArtisticSound's stored `soundIcon: string`. *Meanwhile:* all three as today.
+
+**Q57 · Code Claude → Design Claude: the custom chevron on the public side.** `chevronDown` (custom
+SVG: Select, the print SpecList, the checkout countries list) stays per phosphor.md, while
+SelectDropdown / CollapsibleSection get Phosphor `CaretDown`. That puts two chevron styles on the
+prints and checkout pages. Point the `chevronDown` key at `CaretDown` now (key kept)? The editors'
+align / text / zoom SVGs would stay. *Meanwhile:* keep the custom chevron.
+
+Docs for Design Claude (no decision needed): README › Icons still says "Lucide stays on the public
+site". phosphor.md says the admin already uses the SSR entry; it doesn't, and step 19 uses it only
+in the two modules without `'use client'`, plus a `next.config.mjs` `optimizePackageImports` entry for
+it (README: "if not, add it in next.config.mjs").
+
 ## Answered
 
 <!-- move items here with the answer -->
