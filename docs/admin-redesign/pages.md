@@ -20,7 +20,7 @@ Do these in order, one PR each.
 | 9 | Users | users (spec: users.md) | Built | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Built | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Built | UI only. |
-| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Building: 12a, 12b built | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
+| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Built (12a, 12b, 12c) | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
@@ -375,6 +375,36 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-ga
 15/15 on port 3001 (unchanged specs); browser on my own `pnpm dev` (dev DB, read-only: one menu opened and
 closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
 scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
+
+### Step 12c · Page editor — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-content-editor.md`. Files: `app/admin/content/[slug]/page.tsx` + SCSS,
+new `ui/SaveBar`, opt-in props on the shared `ui/RichTextEditor` (`tone="admin"`, `richTextVariant`, `labelledBy`,
+`describedBy`, `onReady`), `ui/ImageUploader` (`tone="admin"`, `note`) and `ui/Input` (`aria-describedby`), token
+`--admin-save-bar-shadow`, new `e2e/admin-page-editor.spec.ts` (read-only: nothing is saved).
+
+1. **Kept**: the guard, the banner upload / remove handlers and the save request are unchanged (diffed); uploads
+   and removals still go live at once. The shared editor / uploader / input render exactly as before wherever the
+   new props aren't passed (studio artwork editor, exhibition settings, profile, wall view dialog, landing slides,
+   announcements).
+2. **Layout per gallery.md §2c**: breadcrumb Content / {page}, h1 "{Page} page", "Last saved {date, time}"
+   (`updatedAt`), View page ↗; panels with the label above and help under the field (Banner image only on Prints,
+   with Replace / Remove and "JPG or PNG, up to 1 MB." — WebP is refused today, Q79); the toolbar in five labelled
+   groups, 32 px buttons (44 on phones), arrow keys, sticky in the editor; the text in the public site's fonts and
+   styles (the public RichText classes, About / legal in their page variant).
+3. **NEW save bar** (approved): "Unsaved changes" when the title or text differs from what was loaded or last
+   saved (the editor's own rewrite of the loaded text doesn't count); Discard asks, then restores title and text
+   (no request); Save sends today's request, and "Saved" / Last saved / the baseline move only when the server
+   accepts (today "Saved" showed even after a refusal, Q80); no warning on leaving (Q81). After a failed load the
+   bar reads "Couldn't load this page. Reload before editing." and Discard is off; Save behaves as today (Q82).
+4. **Found, not fixed (Q82, owner)**: a failed load opens an empty editor, and saving then blanks the live page;
+   Remove has no confirm; the editor registers Link twice (a console warning on every editor).
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; the shared components' removed lines are only two
+imports (extended) and two defaults that now sit behind `tone`; the new spec 7/7 (one locator fixed: the title
+field by its role, as its panel is also named "Page title"); browser on my own `pnpm dev` (dev DB, read-only) at
+1440 and 390 px: Prints and About editors, "All changes saved" on open, the studio profile's editor unchanged, no
+console errors, no horizontal scroll.
 
 ### Step 12b · Sortable lists + Announcements — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 

@@ -607,6 +607,101 @@ _Meanwhile:_ only the breadcrumb changes.
 
 Both keep the shared `Modal`: today's look, and no focus trap (Q5 wants one in every admin dialog). _Meanwhile:_ unchanged, apart from the slide editor's sentence case. Should they be designed, or get only `tone="admin"` + the dialog layer's `inert`?
 
+**Q78 · Code Claude → owner: the Page title field reaches almost nothing.**
+
+- About and the four legal pages pass only `content` to their components (`app/about/page.tsx:18–19`, the same in the other four), whose headings are fixed (`components/about/index.tsx:12–15`).
+- Prints uses the title only as the banner's `alt` (`components/prints/index.tsx:41`); its heading "Fine Art Prints" is fixed too.
+- So today's "This appears as the main heading" and the drawn _The main heading at the top of the page._ are wrong on all six.
+
+Options:
+
+- (a) keep the field, with true help:
+  - Prints: _Read by screen readers as the banner's description._;
+  - the others: _Not shown on the page, whose heading is fixed._;
+- (b) hide it on the five (UI only: Save still sends the loaded title);
+- (c) show it on the public pages (a public change, later).
+
+_Meanwhile:_ (a).
+
+**Q79 · Code Claude → owner: the banner's file types.**
+
+- The browser takes JPEG / PNG / TIFF (`ImageUploader.tsx:68`), and the route takes JPEG / PNG / WebP / GIF. So only JPG and PNG get through:
+  - WebP stops in the browser ("Invalid file type. Accepted: JPG, PNG, TIFF.");
+  - TIFF stops at the server ("Invalid file type. Please upload a JPG, PNG, WebP, or GIF image.").
+
+Options:
+
+- (a) the hint _JPG or PNG, up to 1 MB._ (copy only);
+- (b) this uploader also takes WebP (an opt-in `acceptedTypes`; a behavior change, which the route already supports).
+
+_Meanwhile:_ (a), instead of the drawn _JPG, PNG or WebP_.
+
+**Q80 · Code Claude → owner: a refused save.**
+
+- Today Save shows "✓ Saved!" after any reply, a 401 or a 500 included (`page.tsx:85–92`).
+- The new status can't then say "All changes saved", so the baseline and "Saved" move only on a 2xx. A refusal leaves "Unsaved changes" and no message.
+- Option: a red `FeedbackBar` "The page could not be saved. Please try again." (as on Users).
+
+_Meanwhile:_ the gate, no message. Is the gate OK, and do you want the message?
+
+**Q81 · Code Claude → owner: leaving with unsaved changes.**
+
+- Nothing warns today, and the spec asks for a warning only if one exists.
+- Option: `beforeunload`, the browser's own "Leave site?" on reload, closing the tab or typing a URL.
+  - Menu and breadcrumb clicks are in-app navigations it doesn't catch.
+  - Catching them needs a guard on the shell's links (more work).
+
+_Meanwhile:_ none.
+
+**Q82 · Code Claude → owner: behavior found while reading (kept as today, not fixed in a re-layout).**
+
+- **A failed load opens an empty editor that can blank the live page.**
+  - `fetchPage` stores any reply, so a 401 or 500 body becomes the page.
+  - The editor opens with no title and no text. Save then sends `{ content: '<p></p>' }` (Prisma drops the undefined title), and the public page goes blank. The new bar would even read "All changes saved".
+  - Fix: a non-2xx load shows "The page could not be loaded." and no editor.
+  - _Meanwhile_ (coordinator): the editor still opens, as today, but the bar's status reads **Couldn't load this page. Reload before editing.** (red, `role="alert"`), Discard is disabled, and Save is as today.
+- **Remove** has no confirm and takes the banner off /prints at once.
+- **Link is registered twice** (StarterKit 3 includes it, `RichTextEditor.tsx:51–58` adds it again), so every editor in the app logs a TipTap warning.
+  - Fix: `link: false` in `StarterKit.configure`. It touches all six editors.
+
+Fix them in a later pass?
+
+**Q83 · Code Claude → Design Claude: the save bar, points not drawn.** _Meanwhile:_
+
+- **Discard asks first:** "Discard changes?" / "Your changes since the last save will be lost." / **Discard** (red) / Cancel. One click next to Save could otherwise throw away an hour of legal text. Drop it?
+- **Discard** is disabled with nothing to discard and while saving.
+- **Save** stays enabled, as today (a clean Save re-sends and refreshes the live page). "Saving…", then **Saved** for today's 3 s, only while nothing has changed since.
+- **"Loaded values"** = the last loaded or saved values. Otherwise Discard, after a Save, would bring back text that is no longer live.
+- **The banner** sits outside the bar's state (it saves on upload, as today), so its panel says _Saved as soon as it uploads or is removed._ (the Edit announcement page's wording).
+- **Status:** `role="status"`, so a screen reader hears it flip.
+- **Last saved** moves with each Save. A banner change moves it only on the next load: its routes don't return the time.
+- **Phone:** the status on its own line, the buttons under it, 44 px.
+- **Shadow:** the drawn one as a token, `--admin-save-bar-shadow` (the README allows shadows only on dialogs).
+
+**Q84 · Code Claude → Design Claude: the editor.** _Meanwhile:_
+
+- **Icons:**
+  - Phosphor instead of the drawn glyphs (the names in Decision 6), 18 px light;
+  - pressed = `--color-gray-25` + `fill` (the drawn #e2e2e2 on #f6f6f6 alone is 1.1:1);
+  - cost: 16 icons more in the editor's bundle, studio pages included (Q55).
+- **Names:** as drawn, except **Code block** (the button makes a code block, not inline code). Tooltips keep today's shortcuts.
+- **Keyboard:** `role="toolbar"` with arrow keys and one Tab stop. That is the APG pattern the role promises; today every button is its own Tab stop.
+- **Box:** today's 500 px, the toolbar sticking inside it. Option: let it grow with the page, with the toolbar sticking to the viewport top (long legal pages).
+- **Text:** the live page's own styles (`page` variant for About and legal, default for Prints). So h2 is 24 px 500 (drawn 28 px 400), paragraphs have the live 2.0 line height, and links have no underline (as live, and as today's editor).
+- **Phone:** 44 px buttons; the toolbar wraps between groups (3 rows at 390 px).
+
+**Q85 · Code Claude → Design Claude: banner and header, points not drawn.** _Meanwhile:_
+
+- **Replace** is new to this page. It uses today's upload; the route swaps the file and deletes the old one only after.
+- **Empty banner:** a dashed 320×180 drop area with today's click / Enter / drag and drop. The side column keeps the note.
+- **Meta line:** today's "1538 × 1022 px · WebP".
+- **Breadcrumb:** Content / {the Content list's name}, not the editable title.
+- **h1 "{name} page"** reads "Online terms of sale page". An unknown slug gets "{slug} page" and no View page.
+- **View page ↗** shows the saved version.
+- **States:** loading = "Loading page…"; a thrown load = a red callout "Page not found" (today's text).
+
+**Q86 · Code Claude → Design Claude: Q76 follow-up.** The Edit announcement page could take this layout as is: panels, `SaveBar` (its Save already checks the reply) and the restyled editor. Do it as step 12d, after 12c is approved? _Meanwhile:_ untouched.
+
 ## Answered
 
 <!-- move items here with the answer -->

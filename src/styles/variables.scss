@@ -154,6 +154,7 @@
   --admin-published-dot: #2e8b57; // the "Published" dot (ui/PublishState)
   --admin-success-border: #b7dfc2; // the success feedback bar (ui/FeedbackBar)
   --admin-preview-tile: #f0efec; // behind a work's render (print presentations)
+  --admin-save-bar-shadow: 0 -6px 16px rgba(0, 0, 0, 0.04); // the fixed save bar (ui/SaveBar)
   // Donut / chart grays, darkest first (dashboard "Traffic channels").
   --admin-chart-1: var(--color-dark-surface);
   --admin-chart-2: var(--color-gray-70);

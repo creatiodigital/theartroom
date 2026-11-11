@@ -358,3 +358,16 @@ like the real Pause switch). Logic and dialogs unchanged.
   className?; marker? (a data-* attribute name put on the row) }[]; onDragEnd(event: DragEndEvent) }`. dnd-kit (pointer + keyboard
   sensors, closest-center, vertical strategy); each row: handle (`aria-label="Reorder {title}"`, DotsSixVertical bold,
   `touch-action: none`), position, thumb, title + sub, actions. `SORTABLE_KEYBOARD_HINT` is the footnote text.
+
+## Page editor pieces (step 12c)
+
+### `SaveBar`
+- **Built** · `ui/SaveBar.tsx` · `{ dirty: boolean; saving: boolean; saved?: boolean; onSave(); onDiscard?(); error?: ReactNode }`
+  (fixed to the bottom of the content area, lined up with the 880 px column; status as a live region: "All changes
+  saved" / "Unsaved changes" / "Saved" / the error; Discard only with `onDiscard`).
+
+### Opt-in props on shared public components (their default output is unchanged)
+- `RichTextEditor`: `tone?: 'default' | 'admin'` (grouped toolbar, the public RichText styles), `richTextVariant?:
+  'default' | 'page'`, `labelledBy?`, `describedBy?`, `onReady?(html)` (the editor's own form of the loaded text).
+- `ImageUploader`: `tone?: 'default' | 'admin'` (preview + Replace / Remove), `note?: ReactNode`.
+- `Input`: `aria-describedby?`.

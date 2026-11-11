@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 .container {
   width: 100%;
 }
@@ -169,4 +171,111 @@
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
   color: var(--color-error-text);
+}
+
+// ── tone="admin" (gallery.md §2c, designs/content-editor.dc.html) ──
+// Only the admin layout's own classes; nothing above changes.
+
+.adminContainer {
+  width: 100%;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+}
+
+.adminRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  @include media-up(tablet) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5);
+  }
+}
+
+// 320×180 as drawn (the ratio comes from `aspectRatio`); full width on phones.
+.adminPreview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+
+  @include media-up(tablet) {
+    flex: 0 0 auto;
+    width: 320px;
+  }
+}
+
+// After .dropzone, so its width wins at the same specificity.
+.adminDropzone {
+  @include media-up(tablet) {
+    flex: 0 0 auto;
+    width: 320px;
+  }
+}
+
+.adminSide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.adminMeta {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.adminActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+// Two classes: Button's bare reset would win over one.
+.adminActions .adminButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-15);
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.adminActions .adminRemove {
+  color: var(--color-red-50);
+
+  &:hover {
+    background: var(--color-red-30);
+    border-color: var(--color-red-40);
+    color: var(--color-red-50);
+  }
+}
+
+.adminNote {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
 }
