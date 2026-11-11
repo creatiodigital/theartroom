@@ -1,0 +1,101 @@
+@use '@/styles/mixins' as *;
+
+// /admin/content — docs/admin-redesign/gallery.md §2, designs/content.dc.html.
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+// One column on phones (panels stack); side by side from 900px, as drawn.
+.groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+
+  @include media-up(tablet) {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  border-top: 1px solid var(--color-gray-20);
+}
+
+// The whole row is the link: 56px or taller, so it is past 44px on phones too.
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: var(--space-14);
+  box-sizing: border-box;
+  padding: 14px var(--space-4);
+  color: var(--color-text-primary);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--color-gray-10);
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  @include media-up(tablet) {
+    padding: 14px var(--space-5);
+  }
+}
+
+.tile {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-20);
+  color: var(--color-text-primary);
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.edit {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+
+  .row:hover & {
+    color: var(--color-black);
+  }
+}

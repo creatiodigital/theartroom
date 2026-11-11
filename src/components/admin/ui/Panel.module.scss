@@ -33,6 +33,22 @@
   }
 }
 
+// Edge-to-edge rows (designs/content.dc.html): an 8px card inset top and bottom
+// only, and the header keeps the sides (16px on phones, 20px from 900px).
+// After `.panel` in this file, so it wins at the same specificity.
+.flush {
+  gap: 0;
+  padding: var(--space-2) 0;
+
+  .head {
+    padding: var(--space-3) var(--space-4) var(--space-2);
+
+    @include media-up(tablet) {
+      padding: var(--space-3) var(--space-5) var(--space-2);
+    }
+  }
+}
+
 .headText {
   display: flex;
   flex-direction: column;

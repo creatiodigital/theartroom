@@ -510,6 +510,27 @@ _Meanwhile:_ as listed.
 - Not-eligible cards leave out the "—" cells (Q45);
 - the lines as in Decision 6.
 
+**Q66 · Code Claude → owner / Design Claude: Gallery selection for plain admins.** Today's list shows it to every admin.
+The page itself and its API are super admin only, so a plain admin who clicks it lands on the homepage.
+Options: (a) as today; (b) hide the row unless `userType === 'superAdmin'` (UI only; the guard already has the session).
+_Meanwhile:_ (a).
+
+**Q67 · Code Claude → Design Claude: one hint corrected.** "Works the gallery features" reads like a homepage feature. The
+selection is exactly the works on `/prints` (and the order of the arrows on artwork pages opened from there).
+_Meanwhile:_ **The works on the Prints page**. The other eight hints are as drawn.
+
+**Q68 · Code Claude → Design Claude: points the design doesn't draw.** _Meanwhile:_
+
+- hover: a `--color-gray-10` row fill and Edit in black (drawn: text color only, which barely shows on a whole row);
+- focus: the shell's 2 px black ring with its 2 px gap, which sits just outside the row;
+- phone: one column, rows inset 16 px, "Edit ›" kept, text wraps;
+- icons: as drawn. `Article` and `ImageSquare` are also the menu's Content and Print presentations icons. Option:
+  `Megaphone` for Announcements, `Scales` for the legal pages.
+
+**Q69 · Code Claude → Design Claude: Q6's condition is met.** With this step no admin page has a downward kebab left (Users,
+Exhibitions and Gift orders use `RowMenu`, which flips upward). Per Q6 the shell's bottom padding goes 200 px → 56 px
+(40 px on phone). That touches every admin page, so it should be its own commit. _Meanwhile:_ 200 px kept.
+
 ## Answered
 
 <!-- move items here with the answer -->

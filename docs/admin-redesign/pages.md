@@ -20,7 +20,7 @@ Do these in order, one PR each.
 | 9 | Users | users (spec: users.md) | Built | UI only + NEW type filter (approved). |
 | 10 | Exhibitions | exhibitions (spec: exhibitions.md) | Built | UI only, no logic changes. |
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Built | UI only. |
-| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Designed · approved by owner | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
+| 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Building: 12a built | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Designed · approved by owner | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
@@ -375,6 +375,25 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `bake-publish-ga
 15/15 on port 3001 (unchanged specs); browser on my own `pnpm dev` (dev DB, read-only: one menu opened and
 closed) at 1440 and 390 px: menu groups and hints, Escape returns focus to ⋮, no console errors, no horizontal
 scroll. Seen in passing: two "E2E Leak …" exhibitions from an older e2e run (≈ 2026-11-04) sit on the dev DB.
+
+### Step 12a · Content list — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-content-list.md`. Files: new `src/components/admin/content/`
+(`index.tsx` = today's page guard, `ContentList.tsx`, `Content.module.scss`), `app/admin/content/page.tsx` (renders
+it; still `'use client'`), `ui/Panel` (`flush`); `admin/dashboard/ContentManagement.tsx` removed (only the page used it).
+
+1. **Same nine routes**, no data and no conditions, as today (every admin sees all nine; Q66). The table with a
+   one-item ⋮ menu becomes three panels of whole-row links: Home & curation (Landing page, Announcements,
+   Gallery selection), Pages (About us, Prints), Legal (the four policies). Sentence case.
+2. **Hints**: as drawn, checked against what each page edits, except Gallery selection: "The works on the
+   Prints page" (the selection is the whole of `/prints`; Q67).
+3. **Phone**: one column; panels side by side from 900 px.
+4. Sub-page breadcrumbs come with 12b / 12c. With this step no admin page has a downward kebab left (Q69: the
+   shell's 200 px bottom padding can go, as its own commit).
+
+Verified: typecheck, lint, prettier; the guard diffed against HEAD; the nine hrefs identical to today's; browser
+on my own `pnpm dev` (dev DB, read-only) at 1440 and 390 px: nine rows, a row opens its page, no console
+errors, no horizontal scroll. No e2e opens this page.
 
 ### Step 11 · Print presentations — Built 2026-11-11 · committed after my checks (owner: steps 10, 11, 13 reviewed together later)
 

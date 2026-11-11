@@ -135,7 +135,7 @@ White card: border `--color-border-default`, radius 8, padding 24, gap 18. Heade
 link 32 px tall). Used for every block on the dashboard and, later, around every table.
 
 - **Built** · `ui/Panel.tsx` · `Panel { title: string; subtitle?: ReactNode; action?: ReactNode;
-  children; className? }` (a `<section aria-labelledby>`), and `PanelLink { href; children }` for the
+  children; className?; flush?: boolean }` (`flush`, step 12a: rows run edge to edge, the header keeps its inset) (a `<section aria-labelledby>`), and `PanelLink { href; children }` for the
   "All orders >" action (outlined on desktop, plain text on phone). Phone: padding 18 px and the
   subtitle hidden, as in `dashboard-phone.dc.html`.
 

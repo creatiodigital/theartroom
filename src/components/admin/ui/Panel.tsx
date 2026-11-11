@@ -12,15 +12,20 @@ type PanelProps = {
   subtitle?: ReactNode
   /** Right side of the header, e.g. a PanelLink. */
   action?: ReactNode
+  /** Children run edge to edge (rows that bring their own inset); the header keeps its inset. */
+  flush?: boolean
   children: ReactNode
   className?: string
 }
 
 /** White admin card with a caps title (components.md, Panel). */
-export function Panel({ title, subtitle, action, children, className }: PanelProps) {
+export function Panel({ title, subtitle, action, flush, children, className }: PanelProps) {
   const titleId = useId()
   return (
-    <section aria-labelledby={titleId} className={c(styles.panel, className)}>
+    <section
+      aria-labelledby={titleId}
+      className={c(styles.panel, flush && styles.flush, className)}
+    >
       <div className={styles.head}>
         <div className={styles.headText}>
           <h2 id={titleId} className={styles.title}>
