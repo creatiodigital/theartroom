@@ -55,6 +55,9 @@ only inside the canvas, so read the source.
 | `designs/exhibitions.dc.html` | Exhibitions, actions menu open. Spec: `exhibitions.md`. |
 | `designs/artist-*.dc.html` | Artist studio (`/dashboard/*`): home (its `impersonating` prop shows the menu card), artworks, artwork editor, profile, payouts (both states), exhibition settings. Spec: `artist.md`. |
 | `designs/api-reference.dc.html` | Developer: API & database reference. Spec: `developer.md`. |
+| `designs/editor-3d.dc.html`, `designs/editor-3d-panels.dc.html` | 3D room editor: toolbar + Lighting panel, then the other panels. Spec: `editor3d.md`. |
+| `designs/wall-view.dc.html`, `designs/wall-view-panels.dc.html` | Wall view: left panel + add bar, then the right panels. Spec: `wallview.md`. |
+| `designs/visitor-room-menu.dc.html`, `designs/visitor-wall-exit.dc.html` | Visitor 3D room: menu button, Exit wall view button. Spec: `visitor-wallview.md`. |
 
 ## Look and feel
 

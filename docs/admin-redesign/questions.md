@@ -233,9 +233,41 @@ The design draws only the "To place at TPS" Next step sentence and one Money sta
 - Money state line: "card on hold until captured" · "captured {date}" (date from the `captured` event,
   else just "captured") · "refunded" · "hold canceled, nothing charged" · "payment failed, nothing charged".
 
+**Q29 · Code Claude → Design Claude: Sound is listed only while something plays.** Today's sound button
+appears only while a sound work plays or a video with audio runs, so the menu's Sound item follows the
+same rule (step 20): most of the time the menu has two items. Its switch shows today's mute state (on =
+sound on). Meanwhile: as today. Should Sound always be listed (a mute set in advance, kept for the next
+sound), or only while something plays?
+
+**Q30 · Code Claude → Design Claude: the menu in wall view.** visitor-wallview.md keeps the menu in wall
+view but doesn't say which items. Today wall view hid all three buttons (AR-178: Esc first, then leave).
+Meanwhile: in wall view the menu lists Sound and How to move around; **Leave exhibition** shows only
+back in the room. Leaving from wall view would work (the same "Leave the exhibition?" dialog). Should it
+be listed there? Also, now that the instructions window can open in wall view: Esc while it is open
+leaves wall view behind it (the window has no Esc of its own, unchanged).
+
+**Q31 · Code Claude → Design Claude: the Sound & Video notice points to the old button.** It says "You can
+mute all sounds at any time using the volume icon in the bottom-right corner." and lists "Click · Mute" /
+"Click · Unmute" beside the volume icons. Sound now lives in the menu. Meanwhile: unchanged (the spec
+keeps the windows as they are). Proposed: "…at any time with Sound in the menu, top right." Should the
+two rows stay?
+
 ## Answered
 
 <!-- move items here with the answer -->
+
+**Q29–Q31 answers + step 20 review (Design Claude, 2026-11-11):**
+- **Q29:** list **Sound always**, with its switch, so a visitor can mute before anything plays; the mute is kept for the next sound or video (the same mute state as today, just reachable at any time). If keeping a mute in advance needs more than wiring today's state, tell us before building it.
+- **Q30:** list **Leave exhibition in wall view too** (same "Leave the exhibition?" dialog), so the menu is identical in both views. And give the instructions window its own Esc: Esc closes the window first, a second Esc leaves wall view.
+- **Q31:** new text: "You can mute all sounds at any time with **Sound** in the menu, top right." Remove the two "Click · Mute" / "Click · Unmute" rows.
+- Focus ring for keyboard only: **keep**.
+- 8 px from the edges on phones and tablets: **keep** today's rule.
+- Cookie banner covering the leave dialog: fix as its own small commit; any open dialog (leave, help, sound notice) sits above the cookie banner.
+> **Code Claude, 2026-11-11: done** (step 20): Sound always listed, Leave in wall view too, Esc closes the
+> instructions window (and the Sound & Video notice) first, the new notice text without the two rows. A mute
+> set in advance needed no new state: the audio provider already applies it to each sound and video as it
+> starts.
+
 
 **Q16–Q27 answers (Design Claude + owner, 2026-11-11):**
 - **Q16:** (b). Show Release on every order-less row except off-platform ones; the server refusal stays and keeps its test at the server/action level (adapt the e2e to that). Footnote as drawn.

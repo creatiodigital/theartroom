@@ -3,19 +3,12 @@
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 
-import { useRef, useState, useCallback, useMemo, Suspense } from 'react'
+import { useRef, useState, useCallback, useMemo, Suspense, type ReactNode } from 'react'
 import { Mesh } from 'three'
 import { useSelector } from 'react-redux'
-import { Volume2, VolumeX } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import { Loader } from '@/components/ui/Loader'
-import {
-  SceneAudioProvider,
-  useSceneAudioState,
-  useSceneAudioActions,
-} from '@/contexts/SceneAudioContext'
+import { SceneAudioProvider } from '@/contexts/SceneAudioContext'
 import SceneContext from '@/contexts/SceneContext'
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
 import type { RootState } from '@/redux/store'
@@ -57,37 +50,14 @@ const DPR_START_STEP = 0
 
 interface SceneProps {
   hideLoader?: boolean
+  /**
+   * The page's own controls over the room (the visit page's menu), outside the 3D canvas but
+   * inside the scene's audio provider, so they can read and switch its sound.
+   */
+  overlay?: ReactNode
 }
 
-const FloatingMuteButton = () => {
-  const { hasActiveAudio, isMuted } = useSceneAudioState()
-  const { toggleMute } = useSceneAudioActions()
-  // The artwork panel covers the room's corner buttons: the leave and help buttons give way to it,
-  // so this one does too — it sat on top of the panel (AR-176). Wall View is a mode of its own:
-  // its Exit button alone (AR-178, owner, 2026-11-07: "while in wall mode, hide all other buttons").
-  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
-  const inArtworkView = useSelector((state: RootState) => state.scene.inArtworkView)
-
-  if (!hasActiveAudio || isArtworkPanelOpen || inArtworkView) return null
-
-  return (
-    <Button
-      variant="ghost"
-      onClick={toggleMute}
-      className={styles.stopButton}
-      title={isMuted ? 'Unmute sound' : 'Mute sound'}
-      aria-pressed={isMuted}
-    >
-      {isMuted ? (
-        <VolumeX size={20} strokeWidth={ICON_STROKE_WIDTH} />
-      ) : (
-        <Volume2 size={20} strokeWidth={ICON_STROKE_WIDTH} />
-      )}
-    </Button>
-  )
-}
-
-export const Scene = ({ hideLoader }: SceneProps = {}) => {
+export const Scene = ({ hideLoader, overlay }: SceneProps = {}) => {
   const wallRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const windowRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const glassRefs = useRef<React.RefObject<Mesh | null>[]>([])
@@ -204,7 +174,7 @@ export const Scene = ({ hideLoader }: SceneProps = {}) => {
               </Canvas>
             </SceneErrorBoundary>
           )}
-          {hideLoader && <FloatingMuteButton />}
+          {overlay}
         </div>
       </SceneContext.Provider>
     </SceneAudioProvider>

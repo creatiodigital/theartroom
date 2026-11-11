@@ -1,5 +1,3 @@
-@use '@/styles/mixins' as *;
-
 .errorState,
 .emptyState {
   display: flex;
@@ -20,46 +18,6 @@
   background-color: var(--color-surface-subtle);
 }
 
-// Phones and tablets (`$touch-room`, mixins): the leave and help buttons sit 8px from the edges.
-// The room reaches every edge of the screen (the visit page's `viewport-fit=cover`, AR-176), so
-// each corner button also keeps clear of the notch, the rounded corners and the home indicator
-// (`env(safe-area-inset-*)`: 0 where there are none).
-
-.navigationButtonWrapper {
-  position: fixed;
-  top: calc(var(--space-6) + env(safe-area-inset-top));
-  right: calc(var(--space-6) + env(safe-area-inset-right));
-  z-index: $room-button-z;
-
-  @media #{$touch-room} {
-    top: calc(var(--space-2) + env(safe-area-inset-top));
-    right: calc(var(--space-2) + env(safe-area-inset-right));
-  }
-
-  // A phone on its side (AR-176): iOS keeps the notch's width clear on BOTH sides (47pt), but the
-  // notch sits mid-edge and this button is in a corner, so it goes right by the edge, as upright.
-  @media #{$phone-sideways} {
-    right: var(--space-2);
-  }
-}
-
-.navigationButton {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background-color: $room-button-bg;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-
-  svg {
-    color: var(--color-black);
-  }
-}
-
 // Over the room, under the artwork panel (z-index 2) and the details: see the
 // note where it is rendered.
 .touchShield {
@@ -67,44 +25,6 @@
   inset: 0;
   z-index: 1;
   touch-action: none;
-}
-
-.infoButton {
-  position: fixed;
-  bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
-  right: calc(var(--space-6) + env(safe-area-inset-right));
-  z-index: $room-button-z;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background-color: $room-button-bg;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-
-  svg {
-    color: var(--color-black);
-  }
-
-  @media #{$touch-room} {
-    bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
-    right: calc(var(--space-2) + env(safe-area-inset-right));
-  }
-
-  // A tablet's home indicator is a thin line mid-edge, nowhere near this corner, so the button
-  // comes down to 8px, the same as from the side (AR-177).
-  @media #{$tablet-room} {
-    bottom: var(--space-2);
-  }
-
-  // A phone on its side (AR-176): iOS keeps the notch's width clear on BOTH sides (47pt), but the
-  // notch sits mid-edge and this button is in a corner, so it goes right by the edge, as upright.
-  @media #{$phone-sideways} {
-    right: var(--space-2);
-  }
 }
 
 .infoOverlay {
@@ -167,6 +87,13 @@
   @media (orientation: landscape) and (max-height: 500px) {
     margin-bottom: var(--space-4);
     padding-bottom: var(--space-4);
+  }
+
+  // The Sound & Video notice once "Don't show this again" was chosen: nothing below to divide off.
+  &:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
   }
 }
 
@@ -244,15 +171,6 @@
   }
 }
 
-// The help button's finger (phones and tablets): the guide's own tap pictogram, drawn larger
-// than a 20px line icon would be, as its hand is drawn at 80% inside the frame.
-.infoButtonIcon {
-  width: 26px;
-  height: 26px;
-}
-
-.navigationButton,
-.infoButton,
 .infoPanelClose {
   &:focus {
     outline: none;

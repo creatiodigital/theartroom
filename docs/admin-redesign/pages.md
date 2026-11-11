@@ -29,7 +29,7 @@ Do these in order, one PR each.
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site**: swap the name→icon map in `components/ui/Icon/Icon.tsx` (light weight, size as today), then the ~25 files that import `lucide-react` directly; remove `lucide-react` and `ICON_STROKE_WIDTH` when nothing uses them | — | Approved by owner | Do after step 18 so the editor and the public site switch together. Check every public page and the 3D room afterwards. |
-| 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Designed · approved by owner | Public side, independent of the admin work: can be done any time. |
+| 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
 
 ## Built notes
 
@@ -250,3 +250,51 @@ rows, menu and dialogs).
 after production): "This gift was canceled after production, so its edition number stays used. It can’t be
 deleted." No other change. `edition-off-platform.spec` now tries Delete on its canceled-after-shipping gift and
 expects the refusal and the order to remain.
+
+### Step 20 · Visitor room menu + Exit wall view — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-visitor-room-menu.md`. Files: new
+`src/components/exhibitions/view/RoomControls/` (`RoomMenu`, `ExitWallViewButton`, one SCSS module),
+`exhibitions/view/index.tsx` and its SCSS (the X, the help button and the old Exit Wall View removed),
+`scene/index.tsx` (`FloatingMuteButton` removed; a new `overlay` prop renders the menu outside the
+3D canvas), `styles/mixins.scss` (the shared button look; the old `$room-button-bg` had no other users).
+Nothing inside the three.js `<Canvas>` changed.
+
+1. **Kept**: every handler, unchanged and in one place each: Sound is today's `toggleMute`; How to move
+   around is today's `handleInfoClick` (the help window and the Sound & Video notice that follows it
+   are untouched); Leave exhibition is today's `openExitPrompt('button')` (same dialog, same
+   `/exhibitions` destination); Exit wall view is today's `requestArtworkViewExit()`. Esc and pinch
+   still leave wall view; a click on the empty wall still does not.
+2. **Items (after Q29 / Q30)**: the same menu in the room and in wall view. **Sound** is always listed
+   (its switch is today's mute; a mute set before anything plays holds for the next sound or video,
+   which the audio provider already applied to each one as it starts); it is left out only without
+   WebGL. **How to move around**: not without WebGL, not on the bake page. **Leave exhibition**:
+   always. Before the room has mounted the page renders the menu itself (no Sound there), so Leave is
+   always reachable where the X was.
+3. **Escape** closes the instructions window or the Sound & Video notice first (Q30); only the next
+   Escape leaves wall view.
+4. **Nothing reaches the room**: while the menu is open, a transparent layer catches the outside click
+   (it closes the menu and does not walk or select a work); keys pressed in the menu don't walk; Esc
+   closes the menu and does not also leave wall view. The menu closes if the leave dialog opens.
+5. **Focus**: first item on open, back to the menu button on every close (the leave dialog's Stay
+   returns there too). Arrows / Home / End move, Tab closes. Both buttons draw a focus ring for the
+   keyboard only (white + dark, seen over any wall): the room's old buttons had none. Remove the
+   `:focus-visible` block in `RoomControls.module.scss` if unwanted.
+6. **Look**: per the spec (radius 10, not the wall-exit design's pill; the menu, not that design's old
+   bottom-right buttons). On phones and tablets both buttons sit 8 px from the edges plus the safe
+   area, today's rule for the room's corner buttons (the design shows ~14 px). Switch off track:
+   `--color-toggle-off`. Item hover / keyboard focus: `--color-gray-20`.
+7. **Sound & Video notice** (Q31): "…You can mute all sounds at any time with **Sound** in the menu, top
+   right."; the two "Click · Mute / Unmute" rows are gone.
+
+Verified: typecheck, lint, prettier; browser on my own `pnpm dev` (dev DB, read-only, the Vivrière room):
+after the Q29–Q31 answers, two rooms (with and without media): Sound listed and switching in both,
+the same three items in wall view, Esc closing the help window and then the notice before leaving wall
+view, the new notice text. Before them, 1440 px and 390 px touch: no old buttons left, menu open / closed, items, Esc / arrows / End / Tab and
+focus return, outside tap closes, How to move around opens the guide (then the Sound & Video notice,
+as today), Leave exhibition opens the dialog and Stay returns focus to the menu button. Wall view at
+1440 px: Exit wall view top-left and leaving through it, the menu with Sound + How to move around, Esc
+closes only the menu; at 390 px: Exit wall view top-left (8 px) and leaving through it. No console
+errors, no horizontal scroll. Seen in passing, not part of this
+step: the cookie banner sits above the leave dialog and covers its Stay / Leave buttons until consent
+is given (fixed in its own commit).
