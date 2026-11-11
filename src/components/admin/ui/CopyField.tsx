@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import type { Icon } from '@phosphor-icons/react'
 import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
@@ -21,11 +22,17 @@ function useCopied() {
     [],
   )
 
+  // "Copied" only once the clipboard took the text: a refused write (no
+  // permission, page not focused) leaves the label as it was.
   const copy = useCallback((value: string) => {
-    void navigator.clipboard.writeText(value)
-    setCopied(true)
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = setTimeout(() => setCopied(false), COPIED_MS)
+    navigator.clipboard.writeText(value).then(
+      () => {
+        setCopied(true)
+        if (timer.current) clearTimeout(timer.current)
+        timer.current = setTimeout(() => setCopied(false), COPIED_MS)
+      },
+      () => setCopied(false),
+    )
   }, [])
 
   return { copied, copy }
@@ -40,10 +47,18 @@ type CopyButtonProps = {
   srSuffix?: string
   /** compact: the 28px "Copy" inside a CopyField row (44px below 900px either way). */
   size?: 'regular' | 'compact'
+  /** A mark before the label, e.g. Copy on "Copy address for TPS" (light, decorative). */
+  icon?: Icon
 }
 
 /** A button that copies `value` and says "Copied" for 2 s. */
-export function CopyButton({ value, label, srSuffix, size = 'regular' }: CopyButtonProps) {
+export function CopyButton({
+  value,
+  label,
+  srSuffix,
+  size = 'regular',
+  icon: ButtonIcon,
+}: CopyButtonProps) {
   const { copied, copy } = useCopied()
   return (
     <span className={styles.buttonWrap}>
@@ -53,6 +68,7 @@ export function CopyButton({ value, label, srSuffix, size = 'regular' }: CopyBut
         className={c(styles.button, size === 'compact' && styles.compact)}
         onClick={() => copy(value)}
       >
+        {ButtonIcon && <ButtonIcon size={13} weight="light" aria-hidden />}
         {copied ? 'Copied' : label}
         {srSuffix && <span className="sr-only"> {srSuffix}</span>}
       </Button>

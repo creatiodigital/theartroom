@@ -46,6 +46,8 @@ type ButtonProps = {
   'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog' | 'tree' | 'grid'
   'aria-selected'?: boolean
   'aria-invalid'?: boolean
+  /** Focusable but not actionable, e.g. a menu item that explains why it is off. */
+  'aria-disabled'?: boolean
   'aria-current'?: React.AriaAttributes['aria-current']
   role?: string
   /** Roving tabindex in composite widgets (e.g. admin stage tabs). */
@@ -80,6 +82,7 @@ export const Button = React.memo(
     'aria-haspopup': ariaHaspopup,
     'aria-selected': ariaSelected,
     'aria-invalid': ariaInvalid,
+    'aria-disabled': ariaDisabled,
     'aria-current': ariaCurrent,
     role,
     tabIndex,
@@ -144,6 +147,7 @@ export const Button = React.memo(
         aria-haspopup={ariaHaspopup}
         aria-selected={ariaSelected}
         aria-invalid={ariaInvalid}
+        aria-disabled={ariaDisabled}
         aria-current={ariaCurrent}
       >
         {content}

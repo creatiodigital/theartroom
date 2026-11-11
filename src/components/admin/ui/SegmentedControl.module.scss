@@ -1,0 +1,73 @@
+@use '@/styles/mixins' as *;
+
+// designs/gift-orders.dc.html (the Kind control in the toolbar).
+.group {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+
+  @include media-up(tablet) {
+    display: inline-flex;
+    width: auto;
+  }
+}
+
+// Two classes, so these beat Button's own one-class `bare` rules. Phones: the
+// options share the row and wrap their words rather than overflow it.
+.group .option {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 6px var(--space-2);
+  background: var(--color-white);
+  font-size: 13px;
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  text-align: center;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  & + .option {
+    border-left: 1px solid var(--color-gray-60);
+  }
+
+  // Inside the group's 1px border: the corners follow its 4px.
+  &:first-child {
+    border-radius: calc(var(--radius-sm) - 1px) 0 0 calc(var(--radius-sm) - 1px);
+  }
+
+  &:last-child {
+    border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0;
+  }
+
+  // The ring is drawn over the neighboring options, not under them.
+  &:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+
+  // The drawn 34px and 12px sides, one line each, from 900px (questions.md Q7).
+  @include media-up(tablet) {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 6px var(--space-3);
+    white-space: nowrap;
+  }
+}
+
+.group .pressed,
+.group .pressed:hover {
+  background: var(--color-dark-surface);
+  font-weight: var(--font-semibold);
+  color: var(--color-white);
+}

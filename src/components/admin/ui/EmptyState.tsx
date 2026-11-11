@@ -7,8 +7,8 @@ import styles from './EmptyState.module.scss'
 
 type EmptyStateProps = {
   title: string
-  /** One secondary line (optional). */
-  text?: string
+  /** One secondary line (optional); may carry a <strong> name of a control. */
+  text?: ReactNode
   /** A button under the text, e.g. "Clear" when filters hide everything. */
   action?: ReactNode
 }

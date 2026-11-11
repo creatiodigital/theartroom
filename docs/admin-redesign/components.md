@@ -294,3 +294,24 @@ like the real Pause switch). Logic and dialogs unchanged.
   (`null` = no icon circle).
 - `StatusPill`: `tone` also `'green' | 'amber' | 'info' | 'gray'`; `shape?: 'pill' | 'tag'` (4 px corners).
 - `EmptyState`: `action?: ReactNode`.
+
+## Gift order pieces (step 6)
+
+### `RowMenu`
+- **Built** · `ui/RowMenu.tsx` · `{ label; groups: { label?; items: { id; label; hint?; tone?: 'danger'; disabled?; onSelect }[] }[];
+  disabled?; width? = 190 }`. ⋮ trigger (36 px, 44 px under 900 px) with `aria-haspopup="menu"` / `aria-expanded`;
+  `role="menu"` of `menuitem` buttons (disabled items stay focusable, `aria-disabled`); arrows / Home / End,
+  Escape returns focus to the trigger, Tab closes; closes on outside click; fixed position that follows the
+  trigger on scroll / resize and opens upward when short of room below (Q6). Not portaled (row-scoped locators work).
+
+### `SegmentedControl`
+- **Built** · `ui/SegmentedControl.tsx` · `{ label; options: { id; label }[]; value; onChange }` (`role="group"` of
+  `aria-pressed` buttons; 34 px, 44 px under 900 px; full row on phones, words wrap).
+
+### `AdminCheckbox`
+- **Built** · `ui/AdminCheckbox.tsx` · `{ id; label; checked; onChange(checked) }` (native 16 px box; 44 px hit area on phones).
+
+### Additions
+- `CopyButton`: `icon?: Icon`; "Copied" only after the clipboard write succeeds.
+- `EmptyState`: `text` takes a `ReactNode`.
+- `Button`: `aria-disabled` pass-through.

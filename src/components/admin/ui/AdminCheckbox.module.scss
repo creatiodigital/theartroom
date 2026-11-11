@@ -1,0 +1,35 @@
+@use '@/styles/mixins' as *;
+
+// designs/gift-orders.dc.html ("Hide delivered" in the toolbar).
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  // 44px touch target below 900px; the line's own height above (questions.md Q7).
+  @include media-up(tablet) {
+    min-height: 34px;
+  }
+}
+
+.box {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-dark-surface);
+  cursor: pointer;
+
+  // globals.scss removes every outline; the admin's ring covers links and
+  // buttons only, so a checkbox brings its own (README, Accessibility).
+  &:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+}

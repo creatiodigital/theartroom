@@ -771,7 +771,7 @@ export async function markOffPlatformArtistPaid(
   if (order.artistCents <= 0) return { ok: false, error: 'This order carries no artist fee.' }
   if (order.artistPaidAt) return { ok: false, error: 'Already marked paid.' }
   if (order.fulfillmentStatus === STAGE_CANCELLED) {
-    return { ok: false, error: 'This order is cancelled — nothing to pay.' }
+    return { ok: false, error: 'This order is canceled — nothing to pay.' }
   }
 
   await prisma.offPlatformOrder.update({ where: { id }, data: { artistPaidAt: new Date() } })
@@ -795,7 +795,7 @@ export async function deleteCancelledOffPlatformOrder(
   })
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus !== STAGE_CANCELLED) {
-    return { ok: false, error: 'Only cancelled gift orders can be deleted — cancel it first.' }
+    return { ok: false, error: 'Only canceled gift orders can be deleted — cancel it first.' }
   }
 
   await prisma.offPlatformOrder.delete({ where: { id } })
@@ -827,7 +827,7 @@ export async function advanceOffPlatformOrder(
   })
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus === STAGE_CANCELLED) {
-    return { ok: false, error: 'This order is cancelled — no further actions.' }
+    return { ok: false, error: 'This order is canceled — no further actions.' }
   }
 
   const trackingUrl = (opts.trackingUrl ?? '').trim() || null
@@ -839,6 +839,36 @@ export async function advanceOffPlatformOrder(
       ...(newStage === STAGE_SHIPPED ? { shippedAt: new Date() } : {}),
     },
   })
+  return { ok: true }
+}
+
+/**
+ * Set, correct or clear the tracking link of a shipped or delivered
+ * off-platform order without touching its stage or `shippedAt` (Gift orders'
+ * "Edit tracking link", questions.md Q21 (a)). The link is read the same way
+ * the Shipped step reads it: trimmed, and an empty field stores no link.
+ */
+export async function updateOffPlatformTrackingUrl(
+  id: string,
+  url: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.offPlatformOrder.findUnique({
+    where: { id },
+    select: { id: true, fulfillmentStatus: true },
+  })
+  if (!order) return { ok: false, error: 'Off-platform order not found.' }
+  if (order.fulfillmentStatus === STAGE_CANCELLED) {
+    return { ok: false, error: 'This order is canceled — no further actions.' }
+  }
+  if (order.fulfillmentStatus !== STAGE_SHIPPED && order.fulfillmentStatus !== STAGE_COMPLETE) {
+    return { ok: false, error: 'Only a shipped or delivered parcel has a tracking link.' }
+  }
+
+  const trackingUrl = (url ?? '').trim() || null
+  await prisma.offPlatformOrder.update({ where: { id }, data: { trackingUrl } })
   return { ok: true }
 }
 
@@ -860,7 +890,7 @@ export async function cancelOffPlatformOrder(
   })
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus === STAGE_CANCELLED) {
-    return { ok: false, error: 'Already cancelled.' }
+    return { ok: false, error: 'Already canceled.' }
   }
 
   // Cancelling is always allowed — the row must be able to record that the gift

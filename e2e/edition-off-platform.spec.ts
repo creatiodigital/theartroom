@@ -106,17 +106,19 @@ test('gift order: create, buyers skip its number, stages advance, shipped cancel
     await page.fill('input[placeholder^="https"]', 'https://tracking.example/e2e')
     await page.getByRole('button', { name: 'Mark shipped' }).last().click()
     await expect(giftRow.getByText('Shipped')).toBeVisible()
-    await expect(giftRow.getByRole('link', { name: /tracking/ })).toBeVisible()
+    await expect(giftRow.getByRole('link', { name: /tracking/i })).toBeVisible()
 
     // ── Cancelling AFTER production keeps the number consumed ────────
     // The parcel reached 'Shipped', so a physical print numbered 1/N exists.
     // Cancelling must still record the cancellation, but must NOT return the
     // number to the pool — releasing it would let a buyer purchase the same
     // copy and put two prints into the world bearing the same number.
-    await giftRow.getByRole('button', { name: 'Cancel' }).click()
+    // Cancel moved into the row's ⋮ menu (sales.md §2).
+    await giftRow.getByRole('button', { name: `Actions for ${RECIPIENT}` }).click()
+    await giftRow.getByRole('menuitem', { name: 'Cancel gift order…' }).click()
     await expect(page.getByText(/stays consumed/i)).toBeVisible()
     await page.getByRole('button', { name: 'Yes, cancel it' }).click()
-    await expect(giftRow.getByText('Cancelled')).toBeVisible()
+    await expect(giftRow.getByText('Canceled')).toBeVisible()
 
     // Give the action time to land, then assert the number did NOT come back.
     await expect

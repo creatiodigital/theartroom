@@ -14,7 +14,7 @@ Do these in order, one PR each.
 | 3 | Orders list | orders (spec: orders.md §1) | Built | Sets the pattern for every list page. Closes Q1 (`?stage=`). Read counts/rows from the shell (Q2). |
 | 4 | Order detail | order-detail (spec: orders.md §2) | Built | Re-layout only: keep every action, guard and confirm as today. |
 | 5 | Edition sales | edition-sales (spec: sales.md §1) | Built | Adds summary cards + status filter (NEW, approved). |
-| 6 | Gift orders | gift-orders (spec: sales.md §2) | Designed · approved by owner | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
+| 6 | Gift orders | gift-orders (spec: sales.md §2) | Built | Adds kind filter, Hide delivered, row ⋮ menu (NEW, approved). |
 | 7 | Invoices | invoices (spec: invoices.md) | Designed · approved by owner | Adds totals cards, Order column, totals row (NEW, approved). Invoice detail page: still to design. |
 | 8 | Payouts | payouts (spec: payouts.md) | Designed · approved by owner | Adds export, waiting reminder, summary, filters, totals row (NEW, approved). |
 | 9 | Users | users (spec: users.md) | Designed · approved by owner | UI only + NEW type filter (approved). |
@@ -217,3 +217,29 @@ green / amber / info / gray tones and a `tag` shape; `EmptyState` gains `action`
 
 Verified: typecheck, lint, prettier; `edition-off-platform` e2e 1/1 (before and after Q16); browser (dev DB,
 1440 / 390, read-only): no console errors, no horizontal scroll, the Sold card sets `?status=sold`.
+
+### Step 6 · Gift orders — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
+
+Plan: `docs/superpowers/plans/2026-11-11-admin-gift-orders.md` + answers Q20–Q23. Files:
+`src/components/admin/gift-orders/*`, new `ui/RowMenu`, `ui/SegmentedControl`, `ui/AdminCheckbox`;
+`CopyButton` gains `icon` and shows "Copied" only once the clipboard write succeeds; `EmptyState.text`
+takes a node; `Button` passes `aria-disabled`; token `--admin-menu-shadow`.
+
+1. **Kept**: every state, effect and handler (checked line by line; the only move is the "Copied" state
+   into `CopyButton`), all five dialogs (now `AdminConfirmModal`), the next-step rules, Copy address text.
+2. **NEW, built**: Kind filter (`?kind=`), Hide delivered (on by default, remembered per browser, hides
+   delivered rows only), count, ⋮ row menu (Edit tracking link on Shipped / Delivered, Cancel gift
+   order…, Delete… on canceled rows), Edit tracking link dialog backed by the new server action
+   `updateOffPlatformTrackingUrl` (Q21 (a): admin guard, refuses canceled, Shipped / Delivered only,
+   empty clears; stage and dates untouched).
+3. **Q20**: "Paid {date}" / "Not paid" / "No fee", amount line, **Mark paid…** under "Not paid" (today's
+   dialog); note under "city, country"; the full address only through Copy address.
+4. **Q23**: "Canceled" everywhere, including four server messages that show in this page's dialogs
+   ("This order is canceled — …", "Already canceled.", "Only canceled gift orders can be deleted …").
+5. **RowMenu** follows its trigger on scroll / resize (fixed position, opens upward when short of room
+   below, per Q6), so a click that first scrolls the item into view still lands.
+6. e2e `edition-off-platform.spec`: Cancel through the ⋮ menu, "Canceled", `/tracking/i`.
+
+Verified: typecheck, lint, prettier; `edition-off-platform` e2e 1/1; browser (dev DB, 1440 / 390,
+read-only): no console errors, no horizontal scroll (the dev DB had no gift orders; the e2e run covers
+rows, menu and dialogs).

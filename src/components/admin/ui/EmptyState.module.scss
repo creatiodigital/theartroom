@@ -32,4 +32,9 @@
 .text {
   max-width: 420px;
   color: var(--color-text-secondary);
+
+  strong {
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+  }
 }

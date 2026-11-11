@@ -1,0 +1,343 @@
+@use '@/styles/mixins' as *;
+
+// /admin/gift-orders — docs/admin-redesign/sales.md §2, designs/gift-orders.dc.html.
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+// ── Toolbar ──
+// The whole row on phones (the count drops under it), what it needs above.
+.filters {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) 10px;
+
+  @include media-up(tablet) {
+    flex: 1 1 auto;
+    gap: 10px;
+  }
+}
+
+.loading {
+  margin: 0;
+  padding: var(--space-6) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+// Two classes beat DataTable's `th` rule (left-aligned).
+.table .alignRight {
+  text-align: right;
+}
+
+// ── Cells ──
+.cellDate {
+  white-space: nowrap;
+}
+
+.kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-black);
+  white-space: nowrap;
+
+  svg {
+    flex: 0 0 auto;
+  }
+}
+
+.copy + .copy {
+  margin-top: var(--space-2);
+}
+
+.title {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.sub {
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.number {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+}
+
+.recipient {
+  color: var(--color-black);
+}
+
+.copyAddress {
+  margin-top: 6px;
+}
+
+.cellStatus {
+  white-space: nowrap;
+}
+
+.tracking {
+  margin-top: 6px;
+}
+
+// 44px tall under 900px (a finger), the line's height above.
+.trackingLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-xs);
+  color: var(--color-text-primary);
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    min-height: 0;
+  }
+}
+
+.cellFee {
+  font-size: 13px;
+}
+
+.paid {
+  font-weight: var(--font-semibold);
+  color: var(--color-green-70);
+  white-space: nowrap;
+}
+
+.unpaid {
+  color: var(--color-text-primary);
+}
+
+.noFee {
+  color: var(--color-text-secondary);
+}
+
+// "Mark paid…" under "Not paid" (questions.md Q20): a text button, 44px under 900px.
+.page .markPaid {
+  align-items: center;
+  min-height: 44px;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    min-height: 28px;
+  }
+}
+
+.cellAction {
+  text-align: right;
+}
+
+// The drawn 12px, so the 36px buttons sit level with the row's text.
+.table .cellAction {
+  padding-top: var(--space-3);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+// The row's next step: dark, today's label. 36px, 44px under 900px (Q7).
+.page .next {
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-dark-surface);
+  border: 1px solid var(--color-dark-surface);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-white);
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--color-gray-80);
+    border-color: var(--color-gray-80);
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+// Canceled rows: secondary text rather than today's 55% opacity, which also
+// faded the buttons and the pill below readable contrast.
+.canceled {
+  color: var(--color-text-secondary);
+
+  .kind,
+  .title,
+  .recipient,
+  .unpaid {
+    color: var(--color-text-secondary);
+  }
+}
+
+// ── Desktop: a real table that scrolls sideways when the panel is narrow ──
+@include media-up(tablet) {
+  .table {
+    min-width: 980px;
+  }
+}
+
+// ── Phone: each row becomes a card (same <tr>, so one copy in the DOM) ──
+// kind + date / copy / recipient + Copy address / status + fee / next step + ⋮.
+@media (max-width: #{bp(tablet) - 0.02px}) {
+  .table {
+    display: block;
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    tbody {
+      display: block;
+    }
+
+    // Under .row too, so these outrank the desktop `.table .cellAction` padding.
+    .row td,
+    .row td:first-child,
+    .row td:last-child {
+      padding: 0;
+      border-top: 0;
+    }
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'kind date'
+      'copy copy'
+      'recipient recipient'
+      'status fee'
+      'action action';
+    column-gap: var(--space-3);
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-gray-20);
+
+    &:first-child {
+      border-top: 0;
+    }
+  }
+
+  .cellKind {
+    grid-area: kind;
+    align-self: center;
+  }
+
+  .cellDate {
+    grid-area: date;
+    align-self: center;
+    justify-self: end;
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .cellCopy {
+    grid-area: copy;
+    margin-top: var(--space-3);
+  }
+
+  .cellRecipient {
+    grid-area: recipient;
+    margin-top: var(--space-3);
+  }
+
+  .cellStatus {
+    grid-area: status;
+    margin-top: var(--space-3);
+  }
+
+  .cellFee {
+    grid-area: fee;
+    margin-top: var(--space-3);
+    justify-self: end;
+    text-align: right;
+  }
+
+  .cellAction {
+    grid-area: action;
+    margin-top: var(--space-3);
+  }
+
+  .page .next {
+    flex: 1 1 auto;
+  }
+}
+
+// ── The tracking-link field (Mark shipped, Edit tracking link) ──
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+
+  &:focus {
+    border-color: var(--color-dark-surface);
+    outline: none;
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
