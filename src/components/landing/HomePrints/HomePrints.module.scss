@@ -5,7 +5,13 @@
 .section {
   width: 100vw;
   margin-left: calc(50% - 50vw);
+  // The same space below as the white sections leave, so the next heading's hairline sits as theirs.
+  margin-bottom: 130px;
   background: var(--public-render-wall);
+
+  @include media-down(md) {
+    margin-bottom: 72px;
+  }
 }
 
 .inner {

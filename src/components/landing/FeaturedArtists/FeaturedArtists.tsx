@@ -30,7 +30,12 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
     <section className={styles.section}>
       {/* Owner, 2026-11-12: "Featured artists" (home.md §6 drew "Artists"); sentence case, as the
           page's other headings. */}
-      <HomeSectionHead title="Featured artists" link={{ href: '/artists', label: 'All artists' }} />
+      {/* The hairline above, as Current exhibitions and Announcements (owner, 2026-11-12). */}
+      <HomeSectionHead
+        title="Featured artists"
+        rule
+        link={{ href: '/artists', label: 'All artists' }}
+      />
 
       <ul className={styles.grid}>
         {artists.map((artist) => (

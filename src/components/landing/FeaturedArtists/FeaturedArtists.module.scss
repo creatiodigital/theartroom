@@ -1,11 +1,13 @@
 @use '@/styles/mixins' as *;
 
 // docs/public-redesign/home.md §6; designs/home-desktop.dc.html / home-phone.dc.html.
+// No space above: the heading's hairline sits where the section before ends (its own 130 / 72 px
+// below), as Current exhibitions and Announcements do.
 .section {
-  padding: 120px 0;
+  padding: 0 0 120px;
 
   @include media-down(md) {
-    padding: 64px 0 56px;
+    padding: 0 0 56px;
   }
 }
 
