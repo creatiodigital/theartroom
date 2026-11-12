@@ -993,6 +993,10 @@ rule?
 
 ## Answered
 
+**Owner answers, 2026-11-12 (Q147, relayed to Code Claude):**
+- **Q147:** yes, remove `plus` and `printer` from the icon map and delete `src/icons/zoom-reset.svg` (grep first), in
+  their own small commit. From now on, unused icon keys and orphan SVGs go in their own small commit without asking.
+
 **Owner answers, 2026-11-12 (step 18b, and Q139 a, relayed to Code Claude):**
 - **Q141:** yes, remove the floating zoom label from `CenterPanel` (display only).
 - **Q142:** yes, the wall view's Unsaved dot + `beforeunload` as its own small step right after 18b, like Q131.
