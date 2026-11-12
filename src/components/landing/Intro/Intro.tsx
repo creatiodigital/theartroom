@@ -11,7 +11,8 @@ const POINTS = [
 export const Intro = () => (
   <section className={styles.intro}>
     <div className={styles.text}>
-      <h2 className={styles.heading}>Step inside the work.</h2>
+      {/* Owner, 2026-11-12: today's tagline, in place of home.md's "Step inside the work." */}
+      <h2 className={styles.heading}>Art beyond immediacy</h2>
       <p className={styles.lead}>
         The Art Room is an online gallery for contemporary art. Each exhibition is carefully
         curated, and can also be visited as a room you walk through, at your own pace.
