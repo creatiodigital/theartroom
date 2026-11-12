@@ -118,6 +118,13 @@ export async function visitRoom(page: Page, show: Show): Promise<Visit> {
   const failure = new Map<Request, string>()
   let lastFileAt = Date.now()
 
+  // `<Analytics />` and `<SpeedInsights />` (app/layout.tsx) load their scripts from /_vercel/,
+  // which only Vercel serves: a local `next start` answers 404, read here as console errors and a
+  // file that never arrived. Not the room's; answered with an empty script (and nothing is sent
+  // to Vercel). Dev builds never load them.
+  await page.route('**/_vercel/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/javascript', body: '' }),
+  )
   page.on('pageerror', (error) => pageErrors.push(error.stack ?? error.message))
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text())

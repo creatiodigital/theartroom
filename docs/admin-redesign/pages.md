@@ -1175,3 +1175,6 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
 - **Q69 · admin bottom padding (2026-11-12):** the shell's bottom padding is the design's 56 px (40 px on phones)
   instead of 200 px; the page editor keeps its last panel clear of the fixed save bar on its own. Look: any admin
   page's end.
+- **3D suite, production build locally (2026-11-12):** `e2e-3d/helpers.ts` answers `/_vercel/**` (the analytics
+  scripts only Vercel serves) with an empty script, so their 404s no longer fail "no console errors" / "every file
+  arrives". Verified at the final full run.
