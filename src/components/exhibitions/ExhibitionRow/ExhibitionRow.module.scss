@@ -3,7 +3,8 @@
 // docs/public-redesign/exhibitions.md, designs/exhibitions-desktop.dc.html / -phone.dc.html.
 .row {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  // The photo at half the content's width (owner, 2026-11-12; it was 340 px), the text beside it.
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-10);
   align-items: center;
   padding: 28px 0;

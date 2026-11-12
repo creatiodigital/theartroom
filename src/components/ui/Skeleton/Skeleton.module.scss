@@ -28,10 +28,10 @@
   padding-bottom: var(--space-16);
 }
 
-// ExhibitionRow's shape: a 340 × 227 image, the text beside it.
+// ExhibitionRow's shape: a 3:2 image at half the width, the text beside it.
 .row {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-10);
   padding: 28px 0;
   border-top: 1px solid var(--color-gray-30);

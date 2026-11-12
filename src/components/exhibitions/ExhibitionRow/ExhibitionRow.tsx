@@ -20,7 +20,7 @@ export type ExhibitionRowData = {
 
 /**
  * One exhibition in a list (docs/public-redesign/components.md "ExhibitionRow", exhibitions.md): a
- * 340px 3:2 image, the artist in small caps (left out on the artist's own page), the title, the
+ * 3:2 image at half the width, the artist in small caps (left out on the artist's own page), the title, the
  * description clamped to 3 lines (2 on phones), and the two links. The image and the title open
  * the exhibition page; the image's link is a mouse shortcut, skipped by keyboard and screen readers.
  */
@@ -45,7 +45,7 @@ export const ExhibitionRow = ({
             // Skip the Vercel optimizer: source is already-optimized .webp on an
             // immutable R2/CDN; cold re-encodes broke images on first load (AR-125).
             unoptimized
-            sizes="(max-width: 768px) 100vw, 340px"
+            sizes="(max-width: 768px) 100vw, 50vw"
             className={styles.image}
             priority={priority}
           />
