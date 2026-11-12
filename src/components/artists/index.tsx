@@ -12,21 +12,22 @@ type Artist = {
   handler: string
   biography: string | null
   profileImageUrl: string | null
-  exhibitions: { mainTitle: string }[]
 }
 
 interface ArtistsPageProps {
   artists: Artist[]
 }
 
-/** /artists (docs/public-redesign/artists.md): one compact row per artist. */
+/**
+ * /artists (docs/public-redesign/artists.md): one compact row per artist. No exhibition titles in
+ * the rows (owner, 2026-11-12): portrait, name, bio, View artist.
+ */
 export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
   const rows = artists.map((artist) => ({
     href: `/artists/${artist.handler}`,
     name: `${artist.name} ${artist.lastName}`.trim(),
     imageUrl: artist.profileImageUrl,
     biography: artist.biography,
-    exhibitions: artist.exhibitions.map((e) => e.mainTitle),
   }))
 
   return (
