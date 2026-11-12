@@ -14,6 +14,8 @@ type ContentPage = {
   hint: string
   href: string
   icon: Icon
+  /** Listed for super admins only: the page and its API are theirs alone (Q66). */
+  superAdminOnly?: boolean
 }
 
 type ContentGroup = {
@@ -22,9 +24,9 @@ type ContentGroup = {
 }
 
 /**
- * Every page listed for every admin, as before (Q66). Routes unchanged. The
- * Gallery selection line differs from the design's (Q67): the selection is
- * the whole of /prints.
+ * Routes unchanged. Gallery selection is listed for super admins only (Q66),
+ * as its page lets only them in. Its line differs from the design's (Q67):
+ * the selection is the whole of /prints.
  */
 const CONTENT_GROUPS: ContentGroup[] = [
   {
@@ -47,6 +49,7 @@ const CONTENT_GROUPS: ContentGroup[] = [
         hint: 'The works on the Prints page',
         href: '/admin/content/gallery-selection',
         icon: ImageSquare,
+        superAdminOnly: true,
       },
     ],
   },
@@ -93,8 +96,13 @@ const CONTENT_GROUPS: ContentGroup[] = [
   },
 ]
 
+type ContentListProps = {
+  /** The session's `userType === 'superAdmin'`, the gallery-selection page's own check. */
+  isSuperAdmin: boolean
+}
+
 /** The public site's pages and texts, as three panels of whole-row links. */
-export const ContentList = () => (
+export const ContentList = ({ isSuperAdmin }: ContentListProps) => (
   <div className={styles.page}>
     <AdminPageHeader
       eyebrow="Gallery"
@@ -106,23 +114,25 @@ export const ContentList = () => (
       {CONTENT_GROUPS.map((group) => (
         <Panel key={group.title} title={group.title} flush>
           <ul className={styles.list}>
-            {group.pages.map(({ name, hint, href, icon: PageIcon }) => (
-              <li key={href} className={styles.item}>
-                <Link href={href} className={styles.row}>
-                  <span className={styles.tile}>
-                    <PageIcon size={18} weight="light" aria-hidden />
-                  </span>
-                  <span className={styles.text}>
-                    <span className={styles.name}>{name}</span>
-                    <span className={styles.hint}>{hint}</span>
-                  </span>
-                  <span className={styles.edit}>
-                    Edit
-                    <CaretRight size={14} weight="light" aria-hidden />
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {group.pages
+              .filter((contentPage) => isSuperAdmin || !contentPage.superAdminOnly)
+              .map(({ name, hint, href, icon: PageIcon }) => (
+                <li key={href} className={styles.item}>
+                  <Link href={href} className={styles.row}>
+                    <span className={styles.tile}>
+                      <PageIcon size={18} weight="light" aria-hidden />
+                    </span>
+                    <span className={styles.text}>
+                      <span className={styles.name}>{name}</span>
+                      <span className={styles.hint}>{hint}</span>
+                    </span>
+                    <span className={styles.edit}>
+                      Edit
+                      <CaretRight size={14} weight="light" aria-hidden />
+                    </span>
+                  </Link>
+                </li>
+              ))}
           </ul>
         </Panel>
       ))}

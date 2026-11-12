@@ -468,6 +468,8 @@ it; still `'use client'`), `ui/Panel` (`flush`); `admin/dashboard/ContentManagem
 3. **Phone**: one column; panels side by side from 900 px.
 4. Sub-page breadcrumbs come with 12b / 12c. With this step no admin page has a downward kebab left (Q69: the
    shell's 200 px bottom padding can go, as its own commit).
+5. **After Q66 (b), 2026-11-11 (own commit):** the Gallery selection row is listed for super admins only (the page and
+   its API let only them in); plain admins see eight rows. The guard passes the session's `userType`.
 
 Verified: typecheck, lint, prettier; the guard diffed against HEAD; the nine hrefs identical to today's; browser
 on my own `pnpm dev` (dev DB, read-only) at 1440 and 390 px: nine rows, a row opens its page, no console

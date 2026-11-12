@@ -39,5 +39,5 @@ export const AdminContent = () => {
     return <div className={styles.page}>Not authorized</div>
   }
 
-  return <ContentList />
+  return <ContentList isSuperAdmin={userType === 'superAdmin'} />
 }

@@ -793,6 +793,8 @@ _Meanwhile:_ all as today.
 - **Q80:** the 2xx gate is OK; add a red `FeedbackBar` "The page could not be saved. Please try again." on a refused save.
 - **Q81:** add `beforeunload` now (unsaved changes); the in-app link guard later.
 - **Q82:** fix the failed load NOW: a non-2xx load shows "The page could not be loaded." and no editor. The Remove confirm and `link: false` (the duplicate Link extension) in the next pass.
+> **Code Claude, 2026-11-12: done** (each its own commit):
+> - **Q66 (b):** the Content list shows Gallery selection to super admins only.
 
 <!-- move items here with the answer -->
 
