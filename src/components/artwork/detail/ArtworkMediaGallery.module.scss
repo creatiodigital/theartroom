@@ -9,13 +9,16 @@
 // the deliberate exception.
 .gallery {
   position: relative;
-  margin-top: var(--space-10);
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--color-gray-30);
   // The gallery is the last thing on the page, so it needs clearance from the
   // footer's rule — otherwise a full-bleed image runs straight into it.
   margin-bottom: var(--space-18);
 
   @include media-down(lg) {
-    margin-top: var(--space-4);
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
     margin-bottom: var(--space-10);
   }
   padding: 0;
@@ -223,4 +226,16 @@
   .slide {
     transition: none;
   }
+}
+
+// The TextSection label's look (small grey caps), over the gallery.
+.label {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  font-weight: var(--font-regular);
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
 }

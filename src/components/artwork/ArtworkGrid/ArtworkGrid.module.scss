@@ -22,6 +22,20 @@
   &.flushBottom {
     margin-bottom: 0;
   }
+
+  // `columns={4}` (artwork.md "More by the artist"): four across, 32 px apart; two below 1024 px.
+  &.four {
+    @include breakpoint(lg) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 32px;
+    }
+
+    @include media-down(lg) {
+      > :nth-child(n + 3) {
+        display: none;
+      }
+    }
+  }
 }
 
 .card {

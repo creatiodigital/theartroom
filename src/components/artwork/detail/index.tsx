@@ -3,9 +3,10 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
-import { ArtworkMediaGallery } from './ArtworkMediaGallery'
+import type { PublicArtistArtwork } from '@/lib/queries/getPublicArtistByHandler'
+
+import { ArtworkBelowTheWork } from './ArtworkBelowTheWork'
 import { ArtworkTechnique } from './ArtworkRichText'
-import { ArtworkStorySection } from './ArtworkStorySection'
 
 import {
   ArtworkDetailBody,
@@ -27,6 +28,8 @@ interface ArtworkDetailPageProps {
   neighbours?: ArtworkNeighbours | null
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation?: PresentationView | null
+  /** Other works from the artist's page, for "More by the artist". */
+  more?: PublicArtistArtwork[]
 }
 
 export const ArtworkDetailPage = ({
@@ -36,11 +39,11 @@ export const ArtworkDetailPage = ({
   media = [],
   neighbours,
   presentation,
+  more = [],
 }: ArtworkDetailPageProps) => {
   return (
     <PageLayout>
-      {/* The two-column zone. Everything below it is full width, so it lives
-          outside this grid rather than as another cell in it. */}
+      {/* The two columns, then what follows them (artwork.md "Below the work"). */}
       <div className={styles.standaloneContent}>
         <ArtworkDetailBody
           artwork={artwork}
@@ -50,11 +53,13 @@ export const ArtworkDetailPage = ({
           presentation={presentation}
           technique={artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null}
         />
+        <ArtworkBelowTheWork
+          description={artwork.description}
+          media={media}
+          more={more}
+          artist={artist}
+        />
       </div>
-
-      <ArtworkStorySection description={artwork.description} />
-
-      <ArtworkMediaGallery media={media} />
     </PageLayout>
   )
 }

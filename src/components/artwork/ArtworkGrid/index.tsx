@@ -83,6 +83,8 @@ interface ArtworkGridProps {
    * grid keeps its bottom margin, which holds it off the footer where it ends the page.
    */
   flushBottom?: boolean
+  /** 4: four across from 1024 px and two (only the first two) below — "More by the artist". */
+  columns?: 3 | 4
 }
 
 // Fallback ratio for legacy artworks uploaded before EXIF capture.
@@ -98,6 +100,7 @@ export const ArtworkGrid = ({
   fromPrints,
   artistHandler,
   flushBottom,
+  columns = 3,
   showArtist = false,
   showEdition = false,
 }: ArtworkGridProps) => {
@@ -118,7 +121,11 @@ export const ArtworkGrid = ({
         : ''
 
   return (
-    <div className={flushBottom ? `${styles.grid} ${styles.flushBottom}` : styles.grid}>
+    <div
+      className={[styles.grid, flushBottom && styles.flushBottom, columns === 4 && styles.four]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {artworks.map((artwork) => {
         const w = artwork.originalWidth ?? FALLBACK_WIDTH
         const h = artwork.originalHeight ?? FALLBACK_HEIGHT

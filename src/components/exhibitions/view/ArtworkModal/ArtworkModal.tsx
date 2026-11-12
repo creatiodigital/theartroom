@@ -10,10 +10,10 @@ import {
   type Artist,
   type ArtworkCommerce,
 } from '@/components/artwork/detail/ArtworkDetailBody'
-import { ArtworkMediaGallery } from '@/components/artwork/detail/ArtworkMediaGallery'
+import { ArtworkBelowTheWork } from '@/components/artwork/detail/ArtworkBelowTheWork'
 import { ArtworkTechnique } from '@/components/artwork/detail/ArtworkRichText'
-import { ArtworkStorySection } from '@/components/artwork/detail/ArtworkStorySection'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
+import type { PublicArtistArtwork } from '@/lib/queries/getPublicArtistByHandler'
 import { Button } from '@/components/ui/Button'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
@@ -29,6 +29,8 @@ type FetchedDetail = {
    *  shows the same availability card rather than a reduced twin. */
   commerce: ArtworkCommerce | null
   media: ArtworkMediaItem[]
+  /** Other works from the artist's page ("More by the artist"). */
+  more?: PublicArtistArtwork[]
 }
 
 interface ArtworkModalProps {
@@ -125,9 +127,12 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
           />
         </div>
 
-        <ArtworkStorySection description={artwork.description} />
-
-        <ArtworkMediaGallery media={fetched?.media ?? []} />
+        <ArtworkBelowTheWork
+          description={artwork.description}
+          media={fetched?.media ?? []}
+          more={fetched?.more ?? []}
+          artist={artist}
+        />
       </div>
     </div>
   )

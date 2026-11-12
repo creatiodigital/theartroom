@@ -185,8 +185,10 @@ a.artist:hover {
   color: var(--color-text-secondary);
 }
 
-// The technique's lines (camera, lens, ISO…), as entered, 8 px under the size.
-.identity .technique {
+// The technique's lines (camera, lens, ISO…), as entered, 8 px under the size. Through .info
+// .identity: outranks RichText's own compact rules whatever the stylesheet order (the room
+// overlay loads them in another order than the page).
+.info .identity .technique {
   margin-top: 4px;
   font-size: 13px;
   line-height: 1.6;
