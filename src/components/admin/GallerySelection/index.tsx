@@ -5,8 +5,11 @@ import Link from 'next/link'
 import { ArrowSquareOut, Plus } from '@phosphor-icons/react'
 
 import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
 import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
 import { ListPanel } from '@/components/admin/ui/ListPanel'
 import { SORTABLE_KEYBOARD_HINT } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
@@ -18,15 +21,31 @@ import styles from './GallerySelection.module.scss'
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
+const workTitle = (row: AdminSelectionRow) => row.artwork.title || row.artwork.name
+
 export const GallerySelection = () => {
   const [rows, setRows] = useState<AdminSelectionRow[]>([])
   const [loading, setLoading] = useState(true)
   const [pickerOpen, setPickerOpen] = useState(false)
+  // questions.md Q74: failures are said on screen (they were console only): a failed load in red
+  // with no list (a refused one read as "Nothing selected yet", a thrown one left the page blank),
+  // a refused reorder or remove in a red bar. Remove asks first.
+  const [loadError, setLoadError] = useState(false)
+  const [actionError, setActionError] = useState('')
+  const [removeTarget, setRemoveTarget] = useState<AdminSelectionRow | null>(null)
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/selected-prints')
-    setRows(res.ok ? await res.json() : [])
-    setLoading(false)
+    try {
+      const res = await fetch('/api/selected-prints')
+      if (!res.ok) throw new Error(`Selection: ${res.status}`)
+      setRows(await res.json())
+      setLoadError(false)
+    } catch (error) {
+      console.error('Error loading the selection:', error)
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -43,7 +62,10 @@ export const GallerySelection = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids }),
       })
-      if (!res.ok) console.error('Reorder failed:', res.status)
+      if (!res.ok) {
+        console.error('Reorder failed:', res.status)
+        setActionError("Couldn't save the new order. Please try again.")
+      }
     } catch (error) {
       // A rejected fetch (offline, dropped connection) throws before the line
       // below ever runs — without this catch, the optimistic order would be
@@ -51,21 +73,28 @@ export const GallerySelection = () => {
       // screen's whole job is to never lie about what's saved, so `load()`
       // in `finally` always has the last word, success or failure.
       console.error('Error reordering selection:', error)
+      setActionError("Couldn't save the new order. Please try again.")
     } finally {
       void load()
     }
   }
 
-  const handleRemove = async (selectionId: string) => {
+  const handleRemove = async (row: AdminSelectionRow) => {
+    const failed = `Couldn't remove ${workTitle(row)}. Please try again.`
+    setRemoveTarget(null)
     try {
-      const res = await fetch(`/api/selected-prints/${selectionId}`, { method: 'DELETE' })
-      if (!res.ok) console.error('Remove failed:', res.status)
+      const res = await fetch(`/api/selected-prints/${row.selectionId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        console.error('Remove failed:', res.status)
+        setActionError(failed)
+      }
     } catch (error) {
       // Same reasoning as handleReorder: a dropped response (the DELETE may
       // have landed server-side even though the client never heard back)
       // must not leave a removed row looking like it's still selected, or
       // vice versa. Reconcile unconditionally.
       console.error('Error removing selection:', error)
+      setActionError(failed)
     } finally {
       void load()
     }
@@ -130,20 +159,35 @@ export const GallerySelection = () => {
               <ArrowSquareOut size={16} weight="light" aria-hidden />
               <span className="sr-only">(opens in a new tab)</span>
             </Link>
-            <Button
-              variant="bare"
-              font="dashboard"
-              className={styles.add}
-              onClick={() => setPickerOpen(true)}
-            >
-              <Plus size={16} weight="light" aria-hidden />
-              Add artworks
-            </Button>
+            {/* The picker leaves out what is already selected: not without the list (Q74). */}
+            {!loadError && (
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.add}
+                onClick={() => setPickerOpen(true)}
+              >
+                <Plus size={16} weight="light" aria-hidden />
+                Add artworks
+              </Button>
+            )}
           </>
         }
       />
 
-      {loading ? null : rows.length === 0 ? (
+      {/* No ×: a dismissed load error would leave an empty page (as Q75). */}
+      {loadError && (
+        <Callout tone="red" role="alert">
+          The selection could not be loaded.
+        </Callout>
+      )}
+      {actionError && (
+        <FeedbackBar tone="error" onDismiss={() => setActionError('')}>
+          {actionError}
+        </FeedbackBar>
+      )}
+
+      {loading || loadError ? null : rows.length === 0 ? (
         <ListPanel label="Works">
           <EmptyState
             title="Nothing selected yet."
@@ -156,7 +200,13 @@ export const GallerySelection = () => {
           count={plural(rows.length, 'work', 'works')}
           footnote={SORTABLE_KEYBOARD_HINT}
         >
-          <SelectionList rows={rows} onReorder={handleReorder} onRemove={handleRemove} />
+          <SelectionList
+            rows={rows}
+            onReorder={handleReorder}
+            onRemove={(selectionId) =>
+              setRemoveTarget(rows.find((r) => r.selectionId === selectionId) ?? null)
+            }
+          />
         </ListPanel>
       )}
 
@@ -165,6 +215,17 @@ export const GallerySelection = () => {
           excludeIds={excludeIds}
           onClose={() => setPickerOpen(false)}
           onAdded={load}
+        />
+      )}
+
+      {removeTarget && (
+        <AdminConfirmModal
+          title="Remove from the selection?"
+          message={`${workTitle(removeTarget)} will no longer be on the Prints page.`}
+          confirmLabel="Remove"
+          destructive
+          onConfirm={() => handleRemove(removeTarget)}
+          onCancel={() => setRemoveTarget(null)}
         />
       )}
     </div>

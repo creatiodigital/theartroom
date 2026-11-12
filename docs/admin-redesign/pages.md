@@ -1152,3 +1152,6 @@ the only literal `eyeOff`); file restored.
 
 The wheel over the toolbar scrolls it (no longer walks the room); every Save panel shows "Saved" for 3 s, then "Save"
 (Q158); opening a work's panel closes a tool panel and vice versa; (f) and (g) were already fixed, checked (Q159).
+- **Q74 · Landing slideshow + Gallery selection, failures said (2026-11-12):** failed loads in red with no list, refused
+  Save in its dialog, refused delete / reorder / remove / Add said, Remove asks first, an upload no longer publishes an
+  unsaved slide (Q160). Look: the refused Add line (not seen in the browser: the picker's list uses server actions).

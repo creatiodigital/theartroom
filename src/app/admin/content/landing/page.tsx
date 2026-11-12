@@ -11,7 +11,9 @@ import { ArrowSquareOut, PencilSimple, Plus, Trash } from '@phosphor-icons/react
 import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
 import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
 import { ListPanel } from '@/components/admin/ui/ListPanel'
 import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
@@ -70,6 +72,11 @@ export default function LandingContentPage() {
   const [uploading, setUploading] = useState<SlideImageVariant | null>(null)
   const [uploadErrors, setUploadErrors] = useState<Partial<Record<SlideImageVariant, string>>>({})
   const [deleteTarget, setDeleteTarget] = useState<Slide | null>(null)
+  // questions.md Q74: a failed list load, a refused Save (in its dialog, as the save bar says it) and
+  // a refused delete or reorder (a red bar) are said on screen; they used to be console only.
+  const [loadError, setLoadError] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   // Redirect non-admins
   useEffect(() => {
@@ -86,10 +93,15 @@ export default function LandingContentPage() {
   const fetchSlides = useCallback(async () => {
     try {
       const response = await fetch('/api/slides')
-      const data = await response.json()
+      const data = await response.json().catch(() => null)
+      // Q74: a refused or malformed reply is no list of slides (it used to become one, and the
+      // page crashed on `slides.map`).
+      if (!response.ok || !Array.isArray(data)) throw new Error(`Slides: ${response.status}`)
       setSlides(data)
+      setLoadError(false)
     } catch (error) {
       console.error('Error fetching slides:', error)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -116,12 +128,14 @@ export default function LandingContentPage() {
     })
     setIsNewSlide(true)
     setUploadErrors({})
+    setSaveFailed(false)
   }
 
   const handleEditSlide = (slide: Slide) => {
     setEditingSlide(slide)
     setIsNewSlide(false)
     setUploadErrors({})
+    setSaveFailed(false)
   }
 
   const setUploadError = (variant: SlideImageVariant, message: string | null) =>
@@ -164,10 +178,12 @@ export default function LandingContentPage() {
         setSaving(true)
         setUploadError(variant, null)
         try {
+          // Q74: created hidden, so an image alone never puts an unsaved slide on the homepage;
+          // Save shows it (below). Closed without Save, it stays in the list, marked, off the homepage.
           const response = await fetch('/api/slides', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(editingSlide),
+            body: JSON.stringify({ ...editingSlide, isActive: false }),
           })
           const savedSlide = await response.json()
           if (!response.ok) {
@@ -222,20 +238,29 @@ export default function LandingContentPage() {
     if (!editingSlide) return
 
     setSaving(true)
+    setSaveFailed(false)
     try {
       const url = isNewSlide ? '/api/slides' : `/api/slides/${editingSlide.id}`
       const method = isNewSlide ? 'POST' : 'PUT'
 
-      await fetch(url, {
+      // Q74: Save is what puts a slide on the homepage, one first created by an image upload
+      // (hidden until now) included. This screen has no way to hide a slide.
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingSlide),
+        body: JSON.stringify({ ...editingSlide, isActive: true }),
       })
+      // Q74: a refused save keeps the dialog open and says so (it used to close as if saved).
+      if (!response.ok) {
+        setSaveFailed(true)
+        return
+      }
 
       await fetchSlides()
       setEditingSlide(null)
     } catch (error) {
       console.error('Error saving slide:', error)
+      setSaveFailed(true)
     } finally {
       setSaving(false)
     }
@@ -243,19 +268,24 @@ export default function LandingContentPage() {
 
   const handleDeleteSlide = async () => {
     if (!deleteTarget) return
+    const target = deleteTarget
 
     try {
-      await fetch(`/api/slides/${deleteTarget.id}`, { method: 'DELETE' })
-      await fetchSlides()
-      setDeleteTarget(null)
+      const response = await fetch(`/api/slides/${target.id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error(`Delete: ${response.status}`)
     } catch (error) {
+      // Q74: said on screen, not only in the console.
       console.error('Error deleting slide:', error)
+      setActionError(`Couldn't delete ${slideTitle(target)}. Please try again.`)
     }
+    setDeleteTarget(null)
+    await fetchSlides()
   }
 
   const updateField = (field: keyof Slide, value: string | number | boolean) => {
     if (!editingSlide) return
     setEditingSlide({ ...editingSlide, [field]: value })
+    setSaveFailed(false)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -269,18 +299,21 @@ export default function LandingContentPage() {
 
       // Persist new order to the API
       try {
-        await fetch('/api/slides/reorder', {
+        const response = await fetch('/api/slides/reorder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             slideIds: newSlides.map((s) => s.id),
           }),
         })
+        if (!response.ok) throw new Error(`Reorder: ${response.status}`)
       } catch (error) {
         console.error('Error reordering slides:', error)
-        // Refetch to restore server state on error
-        fetchSlides()
+        setActionError("Couldn't save the new order. Please try again.")
       }
+      // Q74: the server's order either way. On a refusal it puts the list back; on success each
+      // slide gets its new `order` (it kept the old one, and an edit saved after a drag undid it).
+      fetchSlides()
     }
   }
 
@@ -321,15 +354,35 @@ export default function LandingContentPage() {
               <ArrowSquareOut size={16} weight="light" aria-hidden />
               <span className="sr-only">(opens in a new tab)</span>
             </Link>
-            <Button variant="bare" font="dashboard" className={styles.add} onClick={handleAddSlide}>
-              <Plus size={16} weight="light" aria-hidden />
-              Add slide
-            </Button>
+            {/* Add numbers the new slide after the last: not without the list (Q74). */}
+            {!loadError && (
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.add}
+                onClick={handleAddSlide}
+              >
+                <Plus size={16} weight="light" aria-hidden />
+                Add slide
+              </Button>
+            )}
           </>
         }
       />
 
-      {slides.length === 0 ? (
+      {/* No ×: a dismissed load error would leave an empty page (as Q75). */}
+      {loadError && (
+        <Callout tone="red" role="alert">
+          The slides could not be loaded.
+        </Callout>
+      )}
+      {actionError && (
+        <FeedbackBar tone="error" onDismiss={() => setActionError('')}>
+          {actionError}
+        </FeedbackBar>
+      )}
+
+      {loadError ? null : slides.length === 0 ? (
         <ListPanel label="Slides">
           <EmptyState
             title="No slides yet."
@@ -354,7 +407,12 @@ export default function LandingContentPage() {
                 id: slide.id,
                 title,
                 sub:
-                  [slide.subtitle, slide.meta]
+                  // A slide created by an image upload and never saved is off the homepage (Q74).
+                  [
+                    slide.isActive ? '' : 'Not on the homepage until saved',
+                    slide.subtitle,
+                    slide.meta,
+                  ]
                     .map((part) => part.trim())
                     .filter(Boolean)
                     .join(' · ') || undefined,
@@ -497,6 +555,11 @@ export default function LandingContentPage() {
             </div>
 
             <div className={styles.slideModalActions}>
+              {saveFailed && (
+                <p role="alert" className={styles.saveFailed}>
+                  Not saved. Please try again.
+                </p>
+              )}
               <Button
                 font="dashboard"
                 variant="secondary"

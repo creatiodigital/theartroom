@@ -69,6 +69,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
   const [loadingWorks, setLoadingWorks] = useState(false)
   const [ticked, setTicked] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
+  const [addError, setAddError] = useState('')
 
   useEffect(() => {
     void getPrintArtistOptions().then(setArtists)
@@ -147,20 +148,31 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
 
   const handleAdd = async () => {
     setSaving(true)
-    const res = await fetch('/api/selected-prints', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ artworkIds: [...ticked] }),
-    })
-    setSaving(false)
-    if (res.ok) {
-      onAdded()
-      onClose()
-    } else {
-      // Stays open on failure — most likely a work sold out or was selected
-      // elsewhere while this modal sat open — so the curator can drop it and
-      // retry rather than lose the rest of an otherwise-good batch.
-      console.error('Add artworks failed:', res.status)
+    setAddError('')
+    try {
+      const res = await fetch('/api/selected-prints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artworkIds: [...ticked] }),
+      })
+      if (res.ok) {
+        onAdded()
+        onClose()
+      } else {
+        // Stays open on failure — most likely a work sold out or was selected
+        // elsewhere while this modal sat open — so the curator can drop it and
+        // retry rather than lose the rest of an otherwise-good batch. Said in
+        // the footer (questions.md Q74), with the server's reason when it gives one.
+        console.error('Add artworks failed:', res.status)
+        const data = await res.json().catch(() => null)
+        setAddError(data?.error || "Couldn't add these works. Please try again.")
+      }
+    } catch (error) {
+      // A thrown request left "Adding…" on for good.
+      console.error('Error adding artworks:', error)
+      setAddError("Couldn't add these works. Please try again.")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -356,6 +368,11 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
               />
             )}
           </div>
+          {addError && (
+            <p role="alert" className={styles.pickerError}>
+              {addError}
+            </p>
+          )}
           <ButtonGroup align="right">
             <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} />
             <Button

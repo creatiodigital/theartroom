@@ -1095,6 +1095,13 @@ browser asks, so after "Stay" the next wall opens with those at their defaults; 
 for the detail: (a) leave it; (b) reset only once the page really leaves. _Meanwhile:_ (f) and (g) get a browser check in
 the Q139 d–h pass and are then marked done; the detail stays as (a) (Code Claude recommends (a): every handler kept).
 
+**Q160 · Code Claude → owner: Q74 built; choices made without asking (speed-first workflow).** (1) An image uploaded
+to a slide that was never saved creates it **hidden**; **Save** puts it on the homepage (Save now always sends "shown":
+this screen never had a way to hide a slide). Closed without Save, it stays in the list marked "Not on the homepage until
+saved" (not deleted). (2) Not done: deleting a slide still leaves its two images in storage (a server change that deletes
+files; ask if wanted). (3) A refused delete / reorder / remove shows a red bar and reloads the list; a refused Add says
+the server's reason (or "Couldn't add these works. Please try again.") in the picker's footer.
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**
