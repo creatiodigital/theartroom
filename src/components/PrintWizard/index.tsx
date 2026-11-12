@@ -34,7 +34,6 @@ import type { LimitedVariantView } from '@/lib/editions/types'
 
 import { LimitedWizard } from './LimitedWizard'
 import { CartAddedModal } from './CartAddedModal'
-import { EditionBadge } from './EditionBadge'
 import { SchemaStage } from './SchemaStage'
 import { StepsPanel } from './StepsPanel'
 import { SummaryPanel } from './SummaryPanel'
@@ -323,7 +322,6 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
       </header>
 
       <main className={styles.body}>
-        <EditionBadge editionType="open" onDetails={() => setIntroOpen(true)} />
         <StepsPanel
           catalog={catalog}
           config={config}
@@ -348,6 +346,8 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
           onContinueShopping={close}
           isEditing={editLineId !== null}
           isDuplicate={isDuplicate}
+          editionType="open"
+          onLearnMore={() => setIntroOpen(true)}
         />
       </main>
 

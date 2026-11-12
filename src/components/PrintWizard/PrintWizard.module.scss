@@ -34,9 +34,6 @@
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 15px;
   line-height: 1.4;
-  // Not the header's caps.
-  letter-spacing: normal;
-  text-transform: none;
   color: var(--public-text);
 
   em {
@@ -89,15 +86,6 @@
   overflow: visible;
 }
 
-.headerTitle {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-primary);
-  text-align: center;
-}
-
 .closeButton {
   display: flex;
   align-items: center;
@@ -121,10 +109,9 @@
   flex: 1;
   display: grid;
   grid-template-columns: 340px 1fr 360px;
-  // Row 1 = the edition badge (content height); row 2 = the panels (fill the
-  // rest). Without this the grid splits the body height across both rows and
-  // the badge row balloons.
-  grid-template-rows: auto 1fr;
+  // One row: the panels fill the height. (The edition badge's row went into the summary panel's
+  // "What is an open edition?" row, order-flow.md.)
+  grid-template-rows: 1fr;
   min-height: 0;
 
   @include media-down(wide) {
@@ -137,76 +124,6 @@
     grid-template-rows: none;
   }
 }
-
-// Persistent edition marker — spans the full body width as the first row,
-// above the left panel's "Choose your edition" / steps. A quiet stack:
-// bordered badge with a soft "Learn more" text link centered beneath it.
-.editionBadge {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--color-border-default);
-}
-
-// The availability caveat under "Learn more". Narrow and centred so it reads
-// as a note on the edition, not a system warning.
-.editionBadgeNote {
-  max-width: 52ch;
-  margin: 0;
-  color: var(--color-text-secondary);
-  line-height: 1.45;
-  text-align: center;
-}
-
-// Typographic mark, not a control: serif small-caps-style heading flanked by
-// tapered filigree rules — "— Open Edition —". No border/background so it
-// can't be mistaken for something clickable.
-.editionBadgeLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  max-width: 100%;
-}
-
-.editionBadgeText {
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-}
-
-// Tapered spindle rule (SVG) — swells in the middle, vanishes at the tips.
-.editionBadgeOrnament {
-  width: 24px;
-  height: 2px;
-  color: var(--color-text-secondary);
-}
-
-// Soft, non-navigational trigger: quiet serif text with a hairline underline
-// (no arrow — it opens a modal, it doesn't take the buyer anywhere).
-.editionBadgeCta {
-  padding: 0;
-  // No font-family here: the Button already applies its `sans` class (its
-  // default), and that carries the proper fallback stack. Overriding it to
-  // serif set the link in the display face used for the badge above it, which
-  // reads as a heading rather than the quiet control it is.
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 5px;
-  text-decoration-thickness: 1px;
-  text-decoration-color: var(--color-border-default);
-
-  &:hover {
-    color: var(--color-text-primary);
-    text-decoration-color: currentcolor;
-  }
-}
-
-// ── Left steps panel ─────────────────────────────────────────
 
 .stepsPanel {
   // The numbered steps' counter (NumberedStep).
@@ -898,26 +815,41 @@
   }
 }
 
+// order-flow.md, designs/order-configure-*.dc.html (right panel): the edition in small caps, the
+// title in serif italics, the artist; the choices between hairlines; the price in serif 30.
 .summaryHeader {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 6px;
 }
 
-// The artist, set the way the artwork page sets it: serif, sentence case, under
-// the work's title. It was an uppercase sans eyebrow ABOVE the title, which
-// made the artist read as a category label rather than as the person.
-.summaryArtist {
-  font-family: var(--font-serif);
-  font-size: var(--text-md);
-  color: var(--color-text-primary);
+.summaryEdition {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--public-secondary);
 }
 
 .summaryTitle {
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
   margin: 0;
-  line-height: 1.2;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 26px;
+  font-weight: var(--font-regular);
+  line-height: 1.15;
+  color: var(--public-text);
+}
+
+.summaryArtist {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+// SpecList draws the hairline above; this one closes the list.
+.summarySpecs {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-30);
 }
 
 .priceList {
@@ -925,35 +857,77 @@
   flex-direction: column;
   gap: var(--space-2);
   margin: 0;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border-light);
 }
 
-// Sits under the base price: quiet, secondary, never competing with the figure.
+// Under the button: quiet, secondary, never competing with the figure (the drawn #999 → #666,
+// questions Q-P12). A <p>: size pinned.
 .priceNote {
   margin: 0;
-  font-size: var(--text-xs);
-  line-height: 1.45;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  line-height: 1.55;
   color: var(--color-text-secondary);
 }
 
 .priceRow {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: var(--space-3);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: 600;
   margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
 
   dt {
-    color: var(--color-text-secondary);
+    font-size: 14px;
+    color: var(--public-secondary);
   }
 
   dd {
     margin: 0;
+    font-family: var(--font-serif), var(--font-serif-fallback);
+    font-size: 30px;
     font-variant-numeric: tabular-nums;
+    color: var(--public-text);
   }
+}
+
+// "What is an open / a limited edition?": opens the Learn more window. Two classes: Button's
+// bare reset would win over one.
+.summaryPanel .learnMore {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 14px var(--space-4);
+  border: 1px solid var(--color-gray-30);
+  background: var(--public-off-white);
+  color: var(--public-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 2px;
+  }
+}
+
+.learnMoreText {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.learnMoreTitle {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  font-weight: var(--font-bold);
+}
+
+.learnMoreSub {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
 }
 
 .priceRowMuted {

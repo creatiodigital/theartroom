@@ -24,7 +24,6 @@ import {
   selectableVariants,
 } from '@/lib/editions/variantSelection'
 
-import { EditionBadge } from './EditionBadge'
 import { SchemaStage } from './SchemaStage'
 import { SummaryPanel } from './SummaryPanel'
 import { VariantPicker, type VariantPickerItem } from './VariantPicker'
@@ -249,11 +248,6 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
         {/* The caveat rides on the badge, before anything is chosen — there is
             no hold and no clock, so the one thing the buyer must know up front
             is that taking their time carries a risk. */}
-        <EditionBadge
-          editionType="limited"
-          onDetails={() => setIntroOpen(true)}
-          note="Not reserved until you pay — another collector may take it first."
-        />
         {available.length > 0 ? (
           <>
             <VariantPicker
@@ -287,6 +281,9 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
                 alreadyInCart={selectedInCart}
                 addError={addError}
                 isDuplicate={selectedInCart}
+                editionType="limited"
+                onLearnMore={() => setIntroOpen(true)}
+                caveat="Not reserved until you pay: another collector may take it first."
               />
             )}
           </>
