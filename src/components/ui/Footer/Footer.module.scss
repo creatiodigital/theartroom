@@ -47,15 +47,11 @@
   color: var(--color-brand);
 }
 
-// The header's wordmark, at the drawn 26px type size.
+// Exactly the header's wordmark size (home.md §8): one knob, --logo-width, on every screen.
 .logo {
-  width: 196px;
+  width: var(--logo-width);
   height: auto;
   overflow: visible;
-
-  @include media-down(md) {
-    width: 170px;
-  }
 }
 
 // A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
