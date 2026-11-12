@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CaretRight, Info, ShoppingBagOpen } from '@phosphor-icons/react'
+import { CaretRight, Info } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
@@ -215,7 +215,6 @@ export const SummaryPanel = ({
             onClick={handleAddToCart}
             disabled={!canContinue || adding}
             label={adding ? ctaBusyLabel : ctaLabel}
-            iconLeft={<ShoppingBagOpen size={18} weight="light" aria-hidden />}
             className={styles.ctaButton}
           />
         </>
