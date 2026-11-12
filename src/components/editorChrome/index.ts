@@ -2,6 +2,7 @@
 // Redux, no requests, nothing from the scene.
 export { ToolPanel, type ToolPanelSave } from './ToolPanel'
 export { PanelCard } from './PanelCard'
+export { PanelSection } from './PanelSection'
 export { SliderRow } from './SliderRow'
 export { SwitchRow } from './SwitchRow'
 export { InfoLine } from './InfoLine'

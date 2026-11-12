@@ -503,3 +503,8 @@ like the real Pause switch). Logic and dialogs unchanged.
   `ui/ColorPicker`: `variant?: 'default' | 'row' | 'inline'` + `name` (`row`: the whole row is the label that opens today's
   picker). Defaults unchanged.
 - Tokens `--editor-*` (panel surface, shadows, tints, the attention dot).
+- `PanelSection` (step 18-2) · a collapsible card: one head button (icon tile white closed / dark open, title, line, the main
+  value in mono while closed, caret), the body only while open; its open state in localStorage under the caller's key
+  (today's `section-*` keys, "1" / "0").
+- `editview/LightingPanel/LampPicker` (step 18-2): the lamp grid (`radiogroup` of tiles, arrows stay in it), one grid per
+  room on Vienna; the picked lamp is local UI state.

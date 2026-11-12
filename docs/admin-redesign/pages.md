@@ -26,11 +26,13 @@ Do these in order, one PR each.
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
-| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
+| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1, 18-2) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
 | 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Approved by owner | After the admin redesign. Small, behaviour change. |
+
+**Next, same branch:** the public site redesign, steps 22–38, in `docs/public-redesign/pages.md` (start there with its README, components and questions).
 
 ## Built notes
 
@@ -900,3 +902,32 @@ and reopening the panel, "Leave site?" with it unsaved, the canvas rendering, no
 No e2e opens the 3D editor (WebGL specs aren't added); the specs near the shared changes on port 3001
 (`admin-print-presentations`, `bake-publish-gate`, `bake-room-settings`, `bake-dimmer`, `exhibition-window-color`,
 `studio-shell`): 40 passed, 1 skipped (as in step 11: no image work of unknown shape on the dev DB).
+
+### Step 18-2 · 3D editor, Lighting — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan. Files: `editview/LightingPanel/LightingPanel.tsx` + SCSS (both branches on the 18-1 shell), new
+`editview/LightingPanel/LampPicker` (+ SCSS), new `editorChrome/PanelSection` (+ SCSS).
+
+1. **Kept**: all 21 sliders pass today's value, min / max / step, onChange and `disabled` (compared one by one); every
+   color handler, both selects (now the admin's native select: same values, the handler takes the value directly), the
+   window transparency switch, the save body and every show / hide condition (`bakedSpace`, `showPlafond`,
+   `showTrackLamps`, `hasWindows`, …). Nothing inside the three.js canvas changed.
+2. **Sections** (`PanelSection`): one button per card (icon tile, title, line, the main value in mono while closed, caret),
+   closed by default, remembered under today's localStorage keys (`section-soft-light`, `section-ceiling`,
+   `section-track-lamps`, `section-window`, …).
+3. **Lamp picker** (NEW, approved): a 5-column `radiogroup` of lamp tiles ("Lamp 3, on", a green / grey dot, the picked one
+   dark), then only the picked lamp's switch, Turn and Position, with today's actions, ranges and off-disables. The picked
+   lamp is the panel's own state, never dispatched or saved. Arrow keys / Home / End stay in the grid (they don't walk the
+   camera). Vienna: one grid per room under today's "Room n · 14 lamps" captions, one picked lamp for the space; the room
+   folds go (Q133 fallback).
+4. **Owner answers**: "Distance from the wall" is **Light reach** (Q134; the lib label is unchanged, the chip reads "4.5 m");
+   accessible names are the visible words (Q135), with context only where a word repeats ("Track lamps brightness",
+   "Room 1 · Lamp 3 turn"); Lighting joins the Save area's Unsaved dot, red refused save and "Leave site?" (Q131).
+
+Verified: typecheck, lint, prettier; the sliders, handlers and conditions compared against HEAD (above); browser on my own
+`pnpm dev` (dev DB, every non-GET request refused locally) at 1440 px: Vivrière (Madrid, no track lamps: three sections,
+today's keys) and Florescĕre (Vienna: two grids of 14, picking a lamp, arrows reaching the page 0 times, the lamp switch
+"Room 1 · Lamp 3" flipping the bar to Unsaved, Light reach, a refused save red, "Leave site?"); no console errors other
+than the faked 500; e2e on port 3001 (`bake-dimmer`, `bake-room-settings`, `bake-publish-gate`,
+`exhibition-window-color`, `bake-save`): 36 passed. One fix after the first look: the lamp tiles don't fade (with Button's 0.15 s background fade the
+picked number turned white on a still-white tile).
