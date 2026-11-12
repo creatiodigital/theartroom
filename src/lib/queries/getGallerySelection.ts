@@ -47,6 +47,10 @@ export type GallerySelectionCard = {
    *  /prints can build its artist filter from the selection itself, with no
    *  second query and no artist in the list who has nothing on the page. */
   artistName: string
+  /** The artist's page handle: /prints' "See all prints by {artist}" (prints.md). */
+  artistHandler: string
+  /** The account's last name: /prints orders its artist menu by it (prints.md). */
+  artistLastName: string
   sale: ArtworkSale
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation?: PresentationView | null
@@ -72,7 +76,7 @@ const orderedRows = () =>
       artwork: {
         select: {
           ...CARD_SELECT,
-          user: { select: { name: true, lastName: true, published: true } },
+          user: { select: { name: true, lastName: true, published: true, handler: true } },
         },
       },
     },
@@ -96,6 +100,8 @@ function toCard(row: Awaited<ReturnType<typeof orderedRows>>[number]['artwork'])
     card: {
       ...rest,
       artistName,
+      artistHandler: user.handler,
+      artistLastName: user.lastName ?? '',
       // An unpublished artist's works are not for sale (checkout refuses them),
       // so the page hides them and the admin list says why.
       sale: user.published

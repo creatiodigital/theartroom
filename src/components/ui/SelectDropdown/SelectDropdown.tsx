@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CaretDown } from '@phosphor-icons/react'
+import { CaretDown, Check } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { HelpTooltip } from '@/components/ui/HelpTooltip'
@@ -38,8 +38,11 @@ interface SelectDropdownProps<V extends string = string> {
   disabled?: boolean
   className?: string
   /** Visual style of the closed control. 'boxed' (default) = bordered input;
-   *  'plain' = borderless text + chevron (underlines on hover). */
-  variant?: 'boxed' | 'plain'
+   *  'plain' = borderless text + chevron (underlines on hover); 'field' = the public
+   *  filter field (docs/public-redesign/prints.md: 46px, #f5f5f3, a check on the choice). */
+  variant?: 'boxed' | 'plain' | 'field'
+  /** 'field' only: a grey word inside the control before the value ("Artist"). */
+  inlineLabel?: string
   /** Mark the control invalid: red border + `aria-invalid`. */
   invalid?: boolean
 }
@@ -58,6 +61,7 @@ export const SelectDropdown = <V extends string = string>({
   disabled,
   className,
   variant = 'boxed',
+  inlineLabel,
   invalid,
 }: SelectDropdownProps<V>) => {
   const [open, setOpen] = useState(false)
@@ -142,20 +146,23 @@ export const SelectDropdown = <V extends string = string>({
 
   return (
     <div
-      className={`${styles.wrapper} ${variant === 'plain' ? styles.wrapperPlain : ''} ${className ?? ''}`}
+      className={`${styles.wrapper} ${variant === 'plain' ? styles.wrapperPlain : ''} ${variant === 'field' ? styles.wrapperField : ''} ${className ?? ''}`}
       ref={wrapperRef}
       onKeyDown={handleKeyDown}
     >
       {label && <span className={styles.label}>{label}</span>}
       <Button
         variant="bare"
-        className={`${styles.control} ${variant === 'plain' ? styles.controlPlain : ''} ${open ? styles.controlOpen : ''} ${invalid ? styles.invalid : ''}`}
+        className={`${styles.control} ${variant === 'plain' ? styles.controlPlain : ''} ${variant === 'field' ? styles.controlField : ''} ${open ? styles.controlOpen : ''} ${invalid ? styles.invalid : ''}`}
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-invalid={invalid || undefined}
       >
+        {variant === 'field' && inlineLabel && (
+          <span className={styles.inlineLabel}>{inlineLabel}</span>
+        )}
         <span className={styles.controlLabel}>
           {selected ? selected.label : (placeholder ?? 'Select…')}
         </span>
@@ -193,6 +200,9 @@ export const SelectDropdown = <V extends string = string>({
                   <span className={styles.optionDisabledNote}>{opt.disabledReason}</span>
                 )}
                 {opt.badge && <span className={styles.optionBadge}>{opt.badge}</span>}
+                {variant === 'field' && isSelected && (
+                  <Check size={16} weight="light" aria-hidden className={styles.optionCheck} />
+                )}
               </Button>
             )
             return (

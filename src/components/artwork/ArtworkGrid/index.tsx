@@ -54,6 +54,8 @@ type Artwork = {
 interface ArtworkGridProps {
   /** Name the artist on each card: only on a grid of several artists (Prints). */
   showArtist?: boolean
+  /** Add the edition to the year line, "2026 · Limited edition" (Prints, prints.md §4). */
+  showEdition?: boolean
   artworks: Artwork[]
   artistName?: string
   /**
@@ -97,6 +99,7 @@ export const ArtworkGrid = ({
   artistHandler,
   flushBottom,
   showArtist = false,
+  showEdition = false,
 }: ArtworkGridProps) => {
   // Admin kill switch. Hides the whole commerce block — price, CTA and the
   // sold-out badge alike — across every grid that uses this component. The
@@ -168,6 +171,9 @@ export const ArtworkGrid = ({
                   docs/public-redesign/components.md "ArtworkCard". The artist is
                   named only on a grid of several artists (Prints). */}
               <div className={styles.caption}>
+                <h3 className={styles.title}>
+                  <em>{artwork.title || artwork.name}</em>
+                </h3>
                 {showArtist && (
                   <span className={styles.artist}>
                     {/* Per-card first: it is the only value that is right on a
@@ -176,10 +182,16 @@ export const ArtworkGrid = ({
                     {artwork.artistName || artwork.author || artistName || ''}
                   </span>
                 )}
-                <h3 className={styles.title}>
-                  <em>{artwork.title || artwork.name}</em>
-                </h3>
-                {artwork.year && <p className={styles.year}>{artwork.year}</p>}
+                {(() => {
+                  const edition =
+                    showEdition && artwork.sale
+                      ? artwork.sale.editionType === 'limited'
+                        ? 'Limited edition'
+                        : 'Open edition'
+                      : null
+                  const line = [artwork.year, edition].filter(Boolean).join(' · ')
+                  return line ? <p className={styles.year}>{line}</p> : null
+                })()}
               </div>
               {sale && (
                 <div className={styles.orderAction}>

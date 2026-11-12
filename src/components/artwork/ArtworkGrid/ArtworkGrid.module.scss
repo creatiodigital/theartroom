@@ -101,13 +101,12 @@
   min-width: 0;
 }
 
-// Prints only: several artists on one grid.
+// Prints only: several artists on one grid (prints.md §4: under the title).
 .artist {
   font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-primary);
 }
 
 .title {
