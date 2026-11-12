@@ -174,7 +174,8 @@ test.describe('prints previous/next arrows', () => {
     const slug = fixtures[1].slug
     const measure = async (url: string) => {
       await page.goto(url)
-      return page.locator('[class*="imageFrame"] img').boundingBox()
+      // The image area (public step 30): the work's picture inside it.
+      return page.locator('[class*="imageArea"] img').first().boundingBox()
     }
 
     const withContext = await measure(`/artworks/${slug}?from=prints`)
