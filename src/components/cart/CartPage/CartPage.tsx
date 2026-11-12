@@ -3,6 +3,7 @@
 import { Lock } from '@phosphor-icons/react'
 
 import { CartLine } from '@/components/cart/CartLine'
+import { EmptyCart } from '@/components/cart/EmptyCart'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 import { PageIntro } from '@/components/ui/PageIntro'
@@ -26,18 +27,7 @@ export const CartPage = () => {
       <PageLayout>
         <div className={styles.page}>
           <PageIntro title="Cart" compact />
-          {/* docs/public-redesign/other-screens.md "Empty cart". */}
-          <div className={styles.empty}>
-            <p className={styles.emptyTitle}>Your cart is empty.</p>
-            <p className={styles.emptyLine}>
-              Every print is made to order on archival fine-art paper and arrives with a Certificate
-              of Authenticity.
-            </p>
-            <div className={styles.emptyLinks}>
-              <ArrowLink href="/prints">Browse the prints</ArrowLink>
-              <ArrowLink href="/exhibitions">Visit the exhibitions</ArrowLink>
-            </div>
-          </div>
+          <EmptyCart />
         </div>
       </PageLayout>
     )

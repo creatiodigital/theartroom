@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { specLines } from '../src/lib/cart/specLines'
+import { specLines, specShortLine } from '../src/lib/cart/specLines'
 
 /**
  * The cart's and checkout's short spec lines (order-flow.md "Cart"). Node only: no page, no sign-in.
@@ -94,5 +94,20 @@ test.describe('specLines', () => {
 
   test('nothing configured, no lines', () => {
     expect(specLines([])).toEqual([])
+  })
+
+  test('the short line is the size and how it is presented', () => {
+    const base = [row('paper', 'Paper', 'Fuji Matt'), row('size', 'Print size', '25.0 × 20.0 cm')]
+    expect(specShortLine([...base, row('format', 'Mounting / Framing', 'Print Only')])).toBe(
+      '25.0 × 20.0 cm · print only',
+    )
+    expect(
+      specShortLine([
+        ...base,
+        row('format', 'Mounting / Framing', 'Framing'),
+        row('frameType', 'Frame type', 'Box Frame'),
+      ]),
+    ).toBe('25.0 × 20.0 cm · Box Frame')
+    expect(specShortLine([row('size', 'Print size', '30.0 × 40.0 cm')])).toBe('30.0 × 40.0 cm')
   })
 })

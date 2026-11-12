@@ -77,3 +77,16 @@ function borderPhrase(value: string): string {
   if (value.includes(' and ')) return `border ${value}`
   return `${value} border`
 }
+
+/**
+ * One short line for the checkout's compact item rows (designs/checkout-1-shipping.dc.html: "25 × 20 cm ·
+ * print only"): the print size and how it is presented. The full lines are on the review step.
+ */
+export function specShortLine(specs: SpecsSummary): string {
+  const value = (id: string) => specs.find((r) => r.id === id)?.value.trim() || null
+  const size = value('size')
+  const format = value('format')
+  const presentation =
+    format && /^print only$/i.test(format) ? 'print only' : (value('frameType') ?? format)
+  return [size, presentation].filter(Boolean).join(' · ')
+}

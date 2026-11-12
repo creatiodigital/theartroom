@@ -1,318 +1,158 @@
 @use '@/styles/mixins' as *;
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-6);
-  padding: var(--space-10) 0;
+// docs/public-redesign/order-flow.md "Checkout"; designs/checkout-1-shipping.dc.html and
+// checkout-2-review.dc.html. Content 1160 px wide, as the cart; the step on the left, the order
+// panel on the right (400 px); stacked below 1024 px.
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding-bottom: 72px;
+
+  @include media-down(md) {
+    padding-bottom: var(--space-8);
+  }
 }
 
-.emptyText {
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-// Two-column layout: order recap on the left, the form / summary on the
-// right. Collapses to a single column on narrow viewports.
-.addressStep,
-.reviewStep {
+.grid {
   display: grid;
-  // Form column ~30% but never below 650px; the order recap (1fr) takes the
-  // remaining space. (The greedy 1fr keeps the form at its 650px floor on
-  // normal desktops; the 30% cap only bites on very wide screens.)
-  grid-template-columns: 1fr minmax(450px, 40%);
-  // Generous gutter — the recap card and the summary panel are both boxed
-  // surfaces and read cramped when they sit close.
-  gap: var(--space-16);
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 64px;
   align-items: start;
-  // Breathing room between the CTA / content and the page's bottom border.
-  padding-bottom: var(--space-12);
 
   @include media-down(lg) {
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-10);
   }
 }
 
-.cartRecap {
+.main {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-}
-
-.recapHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.recapTitle {
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.lines {
-  display: flex;
-  flex-direction: column;
-}
-
-// Desktop: details left, qty/total column right. Below xl the card is too
-// narrow for a side column (the recap shares the page with the 450px-floor
-// form), so it stacks: details on top, then a qty/total footer row.
-.line {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  background: var(--color-surface-subtle);
-  // Separated cards with a white gap — matches the cart line styling.
-  border-top: 1px solid var(--color-border-light);
-  border-bottom: 1px solid var(--color-border-light);
-  margin-bottom: var(--space-6);
-
-  @include media-down(xl) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.lineError {
-  background: var(--color-surface-subtle);
-}
-
-.thumb {
-  display: flex;
-  align-items: flex-start;
-}
-
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  gap: 24px;
   min-width: 0;
 }
 
-.artist {
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--color-text-secondary);
-}
-
-.title {
+.stepTitle {
   margin: 0;
-  color: var(--color-text-primary);
-}
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
 
-.editionTag {
-  margin-top: var(--space-1);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--color-text-secondary);
-}
-
-.lineErrorText {
-  margin-top: var(--space-1);
-  color: var(--color-error-text);
-}
-
-.qtyCol {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-5);
-  white-space: nowrap;
-
-  // Stacked card (see .line): becomes a footer row — quantity left, line
-  // total right, on one baseline, separated from the details by a hairline.
-  @include media-down(xl) {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--color-border-light);
+  @include media-down(sm) {
+    font-size: 26px;
   }
 }
 
-.qtyRow {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-1);
-}
-
-.qtyLabel {
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.qtyValue {
-  color: var(--color-text-primary);
-}
-
-.priceBlock {
+.errors {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1);
-
-  // Footer mode: label and value inline on one baseline.
-  @include media-down(xl) {
-    flex-direction: row;
-    align-items: baseline;
-    gap: var(--space-3);
-  }
-}
-
-.priceLabel {
-  color: var(--color-text-secondary);
-}
-
-.priceValue {
-  color: var(--color-text-primary);
+  gap: var(--space-2);
 }
 
 .orderError {
-  margin: var(--space-2) 0 0;
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--color-error-text);
 }
 
-// ── Form / summary panel (right) ─────────────────────────────
-.formPanel {
-  width: 100%;
+.asideLink {
+  align-self: flex-start;
+  padding-top: 6px;
 }
 
-.summaryPanel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-6);
-  background: var(--color-surface-subtle);
-  border: 1px solid var(--color-border-light);
+.asideButton {
+  margin-top: 8px;
 }
 
+// ── Review: "Shipping to" and → Change ───────────────────────────────────
 .shipTo {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.shipToLabel {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-text-secondary);
-}
-
-.shipToValue {
-  color: var(--color-text-primary);
-}
-
-.shipToCountry {
-  color: var(--color-text-primary);
-  font-weight: 700;
-}
-
-.changeAddress {
-  align-self: flex-start;
-  margin-top: var(--space-1);
-}
-
-.totals {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.totalRow {
-  display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-}
+  padding: 22px 0;
+  border-top: 1px solid var(--color-gray-30);
+  border-bottom: 1px solid var(--color-gray-30);
+  font-family: var(--font-sans), var(--font-sans-fallback);
 
-.totalLabel {
-  color: var(--color-text-secondary);
-}
-
-.totalValue {
-  color: var(--color-text-primary);
-}
-
-.grandTotalRow {
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border-light);
-}
-
-.grandTotalLabel {
-  color: var(--color-text-primary);
-}
-
-.grandTotalValue {
-  color: var(--color-text-primary);
-}
-
-.payCta {
-  margin-top: var(--space-2);
-}
-
-// ── Payment step ─────────────────────────────────────────────
-// Mirrors the review layout: order recap on the left, the Stripe
-// card form + totals on the right.
-.paymentStep {
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: var(--space-10);
-  align-items: start;
-
-  @include media-down(tablet) {
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
+  // The rows below draw their own hairlines.
+  + div {
+    margin-top: -24px;
   }
 }
 
-// Left column of the payment step: the bordered card panel with the
-// "Back to review" row below it (outside the box).
-.paymentMain {
+.shipToText {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 4px;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.paymentPanel {
+// #666, not the drawn #888 (Q-P12).
+.shipToLabel {
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.shipToName {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--public-text);
+}
+
+.shipToAddress {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--public-secondary);
+}
+
+.shipToContact {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+// ── Review: the item rows ────────────────────────────────────────────────
+.line {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-gray-30);
+}
+
+.linePrice {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-6);
-  border: 1px solid var(--color-border-light);
+  align-items: flex-end;
+  gap: 4px;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--public-text);
+  white-space: nowrap;
+
+  @include media-down(sm) {
+    align-items: flex-start;
+  }
 }
 
-.paymentHelp {
-  margin: 0;
+.lineQty {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
   color: var(--color-text-secondary);
 }
 
-.paymentForm {
-  margin-top: var(--space-2);
-}
-
-.paymentError {
-  margin: var(--space-2) 0 0;
-  color: var(--color-error-text);
-}
-
-.backRow {
-  display: flex;
-}
-
-.hydrating {
-  margin: 0;
-  color: var(--color-text-secondary);
-}
-
+// ── Confirmation (restyled with step 36b) ────────────────────────────────
 // ── Confirmation step ────────────────────────────────────────
 .confirmation {
   display: flex;

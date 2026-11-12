@@ -2,17 +2,27 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { ArrowRight } from '@phosphor-icons/react'
+
 import { AddressForm } from '@/components/checkout/AddressForm'
+import {
+  ArrowButton,
+  CheckoutAside,
+  CheckoutButton,
+  ItemsTotal,
+  OrderItems,
+  StepIndicator,
+  Totals,
+} from '@/components/checkout/CheckoutParts'
 import { CartItemDetails } from '@/components/cart/CartItemDetails/CartItemDetails'
-import { Button } from '@/components/ui/Button'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyCart } from '@/components/cart/EmptyCart'
+import { ArrowLink } from '@/components/ui/ArrowLink'
+import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
-import { lineTotal } from '@/lib/cart/cartMath'
+import { cartSubtotal, lineTotal } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
 import { useCart } from '@/lib/cart/useCart'
 import type { CartLikeItem, CartTotals } from '@/lib/cart/validateCart'
-import { vatLabel } from '@/lib/checkout/vatLabel'
 import { formatEuro } from '@/lib/print-providers'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
@@ -139,12 +149,9 @@ export const CartCheckout = ({
   if (items.length === 0 && !paidRef.current && !restoringOrder) {
     return (
       <PageLayout>
-        <PageHeader pageTitle="Checkout" />
-        <div className={styles.empty}>
-          <Text as="p" font="serif" size="lg" className={styles.emptyText}>
-            Your cart is empty
-          </Text>
-          <Button variant="primary" size="bigSquared" href="/prints" label="Browse prints" />
+        <div className={styles.page}>
+          <PageIntro title="Checkout" compact />
+          <EmptyCart />
         </div>
       </PageLayout>
     )
@@ -251,171 +258,139 @@ export const CartCheckout = ({
     keepOnlyPaymentIntentInUrl(confirmedPaymentIntentId)
   }
 
+  // The confirmation has a layout of its own (order-confirmed.dc.html): no title, no steps.
+  if (step === 'confirmation') {
+    return (
+      <PageLayout>
+        <div className={styles.page}>
+          {paymentIntentId && <CartConfirmation paymentIntentId={paymentIntentId} />}
+        </div>
+      </PageLayout>
+    )
+  }
+
+  // Order errors on the shipping step: what the server refused, and payment-side failures that
+  // route the buyer back here (sold out at the PI call, or a failed 3DS return).
+  const hasLineErrors = Object.keys(lineErrors).length > 0
+  const addressErrors = (orderError || hasLineErrors || payError) && (
+    <div className={styles.errors}>
+      {orderError && <p className={styles.orderError}>{orderError}</p>}
+      {hasLineErrors && (
+        <p className={styles.orderError}>
+          Some items in your order are no longer available. Please update your cart and try again.
+        </p>
+      )}
+      {payError && <p className={styles.orderError}>{payError}</p>}
+    </div>
+  )
+
   return (
     <PageLayout>
-      <PageHeader pageTitle="Checkout" />
+      <div className={styles.page}>
+        <PageIntro title="Checkout" compact />
+        <StepIndicator current={step === 'address' ? 0 : step === 'review' ? 1 : 2} />
 
-      {step === 'address' && (
-        <div className={styles.addressStep}>
-          <div className={styles.cartRecap}>
-            <div className={styles.recapHeader}>
-              <Text as="h2" font="serif" size="xl" className={styles.recapTitle}>
-                Your order
-              </Text>
-              <Button variant="secondary" size="regularSquared" href="/cart" label="Edit Cart" />
+        {step === 'address' && (
+          <div className={styles.grid}>
+            <div className={styles.main}>
+              {addressErrors}
+              <AddressForm
+                onSubmit={handleAddressSubmit}
+                submitting={submitting}
+                submitLabel="Continue to review"
+                countryCodes={supportedCountries}
+                initialAddress={address}
+                addressAutocomplete={addressAutocomplete}
+              />
             </div>
-            <div className={styles.lines}>
-              {items.map((item) => (
-                <CheckoutLine key={item.lineId} item={item} error={lineErrors[item.lineId]} />
-              ))}
-            </div>
-            {orderError && (
-              <Text as="p" size="sm" className={styles.orderError}>
-                {orderError}
-              </Text>
-            )}
-            {Object.keys(lineErrors).length > 0 && (
-              <Text as="p" size="sm" className={styles.orderError}>
-                Some items in your order are no longer available. Please update your cart and try
-                again.
-              </Text>
-            )}
-            {/* Payment-side failures route the buyer back here (sold-out at the
-                PI call, or a failed 3DS return) — surface the message so it's
-                not lost on the address step. */}
-            {payError && (
-              <Text as="p" size="sm" className={styles.orderError}>
-                {payError}
-              </Text>
-            )}
+
+            <CheckoutAside title="Your order">
+              <OrderItems items={items} errors={lineErrors} />
+              {/* The cart's own figures until the address is known; the server re-prices on the
+                  next step. */}
+              <ItemsTotal itemsCents={cartSubtotal(items)} />
+              <ArrowLink href="/cart" size="small" className={styles.asideLink}>
+                Edit cart
+              </ArrowLink>
+            </CheckoutAside>
           </div>
+        )}
 
-          <div className={styles.formPanel}>
-            <AddressForm
-              onSubmit={handleAddressSubmit}
-              submitting={submitting}
-              submitLabel="Continue to review"
-              countryCodes={supportedCountries}
-              initialAddress={address}
-              addressAutocomplete={addressAutocomplete}
-            />
-          </div>
-        </div>
-      )}
+        {step === 'review' && totals && address && (
+          <div className={styles.grid}>
+            <div className={styles.main}>
+              <h2 className={styles.stepTitle}>Check your order</h2>
 
-      {step === 'review' && totals && address && (
-        <div className={styles.reviewStep}>
-          <div className={styles.cartRecap}>
-            <div className={styles.recapHeader}>
-              <Text as="h2" font="serif" size="xl" className={styles.recapTitle}>
-                Your order
-              </Text>
-              <Button variant="secondary" size="regularSquared" href="/cart" label="Edit Cart" />
-            </div>
-            <div className={styles.lines}>
-              {items.map((item) => (
-                <CheckoutLine key={item.lineId} item={item} />
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.cartRecap}>
-            <div className={styles.recapHeader}>
-              <Text as="h2" font="serif" size="xl" className={styles.recapTitle}>
-                Summary
-              </Text>
-            </div>
-
-            <div className={styles.summaryPanel}>
               <div className={styles.shipTo}>
-                <Text as="span" size="xs" className={styles.shipToLabel}>
-                  Shipping to
-                </Text>
-                <Text as="span" size="sm" className={styles.shipToValue}>
-                  {address.fullName}
-                </Text>
-                <Text as="span" size="sm" className={styles.shipToCountry}>
-                  {getCountryName(address.countryCode)}
-                </Text>
-                <Button
-                  variant="secondary"
-                  size="regularSquared"
-                  label="Change address"
+                <div className={styles.shipToText}>
+                  <span className={styles.shipToLabel}>Shipping to</span>
+                  <span className={styles.shipToName}>{address.fullName}</span>
+                  <span className={styles.shipToAddress}>
+                    {[
+                      address.address1,
+                      address.address2,
+                      `${address.postalCode} ${address.city}`.trim(),
+                      address.stateOrRegion,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}{' '}
+                    · {getCountryName(address.countryCode)}
+                  </span>
+                  <span className={styles.shipToContact}>
+                    {[address.email, address.phone].filter(Boolean).map((part, index) => (
+                      <span key={part} className={styles.nowrap}>
+                        {index > 0 && ' · '}
+                        {part}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+                {/* The hidden word keeps the button's name "Change address". */}
+                <ArrowButton
+                  icon={<ArrowRight size={15} weight="light" aria-hidden />}
                   onClick={handleChangeAddress}
-                  className={styles.changeAddress}
-                />
+                >
+                  Change<span className="sr-only"> address</span>
+                </ArrowButton>
               </div>
 
-              <div className={styles.totals}>
-                <div className={styles.totalRow}>
-                  <Text as="span" size="sm" className={styles.totalLabel}>
-                    Items
-                  </Text>
-                  <Text as="span" size="sm" className={styles.totalValue}>
-                    {formatEuro(totals.itemsPreTaxCents)}
-                  </Text>
-                </div>
-                <div className={styles.totalRow}>
-                  <Text as="span" size="sm" className={styles.totalLabel}>
-                    Shipping
-                  </Text>
-                  <Text as="span" size="sm" className={styles.totalValue}>
-                    {formatEuro(totals.shippingCents)}
-                  </Text>
-                </div>
-                <div className={styles.totalRow}>
-                  <Text as="span" size="sm" className={styles.totalLabel}>
-                    {vatLabel(totals.vatRate)}
-                  </Text>
-                  <Text as="span" size="sm" className={styles.totalValue}>
-                    {formatEuro(totals.customerVatCents)}
-                  </Text>
-                </div>
-                <div className={`${styles.totalRow} ${styles.grandTotalRow}`}>
-                  <Text as="span" size="md" className={styles.grandTotalLabel}>
-                    Total
-                  </Text>
-                  <Text as="span" font="serif" size="xl" className={styles.grandTotalValue}>
-                    {formatEuro(totals.totalCents)}
-                  </Text>
-                </div>
+              <div>
+                {items.map((item) => (
+                  <CheckoutLine key={item.lineId} item={item} />
+                ))}
               </div>
 
-              {payError && (
-                <Text as="p" size="sm" className={styles.orderError}>
-                  {payError}
-                </Text>
-              )}
+              <ArrowLink href="/cart" size="small">
+                Edit cart
+              </ArrowLink>
+            </div>
 
-              <Button
-                variant="primary"
-                size="bigSquared"
-                fullWidth
+            <CheckoutAside title="Summary">
+              <Totals totals={totals} />
+              {payError && <p className={styles.orderError}>{payError}</p>}
+              <CheckoutButton
                 disabled={submitting}
-                label={submitting ? 'Preparing payment…' : 'Proceed to payment'}
+                label={submitting ? 'Preparing payment…' : 'Continue to payment'}
                 onClick={() => {
                   void handleProceedToPayment()
                 }}
-                className={styles.payCta}
+                className={styles.asideButton}
               />
-            </div>
+            </CheckoutAside>
           </div>
-        </div>
-      )}
+        )}
 
-      {step === 'payment' && totals && address && clientSecret && (
-        <CartPayment
-          clientSecret={clientSecret}
-          totals={totals}
-          address={address}
-          onSuccess={handlePaymentSuccess}
-          onBack={handleBackToReview}
-        />
-      )}
-
-      {step === 'confirmation' && paymentIntentId && (
-        <CartConfirmation paymentIntentId={paymentIntentId} />
-      )}
+        {step === 'payment' && totals && address && clientSecret && (
+          <CartPayment
+            clientSecret={clientSecret}
+            items={items}
+            totals={totals}
+            address={address}
+            onSuccess={handlePaymentSuccess}
+            onBack={handleBackToReview}
+          />
+        )}
+      </div>
     </PageLayout>
   )
 }
@@ -427,35 +402,24 @@ type CheckoutLineProps = {
 }
 
 /**
- * Read-only order line for the checkout surfaces. Unlike the cart's CartLine
- * there are no quantity steppers or remove controls here — the buyer edits
- * quantities on the cart page; checkout just reflects the order.
+ * Read-only order line for the review step (checkout-2-review.dc.html): the cart's item block with
+ * the price on the right. No steppers or remove controls — the buyer edits quantities on the cart
+ * page; checkout just reflects the order.
  */
 const CheckoutLine = ({ item, error }: CheckoutLineProps) => {
   const { lineItemCents } = lineTotal(item)
   return (
-    <div className={`${styles.line} ${error ? styles.lineError : ''}`}>
-      <CartItemDetails item={item} thumbHeight={88} error={error} />
-
-      <div className={styles.qtyCol}>
-        <div className={styles.qtyRow}>
-          <Text as="span" size="sm" className={styles.qtyLabel}>
-            Qty:
-          </Text>
-          <Text as="span" size="sm" className={styles.qtyValue}>
-            {item.quantity}
-          </Text>
-        </div>
-
-        <div className={styles.priceBlock}>
-          <Text as="span" size="sm" className={styles.priceLabel}>
-            Base price
-          </Text>
-          <Text as="span" font="serif" size="lg" className={styles.priceValue}>
+    <div className={styles.line}>
+      <CartItemDetails
+        item={item}
+        error={error}
+        aside={
+          <span className={styles.linePrice}>
             {formatEuro(lineItemCents)}
-          </Text>
-        </div>
-      </div>
+            {item.quantity > 1 && <span className={styles.lineQty}>Quantity {item.quantity}</span>}
+          </span>
+        }
+      />
     </div>
   )
 }

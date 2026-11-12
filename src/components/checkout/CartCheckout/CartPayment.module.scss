@@ -1,0 +1,84 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/order-flow.md "Checkout"; designs/checkout-3-payment.dc.html: the form on the
+// left, the order panel with Pay on the right (400 px); stacked below 1024 px.
+.paymentStep {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 64px;
+  align-items: start;
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-10);
+  }
+}
+
+.paymentMain {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.paymentTitle {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 26px;
+  }
+}
+
+.paymentForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.paymentError {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-error-text);
+}
+
+// The Stripe sentence with a lock.
+.paymentHelp {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+}
+
+.helpIcon {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--public-text);
+}
+
+.payButton {
+  margin-top: 8px;
+}
+
+// #666, not the drawn #888 (Q-P12).
+.terms {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+
+  a {
+    font-weight: var(--font-bold);
+    color: #333333;
+  }
+}

@@ -1,0 +1,275 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/order-flow.md "Checkout"; designs/checkout-*.dc.html, order-confirmed.dc.html.
+
+// ── Shipping → Review → Payment ──────────────────────────────────────────
+.steps {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 0 36px;
+  list-style: none;
+
+  @include media-down(md) {
+    padding-bottom: var(--space-6);
+  }
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+  // #666, not the drawn #999 (Q-P12).
+  color: var(--color-text-secondary);
+
+  // The hairline between two steps.
+  & + & {
+    &::before {
+      content: '';
+      flex: 0 1 48px;
+      width: 48px;
+      min-width: 12px;
+      height: 1px;
+      margin-right: 4px;
+      background: #dddddd;
+    }
+
+    margin-left: 14px;
+  }
+
+  @include media-down(sm) {
+    gap: 8px;
+    font-size: 13px;
+
+    & + & {
+      margin-left: 8px;
+
+      &::before {
+        width: 16px;
+      }
+    }
+  }
+}
+
+.stepMark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #cfcfcf;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.stepDone,
+.stepCurrent {
+  color: var(--public-text);
+
+  .stepMark {
+    border-color: var(--public-text);
+    background: var(--public-text);
+    color: var(--color-white);
+  }
+}
+
+.stepCurrent {
+  font-weight: var(--font-bold);
+}
+
+// ── The right-hand panel ─────────────────────────────────────────────────
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px;
+  background: var(--public-off-white);
+
+  // Under the sticky site header (83 px from 1024 px).
+  @include media-up(lg) {
+    position: sticky;
+    top: calc(83px + var(--space-6));
+  }
+
+  @include media-down(sm) {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+.asideTitle {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 24px;
+  font-weight: var(--font-regular);
+  line-height: 1.25;
+  color: var(--public-text);
+}
+
+// ── Compact item rows ────────────────────────────────────────────────────
+.items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-gray-30);
+}
+
+.itemThumb {
+  width: 64px;
+  height: 64px;
+  background: var(--public-render-wall);
+}
+
+.itemThumbImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.itemText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+}
+
+.itemTitle {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--public-text);
+  overflow-wrap: anywhere;
+}
+
+.itemMeta {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+// #666, not the drawn #999 (Q-P12).
+.itemSpec {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.itemError {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-error-text);
+}
+
+.itemPrice {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  color: var(--public-text);
+  white-space: nowrap;
+}
+
+// ── Totals ───────────────────────────────────────────────────────────────
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-top: 8px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.totalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+
+  dt {
+    color: var(--public-secondary);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--public-text);
+    white-space: nowrap;
+  }
+}
+
+.totalPending {
+  dt,
+  dd {
+    color: var(--color-text-secondary);
+  }
+}
+
+.grandTotal {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #e6e6e3;
+
+  dt {
+    font-size: 15px;
+    color: var(--public-text);
+  }
+
+  dd {
+    font-family: var(--font-serif), var(--font-serif-fallback);
+    font-size: 30px;
+    line-height: 1.1;
+  }
+}
+
+// ── Buttons ──────────────────────────────────────────────────────────────
+// Doubled class: outranks Button's own size rules whatever the stylesheet order.
+.button.button {
+  min-height: 54px;
+  padding: 0 var(--space-6);
+  gap: 10px;
+  font-size: 13px;
+  font-weight: var(--font-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+// The small arrow link's look (ArrowLink size="small") on a button.
+.arrowButton.arrowButton {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333333;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
+  }
+}
