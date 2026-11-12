@@ -1,9 +1,10 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr'
 
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import { plainTextOf } from '@/lib/richText/headingAnchors'
+import c from 'classnames'
 
 import styles from './ArtistRow.module.scss'
 
@@ -22,19 +23,16 @@ export type ArtistRowData = {
  * a 3:2 portrait, the name in serif, the bio's opening lines, "→ View artist". The whole row is one
  * link to the artist page.
  */
-export const ArtistRow = ({ artist }: { artist: ArtistRowData }) => {
+export const ArtistRow = ({ artist, className }: { artist: ArtistRowData; className?: string }) => {
   const bio = artist.biography ? plainTextOf(artist.biography) : ''
   return (
-    <Link href={artist.href} className={styles.row}>
+    <Link href={artist.href} className={c(styles.row, className)}>
       <span className={styles.portrait}>
         {artist.imageUrl && isSafeImageSrc(artist.imageUrl) && (
-          <Image
+          <ProtectedImage
             src={artist.imageUrl}
             alt=""
             fill
-            // Skip the Vercel optimizer: source is already-optimized .webp on an
-            // immutable R2/CDN; cold re-encodes broke images on first load (AR-125).
-            unoptimized
             sizes="(max-width: 768px) 132px, 180px"
             className={styles.image}
           />

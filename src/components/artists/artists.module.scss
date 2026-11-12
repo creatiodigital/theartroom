@@ -1,64 +1,36 @@
 @use '@/styles/mixins' as *;
 
-// Two columns on desktop — a single full-width row per artist reads empty on
-// big screens. One column below lg, the same breakpoint where the header
-// switches to the hamburger menu.
-.list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: var(--space-16);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-
-  @include media-down(lg) {
-    grid-template-columns: 1fr;
-  }
+// docs/public-redesign/artists.md, designs/artists-desktop.dc.html / -phone.dc.html.
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
 }
 
-// Photo first, name right beside it — same row as the home page's Featured
-// Artists.
-.artistRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  text-decoration: none;
-  padding: var(--space-6) 0;
-  border-bottom: 1px solid var(--color-border-default);
-  &:hover {
-    text-decoration: none;
-  }
+.count {
+  color: var(--color-text-secondary);
 }
 
-.artistName {
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: var(--text-2xl);
-  font-weight: var(--font-regular);
-  color: var(--color-text-primary);
+.listArea {
+  padding-bottom: 120px;
 
   @include media-down(md) {
-    font-size: var(--text-xl);
+    padding-bottom: 72px;
   }
 }
 
-// The fixed box lives on the ProtectedImage wrapper itself: the inner <img>
-// sizes at 100%, so the wrapper must carry real dimensions or the height
-// collapses to auto and every photo keeps its own aspect ratio — which is what
-// left these rendering 109, 137 and 174px tall inside a 110px box.
-.imageContainer {
-  flex-shrink: 0;
-  width: 160px;
-  height: 110px;
-  overflow: hidden;
+.list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-gray-30);
+  list-style: none;
 }
 
-.featuredImage {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  // Artist photographs are portraits and this box is landscape, so `cover`
-  // discards a lot of height. Anchored to the top it comes off the bottom
-  // rather than off the top of the head — same rule as the profile page.
-  object-position: top;
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.empty {
+  margin: 0;
+  padding: var(--space-8) 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
 }

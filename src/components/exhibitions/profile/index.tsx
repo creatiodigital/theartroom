@@ -164,6 +164,7 @@ export const ExhibitionProfilePage = ({
             About the artist
           </h2>
           <ArtistRow
+            className={styles.artistRow}
             artist={{
               href: artistHref,
               name: artistName,
