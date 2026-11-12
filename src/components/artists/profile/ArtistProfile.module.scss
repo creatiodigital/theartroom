@@ -1,134 +1,115 @@
 @use '@/styles/mixins' as *;
 
-.page {
-  flex: 1 0 auto;
-  width: 100%;
-  max-width: calc(var(--content-max-width) + var(--space-8) * 2);
+// docs/public-redesign/artist.md, designs/artist-desktop.dc.html / -phone.dc.html.
+.content {
+  max-width: 1160px;
   margin: 0 auto;
-  padding: var(--space-6);
+  padding-bottom: 120px;
 
-  @include breakpoint(lg) {
-    padding: var(--space-8);
+  @include media-down(md) {
+    padding-bottom: 72px;
   }
 }
 
-.header {
+// Hero: the text in a 360px column, the photo 3:2 on the right; the photo first on phones.
+.hero {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+  padding-top: var(--space-12);
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    padding-top: var(--space-6);
+  }
+}
+
+.heroText {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  margin-bottom: var(--space-6);
+  gap: 14px;
 
-  @include breakpoint(lg) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    margin-bottom: 2rem;
+  @include media-down(lg) {
+    order: 2;
   }
 }
 
-.avatarWrapper {
+// Small grey caps (the secondary grey: the drawn one is under 4.5:1, Q-P12).
+.eyebrow {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 50px;
+  font-weight: var(--font-regular);
+  line-height: 1.08;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 36px;
+  }
+}
+
+// <p>s: size and line height pinned (globals.scss gives every <p> 16–18px).
+.counts,
+.empty {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.photo {
   position: relative;
-  width: 100%;
   aspect-ratio: 3 / 2;
-
-  @include breakpoint(lg) {
-    width: 66.67%;
-  }
-}
-
-.avatar {
-  object-fit: cover;
-  // Anchored to the TOP, not the middle. Artist photographs are portraits and
-  // this box is 3:2, so `cover` has to discard around 39% of their height —
-  // centred, it took half of that off the top and cut the head off. Held to the
-  // top edge, everything it drops comes off the bottom instead, where a
-  // photograph can spare it.
-  object-position: top;
-}
-
-.avatarPlaceholder {
-  width: 100%;
-  aspect-ratio: 3 / 2;
-  background-color: var(--color-border-default);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  color: var(--color-text-primary);
+  background: var(--public-render-wall);
 
-  @include breakpoint(lg) {
-    width: 40vw;
-    height: 25vw;
+  @include media-down(lg) {
+    order: 1;
   }
 }
 
-.artistName {
+.photoImage {
+  object-fit: cover;
+}
+
+.initials {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 64px;
+  color: var(--color-text-secondary);
+}
+
+.about {
+  padding: 72px 0 88px;
+
+  @include media-down(md) {
+    padding: var(--space-10) 0 var(--space-12);
+  }
+}
+
+.group + .group {
+  margin-top: 80px;
+
+  @include media-down(md) {
+    margin-top: var(--space-12);
+  }
+}
+
+.rows {
   margin: 0;
-}
-
-.handler {
-  color: var(--color-text-primary);
-  margin: 0.5rem 0 0;
-}
-
-// Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
-.section {
-  margin-top: var(--space-8);
-  margin-bottom: var(--space-12);
-
-  @include breakpoint(lg) {
-    margin-top: var(--space-10);
-    margin-bottom: var(--space-16);
-  }
-}
-
-.biography {
-  column-count: 1;
-  margin-bottom: var(--space-12);
-
-  @include breakpoint(lg) {
-    column-count: 3;
-    column-gap: var(--space-10);
-    margin-bottom: var(--space-16);
-  }
-}
-
-.emptyText {
-  color: var(--color-text-primary);
-}
-
-.exhibitionList {
-  list-style: none;
   padding: 0;
-  margin: 0;
-}
-
-.exhibitionItem {
-  margin-bottom: 0.75rem;
-}
-
-.exhibitionLink {
-  text-decoration: none;
-  display: inline-block;
-  padding: 0.5rem 0;
-  width: 100%;
-
-  &:hover {
-    text-decoration: none;
-  }
-}
-
-.sectionHeading {
-  margin-bottom: var(--space-4);
-  text-transform: uppercase;
-  font-weight: var(--font-regular);
-  border-top: 1px solid var(--color-border-default);
-  padding-top: var(--space-6);
-  letter-spacing: var(--space-1);
-
-  @include breakpoint(lg) {
-    margin-bottom: var(--space-6);
-    padding-top: var(--space-8);
-  }
+  list-style: none;
 }

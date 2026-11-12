@@ -2,14 +2,12 @@
 
 import type { ReactNode } from 'react'
 
-import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
-
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { ExhibitionRow } from '@/components/exhibitions/ExhibitionRow'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
-import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
-import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
+import { SectionHeading } from '@/components/ui/SectionHeading'
+import { TextSection } from '@/components/ui/TextSection'
 import type {
   PublicArtistArtwork,
   PublicArtistExhibition,
@@ -39,6 +37,12 @@ interface ArtistProfilePageProps {
   biography?: ReactNode
 }
 
+const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+/**
+ * The artist page (docs/public-redesign/artist.md): hero, About the artist, Exhibitions (rows,
+ * without the artist's name), Works. Data and links as before.
+ */
 export const ArtistProfilePage = ({
   artist,
   exhibitions,
@@ -46,71 +50,93 @@ export const ArtistProfilePage = ({
   biography,
 }: ArtistProfilePageProps) => {
   const artistFullName = `${artist.name} ${artist.lastName}`
+  const exhibitionsCount = count(exhibitions.length, 'exhibition', 'exhibitions')
+  const worksCount = count(artworks.length, 'work', 'works')
+  // "1 exhibition · 26 works" (artist.md §1): from the data, nothing invented for none.
+  const countsLine = [
+    exhibitions.length > 0 ? exhibitionsCount : null,
+    artworks.length > 0 ? worksCount : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <PageLayout>
-      <div className={styles.header}>
-        <div>
-          <Text as="h1" size="huge" className={styles.artistName}>
-            {artist.name} {artist.lastName}
-          </Text>
-        </div>
-        {artist.profileImageUrl ? (
-          <div className={styles.avatarWrapper}>
-            <ProtectedImage
-              src={artist.profileImageUrl}
-              alt={artistFullName}
-              fill
-              priority
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className={styles.avatar}
+      <div className={styles.content}>
+        <section className={styles.hero}>
+          <div className={styles.heroText}>
+            <span className={styles.eyebrow}>Artist</span>
+            <h1 className={styles.name}>{artistFullName}</h1>
+            {countsLine && <p className={styles.counts}>{countsLine}</p>}
+          </div>
+          <div className={styles.photo}>
+            {artist.profileImageUrl ? (
+              <ProtectedImage
+                src={artist.profileImageUrl}
+                alt={artistFullName}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                className={styles.photoImage}
+              />
+            ) : (
+              <span className={styles.initials} aria-hidden>
+                {artist.name.charAt(0)}
+                {artist.lastName.charAt(0)}
+              </span>
+            )}
+          </div>
+        </section>
+
+        <TextSection label="About the artist" className={styles.about}>
+          {artist.biography ? biography : <p className={styles.empty}>No biography yet.</p>}
+        </TextSection>
+
+        <section className={styles.group} aria-label="Exhibitions">
+          <SectionHeading
+            title="Exhibitions"
+            count={exhibitions.length > 0 ? exhibitionsCount : undefined}
+          />
+          {exhibitions.length === 0 ? (
+            <p className={styles.empty}>No exhibitions yet.</p>
+          ) : (
+            <ul className={styles.rows}>
+              {exhibitions.map((ex) => {
+                const href = `/exhibitions/${artist.handler}/${ex.url}`
+                return (
+                  <ExhibitionRow
+                    key={ex.id}
+                    showArtist={false}
+                    exhibition={{
+                      id: ex.id,
+                      href,
+                      visitUrl: ex.spacePublished ? `${href}/visit` : null,
+                      title: ex.mainTitle,
+                      artistName: artistFullName,
+                      description: ex.shortDescription,
+                      imageUrl: ex.featuredImageUrl,
+                    }}
+                  />
+                )
+              })}
+            </ul>
+          )}
+        </section>
+
+        {artworks.length > 0 && (
+          <section className={styles.group} aria-label="Works">
+            <SectionHeading title="Works" count={worksCount} />
+            {/* `artistHandler` marks the cards as a set the visitor is walking, so
+                the artwork page can offer previous/next through this artist's
+                works. `artistName` is the display name for the cards — different
+                job, different value. */}
+            <ArtworkGrid
+              artworks={artworks}
+              artistName={artistFullName}
+              artistHandler={artist.handler}
+              flushBottom
             />
-          </div>
-        ) : (
-          <div className={styles.avatarPlaceholder}>
-            {artist.name.charAt(0)}
-            {artist.lastName.charAt(0)}
-          </div>
-        )}
-      </div>
-
-      <div className={styles.section}>
-        {artist.biography ? biography : <EmptyState message="No biography yet." />}
-      </div>
-
-      {artworks.length > 0 && <NiceTitle title="Featured Works" align="left" />}
-
-      {artworks.length > 0 && (
-        <div className={styles.section}>
-          {/* `artistHandler` marks the cards as a set the visitor is walking, so
-              the artwork page can offer previous/next through this artist's
-              works. `artistName` is the display name for the cards — different
-              job, different value. */}
-          <ArtworkGrid
-            artworks={artworks}
-            artistName={artistFullName}
-            artistHandler={artist.handler}
-            flushBottom
-          />
-        </div>
-      )}
-
-      <NiceTitle title="Artist's Exhibitions" align="left" />
-      <div className={styles.section}>
-        {exhibitions.length === 0 ? (
-          <EmptyState message="No exhibitions yet." />
-        ) : (
-          <ExhibitionGrid
-            exhibitions={exhibitions.map((ex) => ({
-              id: ex.id,
-              mainTitle: ex.mainTitle,
-              featuredImageUrl: ex.featuredImageUrl,
-              shortDescription: ex.shortDescription,
-              artistLabel: artistFullName,
-              href: `/exhibitions/${artist.handler}/${ex.url}`,
-              visitUrl: ex.spacePublished ? `/exhibitions/${artist.handler}/${ex.url}/visit` : null,
-            }))}
-          />
+          </section>
         )}
       </div>
     </PageLayout>
