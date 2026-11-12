@@ -24,11 +24,10 @@
   }
 }
 
-// Portrait, 4:5, as on the homepage (owner, 2026-11-12): the landscape photos cropped from the
-// sides, centred.
+// Landscape, 3:2 (owner, 2026-11-12: back from a 4:5 try once the rows lost their bio).
 .portrait {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
   background: var(--public-render-wall);
 }
@@ -56,11 +55,8 @@
   }
 }
 
-// On one line (artists.md); a long list ends in an ellipsis.
+// Joined by " · "; a long list wraps, never cut (owner, 2026-11-12).
 .exhibitions {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: 17px;
   font-style: italic;

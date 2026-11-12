@@ -14,13 +14,13 @@ export type ArtistRowData = {
   imageUrl: string | null
   /** The bio (rich text), shown whole as plain text; the exhibition page's About the artist only. */
   biography?: string | null
-  /** The Artists page: their exhibitions, joined by " · ". */
+  /** The Artists page: their exhibitions, joined by " · " (wrapping, never cut). */
   exhibitions?: string[]
 }
 
 /**
  * One artist in a row (docs/public-redesign/artists.md; the exhibition page's "About the artist"):
- * a 4:5 portrait, the name in serif, the whole bio in its paragraphs, "→ View artist". The whole row
+ * a 3:2 portrait, the name in serif, the whole bio in its paragraphs, "→ View artist". The whole row
  * is one link to the artist page.
  */
 export const ArtistRow = ({ artist, className }: { artist: ArtistRowData; className?: string }) => {

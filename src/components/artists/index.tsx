@@ -11,6 +11,7 @@ type Artist = {
   lastName: string
   handler: string
   profileImageUrl: string | null
+  exhibitions: { mainTitle: string }[]
 }
 
 interface ArtistsPageProps {
@@ -18,14 +19,15 @@ interface ArtistsPageProps {
 }
 
 /**
- * /artists (docs/public-redesign/artists.md): one row per artist, the portrait and the name only
- * (owner, 2026-11-12: no exhibition titles, no bio; the bio is the long one, on the artist page).
+ * /artists (docs/public-redesign/artists.md): one row per artist: the photo, the name and their
+ * exhibitions (owner, 2026-11-12: no bio; the bio is the long one, on the artist page).
  */
 export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
   const rows = artists.map((artist) => ({
     href: `/artists/${artist.handler}`,
     name: `${artist.name} ${artist.lastName}`.trim(),
     imageUrl: artist.profileImageUrl,
+    exhibitions: artist.exhibitions.map((e) => e.mainTitle),
   }))
 
   return (

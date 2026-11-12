@@ -22,6 +22,13 @@ const getArtistsList = () =>
       lastName: true,
       handler: true,
       profileImageUrl: true,
+      // Their exhibitions under the name (docs/public-redesign/artists.md): the published ones, the
+      // same public rule as /exhibitions.
+      exhibitions: {
+        where: { published: true },
+        select: { mainTitle: true },
+        orderBy: { createdAt: 'desc' },
+      },
     },
     // Alphabetical by last name (artists.md), then first name.
     orderBy: [{ lastName: 'asc' }, { name: 'asc' }],
