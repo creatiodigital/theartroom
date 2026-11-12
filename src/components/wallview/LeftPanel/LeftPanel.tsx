@@ -1,15 +1,29 @@
 'use client'
 
 import c from 'classnames'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { v4 as uuidv4 } from 'uuid'
+import {
+  ArrowClockwise,
+  ArrowCounterClockwise,
+  CornersOut,
+  Eye,
+  EyeSlash,
+  LockSimple,
+  Magnet,
+  Minus,
+  Person,
+  Plus,
+  Ruler,
+  X,
+} from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
-import { Icon } from '@/components/ui/Icon'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { HelperSwitch, ItemThumb, SegmentStrip } from '@/components/wallview/chrome'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
 import { restoreArtworksSnapshot, clearArtworksSnapshot } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
@@ -47,6 +61,24 @@ import styles from './LeftPanel.module.scss'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 import { isTypingTarget } from '@/utils/isTypingTarget'
 
+// The list filter, in today's order and words.
+const TYPE_FILTERS = [
+  { type: 'all', label: 'All' },
+  { type: 'image', label: 'Images' },
+  { type: 'text', label: 'Text' },
+  { type: 'video', label: 'Video' },
+  { type: 'sound', label: 'Sound' },
+] as const
+
+// A row's type, after its name (designs/wall-view.dc.html).
+const TYPE_NAMES: Record<string, string> = {
+  image: 'Image',
+  text: 'Text',
+  shape: 'Shape',
+  video: 'Video',
+  sound: 'Sound',
+}
+
 export const LeftPanel = () => {
   const dispatch = useDispatch()
   const { saveToDatabase, saving } = useSaveExhibition()
@@ -81,6 +113,20 @@ export const LeftPanel = () => {
   const futureLength = useSelector((state: RootState) => state.exhibition._future?.length ?? 0)
   const canUndo = historyLength > 0
   const canRedo = futureLength > 0
+
+  // Display only (wallview.md §1): the header's title, the strip's zoom, and a refused save
+  // (questions.md Q139 b), shown until the next edit (anything a save sends changes) or an
+  // accepted save.
+  const scaleFactor = useSelector((state: RootState) => state.wallView.scaleFactor)
+  const mainTitle = useSelector((state: RootState) => state.exhibition.mainTitle)
+  const wallWidth = useSelector((state: RootState) => state.wallView.wallWidth)
+  const [saveFailed, setSaveFailed] = useState(false)
+  useEffect(() => {
+    setSaveFailed(false)
+  }, [artworksById, positionsById, allAutofocusGroups])
+  const helpersId = useId()
+  const itemsId = useId()
+  const groupsId = useId()
 
   const wallArtworks = useMemo(() => {
     if (!currentWallId) return []
@@ -156,6 +202,7 @@ export const LeftPanel = () => {
     if (!success) {
       // Optionally show error - for now just log
       console.error('Failed to save to database')
+      setSaveFailed(true)
       return
     }
 
@@ -178,6 +225,7 @@ export const LeftPanel = () => {
 
     if (!success) {
       console.error('Failed to save progress')
+      setSaveFailed(true)
       return
     }
 
@@ -186,6 +234,7 @@ export const LeftPanel = () => {
     dispatch(clearSnapshot())
     dispatch(clearArtworksSnapshot())
     dispatch(clearHistory())
+    setSaveFailed(false)
   }
 
   const handleCancel = () => {
@@ -268,268 +317,246 @@ export const LeftPanel = () => {
   const handleToggleGroupHighlight = (groupId: string) => {
     dispatch(setActiveAutofocusGroupId(activeGroupId === groupId ? null : groupId))
   }
+  // "{exhibition} · {wall width} cm": a long name takes the ellipsis, the width always shows.
+  const wallSize = wallWidth ? `${Math.round(wallWidth * 100)} cm` : ''
 
   return (
-    <div
+    <aside
+      aria-label="Wall options"
       className={styles.panel}
       data-no-deselect="true"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className={styles.header}>
-        <Text font="dashboard" as="h2" className={styles.headerTitle}>
-          Wall Options
-        </Text>
-      </div>
-      <div className={styles.section}>
-        <div className={styles.subsection}>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Discard all changes and exit" placement="bottom" fullWidth>
-                <Button
-                  size="regular"
-                  variant="secondary"
-                  font="dashboard"
-                  onClick={handleCancel}
-                  label="Cancel"
-                  disabled={saving}
-                />
-              </Tooltip>
-            </div>
-          </div>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Save all changes and continue editing" placement="bottom" fullWidth>
-                <Button
-                  size="regular"
-                  variant="secondary"
-                  font="dashboard"
-                  onClick={handleSaveProgress}
-                  label={saving ? 'Saving...' : 'Save Progress'}
-                  disabled={saving}
-                />
-              </Tooltip>
-            </div>
-          </div>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Save all changes and exit" placement="bottom" fullWidth>
-                <Button
-                  size="regular"
-                  variant="primary"
-                  font="dashboard"
-                  onClick={handleSaveWallView}
-                  label={saving ? 'Saving...' : 'Save & Close'}
-                  disabled={saving}
-                />
-              </Tooltip>
-            </div>
-          </div>
+      <header className={styles.header}>
+        <div className={styles.heading}>
+          <span className={styles.eyebrow}>Editing wall</span>
+          {(mainTitle || wallSize) && (
+            <h1 className={styles.title}>
+              {mainTitle && <span className={styles.titleName}>{mainTitle}</span>}
+              {mainTitle && wallSize && <span> · </span>}
+              {wallSize && <span className={styles.titleSize}>{wallSize}</span>}
+            </h1>
+          )}
         </div>
-      </div>
-      <div className={styles.section}>
-        <div className={styles.subsection}>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Undo (⌘Z)" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant="secondary"
-                  icon="undo"
-                  onClick={handleUndo}
-                  disabled={!canUndo}
-                />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Redo (⌘⇧Z)" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant="secondary"
-                  icon="redo"
-                  onClick={handleRedo}
-                  disabled={!canRedo}
-                />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Zoom out" placement="right" fullWidth>
-                <Button size="regular" variant="secondary" icon="zoomOut" onClick={handleZoomOut} />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Zoom in" placement="right" fullWidth>
-                <Button size="regular" variant="secondary" icon="zoomIn" onClick={handleZoomIn} />
-              </Tooltip>
-            </div>
-          </div>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Fit to view" placement="right" fullWidth>
-                <Button size="regular" variant="secondary" icon="reset" onClick={handleResetView} />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Show rulers & guides" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant={isRulersVisible ? 'primary' : 'secondary'}
-                  icon="ruler"
-                  onClick={handleToggleRulers}
-                />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Lock Guides" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant={guidesLocked ? 'primary' : 'secondary'}
-                  icon="panel-bottom-dashed"
-                  onClick={handleToggleGuidesLocked}
-                  disabled={!isRulersVisible}
-                />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Snap align" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant={isSnapEnabled ? 'primary' : 'secondary'}
-                  icon="magnet"
-                  onClick={handleToggleSnap}
-                />
-              </Tooltip>
-            </div>
-          </div>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip label="Show human height reference" placement="right" fullWidth>
-                <Button
-                  size="regular"
-                  variant={isHumanVisible ? 'primary' : 'secondary'}
-                  icon="human-standing"
-                  onClick={handleToggleHuman}
-                />
-              </Tooltip>
-            </div>
-            <div className={styles.itemFlex} />
-            <div className={styles.itemFlex} />
-            <div className={styles.itemFlex} />
-          </div>
+        <div className={styles.saveRow}>
+          <Tooltip label="Discard all changes and exit" placement="bottom">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.cancel}
+              onClick={handleCancel}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+          </Tooltip>
+          <Tooltip label="Save all changes and continue editing" placement="bottom">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.save}
+              onClick={handleSaveProgress}
+              disabled={saving}
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </Button>
+          </Tooltip>
+          <Tooltip label="Save all changes and exit" placement="bottom">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.saveClose}
+              onClick={handleSaveWallView}
+              disabled={saving}
+            >
+              {saving ? 'Saving…' : 'Save & close'}
+            </Button>
+          </Tooltip>
         </div>
-      </div>
-      {wallArtworks.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.tabs}>
-            {(['all', 'image', 'text', 'video', 'sound'] as const).map((type) => (
-              <Button
-                key={type}
-                variant="tab"
-                className={styles.tab}
-                onClick={() => setTypeFilter(type)}
-                aria-pressed={typeFilter === type}
-                label={
-                  type === 'all'
-                    ? 'All'
-                    : type === 'image'
-                      ? 'Images'
-                      : type === 'text'
-                        ? 'Text'
-                        : type === 'video'
-                          ? 'Video'
-                          : 'Sound'
-                }
-              />
-            ))}
-          </div>
-          <div className={styles.subsection}>
-            <ul className={styles.artworks}>
-              {filteredWallArtworks.map((artwork) => (
-                <li
-                  key={artwork.id}
-                  onClick={() => handleSelectArtwork(artwork.id)}
-                  className={c(styles.artwork, {
-                    [styles.selected]: artwork.id === currentArtworkId,
-                  })}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span
-                    style={{
-                      flexShrink: 0,
-                      display: 'inline-flex',
-                      width: 16,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
-                    artwork.imageUrl ? (
-                      <img
-                        src={artwork.imageUrl}
-                        alt=""
-                        width={10}
-                        height={10}
-                        style={{ objectFit: 'cover', borderRadius: 1, display: 'block' }}
-                      />
-                    ) : (
-                      <span style={{ opacity: 0.5 }}>
-                        <Icon
-                          name={
-                            artwork.artworkType === 'sound'
-                              ? 'volume-2'
-                              : artwork.artworkType === 'text'
-                                ? 'type'
-                                : artwork.artworkType === 'shape'
-                                  ? 'shapes'
-                                  : artwork.artworkType === 'video'
-                                    ? 'video'
-                                    : 'image'
-                          }
-                          size={14}
-                          color="currentColor"
-                        />
-                      </span>
-                    )}
-                  </span>
-                  <Text as="span" font="dashboard" size="sm">
-                    {artwork.artworkTitle || artwork.name}
-                  </Text>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+        {saveFailed && (
+          <p role="alert" className={styles.failed}>
+            Not saved. Please try again.
+          </p>
+        )}
+      </header>
 
-      {/* Autofocus Groups Section */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <Text font="dashboard" as="h3" className={styles.sectionTitle}>
-            Autofocus Groups
-          </Text>
+      <div className={styles.body}>
+        <div className={styles.strip}>
+          <Tooltip label="Undo (⌘Z)" placement="right">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.raised}
+              aria-label="Undo"
+              onClick={handleUndo}
+              disabled={!canUndo}
+            >
+              <ArrowCounterClockwise size={17} weight="light" aria-hidden />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Redo (⌘⇧Z)" placement="right">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.raised}
+              aria-label="Redo"
+              onClick={handleRedo}
+              disabled={!canRedo}
+            >
+              <ArrowClockwise size={17} weight="light" aria-hidden />
+            </Button>
+          </Tooltip>
+          <span aria-hidden className={styles.stripDivider} />
+          <Tooltip label="Zoom out" placement="right">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.zoomButton}
+              aria-label="Zoom out"
+              onClick={handleZoomOut}
+            >
+              <Minus size={15} weight="light" aria-hidden />
+            </Button>
+          </Tooltip>
+          <span aria-live="polite" className={styles.zoom}>
+            {Math.round(scaleFactor * 100)}%
+          </span>
+          <Tooltip label="Zoom in" placement="right">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.zoomButton}
+              aria-label="Zoom in"
+              onClick={handleZoomIn}
+            >
+              <Plus size={15} weight="light" aria-hidden />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Fit to view" placement="right">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={c(styles.raised, styles.fit)}
+              onClick={handleResetView}
+            >
+              <CornersOut size={14} weight="light" aria-hidden />
+              Fit
+            </Button>
+          </Tooltip>
         </div>
-        <div className={styles.subsection}>
-          <div className={styles.row}>
-            <div className={styles.itemFlex}>
-              <Tooltip
-                label={
-                  canMakeGroup
-                    ? 'Create autofocus group from selected artworks'
-                    : 'Select 2 or more artworks to create a group'
-                }
-                placement="bottom"
-                fullWidth
-              >
-                <Button
-                  size="regular"
-                  variant="secondary"
-                  font="dashboard"
-                  onClick={handleMakeAutofocusGroup}
-                  label="Make Autofocus Group"
-                  disabled={!canMakeGroup}
-                />
-              </Tooltip>
+
+        <section aria-labelledby={helpersId} className={c(styles.section, styles.helpers)}>
+          <h2 id={helpersId} className={styles.caption}>
+            Helpers
+          </h2>
+          <HelperSwitch
+            icon={Ruler}
+            title="Rulers & guides"
+            line="Measure and line things up"
+            checked={isRulersVisible}
+            onChange={handleToggleRulers}
+          />
+          <HelperSwitch
+            icon={LockSimple}
+            title="Lock guides"
+            line={isRulersVisible ? undefined : 'Turn on rulers first'}
+            checked={guidesLocked}
+            onChange={handleToggleGuidesLocked}
+            disabled={!isRulersVisible}
+            dependent
+          />
+          <HelperSwitch
+            icon={Magnet}
+            title="Snap to align"
+            line="Works snap to edges and centers"
+            checked={isSnapEnabled}
+            onChange={handleToggleSnap}
+          />
+          {/* The figure's height is Wall.tsx's `humanHeight` (170 cm). */}
+          <HelperSwitch
+            icon={Person}
+            title="Person for scale"
+            line="A 170 cm figure on the wall"
+            checked={isHumanVisible}
+            onChange={handleToggleHuman}
+          />
+        </section>
+
+        {wallArtworks.length > 0 && (
+          <section aria-labelledby={itemsId} className={styles.section}>
+            <div className={styles.sectionHead}>
+              <h2 id={itemsId} className={styles.caption}>
+                On this wall
+              </h2>
+              <span className={styles.count}>
+                {wallArtworks.length === 1 ? '1 item' : `${wallArtworks.length} items`}
+              </span>
             </div>
+            <SegmentStrip
+              label="Show"
+              segments={TYPE_FILTERS.map(({ type, label }) => ({
+                key: type,
+                label,
+                pressed: typeFilter === type,
+                onClick: () => setTypeFilter(type),
+              }))}
+            />
+            <ul className={styles.items}>
+              {filteredWallArtworks.map((artwork) => {
+                const isSelected = artwork.id === currentArtworkId
+                return (
+                  <li key={artwork.id}>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={c(styles.item, isSelected && styles.selected)}
+                      aria-current={isSelected ? 'true' : undefined}
+                      onClick={() => handleSelectArtwork(artwork.id)}
+                    >
+                      <ItemThumb
+                        artworkType={artwork.artworkType}
+                        imageUrl={artwork.imageUrl}
+                        size="row"
+                      />
+                      <span className={styles.itemName}>
+                        {artwork.artworkTitle || artwork.name}
+                      </span>
+                      <span className={styles.itemKind}>
+                        {TYPE_NAMES[artwork.artworkType ?? ''] ?? ''}
+                      </span>
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
+
+        <section aria-labelledby={groupsId} className={c(styles.section, styles.groups)}>
+          <div className={styles.sectionHead}>
+            <h2 id={groupsId} className={styles.caption}>
+              Autofocus groups
+            </h2>
+            <Tooltip
+              label={
+                canMakeGroup
+                  ? 'Create autofocus group from selected artworks'
+                  : 'Select 2 or more artworks to create a group'
+              }
+              placement="bottom"
+            >
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.newGroup}
+                onClick={handleMakeAutofocusGroup}
+                disabled={!canMakeGroup}
+              >
+                <Plus size={12} weight="light" aria-hidden />
+                New group
+              </Button>
+            </Tooltip>
           </div>
           {groupWarning && (
             <Modal onClose={() => setGroupWarning(false)}>
@@ -549,43 +576,67 @@ export const LeftPanel = () => {
               </div>
             </Modal>
           )}
-          {wallAutofocusGroups.map((group) => (
-            <div
-              key={group.id}
-              className={c(styles.groupRow, {
-                [styles.groupRowActive]: activeGroupId === group.id,
+          {wallAutofocusGroups.length > 0 && (
+            <ul className={styles.groupList}>
+              {wallAutofocusGroups.map((group) => {
+                const isShown = activeGroupId === group.id
+                const count = group.artworkIds.length
+                return (
+                  <li key={group.id} className={styles.groupRow}>
+                    <span aria-hidden className={styles.groupThumbs}>
+                      {group.artworkIds.slice(0, 3).map((id) => {
+                        const artwork = artworksById[id]
+                        return artwork ? (
+                          <ItemThumb
+                            key={id}
+                            artworkType={artwork.artworkType}
+                            imageUrl={artwork.imageUrl}
+                            size="group"
+                          />
+                        ) : null
+                      })}
+                    </span>
+                    <span className={styles.groupText}>
+                      <span className={styles.groupName}>{group.name}</span>
+                      <span className={styles.groupCount}>
+                        {count === 1 ? '1 work' : `${count} works`}
+                      </span>
+                    </span>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.groupButton}
+                      aria-pressed={isShown}
+                      aria-label={`Show ${group.name} outline`}
+                      onClick={() => handleToggleGroupHighlight(group.id)}
+                    >
+                      {isShown ? (
+                        <Eye size={16} weight="light" aria-hidden />
+                      ) : (
+                        <EyeSlash size={16} weight="light" aria-hidden />
+                      )}
+                    </Button>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.groupButton}
+                      aria-label={`Remove ${group.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteAutofocusGroup(group.id)
+                      }}
+                    >
+                      <X size={14} weight="light" aria-hidden />
+                    </Button>
+                  </li>
+                )
               })}
-              onClick={() => handleToggleGroupHighlight(group.id)}
-            >
-              <Icon
-                name={activeGroupId === group.id ? 'eye' : 'eyeOff'}
-                size={14}
-                color="currentColor"
-              />
-              <Text as="span" font="dashboard" size="sm" className={styles.groupName}>
-                {group.name} ({group.artworkIds.length})
-              </Text>
-              <Button
-                variant="ghost"
-                className={styles.groupDelete}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleDeleteAutofocusGroup(group.id)
-                }}
-                aria-label="Delete group"
-              >
-                <Icon name="close" size={14} color="currentColor" />
-              </Button>
-            </div>
-          ))}
-          {wallAutofocusGroups.length === 0 && (
-            <Text as="p" font="dashboard" size="sm" style={{ opacity: 0.5 }}>
-              No groups created
-            </Text>
+            </ul>
           )}
-        </div>
+          {wallAutofocusGroups.length === 0 && <p className={styles.empty}>No groups created</p>}
+        </section>
       </div>
-    </div>
+    </aside>
   )
 }
 

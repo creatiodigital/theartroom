@@ -514,3 +514,15 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `ToolPanel` `footer?: ReactNode` (step 18-3): the footer of a panel without Save (the Artwork panel's View details).
   `ui/ColorPicker` `aria-label?` on the `row` / `inline` variants: a name with context where the visible one repeats
   ("Room 2 · Panel 1 color").
+
+## Wall view chrome (step 18b)
+
+`src/components/wallview/chrome/`, pure UI (no Redux, no requests); the wall view also imports `editorChrome`'s rows.
+
+- `SegmentStrip` · `{ label; segments: { key; label; icon?; pressed?; onClick; disabled? }[] }`: a grey track of
+  segments (`role="group"`); `pressed` = a choice (`aria-pressed`), without it an action; an icon segment is named by
+  its label and shows it as its tooltip.
+- `HelperSwitch` · `{ icon; title; line?; checked; onChange; disabled?; dependent? }`: a tile + name + line + the editor
+  switch; `dependent` indents it (Lock guides); disabled dims the tile and words.
+- `ItemThumb` · `{ artworkType?; imageUrl?; size: 'row' | 'group' }`: a wall item's image, or its type icon (decorative).
+- Tokens: `--editor-row-selected`, `--editor-row-selected-text`, `--editor-row-selected-edge`, `--editor-segment-shadow`.

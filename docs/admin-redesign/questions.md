@@ -954,7 +954,44 @@ dimensions); (2) the public page in a new tab, only for published artists; (3) t
 
 **Q140 · Code Claude → owner: the Icon map after this step.** The keys `light`, `panel-top`, `armchair`, `house`, `grid-2x2`, `brick-wall`, `preview`, `placeholder` and `src/icons/preview.svg` / `placeholder.svg` lose their only user (the old toolbar). _Meanwhile:_ removed in 18-3 under the Q55 (b) rule (unused keys and orphan SVGs go). Keep them instead?
 
+**Q141 · Code Claude → owner: the floating "Zoom: 35%" lives in the wall's file.** wallview.md moves the zoom % into the left panel's strip, but the floating label is in `CenterPanel.tsx:96–100` (+ 8 lines of SCSS), a file the spec lists as "the wall itself". It is a read-only label, no handler. _Meanwhile:_ the strip shows the % and the floating label stays (two readouts of the same value). Remove those lines?
+
+**Q142 · Code Claude → owner: "Unsaved changes" and "Leave site?" in the wall view (Q131).** Nothing the wall view has can tell, display-only, that the wall differs from the last save: the undo history misses every Look edit (frames, text styling, sound, video), new items, locks and groups; the Cancel snapshot exists from opening until the first save, whatever happens; a before / after compare is tripped by the wall itself, which re-computes every item's 3D position when it opens. A right answer needs either lines in the wall's own drag / resize / drop / Delete code (off-limits) or a "changed since the last save" flag in the store (Redux). _Meanwhile:_ no dot and no "Leave site?" (as today); a refused save does show the red line (Q139 b). Make the store flag its own small step after 18b?
+
+**Q143 · Code Claude → owner: the print-size marker goes with the sliders.** The width / height sliders carried a red mark at the largest print a buyer can order (image works whose resolution is known), so the artist doesn't hang a work bigger than anything on sale. _Meanwhile:_ the same fact as one line under Size, under the same condition: "Largest print on sale: {h} × {w} cm" (12 px secondary). Keep it, or drop it?
+
+**Q144 · Code Claude → Design Claude: "Distance to the wall edges" are distances to the center.** The four numbers (and the group's) are measured from each wall edge to the item's center, as today, while the box picture reads as gaps to its edges. _Meanwhile:_ the drawn caption, the note "All in cm, to the center of the artwork. Type a number to move it." ("…of the group…" for two or more). OK, or a different caption?
+
+**Q145 · Code Claude → Design Claude: points not drawn.** _Meanwhile:_ nothing selected: the empty column as today; the header and its action row are the same on both tabs (the drawn Look tab leaves the actions out); the header reads H × W ("Image · 98 × 130 cm", the site's convention) while the fields stay Width then Height (today, drawn); "{n} items" counts the whole wall whatever the filter; a video shows its image when it has one (today's list rule); Lock guides' line "Turn on rulers first" only while rulers are off, no line once on; "{n} works selected" when every item is an image, else "{n} elements selected" (today's word); Background "None" is a small text button under the field (pressed while there is none), the field then shows the crossed swatch; options not drawn sit inside their switch's card or under their extra's row, in today's order (wood Paint, Scale, Rotation, Roughness, Details; Size, Thickness; text Thickness under Colors while there is a background; Texture; border; the monogram's five); the Look tab is empty for a text box without text and an image without an image (today's rule); the three preset dialogs and the group warning keep today's look; selects stay today's dropdown restyled (exact values), not the 3D editor's native select; switches 36 × 22 (Q130); the drawn 500 weights are 600 and the #888 / #999 lines secondary (Q90); no phone layout (as today), 44 px targets on touch. OK?
+
+_18b-1 (Code Claude → Design Claude):_ two more points not drawn. The header title is "{exhibition} · {width} cm": with a
+long exhibition name the name takes the ellipsis and the width always shows. On touch screens the control strip's 44 px
+targets don't fit one row, so Fit takes a full-width second row. OK?
+
+**Q146 · Code Claude → owner: found while reading (kept as today).**
+
+- (a) **Cancel** ("Discard all changes and exit") restores the snapshot taken when the wall was opened. After a Save, or when the wall was opened from a link (`?wallId=`), there is none, so Cancel keeps every later edit in the room (unsaved; lost on reload).
+- (b) The left panel and View details each have their own "saving": while one saves, the other's buttons stay enabled, so two saves can overlap.
+- (c) By the code, a click on an add button adds the item and the wall's outside-click rule deselects it at once (the bar isn't marked as part of the panels).
+- (d) **Lock all** flips each work's lock: a mixed group ends mixed the other way.
+- (e) A locked item's Look controls are greyed and blocked for the mouse but still reachable by keyboard (most pass no `disabled`).
+- (f) Video: the Paper border switch saves `showPaperBorder` but the panel never reads it back, so it always shows off and its Size never appears.
+- (g) View details saves first only when the undo history, the snapshot or an upload says so; after a Save, Look edits (which don't enter the history) don't trigger it.
+- (h) Presets: **Delete** removes at once without asking; a refused save, update or delete shows nothing (the dialog stays open).
+- (i) The media library's hidden-artwork badge asks for an icon key that doesn't exist (`eye-off`), so it shows no icon.
+
+_Meanwhile:_ all as today. Fix (a), (b), (c) and (h) in a later pass?
+
 ## Answered
+
+**Owner answers, 2026-11-12 (step 18b, and Q139 a, relayed to Code Claude):**
+- **Q141:** yes, remove the floating zoom label from `CenterPanel` (display only).
+- **Q142:** yes, the wall view's Unsaved dot + `beforeunload` as its own small step right after 18b, like Q131.
+- **Q143:** keep the "Largest print on sale: {h} × {w} cm" line.
+- **Q146:** a later pass fixes (a), (b), (c), (h), plus (f) the video Paper border not read back and (i) the `eye-off`
+  icon key. Leave (d), (e), (g).
+- **Q139 (a):** option 3: rename the button "Edit artwork" and open `/dashboard/artworks/{id}/edit` in a new tab (later
+  pass).
 
 **Owner answers, 2026-11-12 (step 18, relayed to Code Claude):**
 - **Q131:** yes, the Unsaved dot: "any change since the last save" (set on edit, cleared on a successful save), with

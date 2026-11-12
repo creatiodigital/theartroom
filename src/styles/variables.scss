@@ -205,6 +205,11 @@
   --editor-tint-view: #ece8f4;
   --editor-tint-view-icon: #4a3a73;
   --editor-tint-walls: #eceae6; // icon: --color-text-primary
+  // The wall view (wallview.md, `components/wallview`): its side panels and add bar.
+  --editor-row-selected: #eef3fb; // the selected row of "On this wall"
+  --editor-row-selected-text: #1a3f73;
+  --editor-row-selected-edge: #3b6fd8; // its 3px left edge; the item in a distance box
+  --editor-segment-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); // a pressed segment, a raised strip button
 
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;

@@ -1,0 +1,55 @@
+@use '@/styles/mixins' as *;
+
+// wallview.md (designs/wall-view.dc.html "Show", wall-view-panels.dc.html `.seg`): a grey track,
+// the segments sharing it equally.
+.strip {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-gray-15);
+  border-radius: var(--radius-md);
+
+  // A segment, or the tooltip around an icon segment.
+  > * {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+// Two classes: Button's bare reset would win over one.
+.strip .segment {
+  width: 100%;
+  min-height: 30px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1);
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-regular);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover:not(.pressed) {
+    background: var(--color-gray-30);
+  }
+
+  &.pressed {
+    background: var(--color-white);
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+    box-shadow: var(--editor-segment-shadow);
+  }
+
+  // The ring is drawn over the neighboring segments, not under them.
+  &:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}

@@ -27,7 +27,7 @@ Do these in order, one PR each.
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1, 18-2, 18-3) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
-| 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
+| 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Built (18b-1) | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
 | 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Approved by owner | After the admin redesign. Small, behaviour change. |
@@ -970,3 +970,37 @@ and red on a refused save; "Leave site?"; no console errors other than the faked
 cover the screen, "Helion leather" wraps to two lines. No e2e opens the 3D editor; the specs near the shared changes on
 port 3001 (`admin-print-presentations`, `bake-publish-gate`, `bake-room-settings`, `exhibition-window-color`,
 `studio-shell`): 31 passed, 1 skipped (as in 18-1).
+
+### Step 18b-1 · Wall view, left panel and add bar — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-wall-view-chrome.md` (contract, decisions, Q141–Q146 and the owner's answers at
+its end). Files: `wallview/LeftPanel` and `wallview/CreatePanel` (+ SCSS, rewritten), new `wallview/chrome/`
+(`SegmentStrip`, `HelperSwitch`, `ItemThumb`), four `--editor-*` tokens, and `CenterPanel`'s floating zoom label removed
+(Q141, owner: the only wall-file edit). The right panel is 18b-2.
+
+1. **The wall is untouched**: no line of the wall, its hooks, the slices or the scene changed except the zoom label's 5
+   lines (+ its `Text` import and SCSS rule). The left panel keeps `data-no-deselect` and its click / mouse-down stops,
+   so a click in it never deselects a work.
+2. **Kept**: LeftPanel's logic is today's (diffed): every handler, the ⌘Z / ⌘⇧Z keys, Undo / Redo / New group enable
+   rules, the group warning dialog, the type filter, and every tooltip sentence of the save, history, zoom and add
+   buttons. The add bar keeps each button's click, drag and drop and its tooltip.
+3. **Left panel per wallview.md**: header "Editing wall" + "{exhibition} · {wall width} cm" (a long name takes the
+   ellipsis, the width always shows), Cancel / Save / Save & close; the control strip (Undo, Redo, zoom − / % / +,
+   Fit); **Helpers** as named switches with a line each (Lock guides off and dimmed until rulers are on); **On this
+   wall** with the count, the filter strip and rows that are buttons (thumbnail, name, type; selected in blue); and
+   **Autofocus groups** (New group, rows with thumbnails, "{n} works", the outline toggle and ×).
+4. **Add bar per wallview.md**: "From library" and five named buttons (Image, Text, Shape, Video, Sound), the hint
+   line under it.
+5. **Owner answers**: a refused Save or Save & close shows the red "Not saved. Please try again." under the buttons
+   until the next edit or an accepted save (Q139 b); no Unsaved dot yet (Q142: its own step after 18b).
+6. **Changed as the plan says**: "Save Progress" → "Save", "Make Autofocus Group" → "New group", a group's × is named
+   "Remove {group}"; a group row is no longer one big toggle (its eye button is); the helpers' tooltips became their
+   visible names and lines. On touch screens Fit takes the strip's second row (44 px targets don't fit one row).
+
+Verified: typecheck, lint, prettier; the logic diffed against HEAD (above); browser on my own `pnpm dev` (dev DB, every
+non-GET request refused locally) in Florescĕre's main wall (14 items) at 1440, 1280 and 1180 (touch): the title, the
+zoom % following − / + and Fit, Lock guides following rulers, the person and rulers on, a row picked by keyboard, a
+refused Save red and cleared by the next edit (an arrow nudge), a refused Save & close red and still in the wall view,
+a shape added by click, From library opening the library, focus rings, the wall area 825 px with no sideways scroll;
+no console errors other than the save's own logs of the faked refusal. e2e on port 3001 (`font-family-wiring`,
+`wall-stacking`, `panel-transform`, `wall-orientation`): 37 passed.
