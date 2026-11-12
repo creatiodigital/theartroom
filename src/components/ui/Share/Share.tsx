@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Envelope, ShareNetwork } from '@phosphor-icons/react'
+import { ShareNetwork } from '@phosphor-icons/react'
+
+import EnvelopeIcon from '@/icons/envelope.svg'
 
 import { Button } from '@/components/ui/Button'
 
@@ -60,7 +62,7 @@ export const Share = ({ title, url, className }: ShareProps) => {
             href={`mailto:?subject=${encodeURIComponent(`${title} — The Art Room`)}&body=${encodeURIComponent(url)}`}
             className={styles.link}
           >
-            <Envelope size={15} weight="light" aria-hidden />
+            <EnvelopeIcon width={15} height={15} aria-hidden />
             <span>Email</span>
           </a>
           <a
