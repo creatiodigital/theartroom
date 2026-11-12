@@ -145,13 +145,12 @@ interface LoadingOverlayProps {
   mode: PageMode
   /** Once the room is revealed with its stored bake on — never when the bake failed to go on. */
   onRevealed?: () => void
-  /** The visitor's loader (room-loader.md): the exhibition's title, artist and cover. */
+  /** The visitor's loader (room-loader.md): the exhibition's title and artist. */
   title?: string
   artist?: string
-  imageUrl?: string
 }
 
-const LoadingOverlay = ({ mode, onRevealed, title, artist, imageUrl }: LoadingOverlayProps) => {
+const LoadingOverlay = ({ mode, onRevealed, title, artist }: LoadingOverlayProps) => {
   const { active, progress } = useProgress()
   const bake = useBakeProgress()
   // A stored bake that will be shown (`shownStoredBake`) only downloads (its files are assets) but
@@ -197,8 +196,8 @@ const LoadingOverlay = ({ mode, onRevealed, title, artist, imageUrl }: LoadingOv
       ? (1 - BAKE_MAPS_SHARE) * assets + BAKE_MAPS_SHARE * mapBytes
       : assets
 
-  // The admin's bake keeps the monogram ("Lighting the room"); visitors see the cover develop
-  // (room-loader.md, step 38b). Same fraction and done either way.
+  // The admin's bake keeps the monogram ("Lighting the room"); visitors see the exhibition's title
+  // card (room-loader.md, step 38b). Same fraction and done either way.
   if (bakes) {
     return (
       <MonogramLoader
@@ -209,9 +208,7 @@ const LoadingOverlay = ({ mode, onRevealed, title, artist, imageUrl }: LoadingOv
       />
     )
   }
-  return (
-    <RoomLoader progress={fraction} done={done} title={title} artist={artist} imageUrl={imageUrl} />
-  )
+  return <RoomLoader progress={fraction} done={done} title={title} artist={artist} />
 }
 
 type ReviewState = 'pending' | 'reviewed' | 'refused' | 'failed'
@@ -1004,7 +1001,6 @@ export const ExhibitionViewPage = ({
             mode={shownMode}
             title={about?.title ?? exhibition?.mainTitle}
             artist={about?.artistName}
-            imageUrl={about?.coverUrl || exhibition?.thumbnailUrl || undefined}
             onRevealed={mode === 'review' ? markReviewed : undefined}
           />
         </>

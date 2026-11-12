@@ -1,7 +1,7 @@
 @use '@/styles/mixins' as *;
 
-// room-loader.md "Layout": full screen on warm paper, everything centred, 30 px apart (24 on phones).
-// `--d` (0..1, written every frame) develops the print and grows the red line.
+// room-loader.md (Option A2): a still title card on warm paper, centred; only the red line moves.
+// `--d` (0..1) is written every frame by RoomLoader.
 .loader {
   --d: 0;
 
@@ -12,15 +12,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 30px;
-  padding: 24px;
+  padding: 0 24px;
   background: #fbfaf7;
+  text-align: center;
   opacity: 1;
   transition: opacity 500ms ease;
-
-  @include media-down(sm) {
-    gap: 24px;
-  }
 }
 
 .fading {
@@ -28,133 +24,87 @@
   pointer-events: none;
 }
 
-// The blank paper the print develops on: 520 × 390 (4:3; at most 342 wide on phones).
-.paper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 520px;
-  max-width: calc(100vw - 48px);
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: #f4f1ea;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-
-  @include media-down(sm) {
-    width: min(100vw - 48px, 342px);
-  }
-}
-
-// opacity 0.05 + 0.95 × ease(d) (ease-out: d(2 − d)); blur, contrast and a warm tint that clear with d.
-.print {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  filter: blur(calc(14px * (1 - var(--d)))) contrast(calc(0.4 + 0.6 * var(--d)))
-    sepia(calc(0.5 * (1 - var(--d))));
-}
-
-.printReady {
-  opacity: calc(0.05 + 0.95 * var(--d) * (2 - var(--d)));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .print {
-    filter: none;
-  }
-}
-
-// The fallback: the red monogram, 64 px, filling from its foot with d (MonogramLoader's look).
-.mark {
-  position: relative;
-  width: 64px;
-  aspect-ratio: 850.39 / 907.09;
-}
-
-.layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-// The red shows below y = 825 − 730 d (of the 907.09 box).
-.redLayer {
-  clip-path: inset(calc((825 - 730 * var(--d)) / 907.09 * 100%) 0 0 0);
-}
-
-.grey {
-  fill: #ebe7e2;
-}
-
-.red {
-  fill: #bd1622;
-}
-
-.text {
+.card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  max-width: 640px;
-  text-align: center;
+  max-width: 760px;
 }
 
-// #666, not the drawn #999 (Q-P12).
+// Small greys at #666, not the drawn #999 / #888 / #aaa (Q-P12).
 .eyebrow {
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 11.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-text-secondary);
-}
-
-// Fades in (300 ms) when the exhibition's data arrives. Two lines at most.
-.title {
-  display: -webkit-box;
-  margin: 0;
-  overflow: hidden;
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 40px;
-  line-height: 1.15;
-  color: var(--public-text);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  animation: appear 300ms ease both;
 
   @include media-down(sm) {
-    font-size: 28px;
+    font-size: 11px;
+  }
+}
+
+// A <p>: size pinned. Three lines at most.
+.title {
+  display: -webkit-box;
+  margin: 14px 0 0;
+  overflow: hidden;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 44px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+
+  @include media-down(sm) {
+    margin-top: 12px;
+    font-size: 32px;
   }
 }
 
 .artist {
+  margin-top: 18px;
   font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 13px;
-  letter-spacing: 0.12em;
+  font-size: 14px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--public-secondary);
-  animation: appear 300ms ease both;
+
+  @include media-down(sm) {
+    margin-top: 14px;
+    font-size: 12px;
+  }
 }
 
-// The hairline (220 px; 160 on phones) with the red line growing in it from the left.
-.line {
+// Hidden until they arrive (their space kept), then a 300 ms fade in.
+.title,
+.artist {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.shown {
+  opacity: 1;
+}
+
+// The track (220 × 1 px; 160 on phones) and the red line growing in it from the left.
+.track {
   position: relative;
+  display: block;
   width: 220px;
   height: 1px;
+  margin-top: 44px;
   overflow: hidden;
   background: #e6e3dc;
 
   @include media-down(sm) {
     width: 160px;
+    margin-top: 36px;
   }
 }
 
-.lineFill {
+.line {
   position: absolute;
   inset: 0;
   background: #bd1622;
@@ -162,35 +112,40 @@
   transform-origin: left center;
 }
 
-.captions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  text-align: center;
-}
-
-// Each caption fades in (500 ms) as it takes its turn. #666, not the drawn #888 (Q-P12).
-.caption {
+.note {
+  margin-top: 22px;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 14px;
   color: var(--color-text-secondary);
-  animation: appear 500ms ease both;
+
+  @include media-down(sm) {
+    margin-top: 20px;
+  }
 }
 
+// After 20 s: one quiet line, faded in once, then it stays. Hidden (not just transparent) before,
+// so it is announced only when it appears.
 .slow {
+  margin: 8px 0 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 13px;
+  line-height: 1.5;
   color: var(--color-text-secondary);
-  animation: appear 500ms ease both;
+  visibility: hidden;
+}
+
+.slowShown {
+  visibility: visible;
+  animation: appear 300ms ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .title,
-  .artist,
-  .caption,
-  .slow {
+  .artist {
+    transition: none;
+  }
+
+  .slowShown {
     animation: none;
   }
 }

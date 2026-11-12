@@ -5,7 +5,6 @@ import { ExhibitionViewPage } from '@/components/exhibitions/view'
 import type { RoomAbout } from '@/components/exhibitions/view/RoomAbout/RoomAboutPanel'
 import prisma from '@/lib/prisma'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
-import { isSafeImageSrc } from '@/lib/imageSafety'
 import { plainTextOf } from '@/lib/richText/headingAnchors'
 import { isRichTextEmpty } from '@/lib/textUtils'
 
@@ -85,10 +84,6 @@ async function getRoomAbout(artistSlug: string, exhibitionSlug: string): Promise
     },
     exhibitionHref: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
     artistHref: `/artists/${exhibition.user.handler}`,
-    coverUrl:
-      exhibition.featuredImageUrl && isSafeImageSrc(exhibition.featuredImageUrl)
-        ? exhibition.featuredImageUrl
-        : null,
   }
 }
 
