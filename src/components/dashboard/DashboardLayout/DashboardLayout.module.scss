@@ -81,46 +81,6 @@
   margin-bottom: var(--space-4);
 }
 
-/* Tables */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-sm);
-
-  th,
-  td {
-    padding: var(--space-3) var(--space-4);
-    text-align: left;
-    border-bottom: 1px solid var(--color-border-default);
-  }
-
-  th {
-    font-weight: 600;
-    color: var(--color-text-primary);
-    background: var(--color-white);
-  }
-
-  td {
-    color: var(--color-text-primary);
-  }
-
-  tr:last-child td {
-    border-bottom: none;
-  }
-
-  th:first-child,
-  td:first-child {
-    padding-left: 0;
-  }
-
-  th:last-child,
-  td:last-child {
-    padding-right: 0;
-    text-align: right;
-  }
-}
-
 // A quiet marker for a legitimate-but-rare row state (e.g. a published
 // exhibition whose 3D room is still switched off). Warning-toned so it
 // reads as worth a glance, not an error — it sits inline under a badge,
@@ -133,19 +93,6 @@
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-xs);
   color: var(--color-badge-warning-text);
-}
-
-// Why the server refused a publish (AR-161: a baked room needs a current, reviewed
-// bake): a notice row under the exhibition it belongs to, with the way to fix it.
-// The row above drops its divider so the two read as one.
-.table tr:has(+ .refusalRow) td {
-  border-bottom: none;
-}
-
-// Its one cell is both the first and the last: undo the actions column's right alignment.
-.table .refusalRow td {
-  padding-top: 0;
-  text-align: left;
 }
 
 .publishRefusal {
@@ -173,59 +120,6 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
-}
-
-/* Kebab Menu */
-.kebabWrapper {
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.kebabButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  padding: var(--space-1);
-  color: var(--color-text-primary);
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: var(--color-surface-subtle);
-  }
-}
-
-.kebabMenu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 10;
-  min-width: 140px;
-  background: var(--color-white);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: var(--space-1) 0;
-  margin-top: var(--space-1);
-}
-
-// Layout / hover / color come from Button variant="menuItem"; this class
-// adds dashboard typography and prevents wrapping inside the dropdown.
-.kebabMenuItem {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  white-space: nowrap;
-}
-
-.kebabMenuItemDanger {
-  color: var(--color-brand);
-
-  &:hover {
-    background: var(--color-error-bg);
-  }
 }
 
 /* Form Fields */
@@ -261,42 +155,6 @@
   padding: var(--space-3) var(--space-6);
   border-top: 1px solid var(--color-border-default);
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-}
-
-/* Delete Confirmation Modal */
-.deleteModal {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  max-width: 400px;
-
-  h2 {
-    font-family: inherit;
-    margin: 0 0 var(--space-4);
-    font-size: 24px;
-    font-weight: 500;
-  }
-
-  p {
-    font-family: inherit;
-    margin: 0 0 var(--space-4);
-    font-size: var(--text-sm);
-    color: var(--color-text-primary);
-    line-height: 1.5;
-  }
-}
-
-.deleteWarning {
-  background: var(--color-error-bg);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-4);
-  margin-bottom: var(--space-6);
-  color: var(--color-brand);
-  font-size: var(--text-sm);
-}
-
-.deleteActions {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
 }
 
 .confirmInput {

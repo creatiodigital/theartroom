@@ -1,21 +1,27 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useId } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
+import c from 'classnames'
 
-import { DotsThreeVertical } from '@phosphor-icons/react'
+import { Bank, Cube, Images, Plus, User, type Icon } from '@phosphor-icons/react'
 
-import { Badge } from '@/components/ui/Badge'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { Callout } from '@/components/admin/ui/Callout'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { PublishState } from '@/components/admin/ui/PublishState'
+import { RowMenu } from '@/components/admin/ui/RowMenu'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { ErrorText } from '@/components/ui/ErrorText'
 import { ExhibitionModal } from '@/components/ui/ExhibitionModal'
 import { Modal } from '@/components/ui/Modal'
 
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
+import { isSafeImageSrc } from '@/lib/imageSafety'
 import { selectExhibitionsForUser } from '@/redux/selectors/userSelectors'
 import { selectSpace } from '@/redux/slices/dashboardSlice'
 import {
@@ -32,6 +38,76 @@ import type { TExhibition } from '@/types/exhibition'
 
 import { spaceOptions } from './constants'
 import dashboardStyles from './DashboardLayout/DashboardLayout.module.scss'
+import styles from './Home.module.scss'
+
+/** A row of the exhibitions list: every GET /api/exhibitions row carries its featured image. */
+type HomeExhibition = TExhibition & { featuredImageUrl?: string | null }
+
+type Shortcut = {
+  href: string
+  icon: Icon
+  title: string
+  text: string
+  cta: string
+}
+
+// The three shortcut cards (artist.md §1). Payouts stays neutral: nothing the
+// studio has knows the payouts state (questions.md Q98).
+const SHORTCUTS: Shortcut[] = [
+  {
+    href: '/dashboard/artworks',
+    icon: Images,
+    title: 'Artworks',
+    text: 'Add images, texts, sound and video, and choose which prints you sell.',
+    cta: 'Open library',
+  },
+  {
+    href: '/dashboard/profile',
+    icon: User,
+    title: 'Profile',
+    text: 'Your photo, signature, name and biography on your public page.',
+    cta: 'Edit profile',
+  },
+  {
+    href: '/dashboard/payouts',
+    icon: Bank,
+    title: 'Payouts',
+    text: 'Connect a bank account with Stripe so we can pay you for your sales.',
+    cta: 'Set up payouts',
+  },
+]
+
+const exhibitionsCount = (n: number) => (n === 1 ? '1 exhibition' : `${n} exhibitions`)
+
+/** One card: named by its title, its line read as the description. */
+function ShortcutCard({ shortcut }: { shortcut: Shortcut }) {
+  const id = useId()
+  const TileIcon = shortcut.icon
+  return (
+    <li>
+      <Link
+        href={shortcut.href}
+        className={styles.tile}
+        aria-labelledby={`${id}-title`}
+        aria-describedby={`${id}-text`}
+      >
+        <span aria-hidden className={styles.tileIcon}>
+          <TileIcon size={20} weight="light" />
+        </span>
+        <span id={`${id}-title`} className={styles.tileTitle}>
+          {shortcut.title}
+        </span>
+        <span id={`${id}-text`} className={styles.tileText}>
+          {shortcut.text}
+        </span>
+        <span className={styles.tileCta}>
+          {shortcut.cta}
+          <span aria-hidden> →</span>
+        </span>
+      </Link>
+    </li>
+  )
+}
 
 export const DashboardPage = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -52,20 +128,6 @@ export const DashboardPage = () => {
   const [isModalShown, setIsModalShown] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  // Close kebab menu on outside click
-  useEffect(() => {
-    if (!openMenuId) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [openMenuId])
 
   const { data: userData } = useGetUserQuery(userId ?? '', {
     skip: !userId,
@@ -77,6 +139,7 @@ export const DashboardPage = () => {
     // after a user switch can never be filed under the wrong owner.
     originalArgs: exhibitionsOwnerId,
     isError: exhibitionsFailed,
+    isLoading: exhibitionsLoading,
     refetch: refetchExhibitions,
   } = useGetExhibitionsByUserQuery(userId ?? '', {
     skip: !userId,
@@ -176,188 +239,167 @@ export const DashboardPage = () => {
   const isAdminOrSuperAdmin = userType === 'admin' || userType === 'superAdmin'
   const showBackToAdmin = isAdminOrSuperAdmin && !isImpersonating
 
+  // ── Render-only ──
+  const panelTitleId = useId()
+  const greetingName = userData?.name ?? session?.user?.name ?? ''
+  const listed = exhibitions.length > 0
+
   return (
-    <>
+    <div className={styles.page}>
       {/* The old frame's header link, kept in the page: its target isn't in the
           studio menu (questions.md Q99). */}
       {showBackToAdmin && (
-        <Link href="/admin/dashboard" className={dashboardStyles.backLink}>
+        <Link href="/admin/dashboard" className={c(dashboardStyles.backLink, styles.backLink)}>
           ← Back to Admin Dashboard
         </Link>
       )}
 
-      {/* Page Title */}
-      <h1 className={dashboardStyles.pageTitle}>
-        Hello {userData?.name ?? session?.user?.name ?? ''}
-      </h1>
+      <header className={styles.header}>
+        <h1 className={styles.greeting}>{greetingName ? `Hello, ${greetingName}` : 'Hello'}</h1>
+        <p className={styles.sub}>Your exhibitions, artworks and profile, all in one place.</p>
+      </header>
 
-      {/* Artist Profile Section */}
-      <div className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>My Profile</h2>
-          <Button
-            font="dashboard"
-            variant="secondary"
-            label="Edit Profile"
-            onClick={() => router.push('/dashboard/profile')}
-          />
-        </div>
-        <p className={dashboardStyles.sectionDescription}>
-          Manage your artist profile, biography, and profile picture.
-        </p>
-      </div>
+      <ul className={styles.tiles}>
+        {SHORTCUTS.map((shortcut) => (
+          <ShortcutCard key={shortcut.href} shortcut={shortcut} />
+        ))}
+      </ul>
 
-      {/* Payouts Section */}
-      <div className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>Payouts</h2>
+      <section aria-labelledby={panelTitleId} className={styles.panel}>
+        <div className={styles.panelHead}>
+          <div className={styles.panelTitles}>
+            <h2 id={panelTitleId} className={styles.panelTitle}>
+              My exhibitions
+            </h2>
+            {listed && <span className={styles.count}>{exhibitionsCount(exhibitions.length)}</span>}
+          </div>
           <Button
+            variant="bare"
             font="dashboard"
-            variant="secondary"
-            label="Set up payouts"
-            onClick={() => router.push('/dashboard/payouts')}
-          />
-        </div>
-        <p className={dashboardStyles.sectionDescription}>
-          Connect a bank account with Stripe so we can send you your share when your prints sell.
-        </p>
-      </div>
-
-      {/* Artwork Library Section */}
-      <div className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>My Artworks</h2>
-          <Button
-            font="dashboard"
-            variant="secondary"
-            label="Manage Artworks"
-            onClick={() => router.push('/dashboard/artworks')}
-          />
-        </div>
-        <p className={dashboardStyles.sectionDescription}>
-          Upload and manage your artwork collection. Artworks can be used across multiple
-          exhibitions.
-        </p>
-      </div>
-
-      {/* Exhibitions Section */}
-      <div className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>My Exhibitions</h2>
-          <Button
-            font="dashboard"
-            variant="secondary"
-            label="New Exhibition"
+            className={styles.add}
             onClick={handleNewExhibition}
-          />
+          >
+            <Plus size={16} weight="light" aria-hidden />
+            New exhibition
+          </Button>
         </div>
 
         {/* A failed load used to be completely silent: the list simply stayed as
             it was, which is what let a stale one pass for the real thing. Say so
             instead — an empty list and a broken list are different facts. */}
         {exhibitionsFailed ? (
-          <EmptyState message="Could not load exhibitions. Refresh the page to try again." />
-        ) : exhibitions.length === 0 ? (
-          <EmptyState message="You do not have any exhibitions yet." />
+          <div className={styles.panelBody}>
+            <Callout tone="red" role="alert">
+              Could not load exhibitions. Refresh the page to try again.
+            </Callout>
+          </div>
+        ) : !listed ? (
+          exhibitionsLoading ? (
+            <p className={styles.loading}>Loading exhibitions…</p>
+          ) : (
+            <EmptyState title="You do not have any exhibitions yet." />
+          )
         ) : (
-          <table className={dashboardStyles.table}>
-            <thead>
-              <tr>
-                <th>Exhibition Name</th>
-                <th>Space</th>
-                <th>Status</th>
-                <th>Visibility</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {exhibitions.map((ex: TExhibition) => (
-                <tr key={ex.id}>
-                  <td>{ex.mainTitle}</td>
-                  <td>{spaceOptions.find((s) => s.value === ex.spaceId)?.label || ex.spaceId}</td>
-                  <td>
-                    <Badge
-                      label={ex.published ? 'Published' : 'Unpublished'}
-                      variant={ex.published ? 'published' : 'unpublished'}
-                    />
-                  </td>
-                  <td>
-                    {ex.published && ex.hasPendingChanges ? (
-                      <Badge label="Pending Changes" variant="current" />
-                    ) : ex.published ? (
-                      <Badge label="Up to date" variant="published" />
-                    ) : null}
-                  </td>
-                  <td>
-                    <div
-                      className={dashboardStyles.kebabWrapper}
-                      ref={openMenuId === ex.id ? menuRef : undefined}
+          <ul className={styles.rows}>
+            {exhibitions.map((ex: HomeExhibition) => {
+              const space = spaceOptions.find((s) => s.value === ex.spaceId)?.label || ex.spaceId
+              const image =
+                ex.featuredImageUrl && isSafeImageSrc(ex.featuredImageUrl)
+                  ? ex.featuredImageUrl
+                  : null
+              return (
+                <li key={ex.id} className={styles.row}>
+                  <span className={styles.image}>
+                    {image && (
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="96px"
+                        // Skip the Vercel optimizer: already-optimized .webp on
+                        // R2/CDN; cold re-encodes broke images on first load (AR-125).
+                        unoptimized
+                        className={styles.imageFill}
+                      />
+                    )}
+                  </span>
+                  <div className={styles.text}>
+                    <Link
+                      href={`/dashboard/exhibitions/${ex.id}/settings`}
+                      prefetch={false}
+                      className={styles.name}
                     >
-                      <Button
-                        variant="ghost"
-                        className={dashboardStyles.kebabButton}
-                        onClick={() => setOpenMenuId(openMenuId === ex.id ? null : ex.id)}
-                        aria-label="Actions"
-                        aria-haspopup="menu"
-                        aria-expanded={openMenuId === ex.id}
-                      >
-                        <DotsThreeVertical size={16} weight="bold" aria-hidden />
-                      </Button>
-                      {openMenuId === ex.id && (
-                        <div className={dashboardStyles.kebabMenu} role="menu">
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleViewExhibition(ex)
-                            }}
-                            disabled={!ex.published}
-                            label="View"
-                          />
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleEditExhibitionSettings(ex)
-                            }}
-                            label="Edit Exhibition"
-                          />
-                          <Button
-                            variant="menuItem"
-                            role="menuitem"
-                            className={dashboardStyles.kebabMenuItem}
-                            onClick={() => {
-                              setOpenMenuId(null)
-                              handleEdit3DSpace(ex)
-                            }}
-                            label="Edit 3D Space"
-                          />
-                          {isAdminOrSuperAdmin && (
-                            <Button
-                              variant="menuItem"
-                              role="menuitem"
-                              className={`${dashboardStyles.kebabMenuItem} ${dashboardStyles.kebabMenuItemDanger}`}
-                              onClick={() => {
-                                setOpenMenuId(null)
-                                handleDeleteClick(ex.id, ex.mainTitle)
-                              }}
-                              label="Delete"
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {ex.mainTitle}
+                    </Link>
+                    <span className={styles.meta}>
+                      <span className={styles.space}>{space}</span>
+                      <PublishState published={ex.published} />
+                      {ex.published && ex.hasPendingChanges ? (
+                        <StatusPill label="Pending changes" tone="amber" shape="tag" />
+                      ) : ex.published ? (
+                        <StatusPill label="Up to date" tone="green" shape="tag" />
+                      ) : null}
+                    </span>
+                  </div>
+                  <div className={styles.actions}>
+                    {/* The same URL handleEdit3DSpace opens (the menu item keeps the handler). */}
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      href={`/exhibitions/${userHandler ?? ''}/${ex.url}/edit`}
+                      prefetch={false}
+                      className={styles.edit3d}
+                    >
+                      <Cube size={16} weight="light" aria-hidden />
+                      Edit 3D space
+                    </Button>
+                    <RowMenu
+                      label={`Actions for ${ex.mainTitle}`}
+                      width={210}
+                      groups={[
+                        {
+                          items: [
+                            {
+                              id: 'view',
+                              label: 'View exhibition',
+                              hint: !ex.published ? 'Not published yet' : undefined,
+                              disabled: !ex.published,
+                              onSelect: () => handleViewExhibition(ex),
+                            },
+                            {
+                              id: 'settings',
+                              label: 'Exhibition settings',
+                              onSelect: () => handleEditExhibitionSettings(ex),
+                            },
+                            {
+                              id: 'edit-3d',
+                              label: 'Edit 3D space',
+                              onSelect: () => handleEdit3DSpace(ex),
+                            },
+                          ],
+                        },
+                        // Admins only, as before; for artists the group is empty and drops.
+                        {
+                          items: isAdminOrSuperAdmin
+                            ? [
+                                {
+                                  id: 'delete',
+                                  label: 'Delete exhibition…',
+                                  tone: 'danger',
+                                  onSelect: () => handleDeleteClick(ex.id, ex.mainTitle),
+                                },
+                              ]
+                            : [],
+                        },
+                      ]}
+                    />
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
         )}
-      </div>
+      </section>
 
       {isModalShown && (
         <Modal onClose={() => setIsModalShown(false)}>
@@ -373,37 +415,31 @@ export const DashboardPage = () => {
         </Modal>
       )}
 
-      <ErrorText>{error && `⚠️ ${JSON.stringify(error)}`}</ErrorText>
+      {/* The create request's error, as before (questions.md Q104). */}
+      {error && (
+        <Callout tone="red" role="alert">
+          {JSON.stringify(error)}
+        </Callout>
+      )}
 
       {deleteTarget && (
-        <Modal onClose={() => setDeleteTarget(null)}>
-          <div className={dashboardStyles.deleteModal}>
-            <h2>Delete Exhibition</h2>
+        <AdminConfirmModal
+          title="Delete exhibition"
+          message={
             <p>
               Are you sure you want to delete <strong>{deleteTarget.title}</strong>? This will
               permanently remove the exhibition and all its data.
             </p>
-            <div className={dashboardStyles.deleteWarning}>
-              This action is not reversible. Please be certain.
-            </div>
-            <div className={dashboardStyles.deleteActions}>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={deleting ? 'Deleting...' : 'Delete'}
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-              />
-            </div>
-          </div>
-        </Modal>
+          }
+          warning="This action is not reversible. Please be certain."
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          destructive
+          busy={deleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
-    </>
+    </div>
   )
 }

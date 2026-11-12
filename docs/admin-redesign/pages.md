@@ -23,7 +23,7 @@ Do these in order, one PR each.
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Built (12a, 12b, 12c) | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Built | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
-| 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
+| 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
@@ -632,3 +632,39 @@ the frame, the new `studio-shell.spec`): 88 passed, 2 skipped (they need data th
 `pnpm dev` (dev DB, read-only) at 1440 and 390 px: every studio page's active item and width, no horizontal scroll,
 no console errors; the admin drawer pixel-identical to before, the admin side menu identical apart from counts still
 loading in one shot.
+
+### Step 15a · Artist Home — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-artist-home-artworks.md` (contract, decisions, Q102–Q108). Files:
+`dashboard/index.tsx` + new `Home.module.scss`, `admin/shell/ShellFrame.module.scss` (studio bottom padding),
+`DashboardLayout.module.scss` (the rules Home was the last user of: `.table` and its two refusal rules, five `kebab*`,
+three `delete*`), `e2e/impersonation-dashboard.spec.ts` (two lines).
+
+1. **Kept**: every state, effect, handler, request and condition (diffed: the only removals are the kebab's open state
+   and its outside-click effect, which `RowMenu` owns; RTK's `isLoading` is read from the existing query). Delete
+   exhibition… is shown to admins only, View exhibition is disabled while unpublished and opens in the same tab, the
+   sync badge shows on published rows only, today's Space stays (Q102). The New exhibition dialog is today's (Q104).
+2. **Layout per artist.md §1**: serif h1 **Hello, {name}** (EB Garamond 40/400, 32 on phones) + the drawn sub; three tile
+   links (Artworks, Profile, Payouts; the design's copy; Payouts neutral, Q98); the **My exhibitions** panel (h2, "{n}
+   exhibitions", New exhibition) with rows: 96×64 featured image (gray tile without one), the name linking to its
+   settings, space · `PublishState` · Up to date / Pending changes, an outline **Edit 3D space** link, and ⋮
+   "Actions for {name}" (`RowMenu`: View exhibition, Exhibition settings, Edit 3D space, then Delete exhibition…). Links
+   go to the handlers' own URLs with prefetch off.
+3. **Delete exhibition** is `AdminConfirmModal` with today's text (the warning line in the amber box); it can't be
+   closed while the request runs (Q107). A failed create shows today's text in a red `Callout` (no emoji; Q104).
+4. **States (not drawn, Q103)**: "Loading exhibitions…" during the first load (today the empty message showed then); a
+   failed load = red `Callout` with today's sentence; empty = `EmptyState` with today's sentence.
+5. **Phone**: one column of tiles; rows in two lines (image + text, then Edit 3D space and ⋮ at 44 px).
+6. **Bottom padding**: with Home on `RowMenu` (it flips upward), no studio page has a downward menu, so the studio's
+   content ends 56 px down (40 px on phones). The admin keeps 200 px until Q69.
+7. **e2e**: `impersonation-dashboard` reads the exhibition names from the "My exhibitions" region's links and the
+   greeting as the h1 "Hello, {first}".
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; e2e on port 3001 (`impersonation-dashboard`,
+`impersonation-session`, `studio-shell`, `artist-logout`, with 15b's specs: 27 passed, 1 skipped: the user-switch test
+needs two artists with exhibitions, and it holds both changed lines, so their locators were run in the browser pass
+instead: 6 names from the region's links, h1 "Hello, John"); browser on my own `pnpm dev` (dev DB, read-only) at 1440
+and 390 px, as the artist and as an admin in their own studio: tiles, rows, badges, the last row's ⋮ opening upward,
+Escape back to ⋮, New exhibition opened and canceled, the admin's Delete exhibition… dialog (on a faked row) opened and
+canceled with no request, "Loading exhibitions…" and the failed Callout (route interception), the bottom padding
+(56 / 40 px) on every studio page, no horizontal scroll, no console errors.

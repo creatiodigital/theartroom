@@ -781,6 +781,32 @@ _Meanwhile:_ outside the frame, as today (the layout passes it through bare, lik
 _Meanwhile:_ all as today.
 
 
+**Q102 · Code Claude → Design Claude: Home, the exhibition row.** _Meanwhile:_
+
+- **View exhibition** opens in the same tab and stays disabled while unpublished, as today, so it has no ↗: a new tab would change behavior. The disabled item's hint is "Not published yet". Should it open a new tab, with ↗?
+- **Space**: today's Space column isn't drawn. It stays, as the first item of the status line ("Vienna · Published · Up to date").
+- **Sync badge**: drawn on an unpublished row ("Pending changes"). Today it shows only on published ones, so unpublished rows have none.
+- **Delete exhibition…** shows to admins only, as today. Artists get one group and no divider.
+- The name and **Edit 3D space** are links, to the same URLs as today's buttons, with prefetch off. The menu items keep today's handlers. ⋮ is named "Actions for {name}".
+
+**Q103 · Code Claude → Design Claude: Home, points not drawn.** _Meanwhile:_
+
+- **Loading**: "Loading exhibitions…" in the panel. Today the empty message showed while loading.
+- **Failed**: a red `Callout` with today's sentence.
+- **Empty**: `EmptyState` "You do not have any exhibitions yet."
+- **Count**: shown only from one exhibition up.
+- **Greeting**: "Hello, {name}", or "Hello" with no name.
+- **Tiles**: the design's copy replaces today's three descriptions. Each tile link is named by its title, with its line as the description. Hover: a `--color-gray-60` border.
+- **Phone**: h1 32 px, one column of tiles, rows in two lines (image 72×48 + text, then Edit 3D space + ⋮ at 44 px).
+- **Back link**: "← Back to Admin Dashboard" stays above the h1 (Q99 is still open).
+
+**Q104 · Code Claude → owner: Home, the New exhibition dialog and its error.**
+
+- The spec says "today's flow", so the dialog is unchanged: shared `Modal`, today's look, no focus trap.
+- A failed create shows the raw error as JSON, today behind a ⚠️, under the page, behind the dialog (which stays open).
+
+_Meanwhile:_ the same text in a red `Callout`, in the same place, with its Warning icon in place of the emoji. Options: (a) give the dialog the admin look, as Add artwork has, and show a readable error inside it (the server's text, else "The exhibition could not be created. Please try again."). That is a small behavior change. (b) Keep it as it is.
+
 ## Answered
 
 **Owner answers, 2026-11-11 (relayed to Code Claude):**

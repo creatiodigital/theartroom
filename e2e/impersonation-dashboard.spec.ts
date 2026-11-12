@@ -27,11 +27,16 @@ test.use({ storageState: 'e2e/.auth/admin.json' })
  * to the artist named in the banner.
  */
 
-/** Exhibition names currently rendered in the dashboard table. */
-const renderedExhibitions = (page: Page) =>
-  page.$$eval('table tbody tr td:first-child', (cells) =>
-    cells.map((c) => c.textContent?.trim() ?? '').filter(Boolean),
+/** Exhibition names currently rendered in Home's "My exhibitions" list (each links to its settings). */
+const renderedExhibitions = async (page: Page) =>
+  (
+    await page
+      .getByRole('region', { name: 'My exhibitions' })
+      .locator('a[href^="/dashboard/exhibitions/"]')
+      .allTextContents()
   )
+    .map((t) => t.trim())
+    .filter(Boolean)
 
 /** Two published artists who each own at least one exhibition. */
 function twoArtistsWithExhibitions() {
@@ -93,7 +98,9 @@ test("an impersonated artist never sees another artist's exhibitions", async ({ 
   await page.route('**/api/exhibitions?userId=*', (route) => route.abort('failed'))
 
   await impersonate(page, second.name)
-  await expect(page.getByText(`Hello ${second.name.split(' ')[0]}`)).toBeVisible()
+  await expect(
+    page.getByRole('heading', { level: 1, name: `Hello, ${second.name.split(' ')[0]}` }),
+  ).toBeVisible()
 
   // The invariant. Before the fix this kept the FIRST artist's exhibitions on
   // screen indefinitely, while banner and greeting both named the second.

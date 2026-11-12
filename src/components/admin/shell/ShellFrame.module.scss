@@ -65,10 +65,9 @@
   flex-direction: column;
 }
 
-// Bottom padding stays the old DashboardLayout's 200px (not the design's 56 / 40)
-// until the list pages are redesigned: the kebab menus on the last rows of Users,
-// Exhibitions and Content open downward and need the room (47dadb64). questions.md
-// Q6. The studio keeps it too: Home's exhibition kebab opens downward (step 15).
+// The admin's bottom padding stays the old DashboardLayout's 200px (not the design's
+// 56 / 40) until questions.md Q69 is answered: the kebab menus on the last rows of
+// Users, Exhibitions and Content opened downward and needed the room (47dadb64, Q6).
 .content {
   padding: var(--space-6) var(--space-4) 200px;
   box-sizing: border-box;
@@ -89,10 +88,14 @@
   }
 }
 
-// The studio's column starts 40px down (artist-home.dc.html).
+// The studio's column starts 40px down and ends 56px down (artist-home.dc.html;
+// 40px on phones). Its only row menu (Home's) flips upward near the bottom (Q6).
 .studio .content {
+  padding-bottom: var(--space-10);
+
   @include media-up(tablet) {
     padding-top: var(--space-10);
+    padding-bottom: 56px;
   }
 }
 
