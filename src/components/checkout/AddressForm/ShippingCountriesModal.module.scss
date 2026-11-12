@@ -209,8 +209,9 @@
   }
 }
 
+// The chosen country: bold and the check only (owner, 2026-11-12); grey is for hover and focus.
 .window .countryChosen {
-  background: var(--public-field);
+  font-weight: var(--font-bold);
 }
 
 // The full-width bar under the faded row: a button that scrolls down one view.
