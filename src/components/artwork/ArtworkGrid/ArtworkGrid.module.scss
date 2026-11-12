@@ -54,7 +54,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: var(--public-render-wall);
+  // No grey behind the work (owner, 2026-11-12): the square is only its frame on the page.
 }
 
 .viewDetailsLink {
