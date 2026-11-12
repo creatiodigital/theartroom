@@ -21,7 +21,6 @@ const getArtistsList = () =>
       name: true,
       lastName: true,
       handler: true,
-      biography: true,
       profileImageUrl: true,
     },
     // Alphabetical by last name (artists.md), then first name.

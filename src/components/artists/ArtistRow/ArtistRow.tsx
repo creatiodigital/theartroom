@@ -12,8 +12,8 @@ export type ArtistRowData = {
   href: string
   name: string
   imageUrl: string | null
-  /** The bio (rich text), shown whole as plain text. */
-  biography: string | null
+  /** The bio (rich text), shown whole as plain text; the exhibition page's About the artist only. */
+  biography?: string | null
   /** The Artists page: their exhibitions, joined by " · ". */
   exhibitions?: string[]
 }
