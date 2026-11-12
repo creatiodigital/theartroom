@@ -27,9 +27,7 @@
 .headerTitle {
   min-width: 0;
   margin: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  // Wraps rather than cutting a long title (owner, 2026-11-12: never cut).
   text-align: center;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 15px;
@@ -499,12 +497,9 @@
 }
 
 .cartAddedWork {
-  overflow: hidden;
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: 18px;
   line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .cartAddedArtist {

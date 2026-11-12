@@ -36,6 +36,16 @@ export const plainTextOf = (inner: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
+/**
+ * Rich text as plain-text paragraphs: one per paragraph, line break, list item or heading of the
+ * editor's text, so they don't run together ("wisdom.Watercolor") when shown as plain text.
+ */
+export const plainParagraphsOf = (html: string) =>
+  html
+    .split(/<\/p>|<br\s*\/?>|<\/li>|<\/h[1-6]>/i)
+    .map(plainTextOf)
+    .filter(Boolean)
+
 const slugOf = (text: string) =>
   text
     .normalize('NFKD')

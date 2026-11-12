@@ -5,7 +5,7 @@ import { ExhibitionViewPage } from '@/components/exhibitions/view'
 import type { RoomAbout } from '@/components/exhibitions/view/RoomAbout/RoomAboutPanel'
 import prisma from '@/lib/prisma'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
-import { plainTextOf } from '@/lib/richText/headingAnchors'
+import { plainParagraphsOf } from '@/lib/richText/headingAnchors'
 import { isRichTextEmpty } from '@/lib/textUtils'
 
 /**
@@ -80,7 +80,7 @@ async function getRoomAbout(artistSlug: string, exhibitionSlug: string): Promise
     artist: {
       name: artistName,
       imageUrl: exhibition.user.profileImageUrl,
-      biography: exhibition.user.biography ? plainTextOf(exhibition.user.biography) || null : null,
+      biography: exhibition.user.biography ? plainParagraphsOf(exhibition.user.biography) : [],
     },
     exhibitionHref: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
     artistHref: `/artists/${exhibition.user.handler}`,

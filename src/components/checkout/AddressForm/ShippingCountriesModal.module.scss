@@ -183,20 +183,15 @@
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  height: 36px;
-  padding: 0 12px;
+  min-height: 36px;
+  padding: 7px 12px;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 15px;
   line-height: 1.2;
   text-align: left;
   color: var(--public-text);
   cursor: pointer;
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  // A long name wraps rather than being cut (owner, 2026-11-12: never cut).
 
   &:hover,
   &:focus-visible {

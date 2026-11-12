@@ -83,13 +83,10 @@
   }
 }
 
-// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). Whole, on as many
+// lines as it needs (owner, 2026-11-12: never cut).
 .description {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 16px;
   line-height: 1.65;
@@ -100,6 +97,9 @@
   }
 }
 
+// At the foot of the card, so the action rows line up across a row of cards whatever the length of
+// each description (owner, 2026-11-12); the card stretches to its grid row.
 .actions {
-  margin-top: 4px;
+  margin-top: auto;
+  padding-top: 4px;
 }

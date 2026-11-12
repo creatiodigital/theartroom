@@ -75,23 +75,14 @@
   }
 }
 
-// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). Whole, on as many
+// lines as it needs (owner, 2026-11-12: never cut).
 .description {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 15px;
   line-height: 1.6;
   color: var(--color-text-secondary);
-
-  @include media-down(md) {
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
 }
 
 .actions {

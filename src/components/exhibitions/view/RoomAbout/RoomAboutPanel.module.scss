@@ -207,17 +207,17 @@
   color: var(--public-text);
 }
 
-// A <p>: size pinned; two lines at most.
+// A <p> per paragraph: size pinned; the whole bio (owner, 2026-11-12: never cut).
 .bio {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 13px;
   line-height: 1.55;
   color: var(--public-secondary);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+
+  & + & {
+    margin-top: 8px;
+  }
 }
 
 .links {

@@ -46,16 +46,13 @@
 
 // A <p>: size pinned. Three lines at most.
 .title {
-  display: -webkit-box;
   margin: 14px 0 0;
-  overflow: hidden;
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: 44px;
   font-weight: var(--font-regular);
   line-height: 1.1;
   color: var(--public-text);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  // Whole, however long (owner, 2026-11-12: never cut).
 
   @include media-down(sm) {
     margin-top: 12px;

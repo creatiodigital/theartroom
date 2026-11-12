@@ -3,7 +3,7 @@ import { ArrowRight } from '@phosphor-icons/react/dist/ssr'
 
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { isSafeImageSrc } from '@/lib/imageSafety'
-import { plainTextOf } from '@/lib/richText/headingAnchors'
+import { plainParagraphsOf } from '@/lib/richText/headingAnchors'
 import c from 'classnames'
 
 import styles from './ArtistRow.module.scss'
@@ -20,18 +20,11 @@ export type ArtistRowData = {
 
 /**
  * One artist in a row (docs/public-redesign/artists.md; the exhibition page's "About the artist"):
- * a 4:5 portrait, the name in serif, the whole bio, "→ View artist". The whole row is one
- * link to the artist page.
+ * a 4:5 portrait, the name in serif, the whole bio in its paragraphs, "→ View artist". The whole row
+ * is one link to the artist page.
  */
-/** The bio's paragraphs as plain text: the editor's breaks kept, so they don't run together. */
-const bioParagraphs = (html: string) =>
-  html
-    .split(/<\/p>|<br\s*\/?>|<\/li>|<\/h[1-6]>/i)
-    .map(plainTextOf)
-    .filter(Boolean)
-
 export const ArtistRow = ({ artist, className }: { artist: ArtistRowData; className?: string }) => {
-  const bio = artist.biography ? bioParagraphs(artist.biography) : []
+  const bio = artist.biography ? plainParagraphsOf(artist.biography) : []
   return (
     <Link href={artist.href} className={c(styles.row, className)}>
       <span className={styles.portrait}>

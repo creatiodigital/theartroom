@@ -16,7 +16,8 @@ export type RoomAbout = {
   counts: string | null
   /** The full exhibition text, already rendered (sanitized on the server). */
   description: ReactNode | null
-  artist: { name: string; imageUrl: string | null; biography: string | null }
+  /** `biography`: the bio's paragraphs, plain text (whole; owner 2026-11-12: never cut). */
+  artist: { name: string; imageUrl: string | null; biography: string[] }
   exhibitionHref: string
   artistHref: string
 }
@@ -119,7 +120,11 @@ export const RoomAboutPanel = ({ about, onClose }: { about: RoomAbout; onClose: 
             )}
             <div className={styles.artistText}>
               <span className={styles.artistName}>{about.artist.name}</span>
-              {about.artist.biography && <p className={styles.bio}>{about.artist.biography}</p>}
+              {about.artist.biography.map((paragraph, index) => (
+                <p key={index} className={styles.bio}>
+                  {paragraph}
+                </p>
+              ))}
             </div>
           </div>
         </section>
