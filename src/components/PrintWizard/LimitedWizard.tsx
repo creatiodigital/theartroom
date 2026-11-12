@@ -11,7 +11,6 @@ import { Modal } from '@/components/ui/Modal'
 import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import { consumePrintReturnUrl } from '@/components/checkout/printReturnUrl'
 import Logo from '@/icons/logo.svg'
-import Monogram from '@/icons/monogram.svg'
 
 import { buildCartItem } from '@/lib/cart/buildCartItem'
 import { useCart } from '@/lib/cart/useCart'
@@ -26,6 +25,7 @@ import {
 
 import { SchemaStage } from './SchemaStage'
 import { SummaryPanel } from './SummaryPanel'
+import { LearnMoreSheet } from './LearnMoreSheet'
 import { VariantPicker, type VariantPickerItem } from './VariantPicker'
 import type { WizardArtwork } from './index'
 
@@ -296,60 +296,30 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
 
       {introOpen && detailVariant && (
         <Modal onClose={dismissIntro} titleId="print-intro-title" maxWidth="640px" showClose>
-          <div className={styles.introModal}>
-            <Monogram className={styles.introMonogram} aria-hidden="true" />
-            {/* Not shown: the buyer is already on this artwork's page, so the
-                line only restated what sits behind the modal. It stays in the
-                markup, visually hidden, because `titleId` points at it for the
-                dialog's accessible name. */}
-            <p id="print-intro-title" className="sr-only">
-              {artwork.title} by {artwork.artistName}
-            </p>
-            <div className={styles.detailSections}>
-              <p className={styles.detailSubhead}>Terms of sale</p>
-              <ul className={styles.detailList}>
-                <li>
-                  Individually numbered — each print carries its own number in the margin below the
-                  image.
-                </li>
-                <li>
-                  Comes with a Certificate of Authenticity (COA), hand-signed by the artist — the
-                  signature is on the certificate, not the print.
-                </li>
-                <li>Sold unframed, on premium archival paper — frame it your way.</li>
-                <li>Price might rise as the edition sells.</li>
-                <li>
-                  Your edition number is allocated at the point of sale — the number shown in the
-                  preview is for reference only.
-                </li>
-                <li>Final VAT is calculated when you confirm your delivery address at checkout.</li>
-                <li>Sales are strictly limited to one edition per household.</li>
-                <li>We reserve the right to cancel or refund an order if needed.</li>
-              </ul>
-              <p className={styles.detailSubhead}>Shipping</p>
-              <ul className={styles.detailList}>
-                <li>
-                  All editions are packaged to the highest standards, managed at our warehouse using
-                  archival materials.
-                </li>
-                <li>Shipping is calculated at checkout, based on your delivery address.</li>
-                <li>Most editions are dispatched within about a week of purchase.</li>
-                <li>
-                  Sent with tracked delivery &mdash; we&rsquo;ll email you the tracking when
-                  it&rsquo;s on its way.
-                </li>
-                <li>Delivery is typically 1&ndash;2 weeks.</li>
-                <li>Orders may be subject to customs and local import duties.</li>
-              </ul>
-            </div>
-            <p className={styles.detailTerms}>
-              Please read our{' '}
-              <Link href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
-                full terms of sale
-              </Link>
-              .
-            </p>
-          </div>
+          {/* order-flow.md "Learn more window": the same points as before, dashes removed. */}
+          <LearnMoreSheet
+            editionType="limited"
+            title={artwork.title}
+            artistName={artwork.artistName}
+            terms={[
+              'Individually numbered: each print carries its own number in the margin below the image.',
+              'Comes with a Certificate of Authenticity (COA), hand-signed by the artist: the signature is on the certificate, not the print.',
+              'Sold unframed, on premium archival paper: frame it your way.',
+              'Price might rise as the edition sells.',
+              'Your edition number is allocated at the point of sale: the number shown in the preview is for reference only.',
+              'Final VAT is calculated when you confirm your delivery address at checkout.',
+              'Sales are strictly limited to one edition per household.',
+              'We reserve the right to cancel or refund an order if needed.',
+            ]}
+            shipping={[
+              'All editions are packaged to the highest standards, managed at our warehouse using archival materials.',
+              'Shipping is calculated at checkout, based on your delivery address.',
+              'Most editions are dispatched within about a week of purchase.',
+              'Sent with tracked delivery: we’ll email you the tracking when it’s on its way.',
+              'Delivery is typically 1–2 weeks.',
+              'Orders may be subject to customs and local import duties.',
+            ]}
+          />
         </Modal>
       )}
     </div>

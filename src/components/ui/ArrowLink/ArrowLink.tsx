@@ -14,18 +14,31 @@ type ArrowLinkProps = {
   /** `cube` for "Enter 3D room". */
   icon?: keyof typeof ICONS
   className?: string
+  /** Opens in a new tab, and says so to screen readers. */
+  newTab?: boolean
 }
 
 /**
  * The public site's link (docs/public-redesign/components.md "ArrowLink"): the icon first
  * (ArrowRight, or Cube for the 3D room), then the label; never underlined.
  */
-export const ArrowLink = ({ href, children, icon = 'arrow', className }: ArrowLinkProps) => {
+export const ArrowLink = ({
+  href,
+  children,
+  icon = 'arrow',
+  className,
+  newTab = false,
+}: ArrowLinkProps) => {
   const Icon = ICONS[icon]
   return (
-    <Link href={href} className={c(styles.link, className)}>
+    <Link
+      href={href}
+      className={c(styles.link, className)}
+      {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
       <Icon size={18} weight="light" aria-hidden className={styles.icon} />
       <span>{children}</span>
+      {newTab && <span className="sr-only"> (opens in a new tab)</span>}
     </Link>
   )
 }
