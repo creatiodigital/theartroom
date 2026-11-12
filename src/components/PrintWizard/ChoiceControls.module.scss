@@ -1,0 +1,224 @@
+// order-flow.md "Frame", designs/order-configure-open-frame.dc.html: the switch, photo cards,
+// option rows with descriptions, chips, swatches. Native radios, visually hidden; focus shows on
+// the label.
+// position: relative keeps the hidden radios inside the scrolling steps panel; positioned against
+// the page instead, they stretched the document (the page scrolled under the wizard).
+.group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.options {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.option {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  border: 1px solid var(--color-gray-35);
+  background: var(--color-white);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  color: var(--public-secondary);
+  cursor: pointer;
+
+  &:has(.radio:focus-visible) {
+    outline: 2px solid var(--public-text);
+    outline-offset: 2px;
+  }
+}
+
+.checked {
+  border-color: var(--public-text);
+  color: var(--public-text);
+
+  .optionLabel {
+    font-weight: var(--font-bold);
+  }
+}
+
+.locked {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.optionLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.optionDescription {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+// "Print only | Framed": two equal halves.
+.segmented {
+  grid-template-columns: 1fr 1fr;
+
+  .option {
+    justify-content: center;
+    padding: var(--space-3);
+    text-align: center;
+  }
+}
+
+// Frame types: 2-up photo cards, the name under the photo.
+.cards {
+  grid-template-columns: 1fr 1fr;
+
+  .option {
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px;
+    font-size: 13px;
+    color: var(--public-text);
+  }
+
+  .optionText {
+    padding: 2px 2px 0;
+  }
+}
+
+.cardImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+// Glass, hanging: rows with a radio dot and the description written in.
+.list {
+  grid-template-columns: 1fr;
+
+  .option {
+    align-items: flex-start;
+    padding: var(--space-3) 14px;
+  }
+}
+
+.dot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid var(--color-gray-65);
+  border-radius: 50%;
+}
+
+.list .checked .dot {
+  border-color: var(--public-text);
+
+  &::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--public-text);
+  }
+}
+
+// Mount, profiles: chips.
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+
+  .option {
+    padding: 9px 14px;
+  }
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swatch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:has(.radio:focus-visible) .swatchDot {
+    outline: 2px solid var(--public-text);
+    outline-offset: 4px;
+  }
+
+  &.checked {
+    color: var(--public-text);
+  }
+}
+
+.swatchDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%);
+}
+
+.swatch.checked .swatchDot {
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 12%),
+    0 0 0 2px var(--color-white),
+    0 0 0 3px var(--public-text);
+}
+
+// A <p>: size pinned (globals.scss gives every <p> 16–18px).
+.note {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+
+  b {
+    color: var(--public-text);
+  }
+}

@@ -109,9 +109,10 @@
   flex: 1;
   display: grid;
   grid-template-columns: 340px 1fr 360px;
-  // One row: the panels fill the height. (The edition badge's row went into the summary panel's
-  // "What is an open edition?" row, order-flow.md.)
-  grid-template-rows: 1fr;
+  // One row: the panels fill the height and scroll inside it (minmax(0, …): a plain 1fr row
+  // grows with a tall step and the page scrolls instead). The edition badge's row went into the
+  // summary panel's "What is an open edition?" row (order-flow.md).
+  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
 
   @include media-down(wide) {

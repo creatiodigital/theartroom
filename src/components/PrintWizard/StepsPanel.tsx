@@ -8,6 +8,7 @@ import { SelectDropdown } from '@/components/ui/SelectDropdown'
 import { Slider } from '@/components/ui/Slider'
 import type { SelectOption } from '@/components/ui/SelectDropdown'
 
+import { EnumChoice, MouldingChoice } from './ChoiceControls'
 import { NumberedStep } from './NumberedStep'
 import { CustomSizeInputs } from './CustomSizeInputs'
 
@@ -511,7 +512,8 @@ const FrameSection = ({
       open={open}
       onToggle={onToggle}
     >
-      <EnumDropdown
+      <EnumChoice
+        look="segmented"
         dim={format}
         config={config}
         countryCode={countryCode}
@@ -522,7 +524,8 @@ const FrameSection = ({
       />
       {isFraming && (
         <>
-          <EnumDropdown
+          <EnumChoice
+            look="cards"
             dim={frameType}
             config={config}
             countryCode={countryCode}
@@ -531,7 +534,7 @@ const FrameSection = ({
             optionsLocked={optionsLocked}
             onChange={onChange}
           />
-          <EnumDropdown
+          <MouldingChoice
             dim={moulding}
             config={config}
             countryCode={countryCode}
@@ -541,7 +544,8 @@ const FrameSection = ({
             onChange={onChange}
           />
           {glass && isDimensionVisible(glass, config, catalog) && (
-            <EnumDropdown
+            <EnumChoice
+              look="list"
               dim={glass}
               config={config}
               countryCode={countryCode}
@@ -552,7 +556,8 @@ const FrameSection = ({
             />
           )}
           {windowMount && isDimensionVisible(windowMount, config, catalog) && (
-            <EnumDropdown
+            <EnumChoice
+              look="chips"
               dim={windowMount}
               config={config}
               countryCode={countryCode}
@@ -564,7 +569,8 @@ const FrameSection = ({
           )}
           {windowMountSize && isDimensionVisible(windowMountSize, config, catalog) && (
             <>
-              <EnumDropdown
+              <EnumChoice
+                look="chips"
                 dim={windowMountSize}
                 config={config}
                 countryCode={countryCode}
@@ -577,7 +583,8 @@ const FrameSection = ({
             </>
           )}
           {hanging && (
-            <EnumDropdown
+            <EnumChoice
+              look="list"
               dim={hanging}
               config={config}
               countryCode={countryCode}
@@ -593,70 +600,6 @@ const FrameSection = ({
   )
 }
 
-// Bare enum dropdown — same logic as EnumDimensionSection but without
-// the outer CollapsibleSection wrapper, so it can be used inside a
-// grouped section.
-const EnumDropdown = ({
-  dim,
-  config,
-  countryCode,
-  availability,
-  restrictions,
-  optionsLocked,
-  onChange,
-}: {
-  dim: EnumDimension
-  config: WizardConfig
-  countryCode: string
-  availability: AvailabilityCheck
-  restrictions: PrintRestrictions | null
-  optionsLocked: boolean
-  onChange: (patch: Record<string, string>) => void
-}) => {
-  const filtered = useMemo(
-    () =>
-      dim.options.filter((option) =>
-        isOptionPickable(option, {
-          dimensionId: dim.id,
-          config,
-          country: countryCode,
-          availability,
-          restrictions,
-        }),
-      ),
-    [dim, config, countryCode, availability, restrictions],
-  )
-
-  const selectOptions: SelectOption<string>[] = useMemo(
-    () =>
-      filtered.map((option) => ({
-        value: option.id,
-        label: option.label,
-        tooltip: optionTooltip(option),
-        tooltipImage: option.tooltipImageUrl ? (
-          // unoptimized: catalog image; skip the Vercel optimizer whose cold
-          // re-encode broke images on first load (AR-125).
-          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} unoptimized />
-        ) : undefined,
-      })),
-    [filtered],
-  )
-
-  return (
-    <div className={styles.stepField}>
-      <SelectDropdown<string>
-        label={dim.label}
-        options={selectOptions}
-        value={config.values[dim.id] ?? ''}
-        onChange={(v) => onChange({ [dim.id]: v })}
-        disabled={optionsLocked}
-      />
-    </div>
-  )
-}
-
-// Bare border slider — mirrors BorderDimensionSection's inner content
-// without the outer CollapsibleSection.
 const BorderSlider = ({
   dim,
   config,
