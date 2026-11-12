@@ -2,15 +2,14 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 
+import { Check } from '@phosphor-icons/react'
+
+import { PasswordFields } from '@/components/auth/PasswordFields'
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
-import { ErrorText } from '@/components/ui/ErrorText'
-import { FormField } from '@/components/ui/FormField'
-import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
 import { validatePassword } from '@/lib/validation'
 
 import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
@@ -50,7 +49,7 @@ const ResetPasswordForm = () => {
     const next: { password?: string; confirmPassword?: string } = {}
     const result = validatePassword(pw)
     if (!result.valid) next.password = `Password must include ${result.errors.join(', ')}.`
-    if (confirm !== pw) next.confirmPassword = 'Passwords do not match.'
+    if (confirm !== pw) next.confirmPassword = 'Passwords don’t match.'
     return next
   }
 
@@ -100,85 +99,56 @@ const ResetPasswordForm = () => {
     }
   }
 
+  // other-screens.md "Reset password": a centred 420 px column, the shared fields and checklist, a
+  // black full-width button, server errors as one red line under it; the done state in its place.
   if (success) {
     return (
       <div className={styles.container}>
-        <Text as="h1" size="2xl" font="serif" className={styles.title}>
-          Password Reset Successfully
-        </Text>
-        <Text as="p" className={styles.subtitle}>
-          Your password has been updated. You can now log in with your new password.
-        </Text>
-        <Text as="p" className={styles.redirect}>
-          Redirecting to home page...
-        </Text>
-        <Link href="/" className={styles.link}>
-          Go to Home
-        </Link>
+        <span className={styles.doneMark} aria-hidden>
+          <Check size={22} weight="light" />
+        </span>
+        <h1 className={styles.title}>Your password is updated.</h1>
+        <p className={styles.subtitle}>You can now sign in with your new password.</p>
+        <ArrowLink href="/">Back to the home page</ArrowLink>
       </div>
     )
   }
 
   return (
     <div className={styles.container}>
-      <Text as="h1" size="2xl" font="serif" className={styles.title}>
-        Reset Your Password
-      </Text>
-      <Text as="p" className={styles.subtitle}>
-        Enter your new password below.
-      </Text>
+      <h1 className={styles.title}>Reset your password</h1>
+      <p className={styles.subtitle}>Choose a new password for your account.</p>
 
       <form onSubmit={handleSubmit} className={styles.form} noValidate>
-        <FormField label="New Password" htmlFor="password" error={fieldErrors.password}>
-          <Input
-            id="password"
-            type="password"
-            size="medium"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              revalidate(e.target.value, confirmPassword)
-            }}
-            invalid={!!fieldErrors.password}
-            showPasswordToggle
-            required
-          />
-        </FormField>
-
-        <FormField
-          label="Confirm Password"
-          htmlFor="confirmPassword"
-          error={fieldErrors.confirmPassword}
-        >
-          <Input
-            id="confirmPassword"
-            type="password"
-            size="medium"
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value)
-              revalidate(password, e.target.value)
-            }}
-            invalid={!!fieldErrors.confirmPassword}
-            showPasswordToggle
-            required
-          />
-        </FormField>
-
-        <ErrorText>{error}</ErrorText>
+        <PasswordFields
+          ids={{ password: 'password', confirm: 'confirmPassword' }}
+          password={password}
+          confirm={confirmPassword}
+          onPasswordChange={(next) => {
+            setPassword(next)
+            revalidate(next, confirmPassword)
+          }}
+          onConfirmChange={(next) => {
+            setConfirmPassword(next)
+            revalidate(password, next)
+          }}
+          passwordError={fieldErrors.password}
+          confirmError={fieldErrors.confirmPassword}
+        />
 
         <Button
           variant="primary"
-          size="regularSquared"
-          label={loading ? 'Resetting...' : 'Reset Password'}
+          label={loading ? 'Resetting…' : 'Reset password'}
           type="submit"
           className={styles.submitButton}
         />
+        {/* No page to request a new link from (only the sign-in window's), so the line alone. */}
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
       </form>
-
-      <Link href="/" className={styles.link}>
-        Back to Home
-      </Link>
     </div>
   )
 }
