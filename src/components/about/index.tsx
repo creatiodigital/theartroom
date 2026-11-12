@@ -8,6 +8,8 @@ import { splitAtH2 } from '@/lib/richText/headingAnchors'
 
 import styles from './About.module.scss'
 
+const FIRST_SECTION_LABEL = 'The gallery'
+
 interface AboutPageProps {
   content: string | null
 }
@@ -25,18 +27,21 @@ export const AboutPage = ({ content }: AboutPageProps) => {
         <PageIntro title="About" subtitle="A space for art, dialogue and experimentation." lead />
 
         <div className={styles.sections}>
-          {sections.map((section, index) =>
-            section.heading ? (
-              <TextSection key={index} label={section.heading} className={styles.row}>
+          {sections.map((section, index) => {
+            // The editor's text has no heading above its opening paragraphs: they get the
+            // spec's first label (about-contact.md), like every other section.
+            const label = section.heading ?? (index === 0 ? FIRST_SECTION_LABEL : null)
+            return label ? (
+              <TextSection key={index} label={label} className={styles.row}>
                 <RichText content={section.html} variant="page" className={styles.text} />
               </TextSection>
             ) : (
-              // Text before the first heading has no label: it runs in the text column alone.
+              // A later section under an empty heading has no label: it runs in the text column alone.
               <div key={index} className={`${styles.row} ${styles.unlabelled}`}>
                 <RichText content={section.html} variant="page" className={styles.text} />
               </div>
-            ),
-          )}
+            )
+          })}
         </div>
 
         <Band
