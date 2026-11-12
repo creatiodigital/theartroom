@@ -38,15 +38,6 @@
   }
 }
 
-// Small grey caps (the secondary grey: the drawn one is under 4.5:1, Q-P12).
-.eyebrow {
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-
 .name {
   margin: 0;
   font-family: var(--font-serif), var(--font-serif-fallback);

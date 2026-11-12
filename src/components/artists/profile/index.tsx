@@ -55,7 +55,6 @@ export const ArtistProfilePage = ({
       <div className={styles.content}>
         <section className={styles.hero}>
           <div className={styles.heroText}>
-            <span className={styles.eyebrow}>Artist</span>
             <h1 className={styles.name}>{artistFullName}</h1>
           </div>
           <div className={styles.photo}>
