@@ -39,7 +39,7 @@ export const ContactPage = () => {
             <Text as="span" size="xs" className={styles.label}>
               CONTACT
             </Text>
-            <Text as="p" font="serif" className={styles.value}>
+            <Text as="p" font="serif" className={styles.paragraph}>
               The Art Room welcomes inquiries related to exhibitions, artworks, and artist
               collaborations.
             </Text>
@@ -49,7 +49,7 @@ export const ContactPage = () => {
             <Text as="span" size="xs" className={styles.label}>
               SUBMISSION
             </Text>
-            <Text as="p" font="serif" className={styles.value}>
+            <Text as="p" font="serif" className={styles.paragraph}>
               The Art Room is currently accepting exhibition proposals from artists anywhere in the
               world, working in any medium. Write to us with a short introduction, a link to your
               portfolio or a selection of images, and a few words about the body of work you would

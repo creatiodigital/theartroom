@@ -143,6 +143,20 @@
   }
 }
 
+// The Contact and Submission paragraphs: reading text, smaller than the short values above (the
+// email, the cities). At the values' size the Submission text, twice as long since AR-174, read as
+// a headline (owner, 2026-11-10: "the paragraph font size huge ... decrease them a little").
+.paragraph {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg-mobile);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+
+  @include breakpoint(lg) {
+    font-size: var(--text-lg);
+  }
+}
+
 .sectionTitle {
   color: var(--color-text-primary);
   margin-bottom: var(--space-2);
