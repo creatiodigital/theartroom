@@ -19,9 +19,9 @@ interface FeaturedArtistsProps {
 }
 
 /**
- * The homepage's Artists (docs/public-redesign/home.md §6): today's featured artists as 3:2
- * portraits, four in a row (two on phones), the name in serif only, each a link to the artist's
- * page; "All artists" on the heading row.
+ * The homepage's Featured artists (docs/public-redesign/home.md §6): today's featured artists as
+ * portrait photos (4:5, cropped from the sides; owner, 2026-11-12), four in a row (two on phones),
+ * the name in serif only, each a link to the artist's page; "All artists" on the heading row.
  */
 export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
   if (artists.length === 0) return null
@@ -42,7 +42,7 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
                     src={artist.profileImageUrl}
                     alt=""
                     fill
-                    sizes="(max-width: 768px) 50vw, 270px"
+                    sizes="(max-width: 768px) 50vw, 420px"
                     className={styles.image}
                   />
                 )}

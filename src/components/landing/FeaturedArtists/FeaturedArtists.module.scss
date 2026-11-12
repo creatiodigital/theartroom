@@ -39,11 +39,12 @@
   }
 }
 
-// 3:2: the artists' photos are landscape.
+// Portrait, 4:5 (owner, 2026-11-12): the photos are landscape, so they are cropped from the sides,
+// centred.
 .imageBox {
   position: relative;
   display: block;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   background: var(--public-render-wall);
 }
