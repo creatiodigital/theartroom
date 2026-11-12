@@ -126,10 +126,12 @@
   padding: 20px 0 28px;
   border-top: 1px solid var(--color-gray-20);
 
+  // Phones: more air (owner, 2026-11-12: it was cluttered), the © under a hairline of its own.
   @include media-down(md) {
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
+    align-items: stretch;
+    gap: var(--space-6);
+    padding: var(--space-6) 0 var(--space-8);
   }
 }
 
@@ -145,7 +147,7 @@
   @include media-down(md) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3) var(--space-4);
+    gap: var(--space-4) var(--space-6);
     justify-items: start;
   }
 }
@@ -164,4 +166,10 @@
   line-height: 1.5;
   white-space: nowrap;
   color: var(--public-muted);
+
+  // Phones: set apart from the legal links by a grey hairline (owner, 2026-11-12).
+  @include media-down(md) {
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-gray-30);
+  }
 }
