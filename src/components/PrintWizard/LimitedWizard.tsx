@@ -295,7 +295,13 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
       </main>
 
       {introOpen && detailVariant && (
-        <Modal onClose={dismissIntro} titleId="print-intro-title" maxWidth="640px" showClose>
+        <Modal
+          onClose={dismissIntro}
+          titleId="print-intro-title"
+          maxWidth="640px"
+          showClose
+          tone="public"
+        >
           {/* order-flow.md "Learn more window": the same points as before, dashes removed. */}
           <LearnMoreSheet
             editionType="limited"

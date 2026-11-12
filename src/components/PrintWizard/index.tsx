@@ -356,7 +356,13 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
       )}
 
       {introOpen && (
-        <Modal onClose={dismissIntro} titleId="print-intro-title" maxWidth="640px" showClose>
+        <Modal
+          onClose={dismissIntro}
+          titleId="print-intro-title"
+          maxWidth="640px"
+          showClose
+          tone="public"
+        >
           {/* order-flow.md "Learn more window": the same points as before, dashes removed. */}
           <LearnMoreSheet
             editionType="open"

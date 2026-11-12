@@ -507,6 +507,7 @@ export const AddressForm = ({
       {countriesOpen && (
         <ShippingCountriesModal
           countryCodes={countryCodes ?? Object.keys(COUNTRY_NAMES)}
+          selectedCode={country}
           onClose={() => setCountriesOpen(false)}
           onSelect={(code) => {
             setCountry(code)

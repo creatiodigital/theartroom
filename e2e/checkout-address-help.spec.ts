@@ -125,6 +125,8 @@ test('the address warning states we print exactly what was entered', async ({ pa
 test('"Where we ship" opens over checkout, and picking a country fills the form', async ({
   page,
 }) => {
+  // A desktop screen (the 1280 × 720 default is too short for the whole list at once).
+  await page.setViewportSize({ width: 1440, height: 900 })
   await openCheckout(page)
 
   // Type into the form FIRST — the whole point of a modal here is that a buyer
@@ -140,19 +142,28 @@ test('"Where we ship" opens over checkout, and picking a country fills the form'
   await expect(dialog).toHaveAccessibleName(/where we ship/i)
   await expect(dialog.getByRole('heading', { name: /where we ship/i })).toBeVisible()
   // The kind sign-off, so a buyer whose country is absent is not just refused.
-  await expect(dialog.getByText(/adding new delivery countries/i)).toBeVisible()
+  await expect(dialog.getByText(/we add new countries as we grow/i)).toBeVisible()
+  await expect(dialog.getByRole('link', { name: /tell us where you are/i })).toHaveAttribute(
+    'href',
+    /^mailto:contact@theartroom\.gallery\?subject=Shipping%20to%20my%20country$/,
+  )
 
-  // The list scrolls inside the dialog, and macOS hides scrollbars — the
-  // visible part ended on a full row and looked complete, which hid the UK,
-  // the US and Spain from buyers. So the dialog says there is more, and stops
-  // saying it once the buyer reaches the end.
-  const scrollHint = dialog.getByText(/scroll to see all countries/i)
+  // Nobody may miss a country (order-flow.md "Where we ship" window). On a desktop screen the
+  // window is wide enough (4 columns) for every country at once: no "more below" bar, and the
+  // last country is in view without scrolling.
   const lastCountry = dialog.getByRole('button', { name: 'United States', exact: true })
-  await expect(lastCountry).not.toBeInViewport()
-  await expect(scrollHint).toBeVisible()
-  await dialog.getByRole('list').evaluate((list) => list.scrollTo({ top: list.scrollHeight }))
+  const moreBelow = dialog.getByRole('button', { name: /more countr(y|ies) below/i })
   await expect(lastCountry).toBeInViewport()
-  await expect(scrollHint).toBeHidden()
+  await expect(moreBelow).toHaveCount(0)
+
+  // Find your country: start of any word, any case; no match says so.
+  const search = dialog.getByRole('searchbox', { name: 'Find your country' })
+  await search.fill('KING')
+  await expect(dialog.getByRole('button', { name: 'United Kingdom', exact: true })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Spain', exact: true })).toHaveCount(0)
+  await search.fill('Atlantis')
+  await expect(dialog.getByText('We don’t ship to “Atlantis” yet.')).toBeVisible()
+  await search.fill('')
 
   // Spain is on the list; choosing it sets the country and closes the dialog.
   await dialog.getByRole('button', { name: 'Spain', exact: true }).click()
@@ -161,4 +172,29 @@ test('"Where we ship" opens over checkout, and picking a country fills the form'
   // Nothing behind the modal was disturbed.
   await expect(page.locator('#fullName')).toHaveValue('John Doe')
   await expect(page.getByText('Spain')).toBeVisible()
+})
+
+test('"Where we ship" on a phone: the bar under the list leads to every country', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openCheckout(page)
+  await page.getByRole('button', { name: /where we ship/i }).click()
+
+  const dialog = page.getByRole('dialog')
+  const lastCountry = dialog.getByRole('button', { name: 'United States', exact: true })
+  const moreBelow = dialog.getByRole('button', { name: /more countr(y|ies) below/i })
+
+  // Two columns do not fit: the bar says how many are below (replaces "Scroll to see all").
+  await expect(lastCountry).not.toBeInViewport()
+  await expect(moreBelow).toBeVisible()
+  await expect(dialog.getByText(/scroll to see all countries/i)).toHaveCount(0)
+
+  // Each press scrolls one view; at the end the bar goes and the last country is in view.
+  for (let press = 0; press < 12 && (await moreBelow.count()) > 0; press++) {
+    await moreBelow.click()
+    await page.waitForTimeout(400)
+  }
+  await expect(moreBelow).toHaveCount(0)
+  await expect(lastCountry).toBeInViewport()
 })

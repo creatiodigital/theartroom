@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode, MouseEvent } from 'react'
 import { X } from '@phosphor-icons/react'
+import c from 'classnames'
 
 type ModalProps = {
   children: ReactNode
@@ -30,9 +31,18 @@ type ModalProps = {
   showClose?: boolean
   /**
    * `admin`: the admin redesign's dialog look (dark backdrop, 8px corners,
-   * deeper shadow). Opt-in so every other modal keeps its look.
+   * deeper shadow). `public`: the public site's windows (docs/public-redesign
+   * order-flow.md: square, a deep shadow, a dim backdrop). Opt-in so every
+   * other modal keeps its look.
    */
-  tone?: 'default' | 'admin'
+  tone?: 'default' | 'admin' | 'public'
+  /**
+   * `flush`: no padding and no scrolling of its own, for a window that lays out
+   * its own header, scrolling middle and footer.
+   */
+  layout?: 'padded' | 'flush'
+  /** Full screen on phones (below 640px): no inset, the panel fills the screen. */
+  phoneFullScreen?: boolean
 }
 
 import styles from './Modal.module.scss'
@@ -44,6 +54,8 @@ const Modal = ({
   maxWidth,
   showClose,
   tone = 'default',
+  layout = 'padded',
+  phoneFullScreen = false,
 }: ModalProps) => {
   const mouseDownOnBackdrop = useRef(false)
   const mouseDownAt = useRef<{ x: number; y: number } | null>(null)
@@ -106,7 +118,12 @@ const Modal = ({
 
   return (
     <div
-      className={tone === 'admin' ? `${styles.modal} ${styles.admin}` : styles.modal}
+      className={c(
+        styles.modal,
+        tone === 'admin' && styles.admin,
+        tone === 'public' && styles.public,
+        phoneFullScreen && styles.phoneFullScreen,
+      )}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       data-no-deselect="true"
@@ -117,7 +134,7 @@ const Modal = ({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={styles.content}
+        className={c(styles.content, layout === 'flush' && styles.flush)}
         // Bounded by the viewport even when a caller names a width. As a bare
         // inline value this overrode the stylesheet's cap, so a modal asking for
         // 640px ran to both edges of a 390px phone.

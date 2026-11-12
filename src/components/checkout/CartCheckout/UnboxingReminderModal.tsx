@@ -31,7 +31,7 @@ export const UnboxingReminderModal = ({ onClose }: UnboxingReminderModalProps) =
 
   // order-flow.md "A small request"; designs/order-unboxing-request.dc.html: 520 px.
   return (
-    <Modal onClose={onClose} titleId={titleId} maxWidth="520px" showClose>
+    <Modal onClose={onClose} titleId={titleId} maxWidth="520px" showClose tone="public">
       <div className={styles.body}>
         <span className={styles.icon} aria-hidden>
           <Camera size={26} weight="light" />

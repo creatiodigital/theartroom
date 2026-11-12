@@ -1,0 +1,310 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/order-flow.md "Where we ship" window: 760 px, a header over a hairline, the
+// search, 4 columns (2 on phones), the "more below" bar when the list does not fit, a footer.
+// Never taller than the screen less 64 px above and below; full screen on phones.
+.window {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(100dvh - 128px);
+
+  @include media-down(sm) {
+    height: 100%;
+    max-height: none;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 32px 36px 20px;
+  border-bottom: 1px solid var(--color-gray-30);
+
+  @include media-down(sm) {
+    padding: 24px 20px 20px;
+  }
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// #666, not the drawn #888 (Q-P12).
+.eyebrow {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 34px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 30px;
+  }
+}
+
+.intro {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--public-secondary);
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 24px 36px;
+
+  @include media-down(sm) {
+    padding: 20px;
+  }
+}
+
+// ── Find your country ────────────────────────────────────────────────────
+.search {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--color-gray-60);
+  background: var(--color-white);
+
+  &:focus-within {
+    border-color: var(--public-text);
+  }
+}
+
+.searchIcon {
+  flex: 0 0 auto;
+  color: var(--public-muted);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  // 16 px on touch screens: below it iOS zooms the page on focus.
+  font-size: 15px;
+  color: var(--public-text);
+
+  @media (pointer: coarse) {
+    font-size: 16px;
+  }
+
+  &::placeholder {
+    color: var(--public-muted);
+  }
+
+  &::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+}
+
+// ── The list ─────────────────────────────────────────────────────────────
+// The frame carries the fade: the list is the scroller, so anything drawn inside it scrolls away.
+.listFrame {
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 56px;
+    background: linear-gradient(rgba(255, 255, 255, 0), var(--color-white));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &.moreBelow::after {
+    opacity: 1;
+  }
+
+  @include media-down(sm) {
+    flex: 1 1 auto;
+  }
+}
+
+// Positioned: the "more below" count reads each row's offsetTop against it.
+.list {
+  position: relative;
+  display: grid;
+  flex: 0 1 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-content: start;
+  column-gap: 8px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+
+  @include media-down(sm) {
+    flex: 1 1 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// Through .window: the bare Buttons outrank Button's own reset whatever the stylesheet order.
+.window .country {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.2;
+  text-align: left;
+  color: var(--public-text);
+  cursor: pointer;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: var(--public-field);
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--public-text);
+  }
+}
+
+.window .countryChosen {
+  background: var(--public-field);
+}
+
+// The full-width bar under the faded row: a button that scrolls down one view.
+.window .more {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  background: var(--public-field);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  color: var(--public-text);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-30);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: -2px;
+  }
+}
+
+.noMatch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 0 20px;
+}
+
+.noMatchTitle {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--public-text);
+  overflow-wrap: anywhere;
+}
+
+.noMatchLine {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+}
+
+// ── Footer ───────────────────────────────────────────────────────────────
+.foot {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 36px 28px;
+  border-top: 1px solid var(--color-gray-30);
+
+  @include media-down(sm) {
+    padding: 16px 20px 28px;
+  }
+}
+
+.footLine {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+}
+
+// × Close, as the Learn more window; the × only on phones.
+.window .close {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  color: var(--public-text);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
+  }
+}
+
+.closeWord {
+  @include media-down(sm) {
+    display: none;
+  }
+}

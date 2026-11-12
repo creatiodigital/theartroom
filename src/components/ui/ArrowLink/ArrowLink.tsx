@@ -29,19 +29,30 @@ export const ArrowLink = ({
   children,
   icon = 'arrow',
   size = 'regular',
-  className,
+  className: classNameProp,
   newTab = false,
 }: ArrowLinkProps) => {
   const Icon = ICONS[icon]
-  return (
-    <Link
-      href={href}
-      className={c(styles.link, size === 'small' && styles.small, className)}
-      {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-    >
+  const className = c(styles.link, size === 'small' && styles.small, classNameProp)
+  const content = (
+    <>
       <Icon size={size === 'small' ? 15 : 18} weight="light" aria-hidden className={styles.icon} />
       <span>{children}</span>
       {newTab && <span className="sr-only"> (opens in a new tab)</span>}
+    </>
+  )
+  const tabProps = newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {}
+  // mailto: and other non-page links are plain anchors; next/link is for the site's own pages.
+  if (/^[a-z]+:/i.test(href)) {
+    return (
+      <a href={href} className={className} {...tabProps}>
+        {content}
+      </a>
+    )
+  }
+  return (
+    <Link href={href} className={className} {...tabProps}>
+      {content}
     </Link>
   )
 }

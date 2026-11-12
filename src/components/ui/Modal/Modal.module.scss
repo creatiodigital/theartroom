@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 .modal {
   position: fixed;
   top: 0;
@@ -64,5 +66,38 @@
     border: none;
     border-radius: var(--radius-md);
     box-shadow: var(--admin-dialog-shadow);
+  }
+}
+
+// tone="public" (docs/public-redesign/order-flow.md, the Learn more and "Where we ship" windows):
+// square, a deep shadow, a dim backdrop.
+.public {
+  background-color: rgba(20, 20, 20, 0.45);
+
+  .content {
+    border: none;
+    border-radius: 0;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  }
+}
+
+// layout="flush": the window lays out its own header, scrolling middle and footer.
+.content.flush {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+// phoneFullScreen: below 640px the panel fills the screen.
+.phoneFullScreen {
+  @include media-down(sm) {
+    padding: 0;
+
+    .content {
+      max-width: none;
+      height: 100%;
+      border: none;
+    }
   }
 }
