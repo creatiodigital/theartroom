@@ -23,7 +23,7 @@ Do these in order, one PR each.
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Built (12a, 12b, 12c) | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Built | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
-| 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a) | UI only. See Built notes. |
+| 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
@@ -668,3 +668,37 @@ and 390 px, as the artist and as an admin in their own studio: tiles, rows, badg
 Escape back to ⋮, New exhibition opened and canceled, the admin's Delete exhibition… dialog (on a faked row) opened and
 canceled with no request, "Loading exhibitions…" and the failed Callout (route interception), the bottom padding
 (56 / 40 px) on every studio page, no horizontal scroll, no console errors.
+
+### Step 15b · Artwork library — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan. Files: `dashboard/artworks/index.tsx` + `artworks.module.scss` (rewritten), `AddArtworkModal.tsx` + its
+SCSS, `ui/SortableList` (`href`, `numbered`, `sortable`), `ui/StatusPill` (`dot`), `e2e/confirm-dialog.spec.ts` (one
+line + comments).
+
+1. **Kept**: every state, effect and handler (diffed: the only removal is the dnd-kit sensors block, now inside
+   `SortableList`, same sensors; the hydration comment updated); the stored type filter, the 300 ms search, drag only
+   while not searching, the slot-preserving reorder and its request; Add artwork's submit is byte-identical.
+2. **Layout per artist.md §2**: header **Artwork library** + sub + **Add artwork**; a panel with the Type segmented
+   control (today's filter) and the search; `SortableList` rows: handle, 64 px thumb, title (link to the editor),
+   "type · year · technique" (technique as plain text), the green **Selling prints** tag where today says "Currently
+   Selling", outline **Edit**, red trash "Delete {title}"; the keyboard footnote.
+3. **Kept although not drawn (Q105)**: the "In: {exhibition} ×" chips with today's Remove confirm, the sound play /
+   stop preview (now a real button, "Play {title}" / "Stop {title}"), a video's poster or first frame, contained (not
+   cropped) images. The text tile's 7 px preview became the TextT icon, as the spec says.
+4. **Dialogs**: Delete artwork? and Remove from exhibition? are `AdminConfirmModal` with today's sentences (errors in
+   the amber box); Add artwork takes the admin dialog look (labels above, today's help, the admin select, Cancel /
+   Create artwork). All three keep their confirm disabled and can't be closed while the request runs (Q107).
+5. **States (Q106)**: loading = header + "Loading artworks…" (no toolbar: the stored filter must not reach the first
+   render); empty = "No artworks yet." + "Click **Add artwork** to create your first one."; no match = today's sentence;
+   searching hides the handles and the footnote.
+6. **Phone**: two-line rows (56 px thumb), the search under the type control, 44 px targets, no horizontal scroll (the
+   old 500 px Add artwork dialog is gone).
+7. **e2e**: `confirm-dialog` finds the trash as `/^delete /i` (it is "Delete {title}" now).
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD (library and Add artwork); e2e on port 3001
+(`confirm-dialog`, `studio-shell`, `limited-variant-delete-ui`, `artwork-exhibition-picker`, `artwork-section-picker`,
+`gallery-selection-admin`: all passed, in the same run as 15a's); browser (dev DB, read-only) at 1440 and 390 px: 498
+rows with thumbs, chips and Selling prints tags, Image filter, no-match search (handles hidden), a keyboard pick-up
+cancelled with Escape sends nothing, the three dialogs opened and canceled, Play ⇄ Stop on a faked sound row, a stored
+"image" filter reloads with no hydration warning, landing and gallery selection lists unchanged, no horizontal scroll,
+no console errors.

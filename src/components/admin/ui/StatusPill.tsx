@@ -17,6 +17,8 @@ type StatusPillProps = {
   shape?: 'pill' | 'tag'
   /** A 12px filled mark before the label, e.g. Star on "Featured". */
   icon?: Icon
+  /** A 6px dot before the label, e.g. "Selling prints" (green: the Published dot's color). */
+  dot?: boolean
 }
 
 /** A status label: the stage next to a detail page's title (orders.md §2), or a row's status. */
@@ -25,10 +27,12 @@ export function StatusPill({
   tone = 'dark',
   shape = 'pill',
   icon: PillIcon,
+  dot = false,
 }: StatusPillProps) {
   return (
     <span className={c(styles.pill, styles[tone], shape === 'tag' && styles.tag)}>
       {PillIcon && <PillIcon size={12} weight="fill" aria-hidden className={styles.icon} />}
+      {dot && <span aria-hidden className={styles.dot} />}
       {label}
     </span>
   )

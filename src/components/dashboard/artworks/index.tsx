@@ -3,49 +3,75 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+  Image as ImageIcon,
+  PencilSimple,
+  Play,
+  Plus,
+  SpeakerHigh,
+  Stop,
+  TextT,
+  Trash,
+  VideoCamera,
+  X,
+} from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import {
+  ARTWORK_TYPE_FILTERS,
   readArtworkTypeFilter,
   writeArtworkTypeFilter,
   type ArtworkTypeFilter,
 } from '@/lib/artworkTypeFilter'
 
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { SearchField } from '@/components/admin/ui/SearchField'
+import { SegmentedControl } from '@/components/admin/ui/SegmentedControl'
+import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/SortableList'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
-import { ErrorText } from '@/components/ui/ErrorText'
-import { Icon } from '@/components/ui/Icon'
-import { Input } from '@/components/ui/Input'
-import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
-import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './artworks.module.scss'
 
-// Helper to truncate text
-const truncateText = (text: string | null | undefined, maxLength: number): string => {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength).trim() + '...'
+const TITLE = 'Artwork library'
+const DESCRIPTION = 'Everything you can hang in your exhibitions. Drag to change the order.'
+
+/** How each media type reads in the type filter and in a row's meta line. */
+const TYPE_LABEL: Record<string, string> = {
+  image: 'Image',
+  text: 'Text',
+  sound: 'Sound',
+  video: 'Video',
 }
+
+const FILTER_OPTIONS = ARTWORK_TYPE_FILTERS.map((id) => ({
+  id,
+  label: id === 'all' ? 'All' : TYPE_LABEL[id],
+}))
+
+/**
+ * The technique is rich text (HTML from the editor): one plain line for the
+ * meta row. The result is rendered as text, never as HTML.
+ */
+const plainText = (html: string | null | undefined): string =>
+  (html ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim()
 
 type Exhibition = {
   id: string
@@ -140,142 +166,86 @@ function VideoThumbnail({ videoUrl, alt }: { videoUrl: string; alt: string }) {
   )
 }
 
-type ArtworkCardProps = {
+type ArtworkThumbProps = {
   artwork: Artwork
-  onEdit: (id: string) => void
-  onDelete: (id: string, name: string) => void
-  onUnlink: (exhibitionArtworkId: string, artworkName: string, exhibitionTitle: string) => void
-  playingArtworkId: string | null
+  /** The row's title, for the sound button's name. */
+  title: string
+  isPlaying: boolean
   onTogglePlay: (artworkId: string, soundUrl: string) => void
-  /** Hidden when a filter / search is active — dragging a subset would
-   *  scramble the order of items currently hidden by the filter. */
-  draggable: boolean
 }
 
-function SortableArtworkCard(props: ArtworkCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: props.artwork.id,
-  })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+/**
+ * The row's 64px tile (artist.md §2), in today's order: the picture (an image,
+ * or a video's poster), a video's first frame, the sound preview, else an icon
+ * by type on the warm tile. Pictures are CONTAINED, not cropped: the box is
+ * square, and cropping hid whether a work is landscape or portrait.
+ */
+function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbProps) {
+  if (
+    (artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
+    artwork.imageUrl &&
+    isSafeImageSrc(artwork.imageUrl)
+  ) {
+    return (
+      <span className={styles.thumb}>
+        <Image
+          src={artwork.imageUrl}
+          alt=""
+          width={64}
+          height={64}
+          // Skip the Vercel optimizer (already-optimized R2/CDN .webp); cold
+          // re-encodes broke images on first load (AR-125).
+          unoptimized
+          className={styles.thumbImage}
+        />
+      </span>
+    )
   }
 
-  return (
-    <div ref={setNodeRef} style={style} className={styles.sortableRow}>
-      {props.draggable && (
-        <div className={styles.dragHandle} {...attributes} {...listeners}>
-          <span className={styles.dragIcon}>⠿</span>
-        </div>
-      )}
-      <ArtworkCard {...props} />
-    </div>
-  )
-}
+  if (artwork.artworkType === 'video' && artwork.videoUrl) {
+    return (
+      <span className={c(styles.thumb, styles.tile)}>
+        <VideoThumbnail videoUrl={artwork.videoUrl} alt={artwork.title || 'Video'} />
+      </span>
+    )
+  }
 
-function ArtworkCard({
-  artwork,
-  onEdit,
-  onDelete,
-  onUnlink,
-  playingArtworkId,
-  onTogglePlay,
-}: ArtworkCardProps) {
-  const isPlaying = playingArtworkId === artwork.id
-
-  return (
-    <div className={styles.card}>
-      {/* Thumbnail / Text Preview */}
-      <div className={styles.cardThumbnail}>
-        {(artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
-        artwork.imageUrl &&
-        isSafeImageSrc(artwork.imageUrl) ? (
-          <Image
-            src={artwork.imageUrl}
-            alt={artwork.title || 'Artwork'}
-            width={60}
-            height={60}
-            // Skip the Vercel optimizer (already-optimized R2/CDN .webp); cold
-            // re-encodes broke images on first load (AR-125).
-            unoptimized
-            className={styles.thumbnail}
-          />
-        ) : artwork.artworkType === 'video' && artwork.videoUrl ? (
-          <VideoThumbnail videoUrl={artwork.videoUrl} alt={artwork.title || 'Video'} />
-        ) : artwork.artworkType === 'text' && artwork.textContent ? (
-          <div className={styles.textPreview}>{truncateText(artwork.textContent, 100)}</div>
-        ) : artwork.artworkType === 'sound' ? (
-          <div
-            className={`${styles.placeholder} ${artwork.soundUrl ? styles.soundPlayable : ''}`}
-            onClick={(e) => {
-              if (artwork.soundUrl) {
-                e.stopPropagation()
-                onTogglePlay(artwork.id, artwork.soundUrl)
-              }
-            }}
-            role={artwork.soundUrl ? 'button' : undefined}
-            tabIndex={artwork.soundUrl ? 0 : undefined}
-          >
-            <Icon
-              name={isPlaying ? 'square' : artwork.soundUrl ? 'play' : 'volume-2'}
-              size={32}
-              color={isPlaying ? '#e53e3e' : artwork.soundUrl ? '#333' : '#666'}
-            />
-          </div>
-        ) : (
-          <div className={styles.placeholder}>
-            <Icon
-              name={
-                artwork.artworkType === 'image'
-                  ? 'image'
-                  : artwork.artworkType === 'video'
-                    ? 'video'
-                    : 'type'
-              }
-              size={32}
-              color="#666"
-            />
-          </div>
-        )}
-      </div>
-      <div className={styles.cardInfo}>
-        {artwork.sellingNow && <span className={styles.sellingTag}>Currently Selling</span>}
-        <Text font="dashboard" as="h3">
-          {artwork.title}
-        </Text>
-        {artwork.exhibitionArtworks.length > 0 && (
-          <div className={styles.exhibitions}>
-            <span className={styles.exhibitionsLabel}>In:</span>
-            {artwork.exhibitionArtworks.map((ea) => (
-              <span key={ea.id} className={styles.exhibitionTag}>
-                {ea.exhibition.mainTitle}
-                <Button
-                  variant="ghost"
-                  className={styles.removeBtn}
-                  onClick={() =>
-                    onUnlink(ea.id, artwork.title || 'Artwork', ea.exhibition.mainTitle)
-                  }
-                  title={`Remove from ${ea.exhibition.mainTitle}`}
-                  aria-label={`Remove from ${ea.exhibition.mainTitle}`}
-                >
-                  <Icon name="close" size={14} />
-                </Button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className={styles.cardActions}>
-        <Button variant="secondary" label="Edit" onClick={() => onEdit(artwork.id)} />
+  if (artwork.artworkType === 'sound') {
+    const soundUrl = artwork.soundUrl
+    if (soundUrl) {
+      return (
         <Button
-          variant="secondary"
-          label="Delete"
-          onClick={() => onDelete(artwork.id, artwork.title || 'Artwork')}
-        />
-      </div>
-    </div>
+          variant="bare"
+          font="dashboard"
+          className={c(styles.thumb, styles.tile, styles.play)}
+          aria-label={isPlaying ? `Stop ${title}` : `Play ${title}`}
+          onClick={() => onTogglePlay(artwork.id, soundUrl)}
+        >
+          {isPlaying ? (
+            <Stop size={22} weight="fill" aria-hidden className={styles.playing} />
+          ) : (
+            <Play size={22} weight="light" aria-hidden />
+          )}
+        </Button>
+      )
+    }
+    return (
+      <span aria-hidden className={c(styles.thumb, styles.tile)}>
+        <SpeakerHigh size={22} weight="light" />
+      </span>
+    )
+  }
+
+  const TypeIcon =
+    artwork.artworkType === 'image'
+      ? ImageIcon
+      : artwork.artworkType === 'video'
+        ? VideoCamera
+        : TextT
+  return (
+    <span aria-hidden className={c(styles.thumb, styles.tile)}>
+      <TypeIcon size={22} weight="light" />
+    </span>
   )
 }
 
@@ -296,9 +266,10 @@ export const ArtworkLibraryPage = () => {
   const [unlinking, setUnlinking] = useState(false)
   const [actionError, setActionError] = useState('')
   // Lazily initialised from storage so the filter survives the remount that
-  // editing an artwork causes. Safe against hydration: the first render returns
-  // `Loading...` on both server and client, so the stored value cannot reach the
-  // DOM before hydration is done.
+  // editing an artwork causes. Safe against hydration: the first render is the
+  // loading view (the header and "Loading artworks…", no type filter) on both
+  // server and client, so the stored value cannot reach the DOM before hydration
+  // is done.
   const [typeFilter, setTypeFilter] = useState<ArtworkTypeFilter>(readArtworkTypeFilter)
 
   // Written here rather than in an effect on `typeFilter`, so a mount that only
@@ -480,13 +451,6 @@ export const ArtworkLibraryPage = () => {
     }
   }, [unlinkTarget, fetchArtworks])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -525,166 +489,207 @@ export const ArtworkLibraryPage = () => {
   }
 
   if (loading) {
-    return <>Loading...</>
+    return (
+      <div className={styles.page}>
+        <AdminPageHeader title={TITLE} description={DESCRIPTION} />
+        <ListPanel label="Artworks">
+          <p className={styles.loading}>Loading artworks…</p>
+        </ListPanel>
+      </div>
+    )
   }
 
   return (
-    <>
-      {/* Page Title */}
-      <h1 className={dashboardStyles.pageTitle}>Artwork Library</h1>
-
-      {/* Filter Tags */}
-      <div className={styles.filterBar}>
-        <div className={styles.filters}>
+    <div className={styles.page}>
+      <AdminPageHeader
+        title={TITLE}
+        description={DESCRIPTION}
+        actions={
           <Button
-            variant="pill"
-            onClick={() => selectType('all')}
-            aria-pressed={typeFilter === 'all'}
-            label="All"
-          />
-          <Button
-            variant="pill"
-            onClick={() => selectType('image')}
-            aria-pressed={typeFilter === 'image'}
-            label="Image"
-          />
-          <Button
-            variant="pill"
-            onClick={() => selectType('text')}
-            aria-pressed={typeFilter === 'text'}
-            label="Text"
-          />
-          <Button
-            variant="pill"
-            onClick={() => selectType('sound')}
-            aria-pressed={typeFilter === 'sound'}
-            label="Sound"
-          />
-          <Button
-            variant="pill"
-            onClick={() => selectType('video')}
-            aria-pressed={typeFilter === 'video'}
-            label="Video"
-          />
-        </div>
-        <div className={styles.searchRow}>
-          <Input
-            id="artwork-search"
-            type="text"
-            variant="search"
-            placeholder="Search by title or content..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Button
+            variant="bare"
             font="dashboard"
-            variant="primary"
-            label="Add Artwork"
+            className={styles.add}
             onClick={() => setShowAddModal(true)}
-          />
-        </div>
-      </div>
-
-      {sortedArtworks.length === 0 ? (
-        <div className={styles.empty}>
-          <Text font="dashboard" as="p">
-            {artworks.length === 0
-              ? 'No artworks yet. Click "Add Artwork" to create your first one.'
-              : 'No artworks match this filter.'}
-          </Text>
-        </div>
-      ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={sortedArtworks.map((a) => a.id)}
-            strategy={verticalListSortingStrategy}
           >
-            <div className={styles.list}>
-              {sortedArtworks.map((artwork) => (
-                <SortableArtworkCard
-                  key={artwork.id}
-                  artwork={artwork}
-                  onEdit={(id: string) => router.push(`/dashboard/artworks/${id}/edit`)}
-                  onDelete={handleDeleteClick}
-                  onUnlink={handleUnlinkClick}
-                  playingArtworkId={playingArtworkId}
-                  onTogglePlay={handleTogglePlay}
-                  draggable={dragEnabled}
-                />
-              ))}
+            <Plus size={16} weight="light" aria-hidden />
+            Add artwork
+          </Button>
+        }
+      />
+
+      <ListPanel
+        label="Artworks"
+        toolbar={
+          <>
+            <SegmentedControl
+              label="Type"
+              options={FILTER_OPTIONS}
+              value={typeFilter}
+              onChange={selectType}
+            />
+            <div className={styles.search}>
+              <SearchField
+                label="Search artworks"
+                placeholder="Search by title or content"
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
             </div>
-          </SortableContext>
-        </DndContext>
-      )}
+          </>
+        }
+        footnote={dragEnabled && sortedArtworks.length > 0 ? SORTABLE_KEYBOARD_HINT : undefined}
+      >
+        {sortedArtworks.length === 0 ? (
+          artworks.length === 0 ? (
+            <EmptyState
+              title="No artworks yet."
+              text={
+                <>
+                  Click <strong>Add artwork</strong> to create your first one.
+                </>
+              }
+            />
+          ) : (
+            <EmptyState title="No artworks match this filter." />
+          )
+        ) : (
+          <SortableList
+            onDragEnd={handleDragEnd}
+            numbered={false}
+            sortable={dragEnabled}
+            rows={sortedArtworks.map((artwork) => {
+              const title = artwork.title || 'Artwork'
+              const meta = [artwork.year?.trim() ?? '', plainText(artwork.technique)].filter(
+                Boolean,
+              )
+              return {
+                id: artwork.id,
+                title,
+                href: `/dashboard/artworks/${artwork.id}/edit`,
+                thumb: (
+                  <ArtworkThumb
+                    artwork={artwork}
+                    title={title}
+                    isPlaying={playingArtworkId === artwork.id}
+                    onTogglePlay={handleTogglePlay}
+                  />
+                ),
+                sub: (
+                  <>
+                    <span className={styles.meta}>
+                      <span>{TYPE_LABEL[artwork.artworkType] ?? artwork.artworkType}</span>
+                      {meta.length > 0 && <span>{meta.join(' · ')}</span>}
+                      {artwork.sellingNow && (
+                        <StatusPill label="Selling prints" tone="green" shape="tag" dot />
+                      )}
+                    </span>
+                    {/* Not drawn, kept (questions.md Q105): the library's only way
+                        to take a work out of an exhibition. */}
+                    {artwork.exhibitionArtworks.length > 0 && (
+                      <span className={styles.exhibitions}>
+                        <span className={styles.exhibitionsLabel}>In:</span>
+                        {artwork.exhibitionArtworks.map((ea) => (
+                          <span key={ea.id} className={styles.exhibitionTag}>
+                            {ea.exhibition.mainTitle}
+                            <Button
+                              variant="bare"
+                              font="dashboard"
+                              className={styles.unlink}
+                              onClick={() =>
+                                handleUnlinkClick(
+                                  ea.id,
+                                  artwork.title || 'Artwork',
+                                  ea.exhibition.mainTitle,
+                                )
+                              }
+                              title={`Remove from ${ea.exhibition.mainTitle}`}
+                              aria-label={`Remove from ${ea.exhibition.mainTitle}`}
+                            >
+                              <X size={12} weight="light" aria-hidden />
+                            </Button>
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </>
+                ),
+                actions: (
+                  <>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.edit}
+                      onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
+                    >
+                      <PencilSimple size={16} weight="light" aria-hidden />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.trash}
+                      aria-label={`Delete ${title}`}
+                      onClick={() => handleDeleteClick(artwork.id, artwork.title || 'Artwork')}
+                    >
+                      <Trash size={16} weight="light" aria-hidden />
+                    </Button>
+                  </>
+                ),
+              }
+            })}
+          />
+        )}
+      </ListPanel>
 
       {showAddModal && (
-        <Modal onClose={() => setShowAddModal(false)}>
-          <AddArtworkModal
-            userId={effectiveUser?.id ?? ''}
-            onClose={() => setShowAddModal(false)}
-            onSuccess={handleAddSuccess}
-          />
-        </Modal>
+        <AddArtworkModal
+          userId={effectiveUser?.id ?? ''}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleAddSuccess}
+        />
       )}
 
       {deleteTarget && (
-        <Modal onClose={() => setDeleteTarget(null)}>
-          <div className={styles.deleteModal}>
-            <Text font="dashboard" as="h2">
-              Delete Artwork?
-            </Text>
-            <Text font="dashboard" as="p">
-              Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
-              <br />
-              This action cannot be undone.
-            </Text>
-            <ErrorText>{actionError}</ErrorText>
-            <div className={styles.deleteActions}>
-              <Button
-                variant="primary"
-                label={deleting ? 'Deleting...' : 'Yes, Delete'}
-                onClick={handleDeleteConfirm}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
-            </div>
-          </div>
-        </Modal>
+        <AdminConfirmModal
+          title="Delete artwork?"
+          message={
+            <>
+              <p>
+                Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
+              </p>
+              <p>This action cannot be undone.</p>
+            </>
+          }
+          warning={actionError || undefined}
+          confirmLabel="Yes, delete"
+          busyLabel="Deleting…"
+          destructive
+          busy={deleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
 
       {unlinkTarget && (
-        <Modal onClose={() => setUnlinkTarget(null)}>
-          <div className={styles.deleteModal}>
-            <Text font="dashboard" as="h2">
-              Remove from Exhibition?
-            </Text>
-            <Text font="dashboard" as="p">
-              Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
-              <strong>{unlinkTarget.exhibitionTitle}</strong>?
-              <br />
-              The artwork will remain in your library.
-            </Text>
-            <ErrorText>{actionError}</ErrorText>
-            <div className={styles.deleteActions}>
-              <Button
-                variant="primary"
-                label={unlinking ? 'Removing...' : 'Yes, Remove'}
-                onClick={handleUnlinkConfirm}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setUnlinkTarget(null)}
-              />
-            </div>
-          </div>
-        </Modal>
+        <AdminConfirmModal
+          title="Remove from exhibition?"
+          message={
+            <>
+              <p>
+                Remove <strong>{unlinkTarget.artworkName}</strong> from{' '}
+                <strong>{unlinkTarget.exhibitionTitle}</strong>?
+              </p>
+              <p>The artwork will remain in your library.</p>
+            </>
+          }
+          warning={actionError || undefined}
+          confirmLabel="Yes, remove"
+          busyLabel="Removing…"
+          busy={unlinking}
+          onConfirm={handleUnlinkConfirm}
+          onCancel={() => setUnlinkTarget(null)}
+        />
       )}
-    </>
+    </div>
   )
 }

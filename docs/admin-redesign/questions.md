@@ -807,6 +807,54 @@ _Meanwhile:_ all as today.
 
 _Meanwhile:_ the same text in a red `Callout`, in the same place, with its Warning icon in place of the emoji. Options: (a) give the dialog the admin look, as Add artwork has, and show a readable error inside it (the server's text, else "The exhibition could not be created. Please try again."). That is a small behavior change. (b) Keep it as it is.
 
+**Q105 · Code Claude → owner / Design Claude: Library, production UI the design leaves out.** _Meanwhile, kept and restyled:_
+
+- the **"In: {exhibition} ×" chips** under each row, with today's Remove from exhibition confirm (now in the admin dialog look). This is the library's only way to unlink a work;
+- the sound tile's **play / stop preview**. It is now a button named "Play {title}" / "Stop {title}"; it was a `div` that ignored Enter and Space;
+- a video's **poster, or its first frame** drawn from the file, instead of the drawn icon. The icon shows when there is neither;
+- images **contained**, not cropped, in the tile. This is today's choice, made so the list shows each work's proportions.
+
+_Removed per the spec:_ the text tile's 7 px text preview, which becomes the TextT icon. OK, or keep the preview?
+
+**Q106 · Code Claude → Design Claude: Library, states and details not drawn.** _Meanwhile:_
+
+- **Loading**: the header without Add artwork, then "Loading artworks…". The filter stays out of the first render because it is read from browser storage; rendering it would cause a hydration mismatch.
+- **Empty**: "No artworks yet." + "Click **Add artwork** to create your first one." **No match**: "No artworks match this filter."
+- **Searching**: the handles hide (as today), and the keyboard footnote with them. No count (not drawn).
+- **Meta line**: type · year · technique, the technique as plain text (it is stored as rich text). **Selling prints** is a green tag with a dot. The editor keeps "Currently Selling" until step 16.
+- **Untitled works**: today's "Artwork".
+- **Thumbnails**: `alt=""`, since the title sits next to them.
+- **Titles**: 14 px (`SortableList`'s), not the drawn 15.
+- **Phone**: two-line rows with 56 px thumbs; the search on its own row under the type control; a 44 px hit area on the chip ×.
+
+**Q107 · Code Claude → owner: the Add artwork dialog in the admin look.** It follows the step 9 Add user pattern:
+
+- title "Add artwork";
+- labels above the fields, with today's help text under them;
+- Type as the admin's native select, with the same four values (today a custom dropdown);
+- the error in the dialog's amber box;
+- Cancel / "Create artwork" ("Creating…").
+
+What changes with it:
+
+- Create is disabled while it runs; today a double click could create two artworks.
+- The dialog can't be closed mid-request.
+- The old 500 px minimum width, which overflowed phones, goes.
+
+The same two rules now apply to Delete artwork, Remove from exhibition and Delete exhibition. OK?
+
+**Q108 · Code Claude → owner: found while reading (kept as today).**
+
+- (a) Reorder ignores a refused reply. Only a request that throws refetches (as Q74 found on Landing).
+- (b) A failed library load reads as "No artworks yet". The error goes to the console only.
+- (c) While impersonating, Home's greeting shows the **admin's** first name until the artist's record loads (the `session.user.name` fallback). `effectiveUser.name` would be right.
+- (d) A failed Delete exhibition is console-only: the dialog stays open with no message.
+- (e) A library holding only shapes (never listed) says "No artworks match this filter." on All.
+- (f) `.readyMarker` and `.publishRefusal` in `DashboardLayout.module.scss` have no users. They are left alone.
+
+_Meanwhile:_ all as today. Fix them in a later pass, with a red `FeedbackBar` for (b) and (d) and `effectiveUser.name` for (c)?
+
+
 ## Answered
 
 **Owner answers, 2026-11-11 (relayed to Code Claude):**

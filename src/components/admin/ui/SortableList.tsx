@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import {
   DndContext,
   closestCenter,
@@ -35,19 +36,38 @@ export type SortableListRow = {
   className?: string
   /** An empty attribute on the row, e.g. `data-selection-row` (an e2e hook). */
   marker?: `data-${string}`
+  /** The title becomes a link to this URL (prefetch off), e.g. the artwork editor. */
+  href?: string
 }
 
 type SortableListProps = {
   rows: SortableListRow[]
   /** The page's own drop handler. */
   onDragEnd: (event: DragEndEvent) => void
+  /** The position number before the thumbnail (default true). */
+  numbered?: boolean
+  /**
+   * false: no handles, so nothing can be dragged (e.g. while a search narrows
+   * the list); the handle's column stays, so the rows don't jump. Default true.
+   */
+  sortable?: boolean
 }
 
 /** The footnote under a sortable list (gallery.md §2a). */
 export const SORTABLE_KEYBOARD_HINT =
   'Keyboard: focus the handle, press Space, move with the arrow keys, Space again to drop.'
 
-function SortableRow({ row, position }: { row: SortableListRow; position: number }) {
+function SortableRow({
+  row,
+  position,
+  numbered,
+  sortable,
+}: {
+  row: SortableListRow
+  position: number
+  numbered: boolean
+  sortable: boolean
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
   })
@@ -65,18 +85,28 @@ function SortableRow({ row, position }: { row: SortableListRow; position: number
     >
       {/* dnd-kit's own handle (role="button", tabIndex 0, its listeners): the
           keyboard sensor picks it up with Space or Enter. */}
-      <div
-        className={styles.handle}
-        {...attributes}
-        {...listeners}
-        aria-label={`Reorder ${row.title}`}
-      >
-        <DotsSixVertical size={18} weight="bold" aria-hidden />
-      </div>
-      <span className={styles.position}>{position}</span>
+      {sortable ? (
+        <div
+          className={styles.handle}
+          {...attributes}
+          {...listeners}
+          aria-label={`Reorder ${row.title}`}
+        >
+          <DotsSixVertical size={18} weight="bold" aria-hidden />
+        </div>
+      ) : (
+        <span aria-hidden className={styles.handleSpacer} />
+      )}
+      {numbered && <span className={styles.position}>{position}</span>}
       <div className={styles.thumb}>{row.thumb}</div>
       <div className={styles.text}>
-        <span className={styles.title}>{row.title}</span>
+        {row.href ? (
+          <Link href={row.href} prefetch={false} className={c(styles.title, styles.titleLink)}>
+            {row.title}
+          </Link>
+        ) : (
+          <span className={styles.title}>{row.title}</span>
+        )}
         {row.sub && <div className={styles.sub}>{row.sub}</div>}
       </div>
       <div className={styles.actions}>{row.actions}</div>
@@ -91,7 +121,12 @@ function SortableRow({ row, position }: { row: SortableListRow; position: number
  * landing slideshow and the gallery selection each had; the page keeps its
  * own drop handler and request.
  */
-export function SortableList({ rows, onDragEnd }: SortableListProps) {
+export function SortableList({
+  rows,
+  onDragEnd,
+  numbered = true,
+  sortable = true,
+}: SortableListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -100,9 +135,15 @@ export function SortableList({ rows, onDragEnd }: SortableListProps) {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-        <ol className={styles.list}>
+        <ol className={c(styles.list, !numbered && styles.unnumbered)}>
           {rows.map((row, i) => (
-            <SortableRow key={row.id} row={row} position={i + 1} />
+            <SortableRow
+              key={row.id}
+              row={row}
+              position={i + 1}
+              numbered={numbered}
+              sortable={sortable}
+            />
           ))}
         </ol>
       </SortableContext>

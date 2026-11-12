@@ -392,6 +392,12 @@ like the real Pause switch). Logic and dialogs unchanged.
   sensors, closest-center, vertical strategy); each row: handle (`aria-label="Reorder {title}"`, DotsSixVertical bold,
   `touch-action: none`), position, thumb, title + sub, actions. `SORTABLE_KEYBOARD_HINT` is the footnote text.
 
+### Additions (step 15)
+- `SortableList`: `numbered?: boolean` (default true: the position number), `sortable?: boolean` (default true; false
+  = no handles, an empty handle column so rows don't jump, e.g. while searching), and per row `href?: string` (the
+  title becomes a link, prefetch off). Without them the output is unchanged.
+- `StatusPill`: `dot?: boolean` (a 6 px dot before the label; green = the Published dot), e.g. "Selling prints".
+
 ## Page editor pieces (step 12c)
 
 ### `SaveBar`

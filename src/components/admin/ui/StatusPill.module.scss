@@ -69,6 +69,20 @@
   margin-right: var(--space-1);
 }
 
+// The optional dot before the label (`dot`, artist-artworks.dc.html "Selling prints").
+.dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.green .dot {
+  background: var(--admin-published-dot);
+}
+
 // Inside a list row (edition-sales.dc.html, gift-orders.dc.html): 4px corners, the
 // drawn 2px 8px less the 1px border.
 .tag {
