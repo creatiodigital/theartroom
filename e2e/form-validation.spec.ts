@@ -57,7 +57,7 @@ test.describe('form validation — shared system (InquireSidebar)', () => {
 
     // Only the email is filled (with a malformed value) — other fields stay
     // empty so the form can never submit. This isolates the email-format rule.
-    await page.getByLabel('Email').fill('notanemail')
+    await page.getByRole('textbox', { name: 'Email' }).fill('notanemail')
     await page.getByRole('button', { name: SEND }).click()
 
     await expect(page.getByText('Please enter a valid email address.')).toBeVisible()
@@ -66,7 +66,7 @@ test.describe('form validation — shared system (InquireSidebar)', () => {
   test('rejects an invalid phone number', async ({ page }) => {
     await openInquiry(page)
 
-    await page.getByLabel('Phone').fill('123') // too few digits
+    await page.getByRole('textbox', { name: 'Phone' }).fill('123') // too few digits
     await page.getByRole('button', { name: SEND }).click()
 
     await expect(page.getByText('Please enter a valid phone number.')).toBeVisible()
@@ -80,7 +80,7 @@ test.describe('form validation — shared system (InquireSidebar)', () => {
     await expect(page.getByText('Please enter a valid email address.')).toBeVisible()
 
     // Correcting just the email clears its message in place...
-    await page.getByLabel('Email').fill('jane@example.com')
+    await page.getByRole('textbox', { name: 'Email' }).fill('jane@example.com')
     await expect(page.getByText('Please enter a valid email address.')).toHaveCount(0)
 
     // ...while a still-empty field keeps its error (no full re-validation).
