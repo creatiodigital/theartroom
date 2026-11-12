@@ -67,6 +67,12 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [urlError, setUrlError] = useState('')
+  // questions.md Q128 (e): name and image failures show where they happened (one `error` at the end
+  // of the page held them all); the end-of-page error is the text save's, next to its bar.
+  const [nameError, setNameError] = useState('')
+  const [imageError, setImageError] = useState('')
+  // Q128 (d): Remove takes effect at once, so it asks first.
+  const [confirmingRemoveImage, setConfirmingRemoveImage] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [savingName, setSavingName] = useState(false)
   const [customUrl, setCustomUrl] = useState('')
@@ -130,8 +136,10 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         const checkResponse = await fetch(
           `/api/exhibitions/check-url?userId=${exhibition.userId}&url=${encodeURIComponent(newUrl)}&excludeId=${exhibition.id}`,
         )
-        const checkData = await checkResponse.json()
-        if (!checkData.available) {
+        const checkData = await checkResponse.json().catch(() => null)
+        // Q128 (e): only an answered "taken" stops here. A refused or unreadable check read as
+        // "taken"; now it, like a failed one, goes on to the save, whose 409 says it.
+        if (checkResponse.ok && checkData?.available === false) {
           setUrlError('An exhibition with this name already exists.')
           setSavingName(false)
           return
@@ -143,6 +151,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
 
     setSavingName(true)
     setUrlError('')
+    setNameError('')
 
     try {
       const response = await fetch(`/api/exhibitions/${exhibition.id}`, {
@@ -156,7 +165,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         if (response.status === 409) {
           setUrlError(data.error || 'An exhibition with this name already exists.')
         } else {
-          setError(data.error || 'Failed to save name')
+          setNameError(data.error || 'Failed to save name')
         }
         return
       }
@@ -170,7 +179,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       setSavedEdits(true)
       setTimeout(() => setSaveSuccess(false), 3000)
     } catch {
-      setError('Failed to save name')
+      setNameError('Failed to save name')
     } finally {
       setSavingName(false)
     }
@@ -180,6 +189,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     setMainTitle(exhibition?.mainTitle || '')
     setCustomUrl(exhibition?.url || '')
     setUrlError('')
+    setNameError('')
     setEditingName(false)
   }, [exhibition])
 
@@ -222,7 +232,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       if (!exhibition) return
 
       setUploading(true)
-      setError('')
+      setImageError('')
 
       try {
         const formData = new FormData()
@@ -235,7 +245,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
 
         if (!response.ok) {
           const data = await response.json()
-          setError(data.error || 'Failed to upload image')
+          setImageError(data.error || 'Failed to upload image')
           setUploading(false)
           return
         }
@@ -245,7 +255,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
       } catch {
-        setError('Failed to upload image')
+        setImageError('Failed to upload image')
       } finally {
         setUploading(false)
       }
@@ -257,7 +267,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
     if (!exhibition?.featuredImageUrl) return
 
     setUploading(true)
-    setError('')
+    setImageError('')
 
     try {
       const response = await fetch(`/api/exhibitions/${exhibition.id}/image`, {
@@ -265,7 +275,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       })
 
       if (!response.ok) {
-        setError('Failed to remove image')
+        setImageError('Failed to remove image')
         setUploading(false)
         return
       }
@@ -274,7 +284,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
     } catch {
-      setError('Failed to remove image')
+      setImageError('Failed to remove image')
     } finally {
       setUploading(false)
     }
@@ -474,6 +484,7 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
             />
           </div>
           {urlError && <ErrorText className={page.fieldError}>{urlError}</ErrorText>}
+          {nameError && <ErrorText className={page.fieldError}>{nameError}</ErrorText>}
           {editingName && (
             <p id="exhibition-url-help" className={page.help}>
               Leave empty to auto-generate from title. Only lowercase letters, numbers, and dashes.
@@ -513,8 +524,9 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           tone="admin"
           imageUrl={exhibition.featuredImageUrl}
           onUpload={handleImageUpload}
-          onRemove={handleRemoveImage}
+          onRemove={() => setConfirmingRemoveImage(true)}
           uploading={uploading}
+          error={imageError || undefined}
           aspectRatio="16 / 9"
           note={
             <>
@@ -598,6 +610,20 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
         }}
         onDiscard={() => setConfirmingDiscard(true)}
       />
+
+      {confirmingRemoveImage && (
+        <AdminConfirmModal
+          title="Remove the featured image?"
+          message="This takes effect at once."
+          confirmLabel="Remove"
+          destructive
+          onConfirm={() => {
+            setConfirmingRemoveImage(false)
+            void handleRemoveImage()
+          }}
+          onCancel={() => setConfirmingRemoveImage(false)}
+        />
+      )}
 
       {confirmingDiscard && (
         <AdminConfirmModal

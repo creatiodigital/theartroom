@@ -177,6 +177,9 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
   const [listError, setListError] = useState('')
   const [pendingDelete, setPendingDelete] = useState<Section | null>(null)
   const [deleting, setDeleting] = useState(false)
+  // questions.md Q128 (f): a refused delete stays in its dialog, with the reason (it closed and
+  // reported in the list's line).
+  const [deleteError, setDeleteError] = useState('')
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -245,16 +248,20 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
   const confirmDelete = async () => {
     if (!pendingDelete) return
     setDeleting(true)
+    setDeleteError('')
     const removedId = pendingDelete.id
     try {
       const res = await fetch(`${base}/${removedId}`, { method: 'DELETE' })
-      if (!res.ok) setListError(await readError(res, 'Failed to delete section'))
-      else setSections((prev) => prev.filter((s) => s.id !== removedId))
+      if (!res.ok) {
+        setDeleteError(await readError(res, 'Failed to delete section'))
+        return
+      }
+      setSections((prev) => prev.filter((s) => s.id !== removedId))
+      setPendingDelete(null)
     } catch {
-      setListError('Failed to delete section')
+      setDeleteError('Failed to delete section')
     } finally {
       setDeleting(false)
-      setPendingDelete(null)
     }
   }
 
@@ -362,8 +369,12 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
           confirmLabel="Delete section"
           destructive
           busy={deleting}
+          warning={deleteError || undefined}
           onConfirm={confirmDelete}
-          onCancel={() => setPendingDelete(null)}
+          onCancel={() => {
+            setPendingDelete(null)
+            setDeleteError('')
+          }}
         />
       )}
     </StudioPanel>

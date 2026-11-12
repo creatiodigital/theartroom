@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useId } from 'react'
 import type { ChangeEvent, DragEvent, ReactNode } from 'react'
 import Image from 'next/image'
 import { UploadSimple } from '@phosphor-icons/react'
@@ -241,6 +241,8 @@ export const ImageUploader = ({
   adminPreview = 'banner',
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // questions.md Q128 (c): its own id, so two uploaders on one page (the profile) never share one.
+  const fileInputId = useId()
   const [isDragging, setIsDragging] = useState(false)
   const [sizeError, setSizeError] = useState<string | null>(null)
   const [resolutionError, setResolutionError] = useState<string | null>(null)
@@ -426,7 +428,7 @@ export const ImageUploader = ({
       <div className={styles.adminContainer}>
         <FileInput
           ref={fileInputRef}
-          id="image-uploader-file"
+          id={fileInputId}
           accept={ACCEPT_ATTR}
           onChange={handleFileSelect}
           className={styles.hiddenInput}
@@ -556,7 +558,7 @@ export const ImageUploader = ({
     <div className={containerClass}>
       <FileInput
         ref={fileInputRef}
-        id="image-uploader-file"
+        id={fileInputId}
         accept={ACCEPT_ATTR}
         onChange={handleFileSelect}
         className={styles.hiddenInput}

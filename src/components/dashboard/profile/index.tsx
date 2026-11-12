@@ -59,7 +59,7 @@ const profileValidators = {
 }
 
 export const DashboardProfilePage = () => {
-  const { effectiveUser } = useEffectiveUser()
+  const { effectiveUser, status: sessionStatus } = useEffectiveUser()
 
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,6 +87,8 @@ export const DashboardProfilePage = () => {
   // The form a refused save sent, while nothing has changed since (questions.md Q80).
   const [failedKey, setFailedKey] = useState<string | null>(null)
   const [confirmingDiscard, setConfirmingDiscard] = useState(false)
+  // questions.md Q128 (d): Remove takes effect at once, so it asks first.
+  const [confirmingRemove, setConfirmingRemove] = useState<'image' | 'signature' | null>(null)
 
   // Fetch user data
   useEffect(() => {
@@ -367,7 +369,9 @@ export const DashboardProfilePage = () => {
     />
   )
 
-  if (loading) {
+  // Q128 (b): a session without a user id has no profile to load; it stayed on "Loading…" for good.
+  const noUserToLoad = sessionStatus !== 'loading' && !effectiveUser?.id
+  if (loading && !noUserToLoad) {
     return (
       <div className={page.page}>
         {header}
@@ -403,7 +407,7 @@ export const DashboardProfilePage = () => {
           adminPreview="avatar"
           imageUrl={user.profileImageUrl}
           onUpload={handleImageUpload}
-          onRemove={handleRemoveImage}
+          onRemove={() => setConfirmingRemove('image')}
           uploading={uploading}
           error={profileImageError}
           note="Recommended: JPG, PNG, or WebP. Max 1MB."
@@ -427,7 +431,7 @@ export const DashboardProfilePage = () => {
           objectFit="contain"
           imageUrl={user.signatureUrl}
           onUpload={handleSignatureUpload}
-          onRemove={handleRemoveSignature}
+          onRemove={() => setConfirmingRemove('signature')}
           uploading={uploadingSignature}
           error={signatureError}
           note="Transparent PNG only. Minimum 600 × 200 pixels. Keep the background fully transparent: your signature should float over the certificate, not sit in a white box."
@@ -569,6 +573,23 @@ export const DashboardProfilePage = () => {
         failed={failed}
         onDiscard={() => setConfirmingDiscard(true)}
       />
+
+      {confirmingRemove && (
+        <AdminConfirmModal
+          title={
+            confirmingRemove === 'image' ? 'Remove the profile picture?' : 'Remove the signature?'
+          }
+          message="This takes effect at once."
+          confirmLabel="Remove"
+          destructive
+          onConfirm={() => {
+            const target = confirmingRemove
+            setConfirmingRemove(null)
+            void (target === 'image' ? handleRemoveImage() : handleRemoveSignature())
+          }}
+          onCancel={() => setConfirmingRemove(null)}
+        />
+      )}
 
       {confirmingDiscard && (
         <AdminConfirmModal

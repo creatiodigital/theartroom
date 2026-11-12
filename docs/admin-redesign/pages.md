@@ -1165,3 +1165,7 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
   (pop-up blockers no longer drop it); "Disconnecting…" only for Disconnect; no "in progress" note under "Payouts
   active"; a countries failure shows in the country picker only. Look: all four (not seen: the dev artist's Stripe
   account is invalid for the dev key, so the page stops at "Could not load payout status.").
+- **Q128 (b)–(f) · studio Profile + Exhibition settings (2026-11-12):** Remove (picture, signature, featured image) asks
+  first; each uploader has its own file id; no endless "Loading…" without a user; name and image failures show where
+  they happen (a refused URL check no longer reads as "already exists"); a refused section delete stays in its dialog
+  with the reason.
