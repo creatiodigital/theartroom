@@ -1,13 +1,13 @@
 'use client'
 
-import { ShoppingBag } from '@phosphor-icons/react'
+import { Lock } from '@phosphor-icons/react'
 
 import { CartLine } from '@/components/cart/CartLine'
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
-import { cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
+import { cartCount, cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
 import { LIMITED_NOT_RESERVED_NOTICE } from '@/lib/cart/notices'
 import { useCart } from '@/lib/cart/useCart'
 import { formatEuro } from '@/lib/print-providers'
@@ -24,20 +24,20 @@ export const CartPage = () => {
   if (items.length === 0) {
     return (
       <PageLayout>
-        <PageHeader pageTitle="Cart" />
-        {/* Centered, with air above and below: the header cart now leads here
-            from every page, so an empty cart is a real arrival, not a dead
-            end tucked into the left column. */}
-        <div className={styles.empty}>
-          <ShoppingBag size={40} weight="light" className={styles.emptyIcon} aria-hidden="true" />
-          <Text as="p" font="serif" size="2xl" className={styles.emptyText}>
-            Your cart is empty
-          </Text>
-          <Text as="p" muted className={styles.emptyNote}>
-            Every print is made to order on archival fine-art paper and arrives with a Certificate
-            of Authenticity.
-          </Text>
-          <Button variant="primary" size="bigSquared" href="/prints" label="Browse prints" />
+        <div className={styles.page}>
+          <PageIntro title="Cart" compact />
+          {/* docs/public-redesign/other-screens.md "Empty cart". */}
+          <div className={styles.empty}>
+            <p className={styles.emptyTitle}>Your cart is empty.</p>
+            <p className={styles.emptyLine}>
+              Every print is made to order on archival fine-art paper and arrives with a Certificate
+              of Authenticity.
+            </p>
+            <div className={styles.emptyLinks}>
+              <ArrowLink href="/prints">Browse the prints</ArrowLink>
+              <ArrowLink href="/exhibitions">Visit the exhibitions</ArrowLink>
+            </div>
+          </div>
         </div>
       </PageLayout>
     )
@@ -45,73 +45,69 @@ export const CartPage = () => {
 
   // Item prices only — shipping and VAT are added later at checkout.
   const subtotalCents = cartSubtotal(items)
+  const prints = cartCount(items)
 
   return (
     <PageLayout>
-      <PageHeader pageTitle="Cart" />
+      <div className={styles.page}>
+        <PageIntro title="Cart" compact />
 
-      <div className={styles.cartGrid}>
-        <div className={styles.items}>
-          {items.map((item) => (
-            <CartLine key={item.lineId} item={item} />
-          ))}
-          {/* Back to the wizard's first screen for the work they last added —
-              the variant picker — because that is where another edition of it
-              gets chosen. Deliberately NOT the browser's history and NOT the
-              catalogue: the useful destination after looking at your cart is
-              the list of editions you were just choosing from. No editLineId
-              and no variant param, so it opens clean rather than resuming a
-              line that is already in the cart. */}
-          <div className={styles.backRow}>
+        <div className={styles.cartGrid}>
+          <div className={styles.items}>
+            <div className={styles.list}>
+              {items.map((item) => (
+                <CartLine key={item.lineId} item={item} />
+              ))}
+            </div>
+            {/* Back to the wizard's first screen for the work they last added —
+                the variant picker — because that is where another edition of it
+                gets chosen. Deliberately NOT the browser's history and NOT the
+                catalogue: the useful destination after looking at your cart is
+                the list of editions you were just choosing from. No editLineId
+                and no variant param, so it opens clean rather than resuming a
+                line that is already in the cart. */}
+            <div className={styles.backRow}>
+              <ArrowLink
+                icon="back"
+                size="small"
+                href={`/artworks/${items[items.length - 1].artworkSlug}/print`}
+              >
+                Back to editions
+              </ArrowLink>
+            </div>
+          </div>
+
+          <aside className={styles.summary} aria-labelledby="cart-summary-title">
+            <h2 id="cart-summary-title" className={styles.summaryTitle}>
+              Order summary
+            </h2>
+            <div className={styles.subtotalRow}>
+              <span className={styles.subtotalLabel}>
+                Subtotal · {prints} {prints === 1 ? 'print' : 'prints'}
+              </span>
+              <span className={styles.subtotalValue}>{formatEuro(subtotalCents)}</span>
+            </div>
+            <p className={styles.note}>Shipping and taxes are calculated at checkout.</p>
             <Button
-              variant="secondary"
-              size="regularSquared"
-              icon="arrowLeft"
-              label="Back to editions"
-              href={`/artworks/${items[items.length - 1].artworkSlug}/print`}
+              variant="primary"
+              size="bigSquared"
+              fullWidth
+              href="/checkout"
+              label="Continue to checkout"
+              className={styles.checkoutButton}
             />
-          </div>
+            <ArrowLink href="/prints" size="small" className={styles.browse}>
+              Continue browsing
+            </ArrowLink>
+            {/* The stake stated in the panel, with the lock the design gives it. */}
+            {hasLimited && (
+              <p className={styles.limitedNotice}>
+                <Lock size={14} weight="light" aria-hidden className={styles.lock} />
+                <span>{LIMITED_NOT_RESERVED_NOTICE}</span>
+              </p>
+            )}
+          </aside>
         </div>
-
-        <aside className={styles.summary}>
-          <Text as="h2" font="serif" size="xl" className={styles.summaryTitle}>
-            Order summary
-          </Text>
-          <div className={styles.subtotalRow}>
-            <Text as="span" size="md" className={styles.subtotalLabel}>
-              Subtotal
-            </Text>
-            <Text as="span" font="serif" size="lg" className={styles.subtotalValue}>
-              {formatEuro(subtotalCents)}
-            </Text>
-          </div>
-          <Text as="p" size="sm" className={styles.note}>
-            Shipping and taxes calculated at checkout.
-          </Text>
-          {/* Same sentence, same place in the panel as the wizard's: the stake
-              stated above the button, not discovered after it. */}
-          {hasLimited && (
-            <Text as="p" size="sm" className={styles.limitedNotice}>
-              {LIMITED_NOT_RESERVED_NOTICE}
-            </Text>
-          )}
-          <Button
-            variant="primary"
-            size="bigSquared"
-            fullWidth
-            href="/checkout"
-            label="Continue to checkout"
-            className={styles.cta}
-          />
-          <Button
-            variant="secondary"
-            size="bigSquared"
-            fullWidth
-            href="/prints"
-            label="Continue shopping"
-            className={styles.secondaryCta}
-          />
-        </aside>
       </div>
     </PageLayout>
   )

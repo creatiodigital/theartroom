@@ -1,9 +1,11 @@
 'use client'
 
+import type { CSSProperties, ReactNode } from 'react'
+import c from 'classnames'
+
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
-import { SpecList } from '@/components/print/SpecList/SpecList'
-import { Text } from '@/components/ui/Typography'
-import { editionTypeLabel } from '@/lib/editions/editionLabel'
+import { editionLabel } from '@/lib/editions/editionLabel'
+import { specLines } from '@/lib/cart/specLines'
 import type { CartItem } from '@/lib/cart/types'
 
 import styles from './CartItemDetails.module.scss'
@@ -11,54 +13,45 @@ import styles from './CartItemDetails.module.scss'
 type Props = {
   item: CartItem
   /**
-   * Thumbnail box size in px. The frame is a SQUARE of this size and the art
-   * is contained inside it (never cropped) — so portrait and landscape prints
-   * take the same footprint and every row's columns line up. On phones
-   * (below 640px, the sm breakpoint) the photo instead spans the full card
-   * width at its natural aspect ratio, with the text stacked beneath it.
+   * The square thumbnail's size in px (120 drawn). The work is contained in it on the render-wall
+   * grey, never cropped, so portrait and landscape lines take the same room. 88 px on phones.
    */
   thumbHeight?: number
   /** Per-line server-revalidation error (checkout). */
   error?: string
-  /**
-   * Whether to show the inline "Limited edition" tag. The cart hides it (its
-   * price panel shows the edition); checkout keeps it.
-   */
+  /** Whether to show the edition line ("Open edition", "Limited edition · S1"). */
   showEditionTag?: boolean
-  /**
-   * Optional control parked at the right end of the edition line (cart: "Edit
-   * item" on phones). Rendered only alongside the edition tag — it rides that
-   * row rather than owning one of its own.
-   */
-  editionAction?: React.ReactNode
+  /** Under the specs: the cart's Edit and Remove. */
+  actions?: ReactNode
+  /** The right-hand column: the cart's price and quantity. Under the text on phones. */
+  aside?: ReactNode
 }
 
 /**
- * Shared presentation of a cart item — thumbnail + artist/title + aligned spec
- * list + limited-edition tag/countdown. Used by both the cart line and the
- * checkout recap so the two surfaces never drift in look or markup. Each
- * surface supplies its own controls (cart: stepper/remove; checkout: read-only
- * qty) around this block.
+ * One cart item as the order flow draws it (docs/public-redesign/order-flow.md "Cart",
+ * designs/cart.dc.html, checkout-2-review.dc.html): the thumbnail, the title in serif italics,
+ * the artist, the edition in small caps and the choices as short lines (`specLines`). Shared by
+ * the cart and the checkout so the two never drift; each supplies its own controls.
  */
 export const CartItemDetails = ({
   item,
   thumbHeight = 120,
   error,
   showEditionTag = true,
-  editionAction,
+  actions,
+  aside,
 }: Props) => {
+  const lines = specLines(item.specsSummary)
   return (
     <div
-      className={styles.item}
-      style={{ '--thumb-size': `${thumbHeight}px` } as React.CSSProperties}
+      className={c(styles.item, aside !== undefined && styles.withAside)}
+      style={{ '--thumb-size': `${thumbHeight}px` } as CSSProperties}
     >
       <ProtectedImage
         src={item.thumbnailUrl}
         alt={item.title}
-        // 0×0 + CSS sizing is next/image's responsive pattern for sources
-        // whose intrinsic size we don't know — it lets the same <img> render
-        // as a contained square on desktop and full-width/natural-height on
-        // mobile, switched purely in the stylesheet.
+        // 0×0 + CSS sizing: next/image's pattern for sources of unknown intrinsic size; the
+        // stylesheet makes it a contained square.
         width={0}
         height={0}
         wrapperClassName={styles.thumb}
@@ -66,45 +59,29 @@ export const CartItemDetails = ({
       />
 
       <div className={styles.details}>
-        <Text as="p" font="serif" size="xl" className={styles.title}>
-          {item.title}
-        </Text>
-        <Text as="span" font="serif" size="lg" className={styles.artist}>
-          {item.artistName}
-        </Text>
+        <p className={styles.title}>
+          <em>{item.title}</em>
+        </p>
+        <span className={styles.artist}>{item.artistName}</span>
 
         {showEditionTag && (
-          <div className={styles.editionRow}>
-            <Text as="span" size="md" className={styles.edition}>
-              {editionTypeLabel(item.editionType)}
-              {/* The variant name is the one part of this line that identifies
-                  *which* edition was bought — it carries the weight, the type
-                  wording in front of it is context. */}
-              {item.editionName && (
-                <>
-                  {' · '}
-                  <Text as="span" size="md" weight="bold">
-                    {item.editionName}
-                  </Text>
-                </>
-              )}
-            </Text>
-            {editionAction}
+          <span className={styles.edition}>{editionLabel(item.editionType, item.editionName)}</span>
+        )}
+
+        {lines.length > 0 && (
+          <div className={styles.specs}>
+            {lines.map((line, index) => (
+              <span key={index}>{line}</span>
+            ))}
           </div>
         )}
 
-        {/* No per-surface row budget: the cart and checkout render the same
-            line, and giving them different budgets meant the same purchase
-            showed five specs on one page and three plus a toggle on the next.
-            SpecList owns the budget for every surface. */}
-        <SpecList specs={item.specsSummary} className={styles.specs} />
+        {error && <span className={styles.errorText}>{error}</span>}
 
-        {error && (
-          <Text as="span" size="xs" className={styles.errorText}>
-            {error}
-          </Text>
-        )}
+        {actions && <div className={styles.actions}>{actions}</div>}
       </div>
+
+      {aside !== undefined && <div className={styles.aside}>{aside}</div>}
     </div>
   )
 }

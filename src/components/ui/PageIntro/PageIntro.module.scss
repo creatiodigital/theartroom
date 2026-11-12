@@ -8,6 +8,22 @@
   }
 }
 
+.compact {
+  padding: 56px 0 32px;
+
+  @include media-down(md) {
+    padding: var(--space-8) 0 var(--space-6);
+  }
+
+  .title {
+    font-size: 48px;
+
+    @include media-down(md) {
+      font-size: 36px;
+    }
+  }
+}
+
 .title {
   margin: 0;
   font-family: var(--font-serif), var(--font-serif-fallback);

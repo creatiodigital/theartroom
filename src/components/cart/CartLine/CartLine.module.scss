@@ -1,180 +1,94 @@
 @use '@/styles/mixins' as *;
 
-// Item card: details (image + artist/title/specs) on the left, and a vertical
-// price · quantity · subtotal · remove panel on the right, split by a divider.
-// Below 1280px (xl) the panel drops beneath the details — see the note on the
-// media query below for why the cart stacks earlier than most components.
+// docs/public-redesign/order-flow.md "Cart"; designs/cart.dc.html (an item row): 24 px above and
+// below, a hairline under each (the list draws the one above the first).
 .line {
-  display: flex;
-  align-items: stretch;
-  // Containing block for the stacked layout's top-right "Edit item" — see
-  // .actions.
-  position: relative;
-  background: var(--color-surface-subtle);
-  border-top: 1px solid var(--color-border-light);
-  border-bottom: 1px solid var(--color-border-light);
-  // White gap between item cards — the page background shows through.
-  margin-bottom: var(--space-6);
-
-  // Stack below 1280px (xl). The side-by-side layout reserves a fixed 220px
-  // panel next to the details while the page also reserves a fixed 340px
-  // order-summary column — in the laptop band (~1024–1246px) the details
-  // area got too narrow for the spec list's value column. The cart therefore
-  // stacks earlier (xl) than lighter components.
-  @include media-down(xl) {
-    flex-direction: column;
-  }
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-gray-30);
 }
 
-.body {
-  flex: 1;
-  min-width: 0;
-  padding: var(--space-5);
+.edit {
+  color: #333333;
 }
 
-// Right panel — the divider is its left border, full-height because the row
-// stretches both columns to equal height.
-.panel {
-  position: relative;
-  flex-shrink: 0;
-  width: 220px;
+.price {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--public-text);
+  white-space: nowrap;
+}
+
+.quantity {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-6) var(--space-5);
-  text-align: center;
+  align-items: flex-end;
+  gap: 4px;
 
-  // Vertical divider between the details and this panel, inset from the top and
-  // bottom so it doesn't run the full card height.
-  &::before {
-    content: '';
-    position: absolute;
-    top: var(--space-6);
-    bottom: var(--space-6);
-    left: 0;
-    width: 1px;
-    background: var(--color-border-light);
-  }
-
-  // Stacked, the panel spans the whole card, so it stops being a column and
-  // becomes a bar: stepper on the left, price and Edit pushed to the right.
-  // Kept as a centred column it stacked three blocks with 24px gaps between
-  // them and spent ~170px of height stating a quantity of 1 — across a card
-  // that is a thousand pixels wide and empty.
-  @include media-down(xl) {
-    position: static;
-    width: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
-    gap: var(--space-4) var(--space-5);
-    padding: var(--space-4) var(--space-5);
-    text-align: left;
-    border-top: 1px solid var(--color-border-light);
-
-    &::before {
-      display: none;
-    }
+  @include media-down(sm) {
+    align-items: flex-start;
   }
 }
 
-.totalBlock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-
-  // In the bar: label and value on one line, shunted to the right edge. The
-  // stacked label/value pair is a column-panel shape and costs a whole extra
-  // line here for nothing.
-  @include media-down(xl) {
-    flex-direction: row;
-    align-items: baseline;
-    gap: var(--space-2);
-    margin-left: auto;
-  }
-}
-
-.panelLabel {
-  color: var(--color-text-secondary);
-}
-
-.totalValue {
-  color: var(--color-text-primary);
-}
-
+// − 1 + in one 34 px box.
 .stepper {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-
-  // −, + and the qty-1 trash all render at one consistent width, whether they
-  // carry a text glyph or an (icon-only) icon — the icon variant's tighter
-  // padding would otherwise make the trash narrower than −/+.
-  button {
-    min-width: 40px;
-    justify-content: center;
-  }
-
-  // The trash icon that replaces "−" at qty 1 — keep it in scale with the
-  // "−"/"+" glyphs rather than the button's default 20px icon size.
-  svg {
-    width: 14px;
-    height: 14px;
-  }
+  height: 34px;
+  border: 1px solid var(--color-gray-60);
 }
 
 .qty {
-  min-width: var(--space-6);
+  width: 28px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
   text-align: center;
-  color: var(--color-text-primary);
+  color: var(--public-text);
 }
 
-// Edit / Delete CTAs — stacked, equal width (both fullWidth) so the panel
-// reads as one tidy action column.
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  width: 100%;
+// #666, not the drawn #999 (Q-P12).
+.limitNote {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
 
-  // Stacked, it leaves the bottom bar entirely and sits in the card's top-right
-  // corner, level with the artist's name — an action ON this item, next to what
-  // identifies it, rather than a third thing competing with the price. Anchored
-  // to .line (not .panel, which goes static here). The artist/title/edition
-  // block above the spec grid is ~75px tall and this button ends around 64px,
-  // so it clears the specs without a reserved gutter.
-  @include media-down(xl) {
-    position: absolute;
-    top: var(--space-5);
-    right: var(--space-5);
-    flex-direction: row;
-    width: auto;
+// The bare Buttons, through .line so they outrank Button's own reset whatever the stylesheet order.
+.line {
+  // #666, not the drawn #777 (Q-P12).
+  .remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans), var(--font-sans-fallback);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+    cursor: pointer;
 
-    button,
-    a {
-      width: auto;
+    &:hover {
+      color: var(--public-text);
     }
   }
 
-  // On phones the card stacks the photo above the text, so this corner is
-  // the top-right of the picture — the button landed on the artwork. The
-  // twin inside the details takes over there (see .inlineEdit).
-  @include media-down(sm) {
-    display: none;
-  }
-}
+  .step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 100%;
+    color: #333333;
+    cursor: pointer;
 
-// The phone-only twin of the Edit button, rendered on the edition line inside
-// the details. Exactly one of the two is ever displayed, so only one reaches
-// the accessibility tree.
-.inlineEdit {
-  display: none;
+    &:disabled {
+      color: var(--color-gray-65);
+      cursor: not-allowed;
+    }
 
-  @include media-down(sm) {
-    display: block;
-    flex-shrink: 0;
+    &:focus-visible {
+      outline: 2px solid var(--public-text);
+      outline-offset: -2px;
+    }
   }
 }

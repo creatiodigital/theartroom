@@ -1,52 +1,27 @@
 @use '@/styles/mixins' as *;
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  // Tall enough that the block sits in the middle of the page rather than
-  // hugging the header rule, with the footer kept below the fold's edge.
-  min-height: 50vh;
-  padding: var(--space-16) 0;
+// docs/public-redesign/order-flow.md "Cart"; designs/cart.dc.html. Content 1160 px wide (the drawn
+// 1240 wrap less its 40 px sides), as on the Prints page.
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding-bottom: 72px;
 
-  @include media-down(sm) {
-    min-height: 0;
-    padding: var(--space-12) 0;
+  @include media-down(md) {
+    padding-bottom: var(--space-8);
   }
 }
 
-.emptyIcon {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-6);
-}
-
-.emptyText {
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-// One reassuring line, kept to a short measure so it reads as a caption.
-.emptyNote {
-  margin: var(--space-4) 0 var(--space-8);
-  max-width: 420px;
-}
-
-// Page layout: items table (left) + sticky order summary (right).
+// Items (left) and the order summary (right, 360 px); stacked below 1024 px.
 .cartGrid {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  // Matches the checkout steps' column gutter so the two surfaces breathe
-  // the same.
-  gap: var(--space-16);
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 56px;
   align-items: start;
 
-  // Keep items + summary side by side on laptops (incl. 13" ≈ 1280px); only
-  // stack on tablet/mobile.
   @include media-down(lg) {
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-10);
   }
 }
 
@@ -54,25 +29,40 @@
   min-width: 0;
 }
 
-// ── Order summary card ─────────────────────────────────────────
+.list {
+  border-top: 1px solid var(--color-gray-30);
+}
+
+.backRow {
+  display: flex;
+  padding-top: var(--space-6);
+}
+
+// The order summary panel on the off-white, sticky under the site header (83 px from 1024 px).
 .summary {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-6);
-  background: var(--color-surface-elevated);
-  border-top: 1px solid var(--color-border-default);
-  border-bottom: 1px solid var(--color-border-default);
+  gap: 14px;
+  padding: 28px;
+  background: var(--public-off-white);
 
-  // Stops being a sticky sidebar once it drops below the table (see .cartGrid).
-  @include media-down(lg) {
-    position: static;
+  @include media-up(lg) {
+    position: sticky;
+    top: calc(83px + var(--space-6));
+  }
+
+  @include media-down(sm) {
+    padding: var(--space-6) var(--space-5);
   }
 }
 
 .summaryTitle {
-  margin: 0 0 var(--space-2);
-  color: var(--color-text-primary);
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 24px;
+  font-weight: var(--font-regular);
+  line-height: 1.25;
+  color: var(--public-text);
 }
 
 .subtotalRow {
@@ -80,45 +70,100 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border-default);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .subtotalLabel {
-  color: var(--color-text-secondary);
+  color: var(--public-secondary);
 }
 
 .subtotalValue {
-  color: var(--color-text-primary);
+  color: var(--public-text);
+  white-space: nowrap;
 }
 
+// A <p>: size pinned. #666, not the drawn #888 (Q-P12).
 .note {
   margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--color-text-secondary);
 }
 
-.cta {
-  margin-top: var(--space-2);
+// Black, 52 px, caps 13 px. Through .summary so it outranks Button's own size rules.
+.summary .checkoutButton {
+  height: 52px;
+  margin-top: 6px;
+  padding: 0 var(--space-6);
+  font-size: 13px;
+  font-weight: var(--font-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.secondaryCta {
-  margin-top: var(--space-1);
+.browse {
+  align-self: center;
+  padding-top: 4px;
 }
 
-// One plain sentence: a limited edition in this cart is not reserved. No
-// border, no clock — it is a caveat, not a countdown.
+// The limited-edition caveat under a hairline, with a lock. #666, not the drawn #888 (Q-P12).
 .limitedNotice {
-  margin: 0 0 var(--space-3);
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid #e6e6e3;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  line-height: 1.55;
   color: var(--color-text-secondary);
-  line-height: 1.45;
 }
 
-// The way back out of the cart, under everything in it. Left-aligned with the
-// lines above rather than centred, so it reads as "leave this list" and never
-// competes with the checkout button in the summary.
-.backRow {
+.lock {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+// other-screens.md "Empty cart": serif line, one grey line, two arrow links.
+.empty {
   display: flex;
-  padding-top: var(--space-4);
-  // No rule of its own: the last item card already closes with a border-bottom
-  // a few pixels above, and the two together read as a doubled line.
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40px 0 var(--space-16);
+  border-top: 1px solid var(--color-gray-30);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 32px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 28px;
+  }
+}
+
+.emptyLine {
+  max-width: 520px;
+  margin: 14px 0 28px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--public-secondary);
+}
+
+.emptyLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+
+  @include media-down(sm) {
+    flex-direction: column;
+  }
 }
