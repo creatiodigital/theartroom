@@ -14,5 +14,6 @@ export {
   type SaveStatus,
   type SaveTracking,
 } from './saveTracking'
+export { SAVED_MOMENT_MS, useSavedMoment } from './savedMoment'
 export type { ToolTint } from './tints'
 export { metres } from './format'

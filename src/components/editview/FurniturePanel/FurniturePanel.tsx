@@ -14,6 +14,7 @@ import {
   ToolPanel,
   metres,
   useSaveTracking,
+  useSavedMoment,
 } from '@/components/editorChrome'
 import {
   BENCH_MODELS,
@@ -35,7 +36,7 @@ const MOVE_RANGE = 15
 const FurniturePanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const benchSettings = useSelector((state: RootState) => state.exhibition.benchSettings)
@@ -61,7 +62,6 @@ const FurniturePanel = () => {
       })
       if (response.ok) {
         setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
       }
       saveTrack.finished(sentAt, response.ok)
     } catch (error) {

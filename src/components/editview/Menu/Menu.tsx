@@ -245,7 +245,10 @@ export const Menu = () => {
 
   return (
     <>
-      <nav aria-label="Editor tools" className={styles.toolbar}>
+      {/* Q139 (d): the room's camera skips a wheel or a press inside `[data-panel-overlay]`
+          (MainCamera), as on the panels and the visitor's RoomMenu: the wheel scrolls the toolbar
+          when it overflows (Q138) instead of walking the room, and a drag from it doesn't turn it. */}
+      <nav aria-label="Editor tools" className={styles.toolbar} data-panel-overlay>
         <Tool label="Exit" tooltip="Back to dashboard" icon={ArrowLeft} onClick={handleClose} />
         <Tool
           label="Spots"

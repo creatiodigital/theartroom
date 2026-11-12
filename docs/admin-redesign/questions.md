@@ -952,6 +952,10 @@ Options: (1) drop View details from the editor's panel (the panel already shows 
 dimensions); (2) the public page in a new tab, only for published artists; (3) the studio's artwork editor
 (`/dashboard/artworks/{id}/edit`); (4) the room's details overlay in the editor. Which one?
 
+_Q139 d–h pass (Code Claude, 2026-11-12): all done._ (d) the wheel over the toolbar scrolls it, the room stays; (e) "Saved"
+for 3 s in all seven panels (Q158); (h) the Artwork panel and a tool panel replace each other. (f) and (g) were already
+fixed by 18-2 and Q131 (Q159), confirmed in the browser and closed.
+
 **Q140 · Code Claude → owner: the Icon map after this step.** The keys `light`, `panel-top`, `armchair`, `house`, `grid-2x2`, `brick-wall`, `preview`, `placeholder` and `src/icons/preview.svg` / `placeholder.svg` lose their only user (the old toolbar). _Meanwhile:_ removed in 18-3 under the Q55 (b) rule (unused keys and orphan SVGs go). Keep them instead?
 
 **Q141 · Code Claude → owner: the floating "Zoom: 35%" lives in the wall's file.** wallview.md moves the zoom % into the left panel's strip, but the floating label is in `CenterPanel.tsx:96–100` (+ 8 lines of SCSS), a file the spec lists as "the wall itself". It is a read-only label, no handler. _Meanwhile:_ the strip shows the % and the floating label stays (two readouts of the same value). Remove those lines?
@@ -1074,7 +1078,29 @@ wall edits; the wall's copy wins there), then saves; (b) the line says "Discard 
 keeps this editor's copy and overwrites the other tab's change."; (c) leave it, as a known limit. _Meanwhile:_ not
 committed until the owner chooses (Code Claude recommends (a)).
 
+**Q158 · Code Claude → owner: "Saved" in the 3D editor's Save panels (Q139 e).** After an accepted save the button
+reads "Saved". In Benches and Display panels it goes back to "Save" after 2 s; in Lighting, Walls, Windows, Floor and
+View it stays until the next edit. Either way it is the open panel's own moment: close and reopen a panel and it says
+"Save" (the Unsaved dot is what remembers). Options: (a) all seven show "Saved" for 2 s, then "Save" (as Benches and
+Display today; the admin pages' save bars do the same for 3 s); (b) all seven keep "Saved" until the next edit (the
+two timers go). _Meanwhile:_ planned as (a), not built until answered.
+
+**Q159 · Code Claude → owner: Q139 (f) and (g) are already fixed by earlier steps.** (f) Step 18-2 (committed 17 minutes
+after Q139 was written) gave every lamp control its room: the picked lamp's switch and sliders read "Room 2 · Lamp 1"
+and "Room 2 · Lamp 1 turn", and each grid of lamp buttons is a group named "Room 2 lamps". (g) Since Q131, an unsaved
+edit in any of the seven Save panels makes Exit ask the browser's "Leave site?"; so does the entrance corridor's "Leave"
+(after its own prompt, so it asks twice). The wall view never returns to the room with unsaved wall edits (Save & close
+or Cancel). One detail: Exit resets the wall view's working state (size locks, guides, zoom, grid and snap) before the
+browser asks, so after "Stay" the next wall opens with those at their defaults; nothing saved or sent changes. Options
+for the detail: (a) leave it; (b) reset only once the page really leaves. _Meanwhile:_ (f) and (g) get a browser check in
+the Q139 d–h pass and are then marked done; the detail stays as (a) (Code Claude recommends (a): every handler kept).
+
 ## Answered
+
+**Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**
+- **Q158:** (a), "Saved" then back to "Save" in all seven Save panels, for as long as the admin save bars show it
+  (3 s: the page editor, announcements, exhibition settings).
+- **Q159:** yes, close (f) and (g) after the browser check. The Exit reset: (a), as is.
 
 **Owner answers, 2026-11-12 (Q142 step, relayed to Code Claude):**
 - **Q142:** approved as described: one "changed since last save" flag in the Redux store; plan first, listing every

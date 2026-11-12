@@ -21,6 +21,7 @@ import {
   ToolPanel,
   metres,
   useSaveTracking,
+  useSavedMoment,
 } from '@/components/editorChrome'
 import { ColorPicker } from '@/components/ui/ColorPicker'
 import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
@@ -106,7 +107,7 @@ const throwChip = (stored: number) => throwLabel(stored).replace(/(\d)m$/, '$1 m
 const LightingPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
   // NEW lamp picker (editor3d.md): which lamp's controls show. UI state only: never dispatched
   // or saved, and nothing in the room follows it. Null: the first lamp.
   const [pickedLamp, setPickedLamp] = useState<number | null>(null)

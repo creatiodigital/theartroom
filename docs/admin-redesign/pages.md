@@ -1148,3 +1148,7 @@ with its Size slider. e2e (port 3001): `e2e/icon-keys.spec.ts` 4 passed; with `<
 `MediaLibrary.tsx:294` it fails naming `eye-off` at `MediaLibrary.tsx:294` (its scan guard fails too, as that line is
 the only literal `eyeOff`); file restored.
 
+### Q139 d–h · 3D editor: toolbar wheel, "Saved" moment, one panel at a time — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+The wheel over the toolbar scrolls it (no longer walks the room); every Save panel shows "Saved" for 3 s, then "Save"
+(Q158); opening a work's panel closes a tool panel and vice versa; (f) and (g) were already fixed, checked (Q159).

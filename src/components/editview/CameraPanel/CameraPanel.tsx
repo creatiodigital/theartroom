@@ -4,7 +4,14 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Camera } from '@phosphor-icons/react'
 
-import { PanelCard, SliderRow, ToolPanel, metres, useSaveTracking } from '@/components/editorChrome'
+import {
+  PanelCard,
+  SliderRow,
+  ToolPanel,
+  metres,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { hideCameraPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
@@ -16,7 +23,7 @@ const DEFAULT_CAMERA_ELEVATION = 1.6
 const CameraPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".

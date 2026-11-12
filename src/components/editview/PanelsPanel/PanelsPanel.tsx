@@ -13,6 +13,7 @@ import {
   ToolPanel,
   metres,
   useSaveTracking,
+  useSavedMoment,
 } from '@/components/editorChrome'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
 import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
@@ -41,7 +42,7 @@ const roomOfPanel = (index: number) => Math.floor(index / 10)
 const PanelsPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
@@ -104,7 +105,6 @@ const PanelsPanel = () => {
       })
       if (response.ok) {
         setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
       }
       saveTrack.finished(sentAt, response.ok)
     } catch (error) {

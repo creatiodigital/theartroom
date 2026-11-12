@@ -547,3 +547,7 @@ like the real Pause switch). Logic and dialogs unchanged.
   linked wall once loaded), `needsLinkCancelPoint(...)`. `wallViewSlice` `wallSaving` + `setWallSaving` (the one save
   flag `useSaveExhibition` returns as `saving`). Preset dialogs take `failed` (their red line); `DeletePresetsModal`
   asks inside the dialog.
+- Q139 d–h: `editorChrome/savedMoment.ts`: `useSavedMoment(ms?)` → `[saved, setSaved]`, a drop-in for the seven Save
+  panels' `useState(false)` ("Saved" for `SAVED_MOMENT_MS` = 3000, as the admin save bars; Q158), on
+  `savedMomentTimer(onEnd, ms?, timers?)`. `dashboardSlice`: `showArtworkPanel` closes the eight tool panels and each tool
+  panel's `show` closes the Artwork panel (one at a time). The toolbar `nav` carries `data-panel-overlay`.

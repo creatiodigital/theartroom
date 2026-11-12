@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { GridFour } from '@phosphor-icons/react'
 
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { ToolPanel, useSaveTracking } from '@/components/editorChrome'
+import { ToolPanel, useSaveTracking, useSavedMoment } from '@/components/editorChrome'
 import { DEFAULT_RADIATOR_COLOR } from '@/components/scene/spaces/objects/Radiator'
 import { DEFAULT_WINDOW_FRAME_COLOR } from '@/components/scene/spaces/objects/Windows'
 import { hideWindowsPanel } from '@/redux/slices/dashboardSlice'
@@ -16,7 +16,7 @@ import type { RootState } from '@/redux/store'
 const WindowsPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".

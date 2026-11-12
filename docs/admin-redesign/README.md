@@ -8,6 +8,10 @@ Only the owner uses the admin. There is no deadline: quality over speed, one pag
 
 ## How we work (read this first)
 
+> **Update, owner 2026-11-12:** from now on (remaining admin work and the whole public redesign), commit without
+> waiting for the owner, stop only for real blockers, and don't run E2E per commit: one full E2E run at the very end.
+> Details: `docs/public-redesign/README.md`, "Workflow".
+
 Two Claudes share this folder:
 
 | Who | Where | Owns |

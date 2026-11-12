@@ -5,7 +5,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { PaintRoller } from '@phosphor-icons/react'
 
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { PanelCard, SliderRow, ToolPanel, useSaveTracking } from '@/components/editorChrome'
+import {
+  PanelCard,
+  SliderRow,
+  ToolPanel,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { hideWallCeilingPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
@@ -18,7 +24,7 @@ const DEFAULT_CEILING_COLOR = '#ffffff'
 const WallCeilingPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".

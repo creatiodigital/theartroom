@@ -5,7 +5,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Rows } from '@phosphor-icons/react'
 
 import { AdminSelect } from '@/components/admin/ui/AdminSelect'
-import { PanelCard, SliderRow, ToolPanel, useSaveTracking } from '@/components/editorChrome'
+import {
+  PanelCard,
+  SliderRow,
+  ToolPanel,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import {
   BAKED_FLOORS,
@@ -53,7 +59,7 @@ const BAKED_FLOOR_LABELS: Record<string, string> = {
 const FloorPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
