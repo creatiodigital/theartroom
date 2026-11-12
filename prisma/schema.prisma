@@ -234,6 +234,8 @@ model Artwork {
 
   // The gallery's curated /prints entry, if this work is in the selection.
   selectedPrint SelectedPrint?
+  // The home page's rotating prints entry, if this work is in that list (HomePrint).
+  homePrint     HomePrint?
 
   exhibitionArtworks ExhibitionArtwork[]
   printOrders        PrintOrder[]
@@ -784,6 +786,8 @@ model Exhibition {
   // Optional titled groups on the public page, in artist order. See
   // docs/superpowers/specs/2026-10-08-exhibition-sections-design.md
   sections           ExhibitionSection[]
+  // Visitor feedback sent from this exhibition's 3D room (Feedback).
+  feedback           Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -957,29 +961,29 @@ model Session {
 }
 
 model Slide {
-  id             String   @id @default(uuid())
-  order          Int      @default(0)
-  imageUrl       String
+  id                 String   @id @default(uuid())
+  order              Int      @default(0)
+  imageUrl           String
   // Optional portrait crop shown below the desktop breakpoint (phones AND
   // tablets). A wide image center-cropped to portrait can put the text over a
   // busy area; this lets the admin compose a calm one. Null = use imageUrl.
-  mobileImageUrl String?
-  title          String
-  subtitle       String
-  meta           String // e.g. "7 NOV 2025 - 17 JAN 2026    NEW YORK"
-  exhibitionUrl  String
-  isActive       Boolean  @default(true)
+  mobileImageUrl     String?
+  title              String
+  subtitle           String
+  meta               String // e.g. "7 NOV 2025 - 17 JAN 2026    NEW YORK"
+  exhibitionUrl      String
+  isActive           Boolean  @default(true)
   // Hex color for the overlaid title/subtitle/meta text. Lets the
   // admin pick a contrasting color per slide so light or busy images
   // don't lose the text. Defaults to #ffffff (the previous behavior).
-  textColor      String   @default("#ffffff")
+  textColor          String   @default("#ffffff")
   // The "Enter Virtual Exhibition" button under the text — shown on laptops and
   // desktops when the slide's exhibition has its 3D space published, straight
   // into it (/visit). Its colors are picked per slide to suit the image.
   ctaBackgroundColor String   @default("#ffffff")
   ctaTextColor       String   @default("#000000")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 // One curated entry on /prints — the gallery's own selection, ordered by hand.
@@ -992,6 +996,32 @@ model SelectedPrint {
   artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
   order     Int      @default(0)
   createdAt DateTime @default(now())
+}
+
+/// The home page's rotating prints (docs/public-redesign/home.md §5): a list of its own, the twin of
+/// `SelectedPrint` (Gallery selection), with the same shape and admin logic (questions Q-P2).
+/// `SelectedPrint.artworkId` is unique, so it can't hold a second list.
+model HomePrint {
+  id        String   @id @default(uuid())
+  artworkId String   @unique
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+/// Visitor feedback (docs/public-redesign/feedback.md): one text box, stored and emailed to the
+/// owner. Nothing personal: no IP, no user agent, no cookies. `source` is a fixed value the UI
+/// sends (`home` | `room`); `exhibitionId` only from a room, set by the server from a validated
+/// slug, and cleared (the message kept) if the exhibition is deleted.
+model Feedback {
+  id           String      @id @default(uuid())
+  message      String
+  source       String
+  exhibitionId String?
+  exhibition   Exhibition? @relation(fields: [exhibitionId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+
+  @@index([createdAt])
 }
 
 /// Supplementary media for an artwork page — close-ups, print mockups, studio
