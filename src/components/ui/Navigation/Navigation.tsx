@@ -84,8 +84,13 @@ export const Navigation = () => {
       {/* Mobile Menu Overlay */}
       <div className={`${styles.mobileOverlay} ${isMenuOpen ? styles.open : ''}`}>
         <div className={styles.mobileHeader}>
-          <Link href="/" className={styles.mobileLogo} onClick={() => setIsMenuOpen(false)}>
-            <Logo />
+          <Link
+            href="/"
+            className={styles.mobileLogo}
+            aria-label="The Art Room"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <Logo aria-hidden />
           </Link>
           <Button
             variant="ghost"

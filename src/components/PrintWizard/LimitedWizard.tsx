@@ -225,8 +225,8 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
   return (
     <div className={styles.wizard}>
       <header className={styles.header}>
-        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
-          <Logo className={styles.logo} />
+        <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
+          <Logo className={styles.logo} aria-hidden />
         </Link>
         <span />
         <div className={styles.headerActions}>
