@@ -121,12 +121,8 @@
   padding-top: 4px;
   grid-column: 2;
   grid-row: 1;
-
-  // Sticky under the site header (83 px from 1024 px) while the page scrolls.
-  @include media-up(lg) {
-    position: sticky;
-    top: calc(83px + var(--space-6));
-  }
+  // Scrolls with the page, top-aligned with the picture; not sticky (owner, 2026-11-12).
+  align-self: start;
 
   // Stacked: under the picture, on the off-white.
   @include media-down(lg) {
