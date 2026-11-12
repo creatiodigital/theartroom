@@ -19,9 +19,10 @@
   padding: 0;
   list-style: none;
 
+  // One per row on phones (owner, 2026-11-12: never two columns on a phone).
   @include media-down(md) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px 14px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
   }
 }
 

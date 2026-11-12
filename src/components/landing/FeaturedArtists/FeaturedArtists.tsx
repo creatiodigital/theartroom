@@ -47,7 +47,7 @@ export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
                     src={artist.profileImageUrl}
                     alt=""
                     fill
-                    sizes="(max-width: 768px) 50vw, 420px"
+                    sizes="(max-width: 768px) 100vw, 420px"
                     className={styles.image}
                   />
                 )}
