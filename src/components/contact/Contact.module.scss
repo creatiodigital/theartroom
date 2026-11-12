@@ -1,9 +1,9 @@
 @use '@/styles/mixins' as *;
 
-// docs/public-redesign/about-contact.md; designs/contact-desktop.dc.html. Content 1160 px wide; rows
-// as on About (a hairline above each, 48 px of air).
+// docs/public-redesign/about-contact.md; designs/contact-desktop.dc.html. Rows as on About (a
+// hairline above each, 48 px of air).
 .page {
-  max-width: 1160px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
 }
 

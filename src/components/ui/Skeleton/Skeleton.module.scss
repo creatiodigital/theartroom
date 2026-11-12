@@ -23,7 +23,7 @@
 }
 
 .page {
-  max-width: 1160px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
   padding-bottom: var(--space-16);
 }
@@ -90,7 +90,7 @@
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 56px;
   align-items: start;
-  max-width: 1360px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
   padding: 32px 0 var(--space-16);
 

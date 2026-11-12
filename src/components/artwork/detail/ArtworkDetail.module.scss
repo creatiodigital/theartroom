@@ -3,9 +3,9 @@
 // docs/public-redesign/artwork.md; designs/artwork-desktop.dc.html, artwork-phone.dc.html,
 // artwork-portrait-*.dc.html. Shared by the artwork page and the 3D room's artwork overlay.
 
-// The page's frame around the two columns: the drawn 1440 px page less its 40 px sides.
+// The page's frame around the two columns.
 .standaloneContent {
-  max-width: 1360px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
   padding-top: 32px;
 

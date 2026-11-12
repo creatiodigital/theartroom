@@ -13,7 +13,8 @@
   grid-template-columns: 6fr 5fr;
   gap: 80px;
   align-items: center;
-  max-width: 1160px;
+  // The header's column (owner, 2026-11-12: no narrower cap).
+  max-width: var(--content-max-width);
   width: calc(100% - var(--site-padding) * 2);
   margin: 0 auto;
   padding: 120px 0;

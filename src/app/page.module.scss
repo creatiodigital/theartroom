@@ -37,10 +37,10 @@
   }
 }
 
-// The homepage's column (docs/public-redesign/home.md; designs/home-desktop.dc.html): 1160px,
-// the Band's width, with the site's padding each side; 24px each side below lg.
+// The homepage's column (docs/public-redesign/home.md): the header's and the footer's width, the
+// site's padding each side; 24px each side below lg (owner, 2026-11-12: no narrower cap).
 .content {
-  max-width: 1160px;
+  max-width: var(--content-max-width);
   width: calc(100% - var(--site-padding) * 2);
   margin: 0 auto;
 

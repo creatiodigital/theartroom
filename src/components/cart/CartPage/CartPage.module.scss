@@ -1,9 +1,9 @@
 @use '@/styles/mixins' as *;
 
-// docs/public-redesign/order-flow.md "Cart"; designs/cart.dc.html. Content 1160 px wide (the drawn
-// 1240 wrap less its 40 px sides), as on the Prints page.
+// docs/public-redesign/order-flow.md "Cart"; designs/cart.dc.html. As wide as the header, as on the
+// Prints page.
 .page {
-  max-width: 1160px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
   padding-bottom: 72px;
 

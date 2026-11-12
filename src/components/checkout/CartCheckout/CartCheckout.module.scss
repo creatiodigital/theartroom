@@ -1,10 +1,10 @@
 @use '@/styles/mixins' as *;
 
 // docs/public-redesign/order-flow.md "Checkout"; designs/checkout-1-shipping.dc.html and
-// checkout-2-review.dc.html. Content 1160 px wide, as the cart; the step on the left, the order
+// checkout-2-review.dc.html. As wide as the header, as the cart; the step on the left, the order
 // panel on the right (400 px); stacked below 1024 px.
 .page {
-  max-width: 1160px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
   padding-bottom: 72px;
 

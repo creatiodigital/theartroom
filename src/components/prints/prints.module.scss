@@ -2,7 +2,7 @@
 
 // docs/public-redesign/prints.md, designs/prints-desktop.dc.html / -phone.dc.html.
 .page {
-  max-width: 1160px;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
   margin: 0 auto;
 }
 
