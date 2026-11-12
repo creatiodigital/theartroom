@@ -1,0 +1,99 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/exhibitions.md, designs/exhibitions-desktop.dc.html / -phone.dc.html.
+.row {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: var(--space-10);
+  align-items: center;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--color-gray-30);
+
+  // Phones: stacked, the image edge to edge, 44px between exhibitions, no hairlines.
+  @include media-down(md) {
+    display: block;
+    padding: 0 0 44px;
+    border-bottom: 0;
+  }
+}
+
+.imageLink {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--public-render-wall);
+
+  @include media-down(md) {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-bottom: var(--space-4);
+  }
+}
+
+.image {
+  object-fit: cover;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 700px;
+  min-width: 0;
+}
+
+// Small caps (the drawn #777 is 4.48:1 on white; the secondary grey reads the same and passes).
+.artist {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 27px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
+  }
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.description {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+
+  @include media-down(md) {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+
+.actions {
+  margin-top: 6px;
+}

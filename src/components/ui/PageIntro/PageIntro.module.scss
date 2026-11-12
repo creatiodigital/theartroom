@@ -1,0 +1,36 @@
+@use '@/styles/mixins' as *;
+
+.intro {
+  padding: 72px 0 48px;
+
+  @include media-down(md) {
+    padding: var(--space-10) 0 var(--space-8);
+  }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 52px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 38px;
+  }
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.subtitle {
+  max-width: 640px;
+  margin: 14px 0 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+
+  @include media-down(md) {
+    font-size: 16px;
+  }
+}

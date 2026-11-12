@@ -1,9 +1,4 @@
-import Link from 'next/link'
-import c from 'classnames'
-// The SSR entry: this renders inside server components (home, /exhibitions, artist profiles).
-import { ArrowRight, Cube } from '@phosphor-icons/react/dist/ssr'
-
-import styles from './ExhibitionActions.module.scss'
+import { ArrowLink, ArrowLinkDivider, ArrowLinkRow } from '@/components/ui/ArrowLink'
 
 interface ExhibitionActionsProps {
   /** The exhibition page. */
@@ -14,24 +9,20 @@ interface ExhibitionActionsProps {
 }
 
 /**
- * "→ View Exhibition | Enter 3D Room" under an exhibition card (AR-174): the homepage grid, the
- * artist profile and the /exhibitions list. Each is a link of its own, so the card around it must
- * never be one.
+ * "→ View exhibition | Enter 3D room" under an exhibition (AR-174; docs/public-redesign/exhibitions.md,
+ * components.md "ArrowLink"): the homepage grid, the artist profile and the /exhibitions list. Each
+ * is a link of its own, so the card around it must never be one.
  */
 export const ExhibitionActions = ({ href, visitUrl, className }: ExhibitionActionsProps) => (
-  <div className={c(styles.actions, className)}>
-    <ArrowRight size={16} weight="light" aria-hidden />
-    <Link href={href} className={styles.action}>
-      View Exhibition
-    </Link>
+  <ArrowLinkRow className={className}>
+    <ArrowLink href={href}>View exhibition</ArrowLink>
     {visitUrl && (
       <>
-        <span className={styles.separator} aria-hidden />
-        <Link href={visitUrl} className={c(styles.action, styles.roomAction)}>
-          <Cube size={16} weight="light" aria-hidden />
-          <span>Enter 3D Room</span>
-        </Link>
+        <ArrowLinkDivider />
+        <ArrowLink href={visitUrl} icon="cube">
+          Enter 3D room
+        </ArrowLink>
       </>
     )}
-  </div>
+  </ArrowLinkRow>
 )

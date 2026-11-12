@@ -112,7 +112,7 @@ test('a homepage card offers its exhibition page, and its 3D room only once publ
   await page.goto('/')
   const roomLink = page.locator(`a[href="${withSpace}/visit"]`)
   await expect(roomLink).toHaveCount(1)
-  await expect(roomLink).toHaveText('Enter 3D Room')
+  await expect(roomLink).toHaveText('Enter 3D room')
   await expect(
     page.getByRole('link', { name: 'View Exhibition' }).and(page.locator(`[href="${withSpace}"]`)),
   ).toHaveCount(1)
@@ -132,7 +132,7 @@ for (const [where, path] of [
     page,
   }) => {
     await page.goto(path)
-    await expect(page.locator(`a[href="${withSpace}/visit"]`)).toHaveText('Enter 3D Room')
+    await expect(page.locator(`a[href="${withSpace}/visit"]`)).toHaveText('Enter 3D room')
     await expect(
       page
         .getByRole('link', { name: 'View Exhibition' })
