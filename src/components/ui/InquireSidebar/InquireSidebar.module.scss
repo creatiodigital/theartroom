@@ -144,15 +144,12 @@
   gap: 18px;
 }
 
+// First and last name one under the other, at every width (owner, 2026-11-12), spaced like the
+// form's other fields.
 .pair {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-
-  @include media-down(sm) {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
+  grid-template-columns: 1fr;
+  gap: 18px;
 }
 
 .label {
