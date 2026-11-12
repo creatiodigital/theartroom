@@ -67,6 +67,10 @@ export const countsAsWallEdit = (
   // The page load and the 3D editor are not the wall view.
   if (!wall.isWallView || !isWallContentAction(action)) return false
 
+  // A copy of what the server already holds (the editor's re-read of a work edited in the
+  // studio, hooks/artworkReread.ts) is not an edit.
+  if ((action as { meta?: { fromServer?: boolean } }).meta?.fromServer === true) return false
+
   // The wall's mount-time recompute (Wall.tsx) sends only derived 3D keys; every edit moves,
   // sizes or turns the item in 2D.
   if (updateArtworkPosition.match(action)) {

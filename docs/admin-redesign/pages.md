@@ -1070,3 +1070,34 @@ place, Move to front, an add, undo and lock; a refused save red only, the next e
 and Cancel clear it; "Leave site?" on reload with the dot, none after a save. e2e on port 3001 (the new spec +
 `font-family-wiring`, `wall-stacking`, `panel-transform`, `wall-orientation`, `exhibition-membership-wall`): 71 passed.
 
+### Later pass, commit A · 3D editor: Edit artwork, keys in panels — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-later-pass.md` (items 1–2, the owner's answers Q152–Q157). Behaviour fixes the
+owner decided (Q139 a / c, Q153, Q157).
+
+1. **Edit artwork (Q139 a)**: the editor's Artwork panel button "View details" (which opened nothing) is now **Edit
+   artwork** and opens the studio's `/dashboard/artworks/{id}/edit` in a new tab ("opens in a new tab" for screen
+   readers); the panel stays open. For every admin (Q152 a): an admin who isn't impersonating can open it, but saving
+   another artist's work is refused there, as the wall's own save already is.
+2. **Read back on return (Q153)**: works opened with Edit artwork are read again (read-only) when this tab is back in
+   front, and their title, author, year, dimensions, technique, description, text, featured and image are taken in
+   (no Unsaved dot). With a wall open and unsaved changes, nothing is taken: the left panel says "This work was changed
+   in another tab. Save or discard your wall changes to load it." and it is read after the save or the discard.
+3. **A wall save never undoes the other tab (Q157 a)**: before the wall's Save, Save & close or View details' save-first
+   sends anything, the opened works are read again and the request carries the studio's values for every field but a
+   text item's text (the wall's copy). If that read fails, the save stops before sending and shows the red "Not saved.
+   Please try again.". After the save the "changed in another tab" line is gone. The batch request's shape and every
+   other field are unchanged (its builder moved verbatim to `wallview/hooks/artworksBatch.ts`).
+4. **Keys in panels (Q139 c)**: while a field in a tool panel has focus (slider, select, color, switch), W A S D and
+   the arrows are the field's: they no longer also walk the room. Keys elsewhere walk as before.
+5. Nothing inside the three.js scene changed.
+
+Verified: typecheck, lint, prettier; the moved batch builder diffed against HEAD (identical apart from the studio
+values); new `e2e/editor-artwork-reread.spec.ts` (Node, the real reducers and the batch builder, 20 tests, including
+"edit the title in the studio, save the wall, and the studio's title survives" on the request body) with
+`wall-unsaved-flag` and `exhibition-membership-wall`: 54 passed; browser on my own `pnpm dev` (dev DB; non-GET answered
+locally; the studio's save simulated by altering the artwork GET's reply in the browser only) in Florescĕre: 0 walking
+keys reaching the room from a focused slider (the slider still moves), Edit artwork opening the studio editor in a new
+tab with the panel open, the read-back with no wall / a clean wall / a wall with the dot (the line, then the save sending
+the studio's title and the line clearing), and after Cancel; no page errors.
+

@@ -168,6 +168,13 @@
   background: var(--editor-attention-dot);
 }
 
+// A work edited in the studio, waiting for the wall to be saved or discarded (questions.md Q153).
+// Empty most of the time: it takes back the header's gap above it, and stays in the page (no
+// display: none) so the line is announced when it appears.
+.notice:empty {
+  margin-top: calc(-1 * var(--space-3));
+}
+
 // ---- Body ----
 
 .body {

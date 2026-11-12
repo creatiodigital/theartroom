@@ -1024,6 +1024,56 @@ Q142 browser check: the load's own writes reached the open wall and showed the d
 option A):_ a finished load clears it (`wallContentLoaded`). The race itself stays (the owner's call); fixing it would
 make "ready" wait for this exhibition's works, so a failed load would leave a linked wall closed.
 
+**Q152 · Code Claude → owner: "Edit artwork" for an admin who isn't impersonating.**
+- On another artist's exhibition, the studio editor opens for any admin. It shows inside that admin's own studio frame (their menu and name).
+- Saving there needs the owner, someone impersonating the owner, or a superAdmin. A plain admin gets "Not saved. Please try again.", which is also what their own saves in the 3D editor get.
+- No admin page edits artworks (Q109).
+- Options:
+  - (a) the button for everyone, as decided;
+  - (b) for that admin, a line instead: "Impersonate {artist} to edit this work.";
+  - (c) an admin editing route later.
+- _Meanwhile:_ (a).
+
+**Q153 · Code Claude → owner: a wall Save can undo what the new tab just saved.**
+- The wall's Save also writes each work's title, author, year, technique, dimensions, description, text and featured from the editor's own copy.
+- So "Edit artwork" in a new tab, a studio save, then a wall Save in the editor puts the old values back.
+- Options:
+  - (1) open the studio editor in the same tab: the editor reloads when you come back;
+  - (2) a new tab, and the editor re-reads those works' details from the server whenever its tab is back in front (no wall open);
+  - (3) a new tab as is.
+- _Meanwhile:_ (2).
+
+**Q154 · Code Claude → owner: the 3D room never draws a video's paper border.**
+- Only images get one in the room.
+- The wall editor shows it on a video that has a poster image, so the read-back fix makes the switch work there only.
+- Options:
+  - (a) read back as decided;
+  - (b) hide the Paper border switch for videos;
+  - (c) draw it in the room. That is a scene change, against your rule.
+- _Meanwhile:_ (a).
+
+**Q155 · Code Claude → owner: two effects of Cancel now really discarding.**
+- (a) With a Cancel point always kept, **View details always saves the wall first**. Today it skips the save after a Save when nothing entered the undo history. That is one extra save per click, and safer: the overlay reads the work from the server.
+- (b) An edit made in the second a save is in flight becomes part of the new Cancel point. Cancel then keeps it, unsaved, and the dot goes with the wall. Exactness would mean snapshotting the state as sent: new reducers in the content slices.
+- _Meanwhile:_ both as described. OK?
+
+**Q156 · Code Claude → owner: known issue, Cancel keeps an edit made while a save is out (kept as described in Q155).**
+After an accepted save the wall's Cancel point is taken again (Q146 a). An edit made while that save's request was out is
+part of the new Cancel point, so Cancel keeps it although it isn't saved (the Unsaved dot still shows it, Q142). Exact
+behaviour would need new reducers in the artwork and exhibition slices (snapshot as of the request). _Meanwhile:_ as
+described (owner, Q155).
+
+**Q157 · Code Claude → owner: "Save" on the wall overwrites the other tab's edit (found in commit A's check).** While a
+work changed in another tab is held (the wall has unsaved changes), the line says "Save or discard your wall changes to
+load it". But the wall's Save sends every work's title, author, year, dimensions, technique, description, text and
+featured flag from this editor's copy (useSaveExhibition), so following "Save" overwrites the studio's edit (checked in
+the browser with the saves answered locally: the save sent the old title). Discard is safe. Outside its View details
+overlay (which saves itself), the wall view edits only a text item's text of those fields. Options: (a) when works are
+held, the wall's Save first re-reads them and takes the studio's values for every field except the text (the one the
+wall edits; the wall's copy wins there), then saves; (b) the line says "Discard your wall changes to load it. Saving
+keeps this editor's copy and overwrites the other tab's change."; (c) leave it, as a known limit. _Meanwhile:_ not
+committed until the owner chooses (Code Claude recommends (a)).
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q142 step, relayed to Code Claude):**
@@ -1033,6 +1083,19 @@ make "ready" wait for this exhibition's works, so a failed load would leave a li
   cleared by an accepted Save / Save & close, by Cancel / discard and by loading a wall; a refused save keeps it, with
   the red "Not saved"; not persisted, not sent, no change to the save payload. Tests: open → no dot; each kind of edit →
   dot; save → clears; refused save → stays; reload with the dot → "Leave site?".
+
+**Owner answers, 2026-11-12 (Q157, relayed to Code Claude):**
+- **Q157:** (a). Before a wall Save, re-read each held work and take the studio's values for title, author, year,
+  dimensions, technique, description and featured. Only a text item's text keeps the wall's copy. After the save, clear
+  the "changed in another tab" line. Spec test: edit the title in the studio, save the wall, and the studio's title
+  survives.
+
+**Owner answers, 2026-11-12 (Q152–Q155, the later pass, relayed to Code Claude):**
+- **Q152:** (a), "Edit artwork" for everyone.
+- **Q153:** (2), re-read on tab focus. If a wall is open with the Unsaved dot on, don't re-read: show "This work was
+  changed in another tab. Save or discard your wall changes to load it." and re-read after the save or discard.
+- **Q154:** (a), read back as decided.
+- **Q155:** OK as described; the in-flight case noted as a known issue (Q156).
 
 **Owner answers, 2026-11-12 (Q148–Q150, the Q142 step, relayed to Code Claude):**
 - **Q151 (found in the browser check):** option A: a finished load of the works clears the dot (a reset action

@@ -61,6 +61,8 @@ import { toRuntimeArtwork } from '@/utils/artworkTransform'
 import styles from './LeftPanel.module.scss'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 import { selectWallUnsaved } from '@/redux/selectors/wallUnsaved'
+import { useArtworkChangedElsewhere } from '@/hooks/artworkReread'
+import { InfoLine } from '@/components/editorChrome'
 import { isTypingTarget } from '@/utils/isTypingTarget'
 
 // The list filter, in today's order and words.
@@ -129,6 +131,8 @@ export const LeftPanel = () => {
   // Unsaved changes (questions.md Q142): saved-content edits since the last accepted save.
   // `wallEdits` is read when a save goes out, so an edit made during the save keeps the dot.
   const unsaved = useSelector(selectWallUnsaved)
+  // Q153: a work edited in the studio is waiting for this wall to be saved or discarded.
+  const changedElsewhere = useArtworkChangedElsewhere()
   const wallEdits = useSelector((state: RootState) => state.wallView.wallEdits)
   // Q81 / Q142: with unsaved changes, reloading, closing the tab or typing a URL asks the
   // browser's own "Leave site?". In-app links are not caught.
@@ -409,6 +413,14 @@ export const LeftPanel = () => {
             )}
           </p>
         )}
+        {/* Polite, as a status: the work's studio edit is loaded after a save or a discard. */}
+        <div role="status" className={styles.notice}>
+          {changedElsewhere && (
+            <InfoLine>
+              This work was changed in another tab. Save or discard your wall changes to load it.
+            </InfoLine>
+          )}
+        </div>
       </header>
 
       <div className={styles.body}>

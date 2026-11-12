@@ -12,6 +12,7 @@ import { PanelsPanel } from '@/components/editview/PanelsPanel'
 import WallCeilingPanel from '@/components/editview/WallCeilingPanel/WallCeilingPanel'
 import { WindowsPanel } from '@/components/editview/WindowsPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
+import { useArtworkRereadOnReturn } from '@/hooks/artworkReread'
 import { Scene } from '@/components/scene'
 import { WallView } from '@/components/wallview'
 import { declineExit } from '@/redux/slices/sceneSlice'
@@ -22,6 +23,8 @@ import { Menu } from './Menu'
 
 function EditView() {
   const dispatch = useDispatch()
+  // Works opened in the studio by "Edit artwork" are re-read when this tab is back (Q153).
+  useArtworkRereadOnReturn()
   const isWallView: boolean = useSelector((state: RootState) => state.wallView.isWallView)
   const isArtworkPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isArtworkPanelOpen,

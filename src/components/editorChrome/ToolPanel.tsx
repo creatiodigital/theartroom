@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, type ReactNode, type SyntheticEvent } from 'react'
+import { useId, type KeyboardEvent, type ReactNode, type SyntheticEvent } from 'react'
 import { X, type Icon } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
@@ -41,6 +41,16 @@ type ToolPanelProps = {
 // marker the camera skips as well (MainCamera), as the Artwork panel had.
 const keepFromRoom = (event: SyntheticEvent) => event.stopPropagation()
 
+// Q139 (c): while a panel field has focus (a slider, a select, a color, a switch: the targets the
+// camera itself calls typing, MainCamera), the walking keys are the field's. Stopped here, before
+// the window, so they don't also walk the room; the field still gets them (no preventDefault).
+const WALK_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'])
+const FIELD = 'input, select, textarea, [contenteditable="true"]'
+const keepFieldKeysFromRoom = (event: KeyboardEvent<HTMLElement>) => {
+  const target = event.target as HTMLElement
+  if (WALK_KEYS.has(event.key.toLowerCase()) && target.closest(FIELD)) event.stopPropagation()
+}
+
 /**
  * The floating panel a toolbar tool opens in the 3D editor (editor3d.md "Panel shell",
  * designs/editor-3d.dc.html): header with the tinted icon tile, title, purpose and close; a
@@ -68,6 +78,7 @@ export function ToolPanel({
       onMouseDown={keepFromRoom}
       onPointerDown={keepFromRoom}
       onWheel={keepFromRoom}
+      onKeyDown={keepFieldKeysFromRoom}
     >
       <header className={styles.header}>
         <IconTile icon={icon} size={40} tint={tint} />

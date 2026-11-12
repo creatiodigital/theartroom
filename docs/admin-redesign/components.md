@@ -538,3 +538,8 @@ like the real Pause switch). Logic and dialogs unchanged.
 - Q142 (state, display only): `wallViewSlice` `wallEdits` / `wallEditsSaved` (unsaved = edits > saved), `markWallSaved(sentAt)`,
   `wallContentLoaded()`; `selectWallUnsaved` (`src/redux/selectors/wallUnsaved.ts`); `countsAsWallEdit` /
   `isWallContentAction` (`src/redux/wallEdits.ts`, the 13 counted actions and their exclusions).
+- Later pass A: `src/hooks/artworkReread.ts`: `rereadWhenBack(id)` (Edit artwork), `useArtworkRereadOnReturn()`
+  (EditView: on focus, wall close, a cleared dot), `useArtworkChangedElsewhere()` (the left panel's line),
+  `takeStudioValuesForSave(dispatch)` (the wall save, Q157); writes it makes carry `meta.fromServer` and never count as a
+  wall edit. `wallview/hooks/artworksBatch.ts`: `buildArtworksBatch`, `withStudioValues` (the save's batch, moved
+  verbatim). `ToolPanel` stops W A S D / arrows from fields reaching the room (Q139 c).

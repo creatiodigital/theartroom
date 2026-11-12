@@ -3,13 +3,14 @@
 import { useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { ArrowRight, Image as ImageIcon } from '@phosphor-icons/react'
+import { ArrowSquareOut, Image as ImageIcon } from '@phosphor-icons/react'
 
 import { ToolPanel } from '@/components/editorChrome'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
 import { RichText } from '@/components/ui/RichText'
-import { hideArtworkPanel, openArtworkModal } from '@/redux/slices/dashboardSlice'
+import { rereadWhenBack } from '@/hooks/artworkReread'
+import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -46,16 +47,16 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
   // Use original URLs - Next.js image optimization has issues with R2 URLs in production
   const thumbnailUrl = imageUrl || null
 
-  const handleViewDetails = () => {
+  // Q139 (a), owner option 3: the work's own editor in the studio, in a new tab. The panel stays;
+  // the editor re-reads this work's details when its tab is back in front (Q153).
+  const handleEditArtwork = () => {
     if (!selectedArtwork?.id) return
-    // Open the in-exhibition modal over the live scene and close the sidebar beneath it,
-    // so dismissing the modal returns to a clean scene with no sidebar lingering.
-    dispatch(hideArtworkPanel())
-    dispatch(openArtworkModal())
+    rereadWhenBack(selectedArtwork.id)
+    window.open(`/dashboard/artworks/${selectedArtwork.id}/edit`, '_blank', 'noopener')
   }
 
   // Not drawn (questions.md Q137): the tool panels' shell, the work's title as the heading and the
-  // artist as its line; the image, technique and dimensions in the body; View details below.
+  // artist as its line; the image, technique and dimensions in the body; Edit artwork below.
   return (
     <ToolPanel
       title={artworkTitle || name || 'Artwork'}
@@ -68,11 +69,12 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
           <Button
             variant="bare"
             font="dashboard"
-            className={styles.viewDetails}
-            onClick={handleViewDetails}
+            className={styles.editArtwork}
+            onClick={handleEditArtwork}
           >
-            View details
-            <ArrowRight size={16} weight="light" aria-hidden />
+            Edit artwork
+            <span className="sr-only"> (opens in a new tab)</span>
+            <ArrowSquareOut size={16} weight="light" aria-hidden />
           </Button>
         </div>
       }
