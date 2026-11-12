@@ -1,8 +1,6 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { ShoppingBagOpen } from '@phosphor-icons/react'
-
 import { Button } from '@/components/ui/Button'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
@@ -92,7 +90,6 @@ export const ArtworkAvailabilityCard = ({
         <Button
           variant="primary"
           label="Order a print"
-          iconLeft={<ShoppingBagOpen size={18} weight="light" aria-hidden />}
           onClick={openWizard}
           className={styles.cta}
         />
