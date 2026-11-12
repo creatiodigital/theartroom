@@ -45,14 +45,16 @@ export const Footer = () => {
           <ul className={styles.social}>
             {SOCIAL.map(({ label, href, Icon }) => (
               <li key={label}>
-                <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+                <a href={href} target="_blank" rel="noopener noreferrer">
                   <Icon className={styles.brandIcon} aria-hidden />
+                  {label}
                 </a>
               </li>
             ))}
             <li>
-              <a href={`mailto:${CONTACT_EMAIL}`} aria-label="Email">
-                <Envelope size={22} weight="light" aria-hidden />
+              <a href={`mailto:${CONTACT_EMAIL}`}>
+                <Envelope size={18} weight="light" aria-hidden />
+                Email
               </a>
             </li>
           </ul>

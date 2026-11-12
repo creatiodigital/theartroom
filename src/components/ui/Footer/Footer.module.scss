@@ -27,11 +27,12 @@
   gap: var(--space-10);
   padding: 56px 0 var(--space-10);
 
+  // Phones: the network band ends it, closed by the legal row's hairline.
   @include media-down(md) {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-6);
-    padding: var(--space-10) 0 var(--space-8);
+    padding: var(--space-10) 0 0;
   }
 }
 
@@ -70,29 +71,51 @@
 
 // Plain icons, no circles or labels, about 22px apart (README "Footer network icons"): the 44px
 // touch targets alone leave that between the glyphs.
+// The networks, as today's live site (owner, 2026-11-12: "follow legacy"): the icon, then the name
+// in caps, 12 px with 1 px letter spacing; 8 px between icon and name, 20 px between networks (48 px
+// from 1024 px); centred, wrapping only where the four don't fit.
 .social {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 0;
+  gap: var(--space-3) var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
 
+  @include breakpoint(lg) {
+    gap: var(--space-12);
+  }
+
   a {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    letter-spacing: 1px;
+    text-transform: uppercase;
     color: var(--color-text-primary);
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  // Phones, as the live site: a band of its own between two hairlines (the one under it is the
+  // legal row's).
+  @include media-down(md) {
+    align-self: stretch;
+    padding: var(--space-5) 0;
+    border-top: 1px solid var(--color-gray-30);
   }
 }
 
-// The brand logos are solid glyphs, which read heavier than the thin envelope at the same size
-// (the drawing: 19 / 21px), so they sit a touch smaller than its 22px.
+// The brand logos are solid glyphs, which read heavier than the thin envelope at the same size,
+// so they sit a touch smaller (16 / 18 px, as the live site).
 .brandIcon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
 .bottom {
