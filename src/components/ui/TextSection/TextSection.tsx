@@ -12,12 +12,18 @@ export const TextSection = ({
   label,
   children,
   className,
+  variant = 'default',
 }: {
   label: string
   children: ReactNode
   className?: string
+  /**
+   * `columns`: the text spans the right two thirds (under the artist page's photo, which takes the
+   * same share) in two columns, one on phones (owner, 2026-11-12).
+   */
+  variant?: 'default' | 'columns'
 }) => (
-  <section className={c(styles.section, className)}>
+  <section className={c(styles.section, variant === 'columns' && styles.columns, className)}>
     <h2 className={styles.label}>{label}</h2>
     <div className={styles.text}>{children}</div>
   </section>

@@ -88,7 +88,7 @@ export const ArtistProfilePage = ({
           </div>
         </section>
 
-        <TextSection label="About the artist" className={styles.about}>
+        <TextSection label="About the artist" variant="columns" className={styles.about}>
           {artist.biography ? biography : <p className={styles.empty}>No biography yet.</p>}
         </TextSection>
 
