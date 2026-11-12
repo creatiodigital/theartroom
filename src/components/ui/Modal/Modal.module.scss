@@ -37,8 +37,13 @@
 
 // Corner close. Opt-in via `showClose`, because ESC does not exist on a phone
 // and a backdrop tap is not an affordance anyone can see.
+//
+// Above the content: it comes first in the panel, so any positioned element in the content (a
+// form with a hidden honeypot, a header) painted over it and only its outer ring took the pointer,
+// the ring where the hover shows (owner, 2026-11-12).
 .close {
   position: absolute;
+  z-index: 1;
   top: var(--space-3);
   right: var(--space-3);
   display: inline-flex;
@@ -78,6 +83,11 @@
     border: none;
     border-radius: 0;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  }
+
+  // Square like every public control (no round hover).
+  .close {
+    border-radius: 0;
   }
 }
 

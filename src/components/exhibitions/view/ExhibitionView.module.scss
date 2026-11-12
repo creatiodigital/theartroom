@@ -63,6 +63,8 @@
 
 .infoPanelClose {
   position: absolute;
+  // Above the panel's content, so nothing positioned in it can cover the × (as the shared Modal).
+  z-index: 1;
   top: var(--space-4);
   right: var(--space-4);
   background: none;
