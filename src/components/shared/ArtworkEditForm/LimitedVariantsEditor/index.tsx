@@ -88,6 +88,9 @@ type Props = {
     variantId: string | null,
     values: LimitedVariantDraft,
   ) => Promise<{ ok: boolean; error?: string; variantId?: string }>
+  /** Display only: how many variants have unsaved changes (the "Unsaved" banner's
+   *  count), for the page's save bar. Reported on every change, and 0 on unmount. */
+  onDirtyCountChange?: (count: number) => void
 }
 
 /**
@@ -107,6 +110,7 @@ export const LimitedVariantsEditor = ({
   onReadyToSellVariant,
   onDeleteVariant,
   onSaveVariant,
+  onDirtyCountChange,
 }: Props) => {
   const keyFor = (v: LimitedVariantDraft, i: number) => v.id ?? `new-${i}`
   // A variant with nothing worth summarising still needs its fields visible.
@@ -467,6 +471,12 @@ export const LimitedVariantsEditor = ({
     const next = { ...variants[index], ...patch }
     update(index, { ...patch, ...withDerivedImage(next) })
   }
+
+  // The save bar's view of the "Unsaved" banner (display only).
+  useEffect(() => {
+    onDirtyCountChange?.(dirtyCount)
+  }, [dirtyCount, onDirtyCountChange])
+  useEffect(() => () => onDirtyCountChange?.(0), [onDirtyCountChange])
 
   return (
     <div className={styles.editor}>

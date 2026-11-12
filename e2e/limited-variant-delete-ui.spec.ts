@@ -65,7 +65,7 @@ test('a deleted variant stays deleted after a reload', async ({ page }) => {
     await page.getByPlaceholder('Add your price here').last().fill(PRICE_EUROS)
 
     // ── 2. Save, and prove it actually persisted ─────────────────────
-    await page.getByRole('button', { name: /^Save$/ }).click()
+    await page.getByRole('button', { name: /^Save changes$/ }).click()
     // A successful save navigates back to the artwork list. If validation
     // rejected the variant we stay put — fail loudly here rather than later.
     await page.waitForURL('**/dashboard/artworks', { timeout: 15000 })

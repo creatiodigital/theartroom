@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { VideoCamera } from '@phosphor-icons/react'
+import { Plus, Trash, UploadSimple, VideoCamera } from '@phosphor-icons/react'
 
+import { Callout } from '@/components/admin/ui/Callout'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
 import { MAX_ARTWORK_MEDIA, type ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 
 import styles from './ArtworkMediaManager.module.scss'
@@ -135,10 +135,10 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
 
   return (
     <div className={styles.manager}>
-      <Text as="p" size="sm" className={styles.hint}>
+      <p className={styles.hint}>
         Shown below the artwork on its page. One image sits alone, two sit side by side, three or
         more become a carousel. Leave it empty and the section does not appear at all.
-      </Text>
+      </p>
 
       {media.length > 0 && (
         <ul className={styles.grid}>
@@ -161,15 +161,15 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
                 </span>
               )}
               <Button
+                variant="bare"
                 font="dashboard"
-                variant="secondary"
-                size="small"
-                label="Remove"
-                icon="trash-2"
+                className={styles.remove}
                 disabled={busy}
                 onClick={() => remove(item.id)}
-                className={styles.remove}
-              />
+              >
+                <Trash size={16} weight="light" aria-hidden />
+                Remove
+              </Button>
             </li>
           ))}
         </ul>
@@ -188,32 +188,33 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
         onChange={(e) => e.target.files && e.target.files.length > 0 && upload(e.target.files)}
       />
 
-      <div className={styles.actions}>
+      {/* artist.md §3: today's uploader inside a dashed area. It has no drag and
+          drop (questions.md, step 16): the button is the only way in, as before. */}
+      <div className={styles.dropArea}>
+        <UploadSimple size={24} weight="light" aria-hidden className={styles.dropIcon} />
         <Button
+          variant="bare"
           font="dashboard"
-          variant="secondary"
-          label={busy ? 'Uploading…' : media.length > 0 ? 'Add more' : 'Add images or video'}
-          icon="plus"
+          className={styles.add}
           disabled={busy || full}
           onClick={() => inputRef.current?.click()}
-        />
-        <Text as="span" size="sm" className={styles.count}>
+        >
+          <Plus size={16} weight="light" aria-hidden />
+          {busy ? 'Uploading…' : media.length > 0 ? 'Add more' : 'Add images or video'}
+        </Button>
+        <span className={styles.count}>
           {full
             ? `Limit reached (${MAX_ARTWORK_MEDIA}) — remove one to add another`
             : media.length === 0
               ? 'Add as many as you like'
               : `${media.length} added`}
-        </Text>
+        </span>
       </div>
-      {notice && (
-        <Text as="p" size="sm" className={styles.notice}>
-          {notice}
-        </Text>
-      )}
+      {notice && <Callout tone="amber">{notice}</Callout>}
       {error && (
-        <Text as="p" size="sm" className={styles.error}>
+        <Callout tone="red" role="alert">
           {error}
-        </Text>
+        </Callout>
       )}
     </div>
   )

@@ -1,0 +1,32 @@
+@use '@/styles/mixins' as *;
+
+// The artwork editor page (artist.md §3, designs/artist-artwork-edit.dc.html):
+// breadcrumb, header, then the form (On this page + panels) and the fixed save bar.
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  // The save bar is fixed over the bottom of the viewport and the studio's own
+  // bottom padding is 40 / 56px: this keeps the last panel clear of the bar
+  // (two lines and the safe area on phones, one 65px line from 900px).
+  padding-bottom: calc(var(--space-18) + env(safe-area-inset-bottom));
+
+  @include media-up(tablet) {
+    padding-bottom: var(--space-6);
+  }
+}
+
+.status {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+// Under the title: the type, then "Selling prints".
+.meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}

@@ -855,7 +855,46 @@ The same two rules now apply to Delete artwork, Remove from exhibition and Delet
 _Meanwhile:_ all as today. Fix them in a later pass, with a red `FeedbackBar` for (b) and (d) and `effectiveUser.name` for (c)?
 
 
+**Q109 · Code Claude → Design Claude / owner: "also used by admin edit".** No admin page edits artworks. The form's other user is the wall view's **View details** overlay in the 3D editor (artists and admins), outside the studio shell. _Meanwhile:_ the overlay gets the same panels (shared form), centered at 880 px, under its own × bar, with an h1 "Edit image" (etc.) and an inline Cancel / **Save changes** row. It has no breadcrumb, no On this page and no save bar: the bar assumes the 248 px menu, and the studio's dialog layer isn't there. Its dialogs stay the shared ones. Do you want the overlay designed (e.g. a sticky footer of its own)?
+
+**Q110 · Code Claude → owner: what "Unsaved changes" counts.** It compares the fields a Save sends with the loaded values; a picked or removed image counts; the editors' own rewrite of the loaded text doesn't; variant edits count through the variants editor's "Unsaved" count; sound and video don't (they save at once). Limits: (a) a prefilled Author (the artist's name on an empty field) and HTML stripped from old Text content read as saved, though Save writes them, as today; (b) after **Put on sale** of a variant edited before, both the variants banner and the bar can say "unsaved" (the editor's per-variant baselines aren't refreshed, today's banner does the same). _Meanwhile:_ as described, with a "touched" fallback if a fresh page ever opens as unsaved.
+
+**Q111 · Code Claude → owner: leaving, and a refused save.** Cancel, the menu and the breadcrumb leave without asking, as today (12c added `beforeunload` after Q81). A refused save turns the bar red ("Not saved. Please try again."), while the server's reason stays in the red callout at the end of the form, where today's error line is: off-screen when Save is pressed from the top. _Meanwhile:_ no leave warning; the reason at the end. Options: add `beforeunload` here too; and/or show the reason in the bar, or scroll to it.
+
+**Q112 · Code Claude → Design Claude: page points not drawn.** _Meanwhile:_ the h1 is the saved title ("Artwork" if none), not live; the meta is the type + **Selling prints** by the library's rule on the loaded record (it updates after Put on sale, but after an admin's Unblock only on reload); loading = "Loading artwork…", a failed load = a red callout with today's text, both under "Artworks / Artwork"; On this page lists only the rendered panels ("Video poster" for video; text and sound have three or fewer entries) with a scroll spy; hidden under 900 px; panels keep today's sentences where the design shows sample ones (Featured, Supplementary media); Exhibitions keep today's checkboxes and section picker, not the drawn chips; for video, Where it shows holds only Featured; labels `--color-text-secondary` (the drawn #555 has no token); phone as Decision 14.
+
+**Q113 · Code Claude → Design Claude: Print sales and the image panel.** _Meanwhile:_ the switch is named by "Enable this artwork for print sales" with today's sentence under the row; the low-resolution notice stays amber, the other two notices stay plain lines; the lock row drops the "Locked" badge; series type is today's radios until locked, then the read-only field with **Locked**; the info box uses `--color-badge-info-*` as the spec says (#cce5ff / #004085, louder than the drawn #eef5fb / #d6e6f3 / #1f3b57; three studio tokens could match the drawing); resolution isn't repeated in the box (the uploader's meta line above shows it); the preview stays today's 1:1, contained (drawn 280 × 210); the summary rows show the drawn one-liners with today's two paragraphs inside; restriction chips are pressed when a paper / frame / mount is **offered** (all pressed by default). OK?
+
+**Q114 · Code Claude → Design Claude: edition variants as a table.** _Meanwhile:_ today's expandable cards as rows of one bordered box, head **Variant · Status** (drawn "Shown to buyers", which the sold / paused badges don't fit), sentence-case "Currently selling", Add variant / Apply saved variant with icons, the delete dialog unchanged. Should the collapsed row also show size · copies · price (display only)?
+
+**Q115 · Code Claude → Design Claude: the two editors.** Technique uses today's full toolbar (headings, lists, links) in the admin look, 300 px tall at least, in the public default text style; the public page shows it in the compact `RichText` variant; drawn as a small B / I / U field. _Meanwhile:_ that. Options: a compact editor (a `richTextVariant="compact"` and a smaller height, both opt-in on `RichTextEditor`), or the `simple` toolbar (bold only; fewer tools than today).
+
+**Q116 · Code Claude → owner: Supplementary media "as a dashed drop area".** Today's uploader has no drag and drop. _Meanwhile:_ a dashed area around today's button and count, no drop. Adding drop would reuse the same upload (`upload(files)`), but it is a new way in: a dropped file skips the picker's type filter, and only the server would refuse it. Add it?
+
+**Q117 · Code Claude → owner: found while reading (kept as today).**
+
+- (a) The print-sales switch is disabled whenever the image isn't printable, so an artwork already selling can't be switched off after a low-resolution re-pick until a printable image is back (the handler allows unchecking; the disabled control doesn't).
+- (b) In the wall view overlay, the series type radios and the variant fields render but change nothing, and Delete variant only closes its dialog (no handlers are passed).
+- (c) The open edition's **Unblock** (super admin) has no confirm.
+- (d) A non-owner's load renders the blank form for a moment before the redirect lands.
+- (e) A Save that uploads the new image and then has its PUT refused leaves the image saved and the details not.
+- (f) The variants editor keeps stale per-variant baselines after **Put on sale** (Q110 b).
+- (g) The editor registers Link twice (Q82): two editors on this page, two console warnings.
+- (h) `.row` in `DashboardLayout.module.scss` has no user.
+
+_Meanwhile:_ all as today. Fix (a), (c) and (d) in a later pass?
+
+
 ## Answered
+
+**Owner answers, 2026-11-12 (step 16, relayed to Code Claude):**
+- **Q109:** yes, the "View details" overlay takes the restyle, with its own Cancel / Save changes row.
+- **Q110:** OK: "Save changes" (and the six e2e updates), and the "Unsaved changes" / "Not saved" logic as on the page editor.
+- **Q111:** yes, add the `beforeunload` "Leave site?" warning, as on the page editor.
+- **Q113:** follow the drawing: a neutral grey box (`#f7f7f7`, hairline border, dark text), not the blue tokens.
+- **Q116:** later, as its own small step, unless the current upload already accepts dropped files with a trivial change.
+- **Q117:** fix in the next pass. For the half-save (image uploaded, details refused), the save bar says it in red:
+  "Not saved: the new image was uploaded, the details were not. Please try again."
 
 **Owner answers, 2026-11-11 (relayed to Code Claude):**
 - **Q43:** yes to all three. Exhibitions: failures show in a red `FeedbackBar` (the server's text, else "Couldn't update {title}. Please try again."); Copy preview link confirms with a green "Preview link copied."; Mark current / past and Delete are hidden for plain admins (super admin only, as the server rules).

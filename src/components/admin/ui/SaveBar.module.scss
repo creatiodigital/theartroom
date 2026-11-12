@@ -1,9 +1,11 @@
 @use '@/styles/mixins' as *;
 
 // Fixed to the bottom of the viewport, across the content area (the menu is
-// 248px wide from 900px). Under the drawer (100), the dialogs (1000) and the
-// cookie banner (999). The shell's 200px bottom padding keeps the last panel
-// clear of it (questions.md Q69).
+// 248px wide from 900px, in the admin and the studio alike). Under the drawer
+// (100), the dialogs (1000) and the cookie banner (999). The admin's 200px
+// bottom padding keeps the last panel clear of it (questions.md Q69); the
+// studio's is 40 / 56px, so a studio page with the bar adds its own (the
+// artwork editor's `.page`).
 .bar {
   position: fixed;
   right: 0;
@@ -34,6 +36,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
+}
+
+// width="list": lines up with the studio's 1080px column (the artwork editor).
+.list .inner {
+  max-width: var(--studio-content-max-width);
 }
 
 .status {

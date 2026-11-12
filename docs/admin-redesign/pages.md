@@ -24,7 +24,7 @@ Do these in order, one PR each.
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Built | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
-| 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
+| 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
@@ -702,3 +702,48 @@ rows with thumbs, chips and Selling prints tags, Image filter, no-match search (
 cancelled with Escape sends nothing, the three dialogs opened and canceled, Play ⇄ Stop on a faked sound row, a stored
 "image" filter reloads with no hydration warning, landing and gallery selection lists unchanged, no horizontal scroll,
 no console errors.
+
+### Step 16a · Artwork editor, frame and panels — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-artist-artwork-editor.md` (contract, decisions, Q109–Q117; owner answers in
+questions.md). Files: `dashboard/artworks/edit/index.tsx` + new `ArtworkEditPage.module.scss`; `shared/ArtworkEditForm/`
+`index.tsx` + SCSS, new `EditorPanel`, `SectionNav`, `sections.ts`, `ArtworkMediaManager` (render only),
+`LimitedVariantsEditor` (one display-only callback); `ui/SaveBar` (`onCancel`, `form`, `width`, `failedMessage`);
+`ui/AdminCheckbox` (`description`); six e2e lines.
+
+1. **Two users, one form** (Q109): no admin page renders the editor. The studio page passes `variant="page"`; the wall
+   view's View details overlay keeps the default `"overlay"` (its own h1 "Edit image" / "Edit text" / …, the same
+   panels, and its own Cancel / Save changes row; no save bar, no list). `wallview/ArtworkEditModal` is untouched.
+2. **Kept**: every state, effect, handler, request, validation and condition (diffed: the form's logic is identical
+   apart from three new props; the variants editor gains only `onDirtyCountChange`; the media manager's logic is
+   identical). The named render conditions equal today's expressions. Sections keep today's order; Printing
+   restrictions / recommendations sit inside the Artwork image panel they already followed.
+3. **Layout per artist.md §3**: breadcrumb Artworks / {title}, h1 the saved title, type + **Selling prints** (the
+   library's rule); **On this page** (sticky, 190 px, hidden under 900 px, light scroll spy) listing only the panels that
+   render; white panels with h2 18/700, labels above fields, help under, 44 px inputs; Featured and the exhibition boxes
+   as `AdminCheckbox`; the uploader in its admin look (Replace / Remove); Supplementary media as a dashed area. The print
+   sections keep their old inner look inside the new panels until 16b.
+4. **Save bar** (Q110): "Unsaved changes" compares what a save would send with what was loaded (the editors' own
+   rewrite of loaded text doesn't count; a picked or removed image and the variants editor's "Unsaved" count do; sound
+   and video uploads save at once and don't). **Save changes** submits the real form (title check, Enter, scroll to
+   the error unchanged); **Cancel** is today's. A refused save turns the bar red, "Not saved. Please try again.", until
+   the next edit; if the new image was uploaded and the details refused, it reads "Not saved: the new image was
+   uploaded, the details were not. Please try again." (owner, Q117). The server's reason stays in the red callout at the
+   end of the form. Display-only lines added to the handlers: the baseline after a load and after Put on sale's reload,
+   and what a refused save sent.
+5. **Leave warning** (Q111): `beforeunload` while unsaved, as the page editor. In-app links aren't caught.
+6. **Supplementary media drop** (Q116): left out. The upload function would take a dropped list, but today's two client
+   checks (busy / at the limit, the picker's type filter) sit outside it: its own later step.
+7. **e2e**: the editor's Save is "Save changes" (`limited-variant-delete-ui`, `artwork-exhibition-picker`,
+   `artwork-section-picker`).
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD (page, form, variants editor, media manager); e2e on
+port 3001 (`limited-variant-delete-ui`, `artwork-exhibition-picker`, `artwork-section-picker`, `studio-shell`,
+`admin-page-editor`, `edition-off-platform`, `invoice-ui`): 24 passed; browser on
+my own `pnpm dev` (dev DB; every save and upload intercepted, nothing written) at 1440 and 390 px: text, image (print
+off, open, limited) and video artworks all open on "All changes saved" with the right panels in the list; title,
+technique, Featured and a variant edit flip the bar and undoing returns it; a refused save turns it red and the next
+edit clears it; the half-save sentence after a faked upload and a refused save; an empty title sends nothing; Enter
+submits; "Leave site?" with unsaved changes; the overlay opened from wall view (Edit image, panels, Cancel / Save
+changes) and canceled; the page editor's save bar and the invoices checkbox unchanged; no horizontal scroll, no console
+errors. The dev DB has no sound work, so the Audio file panel was checked in code only.

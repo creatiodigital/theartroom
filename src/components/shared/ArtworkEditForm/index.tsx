@@ -2,7 +2,11 @@
 
 import { useRef, useState, useCallback, useMemo } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
+import { SpeakerHigh, VideoCamera } from '@phosphor-icons/react'
+import c from 'classnames'
 
+import { AdminCheckbox } from '@/components/admin/ui/AdminCheckbox'
+import { Callout } from '@/components/admin/ui/Callout'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { ErrorText } from '@/components/ui/ErrorText'
@@ -31,6 +35,14 @@ import type { LimitedVariantDraft } from '@/lib/editions/types'
 import { resolveArtworkAuthor } from '@/utils/artistDisplayName'
 import { LimitedVariantsEditor } from './LimitedVariantsEditor'
 import { ArtworkMediaManager } from './ArtworkMediaManager'
+import { EditorPanel } from './EditorPanel'
+import { SectionNav } from './SectionNav'
+import {
+  ARTWORK_EDIT_FORM_ID,
+  ARTWORK_SECTION,
+  panelTitleId,
+  type ArtworkSection,
+} from './sections'
 import {
   MAX_ARTWORK_UPLOAD_SIZE,
   MIN_ARTWORK_IMAGE_WIDTH,
@@ -42,6 +54,8 @@ import {
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 import styles from './ArtworkEditForm.module.scss'
+
+export { ARTWORK_EDIT_FORM_ID } from './sections'
 
 // Strip HTML tags from text content (for content saved with RichTextEditor previously)
 export const stripHtml = (html: string): string => {
@@ -285,6 +299,18 @@ type ArtworkEditFormProps = {
   onVideoRemove?: () => void | Promise<void>
   onSubmit: (e: React.FormEvent) => void
   onCancel: () => void
+  /**
+   * page: the studio's artwork editor (artist.md §3): no h1 (the page has the
+   * header), the On this page list, and no Save / Cancel row (the page's save
+   * bar submits this form by ARTWORK_EDIT_FORM_ID). overlay (default): the wall
+   * view's View details overlay, with its own h1 and a Cancel / Save changes row.
+   */
+  variant?: 'page' | 'overlay'
+  /** Display only: each rich-text editor's own HTML for the text it loaded with
+   *  (RichTextEditor `onReady`), for the page's "Unsaved changes". */
+  onRichTextReady?: (field: 'technique' | 'description', html: string) => void
+  /** Display only: the variants editor's unsaved count, for the page's save bar. */
+  onVariantsDirtyChange?: (count: number) => void
 }
 
 const ALLOWED_SOUND_TYPES = [
@@ -484,6 +510,9 @@ export const ArtworkEditForm = ({
   onVideoRemove,
   onSubmit,
   onCancel,
+  variant = 'overlay',
+  onRichTextReady,
+  onVariantsDirtyChange,
 }: ArtworkEditFormProps) => {
   const soundInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -663,84 +692,119 @@ export const ArtworkEditForm = ({
     [onVideoUpload],
   )
 
+  // Which sections render: today's conditions, named once so the panels and the
+  // studio page's On this page list can never disagree.
+  const isImage = formData.artworkType === 'image'
+  const isVideo = formData.artworkType === 'video'
+  const isImageOrVideo = isImage || isVideo
+  const showOpenPrintOptions = isImage && formData.printEnabled && formData.editionType === 'open'
+  const showExhibitions = !!exhibitions && exhibitions.length > 0 && isImage
+  const showSupplementary = isAdmin && !!artworkId
+  const isPage = variant === 'page'
+  const imageSection = isVideo ? ARTWORK_SECTION.poster : ARTWORK_SECTION.image
+
+  const rendered: (ArtworkSection | false)[] = [
+    isImage && ARTWORK_SECTION.printSales,
+    isVideo && ARTWORK_SECTION.videoFile,
+    isImageOrVideo && imageSection,
+    showOpenPrintOptions && ARTWORK_SECTION.ready,
+    formData.artworkType === 'sound' && ARTWORK_SECTION.audioFile,
+    ARTWORK_SECTION.details,
+    formData.artworkType === 'text' && ARTWORK_SECTION.text,
+    isImageOrVideo && ARTWORK_SECTION.description,
+    isImageOrVideo && ARTWORK_SECTION.where,
+    showSupplementary && ARTWORK_SECTION.media,
+  ]
+  const sections = rendered.filter((section): section is ArtworkSection => Boolean(section))
+
   return (
     <>
-      {/* Page Title — type-specific so the artist immediately sees which
-          surface they're on (Image / Text / Video / Sound). */}
-      <h1 className={dashboardStyles.pageTitle}>
-        {formData.artworkType === 'image'
-          ? 'Edit Image'
-          : formData.artworkType === 'text'
-            ? 'Edit Text'
-            : formData.artworkType === 'video'
-              ? 'Edit Video'
-              : formData.artworkType === 'sound'
-                ? 'Edit Sound'
-                : 'Edit Artwork'}
-      </h1>
+      <div className={isPage ? styles.pageLayout : styles.overlayLayout}>
+        {isPage ? (
+          <SectionNav sections={sections} />
+        ) : (
+          // The wall view's overlay has no page header: the type-specific title
+          // stays, so the artist sees which surface they're on.
+          <h1 className={styles.overlayTitle}>
+            {formData.artworkType === 'image'
+              ? 'Edit image'
+              : formData.artworkType === 'text'
+                ? 'Edit text'
+                : formData.artworkType === 'video'
+                  ? 'Edit video'
+                  : formData.artworkType === 'sound'
+                    ? 'Edit sound'
+                    : 'Edit artwork'}
+          </h1>
+        )}
 
-      {/* Print Sales — pinned to the top for image artworks so artists see
-          the sell-as-print decision before scrolling into metadata.
-          The enable toggle gates everything else: provider, price and
-          restrictions only render once the artist opts in. */}
-      {formData.artworkType === 'image' && (
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Print Sales</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Let buyers order a physical print of this artwork. We&apos;ll show a &quot;Buy
-            Printable&quot; button next to &quot;Inquire&quot; on the public page.
-          </p>
-
-          <Checkbox
-            checked={formData.printEnabled}
-            onChange={(e) => {
-              if ((printEligible && printableFormat) || !e.target.checked) {
-                onFormChange('printEnabled', e.target.checked)
+        <div className={styles.column}>
+          {/* Print Sales — pinned to the top for image artworks so artists see
+              the sell-as-print decision before scrolling into metadata.
+              The enable toggle gates everything else: provider, price and
+              restrictions only render once the artist opts in. */}
+          {isImage && (
+            <EditorPanel
+              section={ARTWORK_SECTION.printSales}
+              description={
+                <>
+                  Let buyers order a physical print of this artwork. We&apos;ll show a &quot;Buy
+                  Printable&quot; button next to &quot;Inquire&quot; on the public page.
+                </>
               }
-            }}
-            label="Enable this artwork for print sales"
-            disabled={!printEligible || !printableFormat}
-          />
-          {!printEligible && !imageMeta && (
-            <p className={styles.printDisabledHint}>
-              Upload your artwork image to check print eligibility. Prints need at least{' '}
-              {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px (about {MIN_DPI} DPI on the smallest
-              sellable print).
-            </p>
-          )}
-          {!printEligible && imageMeta && (
-            <div className={styles.printStatusNotReady}>
-              <Icon name="alert-circle" size={16} />
+            >
+              {/* Restyled in step 16b; today's content, unchanged. */}
               <div>
-                <strong>This image isn&apos;t high enough resolution for print sales.</strong>
-                <p style={{ margin: 'var(--space-2) 0 0' }}>
-                  Your file:{' '}
-                  <strong>
-                    {imageMeta.width} × {imageMeta.height} px
-                  </strong>
-                  <br />
-                  Required:{' '}
-                  <strong>
-                    at least {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px
-                  </strong>
-                </p>
-                <p style={{ margin: 'var(--space-2) 0 0' }}>
-                  Re-upload a higher-resolution version to enable prints. We need {MIN_DPI} DPI on
-                  the smallest sellable print (20 cm on the long edge).
-                </p>
-              </div>
-            </div>
-          )}
-          {printEligible && !printableFormat && imageMeta && (
-            <p className={styles.printDisabledHint}>
-              The current image format ({imageMeta.format}) can&apos;t be printed. Re-upload as
-              JPEG, PNG or TIFF to enable print sales.
-            </p>
-          )}
+                <Checkbox
+                  checked={formData.printEnabled}
+                  onChange={(e) => {
+                    if ((printEligible && printableFormat) || !e.target.checked) {
+                      onFormChange('printEnabled', e.target.checked)
+                    }
+                  }}
+                  label="Enable this artwork for print sales"
+                  disabled={!printEligible || !printableFormat}
+                />
+                {!printEligible && !imageMeta && (
+                  <p className={styles.printDisabledHint}>
+                    Upload your artwork image to check print eligibility. Prints need at least{' '}
+                    {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px (about {MIN_DPI} DPI on the smallest
+                    sellable print).
+                  </p>
+                )}
+                {!printEligible && imageMeta && (
+                  <div className={styles.printStatusNotReady}>
+                    <Icon name="alert-circle" size={16} />
+                    <div>
+                      <strong>This image isn&apos;t high enough resolution for print sales.</strong>
+                      <p style={{ margin: 'var(--space-2) 0 0' }}>
+                        Your file:{' '}
+                        <strong>
+                          {imageMeta.width} × {imageMeta.height} px
+                        </strong>
+                        <br />
+                        Required:{' '}
+                        <strong>
+                          at least {MIN_PRINT_WIDTH} × {MIN_PRINT_HEIGHT} px
+                        </strong>
+                      </p>
+                      <p style={{ margin: 'var(--space-2) 0 0' }}>
+                        Re-upload a higher-resolution version to enable prints. We need {MIN_DPI}{' '}
+                        DPI on the smallest sellable print (20 cm on the long edge).
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {printEligible && !printableFormat && imageMeta && (
+                  <p className={styles.printDisabledHint}>
+                    The current image format ({imageMeta.format}) can&apos;t be printed. Re-upload
+                    as JPEG, PNG or TIFF to enable print sales.
+                  </p>
+                )}
 
-          {formData.printEnabled && (
-            <>
-              {/* Artwork-level banner — reports ONLY the series-type lock,
+                {formData.printEnabled && (
+                  <>
+                    {/* Artwork-level banner — reports ONLY the series-type lock,
                   which is the one thing that really is artwork-wide (the
                   open/limited radio below is disabled by it). Variant freezing
                   is per-variant and each live variant says so on its own card;
@@ -748,210 +812,218 @@ export const ArtworkEditForm = ({
                   frozen. The reason differs by type: an open edition locks when
                   the artwork itself is marked ready to sell, a limited one as
                   soon as ANY variant goes on sale. */}
-              {seriesTypeLocked && (
-                <div className={styles.editionLockedBanner} style={{ marginTop: 'var(--space-4)' }}>
-                  <span className={styles.editionLockedBadge}>Locked</span>
-                  <div>
-                    <strong>The series type is locked.</strong>{' '}
-                    {formData.editionType === 'limited'
-                      ? 'At least one variant is ready to sell, so this artwork can no longer be switched to an open edition.'
-                      : 'This artwork is marked ready to sell, so it can no longer be switched to a limited edition.'}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginTop: 'var(--space-4)' }}>
-                <label className={dashboardStyles.field}>Series type</label>
-                <RadioGroup<'open' | 'limited'>
-                  name="editionType"
-                  options={[
-                    { value: 'open', label: 'Open Edition' },
-                    { value: 'limited', label: 'Limited Edition' },
-                  ]}
-                  value={formData.editionType}
-                  disabled={seriesTypeLocked}
-                  onChange={(v) => onEditionTypeChange?.(v)}
-                />
-                <p className={styles.printDisabledHint} style={{ marginTop: 'var(--space-2)' }}>
-                  {formData.editionType === 'limited'
-                    ? 'Numbered, print-only editions sold in pre-defined variants. Buyers pick a variant — no framing.'
-                    : 'Fully configurable prints — buyers choose size, paper and framing. Unlimited.'}
-                </p>
-              </div>
-
-              {/* Open editions: one artist price for the whole artwork. Limited
-                  editions are priced per variant (in the editor below). */}
-              {formData.editionType === 'open' && (
-                <>
-                  <div
-                    className={dashboardStyles.field}
-                    style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
-                  >
-                    <label htmlFor="printPriceEuros">Your price per print (&euro;)</label>
-                    <Input
-                      id="printPriceEuros"
-                      type="text"
-                      inputMode="decimal"
-                      size="medium"
-                      value={formData.printPriceEuros}
-                      onChange={(e) =>
-                        onFormChange(
-                          'printPriceEuros',
-                          // Accept both period and comma as decimal separators
-                          // (Spanish/EU users) but normalise to period — the
-                          // app's display convention is always `1234.56`.
-                          e.target.value.replace(',', '.').replace(/[^0-9.]/g, ''),
-                        )
-                      }
-                      placeholder="Add your price here"
-                      invalid={openPriceError}
-                    />
-                    {openPriceError && (
-                      <ErrorText>Price is required and must be greater than 0.</ErrorText>
+                    {seriesTypeLocked && (
+                      <div
+                        className={styles.editionLockedBanner}
+                        style={{ marginTop: 'var(--space-4)' }}
+                      >
+                        <span className={styles.editionLockedBadge}>Locked</span>
+                        <div>
+                          <strong>The series type is locked.</strong>{' '}
+                          {formData.editionType === 'limited'
+                            ? 'At least one variant is ready to sell, so this artwork can no longer be switched to an open edition.'
+                            : 'This artwork is marked ready to sell, so it can no longer be switched to a limited edition.'}
+                        </div>
+                      </div>
                     )}
-                  </div>
-                  <p className={styles.printDisabledHint} style={{ marginTop: 'var(--space-2)' }}>
-                    This is the amount you earn per print sold. Production, shipping, gallery fee
-                    and VAT are added separately at checkout.
-                  </p>
-                </>
-              )}
 
-              {formData.editionType === 'limited' && (
-                <div style={{ marginTop: 'var(--space-4)' }}>
-                  <h4 className={dashboardStyles.sectionTitle}>Edition variants</h4>
-                  <p className={styles.printDisabledHint}>
-                    Define 1–4 variants. Each is its own numbered edition (e.g. “Small” 1/50) with
-                    its own size and price. Sizes must be distinct. Once you start selling, the
-                    edition is locked — only the price can still be changed (raise it as copies
-                    sell).
-                  </p>
-                  <LimitedVariantsEditor
-                    variants={formData.limitedVariants}
-                    aspectRatio={editionAspectRatio}
-                    longEdgeBounds={editionLongEdgeBounds}
-                    onChange={(next) => onVariantsChange?.(next)}
-                    artworkId={artworkId}
-                    isAdmin={isAdmin}
-                    onUnblockVariant={onUnblockVariant}
-                    onReadyToSellVariant={onReadyToSellVariant}
-                    onDeleteVariant={onDeleteVariant}
-                    onSaveVariant={onSaveVariant}
-                  />
-                </div>
-              )}
+                    <div style={{ marginTop: 'var(--space-4)' }}>
+                      <label className={dashboardStyles.field}>Series type</label>
+                      <RadioGroup<'open' | 'limited'>
+                        name="editionType"
+                        options={[
+                          { value: 'open', label: 'Open Edition' },
+                          { value: 'limited', label: 'Limited Edition' },
+                        ]}
+                        value={formData.editionType}
+                        disabled={seriesTypeLocked}
+                        onChange={(v) => onEditionTypeChange?.(v)}
+                      />
+                      <p
+                        className={styles.printDisabledHint}
+                        style={{ marginTop: 'var(--space-2)' }}
+                      >
+                        {formData.editionType === 'limited'
+                          ? 'Numbered, print-only editions sold in pre-defined variants. Buyers pick a variant — no framing.'
+                          : 'Fully configurable prints — buyers choose size, paper and framing. Unlimited.'}
+                      </p>
+                    </div>
 
-              {/* Limited editions publish per variant (the button lives inside
+                    {/* Open editions: one artist price for the whole artwork. Limited
+                  editions are priced per variant (in the editor below). */}
+                    {formData.editionType === 'open' && (
+                      <>
+                        <div
+                          className={dashboardStyles.field}
+                          style={{ maxWidth: 240, marginTop: 'var(--space-4)' }}
+                        >
+                          <label htmlFor="printPriceEuros">Your price per print (&euro;)</label>
+                          <Input
+                            id="printPriceEuros"
+                            type="text"
+                            inputMode="decimal"
+                            size="medium"
+                            value={formData.printPriceEuros}
+                            onChange={(e) =>
+                              onFormChange(
+                                'printPriceEuros',
+                                // Accept both period and comma as decimal separators
+                                // (Spanish/EU users) but normalise to period — the
+                                // app's display convention is always `1234.56`.
+                                e.target.value.replace(',', '.').replace(/[^0-9.]/g, ''),
+                              )
+                            }
+                            placeholder="Add your price here"
+                            invalid={openPriceError}
+                          />
+                          {openPriceError && (
+                            <ErrorText>Price is required and must be greater than 0.</ErrorText>
+                          )}
+                        </div>
+                        <p
+                          className={styles.printDisabledHint}
+                          style={{ marginTop: 'var(--space-2)' }}
+                        >
+                          This is the amount you earn per print sold. Production, shipping, gallery
+                          fee and VAT are added separately at checkout.
+                        </p>
+                      </>
+                    )}
+
+                    {formData.editionType === 'limited' && (
+                      <div style={{ marginTop: 'var(--space-4)' }}>
+                        <h4 className={dashboardStyles.sectionTitle}>Edition variants</h4>
+                        <p className={styles.printDisabledHint}>
+                          Define 1–4 variants. Each is its own numbered edition (e.g. “Small” 1/50)
+                          with its own size and price. Sizes must be distinct. Once you start
+                          selling, the edition is locked — only the price can still be changed
+                          (raise it as copies sell).
+                        </p>
+                        <LimitedVariantsEditor
+                          variants={formData.limitedVariants}
+                          aspectRatio={editionAspectRatio}
+                          longEdgeBounds={editionLongEdgeBounds}
+                          onChange={(next) => onVariantsChange?.(next)}
+                          artworkId={artworkId}
+                          isAdmin={isAdmin}
+                          onUnblockVariant={onUnblockVariant}
+                          onReadyToSellVariant={onReadyToSellVariant}
+                          onDeleteVariant={onDeleteVariant}
+                          onSaveVariant={onSaveVariant}
+                          onDirtyCountChange={onVariantsDirtyChange}
+                        />
+                      </div>
+                    )}
+
+                    {/* Limited editions publish per variant (the button lives inside
                   each variant card above). Open editions show their
                   "Ready to Sell" / "Unblock" control below the printing
                   options instead — see the open-edition go-live section. */}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Video File Upload Section - only for video type */}
-      {formData.artworkType === 'video' && (
-        <div className={`${dashboardStyles.section} ${styles.imageSectionHalf}`}>
-          <h3 className={dashboardStyles.sectionTitle}>Video File</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Upload the video file. This will be played in exhibitions.
-          </p>
-
-          <FileInput
-            ref={videoInputRef}
-            id="artwork-video-file"
-            accept="video/mp4,video/webm"
-            onChange={handleVideoFileSelect}
-            className={styles.hiddenInput}
-          />
-
-          {videoUrl ? (
-            <div className={styles.soundPreview}>
-              <div className={styles.soundInfo}>
-                <Icon name="video" size={24} color="#333" />
-                <video
-                  controls
-                  controlsList="nodownload"
-                  src={videoUrl}
-                  className={styles.videoPlayer}
-                >
-                  Your browser does not support the video element.
-                </video>
+                  </>
+                )}
               </div>
-              {onVideoRemove && (
-                <Button
-                  font="dashboard"
-                  variant="secondary"
-                  label="Remove"
-                  onClick={() => onVideoRemove()}
-                  type="button"
-                />
-              )}
-            </div>
-          ) : (
-            <div
-              className={`${styles.soundDropzone} ${isDraggingVideo ? styles.dragging : ''}`}
-              onDragOver={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setIsDraggingVideo(true)
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setIsDraggingVideo(false)
-              }}
-              onDrop={handleVideoDrop}
-              onClick={() => videoInputRef.current?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && videoInputRef.current?.click()}
-            >
-              {uploading ? (
-                <span className={styles.uploadingText}>{loadingText}</span>
-              ) : (
-                <>
-                  <Button
-                    font="dashboard"
-                    variant="primary"
-                    label="Select a Video File"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      videoInputRef.current?.click()
-                    }}
-                    type="button"
-                  />
-                  <span className={styles.dropText}>or drag and drop files</span>
-                </>
-              )}
-            </div>
+            </EditorPanel>
           )}
 
-          {videoSizeError && <div className={styles.sizeError}>{videoSizeError}</div>}
-          <span className={dashboardStyles.hint}>
-            Accepted: MP4, WebM (max 50MB). Videos are automatically optimized for the gallery.
-          </span>
-        </div>
-      )}
+          {/* Video file - only for video type */}
+          {isVideo && (
+            <EditorPanel
+              section={ARTWORK_SECTION.videoFile}
+              description="Upload the video file. This will be played in exhibitions."
+            >
+              <FileInput
+                ref={videoInputRef}
+                id="artwork-video-file"
+                accept="video/mp4,video/webm"
+                onChange={handleVideoFileSelect}
+                className={styles.hiddenInput}
+              />
 
-      {/* Image Upload Section - for image and video types (poster for video) */}
-      {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-        <div
-          className={`${dashboardStyles.section} ${formData.artworkType === 'image' ? styles.imageSection : styles.imageSectionHalf}`}
-        >
-          <h3 className={dashboardStyles.sectionTitle}>
-            {formData.artworkType === 'video' ? 'Video Poster' : 'Artwork Image'}
-          </h3>
-          <p className={dashboardStyles.sectionDescription}>
-            {formData.artworkType === 'video'
-              ? 'Optional. Upload a poster image for this video. If not provided, the first frame of the video will be used.'
-              : 'Upload the artwork image. This will be displayed in exhibitions and on your profile.'}
-          </p>
+              {videoUrl ? (
+                <div className={styles.filePreview}>
+                  <div className={styles.fileInfo}>
+                    <VideoCamera size={24} weight="light" aria-hidden className={styles.fileIcon} />
+                    <video
+                      controls
+                      controlsList="nodownload"
+                      src={videoUrl}
+                      className={styles.videoPlayer}
+                    >
+                      Your browser does not support the video element.
+                    </video>
+                  </div>
+                  {onVideoRemove && (
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.removeFile}
+                      onClick={() => onVideoRemove()}
+                      type="button"
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className={c(styles.dropzone, isDraggingVideo && styles.dragging)}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsDraggingVideo(true)
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsDraggingVideo(false)
+                  }}
+                  onDrop={handleVideoDrop}
+                  onClick={() => videoInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && videoInputRef.current?.click()}
+                >
+                  {uploading ? (
+                    <span className={styles.uploadingText}>{loadingText}</span>
+                  ) : (
+                    <>
+                      <Button
+                        variant="bare"
+                        font="dashboard"
+                        className={styles.selectFile}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          videoInputRef.current?.click()
+                        }}
+                        type="button"
+                      >
+                        Select a video file
+                      </Button>
+                      <span className={styles.dropText}>or drag and drop files</span>
+                    </>
+                  )}
+                </div>
+              )}
 
-          <div className={styles.imageRow}>
-            <div className={styles.imageUploaderCol}>
+              {videoSizeError && <div className={styles.sizeError}>{videoSizeError}</div>}
+              <p className={styles.help}>
+                Accepted: MP4, WebM (max 50MB). Videos are automatically optimized for the gallery.
+              </p>
+            </EditorPanel>
+          )}
+
+          {/* Image - for image and video types (poster for video) */}
+          {isImageOrVideo && (
+            <EditorPanel
+              section={imageSection}
+              description={
+                isVideo
+                  ? 'Optional. Upload a poster image for this video. If not provided, the first frame of the video will be used.'
+                  : 'Upload the artwork image. This will be displayed in exhibitions and on your profile.'
+              }
+            >
               <ImageUploader
+                tone="admin"
                 imageUrl={imageUrl}
                 onUpload={onImageUpload}
                 onRemove={onImageRemove}
@@ -964,15 +1036,19 @@ export const ArtworkEditForm = ({
                 maxSizeBytes={MAX_ARTWORK_UPLOAD_SIZE}
                 minWidth={MIN_ARTWORK_IMAGE_WIDTH}
                 minHeight={MIN_ARTWORK_IMAGE_HEIGHT}
+                note={
+                  <span>
+                    Accepted: JPEG, PNG, TIFF. Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH} ×{' '}
+                    {MIN_ARTWORK_IMAGE_HEIGHT} px. Images are automatically optimized for the web.
+                  </span>
+                }
               />
-            </div>
 
-            {/* Print requirements info — only when print sales is enabled.
-                The DPI/eligibility detail is irrelevant if the artist
-                isn't selling prints, so we keep it gated behind the
-                Print Sales toggle to avoid noise. */}
-            {formData.artworkType === 'image' && formData.printEnabled && (
-              <div className={styles.printInfoCol}>
+              {/* Print requirements info — only when print sales is enabled.
+                  The DPI/eligibility detail is irrelevant if the artist
+                  isn't selling prints, so we keep it gated behind the
+                  Print Sales toggle to avoid noise. Restyled in step 16b. */}
+              {isImage && formData.printEnabled && (
                 <div className={styles.printInfoCard}>
                   <h4 className={styles.printInfoTitle}>
                     <Icon name="printer" size={16} />
@@ -1080,467 +1156,500 @@ export const ArtworkEditForm = ({
                     />
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          <span className={dashboardStyles.hint}>
-            Accepted: JPEG, PNG, TIFF. Minimum resolution: {MIN_ARTWORK_IMAGE_WIDTH} ×{' '}
-            {MIN_ARTWORK_IMAGE_HEIGHT} px. Images are automatically optimized for the web.
-          </span>
-        </div>
-      )}
-
-      {/* Per-artwork printing restrictions. Open editions only — limited
-          editions are constrained to their pre-defined variants. Stored in
-          canonical PrintRestrictions shape (`{ allowed: { dimId: ids[] } }`). */}
-      {formData.artworkType === 'image' &&
-        formData.printEnabled &&
-        formData.editionType === 'open' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Printing restrictions</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Advanced — you don&apos;t need to touch this unless you have very specific reasons not
-              to offer a particular paper, frame type or passepartout for this artwork.
-            </p>
-
-            <details className={styles.printRestrictions}>
-              <summary className={styles.printRestrictionsSummary}>Show options</summary>
-
-              <p className={styles.printRestrictionsIntro}>
-                We offer many printing options — to keep this simple we only let you veto the three
-                that matter most for editorial control: papers, frame types and the passepartout.
-                Everything that stays checked remains available to buyers.
-              </p>
-
-              <TpsRestrictionGroup
-                title="Papers"
-                all={TPS_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
-                dimensionId="paper"
-                restrictions={formData.printOptions ?? null}
-                onChange={onPrintOptionsChange}
-                allIds={TPS_PAPERS.map((p) => p.id)}
-              />
-              <TpsRestrictionGroup
-                title="Frame types"
-                all={TPS_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
-                dimensionId="frameType"
-                restrictions={formData.printOptions ?? null}
-                onChange={onPrintOptionsChange}
-                allIds={TPS_FRAME_TYPES.map((f) => f.id)}
-              />
-              <TpsRestrictionGroup
-                title="Mount (Passepartout)"
-                all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
-                dimensionId="windowMount"
-                restrictions={formData.printOptions ?? null}
-                onChange={onPrintOptionsChange}
-                allIds={TPS_WINDOW_MOUNTS.map((w) => w.id)}
-              />
-            </details>
-          </div>
-        )}
-
-      {/* Per-artwork paper recommendations. Open editions only. Soft hint —
-          does not filter, just surfaces a check-circle in the buyer's paper
-          picker. Vetoed papers are hidden so the artist can't recommend a
-          paper buyers can't pick. */}
-      {formData.artworkType === 'image' &&
-        formData.printEnabled &&
-        formData.editionType === 'open' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Printing recommendations</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Advanced — pick the specific paper types you&apos;d recommend for this artwork. Buyers
-              see a checkmark next to your picks in the print wizard; every paper stays available
-              either way.
-            </p>
-
-            <details className={styles.printRestrictions}>
-              <summary className={styles.printRestrictionsSummary}>Show options</summary>
-
-              <p className={styles.printRestrictionsIntro}>
-                Recommendations are a soft hint, not a filter. Anything you check here gets a
-                checkmark in the buyer&apos;s paper picker plus a legend explaining it&apos;s your
-                recommendation for best results.
-              </p>
-
-              <PaperRecommendationGroup
-                papers={TPS_PAPERS.filter((p) =>
-                  isTpsDimensionChecked(formData.printOptions ?? null, 'paper', p.id),
-                ).map((p) => ({ id: p.id, label: p.label }))}
-                recommendations={formData.printRecommendations ?? null}
-                onChange={onPrintRecommendationsChange}
-              />
-            </details>
-          </div>
-        )}
-
-      {/* Open-edition go-live. Sits after the printing options because, for an
-          open edition, those options stay editable for the life of the work —
-          the ONLY thing "Ready to Sell" freezes is the series type (so an
-          on-sale open edition can't be flipped to a limited one). A superAdmin
-          can reopen it with "Unblock". */}
-      {formData.artworkType === 'image' &&
-        formData.printEnabled &&
-        formData.editionType === 'open' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Ready to sell</h3>
-            {!seriesTypeLocked ? (
-              <>
-                {onReadyToSell && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    label="Ready to Sell"
-                    onClick={handleOpenReadyToSell}
-                  />
-                )}
-                {openPriceError && (
-                  <p className={styles.sizeError}>
-                    Add your price above before putting this artwork on sale.
+              {/* Per-artwork printing restrictions. Open editions only — limited
+                  editions are constrained to their pre-defined variants. Stored in
+                  canonical PrintRestrictions shape (`{ allowed: { dimId: ids[] } }`).
+                  Restyled in step 16b. */}
+              {showOpenPrintOptions && (
+                <div className={styles.subsection}>
+                  <h3 className={styles.subheading}>Printing restrictions</h3>
+                  <p className={styles.help}>
+                    Advanced — you don&apos;t need to touch this unless you have very specific
+                    reasons not to offer a particular paper, frame type or passepartout for this
+                    artwork.
                   </p>
-                )}
-                <p className={styles.printDisabledHint} style={{ marginTop: 'var(--space-2)' }}>
-                  Confirms this artwork is ready to sell. This locks the series type to “Open” — you
-                  can’t switch it to a limited edition afterwards. Your price and printing options
-                  stay editable.
-                </p>
-              </>
-            ) : (
-              <>
-                {/* The series-type lock itself is stated once, in the banner
-                    above. This section keeps only what is still actionable. */}
-                <p className={styles.printDisabledHint} style={{ margin: 0 }}>
-                  This open edition is on sale. Price and printing options remain editable.
-                </p>
-                {isSuperAdmin && onUnblock && (
-                  <div style={{ marginTop: 'var(--space-2)' }}>
-                    <Button type="button" variant="secondary" label="Unblock" onClick={onUnblock} />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+                  <details className={styles.printRestrictions}>
+                    <summary className={styles.printRestrictionsSummary}>Show options</summary>
 
-      {/* Sound Upload Section - only for sound type */}
-      {formData.artworkType === 'sound' && (
-        <div className={`${dashboardStyles.section} ${styles.imageSectionHalf}`}>
-          <h3 className={dashboardStyles.sectionTitle}>Audio File</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Upload an audio file. This sound will be playable in exhibitions.
-          </p>
+                    <p className={styles.printRestrictionsIntro}>
+                      We offer many printing options — to keep this simple we only let you veto the
+                      three that matter most for editorial control: papers, frame types and the
+                      passepartout. Everything that stays checked remains available to buyers.
+                    </p>
 
-          <FileInput
-            ref={soundInputRef}
-            id="artwork-sound-file"
-            accept="audio/mpeg,audio/mp4,audio/ogg,audio/webm,audio/wav,audio/x-wav,audio/aac,audio/flac"
-            onChange={handleSoundFileSelect}
-            className={styles.hiddenInput}
-          />
-
-          {soundUrl ? (
-            <div className={styles.soundPreview}>
-              <div className={styles.soundInfo}>
-                <Icon name="volume-2" size={24} color="#333" />
-                <audio controls src={soundUrl} className={styles.audioPlayer}>
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-              {onSoundRemove && (
-                <Button
-                  font="dashboard"
-                  variant="secondary"
-                  label="Remove"
-                  onClick={() => onSoundRemove()}
-                  type="button"
-                />
+                    <TpsRestrictionGroup
+                      title="Papers"
+                      all={TPS_PAPERS.map((p) => ({ id: p.id, label: p.label }))}
+                      dimensionId="paper"
+                      restrictions={formData.printOptions ?? null}
+                      onChange={onPrintOptionsChange}
+                      allIds={TPS_PAPERS.map((p) => p.id)}
+                    />
+                    <TpsRestrictionGroup
+                      title="Frame types"
+                      all={TPS_FRAME_TYPES.map((f) => ({ id: f.id, label: f.label }))}
+                      dimensionId="frameType"
+                      restrictions={formData.printOptions ?? null}
+                      onChange={onPrintOptionsChange}
+                      allIds={TPS_FRAME_TYPES.map((f) => f.id)}
+                    />
+                    <TpsRestrictionGroup
+                      title="Mount (Passepartout)"
+                      all={TPS_WINDOW_MOUNTS.map((w) => ({ id: w.id, label: w.label }))}
+                      dimensionId="windowMount"
+                      restrictions={formData.printOptions ?? null}
+                      onChange={onPrintOptionsChange}
+                      allIds={TPS_WINDOW_MOUNTS.map((w) => w.id)}
+                    />
+                  </details>
+                </div>
               )}
-            </div>
-          ) : (
-            <div
-              className={`${styles.soundDropzone} ${isDraggingSound ? styles.dragging : ''}`}
-              onDragOver={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setIsDraggingSound(true)
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setIsDraggingSound(false)
-              }}
-              onDrop={handleSoundDrop}
-              onClick={() => soundInputRef.current?.click()}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && soundInputRef.current?.click()}
-            >
-              {uploading ? (
-                <span className={styles.uploadingText}>{loadingText}</span>
-              ) : (
-                <>
-                  <Button
-                    font="dashboard"
-                    variant="primary"
-                    label="Select an Audio File"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      soundInputRef.current?.click()
-                    }}
-                    type="button"
-                  />
-                  <span className={styles.dropText}>or drag and drop files</span>
-                </>
+
+              {/* Per-artwork paper recommendations. Open editions only. Soft hint —
+                  does not filter, just surfaces a check-circle in the buyer's paper
+                  picker. Vetoed papers are hidden so the artist can't recommend a
+                  paper buyers can't pick. Restyled in step 16b. */}
+              {showOpenPrintOptions && (
+                <div className={styles.subsection}>
+                  <h3 className={styles.subheading}>Printing recommendations</h3>
+                  <p className={styles.help}>
+                    Advanced — pick the specific paper types you&apos;d recommend for this artwork.
+                    Buyers see a checkmark next to your picks in the print wizard; every paper stays
+                    available either way.
+                  </p>
+                  <details className={styles.printRestrictions}>
+                    <summary className={styles.printRestrictionsSummary}>Show options</summary>
+
+                    <p className={styles.printRestrictionsIntro}>
+                      Recommendations are a soft hint, not a filter. Anything you check here gets a
+                      checkmark in the buyer&apos;s paper picker plus a legend explaining it&apos;s
+                      your recommendation for best results.
+                    </p>
+
+                    <PaperRecommendationGroup
+                      papers={TPS_PAPERS.filter((p) =>
+                        isTpsDimensionChecked(formData.printOptions ?? null, 'paper', p.id),
+                      ).map((p) => ({ id: p.id, label: p.label }))}
+                      recommendations={formData.printRecommendations ?? null}
+                      onChange={onPrintRecommendationsChange}
+                    />
+                  </details>
+                </div>
               )}
-            </div>
+            </EditorPanel>
           )}
 
-          {soundSizeError && <div className={styles.sizeError}>{soundSizeError}</div>}
-          <span className={dashboardStyles.hint}>
-            Accepted: MP3, M4A, OGG, WebM, WAV, AAC, FLAC (max 3MB).
-          </span>
-        </div>
-      )}
+          {/* Open-edition go-live. Sits after the printing options because, for an
+              open edition, those options stay editable for the life of the work —
+              the ONLY thing "Ready to Sell" freezes is the series type (so an
+              on-sale open edition can't be flipped to a limited one). A superAdmin
+              can reopen it with "Unblock". Restyled in step 16b. */}
+          {showOpenPrintOptions && (
+            <EditorPanel section={ARTWORK_SECTION.ready}>
+              <div>
+                {!seriesTypeLocked ? (
+                  <>
+                    {onReadyToSell && (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        label="Ready to Sell"
+                        onClick={handleOpenReadyToSell}
+                      />
+                    )}
+                    {openPriceError && (
+                      <p className={styles.sizeError}>
+                        Add your price above before putting this artwork on sale.
+                      </p>
+                    )}
+                    <p className={styles.printDisabledHint} style={{ marginTop: 'var(--space-2)' }}>
+                      Confirms this artwork is ready to sell. This locks the series type to “Open” —
+                      you can’t switch it to a limited edition afterwards. Your price and printing
+                      options stay editable.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    {/* The series-type lock itself is stated once, in the banner
+                    above. This section keeps only what is still actionable. */}
+                    <p className={styles.printDisabledHint} style={{ margin: 0 }}>
+                      This open edition is on sale. Price and printing options remain editable.
+                    </p>
+                    {isSuperAdmin && onUnblock && (
+                      <div style={{ marginTop: 'var(--space-2)' }}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          label="Unblock"
+                          onClick={onUnblock}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </EditorPanel>
+          )}
 
-      <form onSubmit={handleFormSubmit} noValidate>
-        {/* Title Section */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Title</h3>
-          <p className={dashboardStyles.sectionDescription}>The display title for your artwork.</p>
-          <Input
-            id="title"
-            type="text"
-            size="medium"
-            value={formData.title}
-            onChange={(e) => {
-              onFormChange('title', e.target.value)
-              if (titleError && e.target.value.trim()) setTitleError(undefined)
-            }}
-            invalid={!!titleError}
-            required
-          />
-          <ErrorText>{titleError}</ErrorText>
-          <span className={dashboardStyles.hint}>
-            This will be shown in exhibitions and on your profile.
-          </span>
-        </div>
+          {/* Audio file - only for sound type */}
+          {formData.artworkType === 'sound' && (
+            <EditorPanel
+              section={ARTWORK_SECTION.audioFile}
+              description="Upload an audio file. This sound will be playable in exhibitions."
+            >
+              <FileInput
+                ref={soundInputRef}
+                id="artwork-sound-file"
+                accept="audio/mpeg,audio/mp4,audio/ogg,audio/webm,audio/wav,audio/x-wav,audio/aac,audio/flac"
+                onChange={handleSoundFileSelect}
+                className={styles.hiddenInput}
+              />
 
-        {/* Author */}
-        {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Author</h3>
-            <Input
-              id="author"
-              type="text"
-              size="medium"
-              value={formData.author}
-              onChange={(e) => onFormChange('author', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Year */}
-        {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Year</h3>
-            <Input
-              id="year"
-              type="text"
-              size="medium"
-              value={formData.year}
-              onChange={(e) => onFormChange('year', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Technique / Medium */}
-        {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Technique / Medium</h3>
-            <RichTextEditor
-              content={formData.technique}
-              onChange={(content) => onFormChange('technique', content)}
-              placeholder="e.g. Oil on canvas, mixed media..."
-            />
-          </div>
-        )}
-
-        {/* Dimensions */}
-        {formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Dimensions</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              A reference dimension shown on the public artwork page — most relevant for unique
-              physical works (paintings, drawings, sculptures) where the size is fixed. For
-              photography or editions sold as prints, list the original capture size; the actual
-              print sizes are picked by the buyer in the print wizard.
-            </p>
-            <Input
-              id="dimensions"
-              type="text"
-              size="medium"
-              value={formData.dimensions}
-              onChange={(e) => onFormChange('dimensions', e.target.value)}
-              placeholder="e.g. 40 × 30 cm"
-            />
-            <span className={dashboardStyles.hint}>
-              Follow gallery convention: height × width (× depth for 3D works).
-            </span>
-          </div>
-        )}
-
-        {/* Text Content - for text artworks (plain text only for 3D) */}
-        {formData.artworkType === 'text' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Text Content</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Plain text content that will be displayed on the 3D stencil.
-            </p>
-            <textarea
-              value={formData.textContent}
-              onChange={(e) => onFormChange('textContent', e.target.value)}
-              placeholder="Enter the text to display..."
-              rows={8}
-              style={{
-                width: '100%',
-                padding: 'var(--space-3)',
-                border: '1px solid var(--color-border-default)',
-                borderRadius: 'var(--radius-sm)',
-                fontFamily: 'inherit',
-                fontSize: 'var(--text-sm)',
-                lineHeight: '1.6',
-                resize: 'vertical',
-              }}
-            />
-            <span className={dashboardStyles.hint}>
-              Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall
-              panel.
-            </span>
-          </div>
-        )}
-
-        {/* Description - for image artworks (supports rich text) */}
-        {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Description</h3>
-            <RichTextEditor
-              content={formData.description}
-              onChange={(content) => onFormChange('description', content)}
-              placeholder="About this artwork..."
-            />
-          </div>
-        )}
-
-        {/* Featured Checkbox */}
-        {(formData.artworkType === 'image' || formData.artworkType === 'video') && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Featured Artwork</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Highlight this artwork on your public artist profile.
-            </p>
-            <Checkbox
-              checked={formData.featured}
-              onChange={(e) => onFormChange('featured', e.target.checked)}
-              label="Feature on artist profile"
-            />
-            <span className={dashboardStyles.hint}>
-              Featured artworks appear prominently in your profile&apos;s artwork grid.
-            </span>
-          </div>
-        )}
-
-        {/* Exhibition membership. Deliberately separate from the 3D room: a
-            work appears here because it was chosen for the show, not because
-            it happens to hang on a wall. Renders only where the caller supplies
-            the artist's exhibitions — the wall-view modal is already inside
-            one show and has no use for it. */}
-        {exhibitions && exhibitions.length > 0 && formData.artworkType === 'image' && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Exhibitions</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Choose which exhibitions show this artwork on their page.
-            </p>
-            {exhibitions.map((exhibition) => {
-              const ticked = formData.exhibitionIds.includes(exhibition.id)
-              return (
-                <div key={exhibition.id} data-exhibition-row={exhibition.id}>
-                  <Checkbox
-                    checked={ticked}
-                    onChange={(e) =>
-                      onFormChange(
-                        'exhibitionIds',
-                        e.target.checked
-                          ? [...formData.exhibitionIds, exhibition.id]
-                          : formData.exhibitionIds.filter((id) => id !== exhibition.id),
-                      )
-                    }
-                    label={
-                      exhibition.published
-                        ? exhibition.mainTitle
-                        : `${exhibition.mainTitle} (draft)`
-                    }
-                  />
-                  {/* Only when the work is on this show's page and the show has
-                      sections to offer — otherwise the form reads as before. */}
-                  {ticked && exhibition.sections.length > 0 && (
-                    <SelectDropdown
-                      className={styles.sectionSelect}
-                      options={[
-                        { value: '', label: 'No section' },
-                        ...exhibition.sections.map((s) => ({ value: s.id, label: s.title })),
-                      ]}
-                      value={formData.exhibitionSections[exhibition.id] ?? ''}
-                      onChange={(value) =>
-                        onFormChange('exhibitionSections', {
-                          ...formData.exhibitionSections,
-                          [exhibition.id]: value || null,
-                        })
-                      }
-                    />
+              {soundUrl ? (
+                <div className={styles.filePreview}>
+                  <div className={styles.fileInfo}>
+                    <SpeakerHigh size={24} weight="light" aria-hidden className={styles.fileIcon} />
+                    <audio controls src={soundUrl} className={styles.audioPlayer}>
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                  {onSoundRemove && (
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.removeFile}
+                      onClick={() => onSoundRemove()}
+                      type="button"
+                    >
+                      Remove
+                    </Button>
                   )}
                 </div>
-              )
-            })}
-            <span className={dashboardStyles.hint}>
-              Independent of the 3D space. An artwork can appear on the page without hanging in the
-              room. Sections are set up on each exhibition&apos;s settings page.
-            </span>
-          </div>
-        )}
+              ) : (
+                <div
+                  className={c(styles.dropzone, isDraggingSound && styles.dragging)}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsDraggingSound(true)
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsDraggingSound(false)
+                  }}
+                  onDrop={handleSoundDrop}
+                  onClick={() => soundInputRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && soundInputRef.current?.click()}
+                >
+                  {uploading ? (
+                    <span className={styles.uploadingText}>{loadingText}</span>
+                  ) : (
+                    <>
+                      <Button
+                        variant="bare"
+                        font="dashboard"
+                        className={styles.selectFile}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          soundInputRef.current?.click()
+                        }}
+                        type="button"
+                      >
+                        Select an audio file
+                      </Button>
+                      <span className={styles.dropText}>or drag and drop files</span>
+                    </>
+                  )}
+                </div>
+              )}
 
-        {/* Gallery-curated sales imagery, admin only, and only once the
-            artwork exists — an upload needs an id to attach to. */}
-        {isAdmin && artworkId && (
-          <div className={dashboardStyles.section}>
-            <h3 className={dashboardStyles.sectionTitle}>Supplementary media</h3>
-            <p className={dashboardStyles.sectionDescription}>
-              Close-ups, print mockups, the certificate, a short film &mdash; the evidence that a
-              physical object exists.
-            </p>
-            <ArtworkMediaManager artworkId={artworkId} />
-          </div>
-        )}
+              {soundSizeError && <div className={styles.sizeError}>{soundSizeError}</div>}
+              <p className={styles.help}>
+                Accepted: MP3, M4A, OGG, WebM, WAV, AAC, FLAC (max 3MB).
+              </p>
+            </EditorPanel>
+          )}
 
-        <ErrorText>{error}</ErrorText>
+          <form
+            id={isPage ? ARTWORK_EDIT_FORM_ID : undefined}
+            onSubmit={handleFormSubmit}
+            noValidate
+            className={styles.form}
+          >
+            <EditorPanel section={ARTWORK_SECTION.details}>
+              <div className={styles.field}>
+                <label htmlFor="title" className={styles.label}>
+                  Title
+                </label>
+                <Input
+                  id="title"
+                  type="text"
+                  size="bare"
+                  inputClassName={styles.input}
+                  value={formData.title}
+                  onChange={(e) => {
+                    onFormChange('title', e.target.value)
+                    if (titleError && e.target.value.trim()) setTitleError(undefined)
+                  }}
+                  invalid={!!titleError}
+                  required
+                  aria-describedby="title-help"
+                />
+                <ErrorText>{titleError}</ErrorText>
+                <p id="title-help" className={styles.help}>
+                  The display title for your artwork. This will be shown in exhibitions and on your
+                  profile.
+                </p>
+              </div>
 
-        <div className={dashboardStyles.actions}>
-          <Button
-            font="dashboard"
-            variant="primary"
-            label={saving ? 'Saving...' : 'Save'}
-            type="submit"
-          />
-          <Button
-            font="dashboard"
-            variant="secondary"
-            label="Cancel"
-            onClick={onCancel}
-            type="button"
-          />
+              {/* Author + Year */}
+              {isImageOrVideo && (
+                <div className={styles.authorYear}>
+                  <div className={styles.field}>
+                    <label htmlFor="author" className={styles.label}>
+                      Author
+                    </label>
+                    <Input
+                      id="author"
+                      type="text"
+                      size="bare"
+                      inputClassName={styles.input}
+                      value={formData.author}
+                      onChange={(e) => onFormChange('author', e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label htmlFor="year" className={styles.label}>
+                      Year
+                    </label>
+                    <Input
+                      id="year"
+                      type="text"
+                      size="bare"
+                      inputClassName={styles.input}
+                      value={formData.year}
+                      onChange={(e) => onFormChange('year', e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Technique / Medium */}
+              {isImageOrVideo && (
+                <div className={styles.field}>
+                  <span id="technique-label" className={styles.label}>
+                    Technique / medium
+                  </span>
+                  <RichTextEditor
+                    tone="admin"
+                    labelledBy="technique-label"
+                    content={formData.technique}
+                    onChange={(content) => onFormChange('technique', content)}
+                    onReady={(html) => onRichTextReady?.('technique', html)}
+                    placeholder="e.g. Oil on canvas, mixed media…"
+                  />
+                </div>
+              )}
+
+              {/* Dimensions */}
+              {isImage && (
+                <div className={styles.field}>
+                  <label htmlFor="dimensions" className={styles.label}>
+                    Dimensions
+                  </label>
+                  <Input
+                    id="dimensions"
+                    type="text"
+                    size="bare"
+                    className={styles.short}
+                    inputClassName={styles.input}
+                    value={formData.dimensions}
+                    onChange={(e) => onFormChange('dimensions', e.target.value)}
+                    placeholder="e.g. 40 × 30 cm"
+                    aria-describedby="dimensions-help"
+                  />
+                  <div id="dimensions-help" className={styles.helpGroup}>
+                    <p className={styles.help}>
+                      A reference dimension shown on the public artwork page — most relevant for
+                      unique physical works (paintings, drawings, sculptures) where the size is
+                      fixed. For photography or editions sold as prints, list the original capture
+                      size; the actual print sizes are picked by the buyer in the print wizard.
+                    </p>
+                    <p className={styles.help}>
+                      Follow gallery convention: height × width (× depth for 3D works).
+                    </p>
+                  </div>
+                </div>
+              )}
+            </EditorPanel>
+
+            {/* Text content - for text artworks (plain text only for 3D) */}
+            {formData.artworkType === 'text' && (
+              <EditorPanel
+                section={ARTWORK_SECTION.text}
+                description="Plain text content that will be displayed on the 3D stencil."
+              >
+                <textarea
+                  className={styles.textarea}
+                  value={formData.textContent}
+                  onChange={(e) => onFormChange('textContent', e.target.value)}
+                  placeholder="Enter the text to display…"
+                  rows={8}
+                  aria-labelledby={panelTitleId(ARTWORK_SECTION.text)}
+                  aria-describedby="text-content-help"
+                />
+                <p id="text-content-help" className={styles.help}>
+                  Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall
+                  panel.
+                </p>
+              </EditorPanel>
+            )}
+
+            {/* Description - for image and video artworks (supports rich text) */}
+            {isImageOrVideo && (
+              <EditorPanel section={ARTWORK_SECTION.description}>
+                <RichTextEditor
+                  tone="admin"
+                  labelledBy={panelTitleId(ARTWORK_SECTION.description)}
+                  content={formData.description}
+                  onChange={(content) => onFormChange('description', content)}
+                  onReady={(html) => onRichTextReady?.('description', html)}
+                  placeholder="About this artwork…"
+                />
+              </EditorPanel>
+            )}
+
+            {/* Featured + exhibition membership */}
+            {isImageOrVideo && (
+              <EditorPanel section={ARTWORK_SECTION.where}>
+                <AdminCheckbox
+                  id="artwork-featured"
+                  label="Feature on artist profile"
+                  description="Highlight this artwork on your public artist profile. Featured artworks appear prominently in your profile's artwork grid."
+                  checked={formData.featured}
+                  onChange={(checked) => onFormChange('featured', checked)}
+                />
+
+                {/* Exhibition membership. Deliberately separate from the 3D room: a
+                    work appears here because it was chosen for the show, not because
+                    it happens to hang on a wall. Renders only where the caller supplies
+                    the artist's exhibitions — the wall-view modal is already inside
+                    one show and has no use for it. */}
+                {showExhibitions && exhibitions && (
+                  <div className={styles.exhibitions}>
+                    <div className={styles.field}>
+                      {/* A heading (e2e: artwork-exhibition-picker), in the label look. */}
+                      <h3 className={styles.label}>Exhibitions</h3>
+                      <p className={styles.help}>
+                        Choose which exhibitions show this artwork on their page.
+                      </p>
+                    </div>
+                    {exhibitions.map((exhibition) => {
+                      const ticked = formData.exhibitionIds.includes(exhibition.id)
+                      return (
+                        <div
+                          key={exhibition.id}
+                          data-exhibition-row={exhibition.id}
+                          className={styles.exhibitionRow}
+                        >
+                          <AdminCheckbox
+                            id={`artwork-exhibition-${exhibition.id}`}
+                            checked={ticked}
+                            onChange={(checked) =>
+                              onFormChange(
+                                'exhibitionIds',
+                                checked
+                                  ? [...formData.exhibitionIds, exhibition.id]
+                                  : formData.exhibitionIds.filter((id) => id !== exhibition.id),
+                              )
+                            }
+                            label={
+                              exhibition.published
+                                ? exhibition.mainTitle
+                                : `${exhibition.mainTitle} (draft)`
+                            }
+                          />
+                          {/* Only when the work is on this show's page and the show has
+                              sections to offer — otherwise the form reads as before. */}
+                          {ticked && exhibition.sections.length > 0 && (
+                            <SelectDropdown
+                              className={styles.sectionSelect}
+                              options={[
+                                { value: '', label: 'No section' },
+                                ...exhibition.sections.map((s) => ({
+                                  value: s.id,
+                                  label: s.title,
+                                })),
+                              ]}
+                              value={formData.exhibitionSections[exhibition.id] ?? ''}
+                              onChange={(value) =>
+                                onFormChange('exhibitionSections', {
+                                  ...formData.exhibitionSections,
+                                  [exhibition.id]: value || null,
+                                })
+                              }
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                    <p className={styles.help}>
+                      Independent of the 3D space. An artwork can appear on the page without hanging
+                      in the room. Sections are set up on each exhibition&apos;s settings page.
+                    </p>
+                  </div>
+                )}
+              </EditorPanel>
+            )}
+
+            {/* Gallery-curated sales imagery, admin only, and only once the
+                artwork exists — an upload needs an id to attach to. */}
+            {showSupplementary && artworkId && (
+              <EditorPanel
+                section={ARTWORK_SECTION.media}
+                description={
+                  <>
+                    Close-ups, print mockups, the certificate, a short film &mdash; the evidence
+                    that a physical object exists.
+                  </>
+                }
+              >
+                <ArtworkMediaManager artworkId={artworkId} />
+              </EditorPanel>
+            )}
+
+            {error && (
+              <Callout tone="red" role="alert">
+                {error}
+              </Callout>
+            )}
+
+            {/* The studio page's save bar submits this form by its id; the wall
+                view's overlay keeps its own row. */}
+            {!isPage && (
+              <div className={styles.actions}>
+                <Button
+                  variant="bare"
+                  font="dashboard"
+                  className={styles.cancel}
+                  onClick={onCancel}
+                  type="button"
+                >
+                  Cancel
+                </Button>
+                <Button variant="bare" font="dashboard" className={styles.save} type="submit">
+                  {saving ? 'Saving…' : 'Save changes'}
+                </Button>
+              </div>
+            )}
+          </form>
         </div>
-      </form>
+      </div>
 
       {/* Print sizes info modal */}
       {showPrintInfoModal && (

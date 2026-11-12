@@ -33,3 +33,18 @@
     outline-offset: 2px;
   }
 }
+
+// With `description`: the line sits under the label text, past the box and its gap.
+.withDescription {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.description {
+  padding-left: calc(16px + var(--space-2));
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}

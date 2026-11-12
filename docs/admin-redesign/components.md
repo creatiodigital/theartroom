@@ -406,6 +406,11 @@ like the real Pause switch). Logic and dialogs unchanged.
   saved" / "Unsaved changes" / "Saved"; with `failed` (Q80) the status is a red `role="alert"` "Not saved. Please try
   again." — the page passes it while it still holds exactly what the refused save sent; Discard only with `onDiscard`).
 
+### `SaveBar` additions (step 16a)
+- `onCancel?()` (an always-enabled outline Cancel before Save), `form?: string` (instead of `onSave`: Save becomes
+  `type="submit" form={form}`, so the form's own submit, validation and Enter run), `width?: 'form' | 'list'` (880 /
+  1080 px column), `failedMessage?: string` (the red text while `failed`; default "Not saved. Please try again.").
+
 ### Opt-in props on shared public components (their default output is unchanged)
 - `RichTextEditor`: `tone?: 'default' | 'admin'` (grouped toolbar, the public RichText styles), `richTextVariant?:
   'default' | 'page'`, `labelledBy?`, `describedBy?`, `onReady?(html)` (the editor's own form of the loaded text).
@@ -442,3 +447,17 @@ like the real Pause switch). Logic and dialogs unchanged.
   `useGetUserQuery`, the session name until it lands, Q96); `useRefreshPersonAfterProfile(pathname)`.
 - Tokens: `--studio-content-max-width`, `--studio-form-max-width`, `--studio-nav-active`, `--studio-avatar`,
   `--studio-foot-text`, `--studio-impersonation-{surface,border,button-border,label,text}`.
+
+## Artwork editor pieces (step 16a)
+
+- `shared/ArtworkEditForm` gains `variant?: 'page' | 'overlay'` (default `overlay`: the wall view's View details, own h1 and
+  Cancel / Save changes row; `page`: no h1, the On this page list, the form id `ARTWORK_EDIT_FORM_ID` for the save bar),
+  `onRichTextReady?(field, html)` and `onVariantsDirtyChange?(count)` (display only, for the save bar).
+- `EditorPanel` · `{ section: ArtworkSection; description?; children }`: `<section id aria-labelledby>`, white, radius 8,
+  padding 24 (18 on phones), h2 18/700.
+- `SectionNav` · `{ sections: ArtworkSection[] }`: "On this page", sticky, plain anchors, `aria-current` on the section in
+  view; hidden under 900 px.
+- `sections.ts`: `ARTWORK_SECTION` (ids and titles), `ARTWORK_EDIT_FORM_ID`, `panelTitleId`, `panelDescriptionId`.
+- `LimitedVariantsEditor`: `onDirtyCountChange?(count)` (display only).
+- `AdminCheckbox`: `description?: ReactNode` (a line under the label, tied with `aria-describedby`; without it the markup
+  is unchanged).
