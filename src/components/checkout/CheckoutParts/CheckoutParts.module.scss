@@ -88,8 +88,8 @@
   flex-direction: column;
   gap: 12px;
   padding: 28px;
-  // The photos' grey (owner, 2026-11-12), not the off-white.
-  background: var(--public-render-wall);
+  // The site's light grey (owner, 2026-11-12: the live site's).
+  background: var(--public-off-white);
 
   // Under the sticky site header (83 px from 1024 px).
   @include media-up(lg) {

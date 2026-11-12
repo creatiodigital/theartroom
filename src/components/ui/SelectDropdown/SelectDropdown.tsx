@@ -39,7 +39,7 @@ interface SelectDropdownProps<V extends string = string> {
   className?: string
   /** Visual style of the closed control. 'boxed' (default) = bordered input;
    *  'plain' = borderless text + chevron (underlines on hover); 'field' = the public
-   *  filter field (docs/public-redesign/prints.md: 46px, #f5f5f3, a check on the choice). */
+   *  filter field (docs/public-redesign/prints.md: 46px, the light grey, a check on the choice). */
   variant?: 'boxed' | 'plain' | 'field'
   /** 'field' only: the control's name, read out before the value ("Artist") but not shown (owner,
    *  2026-11-12: the value alone on screen). */

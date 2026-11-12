@@ -38,14 +38,14 @@
   padding-top: var(--space-6);
 }
 
-// The order summary panel on the photos' grey (owner, 2026-11-12, as checkout's), sticky under the
-// site header (83 px from 1024 px).
+// The order summary panel on the site's light grey (as checkout's), sticky under the site header
+// (83 px from 1024 px).
 .summary {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 28px;
-  background: var(--public-render-wall);
+  background: var(--public-off-white);
 
   @include media-up(lg) {
     position: sticky;

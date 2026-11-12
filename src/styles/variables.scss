@@ -99,8 +99,10 @@
   --public-secondary: #555555;
   --public-muted: #888888;
   --public-render-wall: #f2f2f2; // behind every print render and the home prints section
-  --public-off-white: #f8f8f6; // bands, panels, summary boxes
-  --public-field: #f5f5f3; // field background
+  // One neutral light grey for bands, panels, summary boxes and fields: the live site's
+  // (--color-surface-subtle), not the warm off-white the boards drew (owner, 2026-11-12).
+  --public-off-white: var(--color-gray-10); // bands, panels, summary boxes
+  --public-field: var(--color-gray-10); // field background
 
   // Panels
   --color-surface-elevated: var(--color-gray-15);
