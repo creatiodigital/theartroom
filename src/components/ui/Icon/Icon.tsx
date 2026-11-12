@@ -10,18 +10,14 @@ import {
   ArrowLineRight,
   ArrowLineUp,
   ArrowRight,
-  Armchair,
   Camera,
   CheckCircle,
   Cube,
   Eye,
   EyeSlash,
   FolderSimplePlus,
-  GridFour,
   Headphones,
-  House,
   Image,
-  Lightbulb,
   LinkSimple,
   LockSimple,
   Magnet,
@@ -31,8 +27,6 @@ import {
   Play,
   Plus,
   Printer,
-  Rectangle,
-  Rows,
   Ruler,
   Selection,
   SelectionBackground,
@@ -55,14 +49,12 @@ import DistributeVertical from '@/icons/distribute-vertical.svg'
 import HorizontalCenter from '@/icons/horizontal-center.svg'
 import HorizontalLeft from '@/icons/horizontal-left.svg'
 import HorizontalRight from '@/icons/horizontal-right.svg'
-import Placeholder from '@/icons/placeholder.svg'
 import PositionBottom from '@/icons/position-bottom.svg'
 import PositionCenterH from '@/icons/position-center-h.svg'
 import PositionCenterV from '@/icons/position-center-v.svg'
 import PositionLeft from '@/icons/position-left.svg'
 import PositionRight from '@/icons/position-right.svg'
 import PositionTop from '@/icons/position-top.svg'
-import Preview from '@/icons/preview.svg'
 import Reset from '@/icons/reset.svg'
 import TextCenter from '@/icons/text-center.svg'
 import TextLeft from '@/icons/text-left.svg'
@@ -86,14 +78,12 @@ type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 // each Phosphor icon here ships in every page that has a Button.
 const phosphorIcons: Record<string, PhosphorIcon> = {
   'alert-circle': WarningCircle,
-  armchair: Armchair,
   arrowLeft: ArrowLeft,
   arrowRight: ArrowRight,
   arrowTopFromLine: ArrowLineUp,
   arrowBottomFromLine: ArrowLineDown,
   arrowLeftFromLine: ArrowLineLeft,
   arrowRightFromLine: ArrowLineRight,
-  'brick-wall': Rows,
   box: Cube,
   camera: Camera,
   'check-circle': CheckCircle,
@@ -101,12 +91,9 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
   eye: Eye,
   eyeOff: EyeSlash,
   gallery: FolderSimplePlus,
-  'grid-2x2': GridFour,
   headphones: Headphones,
-  house: House,
   'human-standing': Person,
   image: Image,
-  light: Lightbulb,
   link: LinkSimple,
   lock: LockSimple,
   magnet: Magnet,
@@ -115,8 +102,6 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
   plus: Plus,
   play: Play,
   'bring-to-front': SelectionForeground,
-  // Not Rows: the editor's Floor button (brick-wall) already has it (Q49).
-  'panel-top': Rectangle,
   printer: Printer,
   redo: ArrowClockwise,
   ruler: Ruler,
@@ -145,8 +130,6 @@ const customIcons: Record<string, CustomSvgIcon> = {
   positionCenterV: PositionCenterV,
   positionCenterH: PositionCenterH,
   positionRight: PositionRight,
-  preview: Preview,
-  placeholder: Placeholder,
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
   reset: Reset,

@@ -925,6 +925,10 @@ _Meanwhile:_ all as today. Fix (a), (c) and (d) in a later pass?
 
 **Q137 · Code Claude → Design Claude: panels and parts not drawn.** _Meanwhile:_ Display panels: grey tint, a `Columns` icon (Rows is Floor and Rectangle is Spots), today's hint as the line, and **not folded when off** (folding is approved for benches only); Artwork panel: the shell with an Image tile, the work's title as the h2, the author as the line, image, technique and dimensions in the body, View details in the footer (the serif label look goes); Lighting's Window section: SunHorizon, sub "Daylight through the windows", summary = Daylight %; the not-baked Lighting and Floor branches (no space uses them today): today's labels in sentence case, no summaries, Floor line "The floor's material and how it is laid."; the three dimmers all read "Brightness". OK?
 
+_18-3 (Code Claude → Design Claude):_ the Artwork panel's technique keeps today's compact rich text (the public label's
+Lato, 14 px, paragraph spacing) inside the Geist panel; the dimensions are Geist 13 px secondary. Geist 13 px for the
+technique too?
+
 **Q138 · Code Claude → Design Claude: layout points not drawn.** _Meanwhile:_ the toolbar is ~630 px tall with Bake, so on shorter windows and phones sideways it scrolls inside the viewport (touch scrolls it; a mouse wheel over it still turns the room, Q139 d); on phones the toolbar and pill sit 8 px in and an open panel covers the screen with an 8 px inset; panels run full height (top and bottom 16) even when short (Walls, Windows, View), as the spec says; the Bake box has no "Baking…" state (the bake runs in its own tab), loading is grey, not baked is amber, a failed read is red; Floor and View are static cards as drawn, Lighting's sections stay collapsible and closed by default as today (remembered per section); the drawn 500 weights are 600 (Geist has no 500 here). OK, or a compact toolbar for short windows?
 
 **Q139 · Code Claude → owner: found while reading (kept as today).**
@@ -939,6 +943,14 @@ _Meanwhile:_ all as today. Fix (a), (c) and (d) in a later pass?
 - (h) The Artwork panel and an open tool panel can be open together, one over the other.
 
 _Meanwhile:_ all as today. Fix (a), (b) and (c) in a later pass?
+
+_18-3 (Code Claude → owner), (a) is not small, so it stays as today:_ the editor has no details view to open. The room's
+details (`ArtworkModal`) belong to the visit page: showing them in the editor means rendering that component in
+`EditView` with its request and its buy / inquire side panel. A link to the public artwork page (`/artworks/{slug}`, new
+tab) would be small, but that page is a 404 while the artist is unpublished, which is when shows are being set up.
+Options: (1) drop View details from the editor's panel (the panel already shows the image, title, artist, technique and
+dimensions); (2) the public page in a new tab, only for published artists; (3) the studio's artwork editor
+(`/dashboard/artworks/{id}/edit`); (4) the room's details overlay in the editor. Which one?
 
 **Q140 · Code Claude → owner: the Icon map after this step.** The keys `light`, `panel-top`, `armchair`, `house`, `grid-2x2`, `brick-wall`, `preview`, `placeholder` and `src/icons/preview.svg` / `placeholder.svg` lose their only user (the old toolbar). _Meanwhile:_ removed in 18-3 under the Q55 (b) rule (unused keys and orphan SVGs go). Keep them instead?
 

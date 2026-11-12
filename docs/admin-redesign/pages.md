@@ -26,7 +26,7 @@ Do these in order, one PR each.
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
-| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1, 18-2) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
+| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1, 18-2, 18-3) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
@@ -931,3 +931,42 @@ today's keys) and Florescĕre (Vienna: two grids of 14, picking a lamp, arrows r
 than the faked 500; e2e on port 3001 (`bake-dimmer`, `bake-room-settings`, `bake-publish-gate`,
 `exhibition-window-color`, `bake-save`): 36 passed. One fix after the first look: the lamp tiles don't fade (with Button's 0.15 s background fade the
 picked number turned white on a still-white tile).
+
+### Step 18-3 · 3D editor, Floor, Benches, Display panels, Artwork panel — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan. Files: `editview/{FloorPanel, FurniturePanel, PanelsPanel, ArtworkPanel}` (the first three lose their SCSS), new
+`editorChrome/ChoiceTiles` (+ SCSS), `editorChrome/ToolPanel` (an optional `footer`), `ui/ColorPicker` (an optional
+`aria-label` on the `row` / `inline` variants), `ui/Icon`; deleted: `editview/SettingsPanel/` (no user left),
+`src/icons/{preview,placeholder}.svg`.
+
+1. **Kept**: every selector, `set` / `patch` / `setTiling` / `chooseFloor`, save body, close handler and condition; all 11
+   Floor sliders, the 3 per bench and the 3 per display panel keep today's value, min / max / step, onChange and
+   `disabled` (compared one by one); both Floor selects keep their values (now the admin's native select; the baked one
+   keeps `id="baked-floor-type"`); the panels' 2 s "Saved" reset; the display panels' artwork-count line, word for word.
+   Nothing inside the three.js canvas changed.
+2. **Floor**: static cards as drawn (Wood: Type + Tone with the Natural → Honey track; Boards: Board width, Shift
+   across, Shift along, Rotation; unbaked spaces: Material and Surface). Floor names in sentence case ("White oak").
+   The wood tiles stay a select: no floor has a color or a thumbnail (Q136 fallback).
+3. **Benches** (folding is NEW, approved): one card per bench; off, the card is its name, "Off" and the switch; on, the
+   Model as three tiles (Eaton, Helion fabric, Helion leather; a `radiogroup`, arrows / Home / End stay in it), then
+   Across, Depth, Turn. The switch stays put as the card folds, so keyboard focus stays on it. Two rooms (Vienna): a
+   section per room ("Room 1 · 4 benches", "{n} on" while closed), open by default, remembered under today's keys.
+4. **Display panels**: the same cards, not folded when off (Q137), each with its Color row; rooms as benches.
+5. **Artwork panel** (not drawn, Q137): the tool panels' shell: the work's title as the heading, the artist as its line,
+   the image, technique and dimensions, **View details** in the footer. The technique keeps today's compact rich text
+   (Lato). View details still closes the panel and opens nothing (Q139 a: not small, see questions.md).
+6. **Owner answers**: Floor, Benches and Display panels join the Save area's Unsaved dot, red refused save and "Leave
+   site?" (Q131, Q139 b); accessible names are the visible words, with the bench / panel (and the room, on two-room
+   spaces) where a word repeats: "Bench 1 across", "Room 2 · Panel 1 color" (Q135); the 8 Icon keys the old toolbar used
+   and their 2 SVGs are gone (Q140; grep: no other user).
+
+Verified: typecheck, lint, prettier; the logic diffed against HEAD (above); browser on my own `pnpm dev` (dev DB, every
+non-GET request refused locally) at 1440 px in Florescĕre (Vienna, as the artist: two bench rooms, display panels with
+10 and 3 works, "10 artworks hidden with this panel" when switched off), The Beauty of Permanence (Paris, as an admin)
+and Vivrière (Madrid): a Floor type change keeps placement and tone and moves the Board width range (12–38 → 5–12 cm);
+a bench switched on / off by Space keeps focus on its switch; model tiles by mouse and keys, 0 keys reaching the room;
+the empty display panels state; the Artwork panel opened as a double click does; every panel turns Unsaved on an edit
+and red on a refused save; "Leave site?"; no console errors other than the faked 500s. At 390 px (touch): the panels
+cover the screen, "Helion leather" wraps to two lines. No e2e opens the 3D editor; the specs near the shared changes on
+port 3001 (`admin-print-presentations`, `bake-publish-gate`, `bake-room-settings`, `exhibition-window-color`,
+`studio-shell`): 31 passed, 1 skipped (as in 18-1).

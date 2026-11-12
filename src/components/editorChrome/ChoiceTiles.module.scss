@@ -1,0 +1,42 @@
+@use '@/styles/mixins' as *;
+
+// designs/editor-3d-panels.dc.html, a bench's Model.
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--choice-columns), minmax(0, 1fr));
+  gap: 6px;
+}
+
+// Two classes: Button's bare reset would win over one. Three tiles fit the 384px panel on one
+// line each (a tile holds ~89-93px of text; "Helion leather" is ~83px at 13px 400, a little more
+// at 600); on a narrower phone a name wraps to two lines and the row's tiles grow together.
+.tiles .tile {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  // The thicker edge takes its half pixel from the padding, so the name doesn't shift.
+  &[aria-checked='true'] {
+    padding: 5.5px;
+    border: 1.5px solid var(--color-dark-surface);
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}

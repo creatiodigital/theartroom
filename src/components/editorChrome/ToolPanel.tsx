@@ -31,6 +31,8 @@ type ToolPanelProps = {
   onClose: () => void
   /** Only on panels that have Save today (editor3d.md "Footer"). */
   save?: ToolPanelSave
+  /** The footer of a panel without Save, e.g. the Artwork panel's "View details"; not with `save`. */
+  footer?: ReactNode
   children: ReactNode
 }
 
@@ -51,6 +53,7 @@ export function ToolPanel({
   tint,
   onClose,
   save,
+  footer,
   children,
 }: ToolPanelProps) {
   const titleId = useId()
@@ -121,6 +124,8 @@ export function ToolPanel({
           </Button>
         </div>
       )}
+
+      {!save && footer && <div className={styles.footer}>{footer}</div>}
     </aside>
   )
 }

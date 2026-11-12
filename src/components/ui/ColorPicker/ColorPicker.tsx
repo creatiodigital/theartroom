@@ -10,7 +10,7 @@ type ColorPickerProps = {
   onColorSelect: (color: string) => void
   disabled?: boolean
 } & (
-  | { variant?: 'default'; name?: undefined }
+  | { variant?: 'default'; name?: undefined; 'aria-label'?: undefined }
   | {
       /**
        * The 3D editor's color rows (editor3d.md): the whole row is the input's <label>, so a
@@ -21,6 +21,11 @@ type ColorPickerProps = {
       variant: 'row' | 'inline'
       /** The row's visible name; with the hex, the input's accessible name. */
       name: string
+      /**
+       * Only where the name needs its context to be told apart, and then containing it
+       * (questions.md Q135), e.g. "Room 2 · Panel 1 color".
+       */
+      'aria-label'?: string
     }
 )
 
@@ -30,6 +35,7 @@ const ColorPicker = ({
   disabled,
   variant = 'default',
   name,
+  'aria-label': ariaLabel,
 }: ColorPickerProps) => {
   const [selectedColor, setSelectedColor] = useState(textColor)
 
@@ -54,6 +60,7 @@ const ColorPicker = ({
           value={selectedColor}
           onChange={handleColorChange}
           disabled={disabled}
+          aria-label={ariaLabel}
         />
         <span className={styles.rowText}>
           <span className={styles.rowName}>{name}</span>
@@ -77,6 +84,7 @@ const ColorPicker = ({
             value={selectedColor}
             onChange={handleColorChange}
             disabled={disabled}
+            aria-label={ariaLabel}
           />
           <span className={styles.hex}>{selectedColor}</span>
         </span>

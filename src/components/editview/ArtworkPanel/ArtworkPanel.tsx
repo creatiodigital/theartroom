@@ -1,13 +1,13 @@
 'use client'
 
-import { useRef, useMemo, useEffect } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { X } from '@phosphor-icons/react'
+import { ArrowRight, Image as ImageIcon } from '@phosphor-icons/react'
 
+import { ToolPanel } from '@/components/editorChrome'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
 import { hideArtworkPanel, openArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { PresentationView } from '@/lib/printPresentation/record'
@@ -26,7 +26,6 @@ interface ArtworkPanelProps {
 
 const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
   const dispatch = useDispatch()
-  const panelRef = useRef(null)
   const selectedSceneArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const byId = useSelector((state: RootState) => state.artworks.byId)
 
@@ -55,22 +54,30 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
     dispatch(openArtworkModal())
   }
 
+  // Not drawn (questions.md Q137): the tool panels' shell, the work's title as the heading and the
+  // artist as its line; the image, technique and dimensions in the body; View details below.
   return (
-    <div
-      ref={panelRef}
-      className={styles.panel}
-      data-panel-overlay
-      onPointerDown={(e) => e.stopPropagation()}
+    <ToolPanel
+      title={artworkTitle || name || 'Artwork'}
+      description={selectedArtwork?.author}
+      icon={ImageIcon}
+      tint="walls"
+      onClose={() => dispatch(hideArtworkPanel())}
+      footer={
+        <div className={styles.actions}>
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={styles.viewDetails}
+            onClick={handleViewDetails}
+          >
+            View details
+            <ArrowRight size={16} weight="light" aria-hidden />
+          </Button>
+        </div>
+      }
     >
-      <Button
-        variant="ghost"
-        onClick={() => dispatch(hideArtworkPanel())}
-        className={styles.closeButton}
-        aria-label="Close"
-      >
-        CLOSE <X size={14} weight="light" aria-hidden />
-      </Button>
-      <div className={styles.header}>
+      <div className={styles.content}>
         {thumbnailUrl && (
           <div className={styles.imageWrapper}>
             {/* Cropped to the piece and a thin border of wall, as the artwork page does, so it
@@ -93,45 +100,16 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
             </PrintPresentation>
           </div>
         )}
-        <div className={styles.info}>
-          {selectedArtwork && (
-            <div>
-              {selectedArtwork.author && (
-                <Text font="serif" as="h1" size="2xl" className={styles.author}>
-                  {selectedArtwork.author}
-                </Text>
-              )}
-              {(artworkTitle || name) && (
-                <div className={styles.titleWrapper}>
-                  <Text font="serif" as="span" size="xl" className={styles.title}>
-                    {artworkTitle || name}
-                  </Text>
-                </div>
-              )}
-              {selectedArtwork.technique && (
-                <RichText
-                  content={selectedArtwork.technique}
-                  variant="compact"
-                  className={styles.technique}
-                />
-              )}
-              {artworkDimensions && (
-                <Text font="dashboard" as="p" size="sm" className={styles.dimensions}>
-                  {artworkDimensions}
-                </Text>
-              )}
-            </div>
-          )}
-        </div>
-        <Button
-          variant="primary"
-          size="regularSquared"
-          label="View Details"
-          icon="arrowRight"
-          onClick={handleViewDetails}
-        />
+        {selectedArtwork && (selectedArtwork.technique || artworkDimensions) && (
+          <div className={styles.info}>
+            {selectedArtwork.technique && (
+              <RichText content={selectedArtwork.technique} variant="compact" />
+            )}
+            {artworkDimensions && <p className={styles.dimensions}>{artworkDimensions}</p>}
+          </div>
+        )}
       </div>
-    </div>
+    </ToolPanel>
   )
 }
 

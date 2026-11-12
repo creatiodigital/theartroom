@@ -508,3 +508,9 @@ like the real Pause switch). Logic and dialogs unchanged.
   (today's `section-*` keys, "1" / "0").
 - `editview/LightingPanel/LampPicker` (step 18-2): the lamp grid (`radiogroup` of tiles, arrows stay in it), one grid per
   room on Vienna; the picked lamp is local UI state.
+- `ChoiceTiles` (step 18-3) · `{ label; options: readonly { value; label }[]; value; onChange(value); columns? }`: a short
+  list as tiles (a bench's Model), `radiogroup` with one tab stop; arrows / Home / End move and pick and don't reach the
+  room; `onChange` only for a value other than `value`, as a native select. Long names wrap inside their tile.
+- `ToolPanel` `footer?: ReactNode` (step 18-3): the footer of a panel without Save (the Artwork panel's View details).
+  `ui/ColorPicker` `aria-label?` on the `row` / `inline` variants: a name with context where the visible one repeats
+  ("Room 2 · Panel 1 color").
