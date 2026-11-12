@@ -535,3 +535,6 @@ like the real Pause switch). Logic and dialogs unchanged.
   `ui/ColorPicker`: `variant="field"` (name above a 36px box with the swatch and hex) + `emptyLabel?` (a crossed swatch
   and e.g. "None"). `ui/NumberInput` (wall view only): `'aria-label'?`, `suffix?`, `size?: 'regular' | 'compact'`; the
   unused `icon`, `rotate`, `label`, `variant` props are gone. `ui/Section` is deleted (no user left).
+- Q142 (state, display only): `wallViewSlice` `wallEdits` / `wallEditsSaved` (unsaved = edits > saved), `markWallSaved(sentAt)`,
+  `wallContentLoaded()`; `selectWallUnsaved` (`src/redux/selectors/wallUnsaved.ts`); `countsAsWallEdit` /
+  `isWallContentAction` (`src/redux/wallEdits.ts`, the 13 counted actions and their exclusions).

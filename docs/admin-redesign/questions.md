@@ -991,7 +991,56 @@ _Meanwhile:_ all as today. Fix (a), (b), (c) and (h) in a later pass?
 16, and `src/icons/zoom-reset.svg` has no importer. _Meanwhile:_ kept (outside this step). Remove them under the Q55 (b)
 rule?
 
+**Q148 · Code Claude → owner: what counts as an edit.**
+- Each content action counts once, whatever its value:
+  - re-picking the option that is already chosen;
+  - leaving a text box after editing it without typing;
+  - a drag of a fraction of a pixel;
+  - an undo all the way back to the saved state.
+  - All of these show the dot.
+- This is how the 3D editor's dot works (Q131, "set on edit").
+- A click with no pointer movement only selects and shows nothing.
+- Telling equal values apart would mean comparing old and new values inside the reducers of the artworks and positions slices.
+- _Meanwhile:_ count every one. OK?
+
+**Q149 · Code Claude → owner: how to test the dot in the page.**
+- The store rules are covered in the main suite by a Node spec (open, each kind of edit, save, refused save, Cancel, loading a wall, the mount recompute, the overlay). It needs no browser.
+- The page itself (the dot, the red line beside it, "Leave site?" on reload) needs the 3D editor, which mounts WebGL.
+- Options:
+  - (1) my read-only browser check on the real GPU with every save refused locally, as for steps 18 and 18b;
+  - (2) a spec in the 3D suite. It would be the first there to log in, create and delete a fixture exhibition on dev, and intercept the save. It runs only with `pnpm test:e2e:3d`.
+- _Meanwhile:_ (1). Do you want (2) as well?
+
+**Q150 · Code Claude → Design Claude: one line or two after a refused save.**
+- _Meanwhile:_ as the 3D editor's Save area. While the red "Not saved. Please try again." shows, it replaces the amber "Unsaved changes".
+- The changes stay unsaved underneath: "Leave site?" keeps asking, and the amber line comes back when the red one clears on the next edit.
+- Show both lines at once instead?
+
+**Q151 · Code Claude → owner: known issue, the `?wallId=` link opens the wall before the works load (kept as today).**
+The loader's "ready" (`useLoadExhibitionArtworks`, `isReady`) starts true before anything is fetched, so a typed or
+bookmarked `/exhibitions/{h}/{url}/edit?wallId=…` link opens the wall view before the works arrive (the editor page,
+`exhibitions/edit/index.tsx:177–195`, waits on that flag). Nothing in the app makes these links any more. Found by the
+Q142 browser check: the load's own writes reached the open wall and showed the dot. _Fixed for the dot only (owner,
+option A):_ a finished load clears it (`wallContentLoaded`). The race itself stays (the owner's call); fixing it would
+make "ready" wait for this exhibition's works, so a failed load would leave a linked wall closed.
+
 ## Answered
+
+**Owner answers, 2026-11-12 (Q142 step, relayed to Code Claude):**
+- **Q142:** approved as described: one "changed since last save" flag in the Redux store; plan first, listing every
+  line and action; stop for the owner's OK before building. Conditions: set only by content-changing actions (an
+  explicit list in the plan), never by the wall's mount-time 3D position recompute (opening a wall shows no dot);
+  cleared by an accepted Save / Save & close, by Cancel / discard and by loading a wall; a refused save keeps it, with
+  the red "Not saved"; not persisted, not sent, no change to the save payload. Tests: open → no dot; each kind of edit →
+  dot; save → clears; refused save → stays; reload with the dot → "Leave site?".
+
+**Owner answers, 2026-11-12 (Q148–Q150, the Q142 step, relayed to Code Claude):**
+- **Q151 (found in the browser check):** option A: a finished load of the works clears the dot (a reset action
+  dispatched once by `useLoadExhibitionArtworks`), with a spec test "a link that opens the wall before the works
+  arrive shows no dot". Leave the `?wallId=` race itself as it is; noted as a known issue (Q151).
+- **Q148:** yes, as proposed: any edit counts, selection doesn't.
+- **Q149:** option 1, Code Claude's browser check with saves refused locally. No new 3D-suite spec.
+- **Q150:** the red line only after a refused save, as in the 3D editor.
 
 **Owner answers, 2026-11-12 (Q147, relayed to Code Claude):**
 - **Q147:** yes, remove `plus` and `printer` from the icon map and delete `src/icons/zoom-reset.svg` (grep first), in

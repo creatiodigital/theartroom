@@ -1045,3 +1045,28 @@ alignment pressed states, Background None, the group panel; no console errors ot
 faked refusal. e2e on port 3001 (`font-family-wiring`, `wall-stacking`, `panel-transform`, `wall-orientation`,
 `exhibition-membership-wall`): 40 passed.
 
+### Step 18b follow-up (Q142) · Wall view, "Unsaved changes" — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-wall-unsaved-flag.md` (the action list, the owner's conditions and answers
+Q148–Q150 at its end). Not UI only (owner-approved state work): two display-only counters in `wallViewSlice`.
+
+1. **What sets it**: one count per content edit while a wall is open: add, add from the library, any Look or text
+   edit, delete, move, resize, turn, place, front / back, lock, autofocus group add / remove, undo, redo (13 actions,
+   `src/redux/wallEdits.ts`). Never: opening a wall (its 3D recompute sends only derived 3D keys), selection, zoom,
+   pan, helpers, guides, tabs, the size lock, the View details overlay's copy of its own save, the save's own writes.
+2. **What clears it**: an accepted Save, Save & close or View details save-first (an edit made while the save is out
+   keeps the dot), Cancel, opening a wall, leaving the editor, and a finished load of the exhibition's works
+   (`useLoadExhibitionArtworks` → `wallContentLoaded`; owner's option A, Q151). A refused save keeps it.
+3. **UI**: the amber "Unsaved changes" line under the left panel's buttons, as the 3D editor's; after a refused save
+   the red "Not saved. Please try again." only (Q150); the browser's "Leave site?" while it is on.
+4. **Unchanged**: nothing is stored or sent; no save request or payload changed; the wall, its hooks, the artwork and
+   exhibition slices and the scene are untouched.
+
+Verified: typecheck, lint, prettier; new main-suite spec `e2e/wall-unsaved-flag.spec.ts` (Node, the real reducers, no
+browser): 31 passed, and a deliberately broken rule fails it; browser on my own `pnpm dev` (dev DB; every non-GET answered
+locally, refused or "accepted", nothing reached the server) in Florescĕre's main wall, opened by the `?wallId=` link and
+from the room: no dot on opening or for selection / zoom / rulers / tabs; the dot after a nudge, a Look switch, a size, a
+place, Move to front, an add, undo and lock; a refused save red only, the next edit brings the dot back; an accepted save
+and Cancel clear it; "Leave site?" on reload with the dot, none after a save. e2e on port 3001 (the new spec +
+`font-family-wiring`, `wall-stacking`, `panel-transform`, `wall-orientation`, `exhibition-membership-wall`): 71 passed.
+

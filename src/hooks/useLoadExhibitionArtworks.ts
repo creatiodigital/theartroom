@@ -8,6 +8,7 @@ import {
 } from '@/lib/exhibitionArtworkMapper'
 import { resetArtworks, restoreArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
+import { wallContentLoaded } from '@/redux/slices/wallViewSlice'
 
 /**
  * Preload images and track progress
@@ -123,6 +124,9 @@ export const useLoadExhibitionArtworks = (
             }),
           )
         })
+        // What was just loaded is what is saved: the wall view's "Unsaved changes" starts clean
+        // (questions.md Q142; a `?wallId=` link can open the wall before the works arrive).
+        dispatch(wallContentLoaded())
 
         // Redux now reflects this exhibition. Mark the load complete
         // *before* image preloading so downstream consumers (modal

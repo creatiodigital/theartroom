@@ -52,6 +52,7 @@ import {
   resetPan,
   hideWallView,
   chooseCurrentArtworkId,
+  markWallSaved,
 } from '@/redux/slices/wallViewSlice'
 import { showWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
@@ -59,6 +60,7 @@ import { toRuntimeArtwork } from '@/utils/artworkTransform'
 
 import styles from './LeftPanel.module.scss'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+import { selectWallUnsaved } from '@/redux/selectors/wallUnsaved'
 import { isTypingTarget } from '@/utils/isTypingTarget'
 
 // The list filter, in today's order and words.
@@ -124,6 +126,22 @@ export const LeftPanel = () => {
   useEffect(() => {
     setSaveFailed(false)
   }, [artworksById, positionsById, allAutofocusGroups])
+  // Unsaved changes (questions.md Q142): saved-content edits since the last accepted save.
+  // `wallEdits` is read when a save goes out, so an edit made during the save keeps the dot.
+  const unsaved = useSelector(selectWallUnsaved)
+  const wallEdits = useSelector((state: RootState) => state.wallView.wallEdits)
+  // Q81 / Q142: with unsaved changes, reloading, closing the tab or typing a URL asks the
+  // browser's own "Leave site?". In-app links are not caught.
+  useEffect(() => {
+    if (!unsaved) return
+    const askFirst = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      // Older Chrome asks only when returnValue is set.
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', askFirst)
+    return () => window.removeEventListener('beforeunload', askFirst)
+  }, [unsaved])
   const helpersId = useId()
   const itemsId = useId()
   const groupsId = useId()
@@ -220,6 +238,7 @@ export const LeftPanel = () => {
   }
 
   const handleSaveProgress = async () => {
+    const sentAt = wallEdits
     // Save to database
     const success = await saveToDatabase()
 
@@ -235,6 +254,7 @@ export const LeftPanel = () => {
     dispatch(clearArtworksSnapshot())
     dispatch(clearHistory())
     setSaveFailed(false)
+    dispatch(markWallSaved(sentAt))
   }
 
   const handleCancel = () => {
@@ -374,9 +394,19 @@ export const LeftPanel = () => {
             </Button>
           </Tooltip>
         </div>
-        {saveFailed && (
+        {/* One line, as the 3D editor's Save area (Q150): a refused save, else Unsaved changes. */}
+        {saveFailed ? (
           <p role="alert" className={styles.failed}>
             Not saved. Please try again.
+          </p>
+        ) : (
+          <p role="status" className={styles.status}>
+            {unsaved && (
+              <>
+                <span className={styles.dot} aria-hidden />
+                Unsaved changes
+              </>
+            )}
           </p>
         )}
       </header>

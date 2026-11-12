@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip/Tooltip'
 import { hasAnyPendingUploads } from '@/lib/pendingUploads'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
-import { openArtworkEditModal } from '@/redux/slices/wallViewSlice'
+import { markWallSaved, openArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
 import { ArtisticImagePanel } from './ArtisticImagePanel'
@@ -57,6 +57,8 @@ const RightPanel = () => {
   useEffect(() => {
     setDetailsFailed(false)
   }, [artworksById, exhibitionArtworksById, autofocusGroups, currentArtworkId])
+  // Unsaved changes (questions.md Q142): an accepted save-first saves the whole wall too.
+  const wallEdits = useSelector((state: RootState) => state.wallView.wallEdits)
 
   // Save first, then open the edit modal
   const handleEditArtworkDetails = async () => {
@@ -66,12 +68,14 @@ const RightPanel = () => {
     // This ensures new artworks and pending image uploads are persisted
     // Check hasAnyPendingUploads() at call time since it's not reactive
     if (hasUnsavedChanges || hasAnyPendingUploads()) {
+      const sentAt = wallEdits
       const success = await saveToDatabase()
       if (!success) {
         console.error('Failed to save before editing')
         setDetailsFailed(true)
         return
       }
+      dispatch(markWallSaved(sentAt))
     }
     setDetailsFailed(false)
 

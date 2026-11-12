@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 import { wallViewFactory } from '@/factories/wallViewFactory'
+import { countsAsWallEdit, isWallContentAction } from '@/redux/wallEdits'
 import type {
   TWallView,
   TCoordinates,
@@ -17,11 +18,15 @@ const wallViewSlice = createSlice({
     showWallView: (state: TWallView, action: PayloadAction<string>) => {
       state.isWallView = true
       state.currentWallId = action.payload
+      state.wallEdits = 0
+      state.wallEditsSaved = 0
     },
     hideWallView: (state: TWallView) => {
       state.isWallView = false
       state.currentWallId = null
       state.returnFromWallView = true
+      state.wallEdits = 0
+      state.wallEditsSaved = 0
     },
     resetWallView: () => {
       // Return fresh initial state to prevent stale data between exhibitions
@@ -229,6 +234,26 @@ const wallViewSlice = createSlice({
     setActiveAutofocusGroupId: (state: TWallView, action: PayloadAction<string | null>) => {
       state.activeAutofocusGroupId = action.payload
     },
+    /** An accepted save that was sent at `wallEdits === payload` (questions.md Q142). */
+    markWallSaved: (state: TWallView, action: PayloadAction<number>) => {
+      state.wallEditsSaved = Math.max(state.wallEditsSaved, action.payload)
+    },
+    /**
+     * The exhibition's works were just loaded from the server (useLoadExhibitionArtworks), so the
+     * store holds what is saved: nothing is unsaved. A `?wallId=` link can open the wall before
+     * they arrive, and the load's own writes must not show the dot (questions.md Q142).
+     */
+    wallContentLoaded: (state: TWallView) => {
+      state.wallEdits = 0
+      state.wallEditsSaved = 0
+    },
+  },
+  // "Unsaved changes" (questions.md Q142): one more saved-content edit while the wall is open.
+  // Which actions count, and which writes of those types don't, is `countsAsWallEdit`.
+  extraReducers: (builder) => {
+    builder.addMatcher(isWallContentAction, (state, action) => {
+      if (countsAsWallEdit(action, state)) state.wallEdits += 1
+    })
   },
 })
 
@@ -274,6 +299,8 @@ export const {
   deselectGuide,
   clearReturnFromWallView,
   setActiveAutofocusGroupId,
+  markWallSaved,
+  wallContentLoaded,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer

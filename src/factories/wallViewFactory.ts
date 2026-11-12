@@ -33,4 +33,6 @@ export const wallViewFactory = (): TWallView => ({
   guides: [],
   selectedGuideId: null,
   activeAutofocusGroupId: null,
+  wallEdits: 0,
+  wallEditsSaved: 0,
 })

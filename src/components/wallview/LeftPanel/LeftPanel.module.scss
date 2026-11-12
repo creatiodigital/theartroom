@@ -148,6 +148,26 @@
   color: var(--color-red-50);
 }
 
+// Unsaved changes (questions.md Q142), as the 3D editor's Save area (ToolPanel). Empty while
+// everything is saved: no height, still in the page so the words are announced when they appear.
+.status {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--editor-attention-dot);
+}
+
 // ---- Body ----
 
 .body {
