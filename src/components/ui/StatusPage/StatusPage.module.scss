@@ -1,0 +1,82 @@
+@use '@/styles/mixins' as *;
+
+// other-screens.md "404 and error": the content column (1160 px, as the other redesigned pages),
+// centred between the header and the footer.
+.page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+  max-width: 1160px;
+  min-height: 56vh;
+  margin: 0 auto;
+  padding: var(--space-16) 0;
+
+  @include media-down(md) {
+    min-height: 50vh;
+    padding: var(--space-10) 0;
+  }
+}
+
+// #666, not the drawn #999 (Q-P12).
+.label {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11.5px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  max-width: 760px;
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 52px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 36px;
+  }
+}
+
+// A <p>: size pinned.
+.line {
+  max-width: 760px;
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+
+  @include media-down(md) {
+    font-size: 16px;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 28px;
+  margin-top: 10px;
+
+  @include media-down(sm) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+// Black, 50 px, caps 13 px (error: Try again). Through .actions: outranks Button's own size rules.
+.actions .primary {
+  min-height: 50px;
+  padding: 0 var(--space-8);
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: var(--font-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
