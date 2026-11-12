@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from
 import { useSelector } from 'react-redux'
 import {
   HandTap,
+  Info,
   List,
   MouseSimple,
   SignOut,
@@ -30,6 +31,8 @@ interface RoomMenuProps {
   onHelp?: () => void
   /** Leaves the exhibition at once (no dialog: the menu is already two clicks); in Wall View too (Q30). */
   onLeave: () => void
+  /** Opens "About this exhibition" (room-about.md); listed first. Absent: no item. */
+  onAbout?: () => void
 }
 
 const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
@@ -48,7 +51,7 @@ const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
  * touches and clicks count only on the canvas, and the keys pressed inside the menu stop here (the
  * camera listens on `window`). Escape closes the menu and does not also leave Wall View.
  */
-export const RoomMenu = ({ sound, onHelp, onLeave }: RoomMenuProps) => {
+export const RoomMenu = ({ sound, onHelp, onLeave, onAbout }: RoomMenuProps) => {
   const [open, setOpen] = useState(false)
   // The leave dialog (also raised by walking into the exit corridor) takes over: the menu closes.
   const exitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
@@ -154,6 +157,18 @@ export const RoomMenu = ({ sound, onHelp, onLeave }: RoomMenuProps) => {
           className={styles.panel}
           onKeyDown={onPanelKeyDown}
         >
+          {onAbout && (
+            <Button
+              variant="bare"
+              role="menuitem"
+              tabIndex={-1}
+              className={styles.item}
+              onClick={() => choose(onAbout)}
+            >
+              <Info {...ICON} />
+              About this exhibition
+            </Button>
+          )}
           {sound && (
             // Today's sound button: the same toggle. The menu stays open.
             <Button
@@ -181,7 +196,7 @@ export const RoomMenu = ({ sound, onHelp, onLeave }: RoomMenuProps) => {
               How to move around
             </Button>
           )}
-          {(sound || onHelp) && <div role="separator" className={styles.separator} />}
+          {(sound || onHelp || onAbout) && <div role="separator" className={styles.separator} />}
           <Button
             variant="bare"
             role="menuitem"

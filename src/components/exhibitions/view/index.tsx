@@ -28,6 +28,10 @@ import {
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
+import {
+  RoomAboutPanel,
+  type RoomAbout,
+} from '@/components/exhibitions/view/RoomAbout/RoomAboutPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { Scene } from '@/components/scene'
 import { useWebGLAvailable } from '@/components/scene/webglSupport'
@@ -110,6 +114,8 @@ const LeavePrompt = () => {
 }
 
 interface ExhibitionViewPageProps {
+  /** "About this exhibition" in the room menu (room-about.md): the exhibition page's data. */
+  about?: RoomAbout | null
   artistSlug: string
   exhibitionSlug: string
 }
@@ -571,7 +577,12 @@ const NavigationHelpModal = ({
   )
 }
 
-export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
+export const ExhibitionViewPage = ({
+  artistSlug,
+  exhibitionSlug,
+  about,
+}: ExhibitionViewPageProps) => {
+  const [aboutOpen, setAboutOpen] = useState(false)
   // AR-176: the page behind the room, so a phone held sideways can paint Safari's strip above it
   // black (globals.scss, `room-page`).
   useEffect(() => {
@@ -946,11 +957,21 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   // - How to move around: where the help button was (WebGL not unavailable, not the bake page).
   // - Leave exhibition: always (in Wall View too, Q30); it leaves at once, without the dialog.
   const helpShown = webglAvailable !== false && shownMode !== 'bake'
+  // About this exhibition: the visitor's room only (not bake or review); it closes back to the
+  // menu button.
+  const aboutShown = !!about && mode !== 'bake' && mode !== 'review'
+  const closeAbout = () => {
+    setAboutOpen(false)
+    document
+      .querySelector<HTMLElement>('[data-panel-overlay] > button[aria-label="Menu"]')
+      ?.focus({ preventScroll: true })
+  }
   const roomMenu = (sound: boolean) => (
     <RoomMenu
       sound={sound}
       onHelp={helpShown ? () => helpRef.current?.open() : undefined}
       onLeave={leaveExhibition}
+      onAbout={aboutShown ? () => setAboutOpen(true) : undefined}
     />
   )
 
@@ -1001,6 +1022,13 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
           open: a slide or tap would walk away from the work being read about. This
           catches those touches; the details sit above it. */}
       {isTouch && isArtworkModalOpen && <div className={styles.touchShield} aria-hidden />}
+      {/* About this exhibition: on a phone or tablet the room's gestures pause while it is open. */}
+      {aboutShown && aboutOpen && about && (
+        <>
+          {isTouch && <div className={styles.touchShield} aria-hidden />}
+          <RoomAboutPanel about={about} onClose={closeAbout} />
+        </>
+      )}
       {/* The work as a photo of the print, as the grids show it, or its plain image when it has no
           current render (AR-174). */}
       {isArtworkModalOpen && <ArtworkModal presentation={currentPresentation} />}

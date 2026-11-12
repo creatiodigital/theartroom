@@ -1,0 +1,236 @@
+@use '@/styles/mixins' as *;
+
+// room-about.md "The panel"; designs/room-about-exhibition.dc.html. Desktop: on the left, 20 px from
+// the edges, 400 px wide, the full height less 40, white, 14 px corners. Phones: a bottom sheet, 78 %
+// of the height, 18 px top corners, a grab handle.
+.panel {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  left: calc(20px + env(safe-area-inset-left));
+  z-index: $room-button-z;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  max-width: calc(100vw - 40px);
+  border-radius: 14px;
+  background: var(--color-white);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  outline: none;
+
+  @include media-down(sm) {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    height: 78dvh;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s ease;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+// The grab handle: phones only.
+.handle {
+  display: none;
+
+  @include media-down(sm) {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 4px;
+    touch-action: none;
+    cursor: grab;
+  }
+}
+
+.grip {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-gray-60);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 16px 16px 12px 24px;
+  border-bottom: 1px solid var(--color-gray-30);
+
+  @include media-down(sm) {
+    padding: 6px 12px 12px 20px;
+  }
+}
+
+// #666, not the drawn #999 (Q-P12).
+.eyebrow {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+// 36 px, 10 px corners. Through .panel: outranks Button's own reset whatever the stylesheet order.
+.panel .close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--public-text);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--public-field);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 1px;
+  }
+}
+
+// Scrolls inside the panel.
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 22px 24px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  @include media-down(sm) {
+    padding: 18px 20px 24px;
+  }
+}
+
+.artistCaps {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--public-secondary);
+}
+
+.title {
+  margin: 6px 0 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.12;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 26px;
+  }
+}
+
+.counts {
+  margin-top: 6px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+// The full exhibition text: Lato 15.5 / 1.7, #444. Through .body: outranks RichText's own sizes.
+.body .text {
+  margin-top: 18px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--public-body);
+
+  p,
+  li {
+    margin: 0 0 12px;
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: var(--public-body);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.artist {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-gray-30);
+}
+
+.label {
+  margin: 0 0 12px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  font-weight: var(--font-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.artistRow {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.portrait {
+  display: block;
+  width: 96px;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: var(--public-render-wall);
+}
+
+.artistText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.artistName {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--public-text);
+}
+
+// A <p>: size pinned; two lines at most.
+.bio {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--public-secondary);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-top: 22px;
+}
+
+.note {
+  margin: 10px 0 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
