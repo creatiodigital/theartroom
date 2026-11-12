@@ -20,6 +20,8 @@ type AdminSelectProps = {
   minWidth?: number
   /** toolbar: 36px, 44px under 900px (default); form: 44px at every width (a dialog field). */
   size?: 'toolbar' | 'form'
+  /** The id of a line under the field, e.g. a warning (Payouts' "can't be changed later"). */
+  'aria-describedby'?: string
   /** The <option>s. */
   children: ReactNode
 }
@@ -38,6 +40,7 @@ export function AdminSelect({
   title,
   minWidth,
   size = 'toolbar',
+  'aria-describedby': ariaDescribedBy,
   children,
 }: AdminSelectProps) {
   const autoId = useId()
@@ -51,6 +54,7 @@ export function AdminSelect({
       disabled={disabled}
       title={title}
       aria-label={hideLabel ? label : undefined}
+      aria-describedby={ariaDescribedBy}
       onChange={(e) => onChange(e.target.value)}
     >
       {children}

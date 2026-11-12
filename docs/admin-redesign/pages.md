@@ -25,7 +25,7 @@ Do these in order, one PR each.
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
-| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
+| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
@@ -812,3 +812,25 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; e2e on port 3001
 a refused save turns it red, "Leave site?" with changes, a faked failed load shows only the callout, no horizontal
 scroll, no console errors. After the first look the studio pages' text was pinned to Geist (descriptions, help lines,
 field errors rendered in the public font); measured: no text outside the editors in another font.
+
+### Step 17b · Payouts — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Files: `dashboard/Payouts/index.tsx` + new `Payouts.module.scss`, `ui/AdminSelect` (`aria-describedby`),
+`DashboardLayout.module.scss` (`.sectionHeader`, no users left).
+
+1. **Kept**: `load`, the countries effect, `handleConnect`, `handleOpenStripe`, `performDisconnect`, `statusHeadline`,
+   `statusBody` and `renderPrimaryAction`'s labels, conditions and `disabled` are today's; only button looks changed.
+2. **Layout per artist.md §5**: header **Payouts** + sub; a status panel with a 44 px tile (amber Bank, or green Check under
+   statusHeadline's own "Payouts active" rule), today's headline and body, and the primary action (in the head when
+   connected; under the country select and a divider when not, as drawn). Not connected: the country as the admin's
+   native select with the "can't be changed later" line as an amber warning. The in-progress note is a grey callout.
+   **Disconnect** panel: text left, outline red **Disconnect Stripe…** (today's confirm, admin dialog look; a refused
+   disconnect shows its reason inside the dialog).
+3. **Q124 (a), owner**: "You’re all set." shows with a real apostrophe (the screen showed `&apos;`). The rest of Q124
+   waits, (d) first.
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD (`renderPrimaryAction` renders in both places with the same
+arguments); browser (dev DB, read-only, Connect and Disconnect never pressed) at 1440 and 390 px. The e2e artist's
+saved Stripe account can't be reached with this environment's sandbox key, so their page shows today's "Could not load
+payout status." (not this step); the "Not connected yet" state was seen as an admin in their own studio. The connected
+states (in progress, active, Disconnect) were checked in code only. No e2e opens this page.

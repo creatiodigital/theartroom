@@ -482,3 +482,4 @@ like the real Pause switch). Logic and dialogs unchanged.
   button looks `.primary` / `.outline` / `.dangerOutline` / `.iconDanger`).
 - `ImageUploader` (shared, admin tone): `adminPreview?: 'banner' | 'avatar' | 'signature'` (default `banner`, as before;
   `avatar` = 112 px circle, `signature` = 300×100 on a checkerboard, contained).
+- `AdminSelect`: `aria-describedby?`.

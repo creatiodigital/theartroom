@@ -58,13 +58,6 @@
   margin-bottom: var(--space-6);
 }
 
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-
 /* Section Title - 20px bold like Vercel */
 .sectionTitle {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);

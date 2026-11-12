@@ -1,0 +1,147 @@
+@use '@/styles/mixins' as *;
+
+// Payouts (artist.md §5, designs/artist-payouts.dc.html). The column, the
+// Disconnect panel and the buttons come from ../StudioPanel.
+
+// The status panel: the icon tile, today's headline and text, and today's
+// primary action (beside them once connected, under a divider before).
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+  padding: 18px;
+  box-sizing: border-box;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+
+  @include media-up(tablet) {
+    padding: 28px;
+  }
+}
+
+.statusHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+// Amber Bank while not connected or in progress; green Check once active.
+.tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--color-yellow-30);
+  color: var(--color-yellow-70);
+}
+
+.tileActive {
+  background: var(--color-green-30);
+  color: var(--color-green-70);
+}
+
+.statusText {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+// The font is set here: globals.scss makes headings serif.
+.headline {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  line-height: 1.3;
+  color: var(--color-black);
+}
+
+// <p>s: their size and line height are pinned (globals.scss gives every <p> 16–18px).
+.body {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.headAction {
+  flex: 0 0 auto;
+  align-self: center;
+
+  // Phones: under the text, full width.
+  @include media-down(tablet) {
+    flex-basis: 100%;
+
+    > * {
+      width: 100%;
+    }
+  }
+}
+
+// "refresh" inside the in-progress note: a link-looking button in the sentence.
+.status .refresh {
+  display: inline;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--color-black);
+  }
+}
+
+// Not connected: the country, then the warning that it can't change.
+.country {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 360px;
+}
+
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-yellow-70);
+}
+
+.warningIcon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.connectRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-gray-20);
+}
+
+// The drawn 44px Connect with Stripe, at every width. Three classes: the shared
+// `.page .primary` is 36px from 900px.
+.status .connectRow .connect {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: var(--text-sm);
+}
+
+.connectNote {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
