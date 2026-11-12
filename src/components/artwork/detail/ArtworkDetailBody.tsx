@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import Link from 'next/link'
+import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 
 import c from 'classnames'
 
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
-import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
@@ -100,6 +101,8 @@ interface ArtworkDetailBodyProps {
    * renders it. Shown when the artwork's own field has content, as before.
    */
   technique?: ReactNode
+  /** `room`: inside the 3D room's overlay (no site header above it). */
+  surface?: 'page' | 'room'
 }
 
 /**
@@ -114,6 +117,7 @@ export const ArtworkDetailBody = ({
   neighbours,
   presentation,
   technique,
+  surface = 'page',
 }: ArtworkDetailBodyProps) => {
   const [isInquireOpen, setIsInquireOpen] = useState(false)
 
@@ -125,106 +129,77 @@ export const ArtworkDetailBody = ({
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
   const imgWidth = artwork.originalWidth ?? FALLBACK_WIDTH
   const imgHeight = artwork.originalHeight ?? FALLBACK_HEIGHT
-  // Which dimension drives the image's size on the two-column layout. The
-  // threshold is 0.8 rather than 1.0 on purpose: a square work at the column's
-  // full width is just as tall as a portrait one, so it belongs on the
-  // height-driven rule too. Only clearly wide work stays width-driven.
-  const isTallFormat = imgHeight / imgWidth > 0.8
+  // Portrait work gets a taller image area on desktop and a 4:5 one on phones (artwork.md
+  // "Portrait works"); landscape and square stay as drawn.
+  const isPortrait = imgHeight / imgWidth > 1.05
 
   // Canonical artwork URL — identical to the standalone page's URL, built from the slug
   // so it is correct even when opened as a modal over the exhibition route.
   const shareUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/artworks/${artwork.slug}` : ''
 
+  const inquireButton = (
+    <Button
+      variant="secondary"
+      label="Inquire"
+      onClick={() => setIsInquireOpen(true)}
+      className={styles.inquire}
+    />
+  )
+
+  // docs/public-redesign/artwork.md, designs/artwork-*.dc.html: the work in the grey box on the
+  // left, the info column (320 px, sticky) on the right. The info column comes first in the DOM:
+  // the <h1> leads for a screen reader; the grid places the picture first on the screen.
   return (
     <>
-      <div className={styles.metadata}>
-        {/* The work leads, and it is the <h1>: this page is about the artwork,
-            not about the artist, who has a page of their own. */}
-        {displayTitle && (
-          <h1 className={styles.title}>
-            <Text as="span" size="3xl" font="serif" className={styles.titleText}>
-              {displayTitle}
-            </Text>
-          </h1>
-        )}
-        {displayAuthor && (
-          <Text as="p" size="xl" font="serif" className={styles.artistName}>
-            {displayAuthor}
-          </Text>
-        )}
-        {artwork.technique && technique}
-        {artwork.dimensions && (
-          <Text as="p" size="sm" className={styles.dimensions}>
-            {artwork.dimensions}
-          </Text>
-        )}
-        {commerce && !purchasesPaused && (
-          <ArtworkAvailabilityCard
-            editionType={commerce.editionType}
-            minPriceCents={commerce.minPriceCents}
-            editionLines={commerce.editionLines}
-            artworkSlug={artwork.slug}
-          />
-        )}
-        {/* Below the purchase block: once a work is buyable, enquiring is the
-            secondary path. On a piece that is NOT for sale there is no card
-            above it and this is the only route forward. */}
-        <Button
-          variant="secondary"
-          label="Inquire"
-          icon="arrowRight"
-          size="bigSquared"
-          onClick={() => setIsInquireOpen(true)}
-          className={`${styles.inquireButton} ${styles.inquireButtonFull}`}
-        />
-        <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
-      </div>
+      <div className={c(styles.layout, surface === 'room' && styles.layoutRoom)}>
+        <aside className={styles.info}>
+          <div className={styles.identity}>
+            {displayAuthor &&
+              (artist.handler ? (
+                <Link href={`/artists/${artist.handler}`} className={styles.artist}>
+                  {displayAuthor}
+                </Link>
+              ) : (
+                <span className={styles.artist}>{displayAuthor}</span>
+              ))}
+            {/* The work leads, and it is the <h1>: this page is about the artwork. */}
+            {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
+            {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
+            {artwork.dimensions && <span className={styles.fact}>{artwork.dimensions}</span>}
+            {artwork.technique && technique}
+          </div>
 
-      <div className={styles.imageContainer}>
-        {/* Arrows are laid out BESIDE the picture, not pinned to the column's
-            edges: a portrait work leaves most of the column empty, and an arrow
-            at the far edge floated in the middle of nowhere. As flex siblings
-            of the frame they sit against the picture whatever its shape.
+          <div className={styles.purchase}>
+            {commerce && !purchasesPaused ? (
+              <ArtworkAvailabilityCard
+                editionType={commerce.editionType}
+                minPriceCents={commerce.minPriceCents}
+                editionLines={commerce.editionLines}
+                artworkSlug={artwork.slug}
+                inquire={inquireButton}
+              />
+            ) : (
+              // Not for sale (or purchases paused): enquiring is the only route forward.
+              inquireButton
+            )}
+            <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
+          </div>
+        </aside>
 
-            When a side has no neighbour it keeps its width as an empty slot, so
-            the work stays on the same axis from the first piece in a show to
-            the last instead of jumping sideways at each end.
-
-            The slots are reserved even with NO set to walk — a work reached by
-            a direct link or from search. Otherwise the same picture renders
-            112px wider there than it does when opened from a show or from
-            /prints, and the two views of one artwork disagree about its size.
-            The gutters cost nothing but air; a work changing size depending on
-            how you arrived at it is the more expensive answer. */}
-        {SHOW_NEIGHBOUR_ARROWS &&
-          (neighbours?.prev ? (
-            <Button
-              variant="bare"
-              icon="arrowLeft"
-              href={neighbours.prev.href}
-              className={styles.navArrow}
-              title={neighbours.prev.title}
-              aria-label={`Previous work: ${neighbours.prev.title}`}
-            />
-          ) : (
-            <span className={styles.navArrowSlot} aria-hidden="true" />
-          ))}
-
-        <div className={styles.imageFrame}>
+        <div className={c(styles.imageArea, isPortrait && styles.imageAreaPortrait)}>
           {artwork.imageUrl && (
             // Raw <img> (not next/image): reuses the image the 3D scene already cached, and
             // sidesteps the known next/image + R2 prod issue. crossOrigin matches THREE's
             // texture request so the same browser-cache entry is reused.
             // As a photo of the print, cropped to the piece and a thin border of wall so it can be
-            // as large as the page allows; the image sits in its window, filling it (the window
-            // has the image's own shape).
+            // as large as the grey box allows; the image sits in its window, filling it.
             <PrintPresentation
               view={presentation}
               size="large"
               crop
               className={styles.presentation}
-              renderClassName={styles.presentationRender}
+              renderClassName={styles.fit}
             >
               {(placement) => (
                 <img
@@ -232,11 +207,7 @@ export const ArtworkDetailBody = ({
                   alt={displayTitle || 'Artwork'}
                   width={imgWidth}
                   height={imgHeight}
-                  className={
-                    placement === 'window'
-                      ? undefined
-                      : c(styles.image, isTallFormat && styles.imagePortrait)
-                  }
+                  className={placement === 'window' ? undefined : styles.fit}
                   crossOrigin="anonymous"
                   decoding="async"
                   onError={() =>
@@ -249,21 +220,32 @@ export const ArtworkDetailBody = ({
               )}
             </PrintPresentation>
           )}
-        </div>
 
-        {SHOW_NEIGHBOUR_ARROWS &&
-          (neighbours?.next ? (
+          {/* Previous / next in the set the visitor came from: round buttons on the image's
+              edges, plain links to the neighbouring works (artwork.md "Below the work"). */}
+          {SHOW_NEIGHBOUR_ARROWS && neighbours?.prev && (
             <Button
               variant="bare"
-              icon="arrowRight"
+              href={neighbours.prev.href}
+              className={c(styles.arrow, styles.arrowPrev)}
+              title={neighbours.prev.title}
+              aria-label={`Previous work: ${neighbours.prev.title}`}
+            >
+              <CaretLeft size={18} weight="light" aria-hidden />
+            </Button>
+          )}
+          {SHOW_NEIGHBOUR_ARROWS && neighbours?.next && (
+            <Button
+              variant="bare"
               href={neighbours.next.href}
-              className={styles.navArrow}
+              className={c(styles.arrow, styles.arrowNext)}
               title={neighbours.next.title}
               aria-label={`Next work: ${neighbours.next.title}`}
-            />
-          ) : (
-            <span className={styles.navArrowSlot} aria-hidden="true" />
-          ))}
+            >
+              <CaretRight size={18} weight="light" aria-hidden />
+            </Button>
+          )}
+        </div>
       </div>
 
       <InquireSidebar

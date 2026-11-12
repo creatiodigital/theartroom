@@ -15,33 +15,39 @@
 // "CLOSE ×" (AR-174), lettered as the double-tap panel's. A bare Button, so no padding of its own:
 // its right edge is the content's (the image's), 24px in on a phone, 40px from lg up. Scoped to the
 // overlay so it outranks the bare reset (same weight otherwise; load order would decide).
+// The room menu button's look and corner (RoomControls.module.scss): 44 px, 10 px corners.
 .overlay .close {
   position: fixed;
-  top: calc(var(--space-6) + env(safe-area-inset-top));
-  right: calc(var(--space-6) + env(safe-area-inset-right));
-  // Below the InquireSidebar (z-index 1000) so it doesn't show a second X over the
-  // sidebar's own CLOSE; still paints above the (non-positioned) artwork body.
+  top: calc(var(--space-5) + env(safe-area-inset-top));
+  right: calc(var(--space-5) + env(safe-area-inset-right));
   z-index: 999;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: $room-control-bg;
+  box-shadow: $room-control-shadow;
+  color: var(--color-dark-surface);
   cursor: pointer;
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  letter-spacing: var(--space-1);
-  text-transform: uppercase;
-  color: var(--color-text-primary);
 
-  @include breakpoint(lg) {
-    top: calc(var(--space-8) + env(safe-area-inset-top));
-    right: calc(var(--space-10) + env(safe-area-inset-right));
+  @media #{$touch-room} {
+    top: calc(var(--space-2) + env(safe-area-inset-top));
+    right: calc(var(--space-2) + env(safe-area-inset-right));
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      $room-control-shadow,
+      0 0 0 2px var(--color-white),
+      0 0 0 4px var(--color-dark-surface);
   }
 }
 
-// Holds the same three sections the artwork page does, at the same width, so
-// the story and the imagery below the grid are inset identically.
 .content {
-  max-width: var(--content-max-width);
+  max-width: 1440px;
   margin: 0 auto;
   width: 100%;
   // Top gap ≈ site header height (space-7 padding + ~32px logo), so the artwork
@@ -58,20 +64,5 @@
 }
 
 .body {
-  display: grid;
-  // Matches the standalone artwork page exactly, down to which side the work is
-  // on: image left, sidebar right. The sidebar holds the same availability
-  // card, whose rows put a price and an edition name on one line, and below
-  // 344px those rows wrap — the old 160px floor was set when this column
-  // carried nothing but a few lines of metadata.
-  grid-template-columns: 1fr minmax(344px, 0.3fr);
-  // Zero, matching the page: the separation is the image's padding-right alone.
-  gap: 0;
-
-  // Stacks at the same breakpoint as the page, and in the same order: the work
-  // first, the facts about it below.
-  @include media-down(lg) {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-  }
+  min-width: 0;
 }

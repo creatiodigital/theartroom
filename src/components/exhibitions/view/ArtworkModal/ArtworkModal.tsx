@@ -98,14 +98,15 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
       // inside it scroll independently instead of the scene swallowing the scroll.
       data-panel-overlay
     >
-      {/* "CLOSE ×", as the panel it opens from has it (AR-174), its right edge on the content's. */}
+      {/* other-screens.md "Artwork details in the 3D room": a close × in the room menu button's
+          place and look (44 px, 10 px corners). */}
       <Button
         variant="bare"
         className={styles.close}
         onClick={() => dispatch(closeArtworkModal())}
         aria-label="Close artwork"
       >
-        CLOSE <X size={14} weight="light" aria-hidden />
+        <X size={20} weight="light" aria-hidden />
       </Button>
       {/* Mirrors the standalone artwork page section for section: the
           two-column zone, then the story (its own full-width section), then
@@ -117,6 +118,7 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
             artist={artist}
             commerce={fetched?.commerce}
             presentation={presentation}
+            surface="room"
             technique={
               artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null
             }
