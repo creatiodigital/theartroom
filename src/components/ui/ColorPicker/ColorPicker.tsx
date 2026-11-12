@@ -10,15 +10,16 @@ type ColorPickerProps = {
   onColorSelect: (color: string) => void
   disabled?: boolean
 } & (
-  | { variant?: 'default'; name?: undefined; 'aria-label'?: undefined }
+  | { variant?: 'default'; name?: undefined; 'aria-label'?: undefined; emptyLabel?: undefined }
   | {
       /**
        * The 3D editor's color rows (editor3d.md): the whole row is the input's <label>, so a
        * click anywhere on it opens the same native picker. `row`: a 40px swatch, the name over
        * the hex, "Change" on the right (Walls, Windows). `inline`: the name on the left, a 24px
-       * swatch and the hex on the right (inside a card, e.g. Lamp color).
+       * swatch and the hex on the right (inside a card, e.g. Lamp color). `field`: the wall
+       * view's (wallview.md): the name above a 36px box with an 18px swatch and the hex.
        */
-      variant: 'row' | 'inline'
+      variant: 'row' | 'inline' | 'field'
       /** The row's visible name; with the hex, the input's accessible name. */
       name: string
       /**
@@ -26,6 +27,11 @@ type ColorPickerProps = {
        * (questions.md Q135), e.g. "Room 2 · Panel 1 color".
        */
       'aria-label'?: string
+      /**
+       * `field` only: there is no color (e.g. a text box's background is None). The swatch is
+       * drawn crossed and this word replaces the hex; the picker still opens and sets a color.
+       */
+      emptyLabel?: string
     }
 )
 
@@ -36,6 +42,7 @@ const ColorPicker = ({
   variant = 'default',
   name,
   'aria-label': ariaLabel,
+  emptyLabel,
 }: ColorPickerProps) => {
   const [selectedColor, setSelectedColor] = useState(textColor)
 
@@ -87,6 +94,30 @@ const ColorPicker = ({
             aria-label={ariaLabel}
           />
           <span className={styles.hex}>{selectedColor}</span>
+        </span>
+      </label>
+    )
+  }
+
+  if (variant === 'field') {
+    return (
+      <label className={styles.field} style={disabledStyle}>
+        <span className={styles.fieldName}>{name}</span>
+        <span className={styles.fieldBox}>
+          <span className={styles.fieldSwatchWrap}>
+            <input
+              type="color"
+              className={styles.fieldSwatch}
+              value={selectedColor}
+              onChange={handleColorChange}
+              disabled={disabled}
+              aria-label={ariaLabel}
+            />
+            {emptyLabel && <span aria-hidden className={styles.fieldEmptySwatch} />}
+          </span>
+          <span className={emptyLabel ? styles.fieldEmpty : styles.fieldHex}>
+            {emptyLabel ?? selectedColor}
+          </span>
         </span>
       </label>
     )

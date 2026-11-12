@@ -5,9 +5,8 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useGLTF } from '@react-three/drei'
 import { Mesh } from 'three'
 
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
+import { SelectField } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState, AppDispatch } from '@/redux/store'
@@ -81,28 +80,22 @@ const GroupPresetApply = ({ artworkIds, uniformType }: GroupPresetApplyProps) =>
   const presetOptions = presets.map((p) => ({ label: p.name, value: p.id }))
 
   return (
+    // The caption ("Preset for all") is the parent group's.
     <div className={styles.presetSection}>
-      <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-        Apply Preset to All
-      </Text>
-      <div className={styles.row}>
-        <div
-          className={styles.item}
-          style={presets.length === 0 ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
-        >
-          <Select<string>
-            options={
-              presets.length > 0
-                ? [{ label: '– Select –', value: '' }, ...presetOptions]
-                : [{ label: 'No presets yet', value: '' }]
-            }
-            value=""
-            onChange={(val) => {
-              if (val && presets.length > 0) handleApplyToAll(val)
-            }}
-          />
-        </div>
-      </div>
+      <SelectField<string>
+        label="Preset for all"
+        hideLabel
+        options={
+          presets.length > 0
+            ? [{ label: 'Apply a preset to all…', value: '' }, ...presetOptions]
+            : [{ label: 'No presets yet', value: '' }]
+        }
+        value=""
+        onChange={(val) => {
+          if (val && presets.length > 0) handleApplyToAll(val)
+        }}
+        disabled={presets.length === 0}
+      />
     </div>
   )
 }

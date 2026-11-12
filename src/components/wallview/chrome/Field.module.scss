@@ -1,0 +1,14 @@
+// A caption over a field (designs/wall-view-panels.dc.html `.lbl`).
+.field {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}

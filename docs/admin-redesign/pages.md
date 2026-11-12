@@ -27,7 +27,7 @@ Do these in order, one PR each.
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1, 18-2, 18-3) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
-| 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Built (18b-1) | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
+| 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Built (18b-1, 18b-2) | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
 | 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Approved by owner | After the admin redesign. Small, behaviour change. |
@@ -1004,3 +1004,44 @@ refused Save red and cleared by the next edit (an arrow nudge), a refused Save &
 a shape added by click, From library opening the library, focus rings, the wall area 825 px with no sideways scroll;
 no console errors other than the save's own logs of the faked refusal. e2e on port 3001 (`font-family-wiring`,
 `wall-stacking`, `panel-transform`, `wall-orientation`): 37 passed.
+
+### Step 18b-2 · Wall view, right panels — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan. Files: `wallview/RightPanel` (the panel, `ArtworkPanel`, the five type panels, `PresentationSection`,
+`PresetSection`, `GroupPanel`, `GroupPresetApply`; new `alignments.ts`), new `wallview/chrome/` pieces (`TabStrip`,
+`PanelGroup`, `DistanceBox`, `SelectField`, `NumberField`), opt-in additions to `ui/Select` (`tone="editor"`, names) and
+`ui/ColorPicker` (`variant="field"`, `emptyLabel`), `ui/NumberInput` restyled (the wall view is its only user); deleted:
+`ui/Section` (no user left), 39 Icon keys and 24 SVGs nothing used any more (Q140 rule, grep: no user).
+
+1. **The wall is untouched** (no wall file, hook, slice, scene file, media library, artwork editor or preset dialog
+   changed). The panel keeps `data-no-deselect` and its click / mouse-down stops.
+2. **Kept**: every selector, hook call, handler body, guard and condition (each HEAD logic line is still there, in
+   order); every control's value, min / max / step, `disabled` and handler (366 expressions compared; the only
+   differences are the removed sliders, the align buttons now built from tables with the same values, option labels in
+   sentence case with identical values, and the View details label); the save, preset and group requests.
+3. **Header and tabs** (NEW Layout / Look tabs, approved): the item's thumbnail, name and "{Type} · H × W cm", then Lock
+   (a pressed button), Move to front / back and View details; the tab stays as you move between items; arrow keys on the
+   tabs don't move the work. Locked: both tabs dim and block the mouse as before, front / back disabled.
+4. **Layout**: Size (Width / Height fields with the proportion chain, Use image proportions, Fit box to text for text),
+   **Place on the wall** (six buttons), **Distance to the wall edges** (the four fields around the item; note "to the
+   center", Q144), Rotation for shapes. The width / height **sliders are removed** (owner-approved); the fields set the
+   size as before (a value under 10 is still ignored), and **"Largest print on sale: H × W cm"** keeps the print
+   marker's fact (Q143, the site's print-size format).
+5. **Look** per type: How it hangs (Frame, Passepartout, Paper border, Support as switch cards with their options),
+   In the exhibition (image), Video properties, Playback / Appearance (sound), Type / Alignment / Colors / Inner spacing
+   / Extras (text), Shape, then Preset (Save as new preset, Update, Delete; the select is disabled with no presets).
+6. **Two or more selected**: "{n} works selected" (or elements), their names, Lock all, Line them up, Even gaps, Place
+   the group on the wall with its distances, Preset for all.
+7. **Owner answers**: View details' refused save-first shows the red "Not saved. Please try again." in the header
+   until the next edit or an accepted save (Q139 b); accessible names are the visible words ("Width", "Opacity",
+   "Frame size" where a word repeats, Q135).
+
+Verified: typecheck, lint, prettier; the logic compared against HEAD (above, by script and by reading the tables);
+browser on my own `pnpm dev` (dev DB, every non-GET request refused locally) at 1440 in Florescĕre (image, text, shape,
+plus a video and a sound added from the bar, never saved) and The Beauty of Permanence (an image with a print size):
+size typing ("60,5", under 10 ignored, the chain keeping the ratio), Lock, a refused View details turning red without
+opening the overlay, the tabs by arrow keys (0 keys reaching the wall), the tab kept across items, Frame's options, text
+alignment pressed states, Background None, the group panel; no console errors other than the save's own logs of the
+faked refusal. e2e on port 3001 (`font-family-wiring`, `wall-stacking`, `panel-transform`, `wall-orientation`,
+`exhibition-membership-wall`): 40 passed.
+

@@ -68,7 +68,8 @@
 
 // The native input drawn as the swatch (its own picker opens from it and from the label).
 .rowSwatch,
-.inlineSwatch {
+.inlineSwatch,
+.fieldSwatch {
   flex: 0 0 auto;
   padding: 0;
   border: none;
@@ -153,4 +154,91 @@
   width: 24px;
   height: 24px;
   border-radius: 6px;
+}
+
+// variant="field": the wall view's color fields (wallview.md, designs/wall-view-panels.dc.html
+// "Colours"). The <label> holds the name and the box, so a click on either opens the picker.
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  // globals.scss removes every outline: the box carries the keyboard ring for its input.
+  &:has(input:focus-visible) .fieldBox {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+}
+
+.fieldName {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.fieldBox {
+  min-height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 10px;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+
+  &:hover {
+    border-color: var(--color-text-secondary);
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}
+
+.fieldSwatchWrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.fieldSwatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+}
+
+// None: white with a red slash, over the input (which still takes the click).
+.fieldEmptySwatch {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    135deg,
+    var(--color-white) 45%,
+    var(--color-red-50) 45% 55%,
+    var(--color-white) 55%
+  );
+  box-shadow: var(--editor-swatch-edge);
+  pointer-events: none;
+}
+
+.fieldHex {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-black);
+  text-overflow: ellipsis;
+}
+
+.fieldEmpty {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
 }

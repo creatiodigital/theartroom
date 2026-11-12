@@ -3,3 +3,8 @@
 export { SegmentStrip, type Segment } from './SegmentStrip'
 export { HelperSwitch } from './HelperSwitch'
 export { ItemThumb } from './ItemThumb'
+export { TabStrip } from './TabStrip'
+export { PanelGroup } from './PanelGroup'
+export { DistanceBox } from './DistanceBox'
+export { SelectField } from './SelectField'
+export { NumberField } from './NumberField'

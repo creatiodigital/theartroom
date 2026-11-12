@@ -1,0 +1,64 @@
+@use '@/styles/mixins' as *;
+
+// designs/wall-view-panels.dc.html `.box`.
+.box {
+  position: relative;
+  height: 150px;
+  box-sizing: border-box;
+  background: var(--color-gray-10);
+  border: 1px dashed var(--color-gray-55);
+  border-radius: 10px;
+
+  // 44px fields: room for them and the item between.
+  @media #{$touch-room} {
+    height: 184px;
+  }
+}
+
+.item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 84px;
+  height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  background: var(--color-white);
+  border: 1.5px solid var(--editor-row-selected-edge);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--editor-row-selected-edge);
+}
+
+.slot {
+  position: absolute;
+  width: 64px;
+  display: flex;
+}
+
+.top {
+  top: var(--space-2);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bottom {
+  bottom: var(--space-2);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.left {
+  top: 50%;
+  left: var(--space-2);
+  transform: translateY(-50%);
+}
+
+.right {
+  top: 50%;
+  right: var(--space-2);
+  transform: translateY(-50%);
+}

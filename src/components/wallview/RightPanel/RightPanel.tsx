@@ -1,10 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Button } from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip/Tooltip'
 import { hasAnyPendingUploads } from '@/lib/pendingUploads'
+import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
 import { openArtworkEditModal } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
@@ -12,7 +14,7 @@ import { ArtisticImagePanel } from './ArtisticImagePanel'
 import { ArtisticSoundPanel } from './ArtisticSoundPanel'
 import { ArtisticTextPanel } from './ArtisticTextPanel'
 import ArtisticVideoPanel from './ArtisticVideoPanel/ArtisticVideoPanel'
-import { ArtworkPanel } from './ArtworkPanel'
+import { ArtworkPanel, type ItemTab } from './ArtworkPanel'
 import { GroupPanel } from './GroupPanel'
 import { ShapePanel } from './ShapePanel/ShapePanel'
 import { useArtworkDetails } from './hooks/useArtworkDetails'
@@ -45,6 +47,17 @@ const RightPanel = () => {
 
   const isGroupCreated = artworkGroupIds.length > 1
 
+  // Display only (wallview.md §3): the tab, kept while the selection changes; and a refused
+  // save-first of View details (questions.md Q139 b), shown until the next edit (anything a save
+  // sends changes), another selection or an accepted save.
+  const [tab, setTab] = useState<ItemTab>('layout')
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  const autofocusGroups = useSelector(selectAutofocusGroups)
+  const [detailsFailed, setDetailsFailed] = useState(false)
+  useEffect(() => {
+    setDetailsFailed(false)
+  }, [artworksById, exhibitionArtworksById, autofocusGroups, currentArtworkId])
+
   // Save first, then open the edit modal
   const handleEditArtworkDetails = async () => {
     if (!currentArtworkId) return
@@ -56,9 +69,11 @@ const RightPanel = () => {
       const success = await saveToDatabase()
       if (!success) {
         console.error('Failed to save before editing')
+        setDetailsFailed(true)
         return
       }
     }
+    setDetailsFailed(false)
 
     // Open the modal overlay
     dispatch(openArtworkEditModal(currentArtworkId))
@@ -66,51 +81,59 @@ const RightPanel = () => {
 
   // Determine button label
   const getButtonLabel = () => {
-    if (saving) return 'Saving...'
-    if (hasUnsavedChanges) return 'View Details'
-    return 'View Details'
+    if (saving) return 'Saving…'
+    if (hasUnsavedChanges) return 'View details'
+    return 'View details'
   }
 
   return (
-    <div
+    <aside
+      aria-label="Selection"
       className={styles.panel}
       data-no-deselect="true"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className={styles.properties}>
-        {isGroupCreated && <GroupPanel />}
-        {!isGroupCreated && isWizardOpen && currentArtworkId && (
-          <>
-            <ArtworkPanel />
-            {artworkType === 'image' && <ArtisticImagePanel disabled={isLocked} />}
-            {artworkType === 'text' && <ArtisticTextPanel disabled={isLocked} />}
-            {artworkType === 'sound' && <ArtisticSoundPanel disabled={isLocked} />}
-            {artworkType === 'video' && <ArtisticVideoPanel disabled={isLocked} />}
-            {artworkType === 'shape' && <ShapePanel disabled={isLocked} />}
-
-            {artworkType !== 'shape' && (
-              <div className={styles.editButtonWrapper}>
-                <Tooltip
-                  label="Clicking will save any pending changes on the current selected artwork"
-                  placement="top"
-                  fullWidth
+      {isGroupCreated && <GroupPanel />}
+      {!isGroupCreated && isWizardOpen && currentArtworkId && (
+        <ArtworkPanel
+          tab={tab}
+          onTabChange={setTab}
+          viewDetails={
+            artworkType !== 'shape' && (
+              <Tooltip
+                label="Clicking will save any pending changes on the current selected artwork"
+                placement="top"
+              >
+                <Button
+                  variant="bare"
+                  font="dashboard"
+                  className={styles.detailsButton}
+                  onClick={handleEditArtworkDetails}
+                  disabled={saving}
                 >
-                  <Button
-                    font="dashboard"
-                    size="regular"
-                    variant="primary"
-                    label={getButtonLabel()}
-                    onClick={handleEditArtworkDetails}
-                    disabled={saving}
-                  />
-                </Tooltip>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+                  {getButtonLabel()}
+                </Button>
+              </Tooltip>
+            )
+          }
+          notice={
+            detailsFailed && (
+              <p role="alert" className={styles.failed}>
+                Not saved. Please try again.
+              </p>
+            )
+          }
+          layoutExtra={artworkType === 'text' && <ArtisticTextPanel part="fit" />}
+        >
+          {artworkType === 'image' && <ArtisticImagePanel disabled={isLocked} />}
+          {artworkType === 'text' && <ArtisticTextPanel disabled={isLocked} />}
+          {artworkType === 'sound' && <ArtisticSoundPanel disabled={isLocked} />}
+          {artworkType === 'video' && <ArtisticVideoPanel disabled={isLocked} />}
+          {artworkType === 'shape' && <ShapePanel disabled={isLocked} />}
+        </ArtworkPanel>
+      )}
+    </aside>
   )
 }
 

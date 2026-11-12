@@ -20,11 +20,16 @@ const TYPE_ICONS: Record<string, Icon> = {
   sound: SpeakerHigh,
 }
 
+const ICON_SIZES = { row: 14, group: 12, header: 18, stack: 16 } as const
+
 type ItemThumbProps = {
   artworkType?: string
   imageUrl?: string | null
-  /** row: "On this wall" (36×27); group: an autofocus group's stack (24×18). */
-  size: 'row' | 'group'
+  /**
+   * row: "On this wall" (36×27); group: an autofocus group's stack (24×18); header: the right
+   * panel's item (48×36); stack: two or more selected (40×30).
+   */
+  size: 'row' | 'group' | 'header' | 'stack'
 }
 
 /**
@@ -41,7 +46,7 @@ export function ItemThumb({ artworkType, imageUrl, size }: ItemThumbProps) {
 
   return (
     <span aria-hidden className={c(styles.thumb, styles.tile, styles[size])}>
-      <TypeIcon size={size === 'group' ? 12 : 14} weight="light" aria-hidden />
+      <TypeIcon size={ICON_SIZES[size]} weight="light" aria-hidden />
     </span>
   )
 }

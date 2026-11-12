@@ -968,6 +968,11 @@ _18b-1 (Code Claude → Design Claude):_ two more points not drawn. The header t
 long exhibition name the name takes the ellipsis and the width always shows. On touch screens the control strip's 44 px
 targets don't fit one row, so Fit takes a full-width second row. OK?
 
+_18b-2 (Code Claude → Design Claude):_ points not drawn, built as the meanwhile above, plus: the Background **None**
+button sits under its field, which then also reads "None" (the word shows twice); long preset names wrap inside the
+select instead of an ellipsis; "Largest print on sale" uses the site's print-size format ("150.0 × 100.0 cm", as the print
+wizard). OK, or a different None control?
+
 **Q146 · Code Claude → owner: found while reading (kept as today).**
 
 - (a) **Cancel** ("Discard all changes and exit") restores the snapshot taken when the wall was opened. After a Save, or when the wall was opened from a link (`?wallId=`), there is none, so Cancel keeps every later edit in the room (unsaved; lost on reload).
@@ -981,6 +986,10 @@ targets don't fit one row, so Fit takes a full-width second row. OK?
 - (i) The media library's hidden-artwork badge asks for an icon key that doesn't exist (`eye-off`), so it shows no icon.
 
 _Meanwhile:_ all as today. Fix (a), (b), (c) and (h) in a later pass?
+
+**Q147 · Code Claude → owner: three more unused icons.** The Icon keys `plus` and `printer` have had no user since step
+16, and `src/icons/zoom-reset.svg` has no importer. _Meanwhile:_ kept (outside this step). Remove them under the Q55 (b)
+rule?
 
 ## Answered
 

@@ -1,18 +1,16 @@
 'use client'
 
 import { useSelector } from 'react-redux'
+import { EyeSlash } from '@phosphor-icons/react'
 
-import { Checkbox } from '@/components/ui/Checkbox'
-import { Icon } from '@/components/ui/Icon'
-import { Section } from '@/components/ui/Section/Section'
-import { Tooltip } from '@/components/ui/Tooltip'
+import { PanelCard, SwitchRow } from '@/components/editorChrome'
+import { PanelGroup } from '@/components/wallview/chrome'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkImageHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkImageHandlers'
 import PresentationSection from '@/components/wallview/RightPanel/PresentationSection/PresentationSection'
 import PresetSection from '@/components/wallview/RightPanel/PresetSection/PresetSection'
+import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import type { RootState } from '@/redux/store'
-
-import styles from './ArtisticImage.module.scss'
 
 const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
@@ -50,56 +48,6 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
 
   return (
     <>
-      <Section title="Display" disabled={disabled}>
-        <Tooltip
-          label="When enabled, visitors can double-click this artwork in the 3D exhibition to view its details"
-          placement="left"
-        >
-          <Checkbox
-            checked={showArtworkInformation!}
-            onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
-            label="Show information in exhibition"
-            disabled={disabled}
-          />
-        </Tooltip>
-
-        <Tooltip
-          label="When enabled, this artwork won't appear in the exhibition's artwork grid on the public page"
-          placement="left"
-        >
-          <Checkbox
-            checked={hiddenFromExhibition ?? false}
-            onChange={(e) => handleEditArtisticImage('hiddenFromExhibition', e.target.checked)}
-            label="Hide in exhibition page"
-            disabled={disabled}
-          />
-        </Tooltip>
-
-        {/* Hung in the room but deliberately off the exhibition page. A
-            legitimate state, and a rare one — so it should read as a
-            decision, not as something forgotten. */}
-        {!showOnPage && (
-          <span className={styles.offPageMarker}>
-            <Icon name="eyeOff" size={14} />
-            Not shown on the exhibition page
-          </span>
-        )}
-
-        <Tooltip
-          label="When enabled, the drop shadow behind the artwork in the 3D scene will be hidden"
-          placement="left"
-        >
-          <Checkbox
-            checked={hideShadow ?? false}
-            onChange={(e) => handleEditArtisticImage('hideShadow', e.target.checked)}
-            label="Hide shadow"
-            disabled={disabled}
-          />
-        </Tooltip>
-
-        <PresetSection presetType="image" />
-      </Section>
-
       <PresentationSection
         disabled={disabled}
         showSupport={showSupport!}
@@ -125,6 +73,49 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
         onEdit={handleEditArtisticImage}
         showShadowControl={false}
       />
+
+      <PanelGroup title="In the exhibition" disabled={disabled}>
+        <PanelCard level="card">
+          <SwitchRow
+            title="Show information"
+            line="Visitors double-click to see details"
+            checked={showArtworkInformation!}
+            onChange={(e) => handleEditArtisticImage('showArtworkInformation', e.target.checked)}
+            disabled={disabled}
+          />
+        </PanelCard>
+        <PanelCard level="card">
+          <SwitchRow
+            title="Hide on the exhibition page"
+            line="Only in the 3D room, not in the list"
+            checked={hiddenFromExhibition ?? false}
+            onChange={(e) => handleEditArtisticImage('hiddenFromExhibition', e.target.checked)}
+            disabled={disabled}
+          />
+          {/* Hung in the room but deliberately off the exhibition page. A
+              legitimate state, and a rare one — so it should read as a
+              decision, not as something forgotten. */}
+          {!showOnPage && (
+            <p className={styles.offPage}>
+              <EyeSlash size={14} weight="light" aria-hidden />
+              Not shown on the exhibition page
+            </p>
+          )}
+        </PanelCard>
+        <PanelCard level="card">
+          <SwitchRow
+            title="Hide shadow"
+            line="No drop shadow behind it in 3D"
+            checked={hideShadow ?? false}
+            onChange={(e) => handleEditArtisticImage('hideShadow', e.target.checked)}
+            disabled={disabled}
+          />
+        </PanelCard>
+      </PanelGroup>
+
+      <PanelGroup title="Preset" disabled={disabled}>
+        <PresetSection presetType="image" />
+      </PanelGroup>
     </>
   )
 }

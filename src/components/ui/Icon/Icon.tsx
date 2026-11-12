@@ -2,36 +2,21 @@ import type { Icon as PhosphorIcon, IconWeight } from '@phosphor-icons/react'
 // The SSR entry: this module has no 'use client', and Phosphor's default entry creates a React
 // context when it loads, which a server component can't do. Its icons work on the client too.
 import {
-  ArrowClockwise,
-  ArrowCounterClockwise,
   ArrowLeft,
-  ArrowLineDown,
-  ArrowLineLeft,
-  ArrowLineRight,
-  ArrowLineUp,
   ArrowRight,
   Camera,
   CheckCircle,
   Cube,
   Eye,
   EyeSlash,
-  FolderSimplePlus,
   Headphones,
   Image,
   LinkSimple,
-  LockSimple,
-  Magnet,
   Pause,
   PencilSimple,
-  Person,
   Play,
   Plus,
   Printer,
-  Ruler,
-  Selection,
-  SelectionBackground,
-  SelectionForeground,
-  Shapes,
   SpeakerHigh,
   Square,
   TextT,
@@ -44,30 +29,6 @@ import type { FC, SVGProps } from 'react'
 
 // Custom SVG icons, kept as they are (not in Phosphor, or kept by the redesign's step 19)
 import ChevronDown from '@/icons/chevron-down.svg'
-import DistributeHorizontal from '@/icons/distribute-horizontal.svg'
-import DistributeVertical from '@/icons/distribute-vertical.svg'
-import HorizontalCenter from '@/icons/horizontal-center.svg'
-import HorizontalLeft from '@/icons/horizontal-left.svg'
-import HorizontalRight from '@/icons/horizontal-right.svg'
-import PositionBottom from '@/icons/position-bottom.svg'
-import PositionCenterH from '@/icons/position-center-h.svg'
-import PositionCenterV from '@/icons/position-center-v.svg'
-import PositionLeft from '@/icons/position-left.svg'
-import PositionRight from '@/icons/position-right.svg'
-import PositionTop from '@/icons/position-top.svg'
-import Reset from '@/icons/reset.svg'
-import TextCenter from '@/icons/text-center.svg'
-import TextLeft from '@/icons/text-left.svg'
-import TextJustify from '@/icons/text-justify.svg'
-import TextRight from '@/icons/text-right.svg'
-import TextVerticalBottom from '@/icons/text-vertical-bottom.svg'
-import TextVerticalCenter from '@/icons/text-vertical-center.svg'
-import TextVerticalTop from '@/icons/text-vertical-top.svg'
-import VerticalBottom from '@/icons/vertical-bottom.svg'
-import VerticalCenter from '@/icons/vertical-center.svg'
-import VerticalTop from '@/icons/vertical-top.svg'
-import ZoomIn from '@/icons/zoom-in.svg'
-import ZoomOut from '@/icons/zoom-out.svg'
 
 // Type for custom SVG icons
 type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
@@ -80,38 +41,23 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
   'alert-circle': WarningCircle,
   arrowLeft: ArrowLeft,
   arrowRight: ArrowRight,
-  arrowTopFromLine: ArrowLineUp,
-  arrowBottomFromLine: ArrowLineDown,
-  arrowLeftFromLine: ArrowLineLeft,
-  arrowRightFromLine: ArrowLineRight,
   box: Cube,
   camera: Camera,
   'check-circle': CheckCircle,
   close: X,
   eye: Eye,
   eyeOff: EyeSlash,
-  gallery: FolderSimplePlus,
   headphones: Headphones,
-  'human-standing': Person,
   image: Image,
   link: LinkSimple,
-  lock: LockSimple,
-  magnet: Magnet,
-  'panel-bottom-dashed': Selection,
   pause: Pause,
   plus: Plus,
   play: Play,
-  'bring-to-front': SelectionForeground,
   printer: Printer,
-  redo: ArrowClockwise,
-  ruler: Ruler,
-  'send-to-back': SelectionBackground,
-  shapes: Shapes,
   square: Square,
   'square-pen': PencilSimple,
   'trash-2': Trash,
   type: TextT,
-  undo: ArrowCounterClockwise,
   video: VideoCamera,
   'volume-2': SpeakerHigh,
 }
@@ -119,30 +65,6 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
 // Custom SVG icons registry
 const customIcons: Record<string, CustomSvgIcon> = {
   chevronDown: ChevronDown,
-  distributeHorizontal: DistributeHorizontal,
-  distributeVertical: DistributeVertical,
-  horizontalLeft: HorizontalLeft,
-  horizontalCenter: HorizontalCenter,
-  horizontalRight: HorizontalRight,
-  positionLeft: PositionLeft,
-  positionTop: PositionTop,
-  positionBottom: PositionBottom,
-  positionCenterV: PositionCenterV,
-  positionCenterH: PositionCenterH,
-  positionRight: PositionRight,
-  zoomIn: ZoomIn,
-  zoomOut: ZoomOut,
-  reset: Reset,
-  textLeft: TextLeft,
-  textCenter: TextCenter,
-  textRight: TextRight,
-  textJustify: TextJustify,
-  textVerticalTop: TextVerticalTop,
-  textVerticalCenter: TextVerticalCenter,
-  textVerticalBottom: TextVerticalBottom,
-  verticalBottom: VerticalBottom,
-  verticalCenter: VerticalCenter,
-  verticalTop: VerticalTop,
 }
 
 // Merge both registries for type inference

@@ -526,3 +526,12 @@ like the real Pause switch). Logic and dialogs unchanged.
   switch; `dependent` indents it (Lock guides); disabled dims the tile and words.
 - `ItemThumb` · `{ artworkType?; imageUrl?; size: 'row' | 'group' }`: a wall item's image, or its type icon (decorative).
 - Tokens: `--editor-row-selected`, `--editor-row-selected-text`, `--editor-row-selected-edge`, `--editor-segment-shadow`.
+- 18b-2 · `TabStrip` · `{ label; tabs: { id; label }[]; selected; onSelect }` (`tablist`, arrows / Home / End stay in it,
+  they don't move the work); `PanelGroup` · `{ title; aside?; disabled?; children }` (a captioned group; disabled dims and
+  blocks the mouse, as the old `ui/Section`); `DistanceBox` · `{ label; itemLabel; top; right; bottom; left; size? }`;
+  `SelectField` · `{ label; hideLabel?; ariaLabel?; options; value; onChange; disabled? }` (a caption + `ui/Select
+  tone="editor"`); `NumberField` · `{ label } & NumberInputProps`; `ItemThumb` sizes `header`, `stack`.
+- `ui/Select`: `tone?: 'default' | 'editor'`, `'aria-label'?`, `'aria-labelledby'?` (default unchanged).
+  `ui/ColorPicker`: `variant="field"` (name above a 36px box with the swatch and hex) + `emptyLabel?` (a crossed swatch
+  and e.g. "None"). `ui/NumberInput` (wall view only): `'aria-label'?`, `suffix?`, `size?: 'regular' | 'compact'`; the
+  unused `icon`, `rotate`, `label`, `variant` props are gone. `ui/Section` is deleted (no user left).
