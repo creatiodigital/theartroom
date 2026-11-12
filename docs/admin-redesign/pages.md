@@ -1169,3 +1169,6 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
   first; each uploader has its own file id; no endless "Loading…" without a user; name and image failures show where
   they happen (a refused URL check no longer reads as "already exists"); a refused section delete stays in its dialog
   with the reason.
+- **Q116 · Supplementary media drop (2026-11-12):** the dashed area takes dropped files (same upload as the button;
+  other types refused with "Not added: … (JPG, PNG, WebP, MP4 or WebM only)"); hint "· or drop files here". Look: the
+  dark border while a file is held over it (not seen in the check).

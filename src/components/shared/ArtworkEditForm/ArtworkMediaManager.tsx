@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 
 import { Plus, Trash, UploadSimple, VideoCamera } from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { Callout } from '@/components/admin/ui/Callout'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +23,8 @@ import styles from './ArtworkMediaManager.module.scss'
  * takes a URL from here, only the key it minted itself.
  */
 const ACCEPT = 'image/jpeg,image/png,image/webp,video/mp4,video/webm'
+/** The picker's filter, for dropped files too (they skip it): questions.md Q116. */
+const ACCEPTED_TYPES = ACCEPT.split(',')
 
 /** Below this the asset is soft on a retina screen at full width. */
 const MIN_IMAGE_LONG_EDGE = 2000
@@ -32,6 +35,8 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // questions.md Q116: files dropped on the dashed area take the same upload as the button.
+  const [dragging, setDragging] = useState(false)
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/artwork-media?artworkId=${artworkId}`)
@@ -60,7 +65,7 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
       img.src = url
     })
 
-  const upload = async (files: FileList) => {
+  const upload = async (files: FileList | File[]) => {
     setBusy(true)
     setError(null)
     setNotice(null)
@@ -133,6 +138,30 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
 
   const full = media.length >= MAX_ARTWORK_MEDIA
 
+  const canDrop = !busy && !full
+  const onDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!canDrop || !event.dataTransfer.types.includes('Files')) return
+    event.preventDefault()
+    setDragging(true)
+  }
+  const onDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false)
+  }
+  const onDrop = async (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setDragging(false)
+    if (!canDrop) return
+    const files = Array.from(event.dataTransfer.files)
+    const accepted = files.filter((file) => ACCEPTED_TYPES.includes(file.type))
+    const refused = files.filter((file) => !ACCEPTED_TYPES.includes(file.type))
+    const refusedLine =
+      refused.length > 0
+        ? `Not added: ${refused.map((file) => file.name).join(', ')} (JPG, PNG, WebP, MP4 or WebM only).`
+        : null
+    if (accepted.length > 0) await upload(accepted)
+    if (refusedLine) setError((prev) => (prev ? `${prev} ${refusedLine}` : refusedLine))
+  }
+
   return (
     <div className={styles.manager}>
       <p className={styles.hint}>
@@ -188,9 +217,14 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
         onChange={(e) => e.target.files && e.target.files.length > 0 && upload(e.target.files)}
       />
 
-      {/* artist.md §3: today's uploader inside a dashed area. It has no drag and
-          drop (questions.md, step 16): the button is the only way in, as before. */}
-      <div className={styles.dropArea}>
+      {/* artist.md §3: today's uploader inside a dashed area, which also takes dropped files
+          (questions.md Q116): the same upload as the button, after the picker's type filter. */}
+      <div
+        className={c(styles.dropArea, dragging && styles.dropAreaActive)}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
         <UploadSimple size={24} weight="light" aria-hidden className={styles.dropIcon} />
         <Button
           variant="bare"
@@ -205,9 +239,7 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
         <span className={styles.count}>
           {full
             ? `Limit reached (${MAX_ARTWORK_MEDIA}) — remove one to add another`
-            : media.length === 0
-              ? 'Add as many as you like'
-              : `${media.length} added`}
+            : `${media.length === 0 ? 'Add as many as you like' : `${media.length} added`} · or drop files here`}
         </span>
       </div>
       {notice && <Callout tone="amber">{notice}</Callout>}

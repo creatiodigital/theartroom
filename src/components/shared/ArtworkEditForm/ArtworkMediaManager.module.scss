@@ -115,6 +115,13 @@
   text-align: center;
 }
 
+// A file held over the area (questions.md Q116).
+.dropAreaActive {
+  border-style: solid;
+  border-color: var(--color-black);
+  background: var(--color-gray-15);
+}
+
 .dropIcon {
   color: var(--color-text-secondary);
 }
