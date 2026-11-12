@@ -305,12 +305,16 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
           <Logo className={styles.logo} aria-hidden />
         </Link>
-        <span />
+        {/* order-flow.md: "Order a print · Title, Artist", the title in serif italics. */}
+        <p className={styles.headerTitle}>
+          Order a print · <em>{artwork.title}</em>, {artwork.artistName}
+        </p>
         <div className={styles.headerActions}>
           <CartIcon />
           <Button
             variant="ghost"
             onClick={close}
+            label="Close"
             iconRight={<Icon name="close" size={16} />}
             className={styles.closeButton}
             aria-label="Close wizard"

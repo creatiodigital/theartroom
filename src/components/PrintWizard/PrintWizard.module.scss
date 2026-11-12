@@ -23,6 +23,32 @@
   }
 }
 
+// The top bar's centre (order-flow.md): "Order a print · Title, Artist". A <p>: size pinned.
+.headerTitle {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.4;
+  // Not the header's caps.
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--public-text);
+
+  em {
+    font-family: var(--font-serif), var(--font-serif-fallback);
+    font-size: 17px;
+  }
+
+  @include media-down(md) {
+    display: none;
+  }
+}
+
 .header {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -183,6 +209,8 @@
 // ── Left steps panel ─────────────────────────────────────────
 
 .stepsPanel {
+  // The numbered steps' counter (NumberedStep).
+  counter-reset: wizard-step;
   // Generous bottom padding so the last step's dropdown can scroll high
   // enough on screen for its option-helper tooltip (which extends below
   // and to the right of the focused option) to render without clipping

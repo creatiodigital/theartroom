@@ -1,0 +1,86 @@
+// docs/public-redesign/order-flow.md, designs/order-configure-*.dc.html: numbered steps, a hairline
+// between them. The number is a CSS counter the steps list resets (PrintWizard .stepsPanel).
+.step {
+  counter-increment: wizard-step;
+  border-bottom: 1px solid var(--color-gray-30);
+}
+
+// Two classes: Button's bare reset would win over one.
+.step .header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-4) 0;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 2px;
+  }
+}
+
+.number {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--public-text);
+  border-radius: 50%;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  color: var(--public-text);
+
+  &::before {
+    content: counter(wizard-step);
+  }
+}
+
+.open .number {
+  background: var(--public-text);
+  color: var(--color-white);
+}
+
+.heading {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--public-text);
+}
+
+.summary {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.caret {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.open .caret {
+  transform: rotate(180deg);
+}
+
+.body {
+  padding: 0 0 var(--space-6) 42px;
+
+  @media (max-width: 768px) {
+    padding-left: 0;
+  }
+}
