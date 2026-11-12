@@ -48,6 +48,9 @@ export const VariantPicker = ({
 }: Props) => (
   <div className={styles.variantPicker}>
     <h2 className={styles.variantPickerTitle}>Choose your edition</h2>
+    <p className={styles.variantPickerIntro}>
+      Each edition has a fixed size and paper, set with the artist.
+    </p>
     {variants.map((v) => {
       const paperLabel = TPS_PAPERS.find((p) => p.id === v.paperId)?.label ?? v.paperId
       const techniqueLabel = TPS_PRINT_TYPES.find((t) => t.id === v.printTypeId)?.label
@@ -70,17 +73,23 @@ export const VariantPicker = ({
           disabled={soldOut}
           aria-pressed={selected}
         >
+          {/* order-flow.md: the name and the price on one line, then paper, sizes and stock. */}
           <span className={styles.variantCardHead}>
-            <span className={styles.variantCardEyebrow}>Edition name</span>
-            {soldOut && <span className={styles.variantCardTag}>Sold out</span>}
-            {inCart && (
-              <span className={styles.variantCardTag}>
-                <Icon name="check-circle" size={13} />
-                In your cart
-              </span>
-            )}
+            <span className={styles.variantCardName}>{v.name}</span>
+            <span className={styles.variantCardPrice}>{formatEuro(v.priceCents)}</span>
           </span>
-          <span className={styles.variantCardName}>{v.name}</span>
+          {(soldOut || inCart) && (
+            <span className={styles.variantCardTag}>
+              {soldOut ? (
+                'Sold out'
+              ) : (
+                <>
+                  <Icon name="check-circle" size={13} />
+                  In your cart
+                </>
+              )}
+            </span>
+          )}
           <span className={styles.variantCardMeta}>{medium}</span>
           <span className={styles.variantCardMeta}>
             {/* "sheet" and "print" are the two words for the two measurements,
@@ -90,11 +99,14 @@ export const VariantPicker = ({
                 framing, and every limited variant is print-only anyway, so it
                 was a constant on every card. */}
             {isFixedSheet(v)
-              ? `${formatDualDimensions(v.sheetWidthCm as number, v.sheetHeightCm as number)} sheet · ${formatDualDimensions(v.widthCm, v.heightCm)} print`
+              ? `${formatDualDimensions(v.widthCm, v.heightCm)} print · sheet ${formatDualDimensions(v.sheetWidthCm as number, v.sheetHeightCm as number)}`
               : `${formatDualDimensions(v.widthCm, v.heightCm)} print`}
           </span>
-          <span className={styles.variantCardStock}>Edition of {v.editionSize}</span>
-          <span className={styles.variantCardPrice}>{formatEuro(v.priceCents)}</span>
+          {/* "Edition of 30 · 29 left" (order-flow.md; questions Q-P4: the count is real data). */}
+          <span className={styles.variantCardStock}>
+            Edition of {v.editionSize}
+            {!soldOut && ` · ${v.remaining} left`}
+          </span>
         </button>
       )
     })}
