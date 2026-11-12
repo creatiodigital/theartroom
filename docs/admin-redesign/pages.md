@@ -1157,3 +1157,7 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
   unsaved slide (Q160). Look: the refused Add line (not seen in the browser: the picker's list uses server actions).
 - **Q82 extras · page editor (2026-11-12):** the Prints banner's Remove asks first ("Remove the banner?"); the full rich
   text editors register Link once (no TipTap duplicate warning; the simple stencil editor keeps StarterKit's Link).
+- **Q108 · studio Home + Artworks (2026-11-12):** a failed library load says so (not "No artworks yet"), a refused
+  reorder says so and reloads, a shapes-only library reads "No artworks yet.", a refused exhibition delete shows a red
+  bar, the greeting uses the impersonated artist's name. Look: the delete bar and the greeting while impersonating (not
+  seen: they need impersonation, which the read-only check refuses).

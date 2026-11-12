@@ -13,6 +13,7 @@ import { Bank, Cube, Images, Plus, User, type Icon } from '@phosphor-icons/react
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { Callout } from '@/components/admin/ui/Callout'
 import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
 import { PublishState } from '@/components/admin/ui/PublishState'
 import { RowMenu } from '@/components/admin/ui/RowMenu'
 import { StatusPill } from '@/components/admin/ui/StatusPill'
@@ -128,6 +129,8 @@ export const DashboardPage = () => {
   const [isModalShown, setIsModalShown] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  // questions.md Q108 (d): a refused delete is said on screen (it was console only).
+  const [deleteError, setDeleteError] = useState('')
 
   const { data: userData } = useGetUserQuery(userId ?? '', {
     skip: !userId,
@@ -198,12 +201,15 @@ export const DashboardPage = () => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return
     setDeleting(true)
+    setDeleteError('')
     try {
       await deleteExhibition(deleteTarget.id).unwrap()
       dispatch(removeExhibition(deleteTarget.id))
       setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete exhibition', err)
+      setDeleteError(`Couldn't delete ${deleteTarget.title}. Please try again.`)
+      setDeleteTarget(null)
     } finally {
       setDeleting(false)
     }
@@ -241,7 +247,8 @@ export const DashboardPage = () => {
 
   // ── Render-only ──
   const panelTitleId = useId()
-  const greetingName = userData?.name ?? session?.user?.name ?? ''
+  // While impersonating, the artist's name until their record loads, never the admin's (Q108 c).
+  const greetingName = userData?.name ?? effectiveUser?.name ?? ''
   const listed = exhibitions.length > 0
 
   return (
@@ -258,6 +265,12 @@ export const DashboardPage = () => {
         <h1 className={styles.greeting}>{greetingName ? `Hello, ${greetingName}` : 'Hello'}</h1>
         <p className={styles.sub}>Your exhibitions, artworks and profile, all in one place.</p>
       </header>
+
+      {deleteError && (
+        <FeedbackBar tone="error" onDismiss={() => setDeleteError('')}>
+          {deleteError}
+        </FeedbackBar>
+      )}
 
       <ul className={styles.tiles}>
         {SHORTCUTS.map((shortcut) => (

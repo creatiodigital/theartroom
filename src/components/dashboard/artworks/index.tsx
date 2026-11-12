@@ -29,7 +29,9 @@ import {
 
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
 import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
 import { ListPanel } from '@/components/admin/ui/ListPanel'
 import { SearchField } from '@/components/admin/ui/SearchField'
 import { SegmentedControl } from '@/components/admin/ui/SegmentedControl'
@@ -265,6 +267,10 @@ export const ArtworkLibraryPage = () => {
   } | null>(null)
   const [unlinking, setUnlinking] = useState(false)
   const [actionError, setActionError] = useState('')
+  // questions.md Q108: a failed load (it read as "No artworks yet") and a refused reorder (it was
+  // ignored) are said on screen.
+  const [loadError, setLoadError] = useState(false)
+  const [reorderError, setReorderError] = useState('')
   // Lazily initialised from storage so the filter survives the remount that
   // editing an artwork causes. Safe against hydration: the first render is the
   // loading view (the header and "Loading artworks…", no type filter) on both
@@ -370,10 +376,13 @@ export const ArtworkLibraryPage = () => {
 
     try {
       const response = await fetch(`/api/artworks?userId=${effectiveUser.id}`)
-      const data = await response.json()
-      setArtworks(Array.isArray(data) ? data : [])
+      const data = await response.json().catch(() => null)
+      if (!response.ok || !Array.isArray(data)) throw new Error(`Artworks: ${response.status}`)
+      setArtworks(data)
+      setLoadError(false)
     } catch (error) {
       console.error('Failed to fetch artworks:', error)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -476,14 +485,16 @@ export const ArtworkLibraryPage = () => {
     setArtworks(next)
 
     try {
-      await fetch('/api/artworks/reorder', {
+      const response = await fetch('/api/artworks/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artworkIds: next.map((a) => a.id) }),
       })
+      if (!response.ok) throw new Error(`Reorder: ${response.status}`)
     } catch (error) {
       console.error('Error reordering artworks:', error)
-      // Refetch to restore server state on error.
+      // Refetch to restore server state on error (a refused reply too, Q108).
+      setReorderError("Couldn't save the new order. Please try again.")
       fetchArtworks()
     }
   }
@@ -517,129 +528,144 @@ export const ArtworkLibraryPage = () => {
         }
       />
 
-      <ListPanel
-        label="Artworks"
-        toolbar={
-          <>
-            <SegmentedControl
-              label="Type"
-              options={FILTER_OPTIONS}
-              value={typeFilter}
-              onChange={selectType}
-            />
-            <div className={styles.search}>
-              <SearchField
-                label="Search artworks"
-                placeholder="Search by title or content"
-                value={searchQuery}
-                onChange={setSearchQuery}
+      {/* No ×: a dismissed load error would leave an empty page (as Q75). */}
+      {loadError && (
+        <Callout tone="red" role="alert">
+          Your artworks could not be loaded. Refresh the page to try again.
+        </Callout>
+      )}
+      {reorderError && (
+        <FeedbackBar tone="error" onDismiss={() => setReorderError('')}>
+          {reorderError}
+        </FeedbackBar>
+      )}
+
+      {!loadError && (
+        <ListPanel
+          label="Artworks"
+          toolbar={
+            <>
+              <SegmentedControl
+                label="Type"
+                options={FILTER_OPTIONS}
+                value={typeFilter}
+                onChange={selectType}
               />
-            </div>
-          </>
-        }
-        footnote={dragEnabled && sortedArtworks.length > 0 ? SORTABLE_KEYBOARD_HINT : undefined}
-      >
-        {sortedArtworks.length === 0 ? (
-          artworks.length === 0 ? (
-            <EmptyState
-              title="No artworks yet."
-              text={
-                <>
-                  Click <strong>Add artwork</strong> to create your first one.
-                </>
-              }
-            />
+              <div className={styles.search}>
+                <SearchField
+                  label="Search artworks"
+                  placeholder="Search by title or content"
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+              </div>
+            </>
+          }
+          footnote={dragEnabled && sortedArtworks.length > 0 ? SORTABLE_KEYBOARD_HINT : undefined}
+        >
+          {sortedArtworks.length === 0 ? (
+            // Shapes are never listed: a library of shapes alone has no artworks yet (Q108 e).
+            artworks.every((artwork) => artwork.artworkType === 'shape') ? (
+              <EmptyState
+                title="No artworks yet."
+                text={
+                  <>
+                    Click <strong>Add artwork</strong> to create your first one.
+                  </>
+                }
+              />
+            ) : (
+              <EmptyState title="No artworks match this filter." />
+            )
           ) : (
-            <EmptyState title="No artworks match this filter." />
-          )
-        ) : (
-          <SortableList
-            onDragEnd={handleDragEnd}
-            numbered={false}
-            sortable={dragEnabled}
-            rows={sortedArtworks.map((artwork) => {
-              const title = artwork.title || 'Artwork'
-              const meta = [artwork.year?.trim() ?? '', plainText(artwork.technique)].filter(
-                Boolean,
-              )
-              return {
-                id: artwork.id,
-                title,
-                href: `/dashboard/artworks/${artwork.id}/edit`,
-                thumb: (
-                  <ArtworkThumb
-                    artwork={artwork}
-                    title={title}
-                    isPlaying={playingArtworkId === artwork.id}
-                    onTogglePlay={handleTogglePlay}
-                  />
-                ),
-                sub: (
-                  <>
-                    <span className={styles.meta}>
-                      <span>{TYPE_LABEL[artwork.artworkType] ?? artwork.artworkType}</span>
-                      {meta.length > 0 && <span>{meta.join(' · ')}</span>}
-                      {artwork.sellingNow && (
-                        <StatusPill label="Selling prints" tone="green" shape="tag" dot />
-                      )}
-                    </span>
-                    {/* Not drawn, kept (questions.md Q105): the library's only way
-                        to take a work out of an exhibition. */}
-                    {artwork.exhibitionArtworks.length > 0 && (
-                      <span className={styles.exhibitions}>
-                        <span className={styles.exhibitionsLabel}>In:</span>
-                        {artwork.exhibitionArtworks.map((ea) => (
-                          <span key={ea.id} className={styles.exhibitionTag}>
-                            {ea.exhibition.mainTitle}
-                            <Button
-                              variant="bare"
-                              font="dashboard"
-                              className={styles.unlink}
-                              onClick={() =>
-                                handleUnlinkClick(
-                                  ea.id,
-                                  artwork.title || 'Artwork',
-                                  ea.exhibition.mainTitle,
-                                )
-                              }
-                              title={`Remove from ${ea.exhibition.mainTitle}`}
-                              aria-label={`Remove from ${ea.exhibition.mainTitle}`}
-                            >
-                              <X size={12} weight="light" aria-hidden />
-                            </Button>
-                          </span>
-                        ))}
+            <SortableList
+              onDragEnd={handleDragEnd}
+              numbered={false}
+              sortable={dragEnabled}
+              rows={sortedArtworks.map((artwork) => {
+                const title = artwork.title || 'Artwork'
+                const meta = [artwork.year?.trim() ?? '', plainText(artwork.technique)].filter(
+                  Boolean,
+                )
+                return {
+                  id: artwork.id,
+                  title,
+                  href: `/dashboard/artworks/${artwork.id}/edit`,
+                  thumb: (
+                    <ArtworkThumb
+                      artwork={artwork}
+                      title={title}
+                      isPlaying={playingArtworkId === artwork.id}
+                      onTogglePlay={handleTogglePlay}
+                    />
+                  ),
+                  sub: (
+                    <>
+                      <span className={styles.meta}>
+                        <span>{TYPE_LABEL[artwork.artworkType] ?? artwork.artworkType}</span>
+                        {meta.length > 0 && <span>{meta.join(' · ')}</span>}
+                        {artwork.sellingNow && (
+                          <StatusPill label="Selling prints" tone="green" shape="tag" dot />
+                        )}
                       </span>
-                    )}
-                  </>
-                ),
-                actions: (
-                  <>
-                    <Button
-                      variant="bare"
-                      font="dashboard"
-                      className={styles.edit}
-                      onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
-                    >
-                      <PencilSimple size={16} weight="light" aria-hidden />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="bare"
-                      font="dashboard"
-                      className={styles.trash}
-                      aria-label={`Delete ${title}`}
-                      onClick={() => handleDeleteClick(artwork.id, artwork.title || 'Artwork')}
-                    >
-                      <Trash size={16} weight="light" aria-hidden />
-                    </Button>
-                  </>
-                ),
-              }
-            })}
-          />
-        )}
-      </ListPanel>
+                      {/* Not drawn, kept (questions.md Q105): the library's only way
+                        to take a work out of an exhibition. */}
+                      {artwork.exhibitionArtworks.length > 0 && (
+                        <span className={styles.exhibitions}>
+                          <span className={styles.exhibitionsLabel}>In:</span>
+                          {artwork.exhibitionArtworks.map((ea) => (
+                            <span key={ea.id} className={styles.exhibitionTag}>
+                              {ea.exhibition.mainTitle}
+                              <Button
+                                variant="bare"
+                                font="dashboard"
+                                className={styles.unlink}
+                                onClick={() =>
+                                  handleUnlinkClick(
+                                    ea.id,
+                                    artwork.title || 'Artwork',
+                                    ea.exhibition.mainTitle,
+                                  )
+                                }
+                                title={`Remove from ${ea.exhibition.mainTitle}`}
+                                aria-label={`Remove from ${ea.exhibition.mainTitle}`}
+                              >
+                                <X size={12} weight="light" aria-hidden />
+                              </Button>
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </>
+                  ),
+                  actions: (
+                    <>
+                      <Button
+                        variant="bare"
+                        font="dashboard"
+                        className={styles.edit}
+                        onClick={() => router.push(`/dashboard/artworks/${artwork.id}/edit`)}
+                      >
+                        <PencilSimple size={16} weight="light" aria-hidden />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="bare"
+                        font="dashboard"
+                        className={styles.trash}
+                        aria-label={`Delete ${title}`}
+                        onClick={() => handleDeleteClick(artwork.id, artwork.title || 'Artwork')}
+                      >
+                        <Trash size={16} weight="light" aria-hidden />
+                      </Button>
+                    </>
+                  ),
+                }
+              })}
+            />
+          )}
+        </ListPanel>
+      )}
 
       {showAddModal && (
         <AddArtworkModal
