@@ -28,7 +28,9 @@
 .thumb {
   width: var(--thumb-size);
   height: var(--thumb-size);
+  padding: 10%;
   background: var(--public-render-wall);
+  // The work never touches the grey: a margin all round (owner, 2026-11-12).
 
   @include media-down(sm) {
     width: 88px;

@@ -129,7 +129,9 @@
 .itemThumb {
   width: 64px;
   height: 64px;
+  padding: 7px;
   background: var(--public-render-wall);
+  // The work never touches the grey: a margin all round (owner, 2026-11-12).
 }
 
 .itemThumbImage {
