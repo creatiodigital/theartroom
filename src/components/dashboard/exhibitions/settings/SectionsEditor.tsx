@@ -19,16 +19,18 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { DotsSixVertical } from '@phosphor-icons/react'
+import { DotsSixVertical, Plus, Trash } from '@phosphor-icons/react'
+import c from 'classnames'
 
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { Callout } from '@/components/admin/ui/Callout'
 import { Button } from '@/components/ui/Button'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { ErrorText } from '@/components/ui/ErrorText'
-import { FormLabel } from '@/components/ui/FormLabel'
 import { Input } from '@/components/ui/Input'
 import { SECTION_TITLE_MAX } from '@/lib/exhibitionSections'
 
-import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
+import { StudioPanel } from '../../StudioPanel'
+import page from '../../StudioPanel/studioPage.module.scss'
 import styles from './SectionsEditor.module.scss'
 
 type Section = { id: string; title: string; order: number; artworkCount: number }
@@ -71,7 +73,7 @@ function SectionRow({
   }
 
   return (
-    <div
+    <li
       ref={setNodeRef}
       data-section-row
       data-section-id={section.id}
@@ -82,11 +84,13 @@ function SectionRow({
         opacity: isDragging ? 0.5 : 1,
       }}
     >
+      {/* dnd-kit's own handle (role="button", tabIndex 0, its listeners), as in
+          SortableList: Button can't take the listeners. */}
       <div
         className={styles.dragHandle}
         {...attributes}
         {...listeners}
-        aria-label={`Drag to reorder ${section.title}`}
+        aria-label={`Reorder ${section.title}`}
       >
         <DotsSixVertical size={18} weight="bold" aria-hidden />
       </div>
@@ -103,8 +107,9 @@ function SectionRow({
             onKeyDown={(e) => {
               if (e.key === 'Escape') setEditing(false)
             }}
-            size="medium"
+            size="bare"
             className={styles.renameInput}
+            inputClassName={page.input}
             maxLength={SECTION_TITLE_MAX}
             invalid={!!error}
             autoFocus
@@ -112,36 +117,49 @@ function SectionRow({
           />
           <Button
             font="dashboard"
-            variant="primary"
-            label={saving ? 'Saving...' : 'Save'}
+            variant="bare"
+            className={page.primary}
             type="submit"
             disabled={saving}
-          />
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
           <Button
             font="dashboard"
-            variant="secondary"
-            label="Cancel"
+            variant="bare"
+            className={page.outline}
             onClick={() => setEditing(false)}
             disabled={saving}
-          />
-          {error && <ErrorText>{error}</ErrorText>}
+          >
+            Cancel
+          </Button>
+          {error && (
+            <ErrorText className={c(page.fieldError, styles.renameError)}>{error}</ErrorText>
+          )}
         </form>
       ) : (
         <>
-          <span className={styles.title}>{section.title}</span>
-          <span className={styles.count}>
-            {section.artworkCount === 1 ? '1 artwork' : `${section.artworkCount} artworks`}
+          <span className={styles.text}>
+            <span className={styles.title}>{section.title}</span>
+            <span className={styles.count}>
+              {section.artworkCount === 1 ? '1 artwork' : `${section.artworkCount} artworks`}
+            </span>
           </span>
-          <Button font="dashboard" variant="secondary" label="Rename" onClick={startEditing} />
+          <Button font="dashboard" variant="bare" className={page.outline} onClick={startEditing}>
+            Rename
+          </Button>
           <Button
             font="dashboard"
-            variant="secondary"
-            label="Delete"
+            variant="bare"
+            className={page.iconDanger}
             onClick={() => onDelete(section)}
-          />
+            aria-label={`Delete section ${section.title}`}
+          >
+            <Trash size={16} weight="light" aria-hidden />
+          </Button>
         </>
       )}
-    </div>
+    </li>
   )
 }
 
@@ -276,23 +294,14 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
         : `${section.artworkCount} artworks will move to no section. They stay on the page.`
 
   return (
-    <div className={dashboardStyles.section}>
-      <h3 className={dashboardStyles.sectionTitle}>Sections</h3>
-      <p className={dashboardStyles.sectionDescription}>
-        Optional. Split this exhibition&apos;s page into titled groups. Drag to change their order.
-      </p>
-
+    <StudioPanel
+      title="Sections"
+      description="Optional. Split this exhibition's page into titled groups. Drag to change their order. Each change saves at once."
+    >
       {sections.length > 0 && (
-        <div className={styles.list}>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={sections.map((s) => s.id)}
-              strategy={verticalListSortingStrategy}
-            >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <ul className={styles.list}>
               {sections.map((section) => (
                 <SectionRow
                   key={section.id}
@@ -301,40 +310,53 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
                   onDelete={setPendingDelete}
                 />
               ))}
-            </SortableContext>
-          </DndContext>
-        </div>
+            </ul>
+          </SortableContext>
+        </DndContext>
       )}
-      {listError && <ErrorText>{listError}</ErrorText>}
+      {listError && (
+        <Callout tone="red" role="alert">
+          {listError}
+        </Callout>
+      )}
 
-      <FormLabel htmlFor={`new-section-${exhibitionId}`}>New section name</FormLabel>
-      <form className={styles.addForm} onSubmit={handleAdd}>
-        <Input
-          id={`new-section-${exhibitionId}`}
-          type="text"
-          size="medium"
-          className={styles.addInput}
-          value={newTitle}
-          onChange={(e) => {
-            setNewTitle(e.target.value)
-            setAddError('')
-          }}
-          placeholder="e.g. Magnolia"
-          maxLength={SECTION_TITLE_MAX}
-          invalid={!!addError}
-        />
-        <Button
-          font="dashboard"
-          variant="secondary"
-          label={adding ? 'Adding...' : 'Add section'}
-          type="submit"
-          disabled={adding}
-        />
-      </form>
-      {addError && <ErrorText>{addError}</ErrorText>}
+      <div className={styles.add}>
+        {/* Visually hidden as drawn; it still names the field. */}
+        <label htmlFor={`new-section-${exhibitionId}`} className="sr-only">
+          New section name
+        </label>
+        <form className={styles.addForm} onSubmit={handleAdd}>
+          <Input
+            id={`new-section-${exhibitionId}`}
+            type="text"
+            size="bare"
+            className={styles.addInput}
+            inputClassName={page.input}
+            value={newTitle}
+            onChange={(e) => {
+              setNewTitle(e.target.value)
+              setAddError('')
+            }}
+            placeholder="e.g. Magnolia"
+            maxLength={SECTION_TITLE_MAX}
+            invalid={!!addError}
+          />
+          <Button
+            font="dashboard"
+            variant="bare"
+            className={c(page.outline, styles.addButton)}
+            type="submit"
+            disabled={adding}
+          >
+            <Plus size={16} weight="light" aria-hidden />
+            {adding ? 'Adding…' : 'Add section'}
+          </Button>
+        </form>
+        {addError && <ErrorText className={page.fieldError}>{addError}</ErrorText>}
+      </div>
 
       {pendingDelete && (
-        <ConfirmModal
+        <AdminConfirmModal
           title={`Delete "${pendingDelete.title}"?`}
           message={deleteMessage(pendingDelete)}
           confirmLabel="Delete section"
@@ -344,6 +366,6 @@ export const SectionsEditor = ({ exhibitionId }: { exhibitionId: string }) => {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </div>
+    </StudioPanel>
   )
 }

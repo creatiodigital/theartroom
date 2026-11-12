@@ -149,7 +149,7 @@ test('drag to reorder persists', async ({ page }) => {
     // back to back are dropped. Its live region announces every move — wait
     // for each announcement before the next key instead of guessing a delay.
     const live = page.locator('[id^="DndLiveRegion"]')
-    const handle = page.getByRole('button', { name: 'Drag to reorder Memory' })
+    const handle = page.getByRole('button', { name: 'Reorder Memory' })
     await handle.focus()
     await page.keyboard.press('Space')
     await expect(live).toContainText(`over droppable area ${ids.Memory}`)
@@ -194,7 +194,7 @@ test('delete asks first, says how many works move, and keeps them', async ({ pag
     await expect(
       page.getByText('1 artwork will move to no section. It stays on the page.'),
     ).toBeVisible()
-    await page.getByRole('button', { name: 'Delete section' }).click()
+    await page.getByRole('button', { name: 'Delete section', exact: true }).click()
 
     await expect(page.locator('[data-section-row]')).toHaveCount(0)
     await expect.poll(() => titlesInDb(exhibition.id)).toEqual([])
@@ -233,7 +233,7 @@ test('a reorder that never reaches the server snaps back with an error', async (
     await page.goto(`/dashboard/exhibitions/${exhibition.id}/settings`)
 
     const live = page.locator('[id^="DndLiveRegion"]')
-    await page.getByRole('button', { name: 'Drag to reorder Mistery' }).focus()
+    await page.getByRole('button', { name: 'Reorder Mistery' }).focus()
     await page.keyboard.press('Space')
     await expect(live).toContainText(`over droppable area ${ids.Mistery}`)
     await page.keyboard.press('ArrowUp')

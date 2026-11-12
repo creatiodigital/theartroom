@@ -483,3 +483,5 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `ImageUploader` (shared, admin tone): `adminPreview?: 'banner' | 'avatar' | 'signature'` (default `banner`, as before;
   `avatar` = 112 px circle, `signature` = 300×100 on a checkerboard, contained).
 - `AdminSelect`: `aria-describedby?`.
+- `SaveBar`: `cleanMessage?: string` (the status while nothing is unsaved; default "All changes saved"), e.g. Exhibition
+  settings' "The new name isn't saved yet: use Save name.".

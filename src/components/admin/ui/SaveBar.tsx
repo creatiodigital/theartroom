@@ -36,6 +36,12 @@ type SaveBarProps = {
    * "the new image was uploaded, the details were not"). Default "Not saved. Please try again."
    */
   failedMessage?: string
+  /**
+   * The status while nothing is unsaved, when a page has something else to say (Exhibition
+   * settings, questions.md Q119: "The new name isn't saved yet: use Save name." while a name edit
+   * is open). Default "All changes saved".
+   */
+  cleanMessage?: string
 } & (
   | { onSave: () => void; form?: undefined }
   | {
@@ -63,6 +69,7 @@ export function SaveBar({
   width = 'form',
   failed,
   failedMessage = 'Not saved. Please try again.',
+  cleanMessage = 'All changes saved',
   form,
 }: SaveBarProps) {
   return (
@@ -81,7 +88,7 @@ export function SaveBar({
                 Unsaved changes
               </span>
             ) : (
-              <span className={styles.clean}>All changes saved</span>
+              <span className={styles.clean}>{cleanMessage}</span>
             )}
           </span>
         )}

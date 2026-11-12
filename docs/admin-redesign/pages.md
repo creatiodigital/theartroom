@@ -25,7 +25,7 @@ Do these in order, one PR each.
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
-| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
+| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
@@ -834,3 +834,29 @@ arguments); browser (dev DB, read-only, Connect and Disconnect never pressed) at
 saved Stripe account can't be reached with this environment's sandbox key, so their page shows today's "Could not load
 payout status." (not this step); the "Not connected yet" state was seen as an admin in their own studio. The connected
 states (in progress, active, Disconnect) were checked in code only. No e2e opens this page.
+
+### Step 17c · Exhibition settings — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Files: `dashboard/exhibitions/settings/index.tsx` + SCSS, `SectionsEditor.tsx` + SCSS, `ui/SaveBar` (`cleanMessage`),
+`e2e/exhibition-sections-editor.spec.ts` (three lines).
+
+1. **Kept**: every handler and request (diffed: display-only lines for the bar, and the header's badge after a save);
+   `SectionsEditor`'s logic and all 14 handler expressions identical.
+2. **Layout per artist.md §6**: breadcrumb My exhibitions / {name}, h1 **Exhibition settings**, Published dot + Up to date /
+   Pending changes (from the loaded record; it flips to Pending changes after an accepted save on a published exhibition,
+   the PUT's own rule, Q125), **View exhibition ↗** (published only) and **Edit 3D space**; panels Name and address (the
+   name read-only until **Edit name**, the URL field with "…/{handler}/" inside it), Featured image (today's uploader),
+   Short description (counter "n / 400", amber from 360), Sections (a bordered list: handle "Reorder {name}", Rename, red
+   trash "Delete section {name}", the add row), Description (the admin editor).
+3. **Four save paths kept (Q119, owner)**: the name with Save name, the image and the sections at once, the two texts with
+   the bar's Save changes. Save changes never saves an open name edit; while one is open the bar reads **"The new name
+   isn't saved yet: use Save name."** instead of "All changes saved". "Leave site?" while the texts are unsaved or an open
+   name edit holds a changed name or URL (Q118).
+4. **e2e**: the section handle is "Reorder {name}" (was "Drag to reorder {name}"); "Delete section" is matched exactly
+   (each row's trash is now "Delete section {name}").
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD (`SectionsEditor` identical, 14 of 14 handlers); e2e as
+17a (`exhibition-sections-editor` passes with the three changed lines); browser (dev DB, read-only) at 1440 and 390 px:
+Edit name shows the bar's name message and Cancel returns "All changes saved", the short description flips the bar and
+the counter, a refused save turns it red, "Leave site?" with changes, no horizontal scroll, no console errors. The
+exhibition checked has no sections; the section rows were checked by the e2e.
