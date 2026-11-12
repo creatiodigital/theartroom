@@ -20,7 +20,8 @@ export const Band = ({
   /** `center`: heading, line and action stacked and centred (the homepage's feedback band). */
   align?: 'split' | 'center'
 }) => (
-  <section className={styles.band}>
+  // `data-band`: PageLayout drops its bottom padding when a page ends on a band.
+  <section className={styles.band} data-band="">
     <div className={c(styles.inner, align === 'center' && styles.center)}>
       <div className={styles.text}>
         <h2 className={styles.heading}>{heading}</h2>
