@@ -12,7 +12,7 @@ export type ArtistRowData = {
   href: string
   name: string
   imageUrl: string | null
-  /** The bio (rich text); its opening lines, clamped. */
+  /** The bio (rich text), shown whole as plain text. */
   biography: string | null
   /** The Artists page: their exhibitions, joined by " · ". */
   exhibitions?: string[]
@@ -20,11 +20,18 @@ export type ArtistRowData = {
 
 /**
  * One artist in a row (docs/public-redesign/artists.md; the exhibition page's "About the artist"):
- * a 3:2 portrait, the name in serif, the bio's opening lines, "→ View artist". The whole row is one
+ * a 4:5 portrait, the name in serif, the whole bio, "→ View artist". The whole row is one
  * link to the artist page.
  */
+/** The bio's paragraphs as plain text: the editor's breaks kept, so they don't run together. */
+const bioParagraphs = (html: string) =>
+  html
+    .split(/<\/p>|<br\s*\/?>|<\/li>|<\/h[1-6]>/i)
+    .map(plainTextOf)
+    .filter(Boolean)
+
 export const ArtistRow = ({ artist, className }: { artist: ArtistRowData; className?: string }) => {
-  const bio = artist.biography ? plainTextOf(artist.biography) : ''
+  const bio = artist.biography ? bioParagraphs(artist.biography) : []
   return (
     <Link href={artist.href} className={c(styles.row, className)}>
       <span className={styles.portrait}>
@@ -43,7 +50,15 @@ export const ArtistRow = ({ artist, className }: { artist: ArtistRowData; classN
         {artist.exhibitions && artist.exhibitions.length > 0 && (
           <span className={styles.exhibitions}>{artist.exhibitions.join(' · ')}</span>
         )}
-        {bio && <span className={styles.bio}>{bio}</span>}
+        {bio.length > 0 && (
+          <span className={styles.bio}>
+            {bio.map((paragraph, index) => (
+              <span key={index} className={styles.paragraph}>
+                {paragraph}
+              </span>
+            ))}
+          </span>
+        )}
       </span>
       <span className={styles.view}>
         <ArrowRight size={18} weight="light" aria-hidden />
