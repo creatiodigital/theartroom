@@ -12,7 +12,6 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor'
 
 import { Text } from '@/components/ui/Typography'
 
-import { DashboardLayout } from '../../DashboardLayout'
 import dashboardStyles from '../../DashboardLayout/DashboardLayout.module.scss'
 import styles from './ExhibitionSettings.module.scss'
 import { SectionsEditor } from './SectionsEditor'
@@ -238,27 +237,27 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
   }, [exhibition])
 
   if (loading) {
-    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
+    return <>Loading...</>
   }
 
   if (error && !exhibition) {
     return (
-      <DashboardLayout backLink="/dashboard">
+      <>
         <ErrorText>{error}</ErrorText>
-      </DashboardLayout>
+      </>
     )
   }
 
   if (!exhibition) {
     return (
-      <DashboardLayout backLink="/dashboard">
+      <>
         <ErrorText>Exhibition not found</ErrorText>
-      </DashboardLayout>
+      </>
     )
   }
 
   return (
-    <DashboardLayout backLink="/dashboard">
+    <>
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Exhibition Settings</h1>
 
@@ -404,6 +403,6 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
       </div>
 
       {error && <ErrorText>{error}</ErrorText>}
-    </DashboardLayout>
+    </>
   )
 }

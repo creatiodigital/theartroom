@@ -1,0 +1,98 @@
+// artist-home.dc.html, the <nav aria-label="Artist"> under the brand.
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+// The phone drawer's nav (StudioMenuDrawer): the foot is pushed to the bottom.
+.drawerNav {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-3);
+}
+
+.foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-gray-20);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px var(--space-3) var(--space-3);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--studio-avatar);
+  color: var(--color-black);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Underlined as drawn: the menu's only text link.
+.publicLink {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--color-black);
+  }
+}
+
+// The drawer: a 44px tap target (questions.md Q7).
+.drawer .publicLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+// Log out is a Button styled as a compact menu row (navItemClassName). These restate
+// what Button's `.bare` reset takes away, through `.foot` so they outrank it.
+.foot .action {
+  width: 100%;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: inherit;
+}
+
+.foot.drawer .action {
+  gap: 14px;
+  padding: var(--space-3);
+}

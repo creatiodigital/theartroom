@@ -68,3 +68,26 @@
   background: var(--color-red-50);
   color: var(--color-white);
 }
+
+// The artist studio's light menu (artist.md §0, artist-home.dc.html). Last in the
+// file so these win over the dark rules above at the same specificity.
+.light {
+  color: var(--color-text-primary);
+}
+
+// The quieter foot rows (Change password, Log out).
+.light.compact {
+  color: var(--studio-foot-text);
+}
+
+// Not drawn (questions.md Q95).
+.light:hover {
+  background: var(--color-gray-15);
+  color: var(--color-black);
+}
+
+.light.active,
+.light.active:hover {
+  background: var(--studio-nav-active);
+  color: var(--color-black);
+}

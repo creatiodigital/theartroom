@@ -37,7 +37,6 @@ import { Text } from '@/components/ui/Typography'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
-import { DashboardLayout } from '../DashboardLayout'
 import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './artworks.module.scss'
 
@@ -526,11 +525,11 @@ export const ArtworkLibraryPage = () => {
   }
 
   if (loading) {
-    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
+    return <>Loading...</>
   }
 
   return (
-    <DashboardLayout backLink="/dashboard">
+    <>
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Artwork Library</h1>
 
@@ -686,6 +685,6 @@ export const ArtworkLibraryPage = () => {
           </div>
         </Modal>
       )}
-    </DashboardLayout>
+    </>
   )
 }

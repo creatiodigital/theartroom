@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -29,7 +30,6 @@ import type { TOption } from '@/types/artwork'
 import type { TSpaceOption } from '@/types/dashboard'
 import type { TExhibition } from '@/types/exhibition'
 
-import { DashboardLayout } from './DashboardLayout'
 import { spaceOptions } from './constants'
 import dashboardStyles from './DashboardLayout/DashboardLayout.module.scss'
 
@@ -177,10 +177,15 @@ export const DashboardPage = () => {
   const showBackToAdmin = isAdminOrSuperAdmin && !isImpersonating
 
   return (
-    <DashboardLayout
-      backLink={showBackToAdmin ? '/admin/dashboard' : undefined}
-      backLabel={showBackToAdmin ? '← Back to Admin Dashboard' : undefined}
-    >
+    <>
+      {/* The old frame's header link, kept in the page: its target isn't in the
+          studio menu (questions.md Q99). */}
+      {showBackToAdmin && (
+        <Link href="/admin/dashboard" className={dashboardStyles.backLink}>
+          ← Back to Admin Dashboard
+        </Link>
+      )}
+
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>
         Hello {userData?.name ?? session?.user?.name ?? ''}
@@ -399,6 +404,6 @@ export const DashboardPage = () => {
           </div>
         </Modal>
       )}
-    </DashboardLayout>
+    </>
   )
 }

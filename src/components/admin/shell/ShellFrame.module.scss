@@ -1,6 +1,7 @@
 @use '@/styles/mixins' as *;
 
-// docs/admin-redesign/README.md (layout) and dashboard.dc.html.
+// The frame shared by the admin (docs/admin-redesign/README.md, dashboard.dc.html)
+// and the artist studio (artist.md §0, artist-home.dc.html).
 .loading {
   min-height: 100vh;
   background: var(--color-gray-10);
@@ -14,10 +15,18 @@
   color: var(--color-text-primary);
 }
 
+// Studio, while an admin impersonates: the 3 px red line across the very top.
+// A border, so it carries no accessibility node and adds no height past 100vh.
+.topLine {
+  box-sizing: border-box;
+  border-top: 3px solid var(--color-red-50);
+}
+
 // The shell's own pieces are all in the dashboard font. Page content keeps
-// what it had under DashboardLayout until each page is redesigned.
+// what it had under the old DashboardLayout until each page is redesigned.
 .sidebarSlot,
 .topBarSlot,
+.drawerSlot,
 .onDark {
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
@@ -56,9 +65,10 @@
   flex-direction: column;
 }
 
-// Bottom padding stays DashboardLayout's 200px (not the design's 56 / 40) until the
-// list pages are redesigned: the kebab menus on the last rows of Users, Exhibitions
-// and Content open downward and need the room (47dadb64). questions.md Q6.
+// Bottom padding stays the old DashboardLayout's 200px (not the design's 56 / 40)
+// until the list pages are redesigned: the kebab menus on the last rows of Users,
+// Exhibitions and Content open downward and need the room (47dadb64). questions.md
+// Q6. The studio keeps it too: Home's exhibition kebab opens downward (step 15).
 .content {
   padding: var(--space-6) var(--space-4) 200px;
   box-sizing: border-box;
@@ -67,8 +77,8 @@
     padding: 36px var(--space-10) 200px;
   }
 
-  // Same rule DashboardLayout's `.page` applied: headings inside admin pages
-  // read in the dashboard font, not the site's editorial serif.
+  // Same rule the old DashboardLayout's `.page` applied: headings inside the
+  // pages read in the dashboard font, not the site's editorial serif.
   h1,
   h2,
   h3,
@@ -79,16 +89,32 @@
   }
 }
 
+// The studio's column starts 40px down (artist-home.dc.html).
+.studio .content {
+  @include media-up(tablet) {
+    padding-top: var(--space-10);
+  }
+}
+
 .contentInner {
   max-width: var(--admin-content-max-width);
   margin: 0 auto;
 }
 
+// Studio columns (artist.md §0): lists 1080, forms 880.
+.contentInner.list {
+  max-width: var(--studio-content-max-width);
+}
+
+.contentInner.form {
+  max-width: var(--studio-form-max-width);
+}
+
 // Keyboard focus (README, Accessibility; questions.md Q3). globals.scss removes
-// every outline site-wide; inside the admin, links and buttons get a ring back
+// every outline site-wide; inside the shell, links and buttons get a ring back
 // on :focus-visible only, so a mouse click never shows it. Fields keep their own
 // focus styling. Black with a 2px gap on light surfaces, white on the dark ones.
-// Scoped to `.root` so the shell's dialog (outside `.shell`) gets it too.
+// Scoped to `.root` so the shell's dialogs (outside `.shell`) get it too.
 .root :is(a, button, [role='button']):focus-visible {
   outline: 2px solid var(--color-black);
   outline-offset: 2px;

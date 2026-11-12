@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-import { DashboardLayout } from '../../DashboardLayout'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { ErrorText } from '@/components/ui/ErrorText'
 import {
@@ -700,23 +699,19 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   }, [artworkId])
 
   if (loading) {
-    return (
-      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
-        Loading...
-      </DashboardLayout>
-    )
+    return <>Loading...</>
   }
 
   if (error && !artwork) {
     return (
-      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
+      <>
         <ErrorText>{error}</ErrorText>
-      </DashboardLayout>
+      </>
     )
   }
 
   return (
-    <DashboardLayout backLink={backLink} backLabel="← Back to Library">
+    <>
       <ArtworkEditForm
         formData={formData}
         artworkId={artworkId}
@@ -778,6 +773,6 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
           onCancel={() => setReadyVariantIndex(null)}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }

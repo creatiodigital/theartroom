@@ -32,6 +32,8 @@ dashboard (`src/components/dashboard/**`) and must keep working unchanged there.
     reload(): Promise<void> }`; read on mount and on arriving at `/admin/dashboard` or `/admin/orders`.
   - Both exported from `@/components/admin/shell`. The menu model (items, icons, `isNavItemActive`,
     `ordersBadge`) is in `shell/adminNav.ts`.
+  - Since step 14 it is a binding of `ShellFrame` (below): the impersonation-ending effect (unchanged),
+    `AdminShellProvider`, the admin sidebar / top bar / drawer and `PausedBanner`. Same props, same output.
 
 ### `AdminSidebar`
 
@@ -56,8 +58,11 @@ Design: `designs/dashboard.dc.html`, the `<nav aria-label="Admin">` block.
 States drawn in `designs/dashboard-states.dc.html` §2.
 
 - **Built** · `shell/AdminNavItem.tsx` · `{ item: AdminNavItemDef; active: boolean;
-  badge?: OrdersBadge | null; size?: 'menu' | 'drawer'; onNavigate?: () => void }`. The badge count is
+  badge?: OrdersBadge | null; size?: 'menu' | 'drawer'; tone?: ShellTone; onNavigate?: () => void }`. The badge count is
   `aria-hidden` and its meaning is in visually hidden text ("…, 9 orders need attention").
+  `tone` (step 14): `'dark'` (default, as above) or `'light'` (the studio: text `--color-text-primary`, compact
+  `--studio-foot-text`, hover `--color-gray-15` + black, active `--studio-nav-active` + black 600). Also exports
+  `navItemClassName({ tone?, size?, compact?, active? })`, so a `Button` row (the studio's Log out) looks like an item.
 
 | State | Style |
 | --- | --- |
@@ -114,6 +119,34 @@ is reachable from every admin page.
 Full-width red bar at the top of the content area on every admin page while paused.
 `role="status"`, pause icon, bold "Purchases are paused." + sentence, white "Resume purchases"
 button (opens the same confirm dialog).
+
+---
+
+### Shared frame pieces (step 14)
+
+The generic parts of the admin frame, used by the admin (`tone="dark"`) and the artist studio (`tone="light"`).
+All in `src/components/admin/shell/`; the studio imports them by path (never through `shell/index.ts`, which pulls
+in admin server actions).
+
+- **`ShellFrame`** · `{ variant: 'admin' | 'studio'; wrap(frame): ReactNode; sidebar: ReactNode;
+  topBar(menu: ShellMenuControls): ReactNode; drawer(onClose): ReactNode; banner?: ReactNode; topLine?: boolean;
+  width?: 'list' | 'form'; children }`. Session gate (loading bar; unauthenticated → `/`), the drawer's state and
+  effects (opens for the current path only, everything else `inert`, closes at 900 px and on navigation, body
+  scroll locked, focus back to whatever opened it), the slots, the content column with the h1–h6 rule and the
+  focus-ring scope. `wrap` puts the shell's providers inside the gate. `admin`: 36 px top, 1180 px column.
+  `studio`: 40 px top, `width` `list` = `--studio-content-max-width` (1080) / `form` = `--studio-form-max-width`
+  (880); `topLine` = the 3 px `--color-red-50` line over the whole frame (impersonating). Bottom padding 200 px (Q6).
+  `ShellTone = 'dark' | 'light'`; `ShellMenuControls = { menuOpen; onOpenMenu(); menuButtonRef }`.
+- **`ShellSidebar`** · `{ tone; label; children }`: the 248 px `<nav>` column (28/16/20 padding, sections 28 px
+  apart). Dark: `--color-dark-surface`; light: white with a 1 px `--color-border-default` right edge.
+- **`ShellTopBar`** · `ShellMenuControls & { tone; wordmark; accessory?; menuLabel; menuBadge? }`: the < 900 px bar,
+  sticky, 44 px menu button (`List`); `accessory` sits before it (the studio's "Viewing as" pill), `menuBadge` on it
+  (the admin's Orders badge).
+- **`ShellDrawer`** · `{ tone; label; wordmark; onClose(); children }`: full-screen `role="dialog"`, 44 px × (focused
+  on open), Escape closes.
+- **`ShellWordmark`** · `{ tag; tone; size: 'menu' | 'bar'; layout: 'stacked' | 'inline'; href? }`: "The Art Room"
+  (EB Garamond 500, 24 / 20 px) + its tag ("Admin" in `--color-dark-text-muted` on dark, "Artist studio" in
+  `--color-red-50` on light). With `href` a `Link` that drops focus after a pointer click.
 
 ---
 
@@ -377,3 +410,28 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `shell/adminNav.ts`: a Developer group (`API reference`, Code) shown when `showsDeveloperSection(userType)` (admin,
   super admin); `AdminNavItem` gains `compact` (13 px, 16 px icon; 18 px in the drawer). The side menu's foot holds the
   Developer group, then the user card; the drawer shows it as its last group.
+
+## Artist studio shell (step 14)
+
+`src/components/dashboard/shell/`, mounted once by `src/app/dashboard/layout.tsx`. Spec: artist.md §0.
+
+- **`StudioRouteLayout`** · `{ children }`: `children` bare on `STUDIO_BARE_PATHS` (`/dashboard/login`,
+  `/dashboard/change-password`, Q100), else `StudioLayout` = `ShellFrame variant="studio"` wrapped in
+  `AdminDialogProvider` (so studio pages can use `AdminConfirmModal`), `topLine` while impersonating, `width` from
+  `studioContentWidth(pathname)`, and a re-read of the user record on leaving Profile.
+- **`StudioSidebar`** (no props) / **`StudioTopBar`** (`ShellMenuControls`; adds the "Viewing as {name}" pill, a
+  `Button` 44 px tall with a 28 px pill, ellipsis, `aria-haspopup="dialog"`, opens the drawer) /
+  **`StudioMenuDrawer`** · `{ onClose() }` ("Artist menu").
+- **`StudioMenuBody`** · `{ layout: 'sidebar' | 'drawer'; onNavigate?() }`: one body for both: the impersonation card,
+  `<nav aria-label="Artist">` items, then the foot (avatar, name, View my public page ↗, Change password, Log out).
+- **`ImpersonationCard`** · `{ name; onStop(); layout: 'sidebar' | 'drawer' }`: `role="status"`, red eye circle,
+  "Viewing as {name}", "You're signed in as an admin. Changes save to this account.", **Stop impersonating** (36 px;
+  44 px in the drawer). Tokens `--studio-impersonation-*`.
+- **`studioNav.ts`**: `STUDIO_HOME`, `STUDIO_BARE_PATHS`, `STUDIO_NAV_ITEMS` (Home `House`, Artworks `Images`, Profile
+  `User`, Payouts `Bank`), `CHANGE_PASSWORD_ITEM` (`Key`, compact), `PROFILE_PATH`, `isStudioItemActive(pathname, href)`
+  (Home: `/dashboard` and `/dashboard/exhibitions/*`; the rest: exact or prefix), `studioContentWidth(pathname)`.
+- **`useStudioShell.ts`**: `useStudioImpersonation(): { name; stop(): Promise<void> } | null` (the old bar's condition
+  and Stop, verbatim); `useStudioPerson(): { name; imageUrl: string | null; publicHref: string | null }` (RTK
+  `useGetUserQuery`, the session name until it lands, Q96); `useRefreshPersonAfterProfile(pathname)`.
+- Tokens: `--studio-content-max-width`, `--studio-form-max-width`, `--studio-nav-active`, `--studio-avatar`,
+  `--studio-foot-text`, `--studio-impersonation-{surface,border,button-border,label,text}`.

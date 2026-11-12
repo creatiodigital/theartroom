@@ -22,7 +22,7 @@ Do these in order, one PR each.
 | 11 | Print presentations | print-presentations (spec: gallery.md §1) | Built | UI only. |
 | 12 | Content + editors (landing, announcements, gallery selection, `[slug]`) | content, content-slideshow, content-editor (spec: gallery.md §2) | Built (12a, 12b, 12c) | UI only, plus Discard + unsaved-state in the save bar (NEW, approved). Do as 12a list page, 12b sortable lists + announcements, 12c editor. |
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Built | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
-| 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Designed · approved by owner | Reuse the admin shell pieces, no copy. UI only. |
+| 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Designed · approved by owner | UI only. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Designed · approved by owner | UI only; same sections/conditions. Also used by admin edit, check both. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
@@ -576,3 +576,46 @@ closes only the menu; at 390 px: Exit wall view top-left (8 px) and leaving thro
 errors, no horizontal scroll. Seen in passing, not part of this
 step: the cookie banner sits above the leave dialog and covers its Stay / Leave buttons until consent
 is given (fixed in its own commit).
+
+### Step 14 · Artist studio shell — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-11-artist-shell.md` (contract, decisions, Q94–Q101). Files: new shared frame
+pieces `admin/shell/Shell{Frame,Wordmark,Sidebar,TopBar,Drawer}` (`AdminLayout.module.scss` became
+`ShellFrame.module.scss`), `AdminNavItem` (`tone`, `navItemClassName`), the admin bindings re-expressed on them
+(`AdminLayout`, `AdminSidebar`, `AdminTopBar`, `AdminMenuDrawer`: same props and output), new
+`dashboard/shell/*` (`StudioLayout` + `StudioRouteLayout`, `StudioSidebar`, `StudioTopBar`, `StudioMenuDrawer`,
+`StudioMenuBody`, `ImpersonationCard`, `studioNav`, `useStudioShell`), new `app/dashboard/layout.tsx`, tokens
+`--studio-*`, the six studio page components (wrappers and back links out); `DashboardLayout.tsx` / `index.ts` and
+`ui/Logout` deleted (no users left; `DashboardLayout.module.scss` stays for its shared page classes, minus the frame
+rules); e2e: two impersonation lines, two comments, new `studio-shell.spec.ts`.
+
+1. **One frame, two tones, no copy.** `ShellFrame` holds what was generic in `AdminLayout` (session gate, loading
+   screen, drawer state and effects, slots, content column, focus-ring scope); the admin keeps only its own parts
+   (the impersonation-ending effect, verbatim; `AdminShellProvider`; `PausedBanner`). The wordmark's three copies are
+   one `ShellWordmark`. The studio binds the same pieces with `tone="light"`.
+2. **Mounted once** in `app/dashboard/layout.tsx`, so the menu and its user read persist across studio pages.
+   `/dashboard/login` and `/dashboard/change-password` pass through bare (the forced first-login screen stays as
+   today; Q100).
+3. **Menu** per artist.md §0: Home, Artworks, Profile, Payouts (Phosphor light, fill when active). Home is lit on
+   `/dashboard` and on an exhibition's settings; Artworks on the artwork editor. No Payouts dot: nothing the shell
+   has knows the payouts state (Q98). The foot: avatar (photo, else initials), full name, **View my public page ↗**
+   (new tab), Change password, Log out (today's `signOutAndVerify`).
+4. **Name and photo** come from the user record through the RTK query Home already makes (no extra call on Home),
+   re-read once on leaving Profile; the session name meanwhile or after a failure (Q96).
+5. **Impersonation**: the red bar became the menu's card (`role="status"`, "Viewing as {name}", one line, **Stop
+   impersonating**) plus a 3 px red top line; on phones a "Viewing as {name}" pill in the top bar opens the drawer.
+   The condition and Stop are today's, verbatim (Stop navigates only after the impersonation has ended). The studio
+   never ends an impersonation itself; going back to an admin page still does (`AdminLayout`'s effect, unchanged).
+6. **Content width**: 1080 px for Home, Artworks and the artwork editor, 880 px for Profile, Payouts and Exhibition
+   settings (the frame picks it from the path). Bottom padding stays 200 px until step 15's row menu (Q6 / Q101 d).
+7. **Back links**: "← Back to Dashboard" and "← Back to Library" are gone (the menu lights the page). Home's
+   "← Back to Admin Dashboard" for an admin in their own studio stays as a plain in-page link (Q99).
+8. **Phone** (not drawn, Q94): light sticky top bar (stacked wordmark, the pill, 44 px menu button), white full-screen
+   drawer with the card on top, 48 px items, the foot at the bottom; focus returns to whatever opened it.
+
+Verified: typecheck, lint, prettier; the `AdminLayout` effect, Stop and `useEffectiveUser` diffed against HEAD
+(identical); e2e on port 3001 (both impersonation specs, both logout specs, the studio page specs that load inside
+the frame, the new `studio-shell.spec`): 88 passed, 2 skipped (they need data the dev DB lacks); browser on my own
+`pnpm dev` (dev DB, read-only) at 1440 and 390 px: every studio page's active item and width, no horizontal scroll,
+no console errors; the admin drawer pixel-identical to before, the admin side menu identical apart from counts still
+loading in one shot.

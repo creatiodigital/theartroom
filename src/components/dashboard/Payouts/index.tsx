@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 
 import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
@@ -114,7 +113,7 @@ export const PayoutsPage = () => {
   }, [load])
 
   return (
-    <DashboardLayout backLink="/dashboard">
+    <>
       <h1 className={dashboardStyles.pageTitle}>Payouts</h1>
 
       {loading && (
@@ -227,7 +226,7 @@ export const PayoutsPage = () => {
           onCancel={() => setConfirmingDisconnect(false)}
         />
       )}
-    </DashboardLayout>
+    </>
   )
 }
 

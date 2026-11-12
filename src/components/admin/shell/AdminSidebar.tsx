@@ -1,13 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import c from 'classnames'
 
 import { AdminNavItem } from './AdminNavItem'
 import { AdminUserCard } from './AdminUserCard'
-import { blurOnPointerClick } from './blurOnPointerClick'
 import { useAttentionCounts } from './AdminShellContext'
 import {
   ADMIN_DASHBOARD_ITEM,
@@ -18,6 +16,8 @@ import {
   ordersBadge,
   showsDeveloperSection,
 } from './adminNav'
+import { ShellSidebar } from './ShellSidebar'
+import { ShellWordmark } from './ShellWordmark'
 import { StorefrontSwitch } from './StorefrontSwitch'
 
 import styles from './AdminSidebar.module.scss'
@@ -31,11 +31,8 @@ export function AdminSidebar() {
   const showsDeveloper = showsDeveloperSection(session?.user?.userType)
 
   return (
-    <nav aria-label="Admin" className={styles.sidebar}>
-      <Link href={ADMIN_HOME} className={styles.wordmark} onClick={blurOnPointerClick}>
-        <span className={styles.wordmarkName}>The Art Room</span>
-        <span className={styles.wordmarkTag}>Admin</span>
-      </Link>
+    <ShellSidebar tone="dark" label="Admin">
+      <ShellWordmark href={ADMIN_HOME} tag="Admin" tone="dark" size="menu" layout="stacked" />
 
       <div className={styles.group}>
         <AdminNavItem
@@ -76,6 +73,6 @@ export function AdminSidebar() {
         )}
         <AdminUserCard layout="sidebar" />
       </div>
-    </nav>
+    </ShellSidebar>
   )
 }

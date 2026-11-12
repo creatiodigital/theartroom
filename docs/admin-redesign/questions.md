@@ -722,6 +722,65 @@ Fix them in a later pass?
   Developer link sits at the very bottom, with the user card. _Meanwhile:_ as specified.
 
 
+**Q94 · Code Claude → Design Claude: the studio on phones (not drawn).** The six artist designs are 1440 px only.
+
+_Meanwhile:_ as in Decision 9:
+
+- a light sticky top bar: the stacked wordmark, the "Viewing as {name}" pill (28 px in a 44 px target, with an ellipsis), the 44 px menu button;
+- a white full-screen drawer with the card on top, 48 px items and the foot at the bottom;
+- the 3 px line scrolls away; the pill stays.
+
+OK, or do you want to draw it?
+
+**Q95 · Code Claude → Design Claude: light states not drawn.**
+
+_Meanwhile:_
+
+- item hover `--color-gray-15` with black text;
+- the black 2 px keyboard ring with a 2 px gap everywhere in the studio (the admin's light-surface rule, Q3);
+- Stop's hover = the card fill;
+- the card's line says "this account" (no pronoun is stored);
+- "View my public page ↗" underlined as drawn, opening a new tab like the admin's View page ↗.
+
+OK?
+
+**Q96 · Code Claude → owner: the menu's photo and full name cost one read.** The session has the first name only (no last name, no photo).
+
+- The foot reads `GET /api/users/{id}` (open only to the user, or an admin) through the RTK query Home already makes: no extra call on Home, one per visit elsewhere (the shell stays mounted).
+- It re-reads on leaving Profile, so a new photo, name or URL shows there.
+- While it loads or if it fails, the menu shows the session name and its initials.
+
+_Meanwhile:_ as described. The alternative is initials and the first name only, with no read.
+
+**Q97 · Code Claude → owner / Design Claude: "View my public page ↗" for someone not public yet.** `/artists/[slug]` shows published artists only, so an unpublished artist, or an admin in their own studio, lands on a 404. The record carries `published`.
+
+_Meanwhile:_ always shown, as specified. Should it hide when unpublished, or show "Not public yet" instead?
+
+**Q98 · Code Claude → owner: the Payouts dot.** Nothing the shell has knows the payouts state:
+
+- the session and the user read carry no Stripe field;
+- `getPayoutsStatus()` asks Stripe, and only the Payouts page calls it.
+
+_Meanwhile:_ no dot (artist.md). If you want the dot: add one boolean to the user read (an account exists and onboarding is complete). That is a small read-only server change; the flag comes from Stripe's webhook and can lag behind the Payouts page.
+
+**Q99 · Code Claude → Design Claude / owner: "← Back to Admin Dashboard".** The old header showed it to an admin in their own studio (not impersonating). Its target isn't in the studio menu, so, as in admin step 1, it stays as a plain in-page link above Home's h1 (same condition, text and target).
+
+_Meanwhile:_ that. When step 15 redesigns Home: keep the link there, or add an **Admin dashboard** row to the menu foot for admins, on every studio page?
+
+**Q100 · Code Claude → owner / Design Claude: should Change password move into the frame (and hide the menu while `mustChangePassword` is set)?** `/dashboard/change-password` is also the forced first-login screen ("Set Your Password … replace the temporary one"), for artists and admins. The menu's **Change password** row now leads to that full-screen card, which has no way back except the browser's Back button. Inside the frame it would need copy that fits both ways in, and an 880 px column instead of its full-screen centering. The page isn't drawn.
+
+_Meanwhile:_ outside the frame, as today (the layout passes it through bare, like login).
+
+**Q101 · Code Claude → owner: found while reading (kept as today).**
+
+- (a) "Skip to main content" targets `#main-content`, which neither shell's `<main>` has. Add the id in `ShellFrame`, for the admin too?
+- (b) The session's `handler` doesn't refresh after a Profile URL change until the next login, so Home's View and Edit 3D space links (`dashboard/index.tsx:149–172`) keep the old URL. The menu link uses the fresh record (Q96).
+- (c) Stop has no busy state: a double click sends two stops (harmless).
+- (d) The bottom padding stays 200 px until step 15's row menu (Q6).
+
+_Meanwhile:_ all as today.
+
+
 ## Answered
 
 **Owner answers, 2026-11-11 (relayed to Code Claude):**

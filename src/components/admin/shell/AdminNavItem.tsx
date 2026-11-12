@@ -5,6 +5,7 @@ import c from 'classnames'
 
 import type { AdminNavItemDef, OrdersBadge } from './adminNav'
 import { blurOnPointerClick } from './blurOnPointerClick'
+import type { ShellTone } from './ShellFrame'
 
 import styles from './AdminNavItem.module.scss'
 
@@ -17,6 +18,34 @@ type AdminNavItemProps = {
   size?: 'menu' | 'drawer'
   /** The drawer closes itself on any item, the current page included (no route change then). */
   onNavigate?: () => void
+  /** `dark` = the admin's menu (default); `light` = the artist studio's (artist.md §0). */
+  tone?: ShellTone
+}
+
+type NavItemClassOptions = {
+  tone?: ShellTone
+  size?: 'menu' | 'drawer'
+  compact?: boolean
+  active: boolean
+}
+
+/**
+ * A menu row's classes. Exported for a row that is a button rather than a
+ * link (the studio's Log out), so it looks and behaves like the others.
+ */
+export function navItemClassName({
+  tone = 'dark',
+  size = 'menu',
+  compact = false,
+  active,
+}: NavItemClassOptions): string {
+  return c(
+    styles.item,
+    tone === 'light' && styles.light,
+    compact && styles.compact,
+    styles[size],
+    active && styles.active,
+  )
 }
 
 // 18 px in the side menu, 20 px in the drawer; a compact item's icon is 2 px smaller.
@@ -28,6 +57,7 @@ export function AdminNavItem({
   badge,
   size = 'menu',
   onNavigate,
+  tone = 'dark',
 }: AdminNavItemProps) {
   const ItemIcon = item.icon
   return (
@@ -38,12 +68,7 @@ export function AdminNavItem({
         onNavigate?.()
       }}
       aria-current={active ? 'page' : undefined}
-      className={c(
-        styles.item,
-        item.compact && styles.compact,
-        styles[size],
-        active && styles.active,
-      )}
+      className={navItemClassName({ tone, size, compact: item.compact, active })}
     >
       <ItemIcon
         size={ICON_SIZE[size] - (item.compact ? 2 : 0)}

@@ -164,6 +164,18 @@
   --admin-chart-4: var(--color-gray-65);
   --admin-chart-5: #e6e6e6;
 
+  // Artist studio (artist.md §0): the light variant of the admin shell. Studio-only.
+  --studio-content-max-width: 1080px; // lists: Home, Artworks, the artwork editor
+  --studio-form-max-width: 880px; // forms: Profile, Payouts, Exhibition settings
+  --studio-nav-active: #f2f0ec; // active menu row
+  --studio-avatar: #e8e2d8; // initials avatar
+  --studio-foot-text: #555555; // Change password / Log out rows
+  --studio-impersonation-surface: #fbeeee; // card fill, phone pill fill
+  --studio-impersonation-border: #f0c9cc; // card and pill border
+  --studio-impersonation-button-border: #e6b8bb;
+  --studio-impersonation-label: #8f1119; // "Viewing as"
+  --studio-impersonation-text: #6b2a2e; // the card's sentence
+
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;
   --font-dashboard-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

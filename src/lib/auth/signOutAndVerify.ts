@@ -2,8 +2,8 @@ import { signOut } from 'next-auth/react'
 
 /**
  * Signs out, VERIFIES the session is really gone, then sends the browser to the
- * home page. Shared by every "Log out" control (the dashboard header and the
- * admin menu).
+ * home page. Shared by every "Log out" control (the artist studio's menu and
+ * the admin menu).
  *
  * The verify-and-retry loop is load-bearing: Auth.js re-issues the JWT
  * session cookie on /api/auth/session reads (sliding expiration), so a

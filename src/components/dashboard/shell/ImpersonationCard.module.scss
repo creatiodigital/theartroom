@@ -1,0 +1,81 @@
+// artist-home.dc.html, the `impersonating` card under the brand. artist.md §0.
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--studio-impersonation-surface);
+  border: 1px solid var(--studio-impersonation-border);
+  border-left: 3px solid var(--color-red-50);
+  border-radius: var(--radius-md);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mark {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-red-50);
+  color: var(--color-white);
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--studio-impersonation-label);
+}
+
+.name {
+  font-weight: var(--font-bold);
+  color: var(--color-black);
+  overflow-wrap: anywhere;
+}
+
+.line {
+  font-size: var(--text-xs);
+  color: var(--studio-impersonation-text);
+}
+
+// Through `.card` so it outranks Button's own `.bare` reset.
+.card .stop {
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px var(--space-3);
+  box-sizing: border-box;
+  background: var(--color-white);
+  color: var(--color-red-50);
+  border: 1px solid var(--studio-impersonation-button-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+
+  // Not drawn (questions.md Q95): the card's own fill.
+  &:hover {
+    background: var(--studio-impersonation-surface);
+  }
+}
+
+// The phone drawer: a 44px tap target (questions.md Q7).
+.drawer .stop {
+  min-height: 44px;
+}

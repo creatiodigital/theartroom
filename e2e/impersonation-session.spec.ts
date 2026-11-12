@@ -48,7 +48,7 @@ async function impersonate(page: Page, fullName: string) {
   await row.getByRole('button', { name: `Actions for ${fullName}` }).click()
   await page.locator('button:has-text("Impersonate")').first().click()
   await page.waitForURL((url) => url.pathname === '/dashboard')
-  await expect(page.getByText(`Viewing as ${fullName}`)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Viewing as' })).toContainText(fullName)
   await page.waitForLoadState('networkidle')
 }
 

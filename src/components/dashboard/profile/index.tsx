@@ -12,7 +12,6 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useFormValidation } from '@/hooks/useFormValidation'
 import { isEmail, required } from '@/lib/validation'
 
-import { DashboardLayout } from '../DashboardLayout'
 import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './profile.module.scss'
 
@@ -269,11 +268,11 @@ export const DashboardProfilePage = () => {
   }, [user?.profileImageUrl, effectiveUser?.id])
 
   if (loading) {
-    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
+    return <>Loading...</>
   }
 
   return (
-    <DashboardLayout backLink="/dashboard">
+    <>
       {/* Page Title */}
       <h1 className={dashboardStyles.pageTitle}>Edit Profile</h1>
 
@@ -436,6 +435,6 @@ export const DashboardProfilePage = () => {
           />
         </div>
       </form>
-    </DashboardLayout>
+    </>
   )
 }

@@ -58,7 +58,7 @@ async function impersonate(page: Page, name: string) {
   await expect(impersonateItem).toBeEnabled()
   await impersonateItem.click()
   await page.waitForURL(/\/dashboard$/)
-  await expect(page.getByText(`Viewing as ${name}`)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Viewing as' })).toContainText(name)
 }
 
 test("an impersonated artist never sees another artist's exhibitions", async ({ page }) => {
