@@ -155,15 +155,6 @@
   color: var(--public-text);
 }
 
-// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
-.count {
-  margin: 0;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-}
-
 .artistLink {
   margin-bottom: var(--space-6);
 }

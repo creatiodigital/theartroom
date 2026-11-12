@@ -60,7 +60,8 @@ export const PrintsToolbar = ({
         ))}
       </div>
     </div>
-    <p className={styles.count} aria-live="polite">
+    {/* Not shown (owner, 2026-11-12: no counts); still read out when a filter changes it. */}
+    <p className="sr-only" aria-live="polite">
       {count === 1 ? '1 selected print' : `${count} selected prints`}
     </p>
   </div>

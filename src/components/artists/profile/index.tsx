@@ -37,8 +37,6 @@ interface ArtistProfilePageProps {
   biography?: ReactNode
 }
 
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
 /**
  * The artist page (docs/public-redesign/artist.md): hero, About the artist, Exhibitions (rows,
  * without the artist's name), Works. Data and links as before.
@@ -50,15 +48,7 @@ export const ArtistProfilePage = ({
   biography,
 }: ArtistProfilePageProps) => {
   const artistFullName = `${artist.name} ${artist.lastName}`
-  const exhibitionsCount = count(exhibitions.length, 'exhibition', 'exhibitions')
-  const worksCount = count(artworks.length, 'work', 'works')
-  // "1 exhibition · 26 works" (artist.md §1): from the data, nothing invented for none.
-  const countsLine = [
-    exhibitions.length > 0 ? exhibitionsCount : null,
-    artworks.length > 0 ? worksCount : null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  // No counts anywhere on the page (owner, 2026-11-12: "1 exhibition · 8 works" removed).
 
   return (
     <PageLayout>
@@ -67,7 +57,6 @@ export const ArtistProfilePage = ({
           <div className={styles.heroText}>
             <span className={styles.eyebrow}>Artist</span>
             <h1 className={styles.name}>{artistFullName}</h1>
-            {countsLine && <p className={styles.counts}>{countsLine}</p>}
           </div>
           <div className={styles.photo}>
             {artist.profileImageUrl ? (
@@ -93,10 +82,7 @@ export const ArtistProfilePage = ({
         </TextSection>
 
         <section className={styles.group} aria-label="Exhibitions">
-          <SectionHeading
-            title="Exhibitions"
-            count={exhibitions.length > 0 ? exhibitionsCount : undefined}
-          />
+          <SectionHeading title="Exhibitions" />
           {exhibitions.length === 0 ? (
             <p className={styles.empty}>No exhibitions yet.</p>
           ) : (
@@ -125,7 +111,7 @@ export const ArtistProfilePage = ({
 
         {artworks.length > 0 && (
           <section className={styles.group} aria-label="Works">
-            <SectionHeading title="Works" count={worksCount} />
+            <SectionHeading title="Works" />
             {/* `artistHandler` marks the cards as a set the visitor is walking, so
                 the artwork page can offer previous/next through this artist's
                 works. `artistName` is the display name for the cards — different

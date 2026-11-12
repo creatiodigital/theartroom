@@ -134,13 +134,6 @@
   }
 }
 
-.counts {
-  margin-top: 6px;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
 // The full exhibition text: Lato 15.5 / 1.7, #444. Through .body: outranks RichText's own sizes.
 .body .text {
   margin-top: 18px;

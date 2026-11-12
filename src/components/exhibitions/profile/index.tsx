@@ -28,8 +28,6 @@ interface ExhibitionProfilePageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
 
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
 /**
  * The exhibition page (docs/public-redesign/exhibition.md): hero, About the exhibition, the series,
  * "Walk through the exhibition", About the artist. Data, links, cart and the 3D room entry as
@@ -60,14 +58,7 @@ export const ExhibitionProfilePage = ({
   const dateRange =
     startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
 
-  // "26 works · 3 series": from the data; no series part without series (exhibition.md §1).
-  const seriesCount = exhibition.groups.filter((group) => group.title).length
-  const countsLine = [
-    exhibition.artworks.length > 0 ? count(exhibition.artworks.length, 'work', 'works') : null,
-    seriesCount > 0 ? count(seriesCount, 'series', 'series') : null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  // No counts (owner, 2026-11-12: "26 works · 3 series" and each series' "N works" removed).
 
   const enter = (className?: string) =>
     exhibition.spacePublished ? (
@@ -88,7 +79,6 @@ export const ExhibitionProfilePage = ({
               {artistName}
             </Link>
             <h1 className={styles.title}>{exhibition.mainTitle}</h1>
-            {countsLine && <p className={styles.counts}>{countsLine}</p>}
             {dateRange && <p className={styles.dates}>{dateRange}</p>}
             {enter(styles.enter)}
             <Share
@@ -134,12 +124,7 @@ export const ExhibitionProfilePage = ({
                 className={styles.group}
                 aria-label={group.title ?? undefined}
               >
-                {group.title && (
-                  <SectionHeading
-                    title={group.title}
-                    count={count(group.artworks.length, 'work', 'works')}
-                  />
-                )}
+                {group.title && <SectionHeading title={group.title} />}
                 <ArtworkGrid
                   artworks={group.artworks}
                   artistName={artistName}

@@ -61,8 +61,7 @@
   }
 }
 
-// <p>s: size and line height pinned (globals.scss gives every <p> 16–18px).
-.counts,
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
 .empty {
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);

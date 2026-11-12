@@ -52,28 +52,18 @@ export async function generateMetadata({ params }: ExhibitionVisitProps): Promis
   }
 }
 
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
 /**
  * "About this exhibition" in the room menu (docs/public-redesign/room-about.md): the exhibition
- * page's own data and counting rules, read here on the server (the text is sanitized here too). Null
+ * page's own data (no counts, as the page), read here on the server (the text is sanitized here too). Null
  * for an exhibition the public page would not show, so the room then has no such item.
  */
 async function getRoomAbout(artistSlug: string, exhibitionSlug: string): Promise<RoomAbout | null> {
   const exhibition = await getPublicExhibitionByUrl(exhibitionSlug)
   if (!exhibition || exhibition.user.handler !== artistSlug) return null
-  const seriesCount = exhibition.groups.filter((group) => group.title).length
-  const counts = [
-    exhibition.artworks.length > 0 ? count(exhibition.artworks.length, 'work', 'works') : null,
-    seriesCount > 0 ? count(seriesCount, 'series', 'series') : null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`.trim()
   return {
     title: exhibition.mainTitle,
     artistName,
-    counts: counts || null,
     description: isRichTextEmpty(exhibition.description) ? null : (
       <ExhibitionDescription description={exhibition.description!} />
     ),

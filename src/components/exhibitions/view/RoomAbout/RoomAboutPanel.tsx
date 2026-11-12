@@ -12,8 +12,6 @@ import styles from './RoomAboutPanel.module.scss'
 export type RoomAbout = {
   title: string
   artistName: string
-  /** "26 works · 3 series", as the exhibition page counts them; null when there is nothing to count. */
-  counts: string | null
   /** The full exhibition text, already rendered (sanitized on the server). */
   description: ReactNode | null
   /** `biography`: the bio's paragraphs, plain text (whole; owner 2026-11-12: never cut). */
@@ -103,7 +101,6 @@ export const RoomAboutPanel = ({ about, onClose }: { about: RoomAbout; onClose: 
       <div className={styles.body}>
         <span className={styles.artistCaps}>{about.artistName}</span>
         <h2 className={styles.title}>{about.title}</h2>
-        {about.counts && <span className={styles.counts}>{about.counts}</span>}
 
         {about.description && <div className={styles.text}>{about.description}</div>}
 

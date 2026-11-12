@@ -58,19 +58,14 @@
   }
 }
 
-// <p>s: size and line height pinned (globals.scss gives every <p> 16–18px). The drawn #888 is
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). The drawn #888 is
 // 3.5:1 on white; the secondary grey passes.
-.counts,
 .dates {
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 15px;
   line-height: 1.5;
   color: var(--color-text-secondary);
-}
-
-.dates {
-  margin-top: -8px;
 }
 
 .enter {

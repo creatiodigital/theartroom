@@ -63,7 +63,7 @@ export function ExhibitionGroups({ exhibitions }: { exhibitions: ListedExhibitio
         return (
           <section key={key} className={styles.group} aria-labelledby={`group-${key}`}>
             <h2 id={`group-${key}`} className={styles.groupHeading}>
-              {label} <span className={styles.groupCount}>{items.length}</span>
+              {label}
             </h2>
             {items.length === 0 ? (
               <p className={styles.empty}>No current exhibitions.</p>
