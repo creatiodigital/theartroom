@@ -11,6 +11,8 @@
   background: var(--color-white);
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 12px;
+  // Semibold (owner, 2026-11-12); Lato has no 600, so it draws its bold.
+  font-weight: var(--font-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;

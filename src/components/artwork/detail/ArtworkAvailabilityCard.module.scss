@@ -84,7 +84,8 @@
   padding: 0 var(--space-5);
   gap: 10px;
   font-size: 13px;
-  font-weight: var(--font-regular);
+  // Semibold (owner, 2026-11-12), as every Order print; Lato draws it with its bold.
+  font-weight: var(--font-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
