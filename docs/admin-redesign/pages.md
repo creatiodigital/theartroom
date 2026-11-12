@@ -28,7 +28,7 @@ Do these in order, one PR each.
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1, 18-2, 18-3) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Built (18b-1, 18b-2) | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
-| 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
+| 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Built (7fff8bbe, a8c31fbd, 2b956e14) | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
 | 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Built (Q161) | After the admin redesign. Small, behaviour change. |
 
@@ -511,7 +511,7 @@ Verified: typecheck, lint, prettier; logic and queue wiring diffed against HEAD;
 strictly read-only: no switch, select or button touched) at 1440 and 390 px: chips, statuses, How it works,
 no console errors, no horizontal scroll. The render status row is checked in code only (rendering writes).
 
-### Step 19 · Lucide → Phosphor, whole site — Built 2026-11-11 (done right after step 10, owner) · not committed yet
+### Step 19 · Lucide → Phosphor, whole site — Built 2026-11-11 (done right after step 10, owner) · committed 7fff8bbe, a8c31fbd, 2b956e14
 
 Plan: `docs/superpowers/plans/2026-11-11-icons-phosphor.md` (inventory, mapping table, Q48–Q57). Three parts,
 three commits after the owner's look: (1) `ui/Icon` map + public / studio / admin files, (2) the room (menu
