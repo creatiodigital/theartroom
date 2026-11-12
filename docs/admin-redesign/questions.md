@@ -795,6 +795,9 @@ _Meanwhile:_ all as today.
 - **Q81:** add `beforeunload` now (unsaved changes); the in-app link guard later.
 - **Q82:** fix the failed load NOW: a non-2xx load shows "The page could not be loaded." and no editor. The Remove confirm and `link: false` (the duplicate Link extension) in the next pass.
 > **Code Claude, 2026-11-12: done** (each its own commit):
+> - **Q55 (b):** the `Icon` map lost its 17 unused keys (`volume-2` / `headphones` stay: stored sound icons) and the 9
+>   SVGs nothing imports were deleted. Production build, JS transferred: `/` 302 → 296 KB, `/exhibitions` 300 → 294 KB,
+>   `/prints` 306 → 300 KB (−6 KB per page; +23 KB net against before step 19). (c) stays a follow-up ticket.
 > - **Q66 (b):** the Content list shows Gallery selection to super admins only.
 > - **Q80 / Q81 / Q82:** the refused save in the save bar ("Not saved. Please try again.", red, `role="alert"`),
 >   `beforeunload` with unsaved changes, and a failed load showing "The page could not be loaded." with no editor

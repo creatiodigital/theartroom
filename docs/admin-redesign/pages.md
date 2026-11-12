@@ -526,6 +526,8 @@ visitor-wallview.md §3), the editors / wall view chrome and the floor hint, (3)
 3. **SVGs**: pinch and double-tap restroked to Phosphor light's weight; `gesture-slide-vertical` and
    `phone-landscape` deleted (no other importer); `gesture-tap` / `gesture-slide-horizontal` stay (floor hint).
 4. **Page weight** (Q55): +29 KB JS on every page measured (production builds, before vs after).
+   **After Q55 (b), 2026-11-12 (own commit):** 17 unused `Icon` keys and 9 orphan SVGs removed: `/` 302 → 296 KB,
+   `/exhibitions` 300 → 294 KB, `/prints` 306 → 300 KB.
 
 Verified: typecheck, lint, prettier, no `lucide` left in `src` or `package.json`; production build (tree-shaking
 works: no unused Phosphor icon in the output); 19 e2e specs that show icons, 92/92; the 3D suite: in its

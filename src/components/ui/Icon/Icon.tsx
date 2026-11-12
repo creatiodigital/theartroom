@@ -10,32 +10,24 @@ import {
   ArrowLineRight,
   ArrowLineUp,
   ArrowRight,
-  ArrowsHorizontal,
-  ArrowsVertical,
   Armchair,
   Camera,
   CheckCircle,
-  CircleNotch,
   Cube,
   Eye,
   EyeSlash,
   FolderSimplePlus,
-  GearSix,
   GridFour,
   Headphones,
   House,
   Image,
-  Info,
   Lightbulb,
   LinkSimple,
   LockSimple,
   Magnet,
-  Monitor,
-  MusicNotes,
   Pause,
   PencilSimple,
-  // Aliased: the custom `person.svg` below is imported as `Person`.
-  Person as PersonStanding,
+  Person,
   Play,
   Plus,
   Printer,
@@ -47,7 +39,6 @@ import {
   SelectionForeground,
   Shapes,
   SpeakerHigh,
-  SpeakerLow,
   Square,
   TextT,
   Trash,
@@ -61,17 +52,9 @@ import type { FC, SVGProps } from 'react'
 import ChevronDown from '@/icons/chevron-down.svg'
 import DistributeHorizontal from '@/icons/distribute-horizontal.svg'
 import DistributeVertical from '@/icons/distribute-vertical.svg'
-import Drop from '@/icons/drop.svg'
-import Expand from '@/icons/expand.svg'
-import Grid from '@/icons/grid.svg'
 import HorizontalCenter from '@/icons/horizontal-center.svg'
 import HorizontalLeft from '@/icons/horizontal-left.svg'
 import HorizontalRight from '@/icons/horizontal-right.svg'
-import Loading from '@/icons/loading.svg'
-import Move from '@/icons/move.svg'
-import Painting from '@/icons/painting.svg'
-import Person from '@/icons/person.svg'
-import Picture from '@/icons/picture.svg'
 import Placeholder from '@/icons/placeholder.svg'
 import PositionBottom from '@/icons/position-bottom.svg'
 import PositionCenterH from '@/icons/position-center-h.svg'
@@ -88,7 +71,6 @@ import TextRight from '@/icons/text-right.svg'
 import TextVerticalBottom from '@/icons/text-vertical-bottom.svg'
 import TextVerticalCenter from '@/icons/text-vertical-center.svg'
 import TextVerticalTop from '@/icons/text-vertical-top.svg'
-import Text from '@/icons/text.svg'
 import VerticalBottom from '@/icons/vertical-bottom.svg'
 import VerticalCenter from '@/icons/vertical-center.svg'
 import VerticalTop from '@/icons/vertical-top.svg'
@@ -99,7 +81,9 @@ import ZoomOut from '@/icons/zoom-out.svg'
 type CustomSvgIcon = FC<SVGProps<SVGSVGElement>>
 
 // Phosphor icons registry. The keys are the names callers (and stored sound works) use: never
-// rename one.
+// rename one. Stored sound works hold 'volume-2' or 'headphones' only: the schema default and
+// the only two options ArtisticSoundPanel has ever offered. Unused keys were dropped (Q55 b):
+// each Phosphor icon here ships in every page that has a Button.
 const phosphorIcons: Record<string, PhosphorIcon> = {
   'alert-circle': WarningCircle,
   armchair: Armchair,
@@ -120,18 +104,12 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
   'grid-2x2': GridFour,
   headphones: Headphones,
   house: House,
-  'human-standing': PersonStanding,
+  'human-standing': Person,
   image: Image,
-  info: Info,
   light: Lightbulb,
   link: LinkSimple,
-  loaderCircle: CircleNotch,
   lock: LockSimple,
   magnet: Magnet,
-  monitor: Monitor,
-  moveHorizontal: ArrowsHorizontal,
-  moveVertical: ArrowsVertical,
-  music: MusicNotes,
   'panel-bottom-dashed': Selection,
   pause: Pause,
   plus: Plus,
@@ -143,7 +121,6 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
   redo: ArrowClockwise,
   ruler: Ruler,
   'send-to-back': SelectionBackground,
-  settings: GearSix,
   shapes: Shapes,
   square: Square,
   'square-pen': PencilSimple,
@@ -151,7 +128,6 @@ const phosphorIcons: Record<string, PhosphorIcon> = {
   type: TextT,
   undo: ArrowCounterClockwise,
   video: VideoCamera,
-  'volume-1': SpeakerLow,
   'volume-2': SpeakerHigh,
 }
 
@@ -160,16 +136,9 @@ const customIcons: Record<string, CustomSvgIcon> = {
   chevronDown: ChevronDown,
   distributeHorizontal: DistributeHorizontal,
   distributeVertical: DistributeVertical,
-  drop: Drop,
-  grid: Grid,
   horizontalLeft: HorizontalLeft,
   horizontalCenter: HorizontalCenter,
   horizontalRight: HorizontalRight,
-  expand: Expand,
-  loading: Loading,
-  move: Move,
-  painting: Painting,
-  person: Person,
   positionLeft: PositionLeft,
   positionTop: PositionTop,
   positionBottom: PositionBottom,
@@ -177,12 +146,10 @@ const customIcons: Record<string, CustomSvgIcon> = {
   positionCenterH: PositionCenterH,
   positionRight: PositionRight,
   preview: Preview,
-  picture: Picture,
   placeholder: Placeholder,
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
   reset: Reset,
-  text: Text,
   textLeft: TextLeft,
   textCenter: TextCenter,
   textRight: TextRight,
