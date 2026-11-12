@@ -1,0 +1,15 @@
+// Paragraphs pin their own size: globals.scss gives every <p> the 16–18px reading size.
+.line {
+  margin: 0;
+  display: flex;
+  gap: var(--space-2);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}

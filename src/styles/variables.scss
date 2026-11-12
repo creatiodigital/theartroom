@@ -177,6 +177,35 @@
   --studio-impersonation-text: #6b2a2e; // the card's sentence
   --studio-note-surface: #f7f7f7; // the artwork editor's print-size box
 
+  // 3D room editor chrome (editor3d.md): the toolbar, the editing pill and the tool panels
+  // floating over the room (`components/editorChrome`). Editor-only.
+  --editor-toolbar-surface: rgba(255, 255, 255, 0.96); // toolbar, editing pill
+  --editor-panel-surface: rgba(255, 255, 255, 0.97); // the tool panels
+  --editor-toolbar-shadow: 0 8px 28px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --editor-panel-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --editor-pill-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --editor-thumb-shadow: 0 0 0 1.5px var(--color-dark-surface), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --editor-swatch-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.12); // a color swatch's hairline
+  --editor-card: #f7f7f7; // section and row cards
+  --editor-chip: #f2f2f2; // a slider's value chip on white
+  --editor-track: #e3e3e3; // a slider's track on white
+  --editor-attention-dot: #e0a800; // the editing pill, "Unsaved changes"
+  --editor-tone-natural: #e7dccb; // Floor → Tone track
+  --editor-tone-honey: #c8924f;
+  --editor-tint-lighting: #fff4d6;
+  --editor-tint-lighting-icon: #8a5a00;
+  --editor-tint-benches: #efe7dc;
+  --editor-tint-benches-icon: #6b4e2e;
+  --editor-tint-floor: #f1e6d6;
+  --editor-tint-floor-icon: #7a5a30;
+  --editor-tint-bake: #e8eef7;
+  --editor-tint-bake-icon: #2c4a73;
+  --editor-tint-windows: #e6f0f5;
+  --editor-tint-windows-icon: #2c5a73;
+  --editor-tint-view: #ece8f4;
+  --editor-tint-view-icon: #4a3a73;
+  --editor-tint-walls: #eceae6; // icon: --color-text-primary
+
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;
   --font-dashboard-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

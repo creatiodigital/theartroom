@@ -909,7 +909,49 @@ _Meanwhile:_ all as today. Fix (a), (c) and (d) in a later pass?
 
 **Q129 · Code Claude → Design Claude: one studio panel.** Profile, Payouts and settings share a new `StudioPanel` (h2 15 px, as their designs); 16a's artwork editor has its own `shared/ArtworkEditForm/EditorPanel.tsx` (h2 18 px as its design, keyed to the editor's `ArtworkSection` for the On this page anchors, so not reusable as is). _Meanwhile:_ two panels, as drawn. Merge them later (one component, `size` 15 / 18)?
 
+**Q130 · Code Claude → Design Claude: the shell's name, and one switch size.** pages.md row 18 and editor3d.md name the shell `EditorPanel`; step 16a already has an `EditorPanel` (the artwork editor's section). _Meanwhile:_ `ToolPanel` in a new `src/components/editorChrome/` with the rows the wall view will reuse (Decision 21); `SettingsPanel` retired. The 3D switch is drawn 36 × 22, the wall view's 34 × 20: _meanwhile_ one `Toggle tone="editor"` at 36 × 22 for both. Please update the docs' name; one size OK?
+
+**Q131 · Code Claude → owner: "Unsaved changes" in the footer.** No panel knows whether its values differ from the last save: `saved` only means "saved since this panel's last edit", and edits stay in the store, unsaved, after the panel closes, so a reopened panel can't tell. _Meanwhile:_ nothing on the left; Save keeps its three states ("Saving…", "Saved", "Save"). Options: a snapshot when the panel opens (display only; misses edits from an earlier opening), or a store-wide "changed since load" (Redux state: not UI only).
+
+**Q132 · Code Claude → owner: the Bake dot.** The store holds the exhibition as loaded, and its fingerprint goes stale after every save; only the Bake panel reads the live status (on open and on window focus). _Meanwhile:_ no dot, as the spec says. Adding it means the toolbar makes that same request on mount and on focus, for admins in baked spaces. Do it?
+
+**Q133 · Code Claude → Design Claude: the lamp picker with rooms (Vienna, 2 × 14).** _Meanwhile:_ one 5-column grid per room under today's "Room n · 14 lamps" caption inside Each lamp (the rooms no longer collapse), one selected lamp for the whole space (default: the first lamp of the first room), its controls once under the grids titled "Room 2 · Lamp 3". OK?
+
+**Q134 · Code Claude → owner: "Distance from the wall".** That slider is the light's reach (three's SpotLight distance: the light fades toward it and reaches nothing beyond; the top is "No limit"), not how far the lamp is from the wall. _Meanwhile:_ today's "Distance". Rename it "Reach" or "How far the light reaches"?
+
+**Q135 · Code Claude → owner: visible labels vs spoken names.** The spec keeps today's `aria-label`s, so renamed rows are announced by their old names: "Brightness" is read as "Track Lamp Intensity", "Turn" as "Lamp 3 rotation", "Shift across" as "Tile Position X" (WCAG 2.5.3, label in name). No e2e reads them. _Meanwhile:_ today's names. Switch them to the visible words (e.g. "Track lamps brightness", "Lamp 3 turn")?
+
+**Q136 · Code Claude → owner / Design Claude: wood type tiles.** No floor has a color or a small thumbnail; the only images are the 0.5–4 MB texture maps. _Meanwhile:_ the spec's fallback, today's select restyled. Add three small swatch images (new static files) or a color per floor (new data) for the drawn tiles?
+
+**Q137 · Code Claude → Design Claude: panels and parts not drawn.** _Meanwhile:_ Display panels: grey tint, a `Columns` icon (Rows is Floor and Rectangle is Spots), today's hint as the line, and **not folded when off** (folding is approved for benches only); Artwork panel: the shell with an Image tile, the work's title as the h2, the author as the line, image, technique and dimensions in the body, View details in the footer (the serif label look goes); Lighting's Window section: SunHorizon, sub "Daylight through the windows", summary = Daylight %; the not-baked Lighting and Floor branches (no space uses them today): today's labels in sentence case, no summaries, Floor line "The floor's material and how it is laid."; the three dimmers all read "Brightness". OK?
+
+**Q138 · Code Claude → Design Claude: layout points not drawn.** _Meanwhile:_ the toolbar is ~630 px tall with Bake, so on shorter windows and phones sideways it scrolls inside the viewport (touch scrolls it; a mouse wheel over it still turns the room, Q139 d); on phones the toolbar and pill sit 8 px in and an open panel covers the screen with an 8 px inset; panels run full height (top and bottom 16) even when short (Walls, Windows, View), as the spec says; the Bake box has no "Baking…" state (the bake runs in its own tab), loading is grey, not baked is amber, a failed read is red; Floor and View are static cards as drawn, Lighting's sections stay collapsible and closed by default as today (remembered per section); the drawn 500 weights are 600 (Geist has no 500 here). OK, or a compact toolbar for short windows?
+
+**Q139 · Code Claude → owner: found while reading (kept as today).**
+
+- (a) In the editor, the Artwork panel's **View details** opens nothing: it closes the panel and sets the room's details flag, but only the visit page renders the details (`ArtworkModal`).
+- (b) A refused save (non-2xx) shows nothing in any of the seven panels: the button just returns to "Save"; a network failure is only logged.
+- (c) Arrow keys in a focused panel slider also walk the camera (it listens on `window`; panels stop the mouse and the wheel, not keys).
+- (d) The mouse wheel over the toolbar moves the room (the toolbar has no guard), so it can't be wheel-scrolled when it overflows.
+- (e) "Saved!" clears after 2 s in Benches and Display panels, but stays until the next edit elsewhere.
+- (f) In Vienna, lamp numbers restart per room, so two lamps are both named "Lamp 1 enabled" / "Lamp 1 rotation".
+- (g) **Exit** leaves without asking even when a panel has unsaved edits (they are lost).
+- (h) The Artwork panel and an open tool panel can be open together, one over the other.
+
+_Meanwhile:_ all as today. Fix (a), (b) and (c) in a later pass?
+
+**Q140 · Code Claude → owner: the Icon map after this step.** The keys `light`, `panel-top`, `armchair`, `house`, `grid-2x2`, `brick-wall`, `preview`, `placeholder` and `src/icons/preview.svg` / `placeholder.svg` lose their only user (the old toolbar). _Meanwhile:_ removed in 18-3 under the Q55 (b) rule (unused keys and orphan SVGs go). Keep them instead?
+
 ## Answered
+
+**Owner answers, 2026-11-12 (step 18, relayed to Code Claude):**
+- **Q131:** yes, the Unsaved dot: "any change since the last save" (set on edit, cleared on a successful save), with
+  `beforeunload` while it is on. If it needs real state work, it becomes its own step right after step 18.
+- **Q134:** rename "Distance from the wall" to "Light reach".
+- **Q135:** yes, accessible names = the visible words.
+- **Q139:** fix now if small: View details opening nothing, and a refused save showing a red "Not saved. Please try
+  again." in the Save area. Arrow keys moving the camera from a slider, and the rest, in the later pass.
+- **Q140:** yes, remove the 8 unused Icon keys and the 2 SVGs.
 
 **Owner answers, 2026-11-12 (step 17, relayed to Code Claude):**
 - **Q118:** as described; and every page with a save bar gets `beforeunload` ("Leave site?"), step 16 included (Q111).

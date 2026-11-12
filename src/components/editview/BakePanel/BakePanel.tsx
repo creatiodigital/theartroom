@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { CheckCircle, Cube, Warning, WarningCircle, type Icon } from '@phosphor-icons/react'
+import c from 'classnames'
 
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import { InfoLine, ToolPanel } from '@/components/editorChrome'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
 import { bakePageHref } from '@/lib/bake/bakePageHref'
 import { isBakeRecord, type BakeRecord } from '@/lib/bake/bakeRecord'
 import { editorBakeStatus } from '@/lib/bake/bakeStatus'
@@ -15,6 +16,15 @@ import type { RootState } from '@/redux/store'
 import styles from './BakePanel.module.scss'
 
 type Loaded = { bake: BakeRecord | null; fingerprint?: string; artistSlug?: string }
+
+type StatusBox = { tone: 'plain' | 'red' | 'amber' | 'green'; title: string; line?: string }
+
+const STATUS_ICON: Record<StatusBox['tone'], Icon | null> = {
+  plain: null,
+  red: WarningCircle,
+  amber: Warning,
+  green: CheckCircle,
+}
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })
@@ -62,12 +72,21 @@ const BakePanel = () => {
   const status = loaded ? editorBakeStatus(loaded.bake, loaded.fingerprint) : null
   const bake = loaded?.bake ?? null
 
-  let message = 'Checking the bake…'
-  if (failed && !loaded) message = 'Could not read the bake status.'
-  else if (status === 'none') message = 'Not baked yet'
+  // Today's five states, conditions and words, in today's order; each now with its tone, and
+  // the current / stale ones as a title and a line (designs/editor-3d-panels.dc.html).
+  let box: StatusBox = { tone: 'plain', title: 'Checking the bake…' }
+  if (failed && !loaded) box = { tone: 'red', title: 'Could not read the bake status.' }
+  else if (status === 'none') box = { tone: 'amber', title: 'Not baked yet' }
   else if (status === 'current' && bake) {
-    message = `Bake is current — baked ${formatDate(bake.bakedAt)}${bake.reviewedAt ? ', reviewed' : ''}`
-  } else if (status === 'stale') message = 'The room changed since the last bake.'
+    box = {
+      tone: 'green',
+      title: 'Bake is current',
+      line: `Baked ${formatDate(bake.bakedAt)}${bake.reviewedAt ? ', reviewed' : ''}`,
+    }
+  } else if (status === 'stale') {
+    box = { tone: 'amber', title: 'Out of date', line: 'The room changed since the last bake.' }
+  }
+  const BoxIcon = STATUS_ICON[box.tone]
 
   // AR-169 Quick bake: the bake page at `bakequality=quick` — fewer samples, shown in that tab
   // only, never uploaded or saved (`BakeRunner`).
@@ -80,47 +99,59 @@ const BakePanel = () => {
   const ready = Boolean(loaded?.artistSlug)
 
   return (
-    <SettingsPanel title="Baked Lighting" onClose={() => dispatch(hideBakePanel())}>
-      <div className={styles.body}>
-        <Text font="dashboard" as="p" size="xs" className={styles.status} data-testid="bake-status">
-          {message}
-        </Text>
-        <Text font="dashboard" as="p" size="xs" className={styles.hint}>
-          Bake lights the room once, so visitors see it instantly. Review the result before
-          publishing.
-        </Text>
-        <div className={styles.actions}>
+    <ToolPanel
+      title="Bake the room"
+      description="Lights the room once, so visitors see it instantly."
+      icon={Cube}
+      tint="bake"
+      onClose={() => dispatch(hideBakePanel())}
+    >
+      <div className={styles.content}>
+        <div role="status" data-testid="bake-status" className={c(styles.status, styles[box.tone])}>
+          {BoxIcon && (
+            <BoxIcon size={18} weight="light" aria-hidden className={styles.statusIcon} />
+          )}
+          <span className={styles.statusText}>
+            <strong className={styles.statusTitle}>{box.title}</strong>
+            {box.line && <span>{box.line}</span>}
+          </span>
+        </div>
+        <p className={styles.review}>Review the result before publishing.</p>
+        <Button
+          variant="bare"
+          font="dashboard"
+          className={styles.bake}
+          disabled={!ready}
+          onClick={() => open('bake')}
+        >
+          Bake
+        </Button>
+        <div className={styles.secondary}>
           <Button
-            size="regular"
-            variant="primary"
-            label="Bake"
-            fullWidth
-            disabled={!ready}
-            onClick={() => open('bake')}
-          />
-          <Button
-            size="regular"
-            variant="secondary"
-            label="Quick bake"
-            fullWidth
+            variant="bare"
+            font="dashboard"
+            className={styles.outline}
             disabled={!ready}
             onClick={() => open('quick')}
-          />
+          >
+            Quick bake
+          </Button>
           <Button
-            size="regular"
-            variant="secondary"
-            label="View baked room"
-            fullWidth
+            variant="bare"
+            font="dashboard"
+            className={styles.outline}
             disabled={!ready || !bake}
             onClick={() => open('review')}
-          />
+          >
+            View baked room
+          </Button>
         </div>
-        <Text font="dashboard" as="p" size="xs" className={styles.hint}>
-          Quick bake: a fast, rougher preview on this computer only — never saved, never shown to
+        <InfoLine>
+          Quick bake: a fast, rougher preview on this computer only. Never saved, never shown to
           visitors.
-        </Text>
+        </InfoLine>
       </div>
-    </SettingsPanel>
+    </ToolPanel>
   )
 }
 

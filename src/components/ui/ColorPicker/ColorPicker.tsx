@@ -9,9 +9,28 @@ type ColorPickerProps = {
   textColor: string
   onColorSelect: (color: string) => void
   disabled?: boolean
-}
+} & (
+  | { variant?: 'default'; name?: undefined }
+  | {
+      /**
+       * The 3D editor's color rows (editor3d.md): the whole row is the input's <label>, so a
+       * click anywhere on it opens the same native picker. `row`: a 40px swatch, the name over
+       * the hex, "Change" on the right (Walls, Windows). `inline`: the name on the left, a 24px
+       * swatch and the hex on the right (inside a card, e.g. Lamp color).
+       */
+      variant: 'row' | 'inline'
+      /** The row's visible name; with the hex, the input's accessible name. */
+      name: string
+    }
+)
 
-const ColorPicker = ({ textColor = '#000000', onColorSelect, disabled }: ColorPickerProps) => {
+const ColorPicker = ({
+  textColor = '#000000',
+  onColorSelect,
+  disabled,
+  variant = 'default',
+  name,
+}: ColorPickerProps) => {
   const [selectedColor, setSelectedColor] = useState(textColor)
 
   useEffect(() => {
@@ -24,11 +43,49 @@ const ColorPicker = ({ textColor = '#000000', onColorSelect, disabled }: ColorPi
     onColorSelect(color)
   }
 
+  const disabledStyle = disabled ? { opacity: 0.5, pointerEvents: 'none' as const } : undefined
+
+  if (variant === 'row') {
+    return (
+      <label className={styles.row} style={disabledStyle}>
+        <input
+          type="color"
+          className={styles.rowSwatch}
+          value={selectedColor}
+          onChange={handleColorChange}
+          disabled={disabled}
+        />
+        <span className={styles.rowText}>
+          <span className={styles.rowName}>{name}</span>
+          <span className={styles.hex}>{selectedColor}</span>
+        </span>
+        <span className={styles.rowAction} aria-hidden>
+          Change
+        </span>
+      </label>
+    )
+  }
+
+  if (variant === 'inline') {
+    return (
+      <label className={styles.inline} style={disabledStyle}>
+        <span className={styles.inlineName}>{name}</span>
+        <span className={styles.inlineValue}>
+          <input
+            type="color"
+            className={styles.inlineSwatch}
+            value={selectedColor}
+            onChange={handleColorChange}
+            disabled={disabled}
+          />
+          <span className={styles.hex}>{selectedColor}</span>
+        </span>
+      </label>
+    )
+  }
+
   return (
-    <div
-      className={styles.picker}
-      style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
-    >
+    <div className={styles.picker} style={disabledStyle}>
       <input type="color" value={selectedColor} onChange={handleColorChange} disabled={disabled} />
       <span className={styles.label}>{selectedColor}</span>
     </div>

@@ -1,0 +1,63 @@
+.tile {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.large {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.small {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+}
+
+.lighting {
+  background: var(--editor-tint-lighting);
+  color: var(--editor-tint-lighting-icon);
+}
+
+.walls {
+  background: var(--editor-tint-walls);
+  color: var(--color-text-primary);
+}
+
+.windows {
+  background: var(--editor-tint-windows);
+  color: var(--editor-tint-windows-icon);
+}
+
+.floor {
+  background: var(--editor-tint-floor);
+  color: var(--editor-tint-floor-icon);
+}
+
+.benches {
+  background: var(--editor-tint-benches);
+  color: var(--editor-tint-benches-icon);
+}
+
+.view {
+  background: var(--editor-tint-view);
+  color: var(--editor-tint-view-icon);
+}
+
+.bake {
+  background: var(--editor-tint-bake);
+  color: var(--editor-tint-bake-icon);
+}
+
+.white {
+  background: var(--color-white);
+  color: var(--color-text-primary);
+}
+
+.dark {
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}

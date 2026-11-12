@@ -26,7 +26,7 @@ Do these in order, one PR each.
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a, 17b, 17c) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
-| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
+| 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Built (18-1) | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved) + the owner's Q131 / Q134 / Q135 / Q139 / Q140. See Built notes. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
@@ -860,3 +860,43 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD (`SectionsEditor`
 Edit name shows the bar's name message and Cancel returns "All changes saved", the short description flips the bar and
 the counter, a refused save turns it red, "Leave site?" with changes, no horizontal scroll, no console errors. The
 exhibition checked has no sections; the section rows were checked by the e2e.
+
+### Step 18-1 · 3D editor, toolbar and panel shell — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-editor-3d-chrome.md` (contract, decisions, Q130–Q140 and the owner's answers at
+its end). Files: new `src/components/editorChrome/` (`ToolPanel`, `PanelCard`, `SliderRow`, `SwitchRow`, `InfoLine`,
+`IconTile`, `saveTracking`, tints / format helpers), `editview/Menu` (+ new `EditingPill`), the Walls & ceiling, Windows,
+View and Bake panels, `exhibitions/edit/index.tsx` (one cleanup effect), opt-in additions to `ui/Toggle` (`tone="editor"`),
+`ui/Slider` (`aria-valuetext`) and `ui/ColorPicker` (`variant="row" | "inline"`), `--editor-*` tokens.
+
+1. **Nothing inside the three.js canvas changed**: no file under `scene/**`, `lib/bake/**`, the Redux slices or
+   `EditView.tsx`. Every edited component renders outside `<Canvas>` and reaches the room only through today's actions.
+2. **Kept**: Menu's logic is today's (diffed; only an id for the "Room" caption is added); every tool's handler, show / hide
+   rule and the Bake rule (admins on baked spaces); in the four panels every selector, `set` helper, slider min / max /
+   step, color handler and save request body. The shell's Save button keeps `onClick={handleSave}` and `disabled={saving}`.
+   `ToolPanel` keeps the old panel's mouse-down / pointer-down / wheel stops, so the room receives what it did before.
+3. **Toolbar per editor3d.md**: a floating `<nav aria-label="Editor tools">` with labels under the icons and `aria-pressed`;
+   Exit, Spots, a "Room" caption, Lighting, Walls, Windows, Floor, Benches, Panels, View, Bake; tooltips in sentence case.
+   **Editing pill** (NEW, approved): "Editing {exhibition}" top left, decorative. No Bake dot (the store can't tell whether
+   the bake is current, Q132).
+4. **Panels**: the `ToolPanel` shell (icon tile, title, line, ×, cards, Save area) for Walls & ceiling (two color rows; the
+   brightness slider shows only on unbaked spaces, as today), Windows, View (Field of view / Eye level with value chips)
+   and Bake the room (today's five states as a status box: checking grey, failed red, not baked / out of date amber,
+   current green; today's buttons).
+5. **Unsaved changes (Q131, owner)**: an amber dot "Unsaved changes" in the Save area from any edit until an accepted save,
+   kept across closing and reopening the panel; "Leave site?" while any panel is unsaved. Display-only lines in each
+   saving panel; the marks are cleared when the editor unmounts or switches exhibition, so they never follow a client-side
+   navigation. Lighting, Floor, Benches and Display panels join in 18-2 / 18-3.
+6. **Refused save (Q139 b, owner)**: a red `role="alert"` "Not saved. Please try again." in the Save area until the next
+   edit or an accepted save.
+7. **Accessible names (Q135, owner)** are the visible words: the tools ("Bake", not "Baked lighting"), "Wall brightness",
+   "Field of view", "Eye level", the color rows, "Close panel". Save reads "Saving…" / "Saved" / "Save".
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD (Menu; the four panels' selectors, sliders, handlers and
+bodies); browser on my own `pnpm dev` (dev DB, every non-GET request refused locally) in the Vivrière editor at 1440 px as
+the artist and as an admin: the toolbar (Bake for the admin only), the pill, Walls & ceiling, Windows, View, Bake the room
+("Out of date"), a View edit showing "Unsaved changes", a refused save turning the Save area red and staying after closing
+and reopening the panel, "Leave site?" with it unsaved, the canvas rendering, no console errors other than the faked 500.
+No e2e opens the 3D editor (WebGL specs aren't added); the specs near the shared changes on port 3001
+(`admin-print-presentations`, `bake-publish-gate`, `bake-room-settings`, `bake-dimmer`, `exhibition-window-color`,
+`studio-shell`): 40 passed, 1 skipped (as in step 11: no image work of unknown shape on the dev DB).

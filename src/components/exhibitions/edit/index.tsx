@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { EditView } from '@/components/editview'
+import { resetSaveTracking } from '@/components/editorChrome/saveTracking'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { useGLTF } from '@react-three/drei'
 import { spaceConfigs } from '@/components/scene/constants'
@@ -75,6 +76,13 @@ export const ExhibitionEditPage = ({
       hasRestoredStateRef.current = null
     }
   }, [dispatch, exhibitionSlug])
+
+  // Display only (questions.md Q131): the tool panels' "Unsaved changes" marks, and the "Leave
+  // site?" they arm, belong to this exhibition's editor. Leaving it by a client-side navigation
+  // (Back, a link) or switching exhibition clears them, so no later page asks before unload and
+  // a return never shows a mark for edits that are gone. Here, not in `Menu`: Menu unmounts in
+  // wall view, while this page stays mounted through it.
+  useEffect(() => () => resetSaveTracking(), [exhibitionSlug])
 
   const {
     data: exhibition,

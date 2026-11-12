@@ -485,3 +485,21 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `AdminSelect`: `aria-describedby?`.
 - `SaveBar`: `cleanMessage?: string` (the status while nothing is unsaved; default "All changes saved"), e.g. Exhibition
   settings' "The new name isn't saved yet: use Save name.".
+
+## 3D editor chrome (step 18-1)
+
+`src/components/editorChrome/`, pure UI (no Redux, no requests, nothing from the scene); the wall view (18b) reuses it.
+
+- `ToolPanel` · `{ title; description?; icon: Icon; tint: ToolTint; onClose(); save?: { saving; saved; onSave(); status:
+  SaveStatus }; children }`: the floating right panel (384 px, radius 16, `--editor-panel-surface`), icon tile + title +
+  line + ×, a scrolling body of cards, and the Save area (amber "Unsaved changes" dot, red `role="alert"` "Not saved. Please
+  try again.", Saving… / Saved / Save). Stops mouse-down, pointer-down and wheel from reaching the room, as the old panel.
+- `PanelCard` · `{ title?; level: 'card' | 'group'; aside?; children }`; `SliderRow` · `{ label; value; sliderValue; min; max;
+  step?; onChange(value); disabled?; 'aria-label'?; ends?: [string, string]; track?: 'fill' | 'tone' }` (label + value chip,
+  then the slider, optional end words); `SwitchRow` · `{ title; line?; checked; onChange; 'aria-label'?; stateText?;
+  disabled? }`; `InfoLine`; `IconTile` · `{ icon; size: 32 | 40; tint }`.
+- `useSaveTracking(key)` / `resetSaveTracking()`: the Save area's display-only status per "{exhibition}:{panel}" (Q131).
+- `ui/Toggle`: `tone?: 'default' | 'admin' | 'editor'` (`editor` = 36×22, `role="switch"`). `ui/Slider`: `aria-valuetext?`.
+  `ui/ColorPicker`: `variant?: 'default' | 'row' | 'inline'` + `name` (`row`: the whole row is the label that opens today's
+  picker). Defaults unchanged.
+- Tokens `--editor-*` (panel surface, shadows, tints, the attention dot).
