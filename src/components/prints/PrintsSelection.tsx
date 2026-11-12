@@ -9,6 +9,13 @@ import type { SelectOption } from '@/components/ui/SelectDropdown'
 import type { GallerySelectionCard } from '@/lib/queries/getGallerySelection'
 
 import { PrintsToolbar } from './PrintsToolbar'
+
+/**
+ * The Artist menu and the Editions switch, off for now (owner, 2026-11-12: "hide these filters in
+ * desktop and mobile for now"). The page then shows the whole selection. Set to true to bring
+ * them back as they were.
+ */
+const SHOW_FILTERS = false
 import styles from './prints.module.scss'
 import type { EditionFilter } from './types'
 
@@ -71,14 +78,16 @@ export const PrintsSelection = ({ selection }: Props) => {
 
   return (
     <>
-      <PrintsToolbar
-        artistOptions={artistOptions}
-        artistId={artistName}
-        onArtistChange={setArtistName}
-        editionId={edition}
-        onEditionChange={setEdition}
-        count={visible.length}
-      />
+      {SHOW_FILTERS && (
+        <PrintsToolbar
+          artistOptions={artistOptions}
+          artistId={artistName}
+          onArtistChange={setArtistName}
+          editionId={edition}
+          onEditionChange={setEdition}
+          count={visible.length}
+        />
+      )}
       {artistName && chosenHandler && (
         <ArrowLink href={`/artists/${chosenHandler}`} className={styles.artistLink}>
           See all prints by {artistName}

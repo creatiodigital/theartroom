@@ -282,11 +282,11 @@ test('/prints renders the selection in order, and nothing else', async ({ page }
       page.getByText('A selection of prints from our artists', { exact: false }),
     ).toBeVisible()
 
-    // The toolbar STAYS — it is production UI. Its filters now run over the
-    // curated list in memory. The cart moved up to the site header (AR-154),
-    // so it is there on every page, this one included.
-    await expect(page.getByText('All artists')).toBeVisible()
-    await expect(page.getByText('All Editions')).toBeVisible()
+    // The filters (Artist menu, Editions switch) are hidden for now (owner,
+    // 2026-11-12): the page shows the whole selection. The cart moved up to the
+    // site header (AR-154), so it is there on every page, this one included.
+    await expect(page.getByText('All artists')).toHaveCount(0)
+    await expect(page.getByRole('group', { name: 'Editions' })).toHaveCount(0)
     await expect(
       page.getByRole('banner').getByRole('link', { name: /^Cart, \d+ items?$/ }),
     ).toBeVisible()
