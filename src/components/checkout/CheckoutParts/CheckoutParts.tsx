@@ -128,7 +128,11 @@ export const Totals = ({
   totals,
   totalLabel = 'Total',
 }: {
-  totals: CartTotals
+  /** The checkout's totals, or the confirmation's as read from the order. */
+  totals: Pick<
+    CartTotals,
+    'itemsPreTaxCents' | 'shippingCents' | 'customerVatCents' | 'vatRate' | 'totalCents'
+  >
   /** "Total, authorized" on the confirmation. */
   totalLabel?: string
 }) => (

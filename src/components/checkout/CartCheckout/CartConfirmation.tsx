@@ -9,10 +9,9 @@ import {
   OrderItems,
   Totals,
 } from '@/components/checkout/CheckoutParts'
-import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import type { CartItem } from '@/lib/cart/types'
-import type { CartTotals } from '@/lib/cart/validateCart'
+import type { DisplayAddress, DisplayTotals } from '@/lib/orders/confirmationSummary'
 import { ensureOrderAction } from '@/lib/orders/ensureOrderAction'
 import {
   EDITION_NUMBER_NOTICE_BODY,
@@ -23,12 +22,13 @@ import { getCountryName } from '@/lib/print-providers/dialCodes'
 import { UnboxingReminderModal } from './UnboxingReminderModal'
 import styles from './CartConfirmation.module.scss'
 
-/** What the page still holds of the order after paying in place (no 3DS / PayPal redirect, no
- *  reload): the "Your order" panel. Display only; absent on the other paths (Q-P15). */
+/** The "Your order" panel: what the page still holds after paying in place, or else what
+ *  `ensureOrderAction` reads from the verified order (3DS / PayPal return, reload; Q-P15 a).
+ *  Display only. */
 export type PlacedOrderSummary = {
   items: CartItem[]
-  totals: CartTotals
-  address: ShippingAddress
+  totals: DisplayTotals
+  address: DisplayAddress
 }
 
 type CartConfirmationProps = {
@@ -124,6 +124,8 @@ export const CartConfirmation = ({ paymentIntentId, summary }: CartConfirmationP
   const [orderRef, setOrderRef] = useState<string | null>(null)
   const [hasLimitedEdition, setHasLimitedEdition] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
+  // The order as the server read it, once the payment is verified: the panel on every path.
+  const [orderSummary, setOrderSummary] = useState<PlacedOrderSummary | null>(null)
 
   useEffect(() => {
     let active = true
@@ -133,6 +135,7 @@ export const CartConfirmation = ({ paymentIntentId, summary }: CartConfirmationP
         setStatus(res.ok ? 'confirmed' : 'failed')
         if (res.orderRef) setOrderRef(res.orderRef)
         setHasLimitedEdition(res.hasLimitedEdition === true)
+        if (res.summary) setOrderSummary(res.summary)
       })
       .catch(() => {
         if (active) setStatus('failed')
@@ -185,7 +188,7 @@ export const CartConfirmation = ({ paymentIntentId, summary }: CartConfirmationP
   }
 
   return (
-    <ConfirmationLayout summary={summary}>
+    <ConfirmationLayout summary={summary ?? orderSummary}>
       <span className={styles.check} aria-hidden>
         <Check size={26} weight="light" />
       </span>
