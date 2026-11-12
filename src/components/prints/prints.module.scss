@@ -6,13 +6,18 @@
   margin: 0 auto;
 }
 
-// The banner (3:2) on the left, the copy on the right; stacked on phones.
+// The banner on the left (the board's wider column), the copy on the right; stacked below lg.
+// Side by side, the banner runs the copy's full height, top to bottom, so its edges line up with
+// the text however long the editor's paragraphs are (owner, 2026-11-12: it sat centred and small
+// beside a taller column); never shorter than 3:2.
 .intro {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 56px;
-  align-items: center;
+  align-items: stretch;
   padding-bottom: 72px;
+  // The banner's 3:2 floor is worked out from this width (cqw).
+  container-type: inline-size;
 
   @include media-down(lg) {
     grid-template-columns: minmax(0, 1fr);
@@ -26,6 +31,14 @@
   aspect-ratio: 3 / 2;
   overflow: hidden;
   background: var(--public-render-wall);
+
+  @include media-up(lg) {
+    // As tall as the copy, never under 3:2 of its column ((width − gap) × 1.1 / 2.1 / 1.5). The ratio
+    // itself is off here: with a stretched height it would set the width and overflow the column.
+    aspect-ratio: auto;
+    width: 100%;
+    min-height: calc((100cqw - 56px) * 1.1 / 2.1 / 1.5);
+  }
 }
 
 .bannerImage {
