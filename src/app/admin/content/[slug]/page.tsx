@@ -80,6 +80,8 @@ export default function PageContentEditor({ params }: PageProps) {
   const [saved, setSaved] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [bannerError, setBannerError] = useState('')
+  // questions.md Q82: Remove takes the banner off /prints at once, so it asks first.
+  const [removeBannerOpen, setRemoveBannerOpen] = useState(false)
   // NEW (gallery.md §2c): what "unsaved" is measured against. `baseline` is the
   // last loaded or accepted values; `editorForm` is the editor's own HTML for the
   // baseline text (its sync rewrites the loaded HTML into that form on mount).
@@ -316,7 +318,7 @@ export default function PageContentEditor({ params }: PageProps) {
             tone="admin"
             imageUrl={page.bannerImageUrl}
             onUpload={handleBannerUpload}
-            onRemove={handleBannerRemove}
+            onRemove={() => setRemoveBannerOpen(true)}
             uploading={uploadingBanner}
             loadingText="Uploading…"
             error={bannerError}
@@ -375,6 +377,20 @@ export default function PageContentEditor({ params }: PageProps) {
         onSave={handleSave}
         onDiscard={() => setDiscardOpen(true)}
       />
+
+      {removeBannerOpen && (
+        <AdminConfirmModal
+          title="Remove the banner?"
+          message="It comes off the Prints page at once."
+          confirmLabel="Remove"
+          destructive
+          onConfirm={() => {
+            setRemoveBannerOpen(false)
+            void handleBannerRemove()
+          }}
+          onCancel={() => setRemoveBannerOpen(false)}
+        />
+      )}
 
       {discardOpen && (
         <AdminConfirmModal

@@ -101,6 +101,10 @@ export const RichTextEditor = ({
         codeBlock: variant === 'full' ? {} : false,
         horizontalRule: variant === 'full' ? {} : false,
         strike: variant === 'full' ? {} : false,
+        // questions.md Q82: StarterKit 3 brings its own Link; the full editor adds the configured one
+        // below, so it was registered twice (a TipTap warning in every editor). The simple editor
+        // keeps StarterKit's, as today.
+        ...(variant === 'full' ? { link: false as const } : {}),
       }),
       Placeholder.configure({
         placeholder,

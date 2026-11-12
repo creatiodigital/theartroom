@@ -1155,3 +1155,5 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
 - **Q74 · Landing slideshow + Gallery selection, failures said (2026-11-12):** failed loads in red with no list, refused
   Save in its dialog, refused delete / reorder / remove / Add said, Remove asks first, an upload no longer publishes an
   unsaved slide (Q160). Look: the refused Add line (not seen in the browser: the picker's list uses server actions).
+- **Q82 extras · page editor (2026-11-12):** the Prints banner's Remove asks first ("Remove the banner?"); the full rich
+  text editors register Link once (no TipTap duplicate warning; the simple stencil editor keeps StarterKit's Link).
