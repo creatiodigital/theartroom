@@ -30,7 +30,7 @@ Do these in order, one PR each.
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Built (18b-1, 18b-2) | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
 | 20 | Visitor 3D room: one top-right **menu button** (Sound, How to move around, Leave exhibition) replaces the X and the bottom-right buttons; labelled **Exit wall view** button top-left in wall view | visitor-room-menu, visitor-wall-exit (spec: visitor-wallview.md) | Built | Public side, independent of the admin work: can be done any time. See Built notes. |
-| 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Approved by owner | After the admin redesign. Small, behaviour change. |
+| 21 | Follow-up (server): re-inviting a user who already signs in sends a "set your password" link instead of replacing their password (Q37) | — | Built (Q161) | After the admin redesign. Small, behaviour change. |
 
 **Next, same branch:** the public site redesign, steps 22–38, in `docs/public-redesign/pages.md` (start there with its README, components and questions).
 
@@ -1178,3 +1178,6 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
 - **3D suite, production build locally (2026-11-12):** `e2e-3d/helpers.ts` answers `/_vercel/**` (the analytics
   scripts only Vercel serves) with an empty script, so their 404s no longer fail "no console errors" / "every file
   arrives". Verified at the final full run.
+- **Step 21 · re-invite of an active user (2026-11-12):** someone with a password of their own gets a 3-day "Set a new
+  password" link and keeps their password; others get a temporary one as before; the dialog says both (Q161). Look:
+  the new email at `/dev/emails/artist-set-password`.

@@ -1104,6 +1104,12 @@ saved" (not deleted). (2) Not done: deleting a slide still leaves its two images
 files; ask if wanted). (3) A refused delete / reorder / remove shows a red bar and reloads the list; a refused Add says
 the server's reason (or "Couldn't add these works. Please try again.") in the picker's footer.
 
+**Q161 · Code Claude → owner: step 21 built; choices made without asking.** (1) "Already signs in" = the account has a
+password and no first-sign-in change pending (no sign-in date is stored). Those get a "Set a new password" email and keep
+their password; everyone else gets a temporary password as before. (2) The link lasts **3 days** (forgot-password's lasts
+1 hour) and uses the same token as forgot-password, so a newer one of either replaces the older. (3) New email "Your
+invitation to The Art Room" (preview: `/dev/emails/artist-set-password`). (4) The Send invite dialog now says both cases.
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**

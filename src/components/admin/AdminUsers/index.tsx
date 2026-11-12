@@ -505,9 +505,12 @@ export const AdminUsers = () => {
               <p>
                 The email will be sent to: <strong>{inviteTarget.email}</strong>
               </p>
-              {/* Q37 (owner): the invite route replaces the password. Shown always:
-                  nothing this page loads says whether the user has signed in. */}
-              <p>This replaces their current password with a new temporary one, sent by email.</p>
+              {/* Step 21 (Q37): the server decides which; nothing this page loads says it. */}
+              <p>
+                If they already have a password of their own, they get a link to set a new one, and
+                their current password keeps working. Otherwise this replaces it with a new
+                temporary one, sent by email.
+              </p>
             </>
           }
           warning={actionError || undefined}

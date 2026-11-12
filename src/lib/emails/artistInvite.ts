@@ -96,3 +96,77 @@ export async function sendArtistInviteEmail(args: {
     return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
+
+export type ArtistSetPasswordArgs = {
+  name: string
+  setPasswordUrl: string
+  loginUrl: string
+  /** How long the link works, for the line under the button. */
+  hours: number
+}
+
+/**
+ * Step 21 (questions.md Q37): the invite sent again to someone who already signs in with their own
+ * password. Their password stays as it is; the link lets them set a new one. Pure renderer.
+ */
+export function renderArtistSetPasswordEmail(args: ArtistSetPasswordArgs): {
+  subject: string
+  html: string
+} {
+  const safeName = escapeHtml(args.name)
+  const safeSetPasswordUrl = escapeHtml(args.setPasswordUrl)
+  const safeLoginUrl = escapeHtml(args.loginUrl)
+  const days = Math.round(args.hours / 24)
+  const expiry = days >= 1 ? `${days} day${days === 1 ? '' : 's'}` : `${args.hours} hours`
+
+  const body =
+    emailHeading('Your invitation to The Art Room') +
+    emailParagraph(`Hi ${safeName},`) +
+    emailParagraph(
+      'The Art Room has sent you your invitation again. Your account is already set up, and your current password still works.',
+    ) +
+    emailParagraph('If you would like a new password, set one here:') +
+    emailButton('Set a new password', safeSetPasswordUrl) +
+    emailParagraph(
+      `<span style="color:#595959;font-size:13px">This link expires in ${expiry}. Until you use it, nothing changes.</span>`,
+    ) +
+    emailParagraph(
+      `<span style="color:#595959;font-size:13px">Your login page: <a href="${safeLoginUrl}" style="color:#595959;word-break:break-all">${safeLoginUrl}</a></span>`,
+    )
+
+  return {
+    subject: 'Your invitation to The Art Room',
+    html: renderEmailLayout({
+      preheader: 'Your account is ready: set a new password if you like',
+      bodyHtml: body,
+    }),
+  }
+}
+
+/** Sends the set-password invite. Resolves with `{ ok: false }` on failure rather than throwing. */
+export async function sendArtistSetPasswordEmail(
+  args: ArtistSetPasswordArgs & { to: string },
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  if (process.env.SKIP_EMAILS === 'true') {
+    return { ok: true, id: 'skipped-e2e' }
+  }
+
+  const fromEmail = process.env.FROM_EMAIL || 'contact@theartroom.gallery'
+  const { subject, html } = renderArtistSetPasswordEmail(args)
+
+  try {
+    const res = await resend.emails.send({
+      from: `The Art Room <${fromEmail}>`,
+      to: args.to,
+      subject,
+      html,
+    })
+
+    if (res.error) {
+      return { ok: false, error: res.error.message ?? 'resend error' }
+    }
+    return { ok: true, id: res.data?.id ?? '' }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
