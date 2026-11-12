@@ -24,7 +24,7 @@ Do these in order, one PR each.
 | 13 | API reference (the only remaining route: no settings page exists; analytics and dev cleanup are on the dashboard) | api-reference (spec: developer.md) | Built | UI only + NEW Developer link at the foot of the menu. Can be done any time after step 3. |
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
-| 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
+| 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
 | 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
@@ -747,3 +747,41 @@ edit clears it; the half-save sentence after a faked upload and a refused save; 
 submits; "Leave site?" with unsaved changes; the overlay opened from wall view (Edit image, panels, Cancel / Save
 changes) and canceled; the page editor's save bar and the invoices checkbox unchanged; no horizontal scroll, no console
 errors. The dev DB has no sound work, so the Audio file panel was checked in code only.
+
+### Step 16b · Artwork editor, print sales — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan. Files: `shared/ArtworkEditForm/index.tsx` + SCSS (Print sales, the print-size box, the restrictions /
+recommendations rows, Ready to sell, the print sizes dialog), new `LockNote` and `OptionChips`, `EditorPanel` (an
+`aside` slot), `LimitedVariantsEditor` + SCSS (the variants table), `ui/ImageUploader` (opt-in top alignment), token
+`--studio-note-surface`, `DashboardLayout.module.scss` (`.field`, no users left), one e2e line.
+
+1. **Kept**: the form's logic is identical; every handler and `disabled` expression in the variants editor's render is
+   today's (33 of 33); the restriction / recommendation groups keep their props and `handleToggle`, and a pressed chip
+   is today's checked box, so the saved values are identical; the print switch is the admin `Toggle` with today's
+   onChange and `disabled`.
+2. **Print sales**: the panel's head carries the switch ("Enable this artwork for print sales"), today's sentence under
+   it; the series-type lock as a grey row with a lock icon (`LockNote`), the locked series type as a read-only field
+   with a "Locked" tag; the price with a € prefix; low resolution as an amber callout with today's lines.
+3. **Print-size box** (Q113, owner): a neutral grey box (`--studio-note-surface` #f7f7f7, hairline border, dark text)
+   beside the image: "Sell as print", today's sentences, the Smallest / Your max table, **More info on print sizes**
+   (today's dialog, restyled). The image row is top-aligned as drawn; the Prints banner keeps its centered row.
+4. **Printing restrictions / recommendations**: `<details>` rows with the drawn one-liners and Show / Hide options; the
+   checkboxes are toggle chips (`aria-pressed`, a check while pressed; for restrictions pressed = offered, as today's
+   checked boxes).
+5. **Ready to sell**: text left, **Ready to sell** (dark) or **Unblock** (super admin) right, today's dialog.
+6. **Edition variants** (Q114): one bordered table, head "Variant · Status"; each row's header is a button with today's
+   badges as tags ("Currently selling", "{n} sold"); live variants open with "This variant is on sale and frozen." in a
+   lock row; fields labelled, 44 px; Add variant / Apply saved variant with icons. The delete dialog stays the shared
+   `ConfirmModal` (the wall view overlay has no admin dialog layer).
+7. **e2e**: `limited-variant-delete-ui` finds "Add variant" without the "+".
+
+Verified: typecheck, lint, prettier; logic diffed against 16a (form logic identical, the variants editor's 33 handler /
+`disabled` expressions identical, chips fed today's checked values and `handleToggle`); e2e on port 3001
+(`limited-variant-delete-ui`, `limited-variant-sheet-editor`, `artwork-exhibition-picker`, `artwork-section-picker`,
+`admin-page-editor`, `studio-shell`, `variant-templates-scope`): 33 passed; browser on my own `pnpm dev` (dev DB, every
+non-GET request refused locally, nothing written) at 1440 and 390 px: open edition (switch, the grey print-size box, a
+restriction chip off and on again flips the bar and back, Ready to sell and print sizes dialogs opened and closed),
+low resolution (switch off, amber note), limited edition (two live variants as frozen rows, the series lock), the Prints
+banner editor unchanged, no horizontal scroll, no console errors. After the first look two fixes went in: paragraphs
+pin their own size (the box at 13 px, the dialog at 14 px, not the site's 16–18 px), and the image row top-aligns as
+drawn (opt-in, the banner keeps its centered row).

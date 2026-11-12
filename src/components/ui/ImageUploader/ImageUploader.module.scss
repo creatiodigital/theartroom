@@ -223,6 +223,22 @@
   min-width: 0;
 }
 
+// align="start" (the artwork editor, artist-artwork-edit.dc.html): the preview
+// and the side column top-aligned, the column taking the rest of the row, so a
+// tall note (the print-size box) stays beside the preview instead of wrapping
+// under it. The default (the page editor's banner) stays centered.
+.adminRowStart {
+  @include media-up(tablet) {
+    align-items: flex-start;
+  }
+}
+
+.adminRowStart .adminSide {
+  @include media-up(tablet) {
+    flex: 1 1 260px;
+  }
+}
+
 .adminMeta {
   font-size: 13px;
   color: var(--color-text-secondary);

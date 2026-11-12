@@ -19,10 +19,26 @@
   }
 }
 
+// The title and its line, with an optional control on the right (wraps under
+// on a narrow panel).
 .head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.headText {
+  flex: 1 1 260px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+
+.aside {
+  flex: 0 0 auto;
 }
 
 // The font is set here, not inherited: the wall view's overlay is outside the

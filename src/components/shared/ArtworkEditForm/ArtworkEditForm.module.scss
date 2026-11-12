@@ -78,6 +78,7 @@
   color: var(--color-text-secondary);
 }
 
+// Its size and line height are pinned: globals.scss gives every <p> the reading size.
 .help {
   margin: 0;
   font-size: var(--text-xs);
@@ -168,23 +169,6 @@
 .sectionSelect {
   max-width: 320px;
   margin-left: calc(16px + var(--space-2));
-}
-
-// ── The image panel's print parts (restyled in step 16b) ────────
-
-.subsection {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.subheading {
-  margin: 0;
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: 15px;
-  font-weight: var(--font-semibold);
-  line-height: 1.3;
-  color: var(--color-black);
 }
 
 // ── Video and audio files ───────────────────────────────────────
@@ -341,371 +325,346 @@
   }
 }
 
-// ── Print sales, the print card, the details and the print sizes dialog:
-// today's rules, until step 16b restyles them.
+// ── Print sales ─────────────────────────────────────────────────
 
-/* Print requirements card */
-// Artwork-wide "locked for sale" banner shown on top of the edition config.
-.editionLockedBanner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-badge-warning-text);
-  border-radius: var(--radius-sm);
-  background: var(--color-badge-warning-bg);
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-}
+// The low-resolution notice's three lines (inside the amber Callout).
+.calloutLines {
+  display: block;
 
-.editionLockedBadge {
-  flex-shrink: 0;
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  color: var(--color-badge-warning-text);
-  background: var(--color-white);
-  border: 1px solid var(--color-badge-warning-text);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  line-height: 1.6;
-}
-
-.printInfoCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-5);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-subtle);
-
-  // The flex gap owns the spacing between sections; drop direct-child
-  // default margins so spacing stays even (nested content keeps its own).
-  > * {
-    margin: 0;
+  > span {
+    display: block;
   }
 }
 
-.printInfoTitle {
+.printGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0;
+    margin-bottom: 6px;
+  }
+}
+
+// Series type once it is locked (designs/artist-artwork-edit.dc.html).
+.readOnly {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-gray-25);
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-15);
+  color: var(--color-text-secondary);
+}
+
+// The price field with € inside it.
+.money {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+
+  &:focus-within {
+    border-color: var(--color-dark-surface);
+  }
+
+  &:has([aria-invalid='true']) {
+    border-color: var(--color-red-50);
+  }
+}
+
+.currency {
+  padding: 0 var(--space-1) 0 var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+// The Input's own wrapper, so it takes the rest of the box.
+.moneyField {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.moneyInput {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border: 0;
+  background: transparent;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
-  font-weight: var(--font-bold);
   color: var(--color-text-primary);
-  margin-bottom: var(--space-3);
+
+  &:focus {
+    outline: none;
+  }
 }
 
-.printInfoText {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-text-primary);
-  line-height: 1.6;
-  margin-bottom: var(--space-2);
+.variants {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.printInfoTextMuted {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin-top: var(--space-3);
-  margin-bottom: 0;
-}
+// ── The print-size box (in the uploader's note), as drawn but neutral (Q113) ──
 
-.printInfoList {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
+.printBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--space-2);
+  padding: 14px var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--studio-note-surface);
+  font-size: 13px;
+  line-height: var(--leading-normal);
   color: var(--color-text-primary);
-  line-height: 1.8;
-  margin: var(--space-2) 0 var(--space-3);
-  padding-left: var(--space-4);
 
-  li {
-    margin-bottom: var(--space-1);
+  // globals.scss gives every <p> the reading size (16–18px): pinned here.
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: var(--leading-normal);
   }
 
   strong {
-    font-weight: var(--font-medium);
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
   }
 }
 
-/* Print eligibility status messages */
-.printStatusReady {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--color-badge-success-bg);
-  border: 1px solid var(--color-success);
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-success);
-  line-height: 1.5;
-
-  svg {
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-}
-
-.printStatusNotReady {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--color-badge-warning-bg);
-  border: 1px solid var(--color-amber-50);
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-badge-warning-text);
-  line-height: 1.5;
-
-  svg {
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-}
-
-/* Disabled print checkbox hint */
-.printDisabledHint {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  margin-top: var(--space-2);
-  margin-bottom: 0;
-}
-
-/* Print size checklist with icons */
-.printSizeChecklist {
-  list-style: none;
-  margin: 0 0 var(--space-2);
-  padding: 0;
-}
-
-.printSizeEligible {
+// The font is set here: globals.scss makes headings serif.
+.printBoxTitle {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) 0;
+  margin: 0;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-success);
-
-  svg {
-    flex-shrink: 0;
-  }
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
 }
 
-.printSizeIneligible {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) 0;
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
+.printBoxMuted {
   color: var(--color-text-secondary);
-  opacity: 0.6;
+}
 
-  svg {
-    flex-shrink: 0;
+.printRange {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+
+  th {
+    padding: var(--space-1) var(--space-2) var(--space-1) 0;
+    font-weight: var(--font-semibold);
+    text-align: left;
+    color: var(--color-text-secondary);
+  }
+
+  td {
+    padding: var(--space-1) var(--space-2) var(--space-1) 0;
+    border-top: 1px solid var(--color-border-default);
   }
 }
 
-.printSizeDpi {
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.7;
-}
-
-/* More Info button */
-.moreInfoButton {
+// A button in a link's look (it opens the print sizes dialog). Two classes:
+// Button's bare reset would win over one. 44px under 900px (Q7).
+.printBox .moreInfo {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  margin-top: var(--space-3);
+  min-height: 44px;
   padding: 0;
   background: none;
-  border: none;
+  border: 0;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  cursor: pointer;
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
   text-decoration: underline;
   text-underline-offset: 2px;
 
   &:hover {
     color: var(--color-text-primary);
   }
-}
 
-/* Print info modal */
-.printModal {
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  max-width: 520px;
-}
-
-.printModalDescription {
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-  line-height: 1.6;
-  margin: var(--space-3) 0 var(--space-4);
-}
-
-.printModalTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-  margin-bottom: var(--space-3);
-
-  th,
-  td {
-    padding: var(--space-2) var(--space-3);
-    text-align: left;
-    border-bottom: 1px solid var(--color-border-default);
-  }
-
-  th {
-    font-weight: 600;
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  td {
-    font-size: var(--text-sm);
-  }
-
-  th:first-child,
-  td:first-child {
-    padding-left: 0;
-  }
-
-  th:last-child,
-  td:last-child {
-    padding-right: 0;
-    text-align: right;
-  }
-
-  tr:last-child td {
-    border-bottom: none;
+  @include media-up(tablet) {
+    min-height: 0;
   }
 }
 
-.statusReady {
-  display: inline-flex;
+// ── Printing restrictions / recommendations as <details> rows ──
+
+.optionsRow {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.optionsSummary {
+  display: flex;
   align-items: center;
-  gap: var(--space-1);
-  color: var(--color-success);
-  font-size: var(--text-xs);
-  font-weight: 500;
-}
-
-.statusNotReady {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--color-badge-warning-text);
-  font-size: var(--text-xs);
-  font-weight: 500;
-}
-
-.printModalCurrentRes {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  margin: var(--space-2) 0 0;
-}
-
-.sizeError {
-  margin-top: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-error-bg);
-  border: 1px solid var(--color-error-border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-sm);
-  color: var(--color-error-text);
-}
-
-// ── Printing restrictions (artist-side advanced panel) ────────
-// Sits flush inside the Print Sales section — no nested card, no
-// background, no extra border. Just a hairline rule above to separate
-// it from the price input.
-.printRestrictions {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border-light);
-}
-
-.printRestrictionsSummary {
-  cursor: pointer;
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  letter-spacing: 0.02em;
-  color: var(--color-text-secondary);
-  user-select: none;
-  padding: 2px 0;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 14px var(--space-4);
   list-style: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+  cursor: pointer;
 
   &::-webkit-details-marker {
     display: none;
   }
-  &::before {
-    content: '';
-    width: 0;
-    height: 0;
-    border-left: 4px solid currentColor;
-    border-top: 4px solid transparent;
-    border-bottom: 4px solid transparent;
-    transition: transform 0.15s ease;
-  }
 
-  &:hover {
-    color: var(--color-text-primary);
+  // The admin's ring covers links and buttons only; a summary brings its own.
+  &:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
   }
 }
 
-.printRestrictions[open] .printRestrictionsSummary::before {
-  transform: rotate(90deg);
+.optionsRow[open] .optionsSummary {
+  border-bottom: 1px solid var(--color-gray-20);
 }
 
-.printRestrictionsIntro {
-  margin: var(--space-3) 0 var(--space-4) 0;
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--color-text-secondary);
-  max-width: 620px;
-}
-
-.printRestrictionGroup {
-  margin-top: var(--space-4);
-
-  &:first-of-type {
-    margin-top: var(--space-2);
-  }
-}
-
-.printRestrictionGroupTitle {
-  margin: 0 0 var(--space-2) 0;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-
-.printRestrictionChoices {
+.optionsText {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionsTitle {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.optionsHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.optionsToggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+// One of the two words shows, by the row's state (no state of our own).
+.optionsRow[open] .whenClosed,
+.optionsRow:not([open]) .whenOpen {
+  display: none;
+}
+
+.caret {
+  transition: transform 0.15s ease;
+}
+
+.optionsRow[open] .caret {
+  transform: rotate(180deg);
+}
+
+.optionsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 14px var(--space-4);
+}
+
+// The recommendations' "vetoed every paper" line.
+.printRestrictionsIntro {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+// ── Errors under a field (the audio / video size, Ready to sell's price) ──
+
+.sizeError {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-red-40);
+  border-radius: var(--radius-sm);
+  background: var(--color-red-30);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-red-70);
+}
+
+// ── The print sizes dialog (the shared Modal, admin tone) ─────────
+
+.printModal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 520px;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+.printModalTitle {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  line-height: 1.3;
+  color: var(--color-black);
+}
+
+// globals.scss gives every <p> the reading size: pinned to the dialog's 14px.
+.printModalDescription {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.printModalSubtitle {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+}
+
+.printModalFacts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+
+  dt {
+    color: var(--color-text-secondary);
+  }
+
+  dd {
+    margin: 0;
+  }
 }

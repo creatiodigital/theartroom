@@ -453,11 +453,21 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `shared/ArtworkEditForm` gains `variant?: 'page' | 'overlay'` (default `overlay`: the wall view's View details, own h1 and
   Cancel / Save changes row; `page`: no h1, the On this page list, the form id `ARTWORK_EDIT_FORM_ID` for the save bar),
   `onRichTextReady?(field, html)` and `onVariantsDirtyChange?(count)` (display only, for the save bar).
-- `EditorPanel` · `{ section: ArtworkSection; description?; children }`: `<section id aria-labelledby>`, white, radius 8,
-  padding 24 (18 on phones), h2 18/700.
+- `EditorPanel` · `{ section: ArtworkSection; description?; aside?; children }`: `<section id aria-labelledby>`, white,
+  radius 8, padding 24 (18 on phones), h2 18/700; `aside` (16b) sits on the head row's right, e.g. the print switch.
 - `SectionNav` · `{ sections: ArtworkSection[] }`: "On this page", sticky, plain anchors, `aria-current` on the section in
   view; hidden under 900 px.
 - `sections.ts`: `ARTWORK_SECTION` (ids and titles), `ARTWORK_EDIT_FORM_ID`, `panelTitleId`, `panelDescriptionId`.
 - `LimitedVariantsEditor`: `onDirtyCountChange?(count)` (display only).
 - `AdminCheckbox`: `description?: ReactNode` (a line under the label, tied with `aria-describedby`; without it the markup
   is unchanged).
+
+## Print sales pieces (step 16b)
+
+- `LockNote` · `{ children }`: a grey row (`--color-gray-15`, radius 8) with `LockSimple` 16 light, for the series-type
+  lock and each live variant.
+- `OptionChips` · `{ title; options: { id; label; pressed }[]; onToggle(id) }`: a `role="group"` of `aria-pressed` chips
+  (dark with a check when pressed; 32 px, 44 px on phones), the printing restrictions / recommendations.
+- `ImageUploader` (shared, admin tone): `align?: 'center' | 'start'` (default `center`, the page editor's banner as before;
+  `start` top-aligns the preview and lets the side column take the row, for the artwork editor's print-size box).
+- Token `--studio-note-surface: #f7f7f7` (the print-size box, Q113).

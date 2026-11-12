@@ -51,7 +51,7 @@ test('a deleted variant stays deleted after a reload', async ({ page }) => {
     await page.goto(`/dashboard/artworks/${fx.artworkId}/edit`)
 
     // ── 1. Add a variant through the UI ──────────────────────────────
-    const addVariant = page.getByRole('button', { name: /\+ Add variant/i })
+    const addVariant = page.getByRole('button', { name: /^Add variant$/i })
     await expect(addVariant).toBeVisible()
     await addVariant.click()
 

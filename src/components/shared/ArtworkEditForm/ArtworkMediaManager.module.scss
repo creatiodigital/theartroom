@@ -12,10 +12,12 @@
   line-height: var(--leading-normal);
 }
 
+// A <p>: its size and line height are pinned (globals.scss gives every <p> 16–18px).
 .hint {
   margin: 0;
   max-width: 60ch;
   font-size: 13px;
+  line-height: var(--leading-normal);
   color: var(--color-text-secondary);
 }
 

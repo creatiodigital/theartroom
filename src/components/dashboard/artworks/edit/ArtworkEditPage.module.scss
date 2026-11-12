@@ -16,10 +16,12 @@
   }
 }
 
+// A <p>: its size and line height are pinned (globals.scss gives every <p> 16–18px).
 .status {
   margin: 0;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: 13px;
+  line-height: var(--leading-normal);
   color: var(--color-text-secondary);
 }
 

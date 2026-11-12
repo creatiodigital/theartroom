@@ -64,6 +64,13 @@ type ImageUploaderProps = {
   tone?: 'default' | 'admin'
   /** admin only: lines under Replace / Remove (e.g. the accepted formats). */
   note?: ReactNode
+  /**
+   * admin only: how the preview and its side column line up from 900px.
+   * center (default): the page editor's banner (content-editor.dc.html).
+   * start: top-aligned, the side column taking the rest of the row, for a tall
+   * note (the artwork editor's print-size box, artist-artwork-edit.dc.html).
+   */
+  align?: 'center' | 'start'
 }
 
 function formatFileSize(bytes: number): string {
@@ -221,6 +228,7 @@ export const ImageUploader = ({
   error,
   tone = 'default',
   note,
+  align = 'center',
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -412,7 +420,7 @@ export const ImageUploader = ({
           className={styles.hiddenInput}
         />
 
-        <div className={styles.adminRow}>
+        <div className={c(styles.adminRow, align === 'start' && styles.adminRowStart)}>
           {imageUrl ? (
             <div className={styles.adminPreview} style={{ aspectRatio }}>
               {/* unoptimized: see the default preview below (AR-125). */}

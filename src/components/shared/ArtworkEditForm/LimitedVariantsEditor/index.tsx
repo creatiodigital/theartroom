@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { formatCm } from '@/lib/print-providers/format'
-import { CaretDown } from '@phosphor-icons/react'
+import { ArrowClockwise, CaretDown, Plus } from '@phosphor-icons/react'
 
+import { Callout } from '@/components/admin/ui/Callout'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { ErrorText } from '@/components/ui/ErrorText'
@@ -24,9 +26,9 @@ import { buildTpsRecipe, formatTpsRecipe } from '@/lib/editions/tpsRecipe'
 import { estimateVariantMarginCents } from '@/lib/editions/variantMargin'
 import { TPS_PAPERS, TPS_SIZE_BOUNDS, MIN_SHORT_EDGE_CM } from '@/lib/print-providers/printspace'
 import type { PrintLongEdgeBounds } from '@/lib/print-providers/printspace'
+import { LockNote } from '../LockNote'
 import { remapIndexKeys } from './remapIndexKeys'
 
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 import styles from './LimitedVariantsEditor.module.scss'
 
 const PAPER_OPTIONS: SelectOption[] = TPS_PAPERS.map((p) => ({ value: p.id, label: p.label }))
@@ -481,395 +483,446 @@ export const LimitedVariantsEditor = ({
   return (
     <div className={styles.editor}>
       {dirtyCount > 0 && (
-        <div className={styles.variantLockedBanner}>
-          <span className={styles.variantLockedBadge}>Unsaved</span>
-          <div>
-            {dirtyCount === 1
-              ? 'One variant has unsaved changes.'
-              : `${dirtyCount} variants have unsaved changes.`}{' '}
-            Use “Save variant” on each card to store them now — leaving this page without saving
-            loses them.
-          </div>
-        </div>
+        <Callout tone="amber">
+          {dirtyCount === 1
+            ? 'One variant has unsaved changes.'
+            : `${dirtyCount} variants have unsaved changes.`}{' '}
+          Use “Save variant” on each card to store them now — leaving this page without saving loses
+          them.
+        </Callout>
       )}
-      {variants.map((variant, index) => {
-        // Everything keys off one fact: a variant is LIVE (on sale) only while
-        // it's published AND blocked. Live variants are frozen and can be taken
-        // off sale (Unblock). Off-sale variants — a draft, or a published one an
-        // admin has unblocked — are editable and show both "Ready to Sell" (put
-        // on sale) and "Delete variant". This is purely per-variant; no variant
-        // is special, and the other variants' state never affects this card.
-        const isLive = variant.published === true && variant.blocked !== false
-        const variantLocked = isLive
-        // Take a live variant off sale to fix it — admin only.
-        const showUnblock = isAdmin && isLive
-        // Off-sale variants can be put on sale and deleted.
-        const showReadyToSell = !isLive && !!onReadyToSellVariant
-        // Copies already reserved/sold. A variant an admin has UNBLOCKED shows
-        // no "Currently Selling" badge, yet real orders may own its numbers —
-        // so the lock alone must not decide whether Delete is offered, or the
-        // UI promises something the server can only refuse.
-        const committedCount = variant.committedCount ?? 0
-        const hasSales = committedCount > 0
-        const showDelete = !isLive && !hasSales
-        // What the badge says. `committedCount` above includes numbers claimed
-        // by a PaymentIntent that no buyer ever paid for — someone opening
-        // checkout and leaving — so showing it read "5 sold" on a variant with
-        // zero orders. `soldCount` counts only copies a buyer actually took.
-        const soldCount = variant.soldCount ?? 0
-        const duplicateSize = isDuplicate(variant)
-        const key = keyFor(variant, index)
-        // Saving this card on its own. Offered only when something here differs
-        // from what is stored, so the button is a statement of fact ("there is
-        // something to save") rather than permanent furniture.
-        const variantDirty = variantIsDirty(variant)
-        const showSaveVariant = variantDirty && Boolean(onSaveVariant)
-        const saveKey = variant.id ?? key
-        const variantSaving = savingKey === saveKey
-        const variantSaveError = saveErrorByKey[saveKey]
-        const variantJustSaved = savedKey === variant.id && !variantDirty
-        const isOpen = !!expanded[key]
-        // The UI's own toggle state — see `sheetMode` above for why this,
-        // not isFixedSheet(variant), drives everything this card renders.
-        const isFixed = isFixedFor(variant, index)
+      {/* The variants as a small table (artist.md §3): one bordered box, a head
+          row, then each variant's expandable row. Nothing renders without one. */}
+      {variants.length > 0 && (
+        <div className={styles.table}>
+          <div className={styles.tableHead} aria-hidden>
+            <span>Variant</span>
+            <span>Status</span>
+          </div>
+          {variants.map((variant, index) => {
+            // Everything keys off one fact: a variant is LIVE (on sale) only while
+            // it's published AND blocked. Live variants are frozen and can be taken
+            // off sale (Unblock). Off-sale variants — a draft, or a published one an
+            // admin has unblocked — are editable and show both "Ready to Sell" (put
+            // on sale) and "Delete variant". This is purely per-variant; no variant
+            // is special, and the other variants' state never affects this card.
+            const isLive = variant.published === true && variant.blocked !== false
+            const variantLocked = isLive
+            // Take a live variant off sale to fix it — admin only.
+            const showUnblock = isAdmin && isLive
+            // Off-sale variants can be put on sale and deleted.
+            const showReadyToSell = !isLive && !!onReadyToSellVariant
+            // Copies already reserved/sold. A variant an admin has UNBLOCKED shows
+            // no "Currently Selling" badge, yet real orders may own its numbers —
+            // so the lock alone must not decide whether Delete is offered, or the
+            // UI promises something the server can only refuse.
+            const committedCount = variant.committedCount ?? 0
+            const hasSales = committedCount > 0
+            const showDelete = !isLive && !hasSales
+            // What the badge says. `committedCount` above includes numbers claimed
+            // by a PaymentIntent that no buyer ever paid for — someone opening
+            // checkout and leaving — so showing it read "5 sold" on a variant with
+            // zero orders. `soldCount` counts only copies a buyer actually took.
+            const soldCount = variant.soldCount ?? 0
+            const duplicateSize = isDuplicate(variant)
+            const key = keyFor(variant, index)
+            // Saving this card on its own. Offered only when something here differs
+            // from what is stored, so the button is a statement of fact ("there is
+            // something to save") rather than permanent furniture.
+            const variantDirty = variantIsDirty(variant)
+            const showSaveVariant = variantDirty && Boolean(onSaveVariant)
+            const saveKey = variant.id ?? key
+            const variantSaving = savingKey === saveKey
+            const variantSaveError = saveErrorByKey[saveKey]
+            const variantJustSaved = savedKey === variant.id && !variantDirty
+            const isOpen = !!expanded[key]
+            // The UI's own toggle state — see `sheetMode` above for why this,
+            // not isFixedSheet(variant), drives everything this card renders.
+            const isFixed = isFixedFor(variant, index)
 
-        const fieldErrors = fieldErrorsOf(variant, isFixed)
-        // Show a field's error only once the artist has tried to go live.
-        const tried = !!triedReadyToSell[key]
-        const errFor = (field: keyof typeof fieldErrors) => (tried ? fieldErrors[field] : null)
+            const fieldErrors = fieldErrorsOf(variant, isFixed)
+            // Show a field's error only once the artist has tried to go live.
+            const tried = !!triedReadyToSell[key]
+            const errFor = (field: keyof typeof fieldErrors) => (tried ? fieldErrors[field] : null)
 
-        // Putting one variant on sale saves the WHOLE form, so every variant
-        // must be valid. Validate all on click; if any fail, reveal their errors
-        // (expand the cards) and don't proceed — no blind 400.
-        const handleReadyToSell = () => {
-          const invalid = variants
-            .map((v, i) => ({
-              key: keyFor(v, i),
-              name: v.name || `Variant ${i + 1}`,
-              bad: variantHasErrors(v, i),
-            }))
-            .filter((entry) => entry.bad)
-          if (invalid.length > 0) {
-            const flags = Object.fromEntries(invalid.map((entry) => [entry.key, true]))
-            setTriedReadyToSell((t) => ({ ...t, ...flags }))
-            setExpanded((e) => ({ ...e, ...flags }))
-            const first = invalid[0]
-            // Name the blocker — it is frequently not the card you clicked.
-            setReadyToSellBlockedBy(
-              invalid.length === 1
-                ? `“${first.name}” needs fixing before anything can go on sale — its card is open below.`
-                : `${invalid.length} variants need fixing before anything can go on sale, starting with “${first.name}”.`,
-            )
-            // Take the artist to the problem rather than leaving them to hunt.
-            requestAnimationFrame(() => {
-              document
-                .getElementById(`variant-card-${first.key}`)
-                ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-            })
-            return
-          }
-          setReadyToSellBlockedBy(null)
-          onReadyToSellVariant?.(index)
-        }
+            // Putting one variant on sale saves the WHOLE form, so every variant
+            // must be valid. Validate all on click; if any fail, reveal their errors
+            // (expand the cards) and don't proceed — no blind 400.
+            const handleReadyToSell = () => {
+              const invalid = variants
+                .map((v, i) => ({
+                  key: keyFor(v, i),
+                  name: v.name || `Variant ${i + 1}`,
+                  bad: variantHasErrors(v, i),
+                }))
+                .filter((entry) => entry.bad)
+              if (invalid.length > 0) {
+                const flags = Object.fromEntries(invalid.map((entry) => [entry.key, true]))
+                setTriedReadyToSell((t) => ({ ...t, ...flags }))
+                setExpanded((e) => ({ ...e, ...flags }))
+                const first = invalid[0]
+                // Name the blocker — it is frequently not the card you clicked.
+                setReadyToSellBlockedBy(
+                  invalid.length === 1
+                    ? `“${first.name}” needs fixing before anything can go on sale — its card is open below.`
+                    : `${invalid.length} variants need fixing before anything can go on sale, starting with “${first.name}”.`,
+                )
+                // Take the artist to the problem rather than leaving them to hunt.
+                requestAnimationFrame(() => {
+                  document
+                    .getElementById(`variant-card-${first.key}`)
+                    ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+                })
+                return
+              }
+              setReadyToSellBlockedBy(null)
+              onReadyToSellVariant?.(index)
+            }
 
-        return (
-          <div key={key} id={`variant-card-${key}`} className={styles.variantCard}>
-            <button
-              type="button"
-              className={styles.variantHeader}
-              onClick={() => toggle(key)}
-              aria-expanded={isOpen}
-            >
-              <span className={styles.variantTag}>{variant.name || `Variant ${index + 1}`}</span>
-              {isLive && <span className={styles.sellingTag}>Currently Selling</span>}
-              {soldCount > 0 && (
-                <span className={styles.variantLockedBadge}>
-                  {soldCount} sold{!isLive && ' · paused'}
-                </span>
-              )}
-              {soldCount === 0 && !isLive && hasSales && (
-                <span className={styles.variantLockedBadge}>paused</span>
-              )}
-              <CaretDown
-                size={16}
-                weight="light"
-                className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
-                aria-hidden
-              />
-            </button>
+            return (
+              <div key={key} id={`variant-card-${key}`} className={styles.row}>
+                <Button
+                  type="button"
+                  variant="bare"
+                  font="dashboard"
+                  className={styles.rowHeader}
+                  onClick={() => toggle(key)}
+                  aria-expanded={isOpen}
+                >
+                  <span className={styles.rowName}>{variant.name || `Variant ${index + 1}`}</span>
+                  <span className={styles.rowStatus}>
+                    {isLive && (
+                      <StatusPill tone="green" shape="tag" dot label="Currently selling" />
+                    )}
+                    {soldCount > 0 && (
+                      <StatusPill
+                        tone="amber"
+                        shape="tag"
+                        label={`${soldCount} sold${!isLive ? ' · paused' : ''}`}
+                      />
+                    )}
+                    {soldCount === 0 && !isLive && hasSales && (
+                      <StatusPill tone="amber" shape="tag" label="paused" />
+                    )}
+                  </span>
+                  <CaretDown
+                    size={16}
+                    weight="light"
+                    className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
+                    aria-hidden
+                  />
+                </Button>
 
-            {isOpen && (
-              <div className={styles.variantBody}>
-                {/* The lock is per-variant, so it is reported per-variant. A
+                {isOpen && (
+                  <div className={styles.rowBody}>
+                    {/* The lock is per-variant, so it is reported per-variant. A
                     sibling variant that is still a draft stays fully editable
                     and shows nothing. */}
-                {isLive && (
-                  <div className={styles.variantLockedBanner}>
-                    <span className={styles.variantLockedBadge}>Locked</span>
-                    <div>
-                      <strong>This variant is on sale and frozen.</strong>{' '}
-                      {isAdmin
-                        ? 'Only its name and price can change — raise the price as copies sell. Unblock it below to edit anything else.'
-                        : 'Only its name and price can change — raise the price as copies sell. Ask an admin to unblock it to edit anything else.'}
-                    </div>
-                  </div>
-                )}
-                <div className={dashboardStyles.field}>
-                  <label>Name</label>
-                  <Input
-                    type="text"
-                    size="medium"
-                    value={variant.name}
-                    // Editable even while on sale, like the price. The name is
-                    // just a label — no invoice references it, and every live
-                    // surface joins it fresh, so a rename never rewrites a
-                    // record. The physical fields below stay frozen.
-                    disabled={false}
-                    placeholder="e.g. Small"
-                    invalid={!!errFor('name')}
-                    onChange={(e) => update(index, { name: e.target.value })}
-                  />
-                  {isLive && (
-                    <span className={styles.hint}>
-                      You can rename this variant at any time — it updates everywhere it is shown.
-                      Already-sent emails keep the name they were sent with.
-                    </span>
-                  )}
-                  <ErrorText>{errFor('name')}</ErrorText>
-                </div>
-
-                <div className={dashboardStyles.field}>
-                  <label>Paper</label>
-                  <SelectDropdown<string>
-                    options={PAPER_OPTIONS}
-                    value={variant.paperId}
-                    disabled={variantLocked}
-                    onChange={(v) => update(index, { paperId: v })}
-                  />
-                </div>
-
-                <div className={dashboardStyles.field}>
-                  <label>Sheet size</label>
-                  <div className={styles.modeToggle} role="group" aria-label="Sheet size mode">
-                    <Button
-                      type="button"
-                      variant={isFixed ? 'secondary' : 'primary'}
-                      disabled={variantLocked}
-                      onClick={() => setSheetMode(index, false)}
-                    >
-                      Grows with the print
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={isFixed ? 'primary' : 'secondary'}
-                      disabled={variantLocked}
-                      onClick={() => setSheetMode(index, true)}
-                    >
-                      Fixed sheet
-                    </Button>
-                  </div>
-                  <span className={styles.hint}>
-                    {isFixed
-                      ? 'You set the paper size; the print is sized to fit inside it and the borders are worked out for you.'
-                      : 'The paper grows around the print — print size plus the border on every side.'}
-                  </span>
-                </div>
-
-                {isFixed ? (
-                  <div className={styles.twoCol}>
-                    <div className={dashboardStyles.field}>
-                      <label>Sheet height (cm)</label>
+                    {isLive && (
+                      <LockNote>
+                        <strong>This variant is on sale and frozen.</strong>{' '}
+                        {isAdmin
+                          ? 'Only its name and price can change — raise the price as copies sell. Unblock it below to edit anything else.'
+                          : 'Only its name and price can change — raise the price as copies sell. Ask an admin to unblock it to edit anything else.'}
+                      </LockNote>
+                    )}
+                    <div className={styles.field}>
+                      <label htmlFor={`variant-${key}-name`} className={styles.label}>
+                        Name
+                      </label>
                       <Input
+                        id={`variant-${key}-name`}
                         type="text"
-                        inputMode="decimal"
-                        size="medium"
-                        value={variant.sheetHeightCm ? String(variant.sheetHeightCm) : ''}
+                        size="bare"
+                        inputClassName={styles.input}
+                        value={variant.name}
+                        // Editable even while on sale, like the price. The name is
+                        // just a label — no invoice references it, and every live
+                        // surface joins it fresh, so a rename never rewrites a
+                        // record. The physical fields below stay frozen.
+                        disabled={false}
+                        placeholder="e.g. Small"
+                        invalid={!!errFor('name')}
+                        onChange={(e) => update(index, { name: e.target.value })}
+                      />
+                      {isLive && (
+                        <span className={styles.hint}>
+                          You can rename this variant at any time — it updates everywhere it is
+                          shown. Already-sent emails keep the name they were sent with.
+                        </span>
+                      )}
+                      <ErrorText>{errFor('name')}</ErrorText>
+                    </div>
+
+                    <div className={styles.field}>
+                      <span className={styles.label}>Paper</span>
+                      <SelectDropdown<string>
+                        options={PAPER_OPTIONS}
+                        value={variant.paperId}
                         disabled={variantLocked}
-                        invalid={!!errFor('sheet')}
-                        onChange={(e) =>
-                          updateSheet(index, {
-                            sheetHeightCm: Number(e.target.value.replace(/[^0-9.]/g, '')) || 0,
-                          })
-                        }
+                        onChange={(v) => update(index, { paperId: v })}
                       />
                     </div>
-                    <div className={dashboardStyles.field}>
-                      <label>Sheet width (cm)</label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        size="medium"
-                        value={variant.sheetWidthCm ? String(variant.sheetWidthCm) : ''}
-                        disabled={variantLocked}
-                        invalid={!!errFor('sheet')}
-                        onChange={(e) =>
-                          updateSheet(index, {
-                            sheetWidthCm: Number(e.target.value.replace(/[^0-9.]/g, '')) || 0,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className={dashboardStyles.field}>
-                    <label>Print size (cm)</label>
-                    <CustomSizeInputs
-                      custom={SIZE_CUSTOM}
-                      aspectRatio={aspectRatio}
-                      longEdgeBounds={longEdgeBounds}
-                      customSize={{ widthCm: variant.widthCm, heightCm: variant.heightCm }}
-                      disabled={variantLocked}
-                      showSlider={false}
-                      onChange={(size) =>
-                        update(index, { widthCm: size.widthCm, heightCm: size.heightCm })
-                      }
-                    />
-                  </div>
-                )}
-                <ErrorText>{errFor('size')}</ErrorText>
-                <ErrorText>{errFor('sheet')}</ErrorText>
-                {duplicateSize && (
-                  <ErrorText>
-                    Each variant must have a distinct print size — this one clashes with another.
-                  </ErrorText>
-                )}
 
-                {/* Border + number of copies — one row, 50% each. */}
-                <div className={styles.twoCol}>
-                  <div className={dashboardStyles.field}>
-                    <label>Border (cm)</label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      size="medium"
-                      value={variant.borderCm ? String(variant.borderCm) : ''}
-                      disabled={variantLocked}
-                      invalid={!!errFor('border')}
-                      onChange={(e) => {
-                        const borderCm = Number(e.target.value.replace(/[^0-9]/g, '')) || 0
-                        const next = { ...variant, borderCm }
-                        update(index, { borderCm, ...withDerivedImage(next) })
-                      }}
-                    />
-                    <span className={styles.hint}>min {LIMITED_BORDER_MIN_CM} cm, whole cm</span>
-                    <ErrorText>{errFor('border')}</ErrorText>
-                  </div>
-                  <div className={dashboardStyles.field}>
-                    <label>Number of copies</label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      size="medium"
-                      value={variant.editionSize ? String(variant.editionSize) : ''}
-                      disabled={variantLocked}
-                      invalid={!!errFor('editionSize')}
-                      onChange={(e) =>
-                        update(index, {
-                          editionSize: Number(e.target.value.replace(/[^0-9]/g, '')) || 0,
-                        })
-                      }
-                    />
-                    <span className={styles.hint}>How many numbered prints exist.</span>
-                    <ErrorText>{errFor('editionSize')}</ErrorText>
-                  </div>
-                </div>
-
-                {(() => {
-                  const paperLabel =
-                    TPS_PAPERS.find((p) => p.id === variant.paperId)?.label ?? variant.paperId
-                  const recipe = buildTpsRecipe({
-                    widthCm: variant.widthCm,
-                    heightCm: variant.heightCm,
-                    borderCm: variant.borderCm,
-                    sheetWidthCm: variant.sheetWidthCm,
-                    sheetHeightCm: variant.sheetHeightCm,
-                    paperLabel,
-                  })
-                  if (!recipe) return null
-                  const text = formatTpsRecipe(recipe, {
-                    title: variant.name || `Variant ${index + 1}`,
-                  })
-                  return (
-                    <div className={styles.layoutSummary}>
-                      {/* Our own convention: height x width. */}
-                      <p className={styles.layoutLine}>
-                        <strong>Sheet</strong> {formatCm(recipe.sheetHeightCm)} ×{' '}
-                        {formatCm(recipe.sheetWidthCm)} cm · <strong>Print</strong>{' '}
-                        {formatCm(recipe.expectedImageHeightCm)} ×{' '}
-                        {formatCm(recipe.expectedImageWidthCm)} cm · <strong>Borders</strong>{' '}
-                        {formatCm(recipe.expectedBorderYCm)} top/bottom,{' '}
-                        {formatCm(recipe.expectedBorderXCm)} left/right cm
-                      </p>
-                      {(() => {
-                        const margin = estimateVariantMarginCents({
-                          widthCm: variant.widthCm,
-                          heightCm: variant.heightCm,
-                          borderCm: variant.borderCm,
-                          sheetWidthCm: variant.sheetWidthCm,
-                          sheetHeightCm: variant.sheetHeightCm,
-                          artistPriceCents: Math.round(Number(variant.priceEuros ?? 0) * 100),
-                        })
-                        if (!margin) return null
-                        const euros = (c: number) => (c / 100).toFixed(2)
-                        return margin.marginCents <= 0 ? (
-                          <ErrorText>
-                            The paper around the print costs €{euros(margin.absorbedCents)} more to
-                            produce than the print alone, which is more than this variant earns.
-                            Raise the price or reduce the border.
-                          </ErrorText>
-                        ) : (
-                          <p className={styles.layoutLine}>
-                            Gallery keeps €{euros(margin.marginCents)} per print (€
-                            {euros(margin.absorbedCents)} of the surrounding paper absorbed).
-                          </p>
-                        )
-                      })()}
-                      <details className={styles.recipeDetails}>
-                        <summary>Print lab setup</summary>
-                        <pre className={styles.recipe}>{text}</pre>
+                    <div className={styles.field}>
+                      <span className={styles.label}>Sheet size</span>
+                      <div className={styles.modeToggle} role="group" aria-label="Sheet size mode">
                         <Button
                           type="button"
-                          variant="secondary"
-                          onClick={() => navigator.clipboard?.writeText(text)}
+                          variant="bare"
+                          font="dashboard"
+                          className={styles.mode}
+                          aria-pressed={!isFixed}
+                          disabled={variantLocked}
+                          onClick={() => setSheetMode(index, false)}
                         >
-                          Copy setup
+                          Grows with the print
                         </Button>
-                      </details>
+                        <Button
+                          type="button"
+                          variant="bare"
+                          font="dashboard"
+                          className={styles.mode}
+                          aria-pressed={isFixed}
+                          disabled={variantLocked}
+                          onClick={() => setSheetMode(index, true)}
+                        >
+                          Fixed sheet
+                        </Button>
+                      </div>
+                      <span className={styles.hint}>
+                        {isFixed
+                          ? 'You set the paper size; the print is sized to fit inside it and the borders are worked out for you.'
+                          : 'The paper grows around the print — print size plus the border on every side.'}
+                      </span>
                     </div>
-                  )
-                })()}
 
-                <div className={dashboardStyles.field} style={{ maxWidth: 240 }}>
-                  <label>Your price for this variant (&euro;)</label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    size="medium"
-                    value={variant.priceEuros ?? ''}
-                    // Price stays editable even when the variant is locked — the
-                    // artist can raise it as the edition sells. Name is editable
-                    // too (see above); every other field is frozen (size + edition
-                    // size are materialised).
-                    disabled={false}
-                    placeholder="Add your price here"
-                    invalid={!!errFor('price')}
-                    onChange={(e) =>
-                      update(index, {
-                        priceEuros: e.target.value.replace(',', '.').replace(/[^0-9.]/g, ''),
+                    {isFixed ? (
+                      <div className={styles.twoCol}>
+                        <div className={styles.field}>
+                          <label htmlFor={`variant-${key}-sheet-height`} className={styles.label}>
+                            Sheet height (cm)
+                          </label>
+                          <Input
+                            id={`variant-${key}-sheet-height`}
+                            type="text"
+                            inputMode="decimal"
+                            size="bare"
+                            inputClassName={styles.input}
+                            value={variant.sheetHeightCm ? String(variant.sheetHeightCm) : ''}
+                            disabled={variantLocked}
+                            invalid={!!errFor('sheet')}
+                            onChange={(e) =>
+                              updateSheet(index, {
+                                sheetHeightCm: Number(e.target.value.replace(/[^0-9.]/g, '')) || 0,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className={styles.field}>
+                          <label htmlFor={`variant-${key}-sheet-width`} className={styles.label}>
+                            Sheet width (cm)
+                          </label>
+                          <Input
+                            id={`variant-${key}-sheet-width`}
+                            type="text"
+                            inputMode="decimal"
+                            size="bare"
+                            inputClassName={styles.input}
+                            value={variant.sheetWidthCm ? String(variant.sheetWidthCm) : ''}
+                            disabled={variantLocked}
+                            invalid={!!errFor('sheet')}
+                            onChange={(e) =>
+                              updateSheet(index, {
+                                sheetWidthCm: Number(e.target.value.replace(/[^0-9.]/g, '')) || 0,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.field}>
+                        <span className={styles.label}>Print size (cm)</span>
+                        <CustomSizeInputs
+                          custom={SIZE_CUSTOM}
+                          aspectRatio={aspectRatio}
+                          longEdgeBounds={longEdgeBounds}
+                          customSize={{ widthCm: variant.widthCm, heightCm: variant.heightCm }}
+                          disabled={variantLocked}
+                          showSlider={false}
+                          onChange={(size) =>
+                            update(index, { widthCm: size.widthCm, heightCm: size.heightCm })
+                          }
+                        />
+                      </div>
+                    )}
+                    <ErrorText>{errFor('size')}</ErrorText>
+                    <ErrorText>{errFor('sheet')}</ErrorText>
+                    {duplicateSize && (
+                      <ErrorText>
+                        Each variant must have a distinct print size — this one clashes with
+                        another.
+                      </ErrorText>
+                    )}
+
+                    {/* Border + number of copies — one row, 50% each. */}
+                    <div className={styles.twoCol}>
+                      <div className={styles.field}>
+                        <label htmlFor={`variant-${key}-border`} className={styles.label}>
+                          Border (cm)
+                        </label>
+                        <Input
+                          id={`variant-${key}-border`}
+                          type="text"
+                          inputMode="numeric"
+                          size="bare"
+                          inputClassName={styles.input}
+                          value={variant.borderCm ? String(variant.borderCm) : ''}
+                          disabled={variantLocked}
+                          invalid={!!errFor('border')}
+                          onChange={(e) => {
+                            const borderCm = Number(e.target.value.replace(/[^0-9]/g, '')) || 0
+                            const next = { ...variant, borderCm }
+                            update(index, { borderCm, ...withDerivedImage(next) })
+                          }}
+                        />
+                        <span className={styles.hint}>
+                          min {LIMITED_BORDER_MIN_CM} cm, whole cm
+                        </span>
+                        <ErrorText>{errFor('border')}</ErrorText>
+                      </div>
+                      <div className={styles.field}>
+                        <label htmlFor={`variant-${key}-copies`} className={styles.label}>
+                          Number of copies
+                        </label>
+                        <Input
+                          id={`variant-${key}-copies`}
+                          type="text"
+                          inputMode="numeric"
+                          size="bare"
+                          inputClassName={styles.input}
+                          value={variant.editionSize ? String(variant.editionSize) : ''}
+                          disabled={variantLocked}
+                          invalid={!!errFor('editionSize')}
+                          onChange={(e) =>
+                            update(index, {
+                              editionSize: Number(e.target.value.replace(/[^0-9]/g, '')) || 0,
+                            })
+                          }
+                        />
+                        <span className={styles.hint}>How many numbered prints exist.</span>
+                        <ErrorText>{errFor('editionSize')}</ErrorText>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const paperLabel =
+                        TPS_PAPERS.find((p) => p.id === variant.paperId)?.label ?? variant.paperId
+                      const recipe = buildTpsRecipe({
+                        widthCm: variant.widthCm,
+                        heightCm: variant.heightCm,
+                        borderCm: variant.borderCm,
+                        sheetWidthCm: variant.sheetWidthCm,
+                        sheetHeightCm: variant.sheetHeightCm,
+                        paperLabel,
                       })
-                    }
-                  />
-                  <span className={styles.hint}>
-                    {variantLocked
-                      ? 'The edition is live — you can still adjust the price; every other field is locked.'
-                      : 'What you earn per print of this variant'}
-                  </span>
-                  <ErrorText>{errFor('price')}</ErrorText>
-                </div>
+                      if (!recipe) return null
+                      const text = formatTpsRecipe(recipe, {
+                        title: variant.name || `Variant ${index + 1}`,
+                      })
+                      return (
+                        <div className={styles.layoutSummary}>
+                          {/* Our own convention: height x width. */}
+                          <p className={styles.layoutLine}>
+                            <strong>Sheet</strong> {formatCm(recipe.sheetHeightCm)} ×{' '}
+                            {formatCm(recipe.sheetWidthCm)} cm · <strong>Print</strong>{' '}
+                            {formatCm(recipe.expectedImageHeightCm)} ×{' '}
+                            {formatCm(recipe.expectedImageWidthCm)} cm · <strong>Borders</strong>{' '}
+                            {formatCm(recipe.expectedBorderYCm)} top/bottom,{' '}
+                            {formatCm(recipe.expectedBorderXCm)} left/right cm
+                          </p>
+                          {(() => {
+                            const margin = estimateVariantMarginCents({
+                              widthCm: variant.widthCm,
+                              heightCm: variant.heightCm,
+                              borderCm: variant.borderCm,
+                              sheetWidthCm: variant.sheetWidthCm,
+                              sheetHeightCm: variant.sheetHeightCm,
+                              artistPriceCents: Math.round(Number(variant.priceEuros ?? 0) * 100),
+                            })
+                            if (!margin) return null
+                            const euros = (c: number) => (c / 100).toFixed(2)
+                            return margin.marginCents <= 0 ? (
+                              <ErrorText>
+                                The paper around the print costs €{euros(margin.absorbedCents)} more
+                                to produce than the print alone, which is more than this variant
+                                earns. Raise the price or reduce the border.
+                              </ErrorText>
+                            ) : (
+                              <p className={styles.layoutLine}>
+                                Gallery keeps €{euros(margin.marginCents)} per print (€
+                                {euros(margin.absorbedCents)} of the surrounding paper absorbed).
+                              </p>
+                            )
+                          })()}
+                          <details className={styles.recipeDetails}>
+                            <summary>Print lab setup</summary>
+                            <pre className={styles.recipe}>{text}</pre>
+                            <Button
+                              type="button"
+                              variant="bare"
+                              font="dashboard"
+                              className={styles.outline}
+                              onClick={() => navigator.clipboard?.writeText(text)}
+                            >
+                              Copy setup
+                            </Button>
+                          </details>
+                        </div>
+                      )
+                    })()}
 
-                {(showUnblock || showReadyToSell || showDelete || showSaveVariant) && (
-                  <div className={styles.variantFooter}>
-                    {/* Admin shortcut: consume a number of this variant
+                    <div className={`${styles.field} ${styles.priceField}`}>
+                      <label htmlFor={`variant-${key}-price`} className={styles.label}>
+                        Your price for this variant (&euro;)
+                      </label>
+                      <div className={styles.money}>
+                        <span aria-hidden className={styles.currency}>
+                          €
+                        </span>
+                        <Input
+                          id={`variant-${key}-price`}
+                          type="text"
+                          inputMode="decimal"
+                          size="bare"
+                          className={styles.moneyField}
+                          inputClassName={styles.moneyInput}
+                          value={variant.priceEuros ?? ''}
+                          // Price stays editable even when the variant is locked — the
+                          // artist can raise it as the edition sells. Name is editable
+                          // too (see above); every other field is frozen (size + edition
+                          // size are materialised).
+                          disabled={false}
+                          placeholder="Add your price here"
+                          invalid={!!errFor('price')}
+                          onChange={(e) =>
+                            update(index, {
+                              priceEuros: e.target.value.replace(',', '.').replace(/[^0-9.]/g, ''),
+                            })
+                          }
+                        />
+                      </div>
+                      <span className={styles.hint}>
+                        {variantLocked
+                          ? 'The edition is live — you can still adjust the price; every other field is locked.'
+                          : 'What you earn per print of this variant'}
+                      </span>
+                      <ErrorText>{errFor('price')}</ErrorText>
+                    </div>
+
+                    {(showUnblock || showReadyToSell || showDelete || showSaveVariant) && (
+                      <div className={styles.variantFooter}>
+                        {/* Admin shortcut: consume a number of this variant
                         off-platform (gift / artist copy / test) — jumps to the
                         Edition Sales modal preselected on this variant.
                         Gated on `published` (numbers exist), NOT on `isLive`:
@@ -878,82 +931,102 @@ export const LimitedVariantsEditor = ({
                         before the edition is offered to buyers. Matches
                         listGiftableVariants + createOffPlatformOrder, which
                         both check `published` only. */}
-                    {isAdmin && variant.published === true && variant.id && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          window.location.href = `/admin/edition-sales?gift=${variant.id}`
-                        }}
-                      >
-                        Create gift order
-                      </Button>
+                        {isAdmin && variant.published === true && variant.id && (
+                          <Button
+                            type="button"
+                            variant="bare"
+                            font="dashboard"
+                            className={styles.outline}
+                            onClick={() => {
+                              window.location.href = `/admin/edition-sales?gift=${variant.id}`
+                            }}
+                          >
+                            Create gift order
+                          </Button>
+                        )}
+                        {/* Off-sale variant (draft or admin-unblocked): put it on sale. */}
+                        {showReadyToSell && (
+                          <Button
+                            type="button"
+                            variant="bare"
+                            font="dashboard"
+                            className={styles.dark}
+                            onClick={handleReadyToSell}
+                          >
+                            Ready to sell
+                          </Button>
+                        )}
+                        {showReadyToSell && readyToSellBlockedBy && (
+                          <ErrorText>{readyToSellBlockedBy}</ErrorText>
+                        )}
+                        {/* Live variant: take it off sale to edit it — admin only. */}
+                        {showUnblock && variant.id && (
+                          <Button
+                            type="button"
+                            variant="bare"
+                            font="dashboard"
+                            className={styles.outline}
+                            onClick={() => onUnblockVariant?.(variant.id as string)}
+                          >
+                            Unblock
+                          </Button>
+                        )}
+                        {showSaveVariant && (
+                          <Button
+                            type="button"
+                            variant="bare"
+                            font="dashboard"
+                            className={styles.dark}
+                            disabled={variantSaving}
+                            onClick={() => saveVariant(index)}
+                          >
+                            {variantSaving
+                              ? 'Saving…'
+                              : variant.id
+                                ? 'Save variant'
+                                : 'Save new variant'}
+                          </Button>
+                        )}
+                        {showDelete && (
+                          <Button
+                            type="button"
+                            variant="bare"
+                            font="dashboard"
+                            className={styles.danger}
+                            onClick={() => requestDelete(index)}
+                          >
+                            Delete variant
+                          </Button>
+                        )}
+                      </div>
                     )}
-                    {/* Off-sale variant (draft or admin-unblocked): put it on sale. */}
-                    {showReadyToSell && (
-                      <Button type="button" variant="primary" onClick={handleReadyToSell}>
-                        Ready to Sell
-                      </Button>
+                    {hasSales && !isLive && (
+                      <span className={styles.hint}>
+                        This variant is paused from sale, but{' '}
+                        {committedCount === 1 ? 'a copy has' : `${committedCount} copies have`}{' '}
+                        already been reserved or sold, so it can’t be deleted. Cancel or refund the
+                        {committedCount === 1 ? ' order that owns it' : ' orders that own them'} to
+                        free {committedCount === 1 ? 'the number' : 'those numbers'}.
+                      </span>
                     )}
-                    {showReadyToSell && readyToSellBlockedBy && (
-                      <ErrorText>{readyToSellBlockedBy}</ErrorText>
+                    {variantDirty && !variantSaving && (
+                      <span className={styles.hint}>
+                        {variant.id
+                          ? isLive
+                            ? 'Unsaved changes. “Save variant” stores this variant’s name and price on their own — no need to save the artwork.'
+                            : 'Unsaved changes. “Save variant” stores this variant on its own — no need to save the artwork.'
+                          : 'This variant hasn’t been saved yet. “Save new variant” creates it on its own — no need to save the artwork.'}
+                      </span>
                     )}
-                    {/* Live variant: take it off sale to edit it — admin only. */}
-                    {showUnblock && variant.id && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => onUnblockVariant?.(variant.id as string)}
-                      >
-                        Unblock
-                      </Button>
-                    )}
-                    {showSaveVariant && (
-                      <Button
-                        type="button"
-                        variant="primary"
-                        disabled={variantSaving}
-                        onClick={() => saveVariant(index)}
-                      >
-                        {variantSaving
-                          ? 'Saving…'
-                          : variant.id
-                            ? 'Save variant'
-                            : 'Save new variant'}
-                      </Button>
-                    )}
-                    {showDelete && (
-                      <Button type="button" variant="danger" onClick={() => requestDelete(index)}>
-                        Delete variant
-                      </Button>
-                    )}
+                    {variantJustSaved && <span className={styles.hint}>Saved.</span>}
+                    {variantSaveError && <ErrorText>{variantSaveError}</ErrorText>}
                   </div>
                 )}
-                {hasSales && !isLive && (
-                  <span className={styles.hint}>
-                    This variant is paused from sale, but{' '}
-                    {committedCount === 1 ? 'a copy has' : `${committedCount} copies have`} already
-                    been reserved or sold, so it can’t be deleted. Cancel or refund the
-                    {committedCount === 1 ? ' order that owns it' : ' orders that own them'} to free{' '}
-                    {committedCount === 1 ? 'the number' : 'those numbers'}.
-                  </span>
-                )}
-                {variantDirty && !variantSaving && (
-                  <span className={styles.hint}>
-                    {variant.id
-                      ? isLive
-                        ? 'Unsaved changes. “Save variant” stores this variant’s name and price on their own — no need to save the artwork.'
-                        : 'Unsaved changes. “Save variant” stores this variant on its own — no need to save the artwork.'
-                      : 'This variant hasn’t been saved yet. “Save new variant” creates it on its own — no need to save the artwork.'}
-                  </span>
-                )}
-                {variantJustSaved && <span className={styles.hint}>Saved.</span>}
-                {variantSaveError && <ErrorText>{variantSaveError}</ErrorText>}
               </div>
-            )}
-          </div>
-        )
-      })}
+            )
+          })}
+        </div>
+      )}
 
       {/* Adding is bounded only by the max — with per-variant publishing the
           artist can keep adding (and going live with) new variants even after
@@ -961,12 +1034,26 @@ export const LimitedVariantsEditor = ({
           the artist's other artworks instead of retyping it. */}
       {variants.length < MAX_LIMITED_VARIANTS && (
         <div className={styles.addRow}>
-          <Button type="button" variant="secondary" onClick={add}>
-            + Add variant
+          <Button
+            type="button"
+            variant="bare"
+            font="dashboard"
+            className={styles.outline}
+            onClick={add}
+          >
+            <Plus size={16} weight="light" aria-hidden />
+            Add variant
           </Button>
           {artworkId && (
-            <Button type="button" variant="secondary" onClick={openTemplatePicker}>
-              ↻ Apply saved variant
+            <Button
+              type="button"
+              variant="bare"
+              font="dashboard"
+              className={styles.outline}
+              onClick={openTemplatePicker}
+            >
+              <ArrowClockwise size={16} weight="light" aria-hidden />
+              Apply saved variant
             </Button>
           )}
         </div>
