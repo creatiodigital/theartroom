@@ -4,7 +4,11 @@
 // left, the order panel with Pay on the right (400 px); stacked below 1024 px.
 .paymentStep {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
+  // The form at a readable width (at most 760 px), the order panel on the page's right edge; the
+  // space between grows with the screen (owner, 2026-11-12: full-width fields were out of
+  // proportion).
+  grid-template-columns: minmax(0, 760px) 400px;
+  justify-content: space-between;
   gap: 64px;
   align-items: start;
 
