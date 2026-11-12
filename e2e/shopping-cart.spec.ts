@@ -125,7 +125,8 @@ test.describe('shopping cart — /cart page', () => {
 
     await expect(page.getByRole('button', { name: /show all selected options/i })).toHaveCount(0)
     await expect(page.getByText('Giclée on Hahnemühle German Etching')).toBeVisible()
-    await expect(page.getByText('30 × 20 cm print · 3 cm border')).toBeVisible()
+    await expect(page.getByText('Print size: 30 × 20 cm')).toBeVisible()
+    await expect(page.getByText('Border: 3 cm')).toBeVisible()
     await expect(page.getByText('Museum glass')).toBeVisible()
   })
 

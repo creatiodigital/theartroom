@@ -3,11 +3,13 @@ import type { SpecsSummary } from '@/lib/print-providers'
 type SpecRow = SpecsSummary[number]
 
 /**
- * A cart line's choices as a few short lines (docs/public-redesign/order-flow.md "Cart",
- * designs/cart.dc.html and checkout-2-review.dc.html), built from the line's specs snapshot:
+ * A cart line's choices as short lines, one subject each (owner, 2026-11-12: one line packing
+ * size, border and sheet was too hard to read), built from the line's specs snapshot:
  *
  *   "Giclée on Hahnemühle German Etching"
- *   "25 × 20 cm print · 4 cm border · sheet 33 × 28 cm"
+ *   "Print size: 25 × 20 cm"
+ *   "Border: 4 cm"
+ *   "Sheet: 33 × 28 cm"
  *   "Print only, no frame"
  *
  * Rows it knows by catalog id get the drawn phrasing. Every other row is still listed, in
@@ -32,16 +34,13 @@ export function specLines(specs: SpecsSummary): string[] {
   const material = printType && paper ? `${printType} on ${paper}` : (printType ?? paper)
   if (material) lines.push(material)
 
-  // How big: "25 × 20 cm print · 4 cm border · sheet 33 × 28 cm".
+  // How big, one line each: "Print size: 25 × 20 cm", "Border: 4 cm", "Sheet: 33 × 28 cm".
   const size = take('size')
   const border = take('border')
   const sheet = take('sheet')
-  const measures = [
-    size && `${size} print`,
-    border && borderPhrase(border),
-    sheet && `sheet ${sheet}`,
-  ].filter((part): part is string => Boolean(part))
-  if (measures.length > 0) lines.push(measures.join(' · '))
+  if (size) lines.push(`Print size: ${size}`)
+  if (border) lines.push(`Border: ${border === '—' ? 'none' : border}`)
+  if (sheet) lines.push(`Sheet: ${sheet}`)
 
   // How it is presented: "Print only, no frame", or the frame and its moulding.
   const format = take('format')
@@ -69,13 +68,6 @@ export function specLines(specs: SpecsSummary): string[] {
   }
 
   return lines
-}
-
-/** "4 cm border"; "no border" for the summary's "—"; unequal borders keep their wording. */
-function borderPhrase(value: string): string {
-  if (value === '—') return 'no border'
-  if (value.includes(' and ')) return `border ${value}`
-  return `${value} border`
 }
 
 /**

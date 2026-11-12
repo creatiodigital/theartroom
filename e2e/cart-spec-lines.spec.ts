@@ -10,7 +10,7 @@ import { specLines, specShortLine } from '../src/lib/cart/specLines'
 const row = (id: string, label: string, value: string) => ({ id, label, value })
 
 test.describe('specLines', () => {
-  test('an unframed open edition reads as the three drawn lines', () => {
+  test('an unframed open edition reads one subject per line', () => {
     expect(
       specLines([
         row('printType', 'Print type', 'Giclée'),
@@ -22,7 +22,9 @@ test.describe('specLines', () => {
       ]),
     ).toEqual([
       'Giclée on Hahnemühle German Etching',
-      '25.0 × 20.0 cm print · 4 cm border · sheet 33.0 × 28.0 cm',
+      'Print size: 25.0 × 20.0 cm',
+      'Border: 4 cm',
+      'Sheet: 33.0 × 28.0 cm',
       'Print only, no frame',
     ])
   })
@@ -42,7 +44,8 @@ test.describe('specLines', () => {
       ]),
     ).toEqual([
       'Giclée on Hahnemühle Photo Rag',
-      '40.0 × 30.0 cm print · no border',
+      'Print size: 40.0 × 30.0 cm',
+      'Border: none',
       'Standard Frame, Oak — Thin',
       'Glass: Anti Reflective Art',
       'Hanging: D-Rings & Cord',
@@ -52,7 +55,7 @@ test.describe('specLines', () => {
   test('unequal borders keep their own wording', () => {
     expect(
       specLines([row('border', 'Paper border', '6 cm top and bottom, 4 cm left and right')]),
-    ).toEqual(['border 6 cm top and bottom, 4 cm left and right'])
+    ).toEqual(['Border: 6 cm top and bottom, 4 cm left and right'])
   })
 
   test('rows it does not know are never dropped', () => {
