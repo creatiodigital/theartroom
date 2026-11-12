@@ -65,15 +65,16 @@
   flex-direction: column;
 }
 
-// The admin's bottom padding stays the old DashboardLayout's 200px (not the design's
-// 56 / 40) until questions.md Q69 is answered: the kebab menus on the last rows of
-// Users, Exhibitions and Content opened downward and needed the room (47dadb64, Q6).
+// The design's bottom padding, 40px on phones and 56px above (questions.md Q6 / Q69). The old
+// DashboardLayout's 200px made room for row menus opening downward on the last rows (47dadb64);
+// every row menu now flips upward near the bottom (RowMenu). A page with the fixed save bar adds
+// its own room for it (the page editor's `.page`, the studio's `.withSaveBar`).
 .content {
-  padding: var(--space-6) var(--space-4) 200px;
+  padding: var(--space-6) var(--space-4) var(--space-10);
   box-sizing: border-box;
 
   @include media-up(tablet) {
-    padding: 36px var(--space-10) 200px;
+    padding: 36px var(--space-10) 56px;
   }
 
   // Same rule the old DashboardLayout's `.page` applied: headings inside the

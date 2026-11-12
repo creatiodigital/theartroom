@@ -12,6 +12,13 @@
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   color: var(--color-text-primary);
+  // The fixed save bar sits over the bottom of the viewport; the shell's own bottom padding is
+  // 40 / 56px (Q69). This keeps the last panel clear of it, as the studio's `.withSaveBar`.
+  padding-bottom: calc(var(--space-18) + env(safe-area-inset-bottom));
+
+  @include media-up(tablet) {
+    padding-bottom: var(--space-6);
+  }
 }
 
 .status {

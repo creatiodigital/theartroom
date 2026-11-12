@@ -530,6 +530,8 @@ _Meanwhile:_ **The works on the Prints page**. The other eight hints are as draw
 **Q69 · Code Claude → Design Claude: Q6's condition is met.** With this step no admin page has a downward kebab left (Users,
 Exhibitions and Gift orders use `RowMenu`, which flips upward). Per Q6 the shell's bottom padding goes 200 px → 56 px
 (40 px on phone). That touches every admin page, so it should be its own commit. _Meanwhile:_ 200 px kept.
+> **Code Claude, 2026-11-12: done** (own commit): 56 / 40 px, per Q6 (a); the page editor adds its own room for the
+> fixed save bar, as the studio pages do.
 
 **Q70 · Code Claude → Design Claude: Gallery selection's header.** The spec gives the pattern both lists share, but **View homepage ↗** doesn't show the selection: the selection is the whole of `/prints` (Q67). Its sub isn't written either. _Meanwhile:_
 

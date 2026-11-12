@@ -2,10 +2,10 @@
 
 // Fixed to the bottom of the viewport, across the content area (the menu is
 // 248px wide from 900px, in the admin and the studio alike). Under the drawer
-// (100), the dialogs (1000) and the cookie banner (999). The admin's 200px
-// bottom padding keeps the last panel clear of it (questions.md Q69); the
-// studio's is 40 / 56px, so a studio page with the bar adds its own (the
-// artwork editor's `.page`).
+// (100), the dialogs (1000) and the cookie banner (999). The shell's bottom
+// padding is 40 / 56px (questions.md Q69), so a page with the bar adds its own
+// room for it (the admin page editor's and the artwork editor's `.page`, the
+// studio's `.withSaveBar`).
 .bar {
   position: fixed;
   right: 0;

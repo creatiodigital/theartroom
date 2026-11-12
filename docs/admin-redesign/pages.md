@@ -1172,3 +1172,6 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
 - **Q116 · Supplementary media drop (2026-11-12):** the dashed area takes dropped files (same upload as the button;
   other types refused with "Not added: … (JPG, PNG, WebP, MP4 or WebM only)"); hint "· or drop files here". Look: the
   dark border while a file is held over it (not seen in the check).
+- **Q69 · admin bottom padding (2026-11-12):** the shell's bottom padding is the design's 56 px (40 px on phones)
+  instead of 200 px; the page editor keeps its last panel clear of the fixed save bar on its own. Look: any admin
+  page's end.
