@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { withHeadingAnchors } from '../src/lib/richText/headingAnchors'
+import { splitAtH2, withHeadingAnchors } from '../src/lib/richText/headingAnchors'
 
 /**
  * The content pages' "On this page" (docs/public-redesign/legal.md): every H2 of the editor's
@@ -48,5 +48,32 @@ test.describe('heading anchors (public step 32)', () => {
   test('an empty H2 is left out of the list and gets no id', () => {
     const source = '<h2> </h2><h2><br></h2>'
     expect(withHeadingAnchors(source)).toEqual({ html: source, headings: [] })
+  })
+})
+
+// About (step 33): each H2 of the editor's text becomes a labelled section.
+test.describe('splitAtH2 (public step 33)', () => {
+  test('cuts at every H2, the heading as text, the rest as HTML', () => {
+    expect(
+      splitAtH2('<h2>The Gallery</h2><p>a</p><p>b</p><h2>Program &amp; Approach</h2><p>c</p>'),
+    ).toEqual([
+      { heading: 'The Gallery', html: '<p>a</p><p>b</p>' },
+      { heading: 'Program & Approach', html: '<p>c</p>' },
+    ])
+  })
+
+  test('text before the first H2 is kept without a heading; blank parts are dropped', () => {
+    expect(splitAtH2('<p>Intro</p><h2 class="x">One</h2><p>1</p><p></p>')).toEqual([
+      { heading: null, html: '<p>Intro</p>' },
+      { heading: 'One', html: '<p>1</p><p></p>' },
+    ])
+    expect(splitAtH2('<p> </p><h2>One</h2><p>1</p>')).toEqual([
+      { heading: 'One', html: '<p>1</p>' },
+    ])
+  })
+
+  test('no H2 at all: one part, unlabelled', () => {
+    expect(splitAtH2('<p>Just text</p>')).toEqual([{ heading: null, html: '<p>Just text</p>' }])
+    expect(splitAtH2('')).toEqual([])
   })
 })

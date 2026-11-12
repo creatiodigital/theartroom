@@ -65,3 +65,28 @@ export function withHeadingAnchors(html: string): { html: string; headings: Page
 
   return { html: anchored, headings }
 }
+
+/** One part of a rich text split at its H2s: the heading's text (null before the first) and the HTML under it. */
+export type H2Section = { heading: string | null; html: string }
+
+/**
+ * The editor's HTML cut at every H2, for pages that lay each part out as a labelled section
+ * (About: the heading becomes the TextSection's label, the rest its text). Blank parts are dropped.
+ */
+export function splitAtH2(html: string): H2Section[] {
+  const sections: H2Section[] = []
+  const pattern = /<h2(?:\s[^>]*)?>([\s\S]*?)<\/h2>/gi
+  let heading: string | null = null
+  let from = 0
+  const push = (to: number) => {
+    const part = html.slice(from, to)
+    if (heading !== null || plainTextOf(part)) sections.push({ heading, html: part.trim() })
+  }
+  for (let match = pattern.exec(html); match; match = pattern.exec(html)) {
+    push(match.index)
+    heading = plainTextOf(match[1]) || null
+    from = match.index + match[0].length
+  }
+  push(html.length)
+  return sections.filter((section) => section.heading !== null || section.html !== '')
+}

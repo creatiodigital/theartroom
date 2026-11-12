@@ -50,3 +50,16 @@
     font-size: 16px;
   }
 }
+
+// lead: the subtitle as a serif lead (designs/about-desktop.dc.html, contact-desktop.dc.html).
+.subtitle.lead {
+  max-width: 760px;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 26px;
+  line-height: 1.35;
+  color: var(--public-body);
+
+  @include media-down(md) {
+    font-size: 21px;
+  }
+}

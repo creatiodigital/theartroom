@@ -1,0 +1,53 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/about-contact.md; designs/about-desktop.dc.html. Content 1160 px wide.
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.sections {
+  padding-bottom: 96px;
+
+  @include media-down(lg) {
+    padding-bottom: var(--space-12);
+  }
+}
+
+// One labelled section: a hairline above, 48 px of air.
+.row {
+  padding: 48px 0;
+  border-top: 1px solid var(--color-gray-30);
+
+  @include media-down(lg) {
+    padding: var(--space-8) 0;
+  }
+}
+
+.unlabelled {
+  @include media-up(lg) {
+    padding-left: calc(360px + 56px);
+  }
+}
+
+// Reading text: Lato 17 / 1.75, #444, 18 px between paragraphs. Through .row: outranks RichText's
+// own `page` sizes whatever the stylesheet order.
+.row .text {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--public-body);
+
+  p {
+    margin: 0 0 18px;
+    font-size: 17px;
+    line-height: 1.75;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  p:empty {
+    display: none;
+  }
+}

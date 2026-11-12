@@ -1,167 +1,66 @@
 @use '@/styles/mixins' as *;
 
-// Badge
-.badgeRow {
-  display: flex;
-  align-items: center;
-  margin: var(--space-10) 0 var(--space-14);
+// docs/public-redesign/about-contact.md; designs/contact-desktop.dc.html. Content 1160 px wide; rows
+// as on About (a hairline above each, 48 px of air).
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
+}
 
-  // Decorative header only — hide on mobile where the SVG badge and
-  // flanking rules eat too much vertical space for no real signal.
-  @include media-down(md) {
-    display: none;
+.rows {
+  padding-bottom: 96px;
+
+  @include media-down(lg) {
+    padding-bottom: var(--space-12);
   }
 }
 
-.badgeLine {
-  flex: 1;
-  height: 3px;
-  border-top: 1px solid var(--color-border-default);
-  border-bottom: 1px solid var(--color-border-default);
-}
+.row {
+  padding: 48px 0;
+  border-top: 1px solid var(--color-gray-30);
 
-.badge {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 250px;
-  height: 112px;
-
-  @include breakpoint(lg) {
-    width: 310px;
-    height: 140px;
+  @include media-down(lg) {
+    padding: var(--space-8) 0;
   }
 }
 
-.badgeSvg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: var(--color-border-default);
-}
-
-.badgeContent {
-  position: relative;
+.stack {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
+  align-items: flex-start;
+  gap: 18px;
 }
 
-.badgeLogo {
-  width: 160px;
-  height: auto;
-  color: var(--color-text-primary);
-}
-
-.badgeBottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.badgeDivider {
-  width: 100%;
-  height: 1px;
-  background: var(--color-text-primary);
-}
-
-.badgeSubtitle {
-  font-size: 0.5625rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  font-weight: var(--font-regular);
-}
-
-// Grid layout
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-8);
-
-  @include breakpoint(lg) {
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-  }
-}
-
-.column {
-  @include breakpoint(lg) {
-    &:first-child {
-      border-right: 1px solid var(--color-border-default);
-      padding-right: var(--space-10);
-    }
-
-    &:last-child {
-      padding-left: var(--space-10);
-    }
-  }
-}
-
-.section {
-  padding: var(--space-6) 0;
-}
-
-.label {
-  display: block;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
-  font-weight: var(--font-regular);
-}
-
-.email {
-  font-family: var(--font-serif);
-  // Same scale as .value so the email doesn't read smaller than its siblings.
-  font-size: var(--text-xl-mobile);
-  color: var(--color-text-primary);
-  text-decoration: none;
-
-  @include breakpoint(lg) {
-    font-size: var(--text-xl);
-  }
-
-  &:hover {
-    text-decoration: none;
-    color: var(--color-brand);
-  }
-}
-
+// The short values (the email, the cities): serif 30.
 .value {
-  font-family: var(--font-serif);
-  font-size: var(--text-xl-mobile);
-  color: var(--color-text-primary);
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--public-text);
+  overflow-wrap: anywhere;
 
-  @include breakpoint(lg) {
-    font-size: var(--text-xl);
-    line-height: var(--leading-tight);
+  @include media-down(sm) {
+    font-size: 24px;
   }
 }
 
-// The Contact and Submission paragraphs: reading text, smaller than the short values above (the
-// email, the cities). At the values' size the Submission text, twice as long since AR-174, read as
-// a headline (owner, 2026-11-10: "the paragraph font size huge ... decrease them a little").
-.paragraph {
-  font-family: var(--font-serif);
-  font-size: var(--text-lg-mobile);
-  line-height: var(--leading-normal);
-  color: var(--color-text-primary);
+// The reading text, smaller than the values (owner, 2026-11-10): Lato 17 / 1.75, #444. A <p>:
+// size and family pinned.
+.paragraph,
+.list {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--public-body);
+}
 
-  @include breakpoint(lg) {
-    font-size: var(--text-lg);
+.list {
+  margin-top: -6px;
+  padding-left: 20px;
+  list-style: disc;
+
+  li {
+    padding-left: 4px;
   }
-}
-
-.sectionTitle {
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
-}
-
-.note {
-  color: var(--color-text-secondary);
 }

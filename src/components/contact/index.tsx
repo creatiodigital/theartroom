@@ -1,66 +1,71 @@
-'use client'
-
-import { PageHeader } from '@/components/ui/PageHeader'
+import { ArrowLink } from '@/components/ui/ArrowLink'
+import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
+import { TextSection } from '@/components/ui/TextSection'
+
 import styles from './Contact.module.scss'
 
+const EMAIL = 'contact@theartroom.gallery'
+
+/**
+ * Contact (docs/public-redesign/about-contact.md, designs/contact-*.dc.html): the title and a serif
+ * lead, then labelled rows like About: Email and Locations as short serif values, the reading
+ * paragraphs under them in Lato (smaller than the values, as the owner set them on 2026-11-10).
+ * No form.
+ */
 export const ContactPage = () => {
   return (
     <PageLayout>
-      <PageHeader
-        pageTitle="Contact Us"
-        pageSubtitle="For inquiries, exhibitions, and collaborations."
-      />
+      <div className={styles.page}>
+        <PageIntro title="Contact" subtitle="For inquiries, exhibitions and collaborations." lead />
 
-      <div className={styles.grid}>
-        <div className={styles.column}>
-          <div className={styles.section}>
-            <Text as="span" size="xs" className={styles.label}>
-              EMAIL
-            </Text>
-            <a href="mailto:contact@theartroom.gallery" className={styles.email}>
-              contact@theartroom.gallery
-            </a>
-          </div>
+        <div className={styles.rows}>
+          <TextSection label="Email" className={styles.row}>
+            <div className={styles.stack}>
+              <span className={styles.value}>{EMAIL}</span>
+              <ArrowLink href={`mailto:${EMAIL}`}>Write to us</ArrowLink>
+            </div>
+          </TextSection>
 
-          <div className={styles.section}>
-            <Text as="span" size="xs" className={styles.label}>
-              LOCATIONS
-            </Text>
-            <Text font="serif" className={styles.value}>
-              Madrid &nbsp;&nbsp;&nbsp; Vienna
-            </Text>
-          </div>
-        </div>
+          <TextSection label="Locations" className={styles.row}>
+            <span className={styles.value}>Madrid · Vienna</span>
+          </TextSection>
 
-        <div className={styles.column}>
-          <div className={styles.section}>
-            <Text as="span" size="xs" className={styles.label}>
-              CONTACT
-            </Text>
-            <Text as="p" font="serif" className={styles.paragraph}>
-              The Art Room welcomes inquiries related to exhibitions, artworks, and artist
+          <TextSection label="General inquiries" className={styles.row}>
+            <p className={styles.paragraph}>
+              The Art Room welcomes inquiries about exhibitions, artworks and prints, and artist
               collaborations.
-            </Text>
-          </div>
+            </p>
+          </TextSection>
 
-          <div className={styles.section}>
-            <Text as="span" size="xs" className={styles.label}>
-              SUBMISSION
-            </Text>
-            <Text as="p" font="serif" className={styles.paragraph}>
-              The Art Room is currently accepting exhibition proposals from artists anywhere in the
-              world, working in any medium. Write to us with a short introduction, a link to your
-              portfolio or a selection of images, and a few words about the body of work you would
-              like to show. Every proposal is reviewed by the gallery, and exhibitions are subject
-              to acceptance.
-            </Text>
-            <Text as="p" size="sm" className={styles.note}>
-              For institutional partnerships and curatorial inquiries, please direct correspondence
-              to the email address above.
-            </Text>
-          </div>
+          <TextSection label="Exhibition proposals" className={styles.row}>
+            <div className={styles.stack}>
+              <p className={styles.paragraph}>
+                The Art Room is accepting exhibition proposals from artists anywhere in the world,
+                working in any medium. Write to us with:
+              </p>
+              <ul className={styles.list}>
+                <li>a short introduction about you and your practice,</li>
+                <li>a link to your portfolio, or a selection of images,</li>
+                <li>a few words about the body of work you would like to show.</li>
+              </ul>
+              <p className={styles.paragraph}>
+                Every proposal is reviewed by the gallery, and exhibitions are subject to
+                acceptance.
+              </p>
+              <ArrowLink
+                href={`mailto:${EMAIL}?subject=${encodeURIComponent('Exhibition proposal')}`}
+              >
+                Send a proposal
+              </ArrowLink>
+            </div>
+          </TextSection>
+
+          <TextSection label="Partnerships" className={styles.row}>
+            <p className={styles.paragraph}>
+              For institutional partnerships and curatorial inquiries, write to the same address.
+            </p>
+          </TextSection>
         </div>
       </div>
     </PageLayout>
