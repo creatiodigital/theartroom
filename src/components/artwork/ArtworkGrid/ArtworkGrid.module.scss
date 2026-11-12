@@ -2,7 +2,7 @@
 
 // docs/public-redesign/components.md "ArtworkCard", designs/exhibition-desktop.dc.html (series):
 // every work in the same 1:1 box on the render wall grey, contained; the caption under it, Order
-// print on its right (full width under it on phones). 3 columns, 2 on tablets, 1 on phones (owner,
+// print on its right (phones too). 3 columns, 2 on tablets, 1 on phones (owner,
 // 2026-11-12: never two on a phone). Equal boxes keep each row's image centres and captions on one
 // line (e2e/artwork-grid-alignment.spec.ts).
 .grid {
@@ -125,12 +125,8 @@
   align-items: flex-start;
   gap: var(--space-4);
   padding-top: 14px;
-
-  @include media-down(md) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
-  }
+  // The same on phones, as the live site: the caption left, Order print on its right (owner,
+  // 2026-11-12: not stacked full width under the caption).
 }
 
 .caption {
