@@ -171,6 +171,15 @@
   margin-left: calc(16px + var(--space-2));
 }
 
+// The studio font: the shared SelectDropdown sets the public sans on its control,
+// value and options (one class each); these (one class + one element) win without
+// touching SelectDropdown.
+.sectionSelect button,
+.sectionSelect span,
+.sectionSelect li {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+}
+
 // ── Video and audio files ───────────────────────────────────────
 
 .hiddenInput {
@@ -356,6 +365,13 @@
     padding: 0;
     margin-bottom: 6px;
   }
+}
+
+// The series-type radios ("Open edition" / "Limited edition") in the dashboard
+// font: the shared RadioGroup sets its labels in the public sans (one class);
+// this (one class + two elements) wins without touching RadioGroup.
+.fieldset label span {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
 }
 
 // Series type once it is locked (designs/artist-artwork-edit.dc.html).
