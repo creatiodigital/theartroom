@@ -71,6 +71,15 @@ type ImageUploaderProps = {
    * note (the artwork editor's print-size box, artist-artwork-edit.dc.html).
    */
   align?: 'center' | 'start'
+  /**
+   * admin only: the preview's shape. banner (default): 320px wide at
+   * `aspectRatio` (the page editor's banner, the artwork image). avatar: a 112px
+   * circle (the studio profile picture); empty, a dashed circle that is itself
+   * the "Select a file" button, with the same click, Enter and drop handlers.
+   * signature: 300px wide at `aspectRatio` on a checkerboard, so a transparent
+   * PNG shows as one (artist-profile.dc.html).
+   */
+  adminPreview?: 'banner' | 'avatar' | 'signature'
 }
 
 function formatFileSize(bytes: number): string {
@@ -229,6 +238,7 @@ export const ImageUploader = ({
   tone = 'default',
   note,
   align = 'center',
+  adminPreview = 'banner',
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -410,6 +420,8 @@ export const ImageUploader = ({
     const meta = displayMeta ?? imageMeta
     const busy = uploading || preparing
     const busyText = preparing ? 'Preparing preview…' : loadingText
+    // adminPreview: the shape's own class on the preview and the drop area (none for banner).
+    const shapeClass = adminPreview === 'banner' ? undefined : styles[adminPreview]
     return (
       <div className={styles.adminContainer}>
         <FileInput
@@ -422,7 +434,7 @@ export const ImageUploader = ({
 
         <div className={c(styles.adminRow, align === 'start' && styles.adminRowStart)}>
           {imageUrl ? (
-            <div className={styles.adminPreview} style={{ aspectRatio }}>
+            <div className={c(styles.adminPreview, shapeClass)} style={{ aspectRatio }}>
               {/* unoptimized: see the default preview below (AR-125). */}
               <Image src={imageUrl} alt="Uploaded image" fill unoptimized style={{ objectFit }} />
               {busy && (
@@ -432,9 +444,38 @@ export const ImageUploader = ({
                 </div>
               )}
             </div>
+          ) : adminPreview === 'avatar' ? (
+            // Too small for the button and the drop line: the circle is the button.
+            <div
+              className={c(
+                styles.dropzone,
+                styles.adminDropzone,
+                shapeClass,
+                isDragging && styles.dragging,
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleClick}
+              role="button"
+              tabIndex={0}
+              aria-label={busy ? busyText : 'Select a file'}
+              onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+            >
+              {busy ? (
+                <span className={styles.spinner} aria-hidden />
+              ) : (
+                <UploadSimple size={24} weight="light" aria-hidden />
+              )}
+            </div>
           ) : (
             <div
-              className={c(styles.dropzone, styles.adminDropzone, isDragging && styles.dragging)}
+              className={c(
+                styles.dropzone,
+                styles.adminDropzone,
+                shapeClass,
+                isDragging && styles.dragging,
+              )}
               style={{ aspectRatio }}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}

@@ -25,7 +25,7 @@ Do these in order, one PR each.
 | 14 | **Artist shell**: light artist variant of the admin shell for `/dashboard/*` (not login); impersonation card in the menu + 3 px red top line replaces the red bar | artist-home (spec: artist.md §0) | Built | Reuse the admin shell pieces, no copy. UI only. See Built notes. |
 | 15 | Artist home + Artwork library | artist-home, artist-artworks (spec: artist.md §1–2) | Built (15a, 15b) | UI only. See Built notes. |
 | 16 | Artwork editor (`ArtworkEditForm`) | artist-artwork-edit (spec: artist.md §3) | Built (16a, 16b) | UI only; same sections/conditions. No admin editor exists: the form's other user is the wall view's View details overlay (Q109). See Built notes. |
-| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Designed · approved by owner | UI only. |
+| 17 | Profile, Payouts, Exhibition settings | artist-profile, artist-payouts, artist-exhibition-settings (spec: artist.md §4–6) | Built (17a) | UI only + the owner's Q118 / Q119 / Q124 (a) / Q128 (a). See Built notes. |
 | 18 | 3D editor: toolbar (`editview/Menu`) + every panel, via one shared `EditorPanel` shell | editor-3d, editor-3d-panels (spec: editor3d.md) | Designed · approved by owner | Nothing inside the three.js canvas changes. UI only + NEW editing pill, lamp picker grid, folding benches (approved). Do after step 17. |
 | 18b | Wall view: left panel, add bar, right panels (`wallview/LeftPanel`, `CreatePanel`, `RightPanel`) | wall-view, wall-view-panels (spec: wallview.md) | Designed · approved by owner | The wall itself does not change. UI only + approved: Layout/Look tabs, width/height sliders removed. Reuse the 3D editor's pieces from step 18. Do as 18b-1 left panel + add bar, 18b-2 right panels. |
 | 19 | **Lucide → Phosphor, whole site** (front and back), remove `lucide-react` | — (spec: phosphor.md) | Approved by owner · **do next, right after step 20** | Icons only. Mapping table in phosphor.md. `grep -r lucide src` must be empty at the end. |
@@ -785,3 +785,30 @@ low resolution (switch off, amber note), limited edition (two live variants as f
 banner editor unchanged, no horizontal scroll, no console errors. After the first look two fixes went in: paragraphs
 pin their own size (the box at 13 px, the dialog at 14 px, not the site's 16–18 px), and the image row top-aligns as
 drawn (opt-in, the banner keeps its centered row).
+
+### Step 17a · Profile — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Plan: `docs/superpowers/plans/2026-11-12-artist-profile-payouts-settings.md` (contract, decisions, Q118–Q129, and the
+owner's answers at its end). Files: `dashboard/profile/index.tsx` + SCSS, new `dashboard/StudioPanel` (+ SCSS) and
+`StudioPanel/studioPage.module.scss` (the studio pages' fields, prefix field, buttons, bottom padding), `ui/ImageUploader`
+(`adminPreview`).
+
+1. **Kept**: every handler, validation, request and saved value (diffed: only display-only lines are added: the save bar's
+   baseline and the refused-save marker; the load's five expressions moved into one `loaded` object).
+2. **Layout per artist.md §4**: header **Profile** + sub + **View my public page ↗** (the saved URL, new tab); panels
+   Profile picture (112 px circle, Replace / Remove, today's hint), Artist signature (on a checkerboard, contained, today's
+   text and hint), About you (First / Last name in one row, Profile URL with `theartroom.gallery/artists/` inside the field,
+   Email), Biography (the admin editor, the public font inside).
+3. **Save bar** (Q118): Save changes submits the form (validation and Enter as today); **Discard** asks first ("Discard
+   changes?") and puts back the last loaded or saved values; a refused save turns the bar red until the next edit;
+   "Leave site?" while unsaved. Picture and signature still save at once.
+4. **Failed load (Q128 a, owner)**: a non-2xx or failed load shows the header and a red callout "The profile could not be
+   loaded." with no form and no save bar, so an empty form can no longer be saved over the profile. Q128 (b)–(f) wait.
+
+Verified: typecheck, lint, prettier; logic diffed against HEAD; e2e on port 3001 (with 17b / 17c: `exhibition-sections-editor`,
+`studio-shell`, `admin-page-editor`, `artwork-exhibition-picker`, `artwork-section-picker`, `limited-variant-delete-ui`,
+`edition-off-platform`: 28 passed); browser on my own `pnpm dev` (dev DB, every non-GET request refused locally, nothing written) at 1440 and 390 px:
+"All changes saved" on open, an edit flips the bar and undo returns it, Discard asks (Cancel keeps, Discard restores),
+a refused save turns it red, "Leave site?" with changes, a faked failed load shows only the callout, no horizontal
+scroll, no console errors. After the first look the studio pages' text was pinned to Geist (descriptions, help lines,
+field errors rendered in the public font); measured: no text outside the editors in another font.

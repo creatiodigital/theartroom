@@ -471,3 +471,14 @@ like the real Pause switch). Logic and dialogs unchanged.
 - `ImageUploader` (shared, admin tone): `align?: 'center' | 'start'` (default `center`, the page editor's banner as before;
   `start` top-aligns the preview and lets the side column take the row, for the artwork editor's print-size box).
 - Token `--studio-note-surface: #f7f7f7` (the print-size box, Q113).
+
+## Studio page pieces (step 17)
+
+- `dashboard/StudioPanel` · `{ title; id?; description?; aside?; layout?: 'stack' | 'row'; className?; children }`: the studio
+  forms' white panel (radius 8, padding 24), h2 15 px 700, description 13 px; `row` puts the content beside the text (e.g.
+  Disconnect).
+- `StudioPanel/studioPage.module.scss`: the studio form pages' shared classes (`.page`, `.withSaveBar` bottom room for the
+  bar, `.field` / `.label` / `.help`, 44 px `.input`, `.prefixBox` / `.prefix` for a prefix inside a field, `.textarea`,
+  button looks `.primary` / `.outline` / `.dangerOutline` / `.iconDanger`).
+- `ImageUploader` (shared, admin tone): `adminPreview?: 'banner' | 'avatar' | 'signature'` (default `banner`, as before;
+  `avatar` = 112 px circle, `signature` = 300×100 on a checkerboard, contained).

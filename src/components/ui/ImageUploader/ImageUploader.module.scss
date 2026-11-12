@@ -216,6 +216,64 @@
   }
 }
 
+// adminPreview="avatar" (artist-profile.dc.html): a 112px circle at every
+// width, the preview and the empty drop area alike. Two classes, so it wins
+// over the 320px / full-width rules above.
+.adminPreview.avatar,
+.adminDropzone.avatar {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-full);
+}
+
+.adminDropzone.avatar {
+  color: var(--color-text-secondary);
+
+  &:hover {
+    color: var(--color-black);
+  }
+}
+
+.avatar .uploadingOverlay {
+  font-size: var(--text-xs);
+}
+
+// adminPreview="signature": 300px wide (full width on phones) at the page's
+// aspect ratio, on a checkerboard so a transparent signature shows as one.
+.adminPreview.signature {
+  border: 1px solid var(--color-border-default);
+  background-color: var(--color-white);
+  background-image:
+    linear-gradient(
+      45deg,
+      var(--color-gray-20) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--color-gray-20) 75%
+    ),
+    linear-gradient(
+      45deg,
+      var(--color-gray-20) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--color-gray-20) 75%
+    );
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    8px 8px;
+}
+
+.adminPreview.signature,
+.adminDropzone.signature {
+  box-sizing: border-box;
+
+  @include media-up(tablet) {
+    width: 300px;
+  }
+}
+
 .adminSide {
   display: flex;
   flex-direction: column;

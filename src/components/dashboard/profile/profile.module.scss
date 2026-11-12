@@ -1,45 +1,37 @@
 @use '@/styles/mixins' as *;
 
-/* Profile-specific styles (shared styles now come from DashboardLayout.module.scss) */
+// Profile (artist.md §4, designs/artist-profile.dc.html). The column, the
+// panels, the fields and the buttons come from ../StudioPanel; only this page's
+// own rows are here.
 
-.imageSection {
-  width: calc(50% - 7px);
+// The form holds About you and Biography, in the page's own rhythm.
+.form {
   display: flex;
   flex-direction: column;
-  min-height: 360px;
-
-  // Hint helper is the last child; pad above it so the dropzone never
-  // butts up against the text, and pin it to the bottom of the card
-  // regardless of how much empty space the flex-grown dropzone leaves.
-  > span:last-child {
-    margin-top: var(--space-4);
-  }
-}
-
-.imageRow {
-  display: flex;
-  gap: 14px;
-  align-items: stretch;
-
-  @include media-down(md) {
-    flex-direction: column;
-
-    .imageSection {
-      width: 100%;
-    }
-  }
-}
-
-.row {
-  display: flex;
   gap: var(--space-4);
+  min-width: 0;
+
+  @include media-up(tablet) {
+    gap: var(--space-5);
+  }
 }
 
-.fieldHalf {
-  flex: 1;
+// About you: the drawn 18px between its fields. Two classes: StudioPanel's own
+// gap is one class in another module.
+.form .about {
+  gap: 18px;
 }
 
-.success {
-  color: var(--color-success);
-  font-size: var(--text-sm);
+// First and last name, then their one help line.
+.nameGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// Side by side from 2 × 220px; one column on phones.
+.names {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
 }
