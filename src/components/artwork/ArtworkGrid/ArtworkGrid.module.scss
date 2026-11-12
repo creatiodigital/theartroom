@@ -54,7 +54,15 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  // No grey behind the work (owner, 2026-11-12): the square is only its frame on the page.
+  // No grey behind a print photo (owner, 2026-11-12): its render already has its wall.
+}
+
+// A plain image (no print photo, or one that failed to load): on the render-wall grey, inset so the
+// work has a margin all round (owner, 2026-11-12). `:has` so a render that falls back to the plain
+// image gets it too.
+.imageWrapper:has(.imageBox) {
+  padding: 8%;
+  background: var(--public-render-wall);
 }
 
 .viewDetailsLink {
