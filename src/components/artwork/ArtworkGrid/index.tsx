@@ -156,6 +156,7 @@ export const ArtworkGrid = ({
                         <ProtectedImage
                           src={artwork.imageUrl!}
                           alt={artwork.title || artwork.name || 'Artwork'}
+                          wrapperClassName={styles.imageBox}
                           className={styles.image}
                           width={w}
                           height={h}
