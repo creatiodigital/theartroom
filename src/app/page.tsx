@@ -6,10 +6,13 @@ import { Text } from '@/components/ui/Typography'
 import { Slideshow } from '@/components/landing/Slideshow'
 import { Announcement } from '@/components/landing/Announcement/Announcement'
 import { Intro } from '@/components/landing/Intro/Intro'
-import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
+import { HomePrints } from '@/components/landing/HomePrints/HomePrints'
+import { HomeSectionHead, WideOnly } from '@/components/landing/HomeSectionHead/HomeSectionHead'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
+import { getHomePrints } from '@/lib/queries/getGallerySelection'
 import { getHomepageAnnouncement } from '@/lib/queries/getHomepageAnnouncement'
 
 import styles from './page.module.scss'
@@ -86,13 +89,22 @@ const getFeaturedArtists = async () => {
   })
 }
 
+// The Fine-art prints section's works (Home page prints, home.md §5). FAILS SOFT, as the
+// announcement: if the read fails, the homepage shows no prints section rather than an error.
+const getHomePrintSlides = () =>
+  getHomePrints().catch((err) => {
+    captureError(err, { flow: 'content', stage: 'homepage-prints', level: 'warning' })
+    return []
+  })
+
 export default async function Home() {
   // Independent reads, so in parallel rather than one after another.
-  const [slides, exhibitions, featuredArtists, announcement] = await Promise.all([
+  const [slides, exhibitions, featuredArtists, announcement, prints] = await Promise.all([
     getSlides(),
     getExhibitions(),
     getFeaturedArtists(),
     getHomepageAnnouncement(),
+    getHomePrintSlides(),
   ])
 
   return (
@@ -105,15 +117,24 @@ export default async function Home() {
 
       {slides.length > 0 && <Slideshow slides={slides} />}
 
+      {/* docs/public-redesign/home.md: introduction, current exhibitions, announcements, the
+          rotating prints, artists. */}
       <div className={styles.content}>
         <Intro />
 
-        {/* Hidden when there's no announcement to show (AR-174). */}
-        {announcement && <Announcement announcement={announcement} />}
-
-        <NiceTitle title="Current Exhibitions" />
-
         <section className={styles.exhibitionsSection}>
+          <HomeSectionHead
+            title="Current exhibitions"
+            rule
+            link={{
+              href: '/exhibitions',
+              label: (
+                <>
+                  All<WideOnly> exhibitions</WideOnly>
+                </>
+              ),
+            }}
+          />
           {exhibitions.length === 0 ? (
             <Text as="p" className={styles.emptyText}>
               No current exhibitions at the moment.
@@ -135,6 +156,11 @@ export default async function Home() {
             />
           )}
         </section>
+
+        {/* Hidden when there's no announcement to show (AR-174). */}
+        {announcement && <Announcement announcement={announcement} />}
+
+        <HomePrints slides={prints} />
 
         <FeaturedArtists artists={featuredArtists} />
       </div>

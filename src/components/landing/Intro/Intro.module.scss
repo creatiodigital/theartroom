@@ -1,20 +1,90 @@
 @use '@/styles/mixins' as *;
 
-// Hidden on phones: under the slideshow it read as a stray heading however it
-// was dressed, so mobile goes straight to "Current Exhibitions".
+// docs/public-redesign/home.md §2; designs/home-desktop.dc.html / home-phone.dc.html.
 .intro {
-  display: none;
-  justify-content: center;
+  padding: 120px 0 110px;
+
+  @include media-down(md) {
+    padding: 64px 0 56px;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  max-width: 780px;
+  margin: 0 auto;
   text-align: center;
-  padding-top: 20px;
-  // Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
-  margin-bottom: var(--space-12);
 
-  @include breakpoint(md) {
-    display: flex;
+  @include media-down(md) {
+    gap: 18px;
   }
+}
 
-  @include breakpoint(lg) {
-    margin-bottom: var(--space-16);
+.heading {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 52px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 36px;
   }
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.lead {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 19px;
+  line-height: 1.7;
+  color: var(--public-body);
+
+  @include media-down(md) {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+}
+
+.points {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 920px;
+  margin: 64px auto 0;
+  padding: 0;
+  list-style: none;
+
+  @include media-down(md) {
+    display: none;
+  }
+}
+
+.point {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 36px;
+  text-align: center;
+
+  & + & {
+    border-left: 1px solid var(--color-border-default);
+  }
+}
+
+.pointTitle {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--public-text);
+}
+
+.pointLine {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
 }
