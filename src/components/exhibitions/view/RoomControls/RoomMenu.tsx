@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useSelector } from 'react-redux'
 import {
+  ChatCircle,
   HandTap,
   Info,
   List,
@@ -33,6 +34,8 @@ interface RoomMenuProps {
   onLeave: () => void
   /** Opens "About this exhibition" (room-about.md); listed first. Absent: no item. */
   onAbout?: () => void
+  /** Opens the feedback window (feedback.md); after How to move around. Absent: no item. */
+  onFeedback?: () => void
 }
 
 const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
@@ -51,7 +54,7 @@ const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
  * touches and clicks count only on the canvas, and the keys pressed inside the menu stop here (the
  * camera listens on `window`). Escape closes the menu and does not also leave Wall View.
  */
-export const RoomMenu = ({ sound, onHelp, onLeave, onAbout }: RoomMenuProps) => {
+export const RoomMenu = ({ sound, onHelp, onLeave, onAbout, onFeedback }: RoomMenuProps) => {
   const [open, setOpen] = useState(false)
   // The leave dialog (also raised by walking into the exit corridor) takes over: the menu closes.
   const exitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
@@ -196,7 +199,21 @@ export const RoomMenu = ({ sound, onHelp, onLeave, onAbout }: RoomMenuProps) => 
               How to move around
             </Button>
           )}
-          {(sound || onHelp || onAbout) && <div role="separator" className={styles.separator} />}
+          {onFeedback && (
+            <Button
+              variant="bare"
+              role="menuitem"
+              tabIndex={-1}
+              className={styles.item}
+              onClick={() => choose(onFeedback)}
+            >
+              <ChatCircle {...ICON} />
+              Send feedback
+            </Button>
+          )}
+          {(sound || onHelp || onAbout || onFeedback) && (
+            <div role="separator" className={styles.separator} />
+          )}
           <Button
             variant="bare"
             role="menuitem"

@@ -29,6 +29,28 @@
   }
 }
 
+// Stacked and centred: the homepage's "We'd love to hear from you" (designs/home-desktop.dc.html).
+.center {
+  flex-direction: column;
+  justify-content: center;
+  gap: 26px;
+  text-align: center;
+
+  @include media-down(md) {
+    align-items: center;
+    gap: 20px;
+  }
+
+  .text {
+    align-items: center;
+    gap: 18px;
+  }
+
+  .line {
+    max-width: 560px;
+  }
+}
+
 .text {
   display: flex;
   flex-direction: column;

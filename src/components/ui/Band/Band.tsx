@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import c from 'classnames'
 
 import styles from './Band.module.scss'
 
@@ -11,13 +12,16 @@ export const Band = ({
   heading,
   line,
   action,
+  align = 'split',
 }: {
   heading: string
   line?: ReactNode
   action?: ReactNode
+  /** `center`: heading, line and action stacked and centred (the homepage's feedback band). */
+  align?: 'split' | 'center'
 }) => (
   <section className={styles.band}>
-    <div className={styles.inner}>
+    <div className={c(styles.inner, align === 'center' && styles.center)}>
       <div className={styles.text}>
         <h2 className={styles.heading}>{heading}</h2>
         {line && <p className={styles.line}>{line}</p>}

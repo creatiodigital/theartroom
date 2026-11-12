@@ -34,6 +34,7 @@ import {
   type RoomAbout,
 } from '@/components/exhibitions/view/RoomAbout/RoomAboutPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
+import { FeedbackWindow } from '@/components/feedback/FeedbackWindow'
 import { Scene } from '@/components/scene'
 import { useWebGLAvailable } from '@/components/scene/webglSupport'
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
@@ -591,6 +592,7 @@ export const ExhibitionViewPage = ({
   about,
 }: ExhibitionViewPageProps) => {
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   // AR-176: the page behind the room, so a phone held sideways can paint Safari's strip above it
   // black (globals.scss, `room-page`).
   useEffect(() => {
@@ -974,12 +976,16 @@ export const ExhibitionViewPage = ({
       .querySelector<HTMLElement>('[data-panel-overlay] > button[aria-label="Menu"]')
       ?.focus({ preventScroll: true })
   }
+  // Send feedback (feedback.md, room-about.md): the visitor's room only, as About; the window
+  // returns focus to the menu button itself.
+  const feedbackShown = !!exhibition?.id && mode !== 'bake' && mode !== 'review'
   const roomMenu = (sound: boolean) => (
     <RoomMenu
       sound={sound}
       onHelp={helpShown ? () => helpRef.current?.open() : undefined}
       onLeave={leaveExhibition}
       onAbout={aboutShown ? () => setAboutOpen(true) : undefined}
+      onFeedback={feedbackShown ? () => setFeedbackOpen(true) : undefined}
     />
   )
 
@@ -1038,6 +1044,16 @@ export const ExhibitionViewPage = ({
           {isTouch && <div className={styles.touchShield} aria-hidden />}
           <RoomAboutPanel about={about} onClose={closeAbout} />
         </>
+      )}
+      {/* The feedback window over the room: its presses and keys are its own, never the room's. */}
+      {feedbackShown && feedbackOpen && exhibition?.id && (
+        <div data-panel-overlay onKeyDown={(event) => event.stopPropagation()}>
+          <FeedbackWindow
+            source="room"
+            exhibitionId={exhibition.id}
+            onClose={() => setFeedbackOpen(false)}
+          />
+        </div>
       )}
       {/* The work as a photo of the print, as the grids show it, or its plain image when it has no
           current render (AR-174). */}

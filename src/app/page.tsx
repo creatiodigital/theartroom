@@ -10,6 +10,7 @@ import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedAr
 import { HomePrints } from '@/components/landing/HomePrints/HomePrints'
 import { HomeSectionHead, WideOnly } from '@/components/landing/HomeSectionHead/HomeSectionHead'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
+import { FeedbackBand } from '@/components/feedback/FeedbackBand'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { getHomePrints } from '@/lib/queries/getGallerySelection'
@@ -118,7 +119,7 @@ export default async function Home() {
       {slides.length > 0 && <Slideshow slides={slides} />}
 
       {/* docs/public-redesign/home.md: introduction, current exhibitions, announcements, the
-          rotating prints, artists. */}
+          rotating prints, artists, the feedback band. */}
       <div className={styles.content}>
         <Intro />
 
@@ -163,6 +164,8 @@ export default async function Home() {
         <HomePrints slides={prints} />
 
         <FeaturedArtists artists={featuredArtists} />
+
+        <FeedbackBand />
       </div>
 
       <Footer />
