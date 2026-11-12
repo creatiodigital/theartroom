@@ -32,7 +32,7 @@ import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { LimitedVariantView } from '@/lib/editions/types'
 
 import { LimitedWizard } from './LimitedWizard'
-import { CartAddedModal } from './CartAddedModal'
+import { CartAddedModal, type AddedLine } from './CartAddedModal'
 import { SchemaStage } from './SchemaStage'
 import { StepsPanel } from './StepsPanel'
 import { SummaryPanel } from './SummaryPanel'
@@ -252,7 +252,8 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
   const quoteLoading = false
 
   const { addItem, removeItem, items } = useCart()
-  const [cartAddedOpen, setCartAddedOpen] = useState(false)
+  // The line just added, shown in the "Added to your cart" toast (other-screens.md, Q-P19 b).
+  const [cartAdded, setCartAdded] = useState<AddedLine | null>(null)
 
   // When the buyer arrived via the cart's "Edit item" link, the line's id rides
   // in the URL. Re-adding replaces that line (removed just before the add) so
@@ -277,7 +278,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
     // replaces it — merging into an identical line if one now matches.
     const quantity = editLineId ? (items.find((i) => i.lineId === editLineId)?.quantity ?? 1) : 1
     if (editLineId) await removeItem(editLineId)
-    await addItem({
+    const added = {
       ...buildCartItem({
         artwork: {
           id: artwork.id,
@@ -294,8 +295,9 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         specsSummary: summarizeConfig(catalog, config),
       }),
       quantity,
-    })
-    setCartAddedOpen(true)
+    }
+    await addItem(added)
+    setCartAdded(added)
   }
 
   return (
@@ -351,8 +353,12 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         />
       </main>
 
-      {cartAddedOpen && (
-        <CartAddedModal onClose={() => setCartAddedOpen(false)} edited={editLineId !== null} />
+      {cartAdded && (
+        <CartAddedModal
+          item={cartAdded}
+          onClose={() => setCartAdded(null)}
+          edited={editLineId !== null}
+        />
       )}
 
       {introOpen && (

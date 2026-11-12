@@ -433,30 +433,99 @@
   opacity: 0;
 }
 
+// "Added to your cart" (other-screens.md, Q-P19 b): a square public card, the check and the
+// title, then the item row (thumbnail on the render-wall grey, serif italic title, artist,
+// edition in small caps, the price in serif).
 .cartAddedCard {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  max-width: 420px;
-  padding: var(--space-5) var(--space-6);
-  border: 1px solid var(--color-border-default);
-  border-radius: 6px;
+  flex-direction: column;
+  gap: 18px;
+  width: min(480px, calc(100vw - 32px));
+  padding: 24px 28px 26px;
   background: var(--color-white);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  font-family: var(--font-sans);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  color: var(--public-text);
 
-  // Keep the check from squashing if the message ever wraps.
-  svg {
-    flex-shrink: 0;
+  @include media-down(sm) {
+    padding: 20px;
   }
 }
 
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
 .cartAddedTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--color-text-primary);
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--public-text);
+}
+
+.cartAddedCheck {
+  flex-shrink: 0;
+}
+
+.cartAddedItem {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+// The work contained in a square on the render-wall grey, never cropped (as the cart's rows).
+.cartAddedThumb {
+  width: 64px;
+  height: 64px;
+  background: var(--public-render-wall);
+}
+
+.cartAddedThumbImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cartAddedText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cartAddedWork {
+  overflow: hidden;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 18px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cartAddedArtist {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--public-secondary);
+}
+
+.cartAddedEdition {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.cartAddedPrice {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 20px;
+  white-space: nowrap;
 }
 
 .sliderValue {
