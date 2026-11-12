@@ -35,4 +35,5 @@ export const wallViewFactory = (): TWallView => ({
   activeAutofocusGroupId: null,
   wallEdits: 0,
   wallEditsSaved: 0,
+  wallSaving: false,
 })

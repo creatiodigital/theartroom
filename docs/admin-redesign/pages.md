@@ -1101,3 +1101,30 @@ keys reaching the room from a focused slider (the slider still moves), Edit artw
 tab with the panel open, the read-back with no wall / a clean wall / a wall with the dot (the line, then the save sending
 the studio's title and the line clearing), and after Cancel; no page errors.
 
+### Later pass, commit B · Wall view: Cancel, one save at a time, add bar, presets — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan (items 3–6, Q146 a / b / c / h; owner answers Q155, Q156 known issue). Behaviour fixes the owner decided.
+
+1. **Cancel returns to the last saved wall (Q146 a)**: an accepted Save or View details' save-first now keeps the wall as
+   its new Cancel point (before, it dropped the point, so Cancel then discarded nothing). A wall opened from a
+   `?wallId=` link takes its Cancel point once this exhibition's works are in the store, never of an empty store (Q151).
+   Known: an edit made while a save is out becomes part of the new Cancel point (Q156).
+2. **One save at a time (Q146 b)**: the left panel's Save / Save & close and View details' save-first share one
+   "saving" state (in the store), so the other buttons are disabled (and read "Saving…") while either saves.
+3. **Add bar (Q146 c)**: an item added by a click stays selected (the bar counts as part of the panels, as they do); a
+   drag onto the wall and a click on the empty area are unchanged.
+4. **Presets (Q146 h)**: Delete asks first inside its dialog: "Delete “{name}”? This can't be undone. Works it was
+   applied to keep their settings." (Cancel / Delete); a refused delete returns to the list with "Not deleted. Please
+   try again."; a refused save or update: "Not saved. Please try again." in the dialog, which stays open; a refused
+   load: "Presets could not be loaded." with "Try again" under the select. Success paths unchanged. Both views of the
+   Delete dialog stay in the page and only one shows (found in the browser check: swapping them on a click let the
+   wall's "click outside the panels" rule deselect the work and close the dialog).
+
+Verified: typecheck, lint, prettier; logic diffed (the save flag replaces the local one 1:1; preset handlers only gain
+their failure lines); new `e2e/wall-cancel-point.spec.ts` (Node, 10 tests) with the Q142, Edit artwork and wall specs:
+101 passed; browser on my own `pnpm dev` (dev DB; every non-GET answered locally, refused or "accepted", delayed for the
+two-saves check) in Florescĕre: Cancel after a save returns to the saved place, Cancel on a `?wallId=` link returns a
+moved work to its loaded place, View details disabled while the left panel saves, a click-added shape stays selected and
+a click on the grey area still deselects, the preset question and its Cancel, a refused delete / create / load with
+their lines and Try again; no page errors.
+

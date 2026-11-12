@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 import { EditView } from '@/components/editview'
 import { resetSaveTracking } from '@/components/editorChrome/saveTracking'
+import { keepAsCancelPoint, needsLinkCancelPoint } from '@/components/wallview/wallBaseline'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { useGLTF } from '@react-three/drei'
 import { spaceConfigs } from '@/components/scene/constants'
@@ -23,7 +24,7 @@ import {
   addArtworkToGroup,
 } from '@/redux/slices/wallViewSlice'
 import { resetWizard, showWizard } from '@/redux/slices/wizardSlice'
-import type { AppDispatch } from '@/redux/store'
+import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
 import { spaceGltfUrlSync } from '@/components/scene/spaceAsset'
 
@@ -170,7 +171,28 @@ export const ExhibitionEditPage = ({
   }, [exhibition, dispatch])
 
   // Load saved artworks from database
-  const { isReady: artworksReady } = useLoadExhibitionArtworks(exhibition?.id, 'edit')
+  const { isReady: artworksReady, loadedExhibitionId } = useLoadExhibitionArtworks(
+    exhibition?.id,
+    'edit',
+  )
+
+  // Q146 (a): a wall opened from a ?wallId= link takes its Cancel point once this exhibition's
+  // works are in the store, never before (wallBaseline.ts). A placeholder's double-click has
+  // already taken one, so then this does nothing.
+  const isWallView = useSelector((state: RootState) => state.wallView.isWallView)
+  const hasCancelPoint = useSelector((state: RootState) => state.exhibition._snapshot !== null)
+  useEffect(() => {
+    if (
+      needsLinkCancelPoint({
+        isWallView,
+        hasCancelPoint,
+        exhibitionId: exhibition?.id,
+        loadedExhibitionId,
+      })
+    ) {
+      keepAsCancelPoint(dispatch)
+    }
+  }, [isWallView, hasCancelPoint, exhibition?.id, loadedExhibitionId, dispatch])
 
   // Restore wall view state from URL params (when returning from artwork edit)
   // Wait for artworks to be loaded before restoring

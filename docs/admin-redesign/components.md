@@ -543,3 +543,7 @@ like the real Pause switch). Logic and dialogs unchanged.
   `takeStudioValuesForSave(dispatch)` (the wall save, Q157); writes it makes carry `meta.fromServer` and never count as a
   wall edit. `wallview/hooks/artworksBatch.ts`: `buildArtworksBatch`, `withStudioValues` (the save's batch, moved
   verbatim). `ToolPanel` stops W A S D / arrows from fields reaching the room (Q139 c).
+- Later pass B: `wallview/wallBaseline.ts`: `keepAsCancelPoint(dispatch)` (both snapshots; after an accepted save, a
+  linked wall once loaded), `needsLinkCancelPoint(...)`. `wallViewSlice` `wallSaving` + `setWallSaving` (the one save
+  flag `useSaveExhibition` returns as `saving`). Preset dialogs take `failed` (their red line); `DeletePresetsModal`
+  asks inside the dialog.

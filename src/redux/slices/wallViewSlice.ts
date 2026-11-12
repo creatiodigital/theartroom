@@ -247,6 +247,10 @@ const wallViewSlice = createSlice({
       state.wallEdits = 0
       state.wallEditsSaved = 0
     },
+    /** The left panel's and View details' saves share it, so neither starts while the other runs (Q146 b). */
+    setWallSaving: (state: TWallView, action: PayloadAction<boolean>) => {
+      state.wallSaving = action.payload
+    },
   },
   // "Unsaved changes" (questions.md Q142): one more saved-content edit while the wall is open.
   // Which actions count, and which writes of those types don't, is `countsAsWallEdit`.
@@ -301,6 +305,7 @@ export const {
   setActiveAutofocusGroupId,
   markWallSaved,
   wallContentLoaded,
+  setWallSaving,
 } = wallViewSlice.actions
 
 export default wallViewSlice.reducer

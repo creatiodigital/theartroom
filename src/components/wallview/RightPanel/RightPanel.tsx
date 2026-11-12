@@ -19,6 +19,7 @@ import { GroupPanel } from './GroupPanel'
 import { ShapePanel } from './ShapePanel/ShapePanel'
 import { useArtworkDetails } from './hooks/useArtworkDetails'
 import { useSaveExhibition } from '../hooks/useSaveExhibition'
+import { keepAsCancelPoint } from '../wallBaseline'
 import styles from './RightPanel.module.scss'
 
 const RightPanel = () => {
@@ -76,6 +77,8 @@ const RightPanel = () => {
         return
       }
       dispatch(markWallSaved(sentAt))
+      // The wall is saved: Cancel returns here, not behind what the server now holds (Q146 a).
+      keepAsCancelPoint(dispatch)
     }
     setDetailsFailed(false)
 

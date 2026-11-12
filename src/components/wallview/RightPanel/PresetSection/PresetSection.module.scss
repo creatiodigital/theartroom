@@ -12,3 +12,19 @@
   align-items: center;
   column-gap: 14px;
 }
+
+// A refused load (questions.md Q146 h): the red line, then "Try again".
+.loadFailed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 14px;
+}
+
+.failed {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-red-50);
+}

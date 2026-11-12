@@ -25,6 +25,7 @@ import { Text } from '@/components/ui/Typography'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { HelperSwitch, ItemThumb, SegmentStrip } from '@/components/wallview/chrome'
 import { useSaveExhibition } from '@/components/wallview/hooks/useSaveExhibition'
+import { keepAsCancelPoint } from '@/components/wallview/wallBaseline'
 import { restoreArtworksSnapshot, clearArtworksSnapshot } from '@/redux/slices/artworkSlice'
 import { showEditMode } from '@/redux/slices/dashboardSlice'
 import {
@@ -252,10 +253,9 @@ export const LeftPanel = () => {
       return
     }
 
-    // Clear the snapshot and history to mark changes as saved
-    // but keep the wall view open
-    dispatch(clearSnapshot())
-    dispatch(clearArtworksSnapshot())
+    // The wall stays open: Cancel now returns to what was just saved (questions.md Q146 a), and
+    // the history starts again from it
+    keepAsCancelPoint(dispatch)
     dispatch(clearHistory())
     setSaveFailed(false)
     dispatch(markWallSaved(sentAt))

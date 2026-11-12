@@ -105,7 +105,9 @@ export const CreatePanel = () => {
           duplicateError={duplicateError}
         />
       )}
-      <div className={styles.panel}>
+      {/* Like the panels: a click here doesn't deselect (Wall.tsx), so an item it adds stays
+          selected (questions.md Q146 c). A drag onto the wall is no click. */}
+      <div className={styles.panel} data-no-deselect="true">
         <nav aria-label="Add to the wall" className={styles.bar}>
           <Tooltip label="Add artwork from your library" placement="top" offset={16}>
             <Button

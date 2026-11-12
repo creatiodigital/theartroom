@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { getAllPendingUploads, clearAllPendingUploads } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
+import { setWallSaving } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import { takeStudioValuesForSave } from '@/hooks/artworkReread'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
@@ -13,7 +14,7 @@ import { buildArtworksBatch, withStudioValues } from './artworksBatch'
 export const useSaveExhibition = () => {
   const { effectiveUser } = useEffectiveUser()
   const dispatch = useDispatch()
-  const [saving, setSaving] = useState(false)
+  const saving = useSelector((state: RootState) => state.wallView.wallSaving)
   const [error, setError] = useState<string | null>(null)
 
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -33,7 +34,7 @@ export const useSaveExhibition = () => {
       return false
     }
 
-    setSaving(true)
+    dispatch(setWallSaving(true))
     setError(null)
 
     try {
@@ -54,7 +55,7 @@ export const useSaveExhibition = () => {
           throw new Error(data.error || 'Failed to sync positions')
         }
 
-        setSaving(false)
+        dispatch(setWallSaving(false))
         return true
       }
 
@@ -325,7 +326,7 @@ export const useSaveExhibition = () => {
       setError(err instanceof Error ? err.message : 'Failed to save')
       return false
     } finally {
-      setSaving(false)
+      dispatch(setWallSaving(false))
     }
   }, [
     effectiveUser?.id,
