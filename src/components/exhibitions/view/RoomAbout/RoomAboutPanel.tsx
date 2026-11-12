@@ -19,6 +19,8 @@ export type RoomAbout = {
   artist: { name: string; imageUrl: string | null; biography: string | null }
   exhibitionHref: string
   artistHref: string
+  /** The exhibition's cover, as the Exhibitions page shows it: the room loader develops it. */
+  coverUrl: string | null
 }
 
 /** How far the sheet must be pulled down (px) before letting go closes it. */

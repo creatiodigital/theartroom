@@ -28,6 +28,7 @@ import {
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
+import { RoomLoader } from '@/components/exhibitions/view/RoomLoader'
 import {
   RoomAboutPanel,
   type RoomAbout,
@@ -120,7 +121,6 @@ interface ExhibitionViewPageProps {
   exhibitionSlug: string
 }
 
-const VISITOR_LOADER_TITLE = 'Preparing the exhibition'
 const BAKE_LOADER_TITLE = 'Lighting the room'
 const BAKE_LOADER_NOTE =
   'This takes a few minutes. Keep this tab open and in front, with the display awake.'
@@ -145,9 +145,13 @@ interface LoadingOverlayProps {
   mode: PageMode
   /** Once the room is revealed with its stored bake on — never when the bake failed to go on. */
   onRevealed?: () => void
+  /** The visitor's loader (room-loader.md): the exhibition's title, artist and cover. */
+  title?: string
+  artist?: string
+  imageUrl?: string
 }
 
-const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
+const LoadingOverlay = ({ mode, onRevealed, title, artist, imageUrl }: LoadingOverlayProps) => {
   const { active, progress } = useProgress()
   const bake = useBakeProgress()
   // A stored bake that will be shown (`shownStoredBake`) only downloads (its files are assets) but
@@ -193,13 +197,20 @@ const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
       ? (1 - BAKE_MAPS_SHARE) * assets + BAKE_MAPS_SHARE * mapBytes
       : assets
 
+  // The admin's bake keeps the monogram ("Lighting the room"); visitors see the cover develop
+  // (room-loader.md, step 38b). Same fraction and done either way.
+  if (bakes) {
+    return (
+      <MonogramLoader
+        progress={fraction}
+        done={done}
+        title={BAKE_LOADER_TITLE}
+        note={BAKE_LOADER_NOTE}
+      />
+    )
+  }
   return (
-    <MonogramLoader
-      progress={fraction}
-      done={done}
-      title={bakes ? BAKE_LOADER_TITLE : VISITOR_LOADER_TITLE}
-      note={bakes ? BAKE_LOADER_NOTE : undefined}
-    />
+    <RoomLoader progress={fraction} done={done} title={title} artist={artist} imageUrl={imageUrl} />
   )
 }
 
@@ -991,6 +1002,9 @@ export const ExhibitionViewPage = ({
           <LoadingOverlay
             key={shownMode}
             mode={shownMode}
+            title={about?.title ?? exhibition?.mainTitle}
+            artist={about?.artistName}
+            imageUrl={about?.coverUrl || exhibition?.thumbnailUrl || undefined}
             onRevealed={mode === 'review' ? markReviewed : undefined}
           />
         </>

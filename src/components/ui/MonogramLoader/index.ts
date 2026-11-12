@@ -1,1 +1,1 @@
-export { MonogramLoader } from './MonogramLoader'
+export { MARK_PATHS, MonogramLoader } from './MonogramLoader'
