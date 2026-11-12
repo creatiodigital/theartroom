@@ -41,7 +41,8 @@ interface SelectDropdownProps<V extends string = string> {
    *  'plain' = borderless text + chevron (underlines on hover); 'field' = the public
    *  filter field (docs/public-redesign/prints.md: 46px, #f5f5f3, a check on the choice). */
   variant?: 'boxed' | 'plain' | 'field'
-  /** 'field' only: a grey word inside the control before the value ("Artist"). */
+  /** 'field' only: the control's name, read out before the value ("Artist") but not shown (owner,
+   *  2026-11-12: the value alone on screen). */
   inlineLabel?: string
   /** Mark the control invalid: red border + `aria-invalid`. */
   invalid?: boolean
@@ -160,9 +161,7 @@ export const SelectDropdown = <V extends string = string>({
         aria-expanded={open}
         aria-invalid={invalid || undefined}
       >
-        {variant === 'field' && inlineLabel && (
-          <span className={styles.inlineLabel}>{inlineLabel}</span>
-        )}
+        {variant === 'field' && inlineLabel && <span className="sr-only">{inlineLabel} </span>}
         <span className={styles.controlLabel}>
           {selected ? selected.label : (placeholder ?? 'Select…')}
         </span>

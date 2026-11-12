@@ -252,11 +252,7 @@
   }
 }
 
-.inlineLabel {
-  color: var(--color-text-secondary);
-}
-
-// The value takes the free space: the label and value sit left, the caret right.
+// The value takes the free space: it sits left, the caret right.
 .controlField .controlLabel {
   flex: 1 1 auto;
 }
