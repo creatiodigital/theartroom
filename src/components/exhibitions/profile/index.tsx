@@ -108,7 +108,7 @@ export const ExhibitionProfilePage = ({
         </section>
 
         {!isRichTextEmpty(exhibition.description) && (
-          <TextSection label="About the exhibition" className={styles.about}>
+          <TextSection label="About the exhibition" variant="columns" className={styles.about}>
             {description}
           </TextSection>
         )}

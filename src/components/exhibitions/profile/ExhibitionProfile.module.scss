@@ -6,11 +6,12 @@
   margin: 0 auto;
 }
 
-// Hero: the text in a 360px column, the image 3:2 on the right; the image first on phones.
+// Hero: as the artist page (owner, 2026-11-12): the text on the left, the image 3:2 on the right at
+// two thirds of the width; the image first on phones.
 .hero {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: 56px;
+  grid-template-columns: minmax(0, 1fr) 66.67%;
+  gap: var(--space-8);
   align-items: center;
   padding-top: var(--space-12);
 
@@ -48,13 +49,14 @@
 .title {
   margin: 0;
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 50px;
+  // The artist page name's size (owner, 2026-11-12).
+  font-size: var(--text-huge);
   font-weight: var(--font-regular);
   line-height: 1.08;
   color: var(--public-text);
 
   @include media-down(md) {
-    font-size: 36px;
+    font-size: 44px;
   }
 }
 
