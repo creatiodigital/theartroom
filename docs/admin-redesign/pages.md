@@ -420,6 +420,15 @@ new `ui/SaveBar`, opt-in props on the shared `ui/RichTextEditor` (`tone="admin"`
    bar reads "Couldn't load this page. Reload before editing." and Discard is off; Save behaves as today (Q82).
 4. **Found, not fixed (Q82, owner)**: a failed load opens an empty editor, and saving then blanks the live page;
    Remove has no confirm; the editor registers Link twice (a console warning on every editor).
+5. **After Q80 / Q81 / Q82, 2026-11-11 (own commit):** a refused or unanswered save shows in the save bar itself: the
+   status turns red, `role="alert"`, "Not saved. Please try again.", until the next edit (back to "Unsaved changes") or
+   the next accepted save (Q80 follow-up; `SaveBar` `failed`, its `error` prop is gone). With unsaved changes,
+   reloading, closing the tab or typing a URL raises the browser's own "Leave site?" (`beforeunload`, Q81); menu and
+   breadcrumb links are not caught yet. A non-2xx or failed load shows the header, View page ↗ and a red callout
+   "The page could not be loaded." (`role="alert"`), with no banner, title, editor or save bar (Q82), so an error body
+   can no longer be saved over the live page. Remove's confirm and `link: false` wait for the next pass.
+   Verified: the page's e2e (now with a `beforeunload` test) on port 3001; the refused save and the failed load seen
+   in a browser with faked 500s (route interception), nothing saved.
 
 Verified: typecheck, lint, prettier; logic diffed against HEAD; the shared components' removed lines are only two
 imports (extended) and two defaults that now sit behind `tone`; the new spec 7/7 (one locator fixed: the title

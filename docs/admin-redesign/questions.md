@@ -791,10 +791,14 @@ _Meanwhile:_ all as today.
 - **Q66:** (b), hide the Gallery selection row for non-super-admins.
 - **Q74:** fix in the next pass. Priority: the slides.map crash on a failed load, the unchecked `res.ok` on save, and an upload publishing an unsaved slide.
 - **Q80:** the 2xx gate is OK; add a red `FeedbackBar` "The page could not be saved. Please try again." on a refused save.
+  **Follow-up (owner, 2026-11-11):** not a top FeedbackBar: the refused save shows in the save bar itself, status in red "Not saved. Please try again." with `role="alert"`, until the next accepted save or the next edit (then back to "Unsaved changes"). Same rule on every page with the save bar.
 - **Q81:** add `beforeunload` now (unsaved changes); the in-app link guard later.
 - **Q82:** fix the failed load NOW: a non-2xx load shows "The page could not be loaded." and no editor. The Remove confirm and `link: false` (the duplicate Link extension) in the next pass.
 > **Code Claude, 2026-11-12: done** (each its own commit):
 > - **Q66 (b):** the Content list shows Gallery selection to super admins only.
+> - **Q80 / Q81 / Q82:** the refused save in the save bar ("Not saved. Please try again.", red, `role="alert"`),
+>   `beforeunload` with unsaved changes, and a failed load showing "The page could not be loaded." with no editor
+>   (pages.md, step 12c note 5).
 
 <!-- move items here with the answer -->
 

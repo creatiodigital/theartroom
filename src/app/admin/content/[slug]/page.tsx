@@ -51,7 +51,8 @@ const SLUGS_WITH_DEFAULT_TEXT = new Set(['prints'])
 const TITLE_HELP_PRINTS = "Read by screen readers as the banner's description."
 const TITLE_HELP_OTHERS = 'Not shown on the page, whose heading is fixed.'
 
-const LOAD_FAILED = "Couldn't load this page. Reload before editing."
+// Q82: no page, no editor (an empty one could be saved over the live page).
+const LOAD_FAILED = 'The page could not be loaded.'
 
 // "9 Nov 2026, 18:20", as the dashboard's analytics footnote.
 const formatLastSaved = (iso: string) =>
@@ -85,7 +86,9 @@ export default function PageContentEditor({ params }: PageProps) {
   const [baseline, setBaseline] = useState<{ title: string; content: string } | null>(null)
   const [editorForm, setEditorForm] = useState<string | null>(null)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
-  const [loadFailed, setLoadFailed] = useState(false)
+  // Q80: the values a refused save sent. The save bar says "Not saved" while the page still holds
+  // exactly them: the next edit changes them (back to "Unsaved changes"), an accepted save clears it.
+  const [failedSave, setFailedSave] = useState<{ title: string; content: string } | null>(null)
   const [discardOpen, setDiscardOpen] = useState(false)
 
   // Redirect non-admins
@@ -103,12 +106,18 @@ export default function PageContentEditor({ params }: PageProps) {
   const fetchPage = useCallback(async () => {
     try {
       const response = await fetch(`/api/pages/${slug}`)
+      // Q82: only a 2xx reply is the page. Anything else (a 401, a 500) leaves no
+      // page, so the editor never opens on an error body.
+      if (!response.ok) {
+        setPage(null)
+        setBaseline(null)
+        return
+      }
       const data = await response.json()
       setPage(data)
-      // NEW: the baseline, Last saved, and the failed-load state (questions.md Q82).
+      // NEW: the baseline and Last saved.
       setBaseline({ title: data.title, content: data.content })
       setLastSaved(data.updatedAt ?? null)
-      setLoadFailed(!response.ok)
     } catch (error) {
       console.error('Error fetching page:', error)
     } finally {
@@ -127,6 +136,7 @@ export default function PageContentEditor({ params }: PageProps) {
     const sent = { title: page.title, content: page.content }
     setSaving(true)
     setSaved(false)
+    setFailedSave(null)
     try {
       const response = await fetch(`/api/pages/${slug}`, {
         method: 'PUT',
@@ -142,9 +152,12 @@ export default function PageContentEditor({ params }: PageProps) {
         if (row?.updatedAt) setLastSaved(row.updatedAt)
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
+      } else {
+        setFailedSave(sent)
       }
     } catch (error) {
       console.error('Error saving page:', error)
+      setFailedSave(sent)
     } finally {
       setSaving(false)
     }
@@ -191,6 +204,32 @@ export default function PageContentEditor({ params }: PageProps) {
     }
   }, [slug, page?.bannerImageUrl])
 
+  // NEW: unsaved = the title or the text differs from the baseline. The text
+  // counts as unchanged in either form (as stored, or as the editor wrote it), and
+  // only once the editor has reported its form. The banner saves on its own.
+  const contentDirty =
+    !!page &&
+    !!baseline &&
+    editorForm !== null &&
+    page.content !== baseline.content &&
+    page.content !== editorForm
+  const dirty = !!page && !!baseline && (page.title !== baseline.title || contentDirty)
+  const saveFailed =
+    !!failedSave && !!page && page.title === failedSave.title && page.content === failedSave.content
+
+  // Q81: with unsaved changes, reloading, closing the tab or typing a URL asks the
+  // browser's own "Leave site?". In-app links (menu, breadcrumb) are not caught.
+  useEffect(() => {
+    if (!dirty) return
+    const askFirst = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      // Older Chrome asks only when returnValue is set.
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', askFirst)
+    return () => window.removeEventListener('beforeunload', askFirst)
+  }, [dirty])
+
   const label = slugLabels[slug] || slug
   const publicRoute = PAGE_ROUTE_BY_SLUG[slug]
 
@@ -223,29 +262,21 @@ export default function PageContentEditor({ params }: PageProps) {
     )
   }
 
+  // Q82: a failed load (a non-2xx reply, or none): the header and View page stay;
+  // no banner, title, editor or save bar.
   if (!page) {
     return (
       <div className={styles.page}>
         {breadcrumb}
         <AdminPageHeader title={`${label} page`} actions={viewPage} />
         <Callout tone="red" role="alert">
-          Page not found
+          {LOAD_FAILED}
         </Callout>
       </div>
     )
   }
 
   const showBanner = SLUGS_WITH_BANNER.has(slug)
-
-  // NEW: unsaved = the title or the text differs from the baseline. The text
-  // counts as unchanged in either form (as stored, or as the editor wrote it), and
-  // only once the editor has reported its form. The banner saves on its own.
-  const contentDirty =
-    !!baseline &&
-    editorForm !== null &&
-    page.content !== baseline.content &&
-    page.content !== editorForm
-  const dirty = !!baseline && (page.title !== baseline.title || contentDirty)
 
   // NEW: Discard puts back the baseline (no request). The banner is left as it is.
   const confirmDiscard = () => {
@@ -340,9 +371,9 @@ export default function PageContentEditor({ params }: PageProps) {
         dirty={dirty}
         saving={saving}
         saved={saved}
+        failed={saveFailed}
         onSave={handleSave}
         onDiscard={() => setDiscardOpen(true)}
-        error={loadFailed ? LOAD_FAILED : undefined}
       />
 
       {discardOpen && (

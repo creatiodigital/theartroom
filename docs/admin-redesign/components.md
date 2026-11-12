@@ -395,9 +395,10 @@ like the real Pause switch). Logic and dialogs unchanged.
 ## Page editor pieces (step 12c)
 
 ### `SaveBar`
-- **Built** · `ui/SaveBar.tsx` · `{ dirty: boolean; saving: boolean; saved?: boolean; onSave(); onDiscard?(); error?: ReactNode }`
+- **Built** · `ui/SaveBar.tsx` · `{ dirty: boolean; saving: boolean; saved?: boolean; onSave(); onDiscard?(); failed?: boolean }`
   (fixed to the bottom of the content area, lined up with the 880 px column; status as a live region: "All changes
-  saved" / "Unsaved changes" / "Saved" / the error; Discard only with `onDiscard`).
+  saved" / "Unsaved changes" / "Saved"; with `failed` (Q80) the status is a red `role="alert"` "Not saved. Please try
+  again." — the page passes it while it still holds exactly what the refused save sent; Discard only with `onDiscard`).
 
 ### Opt-in props on shared public components (their default output is unchanged)
 - `RichTextEditor`: `tone?: 'default' | 'admin'` (grouped toolbar, the public RichText styles), `richTextVariant?:

@@ -6,7 +6,8 @@ test.use({ storageState: 'e2e/.auth/admin.json' })
 
 /**
  * The page editor's save bar (gallery.md §2c): "Unsaved changes" only after a
- * real edit, and Discard puts the last saved values back.
+ * real edit, Discard puts the last saved values back, and leaving with unsaved
+ * changes asks first (Q81).
  *
  * Read-only: nothing here presses Save, Replace or Remove, so no page and no
  * banner is written. Typed text only ever lives in the browser.
@@ -77,4 +78,23 @@ test('Discard puts back the title and the text', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Discard' }).click()
   await expect(text).not.toContainText(token)
   await expect(status).toHaveText('All changes saved')
+})
+
+test('with unsaved changes, closing the tab asks first', async ({ page }) => {
+  await openEditor(page, 'about')
+  const title = page.getByRole('textbox', { name: 'Page title' })
+
+  // A real click and real keys: the browser asks only on a page the user has
+  // interacted with. Nothing is saved; Stay keeps the typed text in the browser.
+  await title.click()
+  await page.keyboard.press('End')
+  await page.keyboard.type(' e2e')
+  await expect(saveBar(page).getByRole('status')).toHaveText('Unsaved changes')
+
+  const asked = page.waitForEvent('dialog')
+  await page.close({ runBeforeUnload: true })
+  const dialog = await asked
+  expect(dialog.type()).toBe('beforeunload')
+  await dialog.dismiss()
+  await expect(title).toHaveValue(/ e2e$/)
 })
