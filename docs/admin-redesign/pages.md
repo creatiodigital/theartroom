@@ -1128,3 +1128,23 @@ moved work to its loaded place, View details disabled while the left panel saves
 a click on the grey area still deselects, the preset question and its Cancel, a refused delete / create / load with
 their lines and Try again; no page errors.
 
+### Later pass, commit C · Small fixes: a video's paper border, the library's hidden badge — Built 2026-11-12 · branch `feat/AR-180-ui-admin-improvements`
+
+Same plan (items 7–8, Q146 f / i; owner answer Q154 a).
+
+1. **A video's Paper border reads back (Q146 f)**: the switch saved its value but the panel never read it back, so it
+   always showed off and its Size never appeared. Now it shows what is saved. The 2D wall draws it on a video with a
+   poster; the 3D room draws no paper border on videos (Q154: as decided, visitors see no change).
+2. **The library's hidden badge has its icon (Q146 i)**: works hung on a switched-off display panel show their
+   eye-slash badge again (the code asked for an icon name that doesn't exist).
+3. **New check `e2e/icon-keys.spec.ts`** (Node, reads the source): every literal icon name in `src` (`<Icon name>`,
+   `<Button icon>`, `<Input icon>`) and every sound icon a work can store exists in the icon map. TypeScript can't catch
+   this (the map's keys are plain strings); with the old `eye-off` put back, the check fails.
+
+Verified: typecheck, lint, prettier, the spec type-checked; browser on my own `pnpm dev` (dev DB, every non-GET refused
+locally) in Florescĕre: with a display panel switched off (in the page only), the media library shows the badge with
+its icon on its 10 works; a video added from the bar (never saved): Paper border switched on reads back on, stored,
+with its Size slider. e2e (port 3001): `e2e/icon-keys.spec.ts` 4 passed; with `<Icon name="eye-off"` put back in
+`MediaLibrary.tsx:294` it fails naming `eye-off` at `MediaLibrary.tsx:294` (its scan guard fails too, as that line is
+the only literal `eyeOff`); file restored.
+

@@ -44,6 +44,8 @@ const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
     passepartoutColor,
     passepartoutSize,
     passepartoutThickness,
+    showPaperBorder,
+    paperBorderSize,
     hideShadow,
   } = useArtworkDetails(currentArtworkId!)
 
@@ -70,6 +72,10 @@ const ArtisticVideoPanel = ({ disabled }: { disabled?: boolean }) => {
         passepartoutColor={passepartoutColor!}
         passepartoutSize={passepartoutSize}
         passepartoutThickness={passepartoutThickness}
+        // Q146 (f): read back what the switch saves (the 2D wall draws it on a video with a poster;
+        // the 3D room draws no video paper border, Q154).
+        showPaperBorder={showPaperBorder}
+        paperBorderSize={paperBorderSize}
         hideShadow={hideShadow}
         onEdit={handleEditVideo}
       />

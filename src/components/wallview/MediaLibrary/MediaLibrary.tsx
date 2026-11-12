@@ -291,7 +291,7 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
             <div key={artwork.id} className={styles.itemWrapper}>
               {onHiddenPanel.has(artwork.id) && (
                 <span className={styles.hiddenBadge} title="On a panel that is switched off">
-                  <Icon name="eye-off" size={12} />
+                  <Icon name="eyeOff" size={12} />
                 </span>
               )}
               <div
