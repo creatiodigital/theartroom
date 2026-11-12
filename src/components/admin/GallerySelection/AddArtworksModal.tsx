@@ -22,6 +22,10 @@ import styles from './GallerySelection.module.scss'
 type Mode = 'artist' | 'name'
 
 type Props = {
+  /** The list's API: '/api/selected-prints' (Gallery selection) or '/api/home-prints'. */
+  endpoint: string
+  /** The line under "Add artworks": what the picked prints are for. */
+  sub: string
   /** Already selected — never offered again. */
   excludeIds: string[]
   onClose: () => void
@@ -59,7 +63,7 @@ const fetchAllPrints = async (query: CatalogQuery): Promise<PrintArtwork[]> => {
  * filtered in the browser, so typing is instant. Searching titles across every
  * artist is unbounded, so that one goes to the server.
  */
-export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
+export const AddArtworksModal = ({ endpoint, sub, excludeIds, onClose, onAdded }: Props) => {
   const [mode, setMode] = useState<Mode>('artist')
   const [query, setQuery] = useState('')
   const [artists, setArtists] = useState<PrintArtistOption[]>([])
@@ -150,7 +154,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
     setSaving(true)
     setAddError('')
     try {
-      const res = await fetch('/api/selected-prints', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artworkIds: [...ticked] }),
@@ -281,7 +285,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
                 Add artworks
               </h2>
               <Text font="dashboard" as="p" className={styles.pickerSub}>
-                Pick the prints to show on the Prints page. Order them once they are in.
+                {sub}
               </Text>
             </div>
             <Button variant="ghost" icon="close" aria-label="Close" onClick={onClose} />

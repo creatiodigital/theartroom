@@ -24,9 +24,9 @@ type ContentGroup = {
 }
 
 /**
- * Routes unchanged. Gallery selection is listed for super admins only (Q66),
- * as its page lets only them in. Its line differs from the design's (Q67):
- * the selection is the whole of /prints.
+ * Routes unchanged. Gallery selection and its twin Home page prints are listed for super admins
+ * only (Q66), as their pages let only them in. Gallery selection's line differs from the design's
+ * (Q67): the selection is the whole of /prints.
  */
 const CONTENT_GROUPS: ContentGroup[] = [
   {
@@ -48,6 +48,13 @@ const CONTENT_GROUPS: ContentGroup[] = [
         name: 'Gallery selection',
         hint: 'The works on the Prints page',
         href: '/admin/content/gallery-selection',
+        icon: ImageSquare,
+        superAdminOnly: true,
+      },
+      {
+        name: 'Home page prints',
+        hint: 'The prints that rotate on the homepage',
+        href: '/admin/content/home-prints',
         icon: ImageSquare,
         superAdminOnly: true,
       },

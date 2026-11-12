@@ -4,8 +4,14 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 
 import { SortableList } from '@/components/admin/ui/SortableList'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
-import type { AdminSelectionRow, SelectionStatus } from '@/lib/queries/getGallerySelection'
+import type {
+  AdminHomePrintRow,
+  AdminSelectionRow,
+  CuratedList,
+  SelectionStatus,
+} from '@/lib/queries/getGallerySelection'
 
 import styles from './GallerySelection.module.scss'
 
@@ -20,13 +26,26 @@ const REASON: Record<SelectionStatus, string | null> = {
   'not-for-sale': 'Not for sale · hidden from the page',
 }
 
+/**
+ * Home page prints: the homepage's caption says "available as a signed print", so a sold-out
+ * edition is hidden there too (questions.md Q-P22).
+ */
+const HOME_REASON: Record<SelectionStatus, string | null> = {
+  live: null,
+  'sold-out': 'Sold out · hidden from the homepage',
+  'not-for-sale': 'Not for sale · hidden from the homepage',
+}
+
 type Props = {
-  rows: AdminSelectionRow[]
+  /** Which list the rows belong to (default: Gallery selection). */
+  list?: CuratedList
+  rows: (AdminSelectionRow & Partial<AdminHomePrintRow>)[]
   onReorder: (ids: string[]) => void
   onRemove: (selectionId: string) => void
 }
 
-export const SelectionList = ({ rows, onReorder, onRemove }: Props) => {
+export const SelectionList = ({ list = 'prints', rows, onReorder, onRemove }: Props) => {
+  const home = list === 'home'
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -39,8 +58,8 @@ export const SelectionList = ({ rows, onReorder, onRemove }: Props) => {
     <SortableList
       onDragEnd={handleDragEnd}
       rows={rows.map((row) => {
-        const reason = REASON[row.status]
-        const hidden = row.status === 'not-for-sale'
+        const reason = (home ? HOME_REASON : REASON)[row.status]
+        const hidden = row.status === 'not-for-sale' || (home && row.status === 'sold-out')
         return {
           id: row.selectionId,
           title: row.artwork.title || row.artwork.name,
@@ -55,11 +74,16 @@ export const SelectionList = ({ rows, onReorder, onRemove }: Props) => {
           ),
           sub: (
             <>
+              {/* Home page prints: "artist · year", as drawn (home-prints-admin). */}
               <span>
                 {row.artistName}
-                {row.artwork.sale
-                  ? ` · ${row.artwork.sale.editionType === 'limited' ? 'Limited' : 'Open'}`
-                  : ''}
+                {home
+                  ? row.artwork.year
+                    ? ` · ${row.artwork.year}`
+                    : ''
+                  : row.artwork.sale
+                    ? ` · ${row.artwork.sale.editionType === 'limited' ? 'Limited' : 'Open'}`
+                    : ''}
               </span>
               {reason && (
                 <span
@@ -71,13 +95,22 @@ export const SelectionList = ({ rows, onReorder, onRemove }: Props) => {
             </>
           ),
           actions: (
-            <Button
-              variant="bare"
-              font="dashboard"
-              className={styles.remove}
-              label="Remove"
-              onClick={() => onRemove(row.selectionId)}
-            />
+            <>
+              {home && (
+                <StatusPill
+                  shape="tag"
+                  tone={row.rendered ? 'green' : 'amber'}
+                  label={row.rendered ? 'Render ready' : 'No render yet'}
+                />
+              )}
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.remove}
+                label="Remove"
+                onClick={() => onRemove(row.selectionId)}
+              />
+            </>
           ),
         }
       })}

@@ -13,7 +13,11 @@ import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
 import { ListPanel } from '@/components/admin/ui/ListPanel'
 import { SORTABLE_KEYBOARD_HINT } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
-import type { AdminSelectionRow } from '@/lib/queries/getGallerySelection'
+import type {
+  AdminHomePrintRow,
+  AdminSelectionRow,
+  CuratedList,
+} from '@/lib/queries/getGallerySelection'
 
 import { AddArtworksModal } from './AddArtworksModal'
 import { SelectionList } from './SelectionList'
@@ -23,8 +27,57 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 const workTitle = (row: AdminSelectionRow) => row.artwork.title || row.artwork.name
 
-export const GallerySelection = () => {
-  const [rows, setRows] = useState<AdminSelectionRow[]>([])
+/**
+ * The words and addresses of each curated list. Gallery selection is the whole of /prints; Home
+ * page prints (docs/public-redesign/home.md §5, designs/home-prints-admin.dc.html) is its twin
+ * with its own list, shown only in the homepage's Fine-art prints section. Same screen, same logic.
+ */
+const LISTS: Record<
+  CuratedList,
+  {
+    api: string
+    title: string
+    sub: string
+    viewHref: string
+    viewLabel: string
+    pickerSub: string
+    emptyText: string
+    removeTitle: string
+    removeMessage: (title: string) => string
+  }
+> = {
+  prints: {
+    api: '/api/selected-prints',
+    title: 'Gallery selection',
+    sub: 'The works on the Prints page, in this order. Drag to reorder.',
+    viewHref: '/prints',
+    viewLabel: 'View Prints page',
+    pickerSub: 'Pick the prints to show on the Prints page. Order them once they are in.',
+    emptyText: 'The Prints page is showing its empty state.',
+    removeTitle: 'Remove from the selection?',
+    removeMessage: (title) => `${title} will no longer be on the Prints page.`,
+  },
+  home: {
+    api: '/api/home-prints',
+    title: 'Home page prints',
+    sub: "The artworks that rotate in the homepage's Fine-art prints section, in this order. Drag to reorder. They only show there, not on the Prints page. Artworks without a print presentation render are skipped until they're rendered.",
+    viewHref: '/',
+    viewLabel: 'View homepage',
+    pickerSub: 'Pick the prints to rotate on the homepage. Order them once they are in.',
+    emptyText: "The homepage's Fine-art prints section is hidden.",
+    removeTitle: 'Remove from Home page prints?',
+    removeMessage: (title) => `${title} will no longer rotate on the homepage.`,
+  },
+}
+
+type GallerySelectionProps = {
+  /** Which curated list this screen edits (default: Gallery selection). */
+  list?: CuratedList
+}
+
+export const GallerySelection = ({ list = 'prints' }: GallerySelectionProps) => {
+  const copy = LISTS[list]
+  const [rows, setRows] = useState<(AdminSelectionRow & Partial<AdminHomePrintRow>)[]>([])
   const [loading, setLoading] = useState(true)
   const [pickerOpen, setPickerOpen] = useState(false)
   // questions.md Q74: failures are said on screen (they were console only): a failed load in red
@@ -36,7 +89,7 @@ export const GallerySelection = () => {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/selected-prints')
+      const res = await fetch(copy.api)
       if (!res.ok) throw new Error(`Selection: ${res.status}`)
       setRows(await res.json())
       setLoadError(false)
@@ -46,7 +99,7 @@ export const GallerySelection = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [copy.api])
 
   useEffect(() => {
     void load()
@@ -57,7 +110,7 @@ export const GallerySelection = () => {
     // slow round-trip reads as a failed drag.
     setRows((prev) => ids.map((id) => prev.find((r) => r.selectionId === id)!).filter(Boolean))
     try {
-      const res = await fetch('/api/selected-prints/reorder', {
+      const res = await fetch(`${copy.api}/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids }),
@@ -83,7 +136,7 @@ export const GallerySelection = () => {
     const failed = `Couldn't remove ${workTitle(row)}. Please try again.`
     setRemoveTarget(null)
     try {
-      const res = await fetch(`/api/selected-prints/${row.selectionId}`, { method: 'DELETE' })
+      const res = await fetch(`${copy.api}/${row.selectionId}`, { method: 'DELETE' })
       if (!res.ok) {
         console.error('Remove failed:', res.status)
         setActionError(failed)
@@ -114,6 +167,8 @@ export const GallerySelection = () => {
   // withdrawn one is a gap to fill.
   const soldOutCount = rows.filter((r) => r.status === 'sold-out').length
   const withdrawnCount = rows.filter((r) => r.status === 'not-for-sale').length
+  // Home page prints only: a work waiting for its render is skipped on the homepage.
+  const unrenderedCount = list === 'home' ? rows.filter((r) => r.rendered === false).length : 0
 
   const perArtistLine = Object.entries(perArtist)
     .map(([name, n]) => `${name} ${n}`)
@@ -123,15 +178,13 @@ export const GallerySelection = () => {
     <div className={styles.screen}>
       {/* gallery.md §2 (Q4): Content / Gallery selection, in place of an eyebrow. */}
       <AdminBreadcrumb
-        items={[{ label: 'Content', href: '/admin/content' }, { label: 'Gallery selection' }]}
+        items={[{ label: 'Content', href: '/admin/content' }, { label: copy.title }]}
       />
       <AdminPageHeader
-        title="Gallery selection"
+        title={copy.title}
         description={
           <>
-            <span className={styles.sub}>
-              The works on the Prints page, in this order. Drag to reorder.
-            </span>
+            <span className={styles.sub}>{copy.sub}</span>
             {/* The tally, once loaded (it read "0 works · 0 artists" while loading). */}
             {!loading && (
               <span className={styles.tally}>
@@ -139,6 +192,7 @@ export const GallerySelection = () => {
                 {plural(Object.keys(perArtist).length, 'artist', 'artists')}
                 {soldOutCount > 0 ? ` · ${soldOutCount} sold out` : ''}
                 {withdrawnCount > 0 ? ` · ${withdrawnCount} hidden` : ''}
+                {unrenderedCount > 0 ? ` · ${unrenderedCount} without a render` : ''}
               </span>
             )}
             {!loading && perArtistLine && (
@@ -149,13 +203,13 @@ export const GallerySelection = () => {
         actions={
           <>
             <Link
-              href="/prints"
+              href={copy.viewHref}
               target="_blank"
               rel="noopener noreferrer"
               prefetch={false}
               className={styles.view}
             >
-              View Prints page
+              {copy.viewLabel}
               <ArrowSquareOut size={16} weight="light" aria-hidden />
               <span className="sr-only">(opens in a new tab)</span>
             </Link>
@@ -189,10 +243,7 @@ export const GallerySelection = () => {
 
       {loading || loadError ? null : rows.length === 0 ? (
         <ListPanel label="Works">
-          <EmptyState
-            title="Nothing selected yet."
-            text="The Prints page is showing its empty state."
-          />
+          <EmptyState title="Nothing selected yet." text={copy.emptyText} />
         </ListPanel>
       ) : (
         <ListPanel
@@ -201,6 +252,7 @@ export const GallerySelection = () => {
           footnote={SORTABLE_KEYBOARD_HINT}
         >
           <SelectionList
+            list={list}
             rows={rows}
             onReorder={handleReorder}
             onRemove={(selectionId) =>
@@ -212,6 +264,8 @@ export const GallerySelection = () => {
 
       {pickerOpen && (
         <AddArtworksModal
+          endpoint={copy.api}
+          sub={copy.pickerSub}
           excludeIds={excludeIds}
           onClose={() => setPickerOpen(false)}
           onAdded={load}
@@ -220,8 +274,8 @@ export const GallerySelection = () => {
 
       {removeTarget && (
         <AdminConfirmModal
-          title="Remove from the selection?"
-          message={`${workTitle(removeTarget)} will no longer be on the Prints page.`}
+          title={copy.removeTitle}
+          message={copy.removeMessage(workTitle(removeTarget))}
           confirmLabel="Remove"
           destructive
           onConfirm={() => handleRemove(removeTarget)}
