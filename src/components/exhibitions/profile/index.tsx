@@ -4,10 +4,13 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { ArtistRow } from '@/components/artists/ArtistRow'
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
+import { Band } from '@/components/ui/Band'
 import { PageLayout } from '@/components/ui/PageLayout'
+import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Share } from '@/components/ui/Share'
-import { Text } from '@/components/ui/Typography'
+import { TextSection } from '@/components/ui/TextSection'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import type { PublicExhibition } from '@/lib/queries/getPublicExhibitionByUrl'
@@ -25,6 +28,13 @@ interface ExhibitionProfilePageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
 
+const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+/**
+ * The exhibition page (docs/public-redesign/exhibition.md): hero, About the exhibition, the series,
+ * "Walk through the exhibition", About the artist. Data, links, cart and the 3D room entry as
+ * before; the share links and the dates stay (questions.md Q-P11).
+ */
 export const ExhibitionProfilePage = ({
   artistSlug,
   exhibitionSlug,
@@ -34,6 +44,7 @@ export const ExhibitionProfilePage = ({
   const shareUrl = `${SITE_URL}/exhibitions/${artistSlug}/${exhibitionSlug}`
   const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
+  const artistHref = `/artists/${exhibition.user.handler}`
 
   const formatDate = (date: Date | null) => {
     if (!date) return null
@@ -49,25 +60,37 @@ export const ExhibitionProfilePage = ({
   const dateRange =
     startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
 
+  // "26 works · 3 series": from the data; no series part without series (exhibition.md §1).
+  const seriesCount = exhibition.groups.filter((group) => group.title).length
+  const countsLine = [
+    exhibition.artworks.length > 0 ? count(exhibition.artworks.length, 'work', 'works') : null,
+    seriesCount > 0 ? count(seriesCount, 'series', 'series') : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const enter = (className?: string) =>
+    exhibition.spacePublished ? (
+      <EnterExhibitionButton
+        artistSlug={artistSlug}
+        exhibitionSlug={exhibitionSlug}
+        visitUrl={visitUrl}
+        className={className}
+      />
+    ) : null
+
   return (
     <PageLayout>
       <div className={styles.content}>
-        <div className={styles.heroSection}>
-          <div className={styles.heroCta}>
-            <Link href={`/artists/${exhibition.user.handler}`} className={styles.artist}>
+        <section className={styles.hero}>
+          <div className={styles.heroText}>
+            <Link href={artistHref} className={styles.artist}>
               {artistName}
             </Link>
-            <Text as="h1" size="3xl" className={styles.title}>
-              {exhibition.mainTitle}
-            </Text>
-            {exhibition.spacePublished && (
-              <EnterExhibitionButton
-                artistSlug={artistSlug}
-                exhibitionSlug={exhibitionSlug}
-                visitUrl={visitUrl}
-                className={styles.button}
-              />
-            )}
+            <h1 className={styles.title}>{exhibition.mainTitle}</h1>
+            {countsLine && <p className={styles.counts}>{countsLine}</p>}
+            {dateRange && <p className={styles.dates}>{dateRange}</p>}
+            {enter(styles.enter)}
             <Share
               title={`${exhibition.mainTitle} — ${artistName}`}
               url={shareUrl}
@@ -87,23 +110,21 @@ export const ExhibitionProfilePage = ({
                 // on a cold transform is what made images break on first load
                 // and only show after a refresh (AR-125).
                 unoptimized
-                sizes="(max-width: 768px) 100vw, 66vw"
+                sizes="(max-width: 1024px) 100vw, 66vw"
                 className={styles.heroImage}
               />
             </div>
           )}
-        </div>
+        </section>
 
-        {dateRange && (
-          <Text as="p" className={styles.dates}>
-            {dateRange}
-          </Text>
+        {!isRichTextEmpty(exhibition.description) && (
+          <TextSection label="About the exhibition" className={styles.about}>
+            {description}
+          </TextSection>
         )}
 
-        {!isRichTextEmpty(exhibition.description) && description}
-
         {exhibition.artworks.length > 0 && (
-          <div className={styles.artworksSection}>
+          <div className={styles.artworks}>
             {/* One grid per section, no-section works first with no heading.
                 The slug rides along on every card link, so the artwork page
                 can offer arrows through THIS exhibition's sequence. */}
@@ -114,19 +135,43 @@ export const ExhibitionProfilePage = ({
                 aria-label={group.title ?? undefined}
               >
                 {group.title && (
-                  <Text as="h2" className={styles.groupHeading} data-section-heading>
-                    {group.title}
-                  </Text>
+                  <SectionHeading
+                    title={group.title}
+                    count={count(group.artworks.length, 'work', 'works')}
+                  />
                 )}
                 <ArtworkGrid
                   artworks={group.artworks}
                   artistName={artistName}
                   exhibitionSlug={exhibitionSlug}
+                  flushBottom
                 />
               </section>
             ))}
           </div>
         )}
+
+        {exhibition.spacePublished && (
+          <Band
+            heading="Walk through the exhibition"
+            line="See the exhibition in an interactive virtual space."
+            action={enter()}
+          />
+        )}
+
+        <section className={styles.artistSection} aria-labelledby="about-the-artist">
+          <h2 id="about-the-artist" className={styles.artistLabel}>
+            About the artist
+          </h2>
+          <ArtistRow
+            artist={{
+              href: artistHref,
+              name: artistName,
+              imageUrl: exhibition.user.profileImageUrl,
+              biography: exhibition.user.biography,
+            }}
+          />
+        </section>
       </div>
     </PageLayout>
   )

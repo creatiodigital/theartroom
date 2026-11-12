@@ -1,0 +1,97 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/artists.md; designs/exhibition-desktop.dc.html ("About the artist").
+.row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) auto;
+  gap: var(--space-8);
+  align-items: center;
+  padding: 22px 0;
+  border-top: 1px solid var(--color-gray-30);
+  border-bottom: 1px solid var(--color-gray-30);
+  color: inherit;
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 4px;
+  }
+
+  @include media-down(md) {
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+.row + .row {
+  border-top: 0;
+}
+
+.portrait {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--public-render-wall);
+}
+
+.image {
+  object-fit: cover;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 680px;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 22px;
+  }
+}
+
+.exhibitions {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 17px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--public-secondary);
+}
+
+.bio {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+
+  @include media-down(md) {
+    display: none;
+  }
+}
+
+// Reads as an ArrowLink; the whole row is the link.
+.view {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+
+  @include media-down(md) {
+    grid-column: 2;
+  }
+}

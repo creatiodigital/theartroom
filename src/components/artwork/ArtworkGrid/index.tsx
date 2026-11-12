@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 
-import { Button } from '@/components/ui/Button'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
+import { OrderPrintButton } from '@/components/ui/OrderPrintButton'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Text } from '@/components/ui/Typography'
@@ -52,6 +52,8 @@ type Artwork = {
 }
 
 interface ArtworkGridProps {
+  /** Name the artist on each card: only on a grid of several artists (Prints). */
+  showArtist?: boolean
   artworks: Artwork[]
   artistName?: string
   /**
@@ -94,6 +96,7 @@ export const ArtworkGrid = ({
   fromPrints,
   artistHandler,
   flushBottom,
+  showArtist = false,
 }: ArtworkGridProps) => {
   // Admin kill switch. Hides the whole commerce block — price, CTA and the
   // sold-out badge alike — across every grid that uses this component. The
@@ -161,49 +164,40 @@ export const ArtworkGrid = ({
               )}
             </div>
             <div className={styles.info}>
-              {/* Identity on the left, one fact per line; the CTA sits on
-                  the right, level with the artist name. */}
+              {/* The caption left, Order print on its right (under it on phones):
+                  docs/public-redesign/components.md "ArtworkCard". The artist is
+                  named only on a grid of several artists (Prints). */}
               <div className={styles.caption}>
-                <Text as="h2" font="sans" size="md" className={styles.artist}>
-                  {/* Per-card first: it is the only value that is right on a
-                      multi-artist listing. Then the free-text override, then the
-                      page-level fallback a single-artist page supplies. */}
-                  {artwork.artistName || artwork.author || artistName || ''}
-                </Text>
-                <Text as="h1" font="sans" size="md" className={styles.title}>
-                  <em>{artwork.title || artwork.name}</em>
-                </Text>
-                {artwork.year && (
-                  <Text as="p" font="sans" size="md" className={styles.year}>
-                    {artwork.year}
-                  </Text>
+                {showArtist && (
+                  <span className={styles.artist}>
+                    {/* Per-card first: it is the only value that is right on a
+                        multi-artist listing. Then the free-text override, then the
+                        page-level fallback a single-artist page supplies. */}
+                    {artwork.artistName || artwork.author || artistName || ''}
+                  </span>
                 )}
+                <h3 className={styles.title}>
+                  <em>{artwork.title || artwork.name}</em>
+                </h3>
+                {artwork.year && <p className={styles.year}>{artwork.year}</p>}
               </div>
               {sale && (
                 <div className={styles.orderAction}>
                   {/* `null` = nothing left to buy, and that is the one number
                       the card still speaks. The work STAYS on the page and says
                       so: a sold-out edition is the best thing there, while an
-                      "Order Print" button leading to a wizard that refuses the
+                      "Order print" button leading to a wizard that refuses the
                       sale is the worst. */}
                   {sale.minPriceCents != null ? (
-                    <>
-                      {/* To the artwork page, NEVER straight to the wizard. The
-                          artwork page is the single door to checkout: the grid's
-                          job is to earn a click, not to close a sale off a
-                          thumbnail. */}
-                      <Button
-                        href={`/artworks/${artwork.slug}${context}`}
-                        label="Order Print"
-                        variant="outline"
-                        size="regularSquared"
-                        className={styles.orderButton}
-                      />
-                    </>
+                    // To the artwork page, NEVER straight to the wizard. The
+                    // artwork page is the single door to checkout: the grid's
+                    // job is to earn a click, not to close a sale off a thumbnail.
+                    <OrderPrintButton
+                      href={`/artworks/${artwork.slug}${context}`}
+                      className={styles.orderButton}
+                    />
                   ) : (
-                    <Text as="span" className={styles.soldOut}>
-                      Sold out
-                    </Text>
+                    <span className={styles.soldOut}>Sold out</span>
                   )}
                 </div>
               )}

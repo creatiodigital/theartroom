@@ -30,7 +30,8 @@ const decode = (text: string) =>
     return ENTITIES[code.toLowerCase()] ?? match
   })
 
-const textOf = (inner: string) =>
+/** The text of a piece of HTML: tags dropped, entities read, spaces collapsed (bios, excerpts). */
+export const plainTextOf = (inner: string) =>
   decode(inner.replace(/<[^>]*>/g, ''))
     .replace(/\s+/g, ' ')
     .trim()
@@ -50,7 +51,7 @@ export function withHeadingAnchors(html: string): { html: string; headings: Page
   const anchored = html.replace(
     /<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi,
     (match, attrs: string | undefined, inner: string) => {
-      const text = textOf(inner)
+      const text = plainTextOf(inner)
       if (!text) return match
       const base = slugOf(text)
       const seen = used.get(base) ?? 0

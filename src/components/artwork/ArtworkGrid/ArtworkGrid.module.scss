@@ -1,23 +1,20 @@
 @use '@/styles/mixins' as *;
 
+// docs/public-redesign/components.md "ArtworkCard", designs/exhibition-desktop.dc.html (series):
+// every work in the same 1:1 box on the render wall grey, contained; the caption under it, Order
+// print on its right (full width under it on phones). 3 columns, 2 on phones. Equal boxes keep
+// each row's image centres and captions on one line (e2e/artwork-grid-alignment.spec.ts).
 .grid {
   display: grid;
-  grid-template-columns: 1fr;
-  // Rows breathe more than columns: each card is a tall image + caption, and
-  // stacked cards read as one block when the row gap matches the column gap.
-  gap: var(--space-10) var(--space-6);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8) var(--space-4);
   // The grid is the last thing on /prints, artist and exhibition pages, so its
-  // bottom row otherwise sits hard against the footer's rule.
+  // bottom row otherwise sits hard against what follows.
   margin-bottom: var(--space-14);
 
-  @include breakpoint(md) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-12) var(--space-8);
-  }
-
   @include breakpoint(lg) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-16) var(--space-10);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 56px var(--space-10);
     margin-bottom: var(--space-18);
   }
 
@@ -30,232 +27,125 @@
 .card {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--space-6);
-
-  @include breakpoint(lg) {
-    gap: var(--space-8);
-  }
-
-  // From two columns up, every card shares the SAME two rows — image, then
-  // caption — via subgrid, so the divider above the caption sits on one
-  // continuous line across the row. Bottom-aligning the cards (the flex
-  // fallback) can't do that: the divider then lands wherever each caption
-  // happens to start, so a work with no technique or no dimensions pushed its
-  // rule lower than its neighbour's.
-  @include breakpoint(md) {
-    display: grid;
-    grid-template-rows: subgrid;
-    grid-row: span 2;
-    // One column that FILLS the card. Without it the implicit column is
-    // `auto`-sized, so it shrank to the image and the inherited
-    // `justify-content: flex-end` pushed that track against the card's right
-    // edge — a portrait work then sat ~19px off-centre while a landscape one
-    // (which fills the width) looked fine. minmax(0, …) so a wide caption
-    // can't force the track past the column.
-    grid-template-columns: minmax(0, 1fr);
-    // MUST override the flex `align-items: center` above. Under grid that
-    // centres each item within its track, so a shorter caption sank by half
-    // the row's slack and its rule sat below its neighbour's — measured at
-    // exactly 12px for a 200px caption beside a 224px one. Stretching makes
-    // every caption start at the top of the shared row, which is what puts
-    // the rules on one line.
-    align-items: stretch;
-    // A subgrid inherits the parent's gutters; this restores the intended
-    // spacing INSIDE a card, leaving the parent's larger gap between rows.
-    row-gap: var(--space-6);
-  }
-
-  @include breakpoint(lg) {
-    row-gap: var(--space-8);
-  }
+  min-width: 0;
 }
 
 .imageWrapper {
-  width: 100%;
+  position: relative;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0;
-  flex-grow: 1;
+  overflow: hidden;
+  background: var(--public-render-wall);
+}
 
-  // Centre the wrapper in the shared image row, so every work in a row sits on
-  // one horizontal axis whatever its height — a landscape work beside the
-  // MIDDLE of a portrait one, not level with its foot (`align-self: end`, which
-  // this replaces).
-  //
-  // It has to be `align-self` HERE and not `align-items: center` on .card:
-  // the card's two subgrid rows are image and caption, so centring at the card
-  // level also centres a short caption in its own row and drops its divider
-  // below its neighbour's — the 12px regression recorded on .card above. This
-  // touches the image row only, which is why the rules stay on one line.
-  @include breakpoint(md) {
-    align-self: center;
+.viewDetailsLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+
+  // The work, or the photo of its print, contained in the square.
+  > * {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 2px;
   }
 }
 
 .image {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: contain;
-  max-height: 600px;
 }
 
-// A work shown as a photo of its print: the render takes the bare image's height cap, so a tall
-// work stays as tall as it was and the frame or sheet fits inside that, centred like the image.
 .presentationRender {
-  max-height: 600px;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .placeholder {
-  width: 100%;
-  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface-subtle);
-  color: var(--color-text-primary);
+  width: 100%;
+  height: 100%;
+  color: var(--color-text-secondary);
 }
 
 .info {
-  // Caption left, CTA right, both hanging from the divider — the gallery
-  // convention, rather than one centered stack.
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-4);
-  text-align: left;
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border-default);
-  width: 100%;
+  padding-top: 14px;
 
-  // The shared caption row (see .card subgrid) is what actually aligns these
-  // now; this only sets a floor so a sparse caption still gives the card some
-  // presence. In the single-column mobile layout it just adds dead space
-  // before the footer, so it stays scoped to md and up.
-  @include breakpoint(md) {
-    min-height: 96px;
+  @include media-down(md) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
   }
 }
 
 .caption {
-  // Lets a long title wrap instead of pushing the CTA out of the card.
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
+// Prints only: several artists on one grid.
 .artist {
-  font-weight: 600;
-  margin-bottom: 0;
-  color: var(--color-text-primary);
-  line-height: 1.35;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
 .title {
-  color: var(--color-text-primary);
-  // Tight to the details below it — artist / title / year are one block of
-  // identity, not separately spaced lines.
-  margin-bottom: 0;
-  line-height: 1.35;
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 19px;
+  font-weight: var(--font-regular);
+  line-height: 1.25;
+  color: var(--public-text);
 }
 
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). The drawn #888 is
+// 3.5:1 on white; the secondary grey passes.
 .year {
   margin: 0;
-  color: var(--color-text-primary);
-  line-height: 1.35;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
 }
 
-.detail {
-  color: var(--color-text-primary);
-  line-height: 1.35;
+.orderAction {
+  flex-shrink: 0;
 }
 
-// The technique comes through RichText's `compact` variant, which carries
-// editorial leading (line-height 2) and a bottom margin — right for a
-// paragraph of prose, far too airy for the one line of it a card shows. It was
-// the single biggest source of slack in the caption. The doubled class
-// out-specifies `.richText.compact` without reaching for `!important`.
-.info .detail.detail {
-  margin-bottom: 0;
-
-  p {
-    margin-bottom: 0;
-    line-height: 1.35;
+.orderAction .orderButton {
+  @include media-down(md) {
+    width: 100%;
   }
 }
 
-.viewDetailsLink {
-  display: inline-block;
-  margin-top: var(--space-4);
-  text-decoration: none;
-  // No text line: the image's inline-block wrapper rested on one, a 6.6 px gap under the bare work
-  // that a print presentation (a block) doesn't have — side by side, the bare work sat 3.3 px high.
-  line-height: 0;
-}
-
-// Edition tag shown with the Order Print CTA — on every grid, wherever the
-// card's `sale` says the work is purchasable.
-.editionTag {
-  display: block;
-  // With `SHOW_PRICE_ON_LISTINGS` off, this tag's neighbour below is the CTA,
-  // not the price — so it needs a real gap. At 2px (the old pairing distance
-  // to the price) the label sat on the button's top edge and read as part of
-  // it. If the price ever comes back, tighten this and let `.price` carry the
-  // separation instead.
-  margin-bottom: var(--space-3);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-
-// The commerce block. Present per-card, driven by `artwork.sale` — not by a
-// grid-wide flag, because the artist and exhibition grids mix sellable work
-// with work that was never for sale.
-.orderAction {
-  // Beside the caption now, not under it: no top gap, and it never shrinks —
-  // the caption wraps instead.
-  margin-top: 0;
-  flex-shrink: 0;
-  // Column flex rather than a stack of blocks: the Button is `inline-flex`, so
-  // in an inline flow it sat on a text baseline and carried the line-box's
-  // descender space under it — a few stray pixels that read as a gap between
-  // the price and the CTA. As a flex item it has none.
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-// A touch taller than regularSquared's 8px, sides unchanged. Scoped under
-// .orderAction so it outranks Button's size class regardless of stylesheet order.
-.orderAction .orderButton {
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
-}
-
-// The figure. A bare number, stated plainly — no "from", no "starting at":
-// a gallery states a price. What it means differs by edition type — a limited
-// variant's is exact, an open edition's moves with size and framing.
-.price {
-  display: block;
-  margin-bottom: var(--space-2);
-  color: var(--color-text-primary);
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-// A sold-out edition stays in the catalogue and is MARKED, not hidden — the
-// work sold, which is the good news. A badge rather than a button: it replaces
-// the CTA, so it must not look like one.
 .soldOut {
   display: inline-block;
-  margin-top: var(--space-1);
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--color-border-default);
-  background: var(--color-surface-subtle);
-  color: var(--color-text-secondary);
-  font-size: var(--text-xs);
-  letter-spacing: 0.1em;
+  padding: var(--space-2) 14px;
+  border: 1px solid var(--color-gray-30);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  line-height: 1.4;
+  color: var(--color-text-secondary);
 }

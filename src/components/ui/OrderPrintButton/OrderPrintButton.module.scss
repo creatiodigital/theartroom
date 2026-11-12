@@ -1,0 +1,27 @@
+// README "Order print": 38px, 1px #1a1a1a, white, Lato 12 caps .12em, 14px side padding, square.
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--public-text);
+  background: var(--color-white);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--public-text);
+
+  &:hover {
+    background: var(--public-off-white);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 2px;
+  }
+}

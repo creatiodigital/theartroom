@@ -55,7 +55,7 @@ async function readCards(page: Page): Promise<CardBox[]> {
       const i = img?.getBoundingClientRect()
       return {
         cardTop: Math.round(card.getBoundingClientRect().top),
-        title: card.querySelector('h1')?.textContent?.trim() ?? '(untitled)',
+        title: card.querySelector('h3, h1')?.textContent?.trim() ?? '(untitled)',
         imgMid: i ? (i.top + i.bottom) / 2 : null,
         imgTop: i ? i.top : null,
         imgBottom: i ? i.bottom : null,
