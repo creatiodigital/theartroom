@@ -37,6 +37,12 @@ export const PayoutsPage = () => {
   const [country, setCountry] = useState<string>('')
   const [countries, setCountries] = useState<ConnectCountry[]>([])
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false)
+  // questions.md Q124 (c): the Disconnect button says "Disconnecting…" only for its own request
+  // (it did for every action, Open Stripe dashboard included).
+  const [disconnecting, setDisconnecting] = useState(false)
+  // Q124 (e): a countries failure is the country picker's own (it replaced any other error, on
+  // every state, connected ones included).
+  const [countriesError, setCountriesError] = useState<string | null>(null)
   // Display only: the dialog shows `error` once its own Disconnect was pressed,
   // so an older error (e.g. the countries one) never shows inside it.
   const [disconnectTried, setDisconnectTried] = useState(false)
@@ -64,7 +70,7 @@ export const PayoutsPage = () => {
     getConnectCountries().then((res) => {
       if (canceled) return
       if (res.ok) setCountries(res.countries)
-      else setError(res.error)
+      else setCountriesError(res.error)
     })
     return () => {
       canceled = true
@@ -91,12 +97,20 @@ export const PayoutsPage = () => {
   }, [country, status?.connected])
 
   const handleOpenStripe = useCallback(async () => {
+    // Q124 (d): Safari and pop-up blockers drop a window opened after a server round trip, so the
+    // tab opens now, on the click, and goes to Stripe once the link is back (closed if it isn't).
+    // Its `opener` is cut, as `noopener` did; the browser's default referrer policy sends Stripe
+    // our origin only. If even this tab is blocked, the old call as a last try.
+    const tab = window.open('', '_blank')
+    if (tab) tab.opener = null
     setWorking(true)
     setError(null)
     const res = await createDashboardLink()
     if (res.ok) {
-      window.open(res.url, '_blank', 'noopener,noreferrer')
+      if (tab) tab.location.href = res.url
+      else window.open(res.url, '_blank', 'noopener,noreferrer')
     } else {
+      tab?.close()
       setError(res.error)
     }
     setWorking(false)
@@ -104,11 +118,13 @@ export const PayoutsPage = () => {
 
   const performDisconnect = useCallback(async () => {
     setWorking(true)
+    setDisconnecting(true)
     setError(null)
     const res = await disconnectAccount()
     if (!res.ok) {
       setError(res.error)
       setWorking(false)
+      setDisconnecting(false)
       return
     }
     if (res.pendingOrders > 0) {
@@ -120,6 +136,7 @@ export const PayoutsPage = () => {
     await load()
     setConfirmingDisconnect(false)
     setWorking(false)
+    setDisconnecting(false)
   }, [load])
 
   // statusHeadline's own "Payouts active" rule: the green tile.
@@ -155,7 +172,8 @@ export const PayoutsPage = () => {
               )}
             </div>
 
-            {status.connected && !status.onboardingComplete && (
+            {/* Q124 (b): not under "Payouts active", while Stripe's webhook lags behind it. */}
+            {status.connected && !active && !status.onboardingComplete && (
               <Callout tone="plain">
                 Stripe updates us in the background once onboarding is complete. If this page still
                 says &quot;in progress&quot; after a minute, click{' '}
@@ -179,7 +197,11 @@ export const PayoutsPage = () => {
                     disabled={countries.length === 0}
                   >
                     <option value="" disabled>
-                      {countries.length === 0 ? 'Loading countries…' : 'Select a country…'}
+                      {countries.length > 0
+                        ? 'Select a country…'
+                        : countriesError
+                          ? 'Countries unavailable'
+                          : 'Loading countries…'}
                     </option>
                     {countries.map((entry) => (
                       <option key={entry.code} value={entry.code}>
@@ -191,6 +213,11 @@ export const PayoutsPage = () => {
                     <Warning size={14} weight="fill" aria-hidden className={styles.warningIcon} />
                     This can&apos;t be changed later. Pick the country your bank account is in.
                   </p>
+                  {countriesError && (
+                    <Callout tone="red" role="alert">
+                      {countriesError}
+                    </Callout>
+                  )}
                 </div>
                 <div className={styles.connectRow}>
                   {renderPrimaryAction({ status, working, handleConnect, handleOpenStripe })}
@@ -218,7 +245,7 @@ export const PayoutsPage = () => {
                   }}
                   disabled={working}
                 >
-                  {working ? 'Disconnecting…' : 'Disconnect Stripe…'}
+                  {disconnecting ? 'Disconnecting…' : 'Disconnect Stripe…'}
                 </Button>
               }
             />

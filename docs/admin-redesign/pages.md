@@ -1161,3 +1161,7 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
   reorder says so and reloads, a shapes-only library reads "No artworks yet.", a refused exhibition delete shows a red
   bar, the greeting uses the impersonated artist's name. Look: the delete bar and the greeting while impersonating (not
   seen: they need impersonation, which the read-only check refuses).
+- **Q124 (b)–(e) · Payouts (2026-11-12):** Open Stripe dashboard opens its tab on the click, then sends it to Stripe
+  (pop-up blockers no longer drop it); "Disconnecting…" only for Disconnect; no "in progress" note under "Payouts
+  active"; a countries failure shows in the country picker only. Look: all four (not seen: the dev artist's Stripe
+  account is invalid for the dev key, so the page stops at "Could not load payout status.").
