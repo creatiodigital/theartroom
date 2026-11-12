@@ -313,7 +313,7 @@ export const CartCheckout = ({
               />
             </div>
 
-            <CheckoutAside title="Your order">
+            <CheckoutAside title="Your order" className={styles.asideShipping}>
               <OrderItems items={items} errors={lineErrors} />
               {/* The cart's own figures until the address is known; the server re-prices on the
                   next step. */}
@@ -374,7 +374,7 @@ export const CartCheckout = ({
               </ArrowLink>
             </div>
 
-            <CheckoutAside title="Summary">
+            <CheckoutAside title="Summary" className={styles.asideReview}>
               <Totals totals={totals} />
               {payError && <p className={styles.orderError}>{payError}</p>}
               <CheckoutButton

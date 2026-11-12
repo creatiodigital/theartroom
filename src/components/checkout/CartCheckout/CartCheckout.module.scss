@@ -15,11 +15,9 @@
 
 .grid {
   display: grid;
-  // The form at a readable width (at most 760 px), the order panel on the page's right edge; the
-  // space between grows with the screen (owner, 2026-11-12: full-width fields were out of
-  // proportion).
-  grid-template-columns: minmax(0, 760px) 400px;
-  justify-content: space-between;
+  // The form at a readable width (at most 760 px, owner 2026-11-12: full-width fields were out of
+  // proportion); the order panel takes the rest of the row, never under 360 px (owner: it adapts).
+  grid-template-columns: minmax(0, 760px) minmax(360px, 1fr);
   gap: 64px;
   align-items: start;
 
@@ -34,6 +32,24 @@
   flex-direction: column;
   gap: 24px;
   min-width: 0;
+}
+
+// Side by side, the order panel starts level with the step's first field or box, not with its
+// title (owner, 2026-11-12): shipping, the form's title and the Country label above the field
+// (83 px); review, "Check your order" (36 px) and the 24 px gap above Shipping to.
+.asideShipping,
+.asideReview {
+  @include media-up(lg) {
+    margin-top: var(--aside-offset);
+  }
+}
+
+.asideShipping {
+  --aside-offset: 83px;
+}
+
+.asideReview {
+  --aside-offset: 60px;
 }
 
 .stepTitle {

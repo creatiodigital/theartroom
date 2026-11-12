@@ -203,7 +203,7 @@ const CartPaymentForm = ({ items, totals, address, onSuccess, onBack }: CartPaym
         </ArrowButton>
       </div>
 
-      <CheckoutAside title="Summary">
+      <CheckoutAside title="Summary" className={styles.aside}>
         <OrderItems items={items} />
         <Totals totals={totals} />
         <CheckoutButton
