@@ -1,11 +1,10 @@
 'use client'
 
 import { useId } from 'react'
+import { Camera } from '@phosphor-icons/react'
 
-import { Button } from '@/components/ui/Button'
-import { Icon } from '@/components/ui/Icon'
+import { CheckoutButton } from '@/components/checkout/CheckoutParts'
 import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
 
 import styles from './UnboxingReminderModal.module.scss'
 
@@ -30,34 +29,31 @@ type UnboxingReminderModalProps = {
 export const UnboxingReminderModal = ({ onClose }: UnboxingReminderModalProps) => {
   const titleId = useId()
 
+  // order-flow.md "A small request"; designs/order-unboxing-request.dc.html: 520 px.
   return (
-    <Modal onClose={onClose} titleId={titleId}>
+    <Modal onClose={onClose} titleId={titleId} maxWidth="520px" showClose>
       <div className={styles.body}>
         <span className={styles.icon} aria-hidden>
-          <Icon name="camera" size={28} />
+          <Camera size={26} weight="light" />
         </span>
 
         <h2 id={titleId} className={styles.title}>
           A small request
         </h2>
 
-        <Text as="p" size="md" className={styles.paragraph}>
-          We kindly suggest taking a few photos, or a short video, as you unwrap your print &mdash;
-          the sealed parcel first, then the moment you open it.
-        </Text>
-        <Text as="p" size="md" className={styles.paragraph}>
+        <p className={styles.paragraph}>
+          We kindly suggest taking a few photos, or a short video, as you unwrap your print: the
+          sealed parcel first, then the moment you open it.
+        </p>
+        <p className={styles.paragraph}>
           Damage in transit is rare and your print travels well protected. But should anything
           arrive less than perfect, those images let us arrange a reprint or a refund right away,
           with no back-and-forth.
-        </Text>
+        </p>
 
-        <Text as="p" size="sm" className={styles.footnote}>
-          We&apos;ll remind you again when your print ships.
-        </Text>
+        <p className={styles.footnote}>We&apos;ll remind you again when your print ships.</p>
 
-        <div className={styles.actions}>
-          <Button variant="primary" size="bigSquared" label="Got it" onClick={onClose} />
-        </div>
+        <CheckoutButton label="Got it" onClick={onClose} className={styles.gotIt} />
       </div>
     </Modal>
   )

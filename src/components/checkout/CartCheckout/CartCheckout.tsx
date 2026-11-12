@@ -27,7 +27,7 @@ import { formatEuro } from '@/lib/print-providers'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
-import { CartConfirmation } from './CartConfirmation'
+import { CartConfirmation, type PlacedOrderSummary } from './CartConfirmation'
 import { CartPayment } from './CartPayment'
 import { createCartPaymentIntent } from './createCartPaymentIntent'
 import { validateCartAction } from './validateCartAction'
@@ -100,6 +100,10 @@ export const CartCheckout = ({
   // lineId → "no longer available" style message, surfaced on the line.
   const [lineErrors, setLineErrors] = useState<Record<string, string>>({})
   const [payError, setPayError] = useState<string | null>(null)
+  // Display only: the lines as they were when payment went through in place, for the
+  // confirmation's "Your order" panel (the cart is cleared right after). Not set on a redirect
+  // return or a reload (Q-P15).
+  const [placedItems, setPlacedItems] = useState<CartItem[] | null>(null)
 
   // Redirect return path. Stripe sends the buyer back to return_url
   // (/checkout) with ?payment_intent=... — after 3DS on a card, and ALWAYS for
@@ -263,7 +267,12 @@ export const CartCheckout = ({
     return (
       <PageLayout>
         <div className={styles.page}>
-          {paymentIntentId && <CartConfirmation paymentIntentId={paymentIntentId} />}
+          {paymentIntentId && (
+            <CartConfirmation
+              paymentIntentId={paymentIntentId}
+              summary={summaryForConfirmation(placedItems, totals, address)}
+            />
+          )}
         </div>
       </PageLayout>
     )
@@ -386,13 +395,24 @@ export const CartCheckout = ({
             items={items}
             totals={totals}
             address={address}
-            onSuccess={handlePaymentSuccess}
+            onSuccess={(confirmedPaymentIntentId) => {
+              setPlacedItems(items)
+              handlePaymentSuccess(confirmedPaymentIntentId)
+            }}
             onBack={handleBackToReview}
           />
         )}
       </div>
     </PageLayout>
   )
+}
+
+function summaryForConfirmation(
+  items: CartItem[] | null,
+  totals: CartTotals | null,
+  address: ShippingAddress | null,
+): PlacedOrderSummary | null {
+  return items && items.length > 0 && totals && address ? { items, totals, address } : null
 }
 
 type CheckoutLineProps = {
