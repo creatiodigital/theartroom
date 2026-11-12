@@ -28,6 +28,11 @@
   @include media-up(lg) {
     padding-left: calc(360px + 56px);
   }
+
+  // The same 760 px reading measure as a labelled section's text (TextSection's .text).
+  .text {
+    max-width: 760px;
+  }
 }
 
 // Reading text: Lato 17 / 1.75, #444, 18 px between paragraphs. Through .row: outranks RichText's
