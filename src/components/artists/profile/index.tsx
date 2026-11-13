@@ -109,8 +109,8 @@ export const ArtistProfilePage = ({
         </section>
 
         {artworks.length > 0 && (
-          <section className={styles.group} aria-label="Works">
-            <SectionHeading title="Works" />
+          <section className={styles.group} aria-label="Selected works">
+            <SectionHeading title="Selected works" />
             {/* `artistHandler` marks the cards as a set the visitor is walking, so
                 the artwork page can offer previous/next through this artist's
                 works. `artistName` is the display name for the cards — different
