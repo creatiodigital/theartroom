@@ -257,6 +257,7 @@ export const ArtworkDetailBody = ({
           year: artwork.year ? parseInt(artwork.year, 10) : undefined,
           artistName: displayAuthor || '',
           imageUrl: artwork.imageUrl || '',
+          presentation,
         }}
       />
     </>

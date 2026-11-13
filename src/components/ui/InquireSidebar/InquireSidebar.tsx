@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import { Check, X } from '@phosphor-icons/react'
 
+import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
 import { useFormValidation } from '@/hooks/useFormValidation'
+import type { PresentationView } from '@/lib/printPresentation/record'
 import { email, minLength, phone, type Validator } from '@/lib/validation'
 
 import styles from './InquireSidebar.module.scss'
@@ -22,6 +24,8 @@ type InquireSidebarProps = {
     year?: number
     artistName: string
     imageUrl: string
+    /** The photo of the print, as the artwork page shows it; without one, the plain image. */
+    presentation?: PresentationView | null
   }
 }
 
@@ -185,14 +189,32 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
         </div>
 
         <div className={styles.work}>
-          <ProtectedImage
-            src={artwork.imageUrl}
-            alt={artwork.title}
-            width={0}
-            height={0}
-            wrapperClassName={styles.workThumb}
-            className={styles.workThumbImage}
-          />
+          {/* The rendered print, cropped to the piece and a thin border of wall as on the artwork
+              page; the plain image where there is no render, or it fails to load. */}
+          <div className={styles.workThumb}>
+            <PrintPresentation
+              view={artwork.presentation}
+              size="small"
+              crop
+              className={styles.workPiece}
+              renderClassName={styles.workRender}
+            >
+              {(placement) =>
+                placement === 'window' ? (
+                  <ProtectedImage src={artwork.imageUrl} alt={artwork.title} fill sizes="64px" />
+                ) : (
+                  <ProtectedImage
+                    src={artwork.imageUrl}
+                    alt={artwork.title}
+                    width={0}
+                    height={0}
+                    wrapperClassName={styles.workPlain}
+                    className={styles.workThumbImage}
+                  />
+                )
+              }
+            </PrintPresentation>
+          </div>
           <div className={styles.workText}>
             <span className={styles.workTitle}>
               <em>{artwork.title}</em>

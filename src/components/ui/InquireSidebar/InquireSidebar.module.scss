@@ -96,11 +96,30 @@
 }
 
 .workThumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 64px;
   height: 64px;
   padding: 7px;
   background: var(--public-render-wall);
   // The work never touches the grey: a margin all round (owner, 2026-11-12).
+}
+
+// The render, cropped to the piece: as large as the 50 px inside the margin allows, its own shape.
+.workRender {
+  max-width: 50px;
+  max-height: 50px;
+}
+
+.workPiece {
+  flex-shrink: 0;
+}
+
+// No render: the plain image fills the space inside the margin.
+.workPlain {
+  width: 100%;
+  height: 100%;
 }
 
 .workThumbImage {
