@@ -35,12 +35,13 @@
 // `fill`, not `color`: the SVG's paths carry no fill of their own.
 .monogram {
   display: block;
-  width: 28px;
+  // Owner, 2026-11-13: bigger than the first 28, then than 36.
+  width: 48px;
   height: auto;
   fill: var(--color-red-50);
 
   @include media-down(sm) {
-    width: 24px;
+    width: 40px;
   }
 }
 
