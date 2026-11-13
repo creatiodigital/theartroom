@@ -104,15 +104,7 @@ export const ArtworkMediaGallery = ({ media = [] }: { media?: ArtworkMediaItem[]
   const activePosition = 2 + shift
 
   return (
-    <section
-      className={styles.gallery}
-      data-count={usable.length}
-      aria-labelledby="artwork-details"
-    >
-      {/* artwork.md "Below the work": a hairline and the "Details" label over today's gallery. */}
-      <h2 id="artwork-details" className={styles.label}>
-        Details
-      </h2>
+    <section className={styles.gallery} data-count={usable.length}>
       <div
         className={styles.viewport}
         // Drag to move — finger, pen or mouse, through one path. On a phone
