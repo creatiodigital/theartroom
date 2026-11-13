@@ -147,7 +147,13 @@ const MadridSpace: React.FC<MadridSpaceProps> = ({ wallRefs, windowRefs, glassRe
   // Display panels. This space's props sit at the scene root, so nothing else
   // needs baking — but a panel authored under a `panelsRoom<n>` Empty does, or
   // it renders at that Empty's offset. A no-op when the nodes have no parent.
-  useMemo(() => bakeWorldTransforms(nodes, ['panel', 'panelFront', 'panelBack']), [nodes])
+  // The wall placeholders too: madrid12 authors them under `room0` (an Empty 3.59 m up), so drawn
+  // from their local transform the editor's Spots outlines sat under the floor, unseen, and could
+  // not be double-clicked. Everything that measures them reads `worldMatrixOf`, baked or not.
+  useMemo(
+    () => bakeWorldTransforms(nodes, ['panel', 'panelFront', 'panelBack', 'placeholder']),
+    [nodes],
+  )
   const panelIndices = useMemo(() => getNodeIndices(nodes, 'panel'), [nodes])
 
   // Register placeholders with Redux
