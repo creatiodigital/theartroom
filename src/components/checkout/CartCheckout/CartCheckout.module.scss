@@ -34,22 +34,39 @@
   min-width: 0;
 }
 
-// Side by side, the order panel starts level with the step's first field or box, not with its
-// title (owner, 2026-11-12): shipping, the form's title and the Country label above the field
-// (83 px); review, "Check your order" (36 px) and the 24 px gap above Shipping to.
-.asideShipping,
-.asideReview {
-  @include media-up(lg) {
-    margin-top: var(--aside-offset);
+// Shipping: the cart's own grid (CartPage.module.scss), so nothing moves from the cart: the items
+// on the left, the address form in the 360 px column on the right (owner, 2026-11-13); stacked
+// below 1024 px, the items first, as the cart.
+.itemsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 56px;
+  align-items: start;
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-10);
   }
 }
 
-.asideShipping {
-  --aside-offset: 83px;
+// The item rows under a hairline, as the cart's list.
+.lines {
+  border-top: 1px solid var(--color-gray-30);
 }
 
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+// Side by side, the summary starts level with the review's first box, not with its title (owner,
+// 2026-11-12): "Check your order" (36 px) and the 24 px gap above Shipping to.
 .asideReview {
-  --aside-offset: 60px;
+  @include media-up(lg) {
+    margin-top: 60px;
+  }
 }
 
 .stepTitle {

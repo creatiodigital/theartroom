@@ -406,7 +406,10 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField className={styles.fieldThird} error={fieldError('city')}>
+        <FormField
+          className={`${styles.fieldThird} ${styles.fieldCity}`}
+          error={fieldError('city')}
+        >
           <label className={styles.fieldLabel} htmlFor="city">
             City
           </label>

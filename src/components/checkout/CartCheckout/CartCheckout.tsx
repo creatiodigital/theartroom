@@ -10,7 +10,6 @@ import {
   CheckoutAside,
   CheckoutButton,
   ItemsTotal,
-  OrderItems,
   StepIndicator,
   Totals,
 } from '@/components/checkout/CheckoutParts'
@@ -299,9 +298,28 @@ export const CartCheckout = ({
         <PageIntro title="Checkout" compact />
         <StepIndicator current={step === 'address' ? 0 : step === 'review' ? 1 : 2} />
 
+        {/* As the cart (owner, 2026-11-13: the items never change sides): the order's items on the
+            left, the address form in the cart's summary column on the right. */}
         {step === 'address' && (
-          <div className={styles.grid}>
-            <div className={styles.main}>
+          <div className={styles.itemsGrid}>
+            <section className={styles.main} aria-labelledby="checkout-your-order">
+              <h2 id="checkout-your-order" className="sr-only">
+                Your order
+              </h2>
+              <div className={styles.lines}>
+                {items.map((item) => (
+                  <CheckoutLine key={item.lineId} item={item} error={lineErrors[item.lineId]} />
+                ))}
+              </div>
+              {/* The cart's own figures until the address is known; the server re-prices on the
+                  next step. */}
+              <ItemsTotal itemsCents={cartSubtotal(items)} />
+              <ArrowLink href="/cart" size="small" className={styles.asideLink}>
+                Edit cart
+              </ArrowLink>
+            </section>
+
+            <div className={styles.side}>
               {addressErrors}
               <AddressForm
                 onSubmit={handleAddressSubmit}
@@ -312,16 +330,6 @@ export const CartCheckout = ({
                 addressAutocomplete={addressAutocomplete}
               />
             </div>
-
-            <CheckoutAside title="Your order" className={styles.asideShipping}>
-              <OrderItems items={items} errors={lineErrors} />
-              {/* The cart's own figures until the address is known; the server re-prices on the
-                  next step. */}
-              <ItemsTotal itemsCents={cartSubtotal(items)} />
-              <ArrowLink href="/cart" size="small" className={styles.asideLink}>
-                Edit cart
-              </ArrowLink>
-            </CheckoutAside>
           </div>
         )}
 

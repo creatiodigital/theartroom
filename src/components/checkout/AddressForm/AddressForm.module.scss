@@ -2,6 +2,8 @@
 
 .form {
   width: 100%;
+  // Its own width decides the field rows (below): in the checkout's 360 px column as on a phone.
+  container-type: inline-size;
 }
 
 // docs/public-redesign/order-flow.md "Checkout"; designs/checkout-1-shipping.dc.html: the serif
@@ -51,6 +53,21 @@
 .fieldThird {
   @include media-down(sm) {
     grid-column: 1 / -1;
+  }
+}
+
+// A narrow form on a wider screen (the checkout's 360 px column): Email, Phone and City a line each,
+// State and Postal code side by side. Phones keep their one column (above).
+@include media-up(sm) {
+  @container (max-width: 520px) {
+    .fieldHalf,
+    .fieldCity {
+      grid-column: 1 / -1;
+    }
+
+    .fieldThird:not(.fieldCity) {
+      grid-column: span 3;
+    }
   }
 }
 
