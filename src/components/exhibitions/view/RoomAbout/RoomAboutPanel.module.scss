@@ -150,6 +150,11 @@
     color: var(--public-body);
   }
 
+  // List items close together, as on the pages (owner, 2026-11-13).
+  li {
+    margin-bottom: 4px;
+  }
+
   p:last-child {
     margin-bottom: 0;
   }

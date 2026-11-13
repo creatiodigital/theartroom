@@ -276,3 +276,10 @@
     }
   }
 }
+
+// A list item's text: the editor wraps each item in a <p>. No paragraph gap inside an item, whatever
+// the variant or a page's own paragraph margins: the items sit at the list's own spacing (owner,
+// 2026-11-13). The doubled class outranks a page's `.x .text p`.
+.richText.richText li > p {
+  margin: 0;
+}
