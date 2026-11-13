@@ -89,8 +89,8 @@
   font-size: 15px;
   line-height: 1.6;
   color: var(--color-text-secondary);
-  // About 70 characters a line, whatever the card's width: wider is hard to read (owner, 2026-11-13).
-  max-width: 36em;
+  // About 65 characters a line, whatever the card's width: wider is hard to read (owner, 2026-11-13).
+  max-width: 32em;
 }
 
 .actions {
