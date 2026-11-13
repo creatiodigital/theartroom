@@ -9,8 +9,10 @@
 .groups {
   padding-bottom: 120px;
 
+  // Phones: with the page's own 48 px, 72 px under the last exhibition (owner, 2026-11-13: it was
+  // 164 px).
   @include media-down(md) {
-    padding-bottom: 72px;
+    padding-bottom: var(--space-6);
   }
 }
 

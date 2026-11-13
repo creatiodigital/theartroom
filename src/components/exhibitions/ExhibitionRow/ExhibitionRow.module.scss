@@ -15,11 +15,16 @@
     border-bottom: 0;
   }
 
-  // Phones: stacked, 44px between exhibitions, no hairlines.
+  // Phones: stacked, 44px between exhibitions, no hairlines; none under the last (the list's
+  // section sets the space below it).
   @include media-down(md) {
     display: block;
     padding: 0 0 44px;
     border-bottom: 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
   }
 }
 
