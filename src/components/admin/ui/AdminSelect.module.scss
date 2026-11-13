@@ -28,11 +28,23 @@
   color: var(--color-text-secondary);
 }
 
+// Holds the select and its arrow.
+.control {
+  position: relative;
+  display: flex;
+}
+
 .select {
   width: 100%;
   min-height: 44px;
   box-sizing: border-box;
-  padding: var(--space-2) var(--space-3);
+  // No native arrow: ours (.caret) sits 12px from the right edge, as the text does from the left.
+  appearance: none;
+  // Right: 12px to the edge + the 16px arrow + 8px before the text.
+  padding: var(--space-2) calc(var(--space-3) + 16px + var(--space-2)) var(--space-2) var(--space-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border: 1px solid var(--color-gray-60);
   border-radius: var(--radius-sm);
   background: var(--color-white);
@@ -57,6 +69,20 @@
   @include media-up(tablet) {
     min-height: 36px;
   }
+}
+
+// Over the select, so clicks go through to it.
+.caret {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.select:disabled + .caret {
+  color: var(--color-gray-65);
 }
 
 // size="form": a dialog field, 44px at every width (users.md, Add user).

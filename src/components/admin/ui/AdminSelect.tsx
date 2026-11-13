@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, type CSSProperties, type ReactNode } from 'react'
+import { CaretDown } from '@phosphor-icons/react'
 import c from 'classnames'
 
 import styles from './AdminSelect.module.scss'
@@ -28,7 +29,9 @@ type AdminSelectProps = {
 
 /**
  * A native <select> in the admin look (sales.md §1 toolbar): 36px, 44px under
- * 900px (Q7). Native on purpose: phones get their own picker for free.
+ * 900px (Q7). Native on purpose: phones get their own picker for free. The arrow is
+ * ours (Phosphor CaretDown, 12px from the edge as the text is from the left): the
+ * browser's own sat wherever it liked inside the padding (owner, 2026-11-13).
  */
 export function AdminSelect({
   label,
@@ -47,18 +50,21 @@ export function AdminSelect({
   const selectId = id ?? autoId
 
   const select = (
-    <select
-      id={selectId}
-      className={c(styles.select, size === 'form' && styles.form)}
-      value={value}
-      disabled={disabled}
-      title={title}
-      aria-label={hideLabel ? label : undefined}
-      aria-describedby={ariaDescribedBy}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {children}
-    </select>
+    <div className={styles.control}>
+      <select
+        id={selectId}
+        className={c(styles.select, size === 'form' && styles.form)}
+        value={value}
+        disabled={disabled}
+        title={title}
+        aria-label={hideLabel ? label : undefined}
+        aria-describedby={ariaDescribedBy}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {children}
+      </select>
+      <CaretDown size={16} weight="light" aria-hidden className={styles.caret} />
+    </div>
   )
 
   return (
