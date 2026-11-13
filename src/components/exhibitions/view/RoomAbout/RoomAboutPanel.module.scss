@@ -171,11 +171,11 @@
   color: var(--color-text-secondary);
 }
 
+// The portrait on its own line, the name and the bio under it (owner, 2026-11-13).
 .artistRow {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  align-items: start;
 }
 
 .portrait {
@@ -189,7 +189,7 @@
 .artistText {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -200,16 +200,17 @@
   color: var(--public-text);
 }
 
-// A <p> per paragraph: size pinned; the whole bio (owner, 2026-11-12: never cut).
+// A <p> per paragraph; the whole bio (owner, 2026-11-12: never cut). The same text as the
+// exhibition's above it: Lato 15.5 / 1.7, #444, 12 px between paragraphs (owner, 2026-11-13).
 .bio {
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--public-secondary);
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--public-body);
 
   & + & {
-    margin-top: 8px;
+    margin-top: 12px;
   }
 }
 
