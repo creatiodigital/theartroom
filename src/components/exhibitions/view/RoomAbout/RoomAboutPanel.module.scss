@@ -178,11 +178,14 @@
   gap: 14px;
 }
 
+// The panel's full width, 3:2 as on the artist page, held to the top: a portrait photo loses its
+// bottom, never the head (owner, 2026-11-13).
 .portrait {
   display: block;
-  width: 96px;
+  width: 100%;
   aspect-ratio: 3 / 2;
   object-fit: cover;
+  object-position: top;
   background: var(--public-render-wall);
 }
 
@@ -193,10 +196,11 @@
   min-width: 0;
 }
 
+// Under the exhibition title's 30 px (owner, 2026-11-13: bigger than the 19 px drawn).
 .artistName {
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 19px;
-  line-height: 1.2;
+  font-size: 24px;
+  line-height: 1.15;
   color: var(--public-text);
 }
 
