@@ -17,32 +17,10 @@ import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
 import { ListPanel } from '@/components/admin/ui/ListPanel'
 import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
-import { ColorPicker } from '@/components/ui/ColorPicker'
-import { ImageUploader } from '@/components/ui/ImageUploader'
-import { Input } from '@/components/ui/Input'
-import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
 
+import { EDITABLE_SLIDE_FIELDS, type Slide, type SlideImageVariant } from './slide'
+import { SlideDialog } from './SlideDialog'
 import styles from './page.module.scss'
-
-type Slide = {
-  id: string
-  order: number
-  imageUrl: string
-  mobileImageUrl: string | null
-  title: string
-  subtitle: string
-  meta: string
-  exhibitionUrl: string
-  isActive: boolean
-  textColor: string
-  ctaBackgroundColor: string
-  ctaTextColor: string
-}
-
-// `desktop` is the main image; `mobile` is the optional portrait one used on
-// phones and tablets (falls back to the desktop image when absent).
-type SlideImageVariant = 'desktop' | 'mobile'
 
 const IMAGE_FIELD = {
   desktop: 'imageUrl',
@@ -67,6 +45,8 @@ export default function LandingContentPage() {
   const [slides, setSlides] = useState<Slide[]>([])
   const [loading, setLoading] = useState(true)
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null)
+  // The slide as the window opened it: "Unsaved changes" and Save follow any difference.
+  const [openedSlide, setOpenedSlide] = useState<Slide | null>(null)
   const [isNewSlide, setIsNewSlide] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<SlideImageVariant | null>(null)
@@ -112,7 +92,7 @@ export default function LandingContentPage() {
   }, [fetchSlides])
 
   const handleAddSlide = () => {
-    setEditingSlide({
+    const blank: Slide = {
       id: '',
       order: slides.length,
       imageUrl: '',
@@ -125,7 +105,9 @@ export default function LandingContentPage() {
       textColor: '#ffffff',
       ctaBackgroundColor: '#ffffff',
       ctaTextColor: '#000000',
-    })
+    }
+    setEditingSlide(blank)
+    setOpenedSlide(blank)
     setIsNewSlide(true)
     setUploadErrors({})
     setSaveFailed(false)
@@ -133,6 +115,7 @@ export default function LandingContentPage() {
 
   const handleEditSlide = (slide: Slide) => {
     setEditingSlide(slide)
+    setOpenedSlide(slide)
     setIsNewSlide(false)
     setUploadErrors({})
     setSaveFailed(false)
@@ -281,6 +264,24 @@ export default function LandingContentPage() {
     setDeleteTarget(null)
     await fetchSlides()
   }
+
+  // The Edit slide window's footer: what changed since it opened, and whether Save is offered.
+  const slideDirty =
+    !!editingSlide &&
+    !!openedSlide &&
+    EDITABLE_SLIDE_FIELDS.some(
+      (field) => (editingSlide[field] ?? '') !== (openedSlide[field] ?? ''),
+    )
+  // A slide created by an upload and never saved is off the homepage; Save is what shows it (Q74),
+  // so it is offered unchanged too.
+  const slideCanSave = slideDirty || (!!editingSlide?.id && !editingSlide.isActive)
+  const slidePosition = (() => {
+    if (!editingSlide) return ''
+    const index = slides.findIndex((s) => s.id === editingSlide.id)
+    return index >= 0
+      ? `Slide ${index + 1} of ${slides.length}`
+      : `Slide ${slides.length + 1} of ${slides.length + 1}`
+  })()
 
   const updateField = (field: keyof Slide, value: string | number | boolean) => {
     if (!editingSlide) return
@@ -449,132 +450,23 @@ export default function LandingContentPage() {
         </ListPanel>
       )}
 
-      {/* Edit/Add Modal */}
       {editingSlide && (
-        <Modal onClose={() => setEditingSlide(null)} maxWidth="720px">
-          <div className={styles.slideModal}>
-            <Text font="dashboard" as="h2" className={styles.slideModalTitle}>
-              {isNewSlide ? 'Add slide' : 'Edit slide'}
-            </Text>
-
-            {/* Only this middle part scrolls: the title and Save stay in view
-                on short laptop screens. */}
-            <div className={styles.slideModalBody}>
-              <div className={styles.section}>
-                <label className={styles.label}>Desktop image</label>
-                <ImageUploader
-                  imageUrl={editingSlide.imageUrl || null}
-                  onUpload={(file) => handleSlideUpload(file, 'desktop')}
-                  onRemove={editingSlide.id ? () => handleSlideImageRemove('desktop') : undefined}
-                  uploading={uploading === 'desktop'}
-                  error={uploadErrors.desktop}
-                  aspectRatio="16 / 9"
-                  objectFit="contain"
-                />
-
-                <label className={styles.label}>Mobile &amp; tablet image (optional)</label>
-                <Text font="dashboard" as="p" size="sm" className={styles.hint}>
-                  Shown on screens narrower than 1024px, cropped from the center. Pick a portrait
-                  image with a calm area behind the text. Without one, the desktop image is used
-                  everywhere.
-                </Text>
-                <div className={styles.mobileUploader}>
-                  <ImageUploader
-                    imageUrl={editingSlide.mobileImageUrl || null}
-                    onUpload={(file) => handleSlideUpload(file, 'mobile')}
-                    onRemove={editingSlide.id ? () => handleSlideImageRemove('mobile') : undefined}
-                    uploading={uploading === 'mobile'}
-                    error={uploadErrors.mobile}
-                    aspectRatio="3 / 4"
-                    objectFit="contain"
-                  />
-                </div>
-
-                <label className={styles.label} htmlFor="title">
-                  Title
-                </label>
-                <Input
-                  id="title"
-                  size="medium"
-                  value={editingSlide.title}
-                  onChange={(e) => updateField('title', e.target.value)}
-                />
-
-                <label className={styles.label} htmlFor="subtitle">
-                  Subtitle
-                </label>
-                <Input
-                  id="subtitle"
-                  size="medium"
-                  value={editingSlide.subtitle}
-                  onChange={(e) => updateField('subtitle', e.target.value)}
-                />
-
-                <label className={styles.label} htmlFor="meta">
-                  Meta
-                </label>
-                <Input
-                  id="meta"
-                  size="medium"
-                  value={editingSlide.meta}
-                  onChange={(e) => updateField('meta', e.target.value)}
-                />
-
-                <label className={styles.label} htmlFor="exhibitionUrl">
-                  Exhibition URL
-                </label>
-                <Input
-                  id="exhibitionUrl"
-                  size="medium"
-                  value={editingSlide.exhibitionUrl}
-                  onChange={(e) => updateField('exhibitionUrl', e.target.value)}
-                />
-
-                <label className={styles.label}>Text color</label>
-                <ColorPicker
-                  textColor={editingSlide.textColor || '#ffffff'}
-                  onColorSelect={(color) => updateField('textColor', color)}
-                />
-
-                <label className={styles.label}>Enter button background</label>
-                <ColorPicker
-                  textColor={editingSlide.ctaBackgroundColor || '#ffffff'}
-                  onColorSelect={(color) => updateField('ctaBackgroundColor', color)}
-                />
-
-                <label className={styles.label}>Enter button text</label>
-                <ColorPicker
-                  textColor={editingSlide.ctaTextColor || '#000000'}
-                  onColorSelect={(color) => updateField('ctaTextColor', color)}
-                />
-                <Text font="dashboard" as="p" size="sm" className={styles.hint}>
-                  The &ldquo;Enter Virtual Exhibition&rdquo; button shows on laptops and desktops
-                  when the exhibition&apos;s 3D space is published, and opens it directly.
-                </Text>
-              </div>
-            </div>
-
-            <div className={styles.slideModalActions}>
-              {saveFailed && (
-                <p role="alert" className={styles.saveFailed}>
-                  Not saved. Please try again.
-                </p>
-              )}
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setEditingSlide(null)}
-              />
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={saving ? 'Saving…' : 'Save'}
-                onClick={handleSaveSlide}
-              />
-            </div>
-          </div>
-        </Modal>
+        <SlideDialog
+          slide={editingSlide}
+          isNew={isNewSlide}
+          position={slidePosition}
+          dirty={slideDirty}
+          canSave={slideCanSave}
+          saving={saving}
+          saveFailed={saveFailed}
+          uploading={uploading}
+          uploadErrors={uploadErrors}
+          onUpload={handleSlideUpload}
+          onRemove={editingSlide.id ? handleSlideImageRemove : undefined}
+          onField={updateField}
+          onSave={handleSaveSlide}
+          onCancel={() => setEditingSlide(null)}
+        />
       )}
 
       {deleteTarget && (

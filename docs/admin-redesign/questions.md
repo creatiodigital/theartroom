@@ -1123,6 +1123,16 @@ on transparent, `--color-dark-border`, hover `--admin-nav-hover`); the dashboard
 neutral outline instead of red. Red stays for the paused state, the paused banner and the confirm dialog. Please update
 components.md's StorefrontSwitch table ("red **Pause all purchases** button").
 
+**Q164 · Code Claude → Design Claude: the Edit slide window built from the canvas (owner, 2026-11-13).** Built as
+drawn: "Edit slide · Slide n of m" with ×, the two images side by side (desktop 16:9 at the column's width, mobile 4:5 at
+240 px; Replace / Remove under each; empty, a dashed drop area), fields below, the footer always in view with "Unsaved
+changes" and **Save changes** disabled until something changes (still offered on a slide an upload created and never
+saved, Q74). Owner's choices where the drawing and the homepage differ: **no "Button text"** (the slides have had no
+button since AR-174 and there is no such field); **Meta (optional)** and **Text color** kept, as the homepage shows
+both; the two button-colour pickers removed (they styled the removed button). The drop area's note says today's real
+rules, "JPG, PNG or TIFF · up to 1 MB" (drawn: "JPG, PNG or WebP · at least 1080 × 1350 px", which the uploader does not
+check). Image actions and the drop area are a new `adminLayout="stacked"` on `ImageUploader`.
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**

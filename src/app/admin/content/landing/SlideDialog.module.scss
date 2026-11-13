@@ -1,0 +1,170 @@
+@use '@/styles/mixins' as *;
+
+// Admin · Content › Landing page · Edit slide (owner, 2026-11-13, from the design canvas). The
+// Modal is flush: this lays out the header, the scrolling middle and the footer, always in view.
+.dialog {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  color: var(--color-text-primary);
+}
+
+// "Edit slide" and "Slide 2 of 3", × on the right, a hairline under.
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 18px var(--space-6);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.title {
+  margin: 0;
+  // Not the site's serif h2 (globals.scss): the admin's own type.
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-black);
+}
+
+.position {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+// Two classes: Button's bare reset would win over one.
+.head .close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  margin: -6px -8px -6px auto;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-15);
+    color: var(--color-black);
+  }
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+// The desktop image wide, the portrait one beside it; stacked on phones.
+.images {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: var(--space-6) 56px;
+  align-items: start;
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border-default);
+
+  @include media-down(sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.image {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+// On phones the portrait image keeps its desktop column's width instead of the screen's.
+.images > .image:last-child {
+  @include media-down(sm) {
+    max-width: 240px;
+  }
+}
+
+.label {
+  font-size: 13px;
+  font-weight: var(--font-bold);
+  color: var(--color-black);
+}
+
+.image .hint {
+  margin: 2px 0 var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-5);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+// Link, and Text color beside it; stacked on phones.
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  gap: var(--space-4);
+  align-items: end;
+
+  @include media-down(sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The color field as the others: its name as their labels, 6px above a box as tall as an input,
+// so both rows' labels and boxes line up.
+.color :global(label) {
+  gap: 6px;
+
+  > span:first-child {
+    font-size: 13px;
+    font-weight: var(--font-bold);
+    color: var(--color-black);
+  }
+
+  > span:last-child {
+    min-height: 38px;
+  }
+}
+
+// "Unsaved changes" (or the refused save) on the left, Cancel and Save on the right.
+.foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 14px var(--space-6);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.unsaved {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+// Worded and coloured as the save bar's (questions.md Q74).
+.saveFailed {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-red-50);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
+}

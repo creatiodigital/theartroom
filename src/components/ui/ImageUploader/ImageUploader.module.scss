@@ -353,3 +353,73 @@
   line-height: var(--leading-normal);
   color: var(--color-text-secondary);
 }
+
+// adminLayout="stacked" (the landing page's Edit slide window): the preview at its column's full
+// width, the meta line and Replace / Remove under it; empty, a dashed drop area of the same shape.
+.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stackedPreview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+}
+
+// Smaller than the page editor's buttons, as drawn: 32px from 900px (44px touch targets below).
+.adminActions .stackedButton {
+  @include media-up(tablet) {
+    min-height: 32px;
+    padding: var(--space-1) var(--space-3);
+  }
+}
+
+.stackedDropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-10);
+  color: var(--color-text-secondary);
+  text-align: center;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-black);
+    color: var(--color-black);
+  }
+}
+
+.stackedDragging {
+  border-color: var(--color-black);
+  background: var(--color-gray-15);
+}
+
+.stackedPrompt {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.stackedChoose {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.stackedNote {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
