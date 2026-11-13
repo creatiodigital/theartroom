@@ -41,8 +41,7 @@ test.describe('form validation — shared system (InquireSidebar)', () => {
     await page.getByRole('button', { name: SEND }).click()
 
     // House flow: silent until the first submit, then ALL errors appear.
-    await expect(page.getByText('Please enter your first name.')).toBeVisible()
-    await expect(page.getByText('Please enter your last name.')).toBeVisible()
+    await expect(page.getByText('Please enter your full name.')).toBeVisible()
     await expect(page.getByText('Please enter a valid email address.')).toBeVisible()
     await expect(page.getByText('Please enter a valid phone number.')).toBeVisible()
     await expect(page.getByText('Please enter a message of at least 10 characters.')).toBeVisible()

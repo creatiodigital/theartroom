@@ -11,7 +11,7 @@ import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
 import { useFormValidation } from '@/hooks/useFormValidation'
 import type { PresentationView } from '@/lib/printPresentation/record'
-import { email, minLength, phone, type Validator } from '@/lib/validation'
+import { email, minLength, name, phone, type Validator } from '@/lib/validation'
 
 import styles from './InquireSidebar.module.scss'
 
@@ -30,8 +30,7 @@ type InquireSidebarProps = {
 }
 
 type FormErrors = {
-  firstName?: string
-  lastName?: string
+  fullName?: string
   email?: string
   phone?: string
   message?: string
@@ -44,16 +43,15 @@ type FieldName = keyof FormErrors
 // Built from the shared validator factories so the messages + rules live in
 // one place. Module-level (stable identity) for `useFormValidation`.
 const inquireValidators: Record<FieldName, Validator> = {
-  firstName: minLength(2, 'Please enter your first name.'),
-  lastName: minLength(2, 'Please enter your last name.'),
+  // One "Full name" field, as checkout's (owner, 2026-11-13).
+  fullName: name(),
   email: email(),
   phone: phone(),
   message: minLength(10, 'Please enter a message of at least 10 characters.'),
 }
 
 export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps) => {
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [fullName, setFullName] = useState('')
   const [emailField, setEmailField] = useState('')
   const [phoneField, setPhoneField] = useState('')
   const [message, setMessage] = useState('')
@@ -69,8 +67,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
   } = useFormValidation(inquireValidators)
 
   const resetForm = () => {
-    setFirstName('')
-    setLastName('')
+    setFullName('')
     setEmailField('')
     setPhoneField('')
     setMessage('')
@@ -86,8 +83,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
     }
 
     const valid = validateAll({
-      firstName,
-      lastName,
+      fullName,
       email: emailField,
       phone: phoneField,
       message,
@@ -101,8 +97,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          firstName,
-          lastName,
+          fullName,
           email: emailField,
           phone: phoneField,
           message,
@@ -135,7 +130,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
   }
 
   const field = (
-    id: 'firstName' | 'lastName' | 'email' | 'phone',
+    id: 'fullName' | 'email' | 'phone',
     label: string,
     value: string,
     set: (next: string) => void,
@@ -246,10 +241,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
                 autoComplete="off"
               />
 
-              <div className={styles.pair}>
-                {field('firstName', 'First name', firstName, setFirstName, 100)}
-                {field('lastName', 'Last name', lastName, setLastName, 100)}
-              </div>
+              {field('fullName', 'Full name', fullName, setFullName, 200)}
               {field('email', 'Email', emailField, setEmailField, 200, 'email')}
               {field('phone', 'Phone', phoneField, setPhoneField, 32)}
 

@@ -3,7 +3,7 @@ import { emailDivider, emailHeading, emailNotice, emailParagraph } from './compo
 import { renderEmailLayout } from './layout'
 
 export type InquiryUserConfirmationArgs = {
-  firstName: string
+  fullName: string
   email: string
   message: string
   artworkTitle: string
@@ -18,7 +18,7 @@ export function renderInquiryUserConfirmationEmail(args: InquiryUserConfirmation
   subject: string
   html: string
 } {
-  const safeFirstName = escapeHtml(args.firstName)
+  const safeFullName = escapeHtml(args.fullName)
   const safeArtworkTitle = escapeHtml(args.artworkTitle)
   const safeArtworkArtist = escapeHtml(args.artworkArtist)
 
@@ -27,7 +27,7 @@ export function renderInquiryUserConfirmationEmail(args: InquiryUserConfirmation
 
   const body =
     emailHeading('Thank you for your inquiry') +
-    emailParagraph(`Dear ${safeFirstName},`) +
+    emailParagraph(`Dear ${safeFullName},`) +
     emailParagraph(
       `We have received your inquiry about <strong>${safeArtworkTitle}</strong> by ${safeArtworkArtist}.`,
     ) +

@@ -21,8 +21,8 @@ import { sanitizeLine, sanitizeMultiline } from '@/utils/sanitizeLine'
  */
 
 export type InquiryInput = {
-  firstName: string
-  lastName: string
+  /** One "Full name" field, as checkout's (owner, 2026-11-13; was first + last name). */
+  fullName: string
   email: string
   phone: string
   message: string
@@ -39,8 +39,7 @@ export type InquiryValidation =
 
 /** Single-line fields, with the cap each one is allowed. */
 const LINE_LIMITS = {
-  firstName: 100,
-  lastName: 100,
+  fullName: 200,
   email: 200,
   phone: 32,
   // Previously uncapped, and this one reaches a Subject header.
@@ -52,7 +51,18 @@ const LINE_LIMITS = {
 const MESSAGE_LIMIT = 4000
 
 /** Fields a person must actually fill in. */
-const REQUIRED = ['firstName', 'lastName', 'email', 'phone', 'message'] as const
+const REQUIRED = ['fullName', 'email', 'phone', 'message'] as const
+
+/**
+ * The name as sent. A page opened before the single field shipped still posts `firstName` and
+ * `lastName`; joined here so that inquiry is not lost to a 400.
+ */
+function fullNameOf(body: Record<string, unknown>): unknown {
+  if (typeof body.fullName === 'string') return body.fullName
+  const parts = [body.firstName, body.lastName]
+  if (!parts.every((part) => typeof part === 'string')) return undefined
+  return parts.join(' ')
+}
 
 export function validateInquiry(body: Record<string, unknown>): InquiryValidation {
   // The decoy is invisible and tab-skipped, so a human never fills it. Checked
@@ -63,6 +73,8 @@ export function validateInquiry(body: Record<string, unknown>): InquiryValidatio
     return { ok: false, drop: true }
   }
 
+  body = { ...body, fullName: fullNameOf(body) }
+
   for (const field of REQUIRED) {
     if (typeof body[field] !== 'string') {
       return { ok: false, status: 400, error: 'Invalid request.' }
@@ -72,8 +84,7 @@ export function validateInquiry(body: Record<string, unknown>): InquiryValidatio
   // Sanitize BEFORE measuring, so a payload padded with control characters
   // cannot slip past on raw byte count.
   const value: InquiryInput = {
-    firstName: sanitizeLine(body.firstName as string),
-    lastName: sanitizeLine(body.lastName as string),
+    fullName: sanitizeLine(body.fullName as string),
     email: sanitizeLine(body.email as string),
     phone: sanitizeLine(body.phone as string),
     message: sanitizeMultiline(body.message as string),

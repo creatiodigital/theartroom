@@ -213,8 +213,7 @@ const TEMPLATES: Record<string, () => string> = {
     }).html,
   'inquiry-admin': () =>
     renderInquiryAdminNotificationEmail({
-      firstName: 'Jane',
-      lastName: 'Smith',
+      fullName: 'Jane Smith',
       email: 'jane@example.com',
       phone: '+34 600 000 000',
       message: 'Is this piece still available, and can it ship framed?',
@@ -224,7 +223,7 @@ const TEMPLATES: Record<string, () => string> = {
     }).html,
   'inquiry-user': () =>
     renderInquiryUserConfirmationEmail({
-      firstName: 'Jane',
+      fullName: 'Jane Smith',
       email: 'jane@example.com',
       message: 'Is this piece still available, and can it ship framed?',
       artworkTitle: 'Puerta Verde',
