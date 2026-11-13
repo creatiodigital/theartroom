@@ -43,10 +43,7 @@ export const ExhibitionsPage = ({ exhibitions }: ExhibitionsPageProps) => {
   return (
     <PageLayout>
       <div className={styles.page}>
-        <PageIntro
-          title="Exhibitions"
-          subtitle="Explore our curated exhibitions."
-        />
+        <PageIntro title="Exhibitions" subtitle="Explore our curated exhibitions." />
         <ExhibitionGroups exhibitions={listed} />
       </div>
     </PageLayout>

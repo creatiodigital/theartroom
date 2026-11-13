@@ -5,10 +5,5 @@ import { ListPageLoading } from '@/components/ui/Skeleton'
  * (list) route group so it covers this page only, never an exhibition page or the 3D room.
  */
 export default function Loading() {
-  return (
-    <ListPageLoading
-      title="Exhibitions"
-      subtitle="Explore our curated exhibitions."
-    />
-  )
+  return <ListPageLoading title="Exhibitions" subtitle="Explore our curated exhibitions." />
 }
