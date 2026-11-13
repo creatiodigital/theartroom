@@ -9,7 +9,8 @@
 
 .inner {
   display: flex;
-  align-items: center;
+  // The action on the last line of the text: its words on the line's baseline (owner, 2026-11-13).
+  align-items: last baseline;
   justify-content: space-between;
   gap: var(--space-10);
   // The header's column (owner, 2026-11-12: no narrower cap).
