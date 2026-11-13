@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight } from '@phosphor-icons/react'
 
 import { CheckoutButton } from '@/components/checkout/CheckoutParts'
 import { Button } from '@/components/ui/Button'
@@ -248,6 +247,20 @@ export const AddressForm = ({
         />
       </FormField>
 
+      {/* A buyer who can't find their country has one question — "do you ship
+          to me?" — and the worst answer is making them abandon a half-filled
+          checkout to go and look. Right under Country (checkout v2, owner 2026-11-13). */}
+      <p className={styles.whereWeShipLine}>
+        Not sure we ship to you?{' '}
+        <Button
+          type="button"
+          variant="bare"
+          className={styles.whereWeShip}
+          onClick={() => setCountriesOpen(true)}
+          label="Where we ship"
+        />
+      </p>
+
       <div className={styles.fieldGrid}>
         <FormField className={styles.fieldFull} error={fieldError('fullName')}>
           <label className={styles.fieldLabel} htmlFor="fullName">
@@ -406,10 +419,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField
-          className={`${styles.fieldThird} ${styles.fieldCity}`}
-          error={fieldError('city')}
-        >
+        <FormField className={styles.fieldFull} error={fieldError('city')}>
           <label className={styles.fieldLabel} htmlFor="city">
             City
           </label>
@@ -431,7 +441,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField className={styles.fieldThird}>
+        <FormField className={styles.fieldHalf}>
           <label className={styles.fieldLabel} htmlFor="state">
             State / region (optional)
           </label>
@@ -448,7 +458,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField className={styles.fieldThird} error={fieldError('postalCode')}>
+        <FormField className={styles.fieldHalf} error={fieldError('postalCode')}>
           <label className={styles.fieldLabel} htmlFor="postalCode">
             Postal code
           </label>
@@ -488,24 +498,8 @@ export const AddressForm = ({
           type="submit"
           disabled={submitting}
           label={submitting ? 'Checking availability…' : submitLabel}
-          iconRight={<ArrowRight size={16} weight="light" aria-hidden />}
         />
       </div>
-
-      {/* A buyer who can't find their country has one question — "do you ship
-          to me?" — and the worst answer is making them abandon a half-filled
-          checkout to go and look. This opens over the flow (under the button,
-          as the checkout design draws it). */}
-      <p className={styles.whereWeShipLine}>
-        Not sure we ship to you?{' '}
-        <Button
-          type="button"
-          variant="bare"
-          className={styles.whereWeShip}
-          onClick={() => setCountriesOpen(true)}
-          label="Where we ship"
-        />
-      </p>
 
       {countriesOpen && (
         <ShippingCountriesModal

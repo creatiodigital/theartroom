@@ -2,8 +2,6 @@
 
 .form {
   width: 100%;
-  // Its own width decides the field rows (below): in the checkout's 360 px column as on a phone.
-  container-type: inline-size;
 }
 
 // docs/public-redesign/order-flow.md "Checkout"; designs/checkout-1-shipping.dc.html: the serif
@@ -22,7 +20,8 @@
   }
 }
 
-// Six tracks: full rows span all, Email / Phone half, City / State / Postal code a third each.
+// Checkout v2 (owner, 2026-11-13): full rows span all; Email / Phone and State / Postal code side by
+// side; City a line of its own. One column on phones.
 .fieldGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -33,7 +32,7 @@
   }
 }
 
-.fieldFull + .fieldGrid {
+.whereWeShipLine + .fieldGrid {
   margin-top: 18px;
 }
 
@@ -43,31 +42,9 @@
 
 .fieldHalf {
   grid-column: span 3;
-}
 
-.fieldThird {
-  grid-column: span 2;
-}
-
-.fieldHalf,
-.fieldThird {
   @include media-down(sm) {
     grid-column: 1 / -1;
-  }
-}
-
-// A narrow form on a wider screen (the checkout's 440 px column): Email, Phone and City a line each,
-// State and Postal code side by side. Phones keep their one column (above).
-@include media-up(sm) {
-  @container (max-width: 520px) {
-    .fieldHalf,
-    .fieldCity {
-      grid-column: 1 / -1;
-    }
-
-    .fieldThird:not(.fieldCity) {
-      grid-column: span 3;
-    }
   }
 }
 
@@ -121,9 +98,9 @@
   margin-top: 18px;
 }
 
-// ── "Not sure we ship to you? Where we ship" (under the button) ──────────
+// ── "Not sure we ship to you? Where we ship" (right under Country) ───────
 .whereWeShipLine {
-  margin: 18px 0 0;
+  margin: 10px 0 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 13px;
   line-height: 1.5;

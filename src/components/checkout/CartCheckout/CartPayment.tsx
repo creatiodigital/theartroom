@@ -5,14 +5,7 @@ import { ArrowLeft, Lock } from '@phosphor-icons/react'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
-import {
-  ArrowButton,
-  CheckoutAside,
-  CheckoutButton,
-  OrderItems,
-  Totals,
-} from '@/components/checkout/CheckoutParts'
-import type { CartItem } from '@/lib/cart/types'
+import { ArrowButton, CheckoutButton } from '@/components/checkout/CheckoutParts'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { STRIPE_APPEARANCE } from '@/lib/checkout/stripeAppearance'
 import { formatEuro } from '@/lib/print-providers'
@@ -30,8 +23,6 @@ const stripePromise: Promise<Stripe | null> =
 
 type CartPaymentProps = {
   clientSecret: string
-  /** The cart's lines, for the order panel. */
-  items: CartItem[]
   totals: CartTotals
   address: ShippingAddress
   /** Card authorized (manual capture). The parent clears the cart + shows
@@ -42,7 +33,8 @@ type CartPaymentProps = {
 }
 
 /**
- * Cart payment view. Mounts the SAME Stripe Elements UI the single-print
+ * Cart payment step: the right-hand column of checkout v2 (the order and its figures are on the
+ * left, CartCheckout's OrderColumn). Mounts the SAME Stripe Elements UI the single-print
  * PrintPayment uses (squared appearance, PaymentElement with billing
  * fields:'never', explicit billing_details on confirm). Built cart-specific
  * rather than reusing PrintPayment because that component is route- and
@@ -51,7 +43,6 @@ type CartPaymentProps = {
  */
 export const CartPayment = ({
   clientSecret,
-  items,
   totals,
   address,
   onSuccess,
@@ -68,26 +59,19 @@ export const CartPayment = ({
 
   return (
     <Elements stripe={stripePromise} options={elementsOptions}>
-      <CartPaymentForm
-        items={items}
-        totals={totals}
-        address={address}
-        onSuccess={onSuccess}
-        onBack={onBack}
-      />
+      <CartPaymentForm totals={totals} address={address} onSuccess={onSuccess} onBack={onBack} />
     </Elements>
   )
 }
 
 type CartPaymentFormProps = {
-  items: CartItem[]
   totals: CartTotals
   address: ShippingAddress
   onSuccess: (paymentIntentId: string) => void
   onBack: () => void
 }
 
-const CartPaymentForm = ({ items, totals, address, onSuccess, onBack }: CartPaymentFormProps) => {
+const CartPaymentForm = ({ totals, address, onSuccess, onBack }: CartPaymentFormProps) => {
   const stripe = useStripe()
   const elements = useElements()
   const [submitting, setSubmitting] = useState(false)
@@ -162,67 +146,54 @@ const CartPaymentForm = ({ items, totals, address, onSuccess, onBack }: CartPaym
     setSubmitting(false)
   }
 
+  // Checkout v2: the step's own column. "Payment", Stripe's fields (Card / PayPal), Pay with the
+  // lock, the Stripe and terms line, then ← Back to review.
   return (
-    <div className={styles.paymentStep}>
-      <div className={styles.paymentMain}>
-        <h2 className={styles.paymentTitle}>Payment</h2>
+    <div className={styles.payment}>
+      <h2 className={styles.paymentTitle}>Payment</h2>
 
-        <form id="cart-payment-form" onSubmit={handleSubmit} className={styles.paymentForm}>
-          <PaymentElement
-            options={{
-              layout: 'tabs',
-              fields: {
-                billingDetails: {
-                  name: 'never',
-                  email: 'never',
-                  phone: 'never',
-                  address: 'never',
-                },
+      <form id="cart-payment-form" onSubmit={handleSubmit} className={styles.paymentForm}>
+        <PaymentElement
+          options={{
+            layout: 'tabs',
+            fields: {
+              billingDetails: {
+                name: 'never',
+                email: 'never',
+                phone: 'never',
+                address: 'never',
               },
-            }}
-          />
-          {error && <p className={styles.paymentError}>{error}</p>}
-        </form>
-
-        <p className={styles.paymentHelp}>
-          <Lock size={16} weight="light" aria-hidden className={styles.helpIcon} />
-          <span>
-            All payments are processed securely by Stripe. Your card details never touch our
-            servers. We&apos;ll hold your card now and charge it once your order enters production.
-          </span>
-        </p>
-
-        {/* Under the form on purpose: the panel holds only what the buyer needs to complete
-            payment; navigation back sits apart from it. */}
-        <ArrowButton
-          icon={<ArrowLeft size={15} weight="light" aria-hidden />}
-          onClick={onBack}
-          disabled={submitting}
-        >
-          Back to review
-        </ArrowButton>
-      </div>
-
-      <CheckoutAside title="Summary" className={styles.aside}>
-        <OrderItems items={items} />
-        <Totals totals={totals} />
+            },
+          }}
+        />
+        {error && <p className={styles.paymentError}>{error}</p>}
         <CheckoutButton
           type="submit"
-          form="cart-payment-form"
           disabled={!stripe || !elements || submitting}
           label={submitting ? 'Processing…' : `Pay ${formatEuro(totals.totalCents)}`}
           iconLeft={<Lock size={16} weight="light" aria-hidden />}
           className={styles.payButton}
         />
-        <p className={styles.terms}>
-          By placing your order you agree to our{' '}
-          <a href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
-            Online terms of sale
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
-          .
-        </p>
-      </CheckoutAside>
+      </form>
+
+      <p className={styles.terms}>
+        All payments are processed securely by Stripe. Your card details never touch our servers.
+        We&apos;ll hold your card now and charge it once your order enters production. By placing
+        your order you agree to our{' '}
+        <a href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
+          Online terms of sale
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+        .
+      </p>
+
+      <ArrowButton
+        icon={<ArrowLeft size={15} weight="light" aria-hidden />}
+        onClick={onBack}
+        disabled={submitting}
+      >
+        Back to review
+      </ArrowButton>
     </div>
   )
 }

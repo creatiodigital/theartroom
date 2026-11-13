@@ -2,8 +2,7 @@ export {
   ArrowButton,
   CheckoutAside,
   CheckoutButton,
-  ItemsTotal,
+  OrderColumn,
   OrderItems,
-  StepIndicator,
   Totals,
 } from './CheckoutParts'

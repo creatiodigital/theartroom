@@ -5,24 +5,15 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from '@phosphor-icons/react'
 
 import { AddressForm } from '@/components/checkout/AddressForm'
-import {
-  ArrowButton,
-  CheckoutAside,
-  CheckoutButton,
-  ItemsTotal,
-  StepIndicator,
-  Totals,
-} from '@/components/checkout/CheckoutParts'
-import { CartItemDetails } from '@/components/cart/CartItemDetails/CartItemDetails'
+import { ArrowButton, CheckoutButton, OrderColumn } from '@/components/checkout/CheckoutParts'
 import { EmptyCart } from '@/components/cart/EmptyCart'
-import { ArrowLink } from '@/components/ui/ArrowLink'
 import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { cartSubtotal, lineTotal } from '@/lib/cart/cartMath'
+import { cartCount } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
 import { useCart } from '@/lib/cart/useCart'
 import type { CartLikeItem, CartTotals } from '@/lib/cart/validateCart'
-import { formatEuro } from '@/lib/print-providers'
+import { estimateDeliveryWindow } from '@/lib/emails/delivery'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
@@ -292,123 +283,110 @@ export const CartCheckout = ({
     </div>
   )
 
+  // Review: when the prints should arrive, by destination (the order email's own estimate).
+  const delivery = address ? estimateDeliveryWindow(address.countryCode) : null
+  const prints = cartCount(items)
+  const hasLimited = items.some((item) => item.editionType === 'limited')
+
+  const stepContent =
+    step === 'address' ? (
+      <>
+        {addressErrors}
+        <AddressForm
+          onSubmit={handleAddressSubmit}
+          submitting={submitting}
+          submitLabel="Continue to review"
+          countryCodes={supportedCountries}
+          initialAddress={address}
+          addressAutocomplete={addressAutocomplete}
+        />
+      </>
+    ) : step === 'review' && totals && address ? (
+      <>
+        <h2 className={styles.stepTitle}>Check your order</h2>
+
+        <div className={styles.shipTo}>
+          <div className={styles.shipToHead}>
+            <span className={styles.shipToLabel}>Shipping to</span>
+            {/* The hidden word keeps the button's name "Change address". */}
+            <ArrowButton
+              icon={<ArrowRight size={15} weight="light" aria-hidden />}
+              onClick={handleChangeAddress}
+            >
+              Change<span className="sr-only"> address</span>
+            </ArrowButton>
+          </div>
+          <span className={styles.shipToName}>{address.fullName}</span>
+          <span className={styles.shipToAddress}>
+            {[
+              address.address1,
+              address.address2,
+              `${address.postalCode} ${address.city}`.trim(),
+              address.stateOrRegion,
+            ]
+              .filter(Boolean)
+              .join(', ')}{' '}
+            · {getCountryName(address.countryCode)}
+          </span>
+          <span className={styles.shipToContact}>
+            {[address.email, address.phone].filter(Boolean).map((part, index) => (
+              <span key={part} className={styles.nowrap}>
+                {index > 0 && ' · '}
+                {part}
+              </span>
+            ))}
+          </span>
+        </div>
+
+        {delivery && (
+          <p className={styles.stepNote}>
+            {prints === 1 ? 'Your print is' : 'Your prints are'} made to order and delivered in{' '}
+            {delivery.minDays}–{delivery.maxDays} business days.
+          </p>
+        )}
+
+        {payError && <p className={styles.orderError}>{payError}</p>}
+        <CheckoutButton
+          disabled={submitting}
+          label={submitting ? 'Preparing payment…' : 'Continue to payment'}
+          onClick={() => {
+            void handleProceedToPayment()
+          }}
+        />
+        {hasLimited && (
+          <p className={styles.limitedNote}>Limited editions are not reserved until you pay.</p>
+        )}
+      </>
+    ) : step === 'payment' && totals && address && clientSecret ? (
+      <CartPayment
+        clientSecret={clientSecret}
+        totals={totals}
+        address={address}
+        onSuccess={(confirmedPaymentIntentId) => {
+          setPlacedItems(items)
+          handlePaymentSuccess(confirmedPaymentIntentId)
+        }}
+        onBack={handleBackToReview}
+      />
+    ) : null
+
   return (
     <PageLayout>
       <div className={styles.page}>
         <PageIntro title="Checkout" compact />
-        <StepIndicator current={step === 'address' ? 0 : step === 'review' ? 1 : 2} />
 
-        {/* As the cart (owner, 2026-11-13: the items never change sides): the order's items on the
-            left, the address form in the cart's summary column on the right. */}
-        {step === 'address' && (
-          <div className={styles.itemsGrid}>
-            <section className={styles.main} aria-labelledby="checkout-your-order">
-              <h2 id="checkout-your-order" className="sr-only">
-                Your order
-              </h2>
-              <div className={styles.lines}>
-                {items.map((item) => (
-                  <CheckoutLine key={item.lineId} item={item} error={lineErrors[item.lineId]} />
-                ))}
-              </div>
-              {/* The cart's own figures until the address is known; the server re-prices on the
-                  next step. */}
-              <ItemsTotal itemsCents={cartSubtotal(items)} />
-              <ArrowLink href="/cart" size="small" className={styles.asideLink}>
-                Edit cart
-              </ArrowLink>
-            </section>
-
-            <div className={styles.side}>
-              {addressErrors}
-              <AddressForm
-                onSubmit={handleAddressSubmit}
-                submitting={submitting}
-                submitLabel="Continue to review"
-                countryCodes={supportedCountries}
-                initialAddress={address}
-                addressAutocomplete={addressAutocomplete}
-              />
-            </div>
-          </div>
-        )}
-
-        {step === 'review' && totals && address && (
+        {/* Checkout v2 (order-flow.md, designs/checkout-v2.dc.html; owner 2026-11-13): no step
+            indicator; on every step the order on the left, as in the cart, and the step on the
+            right, each step's own heading saying where you are. */}
+        {stepContent && (
           <div className={styles.grid}>
-            <div className={styles.main}>
-              <h2 className={styles.stepTitle}>Check your order</h2>
-
-              <div className={styles.shipTo}>
-                <div className={styles.shipToText}>
-                  <span className={styles.shipToLabel}>Shipping to</span>
-                  <span className={styles.shipToName}>{address.fullName}</span>
-                  <span className={styles.shipToAddress}>
-                    {[
-                      address.address1,
-                      address.address2,
-                      `${address.postalCode} ${address.city}`.trim(),
-                      address.stateOrRegion,
-                    ]
-                      .filter(Boolean)
-                      .join(', ')}{' '}
-                    · {getCountryName(address.countryCode)}
-                  </span>
-                  <span className={styles.shipToContact}>
-                    {[address.email, address.phone].filter(Boolean).map((part, index) => (
-                      <span key={part} className={styles.nowrap}>
-                        {index > 0 && ' · '}
-                        {part}
-                      </span>
-                    ))}
-                  </span>
-                </div>
-                {/* The hidden word keeps the button's name "Change address". */}
-                <ArrowButton
-                  icon={<ArrowRight size={15} weight="light" aria-hidden />}
-                  onClick={handleChangeAddress}
-                >
-                  Change<span className="sr-only"> address</span>
-                </ArrowButton>
-              </div>
-
-              <div>
-                {items.map((item) => (
-                  <CheckoutLine key={item.lineId} item={item} />
-                ))}
-              </div>
-
-              <ArrowLink href="/cart" size="small">
-                Edit cart
-              </ArrowLink>
-            </div>
-
-            <CheckoutAside title="Summary" className={styles.asideReview}>
-              <Totals totals={totals} />
-              {payError && <p className={styles.orderError}>{payError}</p>}
-              <CheckoutButton
-                disabled={submitting}
-                label={submitting ? 'Preparing payment…' : 'Continue to payment'}
-                onClick={() => {
-                  void handleProceedToPayment()
-                }}
-                className={styles.asideButton}
-              />
-            </CheckoutAside>
+            <OrderColumn
+              items={items}
+              totals={step === 'address' ? null : totals}
+              errors={step === 'address' ? lineErrors : undefined}
+            />
+            <section className={styles.step}>{stepContent}</section>
           </div>
-        )}
-
-        {step === 'payment' && totals && address && clientSecret && (
-          <CartPayment
-            clientSecret={clientSecret}
-            items={items}
-            totals={totals}
-            address={address}
-            onSuccess={(confirmedPaymentIntentId) => {
-              setPlacedItems(items)
-              handlePaymentSuccess(confirmedPaymentIntentId)
-            }}
-            onBack={handleBackToReview}
-          />
         )}
       </div>
     </PageLayout>
@@ -421,33 +399,4 @@ function summaryForConfirmation(
   address: ShippingAddress | null,
 ): PlacedOrderSummary | null {
   return items && items.length > 0 && totals && address ? { items, totals, address } : null
-}
-
-type CheckoutLineProps = {
-  item: CartItem
-  /** Per-line "no longer available" message from the server revalidation. */
-  error?: string
-}
-
-/**
- * Read-only order line for the review step (checkout-2-review.dc.html): the cart's item block with
- * the price on the right. No steppers or remove controls — the buyer edits quantities on the cart
- * page; checkout just reflects the order.
- */
-const CheckoutLine = ({ item, error }: CheckoutLineProps) => {
-  const { lineItemCents } = lineTotal(item)
-  return (
-    <div className={styles.line}>
-      <CartItemDetails
-        item={item}
-        error={error}
-        aside={
-          <span className={styles.linePrice}>
-            {formatEuro(lineItemCents)}
-            {item.quantity > 1 && <span className={styles.lineQty}>Quantity {item.quantity}</span>}
-          </span>
-        }
-      />
-    </div>
-  )
 }

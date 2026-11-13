@@ -1,33 +1,18 @@
 @use '@/styles/mixins' as *;
 
-// docs/public-redesign/order-flow.md "Checkout"; designs/checkout-3-payment.dc.html: the form on the
-// left, the order panel with Pay on the right (400 px); stacked below 1024 px.
-.paymentStep {
-  display: grid;
-  // The form at a readable width (at most 760 px, owner 2026-11-12: full-width fields were out of
-  // proportion); the order panel takes the rest of the row, never under 360 px (owner: it adapts).
-  grid-template-columns: minmax(0, 760px) minmax(360px, 1fr);
-  gap: 64px;
-  align-items: start;
-
-  @include media-down(lg) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-10);
-  }
-}
-
-.paymentMain {
+// docs/public-redesign/order-flow.md "Checkout v2"; designs/checkout-v2.dc.html (3 · Payment): the
+// step's column on the right (the order is on the left): "Payment", Stripe's fields, Pay, the Stripe
+// and terms line, ← Back to review.
+.payment {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: stretch;
+  gap: 22px;
   min-width: 0;
-}
 
-// Side by side, the summary starts level with the payment form, not with "Payment" (36 px and the
-// 20 px gap; owner, 2026-11-12).
-.aside {
-  @include media-up(lg) {
-    margin-top: 56px;
+  // ← Back to review sits at the start, not stretched.
+  > :last-child {
+    align-self: flex-start;
   }
 }
 
@@ -58,37 +43,20 @@
   color: var(--color-error-text);
 }
 
-// The Stripe sentence with a lock.
-.paymentHelp {
-  display: flex;
-  gap: 12px;
-  margin: 0;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--public-secondary);
-}
-
-.helpIcon {
-  flex: 0 0 auto;
-  margin-top: 3px;
-  color: var(--public-text);
-}
-
 .payButton {
-  margin-top: 8px;
+  margin-top: 18px;
 }
 
-// #666, not the drawn #888 (Q-P12).
+// The Stripe sentence and the terms, one line under Pay. #666, not the drawn #888 (Q-P12).
 .terms {
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 12px;
-  line-height: 1.55;
+  font-size: 12.5px;
+  line-height: 1.6;
   color: var(--color-text-secondary);
 
   a {
     font-weight: var(--font-bold);
-    color: #333333;
+    color: var(--public-text);
   }
 }
