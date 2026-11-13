@@ -40,19 +40,23 @@ const GESTURES: Gesture[] = [
     action: 'Move over the wall: up, down and along',
   },
   { icon: pinch, gesture: 'In Wall View, pinch', action: 'Leave Wall View' },
-  {
-    icon: doubleTap,
-    gesture: 'Double-tap an artwork',
-    action: 'See its details, or play a sound piece',
-  },
 ]
 
 /** The controls section of the welcome guide, on phones and tablets. */
-export const TouchControlsGuide = () => {
+export const TouchControlsGuide = ({ hasSound }: { hasSound: boolean }) => {
+  const gestures: Gesture[] = [
+    ...GESTURES,
+    {
+      icon: doubleTap,
+      gesture: 'Double-tap an artwork',
+      // The sound piece only where a work has sound or video (owner, 2026-11-13).
+      action: hasSound ? 'See its details, or play a sound piece' : 'See its details',
+    },
+  ]
   return (
     <>
       <ul className={styles.gestures}>
-        {GESTURES.map(({ icon, gesture, action }) => (
+        {gestures.map(({ icon, gesture, action }) => (
           <li key={gesture} className={styles.gesture}>
             <span className={styles.icon}>{icon}</span>
             <span className={styles.text}>

@@ -385,7 +385,7 @@ const NavigationHelpModal = ({
             {/* The controls alone, no welcome and no title: the guide no longer greets visitors on
                 entry (the floor's hint does), it opens from the help button (AR-177, owner, 2026-11-05). */}
             {isTouch ? (
-              <TouchControlsGuide />
+              <TouchControlsGuide hasSound={hasMediaArtworks} />
             ) : (
               <div className={styles.infoPanelContent}>
                 <div className={styles.infoItem}>
@@ -523,17 +523,20 @@ const NavigationHelpModal = ({
                     Show artwork details
                   </Text>
                 </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoKeyWide}>
-                    <SpeakerHigh size={14} weight="light" aria-hidden />
+                {/* Only where a work has sound or video (owner, 2026-11-13). */}
+                {hasMediaArtworks && (
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoKeyWide}>
+                      <SpeakerHigh size={14} weight="light" aria-hidden />
+                      <Text as="span" size="sm">
+                        Double Click
+                      </Text>
+                    </span>
                     <Text as="span" size="sm">
-                      Double Click
+                      Play sound
                     </Text>
-                  </span>
-                  <Text as="span" size="sm">
-                    Play sound
-                  </Text>
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
