@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { ArrowUpRight, X } from '@phosphor-icons/react'
 
 import { ArrowLink } from '@/components/ui/ArrowLink'
@@ -20,20 +20,16 @@ export type RoomAbout = {
   artistHref: string
 }
 
-/** How far the sheet must be pulled down (px) before letting go closes it. */
-const DRAG_CLOSE_PX = 96
-
 /**
  * "About this exhibition" in the 3D room (docs/public-redesign/room-about.md,
  * designs/room-about-exhibition.dc.html): a panel on the left on desktop (the menu button on the
- * right stays free), a bottom sheet on phones. The room stays visible and keeps rendering; clicks,
+ * right stays free), a centered card on phones, framed as the "How to move around" window (owner,
+ * 2026-11-13; it was a bottom sheet with a grab handle). The room stays visible and keeps rendering; clicks,
  * the wheel and keys inside the panel never reach it (`data-panel-overlay`, keys stopped). Esc and
  * × close it; it takes the focus when it opens. No change to the scene.
  */
 export const RoomAboutPanel = ({ about, onClose }: { about: RoomAbout; onClose: () => void }) => {
   const panelRef = useRef<HTMLDivElement>(null)
-  const [drag, setDrag] = useState(0)
-  const dragFrom = useRef<number | null>(null)
 
   useEffect(() => {
     panelRef.current?.focus({ preventScroll: true })
@@ -50,22 +46,6 @@ export const RoomAboutPanel = ({ about, onClose }: { about: RoomAbout; onClose: 
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  // Phones: the sheet follows a finger pulling its handle down, and closes past DRAG_CLOSE_PX.
-  const onHandleDown = (event: PointerEvent<HTMLDivElement>) => {
-    dragFrom.current = event.clientY
-    event.currentTarget.setPointerCapture(event.pointerId)
-  }
-  const onHandleMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (dragFrom.current === null) return
-    setDrag(Math.max(0, event.clientY - dragFrom.current))
-  }
-  const onHandleUp = () => {
-    if (dragFrom.current === null) return
-    dragFrom.current = null
-    if (drag > DRAG_CLOSE_PX) onClose()
-    else setDrag(0)
-  }
-
   return (
     <div
       ref={panelRef}
@@ -74,21 +54,9 @@ export const RoomAboutPanel = ({ about, onClose }: { about: RoomAbout; onClose: 
       aria-labelledby="room-about-title"
       tabIndex={-1}
       data-panel-overlay
-      style={drag ? { transform: `translateY(${drag}px)` } : undefined}
       // Keys typed here (Tab, arrows, space) are the panel's, never the room's walking keys.
       onKeyDown={(event) => event.stopPropagation()}
     >
-      <div
-        className={styles.handle}
-        onPointerDown={onHandleDown}
-        onPointerMove={onHandleMove}
-        onPointerUp={onHandleUp}
-        onPointerCancel={onHandleUp}
-        aria-hidden
-      >
-        <span className={styles.grip} />
-      </div>
-
       <div className={styles.head}>
         <span id="room-about-title" className={styles.eyebrow}>
           About this exhibition
