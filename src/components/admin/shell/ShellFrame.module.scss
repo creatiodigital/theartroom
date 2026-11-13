@@ -1,0 +1,129 @@
+@use '@/styles/mixins' as *;
+
+// The frame shared by the admin (docs/admin-redesign/README.md, dashboard.dc.html)
+// and the artist studio (artist.md §0, artist-home.dc.html).
+.loading {
+  min-height: 100vh;
+  background: var(--color-gray-10);
+}
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: var(--color-gray-10);
+  color: var(--color-text-primary);
+}
+
+// Studio, while an admin impersonates: the 3 px red line across the very top.
+// A border, so it carries no accessibility node and adds no height past 100vh.
+.topLine {
+  box-sizing: border-box;
+  border-top: 3px solid var(--color-red-50);
+}
+
+// The shell's own pieces are all in the dashboard font. Page content keeps
+// what it had under the old DashboardLayout until each page is redesigned.
+.sidebarSlot,
+.topBarSlot,
+.drawerSlot,
+.onDark {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.sidebarSlot {
+  display: none;
+
+  @include media-up(tablet) {
+    display: flex;
+  }
+}
+
+.topBarSlot {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  @include media-up(tablet) {
+    display: none;
+  }
+}
+
+.column {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// The design's bottom padding, 40px on phones and 56px above (questions.md Q6 / Q69). The old
+// DashboardLayout's 200px made room for row menus opening downward on the last rows (47dadb64);
+// every row menu now flips upward near the bottom (RowMenu). A page with the fixed save bar adds
+// its own room for it (the page editor's `.page`, the studio's `.withSaveBar`).
+.content {
+  padding: var(--space-6) var(--space-4) var(--space-10);
+  box-sizing: border-box;
+
+  @include media-up(tablet) {
+    padding: 36px var(--space-10) 56px;
+  }
+
+  // Same rule the old DashboardLayout's `.page` applied: headings inside the
+  // pages read in the dashboard font, not the site's editorial serif.
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  }
+}
+
+// The studio's column starts 40px down and ends 56px down (artist-home.dc.html;
+// 40px on phones). Its only row menu (Home's) flips upward near the bottom (Q6).
+.studio .content {
+  padding-bottom: var(--space-10);
+
+  @include media-up(tablet) {
+    padding-top: var(--space-10);
+    padding-bottom: 56px;
+  }
+}
+
+.contentInner {
+  max-width: var(--admin-content-max-width);
+  margin: 0 auto;
+}
+
+// Studio columns (artist.md §0): lists 1080, forms 880.
+.contentInner.list {
+  max-width: var(--studio-content-max-width);
+}
+
+.contentInner.form {
+  max-width: var(--studio-form-max-width);
+}
+
+// Keyboard focus (README, Accessibility; questions.md Q3). globals.scss removes
+// every outline site-wide; inside the shell, links and buttons get a ring back
+// on :focus-visible only, so a mouse click never shows it. Fields keep their own
+// focus styling. Black with a 2px gap on light surfaces, white on the dark ones.
+// Scoped to `.root` so the shell's dialogs (outside `.shell`) get it too.
+.root :is(a, button, [role='button']):focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+.root .onDark :is(a, button, [role='button']):focus-visible {
+  outline-color: var(--color-white);
+}

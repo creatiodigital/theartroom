@@ -57,7 +57,12 @@ test('removing an entry drops it from the list and from /prints', async ({ page 
     await page.goto('/admin/content/gallery-selection')
     await page
       .locator('[data-selection-row]', { hasText: title })
-      .getByRole('button', { name: 'Remove' })
+      .getByRole('button', { name: 'Remove', exact: true })
+      .click()
+    // The admin asks first (admin redesign): confirm in the dialog.
+    await page
+      .getByRole('dialog', { name: 'Remove from the selection?' })
+      .getByRole('button', { name: 'Remove', exact: true })
       .click()
     await expect(page.locator('[data-selection-row]', { hasText: title })).toHaveCount(0)
 

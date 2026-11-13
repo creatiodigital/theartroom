@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
+import { ArtistBiography } from '@/components/artists/profile/ArtistBiography'
 import { ExhibitionProfilePage } from '@/components/exhibitions/profile'
 import { ExhibitionDescription } from '@/components/exhibitions/profile/ExhibitionDescription'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
@@ -55,6 +56,9 @@ const ExhibitionProfile = async ({ params }: ExhibitionProfileProps) => {
         exhibition.description ? (
           <ExhibitionDescription description={exhibition.description} />
         ) : null
+      }
+      artistBiography={
+        exhibition.user.biography ? <ArtistBiography biography={exhibition.user.biography} /> : null
       }
     />
   )

@@ -2,19 +2,21 @@
 
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { PaintRoller } from '@phosphor-icons/react'
 
-import { Button } from '@/components/ui/Button'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { Slider } from '@/components/ui/Slider'
-import { Text } from '@/components/ui/Typography'
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import {
+  PanelCard,
+  SliderRow,
+  ToolPanel,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { hideWallCeilingPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
-
-import styles from '../LightingPanel/LightingPanel.module.scss'
 
 const DEFAULT_WALL_COLOR = '#ffffff'
 const DEFAULT_CEILING_COLOR = '#ffffff'
@@ -22,14 +24,18 @@ const DEFAULT_CEILING_COLOR = '#ffffff'
 const WallCeilingPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
+
+  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
+  const saveTrack = useSaveTracking(exhibitionId ? `${exhibitionId}:walls` : null)
 
   const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
     dispatch(setExhibitionField({ field, value }))
     setSaved(false)
+    saveTrack.edited()
   }
 
-  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   // AR-161 (spec rule 7): in a baked space the wall and ceiling paint are the artist's (the bake
   // takes both colors; the ceiling since Eduardo 2026-10-20); the walls' brightness is the light's,
   // the space's.
@@ -47,6 +53,7 @@ const WallCeilingPanel = () => {
     if (!exhibitionId) return
 
     setSaving(true)
+    const sentAt = saveTrack.started()
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
@@ -60,8 +67,10 @@ const WallCeilingPanel = () => {
       if (response.ok) {
         setSaved(true)
       }
+      saveTrack.finished(sentAt, response.ok)
     } catch (error) {
       console.error('Failed to save wall & ceiling settings:', error)
+      saveTrack.finished(sentAt, false)
     } finally {
       setSaving(false)
     }
@@ -72,68 +81,42 @@ const WallCeilingPanel = () => {
   }
 
   return (
-    <SettingsPanel title="Wall & Ceiling" onClose={handleClose}>
-      {/* Wall Color Section */}
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Wall Color
-        </Text>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Color</label>
-          <ColorPicker textColor={wallColor} onColorSelect={(color) => set('wallColor', color)} />
-        </div>
-      </div>
-
-      {/* Ceiling Color Section */}
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          Ceiling Color
-        </Text>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Color</label>
-          <ColorPicker
-            textColor={ceilingColor}
-            onColorSelect={(color) => set('ceilingColor', color)}
-          />
-        </div>
-      </div>
+    <ToolPanel
+      title="Walls & ceiling"
+      description="The paint colors of the room."
+      icon={PaintRoller}
+      tint="walls"
+      onClose={handleClose}
+      save={{ saving, saved, onSave: handleSave, status: saveTrack.status }}
+    >
+      <ColorPicker
+        variant="row"
+        name="Walls"
+        textColor={wallColor}
+        onColorSelect={(color) => set('wallColor', color)}
+      />
+      <ColorPicker
+        variant="row"
+        name="Ceiling"
+        textColor={ceilingColor}
+        onColorSelect={(color) => set('ceilingColor', color)}
+      />
 
       {/* Temporary: Lambert Brightness Boost */}
       {!bakedSpace && (
-        <div className={styles.section}>
-          <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-            Wall Brightness
-          </Text>
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Brightness</label>
-              <span className={styles.sliderValue}>{wallBrightness.toFixed(2)}</span>
-            </div>
-            <Slider
-              min={1.0}
-              max={5.0}
-              step={0.05}
-              value={wallBrightness}
-              onChange={(v) => set('wallBrightness', v)}
-              aria-label="Wall Brightness"
-            />
-          </div>
-        </div>
+        <PanelCard level="card">
+          <SliderRow
+            label="Wall brightness"
+            value={wallBrightness.toFixed(2)}
+            sliderValue={wallBrightness}
+            min={1.0}
+            max={5.0}
+            step={0.05}
+            onChange={(v) => set('wallBrightness', v)}
+          />
+        </PanelCard>
       )}
-
-      {/* Actions */}
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          onClick={handleSave}
-          disabled={saving}
-          className={styles.saveButton}
-        />
-      </div>
-    </SettingsPanel>
+    </ToolPanel>
   )
 }
 

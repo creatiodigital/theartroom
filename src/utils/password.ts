@@ -9,9 +9,9 @@ const PASSWORD_MIN_LENGTH = 8
 // step with MAX_LENGTHS.password in src/lib/validation.
 const PASSWORD_MAX_LENGTH = 200
 const PASSWORD_RULES = [
-  { regex: /[A-Z]/, message: 'at least one uppercase letter' },
-  { regex: /[a-z]/, message: 'at least one lowercase letter' },
-  { regex: /[0-9]/, message: 'at least one number' },
+  { regex: /[A-Z]/, message: 'at least one uppercase letter', label: 'One uppercase letter' },
+  { regex: /[a-z]/, message: 'at least one lowercase letter', label: 'One lowercase letter' },
+  { regex: /[0-9]/, message: 'at least one number', label: 'One number' },
 ]
 
 export type PasswordValidationResult = {
@@ -43,6 +43,20 @@ export function validatePassword(password: string): PasswordValidationResult {
   }
 
   return { valid: errors.length === 0, errors }
+}
+
+/**
+ * The same requirements as `validatePassword`, one line each with whether it is met, for the live
+ * checklist under a new-password field (docs/public-redesign/other-screens.md "Reset password").
+ */
+export function passwordChecklist(password: string): { label: string; met: boolean }[] {
+  return [
+    {
+      label: `At least ${PASSWORD_MIN_LENGTH} characters`,
+      met: password.length >= PASSWORD_MIN_LENGTH,
+    },
+    ...PASSWORD_RULES.map((rule) => ({ label: rule.label, met: rule.regex.test(password) })),
+  ]
 }
 
 /**

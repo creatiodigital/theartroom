@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { AdminOrderDetail } from '@/components/admin/orders/OrderDetail'
+import { AdminOrderDetail } from '@/components/admin/orders/detail/AdminOrderDetail'
 
 export const metadata: Metadata = {
   title: { absolute: 'Order — The Art Room Admin' },

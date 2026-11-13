@@ -15,6 +15,8 @@ type SavePresetModalProps = {
   onClose: () => void
   loading: boolean
   existingNames?: string[]
+  /** The last create was refused (questions.md Q146 h). */
+  failed?: boolean
 }
 
 const SavePresetModal = ({
@@ -22,6 +24,7 @@ const SavePresetModal = ({
   onClose,
   loading,
   existingNames = [],
+  failed = false,
 }: SavePresetModalProps) => {
   const [name, setName] = useState('')
   const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -65,6 +68,11 @@ const SavePresetModal = ({
             invalid={!!nameError}
           />
         </FormField>
+        {failed && (
+          <p role="alert" className={styles.failed}>
+            Not saved. Please try again.
+          </p>
+        )}
         <div className={styles.actions}>
           <Button
             font="dashboard"

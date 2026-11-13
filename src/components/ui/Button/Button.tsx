@@ -32,6 +32,8 @@ type ButtonProps = {
   iconLeft?: ReactNode
   iconRight?: ReactNode
   href?: string
+  /** With `href`: Next's prefetch (default on). Off for links to files, e.g. invoice PDFs (Q33). */
+  prefetch?: boolean
   title?: string
   draggable?: boolean
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void
@@ -46,8 +48,12 @@ type ButtonProps = {
   'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog' | 'tree' | 'grid'
   'aria-selected'?: boolean
   'aria-invalid'?: boolean
+  /** Focusable but not actionable, e.g. a menu item that explains why it is off. */
+  'aria-disabled'?: boolean
   'aria-current'?: React.AriaAttributes['aria-current']
   role?: string
+  /** Roving tabindex in composite widgets (e.g. admin stage tabs). */
+  tabIndex?: number
 }
 
 export const Button = React.memo(
@@ -64,6 +70,7 @@ export const Button = React.memo(
     iconLeft,
     iconRight,
     href,
+    prefetch,
     title,
     draggable,
     onDragStart,
@@ -78,8 +85,10 @@ export const Button = React.memo(
     'aria-haspopup': ariaHaspopup,
     'aria-selected': ariaSelected,
     'aria-invalid': ariaInvalid,
+    'aria-disabled': ariaDisabled,
     'aria-current': ariaCurrent,
     role,
+    tabIndex,
   }: ButtonProps) => {
     const isIconOnly = icon && !label && !children
 
@@ -110,6 +119,7 @@ export const Button = React.memo(
       return (
         <Link
           href={href}
+          prefetch={prefetch}
           className={classNames}
           title={title}
           style={style}
@@ -133,6 +143,7 @@ export const Button = React.memo(
         onDragStart={onDragStart}
         form={form}
         role={role}
+        tabIndex={tabIndex}
         aria-label={ariaLabel}
         aria-expanded={ariaExpanded}
         aria-pressed={ariaPressed}
@@ -140,6 +151,7 @@ export const Button = React.memo(
         aria-haspopup={ariaHaspopup}
         aria-selected={ariaSelected}
         aria-invalid={ariaInvalid}
+        aria-disabled={ariaDisabled}
         aria-current={ariaCurrent}
       >
         {content}

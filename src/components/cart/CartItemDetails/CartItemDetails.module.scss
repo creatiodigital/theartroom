@@ -1,36 +1,40 @@
 @use '@/styles/mixins' as *;
 
-// Square thumb on the left, text column (artist/title/edition/specs) on the
-// right — on tablet and up. Below sm (640px): one column — the photo spans the
-// full card width on top, everything else follows below. The phone stack is
-// load-bearing: beside a fixed-width thumb, text is the only thing left to
-// shrink, and on a ~600px screen the spec value column collapsed to a few
-// characters and wrapped mid-measurement ("26.0 × 34.5" / "cm"), while the
-// card's top-right Edit button landed on top of the title. Stacked, the title
-// starts below the picture and the specs get the card's full width.
+// docs/public-redesign/order-flow.md "Cart"; designs/cart.dc.html and checkout-2-review.dc.html (the
+// item rows): a 120 px square thumbnail, the text, and (cart) the price and quantity on the right.
+// Phones: an 88 px thumbnail, the right-hand column under the text.
 .item {
-  display: flex;
-  gap: var(--space-5);
+  display: grid;
+  grid-template-columns: var(--thumb-size) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
   min-width: 0;
 
   @include media-down(sm) {
-    flex-direction: column;
+    grid-template-columns: 88px minmax(0, 1fr);
     gap: var(--space-4);
   }
 }
 
-// Tablet and up: uniform square box (--thumb-size, set inline per surface) —
-// portrait and landscape art both sit inside the same footprint (contained,
-// never cropped) so every row's columns line up. Phone: full card width at
-// the image's natural aspect ratio — never cropped, never letterboxed.
+.withAside {
+  grid-template-columns: var(--thumb-size) minmax(0, 1fr) auto;
+
+  @include media-down(sm) {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+}
+
+// The work contained on the render-wall grey, never cropped.
 .thumb {
   width: var(--thumb-size);
   height: var(--thumb-size);
-  flex-shrink: 0;
+  padding: 10%;
+  background: var(--public-render-wall);
+  // The work never touches the grey: a margin all round (owner, 2026-11-12).
 
   @include media-down(sm) {
-    width: 100%;
-    height: auto;
+    width: 88px;
+    height: 88px;
   }
 }
 
@@ -39,95 +43,89 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  // Top, not centre. The box is a square and the art is contained inside it,
-  // so a landscape print floats in the middle and leaves a band of white above
-  // it — the picture then starts well below the artist's name beside it, and
-  // no two rows begin at the same line. Contained to the top, the top edge of
-  // every print meets the top of the text column.
-  object-position: top;
-
-  @include media-down(sm) {
-    height: auto;
-  }
 }
 
 .details {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
   min-width: 0;
-  // Fill the row — without this the column sizes to its content and the
-  // 50/50 spec grid stops short of the card's right edge.
-  flex: 1;
 }
 
-// Space the hold countdown away from the "Show all selected options" toggle
-// above it so the two don't read as one block.
-.hold {
-  margin-top: var(--space-4);
-}
-
-// Serif and sentence case, under the title — the same treatment the artwork
-// page, the wizard summary and the checkout recap give the artist, so one
-// person is set one way everywhere.
-.artist {
-  color: var(--color-text-primary);
-}
-
+// A <p>: family, size and line height pinned (globals.scss gives every <p> Lato 16–18px).
 .title {
   margin: 0;
-  color: var(--color-text-primary);
-}
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
+  overflow-wrap: anywhere;
 
-// Aligned two-column spec list (labels column + values column) so keys and
-// values line up consistently regardless of value length. Element selectors
-// stay literal in CSS modules, so this re-styles the shared SpecList only
-// where CartItemDetails renders it; the component's other uses are untouched.
-.specs {
-  margin-top: var(--space-1);
-
-  dl {
-    display: grid;
-    // Half/half split across the full available width. Equal fractions keep
-    // the value column at the same position whether the list is collapsed or
-    // expanded; minmax(0, 1fr) lets both columns shrink and wrap instead of
-    // overflowing (clipping) the card on narrow widths.
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: var(--space-4);
-    row-gap: var(--space-1);
-  }
-
-  dl > div {
-    display: contents;
-  }
-
-  // Left-align values right after the label column so the key→value gap is a
-  // constant column-gap in every row — and stays consistent when "Show all"
-  // reveals longer labels/values. (Overrides SpecList's text-align: right;
-  // the extra `dl` raises specificity above the shared rule.)
-  dl dd {
-    margin: 0;
-    text-align: left;
-    overflow-wrap: anywhere;
+  @include media-down(sm) {
+    font-size: 20px;
   }
 }
 
-// Edition tag and, on phones, the "Edit item" control on one line: the tag
-// names what this line is, the button acts on it. Pushed apart so the control
-// sits against the card's right edge, level with the words it belongs to.
-.editionRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  min-width: 0;
+.artist {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--public-secondary);
 }
 
+// Small caps line; #666, not the drawn #888 (Q-P12: small greys under 4.5:1).
 .edition {
+  margin-top: 6px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 
+// One subject per line, 14 px (owner, 2026-11-12: easier to read).
+.specs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--public-secondary);
+  overflow-wrap: anywhere;
+}
+
 .errorText {
-  margin-top: var(--space-1);
+  margin-top: 4px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--color-error-text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) 22px;
+  margin-top: 12px;
+}
+
+// Price on top, quantity at the foot. Phones: one row under the text.
+.aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-self: stretch;
+
+  @include media-down(sm) {
+    grid-column: 2;
+    flex-direction: row-reverse;
+    align-items: center;
+  }
 }

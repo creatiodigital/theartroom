@@ -1,0 +1,168 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/legal.md, designs/legal-desktop.dc.html / legal-phone.dc.html.
+.page {
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
+  margin: 0 auto;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+}
+
+.header {
+  padding: 72px 0 56px;
+
+  @include media-down(md) {
+    padding: var(--space-10) 0 var(--space-8);
+  }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 52px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 36px;
+  }
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.subtitle {
+  margin: 14px 0 0;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+
+  @include media-down(md) {
+    font-size: 16px;
+  }
+}
+
+.body {
+  padding: 48px 0 120px;
+  border-top: 1px solid var(--color-gray-30);
+
+  @include media-down(md) {
+    padding: var(--space-8) 0 72px;
+  }
+}
+
+// "On this page" beside the text from 1024px; above the text, as a field, below that.
+.withList {
+  @include media-up(lg) {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 116px;
+  }
+}
+
+.text {
+  max-width: 720px;
+  min-width: 0;
+}
+
+.missing {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--public-body);
+}
+
+.onThisPage {
+  display: flex;
+  flex-direction: column;
+
+  // Under the sticky site header (83px from 1024px, Header.module.scss), with the drawn 24px.
+  @include media-up(lg) {
+    position: sticky;
+    top: calc(83px + var(--space-6));
+    align-self: start;
+  }
+
+  @include media-down(lg) {
+    margin-bottom: var(--space-8);
+  }
+}
+
+// Small grey caps (the drawn #999 is 2.8:1 on white; the secondary grey, as in the admin).
+.label {
+  padding-bottom: var(--space-3);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+
+  @include media-down(lg) {
+    display: none;
+  }
+}
+
+// Phones and tablets: a 50px field that opens the list. Two classes: Button's bare reset would win
+// over one.
+.onThisPage .toggle {
+  display: none;
+
+  @include media-down(lg) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 50px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-gray-30);
+    background: var(--public-field);
+    font-size: 15px;
+    color: var(--public-text);
+    cursor: pointer;
+  }
+}
+
+.toggleCount {
+  color: var(--color-text-secondary);
+}
+
+.caretOpen {
+  transform: rotate(180deg);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include media-down(lg) {
+    display: none;
+    margin-top: var(--space-3);
+  }
+}
+
+.listOpen {
+  @include media-down(lg) {
+    display: flex;
+  }
+}
+
+// The drawn #777 is 4.48:1 on white; the secondary grey reads the same and passes.
+.item {
+  display: block;
+  padding: 6px 0 6px 14px;
+  border-left: 1px solid var(--color-gray-25);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 2px;
+  }
+}
+
+.itemActive {
+  border-left-color: var(--public-text);
+  color: var(--public-text);
+}

@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 
+import { ExhibitionDescription } from '@/components/exhibitions/profile/ExhibitionDescription'
 import { ExhibitionViewPage } from '@/components/exhibitions/view'
+import type { RoomAbout } from '@/components/exhibitions/view/RoomAbout/RoomAboutPanel'
 import prisma from '@/lib/prisma'
+import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
+import { plainParagraphsOf } from '@/lib/richText/headingAnchors'
+import { isRichTextEmpty } from '@/lib/textUtils'
 
 /**
  * AR-176: the room reaches every edge of the screen. Without `cover`, a phone held sideways keeps
@@ -47,9 +52,37 @@ export async function generateMetadata({ params }: ExhibitionVisitProps): Promis
   }
 }
 
+/**
+ * "About this exhibition" in the room menu (docs/public-redesign/room-about.md): the exhibition
+ * page's own data (no counts, as the page), read here on the server (the text is sanitized here too). Null
+ * for an exhibition the public page would not show, so the room then has no such item.
+ */
+async function getRoomAbout(artistSlug: string, exhibitionSlug: string): Promise<RoomAbout | null> {
+  const exhibition = await getPublicExhibitionByUrl(exhibitionSlug)
+  if (!exhibition || exhibition.user.handler !== artistSlug) return null
+  const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`.trim()
+  return {
+    title: exhibition.mainTitle,
+    artistName,
+    description: isRichTextEmpty(exhibition.description) ? null : (
+      <ExhibitionDescription description={exhibition.description!} />
+    ),
+    artist: {
+      name: artistName,
+      imageUrl: exhibition.user.profileImageUrl,
+      biography: exhibition.user.biography ? plainParagraphsOf(exhibition.user.biography) : [],
+    },
+    exhibitionHref: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
+    artistHref: `/artists/${exhibition.user.handler}`,
+  }
+}
+
 const ExhibitionVisit = async ({ params }: ExhibitionVisitProps) => {
   const { artistSlug, exhibitionSlug } = await params
-  return <ExhibitionViewPage artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} />
+  const about = await getRoomAbout(artistSlug, exhibitionSlug)
+  return (
+    <ExhibitionViewPage artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} about={about} />
+  )
 }
 
 export default ExhibitionVisit

@@ -1,22 +1,86 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Check, SealCheck } from '@phosphor-icons/react'
 
-import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
+import {
+  CheckoutAside,
+  CheckoutButton,
+  OrderItems,
+  Totals,
+} from '@/components/checkout/CheckoutParts'
+import { ArrowLink } from '@/components/ui/ArrowLink'
+import type { CartItem } from '@/lib/cart/types'
+import type { DisplayAddress, DisplayTotals } from '@/lib/orders/confirmationSummary'
 import { ensureOrderAction } from '@/lib/orders/ensureOrderAction'
 import {
   EDITION_NUMBER_NOTICE_BODY,
   EDITION_NUMBER_NOTICE_HEADING,
 } from '@/lib/editions/editionNumberNotice'
+import { getCountryName } from '@/lib/print-providers/dialCodes'
 
 import { UnboxingReminderModal } from './UnboxingReminderModal'
-import styles from './CartCheckout.module.scss'
+import styles from './CartConfirmation.module.scss'
+
+/** The "Your order" panel: what the page still holds after paying in place, or else what
+ *  `ensureOrderAction` reads from the verified order (3DS / PayPal return, reload; Q-P15 a).
+ *  Display only. */
+export type PlacedOrderSummary = {
+  items: CartItem[]
+  totals: DisplayTotals
+  address: DisplayAddress
+}
 
 type CartConfirmationProps = {
   /** The authorized PaymentIntent id — shown as the order reference. */
   paymentIntentId: string
+  summary?: PlacedOrderSummary | null
 }
+
+/** order-confirmed.dc.html: the text column, and the order panel when there is one. */
+const ConfirmationLayout = ({
+  summary,
+  children,
+}: {
+  summary?: PlacedOrderSummary | null
+  children: ReactNode
+}) => (
+  <div className={summary ? styles.layout : styles.layoutSingle}>
+    <div className={styles.main}>{children}</div>
+    {summary && (
+      <CheckoutAside title="Your order">
+        <OrderItems items={summary.items} />
+        <Totals totals={summary.totals} totalLabel="Total, authorized" />
+        <div className={styles.shipTo}>
+          <span className={styles.caps}>Shipping to</span>
+          <span className={styles.shipToText}>
+            {summary.address.fullName}
+            <br />
+            {[
+              summary.address.address1,
+              summary.address.address2,
+              `${summary.address.postalCode} ${summary.address.city}`.trim(),
+              summary.address.stateOrRegion,
+            ]
+              .filter(Boolean)
+              .join(', ')}{' '}
+            · {getCountryName(summary.address.countryCode)}
+          </span>
+        </div>
+      </CheckoutAside>
+    )}
+  </div>
+)
+
+/** "What happens next": the three stages, the first one done. */
+const NEXT_STEPS = [
+  { title: 'Order confirmed', text: 'Payment authorized. Nothing is charged yet.' },
+  {
+    title: 'In production',
+    text: 'Your prints are made by the print lab. The payment is taken at this point.',
+  },
+  { title: 'Shipped', text: 'Tracked delivery. We email you the tracking link.' },
+]
 
 type Status = 'finalizing' | 'confirmed' | 'failed'
 
@@ -55,11 +119,13 @@ function markReminderSeen(paymentIntentId: string): void {
  * Covers BOTH entry points (3DS redirect + direct payment success) because both
  * render this component.
  */
-export const CartConfirmation = ({ paymentIntentId }: CartConfirmationProps) => {
+export const CartConfirmation = ({ paymentIntentId, summary }: CartConfirmationProps) => {
   const [status, setStatus] = useState<Status>('finalizing')
   const [orderRef, setOrderRef] = useState<string | null>(null)
   const [hasLimitedEdition, setHasLimitedEdition] = useState(false)
   const [showReminder, setShowReminder] = useState(false)
+  // The order as the server read it, once the payment is verified: the panel on every path.
+  const [orderSummary, setOrderSummary] = useState<PlacedOrderSummary | null>(null)
 
   useEffect(() => {
     let active = true
@@ -69,6 +135,7 @@ export const CartConfirmation = ({ paymentIntentId }: CartConfirmationProps) => 
         setStatus(res.ok ? 'confirmed' : 'failed')
         if (res.orderRef) setOrderRef(res.orderRef)
         setHasLimitedEdition(res.hasLimitedEdition === true)
+        if (res.summary) setOrderSummary(res.summary)
       })
       .catch(() => {
         if (active) setStatus('failed')
@@ -93,55 +160,75 @@ export const CartConfirmation = ({ paymentIntentId }: CartConfirmationProps) => 
 
   if (status === 'finalizing') {
     return (
-      <div className={styles.confirmation}>
-        <Text as="h2" font="serif" size="xl" className={styles.confirmHeadline}>
-          Finalizing your order…
-        </Text>
-        <Text as="p" size="md" className={styles.confirmBody}>
-          One moment while we confirm your order.
-        </Text>
-      </div>
+      <ConfirmationLayout>
+        <h1 className={styles.headline}>Finalizing your order…</h1>
+        <p className={styles.body}>One moment while we confirm your order.</p>
+      </ConfirmationLayout>
     )
   }
 
   if (status === 'failed') {
     return (
-      <div className={styles.confirmation}>
-        <Text as="h2" font="serif" size="xl" className={styles.confirmHeadline}>
-          Payment received — we&apos;re finalizing your order
-        </Text>
-        <Text as="p" size="md" className={styles.confirmBody}>
+      <ConfirmationLayout>
+        <h1 className={styles.headline}>Payment received — we&apos;re finalizing your order</h1>
+        <p className={styles.body}>
           Your card has been authorized but <strong>not charged</strong>. We hit a snag recording
           your order and have already been notified — we&apos;ll email you to confirm it shortly and
           put right anything that&apos;s wrong. Please don&apos;t pay again.
-        </Text>
-        <div className={styles.confirmReference}>
-          <Text as="span" size="xs" className={styles.confirmReferenceLabel}>
-            Reference
-          </Text>
-          <Text as="span" size="sm" className={styles.confirmReferenceValue}>
-            {paymentIntentId}
-          </Text>
+        </p>
+        <div className={styles.reference}>
+          <span className={styles.caps}>Reference</span>
+          <span className={styles.referenceValue}>{paymentIntentId}</span>
         </div>
-        <Button variant="primary" size="bigSquared" href="/prints" label="Browse more prints" />
-      </div>
+        <div className={styles.actions}>
+          <CheckoutButton href="/prints" label="Browse more prints" fullWidth={false} />
+        </div>
+      </ConfirmationLayout>
     )
   }
 
   return (
-    <div className={styles.confirmation}>
-      <Text as="h2" font="serif" size="xl" className={styles.confirmHeadline}>
-        Thank you — your order is confirmed.
-      </Text>
+    <ConfirmationLayout summary={summary ?? orderSummary}>
+      <span className={styles.check} aria-hidden>
+        <Check size={26} weight="light" />
+      </span>
+      <h1 className={styles.headline}>Thank you, your order is confirmed.</h1>
       {/* Says "payment", never "card". Manual capture is offered on every
           method Stripe gives us — a PayPal buyer was being told about a card
           they never used. Method-agnostic wording stays true for whatever the
           Payment Element offers next, without plumbing the method through. */}
-      <Text as="p" size="md" className={styles.confirmBody}>
+      <p className={styles.body}>
         Your payment is authorized and your order is now being prepared. We&apos;ll take the payment
         once your prints enter production, and send a confirmation email with tracking details as
         soon as they ship.
-      </Text>
+      </p>
+
+      {/* The buyer's ONE reference — identical to the string on every email and
+          the invoice, so quoting it back to us always finds this order. The
+          PaymentIntent id stays out of the customer's way; it appears only on
+          the failed path above, where it is the only identifier that exists. */}
+      <div className={styles.reference}>
+        <span className={styles.caps}>Order reference</span>
+        <span className={styles.referenceValue}>{orderRef ?? paymentIntentId}</span>
+        <span className={styles.referenceNote}>Also in your confirmation email</span>
+      </div>
+
+      <div className={styles.next}>
+        <h2 className={styles.caps}>What happens next</h2>
+        <ol className={styles.nextList}>
+          {NEXT_STEPS.map((step, index) => (
+            <li key={step.title} className={styles.nextStep}>
+              <span className={index === 0 ? styles.nextMarkDone : styles.nextMark} aria-hidden>
+                {index === 0 ? <Check size={14} weight="bold" /> : index + 1}
+              </span>
+              <span className={styles.nextText}>
+                <span className={styles.nextTitle}>{step.title}</span>
+                <span className={styles.nextBody}>{step.text}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
 
       {/* Limited lines only: an open-edition buyer has no number coming and
           should not be told to wait for one. The number IS already assigned,
@@ -149,31 +236,20 @@ export const CartConfirmation = ({ paymentIntentId }: CartConfirmationProps) => 
           back — see editionNumberNotice for the full reasoning. */}
       {hasLimitedEdition && (
         <div className={styles.editionNotice}>
-          <Text as="span" size="xs" className={styles.editionNoticeHeading}>
-            {EDITION_NUMBER_NOTICE_HEADING}
-          </Text>
-          <Text as="p" size="sm" className={styles.editionNoticeBody}>
-            {EDITION_NUMBER_NOTICE_BODY}
-          </Text>
+          <SealCheck size={20} weight="light" aria-hidden className={styles.editionIcon} />
+          <div className={styles.editionText}>
+            <span className={styles.editionHeading}>{EDITION_NUMBER_NOTICE_HEADING}</span>
+            <p className={styles.editionBody}>{EDITION_NUMBER_NOTICE_BODY}</p>
+          </div>
         </div>
       )}
 
-      {/* The buyer's ONE reference — identical to the string on every email and
-          the invoice, so quoting it back to us always finds this order. The
-          PaymentIntent id stays out of the customer's way; it appears only on
-          the failed path below, where it is the only identifier that exists. */}
-      <div className={styles.confirmReference}>
-        <Text as="span" size="xs" className={styles.confirmReferenceLabel}>
-          Order reference
-        </Text>
-        <Text as="span" size="sm" className={styles.confirmReferenceValue}>
-          {orderRef ?? paymentIntentId}
-        </Text>
+      <div className={styles.actions}>
+        <CheckoutButton href="/prints" label="Browse more prints" fullWidth={false} />
+        <ArrowLink href="/exhibitions">Visit the exhibitions</ArrowLink>
       </div>
 
-      <Button variant="primary" size="bigSquared" href="/prints" label="Browse more prints" />
-
       {showReminder && <UnboxingReminderModal onClose={dismissReminder} />}
-    </div>
+    </ConfirmationLayout>
   )
 }

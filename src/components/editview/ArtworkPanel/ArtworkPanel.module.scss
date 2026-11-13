@@ -1,90 +1,10 @@
 @use '@/styles/mixins' as *;
 
-.panel {
-  position: fixed;
-  right: 0;
-  top: 0;
-  width: 400px;
-  height: 100vh;
-  background-color: var(--color-surface-subtle);
-  z-index: 2;
-  padding: var(--space-8);
-  display: flex;
-  align-items: space-between;
-  justify-content: flex-start;
-  flex-direction: column;
-  gap: var(--space-6);
-  overflow-y: auto;
-
-  // Phones (AR-172): a 400px side panel would cover the room, or more than all
-  // of it, so it covers the screen instead and closes back to the room. A phone
-  // held sideways is wide but short, so it takes the same full-screen form, laid
-  // out across rather than down. A tablet has the room for the side panel, either
-  // way up, as a laptop does (AR-177).
-  // On the visit page the screen's edges include the notch and the rounded corners
-  // (`viewport-fit=cover`, AR-176): the panel's content keeps clear of them.
-  @media #{$phone-room} {
-    width: 100%;
-    height: 100dvh;
-    padding: calc(var(--space-6) + env(safe-area-inset-top))
-      calc(var(--space-6) + env(safe-area-inset-right))
-      calc(var(--space-6) + env(safe-area-inset-bottom))
-      calc(var(--space-6) + env(safe-area-inset-left));
-  }
-}
-
-// A phone held sideways: the work on the left, the facts beside it.
-@media (orientation: landscape) and (max-height: 500px) {
-  .header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    column-gap: var(--space-8);
-    align-items: start;
-  }
-
-  .imageWrapper {
-    grid-row: 1 / span 2;
-    margin-bottom: 0;
-    // The screen's height, less the panel's padding (with the safe area) and its CLOSE row.
-    max-height: calc(
-      100dvh - 2 *
-        var(--space-6) - var(--space-12) - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-    );
-  }
-
-  .preview,
-  .presentationRender {
-    max-height: calc(
-      100dvh - 2 *
-        var(--space-6) - var(--space-12) - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-    );
-  }
-}
-
-.closeButton {
-  align-self: flex-end;
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  letter-spacing: var(--space-1);
-  color: var(--color-text-primary);
-  text-transform: uppercase;
-  padding: 0;
-}
-
-.imageSection {
-  width: 100%;
+// The editor's Artwork panel on the tool panels' shell (ToolPanel): the work, then its facts.
+.content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding-bottom: var(--space-4);
+  gap: var(--space-4);
 }
 
 .imageWrapper {
@@ -93,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
 }
 
 .preview {
@@ -112,28 +32,64 @@
 .info {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  gap: var(--space-3);
-  padding-bottom: var(--space-4);
+  gap: var(--space-1);
 }
 
-// Tight to the title below it (AR-174): name and work read as one line of identity.
-.author {
-  margin-bottom: 0;
-}
-
-.titleWrapper {
-  margin-bottom: var(--space-6);
-}
-
-.title {
-  font-style: italic;
-}
-
-.technique {
-  margin-bottom: var(--space-3);
-}
-
+// Paragraphs pin their own size: globals.scss gives every <p> the 16–18px reading size.
 .dimensions {
-  margin-bottom: var(--space-4);
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+// A phone held sideways (the shell covers the screen there): the work on the left, the facts
+// beside it, the work no taller than the body. 192px is the shell around the body on a phone: its
+// 8px insets, the header, the footer (44px targets) and the body's padding.
+@media #{$phone-sideways} {
+  .content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .imageWrapper,
+  .preview,
+  .presentationRender {
+    max-height: calc(100dvh - 192px);
+  }
+}
+
+// On the footer's right, where the other panels have Save.
+.actions {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+// Two classes: Button's bare reset would win over one. The look of the shell's Save.
+.actions .editArtwork {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 42px;
+  padding: 10px 20px 10px 22px;
+  border-radius: var(--radius-md);
+  background: var(--color-dark-surface);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-white);
+
+  &:hover {
+    background: var(--color-dark-surface-raised);
+    color: var(--color-white);
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
 }

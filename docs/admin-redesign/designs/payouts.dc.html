@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Payouts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<sc-for list="{{nav}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-if value="{{g.label}}" hint-placeholder-val="{{true}}"><span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">{{g.label}}</span></sc-if>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="4">
+<a href="{{i.href}}" aria-current="{{i.current}}" style="{{i.style}}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{i.d}}"></path></svg><span style="flex: 1 1 auto">{{i.label}}</span><sc-if value="{{i.badge}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 700; min-width: 20px; text-align: center; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000000; box-sizing: border-box">{{i.badge}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid #333333">
+<span style="padding: 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Storefront</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a"></span><span style="font-size: 13px; color: #e0e0e0">Purchases open</span></div>
+<button type="button" style="margin: 0 12px; font: inherit; font-size: 13px; font-weight: 600; color: #ffffff; background: #bd1622; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left">Pause all purchases</button>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 36px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">Sales</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Payouts</h1>
+<span style="color: #666666">Every payout released to an artist, for tax records and accounting. Newest first.</span>
+</div>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,144v64a6,6,0,0,1-6,6H40a6,6,0,0,1-6-6V144a6,6,0,0,1,12,0v58H210V144a6,6,0,0,1,12,0Zm-98.24,4.24a6,6,0,0,0,8.48,0l40-40a6,6,0,0,0-8.48-8.48L134,129.51V32a6,6,0,0,0-12,0v97.51L92.24,99.76a6,6,0,0,0-8.48,8.48Z"></path></svg>Export CSV</button>
+</header>
+
+<div role="note" style="display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 12px 16px; background: #fffbeb; border: 1px solid #f5d68a; border-radius: 8px; color: #5c4503">
+<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="flex: 0 0 auto"><path d="M229.12,142.65a22.43,22.43,0,0,0-19.55-3.88l-45.24,10.4A26,26,0,0,0,140,114H89.94a29.78,29.78,0,0,0-21.21,8.79L45.52,146H16A14,14,0,0,0,2,160v40a14,14,0,0,0,14,14H120a6,6,0,0,0,1.46-.18l64-16a7.16,7.16,0,0,0,.89-.3L225.17,181l.33-.15a22.6,22.6,0,0,0,3.62-38.18ZM14,200V160a2,2,0,0,1,2-2H42v44H16A2,2,0,0,1,14,200Zm206.28-30-38.2,16.27L119.26,202H54V154.49l23.21-23.22A17.88,17.88,0,0,1,89.940,126H140a14,14,0,0,1,0,28H112a6,6,0,0,0,0,12h32a6,6,0,0,0,1.34-.15l67-15.41.24-.06A10.6,10.6,0,0,1,220.28,170ZM164,94a34.54,34.54,0,0,0,7.28-.78,34,34,0,1,0,25.46-42.43A34,34,0,1,0,164,94Zm62-10a22,22,0,1,1-22-22A22,22,0,0,1,226,84ZM164,38a21.94,21.94,0,0,1,21.51,17.49,34,34,0,0,0-15.38,25.65A22,22,0,1,1,164,38Z"></path></svg>
+<span style="flex: 1 1 360px"><strong>2 delivered orders are waiting for their artist payout.</strong> Pay them from the order page.</span>
+<a href="Orders.dc.html" style="font-size: 13px; font-weight: 600; color: #5c4503">Open Delivered orders →</a>
+</div>
+
+<section aria-label="Summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Released</span><span style="font-size: 28px; font-weight: 700; line-height: 1; color: #000000; font-variant-numeric: tabular-nums">€650.00</span><span style="font-size: 12px; color: #666666">in 2026</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Payouts</span><span style="font-size: 28px; font-weight: 700; line-height: 1; color: #000000">4</span><span style="font-size: 12px; color: #666666">3 artists</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Via Stripe</span><span style="font-size: 28px; font-weight: 700; line-height: 1; color: #000000">3</span><span style="font-size: 12px; color: #666666">1 paid manually</span></div>
+</section>
+
+<section aria-label="Payouts" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #eaeaea">
+<select aria-label="Year" style="font: inherit; font-size: 14px; padding: 8px 12px; min-height: 36px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff"><option>2026</option><option>All years</option></select>
+<select aria-label="Artist" style="font: inherit; font-size: 14px; padding: 8px 12px; min-height: 36px; min-width: 200px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff"><option>All artists</option></select>
+<span style="margin-left: auto; font-size: 13px; color: #666666">4 payouts</span>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 860px">
+<thead>
+<tr style="background: #f6f6f6; text-align: left">
+<th scope="col" style="padding: 10px 20px; font-size: 12px; font-weight: 600; color: #666666">Date paid</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Artist</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Artwork</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Method</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666; text-align: right">Amount</th>
+<th scope="col" style="padding: 10px 20px; font-size: 12px; font-weight: 600; color: #666666; text-align: right">Order</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+<tr style="border-top: 1px solid #f0f0f0; vertical-align: top">
+<td style="padding: 14px 20px; white-space: nowrap">{{r.date}}</td>
+<td style="padding: 14px 12px"><div style="color: #000000">{{r.artist}}</div><div style="font-size: 12px; color: #666666">{{r.email}}</div></td>
+<td style="padding: 14px 12px"><a href="#" style="color: #000000; text-decoration: none">{{r.art}}</a><sc-if value="{{r.cart}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: #666666"> · cart line</span></sc-if></td>
+<td style="padding: 14px 12px"><span style="{{r.methodStyle}}">{{r.method}}</span><sc-if value="{{r.transfer}}" hint-placeholder-val="{{false}}"><div style="margin-top: 4px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: #666666">{{r.transfer}}</div></sc-if></td>
+<td style="padding: 14px 12px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: #000000">{{r.amount}}</td>
+<td style="padding: 14px 20px; text-align: right"><a href="OrderDetail.dc.html" style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px">{{r.order}}</a></td>
+</tr>
+</sc-for>
+</tbody>
+<tfoot>
+<tr style="border-top: 2px solid #eaeaea; background: #fcfcfc">
+<th scope="row" colspan="4" style="padding: 12px 20px; text-align: left; font-size: 13px; font-weight: 600">Total released in 2026</th>
+<td style="padding: 12px; text-align: right; font-weight: 700; color: #000000; font-variant-numeric: tabular-nums">€650.00</td>
+<td></td>
+</tr>
+</tfoot>
+</table>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (stripe) => ({ fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: stripe ? '#cce5ff' : '#f0f0f0', color: stripe ? '#004085' : '#333333' });
+    const rows = [
+      { date: '30 Oct 2026', artist: 'Beatriz Salvatierra', email: 'beatriz.s@example.com', art: 'Magnolia I', cart: true, method: 'Stripe', transfer: 'tr_1Q8x…F2a', amount: '€200.00', order: '9B241080' },
+      { date: '12 Sep 2026', artist: 'Elizabeth Mosler', email: 'elizabeth.m@example.com', art: 'Infancia', cart: true, method: 'Stripe', transfer: 'tr_1PzK…9cD', amount: '€180.00', order: 'A77CA7C1' },
+      { date: '28 Aug 2026', artist: 'Mathias Heizmann', email: 'mathias.h@example.com', art: 'Hiver 2', cart: false, method: 'Manual', transfer: '', amount: '€120.00', order: 'FEA60921' },
+      { date: '28 Jun 2026', artist: 'Beatriz Salvatierra', email: 'beatriz.s@example.com', art: 'High Res', cart: true, method: 'Stripe', transfer: 'tr_1PhQ…7Lm', amount: '€150.00', order: '8AE9915C' }
+    ];
+    return {
+      rows: rows.map((r) => ({ ...r, methodStyle: pill(r.method === 'Stripe') })),
+      nav: this.nav('/admin/payouts', 9)
+    };
+  }
+  nav(active, badge) {
+    const P = {
+      dash: 'M104,42H56A14,14,0,0,0,42,56v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,104,42Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm-98,34H56a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,104,138Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,200,138Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Z',
+      orders: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z',
+      editions: 'M222,128a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM104,70H216a6,6,0,0,0,0-12H104a6,6,0,0,0,0,12ZM216,186H104a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12ZM42.68,53.37,50,49.71V104a6,6,0,0,0,12,0V40a6,6,0,0,0-8.68-5.37l-16,8a6,6,0,0,0,5.36,10.74ZM72,202H52l21.48-28.74A21.5,21.5,0,0,0,77.79,157,21.75,21.75,0,0,0,69,142.38a22.86,22.86,0,0,0-31.35,4.31,22.18,22.18,0,0,0-3.28,5.92,6,6,0,0,0,11.28,4.11,9.87,9.87,0,0,1,1.48-2.67,10.78,10.78,0,0,1,14.78-2,9.89,9.89,0,0,1,4,6.61,9.64,9.64,0,0,1-2,7.28l-.06.09L35.2,204.41A6,6,0,0,0,40,214H72a6,6,0,0,0,0-12Z',
+      gift: 'M216,74H174.74a46.41,46.41,0,0,0,6-4.48,27.56,27.56,0,0,0,9.22-20A30.63,30.63,0,0,0,158.5,18a27.56,27.56,0,0,0-20,9.22A57.1,57.1,0,0,0,128,45.76a57.1,57.1,0,0,0-10.48-18.53A27.56,27.56,0,0,0,97.5,18,30.63,30.63,0,0,0,66,49.51a27.56,27.56,0,0,0,9.22,20,45.74,45.74,0,0,0,6,4.48H40A14,14,0,0,0,26,88v32a14,14,0,0,0,14,14h2v66a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V134h2a14,14,0,0,0,14-14V88A14,14,0,0,0,216,74ZM135.77,63c2.25-12.12,6.29-21.75,11.69-27.85A15.68,15.68,0,0,1,158.86,30h.55A18.6,18.6,0,0,1,178,49.14a15.68,15.68,0,0,1-5.18,11.4C162.1,70,143.92,72.83,134.34,73.65,134.59,70.76,135,67.08,135.77,63ZM83.45,35.45A18.69,18.69,0,0,1,96.59,30h.55a15.68,15.68,0,0,1,11.4,5.18C118,45.9,120.83,64.08,121.65,73.66c-2.89-.25-6.57-.68-10.61-1.43C98.92,70,89.29,65.94,83.19,60.53A15.64,15.64,0,0,1,78,49.14,18.65,18.65,0,0,1,83.45,35.45ZM38,120V88a2,2,0,0,1,2-2h82v36H40A2,2,0,0,1,38,120Zm16,80V134h68v68H56A2,2,0,0,1,54,200Zm148,0a2,2,0,0,1-2,2H134V134h68Zm16-80a2,2,0,0,1-2,2H134V86h82a2,2,0,0,1,2,2Z',
+      invoice: 'M28,126a6,6,0,0,1,0-12H56a10,10,0,0,0,0-20H40a22,22,0,0,1,0-44h2V48a6,6,0,0,1,12,0v2H64a6,6,0,0,1,0,12H40a10,10,0,0,0,0,20H56a22,22,0,0,1,0,44H54v2a6,6,0,0,1-12,0v-2ZM230,56V192a14,14,0,0,1-14,14H40a14,14,0,0,1-14-14V152a6,6,0,0,1,12,0v40a2,2,0,0,0,2,2H162V158H80a6,6,0,0,1,0-12h82V110H104a6,6,0,0,1,0-12H218V62H96a6,6,0,0,1,0-12H224A6,6,0,0,1,230,56Zm-56,90h44V110H174Zm44,46V158H174v36h42A2,2,0,0,0,218,192Z',
+      wallet: 'M216,66H56a10,10,0,0,1,0-20H192a6,6,0,0,0,0-12H56A22,22,0,0,0,34,56V184a22,22,0,0,0,22,22H216a14,14,0,0,0,14-14V80A14,14,0,0,0,216,66Zm2,126a2,2,0,0,1-2,2H56a10,10,0,0,1-10-10V75.59A21.84,21.84,0,0,0,56,78H216a2,2,0,0,1,2,2Zm-28-60a10,10,0,1,1-10-10A10,10,0,0,1,190,132Z',
+      walletFill: 'M216,64H56a8,8,0,0,1,0-16H192a8,8,0,0,0,0-16H56A24,24,0,0,0,32,56V184a24,24,0,0,0,24,24H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm-36,80a12,12,0,1,1,12-12A12,12,0,0,1,180,144Z',
+      door: 'M232,218H206V40a14,14,0,0,0-14-14H64A14,14,0,0,0,50,40V218H24a6,6,0,0,0,0,12H232a6,6,0,0,0,0-12ZM62,40a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2V218H62Zm104,92a10,10,0,1,1-10-10A10,10,0,0,1,166,132Z',
+      image: 'M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM46,208V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v82.2l-28.1-28.1a14,14,0,0,0-19.8,0L54.2,210H48A2,2,0,0,1,46,208Zm162,2H71.17l99.41-99.41a2,2,0,0,1,2.83,0L210,147.17V208A2,2,0,0,1,208,210ZM96,118A22,22,0,1,0,74,96,22,22,0,0,0,96,118Zm0-32A10,10,0,1,1,86,96,10,10,0,0,1,96,86Z',
+      article: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM182,96a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,96Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,128Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,160Z',
+      users: 'M112.6,158.43a58,58,0,1,0-57.2,0A93.83,93.83,0,0,0,5.21,196.72a6,6,0,0,0,10.05,6.56,82,82,0,0,1,137.48,0,6,6,0,0,0,10-6.56A93.83,93.83,0,0,0,112.6,158.43ZM38,108a46,46,0,1,1,46,46A46.06,46.06,0,0,1,38,108Zm211,97a6,6,0,0,1-8.3-1.74A81.8,81.8,0,0,0,172,166a6,6,0,0,1,0-12,46,46,0,1,0-17.08-88.73,6,6,0,1,1-4.46-11.14,58,58,0,0,1,50.14,104.3,93.83,93.83,0,0,1,50.19,38.29A6,6,0,0,1,249,205Z'
+    };
+    const links = { '/admin/dashboard': 'Main.dc.html', '/admin/orders': 'Orders.dc.html', '/admin/edition-sales': 'EditionSales.dc.html', '/admin/gift-orders': 'GiftOrders.dc.html', '/admin/invoices': 'Invoices.dc.html', '/admin/payouts': 'Payouts.dc.html', '/admin/exhibitions': 'Exhibitions.dc.html' };
+    const item = (label, href, d, dFill, b) => {
+      const on = active === href;
+      return { label, href: links[href] || '#', current: on ? 'page' : 'false', d: on && dFill ? dFill : d, badge: b || 0,
+        style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', textDecoration: 'none', background: on ? '#2a2a2a' : 'transparent', color: on ? '#ffffff' : '#e0e0e0', fontWeight: on ? 600 : 400 } };
+    };
+    return [
+      { label: '', items: [item('Dashboard', '/admin/dashboard', P.dash)] },
+      { label: 'Sales', items: [item('Orders', '/admin/orders', P.orders, null, badge), item('Edition sales', '/admin/edition-sales', P.editions), item('Gift orders', '/admin/gift-orders', P.gift), item('Invoices', '/admin/invoices', P.invoice), item('Payouts', '/admin/payouts', P.wallet, P.walletFill)] },
+      { label: 'Gallery', items: [item('Exhibitions', '/admin/exhibitions', P.door), item('Print presentations', '/admin/print-presentations', P.image), item('Content', '/admin/content', P.article), item('Users', '/admin/users', P.users)] }
+    ];
+  }
+}
+</script>
+</body>
+</html>

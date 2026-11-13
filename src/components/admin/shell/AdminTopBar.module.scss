@@ -1,0 +1,26 @@
+// dashboard-phone.dc.html: the Orders badge on the menu button. The bar itself
+// is ShellTopBar; the wordmark is ShellWordmark.
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  box-sizing: border-box;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge_amber {
+  background: var(--color-amber-50);
+  color: var(--color-black);
+}
+
+.badge_red {
+  background: var(--color-red-50);
+  color: var(--color-white);
+}

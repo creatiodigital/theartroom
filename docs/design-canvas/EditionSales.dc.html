@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Edition sales</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<sc-for list="{{nav}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-if value="{{g.label}}" hint-placeholder-val="{{true}}"><span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">{{g.label}}</span></sc-if>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="4">
+<a href="{{i.href}}" aria-current="{{i.current}}" style="{{i.style}}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{i.d}}"></path></svg><span style="flex: 1 1 auto">{{i.label}}</span><sc-if value="{{i.badge}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 700; min-width: 20px; text-align: center; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000000; box-sizing: border-box">{{i.badge}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid #333333">
+<span style="padding: 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Storefront</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a"></span><span style="font-size: 13px; color: #e0e0e0">Purchases open</span></div>
+<button type="button" style="margin: 0 12px; font: inherit; font-size: 13px; font-weight: 600; color: #ffffff; background: #bd1622; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left">Pause all purchases</button>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 36px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">Sales</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Edition sales</h1>
+<span style="color: #666666">Every numbered copy reserved or sold. Our authoritative ledger, newest first.</span>
+</header>
+
+<!-- Summary -->
+<section aria-label="Summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Sold</span><span style="font-size: 32px; font-weight: 700; line-height: 1; color: #000000">9</span><span style="font-size: 12px; color: #666666">numbered copies</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Reserved</span><span style="font-size: 32px; font-weight: 700; line-height: 1; color: #000000">1</span><span style="font-size: 12px; color: #666666">held at checkout</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Off-platform</span><span style="font-size: 32px; font-weight: 700; line-height: 1; color: #000000">1</span><span style="font-size: 12px; color: #666666">gifts, artist copies, tests</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; background: #fffbeb; border: 1px solid #f5d68a; border-radius: 8px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Not mirrored in TPS</span><span style="font-size: 32px; font-weight: 700; line-height: 1; color: #856404">10</span><span style="font-size: 12px; font-weight: 600; color: #856404">Mark them sold at TPS too</span></div>
+</section>
+
+<section aria-label="Copies" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #eaeaea">
+<select aria-label="Filter by artwork" style="font: inherit; font-size: 14px; padding: 8px 12px; min-height: 36px; min-width: 220px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff"><option>All artworks</option></select>
+<select aria-label="Filter by variant" disabled title="Choose an artwork first" style="font: inherit; font-size: 14px; padding: 8px 12px; min-height: 36px; min-width: 200px; border: 1px solid #ececec; border-radius: 4px; background: #f9f9f9; color: #999999"><option>All variants</option></select>
+<select aria-label="Filter by status" style="font: inherit; font-size: 14px; padding: 8px 12px; min-height: 36px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff"><option>Any status</option><option>Sold</option><option>Reserved</option><option>Off-platform</option></select>
+<span style="margin-left: auto; font-size: 13px; color: #666666">11 copies</span>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 900px">
+<thead>
+<tr style="background: #f6f6f6; text-align: left">
+<th scope="col" aria-sort="descending" style="padding: 10px 20px; font-size: 12px; font-weight: 600; color: #000000; white-space: nowrap"><button type="button" style="display: inline-flex; align-items: center; gap: 4px; padding: 0; background: none; border: 0; font: inherit; color: inherit; cursor: pointer">Date<svg width="12" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M204.24,148.24l-72,72a6,6,0,0,1-8.48,0l-72-72a6,6,0,0,1,8.48-8.48L122,201.51V40a6,6,0,0,1,12,0V201.51l61.76-61.75a6,6,0,0,1,8.48,8.48Z"></path></svg></button></th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Artwork · variant</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666"><button type="button" style="padding: 0; background: none; border: 0; font: inherit; color: inherit; cursor: pointer">Number</button></th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Holder</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">Status</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #666666">In TPS</th>
+<th scope="col" style="padding: 10px 20px; font-size: 12px; font-weight: 600; color: #666666; text-align: right">Order</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<tr style="border-top: 1px solid #f0f0f0; vertical-align: top">
+<td style="padding: 14px 20px; white-space: nowrap">{{r.date}}</td>
+<td style="padding: 14px 12px"><a href="#" style="color: #000000; font-weight: 600; text-decoration: none">{{r.art}}</a><div style="font-size: 12px; color: #666666">{{r.artist}} · {{r.variant}}</div></td>
+<td style="padding: 14px 12px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #000000; white-space: nowrap">{{r.num}}</td>
+<td style="padding: 14px 12px">
+<sc-if value="{{r.isKind}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; align-items: center; gap: 6px; color: #000000"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{r.kindIcon}}"></path></svg>{{r.holder}}</span></sc-if>
+<sc-if value="{{r.isBuyer}}" hint-placeholder-val="{{true}}"><div style="color: #000000">{{r.holder}}</div></sc-if>
+<div style="font-size: 12px; color: #666666">{{r.email}}</div>
+</td>
+<td style="padding: 14px 12px"><span style="{{r.statusStyle}}">{{r.status}}</span></td>
+<td style="padding: 14px 12px"><span style="{{r.tpsStyle}}">{{r.tps}}</span></td>
+<td style="padding: 12px 20px; text-align: right; white-space: nowrap">
+<sc-if value="{{r.order}}" hint-placeholder-val="{{true}}"><a href="OrderDetail.dc.html" style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #000000">{{r.order}}</a></sc-if>
+<sc-if value="{{r.canRelease}}" hint-placeholder-val="{{false}}"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; min-height: 32px; background: #ffffff; color: #bd1622; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Release</button></sc-if>
+</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding: 12px 20px; border-top: 1px solid #eaeaea; font-size: 12px; color: #666666">Release frees a reserved number that has no order (an abandoned checkout), putting it back on sale.</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const K = {
+      gift: 'M216,74H174.74a46.41,46.41,0,0,0,6-4.48,27.56,27.56,0,0,0,9.22-20A30.63,30.63,0,0,0,158.5,18a27.56,27.56,0,0,0-20,9.22A57.1,57.1,0,0,0,128,45.76a57.1,57.1,0,0,0-10.48-18.53A27.56,27.56,0,0,0,97.5,18,30.63,30.63,0,0,0,66,49.51a27.56,27.56,0,0,0,9.22,20,45.74,45.74,0,0,0,6,4.48H40A14,14,0,0,0,26,88v32a14,14,0,0,0,14,14h2v66a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V134h2a14,14,0,0,0,14-14V88A14,14,0,0,0,216,74ZM135.77,63c2.25-12.12,6.29-21.75,11.69-27.85A15.68,15.68,0,0,1,158.86,30h.55A18.6,18.6,0,0,1,178,49.14a15.68,15.68,0,0,1-5.18,11.4C162.1,70,143.92,72.83,134.34,73.65,134.59,70.76,135,67.08,135.77,63ZM83.45,35.45A18.69,18.69,0,0,1,96.59,30h.55a15.68,15.68,0,0,1,11.4,5.18C118,45.9,120.83,64.08,121.65,73.66c-2.89-.25-6.57-.68-10.61-1.43C98.92,70,89.29,65.94,83.19,60.53A15.64,15.64,0,0,1,78,49.14,18.65,18.65,0,0,1,83.45,35.45ZM38,120V88a2,2,0,0,1,2-2h82v36H40A2,2,0,0,1,38,120Zm16,80V134h68v68H56A2,2,0,0,1,54,200Zm148,0a2,2,0,0,1-2,2H134V134h68Zm16-80a2,2,0,0,1-2,2H134V86h82a2,2,0,0,1,2,2Z'
+    };
+    const st = {
+      Sold: { bg: '#d4edda', fg: '#155724' },
+      Reserved: { bg: '#fff3cd', fg: '#856404' },
+      'Gallery gift': { bg: '#cce5ff', fg: '#004085' }
+    };
+    const pill = (s) => ({ fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: st[s].bg, color: st[s].fg, whiteSpace: 'nowrap' });
+    const R = (date, art, artist, variant, num, holder, email, status, order, extra) => ({ date, art, artist, variant, num, holder, email, status, order: order || '', tps: '—', ...(extra || {}) });
+    const rows = [
+      R('11 Nov 2026', 'Saut de l’ange', 'Mathias Heizmann', '40×50 Baryta', '1/100', '—', 'checkout in progress', 'Reserved', '', { canRelease: true }),
+      R('27 Aug 2026', 'High Res', 'John Doe', 'Small 20', '5/50', 'Anna Keller', 'anna.k@example.com', 'Sold', 'CA8A06D2'),
+      R('22 Aug 2026', 'Passeur', 'John Doe', 'Small Edition Variant', '1/2', 'Marc Duval', 'marc.d@example.com', 'Sold', '65EE6176'),
+      R('22 Aug 2026', 'Passeur', 'John Doe', 'Small Edition Variant', '2/2', 'Anna Keller', 'anna.k@example.com', 'Sold', 'A6977CB4'),
+      R('22 Aug 2026', 'High Res', 'John Doe', 'Small 20', '6/50', 'Anna Keller', 'anna.k@example.com', 'Sold', '40CA8015'),
+      R('22 Aug 2026', 'Rive', 'Mathias Heizmann', '40×50 Baryta', '1/100', 'Lucía Romero', 'lucia.r@example.com', 'Sold', 'CCBFC8FC'),
+      R('20 Aug 2026', 'Magnolia I', 'Beatriz Salvatierra', '40×50 Baryta', '2/30', 'Gallery gift', 'for Elena Ruiz', 'Gallery gift', '', { isKindRow: true, kindIcon: K.gift }),
+      R('4 Jul 2026', 'Landscape and River', 'John Doe', 'Medium', '3/30', 'Peter Lang', 'peter.l@example.com', 'Sold', 'FEA60921')
+    ];
+    return {
+      rows: rows.map((r) => ({
+        ...r, isKind: !!r.isKindRow, isBuyer: !r.isKindRow, kindIcon: r.kindIcon || '', canRelease: !!r.canRelease,
+        statusStyle: pill(r.status),
+        tpsStyle: { fontSize: '13px', color: r.tps === '—' ? '#999999' : '#155724', fontWeight: r.tps === '—' ? 400 : 600 }
+      })),
+      nav: this.nav('/admin/edition-sales', 9)
+    };
+  }
+  nav(active, badge) {
+    const P = {
+      dash: 'M104,42H56A14,14,0,0,0,42,56v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,104,42Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm-98,34H56a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,104,138Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,200,138Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Z',
+      orders: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z',
+      editions: 'M222,128a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM104,70H216a6,6,0,0,0,0-12H104a6,6,0,0,0,0,12ZM216,186H104a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12ZM42.68,53.37,50,49.71V104a6,6,0,0,0,12,0V40a6,6,0,0,0-8.68-5.37l-16,8a6,6,0,0,0,5.36,10.74ZM72,202H52l21.48-28.74A21.5,21.5,0,0,0,77.79,157,21.75,21.75,0,0,0,69,142.38a22.86,22.86,0,0,0-31.35,4.31,22.18,22.18,0,0,0-3.28,5.92,6,6,0,0,0,11.28,4.11,9.87,9.87,0,0,1,1.48-2.67,10.78,10.78,0,0,1,14.78-2,9.89,9.89,0,0,1,4,6.61,9.64,9.64,0,0,1-2,7.28l-.06.09L35.2,204.41A6,6,0,0,0,40,214H72a6,6,0,0,0,0-12Z',
+      editionsFill: 'M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM56.84,75.58a8,8,0,0,1,3.58-10.74l16-8A8,8,0,0,1,88,64v48a8,8,0,0,1-16,0V76.94l-4.42,2.220A8,8,0,0,1,56.840,75.58ZM92,180a8,8,0,0,1,0,16H68a8,8,0,0,1-6.4-12.8l21.67-28.89A3.92,3.920,0,0,0,84,152a4,4,0,0,0-7.77-1.33,8,8,0,0,1-15.090-5.34,20,20,0,1,1,35,18.53L84,180Zm100,4H120a8,8,0,0,1,0-16h72a8,8,0,0,1,0,16Zm0-48H120a8,8,0,0,1,0-16h72a8,8,0,0,1,0,16Zm0-48H120a8,8,0,0,1,0-16h72a8,8,0,0,1,0,16Z',
+      gift: 'M216,74H174.74a46.41,46.41,0,0,0,6-4.48,27.56,27.56,0,0,0,9.22-20A30.63,30.63,0,0,0,158.5,18a27.56,27.56,0,0,0-20,9.22A57.1,57.1,0,0,0,128,45.76a57.1,57.1,0,0,0-10.48-18.53A27.56,27.56,0,0,0,97.5,18,30.63,30.63,0,0,0,66,49.51a27.56,27.56,0,0,0,9.22,20,45.74,45.74,0,0,0,6,4.48H40A14,14,0,0,0,26,88v32a14,14,0,0,0,14,14h2v66a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V134h2a14,14,0,0,0,14-14V88A14,14,0,0,0,216,74ZM135.77,63c2.25-12.12,6.29-21.75,11.69-27.85A15.68,15.68,0,0,1,158.86,30h.55A18.6,18.6,0,0,1,178,49.14a15.68,15.68,0,0,1-5.18,11.4C162.1,70,143.92,72.83,134.34,73.65,134.59,70.76,135,67.08,135.77,63ZM83.45,35.45A18.69,18.69,0,0,1,96.59,30h.55a15.68,15.68,0,0,1,11.4,5.18C118,45.9,120.83,64.08,121.65,73.66c-2.89-.25-6.57-.68-10.61-1.43C98.92,70,89.29,65.94,83.19,60.53A15.64,15.64,0,0,1,78,49.14,18.65,18.65,0,0,1,83.45,35.45ZM38,120V88a2,2,0,0,1,2-2h82v36H40A2,2,0,0,1,38,120Zm16,80V134h68v68H56A2,2,0,0,1,54,200Zm148,0a2,2,0,0,1-2,2H134V134h68Zm16-80a2,2,0,0,1-2,2H134V86h82a2,2,0,0,1,2,2Z',
+      giftFill: 'M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16h60a4,4,0,0,0,4-4V120H40V88h80v32h16V88h80v32H136v92a4,4,0,0,0,4,4h60a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM84.51,59a13.69,13.69,0,0,1-4.5-10A16.62,16.62,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92C109.71,70.39,94,67.43,84.51,59Zm87,0c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08,13.69,13.69,0,0,1,171.49,59Z',
+      invoice: 'M28,126a6,6,0,0,1,0-12H56a10,10,0,0,0,0-20H40a22,22,0,0,1,0-44h2V48a6,6,0,0,1,12,0v2H64a6,6,0,0,1,0,12H40a10,10,0,0,0,0,20H56a22,22,0,0,1,0,44H54v2a6,6,0,0,1-12,0v-2ZM230,56V192a14,14,0,0,1-14,14H40a14,14,0,0,1-14-14V152a6,6,0,0,1,12,0v40a2,2,0,0,0,2,2H162V158H80a6,6,0,0,1,0-12h82V110H104a6,6,0,0,1,0-12H218V62H96a6,6,0,0,1,0-12H224A6,6,0,0,1,230,56Zm-56,90h44V110H174Zm44,46V158H174v36h42A2,2,0,0,0,218,192Z',
+      wallet: 'M216,66H56a10,10,0,0,1,0-20H192a6,6,0,0,0,0-12H56A22,22,0,0,0,34,56V184a22,22,0,0,0,22,22H216a14,14,0,0,0,14-14V80A14,14,0,0,0,216,66Zm2,126a2,2,0,0,1-2,2H56a10,10,0,0,1-10-10V75.59A21.84,21.84,0,0,0,56,78H216a2,2,0,0,1,2,2Zm-28-60a10,10,0,1,1-10-10A10,10,0,0,1,190,132Z',
+      door: 'M232,218H206V40a14,14,0,0,0-14-14H64A14,14,0,0,0,50,40V218H24a6,6,0,0,0,0,12H232a6,6,0,0,0,0-12ZM62,40a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2V218H62Zm104,92a10,10,0,1,1-10-10A10,10,0,0,1,166,132Z',
+      image: 'M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM46,208V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v82.2l-28.1-28.1a14,14,0,0,0-19.8,0L54.2,210H48A2,2,0,0,1,46,208Zm162,2H71.17l99.41-99.41a2,2,0,0,1,2.83,0L210,147.17V208A2,2,0,0,1,208,210ZM96,118A22,22,0,1,0,74,96,22,22,0,0,0,96,118Zm0-32A10,10,0,1,1,86,96,10,10,0,0,1,96,86Z',
+      article: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM182,96a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,96Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,128Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,160Z',
+      users: 'M112.6,158.43a58,58,0,1,0-57.2,0A93.83,93.83,0,0,0,5.21,196.72a6,6,0,0,0,10.05,6.56,82,82,0,0,1,137.48,0,6,6,0,0,0,10-6.56A93.83,93.83,0,0,0,112.6,158.43ZM38,108a46,46,0,1,1,46,46A46.06,46.06,0,0,1,38,108Zm211,97a6,6,0,0,1-8.3-1.74A81.8,81.8,0,0,0,172,166a6,6,0,0,1,0-12,46,46,0,1,0-17.08-88.73,6,6,0,1,1-4.46-11.14,58,58,0,0,1,50.14,104.3,93.83,93.83,0,0,1,50.19,38.29A6,6,0,0,1,249,205Z'
+    };
+    const links = { '/admin/dashboard': 'Main.dc.html', '/admin/orders': 'Orders.dc.html', '/admin/edition-sales': 'EditionSales.dc.html', '/admin/gift-orders': 'GiftOrders.dc.html' };
+    const item = (label, href, d, dFill, b) => {
+      const on = active === href;
+      return { label, href: links[href] || '#', current: on ? 'page' : 'false', d: on && dFill ? dFill : d, badge: b || 0,
+        style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', textDecoration: 'none', background: on ? '#2a2a2a' : 'transparent', color: on ? '#ffffff' : '#e0e0e0', fontWeight: on ? 600 : 400 } };
+    };
+    return [
+      { label: '', items: [item('Dashboard', '/admin/dashboard', P.dash)] },
+      { label: 'Sales', items: [item('Orders', '/admin/orders', P.orders, null, badge), item('Edition sales', '/admin/edition-sales', P.editions, P.editionsFill), item('Gift orders', '/admin/gift-orders', P.gift, P.giftFill), item('Invoices', '/admin/invoices', P.invoice), item('Payouts', '/admin/payouts', P.wallet)] },
+      { label: 'Gallery', items: [item('Exhibitions', '/admin/exhibitions', P.door), item('Print presentations', '/admin/print-presentations', P.image), item('Content', '/admin/content', P.article), item('Users', '/admin/users', P.users)] }
+    ];
+  }
+}
+</script>
+</body>
+</html>

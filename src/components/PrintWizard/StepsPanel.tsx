@@ -3,12 +3,13 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import Image from 'next/image'
 
-import { CollapsibleSection } from '@/components/ui/CollapsibleSection'
 import { Icon } from '@/components/ui/Icon'
 import { SelectDropdown } from '@/components/ui/SelectDropdown'
 import { Slider } from '@/components/ui/Slider'
 import type { SelectOption } from '@/components/ui/SelectDropdown'
 
+import { EnumChoice, MouldingChoice } from './ChoiceControls'
+import { NumberedStep } from './NumberedStep'
 import { CustomSizeInputs } from './CustomSizeInputs'
 
 import {
@@ -59,6 +60,18 @@ interface StepsPanelProps {
  * id when a group's parts are missing, which is the same section the render
  * would produce.
  */
+// The closed steps' grey lines (order-flow.md): the current choice in words.
+const labelOf = (dim: EnumDimension, config: WizardConfig) =>
+  dim.options.find((option) => option.id === config.values[dim.id])?.label ?? null
+const cmText = (value: number) => parseFloat(value.toFixed(1)).toString()
+/** "30 × 20 cm", height first (the site's H × W rule). */
+const sizeText = (config: WizardConfig) =>
+  config.customSize
+    ? `${cmText(config.customSize.heightCm)} × ${cmText(config.customSize.widthCm)} cm`
+    : null
+const joinParts = (...parts: (string | null | undefined)[]) =>
+  parts.filter(Boolean).join(' · ') || null
+
 function firstSectionKey(catalog: Catalog): string | null {
   const first = catalog.dimensions[0]
   if (!first) return null
@@ -353,7 +366,12 @@ const PrintAndPaperSection = ({
   )
 
   return (
-    <CollapsibleSection title="Print" open={open} onToggle={onToggle}>
+    <NumberedStep
+      title="Print"
+      summary={joinParts(labelOf(printType, config), labelOf(paper, config))}
+      open={open}
+      onToggle={onToggle}
+    >
       <div className={styles.stepField}>
         <SelectDropdown<string>
           label="Type"
@@ -372,7 +390,7 @@ const PrintAndPaperSection = ({
           disabled={optionsLocked}
         />
       </div>
-    </CollapsibleSection>
+    </NumberedStep>
   )
 }
 
@@ -408,7 +426,15 @@ const SizeAndBorderSection = ({
   onBorderChange,
 }: SizeAndBorderSectionProps) => {
   return (
-    <CollapsibleSection title={size.label} open={open} onToggle={onToggle}>
+    <NumberedStep
+      title={size.label}
+      summary={joinParts(
+        sizeText(config),
+        `${cmText(config.borders?.[border.id]?.allCm ?? border.defaultCm)} cm border`,
+      )}
+      open={open}
+      onToggle={onToggle}
+    >
       <div className={styles.stepField}>
         <CustomSizeInputs
           custom={size.custom}
@@ -425,7 +451,7 @@ const SizeAndBorderSection = ({
         optionsLocked={optionsLocked}
         onBorderChange={onBorderChange}
       />
-    </CollapsibleSection>
+    </NumberedStep>
   )
 }
 
@@ -476,8 +502,18 @@ const FrameSection = ({
   const isFraming = config.values[format.id] === 'framing'
 
   return (
-    <CollapsibleSection title="Frame" open={open} onToggle={onToggle}>
-      <EnumDropdown
+    <NumberedStep
+      title="Frame"
+      summary={joinParts(
+        labelOf(format, config),
+        isFraming ? labelOf(frameType, config) : null,
+        isFraming ? labelOf(moulding, config) : null,
+      )}
+      open={open}
+      onToggle={onToggle}
+    >
+      <EnumChoice
+        look="segmented"
         dim={format}
         config={config}
         countryCode={countryCode}
@@ -488,7 +524,8 @@ const FrameSection = ({
       />
       {isFraming && (
         <>
-          <EnumDropdown
+          <EnumChoice
+            look="cards"
             dim={frameType}
             config={config}
             countryCode={countryCode}
@@ -497,7 +534,7 @@ const FrameSection = ({
             optionsLocked={optionsLocked}
             onChange={onChange}
           />
-          <EnumDropdown
+          <MouldingChoice
             dim={moulding}
             config={config}
             countryCode={countryCode}
@@ -507,7 +544,8 @@ const FrameSection = ({
             onChange={onChange}
           />
           {glass && isDimensionVisible(glass, config, catalog) && (
-            <EnumDropdown
+            <EnumChoice
+              look="list"
               dim={glass}
               config={config}
               countryCode={countryCode}
@@ -518,7 +556,8 @@ const FrameSection = ({
             />
           )}
           {windowMount && isDimensionVisible(windowMount, config, catalog) && (
-            <EnumDropdown
+            <EnumChoice
+              look="chips"
               dim={windowMount}
               config={config}
               countryCode={countryCode}
@@ -530,7 +569,8 @@ const FrameSection = ({
           )}
           {windowMountSize && isDimensionVisible(windowMountSize, config, catalog) && (
             <>
-              <EnumDropdown
+              <EnumChoice
+                look="chips"
                 dim={windowMountSize}
                 config={config}
                 countryCode={countryCode}
@@ -543,7 +583,8 @@ const FrameSection = ({
             </>
           )}
           {hanging && (
-            <EnumDropdown
+            <EnumChoice
+              look="list"
               dim={hanging}
               config={config}
               countryCode={countryCode}
@@ -555,74 +596,10 @@ const FrameSection = ({
           )}
         </>
       )}
-    </CollapsibleSection>
+    </NumberedStep>
   )
 }
 
-// Bare enum dropdown — same logic as EnumDimensionSection but without
-// the outer CollapsibleSection wrapper, so it can be used inside a
-// grouped section.
-const EnumDropdown = ({
-  dim,
-  config,
-  countryCode,
-  availability,
-  restrictions,
-  optionsLocked,
-  onChange,
-}: {
-  dim: EnumDimension
-  config: WizardConfig
-  countryCode: string
-  availability: AvailabilityCheck
-  restrictions: PrintRestrictions | null
-  optionsLocked: boolean
-  onChange: (patch: Record<string, string>) => void
-}) => {
-  const filtered = useMemo(
-    () =>
-      dim.options.filter((option) =>
-        isOptionPickable(option, {
-          dimensionId: dim.id,
-          config,
-          country: countryCode,
-          availability,
-          restrictions,
-        }),
-      ),
-    [dim, config, countryCode, availability, restrictions],
-  )
-
-  const selectOptions: SelectOption<string>[] = useMemo(
-    () =>
-      filtered.map((option) => ({
-        value: option.id,
-        label: option.label,
-        tooltip: optionTooltip(option),
-        tooltipImage: option.tooltipImageUrl ? (
-          // unoptimized: catalog image; skip the Vercel optimizer whose cold
-          // re-encode broke images on first load (AR-125).
-          <Image src={option.tooltipImageUrl} alt="" width={220} height={220} unoptimized />
-        ) : undefined,
-      })),
-    [filtered],
-  )
-
-  return (
-    <div className={styles.stepField}>
-      <SelectDropdown<string>
-        label={dim.label}
-        options={selectOptions}
-        value={config.values[dim.id] ?? ''}
-        onChange={(v) => onChange({ [dim.id]: v })}
-        disabled={optionsLocked}
-      />
-    </div>
-  )
-}
-
-// Bare border slider — mirrors BorderDimensionSection's inner content
-// without the outer CollapsibleSection.
 const BorderSlider = ({
   dim,
   config,
@@ -809,7 +786,12 @@ const EnumDimensionSection = ({
   )
 
   return (
-    <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+    <NumberedStep
+      title={dimension.label}
+      summary={labelOf(dimension, config)}
+      open={open}
+      onToggle={onToggle}
+    >
       <div className={styles.stepField}>
         <SelectDropdown<string>
           options={selectOptions}
@@ -818,7 +800,7 @@ const EnumDimensionSection = ({
           disabled={optionsLocked}
         />
       </div>
-    </CollapsibleSection>
+    </NumberedStep>
   )
 }
 
@@ -883,7 +865,12 @@ const SizeDimensionSection = ({
   )
 
   return (
-    <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+    <NumberedStep
+      title={dimension.label}
+      summary={sizeText(config)}
+      open={open}
+      onToggle={onToggle}
+    >
       <div className={styles.stepField}>
         {customMode ? (
           <CustomSizeInputs
@@ -903,7 +890,7 @@ const SizeDimensionSection = ({
           />
         )}
       </div>
-    </CollapsibleSection>
+    </NumberedStep>
   )
 }
 
@@ -931,7 +918,12 @@ const BorderDimensionSection = ({
   // Strip trailing zeros so 0 → "0", 1.0 → "1", 0.3 stays "0.3".
   const displayed = parseFloat(value.toFixed(decimals)).toString()
   return (
-    <CollapsibleSection title={dimension.label} open={open} onToggle={onToggle}>
+    <NumberedStep
+      title={dimension.label}
+      summary={`${displayed} cm`}
+      open={open}
+      onToggle={onToggle}
+    >
       <div className={styles.stepField}>
         <p className={styles.sliderValue}>{displayed} cm</p>
         <Slider
@@ -950,7 +942,7 @@ const BorderDimensionSection = ({
         />
         {dimension.helpText && <p className={styles.destinationHelp}>{dimension.helpText}</p>}
       </div>
-    </CollapsibleSection>
+    </NumberedStep>
   )
 }
 

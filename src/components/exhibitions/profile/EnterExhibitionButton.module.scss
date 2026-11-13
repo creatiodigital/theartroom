@@ -1,4 +1,15 @@
-// The CTA into the 3D exhibition, on every device (AR-172).
+@use '@/styles/mixins' as *;
+
+// The CTA into the 3D exhibition, on every device (AR-172). Full width on phones, in the hero and
+// in the "Walk through the exhibition" band (docs/public-redesign/exhibition.md §1, §4).
 .cta {
   display: inline-flex;
+
+  @include media-down(md) {
+    display: flex;
+
+    > * {
+      flex: 1 1 auto;
+    }
+  }
 }

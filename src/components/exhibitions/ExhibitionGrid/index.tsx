@@ -3,8 +3,6 @@ import Link from 'next/link'
 import { ExhibitionActions } from '@/components/exhibitions/ExhibitionActions'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
-import { Text } from '@/components/ui/Typography'
-
 import styles from './ExhibitionGrid.module.scss'
 
 type Exhibition = {
@@ -22,13 +20,18 @@ interface ExhibitionGridProps {
   exhibitions: Exhibition[]
 }
 
+/**
+ * The homepage's Current exhibitions (docs/public-redesign/home.md §3): two columns (one on
+ * phones), a 4:3 picture with nothing on it, the artist in small caps, the serif title, the
+ * description on three lines, then "→ View exhibition | Enter 3D room".
+ */
 export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
   return (
     <div className={styles.grid}>
       {exhibitions.map((exhibition) => (
         // Two links side by side, never one inside the other: the card's picture and text open the
         // exhibition page, and the line under them offers the page or the 3D room.
-        <div key={exhibition.id} className={styles.card}>
+        <article key={exhibition.id} className={styles.card}>
           <Link href={exhibition.href} className={styles.cardLink}>
             <div className={styles.imageWrapper}>
               {exhibition.featuredImageUrl ? (
@@ -36,23 +39,17 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
                   src={exhibition.featuredImageUrl}
                   alt={exhibition.mainTitle}
                   fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  sizes="(max-width: 768px) 100vw, 580px"
                   className={styles.image}
                 />
               ) : (
                 <div className={styles.imagePlaceholder} />
               )}
             </div>
-            <Text as="h2" size="xl" className={styles.author}>
-              {exhibition.artistLabel}
-            </Text>
-            <Text as="h1" font="serif" size="2xl" className={styles.title}>
-              {exhibition.mainTitle}
-            </Text>
+            <span className={styles.author}>{exhibition.artistLabel}</span>
+            <h3 className={styles.title}>{exhibition.mainTitle}</h3>
             {exhibition.shortDescription && (
-              <Text as="p" size="sm" className={styles.description}>
-                {exhibition.shortDescription}
-              </Text>
+              <p className={styles.description}>{exhibition.shortDescription}</p>
             )}
           </Link>
           <ExhibitionActions
@@ -60,7 +57,7 @@ export const ExhibitionGrid = ({ exhibitions }: ExhibitionGridProps) => {
             visitUrl={exhibition.visitUrl}
             className={styles.actions}
           />
-        </div>
+        </article>
       ))}
     </div>
   )

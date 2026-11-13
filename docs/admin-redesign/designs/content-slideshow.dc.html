@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Landing page slideshow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<sc-for list="{{nav}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-if value="{{g.label}}" hint-placeholder-val="{{true}}"><span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">{{g.label}}</span></sc-if>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="4">
+<a href="{{i.href}}" aria-current="{{i.current}}" style="{{i.style}}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{i.d}}"></path></svg><span style="flex: 1 1 auto">{{i.label}}</span><sc-if value="{{i.badge}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 700; min-width: 20px; text-align: center; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000000; box-sizing: border-box">{{i.badge}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 28px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<nav aria-label="Breadcrumb"><ol style="list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; font-size: 13px; color: #666666"><li><a href="Content.dc.html" style="color: #666666">Content</a></li><li aria-hidden="true" style="color: #a3a3a3">/</li><li aria-current="page" style="color: #333333">Landing page</li></ol></nav>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Homepage slideshow</h1>
+<span style="color: #666666">The slides at the top of the homepage, in this order. Drag to reorder.</span>
+</div>
+<div style="display: flex; gap: 8px">
+<a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; text-decoration: none; padding: 8px 14px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff">View homepage<svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,104a6,6,0,0,1-12,0V54.49l-69.75,69.75a6,6,0,0,1-8.48-8.48L201.51,46H152a6,6,0,0,1,0-12h64a6,6,0,0,1,6,6Zm-38,26a6,6,0,0,0-6,6v72a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V80a2,2,0,0,1,2-2h72a6,6,0,0,0,0-12H48A14,14,0,0,0,34,80V208a14,14,0,0,0,14,14H176a14,14,0,0,0,14-14V136A6,6,0,0,0,184,130Z"></path></svg></a>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z"></path></svg>Add slide</button>
+</div>
+</header>
+
+<section aria-label="Slides" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #eaeaea"><span style="font-size: 13px; color: #666666">3 slides</span></div>
+<ol style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{slides}}" as="s" hint-placeholder-count="3">
+<li style="{{s.row}}">
+<button type="button" aria-label="{{s.dragLabel}}" style="width: 32px; height: 44px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 4px; color: #999999; cursor: grab"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M108,60A16,16,0,1,1,92,44,16,16,0,0,1,108,60Zm56,16a16,16,0,1,0-16-16A16,16,0,0,0,164,76ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,180a16,16,0,1,0,16,16A16,16,0,0,0,92,180Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,180Z"></path></svg></button>
+<span style="width: 24px; flex: 0 0 auto; font-size: 13px; font-weight: 600; color: #999999; text-align: center">{{s.n}}</span>
+<div aria-hidden="true" style="{{s.thumb}}"></div>
+<div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-weight: 600; color: #000000">{{s.title}}</span>
+<span style="font-size: 13px; color: #666666">{{s.sub}}</span>
+</div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; text-decoration: none; padding: 7px 12px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M225.9,74.78,181.21,30.09a14,14,0,0,0-19.8,0L38.1,153.41a13.94,13.94,0,0,0-4.1,9.9V208a14,14,0,0,0,14,14H92.69a13.94,13.94,0,0,0,9.9-4.1L225.9,94.58a14,14,0,0,0,0-19.8ZM94.1,209.41a2,2,0,0,1-1.41.59H48a2,2,0,0,1-2-2V163.31a2,2,0,0,1,.59-1.41L136,72.48,183.51,120ZM217.41,86.1,192,111.51,144.49,64,169.9,38.58a2,2,0,0,1,2.83,0l44.68,44.69a2,2,0,0,1,0,2.83Z"></path></svg>Edit</a>
+<button type="button" aria-label="{{s.delLabel}}" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; color: #bd1622; cursor: pointer"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,50H174V40a22,22,0,0,0-22-22H104A22,22,0,0,0,82,40V50H40a6,6,0,0,0,0,12H50V208a14,14,0,0,0,14,14H192a14,14,0,0,0,14-14V62h10a6,6,0,0,0,0-12ZM94,40a10,10,0,0,1,10-10h48a10,10,0,0,1,10,10V50H94ZM194,208a2,2,0,0,1-2,2H64a2,2,0,0,1-2-2V62H194ZM110,104v64a6,6,0,0,1-12,0V104a6,6,0,0,1,12,0Zm48,0v64a6,6,0,0,1-12,0V104a6,6,0,0,1,12,0Z"></path></svg></button>
+</li>
+</sc-for>
+</ol>
+<div style="padding: 12px 20px; border-top: 1px solid #eaeaea; font-size: 12px; color: #666666">Keyboard: focus the handle, press Space, move with the arrow keys, Space again to drop.</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = [
+      ['Sunsets', 'Beatriz Salvatierra', '#8a8f86', '#c7c1b3'],
+      ['Landscapes', 'Mathias Heizmann', '#9a9a95', '#dcdcd8'],
+      ['Kritzendorf', 'Mathias Heizmann', '#3d3d3a', '#8c8c86']
+    ];
+    return {
+      slides: S.map(([title, sub, a, b], i) => ({
+        n: i + 1, title, sub,
+        dragLabel: 'Reorder ' + title, delLabel: 'Delete slide ' + title,
+        row: { display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 20px 12px 12px', borderTop: i === 0 ? '0' : '1px solid #f0f0f0', background: i === 1 ? '#fcfcfc' : '#ffffff' },
+        thumb: { width: '160px', height: '96px', flex: '0 0 auto', borderRadius: '4px', background: 'linear-gradient(180deg, ' + b + ' 0%, ' + b + ' 55%, ' + a + ' 55%, ' + a + ' 100%)' }
+      })),
+      nav: this.nav()
+    };
+  }
+  nav() {
+    const P = {
+      dash: 'M104,42H56A14,14,0,0,0,42,56v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,104,42Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm-98,34H56a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,104,138Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,200,138Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Z',
+      orders: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z',
+      article: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM182,96a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,96Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,128Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,160Z',
+      articleFill: 'M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM176,168H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Zm0-32H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Zm0-32H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z',
+      door: 'M232,218H206V40a14,14,0,0,0-14-14H64A14,14,0,0,0,50,40V218H24a6,6,0,0,0,0,12H232a6,6,0,0,0,0-12ZM62,40a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2V218H62Zm104,92a10,10,0,1,1-10-10A10,10,0,0,1,166,132Z',
+      image: 'M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM46,208V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v82.2l-28.1-28.1a14,14,0,0,0-19.8,0L54.2,210H48A2,2,0,0,1,46,208Zm162,2H71.17l99.41-99.41a2,2,0,0,1,2.83,0L210,147.17V208A2,2,0,0,1,208,210ZM96,118A22,22,0,1,0,74,96,22,22,0,0,0,96,118Zm0-32A10,10,0,1,1,86,96,10,10,0,0,1,96,86Z',
+      users: 'M112.6,158.43a58,58,0,1,0-57.2,0A93.83,93.83,0,0,0,5.21,196.72a6,6,0,0,0,10.05,6.56,82,82,0,0,1,137.48,0,6,6,0,0,0,10-6.56A93.83,93.83,0,0,0,112.6,158.43ZM38,108a46,46,0,1,1,46,46A46.06,46.06,0,0,1,38,108Zm211,97a6,6,0,0,1-8.3-1.74A81.8,81.8,0,0,0,172,166a6,6,0,0,1,0-12,46,46,0,1,0-17.08-88.73,6,6,0,1,1-4.46-11.14,58,58,0,0,1,50.14,104.3,93.83,93.83,0,0,1,50.19,38.29A6,6,0,0,1,249,205Z'
+    };
+    const it = (label, href, d, on) => ({ label, href, current: on ? 'page' : 'false', d, badge: label === 'Orders' ? 9 : 0, style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', textDecoration: 'none', background: on ? '#2a2a2a' : 'transparent', color: on ? '#ffffff' : '#e0e0e0', fontWeight: on ? 600 : 400 } });
+    return [
+      { label: '', items: [it('Dashboard', 'Main.dc.html', P.dash)] },
+      { label: 'Sales', items: [it('Orders', 'Orders.dc.html', P.orders)] },
+      { label: 'Gallery', items: [it('Exhibitions', 'Exhibitions.dc.html', P.door), it('Print presentations', 'PrintPresentations.dc.html', P.image), it('Content', 'Content.dc.html', P.articleFill, true), it('Users', '#', P.users)] }
+    ];
+  }
+}
+</script>
+</body>
+</html>

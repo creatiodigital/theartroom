@@ -3,13 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { Button } from '@/components/ui/Button'
-import { ErrorText } from '@/components/ui/ErrorText'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
 
-import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
 import styles from './AddArtworkModal.module.scss'
 
 const artworkTypeOptions = [
@@ -19,12 +16,20 @@ const artworkTypeOptions = [
   { value: 'video', label: 'Video' },
 ]
 
+// The confirm button sits outside the <form> (in the dialog's button row) and
+// submits it through this id.
+const FORM_ID = 'add-artwork-form'
+
 type AddArtworkModalProps = {
   userId: string
   onClose: () => void
   onSuccess: () => void
 }
 
+/**
+ * Add artwork (artist.md §2: today's dialog in the admin look, like Add user):
+ * labels above the fields, today's help text under them, Cancel / Create artwork.
+ */
 export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalProps) => {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -75,64 +80,57 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
   }
 
   return (
-    <div className={styles.modal}>
-      <Text font="dashboard" as="h2">
-        Add New Artwork
-      </Text>
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Title Section */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Title</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Give your artwork a name. You can change this later.
-          </p>
-          <Input
-            id="title"
-            type="text"
-            size="medium"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
-            placeholder="e.g. Sunset Painting"
-          />
-          <span className={dashboardStyles.hint}>Leave empty to auto-generate a title.</span>
-        </div>
+    <AdminConfirmModal
+      icon={null}
+      title="Add artwork"
+      message={
+        <form id={FORM_ID} className={styles.form} onSubmit={handleSubmit} noValidate>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="title">
+              Title
+            </label>
+            <Input
+              id="title"
+              type="text"
+              size="bare"
+              inputClassName={styles.input}
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="e.g. Sunset Painting"
+            />
+            <span className={styles.help}>
+              Give your artwork a name. You can change this later. Leave empty to auto-generate a
+              title.
+            </span>
+          </div>
 
-        {/* Type Section */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Type</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Choose the type of artwork you want to create.
-          </p>
-          <Select
-            options={artworkTypeOptions}
-            value={formData.artworkType}
-            onChange={(val) => handleChange('artworkType', val as string)}
-            size="medium"
-          />
-          <span className={dashboardStyles.hint}>
-            Image for visual artworks, Text for written content, Sound for audio, Video for video
-            artworks.
-          </span>
-        </div>
-
-        <ErrorText>{error}</ErrorText>
-
-        <div className={styles.actions}>
-          <Button
-            font="dashboard"
-            variant="secondary"
-            label="Cancel"
-            onClick={onClose}
-            type="button"
-          />
-          <Button
-            font="dashboard"
-            variant="primary"
-            label={loading ? 'Creating...' : 'Create Artwork'}
-            type="submit"
-          />
-        </div>
-      </form>
-    </div>
+          <div className={styles.field}>
+            <AdminSelect
+              id="artworkType"
+              label="Type"
+              size="form"
+              value={formData.artworkType}
+              onChange={(val) => handleChange('artworkType', val)}
+            >
+              {artworkTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </AdminSelect>
+            <span className={styles.help}>
+              Choose the type of artwork you want to create. Image for visual artworks, Text for
+              written content, Sound for audio, Video for video artworks.
+            </span>
+          </div>
+        </form>
+      }
+      warning={error || undefined}
+      confirmLabel="Create artwork"
+      busyLabel="Creating…"
+      busy={loading}
+      form={FORM_ID}
+      onCancel={onClose}
+    />
   )
 }

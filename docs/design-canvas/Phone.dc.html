@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Dashboard on phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 2480px; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column">
+
+<!-- Top bar (replaces side menu under 900px) -->
+<header style="position: sticky; top: 0; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: #1a1a1a; color: #ffffff">
+<a href="#" style="flex: 1 1 auto; display: flex; align-items: baseline; gap: 8px; color: #ffffff; text-decoration: none">
+<span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 20px; line-height: 1.2">The Art Room</span>
+<span style="font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span>
+</a>
+<a href="PhoneMenu.dc.html" aria-label="Open menu, 0 orders need attention" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #ffffff; text-decoration: none"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM40,70H216a6,6,0,0,0,0-12H40a6,6,0,0,0,0,12ZM216,186H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z"></path></svg></a>
+</header>
+
+<main style="padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">Wed, 11 Nov 2026</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 26px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Dashboard</h1>
+</div>
+
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a"></span>
+<span style="flex: 1 1 auto; font-size: 13px">Purchases open</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; color: #bd1622; background: #ffffff; border: 1px solid #bd1622; border-radius: 4px; padding: 6px 12px; min-height: 44px; cursor: pointer">Pause</button>
+</div>
+
+<section aria-labelledby="patt" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h2 id="patt" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Needs your attention</h2>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 9999px; background: #d4edda; color: #155724; font-size: 12px; font-weight: 600">All clear</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="5">
+<a href="#" style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; color: #333333; text-decoration: none">
+<span style="font-size: 26px; font-weight: 700; line-height: 1; color: #666666">0</span>
+<span style="font-size: 12px; font-weight: 600; line-height: 1.3">{{c.label}}</span>
+<span style="font-size: 11px; color: #155724">{{c.hint}}</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="ppipe" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h2 id="ppipe" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Order pipeline</h2>
+<a href="#" style="font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 0">All orders</a>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{stages}}" as="s" hint-placeholder-count="7">
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f0">
+<span style="width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%; border: 1px solid #d0d0d0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #666666">{{s.step}}</span>
+<span style="flex: 1 1 auto">{{s.label}}</span>
+<span style="font-weight: 600; color: #999999">0</span>
+</li>
+</sc-for>
+</ol>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="padding: 4px 10px; border-radius: 9999px; background: #f8d7da; color: #721c24; font-size: 12px; font-weight: 600">Canceled · 1</span>
+<span style="padding: 4px 10px; border-radius: 9999px; background: #f0f0f0; font-size: 12px; font-weight: 600">Refunded · 0</span>
+</div>
+</section>
+
+<section aria-labelledby="pchan" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="pchan" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Traffic channels</h2>
+<div style="display: flex; align-items: center; gap: 20px">
+<div role="img" aria-label="Traffic channels donut" style="{{donut}}"><div style="width: 80px; height: 80px; border-radius: 50%; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center"><span style="font-size: 20px; font-weight: 700; line-height: 1; color: #000000">577</span><span style="font-size: 11px; color: #666666">sessions</span></div></div>
+<div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{channels}}" as="ch" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="{{ch.dot}}"></span><span style="flex: 1 1 auto">{{ch.name}}</span><span style="font-weight: 600; color: #000000">{{ch.n}}</span></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="part" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="part" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Most viewed artworks</h2>
+<sc-for list="{{artworks}}" as="a" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0">
+<div style="display: flex; justify-content: space-between; gap: 12px">
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600; color: #000000">{{a.title}}</span><span style="font-size: 12px; color: #666666">{{a.artist}}<sc-if value="{{a.noPrints}}" hint-placeholder-val="{{false}}"> · <span style="color: #856404; font-weight: 600">no prints</span></sc-if></span></span>
+<span style="font-weight: 600; color: #000000">{{a.n}}</span>
+</div>
+<div style="height: 6px; border-radius: 3px; background: #f0f0f0"><div style="{{a.bar}}"></div></div>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="pctry" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="pctry" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Visitors by country</h2>
+<sc-for list="{{countries}}" as="c" hint-placeholder-count="10">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr) 34px; gap: 10px; align-items: center; font-size: 13px">
+<span>{{c.name}}</span>
+<div style="height: 6px; border-radius: 3px; background: #f0f0f0"><div style="{{c.bar}}"></div></div>
+<span style="text-align: right; font-weight: 600; color: #000000">{{c.n}}</span>
+</div>
+</sc-for>
+</section>
+
+<p style="margin: 0; font-size: 12px; color: #666666">Google Analytics, last 30 days: trends, not a census. Updated 10 Nov, 20:47.</p>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2480}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = '#1a1a1a';
+    const bar = (n, max) => ({ width: Math.max(3, Math.round(n / max * 100)) + '%', height: '6px', borderRadius: '3px', background: accent });
+    const colors = [accent, '#666666', '#a3a3a3', '#cccccc', '#e6e6e6'];
+    const ch = [['Direct', 235], ['Organic Social', 230], ['Referral', 55], ['Organic Search', 35], ['Unassigned', 22]];
+    const tot = 577; let acc = 0;
+    const stops = ch.map(([, n], i) => { const a = acc; acc += n / tot * 100; return colors[i] + ' ' + a.toFixed(2) + '% ' + acc.toFixed(2) + '%'; });
+    return {
+      cards: [
+        { label: 'Refund still owed', hint: 'Nothing owed' }, { label: 'Needs attention', hint: 'No flagged orders' },
+        { label: 'New', hint: 'None to capture' }, { label: 'Awaiting placement at TPS', hint: 'All placed' },
+        { label: 'Delivered, artist not paid', hint: 'All artists paid' }
+      ],
+      stages: ['New', 'To place at TPS', 'At TPS', 'In production', 'Shipped', 'Delivered', 'Artist paid'].map((label, i) => ({ label, step: i + 1 })),
+      donut: { width: '120px', height: '120px', borderRadius: '50%', flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'conic-gradient(' + stops.join(', ') + ')' },
+      channels: ch.map(([name, n], i) => ({ name, n, dot: { width: '10px', height: '10px', borderRadius: '2px', flex: '0 0 auto', background: colors[i], boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' } })),
+      artworks: [['Magnolia I', 'Beatriz Salvatierra', 17], ['La memoria de las puertas', 'Elizabeth Mosler', 15], ['Infancia', 'Elizabeth Mosler', 13], ['Hiver 2', 'Mathias Heizmann', 12], ['Rive', 'Mathias Heizmann', 12], ['Blossoms', 'Lucie Bonvalet', 10, true], ['Memoria I', 'Beatriz Salvatierra', 9], ['Magnolia IX', 'Beatriz Salvatierra', 8]].map(([title, artist, n, np]) => ({ title, artist, n, noPrints: !!np, bar: bar(n, 17) })),
+      countries: [['Spain', 336], ['United States', 72], ['Austria', 54], ['France', 35], ['Venezuela', 18], ['Mexico', 8], ['Germany', 7], ['Ireland', 6], ['Argentina', 5], ['Sweden', 5]].map(([name, n]) => ({ name, n, bar: bar(n, 336) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

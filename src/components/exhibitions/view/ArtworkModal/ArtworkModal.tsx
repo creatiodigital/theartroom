@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { X } from 'lucide-react'
+import { X } from '@phosphor-icons/react'
 
 import {
   ArtworkDetailBody,
@@ -10,12 +10,11 @@ import {
   type Artist,
   type ArtworkCommerce,
 } from '@/components/artwork/detail/ArtworkDetailBody'
-import { ArtworkMediaGallery } from '@/components/artwork/detail/ArtworkMediaGallery'
+import { ArtworkBelowTheWork } from '@/components/artwork/detail/ArtworkBelowTheWork'
 import { ArtworkTechnique } from '@/components/artwork/detail/ArtworkRichText'
-import { ArtworkStorySection } from '@/components/artwork/detail/ArtworkStorySection'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
+import type { PublicArtistArtwork } from '@/lib/queries/getPublicArtistByHandler'
 import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
@@ -30,6 +29,8 @@ type FetchedDetail = {
    *  shows the same availability card rather than a reduced twin. */
   commerce: ArtworkCommerce | null
   media: ArtworkMediaItem[]
+  /** Other works from the artist's page ("More by the artist"). */
+  more?: PublicArtistArtwork[]
 }
 
 interface ArtworkModalProps {
@@ -99,14 +100,15 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
       // inside it scroll independently instead of the scene swallowing the scroll.
       data-panel-overlay
     >
-      {/* "CLOSE ×", as the panel it opens from has it (AR-174), its right edge on the content's. */}
+      {/* other-screens.md "Artwork details in the 3D room": a close × in the room menu button's
+          place and look (44 px, 10 px corners). */}
       <Button
         variant="bare"
         className={styles.close}
         onClick={() => dispatch(closeArtworkModal())}
         aria-label="Close artwork"
       >
-        CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
+        <X size={20} weight="light" aria-hidden />
       </Button>
       {/* Mirrors the standalone artwork page section for section: the
           two-column zone, then the story (its own full-width section), then
@@ -118,15 +120,19 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
             artist={artist}
             commerce={fetched?.commerce}
             presentation={presentation}
+            surface="room"
             technique={
               artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null
             }
           />
         </div>
 
-        <ArtworkStorySection description={artwork.description} />
-
-        <ArtworkMediaGallery media={fetched?.media ?? []} />
+        <ArtworkBelowTheWork
+          description={artwork.description}
+          media={fetched?.media ?? []}
+          more={fetched?.more ?? []}
+          artist={artist}
+        />
       </div>
     </div>
   )

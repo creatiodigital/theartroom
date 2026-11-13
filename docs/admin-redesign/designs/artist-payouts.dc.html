@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artist Payouts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Artist" style="flex: 1 1 248px; background: #ffffff; border-right: 1px solid #eaeaea; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="ArtistHome.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #000000; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #bd1622">Artist studio</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="ArtistHome.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Home</a>
+<a href="ArtistArtworks.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Artworks</a>
+<a href="ArtistProfile.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Profile</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #f2f0ec; color: #000000; font-weight: 600; text-decoration: none">Payouts</a>
+</div>
+<span style="padding: 0 12px; font-size: 12px; color: #999999">(menu shortened on this board)</span>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 40px 40px 56px; box-sizing: border-box">
+<div style="max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Payouts</h1>
+<span style="color: #666666">We pay you for every sale through Stripe, straight to your bank account.</span>
+</header>
+
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">State 1 · not connected</span>
+<section aria-labelledby="h-nc" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 28px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: flex-start; gap: 16px">
+<span aria-hidden="true" style="width: 44px; height: 44px; flex: 0 0 auto; border-radius: 8px; background: #fff3cd; color: #856404; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M24,102H50v68H32a6,6,0,0,0,0,12H224a6,6,0,0,0,0-12H206V102h26a6,6,0,0,0,3.14-11.11l-104-64a6,6,0,0,0-6.28,0l-104,64A6,6,0,0,0,24,102Zm38,0H98v68H62Zm84,0v68H110V102Zm48,68H158V102h36ZM128,39l82.8,51H45.2ZM246,208a6,6,0,0,1-6,6H16a6,6,0,0,1,0-12H240A6,6,0,0,1,246,208Z"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-nc" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Not connected yet</h2><span style="color: #555555">Today's status text for this state, unchanged.</span></div>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px; max-width: 360px"><span style="font-size: 12px; font-weight: 600; color: #555555">Your country (where your bank account is)</span><span style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #dcdcdc; border-radius: 4px; color: #666666">Select a country…<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"></path></svg></span><span style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: #856404"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><path d="M235.07,189.09,147.61,37.22h0a22.75,22.75,0,0,0-39.22,0L20.93,189.09a21.53,21.53,0,0,0,0,21.72A22.35,22.35,0,0,0,40.55,222h174.9a22.35,22.35,0,0,0,19.6-11.19A21.53,21.53,0,0,0,235.07,189.09ZM224.66,204.8a10.46,10.46,0,0,1-9.21,5.2H40.55a10.46,10.46,0,0,1-9.21-5.2,9.51,9.51,0,0,1,0-9.72L118.79,43.21a10.75,10.75,0,0,1,18.42,0l87.46,151.87A9.51,9.51,0,0,1,224.66,204.8ZM122,144V104a6,6,0,0,1,12,0v40a6,6,0,0,1-12,0Zm16,36a10,10,0,1,1-10-10A10,10,0,0,1,138,180Z"></path></svg>This can't be changed later. Pick the country your bank account is in.</span></label>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-top: 4px; border-top: 1px solid #f0f0f0">
+<button type="button" style="margin-top: 16px; font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; min-height: 44px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px">Connect with Stripe</button>
+<span style="margin-top: 16px; font-size: 12px; color: #666666">You'll finish on Stripe's secure page, then come back here.</span>
+</div>
+</section>
+
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">State 2 · connected</span>
+<section aria-labelledby="h-c" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+<span aria-hidden="true" style="width: 44px; height: 44px; flex: 0 0 auto; border-radius: 8px; background: #d4edda; color: #155724; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M228.24,76.24l-128,128a6,6,0,0,1-8.48,0l-56-56a6,6,0,0,1,8.48-8.48L96,191.51,219.760,67.76a6,6,0,0,1,8.48,8.48Z"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 300px"><h2 id="h-c" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Today's connected headline</h2><span style="color: #555555">Today's status text for this state.</span></div>
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px">Today's primary action ↗</button>
+</section>
+<section aria-labelledby="h-dc" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 360px"><h2 id="h-dc" style="margin: 0; font-size: 15px; font-weight: 700; color: #000000">Disconnect</h2><span style="font-size: 13px; color: #555555">Removes your bank details from Stripe. You can reconnect anytime, useful if you need to switch country or bank.</span></div>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #ffffff; color: #bd1622; border: 1px solid #e6b8bb; border-radius: 4px">Disconnect Stripe…</button>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { CaretRight, Info } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
@@ -52,6 +53,12 @@ interface SummaryPanelProps {
    *  reserved by that — it just means the buyer has this exact print in their
    *  cart, so the action is to go and finish rather than add it twice. */
   alreadyInCart?: boolean
+  /** Order-flow.md: the edition named over the title and in the Learn more row. */
+  editionType?: 'open' | 'limited'
+  /** Opens the Learn more window (the edition's terms of sale and shipping). */
+  onLearnMore?: () => void
+  /** A line under the button: the limited path's "not reserved until you pay". */
+  caveat?: string
 }
 
 export const SummaryPanel = ({
@@ -69,6 +76,9 @@ export const SummaryPanel = ({
   isDuplicate = false,
   navigatesAfterAdd = false,
   alreadyInCart = false,
+  editionType = 'open',
+  onLearnMore,
+  caveat,
 }: SummaryPanelProps) => {
   const ctaLabel = isEditing ? 'Update cart' : 'Add to cart'
   const ctaBusyLabel = isEditing ? 'Updating…' : 'Adding…'
@@ -123,7 +133,12 @@ export const SummaryPanel = ({
         {/* Work first, artist under it — the same order the cart recap and the
             checkout line use, so the buyer sees one identity block all the way
             through. */}
-        <h2 className={styles.summaryTitle}>{artwork.title}</h2>
+        <span className={styles.summaryEdition}>
+          {editionType === 'limited' ? 'Limited edition' : 'Open edition'}
+        </span>
+        <h2 className={styles.summaryTitle}>
+          <em>{artwork.title}</em>
+        </h2>
         <span className={styles.summaryArtist}>{artwork.artistName}</span>
       </div>
 
@@ -131,7 +146,9 @@ export const SummaryPanel = ({
           panel and squeezed the rows behind a "Show all selected options"
           toggle; it now has the center column to itself, so the full
           configuration fits without hiding any of it behind a control. */}
-      <SpecList specs={summarizeConfig(catalog, config)} collapsible={false} />
+      <div className={styles.summarySpecs}>
+        <SpecList specs={summarizeConfig(catalog, config)} collapsible={false} />
+      </div>
 
       {(() => {
         // Base price — the per-configuration figure (artwork + production, no
@@ -143,12 +160,11 @@ export const SummaryPanel = ({
         return (
           <dl className={styles.priceList}>
             <div className={styles.priceRow}>
-              <dt>Base price</dt>
+              <dt>Price</dt>
               <dd>{artworkLine ? formatEuro(artworkLine.amountCents) : placeholder}</dd>
             </div>
             {/* Says out loud what "base" leaves out, at the point of decision
                 rather than a page later. Same sentence the cart uses. */}
-            <p className={styles.priceNote}>Shipping and taxes calculated at checkout.</p>
           </dl>
         )
       })()}
@@ -202,6 +218,27 @@ export const SummaryPanel = ({
             className={styles.ctaButton}
           />
         </>
+      )}
+
+      {/* Says out loud what the price leaves out, at the point of decision (order-flow.md). */}
+      <p className={styles.priceNote}>
+        Shipping and taxes are calculated at checkout. Signed certificate of authenticity included.
+      </p>
+      {caveat && <p className={styles.priceNote}>{caveat}</p>}
+
+      {onLearnMore && (
+        <Button variant="bare" className={styles.learnMore} onClick={onLearnMore}>
+          <Info size={20} weight="light" aria-hidden />
+          <span className={styles.learnMoreText}>
+            <span className={styles.learnMoreTitle}>
+              {editionType === 'limited'
+                ? 'What is a limited edition?'
+                : 'What is an open edition?'}
+            </span>
+            <span className={styles.learnMoreSub}>Terms of sale and shipping</span>
+          </span>
+          <CaretRight size={16} weight="light" aria-hidden />
+        </Button>
       )}
 
       {confirmDupOpen && (

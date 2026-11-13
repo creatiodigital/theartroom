@@ -22,8 +22,8 @@ interface ExitPromptProps {
 }
 
 /**
- * Confirmation shown before a visitor leaves an exhibition — raised both by the
- * corner close button and by walking out through the entrance corridor.
+ * Confirmation shown before a visitor leaves an exhibition by walking out through
+ * the entrance corridor. (The room menu's Leave exhibition leaves without it.)
  *
  * The walk-out path is why this exists: someone can reach the exit threshold by
  * accident (a stray back-step on arrival), so leaving is always a decision

@@ -2,13 +2,17 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { ArrowSquareOut, Bank, Check, Warning } from '@phosphor-icons/react'
+import c from 'classnames'
 
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
+import { Callout } from '@/components/admin/ui/Callout'
 import { Button } from '@/components/ui/Button'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { StudioPanel } from '@/components/dashboard/StudioPanel'
+import page from '@/components/dashboard/StudioPanel/studioPage.module.scss'
 
 import {
   createDashboardLink,
@@ -19,6 +23,8 @@ import {
   type ConnectCountry,
   type PayoutsStatus,
 } from '@/app/dashboard/payouts/actions'
+
+import styles from './Payouts.module.scss'
 
 export const PayoutsPage = () => {
   const searchParams = useSearchParams()
@@ -31,6 +37,15 @@ export const PayoutsPage = () => {
   const [country, setCountry] = useState<string>('')
   const [countries, setCountries] = useState<ConnectCountry[]>([])
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false)
+  // questions.md Q124 (c): the Disconnect button says "Disconnecting…" only for its own request
+  // (it did for every action, Open Stripe dashboard included).
+  const [disconnecting, setDisconnecting] = useState(false)
+  // Q124 (e): a countries failure is the country picker's own (it replaced any other error, on
+  // every state, connected ones included).
+  const [countriesError, setCountriesError] = useState<string | null>(null)
+  // Display only: the dialog shows `error` once its own Disconnect was pressed,
+  // so an older error (e.g. the countries one) never shows inside it.
+  const [disconnectTried, setDisconnectTried] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -55,7 +70,7 @@ export const PayoutsPage = () => {
     getConnectCountries().then((res) => {
       if (canceled) return
       if (res.ok) setCountries(res.countries)
-      else setError(res.error)
+      else setCountriesError(res.error)
     })
     return () => {
       canceled = true
@@ -82,12 +97,20 @@ export const PayoutsPage = () => {
   }, [country, status?.connected])
 
   const handleOpenStripe = useCallback(async () => {
+    // Q124 (d): Safari and pop-up blockers drop a window opened after a server round trip, so the
+    // tab opens now, on the click, and goes to Stripe once the link is back (closed if it isn't).
+    // Its `opener` is cut, as `noopener` did; the browser's default referrer policy sends Stripe
+    // our origin only. If even this tab is blocked, the old call as a last try.
+    const tab = window.open('', '_blank')
+    if (tab) tab.opener = null
     setWorking(true)
     setError(null)
     const res = await createDashboardLink()
     if (res.ok) {
-      window.open(res.url, '_blank', 'noopener,noreferrer')
+      if (tab) tab.location.href = res.url
+      else window.open(res.url, '_blank', 'noopener,noreferrer')
     } else {
+      tab?.close()
       setError(res.error)
     }
     setWorking(false)
@@ -95,11 +118,13 @@ export const PayoutsPage = () => {
 
   const performDisconnect = useCallback(async () => {
     setWorking(true)
+    setDisconnecting(true)
     setError(null)
     const res = await disconnectAccount()
     if (!res.ok) {
       setError(res.error)
       setWorking(false)
+      setDisconnecting(false)
       return
     }
     if (res.pendingOrders > 0) {
@@ -111,107 +136,131 @@ export const PayoutsPage = () => {
     await load()
     setConfirmingDisconnect(false)
     setWorking(false)
+    setDisconnecting(false)
   }, [load])
 
-  return (
-    <DashboardLayout backLink="/dashboard">
-      <h1 className={dashboardStyles.pageTitle}>Payouts</h1>
+  // statusHeadline's own "Payouts active" rule: the green tile.
+  const active = !!status && status.payoutsEnabled && status.detailsSubmitted
+  const TileIcon = active ? Check : Bank
 
-      {loading && (
-        <div className={dashboardStyles.section}>
-          <p className={dashboardStyles.sectionDescription}>Loading…</p>
-        </div>
-      )}
+  return (
+    <div className={page.page}>
+      <AdminPageHeader
+        title="Payouts"
+        description="We pay you for every sale through Stripe, straight to your bank account."
+      />
+
+      {loading && <p className={page.status}>Loading…</p>}
 
       {!loading && status && (
         <>
-          <div className={dashboardStyles.section}>
-            <div className={dashboardStyles.sectionHeader}>
-              <h2 className={dashboardStyles.sectionTitle}>
-                {statusHeadline(status, justOnboarded)}
-              </h2>
-              {renderPrimaryAction({ status, working, handleConnect, handleOpenStripe })}
-            </div>
-            <p className={dashboardStyles.sectionDescription}>{statusBody(status)}</p>
-
-            {!status.connected && (
-              <div style={{ marginTop: 'var(--space-4)', maxWidth: 320 }}>
-                <label
-                  className={dashboardStyles.sectionDescription}
-                  style={{ display: 'block', marginBottom: 'var(--space-1)' }}
-                >
-                  Your country (where your bank account is)
-                </label>
-                <SelectDropdown<string>
-                  disabled={countries.length === 0}
-                  value={country}
-                  onChange={(v) => setCountry(v)}
-                  placeholder={countries.length === 0 ? 'Loading countries…' : 'Select a country…'}
-                  options={countries.map<SelectOption<string>>((c) => ({
-                    value: c.code,
-                    label: c.name,
-                  }))}
-                />
-                <span
-                  className={dashboardStyles.sectionDescription}
-                  style={{ display: 'block', marginTop: 'var(--space-1)' }}
-                >
-                  This can&apos;t be changed later — pick the country your bank account is in.
-                </span>
+          <section aria-labelledby="payouts-status-title" className={styles.status}>
+            <div className={styles.statusHead}>
+              <span aria-hidden className={c(styles.tile, active && styles.tileActive)}>
+                <TileIcon size={22} weight={active ? 'bold' : 'light'} />
+              </span>
+              <div className={styles.statusText}>
+                <h2 id="payouts-status-title" className={styles.headline}>
+                  {statusHeadline(status, justOnboarded)}
+                </h2>
+                <p className={styles.body}>{statusBody(status)}</p>
               </div>
-            )}
-          </div>
+              {status.connected && (
+                <div className={styles.headAction}>
+                  {renderPrimaryAction({ status, working, handleConnect, handleOpenStripe })}
+                </div>
+              )}
+            </div>
 
-          {status.connected && !status.onboardingComplete && (
-            <div className={dashboardStyles.section}>
-              <p className={dashboardStyles.sectionDescription}>
+            {/* Q124 (b): not under "Payouts active", while Stripe's webhook lags behind it. */}
+            {status.connected && !active && !status.onboardingComplete && (
+              <Callout tone="plain">
                 Stripe updates us in the background once onboarding is complete. If this page still
                 says &quot;in progress&quot; after a minute, click{' '}
-                <Button
-                  variant="ghost"
-                  onClick={load}
-                  label="refresh"
-                  style={{
-                    padding: 0,
-                    textDecoration: 'underline',
-                    color: 'inherit',
-                    font: 'inherit',
-                  }}
-                />
+                <Button variant="bare" font="dashboard" className={styles.refresh} onClick={load}>
+                  refresh
+                </Button>
                 .
-              </p>
-            </div>
-          )}
+              </Callout>
+            )}
+
+            {!status.connected && (
+              <>
+                <div className={styles.country}>
+                  <AdminSelect
+                    id="payouts-country"
+                    size="form"
+                    label="Your country (where your bank account is)"
+                    aria-describedby="payouts-country-warning"
+                    value={country}
+                    onChange={(v) => setCountry(v)}
+                    disabled={countries.length === 0}
+                  >
+                    <option value="" disabled>
+                      {countries.length > 0
+                        ? 'Select a country…'
+                        : countriesError
+                          ? 'Countries unavailable'
+                          : 'Loading countries…'}
+                    </option>
+                    {countries.map((entry) => (
+                      <option key={entry.code} value={entry.code}>
+                        {entry.name}
+                      </option>
+                    ))}
+                  </AdminSelect>
+                  <p id="payouts-country-warning" className={styles.warning}>
+                    <Warning size={14} weight="fill" aria-hidden className={styles.warningIcon} />
+                    This can&apos;t be changed later. Pick the country your bank account is in.
+                  </p>
+                  {countriesError && (
+                    <Callout tone="red" role="alert">
+                      {countriesError}
+                    </Callout>
+                  )}
+                </div>
+                <div className={styles.connectRow}>
+                  {renderPrimaryAction({ status, working, handleConnect, handleOpenStripe })}
+                  <p className={styles.connectNote}>
+                    You&apos;ll finish on Stripe&apos;s secure page, then come back here.
+                  </p>
+                </div>
+              </>
+            )}
+          </section>
 
           {status.connected && (
-            <div className={dashboardStyles.section}>
-              <div className={dashboardStyles.sectionHeader}>
-                <h2 className={dashboardStyles.sectionTitle}>Disconnect</h2>
+            <StudioPanel
+              layout="row"
+              title="Disconnect"
+              description="Removes your bank details from Stripe. You can reconnect anytime, useful if you need to switch country or bank."
+              aside={
                 <Button
+                  variant="bare"
                   font="dashboard"
-                  variant="secondary"
-                  label={working ? 'Disconnecting\u2026' : 'Disconnect Stripe'}
-                  onClick={() => setConfirmingDisconnect(true)}
+                  className={page.dangerOutline}
+                  onClick={() => {
+                    setDisconnectTried(false)
+                    setConfirmingDisconnect(true)
+                  }}
                   disabled={working}
-                />
-              </div>
-              <p className={dashboardStyles.sectionDescription}>
-                Removes your bank details from Stripe. You can reconnect anytime — useful if you
-                need to switch country or bank.
-              </p>
-            </div>
+                >
+                  {disconnecting ? 'Disconnecting…' : 'Disconnect Stripe…'}
+                </Button>
+              }
+            />
           )}
         </>
       )}
 
       {error && (
-        <div className={dashboardStyles.section}>
-          <p className={dashboardStyles.sectionDescription}>⚠️ {error}</p>
-        </div>
+        <Callout tone="red" role="alert">
+          {error}
+        </Callout>
       )}
 
       {confirmingDisconnect && (
-        <ConfirmModal
+        <AdminConfirmModal
           title="Disconnect your Stripe account?"
           message={
             <>
@@ -220,14 +269,19 @@ export const PayoutsPage = () => {
               }
             </>
           }
+          warning={disconnectTried && !working && error ? error : undefined}
           confirmLabel="Disconnect"
+          busyLabel="Disconnecting…"
           destructive
           busy={working}
-          onConfirm={performDisconnect}
+          onConfirm={() => {
+            setDisconnectTried(true)
+            void performDisconnect()
+          }}
           onCancel={() => setConfirmingDisconnect(false)}
         />
       )}
-    </DashboardLayout>
+    </div>
   )
 }
 
@@ -243,7 +297,8 @@ function statusBody(s: PayoutsStatus) {
     return 'Connect a bank account with Stripe so we can send you your share when your prints sell. Stripe handles identity verification and local banking — we never see your card or bank details.'
   }
   if (s.payoutsEnabled && s.detailsSubmitted) {
-    return `You&apos;re all set. Payouts go to the bank account on file with Stripe${
+    // A real apostrophe: this is a JS string, not JSX, so an entity would show as typed (Q124 a).
+    return `You’re all set. Payouts go to the bank account on file with Stripe${
       s.email ? ` (${s.email})` : ''
     }. You can update details from the Stripe dashboard.`
   }
@@ -265,7 +320,8 @@ function renderPrimaryAction({
     return (
       <Button
         font="dashboard"
-        variant="primary"
+        variant="bare"
+        className={c(page.primary, styles.connect)}
         label={working ? 'Opening Stripe…' : 'Connect with Stripe'}
         onClick={handleConnect}
         disabled={working}
@@ -273,20 +329,26 @@ function renderPrimaryAction({
     )
   }
   if (status.payoutsEnabled && status.detailsSubmitted) {
+    // Opens Stripe's dashboard in a new tab.
     return (
       <Button
         font="dashboard"
-        variant="secondary"
-        label={working ? 'Opening…' : 'Open Stripe dashboard'}
+        variant="bare"
+        className={page.outline}
         onClick={handleOpenStripe}
         disabled={working}
-      />
+      >
+        {working ? 'Opening…' : 'Open Stripe dashboard'}
+        <ArrowSquareOut size={14} weight="light" aria-hidden />
+        <span className="sr-only"> (opens in a new tab)</span>
+      </Button>
     )
   }
   return (
     <Button
       font="dashboard"
-      variant="primary"
+      variant="bare"
+      className={page.primary}
       label={working ? 'Opening Stripe…' : 'Continue setup'}
       onClick={handleConnect}
       disabled={working}

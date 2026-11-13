@@ -1,11 +1,8 @@
-import Link from 'next/link'
-
-import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
-
 import { EmptyState } from '@/components/ui/EmptyState'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
 
+import { ARTISTS_SEARCH_FROM, ArtistsList } from './ArtistsList'
 import styles from './artists.module.scss'
 
 type Artist = {
@@ -13,49 +10,49 @@ type Artist = {
   name: string
   lastName: string
   handler: string
-  biography: string | null
   profileImageUrl: string | null
+  exhibitions: { mainTitle: string }[]
 }
 
 interface ArtistsPageProps {
   artists: Artist[]
 }
 
+/**
+ * /artists (docs/public-redesign/artists.md): one row per artist: the photo, the name and their
+ * exhibitions (owner, 2026-11-12: no bio; the bio is the long one, on the artist page).
+ */
 export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
+  const rows = artists.map((artist) => ({
+    href: `/artists/${artist.handler}`,
+    name: `${artist.name} ${artist.lastName}`.trim(),
+    imageUrl: artist.profileImageUrl,
+    exhibitions: artist.exhibitions.map((e) => e.mainTitle),
+  }))
+
   return (
     <PageLayout>
-      {artists.length === 0 ? (
-        <EmptyState message="No artists found." />
-      ) : (
-        <>
-          <PageHeader
-            pageTitle="Artists"
-            pageSubtitle="Participants in current and past exhibitions."
-          />
-          <ul className={styles.list}>
-            {artists.map((artist) => (
-              <li key={artist.id}>
-                <Link href={`/artists/${artist.handler}`} className={styles.artistRow}>
-                  {artist.profileImageUrl && (
-                    <ProtectedImage
-                      src={artist.profileImageUrl}
-                      alt={`${artist.name} ${artist.lastName}`}
-                      width={200}
-                      height={140}
-                      sizes="200px"
-                      wrapperClassName={styles.imageContainer}
-                      className={styles.featuredImage}
-                    />
+      <div className={styles.page}>
+        {artists.length === 0 ? (
+          <EmptyState message="No artists found." />
+        ) : (
+          <>
+            <PageIntro
+              title="Artists"
+              subtitle={
+                <>
+                  The artists we show, in current and past exhibitions.
+                  {/* The count joins the line once the list has its tools (artists.md). */}
+                  {artists.length >= ARTISTS_SEARCH_FROM && (
+                    <span className={styles.count}> {artists.length} artists.</span>
                   )}
-                  <span className={styles.artistName}>
-                    {artist.name} {artist.lastName}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+                </>
+              }
+            />
+            <ArtistsList artists={rows} />
+          </>
+        )}
+      </div>
     </PageLayout>
   )
 }

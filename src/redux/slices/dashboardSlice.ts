@@ -3,6 +3,21 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { createDashboardState } from '@/factories/dashboardFactory'
 import type { TDashboardState, TSpaceOption } from '@/types/dashboard'
 
+// The 3D editor's panels open one at a time (editor3d.md; questions.md Q139 h). The toolbar's
+// toggles close each other (Menu); the Artwork panel and a tool panel share the same place, so
+// opening one closes the other here, whichever opens it (the room's double click on a work
+// dispatches `showArtworkPanel`). Display only: the panels' edits stay in the store, unsaved.
+const closeToolPanels = (state: TDashboardState) => {
+  state.isLightingPanelOpen = false
+  state.isFloorPanelOpen = false
+  state.isCameraPanelOpen = false
+  state.isWallCeilingPanelOpen = false
+  state.isWindowsPanelOpen = false
+  state.isPanelsPanelOpen = false
+  state.isFurniturePanelOpen = false
+  state.isBakePanelOpen = false
+}
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: createDashboardState(),
@@ -14,6 +29,7 @@ const dashboardSlice = createSlice({
       state.isEditMode = false
     },
     showArtworkPanel: (state: TDashboardState) => {
+      closeToolPanels(state)
       state.isArtworkPanelOpen = true
     },
     hideArtworkPanel: (state: TDashboardState) => {
@@ -26,18 +42,21 @@ const dashboardSlice = createSlice({
       state.isArtworkModalOpen = false
     },
     showLightingPanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isLightingPanelOpen = true
     },
     hideLightingPanel: (state: TDashboardState) => {
       state.isLightingPanelOpen = false
     },
     showFloorPanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isFloorPanelOpen = true
     },
     hideFloorPanel: (state: TDashboardState) => {
       state.isFloorPanelOpen = false
     },
     showCameraPanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isCameraPanelOpen = true
     },
     hideCameraPanel: (state: TDashboardState) => {
@@ -45,30 +64,35 @@ const dashboardSlice = createSlice({
     },
 
     showWallCeilingPanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isWallCeilingPanelOpen = true
     },
     hideWallCeilingPanel: (state: TDashboardState) => {
       state.isWallCeilingPanelOpen = false
     },
     showWindowsPanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isWindowsPanelOpen = true
     },
     hideWindowsPanel: (state: TDashboardState) => {
       state.isWindowsPanelOpen = false
     },
     showPanelsPanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isPanelsPanelOpen = true
     },
     hidePanelsPanel: (state: TDashboardState) => {
       state.isPanelsPanelOpen = false
     },
     showFurniturePanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isFurniturePanelOpen = true
     },
     hideFurniturePanel: (state: TDashboardState) => {
       state.isFurniturePanelOpen = false
     },
     showBakePanel: (state: TDashboardState) => {
+      state.isArtworkPanelOpen = false
       state.isBakePanelOpen = true
     },
     hideBakePanel: (state: TDashboardState) => {

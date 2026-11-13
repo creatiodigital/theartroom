@@ -1,392 +1,382 @@
-.container {
-  // Local dark theme for this internal reference page — scoped here on
-  // purpose so the global (light) palette in variables.scss stays clean.
-  --ref-bg: #0a0a0f;
-  --ref-text: #e2e2e8;
-  --ref-text-bright: #f0f0f5;
-  --ref-text-strong: #d0d0e0;
-  --ref-text-soft: #c8c8d8;
-  --ref-text-stat: #c0c0d0;
-  --ref-text-mid: #a0a0b8;
-  --ref-text-dim: #8888a0;
-  --ref-text-muted: #6b6b80;
-  --ref-text-faint: #4b4b60;
+@use '@/styles/mixins' as *;
 
-  --ref-surface: rgba(255, 255, 255, 0.02);
-  --ref-surface-header: rgba(255, 255, 255, 0.025);
-  --ref-surface-raised: rgba(255, 255, 255, 0.03);
-  --ref-surface-pill: rgba(255, 255, 255, 0.05);
-  --ref-border: rgba(255, 255, 255, 0.05);
-  --ref-border-strong: rgba(255, 255, 255, 0.06);
-  --ref-border-soft: rgba(255, 255, 255, 0.04);
-  --ref-border-faint: rgba(255, 255, 255, 0.03);
-
-  --ref-green: #4ade80;
-  --ref-green-tint: rgba(74, 222, 128, 0.12);
-  --ref-blue: #60a5fa;
-  --ref-blue-tint: rgba(96, 165, 250, 0.12);
-  --ref-amber: #fbbf24;
-  --ref-amber-tint: rgba(251, 191, 36, 0.12);
-  --ref-red: #f87171;
-  --ref-red-tint: rgba(248, 113, 113, 0.12);
-  --ref-purple: #c084fc;
-  --ref-purple-tint: rgba(192, 132, 252, 0.12);
-  --ref-indigo: #818cf8;
-  --ref-violet: #c4b5fd;
-  --ref-pink: #f0abfc;
-
-  min-height: 100vh;
-  background: var(--ref-bg);
-  color: var(--ref-text);
-  padding: 2rem 3rem;
-  font-family: var(--font-dashboard), 'Inter', system-ui, sans-serif;
-}
-
-.header {
-  margin-bottom: 2.5rem;
-  border-bottom: 1px solid var(--ref-border-strong);
-  padding-bottom: 1.5rem;
-}
-
-.title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--ref-text-bright);
-  margin: 0 0 0.35rem;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  font-size: 0.85rem;
-  color: var(--ref-text-muted);
-  margin: 0;
-}
-
-.stats {
+// /admin/api-reference — docs/admin-redesign/developer.md, designs/api-reference.dc.html.
+// Mobile first: one column under 900px, the drawn grids from there.
+.page {
   display: flex;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
 }
 
-.stat {
+// ── Toolbar: the search, then the four counts on the right ──
+// Sticky from 900px, on the page background so it reads as part of the page. On
+// phones it scrolls away: the dark top bar already sticks there (Q91).
+.toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: var(--ref-text-dim);
-  background: var(--ref-surface-raised);
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid var(--ref-border);
+  gap: var(--space-3);
+
+  @include media-up(tablet) {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: var(--space-3) 0;
+    background: var(--color-gray-10);
+  }
 }
 
-.statValue {
-  font-weight: 600;
-  color: var(--ref-text-stat);
-  font-variant-numeric: tabular-nums;
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+
+  @include media-up(tablet) {
+    margin-left: auto;
+  }
 }
 
-/* ---------- Sections ---------- */
+// 44px touch target below 900px, the drawn 34px above (questions.md Q7).
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 6px var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 
+  strong {
+    font-weight: var(--font-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    min-height: 34px;
+  }
+}
+
+.countLink {
+  background: var(--color-white);
+  border-color: var(--color-gray-60);
+  color: var(--color-text-primary);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--color-gray-15);
+    color: var(--color-black);
+    text-decoration: none;
+  }
+}
+
+// ── Sections ──
+// A jump from the counts lands the heading clear of what sticks above it: the
+// phones' 64px top bar, the toolbar's two rows (900–1099px) or its one row (1100px+).
 .section {
-  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  scroll-margin-top: 80px;
+
+  @include media-up(tablet) {
+    scroll-margin-top: 120px;
+  }
+
+  @include media-up(wide) {
+    scroll-margin-top: var(--space-18);
+  }
 }
 
 .sectionTitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--ref-text-soft);
-  margin: 0 0 1.25rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-black);
 }
 
-/* ---------- API Groups ---------- */
+.groupGrid,
+.modelGrid,
+.enumGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
 
-.group {
-  margin-bottom: 1.5rem;
-  background: var(--ref-surface);
-  border: 1px solid var(--ref-border);
-  border-radius: 10px;
-  overflow: hidden;
+  @include media-up(tablet) {
+    gap: var(--space-4);
+  }
 }
 
-.groupHeader {
+@include media-up(tablet) {
+  .groupGrid {
+    grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+  }
+
+  .modelGrid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .enumGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+// ── Cards (one per endpoint group, model or enum) ──
+.card {
+  min-width: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.cardHead {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 1rem;
-  background: var(--ref-surface-header);
-  border-bottom: 1px solid var(--ref-border-soft);
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
 }
 
 .groupName {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ref-text-strong);
-  text-transform: capitalize;
-}
-
-.groupCount {
-  font-size: 0.7rem;
-  color: var(--ref-text-muted);
-  background: var(--ref-surface-pill);
-  padding: 0.15rem 0.5rem;
-  border-radius: 10px;
-}
-
-.routeList {
-  list-style: none;
   margin: 0;
-  padding: 0;
+  min-width: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+  overflow-wrap: anywhere;
+}
+
+// Two classes: the shell sets every heading in its content to the dashboard
+// font (`.content h3`), which one class would lose to.
+.cardHead .modelName,
+.enumCard .enumName {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+  overflow-wrap: anywhere;
+}
+
+.cardMeta {
+  flex: 0 0 auto;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+// ── Endpoints: badges in a 132px column, then the path ──
+// Phones stack them: the badges, then the path under them (Q91).
+.routeList {
+  margin: 0;
+  padding: var(--space-1) 0;
+  list-style: none;
 }
 
 .routeItem {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--ref-border-faint);
-  font-size: 0.82rem;
-  transition: background 0.15s;
-}
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
 
-.routeItem:last-child {
-  border-bottom: none;
-}
-
-.routeItem:hover {
-  background: var(--ref-surface);
+  @include media-up(tablet) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: 7px var(--space-4);
+  }
 }
 
 .methods {
   display: flex;
-  gap: 0.3rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+
+  @include media-up(tablet) {
+    flex: 0 0 132px;
+  }
 }
 
+// GET blue, POST green, PUT / PATCH amber, DELETE red (developer.md). An unknown
+// method keeps the gray `.method`.
 .method {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  letter-spacing: 0.04em;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--color-gray-20);
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 11px;
+  font-weight: var(--font-medium);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
 }
 
 .methodGET {
   composes: method;
-  background: var(--ref-green-tint);
-  color: var(--ref-green);
+  background: var(--color-badge-info-bg);
+  color: var(--color-badge-info-text);
 }
 
 .methodPOST {
   composes: method;
-  background: var(--ref-blue-tint);
-  color: var(--ref-blue);
+  background: var(--color-badge-success-bg);
+  color: var(--color-badge-success-text);
 }
 
+// `composes` takes one class per rule, hence two rules.
 .methodPUT {
   composes: method;
-  background: var(--ref-amber-tint);
-  color: var(--ref-amber);
-}
-
-.methodDELETE {
-  composes: method;
-  background: var(--ref-red-tint);
-  color: var(--ref-red);
+  background: var(--color-badge-warning-bg);
+  color: var(--color-badge-warning-text);
 }
 
 .methodPATCH {
   composes: method;
-  background: var(--ref-purple-tint);
-  color: var(--ref-purple);
+  background: var(--color-badge-warning-bg);
+  color: var(--color-badge-warning-text);
+}
+
+.methodDELETE {
+  composes: method;
+  background: var(--color-badge-danger-bg);
+  color: var(--color-badge-danger-text);
 }
 
 .routePath {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 0.8rem;
-  color: var(--ref-text-mid);
+  min-width: 0;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+
+  // formatPath's `:param` spans.
+  span {
+    color: var(--admin-code-param);
+  }
 }
 
-.routePath span {
-  color: var(--ref-indigo);
-  font-weight: 500;
-}
+// ── Models: one row per field ──
+// Past 12 fields the list scrolls inside its card at today's 320px (Q87).
+.fieldsScroll {
+  max-height: 320px;
+  overflow-y: auto;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 
-/* ---------- Schema Models ---------- */
-
-.modelGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 1rem;
-}
-
-.model {
-  background: var(--ref-surface);
-  border: 1px solid var(--ref-border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.modelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.7rem 1rem;
-  background: var(--ref-surface-header);
-  border-bottom: 1px solid var(--ref-border-soft);
-}
-
-.modelName {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ref-violet);
-}
-
-.modelMeta {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.68rem;
-  color: var(--ref-text-muted);
+  &:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: -2px;
+  }
 }
 
 .fieldList {
-  padding: 0.4rem 0;
-  max-height: 320px;
-  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-1) 0;
+  list-style: none;
 }
 
 .field {
-  display: grid;
-  grid-template-columns: 140px 1fr auto;
-  gap: 0.5rem;
-  padding: 0.3rem 1rem;
-  font-size: 0.78rem;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  display: flex;
   align-items: baseline;
-  transition: background 0.15s;
-}
-
-.field:hover {
-  background: var(--ref-surface);
+  gap: var(--space-2);
+  padding: 5px var(--space-4);
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 12.5px;
+  line-height: var(--leading-normal);
 }
 
 .fieldName {
-  color: var(--ref-text-strong);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  color: var(--color-black);
+  overflow-wrap: anywhere;
 }
 
-.fieldNameId {
-  composes: fieldName;
-  color: var(--ref-amber);
+.tag {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  line-height: var(--leading-normal);
 }
 
-.fieldNameRelation {
-  composes: fieldName;
-  color: var(--ref-indigo);
+.tagPk {
+  background: var(--color-badge-warning-bg);
+  color: var(--color-badge-warning-text);
+}
+
+.tagUq {
+  background: var(--color-badge-info-bg);
+  color: var(--color-badge-info-text);
 }
 
 .fieldType {
-  color: var(--ref-text-muted);
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--admin-code-type);
   white-space: nowrap;
 }
 
+// The drawn #999 is 2.8:1 on white; secondary text passes (Q90). Long defaults
+// end in an ellipsis, with the whole value in the `title`.
 .fieldDefault {
-  color: var(--ref-text-faint);
-  font-size: 0.72rem;
-  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
-  text-align: right;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
 }
 
-.fieldBadge {
-  font-size: 0.58rem;
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-left: 0.3rem;
-}
-
-.badgeId {
-  composes: fieldBadge;
-  background: var(--ref-amber-tint);
-  color: var(--ref-amber);
-}
-
-.badgeUnique {
-  composes: fieldBadge;
-  background: var(--ref-purple-tint);
-  color: var(--ref-purple);
-}
-
-/* ---------- Enums ---------- */
-
-.enumGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.enum {
-  background: var(--ref-surface);
-  border: 1px solid var(--ref-border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.enumHeader {
-  padding: 0.6rem 1rem;
-  background: var(--ref-surface-header);
-  border-bottom: 1px solid var(--ref-border-soft);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ref-pink);
+// ── Enums: the name, then the values as gray chips ──
+.enumCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-3) var(--space-4);
 }
 
 .enumValues {
-  padding: 0.5rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .enumValue {
-  display: block;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 0.78rem;
-  color: var(--ref-text-mid);
-  padding: 0.2rem 0;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
 }
 
-/* ---------- No Results ---------- */
-
+// ── No results ──
 .noResults {
+  padding: var(--space-12) var(--space-4);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
   text-align: center;
-  padding: 3rem 1rem;
-  color: var(--ref-text-faint);
-  font-size: 0.85rem;
-}
-
-/* ---------- Back Link ---------- */
-
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  color: var(--ref-text-muted);
-  text-decoration: none;
-  margin-bottom: 1.25rem;
-  transition: color 0.15s;
-}
-
-.backLink:hover {
-  color: var(--ref-text-mid);
+  color: var(--color-text-secondary);
 }

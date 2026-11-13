@@ -16,9 +16,17 @@ type UpdatePresetModalProps = {
   onUpdate: (presetId: string) => void
   onClose: () => void
   loading: boolean
+  /** The last update was refused (questions.md Q146 h). */
+  failed?: boolean
 }
 
-const UpdatePresetModal = ({ presets, onUpdate, onClose, loading }: UpdatePresetModalProps) => {
+const UpdatePresetModal = ({
+  presets,
+  onUpdate,
+  onClose,
+  loading,
+  failed = false,
+}: UpdatePresetModalProps) => {
   return (
     <Modal onClose={onClose}>
       <div className={styles.header}>
@@ -34,6 +42,11 @@ const UpdatePresetModal = ({ presets, onUpdate, onClose, loading }: UpdatePreset
           aria-label="Close"
         />
       </div>
+      {failed && (
+        <p role="alert" className={styles.failed}>
+          Not saved. Please try again.
+        </p>
+      )}
       <div className={styles.list}>
         {presets.length === 0 ? (
           <Text font="dashboard" as="p" size="xs" className={styles.empty}>

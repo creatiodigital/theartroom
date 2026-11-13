@@ -99,7 +99,7 @@ test('checking an exhibition on the artwork form creates membership, leaving the
     await rowA.click()
     await expect(page.getByLabel('E2E Picker Show A')).toBeChecked()
 
-    await page.getByRole('button', { name: /^Save$/ }).click()
+    await page.getByRole('button', { name: /^Save changes$/ }).click()
     await page.waitForURL('**/dashboard/artworks', { timeout: 15000 })
 
     const memberRow = await prisma.exhibitionArtwork.findUnique({
@@ -144,7 +144,7 @@ test('existing membership is pre-checked, and an unrelated save does not drop it
 
     // Save with no changes at all — e.g. the artist opened the editor only to
     // fix the title, never touching the Exhibitions section.
-    await page.getByRole('button', { name: /^Save$/ }).click()
+    await page.getByRole('button', { name: /^Save changes$/ }).click()
     await page.waitForURL('**/dashboard/artworks', { timeout: 15000 })
 
     const row = await prisma.exhibitionArtwork.findUnique({

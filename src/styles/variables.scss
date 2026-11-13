@@ -92,6 +92,18 @@
   --color-highlight: var(--color-orange-50);
   --logo-width: 160px; // one knob for the header logo everywhere
 
+  // Public site redesign (docs/public-redesign/components.md "Tokens"). Brand red is
+  // --color-brand, the hairline --color-gray-30.
+  --public-text: #1a1a1a;
+  --public-body: #444444;
+  --public-secondary: #555555;
+  --public-muted: #888888;
+  --public-render-wall: #f2f2f2; // behind every print render and the home prints section
+  // One neutral light grey for bands, panels, summary boxes and fields: the live site's
+  // (--color-surface-subtle), not the warm off-white the boards drew (owner, 2026-11-12).
+  --public-off-white: var(--color-surface-subtle); // bands, panels, summary boxes
+  --public-field: var(--color-surface-subtle); // field background
+
   // Panels
   --color-surface-elevated: var(--color-gray-15);
   --color-surface-workspace: var(--color-gray-25);
@@ -135,9 +147,86 @@
   --color-warning-gradient-start: var(--color-amber-50);
   --color-warning-gradient-end: var(--color-amber-60);
 
+  // Admin shell (docs/admin-redesign/README.md). Admin-only; the public site never reads these.
+  --admin-sidebar-width: 248px;
+  --admin-content-max-width: 1180px;
+  --admin-nav-hover: #222222; // menu item hover on the dark menu
+  --admin-nav-text: var(--color-gray-35); // menu item text on the dark menu
+  --admin-amber-bg: #fffbeb; // amber attention card
+  --admin-amber-border: #f5d68a;
+  --admin-amber-text: #5c4503; // text on the amber callout
+  --admin-live: #4cc38a; // "Purchases open" dot
+  --admin-paused-surface: #3a1316; // paused box inside the dark menu
+  --admin-paused-border: #7a1c22;
+  --admin-paused-text: #e0b4b7;
+  --admin-paused-dot: #ff6b6b;
+  --admin-backdrop: rgba(26, 26, 26, 0.55); // behind admin dialogs
+  --admin-dialog-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  --admin-menu-shadow: 0 10px 28px rgba(0, 0, 0, 0.12); // row menus (ui/RowMenu)
+  --admin-published-dot: #2e8b57; // the "Published" dot (ui/PublishState)
+  --admin-success-border: #b7dfc2; // the success feedback bar (ui/FeedbackBar)
+  --admin-preview-tile: #f0efec; // behind a work's render (print presentations)
+  --admin-save-bar-shadow: 0 -6px 16px rgba(0, 0, 0, 0.04); // the fixed save bar (ui/SaveBar)
+  --admin-code-param: #9a5b00; // a route's :param (API reference)
+  --admin-code-type: #2e6b8a; // a model field's type (API reference)
+  // Donut / chart grays, darkest first (dashboard "Traffic channels").
+  --admin-chart-1: var(--color-dark-surface);
+  --admin-chart-2: var(--color-gray-70);
+  --admin-chart-3: #a3a3a3;
+  --admin-chart-4: var(--color-gray-65);
+  --admin-chart-5: #e6e6e6;
+
+  // Artist studio (artist.md §0): the light variant of the admin shell. Studio-only.
+  --studio-content-max-width: 1080px; // lists: Home, Artworks, the artwork editor
+  --studio-form-max-width: 880px; // forms: Profile, Payouts, Exhibition settings
+  --studio-nav-active: #f2f0ec; // active menu row
+  --studio-avatar: #e8e2d8; // initials avatar
+  --studio-foot-text: #555555; // Change password / Log out rows
+  --studio-impersonation-surface: #fbeeee; // card fill, phone pill fill
+  --studio-impersonation-border: #f0c9cc; // card and pill border
+  --studio-impersonation-button-border: #e6b8bb;
+  --studio-impersonation-label: #8f1119; // "Viewing as"
+  --studio-impersonation-text: #6b2a2e; // the card's sentence
+  --studio-note-surface: #f7f7f7; // the artwork editor's print-size box
+
+  // 3D room editor chrome (editor3d.md): the toolbar, the editing pill and the tool panels
+  // floating over the room (`components/editorChrome`). Editor-only.
+  --editor-toolbar-surface: rgba(255, 255, 255, 0.96); // toolbar, editing pill
+  --editor-panel-surface: rgba(255, 255, 255, 0.97); // the tool panels
+  --editor-toolbar-shadow: 0 8px 28px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --editor-panel-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --editor-pill-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --editor-thumb-shadow: 0 0 0 1.5px var(--color-dark-surface), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --editor-swatch-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.12); // a color swatch's hairline
+  --editor-card: #f7f7f7; // section and row cards
+  --editor-chip: #f2f2f2; // a slider's value chip on white
+  --editor-track: #e3e3e3; // a slider's track on white
+  --editor-attention-dot: #e0a800; // the editing pill, "Unsaved changes"
+  --editor-tone-natural: #e7dccb; // Floor → Tone track
+  --editor-tone-honey: #c8924f;
+  --editor-tint-lighting: #fff4d6;
+  --editor-tint-lighting-icon: #8a5a00;
+  --editor-tint-benches: #efe7dc;
+  --editor-tint-benches-icon: #6b4e2e;
+  --editor-tint-floor: #f1e6d6;
+  --editor-tint-floor-icon: #7a5a30;
+  --editor-tint-bake: #e8eef7;
+  --editor-tint-bake-icon: #2c4a73;
+  --editor-tint-windows: #e6f0f5;
+  --editor-tint-windows-icon: #2c5a73;
+  --editor-tint-view: #ece8f4;
+  --editor-tint-view-icon: #4a3a73;
+  --editor-tint-walls: #eceae6; // icon: --color-text-primary
+  // The wall view (wallview.md, `components/wallview`): its side panels and add bar.
+  --editor-row-selected: #eef3fb; // the selected row of "On this wall"
+  --editor-row-selected-text: #1a3f73;
+  --editor-row-selected-edge: #3b6fd8; // its 3px left edge; the item in a distance box
+  --editor-segment-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); // a pressed segment, a raised strip button
+
   --font-sans-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif-fallback: Georgia, 'Times New Roman', serif;
   --font-dashboard-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-admin-mono-fallback: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --text-xs: 12px;
   --text-sm: 14px;

@@ -1,19 +1,14 @@
-import { PageHeader } from '@/components/ui/PageHeader'
-import { PageLayout } from '@/components/ui/PageLayout'
-import { StaticPageContent } from '@/components/ui/StaticPageContent'
+import { ContentPage } from '@/components/ui/ContentPage'
 
 interface PrivacyPageProps {
   content: string | null
 }
 
-export const PrivacyPage = ({ content }: PrivacyPageProps) => {
-  return (
-    <PageLayout>
-      <PageHeader
-        pageTitle="Privacy Policy"
-        pageSubtitle="How we collect, use, and protect your personal information"
-      />
-      <StaticPageContent content={content} />
-    </PageLayout>
-  )
-}
+// The content-page template (docs/public-redesign/legal.md); title in sentence case.
+export const PrivacyPage = ({ content }: PrivacyPageProps) => (
+  <ContentPage
+    title="Privacy policy"
+    subtitle="How we collect, use, and protect your personal information."
+    content={content}
+  />
+)

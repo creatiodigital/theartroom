@@ -1,0 +1,143 @@
+@use '@/styles/mixins' as *;
+
+// designs/content-slideshow.dc.html (the Slides list). Phones (not drawn,
+// questions.md Q72): the actions drop to a second line, every control 44px.
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-areas:
+    'handle position thumb text'
+    'actions actions actions actions';
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2) 10px;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-1);
+  background: var(--color-white);
+
+  & + & {
+    border-top: 1px solid var(--color-gray-20);
+  }
+
+  @include media-up(tablet) {
+    grid-template-areas: 'handle position thumb text actions';
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: var(--space-3) var(--space-5) var(--space-3) var(--space-3);
+  }
+}
+
+// `numbered={false}` (the artist's library, artist-artworks.dc.html): no position column.
+.unnumbered .row {
+  grid-template-areas:
+    'handle thumb text'
+    'actions actions actions';
+  grid-template-columns: auto auto minmax(0, 1fr);
+
+  @include media-up(tablet) {
+    grid-template-areas: 'handle thumb text actions';
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+  }
+}
+
+// #666, not the drawn #999 (2.8:1, under 3:1; Q71). `touch-action: none` lets a
+// finger drag the row instead of scrolling the page (Q72).
+.handle {
+  grid-area: handle;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: grab;
+  touch-action: none;
+
+  &:hover {
+    color: var(--color-black);
+  }
+
+  &[aria-pressed='true'] {
+    cursor: grabbing;
+  }
+
+  @include media-up(tablet) {
+    width: 32px;
+  }
+}
+
+// `sortable={false}`: the handle's place, kept so the rows don't jump.
+.handleSpacer {
+  grid-area: handle;
+  width: 44px;
+  height: 44px;
+
+  @include media-up(tablet) {
+    width: 32px;
+  }
+}
+
+.position {
+  grid-area: position;
+  width: 20px;
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-text-secondary);
+
+  @include media-up(tablet) {
+    width: 24px;
+  }
+}
+
+.thumb {
+  grid-area: thumb;
+  display: flex;
+}
+
+.text {
+  grid-area: text;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+  overflow-wrap: anywhere;
+}
+
+// A title that links somewhere (`href`): no underline until hover.
+.titleLink {
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-black);
+    text-decoration: underline;
+  }
+}
+
+.sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  justify-self: end;
+  align-items: center;
+  gap: var(--space-2);
+}

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artist Profile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Artist" style="flex: 1 1 248px; background: #ffffff; border-right: 1px solid #eaeaea; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="ArtistHome.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #000000; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #bd1622">Artist studio</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="ArtistHome.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Home</a>
+<a href="ArtistArtworks.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Artworks</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #f2f0ec; color: #000000; font-weight: 600; text-decoration: none">Profile</a>
+<a href="ArtistPayouts.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Payouts</a>
+</div>
+<span style="padding: 0 12px; font-size: 12px; color: #999999">(menu shortened on this board)</span>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column">
+<div style="max-width: 880px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; flex: 1 1 auto">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Profile</h1>
+<span style="color: #666666">How you appear to visitors on your public artist page.</span>
+</div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff; text-decoration: none; color: #000000">View my public page<svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,104a6,6,0,0,1-12,0V54.49l-69.75,69.75a6,6,0,0,1-8.48-8.48L201.51,46H152a6,6,0,0,1,0-12h64a6,6,0,0,1,6,6Zm-38,26a6,6,0,0,0-6,6v72a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V80a2,2,0,0,1,2-2h72a6,6,0,0,0,0-12H48A14,14,0,0,0,34,80V208a14,14,0,0,0,14,14H176a14,14,0,0,0,14-14V136A6,6,0,0,0,184,130Z"></path></svg></a>
+</header>
+
+<section aria-labelledby="h-pic" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-pic" style="margin: 0; font-size: 15px; font-weight: 700; color: #000000">Profile picture</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px">
+<span aria-hidden="true" style="width: 112px; height: 112px; border-radius: 50%; background: linear-gradient(135deg,#d8c3a5,#8e7355)"></span>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,144v64a6,6,0,0,1-6,6H40a6,6,0,0,1-6-6V144a6,6,0,0,1,12,0v58H210V144a6,6,0,0,1,12,0ZM92.24,76.24,122,46.49V144a6,6,0,0,0,12,0V46.49l29.76,29.75a6,6,0,0,0,8.48-8.48l-40-40a6,6,0,0,0-8.48,0l-40,40a6,6,0,0,0,8.48,8.48Z"></path></svg>Replace</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 7px 10px; min-height: 36px; background: none; border: 0; color: #bd1622">Remove</button></div>
+<span style="font-size: 12px; color: #666666">Recommended: JPG, PNG or WebP. Max 1 MB.</span>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="h-sig" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-sig" style="margin: 0; font-size: 15px; font-weight: 700; color: #000000">Artist signature</h2><span style="color: #555555">Upload a scan or photo of your handwritten signature. It is supplied to the print lab for your <strong>signed limited editions</strong>. It reassures the buyer the piece is genuine, and keeps your work traceable back to you.</span></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px">
+<span style="width: 300px; height: 100px; border: 1px solid #eaeaea; border-radius: 4px; background-color: #ffffff; background-image: linear-gradient(45deg,#f2f2f2 25%,transparent 25%,transparent 75%,#f2f2f2 75%),linear-gradient(45deg,#f2f2f2 25%,transparent 25%,transparent 75%,#f2f2f2 75%); background-size: 16px 16px; background-position: 0 0,8px 8px; display: flex; align-items: center; justify-content: center; font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 36px; color: #1a1a1a">Jane Doe</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px">Replace</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 7px 10px; min-height: 36px; background: none; border: 0; color: #bd1622">Remove</button></div>
+</div>
+<span style="font-size: 12px; color: #666666">Transparent PNG only. Minimum 600 × 200 pixels. Keep the background fully transparent: your signature should float over the certificate, not sit in a white box.</span>
+</section>
+
+<section aria-labelledby="h-name" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<h2 id="h-name" style="margin: 0; font-size: 15px; font-weight: 700; color: #000000">About you</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #555555">First name</span><input value="Jane" style="font: inherit; font-size: 14px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #dcdcdc; border-radius: 4px"></label>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #555555">Last name</span><input value="Doe" style="font: inherit; font-size: 14px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #dcdcdc; border-radius: 4px"></label>
+</div>
+<span style="margin-top: -10px; font-size: 12px; color: #666666">Your name as it will appear on your public artist profile.</span>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #555555">Profile URL</span><span style="display: flex; align-items: stretch; min-height: 44px; border: 1px solid #dcdcdc; border-radius: 4px; overflow: hidden"><span style="display: flex; align-items: center; padding: 0 12px; background: #f6f6f6; border-right: 1px solid #dcdcdc; color: #666666; font-size: 13px; white-space: nowrap">theartroom.gallery/artists/</span><input value="jane-doe" style="flex: 1 1 auto; min-width: 0; font: inherit; font-size: 14px; border: 0; padding: 0 12px"></span><span style="font-size: 12px; color: #666666">Lowercase letters, numbers and hyphens only.</span></label>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: #555555">Email address</span><input value="jane@example.com" style="font: inherit; font-size: 14px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #dcdcdc; border-radius: 4px"></label>
+</section>
+
+<section aria-labelledby="h-bio" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-bio" style="margin: 0; font-size: 15px; font-weight: 700; color: #000000">Biography</h2>
+<div style="border: 1px solid #dcdcdc; border-radius: 4px"><div style="display: flex; gap: 2px; padding: 4px; border-bottom: 1px solid #eaeaea; font-size: 13px"><span style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700">B</span><span style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-style: italic">I</span><span style="width: 1px; background: #eaeaea; margin: 4px"></span><span style="padding: 0 8px; display: flex; align-items: center">H2</span><span style="padding: 0 8px; display: flex; align-items: center">• List</span><span style="padding: 0 8px; display: flex; align-items: center">Link</span></div><div style="padding: 14px 16px; min-height: 140px; font-family: Lato, Georgia, serif; font-size: 15px; line-height: 1.6">Jane Doe paints coastlines at the edges of the day. She lives and works by the Tagus estuary, where most of her paintings begin.</div></div>
+</section>
+
+<div style="height: 24px"></div>
+</div>
+<div style="position: sticky; bottom: 0; margin: 0 -40px; padding: 14px 40px; background: #ffffff; border-top: 1px solid #eaeaea; display: flex; align-items: center; gap: 12px; justify-content: flex-end">
+<span style="margin-right: auto; font-size: 13px; color: #666666">All changes saved</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; color: #999999">Discard</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; min-height: 36px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px">Save changes</button>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -102,7 +102,7 @@ export type TArtwork = {
   hideShadow?: boolean
   // Sound artwork settings (exhibition-level)
   soundUrl?: string // URL of the audio file
-  soundIcon?: string // Lucide icon name to display
+  soundIcon?: string // `Icon` name to display (see ui/Icon), stored: never rename a key
   soundPlayMode?: 'loop' | 'play-once' // Playback mode
   soundSpatial?: boolean // 3D spatial audio
   soundDistance?: number // Reference distance for spatial audio falloff

@@ -17,8 +17,8 @@ export const Header = ({ borderless = false }: HeaderProps) => {
   return (
     <header className={c(styles.header, borderless && styles.borderless)}>
       <div className={styles.headerInner}>
-        <Link href="/" className={styles.logoLink}>
-          <Logo className={styles.logo} />
+        <Link href="/" className={styles.logoLink} aria-label="The Art Room">
+          <Logo className={styles.logo} aria-hidden />
         </Link>
         <Navigation />
       </div>

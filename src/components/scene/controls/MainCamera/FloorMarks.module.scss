@@ -72,15 +72,16 @@
   animation: ripple 2s ease-out infinite;
 }
 
-// The hand's fingertip in `gesture-tap.svg`, and the pointer's tip.
+// The hand's fingertip in `gesture-tap.svg`, and the pointer's tip (Phosphor `Cursor`, regular,
+// at 20 px: its line's tip sits at 3.3 px; the ripple lands just inside it, as it did before).
 .fingertip {
   top: 4.5px;
   left: 8.5px;
 }
 
 .tip {
-  top: 4px;
-  left: 4px;
+  top: 3.85px;
+  left: 3.85px;
 }
 
 // A hand (or the mouse) drawn side to side, as a drag looks around.

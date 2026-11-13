@@ -1,70 +1,82 @@
+@use '@/styles/mixins' as *;
+
+// Edition variants as a small table (artist.md §3, designs/artist-artwork-edit.dc.html):
+// one bordered box, a head row, then one expandable row per variant.
 .editor {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  margin-top: var(--space-3);
-}
-
-.variantCard {
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-subtle);
-  overflow: hidden;
-}
-
-// Clickable header — collapses/expands the variant body.
-.variantHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-}
-
-.variantTag {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  margin-top: var(--space-1);
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-weight: var(--font-medium);
   font-size: var(--text-sm);
+  line-height: var(--leading-normal);
   color: var(--color-text-primary);
 }
 
-// "Currently Selling" badge — shown next to the name only for a live
-// (published + on-sale) variant, so the artist sees at a glance which
-// editions are locked and earning.
-.sellingTag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--color-badge-success-bg);
-  color: var(--color-badge-success-text);
-  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  letter-spacing: 0.03em;
-  white-space: nowrap;
+.table {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
 
-  &::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-success);
-    flex-shrink: 0;
+.tableHead {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 10px 14px;
+  background: var(--color-gray-15);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.row + .row {
+  border-top: 1px solid var(--color-gray-20);
+}
+
+.tableHead + .row {
+  border-top: 1px solid var(--color-border-default);
+}
+
+// The row's header (it opens and closes the row). Two classes: Button's bare
+// reset would win over one.
+.row .rowHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: var(--space-2) 14px;
+  background: var(--color-white);
+  border: 0;
+  border-radius: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  text-align: left;
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-10);
   }
+}
+
+.rowName {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.rowStatus {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 // Chevron pushed to the right edge; rotates to point up when expanded.
 .chevron {
-  margin-left: auto;
   flex-shrink: 0;
   color: var(--color-text-secondary);
   transition: transform 0.15s ease;
@@ -74,40 +86,62 @@
   transform: rotate(180deg);
 }
 
-.variantBody {
+.rowBody {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: 0 var(--space-4) var(--space-4);
+  gap: 14px;
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-gray-20);
+  background: var(--color-gray-10);
 }
 
-// Per-variant lock notice, shown on a LIVE (published + blocked) variant.
-// Freezing is per-variant: the artwork-level banner only reports the
-// series-type lock, so each live variant has to state its own status here —
-// otherwise a card that is fully editable sits under a page-wide "locked"
-// warning and reads as frozen.
-.variantLockedBanner {
+// ── Fields ─────────────────────────────────────────────────────
+
+.field {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-badge-warning-text);
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+// `Input size="bare"`: 44px at every width.
+.input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-gray-60);
   border-radius: var(--radius-sm);
-  background: var(--color-badge-warning-bg);
+  background: var(--color-white);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
   color: var(--color-text-primary);
-}
 
-.variantLockedBadge {
-  flex-shrink: 0;
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  color: var(--color-badge-warning-text);
-  background: var(--color-white);
-  border: 1px solid var(--color-badge-warning-text);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  line-height: 1.6;
+  &:focus {
+    border-color: var(--color-dark-surface);
+    outline: none;
+  }
+
+  &:disabled {
+    background: var(--color-gray-15);
+    color: var(--color-text-secondary);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-red-50);
+  }
 }
 
 // Two equal-width fields side by side (border + number of copies).
@@ -121,62 +155,121 @@
   }
 }
 
-.variantFooter {
+.priceField {
+  max-width: 240px;
+}
+
+// The price field with € inside it.
+.money {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  margin-top: var(--space-1);
+  align-items: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+
+  &:focus-within {
+    border-color: var(--color-dark-surface);
+  }
+
+  &:has([aria-invalid='true']) {
+    border-color: var(--color-red-50);
+  }
 }
 
-.error {
-  margin-top: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--color-error-text);
-}
-
-.hint {
-  font-size: var(--text-xs);
+.currency {
+  padding: 0 var(--space-1) 0 var(--space-3);
   color: var(--color-text-secondary);
-  font-weight: var(--font-medium);
 }
 
-.addRow {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+.moneyField {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.templatePicker {
-  margin-top: var(--space-2);
-  max-width: 520px;
+.moneyInput {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+
+  &:focus {
+    outline: none;
+  }
 }
+
+// ── Sheet size mode: a segmented pair ──────────────────────────
 
 .modeToggle {
-  display: flex;
-  gap: var(--space-2);
+  display: inline-flex;
   flex-wrap: wrap;
+  align-self: flex-start;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-white);
 }
 
+.modeToggle .mode {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: 0;
+  background: var(--color-white);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--color-dark-surface);
+    font-weight: var(--font-semibold);
+    color: var(--color-white);
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.modeToggle .mode + .mode {
+  border-left: 1px solid var(--color-gray-60);
+}
+
+// ── The layout summary ─────────────────────────────────────────
+
 .layoutSummary {
-  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-3);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
-  background: var(--color-surface-panel);
+  background: var(--color-white);
 }
 
+// A <p>: its size and line height are pinned (globals.scss gives every <p> 16–18px).
 .layoutLine {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: 13px;
+  line-height: var(--leading-normal);
   color: var(--color-text-secondary);
 }
 
 .recipeDetails {
-  margin-top: var(--space-2);
-
   summary {
     cursor: pointer;
-    font-size: var(--text-sm);
+    font-size: 13px;
+    font-weight: var(--font-semibold);
   }
 }
 
@@ -188,6 +281,82 @@
   font-size: var(--text-xs);
   line-height: 1.6;
   white-space: pre;
-  background: var(--color-white);
+  background: var(--color-gray-10);
   border-radius: var(--radius-sm);
+}
+
+// ── Buttons. Two classes: Button's bare reset would win over one. 44px under 900px (Q7).
+
+.variantFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.variantFooter .outline,
+.variantFooter .dark,
+.variantFooter .danger,
+.addRow .outline,
+.recipeDetails .outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--color-gray-15);
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.variantFooter .dark {
+  background: var(--color-dark-surface);
+  border-color: var(--color-dark-surface);
+  color: var(--color-white);
+
+  &:hover {
+    background: var(--color-dark-surface-raised);
+    border-color: var(--color-dark-surface-raised);
+    color: var(--color-white);
+  }
+}
+
+.variantFooter .danger {
+  color: var(--color-red-50);
+
+  &:hover {
+    background: var(--color-red-30);
+    border-color: var(--color-red-40);
+    color: var(--color-red-50);
+  }
+}
+
+.templatePicker {
+  margin-top: var(--space-2);
+  max-width: 520px;
 }

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Room Menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#d6d6d6}
+.mb{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.96);border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.05);color:#1a1a1a;padding:0}
+.mb.open{background:#1a1a1a;color:#fff}
+.menu{position:absolute;width:244px;padding:6px;background:#fff;border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.05);display:flex;flex-direction:column}
+.it{display:flex;align-items:center;gap:12px;height:46px;padding:0 12px;border-radius:9px;font-size:15px;color:#1a1a1a}
+.it svg{flex:0 0 auto}
+.sw{margin-left:auto;width:34px;height:20px;border-radius:10px;background:#1a1a1a;position:relative}
+.sw::after{content:'';position:absolute;top:3px;left:17px;width:14px;height:14px;border-radius:50%;background:#fff}
+.cap{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#555}
+</style>
+</helmet>
+<div style="display: flex; gap: 40px; padding: 40px; box-sizing: border-box; min-height: 100vh; background: #d6d6d6; font-family: Lato, -apple-system, sans-serif; align-items: flex-start; justify-content: center">
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="cap">Desktop · menu open</span>
+<div style="position: relative; width: 1120px; height: 680px; border-radius: 10px; overflow: hidden; background: #e9e9e9 url('/_blob/109a2bd8698141144c1b6c8556e0f67d') center / cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.15)">
+<button class="mb open" aria-label="Menu" aria-expanded="true" style="position: absolute; right: 20px; top: 20px"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.x}}"></path></svg></button>
+<div class="menu" role="menu" style="right: 20px; top: 72px">
+<div class="it" role="menuitemcheckbox" aria-checked="true"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.sound}}"></path></svg>Sound<span class="sw"></span></div>
+<div class="it" role="menuitem"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.help}}"></path></svg>How to move around</div>
+<span style="height: 1px; background: #eeeeee; margin: 4px 8px"></span>
+<div class="it" role="menuitem"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.exit}}"></path></svg>Leave exhibition</div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="cap">Closed: the only button on screen</span>
+<div style="position: relative; width: 300px; height: 150px; border-radius: 10px; overflow: hidden; background: #e9e9e9 url('/_blob/109a2bd8698141144c1b6c8556e0f67d') right top / 1120px auto no-repeat; box-shadow: 0 6px 20px rgba(0,0,0,0.12)">
+<button class="mb" aria-label="Menu" style="position: absolute; right: 20px; top: 20px"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.list}}"></path></svg></button>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="cap">Phone · menu open</span>
+<div style="position: relative; width: 300px; height: 560px; border-radius: 28px; overflow: hidden; background: #e9e9e9 url('/_blob/109a2bd8698141144c1b6c8556e0f67d') 55% center / auto 100% no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.15)">
+<button class="mb open" aria-label="Menu" aria-expanded="true" style="position: absolute; right: 14px; top: 44px"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.x}}"></path></svg></button>
+<div class="menu" style="right: 14px; top: 96px; width: 230px">
+<div class="it"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.sound}}"></path></svg>Sound<span class="sw"></span></div>
+<div class="it"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.tap}}"></path></svg>How to move around</div>
+<span style="height: 1px; background: #eeeeee; margin: 4px 8px"></span>
+<div class="it"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.exit}}"></path></svg>Leave exhibition</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { ic: {
+      list: 'M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM40,70H216a6,6,0,0,0,0-12H40a6,6,0,0,0,0,12ZM216,186H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z',
+      x: 'M204.24,195.76a6,6,0,1,1-8.48,8.48L128,136.49,60.24,204.24a6,6,0,0,1-8.48-8.48L119.51,128,51.76,60.24a6,6,0,0,1,8.48-8.48L128,119.51l67.76-67.75a6,6,0,0,1,8.48,8.48L136.49,128Z',
+      sound: 'M154.64,26.61a6,6,0,0,0-6.32.65L77.94,82H32A14,14,0,0,0,18,96v64a14,14,0,0,0,14,14H77.94l70.38,54.74A6,6,0,0,0,158,224V32A6,6,0,0,0,154.64,26.61ZM30,160V96a2,2,0,0,1,2-2H74v68H32A2,2,0,0,1,30,160Zm116,51.73L86,165.07V90.93l60-46.66Zm50.53-108.85a38,38,0,0,1,0,50.24,6,6,0,1,1-9-7.94,26,26,0,0,0,0-34.37,6,6,0,0,1,9-7.93ZM246,128a77.86,77.86,0,0,1-19.86,52,6,6,0,1,1-8.94-8,66,66,0,0,0,0-88,6,6,0,1,1,8.94-8A77.86,77.86,0,0,1,246,128Z',
+      help: 'M144,18H112A62.07,62.07,0,0,0,50,80v96a62.07,62.07,0,0,0,62,62h32a62.07,62.07,0,0,0,62-62V80A62.07,62.07,0,0,0,144,18Zm50,158a50.06,50.06,0,0,1-50,50H112a50.06,50.06,0,0,1-50-50V80a50.06,50.06,0,0,1,50-50h32a50.06,50.06,0,0,1,50,50ZM134,64v48a6,6,0,0,1-12,0V64a6,6,0,0,1,12,0Z',
+      tap: 'M58,76a58,58,0,0,1,116,0,6,6,0,0,1-12,0,46,46,0,0,0-92,0,6,6,0,0,1-12,0Zm138,46a25.87,25.87,0,0,0-14.59,4.49A26,26,0,0,0,142,110.1V76a26,26,0,0,0-52,0v87l-7.53-12.1a26,26,0,0,0-45,26.13l29.32,50A6,6,0,0,0,77.16,221L47.870,171a14,14,0,0,1,24.25-14,1,1,0,0,0,.1.17l18.68,30A6,6,0,0,0,102,184V76a14,14,0,0,1,28,0v68a6,6,0,0,0,12,0V132a14,14,0,0,1,28,0v20a6,6,0,0,0,12,0v-4a14,14,0,0,1,28,0v36c0,22.13-7.3,37.18-7.37,37.32a6,6,0,0,0,2.69,8A5.83,5.83,0,0,0,208,230a6,6,0,0,0,5.38-3.32c.35-.7,8.63-17.55,8.63-42.68V148A26,26,0,0,0,196,122Z',
+      exit: 'M118,216a6,6,0,0,1-6,6H48a6,6,0,0,1-6-6V40a6,6,0,0,1,6-6h64a6,6,0,0,1,0,12H54V210h58A6,6,0,0,1,118,216Zm110.24-92.24-40-40a6,6,0,0,0-8.48,8.48L209.51,122H112a6,6,0,0,0,0,12h97.51l-29.75,29.76a6,6,0,1,0,8.48,8.48l40-40A6,6,0,0,0,228.24,123.76Z'
+    } };
+  }
+}
+</script>
+</body>
+</html>

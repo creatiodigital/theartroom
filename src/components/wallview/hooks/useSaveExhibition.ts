@@ -1,16 +1,20 @@
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getAllPendingUploads, clearAllPendingUploads, isLocalBlobUrl } from '@/lib/pendingUploads'
+import { getAllPendingUploads, clearAllPendingUploads } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
+import { setWallSaving } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
+import { takeStudioValuesForSave } from '@/hooks/artworkReread'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { selectAutofocusGroups } from '@/redux/selectors/autofocusGroups'
+
+import { buildArtworksBatch, withStudioValues } from './artworksBatch'
 
 export const useSaveExhibition = () => {
   const { effectiveUser } = useEffectiveUser()
   const dispatch = useDispatch()
-  const [saving, setSaving] = useState(false)
+  const saving = useSelector((state: RootState) => state.wallView.wallSaving)
   const [error, setError] = useState<string | null>(null)
 
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -30,7 +34,7 @@ export const useSaveExhibition = () => {
       return false
     }
 
-    setSaving(true)
+    dispatch(setWallSaving(true))
     setError(null)
 
     try {
@@ -51,9 +55,15 @@ export const useSaveExhibition = () => {
           throw new Error(data.error || 'Failed to sync positions')
         }
 
-        setSaving(false)
+        dispatch(setWallSaving(false))
         return true
       }
+
+      // Q157 (a): works opened in the studio with "Edit artwork" are read again, and the batches
+      // send the studio's values but a text item's text (hooks/artworkReread.ts). A failed read
+      // stops the save here, before anything is sent: the other tab's edit is never overwritten.
+      const studioValues = await takeStudioValuesForSave(dispatch)
+      if (!studioValues) throw new Error('Failed to read a work changed in another tab')
 
       // 1. Upload pending images to R2
       const pendingUploads = getAllPendingUploads()
@@ -71,7 +81,7 @@ export const useSaveExhibition = () => {
         })
 
         // First save the artwork record (needed for the image API)
-        const artwork = artworksById[artworkId]
+        const artwork = withStudioValues(artworksById, studioValues, artworkId)
         if (!artwork) {
           console.warn(`Artwork ${artworkId} not found in state, skipping upload`)
           continue
@@ -166,44 +176,13 @@ export const useSaveExhibition = () => {
       // Clear pending video uploads
       clearAllPendingUploads()
 
-      const artworks = allArtworkIds
-        .map((id) => {
-          const artwork = artworksById[id]
-          if (!artwork) return null
-
-          let imageUrl = artwork.imageUrl || null
-
-          // Use uploaded URL if available, otherwise keep existing cloud URL
-          if (uploadedUrls.has(id)) {
-            imageUrl = uploadedUrls.get(id)!
-          } else if (isLocalBlobUrl(imageUrl || undefined)) {
-            // Don't save local blob URLs
-            imageUrl = null
-          }
-
-          // Get original dimensions (from pending upload or existing artwork)
-          const dims = originalDimensions.get(id)
-
-          return {
-            id,
-            name: artwork.name || 'Untitled',
-            artworkType: artwork.artworkType || 'image',
-            title: artwork.artworkTitle || null,
-            author: artwork.author || null,
-            year: artwork.artworkYear || null,
-            technique: null,
-            dimensions: artwork.artworkDimensions || null,
-            description: artwork.description || null,
-            imageUrl,
-            textContent: artwork.textContent || null,
-            featured: artwork.featured ?? false,
-            hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
-            // Include original dimensions if we have them
-            originalWidth: dims?.width ?? artwork.originalWidth ?? null,
-            originalHeight: dims?.height ?? artwork.originalHeight ?? null,
-          }
-        })
-        .filter(Boolean)
+      const artworks = buildArtworksBatch({
+        allArtworkIds,
+        artworksById,
+        studioValues,
+        uploadedUrls,
+        originalDimensions,
+      })
 
       // 3. Save artworks
       const artworkResponse = await fetch('/api/artworks/batch', {
@@ -347,7 +326,7 @@ export const useSaveExhibition = () => {
       setError(err instanceof Error ? err.message : 'Failed to save')
       return false
     } finally {
-      setSaving(false)
+      dispatch(setWallSaving(false))
     }
   }, [
     effectiveUser?.id,

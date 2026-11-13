@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 .container {
   width: 100%;
 }
@@ -169,4 +171,255 @@
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
   color: var(--color-error-text);
+}
+
+// ── tone="admin" (gallery.md §2c, designs/content-editor.dc.html) ──
+// Only the admin layout's own classes; nothing above changes.
+
+.adminContainer {
+  width: 100%;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+}
+
+.adminRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  @include media-up(tablet) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5);
+  }
+}
+
+// 320×180 as drawn (the ratio comes from `aspectRatio`); full width on phones.
+.adminPreview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+
+  @include media-up(tablet) {
+    flex: 0 0 auto;
+    width: 320px;
+  }
+}
+
+// After .dropzone, so its width wins at the same specificity.
+.adminDropzone {
+  @include media-up(tablet) {
+    flex: 0 0 auto;
+    width: 320px;
+  }
+}
+
+// adminPreview="avatar" (artist-profile.dc.html): a 112px circle at every
+// width, the preview and the empty drop area alike. Two classes, so it wins
+// over the 320px / full-width rules above.
+.adminPreview.avatar,
+.adminDropzone.avatar {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-full);
+}
+
+.adminDropzone.avatar {
+  color: var(--color-text-secondary);
+
+  &:hover {
+    color: var(--color-black);
+  }
+}
+
+.avatar .uploadingOverlay {
+  font-size: var(--text-xs);
+}
+
+// adminPreview="signature": 300px wide (full width on phones) at the page's
+// aspect ratio, on a checkerboard so a transparent signature shows as one.
+.adminPreview.signature {
+  border: 1px solid var(--color-border-default);
+  background-color: var(--color-white);
+  background-image:
+    linear-gradient(
+      45deg,
+      var(--color-gray-20) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--color-gray-20) 75%
+    ),
+    linear-gradient(
+      45deg,
+      var(--color-gray-20) 25%,
+      transparent 25%,
+      transparent 75%,
+      var(--color-gray-20) 75%
+    );
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    8px 8px;
+}
+
+.adminPreview.signature,
+.adminDropzone.signature {
+  box-sizing: border-box;
+
+  @include media-up(tablet) {
+    width: 300px;
+  }
+}
+
+.adminSide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+// align="start" (the artwork editor, artist-artwork-edit.dc.html): the preview
+// and the side column top-aligned, the column taking the rest of the row, so a
+// tall note (the print-size box) stays beside the preview instead of wrapping
+// under it. The default (the page editor's banner) stays centered.
+.adminRowStart {
+  @include media-up(tablet) {
+    align-items: flex-start;
+  }
+}
+
+.adminRowStart .adminSide {
+  @include media-up(tablet) {
+    flex: 1 1 260px;
+  }
+}
+
+.adminMeta {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.adminActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+// Two classes: Button's bare reset would win over one.
+.adminActions .adminButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-15);
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.adminActions .adminRemove {
+  color: var(--color-red-50);
+
+  &:hover {
+    background: var(--color-red-30);
+    border-color: var(--color-red-40);
+    color: var(--color-red-50);
+  }
+}
+
+.adminNote {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+// adminLayout="stacked" (the landing page's Edit slide window): the preview at its column's full
+// width, the meta line and Replace / Remove under it; empty, a dashed drop area of the same shape.
+.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stackedPreview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+}
+
+// Smaller than the page editor's buttons, as drawn: 32px from 900px (44px touch targets below).
+.adminActions .stackedButton {
+  @include media-up(tablet) {
+    min-height: 32px;
+    padding: var(--space-1) var(--space-3);
+  }
+}
+
+.stackedDropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-10);
+  color: var(--color-text-secondary);
+  text-align: center;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-black);
+    color: var(--color-black);
+  }
+}
+
+.stackedDragging {
+  border-color: var(--color-black);
+  background: var(--color-gray-15);
+}
+
+.stackedPrompt {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.stackedChoose {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.stackedNote {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
 }

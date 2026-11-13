@@ -1,0 +1,52 @@
+@use '@/styles/mixins' as *;
+
+// artwork.md "More by the artist"; designs/artwork-desktop.dc.html: a hairline, small grey caps,
+// the artist's name in serif 32 with → View artist on the right, then four works (two on phones).
+.more {
+  margin: 72px 0 64px;
+  padding-top: 56px;
+  border-top: 1px solid var(--color-gray-30);
+
+  @include media-down(lg) {
+    margin: var(--space-12) 0 var(--space-10);
+    padding-top: var(--space-10);
+  }
+}
+
+.moreHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: 32px;
+}
+
+.moreTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// #666, not the drawn #999 (Q-P12).
+.eyebrow {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 32px;
+  font-weight: var(--font-regular);
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 28px;
+  }
+}

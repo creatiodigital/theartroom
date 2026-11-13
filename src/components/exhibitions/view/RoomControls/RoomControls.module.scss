@@ -1,0 +1,197 @@
+@use '@/styles/mixins' as *;
+
+// The visitor's controls over the 3D room (visitor-wallview.md): the menu button top-right and, in
+// Wall View, Exit wall view top-left. Desktop: 20px from the edges. Under a finger (`$touch-room`,
+// mixins) 8px, as the room's corner buttons always were there (AR-174, AR-177). The room reaches
+// every edge of the screen (the visit page's `viewport-fit=cover`, AR-176), so each corner also
+// keeps clear of the notch and the rounded corners (`env(safe-area-inset-*)`: 0 where there are none).
+
+.menuWrap {
+  position: fixed;
+  top: calc(var(--space-5) + env(safe-area-inset-top));
+  right: calc(var(--space-5) + env(safe-area-inset-right));
+  z-index: $room-button-z;
+
+  @media #{$touch-room} {
+    top: calc(var(--space-2) + env(safe-area-inset-top));
+    right: calc(var(--space-2) + env(safe-area-inset-right));
+  }
+
+  // A phone on its side (AR-176): iOS keeps the notch's width clear on BOTH sides (47pt), but the
+  // notch sits mid-edge and this button is in a corner, so it goes right by the edge, as upright.
+  @media #{$phone-sideways} {
+    right: var(--space-2);
+  }
+}
+
+.exitWrap {
+  position: fixed;
+  top: calc(var(--space-5) + env(safe-area-inset-top));
+  left: calc(var(--space-5) + env(safe-area-inset-left));
+  z-index: $room-button-z;
+
+  @media #{$touch-room} {
+    top: calc(var(--space-2) + env(safe-area-inset-top));
+    left: calc(var(--space-2) + env(safe-area-inset-left));
+  }
+
+  @media #{$phone-sideways} {
+    left: var(--space-2);
+  }
+}
+
+// The open menu's outside: a click there closes the menu and does nothing in the room (it is not
+// the canvas, and `data-panel-overlay` keeps the camera's mouse and wheel off it).
+.scrim {
+  position: fixed;
+  inset: 0;
+}
+
+// Both buttons: 44px, 10px corners (not a pill), near-solid white, dark text.
+.menuWrap .menuButton,
+.exitWrap .exitButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-weight: var(--font-regular);
+  color: var(--color-dark-surface);
+  background-color: $room-control-bg;
+  border-radius: 10px;
+  box-shadow: $room-control-shadow;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+  }
+
+  // Keyboard focus only (a click draws nothing): a white then a dark ring, seen over any wall.
+  &:focus-visible {
+    box-shadow:
+      $room-control-shadow,
+      0 0 0 2px var(--color-white),
+      0 0 0 4px var(--color-dark-surface);
+  }
+}
+
+.menuWrap .menuButton {
+  justify-content: center;
+  width: 44px;
+
+  // Open: dark, with a white X.
+  &[aria-expanded='true'] {
+    color: var(--color-white);
+    background-color: var(--color-dark-surface);
+  }
+}
+
+.exitWrap .exitButton {
+  gap: 10px;
+  padding: 0 18px 0 14px;
+  font-size: 15px;
+  line-height: 1;
+  white-space: nowrap;
+
+  @media #{$phone-room} {
+    gap: var(--space-2);
+    padding: 0 var(--space-4) 0 var(--space-3);
+  }
+}
+
+.menuWrap .menuButton svg,
+.exitWrap .exitButton svg {
+  flex-shrink: 0;
+}
+
+// 8px under the button, right edges aligned.
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: 244px;
+  padding: 6px;
+  background-color: var(--color-white);
+  border-radius: 14px;
+  box-shadow: $room-menu-shadow;
+
+  @media #{$phone-room} {
+    width: 230px;
+  }
+}
+
+.panel .item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 46px;
+  padding: 0 var(--space-3);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  font-weight: var(--font-regular);
+  line-height: 1;
+  color: var(--color-dark-surface);
+  text-align: left;
+  border-radius: 9px;
+  cursor: pointer;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  // The item under the pointer, or reached with the keyboard (the room has no focus ring).
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    background-color: var(--color-gray-20);
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--color-gray-20);
+    }
+  }
+}
+
+.separator {
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+  background-color: var(--color-gray-30);
+}
+
+// Sound's on / off switch: 34×20, dark when on, the knob to the right.
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+  margin-left: auto;
+  background-color: var(--color-toggle-off);
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    background-color: var(--color-white);
+    border-radius: 50%;
+    transition: transform 0.15s ease;
+  }
+}
+
+.switchOn {
+  background-color: var(--color-dark-surface);
+
+  &::after {
+    transform: translateX(14px);
+  }
+}

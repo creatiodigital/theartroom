@@ -71,8 +71,8 @@ export const PrintConfirmation = ({ artwork, paymentIntentId, status }: PrintCon
   return (
     <div className={styles.confirmation}>
       <header className={styles.header}>
-        <Link href="/" className={styles.logoLink}>
-          <Logo className={styles.logo} />
+        <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
+          <Logo className={styles.logo} aria-hidden />
         </Link>
       </header>
 

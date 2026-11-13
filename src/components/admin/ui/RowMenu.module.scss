@@ -1,0 +1,122 @@
+@use '@/styles/mixins' as *;
+
+// designs/gift-orders.dc.html (the ⋮ button and the open menu); questions.md Q6.
+.wrap {
+  display: inline-flex;
+  flex: 0 0 auto;
+  vertical-align: top;
+}
+
+// Two classes, so these beat Button's own one-class `bare` rules.
+.wrap .trigger {
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: var(--color-gray-15);
+  }
+
+  // 44px touch target below 900px, the drawn 36px above (questions.md Q7).
+  @include media-up(tablet) {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+// Placed by the component (top / left) before it paints; hidden until then.
+.menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  visibility: hidden;
+  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--space-2));
+  padding: 6px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--admin-menu-shadow);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  text-align: left;
+  white-space: normal;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupLabel {
+  padding: 6px 10px var(--space-1);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+// Edge to edge across the menu's 6px padding.
+.separator {
+  height: 1px;
+  margin: 6px -6px;
+  background: var(--color-border-default);
+}
+
+.menu .item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  line-height: var(--leading-normal);
+  text-align: left;
+  color: var(--color-text-primary);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-gray-15);
+  }
+
+  @include media-up(tablet) {
+    min-height: 0;
+  }
+}
+
+.menu .danger {
+  color: var(--color-red-50);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-red-30);
+  }
+}
+
+.menu .itemDisabled {
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+
+  &:hover {
+    background: none;
+  }
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

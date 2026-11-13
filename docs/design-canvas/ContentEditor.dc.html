@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin page editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Lato:wght@400;700&amp;family=EB+Garamond:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Gallery</span>
+<a href="Exhibitions.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #e0e0e0; text-decoration: none">Exhibitions</a>
+<a href="PrintPresentations.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #e0e0e0; text-decoration: none">Print presentations</a>
+<a href="Content.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #2a2a2a; color: #ffffff; font-weight: 600; text-decoration: none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM176,168H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Zm0-32H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Zm0-32H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z"></path></svg>Content</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #e0e0e0; text-decoration: none">Users</a>
+</div>
+<span style="padding: 0 12px; font-size: 12px; color: #777777">(menu shortened on this board)</span>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column">
+<div style="flex: 1 1 auto; padding: 28px 40px 40px">
+<div style="max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<nav aria-label="Breadcrumb"><ol style="list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; font-size: 13px; color: #666666"><li><a href="Content.dc.html" style="color: #666666">Content</a></li><li aria-hidden="true" style="color: #a3a3a3">/</li><li aria-current="page" style="color: #333333">Prints</li></ol></nav>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Prints page</h1>
+<span style="color: #666666">Last saved 9 Nov 2026, 18:20</span>
+</div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; text-decoration: none; padding: 8px 14px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff">View page<svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,104a6,6,0,0,1-12,0V54.49l-69.75,69.75a6,6,0,0,1-8.48-8.48L201.51,46H152a6,6,0,0,1,0-12h64a6,6,0,0,1,6,6Zm-38,26a6,6,0,0,0-6,6v72a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V80a2,2,0,0,1,2-2h72a6,6,0,0,0,0-12H48A14,14,0,0,0,34,80V208a14,14,0,0,0,14,14H176a14,14,0,0,0,14-14V136A6,6,0,0,0,184,130Z"></path></svg></a>
+</header>
+
+<!-- Banner image (only pages that have one) -->
+<section aria-labelledby="ban" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px"><h2 id="ban" style="margin: 0; font-weight: 700; font-size: 15px; color: #000000">Banner image</h2><span style="font-size: 13px; color: #666666">A wide image at the top of the Prints page, as prominent as the homepage hero.</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center">
+<div aria-hidden="true" style="flex: 0 0 auto; width: 320px; height: 180px; border-radius: 4px; background: linear-gradient(160deg, #2f4a6b 0%, #2f4a6b 22%, #f0b7a0 22%, #f0b7a0 34%, #d9a441 34%, #d9a441 46%, #6a8f5b 46%, #6a8f5b 62%, #eae7f0 62%)"></div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; color: #666666">1538 × 1022 px · WebP</span>
+<div style="display: flex; gap: 8px">
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; min-height: 36px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,144v64a6,6,0,0,1-6,6H40a6,6,0,0,1-6-6V144a6,6,0,0,1,12,0v58H210V144a6,6,0,0,1,12,0ZM92.24,76.24,122,46.490V144a6,6,0,0,0,12,0V46.49l29.76,29.75a6,6,0,0,0,8.48-8.48l-40-40a6,6,0,0,0-8.48,0l-40,40a6,6,0,0,0,8.48,8.48Z"></path></svg>Replace</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; min-height: 36px; background: #ffffff; color: #bd1622; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Remove</button>
+</div>
+<span style="font-size: 12px; color: #666666">JPG, PNG or WebP, up to 1 MB.</span>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="tt" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+<label for="title-field" id="tt" style="font-weight: 700; font-size: 15px; color: #000000">Page title</label>
+<input id="title-field" value="Prints" style="font: inherit; font-size: 15px; padding: 10px 12px; min-height: 44px; border: 1px solid #dcdcdc; border-radius: 4px; box-sizing: border-box">
+<span style="font-size: 12px; color: #666666">The main heading at the top of the page.</span>
+</section>
+
+<section aria-labelledby="ct" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+<span id="ct" style="font-weight: 700; font-size: 15px; color: #000000">Content</span>
+<div style="border: 1px solid #dcdcdc; border-radius: 4px; overflow: hidden">
+<div role="toolbar" aria-label="Formatting" style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: #f6f6f6; border-bottom: 1px solid #e2e2e2; position: sticky; top: 0">
+<sc-for list="{{tools}}" as="g" hint-placeholder-count="5">
+<div role="group" style="display: flex; gap: 2px; padding-right: 6px; margin-right: 4px; border-right: 1px solid #e2e2e2">
+<sc-for list="{{g}}" as="t" hint-placeholder-count="3">
+<button type="button" aria-label="{{t.aria}}" aria-pressed="{{t.on}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+<div style="padding: 20px 24px; min-height: 300px; font-family: Lato, sans-serif; font-size: 16px; line-height: 1.6; color: #333333">
+<h2 style="margin: 0 0 10px; font-family: 'EB Garamond', Georgia, serif; font-weight: 400; font-size: 28px">Museum-quality prints</h2>
+<p style="margin: 0 0 12px">Every print is produced on archival fine-art paper and checked by hand before it ships.</p>
+<p style="margin: 0; color: #666666">[The page’s real text appears here, styled as on the public site.]</p>
+</div>
+</div>
+<span style="font-size: 12px; color: #666666">Headings, lists, quotes and links are available in the toolbar.</span>
+</section>
+
+</div>
+</div>
+
+<!-- Sticky save bar -->
+<div role="region" aria-label="Save" style="position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 40px; background: #ffffff; border-top: 1px solid #eaeaea; box-shadow: 0 -6px 16px rgba(0,0,0,0.04)">
+<div style="max-width: 880px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 12px">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #856404; font-weight: 600"><span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b"></span>Unsaved changes</span>
+<button type="button" style="margin-left: auto; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 16px; min-height: 40px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Discard</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; min-height: 40px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px; cursor: pointer">Save changes</button>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const b = (label, aria, on, extra) => ({ label, aria, on: on ? 'true' : 'false', style: { minWidth: '32px', height: '32px', padding: '0 6px', font: 'inherit', fontSize: '13px', fontWeight: 600, background: on ? '#e2e2e2' : 'transparent', border: 0, borderRadius: '4px', color: '#333333', cursor: 'pointer', ...(extra || {}) } });
+    return {
+      tools: [
+        [b('B', 'Bold', false), b('I', 'Italic', false, { fontStyle: 'italic' }), b('S', 'Strikethrough', false, { textDecoration: 'line-through' })],
+        [b('H2', 'Heading 2', true), b('H3', 'Heading 3'), b('H4', 'Heading 4'), b('H5', 'Heading 5'), b('¶', 'Paragraph')],
+        [b('•', 'Bulleted list'), b('1.', 'Numbered list')],
+        [b('“', 'Quote'), b('</>', 'Code'), b('—', 'Divider'), b('Link', 'Link')],
+        [b('↶', 'Undo'), b('↷', 'Redo')]
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

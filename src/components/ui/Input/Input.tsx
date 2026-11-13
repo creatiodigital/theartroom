@@ -65,6 +65,8 @@ type TInput = {
   disabled?: boolean
   readOnly?: boolean
   'aria-label'?: string
+  /** The id of help text under the field (e.g. the admin page editor's lines). */
+  'aria-describedby'?: string
   /** Combobox support, for an input that owns a suggestion list (see the
    *  checkout address field). Without these the listbox is invisible to
    *  assistive tech: a sighted user sees suggestions appear and a screen-reader
@@ -104,6 +106,7 @@ const Input = ({
   disabled,
   readOnly,
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedby,
   role,
   'aria-expanded': ariaExpanded,
   'aria-controls': ariaControls,
@@ -154,6 +157,7 @@ const Input = ({
         disabled={disabled}
         readOnly={readOnly}
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedby}
         aria-invalid={invalid || undefined}
         role={role}
         aria-expanded={ariaExpanded}

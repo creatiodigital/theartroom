@@ -1,0 +1,111 @@
+@use '@/styles/mixins' as *;
+
+.panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 18px;
+  box-sizing: border-box;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+
+  @include media-up(tablet) {
+    gap: 18px;
+    padding: var(--space-6);
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+
+  @include media-up(tablet) {
+    align-items: flex-start;
+  }
+}
+
+// Edge-to-edge rows (designs/content.dc.html): an 8px card inset top and bottom
+// only, and the header keeps the sides (16px on phones, 20px from 900px).
+// After `.panel` in this file, so it wins at the same specificity.
+.flush {
+  gap: 0;
+  padding: var(--space-2) 0;
+
+  .head {
+    padding: var(--space-3) var(--space-4) var(--space-2);
+
+    @include media-up(tablet) {
+      padding: var(--space-3) var(--space-5) var(--space-2);
+    }
+  }
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-black);
+}
+
+.subtitle {
+  // Phones show the title alone (dashboard-phone.dc.html).
+  display: none;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+
+  @include media-up(tablet) {
+    display: block;
+  }
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  // A 44px touch target on phones (Q7), drawn as plain text.
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  @include media-up(tablet) {
+    min-height: 32px;
+    padding: 6px 10px 6px var(--space-3);
+    border: 1px solid var(--color-gray-60);
+    border-radius: var(--radius-sm);
+  }
+}
+
+.linkIcon {
+  display: none;
+
+  @include media-up(tablet) {
+    display: block;
+  }
+}

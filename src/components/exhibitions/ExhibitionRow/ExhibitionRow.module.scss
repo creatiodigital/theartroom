@@ -1,0 +1,102 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/exhibitions.md, designs/exhibitions-desktop.dc.html / -phone.dc.html.
+.row {
+  display: grid;
+  // The photo at half the content's width (owner, 2026-11-12; it was 340 px), the text beside it.
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-10);
+  align-items: center;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--color-gray-30);
+
+  // Hairlines between rows only: none under the last (owner, 2026-11-12).
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  // Phones: stacked, 44px between exhibitions, no hairlines; none under the last (the list's
+  // section sets the space below it).
+  @include media-down(md) {
+    display: block;
+    padding: 0 0 44px;
+    border-bottom: 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+}
+
+.imageLink {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: var(--public-render-wall);
+
+  // Phones: inside the page's margins, as the text (owner, 2026-11-13: no longer edge to edge).
+  @include media-down(md) {
+    margin-bottom: var(--space-4);
+  }
+}
+
+.image {
+  object-fit: cover;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 700px;
+  min-width: 0;
+}
+
+// Small caps (the drawn #777 is 4.48:1 on white; the secondary grey reads the same and passes).
+.artist {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 27px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
+  }
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). Whole, on as many
+// lines as it needs (owner, 2026-11-12: never cut).
+.description {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  // About 65 characters a line, whatever the card's width: wider is hard to read (owner, 2026-11-13).
+  max-width: 32em;
+}
+
+.actions {
+  margin-top: 6px;
+}

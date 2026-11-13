@@ -1,0 +1,50 @@
+// dashboard-phone.dc.html, the <header> top bar. Sticky via its slot in ShellFrame.
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-3) 10px var(--space-4);
+}
+
+.dark {
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+// The studio's (not drawn, questions.md Q94): white, a 1px rule under it.
+.light {
+  background: var(--color-white);
+  color: var(--color-black);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.menuButtonWrap {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.bar .menuButton {
+  position: relative;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.dark .menuButton {
+  color: var(--color-white);
+
+  &:hover {
+    background: var(--admin-nav-hover);
+  }
+}
+
+.light .menuButton {
+  color: var(--color-black);
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+}

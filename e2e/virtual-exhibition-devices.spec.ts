@@ -61,7 +61,9 @@ async function setTouchPoints(page: Page, points: number) {
   }, points)
 }
 
-const enterButton = (page: Page) => page.getByRole('link', { name: 'Enter 3D Room' })
+// The exhibition page has two ways in (the hero and the "Walk through the exhibition" band, public
+// step 27): the first is the hero's.
+const enterButton = (page: Page) => page.getByRole('link', { name: 'Enter 3D Room' }).first()
 const laptopNote = (page: Page) => page.getByText(/open this page on a laptop or desktop/i)
 
 async function expectInvitedIn(page: Page) {

@@ -18,7 +18,7 @@ import { renderAdminCartOrderNotificationEmail } from '@/lib/emails/adminCartOrd
 import { renderAdminOrderCancelledEmail } from '@/lib/emails/adminOrderCancelled'
 import { renderLoginCodeEmail } from '@/lib/emails/loginCode'
 import { renderForgotPasswordEmail } from '@/lib/emails/forgotPassword'
-import { renderArtistInviteEmail } from '@/lib/emails/artistInvite'
+import { renderArtistInviteEmail, renderArtistSetPasswordEmail } from '@/lib/emails/artistInvite'
 
 // Dev-only preview of branded emails with SAMPLE data (no DB, no real send).
 // 404 in production so it never ships to buyers.
@@ -213,8 +213,7 @@ const TEMPLATES: Record<string, () => string> = {
     }).html,
   'inquiry-admin': () =>
     renderInquiryAdminNotificationEmail({
-      firstName: 'Jane',
-      lastName: 'Smith',
+      fullName: 'Jane Smith',
       email: 'jane@example.com',
       phone: '+34 600 000 000',
       message: 'Is this piece still available, and can it ship framed?',
@@ -224,7 +223,7 @@ const TEMPLATES: Record<string, () => string> = {
     }).html,
   'inquiry-user': () =>
     renderInquiryUserConfirmationEmail({
-      firstName: 'Jane',
+      fullName: 'Jane Smith',
       email: 'jane@example.com',
       message: 'Is this piece still available, and can it ship framed?',
       artworkTitle: 'Puerta Verde',
@@ -322,6 +321,13 @@ const TEMPLATES: Record<string, () => string> = {
       email: 'john@example.com',
       tempPassword: 'Temp-7Q2K9',
       loginUrl: 'https://theartroom.gallery/login',
+    }).html,
+  'artist-set-password': () =>
+    renderArtistSetPasswordEmail({
+      name: 'John Doe',
+      setPasswordUrl: 'https://theartroom.gallery/reset-password?token=sample',
+      loginUrl: 'https://theartroom.gallery/login',
+      hours: 72,
     }).html,
 }
 

@@ -98,8 +98,8 @@ export const PrintPayment = ({ artwork, providerId, country }: PrintPaymentProps
   return (
     <div className={styles.payment}>
       <header className={styles.header}>
-        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
-          <Logo className={styles.logo} />
+        <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
+          <Logo className={styles.logo} aria-hidden />
         </Link>
         <span />
         <Button

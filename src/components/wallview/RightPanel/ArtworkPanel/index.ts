@@ -1,1 +1,1 @@
-export { default as ArtworkPanel } from './ArtworkPanel'
+export { default as ArtworkPanel, type ItemTab } from './ArtworkPanel'

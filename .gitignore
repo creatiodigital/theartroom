@@ -20,6 +20,8 @@
 
 # next.js
 /.next/
+# Build caches moved aside (e.g. .next.stale-*), never tracked
+/.next*/
 /out/
 
 # production

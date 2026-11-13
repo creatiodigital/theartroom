@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getArtworkMedia } from '@/lib/artwork/artworkMedia'
+import { getMoreByArtist } from '@/lib/queries/getMoreByArtist'
 import { isAdminOrAbove } from '@/lib/authUtils'
 import { buildArtworkCommerce, COMMERCE_SELECT } from '@/lib/editions/artworkCommerce'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
@@ -66,7 +67,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       }
     }
 
-    const [availableNumberCount, commerce, media] = await Promise.all([
+    const [availableNumberCount, commerce, media, more] = await Promise.all([
       // Numbers still available across the live variants — an exhibition
       // visitor must see "Sold out" rather than a CTA into a wizard that
       // refuses.
@@ -86,6 +87,8 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       // The modal mirrors the artwork page, so it needs the same supplementary
       // media. Empty for most works, which is the normal case.
       getArtworkMedia(artwork.id),
+      // And the same "More by the artist" (public works only; empty for an unpublished artist).
+      getMoreByArtist(artwork.user.handler, artwork.slug),
     ])
 
     const { published: _published, ...artist } = artwork.user
@@ -112,6 +115,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       artist,
       commerce,
       media,
+      more,
     })
   } catch (error) {
     console.error('[GET /api/artworks/by-slug/[slug]] error:', error)

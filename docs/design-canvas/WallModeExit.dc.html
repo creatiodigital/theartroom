@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wall Mode Exit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e9e9e9}</style>
+</helmet>
+<div style="display: flex; gap: 40px; padding: 40px; box-sizing: border-box; min-height: 100vh; background: #d6d6d6; font-family: Lato, -apple-system, sans-serif; align-items: flex-start; justify-content: center">
+
+<!-- desktop -->
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #555">Desktop · wall view</span>
+<div style="position: relative; width: 1120px; height: 680px; border-radius: 10px; overflow: hidden; background: #e9e9e9 url('/_blob/6901884f83b430cf9b2b73335ed3bdf1') center / cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.15)">
+
+<button type="button" style="position: absolute; left: 20px; top: 20px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px 0 14px; font: inherit; font-size: 15px; color: #1a1a1a; background: rgba(255,255,255,0.96); border: 0; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05); cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H54.49l61.75,61.76a6,6,0,1,1-8.48,8.48l-72-72a6,6,0,0,1,0-8.48l72-72a6,6,0,0,1,8.48,8.48L54.49,122H216A6,6,0,0,1,222,128Z"></path></svg>
+Exit wall view
+</button>
+
+
+<button type="button" aria-label="Menu" style="position: absolute; right: 20px; top: 20px; width: 44px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.96); border: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05); color: #1a1a1a; padding: 0"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM40,70H216a6,6,0,0,0,0-12H40a6,6,0,0,0,0,12ZM216,186H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z"></path></svg></button>
+
+</div>
+</div>
+
+<!-- phone -->
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #555">Phone</span>
+<div style="position: relative; width: 300px; height: 620px; border-radius: 28px; overflow: hidden; background: #e9e9e9 url('/_blob/6901884f83b430cf9b2b73335ed3bdf1') 62% center / auto 100% no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,0.15)">
+<button type="button" style="position: absolute; left: 14px; top: 44px; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 12px; font: inherit; font-size: 15px; color: #1a1a1a; background: rgba(255,255,255,0.96); border: 0; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12)">
+<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H54.49l61.75,61.76a6,6,0,1,1-8.48,8.48l-72-72a6,6,0,0,1,0-8.48l72-72a6,6,0,0,1,8.48,8.48L54.49,122H216A6,6,0,0,1,222,128Z"></path></svg>Exit wall view</button>
+<button type="button" aria-label="Menu" style="position: absolute; right: 14px; top: 44px; width: 44px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.96); border: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05); color: #1a1a1a; padding: 0"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM40,70H216a6,6,0,0,0,0-12H40a6,6,0,0,0,0,12ZM216,186H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z"></path></svg></button>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":800}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -3,8 +3,18 @@
 import { useGLTF } from '@react-three/drei'
 import { Fragment, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Columns } from '@phosphor-icons/react'
 
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import {
+  PanelCard,
+  PanelSection,
+  SliderRow,
+  SwitchRow,
+  ToolPanel,
+  metres,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
 import { getNodeIndices } from '@/components/scene/spaces/objects/nodeIndices'
 import {
@@ -12,17 +22,11 @@ import {
   panelColorOf,
   type PanelSettings,
 } from '@/components/scene/spaces/objects/Panel/panelSettings'
-import { Button } from '@/components/ui/Button'
-import { CollapsibleSection } from '@/components/ui/CollapsibleSection/CollapsibleSection'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { Slider } from '@/components/ui/Slider'
-import { Text } from '@/components/ui/Typography'
-import { Toggle } from '@/components/ui/Toggle'
 import { hidePanelsPanel } from '@/redux/slices/dashboardSlice'
 import { setPanelSettings } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 
-import styles from './PanelsPanel.module.scss'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 /** How far a panel may be nudged from where Blender put it, in metres. */
@@ -38,7 +42,7 @@ const roomOfPanel = (index: number) => Math.floor(index / 10)
 const PanelsPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) as SpaceKey | null
@@ -46,6 +50,8 @@ const PanelsPanel = () => {
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
   )
+  // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
+  const saveTrack = useSaveTracking(exhibitionId ? `${exhibitionId}:panels` : null)
 
   const { nodes } = useGLTF(
     spaceGltfUrl(getSpaceConfig(spaceId || 'paris').gltfPath),
@@ -84,11 +90,13 @@ const PanelsPanel = () => {
   const patch = (index: number, next: Partial<PanelSettings>) => {
     dispatch(setPanelSettings({ index, patch: next }))
     setSaved(false)
+    saveTrack.edited()
   }
 
   const handleSave = async () => {
     if (!exhibitionId) return
     setSaving(true)
+    const sentAt = saveTrack.started()
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
@@ -97,25 +105,31 @@ const PanelsPanel = () => {
       })
       if (response.ok) {
         setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
       }
+      saveTrack.finished(sentAt, response.ok)
     } catch (error) {
       // As the other panels do: a network failure must not surface as an
       // unhandled rejection.
       console.error('Failed to save panel settings:', error)
+      saveTrack.finished(sentAt, false)
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <SettingsPanel title="Display Panels" onClose={() => dispatch(hidePanelsPanel())}>
-      <Text font="dashboard" as="p" size="xs" className={styles.hint}>
-        {panelIndices.length === 0
+    <ToolPanel
+      title="Display panels"
+      description={
+        panelIndices.length === 0
           ? 'This space has no display panels.'
-          : 'Switch a panel on, then move or turn it. Anything hung on it moves too.'}
-      </Text>
-
+          : 'Switch a panel on, then move or turn it. Anything hung on it moves too.'
+      }
+      icon={Columns}
+      tint="walls"
+      onClose={() => dispatch(hidePanelsPanel())}
+      save={{ saving, saved, onSave: handleSave, status: saveTrack.status }}
+    >
       {panelsByRoom.map(([room, indices]) => {
         const rows = indices.map((index, position) => {
           const settings = panelSettings?.[String(index)]
@@ -124,102 +138,93 @@ const PanelsPanel = () => {
           // Numbering restarts inside each room — the section header above
           // already says which room these belong to.
           const label = `Panel ${position + 1}`
+          // Accessible names (questions.md Q135): the visible words, with the room where two
+          // rooms each have a "Panel 1".
+          const who = panelsByRoom.length < 2 ? label : `Room ${room + 1} · ${label}`
 
+          // Not folded when off (only benches fold; questions.md Q137).
           return (
-            <div key={index} className={styles.panelRow}>
-              <div className={styles.panelHeader}>
-                <span className={styles.panelLabel}>{label}</span>
-                <Toggle
-                  checked={enabled}
-                  onChange={() => patch(index, { enabled: !enabled })}
-                  aria-label={`${label} visible`}
-                />
-              </div>
+            <PanelCard key={index} level={panelsByRoom.length < 2 ? 'card' : 'group'}>
+              <SwitchRow
+                title={label}
+                line={
+                  count > 0 && (
+                    <>
+                      {count} {count === 1 ? 'artwork' : 'artworks'}
+                      {enabled ? '' : ' hidden with this panel'}
+                    </>
+                  )
+                }
+                checked={enabled}
+                onChange={() => patch(index, { enabled: !enabled })}
+                aria-label={panelsByRoom.length < 2 ? undefined : who}
+              />
 
-              {count > 0 && (
-                <span className={styles.artworkCount}>
-                  {count} {count === 1 ? 'artwork' : 'artworks'}
-                  {enabled ? '' : ' hidden with this panel'}
-                </span>
-              )}
+              <SliderRow
+                label="Across"
+                aria-label={`${who} across`}
+                value={metres(settings?.x ?? 0, 2)}
+                sliderValue={settings?.x ?? 0}
+                min={-MOVE_RANGE}
+                max={MOVE_RANGE}
+                step={0.05}
+                onChange={(v) => patch(index, { x: v })}
+                disabled={!enabled}
+              />
 
-              <div className={styles.panelSlider}>
-                <span className={styles.sliderLabel}>Across</span>
-                <Slider
-                  min={-MOVE_RANGE}
-                  max={MOVE_RANGE}
-                  step={0.05}
-                  value={settings?.x ?? 0}
-                  onChange={(v) => patch(index, { x: v })}
-                  disabled={!enabled}
-                  aria-label={`${label} position across the room`}
-                />
-                <span className={styles.sliderValue}>{(settings?.x ?? 0).toFixed(2)}m</span>
-              </div>
+              <SliderRow
+                label="Depth"
+                aria-label={`${who} depth`}
+                value={metres(settings?.z ?? 0, 2)}
+                sliderValue={settings?.z ?? 0}
+                min={-MOVE_RANGE}
+                max={MOVE_RANGE}
+                step={0.05}
+                onChange={(v) => patch(index, { z: v })}
+                disabled={!enabled}
+              />
 
-              <div className={styles.panelSlider}>
-                <span className={styles.sliderLabel}>Depth</span>
-                <Slider
-                  min={-MOVE_RANGE}
-                  max={MOVE_RANGE}
-                  step={0.05}
-                  value={settings?.z ?? 0}
-                  onChange={(v) => patch(index, { z: v })}
-                  disabled={!enabled}
-                  aria-label={`${label} position into the room`}
-                />
-                <span className={styles.sliderValue}>{(settings?.z ?? 0).toFixed(2)}m</span>
-              </div>
+              <SliderRow
+                label="Turn"
+                aria-label={`${who} turn`}
+                value={`${settings?.rotationY ?? 0}°`}
+                sliderValue={settings?.rotationY ?? 0}
+                min={-180}
+                max={180}
+                step={1}
+                onChange={(v) => patch(index, { rotationY: v })}
+                disabled={!enabled}
+              />
 
-              <div className={styles.panelSlider}>
-                <span className={styles.sliderLabel}>Turn</span>
-                <Slider
-                  min={-180}
-                  max={180}
-                  step={1}
-                  value={settings?.rotationY ?? 0}
-                  onChange={(v) => patch(index, { rotationY: v })}
-                  disabled={!enabled}
-                  aria-label={`${label} rotation`}
-                />
-                <span className={styles.sliderValue}>{settings?.rotationY ?? 0}°</span>
-              </div>
-
-              <div className={styles.colorRow}>
-                <span className={styles.sliderLabel}>Color</span>
-                <ColorPicker
-                  textColor={panelColorOf(settings)}
-                  onColorSelect={(color) => patch(index, { color })}
-                />
-              </div>
-            </div>
+              <ColorPicker
+                variant="inline"
+                name="Color"
+                aria-label={`${who} color`}
+                textColor={panelColorOf(settings)}
+                onColorSelect={(color) => patch(index, { color })}
+              />
+            </PanelCard>
           )
         })
 
         if (panelsByRoom.length < 2) return <Fragment key={room}>{rows}</Fragment>
 
+        const on = indices.filter((index) => isPanelEnabled(panelSettings?.[String(index)])).length
+
+        // Each panel a white card on the room's grey (Lighting's "All lamps" / "Each lamp").
         return (
-          <CollapsibleSection
+          <PanelSection
             key={room}
             title={`Room ${room + 1} · ${indices.length} ${indices.length === 1 ? 'panel' : 'panels'}`}
-            persistKey={`display-panels-room${room}`}
+            summary={`${on} on`}
+            storageKey={`collapsible-display-panels-room${room}`}
             defaultOpen
           >
             {rows}
-          </CollapsibleSection>
+          </PanelSection>
         )
       })}
-
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          onClick={handleSave}
-          disabled={saving}
-          className={styles.saveButton}
-        />
-      </div>
-    </SettingsPanel>
+    </ToolPanel>
   )
 }
 

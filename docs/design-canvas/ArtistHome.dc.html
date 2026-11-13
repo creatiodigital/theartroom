@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artist Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-direction: column">
+
+<sc-if value="{{impersonating}}" hint-placeholder-val="{{true}}"><div aria-hidden="true" style="height: 3px; background: #bd1622"></div></sc-if>
+
+<div style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Artist" style="flex: 1 1 248px; background: #ffffff; border-right: 1px solid #eaeaea; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="ArtistHome.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #000000; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #bd1622">Artist studio</span></a>
+<sc-if value="{{impersonating}}" hint-placeholder-val="{{true}}">
+<div role="status" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #fbeeee; border: 1px solid #f0c9cc; border-left: 3px solid #bd1622; border-radius: 8px">
+<span style="display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 32px; height: 32px; flex: 0 0 auto; border-radius: 50%; background: #bd1622; color: #ffffff; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path></svg></span><span style="display: flex; flex-direction: column; min-width: 0; line-height: 1.3"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8f1119">Viewing as</span><span style="font-weight: 700; color: #000000">Jane Doe</span></span></span>
+<span style="font-size: 12px; color: #6b2a2e">You're signed in as an admin. Changes save to her account.</span>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; background: #ffffff; color: #bd1622; border: 1px solid #e6b8bb; border-radius: 4px; cursor: pointer">Stop impersonating</button>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #f2f0ec; color: #000000; font-weight: 600; text-decoration: none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.620,0l80,80A16,16,0,0,1,224,120Z"></path></svg>Home</a>
+<a href="ArtistArtworks.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M208,34H80A14,14,0,0,0,66,48V66H48A14,14,0,0,0,34,80V208a14,14,0,0,0,14,14H176a14,14,0,0,0,14-14V190h18a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM78,48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v74.2l-20.1-20.1a14,14,0,0,0-19.8,0L94.2,178H80a2,2,0,0,1-2-2ZM178,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V80a2,2,0,0,1,2-2H66v98a14,14,0,0,0,14,14h98Zm30-30H111.17l67.41-67.41a2,2,0,0,1,2.83,0L210,139.17V176A2,2,0,0,1,208,178Zm-88-68A22,22,0,1,0,98,88,22,22,0,0,0,120,110Zm0-32a10,10,0,1,1-10,10A10,10,0,0,1,120,78Z"></path></svg>Artworks</a>
+<a href="ArtistProfile.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M229.19,213c-15.81-27.32-40.63-46.49-69.47-54.62a70,70,0,1,0-63.44,0C67.44,166.5,42.62,185.67,26.81,213a6,6,0,1,0,10.38,6C56.4,185.81,90.34,166,128,166s71.6,19.81,90.81,53a6,6,0,1,0,10.38-6ZM70,96a58,58,0,1,1,58,58A58.07,58.07,0,0,1,70,96Z"></path></svg>Profile</a>
+<a href="ArtistPayouts.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M24,102H50v68H32a6,6,0,0,0,0,12H224a6,6,0,0,0,0-12H206V102h26a6,6,0,0,0,3.14-11.11l-104-64a6,6,0,0,0-6.28,0l-104,64A6,6,0,0,0,24,102Zm38,0H98v68H62Zm84,0v68H110V102Zm48,68H158V102h36ZM128,39l82.8,51H45.2ZM246,208a6,6,0,0,1-6,6H16a6,6,0,0,1,0-12H240A6,6,0,0,1,246,208Z"></path></svg>Payouts<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #e0a800" aria-label="Not set up"></span></a>
+</div>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #f0f0f0; padding-top: 16px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 6px 12px 12px"><span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: #e8e2d8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">JD</span><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 600; color: #000000">Jane Doe</span><a href="#" style="font-size: 12px; color: #666666">View my public page ↗</a></span></div>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; color: #555555; text-decoration: none; font-size: 13px"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M215.15,40.85A78,78,0,0,0,86.2,121.31l-56.1,56.1a13.94,13.94,0,0,0-4.1,9.9V216a14,14,0,0,0,14,14H72a6,6,0,0,0,6-6V206H96a6,6,0,0,0,6-6V182h18a6,6,0,0,0,4.24-1.76l10.45-10.44A77.590,77.590,0,0,0,160,174h.1A78,78,0,0,0,215.15,40.85ZM226,98.16c-1.12,35.16-30.67,63.8-65.88,63.840a65.930,65.930,0,0,1-24.51-4.67,6,6,0,0,0-6.64,1.26L117.51,170H96a6,6,0,0,0-6,6v18H72a6,6,0,0,0-6,6v18H40a2,2,0,0,1-2-2V187.31a2,2,0,0,1,.58-1.41l58.83-58.83a6,6,0,0,0,1.26-6.64A65.61,65.61,0,0,1,94,95.92C94,60.71,122.68,31.16,157.83,30A66,66,0,0,1,226,98.16ZM190,76a10,10,0,1,1-10-10A10,10,0,0,1,190,76Z"></path></svg>Change password</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; color: #555555; text-decoration: none; font-size: 13px"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M118,216a6,6,0,0,1-6,6H48a6,6,0,0,1-6-6V40a6,6,0,0,1,6-6h64a6,6,0,0,1,0,12H54V210h58A6,6,0,0,1,118,216Zm110.24-92.24-40-40a6,6,0,0,0-8.48,8.48L209.51,122H112a6,6,0,0,0,0,12h97.51l-29.750,29.76a6,6,0,1,0,8.48,8.48l40-40A6,6,0,0,0,228.24,123.76Z"></path></svg>Log out</a>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 40px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-family: 'EB Garamond', Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1.1; color: #000000">Hello, Jane</h1>
+<span style="color: #666666; font-size: 15px">Your exhibitions, artworks and profile, all in one place.</span>
+</header>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" style="display: flex; flex-direction: column; gap: 10px; padding: 20px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; text-decoration: none; color: #333333">
+<span style="{{t.tileStyle}}"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{t.icon}}"></path></svg></span>
+<span style="font-weight: 600; font-size: 15px; color: #000000">{{t.title}}</span>
+<span style="font-size: 13px; color: #666666; flex: 1 1 auto">{{t.text}}</span>
+<span style="font-size: 13px; font-weight: 600; color: #000000">{{t.cta}} →</span>
+</a>
+</sc-for>
+</div>
+
+<section aria-labelledby="exh-h" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #eaeaea">
+<div style="display: flex; flex-direction: column"><h2 id="exh-h" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">My exhibitions</h2><span style="font-size: 13px; color: #666666">3 exhibitions</span></div>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z"></path></svg>New exhibition</button>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{exh}}" as="e" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-top: 1px solid #f0f0f0; position: relative">
+<span aria-hidden="true" style="{{e.imgStyle}}"></span>
+<span style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0">
+<a href="ArtistExhibitionSettings.dc.html" style="font-weight: 600; font-size: 15px; color: #000000; text-decoration: none">{{e.name}}</a>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 13px"><span style="{{e.pubStyle}}"><span style="{{e.dot}}"></span>{{e.pub}}</span><span style="{{e.syncStyle}}">{{e.sync}}</span></span>
+</span>
+<a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px; text-decoration: none; color: #000000"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222.72,67.9l-88-48.17a13.9,13.9,0,0,0-13.44,0l-88,48.18A14,14,0,0,0,26,80.18v95.64a14,14,0,0,0,7.28,12.27l88,48.18a13.920,13.920,0,0,0,13.440,0l88-48.18A14,14,0,0,0,230,175.82V80.18A14,14,0,0,0,222.72,67.9ZM127,30.25a2,2,0,0,1,1.92,0L212.51,76,128,122.24,43.49,76ZM39,177.57a2,2,0,0,1-1-1.75V86.66l84,46V223Zm177.92,0L134,223V132.64l84-46v89.16A2,2,0,0,1,217,177.57Z"></path></svg>Edit 3D space</a>
+<button type="button" aria-label="{{e.menuLabel}}" aria-haspopup="menu" style="{{e.kebab}}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M112,60a16,16,0,1,1,16,16A16,16,0,0,1,112,60Zm16,52a16,16,0,1,0,16,16A16,16,0,0,0,128,112Zm0,68a16,16,0,1,0,16,16A16,16,0,0,0,128,180Z"></path></svg></button>
+<sc-if value="{{e.open}}" hint-placeholder-val="{{false}}">
+<div role="menu" style="position: absolute; right: 20px; top: 58px; z-index: 5; width: 210px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.14); padding: 6px">
+<button type="button" role="menuitem" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; padding: 8px 10px; background: none; border: 0; border-radius: 4px">View exhibition ↗</button>
+<button type="button" role="menuitem" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; padding: 8px 10px; background: #f6f6f6; border: 0; border-radius: 4px">Exhibition settings</button>
+<button type="button" role="menuitem" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; padding: 8px 10px; background: none; border: 0; border-radius: 4px">Edit 3D space</button>
+<div style="border-top: 1px solid #f0f0f0; margin-top: 4px; padding-top: 4px"><button type="button" role="menuitem" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; padding: 8px 10px; background: none; border: 0; border-radius: 4px; color: #bd1622">Delete exhibition…</button></div>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+</section>
+
+<div style="height: 60px"></div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000},"impersonating":{"type":"boolean","default":true,"label":"Admin impersonating"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = {
+      user: 'M229.19,213c-15.81-27.32-40.63-46.49-69.47-54.62a70,70,0,1,0-63.44,0C67.44,166.5,42.62,185.67,26.81,213a6,6,0,1,0,10.38,6C56.4,185.81,90.34,166,128,166s71.6,19.81,90.81,53a6,6,0,1,0,10.38-6ZM70,96a58,58,0,1,1,58,58A58.07,58.07,0,0,1,70,96Z',
+      art: 'M208,34H80A14,14,0,0,0,66,48V66H48A14,14,0,0,0,34,80V208a14,14,0,0,0,14,14H176a14,14,0,0,0,14-14V190h18a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM78,48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v74.2l-20.1-20.1a14,14,0,0,0-19.8,0L94.2,178H80a2,2,0,0,1-2-2ZM178,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V80a2,2,0,0,1,2-2H66v98a14,14,0,0,0,14,14h98Zm30-30H111.17l67.41-67.41a2,2,0,0,1,2.83,0L210,139.17V176A2,2,0,0,1,208,178Zm-88-68A22,22,0,1,0,98,88,22,22,0,0,0,120,110Zm0-32a10,10,0,1,1-10,10A10,10,0,0,1,120,78Z',
+      bank: 'M24,102H50v68H32a6,6,0,0,0,0,12H224a6,6,0,0,0,0-12H206V102h26a6,6,0,0,0,3.14-11.11l-104-64a6,6,0,0,0-6.28,0l-104,64A6,6,0,0,0,24,102Zm38,0H98v68H62Zm84,0v68H110V102Zm48,68H158V102h36ZM128,39l82.8,51H45.2ZM246,208a6,6,0,0,1-6,6H16a6,6,0,0,1,0-12H240A6,6,0,0,1,246,208Z'
+    };
+    const E = [
+      ['Spring light', true, true, 'linear-gradient(135deg,#d9c7a7,#8c7a5b)'],
+      ['Studies in blue', true, false, 'linear-gradient(135deg,#9fb3c8,#36506b)', true],
+      ['Night garden', false, false, 'linear-gradient(135deg,#7a8c6e,#2f3b2a)']
+    ];
+    const tile = (bg) => ({ width: '36px', height: '36px', borderRadius: '8px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000000' });
+    return {
+      impersonating: this.props.impersonating,
+      tiles: [
+        { href: 'ArtistArtworks.dc.html', tileStyle: tile('#f2f0ec'), icon: P.art, title: 'Artworks', text: 'Add images, texts, sound and video, and choose which prints you sell.', cta: 'Open library' },
+        { href: 'ArtistProfile.dc.html', tileStyle: tile('#f2f0ec'), icon: P.user, title: 'Profile', text: 'Your photo, signature, name and biography on your public page.', cta: 'Edit profile' },
+        { href: 'ArtistPayouts.dc.html', tileStyle: tile('#fff3cd'), icon: P.bank, title: 'Payouts', text: 'Connect a bank account with Stripe so we can pay you for your sales.', cta: 'Set up payouts' }
+      ],
+      exh: E.map(([name, pub, synced, img, open]) => ({
+        name, open: !!open,
+        imgStyle: { width: '96px', height: '64px', flex: '0 0 auto', borderRadius: '4px', background: img },
+        pub: pub ? 'Published' : 'Unpublished',
+        pubStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: pub ? '#000000' : '#666666' },
+        dot: { width: '8px', height: '8px', borderRadius: '50%', background: pub ? '#2e8b57' : '#cccccc' },
+        sync: synced ? 'Up to date' : 'Pending changes',
+        syncStyle: { fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: synced ? '#d4edda' : '#fff3cd', color: synced ? '#155724' : '#856404' },
+        menuLabel: 'Actions for ' + name,
+        kebab: { width: '36px', height: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: open ? '#f0f0f0' : '#ffffff', border: '1px solid ' + (open ? '#d0d0d0' : 'transparent'), borderRadius: '4px', color: '#333333', cursor: 'pointer' }
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

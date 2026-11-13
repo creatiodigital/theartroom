@@ -25,7 +25,7 @@ test.describe.configure({ mode: 'serial' })
 test.use({ storageState: 'e2e/.auth/admin.json' })
 
 let artworkId: string
-let artistLabel: string
+let artistId: string
 let switchWas: boolean
 let record: PrintPresentationRecord
 
@@ -39,9 +39,9 @@ test.beforeAll(async () => {
   test.skip(bakeBackend() !== 'local', 'stores renders: run with BAKE_STORAGE=local, never on R2')
   const owner = await prisma.user.findUniqueOrThrow({
     where: { handler: fixtures.artistSlug },
-    select: { id: true, name: true, lastName: true },
+    select: { id: true },
   })
-  artistLabel = [owner.name, owner.lastName].filter(Boolean).join(' ')
+  artistId = owner.id
   // Sweep what a crashed earlier run left behind.
   await prisma.artwork.deleteMany({ where: { slug: { startsWith: 'e2e-presentation-admin-' } } })
   const artwork = await prisma.artwork.create({
@@ -82,12 +82,7 @@ test.afterAll(async () => {
 /** The page shows one artist at a time (AR-167): open it on the fixture artist's works. */
 const openPage = async (page: import('@playwright/test').Page) => {
   await page.goto(PAGE)
-  await page
-    .getByText('Artist', { exact: true })
-    .locator('xpath=..')
-    .locator('[aria-haspopup="listbox"]')
-    .click()
-  await page.getByRole('option', { name: new RegExp(`^${artistLabel} \\(`) }).click()
+  await page.getByLabel('Artist', { exact: true }).selectOption(artistId)
 }
 
 const statusOf = (page: import('@playwright/test').Page) =>
@@ -102,7 +97,7 @@ test('a work with a current render reads "Up to date"', async ({ page }) => {
   await openPage(page)
   await expect(page.getByRole('heading', { name: 'Print presentations' })).toBeVisible()
   await expect(statusOf(page)).toHaveText('Up to date')
-  await expect(page.getByText(/Up to date: \d+/)).toBeVisible()
+  await expect(page.getByText(/^\d+ Up to date$/)).toBeVisible()
 })
 
 test('its preview is the render, fitted around the window', async ({ page }) => {
@@ -196,15 +191,32 @@ test('an image work of unknown shape reads "Not eligible"', async ({ page }) => 
   )
 })
 
-test('the switch turns the presentations on and off for the site', async ({ page }) => {
+test('the switch asks first, then turns the presentations on and off for the site', async ({
+  page,
+}) => {
   await setPrintPresentationsEnabled(false)
   await openPage(page)
-  const toggle = page.getByLabel('Show print presentations on the site')
+  const toggle = page.getByRole('switch', { name: 'Shown on the site' })
   await expect(toggle).not.toBeChecked()
+
+  // Cancel leaves it as it was.
   await page.locator('label', { has: toggle }).click()
+  const show = page.getByRole('dialog', { name: 'Show print presentations on the site?' })
+  await show.getByRole('button', { name: 'Cancel' }).click()
+  await expect(show).toHaveCount(0)
+  await expect(toggle).not.toBeChecked()
+  expect(await getPrintPresentationsEnabled()).toBe(false)
+
+  await page.locator('label', { has: toggle }).click()
+  await show.getByRole('button', { name: 'Show them' }).click()
+  await expect(show).toHaveCount(0)
   await expect(toggle).toBeChecked()
   await expect.poll(() => getPrintPresentationsEnabled()).toBe(true)
+
   await page.locator('label', { has: toggle }).click()
+  const hide = page.getByRole('dialog', { name: 'Hide print presentations on the site?' })
+  await hide.getByRole('button', { name: 'Hide them' }).click()
+  await expect(hide).toHaveCount(0)
   await expect(toggle).not.toBeChecked()
   await expect.poll(() => getPrintPresentationsEnabled()).toBe(false)
 })

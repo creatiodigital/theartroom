@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { Minus, Plus, Trash } from '@phosphor-icons/react'
 
 import { CartItemDetails } from '@/components/cart/CartItemDetails/CartItemDetails'
 import { configToWizardParams } from '@/components/PrintWizard/wizardParams'
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
-import { Text } from '@/components/ui/Typography'
 import { useCart } from '@/lib/cart/useCart'
 import { lineTotal } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
@@ -35,8 +36,8 @@ export const CartLine = ({ item }: CartLineProps) => {
   }
 
   const decrease = async () => {
-    // At the floor, "−" means remove: confirm first (same modal as the Delete
-    // CTA) rather than silently dropping the line to a 0-quantity state.
+    // At the floor, "−" means remove: confirm first (same modal as Remove)
+    // rather than silently dropping the line to a 0-quantity state.
     if (item.quantity <= 1) {
       setConfirmingRemove(true)
       return
@@ -44,7 +45,7 @@ export const CartLine = ({ item }: CartLineProps) => {
     await setQuantity(item.lineId, item.quantity - 1)
   }
 
-  // "Edit item" re-opens the wizard pre-filled with this line's selection. The
+  // "Edit" re-opens the wizard pre-filled with this line's selection. The
   // lineId rides along so the wizard replaces this line on re-add (rather than
   // leaving a duplicate). Encoding shared with the checkout "back to wizard".
   const editParams = configToWizardParams(item.config)
@@ -54,74 +55,65 @@ export const CartLine = ({ item }: CartLineProps) => {
   if (item.variantId) editParams.set('variant', item.variantId)
   const editHref = `/artworks/${item.artworkSlug}/print?${editParams.toString()}`
 
-  // Open editions only. A limited line has nothing to edit — the variant IS
-  // the object, not a configuration of it, and the wizard it led to could only
-  // ever offer "Go to cart" or add a second line. A button labelled Edit that
-  // cannot edit is worse than no button.
-  //
-  // Two placements, one of them always display:none (so only ever one is in
-  // the accessibility tree): on phones it rides the edition line inside the
-  // details, level with "Open Edition"; from sm up it stays in the price
-  // panel / card corner where it has always been. They sit in different DOM
-  // parents, so CSS alone can't move one between them.
-  const editButton = (inline: boolean) =>
-    isLimited ? null : (
-      <Button
-        variant="secondary"
-        size={inline ? 'smallSquared' : 'regularSquared'}
-        fullWidth={!inline}
-        icon="square-pen"
-        label="Edit Item"
-        href={editHref}
-      />
-    )
-
   return (
     <div className={styles.line}>
-      <div className={styles.body}>
-        <CartItemDetails
-          item={item}
-          thumbHeight={140}
-          editionAction={
-            isLimited ? undefined : <span className={styles.inlineEdit}>{editButton(true)}</span>
-          }
-        />
-      </div>
-
-      <div className={styles.panel}>
-        <div className={styles.stepper}>
-          <Button
-            variant="secondary"
-            size="smallSquared"
-            icon={item.quantity <= 1 ? 'trash-2' : undefined}
-            label={item.quantity <= 1 ? undefined : '−'}
-            aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
-            onClick={decrease}
-          />
-          <Text as="span" size="sm" className={styles.qty} aria-live="polite">
-            {item.quantity}
-          </Text>
-          <Button
-            variant="secondary"
-            size="smallSquared"
-            label="+"
-            aria-label="Increase quantity"
-            disabled={isLimited}
-            onClick={increase}
-          />
-        </div>
-
-        <div className={styles.totalBlock}>
-          <Text as="span" size="sm" className={styles.panelLabel}>
-            Base price
-          </Text>
-          <Text as="span" font="serif" size="xl" className={styles.totalValue}>
-            {formatEuro(lineItemCents)}
-          </Text>
-        </div>
-
-        <div className={styles.actions}>{editButton(false)}</div>
-      </div>
+      <CartItemDetails
+        item={item}
+        actions={
+          <>
+            {/* Open editions only. A limited line has nothing to edit — the
+                variant IS the object, not a configuration of it, and the wizard
+                it led to could only ever offer "Go to cart" or add a second
+                line. A link labelled Edit that cannot edit is worse than none.
+                The hidden word keeps the link's name "Edit item". */}
+            {!isLimited && (
+              <ArrowLink href={editHref} size="small" className={styles.edit}>
+                Edit<span className="sr-only"> item</span>
+              </ArrowLink>
+            )}
+            <Button
+              variant="bare"
+              className={styles.remove}
+              onClick={() => setConfirmingRemove(true)}
+            >
+              <Trash size={15} weight="light" aria-hidden />
+              <span>
+                Remove<span className="sr-only"> from cart</span>
+              </span>
+            </Button>
+          </>
+        }
+        aside={
+          <>
+            <span className={styles.price}>{formatEuro(lineItemCents)}</span>
+            <div className={styles.quantity}>
+              <div className={styles.stepper}>
+                <Button
+                  variant="bare"
+                  className={styles.step}
+                  aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                  onClick={decrease}
+                >
+                  <Minus size={14} weight="light" aria-hidden />
+                </Button>
+                <span className={styles.qty} aria-live="polite">
+                  {item.quantity}
+                </span>
+                <Button
+                  variant="bare"
+                  className={styles.step}
+                  aria-label="Increase quantity"
+                  disabled={isLimited}
+                  onClick={increase}
+                >
+                  <Plus size={14} weight="light" aria-hidden />
+                </Button>
+              </div>
+              {isLimited && <span className={styles.limitNote}>One per limited edition</span>}
+            </div>
+          </>
+        }
+      />
 
       {confirmingRemove && (
         <ConfirmModal

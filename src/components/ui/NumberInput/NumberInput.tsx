@@ -3,32 +3,35 @@
 import { useState, useEffect, useCallback } from 'react'
 import c from 'classnames'
 
-import { Icon, type IconName } from '@/components/ui/Icon'
-
 import styles from './NumberInput.module.scss'
 
-type NumberInputProps = {
-  variant?: string
+export type NumberInputProps = {
   value: number
   onChange: React.ChangeEventHandler<HTMLInputElement>
-  icon?: IconName
-  rotate?: number
   max?: number
   min?: number
-  label?: string
   disabled?: boolean
+  /** The field's name where no visible label wraps it (e.g. "From top, cm"). */
+  'aria-label'?: string
+  /** A unit drawn inside the box after the number, e.g. "cm" (decorative). */
+  suffix?: string
+  /** regular: a 36px field; compact: the 28px number inside a distance box (wallview.md). */
+  size?: 'regular' | 'compact'
 }
 
+/**
+ * The wall view's number field (its only user, wallview.md): a text input that takes digits,
+ * one decimal point or comma and a leading minus, and reports only valid numbers.
+ */
 const NumberInput = ({
-  variant,
   value,
   onChange,
-  icon,
-  rotate,
   max: _max,
   min,
-  label,
   disabled,
+  'aria-label': ariaLabel,
+  suffix,
+  size = 'regular',
 }: NumberInputProps) => {
   // Track the display value as a string to allow empty state and proper editing
   const [displayValue, setDisplayValue] = useState<string>(String(value))
@@ -101,26 +104,27 @@ const NumberInput = ({
   }, [displayValue, min])
 
   return (
-    <div className={styles.wrapper} style={disabled ? { opacity: 0.5 } : undefined}>
-      {label && <span className={styles.label}>{label}</span>}
-      <div className={styles.inputContainer}>
-        <input
-          type="text"
-          inputMode="decimal"
-          className={c([styles.input, variant && styles[variant], { [styles.withIcon]: !!icon }])}
-          value={displayValue}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          disabled={disabled}
-        />
-        {icon && (
-          <div className={c(styles.icon, { [styles[`rotate${rotate}`]]: !!rotate })}>
-            <Icon name={icon} size={16} color="#444444" />
-          </div>
-        )}
-      </div>
-    </div>
+    <span
+      className={c(styles.field, size === 'compact' && styles.compact)}
+      style={disabled ? { opacity: 0.5 } : undefined}
+    >
+      <input
+        type="text"
+        inputMode="decimal"
+        className={styles.input}
+        value={displayValue}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        disabled={disabled}
+        aria-label={ariaLabel}
+      />
+      {suffix && (
+        <span aria-hidden className={styles.suffix}>
+          {suffix}
+        </span>
+      )}
+    </span>
   )
 }
 

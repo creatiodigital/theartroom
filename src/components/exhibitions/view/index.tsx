@@ -1,7 +1,15 @@
 'use client'
 
 import { useProgress } from '@react-three/drei'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -10,20 +18,23 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Minimize2,
-  Mouse,
-  Touchpad,
-  Volume2,
-  VolumeX,
+  HandArrowUp,
+  HandSwipeRight,
+  MouseSimple,
+  SpeakerHigh,
   X,
-} from 'lucide-react'
+} from '@phosphor-icons/react'
 
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
-import TapIcon from '@/icons/gesture-tap.svg'
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
+import { RoomLoader } from '@/components/exhibitions/view/RoomLoader'
+import {
+  RoomAboutPanel,
+  type RoomAbout,
+} from '@/components/exhibitions/view/RoomAbout/RoomAboutPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
+import { FeedbackWindow } from '@/components/feedback/FeedbackWindow'
 import { Scene } from '@/components/scene'
 import { useWebGLAvailable } from '@/components/scene/webglSupport'
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
@@ -50,13 +61,7 @@ import { useLightmapBytes } from '@/components/scene/bake/lightmapLoader'
 import { useSceneFailed } from '@/components/scene/sceneFailure'
 import { MonogramLoader } from '@/components/ui/MonogramLoader'
 import { closeArtworkModal, hideArtworkPanel } from '@/redux/slices/dashboardSlice'
-import {
-  declineExit,
-  hidePlaceholders,
-  openExitPrompt,
-  requestArtworkViewExit,
-  resetScene,
-} from '@/redux/slices/sceneSlice'
+import { declineExit, hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
@@ -65,94 +70,58 @@ import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { bakePageUrl } from '@/lib/bake/bakePageUrl'
 import { Text } from '@/components/ui/Typography'
 import { Button } from '@/components/ui/Button'
-import Tooltip from '@/components/ui/Tooltip/Tooltip'
 import { BakeActions, BakeAdminBar } from './BakeAdmin/BakeAdmin'
+import { ExitWallViewButton } from './RoomControls/ExitWallViewButton'
+import { RoomMenu } from './RoomControls/RoomMenu'
 import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 
 /**
- * While the visitor stands in Wall View (a tap on a work frames it, and every move then travels
- * over its wall), the way out: the one a mouse and keyboard have, with no pinch (AR-178, owner, 2026-11-07:
- * "that button 'Exit Wall View' is paramount"). Its icon alone, minimize-2 ("self explanatory"),
- * where the leave button stands and as it looks (owner: "where the 'exit exhibition' was", "white
- * background, black icon, same size ... semi transparent"): Wall View hides the leave button.
+ * Leaving the exhibition, from the menu's Leave exhibition and from the leave dialog's Leave.
+ *
+ * It goes to the exhibitions index, NOT back to the exhibition just left.
+ * Someone who has decided to leave a show has finished with it; returning them
+ * to its own page offers the one thing they already declined. The index is
+ * where the other exhibitions are.
+ *
+ * This also replaces a `sessionStorage` round trip that read back a
+ * `returnUrl` written on entry — which was always this exhibition's own page,
+ * so both branches landed in the same place anyway.
  */
-const ExitWallViewButton = () => {
-  const dispatch = useDispatch()
-  return (
-    <div className={styles.navigationButtonWrapper}>
-      <Tooltip label="Exit Wall View" placement="left">
-        <Button
-          variant="ghost"
-          onClick={() => dispatch(requestArtworkViewExit())}
-          className={styles.navigationButton}
-          aria-label="Exit Wall View"
-        >
-          <Minimize2 size={20} strokeWidth={ICON_STROKE_WIDTH} />
-        </Button>
-      </Tooltip>
-    </div>
-  )
+const useLeaveExhibition = () => {
+  const router = useRouter()
+  return useCallback(() => router.push('/exhibitions'), [router])
 }
 
-/** The leave button (`buttonHidden`: its dialog stays, the button goes) and the leave dialog. */
-const NavigationButton = ({ buttonHidden }: { buttonHidden: boolean }) => {
-  const router = useRouter()
+/**
+ * The leave dialog, always mounted, raised by walking into the exit corridor: that walk can happen by
+ * accident, so leaving that way stays a decision. The menu's Leave exhibition leaves at once: it is
+ * already two deliberate clicks (owner, 2026-11-11).
+ */
+const LeavePrompt = () => {
   const dispatch = useDispatch()
-  // Shared with the in-scene exit threshold: walking out of the corridor and
-  // clicking this button raise the same single dialog.
   const promptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
   const promptSource = useSelector((state: RootState) => state.scene.exitPromptSource)
-
-  // Every in-scene exit lands here — the prompt's Leave button, the corner X
-  // (which only opens that prompt), and walking into the exit corridor.
-  //
-  // It goes to the exhibitions index, NOT back to the exhibition just left.
-  // Someone who has decided to leave a show has finished with it; returning them
-  // to its own page offers the one thing they already declined. The index is
-  // where the other exhibitions are.
-  //
-  // This also replaces a `sessionStorage` round trip that read back a
-  // `returnUrl` written on entry — which was always this exhibition's own page,
-  // so both branches landed in the same place anyway.
-  const leave = () => {
-    router.push('/exhibitions')
-  }
+  const leave = useLeaveExhibition()
 
   return (
-    <>
-      {!buttonHidden && (
-        <div className={styles.navigationButtonWrapper}>
-          <Tooltip label="Leave Exhibition" placement="left">
-            <Button
-              variant="ghost"
-              onClick={() => dispatch(openExitPrompt('button'))}
-              className={styles.navigationButton}
-              aria-label="Leave Exhibition"
-            >
-              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
-            </Button>
-          </Tooltip>
-        </div>
-      )}
-
-      <ExitPrompt
-        open={promptOpen}
-        restartsAtEntrance={promptSource === 'walk'}
-        onLeave={leave}
-        onCancel={() => dispatch(declineExit())}
-      />
-    </>
+    <ExitPrompt
+      open={promptOpen}
+      restartsAtEntrance={promptSource === 'walk'}
+      onLeave={leave}
+      onCancel={() => dispatch(declineExit())}
+    />
   )
 }
 
 interface ExhibitionViewPageProps {
+  /** "About this exhibition" in the room menu (room-about.md): the exhibition page's data. */
+  about?: RoomAbout | null
   artistSlug: string
   exhibitionSlug: string
 }
 
-const VISITOR_LOADER_TITLE = 'Preparing the exhibition'
 const BAKE_LOADER_TITLE = 'Lighting the room'
 const BAKE_LOADER_NOTE =
   'This takes a few minutes. Keep this tab open and in front, with the display awake.'
@@ -177,9 +146,12 @@ interface LoadingOverlayProps {
   mode: PageMode
   /** Once the room is revealed with its stored bake on — never when the bake failed to go on. */
   onRevealed?: () => void
+  /** The visitor's loader (room-loader.md): the exhibition's title and artist. */
+  title?: string
+  artist?: string
 }
 
-const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
+const LoadingOverlay = ({ mode, onRevealed, title, artist }: LoadingOverlayProps) => {
   const { active, progress } = useProgress()
   const bake = useBakeProgress()
   // A stored bake that will be shown (`shownStoredBake`) only downloads (its files are assets) but
@@ -225,14 +197,19 @@ const LoadingOverlay = ({ mode, onRevealed }: LoadingOverlayProps) => {
       ? (1 - BAKE_MAPS_SHARE) * assets + BAKE_MAPS_SHARE * mapBytes
       : assets
 
-  return (
-    <MonogramLoader
-      progress={fraction}
-      done={done}
-      title={bakes ? BAKE_LOADER_TITLE : VISITOR_LOADER_TITLE}
-      note={bakes ? BAKE_LOADER_NOTE : undefined}
-    />
-  )
+  // The admin's bake keeps the monogram ("Lighting the room"); visitors see the exhibition's title
+  // card (room-loader.md, step 38b). Same fraction and done either way.
+  if (bakes) {
+    return (
+      <MonogramLoader
+        progress={fraction}
+        done={done}
+        title={BAKE_LOADER_TITLE}
+        note={BAKE_LOADER_NOTE}
+      />
+    )
+  }
+  return <RoomLoader progress={fraction} done={done} title={title} artist={artist} />
 }
 
 type ReviewState = 'pending' | 'reviewed' | 'refused' | 'failed'
@@ -265,9 +242,27 @@ const ReviewBar = ({
 // video needs to warn the visitor fresh, since sound is exhibition-
 // specific (the user has to know which rooms to turn the volume up for).
 // Key shape: `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`.
+/**
+ * Whether this exhibition has a work with sound or video: the room's only sources of audio. The
+ * store holds this exhibition's works alone (useLoadExhibitionArtworks resets it on a new one).
+ */
+const useHasSoundOrVideo = () => {
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  return useMemo(
+    () => Object.values(artworksById).some((artwork) => artwork.soundUrl || artwork.videoUrl),
+    [artworksById],
+  )
+}
+
 const MEDIA_NOTICE_STORAGE_PREFIX = 'the-art-room:media-notice-dismissed:'
 
+/** What the room menu's "How to move around" calls: today's help button handler. */
+interface NavigationHelpHandle {
+  open: () => void
+}
+
 interface NavigationHelpModalProps {
+  ref?: Ref<NavigationHelpHandle>
   hidden?: boolean
   /** ID of the exhibition currently being viewed. */
   exhibitionId?: string
@@ -280,7 +275,12 @@ interface NavigationHelpModalProps {
 
 type ModalStep = 'none' | 'help' | 'media'
 
-const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: NavigationHelpModalProps) => {
+const NavigationHelpModal = ({
+  ref,
+  hidden,
+  exhibitionId,
+  artworksReady,
+}: NavigationHelpModalProps) => {
   // Phones and tablets are taught their finger's controls; everything else the
   // keyboard, mouse and trackpad (AR-172).
   const isTouch = useIsTouchDevice()
@@ -288,11 +288,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
   const [mediaDismissed, setMediaDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
 
-  // Detect if exhibition has video or sound artworks
-  const artworksById = useSelector((state: RootState) => state.artworks.byId)
-  const hasMediaArtworks = useMemo(() => {
-    return Object.values(artworksById).some((artwork) => artwork.soundUrl || artwork.videoUrl)
-  }, [artworksById])
+  const hasMediaArtworks = useHasSoundOrVideo()
 
   // The cookie banner and this guide are both "first visit" surfaces, and they
   // used to open on top of each other — an empty localStorage means no consent
@@ -346,27 +342,34 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
 
   const handleCloseMedia = () => setCurrentStep('none')
 
+  // Escape closes the open window first (Q30): caught on `document`, before the camera's `window`
+  // listener, which would otherwise leave Wall View behind it. A second Escape leaves Wall View.
+  const closeOnEscape = useRef(() => {})
+  useEffect(() => {
+    closeOnEscape.current = currentStep === 'help' ? handleCloseHelp : handleCloseMedia
+  })
+  const windowOpen = !hidden && currentStep !== 'none'
+  useEffect(() => {
+    if (!windowOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      closeOnEscape.current()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [windowOpen])
+
   const handleInfoClick = () => setCurrentStep('help')
+
+  // The help button moved into the room menu (visitor-wallview.md §1): its item calls this.
+  useImperativeHandle(ref, () => ({ open: handleInfoClick }))
 
   if (hidden) return null
 
   return (
     <>
-      <Button
-        variant="ghost"
-        onClick={handleInfoClick}
-        className={styles.infoButton}
-        aria-label="Navigation help"
-        title="Navigation help"
-      >
-        {/* A finger tapping on a phone or tablet; the mouse elsewhere. */}
-        {isTouch ? (
-          <TapIcon className={styles.infoButtonIcon} aria-hidden focusable="false" />
-        ) : (
-          <Mouse size={20} strokeWidth={ICON_STROKE_WIDTH} />
-        )}
-      </Button>
-
       {/* Help Modal */}
       {currentStep === 'help' && (
         <div className={styles.infoOverlay} onClick={handleCloseHelp}>
@@ -377,17 +380,17 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
               className={styles.infoPanelClose}
               aria-label="Close"
             >
-              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+              <X size={20} weight="light" aria-hidden />
             </Button>
             {/* The controls alone, no welcome and no title: the guide no longer greets visitors on
                 entry (the floor's hint does), it opens from the help button (AR-177, owner, 2026-11-05). */}
             {isTouch ? (
-              <TouchControlsGuide />
+              <TouchControlsGuide hasSound={hasMediaArtworks} />
             ) : (
               <div className={styles.infoPanelContent}>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Click anywhere
                     </Text>
@@ -408,10 +411,10 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     </div>
                     <div className={styles.infoKeys}>
                       <span className={styles.infoKey}>
-                        <ArrowUp size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowUp size={14} weight="light" aria-hidden />
                       </span>
                       <span className={styles.infoKey}>
-                        <ArrowDown size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowDown size={14} weight="light" aria-hidden />
                       </span>
                     </div>
                   </div>
@@ -433,10 +436,10 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     </div>
                     <div className={styles.infoKeys}>
                       <span className={styles.infoKey}>
-                        <ArrowLeft size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowLeft size={14} weight="light" aria-hidden />
                       </span>
                       <span className={styles.infoKey}>
-                        <ArrowRight size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                        <ArrowRight size={14} weight="light" aria-hidden />
                       </span>
                     </div>
                   </div>
@@ -446,7 +449,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Hold + Drag
                     </Text>
@@ -457,7 +460,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <HandSwipeRight size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Swipe Left / Right
                     </Text>
@@ -468,7 +471,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Touchpad size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <HandArrowUp size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Swipe Up / Down
                     </Text>
@@ -479,7 +482,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Single Click
                     </Text>
@@ -492,7 +495,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     wall, never turning; Escape or the Exit Wall View button leaves it. */}
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Drag, Swipe or Arrows
                     </Text>
@@ -511,7 +514,7 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
-                    <Mouse size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                    <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
                       Double Click
                     </Text>
@@ -520,17 +523,20 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
                     Show artwork details
                   </Text>
                 </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoKeyWide}>
-                    <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
+                {/* Only where a work has sound or video (owner, 2026-11-13). */}
+                {hasMediaArtworks && (
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoKeyWide}>
+                      <SpeakerHigh size={14} weight="light" aria-hidden />
+                      <Text as="span" size="sm">
+                        Double Click
+                      </Text>
+                    </span>
                     <Text as="span" size="sm">
-                      Double Click
+                      Play sound
                     </Text>
-                  </span>
-                  <Text as="span" size="sm">
-                    Play sound
-                  </Text>
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -547,46 +553,23 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
               className={styles.infoPanelClose}
               aria-label="Close"
             >
-              <X size={20} strokeWidth={ICON_STROKE_WIDTH} />
+              <X size={20} weight="light" aria-hidden />
             </Button>
             <div className={styles.welcomeSection}>
-              <Volume2
+              <SpeakerHigh
                 size={32}
-                strokeWidth={ICON_STROKE_WIDTH}
+                weight="light"
                 style={{ margin: '0 auto var(--space-4)', display: 'block' }}
+                aria-hidden
               />
               <Text as="h2" size="lg" font="sans" className={styles.welcomeTitle}>
                 Sound & Video
               </Text>
               <Text as="p" size="sm" className={styles.welcomeText}>
                 This exhibition contains artworks with audio and video. Make sure your volume is
-                turned on for the full experience. You can mute all sounds at any time using the
-                volume icon in the bottom-right corner.
+                turned on for the full experience. You can mute all sounds at any time with{' '}
+                <strong>Sound</strong> in the menu, top right.
               </Text>
-            </div>
-            <div className={styles.infoPanelContent}>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <Volume2 size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                  <Text as="span" size="sm">
-                    {isTouch ? 'Tap' : 'Click'}
-                  </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Mute
-                </Text>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoKeyWide}>
-                  <VolumeX size={14} strokeWidth={ICON_STROKE_WIDTH} />
-                  <Text as="span" size="sm">
-                    {isTouch ? 'Tap' : 'Click'}
-                  </Text>
-                </span>
-                <Text as="span" size="sm">
-                  Unmute
-                </Text>
-              </div>
             </div>
             {!mediaDismissed && (
               <Button
@@ -614,7 +597,13 @@ const NavigationHelpModal = ({ hidden, exhibitionId, artworksReady }: Navigation
   )
 }
 
-export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionViewPageProps) => {
+export const ExhibitionViewPage = ({
+  artistSlug,
+  exhibitionSlug,
+  about,
+}: ExhibitionViewPageProps) => {
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   // AR-176: the page behind the room, so a phone held sideways can paint Safari's strip above it
   // black (globals.scss, `room-page`).
   useEffect(() => {
@@ -625,9 +614,13 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   const hasResetRef = useRef<string | null>(null)
   const searchParams = useSearchParams()
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
+  const hasSoundOrVideo = useHasSoundOrVideo()
   const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const inArtworkView = useSelector((state: RootState) => state.scene.inArtworkView)
   const isTouch = useIsTouchDevice()
+  // The room menu's "How to move around" opens the controls guide through this.
+  const helpRef = useRef<NavigationHelpHandle>(null)
+  const leaveExhibition = useLeaveExhibition()
 
   // AR-161: `?bake=1` bakes the room on the admin's machine and stores it as the draft bake;
   // `?review=1` shows the draft bake exactly as visitors will get it. Admins only — anyone else
@@ -980,23 +973,53 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
   // Bake mode mounts the scene once this computer is known to be able to bake.
   const sceneReady = !!exhibition && (mode !== 'bake' || canBake === true)
 
+  // The room's one menu (visitor-wallview.md §1), in place of the corner X and the help and sound
+  // buttons; the same in the room and in Wall View (Q30):
+  // - Sound: only where a work has sound or video (owner, 2026-11-13; was always, Q29), inside the
+  //   room's audio provider; never without WebGL (nothing plays).
+  // - How to move around: where the help button was (WebGL not unavailable, not the bake page).
+  // - Leave exhibition: always (in Wall View too, Q30); it leaves at once, without the dialog.
+  const helpShown = webglAvailable !== false && shownMode !== 'bake'
+  // About this exhibition: the visitor's room only (not bake or review); it closes back to the
+  // menu button.
+  const aboutShown = !!about && mode !== 'bake' && mode !== 'review'
+  const closeAbout = () => {
+    setAboutOpen(false)
+    document
+      .querySelector<HTMLElement>('[data-panel-overlay] > button[aria-label="Menu"]')
+      ?.focus({ preventScroll: true })
+  }
+  // Send feedback (feedback.md, room-about.md): the visitor's room only, as About; the window
+  // returns focus to the menu button itself.
+  const feedbackShown = !!exhibition?.id && mode !== 'bake' && mode !== 'review'
+  const roomMenu = (sound: boolean) => (
+    <RoomMenu
+      sound={sound}
+      onHelp={helpShown ? () => helpRef.current?.open() : undefined}
+      onLeave={leaveExhibition}
+      onAbout={aboutShown ? () => setAboutOpen(true) : undefined}
+      onFeedback={feedbackShown ? () => setFeedbackOpen(true) : undefined}
+    />
+  )
+
   return (
     <>
-      {/* Wall View is a mode of its own: its Exit button alone, every other button hidden (AR-178, owner,
-          2026-11-07: "while in wall mode, hide all other buttons"; "we are in a special mode on its
-          own"). The sound button gives way too (Scene). */}
-      <NavigationButton buttonHidden={inArtworkView} />
+      <LeavePrompt />
+      {/* Wall View's way out, top-left; the menu stays top-right (visitor-wallview.md §2). */}
       {inArtworkView && !isArtworkModalOpen && <ExitWallViewButton />}
       {webglAvailable !== false && (
         <>
           <NavigationHelpModal
-            hidden={inArtworkView || shownMode === 'bake'}
+            ref={helpRef}
+            hidden={shownMode === 'bake'}
             exhibitionId={exhibition?.id}
             artworksReady={artworksReady}
           />
           <LoadingOverlay
             key={shownMode}
             mode={shownMode}
+            title={about?.title ?? exhibition?.mainTitle}
+            artist={about?.artistName}
             onRevealed={mode === 'review' ? markReviewed : undefined}
           />
         </>
@@ -1013,17 +1036,38 @@ export const ExhibitionViewPage = ({ artistSlug, exhibitionSlug }: ExhibitionVie
           editorHref={editorHref}
         />
       )}
-      {sceneReady && (
+      {sceneReady ? (
         // Keyed by the mode: a bake and a review never share a scene (a finished quick bake is
-        // shown in a fresh one, as review shows a stored bake).
+        // shown in a fresh one, as review shows a stored bake). The menu renders inside it, in its
+        // audio provider, for Sound; until it mounts, the page renders the menu itself (no Sound
+        // then: there is no audio to switch yet), so Leave is always there.
         <BakePageProvider key={shownMode} value={bakePage}>
-          <Scene hideLoader />
+          <Scene hideLoader overlay={roomMenu(webglAvailable !== false && hasSoundOrVideo)} />
         </BakePageProvider>
+      ) : (
+        roomMenu(false)
       )}
       {/* On a phone or tablet the room holds still while an artwork's details are
           open: a slide or tap would walk away from the work being read about. This
           catches those touches; the details sit above it. */}
       {isTouch && isArtworkModalOpen && <div className={styles.touchShield} aria-hidden />}
+      {/* About this exhibition: on a phone or tablet the room's gestures pause while it is open. */}
+      {aboutShown && aboutOpen && about && (
+        <>
+          {isTouch && <div className={styles.touchShield} aria-hidden />}
+          <RoomAboutPanel about={about} onClose={closeAbout} />
+        </>
+      )}
+      {/* The feedback window over the room: its presses and keys are its own, never the room's. */}
+      {feedbackShown && feedbackOpen && exhibition?.id && (
+        <div data-panel-overlay onKeyDown={(event) => event.stopPropagation()}>
+          <FeedbackWindow
+            source="room"
+            exhibitionId={exhibition.id}
+            onClose={() => setFeedbackOpen(false)}
+          />
+        </div>
+      )}
       {/* The work as a photo of the print, as the grids show it, or its plain image when it has no
           current render (AR-174). */}
       {isArtworkModalOpen && <ArtworkModal presentation={currentPresentation} />}

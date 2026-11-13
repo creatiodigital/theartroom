@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { CheckoutButton } from '@/components/checkout/CheckoutParts'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { Icon } from '@/components/ui/Icon'
@@ -227,28 +228,14 @@ export const AddressForm = ({
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.formSectionTitle}>Where should we send it?</h2>
-        {/* A buyer who can't find their country has one question — "do you
-            ship to me?" — and the worst answer is making them abandon a
-            half-filled checkout to go and look. This opens over the flow.
-            It sits on the heading line rather than on the Country label so
-            it reads as an answer about the section, not about that one
-            field. */}
-        <Button
-          type="button"
-          variant="bare"
-          className={styles.whereWeShip}
-          onClick={() => setCountriesOpen(true)}
-          label="Where we ship"
-        />
-      </div>
+      <h2 className={styles.formSectionTitle}>Where should we send it?</h2>
 
       <FormField className={styles.fieldFull} error={fieldError('country')}>
         <label className={styles.fieldLabel} htmlFor="country">
           Country
         </label>
         <SelectDropdown<string>
+          className={styles.countrySelect}
           options={countryOptions}
           value={country}
           onChange={(next) => {
@@ -259,6 +246,20 @@ export const AddressForm = ({
           invalid={!!fieldError('country')}
         />
       </FormField>
+
+      {/* A buyer who can't find their country has one question — "do you ship
+          to me?" — and the worst answer is making them abandon a half-filled
+          checkout to go and look. Right under Country (checkout v2, owner 2026-11-13). */}
+      <p className={styles.whereWeShipLine}>
+        Not sure we ship to you?{' '}
+        <Button
+          type="button"
+          variant="bare"
+          className={styles.whereWeShip}
+          onClick={() => setCountriesOpen(true)}
+          label="Where we ship"
+        />
+      </p>
 
       <div className={styles.fieldGrid}>
         <FormField className={styles.fieldFull} error={fieldError('fullName')}>
@@ -283,7 +284,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField error={fieldError('email')}>
+        <FormField className={styles.fieldHalf} error={fieldError('email')}>
           <label className={styles.fieldLabel} htmlFor="email">
             Email
           </label>
@@ -305,9 +306,9 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField error={fieldError('phone')}>
+        <FormField className={styles.fieldHalf} error={fieldError('phone')}>
           <label className={styles.fieldLabel} htmlFor="phone">
-            Phone (for carrier)
+            Phone, for the carrier
           </label>
           <Input
             id="phone"
@@ -418,7 +419,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField error={fieldError('city')}>
+        <FormField className={styles.fieldFull} error={fieldError('city')}>
           <label className={styles.fieldLabel} htmlFor="city">
             City
           </label>
@@ -440,7 +441,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField>
+        <FormField className={styles.fieldHalf}>
           <label className={styles.fieldLabel} htmlFor="state">
             State / region (optional)
           </label>
@@ -457,7 +458,7 @@ export const AddressForm = ({
           />
         </FormField>
 
-        <FormField error={fieldError('postalCode')}>
+        <FormField className={styles.fieldHalf} error={fieldError('postalCode')}>
           <label className={styles.fieldLabel} htmlFor="postalCode">
             Postal code
           </label>
@@ -484,7 +485,7 @@ export const AddressForm = ({
           where it would be read before there is anything to check. We print
           this address onto the carrier label exactly as it stands. */}
       <p className={styles.addressCheckNotice}>
-        <Icon name="alert-circle" size={16} />
+        <Icon name="alert-circle" size={18} />
         <span>
           <strong>Please double-check your address.</strong> We print it on the parcel label exactly
           as entered. A delivery that fails because of an incorrect or incomplete address can’t be
@@ -493,20 +494,17 @@ export const AddressForm = ({
       </p>
 
       <div className={styles.submitRow}>
-        <Button
+        <CheckoutButton
           type="submit"
-          variant="primary"
-          size="bigSquared"
-          fullWidth
           disabled={submitting}
           label={submitting ? 'Checking availability…' : submitLabel}
-          iconRight={<Icon name="arrowRight" size={20} />}
         />
       </div>
 
       {countriesOpen && (
         <ShippingCountriesModal
           countryCodes={countryCodes ?? Object.keys(COUNTRY_NAMES)}
+          selectedCode={country}
           onClose={() => setCountriesOpen(false)}
           onSelect={(code) => {
             setCountry(code)

@@ -2,22 +2,22 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { ArrowRight } from '@phosphor-icons/react'
+
 import { AddressForm } from '@/components/checkout/AddressForm'
-import { CartItemDetails } from '@/components/cart/CartItemDetails/CartItemDetails'
-import { Button } from '@/components/ui/Button'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { ArrowButton, CheckoutButton, OrderColumn } from '@/components/checkout/CheckoutParts'
+import { EmptyCart } from '@/components/cart/EmptyCart'
+import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { Text } from '@/components/ui/Typography'
-import { lineTotal } from '@/lib/cart/cartMath'
+import { cartCount } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
 import { useCart } from '@/lib/cart/useCart'
 import type { CartLikeItem, CartTotals } from '@/lib/cart/validateCart'
-import { vatLabel } from '@/lib/checkout/vatLabel'
-import { formatEuro } from '@/lib/print-providers'
+import { estimateDeliveryWindow } from '@/lib/emails/delivery'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
-import { CartConfirmation } from './CartConfirmation'
+import { CartConfirmation, type PlacedOrderSummary } from './CartConfirmation'
 import { CartPayment } from './CartPayment'
 import { createCartPaymentIntent } from './createCartPaymentIntent'
 import { validateCartAction } from './validateCartAction'
@@ -90,6 +90,10 @@ export const CartCheckout = ({
   // lineId → "no longer available" style message, surfaced on the line.
   const [lineErrors, setLineErrors] = useState<Record<string, string>>({})
   const [payError, setPayError] = useState<string | null>(null)
+  // Display only: the lines as they were when payment went through in place, for the
+  // confirmation's "Your order" panel (the cart is cleared right after). Not set on a redirect
+  // return or a reload (Q-P15).
+  const [placedItems, setPlacedItems] = useState<CartItem[] | null>(null)
 
   // Redirect return path. Stripe sends the buyer back to return_url
   // (/checkout) with ?payment_intent=... — after 3DS on a card, and ALWAYS for
@@ -139,12 +143,9 @@ export const CartCheckout = ({
   if (items.length === 0 && !paidRef.current && !restoringOrder) {
     return (
       <PageLayout>
-        <PageHeader pageTitle="Checkout" />
-        <div className={styles.empty}>
-          <Text as="p" font="serif" size="lg" className={styles.emptyText}>
-            Your cart is empty
-          </Text>
-          <Button variant="primary" size="bigSquared" href="/prints" label="Browse prints" />
+        <div className={styles.page}>
+          <PageIntro title="Checkout" compact />
+          <EmptyCart />
         </div>
       </PageLayout>
     )
@@ -251,211 +252,151 @@ export const CartCheckout = ({
     keepOnlyPaymentIntentInUrl(confirmedPaymentIntentId)
   }
 
+  // The confirmation has a layout of its own (order-confirmed.dc.html): no title, no steps.
+  if (step === 'confirmation') {
+    return (
+      <PageLayout>
+        <div className={styles.page}>
+          {paymentIntentId && (
+            <CartConfirmation
+              paymentIntentId={paymentIntentId}
+              summary={summaryForConfirmation(placedItems, totals, address)}
+            />
+          )}
+        </div>
+      </PageLayout>
+    )
+  }
+
+  // Order errors on the shipping step: what the server refused, and payment-side failures that
+  // route the buyer back here (sold out at the PI call, or a failed 3DS return).
+  const hasLineErrors = Object.keys(lineErrors).length > 0
+  const addressErrors = (orderError || hasLineErrors || payError) && (
+    <div className={styles.errors}>
+      {orderError && <p className={styles.orderError}>{orderError}</p>}
+      {hasLineErrors && (
+        <p className={styles.orderError}>
+          Some items in your order are no longer available. Please update your cart and try again.
+        </p>
+      )}
+      {payError && <p className={styles.orderError}>{payError}</p>}
+    </div>
+  )
+
+  // Review: when the prints should arrive, by destination (the order email's own estimate).
+  const delivery = address ? estimateDeliveryWindow(address.countryCode) : null
+  const prints = cartCount(items)
+  const hasLimited = items.some((item) => item.editionType === 'limited')
+
+  const stepContent =
+    step === 'address' ? (
+      <>
+        {addressErrors}
+        <AddressForm
+          onSubmit={handleAddressSubmit}
+          submitting={submitting}
+          submitLabel="Continue to review"
+          countryCodes={supportedCountries}
+          initialAddress={address}
+          addressAutocomplete={addressAutocomplete}
+        />
+      </>
+    ) : step === 'review' && totals && address ? (
+      <>
+        <h2 className={styles.stepTitle}>Check your order</h2>
+
+        <div className={styles.shipTo}>
+          <div className={styles.shipToHead}>
+            <span className={styles.shipToLabel}>Shipping to</span>
+            {/* The hidden word keeps the button's name "Change address". */}
+            <ArrowButton
+              icon={<ArrowRight size={15} weight="light" aria-hidden />}
+              onClick={handleChangeAddress}
+            >
+              Change<span className="sr-only"> address</span>
+            </ArrowButton>
+          </div>
+          <span className={styles.shipToName}>{address.fullName}</span>
+          <span className={styles.shipToAddress}>
+            {[
+              address.address1,
+              address.address2,
+              `${address.postalCode} ${address.city}`.trim(),
+              address.stateOrRegion,
+            ]
+              .filter(Boolean)
+              .join(', ')}{' '}
+            · {getCountryName(address.countryCode)}
+          </span>
+          <span className={styles.shipToContact}>
+            {[address.email, address.phone].filter(Boolean).map((part, index) => (
+              <span key={part} className={styles.nowrap}>
+                {index > 0 && ' · '}
+                {part}
+              </span>
+            ))}
+          </span>
+        </div>
+
+        {delivery && (
+          <p className={styles.stepNote}>
+            {prints === 1 ? 'Your print is' : 'Your prints are'} made to order and delivered in{' '}
+            {delivery.minDays}–{delivery.maxDays} business days.
+          </p>
+        )}
+
+        {payError && <p className={styles.orderError}>{payError}</p>}
+        <CheckoutButton
+          disabled={submitting}
+          label={submitting ? 'Preparing payment…' : 'Continue to payment'}
+          onClick={() => {
+            void handleProceedToPayment()
+          }}
+        />
+        {hasLimited && (
+          <p className={styles.limitedNote}>Limited editions are not reserved until you pay.</p>
+        )}
+      </>
+    ) : step === 'payment' && totals && address && clientSecret ? (
+      <CartPayment
+        clientSecret={clientSecret}
+        totals={totals}
+        address={address}
+        onSuccess={(confirmedPaymentIntentId) => {
+          setPlacedItems(items)
+          handlePaymentSuccess(confirmedPaymentIntentId)
+        }}
+        onBack={handleBackToReview}
+      />
+    ) : null
+
   return (
     <PageLayout>
-      <PageHeader pageTitle="Checkout" />
+      <div className={styles.page}>
+        <PageIntro title="Checkout" compact />
 
-      {step === 'address' && (
-        <div className={styles.addressStep}>
-          <div className={styles.cartRecap}>
-            <div className={styles.recapHeader}>
-              <Text as="h2" font="serif" size="xl" className={styles.recapTitle}>
-                Your order
-              </Text>
-              <Button variant="secondary" size="regularSquared" href="/cart" label="Edit Cart" />
-            </div>
-            <div className={styles.lines}>
-              {items.map((item) => (
-                <CheckoutLine key={item.lineId} item={item} error={lineErrors[item.lineId]} />
-              ))}
-            </div>
-            {orderError && (
-              <Text as="p" size="sm" className={styles.orderError}>
-                {orderError}
-              </Text>
-            )}
-            {Object.keys(lineErrors).length > 0 && (
-              <Text as="p" size="sm" className={styles.orderError}>
-                Some items in your order are no longer available. Please update your cart and try
-                again.
-              </Text>
-            )}
-            {/* Payment-side failures route the buyer back here (sold-out at the
-                PI call, or a failed 3DS return) — surface the message so it's
-                not lost on the address step. */}
-            {payError && (
-              <Text as="p" size="sm" className={styles.orderError}>
-                {payError}
-              </Text>
-            )}
-          </div>
-
-          <div className={styles.formPanel}>
-            <AddressForm
-              onSubmit={handleAddressSubmit}
-              submitting={submitting}
-              submitLabel="Continue to review"
-              countryCodes={supportedCountries}
-              initialAddress={address}
-              addressAutocomplete={addressAutocomplete}
+        {/* Checkout v2 (order-flow.md, designs/checkout-v2.dc.html; owner 2026-11-13): no step
+            indicator; on every step the order on the left, as in the cart, and the step on the
+            right, each step's own heading saying where you are. */}
+        {stepContent && (
+          <div className={styles.grid}>
+            <OrderColumn
+              items={items}
+              totals={step === 'address' ? null : totals}
+              errors={step === 'address' ? lineErrors : undefined}
             />
+            <section className={styles.step}>{stepContent}</section>
           </div>
-        </div>
-      )}
-
-      {step === 'review' && totals && address && (
-        <div className={styles.reviewStep}>
-          <div className={styles.cartRecap}>
-            <div className={styles.recapHeader}>
-              <Text as="h2" font="serif" size="xl" className={styles.recapTitle}>
-                Your order
-              </Text>
-              <Button variant="secondary" size="regularSquared" href="/cart" label="Edit Cart" />
-            </div>
-            <div className={styles.lines}>
-              {items.map((item) => (
-                <CheckoutLine key={item.lineId} item={item} />
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.cartRecap}>
-            <div className={styles.recapHeader}>
-              <Text as="h2" font="serif" size="xl" className={styles.recapTitle}>
-                Summary
-              </Text>
-            </div>
-
-            <div className={styles.summaryPanel}>
-              <div className={styles.shipTo}>
-                <Text as="span" size="xs" className={styles.shipToLabel}>
-                  Shipping to
-                </Text>
-                <Text as="span" size="sm" className={styles.shipToValue}>
-                  {address.fullName}
-                </Text>
-                <Text as="span" size="sm" className={styles.shipToCountry}>
-                  {getCountryName(address.countryCode)}
-                </Text>
-                <Button
-                  variant="secondary"
-                  size="regularSquared"
-                  label="Change address"
-                  onClick={handleChangeAddress}
-                  className={styles.changeAddress}
-                />
-              </div>
-
-              <div className={styles.totals}>
-                <div className={styles.totalRow}>
-                  <Text as="span" size="sm" className={styles.totalLabel}>
-                    Items
-                  </Text>
-                  <Text as="span" size="sm" className={styles.totalValue}>
-                    {formatEuro(totals.itemsPreTaxCents)}
-                  </Text>
-                </div>
-                <div className={styles.totalRow}>
-                  <Text as="span" size="sm" className={styles.totalLabel}>
-                    Shipping
-                  </Text>
-                  <Text as="span" size="sm" className={styles.totalValue}>
-                    {formatEuro(totals.shippingCents)}
-                  </Text>
-                </div>
-                <div className={styles.totalRow}>
-                  <Text as="span" size="sm" className={styles.totalLabel}>
-                    {vatLabel(totals.vatRate)}
-                  </Text>
-                  <Text as="span" size="sm" className={styles.totalValue}>
-                    {formatEuro(totals.customerVatCents)}
-                  </Text>
-                </div>
-                <div className={`${styles.totalRow} ${styles.grandTotalRow}`}>
-                  <Text as="span" size="md" className={styles.grandTotalLabel}>
-                    Total
-                  </Text>
-                  <Text as="span" font="serif" size="xl" className={styles.grandTotalValue}>
-                    {formatEuro(totals.totalCents)}
-                  </Text>
-                </div>
-              </div>
-
-              {payError && (
-                <Text as="p" size="sm" className={styles.orderError}>
-                  {payError}
-                </Text>
-              )}
-
-              <Button
-                variant="primary"
-                size="bigSquared"
-                fullWidth
-                disabled={submitting}
-                label={submitting ? 'Preparing payment…' : 'Proceed to payment'}
-                onClick={() => {
-                  void handleProceedToPayment()
-                }}
-                className={styles.payCta}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 'payment' && totals && address && clientSecret && (
-        <CartPayment
-          clientSecret={clientSecret}
-          totals={totals}
-          address={address}
-          onSuccess={handlePaymentSuccess}
-          onBack={handleBackToReview}
-        />
-      )}
-
-      {step === 'confirmation' && paymentIntentId && (
-        <CartConfirmation paymentIntentId={paymentIntentId} />
-      )}
+        )}
+      </div>
     </PageLayout>
   )
 }
 
-type CheckoutLineProps = {
-  item: CartItem
-  /** Per-line "no longer available" message from the server revalidation. */
-  error?: string
-}
-
-/**
- * Read-only order line for the checkout surfaces. Unlike the cart's CartLine
- * there are no quantity steppers or remove controls here — the buyer edits
- * quantities on the cart page; checkout just reflects the order.
- */
-const CheckoutLine = ({ item, error }: CheckoutLineProps) => {
-  const { lineItemCents } = lineTotal(item)
-  return (
-    <div className={`${styles.line} ${error ? styles.lineError : ''}`}>
-      <CartItemDetails item={item} thumbHeight={88} error={error} />
-
-      <div className={styles.qtyCol}>
-        <div className={styles.qtyRow}>
-          <Text as="span" size="sm" className={styles.qtyLabel}>
-            Qty:
-          </Text>
-          <Text as="span" size="sm" className={styles.qtyValue}>
-            {item.quantity}
-          </Text>
-        </div>
-
-        <div className={styles.priceBlock}>
-          <Text as="span" size="sm" className={styles.priceLabel}>
-            Base price
-          </Text>
-          <Text as="span" font="serif" size="lg" className={styles.priceValue}>
-            {formatEuro(lineItemCents)}
-          </Text>
-        </div>
-      </div>
-    </div>
-  )
+function summaryForConfirmation(
+  items: CartItem[] | null,
+  totals: CartTotals | null,
+  address: ShippingAddress | null,
+): PlacedOrderSummary | null {
+  return items && items.length > 0 && totals && address ? { items, totals, address } : null
 }

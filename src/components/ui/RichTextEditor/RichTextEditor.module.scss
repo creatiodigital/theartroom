@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 .container {
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -153,4 +155,107 @@
     pointer-events: none;
     height: 0;
   }
+}
+
+// ── tone="admin" (gallery.md §2c, designs/content-editor.dc.html) ──
+// Only the admin tone's own classes; nothing above changes.
+
+// Today's 500px box with its own scroll; the toolbar sticks inside it.
+.containerAdmin {
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  max-height: 500px;
+  overflow-y: auto;
+
+  &:focus-within {
+    border-color: var(--color-dark-surface);
+  }
+}
+
+.toolbarAdmin {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px var(--space-2);
+  border-bottom: 1px solid var(--color-gray-25);
+  background: var(--color-gray-15);
+}
+
+// A group never splits: the toolbar wraps between groups (phones).
+.toolGroup {
+  display: flex;
+  gap: 2px;
+  padding-right: 6px;
+  margin-right: var(--space-1);
+  border-right: 1px solid var(--color-gray-25);
+
+  &:last-child {
+    padding-right: 0;
+    margin-right: 0;
+    border-right: none;
+  }
+}
+
+// Two classes: Button's bare reset would win over one. 44px on phones (Q7).
+.toolGroup .tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-20);
+    color: var(--color-black);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--color-gray-25);
+    color: var(--color-black);
+  }
+
+  @include media-up(tablet) {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+// The text area also carries RichText's `richText` (+ `page`) classes, so it
+// reads by the live page's own rules. Only what those rules leave open is set here.
+.editorAdmin {
+  min-height: 300px;
+  padding: var(--space-4);
+  outline: none;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: var(--text-md);
+
+  @include media-up(tablet) {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+    height: 0;
+  }
+}
+
+// The admin shell sets every heading in its content to the dashboard font
+// (AdminLayout.module.scss, `.content h1–h6`, 0,1,1), which ties with RichText's
+// own heading rules. These (0,2,1) put back the public fonts.
+.containerAdmin .editorAdmin :is(h1, h2, h3, h4) {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+}
+
+.containerAdmin .editorAdmin :is(h5, h6) {
+  font-family: var(--font-sans), var(--font-sans-fallback);
 }

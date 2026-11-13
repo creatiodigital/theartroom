@@ -1,26 +1,39 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { zOrderToBack, zOrderToFront, type LayerItem } from '@/components/wallview/layerOrder'
 import { useGLTF } from '@react-three/drei'
+import {
+  LinkSimple,
+  LockSimple,
+  LockSimpleOpen,
+  SelectionBackground,
+  SelectionForeground,
+} from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
 
+import { SliderRow } from '@/components/editorChrome'
 import { Button } from '@/components/ui/Button'
-import { Section } from '@/components/ui/Section/Section'
-import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { NumberInput } from '@/components/ui/NumberInput'
-import { Slider } from '@/components/ui/Slider'
-import { Text } from '@/components/ui/Typography'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
+import {
+  DistanceBox,
+  ItemThumb,
+  PanelGroup,
+  SegmentStrip,
+  TabStrip,
+} from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { cmEventToMeters } from '@/components/wallview/utils'
 import { getOriginalDimensions, hasPendingUpload } from '@/lib/pendingUploads'
-import { getPrintMaxSize } from '@/lib/print-providers/printspace/sizeBounds'
+import { formatPrintSize, getPrintMaxSize } from '@/lib/print-providers/printspace/sizeBounds'
 import {
   updateArtworkPosition,
   toggleArtworkLocked,
@@ -31,12 +44,47 @@ import { setSizeLocked } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 import type { TAlign } from '@/types/wizard'
 
+import { TYPE_NAMES, WALL_PLACES } from '../alignments'
 import { useArtworkDetails } from '../hooks/useArtworkDetails'
 import { useArtworkHandlers } from '../hooks/useArtworkHandlers'
 import styles from '../RightPanel.module.scss'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
-const ArtworkPanel = () => {
+export type ItemTab = 'layout' | 'look'
+
+const ITEM_TABS = [
+  { id: 'layout', label: 'Layout' },
+  { id: 'look', label: 'Look' },
+] as const satisfies readonly { id: ItemTab; label: string }[]
+
+type ArtworkPanelProps = {
+  /** The open tab; RightPanel keeps it while the selection changes (wallview.md §3). */
+  tab: ItemTab
+  onTabChange: (tab: ItemTab) => void
+  /** RightPanel's View details button (its save-first handler lives there); none for shapes. */
+  viewDetails?: ReactNode
+  /** A line under the actions, e.g. View details' refused save. */
+  notice?: ReactNode
+  /** More of the Size group for one type: a text box's Fit box to text. */
+  layoutExtra?: ReactNode
+  /** The Look tab: the type's own panel. */
+  children?: ReactNode
+}
+
+/**
+ * One selected item in the right panel (wallview.md §3): the header (thumbnail, name, type and
+ * size, Lock / Move to front / Move to back, View details), the Layout / Look tabs, and the
+ * Layout tab itself. Both tabs stay mounted (the hidden one `hidden`), so the type panels mount
+ * when they always did.
+ */
+const ArtworkPanel = ({
+  tab,
+  onTabChange,
+  viewDetails,
+  notice,
+  layoutExtra,
+  children,
+}: ArtworkPanelProps) => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const sizeLocked = useSelector((state: RootState) =>
@@ -243,69 +291,115 @@ const ArtworkPanel = () => {
     )
   }
 
+  // Handlers still work in meters; convert cm → m at the edge.
+  const minCm = 10
+  const commitFromString = (raw: string, commit: (v: number) => void) => {
+    const parsed = parseFloat(raw.replace(',', '.'))
+    if (Number.isFinite(parsed) && parsed >= minCm) commit(parsed / 100)
+  }
+
+  // Print-max line — image artworks with known resolution only. Shows the largest size a buyer
+  // can actually order so the artist doesn't display a wall artwork bigger than anything on
+  // sale (questions.md Q143: it was a marker on the width / height sliders). Hidden when
+  // resolution is missing so a placeholder value never reads as a real cap.
+  const isImage = artwork?.artworkType === 'image'
+  let imageMeta: { width: number; height: number } | null = null
+  if (isImage && currentArtworkId) {
+    const pending = getOriginalDimensions(currentArtworkId)
+    if (pending) imageMeta = pending
+    else if (artwork?.originalWidth && artwork?.originalHeight) {
+      imageMeta = { width: artwork.originalWidth, height: artwork.originalHeight }
+    }
+  }
+  const printMax = imageMeta ? getPrintMaxSize(imageMeta) : null
+
+  const typeName = TYPE_NAMES[artwork?.artworkType ?? '']
+
   return (
     <>
-      {/* HEADER Section */}
-      <div className={styles.header}>
-        <Text font="dashboard" as="h2" size="sm" weight="bold" className={styles.headerTitle}>
-          {artwork?.name || 'Artwork'}
-        </Text>
-      </div>
+      <header className={styles.header}>
+        <div className={styles.identity}>
+          <ItemThumb
+            artworkType={artwork?.artworkType}
+            imageUrl={artwork?.imageUrl}
+            size="header"
+          />
+          <div className={styles.identityText}>
+            <h2 className={styles.name}>{artwork?.name || 'Artwork'}</h2>
+            {/* Height first (the gallery convention); the size never gives way to the type. */}
+            <p className={styles.meta}>
+              {typeName && <span className={styles.metaType}>{typeName} · </span>}
+              <span className={styles.metaSize}>
+                {heightCm} × {widthCm} cm
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className={styles.actions}>
+          <Tooltip label="Lock artwork" placement="bottom">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={c(styles.iconButton, isLocked && styles.pressed)}
+              aria-pressed={isLocked}
+              aria-label="Lock artwork"
+              onClick={() =>
+                currentArtworkId && dispatch(toggleArtworkLocked({ artworkId: currentArtworkId }))
+              }
+            >
+              {isLocked ? (
+                <LockSimple size={16} weight="light" aria-hidden />
+              ) : (
+                <LockSimpleOpen size={16} weight="light" aria-hidden />
+              )}
+            </Button>
+          </Tooltip>
+          <Tooltip label="Move to front" placement="bottom">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.iconButton}
+              aria-label="Move to front"
+              onClick={handleMoveToFront}
+              disabled={isLocked}
+            >
+              <SelectionForeground size={16} weight="light" aria-hidden />
+            </Button>
+          </Tooltip>
+          <Tooltip label="Move to back" placement="bottom">
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.iconButton}
+              aria-label="Move to back"
+              onClick={handleMoveToBack}
+              disabled={isLocked}
+            >
+              <SelectionBackground size={16} weight="light" aria-hidden />
+            </Button>
+          </Tooltip>
+          {viewDetails && <span className={styles.actionsEnd}>{viewDetails}</span>}
+        </div>
+        {notice}
+        <TabStrip label="Item settings" tabs={ITEM_TABS} selected={tab} onSelect={onTabChange} />
+      </header>
 
-      {/* INTERACTION Section */}
-      <Section title="Interaction">
-        <Checkbox
-          checked={isLocked}
-          onChange={() =>
-            currentArtworkId && dispatch(toggleArtworkLocked({ artworkId: currentArtworkId }))
-          }
-          label="Lock artwork"
-        />
-      </Section>
-
-      {/* SIZE Section */}
-      <Section title="Dimensions" disabled={isLocked}>
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Size (cm)
-        </Text>
-        {(() => {
-          const maxWidthCm = Math.max(500, widthCm)
-          const maxHeightCm = Math.max(500, heightCm)
-          const minCm = 10
-          // Handlers still work in meters; convert cm → m at the edge.
-          const commitFromString = (raw: string, commit: (v: number) => void) => {
-            const parsed = parseFloat(raw.replace(',', '.'))
-            if (Number.isFinite(parsed) && parsed >= minCm) commit(parsed / 100)
-          }
-
-          // Print-max marker — image artworks with known resolution
-          // only. Shows the largest size a buyer can actually order so
-          // the artist doesn't display a wall artwork bigger than
-          // anything on sale. Hidden when resolution is missing so a
-          // placeholder value never reads as a real cap.
-          const isImage = artwork?.artworkType === 'image'
-          let imageMeta: { width: number; height: number } | null = null
-          if (isImage && currentArtworkId) {
-            const pending = getOriginalDimensions(currentArtworkId)
-            if (pending) imageMeta = pending
-            else if (artwork?.originalWidth && artwork?.originalHeight) {
-              imageMeta = { width: artwork.originalWidth, height: artwork.originalHeight }
-            }
-          }
-          const printMax = imageMeta ? getPrintMaxSize(imageMeta) : null
-          const markerPct = (valCm: number, max: number) =>
-            ((Math.min(max, Math.max(minCm, valCm)) - minCm) / (max - minCm)) * 100
-          const widthMarker = printMax ? markerPct(printMax.widthCm, maxWidthCm) : null
-          const heightMarker = printMax ? markerPct(printMax.heightCm, maxHeightCm) : null
-
-          return (
-            <>
-              <div className={styles.item}>
-                <label className={styles.sizeField}>
-                  <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                    Width (cm)
-                  </Text>
+      <div className={styles.body}>
+        <div
+          role="tabpanel"
+          aria-label="Layout"
+          hidden={tab !== 'layout'}
+          className={styles.tabPanel}
+        >
+          <PanelGroup title="Size" disabled={isLocked}>
+            <div className={styles.sizeRow}>
+              <label className={styles.sizeField}>
+                <span className={styles.fieldLabel}>Width</span>
+                <span className={styles.numberBox}>
                   <Input
+                    size="bare"
+                    className={styles.numberInputWrap}
+                    inputClassName={styles.numberInput}
                     type="text"
                     inputMode="numeric"
                     value={widthInputStr}
@@ -319,36 +413,40 @@ const ArtworkPanel = () => {
                       setWidthInputStr(String(widthCm))
                     }}
                     disabled={isLocked}
-                    aria-label="Artwork width in centimeters"
                   />
-                </label>
-                <div className={styles.sliderWithMarker}>
-                  <Slider
-                    min={minCm}
-                    max={maxWidthCm}
-                    step={1}
-                    value={widthCm}
-                    onChange={(cm) => handleLockedWidthChange(cm / 100)}
+                  <span aria-hidden className={styles.unit}>
+                    cm
+                  </span>
+                </span>
+              </label>
+              <Tooltip label="Lock proportions when resizing" placement="top">
+                <label
+                  className={c(styles.chain, sizeLocked && styles.chainOn)}
+                  data-no-deselect="true"
+                >
+                  <input
+                    type="checkbox"
+                    className={styles.chainInput}
+                    checked={sizeLocked}
+                    onChange={(e) =>
+                      currentArtworkId &&
+                      dispatch(
+                        setSizeLocked({ artworkId: currentArtworkId, value: e.target.checked }),
+                      )
+                    }
                     disabled={isLocked}
-                    aria-label="Artwork width in centimeters"
+                    aria-label="Lock proportions when resizing"
                   />
-                  {widthMarker !== null && (
-                    <div className={styles.markerTrack}>
-                      <span
-                        className={styles.maxPrintMarker}
-                        style={{ left: `${widthMarker}%` }}
-                        aria-hidden
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className={styles.item}>
-                <label className={styles.sizeField}>
-                  <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                    Height (cm)
-                  </Text>
+                  <LinkSimple size={15} weight="light" aria-hidden />
+                </label>
+              </Tooltip>
+              <label className={styles.sizeField}>
+                <span className={styles.fieldLabel}>Height</span>
+                <span className={styles.numberBox}>
                   <Input
+                    size="bare"
+                    className={styles.numberInputWrap}
+                    inputClassName={styles.numberInput}
                     type="text"
                     inputMode="numeric"
                     value={heightInputStr}
@@ -362,238 +460,129 @@ const ArtworkPanel = () => {
                       setHeightInputStr(String(heightCm))
                     }}
                     disabled={isLocked}
-                    aria-label="Artwork height in centimeters"
                   />
-                </label>
-                <div className={styles.sliderWithMarker}>
-                  <Slider
-                    min={minCm}
-                    max={maxHeightCm}
-                    step={1}
-                    value={heightCm}
-                    onChange={(cm) => handleLockedHeightChange(cm / 100)}
-                    disabled={isLocked}
-                    aria-label="Artwork height in centimeters"
-                  />
-                  {heightMarker !== null && (
-                    <div className={styles.markerTrack}>
-                      <span
-                        className={styles.maxPrintMarker}
-                        style={{ left: `${heightMarker}%` }}
-                        aria-hidden
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )
-        })()}
-        {showProportionsButton && (
-          <div style={{ marginTop: 'var(--space-2)' }}>
-            <Button
-              font="dashboard"
-              fullWidth
-              variant="secondary"
-              label="Use image proportions"
-              onClick={handleUseImageProportions}
-              disabled={isLocked}
-            />
-          </div>
-        )}
-        <div style={{ marginTop: 'var(--space-3)' }} data-no-deselect="true">
-          <Checkbox
-            checked={sizeLocked}
-            onChange={(e) =>
-              currentArtworkId &&
-              dispatch(setSizeLocked({ artworkId: currentArtworkId, value: e.target.checked }))
-            }
-            label="Lock proportions when resizing"
-            disabled={isLocked}
-          />
-        </div>
-      </Section>
-
-      <Section title="Position" disabled={isLocked}>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="positionTop"
-              onClick={() => handleAlign('verticalTop')}
-              disabled={isLocked}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="positionCenterV"
-              onClick={() => handleAlign('verticalCenter')}
-              disabled={isLocked}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="positionBottom"
-              onClick={() => handleAlign('verticalBottom')}
-              disabled={isLocked}
-            />
-          </div>
-        </div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="positionLeft"
-              onClick={() => handleAlign('horizontalLeft')}
-              disabled={isLocked}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="positionCenterH"
-              onClick={() => handleAlign('horizontalCenter')}
-              disabled={isLocked}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="positionRight"
-              onClick={() => handleAlign('horizontalRight')}
-              disabled={isLocked}
-            />
-          </div>
-        </div>
-
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Vertical Position (cm)
-        </Text>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <NumberInput
-              value={Math.round((fromTop / WALL_SCALE) * 100)}
-              icon="arrowTopFromLine"
-              label="from top"
-              min={0}
-              max={100000}
-              onChange={(e) => handleFromTopChange(cmEventToMeters(e))}
-              disabled={isLocked}
-            />
-          </div>
-          <div className={styles.item}>
-            <NumberInput
-              value={Math.round((fromBottom / WALL_SCALE) * 100)}
-              icon="arrowBottomFromLine"
-              label="from bottom"
-              min={0}
-              max={100000}
-              onChange={(e) => handleFromBottomChange(cmEventToMeters(e))}
-              disabled={isLocked}
-            />
-          </div>
-        </div>
-
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Horizontal Position (cm)
-        </Text>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <NumberInput
-              value={Math.round((fromLeft / WALL_SCALE) * 100)}
-              icon="arrowLeftFromLine"
-              label="from left"
-              min={0}
-              max={100000}
-              onChange={(e) => handleFromLeftChange(cmEventToMeters(e))}
-              disabled={isLocked}
-            />
-          </div>
-          <div className={styles.item}>
-            <NumberInput
-              value={Math.round((fromRight / WALL_SCALE) * 100)}
-              icon="arrowRightFromLine"
-              label="from right"
-              min={0}
-              max={100000}
-              onChange={(e) => handleFromRightChange(cmEventToMeters(e))}
-              disabled={isLocked}
-            />
-          </div>
-        </div>
-
-        {/* Rotation slider - shapes only */}
-        {artwork?.artworkType === 'shape' && exhibitionArtwork && (
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            <div
-              className={styles.row}
-              style={{ justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                Rotation
-              </Text>
-              <Text font="dashboard" as="span" size="xs" style={{ fontFamily: 'monospace' }}>
-                {Math.round(exhibitionArtwork.rotation ?? 0)}°
-              </Text>
+                  <span aria-hidden className={styles.unit}>
+                    cm
+                  </span>
+                </span>
+              </label>
             </div>
-            <Slider
-              min={0}
-              max={360}
-              step={1}
-              value={exhibitionArtwork.rotation ?? 0}
-              onChange={(v) => {
-                if (!currentArtworkId) return
-                dispatch(
-                  updateArtworkPosition({
-                    artworkId: currentArtworkId,
-                    artworkPosition: { rotation: v },
-                  }),
-                )
-              }}
-              disabled={isLocked}
-              aria-label="Artwork rotation"
-            />
-          </div>
-        )}
-      </Section>
+            {showProportionsButton && (
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.link}
+                onClick={handleUseImageProportions}
+                disabled={isLocked}
+              >
+                Use image proportions
+              </Button>
+            )}
+            {layoutExtra}
+            {printMax && (
+              <p className={styles.note}>
+                Largest print on sale: {formatPrintSize(printMax.heightCm, printMax.widthCm)}
+              </p>
+            )}
+          </PanelGroup>
 
-      {/* ARRANGEMENT Section — stacking order within the wall */}
-      <Section title="Arrangement" disabled={isLocked}>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Button
-              font="dashboard"
-              fullWidth
-              size="small"
-              variant="secondary"
-              icon="bring-to-front"
-              label="Move to front"
-              onClick={handleMoveToFront}
-              disabled={isLocked}
+          <PanelGroup title="Place on the wall" disabled={isLocked}>
+            <SegmentStrip
+              label="Place on the wall"
+              segments={WALL_PLACES.map(({ align, label, icon }) => ({
+                key: align,
+                label,
+                icon,
+                onClick: () => handleAlign(align),
+                disabled: isLocked,
+              }))}
             />
-          </div>
-          <div className={styles.item}>
-            <Button
-              font="dashboard"
-              fullWidth
-              size="small"
-              variant="secondary"
-              icon="send-to-back"
-              label="Move to back"
-              onClick={handleMoveToBack}
-              disabled={isLocked}
+          </PanelGroup>
+
+          <PanelGroup title="Distance to the wall edges" disabled={isLocked}>
+            <DistanceBox
+              label="Distance to the wall edges"
+              itemLabel="artwork"
+              top={
+                <NumberInput
+                  size="compact"
+                  aria-label="From top, cm"
+                  value={Math.round((fromTop / WALL_SCALE) * 100)}
+                  min={0}
+                  max={100000}
+                  onChange={(e) => handleFromTopChange(cmEventToMeters(e))}
+                  disabled={isLocked}
+                />
+              }
+              bottom={
+                <NumberInput
+                  size="compact"
+                  aria-label="From bottom, cm"
+                  value={Math.round((fromBottom / WALL_SCALE) * 100)}
+                  min={0}
+                  max={100000}
+                  onChange={(e) => handleFromBottomChange(cmEventToMeters(e))}
+                  disabled={isLocked}
+                />
+              }
+              left={
+                <NumberInput
+                  size="compact"
+                  aria-label="From left, cm"
+                  value={Math.round((fromLeft / WALL_SCALE) * 100)}
+                  min={0}
+                  max={100000}
+                  onChange={(e) => handleFromLeftChange(cmEventToMeters(e))}
+                  disabled={isLocked}
+                />
+              }
+              right={
+                <NumberInput
+                  size="compact"
+                  aria-label="From right, cm"
+                  value={Math.round((fromRight / WALL_SCALE) * 100)}
+                  min={0}
+                  max={100000}
+                  onChange={(e) => handleFromRightChange(cmEventToMeters(e))}
+                  disabled={isLocked}
+                />
+              }
             />
-          </div>
+            {/* The four numbers measure to the artwork's center (questions.md Q144). */}
+            <p className={styles.note}>
+              All in cm, to the center of the artwork. Type a number to move it.
+            </p>
+          </PanelGroup>
+
+          {/* Rotation slider - shapes only */}
+          {artwork?.artworkType === 'shape' && exhibitionArtwork && (
+            <PanelGroup disabled={isLocked}>
+              <SliderRow
+                label="Rotation"
+                value={`${Math.round(exhibitionArtwork.rotation ?? 0)}°`}
+                sliderValue={exhibitionArtwork.rotation ?? 0}
+                min={0}
+                max={360}
+                step={1}
+                onChange={(v) => {
+                  if (!currentArtworkId) return
+                  dispatch(
+                    updateArtworkPosition({
+                      artworkId: currentArtworkId,
+                      artworkPosition: { rotation: v },
+                    }),
+                  )
+                }}
+                disabled={isLocked}
+              />
+            </PanelGroup>
+          )}
         </div>
-      </Section>
+
+        <div role="tabpanel" aria-label="Look" hidden={tab !== 'look'} className={styles.tabPanel}>
+          {children}
+        </div>
+      </div>
     </>
   )
 }

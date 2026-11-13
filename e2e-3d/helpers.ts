@@ -72,6 +72,8 @@ export type FileRequest = {
   status: number | null
   /** Why it never arrived (not an abort: video and sound cancel ranges they no longer need). */
   failure: string | null
+  /** Answered by the browser's own cache (no server address): not a second download. */
+  fromCache: boolean
 }
 
 const FILE_EXTENSION =
@@ -116,18 +118,47 @@ export async function visitRoom(page: Page, show: Show): Promise<Visit> {
   const requests: Request[] = []
   const status = new Map<Request, number>()
   const failure = new Map<Request, string>()
+  const fromCache = new Set<Request>()
   let lastFileAt = Date.now()
 
+  // `<Analytics />` and `<SpeedInsights />` (app/layout.tsx) load their scripts from /_vercel/,
+  // which only Vercel serves: a local `next start` answers 404, read as console errors and a file
+  // that never arrived. Not the room's, so left out of both. NOT stubbed with page.route: routing
+  // turns off the browser's HTTP cache, and then every artwork the room preloads is downloaded a
+  // second time for its texture ("asks for each file once" failed on that, 2026-11-12). Dev builds
+  // never load them.
+  const isVercelScript = (url: string) => {
+    try {
+      return new URL(url).pathname.startsWith('/_vercel/')
+    } catch {
+      return false
+    }
+  }
   page.on('pageerror', (error) => pageErrors.push(error.stack ?? error.message))
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text())
+    // Two shapes: "Failed to load resource" (located at the script) and "Refused to execute script
+    // from '…/_vercel/…'" (located at the page, the script named in the text).
+    const vercel =
+      isVercelScript(message.location().url) || /\/\/[^'"\s]+\/_vercel\//.test(message.text())
+    if (message.type() === 'error' && !vercel) consoleErrors.push(message.text())
   })
   page.on('request', (request) => {
+    if (isVercelScript(request.url())) return
     if (request.method() !== 'GET' || !isFile(new URL(request.url()))) return
     requests.push(request)
     lastFileAt = Date.now()
   })
   page.on('response', (response) => status.set(response.request(), response.status()))
+  // A disk-cache answer still shows as a request (the room preloads each artwork, then loads it as a
+  // texture: the second comes from the cache, 2026-11-12). Only the DevTools protocol says which;
+  // counted per URL here, and that many of the URL's later requests are marked below.
+  const cachedAnswers = new Map<string, number>()
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Network.enable')
+  cdp.on('Network.responseReceived', (event) => {
+    if (!event.response.fromDiskCache) return
+    cachedAnswers.set(event.response.url, (cachedAnswers.get(event.response.url) ?? 0) + 1)
+  })
   page.on('requestfailed', (request) => {
     const reason = request.failure()?.errorText ?? 'failed'
     if (!/ERR_ABORTED/i.test(reason)) failure.set(request, reason)
@@ -155,6 +186,11 @@ export async function visitRoom(page: Page, show: Show): Promise<Visit> {
     await page.waitForTimeout(250)
   }
 
+  // The last N requests of a URL answered N times from the cache are those answers.
+  for (const [url, count] of cachedAnswers) {
+    const asked = requests.filter((request) => request.url() === url)
+    asked.slice(Math.max(0, asked.length - count)).forEach((request) => fromCache.add(request))
+  }
   const files = requests.map((request): FileRequest => {
     const url = new URL(request.url())
     return {
@@ -163,19 +199,21 @@ export async function visitRoom(page: Page, show: Show): Promise<Visit> {
       resourceType: request.resourceType(),
       status: status.get(request) ?? null,
       failure: failure.get(request) ?? null,
+      fromCache: fromCache.has(request),
     }
   })
   return { show, page, revealed, revealedAfterMs, pageErrors, consoleErrors, files }
 }
 
 /**
- * Files asked for more than once, as "N× host/path". Video and sound are left out: a player
- * streams one file in many range requests by design.
+ * Files downloaded more than once, as "N× host/path". Video and sound are left out: a player
+ * streams one file in many range requests by design. Answers from the browser's cache are left out
+ * too: they are not downloads.
  */
 export function repeatedFiles(files: FileRequest[]): string[] {
   const byFile = new Map<string, FileRequest[]>()
   for (const f of files) {
-    if (f.resourceType === 'media' || f.status === 206) continue
+    if (f.resourceType === 'media' || f.status === 206 || f.fromCache) continue
     byFile.set(f.file, [...(byFile.get(f.file) ?? []), f])
   }
   return [...byFile]

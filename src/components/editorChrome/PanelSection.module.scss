@@ -1,0 +1,86 @@
+// editor3d.md "Sections" (designs/editor-3d.dc.html): a grey card whose head is one button.
+// Rows straight in the body sit on grey: white value chips, a darker track (as PanelCard's card).
+.section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--editor-card);
+  border-radius: 10px;
+  --editor-row-chip: var(--color-white);
+  --editor-row-track: var(--color-gray-35);
+}
+
+// Set here: globals.scss makes every heading serif and large.
+.heading {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  font-weight: var(--font-regular);
+  line-height: 1.4;
+}
+
+// Two classes: Button's bare reset would win over one.
+.heading .head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: 10px;
+  text-align: left;
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-gray-20);
+  }
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-black);
+}
+
+.sub {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.summary {
+  flex: 0 0 auto;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.caret {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+  transition: transform 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.open .caret {
+  transform: rotate(180deg);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 var(--space-3) var(--space-3);
+}

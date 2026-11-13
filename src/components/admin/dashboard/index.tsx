@@ -1,21 +1,28 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import {
+  ArrowUUpLeft,
+  Check,
+  Flag,
+  HandCoins,
+  PaperPlaneTilt,
+  Tray,
+  type Icon,
+} from '@phosphor-icons/react'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { useAttentionCounts } from '@/components/admin/shell'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { AttentionCard } from '@/components/admin/ui/AttentionCard'
+import { Panel, PanelLink } from '@/components/admin/ui/Panel'
+import { PipelineList } from '@/components/admin/ui/PipelineList'
 import { Button } from '@/components/ui/Button'
-import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
 import { LoadingBar } from '@/components/ui/LoadingBar'
-import { listOrders } from '@/app/admin/orders/actions'
 import { clearAllTestData, getTestDataCounts } from '@/app/admin/dev-cleanup/actions'
-import { getPurchasesPausedState, togglePurchasesPaused } from '@/app/admin/settings/actions'
-import { type AttentionMetric, countAttentionMetrics } from '@/lib/orders/orderBuckets'
-
-import { AnalyticsSection } from './AnalyticsSection'
+import type { AttentionMetric, Bucket } from '@/lib/orders/orderBuckets'
 
 // Dev/staging-only cleanup controls. NEXT_PUBLIC_APP_ENV is inlined at build
 // time, so on production this is a compile-time false and the whole section
@@ -23,110 +30,102 @@ import { AnalyticsSection } from './AnalyticsSection'
 // authoritative guard — this flag is just UI.
 import { DEV_CLEANUP_ALLOWED } from '@/lib/admin/devCleanup'
 
+import {
+  AnalyticsFootnote,
+  AnalyticsStatePanel,
+  ArtworkViewsPanel,
+  CountriesPanel,
+  TrafficChannelsPanel,
+} from './AnalyticsPanels'
+import { DevCleanupPanel } from './DevCleanupPanel'
+import { PhoneStorefrontRow } from './PhoneStorefrontRow'
+import { useDashboardAnalytics } from './useDashboardAnalytics'
+
+import styles from './AdminDashboard.module.scss'
+
 // Shown when an action never got an answer (timeout, offline, mid-deploy) —
 // distinct from the action's own `error`, which means it ran and said no.
 const UNREACHABLE = 'Could not reach the server.'
 
-import styles from './AdminDashboard.module.scss'
+// Cards, pipeline rows and pills open the Orders page on the matching tab
+// (?stage=, questions.md Q1).
+const ORDERS_HREF = '/admin/orders'
+const stageHref = (bucket: Bucket) => `${ORDERS_HREF}?stage=${bucket}`
 
 // Counter cards surface what needs the admin's attention right now. Each
 // carries a `metric` and reads its live count from countAttentionMetrics
 // (same bucketOf logic as the orders tabs — single source of truth).
 // Ordered by urgency: buyer-money / legal exposure first, payouts last.
-// A card only takes its red/amber tone when its count > 0 (see render),
-// so a clean panel is all-gray and the eye lands on what needs action.
-type CounterCard = {
+// A card only takes its red/amber tone when its count > 0, so a clean row
+// is all-gray and the eye lands on what needs action.
+const URGENT_COUNTERS: {
   label: string
   metric: AttentionMetric
-  href: string
-  tone?: 'red' | 'amber' | 'neutral'
-}
-
-const URGENT_COUNTERS: CounterCard[] = [
-  { label: 'Refund still owed', metric: 'refundOwed', href: '/admin/orders', tone: 'red' },
-  { label: 'Needs attention', metric: 'attention', href: '/admin/orders', tone: 'red' },
-  { label: 'New', metric: 'new', href: '/admin/orders', tone: 'amber' },
+  icon: Icon
+  tone: 'red' | 'amber'
+  zeroHint: string
+  /** The Orders tab these orders sit in (refund-owed orders are in Canceled). */
+  stage: Bucket
+}[] = [
+  {
+    label: 'Refund still owed',
+    metric: 'refundOwed',
+    icon: ArrowUUpLeft,
+    tone: 'red',
+    zeroHint: 'Nothing owed',
+    stage: 'cancelled',
+  },
+  {
+    label: 'Needs attention',
+    metric: 'attention',
+    icon: Flag,
+    tone: 'red',
+    zeroHint: 'No flagged orders',
+    stage: 'attention',
+  },
+  {
+    label: 'New',
+    metric: 'new',
+    icon: Tray,
+    tone: 'amber',
+    zeroHint: 'None to capture',
+    stage: 'new',
+  },
   {
     label: 'Awaiting placement at TPS',
     metric: 'toPlace',
-    href: '/admin/orders',
+    icon: PaperPlaneTilt,
     tone: 'amber',
+    zeroHint: 'All placed',
+    stage: 'to-place',
   },
   {
     label: 'Delivered, artist not paid',
     metric: 'deliveredUnpaid',
-    href: '/admin/orders',
+    icon: HandCoins,
     tone: 'amber',
+    zeroHint: 'All artists paid',
+    stage: 'delivered',
   },
 ]
 
-type Hub = {
-  label: string
-  description: string
-  href: string
+// "Wednesday, 11 November 2026" on desktop, "Wed, 11 Nov 2026" on phone.
+function formatToday(style: 'long' | 'short'): string {
+  const now = new Date()
+  const weekday = now.toLocaleDateString('en-GB', { weekday: style })
+  const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: style, year: 'numeric' })
+  return `${weekday}, ${date}`
 }
-
-const NAV_HUBS: Hub[] = [
-  {
-    label: 'Orders',
-    description: 'Buyer orders, fulfillment stages, refunds, payouts.',
-    href: '/admin/orders',
-  },
-  {
-    label: 'Edition Sales',
-    description: 'Numbered limited-edition copies reserved or sold — the authoritative ledger.',
-    href: '/admin/edition-sales',
-  },
-  {
-    label: 'Gift Orders',
-    description: 'Gifts, artist copies, test prints — off-platform parcels and their stages.',
-    href: '/admin/gift-orders',
-  },
-  {
-    label: 'Users',
-    description: 'Artists, admins, curators — invite, publish, impersonate.',
-    href: '/admin/users',
-  },
-  {
-    label: 'Exhibitions',
-    description: 'Exhibition pages, curation, preview links.',
-    href: '/admin/exhibitions',
-  },
-  {
-    label: 'Print Presentations',
-    description: 'Every work as a photo of its print — render, preview, switch on for the site.',
-    href: '/admin/print-presentations',
-  },
-  {
-    label: 'Content',
-    description: 'CMS pages — landing, About, Prints, Terms, Privacy, etc.',
-    href: '/admin/content',
-  },
-  {
-    label: 'Payouts',
-    description: 'Artist payout history, manual payouts, Stripe Connect status.',
-    href: '/admin/payouts',
-  },
-  {
-    label: 'Invoices',
-    description:
-      'Gallery-issued invoices — view, filter by date & client, download, and export for the accountant.',
-    href: '/admin/invoices',
-  },
-]
 
 export const DashboardAdmin = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
+  const attentionTitleId = useId()
 
-  const [metrics, setMetrics] = useState<Record<AttentionMetric, number> | null>(null)
-
-  // Purchases kill switch — null until the current state loads.
-  const [purchasesPaused, setPurchasesPaused] = useState<boolean | null>(null)
-  const [pauseConfirmOpen, setPauseConfirmOpen] = useState(false)
-  const [pauseToggling, setPauseToggling] = useState(false)
-  const [pauseError, setPauseError] = useState<string | null>(null)
-  const [countsError, setCountsError] = useState<string | null>(null)
+  // Order numbers come from the admin shell (one read per visit, shared with
+  // the menu badge); analytics from its own single request.
+  const { metrics, buckets, error: countsError, reload: loadCounts } = useAttentionCounts()
+  const analytics = useDashboardAnalytics()
 
   // Dev-cleanup state (section only renders outside production).
   const [cleanupConfirmOpen, setCleanupConfirmOpen] = useState(false)
@@ -145,66 +144,12 @@ export const DashboardAdmin = () => {
     }
   }, [sessionStatus, session, router])
 
-  // Live counts for the "Needs your attention" cards. Reuses the orders
-  // list's bucketOf so the dashboard never drifts from the tab badges.
-  //
   // Every action call on this page catches TRANSPORT failures too, not just
   // `ok: false`: a 504 or a rolling deploy rejects the promise before the
   // action's own try/catch runs. Uncaught, that surfaced in Sentry as
   // "An unexpected response was received from the server" — tagged with
   // whatever admin page was open by then, because Next queues actions and
   // posts each one to the CURRENT url, so a slow one outlives the dashboard.
-  const loadCounts = useCallback(async () => {
-    setCountsError(null)
-    try {
-      const res = await listOrders()
-      if (res.ok) setMetrics(countAttentionMetrics(res.orders))
-      else setCountsError(res.error)
-    } catch {
-      setCountsError(UNREACHABLE)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (sessionStatus === 'authenticated') void loadCounts()
-  }, [sessionStatus, loadCounts])
-
-  // Extracted so the error state can offer a retry — during an incident the
-  // kill switch must not dead-end on one failed read.
-  const loadPausedState = useCallback(async () => {
-    setPauseError(null)
-    try {
-      const res = await getPurchasesPausedState()
-      if (res.ok) setPurchasesPaused(res.paused)
-      else setPauseError(res.error)
-    } catch {
-      setPauseError(UNREACHABLE)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (sessionStatus !== 'authenticated') return
-    void loadPausedState()
-  }, [sessionStatus, loadPausedState])
-
-  const handleTogglePurchases = useCallback(async () => {
-    if (purchasesPaused === null) return
-    setPauseToggling(true)
-    setPauseError(null)
-    try {
-      const res = await togglePurchasesPaused(!purchasesPaused)
-      if (res.ok) setPurchasesPaused(res.paused)
-      else setPauseError(res.error)
-    } catch {
-      // The switch may or may not have flipped server-side — say so rather
-      // than guess, and leave the shown state as it was.
-      setPauseError(`${UNREACHABLE} Reload to see the current state before trying again.`)
-    } finally {
-      setPauseToggling(false)
-      setPauseConfirmOpen(false)
-    }
-  }, [purchasesPaused])
-
   const openCleanupConfirm = useCallback(async () => {
     setCleanupResult(null)
     setCleanupCounts(null)
@@ -248,171 +193,105 @@ export const DashboardAdmin = () => {
     }
   }, [loadCounts])
 
-  if (sessionStatus === 'loading') {
-    return (
-      <div className={dashboardStyles.page}>
-        <LoadingBar />
-      </div>
-    )
-  }
+  if (sessionStatus === 'loading') return <LoadingBar />
 
   const userType = session?.user?.userType
   if (sessionStatus === 'unauthenticated' || (userType !== 'admin' && userType !== 'superAdmin')) {
-    return <div className={dashboardStyles.page}>Not authorized</div>
+    return <p className={styles.notAuthorized}>Not authorized</p>
   }
 
-  return (
-    <DashboardLayout>
-      <h1 className={dashboardStyles.pageTitle}>Admin Dashboard</h1>
+  const allClear =
+    metrics !== null && URGENT_COUNTERS.every((counter) => metrics[counter.metric] === 0)
 
-      {/* Urgent — what needs attention right now. Counters are
-          placeholders (0) until we wire a server action that returns
-          counts per bucket. The layout is the focus here. */}
-      <section className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>Needs your attention</h2>
+  return (
+    <div className={styles.page}>
+      <AdminPageHeader
+        eyebrow={
+          <>
+            <span className={styles.dateLong}>{formatToday('long')}</span>
+            <span className={styles.dateShort}>{formatToday('short')}</span>
+          </>
+        }
+        title="Dashboard"
+        description="What needs you today, where orders stand, and how the site is doing."
+      />
+
+      <PhoneStorefrontRow />
+
+      <section aria-labelledby={attentionTitleId} className={styles.attention}>
+        <div className={styles.attentionHead}>
+          <h2 id={attentionTitleId} className={styles.sectionTitle}>
+            Needs your attention
+          </h2>
+          {allClear && (
+            <span className={styles.allClear}>
+              <Check size={12} weight="bold" aria-hidden />
+              All clear
+            </span>
+          )}
         </div>
-        <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
-          Time-sensitive items across orders and inquiries. Click any card to jump to the relevant
-          list.
-        </p>
-        <div className={styles.counterGrid}>
-          {URGENT_COUNTERS.map((c) => {
-            const count = metrics ? metrics[c.metric] : 0
-            // Tone only kicks in when there's actually work — a 0 stays
-            // neutral gray so the eye lands on the cards that need action.
-            const toneClass = count > 0 && c.tone ? styles[`tone_${c.tone}`] : ''
-            return (
-              <Link key={c.label} href={c.href} className={`${styles.counterCard} ${toneClass}`}>
-                {/* A dash until the counts arrive: a 0 before they load (or
-                    after they fail) would read as "nothing needs you". */}
-                <div className={styles.counterValue}>{metrics ? count : '–'}</div>
-                <div className={styles.counterLabel}>{c.label}</div>
-              </Link>
-            )
-          })}
+        <div className={styles.cards}>
+          {URGENT_COUNTERS.map((counter) => (
+            <AttentionCard
+              key={counter.metric}
+              label={counter.label}
+              icon={counter.icon}
+              count={metrics ? metrics[counter.metric] : null}
+              failed={countsError !== null}
+              tone={counter.tone}
+              zeroHint={counter.zeroHint}
+              href={stageHref(counter.stage)}
+            />
+          ))}
         </div>
         {countsError && (
-          <p className={dashboardStyles.sectionDescription} style={{ margin: '12px 0 0 0' }}>
-            {countsError}{' '}
+          <div className={styles.countsError}>
+            <span aria-hidden className={styles.errorDot} />
+            <span className={styles.countsErrorText}>{countsError}</span>
             <Button
+              variant="bare"
               font="dashboard"
-              variant="ghost"
+              className={styles.retry}
               label="Retry"
               onClick={() => void loadCounts()}
             />
-          </p>
+          </div>
         )}
       </section>
 
-      {/* Navigation hubs — entry points to the workspaces. Replaces
-          the old inline tables on the dashboard so this page stays a
-          signal page, not a workspace. */}
-      <section className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>Manage</h2>
-        </div>
-        <div className={styles.hubGrid}>
-          {NAV_HUBS.map((h) => (
-            <Link key={h.label} href={h.href} className={styles.hubCard}>
-              <div className={styles.hubLabel}>{h.label}</div>
-              <div className={styles.hubDescription}>{h.description}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <div className={styles.row}>
+        <Panel
+          title="Order pipeline"
+          subtitle="Every order by fulfillment stage"
+          action={<PanelLink href={ORDERS_HREF}>All orders</PanelLink>}
+        >
+          <PipelineList buckets={buckets} stageHref={stageHref} />
+        </Panel>
+        {analytics?.ok && <TrafficChannelsPanel data={analytics.data} />}
+      </div>
 
-      <AnalyticsSection />
-
-      {/* Dev cleanup — localhost + staging ONLY (compile-time gated above;
-          the server actions enforce it authoritatively). One button to clear
-          all the test noise: orders, invoices, staged carts, edition holds. */}
-      {DEV_CLEANUP_ALLOWED && (
-        <section className={dashboardStyles.section}>
-          <div className={dashboardStyles.sectionHeader}>
-            <h2 className={dashboardStyles.sectionTitle}>Dev cleanup</h2>
+      {analytics?.ok ? (
+        <>
+          <div className={styles.row}>
+            <ArtworkViewsPanel data={analytics.data} />
+            <CountriesPanel data={analytics.data} />
           </div>
-          <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
-            Test environment only ({process.env.NEXT_PUBLIC_APP_ENV ?? 'development'}) — this
-            section does not exist in production. Wipes ALL orders, invoices (and their PDFs),
-            staged carts, and resets every limited-edition series to fully available. Local and
-            staging share this database.
-          </p>
-          <Button
-            font="dashboard"
-            variant="danger"
-            label="Clear all test orders & invoices"
-            onClick={() => void openCleanupConfirm()}
-          />
-          {cleanupResult && (
-            <p className={dashboardStyles.sectionDescription} style={{ margin: '12px 0 0 0' }}>
-              {cleanupResult}
-            </p>
-          )}
-        </section>
+          <AnalyticsFootnote fetchedAt={analytics.data.fetchedAt} />
+        </>
+      ) : (
+        <AnalyticsStatePanel result={analytics} />
       )}
 
-      {/* Emergency kill switch — one click makes the public site read-only:
-          every purchase surface hides and new payments are refused. Rarely
-          used, so it lives at the very bottom; the red PAUSED state still
-          makes an ongoing pause impossible to miss. */}
-      <section className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h2 className={dashboardStyles.sectionTitle}>
-            {purchasesPaused ? 'Purchases — PAUSED' : 'Purchases'}
-          </h2>
-        </div>
-        <p className={dashboardStyles.sectionDescription} style={{ margin: '0 0 16px 0' }}>
-          {purchasesPaused
-            ? 'The public site is read-only — prints catalog, Order Print buttons, cart and checkout are hidden (deep links included) and new payments are refused. Per-artwork print settings are untouched.'
-            : 'Emergency switch: instantly hides every purchase surface on the public site — catalog, Order Print buttons, cart, checkout, bookmarked links — without touching any per-artwork setting.'}
-        </p>
-        <Button
-          font="dashboard"
-          variant={purchasesPaused ? 'primary' : 'danger'}
-          label={
-            purchasesPaused === null
-              ? 'Loading…'
-              : purchasesPaused
-                ? 'Resume purchases'
-                : 'Pause all purchases'
-          }
-          disabled={purchasesPaused === null || pauseToggling}
-          onClick={() => setPauseConfirmOpen(true)}
-        />
-        {pauseError && (
-          <p className={dashboardStyles.sectionDescription} style={{ margin: '12px 0 0 0' }}>
-            {pauseError}{' '}
-            {purchasesPaused === null && (
-              <Button
-                font="dashboard"
-                variant="ghost"
-                label="Retry"
-                onClick={() => void loadPausedState()}
-              />
-            )}
-          </p>
-        )}
-      </section>
-
-      {pauseConfirmOpen && (
-        <ConfirmModal
-          title={purchasesPaused ? 'Resume purchases?' : 'Pause ALL purchases?'}
-          message={
-            purchasesPaused
-              ? 'The prints catalog, Order Print buttons, cart and checkout become available to the public again immediately.'
-              : 'The public site becomes read-only immediately: prints catalog, every Order Print button, cart and checkout disappear (bookmarked links included) and new payments are refused. Orders already placed are not affected. You can resume at any time.'
-          }
-          confirmLabel={purchasesPaused ? 'Resume purchases' : 'Pause all purchases'}
-          destructive={!purchasesPaused}
-          busy={pauseToggling}
-          onConfirm={() => void handleTogglePurchases()}
-          onCancel={() => setPauseConfirmOpen(false)}
+      {DEV_CLEANUP_ALLOWED && (
+        <DevCleanupPanel
+          environment={process.env.NEXT_PUBLIC_APP_ENV ?? 'development'}
+          result={cleanupResult}
+          onClear={() => void openCleanupConfirm()}
         />
       )}
 
       {cleanupConfirmOpen && (
-        <ConfirmModal
+        <AdminConfirmModal
           title="Clear ALL test data?"
           message={
             <>
@@ -421,18 +300,17 @@ export const DashboardAdmin = () => {
                 returns every limited-edition number to the pool — on the SHARED dev database
                 (localhost + staging together).
               </p>
-              <p style={{ marginTop: 8 }}>
-                {cleanupCounts ? `Right now that is: ${cleanupCounts}.` : 'Counting…'}
-              </p>
+              <p>{cleanupCounts ? `Right now that is: ${cleanupCounts}.` : 'Counting…'}</p>
             </>
           }
           confirmLabel="Yes, clear everything"
+          busyLabel="Clearing…"
           destructive
           busy={cleaning}
           onConfirm={() => void handleClearTestData()}
           onCancel={() => setCleanupConfirmOpen(false)}
         />
       )}
-    </DashboardLayout>
+    </div>
   )
 }

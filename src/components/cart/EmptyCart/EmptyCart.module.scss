@@ -1,0 +1,42 @@
+@use '@/styles/mixins' as *;
+
+// other-screens.md "Empty cart": serif line, one grey line, two arrow links.
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40px 0 var(--space-16);
+  border-top: 1px solid var(--color-gray-30);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 32px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 28px;
+  }
+}
+
+.emptyLine {
+  max-width: 520px;
+  margin: 14px 0 28px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--public-secondary);
+}
+
+.emptyLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+
+  @include media-down(sm) {
+    flex-direction: column;
+  }
+}

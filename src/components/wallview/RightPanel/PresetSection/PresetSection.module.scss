@@ -1,60 +1,30 @@
+// wallview.md §3 "Preset" (designs/wall-view-panels.dc.html): one select, then text buttons.
+// Also GroupPresetApply's.
 .presetSection {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4) 0;
-}
-
-.subtitle {
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
 }
 
-.item {
+.actions {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.presetList {
-  margin-top: var(--space-1);
-}
-
-.presetItem {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-1) 0;
-
-  & + & {
-    border-top: 1px solid var(--color-border-light);
-  }
+  column-gap: 14px;
 }
 
-.presetDeleteBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  padding: 2px 6px;
-  line-height: 1;
-
-  &:hover {
-    color: var(--color-black);
-  }
+// A refused load (questions.md Q146 h): the red line, then "Try again".
+.loadFailed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 14px;
 }
 
-.applyLabel {
-  display: block;
-  margin-bottom: var(--space-1);
-  color: var(--color-text-primary);
+.failed {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-red-50);
 }

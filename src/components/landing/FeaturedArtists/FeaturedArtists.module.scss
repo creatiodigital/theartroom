@@ -1,81 +1,69 @@
 @use '@/styles/mixins' as *;
 
+// docs/public-redesign/home.md §6; designs/home-desktop.dc.html / home-phone.dc.html.
+// No space above: the heading's hairline sits where the section before ends (its own 130 / 72 px
+// below), as Current exhibitions and Announcements do.
 .section {
-  margin-top: var(--space-12);
+  padding: 0 0 120px;
+
+  @include media-down(md) {
+    padding: 0 0 56px;
+  }
 }
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 
-  @include media-up(lg) {
-    grid-template-columns: 1fr 1fr;
-    column-gap: var(--space-8);
+  // One per row on phones (owner, 2026-11-12: never two columns on a phone).
+  @include media-down(md) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
   }
 }
 
-// Photo first, name right beside it. With the photo pushed to the far end of
-// the row it sat closer to the neighboring column's name than to its own.
-.artistRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  text-decoration: none;
-  padding: var(--space-6) 0;
-  border-bottom: 1px solid var(--color-border-default);
-
-  // Last visual row carries no divider: the last item (both layouts), and on
-  // the two-column layout also the left item of the final row when present.
-  &:last-child {
-    border-bottom: none;
-  }
-
-  @include media-up(lg) {
-    &:nth-child(odd):nth-last-child(-n + 2) {
-      border-bottom: none;
-    }
-  }
-
-  &:hover {
-    text-decoration: none;
-  }
-}
-
-.nameBlock {
+.artist {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  color: inherit;
+
+  @include media-down(md) {
+    gap: var(--space-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 4px;
+  }
 }
 
-.artistName {
-  line-height: 1;
-}
-
-.biography {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  margin-top: var(--space-1);
-}
-
-// The fixed box lives on the ProtectedImage wrapper itself: the inner <img>
-// sizes at 100%, so the wrapper must carry real dimensions or the height
-// collapses to auto and each photo keeps its own aspect ratio.
-//
-// 160x110, matching the /artists listing exactly — the two are the same row in
-// two places, and an artist's photo should not change shape between them.
-.imageContainer {
-  flex-shrink: 0;
-  width: 160px;
-  height: 110px;
-  overflow: hidden;
-}
-
-.profileImage {
+// Portrait, 4:5 (owner, 2026-11-12): the photos are landscape, so they are cropped from the sides,
+// centred.
+.imageBox {
+  position: relative;
   display: block;
-  width: 100%;
-  height: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--public-render-wall);
+}
+
+.image {
   object-fit: cover;
-  // Off the bottom, not off the top of the head — as on /artists and the
-  // profile page.
-  object-position: top;
+}
+
+.name {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 18px;
+    line-height: 1.2;
+  }
 }

@@ -35,3 +35,210 @@
   @include tinySans();
   color: var(--color-text-primary);
 }
+
+// variant="row" / "inline": the 3D editor's color rows (editor3d.md, designs/editor-3d-panels).
+// The <label> is the row, so a click anywhere on it opens the native picker.
+.row,
+.inline {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  // globals.scss removes every outline: the row carries the keyboard ring for its input.
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+}
+
+.row {
+  gap: var(--space-3);
+  padding: var(--space-3);
+  box-sizing: border-box;
+  background: var(--editor-card);
+  border-radius: 10px;
+
+  &:hover {
+    background: var(--color-gray-20);
+  }
+}
+
+// The native input drawn as the swatch (its own picker opens from it and from the label).
+.rowSwatch,
+.inlineSwatch,
+.fieldSwatch {
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: inherit;
+    box-shadow: var(--editor-swatch-edge);
+  }
+
+  &::-moz-color-swatch {
+    border: none;
+    border-radius: inherit;
+    box-shadow: var(--editor-swatch-edge);
+  }
+}
+
+.rowSwatch {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+}
+
+.rowText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rowName {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-black);
+}
+
+.hex {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.rowAction {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.inline {
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 32px;
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}
+
+.inlineName {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.inlineValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inlineSwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+// variant="field": the wall view's color fields (wallview.md, designs/wall-view-panels.dc.html
+// "Colours"). The <label> holds the name and the box, so a click on either opens the picker.
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  // globals.scss removes every outline: the box carries the keyboard ring for its input.
+  &:has(input:focus-visible) .fieldBox {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+}
+
+.fieldName {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.fieldBox {
+  min-height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 10px;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+
+  &:hover {
+    border-color: var(--color-text-secondary);
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}
+
+.fieldSwatchWrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.fieldSwatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+}
+
+// None: white with a red slash, over the input (which still takes the click).
+.fieldEmptySwatch {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    135deg,
+    var(--color-white) 45%,
+    var(--color-red-50) 45% 55%,
+    var(--color-white) 55%
+  );
+  box-shadow: var(--editor-swatch-edge);
+  pointer-events: none;
+}
+
+.fieldHex {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-black);
+  text-overflow: ellipsis;
+}
+
+.fieldEmpty {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+}

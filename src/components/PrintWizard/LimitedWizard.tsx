@@ -11,7 +11,6 @@ import { Modal } from '@/components/ui/Modal'
 import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import { consumePrintReturnUrl } from '@/components/checkout/printReturnUrl'
 import Logo from '@/icons/logo.svg'
-import Monogram from '@/icons/monogram.svg'
 
 import { buildCartItem } from '@/lib/cart/buildCartItem'
 import { useCart } from '@/lib/cart/useCart'
@@ -24,9 +23,9 @@ import {
   selectableVariants,
 } from '@/lib/editions/variantSelection'
 
-import { EditionBadge } from './EditionBadge'
 import { SchemaStage } from './SchemaStage'
 import { SummaryPanel } from './SummaryPanel'
+import { LearnMoreSheet } from './LearnMoreSheet'
 import { VariantPicker, type VariantPickerItem } from './VariantPicker'
 import type { WizardArtwork } from './index'
 
@@ -225,15 +224,19 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
   return (
     <div className={styles.wizard}>
       <header className={styles.header}>
-        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
-          <Logo className={styles.logo} />
+        <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
+          <Logo className={styles.logo} aria-hidden />
         </Link>
-        <span />
+        {/* order-flow.md: "Order a print · Title, Artist", the title in serif italics. */}
+        <p className={styles.headerTitle}>
+          Order a print · <em>{artwork.title}</em>, {artwork.artistName}
+        </p>
         <div className={styles.headerActions}>
           <CartIcon />
           <Button
             variant="ghost"
             onClick={close}
+            label="Close"
             iconRight={<Icon name="close" size={16} />}
             className={styles.closeButton}
             aria-label="Close wizard"
@@ -245,11 +248,6 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
         {/* The caveat rides on the badge, before anything is chosen — there is
             no hold and no clock, so the one thing the buyer must know up front
             is that taking their time carries a risk. */}
-        <EditionBadge
-          editionType="limited"
-          onDetails={() => setIntroOpen(true)}
-          note="Not reserved until you pay — another collector may take it first."
-        />
         {available.length > 0 ? (
           <>
             <VariantPicker
@@ -283,6 +281,9 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
                 alreadyInCart={selectedInCart}
                 addError={addError}
                 isDuplicate={selectedInCart}
+                editionType="limited"
+                onLearnMore={() => setIntroOpen(true)}
+                caveat="Not reserved until you pay: another collector may take it first."
               />
             )}
           </>
@@ -294,61 +295,37 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
       </main>
 
       {introOpen && detailVariant && (
-        <Modal onClose={dismissIntro} titleId="print-intro-title" maxWidth="640px" showClose>
-          <div className={styles.introModal}>
-            <Monogram className={styles.introMonogram} aria-hidden="true" />
-            {/* Not shown: the buyer is already on this artwork's page, so the
-                line only restated what sits behind the modal. It stays in the
-                markup, visually hidden, because `titleId` points at it for the
-                dialog's accessible name. */}
-            <p id="print-intro-title" className="sr-only">
-              {artwork.title} by {artwork.artistName}
-            </p>
-            <div className={styles.detailSections}>
-              <p className={styles.detailSubhead}>Terms of sale</p>
-              <ul className={styles.detailList}>
-                <li>
-                  Individually numbered — each print carries its own number in the margin below the
-                  image.
-                </li>
-                <li>
-                  Comes with a Certificate of Authenticity (COA), hand-signed by the artist — the
-                  signature is on the certificate, not the print.
-                </li>
-                <li>Sold unframed, on premium archival paper — frame it your way.</li>
-                <li>Price might rise as the edition sells.</li>
-                <li>
-                  Your edition number is allocated at the point of sale — the number shown in the
-                  preview is for reference only.
-                </li>
-                <li>Final VAT is calculated when you confirm your delivery address at checkout.</li>
-                <li>Sales are strictly limited to one edition per household.</li>
-                <li>We reserve the right to cancel or refund an order if needed.</li>
-              </ul>
-              <p className={styles.detailSubhead}>Shipping</p>
-              <ul className={styles.detailList}>
-                <li>
-                  All editions are packaged to the highest standards, managed at our warehouse using
-                  archival materials.
-                </li>
-                <li>Shipping is calculated at checkout, based on your delivery address.</li>
-                <li>Most editions are dispatched within about a week of purchase.</li>
-                <li>
-                  Sent with tracked delivery &mdash; we&rsquo;ll email you the tracking when
-                  it&rsquo;s on its way.
-                </li>
-                <li>Delivery is typically 1&ndash;2 weeks.</li>
-                <li>Orders may be subject to customs and local import duties.</li>
-              </ul>
-            </div>
-            <p className={styles.detailTerms}>
-              Please read our{' '}
-              <Link href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
-                full terms of sale
-              </Link>
-              .
-            </p>
-          </div>
+        <Modal
+          onClose={dismissIntro}
+          titleId="print-intro-title"
+          maxWidth="640px"
+          showClose
+          tone="public"
+        >
+          {/* order-flow.md "Learn more window": the same points as before, dashes removed. */}
+          <LearnMoreSheet
+            editionType="limited"
+            title={artwork.title}
+            artistName={artwork.artistName}
+            terms={[
+              'Individually numbered: each print carries its own number in the margin below the image.',
+              'Comes with a Certificate of Authenticity (COA), hand-signed by the artist: the signature is on the certificate, not the print.',
+              'Sold unframed, on premium archival paper: frame it your way.',
+              'Price might rise as the edition sells.',
+              'Your edition number is allocated at the point of sale: the number shown in the preview is for reference only.',
+              'Final VAT is calculated when you confirm your delivery address at checkout.',
+              'Sales are strictly limited to one edition per household.',
+              'We reserve the right to cancel or refund an order if needed.',
+            ]}
+            shipping={[
+              'All editions are packaged to the highest standards, managed at our warehouse using archival materials.',
+              'Shipping is calculated at checkout, based on your delivery address.',
+              'Most editions are dispatched within about a week of purchase.',
+              'Sent with tracked delivery: we’ll email you the tracking when it’s on its way.',
+              'Delivery is typically 1–2 weeks.',
+              'Orders may be subject to customs and local import duties.',
+            ]}
+          />
         </Modal>
       )}
     </div>

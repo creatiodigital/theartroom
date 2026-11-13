@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Share2, Mail } from 'lucide-react'
+import { ShareNetwork } from '@phosphor-icons/react'
+
+import EnvelopeIcon from '@/icons/envelope.svg'
 
 import { Button } from '@/components/ui/Button'
 
@@ -51,7 +53,7 @@ export const Share = ({ title, url, className }: ShareProps) => {
         className={styles.toggle}
         aria-expanded={isOpen}
       >
-        <Share2 size={16} strokeWidth={1.25} />
+        <ShareNetwork size={16} weight="light" aria-hidden />
         <span>Share</span>
       </Button>
       {isOpen && (
@@ -60,7 +62,7 @@ export const Share = ({ title, url, className }: ShareProps) => {
             href={`mailto:?subject=${encodeURIComponent(`${title} — The Art Room`)}&body=${encodeURIComponent(url)}`}
             className={styles.link}
           >
-            <Mail size={15} strokeWidth={1.25} />
+            <EnvelopeIcon width={15} height={15} aria-hidden />
             <span>Email</span>
           </a>
           <a

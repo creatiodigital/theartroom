@@ -1,0 +1,59 @@
+// dashboard-phone-menu.dc.html. Above the top bar (10) and below the shared Modal.
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  font-size: 15px;
+}
+
+.dark {
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+.light {
+  background: var(--color-white);
+  color: var(--color-text-primary);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-3) 10px var(--space-4);
+  border-bottom: 1px solid var(--color-gray-80);
+}
+
+.light .header {
+  border-bottom-color: var(--color-border-default);
+}
+
+.closeWrap {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.header .close {
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-white);
+
+  &:hover {
+    background: var(--admin-nav-hover);
+  }
+}
+
+.light .header .close {
+  color: var(--color-black);
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+}

@@ -1,0 +1,22 @@
+// Not sticky, not 100vh: a column that grows with the page (components.md, AdminSidebar).
+.sidebar {
+  flex: 0 0 var(--admin-sidebar-width);
+  width: var(--admin-sidebar-width);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  padding: var(--space-7) var(--space-4) var(--space-5);
+}
+
+.dark {
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+// artist-home.dc.html: white, with a 1px rule on its right.
+.light {
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  border-right: 1px solid var(--color-border-default);
+}

@@ -1,0 +1,25 @@
+.track {
+  display: block;
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+}
+
+.thin {
+  height: 6px;
+  border-radius: 3px;
+}
+
+// surface="gray": the track would vanish on a --color-gray-15 row.
+.onGray {
+  background: var(--color-gray-25);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-dark-surface);
+}

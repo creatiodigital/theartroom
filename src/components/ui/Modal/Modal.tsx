@@ -2,9 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 import type { ReactNode, MouseEvent } from 'react'
-import { X } from 'lucide-react'
-
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
+import { X } from '@phosphor-icons/react'
+import c from 'classnames'
 
 type ModalProps = {
   children: ReactNode
@@ -30,11 +29,34 @@ type ModalProps = {
    * touch screen, so any modal a buyer meets on a phone should set this.
    */
   showClose?: boolean
+  /**
+   * `admin`: the admin redesign's dialog look (dark backdrop, 8px corners,
+   * deeper shadow). `public`: the public site's windows (docs/public-redesign
+   * order-flow.md: square, a deep shadow, a dim backdrop). Opt-in so every
+   * other modal keeps its look.
+   */
+  tone?: 'default' | 'admin' | 'public'
+  /**
+   * `flush`: no padding and no scrolling of its own, for a window that lays out
+   * its own header, scrolling middle and footer.
+   */
+  layout?: 'padded' | 'flush'
+  /** Full screen on phones (below 640px): no inset, the panel fills the screen. */
+  phoneFullScreen?: boolean
 }
 
 import styles from './Modal.module.scss'
 
-const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) => {
+const Modal = ({
+  children,
+  onClose,
+  titleId,
+  maxWidth,
+  showClose,
+  tone = 'default',
+  layout = 'padded',
+  phoneFullScreen = false,
+}: ModalProps) => {
   const mouseDownOnBackdrop = useRef(false)
   const mouseDownAt = useRef<{ x: number; y: number } | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -83,6 +105,22 @@ const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) 
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
+  // The page behind stays still while a window is open (owner, 2026-11-13). The values it had are
+  // put back on close, so a window opened over another one (or over the phone menu, which locks
+  // the same way) leaves theirs in place. The scrollbar's width goes on as padding so the page
+  // does not shift sideways where scrollbars take room (Windows; macOS overlays take none).
+  useEffect(() => {
+    const { body, documentElement } = document
+    const previous = { overflow: body.style.overflow, paddingRight: body.style.paddingRight }
+    const scrollbar = window.innerWidth - documentElement.clientWidth
+    body.style.overflow = 'hidden'
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`
+    return () => {
+      body.style.overflow = previous.overflow
+      body.style.paddingRight = previous.paddingRight
+    }
+  }, [])
+
   // Move focus into the modal on mount so keyboard users aren't left
   // focused behind the backdrop, and restore focus to whatever was
   // active before the modal opened when it closes.
@@ -96,7 +134,12 @@ const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) 
 
   return (
     <div
-      className={styles.modal}
+      className={c(
+        styles.modal,
+        tone === 'admin' && styles.admin,
+        tone === 'public' && styles.public,
+        phoneFullScreen && styles.phoneFullScreen,
+      )}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       data-no-deselect="true"
@@ -107,7 +150,7 @@ const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) 
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={styles.content}
+        className={c(styles.content, layout === 'flush' && styles.flush)}
         // Bounded by the viewport even when a caller names a width. As a bare
         // inline value this overrode the stylesheet's cap, so a modal asking for
         // 640px ran to both edges of a 390px phone.
@@ -117,7 +160,7 @@ const Modal = ({ children, onClose, titleId, maxWidth, showClose }: ModalProps) 
       >
         {showClose && (
           <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
-            <X size={20} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+            <X size={20} weight="light" aria-hidden />
           </button>
         )}
         {children}

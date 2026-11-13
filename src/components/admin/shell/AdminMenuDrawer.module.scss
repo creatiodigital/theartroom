@@ -1,0 +1,31 @@
+// dashboard-phone-menu.dc.html: the drawer's body. The drawer itself (full screen,
+// header, close button) is ShellDrawer; the wordmark is ShellWordmark.
+.nav {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-3);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupLabel {
+  padding: 0 var(--space-3) 6px;
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-dark-text-muted);
+}
+
+// The Developer group, last in the list: pushed down onto the user card, with a
+// rule above it as in the side menu.
+.developer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-gray-80);
+}

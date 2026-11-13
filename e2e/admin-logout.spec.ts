@@ -29,7 +29,7 @@ test('admin logout: signs out and clears the session', async ({ page }) => {
       },
       // Generous window: Auth.js rotates the session cookie on session
       // reads, so a straggler response can briefly resurrect the session
-      // right after the signout clear. Logout.tsx verifies-and-retries to
+      // right after the signout clear. signOutAndVerify verifies and retries to
       // defeat that race; this poll allows for those retry round-trips.
       { message: 'session should be empty after logout', timeout: 15_000 },
     )

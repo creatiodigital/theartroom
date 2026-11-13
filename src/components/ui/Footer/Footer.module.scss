@@ -1,53 +1,99 @@
 @use '@/styles/mixins' as *;
 
+// docs/public-redesign/home.md §8 (footer), the same on every screen (owner, 2026-11-13): the brand,
+// the networks, the legal links and the ©, a hairline between each, all on the left.
 .footer {
-  border-top: 3px double var(--color-border-default);
-  background: var(--color-white);
-  padding: var(--space-12) 0;
-  font-size: var(--text-sm);
   margin-top: auto;
   flex-shrink: 0;
+  border-top: 1px solid var(--color-gray-30);
+  background: var(--color-white);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+}
+
+.inner {
   max-width: var(--header-max-width);
-  margin-left: auto;
-  margin-right: auto;
   width: calc(100% - var(--site-padding) * 2);
+  margin: 0 auto;
 
   @include media-down(lg) {
     width: calc(100% - var(--space-6) * 2);
-    padding: var(--space-12) 0;
   }
 }
 
-// Instagram, Facebook and Email in one row under the policy links, in the
-// same small spaced capitals, each with its icon in front.
-.socialBar {
+// The brand, then the networks' band under it, on the left: on every screen as on phones (owner,
+// 2026-11-13: they sat on the right on desktop).
+.top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: 56px 0 0;
+
+  // Phones: less air above the brand.
+  @include media-down(md) {
+    padding: var(--space-10) 0 0;
+  }
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.logoLink {
+  display: inline-flex;
+  color: var(--color-brand);
+}
+
+// Exactly the header's wordmark size (home.md §8): one knob, --logo-width, on every screen.
+.logo {
+  width: var(--logo-width);
+  height: auto;
+  overflow: visible;
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.tagline {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.email {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+// Plain icons, no circles or labels, about 22px apart (README "Footer network icons"): the 44px
+// touch targets alone leave that between the glyphs.
+// The networks, as today's live site (owner, 2026-11-12: "follow legacy"): the icon, then the name
+// in caps, 12 px with 1 px letter spacing; 8 px between icon and name. A band of its own between two
+// hairlines (the one under it is the legal row's), the three networks on one line from the left,
+// 16 px apart: on every screen as on phones (owner, 2026-11-13). They fit from a 375 px phone up.
+.social {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-3) var(--space-5);
-  margin-top: var(--space-8);
-  // Thin rules set the social row apart as its own band.
-  border-top: 1px solid var(--color-border-default);
-  border-bottom: 1px solid var(--color-border-default);
-  padding: var(--space-5) 0;
-
-  @include breakpoint(lg) {
-    gap: var(--space-12);
-  }
+  justify-content: flex-start;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+  padding: var(--space-6) 0;
+  border-top: 1px solid var(--color-gray-30);
+  list-style: none;
 
   a {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--color-text-primary);
-    font-size: var(--text-xs-mobile);
+    font-size: var(--text-xs);
     letter-spacing: 1px;
     text-transform: uppercase;
-    text-decoration: none;
-
-    @include breakpoint(lg) {
-      font-size: var(--text-xs);
-    }
+    color: var(--color-text-primary);
 
     &:hover {
       opacity: 0.8;
@@ -55,100 +101,58 @@
   }
 }
 
-// The brand logos are solid glyphs, which read heavier than the thin-stroke
-// lucide Mail icon at the same size, so they sit a touch smaller.
+// The brand logos, 16 px (as the live site).
 .brandIcon {
   width: 16px;
   height: 16px;
 }
 
-.monogramRow {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-6);
-
-  @include breakpoint(lg) {
-    margin-bottom: var(--space-8);
-  }
-}
-
-.monogramLink {
-  display: flex;
-
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
-.monogram {
-  // New brand monogram.svg bakes ~11% whitespace into its viewBox, so the
-  // visible circle renders ~22% smaller than the old asset at the same width.
-  // Sized up from 40px to keep the rendered circle at its previous ~40px.
-  width: 51px;
-  height: auto;
-  color: var(--color-brand);
-  overflow: visible;
-}
-
-.footerInner {
+// The legal links, then the © under a hairline of its own; 24 px either side of every hairline. On
+// every screen as on phones (owner, 2026-11-12: more air; 2026-11-13: every view the same).
+.bottom {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-6);
+  padding: var(--space-6) 0 var(--space-8);
+  border-top: 1px solid var(--color-gray-20);
+}
 
-  @include breakpoint(lg) {
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 0;
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  // 14 px (owner, 2026-11-13: 13 read small).
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+
+  // Phones: two aligned columns, not a ragged wrap (owner, 2026-11-12), side by side from the left
+  // with a 32 px gap, not spread across the width (owner, 2026-11-13).
+  @include media-down(md) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    justify-content: start;
+    gap: var(--space-4) var(--space-8);
+    justify-items: start;
   }
 }
 
-.links {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-5);
-
-  @include breakpoint(lg) {
-    flex-direction: row;
-    gap: var(--space-8);
-  }
-
-  a,
-  button {
-    color: var(--color-text-primary);
-    font-size: var(--text-xs-mobile);
-    letter-spacing: 1px;
-    text-decoration: none;
-    font-weight: var(--font-regular);
-    text-transform: uppercase;
-    padding: var(--space-2) 0;
-
-    @include breakpoint(lg) {
-      font-size: var(--text-xs);
-      padding: 0;
-    }
-
-    &:hover {
-      text-decoration: none;
-    }
-  }
-
-  // The "Cookie Settings" trigger is a <button> (it opens the banner) but
-  // must look identical to the sibling policy links.
-  button {
-    background: none;
-    border: none;
-    font-family: inherit;
-    cursor: pointer;
-  }
+// Reads as one of the legal links. Two classes: Button's bare reset would win over one.
+.legal .cookieSettings {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
 .copyright {
-  color: var(--color-text-primary);
-  letter-spacing: 1px;
-  text-align: center;
-  margin-top: var(--space-8);
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--public-muted);
+  // Set apart from the legal links by a grey hairline, on every screen (owner, 2026-11-12/13).
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-gray-30);
 }

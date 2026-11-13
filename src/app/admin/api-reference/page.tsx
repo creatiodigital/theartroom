@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import { auth } from '@/auth'
@@ -9,8 +10,9 @@ import ReferenceContent from './ReferenceContent'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'API & Database Reference — The Art Room',
+export const metadata: Metadata = {
+  title: { absolute: 'API & database reference — The Art Room Admin' },
+  robots: { index: false, follow: false },
 }
 
 export default async function ApiReferencePage() {

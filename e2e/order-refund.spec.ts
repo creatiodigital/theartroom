@@ -9,7 +9,7 @@ import { buyOneLimited, teardownBoughtOrder, type BoughtLimitedOrder } from './o
 /**
  * The refund ACTION end-to-end, through the real admin UI (auth-gated) — not the
  * read-only RENDER of an already-refunded order (that's order-refunded-readonly).
- * This is the money path: clicking "Refund buyer" must, for an AUTHORIZED order,
+ * This is the money path: clicking "Refund the buyer…" must, for an AUTHORIZED order,
  * void the Stripe hold, mark the order refunded, AND return the edition number to
  * the pool — the effects buyers and the ledger depend on.
  *
@@ -51,7 +51,7 @@ test.describe('Refund action (authorized order) — real admin UI', () => {
       await page.goto(`/admin/orders/${bought.orderId}`)
 
       // Open the refund panel → enter the audit reason → issue → confirm.
-      await page.getByRole('button', { name: /Refund buyer/ }).click()
+      await page.getByRole('button', { name: 'Refund the buyer…', exact: true }).click()
       await page.getByLabel(/Reason/).fill('e2e refund-action test — releasing the hold')
       await page.getByRole('button', { name: 'Issue refund' }).click()
       await page.getByRole('button', { name: 'Yes, refund buyer' }).click()

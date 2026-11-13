@@ -1,31 +1,29 @@
 @use '@/styles/mixins' as *;
 
-// Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
+// docs/public-redesign/home.md §4; designs/home-desktop.dc.html / home-phone.dc.html.
 .section {
-  margin-bottom: var(--space-12);
+  padding-bottom: 130px;
 
-  @include breakpoint(lg) {
-    margin-bottom: var(--space-16);
+  @include media-down(md) {
+    padding-bottom: 72px;
   }
 }
 
-// Photo above the text on phones and tablets; side by side, half and half, from lg up.
+// Photo 7, text 5, side by side from lg; the photo above the text below it.
 .row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 7fr 5fr;
+  gap: 56px;
+  align-items: center;
 
-  @include breakpoint(lg) {
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
+  @include media-down(lg) {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
   }
 }
 
-.photo {
-  min-width: 0;
-}
-
-// Always a landscape rectangle (3:2, the reference's shape) whatever the upload's shape: the photo
-// fills it, centered, and what doesn't fit is cropped evenly.
+// Always a landscape rectangle (3:2) whatever the upload's shape: the photo fills it, centered,
+// and what doesn't fit is cropped evenly.
 .image {
   display: block;
   width: 100%;
@@ -34,19 +32,52 @@
   object-position: center;
 }
 
-// The inner padding: room around the text inside its half. Its rules are scoped to it so they
-// outrank the Text and RichText components' own margins.
 .content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   min-width: 0;
-  padding: var(--space-6) 0 0;
 
-  @include breakpoint(lg) {
-    padding: var(--space-10) var(--space-16);
+  @include media-down(md) {
+    gap: 12px;
   }
 }
 
-.content .title {
-  color: var(--color-text-primary);
-  line-height: 1.3;
-  margin-bottom: var(--space-6);
+.title {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 40px;
+  font-weight: var(--font-regular);
+  line-height: 1.1;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 28px;
+    line-height: 1.15;
+  }
+}
+
+// The editor's text at the board's size; two classes so it outranks RichText's compact rules.
+.content .text,
+.content .text p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--public-body);
+
+  @include media-down(md) {
+    font-size: 16px;
+  }
+}
+
+.content .text p + p {
+  margin-top: 18px;
+}
+
+// Links inside the text: dark and bold, no underline (no underlines, ever), as the content pages.
+.content .text a,
+.content .text a:hover {
+  color: var(--public-text);
+  font-weight: var(--font-bold);
+  text-decoration: none;
 }

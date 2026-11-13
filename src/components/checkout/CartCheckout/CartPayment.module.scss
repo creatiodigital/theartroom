@@ -1,0 +1,62 @@
+@use '@/styles/mixins' as *;
+
+// docs/public-redesign/order-flow.md "Checkout v2"; designs/checkout-v2.dc.html (3 · Payment): the
+// step's column on the right (the order is on the left): "Payment", Stripe's fields, Pay, the Stripe
+// and terms line, ← Back to review.
+.payment {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 22px;
+  min-width: 0;
+
+  // ← Back to review sits at the start, not stretched.
+  > :last-child {
+    align-self: flex-start;
+  }
+}
+
+.paymentTitle {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
+
+  @include media-down(sm) {
+    font-size: 26px;
+  }
+}
+
+.paymentForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.paymentError {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-error-text);
+}
+
+.payButton {
+  margin-top: 18px;
+}
+
+// The Stripe sentence and the terms, one line under Pay. #666, not the drawn #888 (Q-P12).
+.terms {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+
+  a {
+    font-weight: var(--font-bold);
+    color: var(--public-text);
+  }
+}

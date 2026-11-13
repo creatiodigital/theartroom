@@ -1,23 +1,29 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-
-import { formatOrderRef, orderMatchesQuery } from '@/lib/orders/orderRef'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { CaretRight } from '@phosphor-icons/react'
+import c from 'classnames'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { useAttentionCounts } from '@/components/admin/shell'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
+import { DataTable } from '@/components/admin/ui/DataTable'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { SearchField } from '@/components/admin/ui/SearchField'
+import { StageTabs, type StageTab } from '@/components/admin/ui/StageTabs'
 import { Button } from '@/components/ui/Button'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { authorizationHold } from '@/lib/orders/authorizationPolicy'
 import { type Bucket, BUCKET_ORDER, bucketOf } from '@/lib/orders/orderBuckets'
+import { formatOrderRef, orderMatchesQuery } from '@/lib/orders/orderRef'
 import { daysSinceDelivered, PAYOUT_SAFE_WINDOW_DAYS } from '@/lib/orders/payoutPolicy'
 import { formatEuro } from '@/lib/print-providers/format'
 
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import type { AdminOrderRow } from '@/app/admin/orders/actions'
 
-import { listOrders, type AdminOrderRow } from '@/app/admin/orders/actions'
+import styles from './Orders.module.scss'
 
 const formatDate = (iso: string | null) => {
   if (!iso) return '—'
@@ -28,28 +34,138 @@ const formatDate = (iso: string | null) => {
   })
 }
 
-const DOT_COLORS: Record<string, string> = {
-  green: '#10b981',
-  red: '#ef4444',
-  amber: '#f59e0b',
-  blue: '#3b82f6',
-  gray: '#9ca3af',
+const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`
+
+// The fulfillment pipeline (numbered tabs), then the off-ramps after a divider.
+const STAGE_BUCKETS: Bucket[] = [
+  'new',
+  'to-place',
+  'at-tps',
+  'production',
+  'shipped',
+  'delivered',
+  'done',
+]
+const OTHER_BUCKETS: Bucket[] = ['cancelled', 'refunded', 'attention']
+
+function isBucket(value: string | null): value is Bucket {
+  return value !== null && (BUCKET_ORDER as string[]).includes(value)
 }
 
-const Dot = ({ color }: { color: keyof typeof DOT_COLORS }) => (
-  <span
-    aria-hidden="true"
-    style={{
-      display: 'inline-block',
-      width: 8,
-      height: 8,
-      borderRadius: '50%',
-      background: DOT_COLORS[color],
-      marginRight: 6,
-      verticalAlign: 'middle',
-    }}
-  />
-)
+type BucketMeta = {
+  label: string
+  /** Callout: bold first sentence, then the rest. */
+  title: string
+  text: string
+  tone: 'info' | 'plain' | 'amber' | 'red'
+  /** The row's link to the order page. Every real action happens there. */
+  action: string
+  actionStyle: 'dark' | 'outline' | 'red'
+  empty: [string, string]
+}
+
+// Copy from docs/admin-redesign/orders.md §1 and designs/orders.dc.html.
+const BUCKET_META: Record<Bucket, BucketMeta> = {
+  new: {
+    label: 'New',
+    title: 'Capture the payment first.',
+    text: 'The buyer paid and the card is on hold. Once the capture succeeds the order moves to “To place at TPS”. Never place at TPS before capturing.',
+    tone: 'amber',
+    action: 'Capture payment',
+    actionStyle: 'dark',
+    empty: [
+      'No new orders right now.',
+      'New paid orders appear here as soon as a buyer checks out.',
+    ],
+  },
+  'to-place': {
+    label: 'To place at TPS',
+    title: 'Place and pay the order at TPS.',
+    text: 'Payment is captured, so you hold the buyer’s money. Order it on theprintspace, then mark it placed.',
+    tone: 'info',
+    action: 'Mark placed at TPS',
+    actionStyle: 'dark',
+    empty: [
+      'Nothing to place.',
+      'Captured orders wait here until you order them at theprintspace.',
+    ],
+  },
+  'at-tps': {
+    label: 'At TPS',
+    title: 'Waiting for TPS.',
+    text: 'Mark it in production once theprintspace confirms they are printing.',
+    tone: 'info',
+    action: 'Mark in production',
+    actionStyle: 'dark',
+    empty: [
+      'Nothing waiting at TPS.',
+      'Orders you placed at theprintspace wait here until printing starts.',
+    ],
+  },
+  production: {
+    label: 'In production',
+    title: 'TPS is printing.',
+    text: 'When they ship, add the tracking link and mark it shipped.',
+    tone: 'info',
+    action: 'Mark shipped',
+    actionStyle: 'dark',
+    empty: ['Nothing in production.', ''],
+  },
+  shipped: {
+    label: 'Shipped',
+    title: 'On its way.',
+    text: 'Mark delivered once the buyer has it.',
+    tone: 'info',
+    action: 'Mark delivered',
+    actionStyle: 'dark',
+    empty: ['Nothing on its way.', ''],
+  },
+  delivered: {
+    label: 'Delivered',
+    title: 'Pay the artist.',
+    text: `You can pay any time. The ${PAYOUT_SAFE_WINDOW_DAYS}-day count is only a hint for buyer-dispute risk.`,
+    tone: 'info',
+    action: 'Pay the artist',
+    actionStyle: 'dark',
+    empty: ['No artist waiting for payment.', ''],
+  },
+  done: {
+    label: 'Artist paid',
+    title: 'Complete.',
+    text: 'Delivered and the artist is paid. Nothing left to do.',
+    tone: 'plain',
+    action: 'View',
+    actionStyle: 'outline',
+    empty: ['No completed orders yet.', ''],
+  },
+  cancelled: {
+    label: 'Canceled',
+    title: 'Pulled out before delivery.',
+    text: 'Buyer canceled, TPS rejected the file, prints disabled… Refunds, if needed, are on the order page.',
+    tone: 'plain',
+    action: 'View',
+    actionStyle: 'outline',
+    empty: ['No canceled orders.', 'Orders stopped before delivery would show here.'],
+  },
+  refunded: {
+    label: 'Refunded',
+    title: 'Money returned.',
+    text: 'The buyer was refunded. Nothing left to do.',
+    tone: 'plain',
+    action: 'View',
+    actionStyle: 'outline',
+    empty: ['No refunds.', ''],
+  },
+  attention: {
+    label: 'Needs attention',
+    title: 'Something went wrong.',
+    text: 'Failed payments, rejected orders, refunds owed. Each case differs: open the order to sort it out.',
+    tone: 'red',
+    action: 'Resolve',
+    actionStyle: 'red',
+    empty: ['Nothing needs attention.', 'Failed payments and problems would show here.'],
+  },
+}
 
 /**
  * How long this order's authorization has left, shown under its date.
@@ -73,104 +189,78 @@ const HoldCountdown = ({ order }: { order: AdminOrderRow }) => {
       ? 'Hold expired'
       : // "~" is honest: 7 days is the CARD figure and we don't record the
         // method, so a PayPal hold (up to 20 days) is quoted short on purpose.
-        `Hold ${hold.days}d · ~${hold.daysLeft}d left`
+        `Hold ${days(hold.days)} · ~${days(hold.daysLeft)} left`
 
   return (
-    <div
+    <span
       title={
         hold.status === 'expired'
           ? 'Stripe has very likely voided this authorization already — a capture will fail. Cancel the order and ask the buyer to re-order.'
           : 'Authorizations lapse about 7 days after checkout. Capture the payment, or cancel and tell the buyer, before this runs out.'
       }
-      style={{
-        fontSize: 'var(--text-xs)',
-        marginTop: 2,
-        color: urgent ? '#b91c1c' : 'inherit',
-        opacity: urgent ? 1 : 0.6,
-        fontWeight: urgent ? 600 : 400,
-      }}
+      className={c(styles.meta, urgent && styles.metaUrgent)}
     >
-      {urgent && <Dot color="red" />}
+      {urgent && <span aria-hidden className={styles.redDot} />}
       {label}
-    </div>
+    </span>
   )
 }
 
-const BUCKET_META: Record<
-  Bucket,
-  {
-    title: string
-    helper: string
-    nextAction: string
+// questions.md Q10: no field stores a reason, so it is derived from the row.
+const attentionReason = (order: AdminOrderRow) =>
+  order.paymentStatus === 'failed'
+    ? 'Payment failed'
+    : order.paymentStatus === 'canceled'
+      ? 'Authorization canceled'
+      : 'Needs a look'
+
+const PayoutStatus = ({ order }: { order: AdminOrderRow }) => {
+  if (order.payoutComplete) {
+    return (
+      <span className={styles.payout}>
+        <span aria-hidden className={c(styles.dot, styles.dotGreen)} />
+        {formatEuro(order.artistCents)}
+        {order.payoutAt ? ` · ${formatDate(order.payoutAt)}` : ''}
+        {order.payoutManual ? ' (manual)' : ''}
+      </span>
+    )
   }
-> = {
-  new: {
-    title: 'New',
-    helper:
-      'Buyer paid; card is on hold. Capture the payment FIRST — once it succeeds the order moves to “To place at TPS”. Never place at TPS before capturing.',
-    nextAction: 'Capture payment',
-  },
-  'to-place': {
-    title: 'To place at TPS',
-    helper:
-      'Payment captured — you hold the buyer’s money. Now place + pay the order on theprintspace, then click Mark placed at TPS to advance.',
-    nextAction: 'Mark placed at TPS',
-  },
-  'at-tps': {
-    title: 'At TPS',
-    helper:
-      'Order placed at theprintspace; payment captured. Click Mark in production once TPS confirms they’re printing.',
-    nextAction: 'Mark in production',
-  },
-  production: {
-    title: 'In production',
-    helper: 'TPS is printing. Once they ship, paste the tracking URL to advance.',
-    nextAction: 'Mark shipped',
-  },
-  shipped: {
-    title: 'Shipped',
-    helper: 'TPS shipped. Mark delivered once the buyer confirms receipt.',
-    nextAction: 'Mark delivered',
-  },
-  delivered: {
-    title: 'Delivered',
-    helper: `Buyer received the print. You can pay the artist any time — the ${PAYOUT_SAFE_WINDOW_DAYS}-day counter is just a buyer-dispute risk hint.`,
-    nextAction: 'Pay the Artist',
-  },
-  done: {
-    title: 'Artist paid',
-    helper: 'Order delivered and artist paid. Archived view.',
-    nextAction: 'View details',
-  },
-  cancelled: {
-    title: 'Canceled',
-    helper:
-      'Orders pulled out of the pipeline before delivery — buyer asked to cancel, we couldn’t fulfill, TPS rejected the file, artist disabled prints, etc. Refunds (if needed) are handled from the order detail page.',
-    nextAction: 'View details',
-  },
-  refunded: {
-    title: 'Refunded',
-    helper:
-      'Buyer was refunded — money returned, no further action. Refunds can happen at any stage (e.g. pre-placement cancel, post-delivery goodwill).',
-    nextAction: 'View details',
-  },
-  attention: {
-    title: 'Needs attention',
-    helper:
-      'Failed payments, rejected orders, refunds. Each case differs — open the order to refund, cancel, or close it out.',
-    nextAction: 'Open & resolve →',
-  },
+  const since = daysSinceDelivered(order.shippedAt)
+  if (since === null) return <span className={styles.muted}>—</span>
+  const past = since >= PAYOUT_SAFE_WINDOW_DAYS
+  const remaining = Math.max(0, PAYOUT_SAFE_WINDOW_DAYS - since)
+  return (
+    <span className={styles.payout}>
+      <span aria-hidden className={c(styles.dot, past ? styles.dotGreen : styles.dotAmber)} />
+      {since}d since delivered · {past ? 'safe window passed' : `${remaining}d to safe window`}
+    </span>
+  )
 }
 
 export const AdminOrders = () => {
   const { data: session, status: sessionStatus } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const [orders, setOrders] = useState<AdminOrderRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeBucket, setActiveBucket] = useState<Bucket>('new')
   const [query, setQuery] = useState('')
+
+  // The rows come from the admin shell, which re-reads them on arriving here:
+  // one listOrders() for the list, the tab counts and the menu badge (Q2).
+  // While a re-read runs, the previous rows stay on screen.
+  const { orders: shellOrders, error } = useAttentionCounts()
+  const loading = shellOrders === null && error === null
+  const orders = useMemo(() => shellOrders ?? [], [shellOrders])
+
+  // The selected stage lives in the URL (?stage=), so the dashboard can link
+  // straight to a tab and Back returns to it. Anything else falls back to New.
+  const stageParam = searchParams.get('stage')
+  const activeBucket: Bucket = isBucket(stageParam) ? stageParam : 'new'
+  const selectStage = useCallback(
+    (bucket: string) => {
+      if (isBucket(bucket)) router.replace(`/admin/orders?stage=${bucket}`, { scroll: false })
+    },
+    [router],
+  )
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -180,18 +270,6 @@ export const AdminOrders = () => {
       if (userType !== 'admin' && userType !== 'superAdmin') router.push('/')
     }
   }, [sessionStatus, session, router])
-
-  const load = useCallback(async () => {
-    setError(null)
-    const res = await listOrders()
-    if (res.ok) setOrders(res.orders)
-    else setError(res.error)
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    if (sessionStatus === 'authenticated') load()
-  }, [sessionStatus, load])
 
   const grouped = useMemo(() => {
     const map: Record<Bucket, AdminOrderRow[]> = {
@@ -212,7 +290,8 @@ export const AdminOrders = () => {
     return map
   }, [orders])
 
-  const searching = query.trim().length > 0
+  const trimmed = query.trim()
+  const searching = trimmed.length > 0
   // A search deliberately ignores the bucket tabs: a buyer quoting a reference
   // has no idea whether their order is "New" or "Shipped", and hunting through
   // tabs is exactly the friction this box exists to remove.
@@ -220,315 +299,212 @@ export const AdminOrders = () => {
     () => (searching ? orders.filter((o) => orderMatchesQuery(o, query)) : grouped[activeBucket]),
     [searching, orders, query, grouped, activeBucket],
   )
-  const activeMeta = BUCKET_META[activeBucket]
+  const meta = BUCKET_META[activeBucket]
+
+  const toTab = (bucket: Bucket, step?: number): StageTab => {
+    const count = grouped[bucket].length
+    return {
+      id: bucket,
+      label: BUCKET_META[bucket].label,
+      count,
+      step,
+      // Refunded only goes amber when there's *more than one* — a single
+      // refund is unremarkable, multiples are a pattern worth flagging.
+      countTone:
+        bucket === 'attention' ? 'red' : bucket === 'refunded' && count > 1 ? 'amber' : undefined,
+    }
+  }
+
+  // Column set follows the stage being looked at (a search shows the base set).
+  const showShipped = !searching && (activeBucket === 'shipped' || activeBucket === 'delivered')
+  const showPayout = !searching && (activeBucket === 'delivered' || activeBucket === 'done')
+  const countLabel = `${visibleOrders.length} ${visibleOrders.length === 1 ? 'order' : 'orders'}`
 
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
-      <h1 className={dashboardStyles.pageTitle}>Orders</h1>
+    <div className={styles.page}>
+      <AdminPageHeader
+        eyebrow="Sales"
+        title="Orders"
+        description="Every buyer order, from payment to artist payout."
+      />
 
-      {error && (
-        <div className={dashboardStyles.section}>
-          <p className={dashboardStyles.sectionDescription}>⚠️ {error}</p>
-        </div>
+      {error && <Callout tone="red">{error}</Callout>}
+
+      <StageTabs
+        label="Order stages"
+        groups={[
+          { label: 'Fulfillment stages', tabs: STAGE_BUCKETS.map((b, i) => toTab(b, i + 1)) },
+          { label: 'Other', tabs: OTHER_BUCKETS.map((b) => toTab(b)) },
+        ]}
+        selected={searching ? null : activeBucket}
+        onSelect={(id) => {
+          setQuery('')
+          selectStage(id)
+        }}
+      />
+
+      {searching ? (
+        <Callout tone="plain">
+          {`${countLabel} matching “${trimmed}” — across every stage.`}
+        </Callout>
+      ) : (
+        <Callout tone={meta.tone} title={meta.title}>
+          {meta.text}
+        </Callout>
       )}
 
-      <div
-        role="tablist"
-        aria-label="Order workflow stages"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 4,
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
-          marginBottom: 12,
-          marginTop: 8,
-        }}
+      <section
+        aria-label={searching ? 'Search results' : `${meta.label} orders`}
+        className={styles.panel}
       >
-        {BUCKET_ORDER.map((b) => {
-          const meta = BUCKET_META[b]
-          const count = grouped[b].length
-          const active = b === activeBucket
-          const isAttention = b === 'attention' || b === 'cancelled'
-          const isRefunded = b === 'refunded'
-          const hasItems = count > 0
-          // Refunded only goes orange when there's *more than one* —
-          // a single refund is unremarkable, multiples are a pattern
-          // worth flagging.
-          const refundedAlert = isRefunded && count > 1
-          const colorize =
-            hasItems && (isAttention || refundedAlert || (!isRefunded && !isAttention))
-          const pillBg = !colorize
-            ? 'rgba(0,0,0,0.06)'
-            : isAttention
-              ? '#fdecea'
-              : isRefunded
-                ? '#ffedd5'
-                : '#d1fae5'
-          const pillColor = !colorize
-            ? 'inherit'
-            : isAttention
-              ? '#b91c1c'
-              : isRefunded
-                ? '#9a3412'
-                : '#065f46'
-          return (
-            <Button
-              key={b}
-              variant="ghost"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setActiveBucket(b)}
-              style={{
-                padding: '8px 14px',
-                background: active ? 'var(--color-white)' : 'transparent',
-                border: '1px solid',
-                borderColor: active ? 'var(--color-border-strong)' : 'transparent',
-                borderBottomColor: active ? 'var(--color-white)' : 'transparent',
-                marginBottom: -1,
-                fontFamily: 'inherit',
-                fontSize: 13,
-                cursor: 'pointer',
-                fontWeight: active ? 600 : 400,
-              }}
-            >
-              {meta.title}
-              <span
-                style={{
-                  marginLeft: 6,
-                  padding: '1px 7px',
-                  borderRadius: 10,
-                  background: pillBg,
-                  fontSize: 11,
-                  color: pillColor,
-                }}
-              >
-                {count}
-              </span>
-            </Button>
-          )
-        })}
-      </div>
-
-      <div className={dashboardStyles.section}>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search order reference, payment id, buyer or artwork…"
-          aria-label="Search orders"
-          style={{
-            width: '100%',
-            maxWidth: 420,
-            padding: '8px 12px',
-            marginBottom: 16,
-            fontSize: 14,
-            border: '1px solid var(--color-border-default)',
-            background: 'var(--color-white)',
-            color: 'var(--color-text-primary)',
-          }}
-        />
-        <p
-          className={dashboardStyles.sectionDescription}
-          style={{ margin: '0 0 16px 0', fontSize: 13 }}
-        >
-          {searching
-            ? `${visibleOrders.length} ${visibleOrders.length === 1 ? 'order' : 'orders'} matching “${query.trim()}” — across every stage.`
-            : activeMeta.helper}
-        </p>
-
-        {(() => {
-          if (loading) {
-            return <p className={dashboardStyles.sectionDescription}>Loading…</p>
-          }
-          if (visibleOrders.length === 0) {
-            return (
-              <EmptyState
-                message={
-                  searching
-                    ? `Nothing matches “${query.trim()}”. Order references look like AD81E642; payment ids start with pi_.`
-                    : activeBucket === 'new'
-                      ? 'No new orders right now.'
-                      : `No orders in "${activeMeta.title}".`
-                }
+        <div className={styles.toolbar}>
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            label="Search orders"
+            placeholder="Search reference, payment ID, buyer or artwork"
+          />
+          <span className={styles.count}>
+            {countLabel}
+            {searching && (
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.clear}
+                label="Clear search"
+                onClick={() => setQuery('')}
               />
-            )
-          }
-          return (
-            <table className={dashboardStyles.table}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Order</th>
-                  <th>Buyer</th>
-                  <th>Total</th>
-                  {activeBucket === 'shipped' || activeBucket === 'delivered' ? (
-                    <th>Shipped</th>
-                  ) : null}
-                  {activeBucket === 'delivered' || activeBucket === 'done' ? (
-                    <th>Artist payout</th>
-                  ) : null}
-                  <th>Next action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleOrders.map((o) => (
-                  <tr key={o.id}>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {formatDate(o.createdAt)}
+            )}
+          </span>
+        </div>
+
+        {loading ? (
+          <p className={styles.loading}>Loading…</p>
+        ) : visibleOrders.length === 0 ? (
+          searching ? (
+            <EmptyState
+              title={`Nothing matches “${trimmed}”.`}
+              text="Order references look like AD81E642; payment ids start with pi_."
+            />
+          ) : (
+            <EmptyState title={meta.empty[0]} text={meta.empty[1] || undefined} />
+          )
+        ) : (
+          <DataTable className={styles.table}>
+            <thead>
+              <tr>
+                <th scope="col" className={styles.colDate}>
+                  Date
+                </th>
+                <th scope="col">Order</th>
+                <th scope="col">Buyer</th>
+                {showShipped && <th scope="col">Shipped</th>}
+                {showPayout && <th scope="col">Artist payout</th>}
+                <th scope="col" className={styles.alignRight}>
+                  Total
+                </th>
+                <th scope="col" className={styles.alignRight}>
+                  Next step
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleOrders.map((o) => {
+                const bucket = searching ? bucketOf(o) : activeBucket
+                const rowMeta = BUCKET_META[bucket]
+                const href = `/admin/orders/${o.id}`
+                return (
+                  <tr key={o.id} className={styles.row}>
+                    <td className={styles.cellDate}>
+                      <span className={styles.date}>{formatDate(o.createdAt)}</span>
                       <HoldCountdown order={o} />
+                      {bucket === 'attention' && (
+                        <span className={c(styles.meta, styles.metaUrgent)}>
+                          <span aria-hidden className={styles.redDot} />
+                          {attentionReason(o)}
+                        </span>
+                      )}
                     </td>
-                    <td>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-mono, monospace)',
-                          fontSize: 'var(--text-xs)',
-                          letterSpacing: '0.04em',
-                          marginBottom: 2,
-                        }}
-                      >
+                    <td className={styles.cellOrder}>
+                      <Link href={href} className={styles.ref}>
                         {formatOrderRef(o.id)}
-                      </div>
+                      </Link>
                       {o.itemCount > 0 ? (
                         <>
                           {/* Say WHAT was bought, not just how many. An admin
                               chasing "the order that owns copy 1/100" has to be
                               able to see it from the list. */}
                           {o.itemSummaries.slice(0, 3).map((it, i) => (
-                            <div key={i} style={{ marginBottom: 2 }}>
-                              <span>{it.artworkTitle ?? 'Artwork'}</span>
+                            <div key={i} className={styles.item}>
+                              {it.artworkTitle ?? 'Artwork'}
                               {it.editionName && (
-                                <span style={{ opacity: 0.7 }}> · {it.editionName}</span>
+                                <span className={styles.muted}> · {it.editionName}</span>
                               )}
                               {it.editionLabels.length > 0 && (
-                                <span
-                                  style={{
-                                    fontFamily: 'var(--font-mono, monospace)',
-                                    fontSize: 'var(--text-xs)',
-                                    marginLeft: 6,
-                                  }}
-                                >
+                                <span className={styles.edition}>
+                                  {' '}
                                   #{it.editionLabels.join(', #')}
                                 </span>
                               )}
                               {it.editionLabels.length === 0 && it.quantity > 1 && (
-                                <span style={{ opacity: 0.7 }}> × {it.quantity}</span>
+                                <span className={styles.muted}> × {it.quantity}</span>
                               )}
                             </div>
                           ))}
                           {o.itemSummaries.length > 3 && (
-                            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7 }}>
-                              +{o.itemSummaries.length - 3} more
-                            </div>
+                            <div className={styles.more}>+{o.itemSummaries.length - 3} more</div>
                           )}
                         </>
                       ) : (
                         <>
-                          <div>{o.artwork.title ?? o.artwork.slug ?? o.artwork.id}</div>
-                          <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
-                            {o.artist.name}
+                          <div className={styles.item}>
+                            {o.artwork.title ?? o.artwork.slug ?? o.artwork.id}
                           </div>
+                          <div className={styles.more}>{o.artist.name}</div>
                         </>
                       )}
                       {o.reorderCount > 0 && (
-                        <div
-                          style={{
-                            fontSize: 'var(--text-xs)',
-                            marginTop: 2,
-                            color: '#7c3aed',
-                            fontWeight: 600,
-                          }}
-                        >
-                          ⟳ Replacement{o.reorderCount > 1 ? ` ×${o.reorderCount}` : ''}
-                        </div>
+                        <span className={styles.replacement}>
+                          Replacement{o.reorderCount > 1 ? ` ×${o.reorderCount}` : ''}
+                        </span>
                       )}
                     </td>
-                    <td>
-                      <div>{o.buyerName}</div>
-                      <div style={{ fontSize: 'var(--text-xs)', opacity: 0.7, marginTop: 2 }}>
-                        {o.buyerEmail}
-                      </div>
+                    <td className={styles.cellBuyer}>
+                      <div className={styles.buyer}>{o.buyerName}</div>
+                      <div className={styles.email}>{o.buyerEmail}</div>
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{formatEuro(o.totalCents)}</td>
-
-                    {(activeBucket === 'shipped' || activeBucket === 'delivered') && (
-                      <td style={{ whiteSpace: 'nowrap', fontSize: 'var(--text-xs)' }}>
+                    {showShipped && (
+                      <td className={styles.cellShipped}>
                         {o.shippedAt ? formatDate(o.shippedAt) : '—'}
                       </td>
                     )}
-
-                    {(activeBucket === 'delivered' || activeBucket === 'done') && (
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        {(() => {
-                          if (o.payoutComplete) {
-                            return (
-                              <>
-                                <Dot color="green" />
-                                <span style={{ fontSize: 'var(--text-xs)' }}>
-                                  {formatEuro(o.artistCents)}
-                                  {o.payoutAt ? ` · ${formatDate(o.payoutAt)}` : ''}
-                                  {o.payoutManual ? ' (manual)' : ''}
-                                </span>
-                              </>
-                            )
-                          }
-                          const days = daysSinceDelivered(o.shippedAt)
-                          if (days === null) {
-                            return (
-                              <span style={{ fontSize: 'var(--text-xs)', opacity: 0.6 }}>—</span>
-                            )
-                          }
-                          const past = days >= PAYOUT_SAFE_WINDOW_DAYS
-                          const remaining = Math.max(0, PAYOUT_SAFE_WINDOW_DAYS - days)
-                          return (
-                            <>
-                              <Dot color={past ? 'green' : 'amber'} />
-                              <span style={{ fontSize: 'var(--text-xs)' }}>
-                                {days}d since delivered ·{' '}
-                                {past ? 'safe window passed' : `${remaining}d to safe window`}
-                              </span>
-                            </>
-                          )
-                        })()}
+                    {showPayout && (
+                      <td className={styles.cellPayout}>
+                        <PayoutStatus order={o} />
                       </td>
                     )}
-
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <NextActionCell order={o} bucket={activeBucket} />
+                    <td className={styles.cellTotal}>{formatEuro(o.totalCents)}</td>
+                    <td className={styles.cellAction}>
+                      {/* The row's only action is a doorway to the detail page —
+                          every real workflow action (capture, mark in production,
+                          refund, pay artist, and deleting the order) fires there,
+                          with full context, so an accidental table tap can't trip
+                          them. */}
+                      <Link
+                        href={href}
+                        className={c(styles.next, styles[`next_${rowMeta.actionStyle}`])}
+                      >
+                        {rowMeta.action}
+                        <CaretRight size={14} weight="bold" aria-hidden />
+                      </Link>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )
-        })()}
-      </div>
-    </DashboardLayout>
-  )
-}
-
-const NextActionCell = ({ order, bucket }: { order: AdminOrderRow; bucket: Bucket }) => {
-  const meta = BUCKET_META[bucket]
-
-  // The row's only action is a doorway to the detail page — every real
-  // workflow action (capture, mark in production, refund, pay artist, and
-  // deleting the order) fires there, with full context, so an accidental
-  // table tap can't trip them.
-  const linkStyle: React.CSSProperties = {
-    display: 'inline-block',
-    padding: '6px 12px',
-    background: bucket === 'attention' ? '#b91c1c' : '#111',
-    color: '#fff',
-    textDecoration: 'none',
-    borderRadius: 3,
-    fontSize: 12,
-    whiteSpace: 'nowrap',
-  }
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <Link href={`/admin/orders/${order.id}`} style={linkStyle}>
-        {meta.nextAction}
-      </Link>
+                )
+              })}
+            </tbody>
+          </DataTable>
+        )}
+      </section>
     </div>
   )
 }

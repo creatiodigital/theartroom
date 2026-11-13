@@ -1,119 +1,55 @@
-.page {
-  padding: var(--space-8);
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-}
+@use '@/styles/mixins' as *;
 
-.header {
-  margin-bottom: var(--space-6);
-}
+// Exhibition settings (artist.md §6, designs/artist-exhibition-settings.dc.html).
+// The column, the panels, the fields and the buttons come from ../../StudioPanel;
+// only this page's own rows are here. `.page` is the root (with the shared one).
 
-.backLink {
-  color: var(--color-text-primary);
-  text-decoration: none;
-  font-size: var(--text-sm);
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.pageTitle {
-  margin: 0 0 var(--space-8);
-}
-
-.section {
-  margin-bottom: var(--space-6);
-}
-
-.sectionTitle {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-md);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.imageSection {
-  width: calc(50% - 7px);
-}
-
-.imageRow {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.imagePreview {
-  width: 300px;
-  height: 200px;
-  background: var(--color-surface-subtle);
-  display: flex;
+// Under the title: the Published dot, then the sync badge.
+.state {
+  display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  gap: var(--space-2) 14px;
 }
 
-.noImage {
-  color: var(--color-text-primary);
-  font-size: var(--text-sm);
+// Name and address: the drawn 18px between its fields.
+.page .namePanel {
+  gap: 18px;
 }
 
-.imageActions {
+// The name field and Edit name side by side, at every width.
+.nameRow {
   display: flex;
-  flex-direction: column;
+  align-items: stretch;
   gap: var(--space-2);
 }
 
-.actions {
+.nameField {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// As tall as the field beside it (the shared outline is 36px from 900px).
+.page .nameRow .editName {
+  min-height: 44px;
+}
+
+// Save name and Cancel while the name is being edited.
+.nameActions {
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin-top: var(--space-4);
-
-  button {
-    width: auto;
-  }
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-.successMessage {
-  color: var(--color-success);
-  font-size: var(--text-sm);
+// "n / 400" beside the Short description title.
+.counter {
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
-.titleInput {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--font-sans);
-  font-size: var(--text-md);
-  font-weight: var(--font-medium);
-  color: var(--color-black);
-  background: var(--color-white);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  outline: none;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: var(--color-gray-80);
-  }
-}
-
-.shortDescriptionInput {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  color: var(--color-black);
-  background: var(--color-white);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  outline: none;
-  resize: vertical;
-  line-height: 1.6;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: var(--color-gray-80);
-  }
+.counterNear {
+  font-weight: var(--font-semibold);
+  color: var(--color-yellow-70);
 }

@@ -1,8 +1,10 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
-import type { ChangeEvent, DragEvent } from 'react'
+import { useRef, useState, useCallback, useEffect, useId } from 'react'
+import type { ChangeEvent, DragEvent, ReactNode } from 'react'
 import Image from 'next/image'
+import { ArrowsClockwise, Trash, UploadSimple } from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
 import { FileInput } from '@/components/ui/FileInput'
@@ -54,6 +56,39 @@ type ImageUploaderProps = {
    * size/resolution errors, so users see feedback where they are.
    */
   error?: string | null
+  /**
+   * admin: the admin page editor's layout (gallery.md §2c): the preview at a
+   * fixed 320px beside a column with the meta line, Replace and Remove, and
+   * `note`. Same validation, handlers and messages. Default: today's look.
+   */
+  tone?: 'default' | 'admin'
+  /** admin only: lines under Replace / Remove (e.g. the accepted formats). */
+  note?: ReactNode
+  /**
+   * admin only: how the preview and its side column line up from 900px.
+   * center (default): the page editor's banner (content-editor.dc.html).
+   * start: top-aligned, the side column taking the rest of the row, for a tall
+   * note (the artwork editor's print-size box, artist-artwork-edit.dc.html).
+   */
+  align?: 'center' | 'start'
+  /**
+   * admin only: the preview's shape. banner (default): 320px wide at
+   * `aspectRatio` (the page editor's banner, the artwork image). avatar: a 112px
+   * circle (the studio profile picture); empty, a dashed circle that is itself
+   * the "Select a file" button, with the same click, Enter and drop handlers.
+   * signature: 300px wide at `aspectRatio` on a checkerboard, so a transparent
+   * PNG shows as one (artist-profile.dc.html).
+   */
+  adminPreview?: 'banner' | 'avatar' | 'signature'
+  /**
+   * admin only. row (default): the preview beside its side column (above). stacked: the
+   * landing page's Edit slide window: the preview at its column's full width and `aspectRatio`,
+   * the meta line and Replace / Remove under it; empty, a dashed drop area with `dropPrompt`,
+   * "or choose a file" and `note`. Same validation, handlers and messages.
+   */
+  adminLayout?: 'row' | 'stacked'
+  /** admin stacked only, empty: the drop area's first line (default "Drop an image here"). */
+  dropPrompt?: string
 }
 
 function formatFileSize(bytes: number): string {
@@ -209,8 +244,16 @@ export const ImageUploader = ({
   minHeight = MIN_IMAGE_HEIGHT,
   fill = false,
   error,
+  tone = 'default',
+  note,
+  align = 'center',
+  adminPreview = 'banner',
+  adminLayout = 'row',
+  dropPrompt = 'Drop an image here',
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // questions.md Q128 (c): its own id, so two uploaders on one page (the profile) never share one.
+  const fileInputId = useId()
   const [isDragging, setIsDragging] = useState(false)
   const [sizeError, setSizeError] = useState<string | null>(null)
   const [resolutionError, setResolutionError] = useState<string | null>(null)
@@ -383,11 +426,242 @@ export const ImageUploader = ({
   const boxStyle = fill ? ({ flex: 1, minHeight: 220 } as const) : ({ aspectRatio } as const)
   const containerClass = fill ? `${styles.container} ${styles.containerFill}` : styles.container
 
+  // The admin layout: same file input, validation and handlers as below, laid
+  // out as designs/content-editor.dc.html draws the banner. Replace opens the
+  // same file picker an empty uploader opens.
+  if (tone === 'admin' && adminLayout === 'stacked') {
+    const meta = displayMeta ?? imageMeta
+    const busy = uploading || preparing
+    const busyText = preparing ? 'Preparing preview…' : loadingText
+    return (
+      <div className={c(styles.adminContainer, styles.stacked)}>
+        <FileInput
+          ref={fileInputRef}
+          id={fileInputId}
+          accept={ACCEPT_ATTR}
+          onChange={handleFileSelect}
+          className={styles.hiddenInput}
+        />
+
+        {imageUrl ? (
+          <>
+            <div className={styles.stackedPreview} style={{ aspectRatio }}>
+              {/* unoptimized: see the default preview below (AR-125). */}
+              <Image src={imageUrl} alt="Uploaded image" fill unoptimized style={{ objectFit }} />
+              {busy && (
+                <div className={styles.uploadingOverlay}>
+                  <span className={styles.spinner} aria-hidden />
+                  <span>{busyText}</span>
+                </div>
+              )}
+            </div>
+            {meta && meta.width > 0 && (
+              <span className={styles.adminMeta}>
+                {meta.width} × {meta.height} px · {meta.format}
+                {meta.sizeBytes > 0 && ` · ${formatFileSize(meta.sizeBytes)}`}
+              </span>
+            )}
+            <div className={styles.adminActions}>
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={c(styles.adminButton, styles.stackedButton)}
+                onClick={handleClick}
+                disabled={busy}
+              >
+                <ArrowsClockwise size={14} weight="light" aria-hidden />
+                Replace
+              </Button>
+              {onRemove && (
+                <Button
+                  variant="bare"
+                  font="dashboard"
+                  className={c(styles.adminButton, styles.stackedButton, styles.adminRemove)}
+                  onClick={handleRemove}
+                  disabled={uploading}
+                >
+                  <Trash size={14} weight="light" aria-hidden />
+                  Remove
+                </Button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div
+            className={c(styles.stackedDropzone, isDragging && styles.stackedDragging)}
+            style={{ aspectRatio }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
+          >
+            {busy ? (
+              <span className={styles.uploadingText}>
+                <span className={styles.spinner} aria-hidden />
+                {busyText}
+              </span>
+            ) : (
+              <>
+                <UploadSimple size={18} weight="light" aria-hidden />
+                <span className={styles.stackedPrompt}>{dropPrompt}</span>
+                <span className={styles.stackedChoose}>or choose a file</span>
+                {note && <span className={styles.stackedNote}>{note}</span>}
+              </>
+            )}
+          </div>
+        )}
+
+        {sizeError && <div className={styles.sizeError}>{sizeError}</div>}
+        {resolutionError && <div className={styles.sizeError}>{resolutionError}</div>}
+        {error && <div className={styles.sizeError}>{error}</div>}
+      </div>
+    )
+  }
+
+  if (tone === 'admin') {
+    const meta = displayMeta ?? imageMeta
+    const busy = uploading || preparing
+    const busyText = preparing ? 'Preparing preview…' : loadingText
+    // adminPreview: the shape's own class on the preview and the drop area (none for banner).
+    const shapeClass = adminPreview === 'banner' ? undefined : styles[adminPreview]
+    return (
+      <div className={styles.adminContainer}>
+        <FileInput
+          ref={fileInputRef}
+          id={fileInputId}
+          accept={ACCEPT_ATTR}
+          onChange={handleFileSelect}
+          className={styles.hiddenInput}
+        />
+
+        <div className={c(styles.adminRow, align === 'start' && styles.adminRowStart)}>
+          {imageUrl ? (
+            <div className={c(styles.adminPreview, shapeClass)} style={{ aspectRatio }}>
+              {/* unoptimized: see the default preview below (AR-125). */}
+              <Image src={imageUrl} alt="Uploaded image" fill unoptimized style={{ objectFit }} />
+              {busy && (
+                <div className={styles.uploadingOverlay}>
+                  <span className={styles.spinner} aria-hidden />
+                  <span>{busyText}</span>
+                </div>
+              )}
+            </div>
+          ) : adminPreview === 'avatar' ? (
+            // Too small for the button and the drop line: the circle is the button.
+            <div
+              className={c(
+                styles.dropzone,
+                styles.adminDropzone,
+                shapeClass,
+                isDragging && styles.dragging,
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleClick}
+              role="button"
+              tabIndex={0}
+              aria-label={busy ? busyText : 'Select a file'}
+              onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+            >
+              {busy ? (
+                <span className={styles.spinner} aria-hidden />
+              ) : (
+                <UploadSimple size={24} weight="light" aria-hidden />
+              )}
+            </div>
+          ) : (
+            <div
+              className={c(
+                styles.dropzone,
+                styles.adminDropzone,
+                shapeClass,
+                isDragging && styles.dragging,
+              )}
+              style={{ aspectRatio }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+            >
+              {busy ? (
+                <span className={styles.uploadingText}>
+                  <span className={styles.spinner} aria-hidden />
+                  {busyText}
+                </span>
+              ) : (
+                <>
+                  <Button
+                    font="dashboard"
+                    variant="primary"
+                    label="Select a file"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleClick()
+                    }}
+                    type="button"
+                  />
+                  <span className={styles.dropText}>or drag and drop files</span>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className={styles.adminSide}>
+            {imageUrl && meta && meta.width > 0 && (
+              <span className={styles.adminMeta}>
+                {displayMeta && 'Original file: '}
+                {meta.width} × {meta.height} px · {meta.format}
+                {meta.sizeBytes > 0 && ` · ${formatFileSize(meta.sizeBytes)}`}
+              </span>
+            )}
+            {imageUrl && (
+              <div className={styles.adminActions}>
+                <Button
+                  variant="bare"
+                  font="dashboard"
+                  className={styles.adminButton}
+                  onClick={handleClick}
+                  disabled={busy}
+                >
+                  <UploadSimple size={16} weight="light" aria-hidden />
+                  Replace
+                </Button>
+                {onRemove && (
+                  <Button
+                    variant="bare"
+                    font="dashboard"
+                    className={c(styles.adminButton, styles.adminRemove)}
+                    onClick={handleRemove}
+                    disabled={uploading}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            )}
+            {note && <div className={styles.adminNote}>{note}</div>}
+          </div>
+        </div>
+
+        {sizeError && <div className={styles.sizeError}>{sizeError}</div>}
+        {resolutionError && <div className={styles.sizeError}>{resolutionError}</div>}
+        {error && <div className={styles.sizeError}>{error}</div>}
+      </div>
+    )
+  }
+
   return (
     <div className={containerClass}>
       <FileInput
         ref={fileInputRef}
-        id="image-uploader-file"
+        id={fileInputId}
         accept={ACCEPT_ATTR}
         onChange={handleFileSelect}
         className={styles.hiddenInput}

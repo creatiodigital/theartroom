@@ -1,0 +1,45 @@
+@use '@/styles/mixins' as *;
+
+// designs/artist-artwork-edit.dc.html, `<nav aria-label="Sections">`: 190px,
+// sticky. Phones and narrow tablets have no room for it.
+.nav {
+  display: none;
+
+  @include media-up(tablet) {
+    position: sticky;
+    top: var(--space-6);
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+    font-size: 13px;
+    line-height: var(--leading-normal);
+  }
+}
+
+.caption {
+  padding: 0 10px 6px;
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.link {
+  padding: 7px 10px;
+  border-left: 2px solid var(--color-border-default);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-black);
+  }
+}
+
+.current {
+  border-left-color: var(--color-black);
+  color: var(--color-black);
+  font-weight: var(--font-semibold);
+}
