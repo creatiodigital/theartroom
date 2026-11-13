@@ -7,12 +7,13 @@
   background: var(--public-off-white);
 }
 
+// The heading, the line, then the action under them, on the left (owner, 2026-11-13: it sat on the
+// right).
 .inner {
   display: flex;
-  // The action on the last line of the text: its words on the line's baseline (owner, 2026-11-13).
-  align-items: last baseline;
-  justify-content: space-between;
-  gap: var(--space-10);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
   // The header's column (owner, 2026-11-12: no narrower cap).
   max-width: var(--content-max-width);
   width: calc(100% - var(--site-padding) * 2);
@@ -23,18 +24,17 @@
     width: calc(100% - var(--space-6) * 2);
   }
 
+  // Phones, as before: the action across the column.
   @include media-down(md) {
-    flex-direction: column;
     align-items: stretch;
     gap: var(--space-6);
     padding: var(--space-12) 0;
   }
 }
 
-// Stacked and centred: the homepage's "We'd love to hear from you" (designs/home-desktop.dc.html).
+// Centred: the homepage's "We'd love to hear from you" (designs/home-desktop.dc.html).
 .center {
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
   gap: 26px;
   text-align: center;
 

@@ -5,20 +5,21 @@ import styles from './Band.module.scss'
 
 /**
  * docs/public-redesign/components.md "Band": a full-width off-white section with a serif heading,
- * a line, and the action on the right (under the text on phones): "Walk through the exhibition",
- * the feedback band, "See the work for yourself", "Many more works are available as prints".
+ * a line, and the action under them (owner, 2026-11-13: no longer on the right): "Walk through the
+ * exhibition", the feedback band, "See the work for yourself", "Many more works are available as
+ * prints".
  */
 export const Band = ({
   heading,
   line,
   action,
-  align = 'split',
+  align = 'start',
 }: {
   heading: string
   line?: ReactNode
   action?: ReactNode
-  /** `center`: heading, line and action stacked and centred (the homepage's feedback band). */
-  align?: 'split' | 'center'
+  /** `center`: centred (the homepage's feedback band); `start`: on the left. */
+  align?: 'start' | 'center'
 }) => (
   // `data-band`: PageLayout drops its bottom padding when a page ends on a band.
   <section className={styles.band} data-band="">
