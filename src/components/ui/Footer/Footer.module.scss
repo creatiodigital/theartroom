@@ -155,7 +155,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-6);
-  font-size: 13px;
+  // 14 px (owner, 2026-11-13: 13 read small).
+  font-size: 14px;
   line-height: 1.5;
   color: var(--color-text-secondary);
 
