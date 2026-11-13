@@ -105,6 +105,22 @@ const Modal = ({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
+  // The page behind stays still while a window is open (owner, 2026-11-13). The values it had are
+  // put back on close, so a window opened over another one (or over the phone menu, which locks
+  // the same way) leaves theirs in place. The scrollbar's width goes on as padding so the page
+  // does not shift sideways where scrollbars take room (Windows; macOS overlays take none).
+  useEffect(() => {
+    const { body, documentElement } = document
+    const previous = { overflow: body.style.overflow, paddingRight: body.style.paddingRight }
+    const scrollbar = window.innerWidth - documentElement.clientWidth
+    body.style.overflow = 'hidden'
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`
+    return () => {
+      body.style.overflow = previous.overflow
+      body.style.paddingRight = previous.paddingRight
+    }
+  }, [])
+
   // Move focus into the modal on mount so keyboard users aren't left
   // focused behind the backdrop, and restore focus to whatever was
   // active before the modal opened when it closes.
