@@ -4,10 +4,11 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { ArtistRow } from '@/components/artists/ArtistRow'
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Band } from '@/components/ui/Band'
 import { PageLayout } from '@/components/ui/PageLayout'
+import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Share } from '@/components/ui/Share'
 import { TextSection } from '@/components/ui/TextSection'
@@ -24,6 +25,8 @@ interface ExhibitionProfilePageProps {
   exhibition: PublicExhibition
   /** `exhibition.description`, rendered on the server (see ExhibitionDescription). */
   description?: ReactNode
+  /** The artist's biography, rendered on the server (see ArtistBiography). */
+  artistBiography?: ReactNode
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
@@ -38,6 +41,7 @@ export const ExhibitionProfilePage = ({
   exhibitionSlug,
   exhibition,
   description,
+  artistBiography,
 }: ExhibitionProfilePageProps) => {
   const shareUrl = `${SITE_URL}/exhibitions/${artistSlug}/${exhibitionSlug}`
   const visitUrl = `/exhibitions/${artistSlug}/${exhibitionSlug}/visit`
@@ -144,19 +148,36 @@ export const ExhibitionProfilePage = ({
           />
         )}
 
+        {/* As About the exhibition (owner, 2026-11-13): the label and the portrait in the left third,
+            the name, the whole bio in two columns at the page's reading size, and View artist across
+            the right two thirds; one column on phones. */}
         <section className={styles.artistSection} aria-labelledby="about-the-artist">
-          <h2 id="about-the-artist" className={styles.artistLabel}>
-            About the artist
-          </h2>
-          <ArtistRow
-            className={styles.artistRow}
-            artist={{
-              href: artistHref,
-              name: artistName,
-              imageUrl: exhibition.user.profileImageUrl,
-              biography: exhibition.user.biography,
-            }}
-          />
+          <div className={styles.artistAside}>
+            <h2 id="about-the-artist" className={styles.artistLabel}>
+              About the artist
+            </h2>
+            {exhibition.user.profileImageUrl && isSafeImageSrc(exhibition.user.profileImageUrl) && (
+              // A mouse shortcut to the artist page; the name and View artist are the real links.
+              <Link href={artistHref} className={styles.artistPortrait} tabIndex={-1} aria-hidden>
+                <ProtectedImage
+                  src={exhibition.user.profileImageUrl}
+                  alt=""
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  className={styles.artistPortraitImage}
+                />
+              </Link>
+            )}
+          </div>
+          <div className={styles.artistBody}>
+            <h3 className={styles.artistName}>
+              <Link href={artistHref}>{artistName}</Link>
+            </h3>
+            {artistBiography && <div className={styles.artistBio}>{artistBiography}</div>}
+            <ArrowLink href={artistHref} className={styles.artistView}>
+              View artist
+            </ArrowLink>
+          </div>
         </section>
       </div>
     </PageLayout>

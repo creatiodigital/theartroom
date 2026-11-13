@@ -5,8 +5,7 @@
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr) auto;
   gap: var(--space-8);
-  // To the top: with the whole bio a row can be tall, and the portrait and View artist stay level
-  // with the name (owner, 2026-11-12).
+  // To the top: the portrait and View artist stay level with the name (owner, 2026-11-12).
   align-items: start;
   padding: 22px 0;
   // The hairline under each row; the list (or the section) draws the one above the first.
@@ -62,24 +61,6 @@
   font-style: italic;
   line-height: 1.4;
   color: var(--public-secondary);
-}
-
-// The whole bio, on as many lines as it needs (owner, 2026-11-12: never cut), one block per
-// paragraph of the editor's text.
-.bio {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--color-text-secondary);
-  // About 65 characters a line, whatever the card's width: wider is hard to read (owner, 2026-11-13).
-  max-width: 32em;
-
-  @include media-down(md) {
-    display: none;
-  }
 }
 
 // Reads as an ArrowLink; the whole row is the link.
