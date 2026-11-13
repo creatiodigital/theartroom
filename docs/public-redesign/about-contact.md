@@ -1,6 +1,6 @@
 # Public site · About (`/about`) and Contact (`/contact`)
 
-Designed 2026-11-11 (owner happy with the day's work; confirm before building). Designs: `designs/about-desktop.dc.html`,
+Approved by the owner 2026-11-11. Designs: `designs/about-desktop.dc.html`,
 `designs/about-phone.dc.html`, `designs/contact-desktop.dc.html`, `designs/contact-phone.dc.html`.
 Same pattern as the exhibition page: a small grey caps label on the left (360 px), readable text on the right
 (Lato 17 / 1.75, `#444`, max 760 px), sections separated by hairlines. **No images. No underlines.**

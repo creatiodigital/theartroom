@@ -1,14 +1,31 @@
 # Public site redesign
 
-**Next update after the admin redesign (`docs/admin-redesign/`) is finished.** Work on its own branch.
-Same workflow as the admin: Design Claude designs on the canvas and writes the spec here; Code Claude
-builds one page per commit, plans first, and stops before each commit for the owner's browser check.
+**Same branch as the admin redesign** (`feat/AR-180-ui-admin-improvements`), released together with it. The steps
+continue the admin numbering (22 onward) and start once the admin steps are done. Build order, status and
+dependencies: **`pages.md`**. Shared pieces to build first: **`components.md`**. Open points: **`questions.md`**.
+
+**Workflow, owner's instructions 2026-11-12 (speed first, this goes to production ASAP; applies from now on,
+remaining admin work included):**
+
+- **Commit on your own.** Plan, build, check, commit, move to the next step. Do **not** stop to ask "commit?".
+- **Stop and ask only when it really matters:** a question the specs and designs don't answer and a wrong guess would
+  be costly; a database migration (the `HomePrint` and `Feedback` tables); anything in the order / payment flow that
+  changes behaviour; deleting data or files beyond the agreed cleanup rule. Everything else: pick the most
+  conservative option, note it in `questions.md`, keep going. Batch non-blocking questions; don't wait for answers.
+- **No E2E after each commit.** Per step run only what is fast: type check, lint, the unit tests of what you touched,
+  and a quick look in the browser. **One full E2E run at the very end** (plus the order-flow checks on staging), and
+  fix what it finds then.
+- After each commit, add one short line to the Built notes in `pages.md` (what changed, anything to look at). The
+  owner reviews in batches when he can.
+
+**Ask instead of guessing.** The
+`designs/*.dc.html` files are the visual spec: read their source, don't copy their markup or script.
 
 | # | Page | Spec | Designs | Status |
 |---|---|---|---|---|
 | 1 | Home page | `home.md` | `designs/home-desktop.dc.html`, `designs/home-phone.dc.html` | Designed · approved by owner |
 | 1b | Admin · Content › **Home page prints** (sibling of Gallery selection, same exact logic) | `home.md` §5 | `designs/home-prints-admin.dc.html` | Designed · approved by owner |
-| 1c | Visitor feedback: "We'd love to hear from you" band, the feedback window (one text box, no names or questions), thank-you state, Feedback in the 3D room menu | — (see designs) | `designs/feedback-band-and-window.dc.html`, `designs/feedback-phone.dc.html`, `designs/feedback-in-room.dc.html` | Designed · approved by owner (needs a server endpoint to store messages; the admin Feedback page is parked) |
+| 1c | Visitor feedback: "We'd love to hear from you" band, the feedback window (one text box, no names or questions), thank-you state, Feedback in the 3D room menu | `feedback.md` | `designs/feedback-band-and-window.dc.html`, `designs/feedback-phone.dc.html`, `designs/feedback-in-room.dc.html` | Designed · approved by owner (stored + emailed to the owner, silent bot protection; the admin Feedback page is parked) |
 | 1d | Artists page | `artists.md` | `designs/artists-desktop.dc.html`, `designs/artists-phone.dc.html` | Designed · approved by owner |
 | 1e | Exhibitions page | `exhibitions.md` | `designs/exhibitions-desktop.dc.html`, `designs/exhibitions-phone.dc.html` | Designed · approved by owner |
 | 2 | Exhibition page (the 3D room's main entrance) | `exhibition.md` | `designs/exhibition-desktop.dc.html`, `designs/exhibition-phone.dc.html` | Designed · approved by owner |
@@ -16,9 +33,11 @@ builds one page per commit, plans first, and stops before each commit for the ow
 | 2c | Prints page | `prints.md` | `designs/prints-desktop.dc.html`, `designs/prints-phone.dc.html` | Designed · approved by owner |
 | 2d | Content pages (Terms, Terms of sale, Privacy, Accessibility…): one rich-text template | `legal.md` | `designs/legal-desktop.dc.html`, `designs/legal-phone.dc.html` | Designed · approved by owner |
 | 2e | Artwork page (agnostic of exhibitions; portrait works too) | `artwork.md` | `designs/artwork-*.dc.html` | Designed · approved by owner |
-| 2f | About and Contact | `about-contact.md` | `designs/about-*.dc.html`, `designs/contact-*.dc.html` | Designed · owner happy, confirm before build |
-| 2g | Order a print, Learn more, cart, checkout (3 steps), order confirmed, unboxing request | `order-flow.md` | `designs/order-*.dc.html`, `designs/cart.dc.html`, `designs/checkout-*.dc.html` | Designed · owner happy, confirm before build |
-| 3 | "About this exhibition" in the room's menu | — | — | Proposed, to design |
+| 2f | About and Contact | `about-contact.md` | `designs/about-*.dc.html`, `designs/contact-*.dc.html` | Designed · approved by owner |
+| 2g | Order a print, Learn more, cart, checkout (3 steps), order confirmed, unboxing request | `order-flow.md` | `designs/order-*.dc.html`, `designs/cart.dc.html`, `designs/checkout-*.dc.html` | Designed · approved by owner |
+| 3 | "About this exhibition" and "Send feedback" in the room's menu | `room-about.md` | `designs/room-about-exhibition.dc.html` | Designed · requested by owner |
+| 3b | 3D room loader, type only | `room-loader.md` | `designs/room-loader.dc.html` (Option A2) | Designed, approved |
+| 4 | The remaining public screens (print path, room details, Inquire, cart states, 404, errors, password, cookie banner, loading) | `other-screens.md` | built from existing patterns; `designs/remaining-screens.dc.html` for 404, error, password, cookie banner, loading | Designed, approved |
 
 Principle for every page: **an art portal first, never a poster shop**; the 3D room is a quiet plus.
 
@@ -41,3 +60,12 @@ outline. Plain icons, no circles, no labels.
 https://claude.ai/code/artifact/6d16f4cf-4c5c-4839-9cbd-65e8360d4772 (images are stored there). The `.dc.html` files
 in `designs/` are copies; their images only load inside the canvas. A full copy of every board is in
 `docs/design-canvas/`.
+
+### The logo: always the real SVG (owner, 2026-11-12)
+
+Every "THE ART ROOM" on the public site is the **real logo file `src/icons/logo.svg`** (the same paths as
+`Wordmark` in `src/components/brand/BrandMarks.tsx`), red `#bd1622`, with `aria-label="The Art Room"` on its link.
+Never type it as text in EB Garamond or any font, even where a board shows it as text: the boards only stand in for it.
+That covers the **header** (desktop and the phone menu), the **footer** top row, the order-flow and checkout top bars,
+the password screens, the 404 and error pages, and any new screen. Today's header, footer, phone menu, print wizard and
+checkout already import `logo.svg`: keep them that way when restyling. (The studio and admin shells keep `ShellWordmark`.)

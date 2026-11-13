@@ -51,10 +51,9 @@ uses the full files).
 7. **We'd love to hear from you**: the feedback band already designed (`FeedbackStates` in the admin redesign
    canvas), background `#f8f8f6`.
 8. **Footer** (site-wide), approved by the owner 2026-11-11 (no repeated page links): top border, two rows.
-   **Top row**: left, the **wordmark logo** "THE ART ROOM" (EB Garamond, red, as in the header), one line
+   **Top row**: left, the **wordmark logo**: the real SVG `src/icons/logo.svg` (red, never typed text), **exactly the header size: `width: var(--logo-width)` (160 px), also on phone**, one line
    *"An online gallery for contemporary art."* and the contact email as a link; right,
-   the social links as **plain icons, no circles or borders** (22 px, `#333`, 22 px apart; Phosphor
-   `InstagramLogo`, `FacebookLogo`, `PinterestLogo`, `EnvelopeSimple`, each with an `aria-label`).
+   the social links as **plain icons, no circles or borders** (22 px, `#333`, 22 px apart), using **today's brand icons** (filled Instagram, Facebook and Pinterest logos, thin envelope for email; see README "Footer network icons", which overrides earlier drafts), each with an `aria-label`. The email link has no underline.
    **Bottom row** under a hairline: the legal links inline (13 px, sentence case, grey) on the left,
    "© 2026 The Art Room" on the right. Phone: brand, icons, then legal links and © stacked.
 

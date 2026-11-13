@@ -36,3 +36,22 @@ portrait frame is narrow inside its square:
   left and right of a portrait render, and the frame gets bigger. Landscape works stay square on phone.
 - Open editions with a size range show the range as the size line (*"30 × 20 cm to 165.8 × 110.5 cm"*) and
   *"Open edition · {range}"* under the price.
+
+## Below the work (Q-P13, Design Claude 2026-11-12)
+Today's extras all stay; none of them sits next to the main image except the optional arrows.
+- **Previous / next** (only when `SHOW_NEIGHBOUR_ARROWS` is on and the visitor came from a set, as today): two
+  round 40 px white buttons, Phosphor `CaretLeft` / `CaretRight` 18 px, subtle shadow, centred vertically on the left
+  and right edges of the image area, 16 px inside. `aria-label` "Previous work" / "Next work". Hidden when the flag is off.
+- **Share:** at the foot of the info column, under the "Not reserved…" note, 16 px gap: a small text button, Phosphor
+  `ShareNetwork` 16 px + *Share*, 13 px `#555`, no underline; today's behaviour (native share sheet, copy link fallback).
+- **About the work** (description, then technique): after the two columns, 72 px gap, a `TextSection` like the
+  content pages (small grey caps label left, text right, max 680 px). Label *About the work* for the description;
+  if there is a technique text, a second `TextSection` labelled *Technique* under it (40 px gap). Either is omitted
+  when empty. Today's story text, unchanged.
+- **Details** (supplementary media from the editor, Q116): only when the work has some. Hairline, label *Details*
+  (same `TextSection` label style), then **today's gallery unchanged** (Q-P18: no new viewer).
+- Order on the page: the two columns → About the work → Technique → Details → More by the artist → footer.
+- The 3D room overlay shows the same sections (same components), as `Same page inside the 3D room` says.
+
+## Same page inside the 3D room
+The room's artwork overlay (`ArtworkModal`) shows **exactly this page**, built from the same components, with only a close × added (`other-screens.md`).
