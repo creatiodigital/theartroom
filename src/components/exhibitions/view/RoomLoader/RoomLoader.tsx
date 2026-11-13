@@ -3,6 +3,8 @@
 import c from 'classnames'
 import { useEffect, useRef, useState } from 'react'
 
+import Monogram from '@/icons/monogram.svg'
+
 import styles from './RoomLoader.module.scss'
 
 type RoomLoaderProps = {
@@ -28,7 +30,8 @@ const clamp01 = (value: number) => (Number.isFinite(value) ? Math.min(1, Math.ma
 
 /**
  * The visitor's room loader (docs/public-redesign/room-loader.md, Option A2, type only): a still
- * title card on warm paper. Nothing moves but the red progress line, which follows the real progress
+ * title card on warm paper, under a small red monogram, still too (owner, 2026-11-13: in place of
+ * "Now opening"). Nothing moves but the red progress line, which follows the real progress
  * eased (never backwards), stops at 96 % until the room is ready, creeps a little while the progress
  * stalls so it never looks frozen, then completes and the screen fades out. The line runs in
  * requestAnimationFrame through `--d` (no render per frame). The bake page keeps MonogramLoader.
@@ -108,7 +111,7 @@ export const RoomLoader = ({ progress, done, title, artist }: RoomLoaderProps) =
     >
       <span className="sr-only">{`Preparing the exhibition ${title ?? ''}`.trim()}</span>
       <div className={styles.card} aria-hidden="true">
-        <span className={styles.eyebrow}>Now opening</span>
+        <Monogram className={styles.monogram} />
         {/* Their space is kept until they arrive, so nothing jumps; they fade in. */}
         <p className={c(styles.title, title && styles.shown)}>{title ?? ' '}</p>
         <span className={c(styles.artist, artist && styles.shown)}>{artist ?? ' '}</span>
