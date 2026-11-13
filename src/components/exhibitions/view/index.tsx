@@ -242,6 +242,18 @@ const ReviewBar = ({
 // video needs to warn the visitor fresh, since sound is exhibition-
 // specific (the user has to know which rooms to turn the volume up for).
 // Key shape: `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`.
+/**
+ * Whether this exhibition has a work with sound or video: the room's only sources of audio. The
+ * store holds this exhibition's works alone (useLoadExhibitionArtworks resets it on a new one).
+ */
+const useHasSoundOrVideo = () => {
+  const artworksById = useSelector((state: RootState) => state.artworks.byId)
+  return useMemo(
+    () => Object.values(artworksById).some((artwork) => artwork.soundUrl || artwork.videoUrl),
+    [artworksById],
+  )
+}
+
 const MEDIA_NOTICE_STORAGE_PREFIX = 'the-art-room:media-notice-dismissed:'
 
 /** What the room menu's "How to move around" calls: today's help button handler. */
@@ -276,11 +288,7 @@ const NavigationHelpModal = ({
   const [mediaDismissed, setMediaDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
 
-  // Detect if exhibition has video or sound artworks
-  const artworksById = useSelector((state: RootState) => state.artworks.byId)
-  const hasMediaArtworks = useMemo(() => {
-    return Object.values(artworksById).some((artwork) => artwork.soundUrl || artwork.videoUrl)
-  }, [artworksById])
+  const hasMediaArtworks = useHasSoundOrVideo()
 
   // The cookie banner and this guide are both "first visit" surfaces, and they
   // used to open on top of each other — an empty localStorage means no consent
@@ -603,6 +611,7 @@ export const ExhibitionViewPage = ({
   const hasResetRef = useRef<string | null>(null)
   const searchParams = useSearchParams()
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
+  const hasSoundOrVideo = useHasSoundOrVideo()
   const currentArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const inArtworkView = useSelector((state: RootState) => state.scene.inArtworkView)
   const isTouch = useIsTouchDevice()
@@ -963,7 +972,8 @@ export const ExhibitionViewPage = ({
 
   // The room's one menu (visitor-wallview.md §1), in place of the corner X and the help and sound
   // buttons; the same in the room and in Wall View (Q30):
-  // - Sound: always (Q29), inside the room's audio provider; never without WebGL (nothing plays).
+  // - Sound: only where a work has sound or video (owner, 2026-11-13; was always, Q29), inside the
+  //   room's audio provider; never without WebGL (nothing plays).
   // - How to move around: where the help button was (WebGL not unavailable, not the bake page).
   // - Leave exhibition: always (in Wall View too, Q30); it leaves at once, without the dialog.
   const helpShown = webglAvailable !== false && shownMode !== 'bake'
@@ -1029,7 +1039,7 @@ export const ExhibitionViewPage = ({
         // audio provider, for Sound; until it mounts, the page renders the menu itself (no Sound
         // then: there is no audio to switch yet), so Leave is always there.
         <BakePageProvider key={shownMode} value={bakePage}>
-          <Scene hideLoader overlay={roomMenu(webglAvailable !== false)} />
+          <Scene hideLoader overlay={roomMenu(webglAvailable !== false && hasSoundOrVideo)} />
         </BakePageProvider>
       ) : (
         roomMenu(false)

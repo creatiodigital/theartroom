@@ -24,8 +24,9 @@ import styles from './RoomControls.module.scss'
 
 interface RoomMenuProps {
   /**
-   * Lists Sound (Q29: always, so a visitor can mute before anything plays). Only where the menu sits
-   * inside the scene's audio provider and the room can show (never without WebGL).
+   * Lists Sound: only where the exhibition has a work with sound or video (owner, 2026-11-13), the
+   * menu sits inside the scene's audio provider and the room can show (never without WebGL). Listed,
+   * it shows before anything plays, so a visitor can mute first (Q29).
    */
   sound: boolean
   /** Opens the controls guide. Left out where today's help button was not shown (no WebGL, bake). */
