@@ -44,9 +44,31 @@
   min-width: 0;
 }
 
-// With the bio (the exhibition page): the text takes the row's width, for the bio's two columns.
-.withBio .text {
-  max-width: none;
+// With the bio (the exhibition page), from tablets up: the photo on top with View artist level with
+// it on the right; the name and the bio's two columns below, across the row (owner, 2026-11-13).
+// Phones as before (the bio hidden).
+.withBio {
+  @include media-up(md) {
+    grid-template-columns: 180px minmax(0, 1fr);
+    row-gap: var(--space-6);
+
+    .portrait {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .view {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+    }
+
+    .text {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      max-width: none;
+    }
+  }
 }
 
 .name {
@@ -72,9 +94,10 @@
 // The whole bio, on as many lines as it needs (owner, 2026-11-12: never cut), one block per
 // paragraph of the editor's text.
 // In two columns at the page's reading size, as About the exhibition (owner, 2026-11-13); each
-// column about 70 characters wide. One column below lg; none on phones, as before.
+// column at most about 65 characters (32em), however wide the row. None on phones, as before.
 .bio {
   display: block;
+  max-width: calc(64em + 56px);
   margin-top: var(--space-2);
   column-count: 2;
   column-gap: 56px;
@@ -82,10 +105,6 @@
   font-size: 17px;
   line-height: 1.75;
   color: var(--public-body);
-
-  @include media-down(lg) {
-    column-count: 1;
-  }
 
   @include media-down(md) {
     display: none;
