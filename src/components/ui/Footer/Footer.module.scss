@@ -104,11 +104,20 @@
   }
 
   // Phones, as the live site: a band of its own between two hairlines (the one under it is the
-  // legal row's).
+  // legal row's). One network a line, on the left (owner, 2026-11-13); every icon in an 18 px box
+  // so the names line up.
   @include media-down(md) {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: var(--space-4);
     align-self: stretch;
     padding: var(--space-6) 0;
     border-top: 1px solid var(--color-gray-30);
+
+    svg {
+      flex: 0 0 18px;
+    }
   }
 }
 
