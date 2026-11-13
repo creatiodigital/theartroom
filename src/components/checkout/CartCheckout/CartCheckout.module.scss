@@ -34,12 +34,12 @@
   min-width: 0;
 }
 
-// Shipping: the cart's own grid (CartPage.module.scss), so nothing moves from the cart: the items
-// on the left, the address form in the 360 px column on the right (owner, 2026-11-13); stacked
-// below 1024 px, the items first, as the cart.
+// Shipping: as the cart (CartPage.module.scss), the items on the left and the address form on the
+// right (owner, 2026-11-13), its column a little wider than the cart's 360 px summary (440 px: the
+// form needs the room); stacked below 1024 px, the items first, as the cart.
 .itemsGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 440px;
   gap: 56px;
   align-items: start;
 

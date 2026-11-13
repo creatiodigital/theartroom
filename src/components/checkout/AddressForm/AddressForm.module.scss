@@ -56,7 +56,7 @@
   }
 }
 
-// A narrow form on a wider screen (the checkout's 360 px column): Email, Phone and City a line each,
+// A narrow form on a wider screen (the checkout's 440 px column): Email, Phone and City a line each,
 // State and Postal code side by side. Phones keep their one column (above).
 @include media-up(sm) {
   @container (max-width: 520px) {
