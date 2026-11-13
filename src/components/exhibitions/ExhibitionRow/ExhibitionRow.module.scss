@@ -15,7 +15,7 @@
     border-bottom: 0;
   }
 
-  // Phones: stacked, the image edge to edge, 44px between exhibitions, no hairlines.
+  // Phones: stacked, 44px between exhibitions, no hairlines.
   @include media-down(md) {
     display: block;
     padding: 0 0 44px;
@@ -30,9 +30,8 @@
   overflow: hidden;
   background: var(--public-render-wall);
 
+  // Phones: inside the page's margins, as the text (owner, 2026-11-13: no longer edge to edge).
   @include media-down(md) {
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
     margin-bottom: var(--space-4);
   }
 }
