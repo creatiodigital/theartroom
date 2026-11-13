@@ -3,8 +3,10 @@
 // room-about.md "The panel"; designs/room-about-exhibition.dc.html. Desktop: on the left, 20 px from
 // the edges, 400 px wide, the full height less 40, white, 14 px corners. Phones: a card clear of the
 // screen's edges, framed as the room's "How to move around" window (.infoPanel in
-// ExhibitionView.module.scss): centered, 90 % wide up to 440 px, 8 px corners, 16 px from the top
-// and bottom at most (owner, 2026-11-13; was a bottom sheet touching the edges).
+// ExhibitionView.module.scss): centered across, 90 % wide up to 440 px, 8 px corners (owner,
+// 2026-11-13; was a bottom sheet touching the edges). It starts under the menu button (44 px, 8 px
+// from the top on touch, 20 px otherwise), so the button stays in reach: pressing it closes every
+// open window (owner, 2026-11-13).
 .panel {
   position: fixed;
   top: calc(20px + env(safe-area-inset-top));
@@ -23,16 +25,15 @@
   outline: none;
 
   @include media-down(sm) {
-    top: 50%;
+    top: calc(72px + env(safe-area-inset-top));
     right: 0;
     bottom: auto;
     left: 0;
     width: 90%;
     max-width: 440px;
-    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 72px - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     margin-inline: auto;
     border-radius: 8px;
-    transform: translateY(-50%);
   }
 }
 

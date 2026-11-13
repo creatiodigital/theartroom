@@ -259,6 +259,8 @@ const MEDIA_NOTICE_STORAGE_PREFIX = 'the-art-room:media-notice-dismissed:'
 /** What the room menu's "How to move around" calls: today's help button handler. */
 interface NavigationHelpHandle {
   open: () => void
+  /** Closes the guide or the media notice, whichever is up (the menu button: owner, 2026-11-13). */
+  close: () => void
 }
 
 interface NavigationHelpModalProps {
@@ -364,7 +366,7 @@ const NavigationHelpModal = ({
   const handleInfoClick = () => setCurrentStep('help')
 
   // The help button moved into the room menu (visitor-wallview.md §1): its item calls this.
-  useImperativeHandle(ref, () => ({ open: handleInfoClick }))
+  useImperativeHandle(ref, () => ({ open: handleInfoClick, close: handleCloseMedia }))
 
   if (hidden) return null
 
@@ -992,6 +994,15 @@ export const ExhibitionViewPage = ({
   // Send feedback (feedback.md, room-about.md): the visitor's room only, as About; the window
   // returns focus to the menu button itself.
   const feedbackShown = !!exhibition?.id && mode !== 'bake' && mode !== 'review'
+  // Any press of the menu button closes every window open over the room (owner, 2026-11-13): About,
+  // feedback, the controls guide (or its media notice) and an artwork's details. Wall View is a
+  // mode, not a window: it stays.
+  const closeRoomWindows = () => {
+    setAboutOpen(false)
+    setFeedbackOpen(false)
+    helpRef.current?.close()
+    if (isArtworkModalOpen) dispatch(closeArtworkModal())
+  }
   const roomMenu = (sound: boolean) => (
     <RoomMenu
       sound={sound}
@@ -999,6 +1010,7 @@ export const ExhibitionViewPage = ({
       onLeave={leaveExhibition}
       onAbout={aboutShown ? () => setAboutOpen(true) : undefined}
       onFeedback={feedbackShown ? () => setFeedbackOpen(true) : undefined}
+      onButtonPress={closeRoomWindows}
     />
   )
 

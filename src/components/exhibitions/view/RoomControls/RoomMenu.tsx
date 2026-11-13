@@ -37,6 +37,8 @@ interface RoomMenuProps {
   onAbout?: () => void
   /** Opens the feedback window (feedback.md); after How to move around. Absent: no item. */
   onFeedback?: () => void
+  /** Every press of the menu button, opening or closing the menu: the room closes its open windows. */
+  onButtonPress?: () => void
 }
 
 const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
@@ -55,7 +57,14 @@ const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
  * touches and clicks count only on the canvas, and the keys pressed inside the menu stop here (the
  * camera listens on `window`). Escape closes the menu and does not also leave Wall View.
  */
-export const RoomMenu = ({ sound, onHelp, onLeave, onAbout, onFeedback }: RoomMenuProps) => {
+export const RoomMenu = ({
+  sound,
+  onHelp,
+  onLeave,
+  onAbout,
+  onFeedback,
+  onButtonPress,
+}: RoomMenuProps) => {
   const [open, setOpen] = useState(false)
   // The leave dialog (also raised by walking into the exit corridor) takes over: the menu closes.
   const exitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
@@ -149,7 +158,11 @@ export const RoomMenu = ({ sound, onHelp, onLeave, onAbout, onFeedback }: RoomMe
         aria-label="Menu"
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          onButtonPress?.()
+          if (open) close()
+          else setOpen(true)
+        }}
       >
         {open ? <X {...ICON} /> : <List {...ICON} />}
       </Button>
