@@ -10,9 +10,9 @@ import styles from './NumberedStep.module.scss'
 
 /**
  * One step of the print configurator (docs/public-redesign/order-flow.md, components.md "Checkout
- * pieces": numbered accordion step): the step's number in a circle (a CSS counter on the steps
- * list), its title, and — closed — its choice as a grey line ("30 × 20 cm · 3 cm border"). As the
- * section it replaces, the content is rendered only while open.
+ * pieces": accordion step): its title and — closed — its choice as a grey line ("30 × 20 cm · 3 cm
+ * border"). No step number (owner, 2026-11-13). As the section it replaces, the content is rendered
+ * only while open.
  */
 export function NumberedStep({
   title,
@@ -38,7 +38,6 @@ export function NumberedStep({
         aria-controls={open ? bodyId : undefined}
         onClick={() => onToggle(!open)}
       >
-        <span className={styles.number} aria-hidden />
         <span className={styles.heading}>
           <span className={styles.title}>{title}</span>
           {!open && summary && <span className={styles.summary}>{summary}</span>}

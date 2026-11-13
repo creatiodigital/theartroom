@@ -1,7 +1,6 @@
-// docs/public-redesign/order-flow.md, designs/order-configure-*.dc.html: numbered steps, a hairline
-// between them. The number is a CSS counter the steps list resets (PrintWizard .stepsPanel).
+// docs/public-redesign/order-flow.md, designs/order-configure-*.dc.html: steps with a hairline
+// between them; no step numbers (owner, 2026-11-13).
 .step {
-  counter-increment: wizard-step;
   border-bottom: 1px solid var(--color-gray-30);
 }
 
@@ -20,29 +19,6 @@
     outline: 2px solid var(--public-text);
     outline-offset: 2px;
   }
-}
-
-.number {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--public-text);
-  border-radius: 50%;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 13px;
-  color: var(--public-text);
-
-  &::before {
-    content: counter(wizard-step);
-  }
-}
-
-.open .number {
-  background: var(--public-text);
-  color: var(--color-white);
 }
 
 .heading {
@@ -78,9 +54,5 @@
 }
 
 .body {
-  padding: 0 0 var(--space-6) 42px;
-
-  @media (max-width: 768px) {
-    padding-left: 0;
-  }
+  padding: 0 0 var(--space-6);
 }

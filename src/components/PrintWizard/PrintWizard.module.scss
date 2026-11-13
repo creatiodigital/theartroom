@@ -125,8 +125,6 @@
 }
 
 .stepsPanel {
-  // The numbered steps' counter (NumberedStep).
-  counter-reset: wizard-step;
   // Generous bottom padding so the last step's dropdown can scroll high
   // enough on screen for its option-helper tooltip (which extends below
   // and to the right of the focused option) to render without clipping
