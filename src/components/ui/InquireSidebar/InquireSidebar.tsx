@@ -201,7 +201,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
             >
               {(placement) =>
                 placement === 'window' ? (
-                  <ProtectedImage src={artwork.imageUrl} alt={artwork.title} fill sizes="64px" />
+                  <ProtectedImage src={artwork.imageUrl} alt={artwork.title} fill sizes="96px" />
                 ) : (
                   <ProtectedImage
                     src={artwork.imageUrl}

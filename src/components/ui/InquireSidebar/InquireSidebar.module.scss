@@ -82,8 +82,9 @@
 // The work: thumbnail, title, artist.
 .work {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 14px;
+  // The picture at 96 px (owner, 2026-11-13: it was 64).
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 18px;
   align-items: center;
   margin: 0 28px;
   padding: 14px 0;
@@ -99,17 +100,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  padding: 7px;
+  width: 96px;
+  height: 96px;
+  padding: 8px;
   background: var(--public-render-wall);
   // The work never touches the grey: a margin all round (owner, 2026-11-12).
 }
 
-// The render, cropped to the piece: as large as the 50 px inside the margin allows, its own shape.
+// The render, cropped to the piece: as large as the 80 px inside the margin allows, its own shape.
 .workRender {
-  max-width: 50px;
-  max-height: 50px;
+  max-width: 80px;
+  max-height: 80px;
 }
 
 .workPiece {
