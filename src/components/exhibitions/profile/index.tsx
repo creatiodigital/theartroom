@@ -8,7 +8,6 @@ import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Band } from '@/components/ui/Band'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Share } from '@/components/ui/Share'
 import { TextSection } from '@/components/ui/TextSection'
@@ -149,25 +148,13 @@ export const ExhibitionProfilePage = ({
         )}
 
         {/* As About the exhibition (owner, 2026-11-13): the label in the left third; across the
-            right two thirds the photo on top, the name, the whole bio in two columns at the page's
-            reading size, and View artist. One column on phones. */}
+            right two thirds the name, the whole bio in two columns at the page's reading size, and
+            View artist (no photo). One column on phones. */}
         <section className={styles.artistSection} aria-labelledby="about-the-artist">
           <h2 id="about-the-artist" className={styles.artistLabel}>
             About the artist
           </h2>
           <div className={styles.artistBody}>
-            {exhibition.user.profileImageUrl && isSafeImageSrc(exhibition.user.profileImageUrl) && (
-              // A mouse shortcut to the artist page; the name and View artist are the real links.
-              <Link href={artistHref} className={styles.artistPortrait} tabIndex={-1} aria-hidden>
-                <ProtectedImage
-                  src={exhibition.user.profileImageUrl}
-                  alt=""
-                  fill
-                  sizes="240px"
-                  className={styles.artistPortraitImage}
-                />
-              </Link>
-            )}
             <h3 className={styles.artistName}>
               <Link href={artistHref}>{artistName}</Link>
             </h3>

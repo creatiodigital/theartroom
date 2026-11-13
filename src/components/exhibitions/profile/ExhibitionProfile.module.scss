@@ -136,24 +136,6 @@
   min-width: 0;
 }
 
-// On top: 240 px, 3:2 as on the artist page, held to the top (a portrait photo loses its bottom,
-// never the head).
-.artistPortrait {
-  position: relative;
-  display: block;
-  width: 240px;
-  max-width: 100%;
-  aspect-ratio: 3 / 2;
-  margin-bottom: var(--space-6);
-  overflow: hidden;
-  background: var(--public-render-wall);
-}
-
-.artistPortraitImage {
-  object-fit: cover;
-  object-position: top;
-}
-
 .artistName {
   margin: 0 0 var(--space-5);
   font-family: var(--font-serif), var(--font-serif-fallback);
