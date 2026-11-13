@@ -113,90 +113,22 @@
   }
 }
 
-// As TextSection's `columns` (About the exhibition): the left third, then the right two thirds.
 .artistSection {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 66.67%;
-  gap: var(--space-8);
-  align-items: start;
   padding: 72px 0 96px;
-
-  @include media-down(lg) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-6);
-  }
 
   @include media-down(md) {
     padding: var(--space-10) 0 var(--space-14);
   }
 }
 
-.artistAside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  min-width: 0;
-}
-
-// 3:2, as on the artist page, held to the top: a portrait photo loses its bottom, never the head.
-.artistPortrait {
-  position: relative;
-  display: block;
-  aspect-ratio: 3 / 2;
-  overflow: hidden;
-  background: var(--public-render-wall);
-}
-
-.artistPortraitImage {
-  object-fit: cover;
-  object-position: top;
-}
-
-.artistBody {
-  min-width: 0;
-}
-
-.artistName {
-  margin: 0 0 var(--space-6);
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 32px;
-  font-weight: var(--font-regular);
-  line-height: 1.15;
-  color: var(--public-text);
-
-  @include media-down(md) {
-    font-size: 27px;
-  }
-
-  a:focus-visible {
-    outline: 2px solid var(--public-text);
-    outline-offset: 3px;
-  }
-}
-
-// Two columns, as About the exhibition's text; one on phones. The first paragraph starts each
-// column level.
-.artistBio {
-  column-count: 2;
-  column-gap: 56px;
-
-  @include media-down(md) {
-    column-count: 1;
-  }
-
-  > * > :first-child {
-    margin-top: 0;
-  }
-}
-
-.artistView {
-  margin-top: var(--space-8);
+// The row draws the hairline under it; this one above it (two classes: over the row's own).
+.artistSection .artistRow {
+  border-top: 1px solid var(--color-gray-30);
 }
 
 // Small grey caps (the drawn #999 is 2.8:1 on white; the secondary grey, as elsewhere).
 .artistLabel {
-  margin: 0;
-  padding-top: 6px;
+  margin: 0 0 14px;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 12px;
   font-weight: var(--font-regular);

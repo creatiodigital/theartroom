@@ -5,7 +5,8 @@
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr) auto;
   gap: var(--space-8);
-  // To the top: the portrait and View artist stay level with the name (owner, 2026-11-12).
+  // To the top: with the whole bio a row can be tall, and the portrait and View artist stay level
+  // with the name (owner, 2026-11-12).
   align-items: start;
   padding: 22px 0;
   // The hairline under each row; the list (or the section) draws the one above the first.
@@ -43,6 +44,11 @@
   min-width: 0;
 }
 
+// With the bio (the exhibition page): the text takes the row's width, for the bio's two columns.
+.withBio .text {
+  max-width: none;
+}
+
 .name {
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: 28px;
@@ -61,6 +67,38 @@
   font-style: italic;
   line-height: 1.4;
   color: var(--public-secondary);
+}
+
+// The whole bio, on as many lines as it needs (owner, 2026-11-12: never cut), one block per
+// paragraph of the editor's text.
+// In two columns at the page's reading size, as About the exhibition (owner, 2026-11-13); each
+// column about 70 characters wide. One column below lg; none on phones, as before.
+.bio {
+  display: block;
+  margin-top: var(--space-2);
+  column-count: 2;
+  column-gap: 56px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--public-body);
+
+  @include media-down(lg) {
+    column-count: 1;
+  }
+
+  @include media-down(md) {
+    display: none;
+  }
+}
+
+.paragraph {
+  display: block;
+  margin-bottom: 18px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 // Reads as an ArrowLink; the whole row is the link.
