@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import c from 'classnames'
-import { CaretDown, Check, MagnifyingGlass, X } from '@phosphor-icons/react'
+import { CaretDown, Check, X } from '@phosphor-icons/react'
 
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { countryMatches } from '@/lib/checkout/countrySearch'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 
 import styles from './ShippingCountriesModal.module.scss'
@@ -43,6 +42,8 @@ type ShippingCountriesModalProps = {
  * half-filled checkout to go and look. So this is a window over the flow, every
  * field behind it untouched, and picking a country here sets it on the form.
  *
+ * No search field (owner, 2026-11-13): the list is short enough to read whole.
+ *
  * Nobody may miss a country: on desktop the window is wide enough (4 columns)
  * for the whole list at once. When it still does not fit (always on a phone),
  * the last row fades and a full-width bar says how many countries are below and
@@ -58,13 +59,6 @@ export const ShippingCountriesModal = ({
     () => [...countryCodes].sort((a, b) => getCountryName(a).localeCompare(getCountryName(b))),
     [countryCodes],
   )
-  const [query, setQuery] = useState('')
-  const shown = useMemo(
-    () => sorted.filter((code) => countryMatches(getCountryName(code), query)),
-    [sorted, query],
-  )
-
-  const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const [below, setBelow] = useState(0)
 
@@ -73,7 +67,7 @@ export const ShippingCountriesModal = ({
     setBelow(list ? countBelow(list) : 0)
   }, [])
 
-  // Re-measured when the list resizes (window, columns) and whenever the filter changes it.
+  // Re-measured when the list resizes (window, columns).
   useEffect(() => {
     const list = listRef.current
     measure()
@@ -81,14 +75,7 @@ export const ShippingCountriesModal = ({
     const observer = new ResizeObserver(measure)
     observer.observe(list)
     return () => observer.disconnect()
-  }, [measure, shown])
-
-  // The search field takes the focus on desktop only: on a phone the keyboard would cover the list.
-  useEffect(() => {
-    if (window.matchMedia('(pointer: fine) and (min-width: 768px)').matches) {
-      searchRef.current?.focus()
-    }
-  }, [])
+  }, [measure])
 
   const scrollDown = () => {
     const list = listRef.current
@@ -111,24 +98,7 @@ export const ShippingCountriesModal = ({
     ]
     if (step === undefined) return
     e.preventDefault()
-    if (at + step < 0 && step < 0) {
-      searchRef.current?.focus()
-      return
-    }
     buttons[Math.min(buttons.length - 1, Math.max(0, at + step))]?.focus()
-  }
-
-  const onSearchKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    // This window sits inside the address <form>: Enter must never submit it.
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (shown.length === 1) onSelect(shown[0])
-      return
-    }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      listRef.current?.querySelector('button')?.focus()
-    }
   }
 
   return (
@@ -160,50 +130,28 @@ export const ShippingCountriesModal = ({
         </div>
 
         <div className={styles.body}>
-          <label className={styles.search}>
-            <MagnifyingGlass size={18} weight="light" aria-hidden className={styles.searchIcon} />
-            <input
-              ref={searchRef}
-              type="search"
-              className={styles.searchInput}
-              placeholder="Find your country"
-              aria-label="Find your country"
-              autoComplete="off"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={onSearchKey}
-            />
-          </label>
+          <div className={c(styles.listFrame, below > 0 && styles.moreBelow)}>
+            <ul ref={listRef} className={styles.list} onScroll={measure} onKeyDown={moveFocus}>
+              {sorted.map((code) => {
+                const chosen = code === selectedCode
+                return (
+                  <li key={code}>
+                    <Button
+                      variant="bare"
+                      className={c(styles.country, chosen && styles.countryChosen)}
+                      aria-current={chosen ? 'true' : undefined}
+                      onClick={() => onSelect(code)}
+                    >
+                      <span>{getCountryName(code)}</span>
+                      {chosen && <Check size={16} weight="light" aria-hidden />}
+                    </Button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
 
-          {shown.length === 0 ? (
-            <div className={styles.noMatch} role="status">
-              <p className={styles.noMatchTitle}>We don’t ship to “{query.trim()}” yet.</p>
-              <p className={styles.noMatchLine}>Tell us where you are and it moves up our list.</p>
-            </div>
-          ) : (
-            <div className={c(styles.listFrame, below > 0 && styles.moreBelow)}>
-              <ul ref={listRef} className={styles.list} onScroll={measure} onKeyDown={moveFocus}>
-                {shown.map((code) => {
-                  const chosen = code === selectedCode
-                  return (
-                    <li key={code}>
-                      <Button
-                        variant="bare"
-                        className={c(styles.country, chosen && styles.countryChosen)}
-                        aria-current={chosen ? 'true' : undefined}
-                        onClick={() => onSelect(code)}
-                      >
-                        <span>{getCountryName(code)}</span>
-                        {chosen && <Check size={16} weight="light" aria-hidden />}
-                      </Button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )}
-
-          {shown.length > 0 && below > 0 && (
+          {below > 0 && (
             <Button variant="bare" className={styles.more} onClick={scrollDown}>
               <CaretDown size={16} weight="light" aria-hidden />
               <span>

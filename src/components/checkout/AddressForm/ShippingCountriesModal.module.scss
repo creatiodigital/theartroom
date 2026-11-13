@@ -1,7 +1,8 @@
 @use '@/styles/mixins' as *;
 
-// docs/public-redesign/order-flow.md "Where we ship" window: 760 px, a header over a hairline, the
-// search, 4 columns (2 on phones), the "more below" bar when the list does not fit, a footer.
+// docs/public-redesign/order-flow.md "Where we ship" window: 760 px, a header over a hairline,
+// 4 columns (2 on phones; no search, owner 2026-11-13), the "more below" bar when the list does
+// not fit, a footer.
 // Never taller than the screen less 64 px above and below; full screen on phones.
 .window {
   display: flex;
@@ -75,53 +76,6 @@
 
   @include media-down(sm) {
     padding: 20px;
-  }
-}
-
-// ── Find your country ────────────────────────────────────────────────────
-.search {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-  height: 48px;
-  padding: 0 14px;
-  border: 1px solid var(--color-gray-60);
-  background: var(--color-white);
-
-  &:focus-within {
-    border-color: var(--public-text);
-  }
-}
-
-.searchIcon {
-  flex: 0 0 auto;
-  color: var(--public-muted);
-}
-
-.searchInput {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  padding: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  // 16 px on touch screens: below it iOS zooms the page on focus.
-  font-size: 15px;
-  color: var(--public-text);
-
-  @media (pointer: coarse) {
-    font-size: 16px;
-  }
-
-  &::placeholder {
-    color: var(--public-muted);
-  }
-
-  &::-webkit-search-cancel-button {
-    cursor: pointer;
   }
 }
 
@@ -234,29 +188,6 @@
   }
 }
 
-.noMatch {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 28px 0 20px;
-}
-
-.noMatchTitle {
-  margin: 0;
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 22px;
-  line-height: 1.3;
-  color: var(--public-text);
-  overflow-wrap: anywhere;
-}
-
-.noMatchLine {
-  margin: 0;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--public-secondary);
-}
 
 // ── Footer ───────────────────────────────────────────────────────────────
 .foot {

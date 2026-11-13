@@ -156,14 +156,8 @@ test('"Where we ship" opens over checkout, and picking a country fills the form'
   await expect(lastCountry).toBeInViewport()
   await expect(moreBelow).toHaveCount(0)
 
-  // Find your country: start of any word, any case; no match says so.
-  const search = dialog.getByRole('searchbox', { name: 'Find your country' })
-  await search.fill('KING')
-  await expect(dialog.getByRole('button', { name: 'United Kingdom', exact: true })).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Spain', exact: true })).toHaveCount(0)
-  await search.fill('Atlantis')
-  await expect(dialog.getByText('We don’t ship to “Atlantis” yet.')).toBeVisible()
-  await search.fill('')
+  // No search field (owner, 2026-11-13): the whole list is read at once.
+  await expect(dialog.getByRole('searchbox')).toHaveCount(0)
 
   // Spain is on the list; choosing it sets the country and closes the dialog.
   await dialog.getByRole('button', { name: 'Spain', exact: true }).click()
