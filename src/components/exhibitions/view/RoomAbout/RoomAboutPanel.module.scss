@@ -1,8 +1,12 @@
 @use '@/styles/mixins' as *;
 
 // room-about.md "The panel"; designs/room-about-exhibition.dc.html. Desktop: on the left, 20 px from
-// the edges, 400 px wide, the full height less 40, white, 14 px corners. Phones: a bottom sheet, 78 %
-// of the height, 18 px top corners, a grab handle.
+// the edges, 400 px wide, the full height less 40, white, 14 px corners. Phones: a card clear of the
+// screen's edges, framed as the room's "How to move around" window (.infoPanel in
+// ExhibitionView.module.scss): centered across, 90 % wide up to 440 px, 8 px corners (owner,
+// 2026-11-13; was a bottom sheet touching the edges). It starts under the menu button (44 px, 8 px
+// from the top on touch, 20 px otherwise), so the button stays in reach: pressing it closes every
+// open window (owner, 2026-11-13).
 .panel {
   position: fixed;
   top: calc(20px + env(safe-area-inset-top));
@@ -21,38 +25,16 @@
   outline: none;
 
   @include media-down(sm) {
-    top: auto;
+    top: calc(72px + env(safe-area-inset-top));
     right: 0;
-    bottom: 0;
+    bottom: auto;
     left: 0;
-    width: auto;
-    max-width: none;
-    height: 78dvh;
-    border-radius: 18px 18px 0 0;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
-    transition: transform 0.15s ease;
-    padding-bottom: env(safe-area-inset-bottom);
+    width: 90%;
+    max-width: 440px;
+    max-height: calc(100dvh - 72px - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    margin-inline: auto;
+    border-radius: 8px;
   }
-}
-
-// The grab handle: phones only.
-.handle {
-  display: none;
-
-  @include media-down(sm) {
-    display: flex;
-    justify-content: center;
-    padding: 10px 0 4px;
-    touch-action: none;
-    cursor: grab;
-  }
-}
-
-.grip {
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--color-gray-60);
 }
 
 .head {
@@ -64,7 +46,7 @@
   border-bottom: 1px solid var(--color-gray-30);
 
   @include media-down(sm) {
-    padding: 6px 12px 12px 20px;
+    padding: 12px 12px 12px 20px;
   }
 }
 

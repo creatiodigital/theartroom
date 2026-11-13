@@ -4,14 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import c from 'classnames'
 import { CaretDown, Check, X } from '@phosphor-icons/react'
 
-import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 
 import styles from './ShippingCountriesModal.module.scss'
-
-const TELL_US_HREF = 'mailto:contact@theartroom.gallery?subject=Shipping%20to%20my%20country'
 
 /** Countries whose row is not fully inside the list's visible part (the list is positioned). */
 function countBelow(list: HTMLElement): number {
@@ -159,13 +156,6 @@ export const ShippingCountriesModal = ({
               </span>
             </Button>
           )}
-        </div>
-
-        <div className={styles.foot}>
-          <p className={styles.footLine}>Not on the list yet? We add new countries as we grow.</p>
-          <ArrowLink href={TELL_US_HREF} size="small">
-            Tell us where you are
-          </ArrowLink>
         </div>
       </div>
     </Modal>

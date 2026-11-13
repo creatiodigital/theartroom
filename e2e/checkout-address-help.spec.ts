@@ -141,12 +141,9 @@ test('"Where we ship" opens over checkout, and picking a country fills the form'
   // means Modal's aria-labelledby actually resolves to the heading.
   await expect(dialog).toHaveAccessibleName(/where we ship/i)
   await expect(dialog.getByRole('heading', { name: /where we ship/i })).toBeVisible()
-  // The kind sign-off, so a buyer whose country is absent is not just refused.
-  await expect(dialog.getByText(/we add new countries as we grow/i)).toBeVisible()
-  await expect(dialog.getByRole('link', { name: /tell us where you are/i })).toHaveAttribute(
-    'href',
-    /^mailto:contact@theartroom\.gallery\?subject=Shipping%20to%20my%20country$/,
-  )
+  // No footer under the list (owner, 2026-11-13): no "Not on the list yet?" line, no mailto link.
+  await expect(dialog.getByText(/we add new countries as we grow/i)).toHaveCount(0)
+  await expect(dialog.getByRole('link', { name: /tell us where you are/i })).toHaveCount(0)
 
   // Nobody may miss a country (order-flow.md "Where we ship" window). On a desktop screen the
   // window is wide enough (4 columns) for every country at once: no "more below" bar, and the

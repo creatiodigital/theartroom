@@ -19,13 +19,15 @@ export const ExitWallViewButton = () => {
   const dispatch = useDispatch()
   return (
     <div className={styles.exitWrap} data-panel-overlay>
+      {/* Phones show the arrow alone (owner, 2026-11-13), so the name rides on aria-label. */}
       <Button
         variant="bare"
         className={styles.exitButton}
+        aria-label="Exit wall view"
         onClick={() => dispatch(requestArtworkViewExit())}
       >
         <ArrowLeft size={18} weight="light" aria-hidden />
-        Exit wall view
+        <span className={styles.exitLabel}>Exit wall view</span>
       </Button>
     </div>
   )
