@@ -72,6 +72,10 @@ const getExhibitions = () =>
     take: 6,
   })
 
+// The Featured artists section: hidden for now, on every screen size (owner, 2026-11-13). Set to
+// true to show it again; while false its read is skipped too.
+const SHOW_FEATURED_ARTISTS = false
+
 const getFeaturedArtists = async () => {
   return prisma.user.findMany({
     where: {
@@ -103,7 +107,7 @@ export default async function Home() {
   const [slides, exhibitions, featuredArtists, announcement, prints] = await Promise.all([
     getSlides(),
     getExhibitions(),
-    getFeaturedArtists(),
+    SHOW_FEATURED_ARTISTS ? getFeaturedArtists() : Promise.resolve([]),
     getHomepageAnnouncement(),
     getHomePrintSlides(),
   ])
@@ -163,7 +167,7 @@ export default async function Home() {
 
         <HomePrints slides={prints} />
 
-        <FeaturedArtists artists={featuredArtists} />
+        {SHOW_FEATURED_ARTISTS && <FeaturedArtists artists={featuredArtists} />}
 
         <FeedbackBand />
       </div>
