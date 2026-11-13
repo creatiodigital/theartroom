@@ -83,6 +83,6 @@ test.describe('form validation — shared system (InquireSidebar)', () => {
     await expect(page.getByText('Please enter a valid email address.')).toHaveCount(0)
 
     // ...while a still-empty field keeps its error (no full re-validation).
-    await expect(page.getByText('Please enter your first name.')).toBeVisible()
+    await expect(page.getByText('Please enter your full name.')).toBeVisible()
   })
 })
