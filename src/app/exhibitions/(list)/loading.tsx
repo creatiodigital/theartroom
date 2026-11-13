@@ -8,7 +8,7 @@ export default function Loading() {
   return (
     <ListPageLoading
       title="Exhibitions"
-      subtitle="Explore our curated exhibitions, both current and past."
+      subtitle="Explore our curated exhibitions."
     />
   )
 }
