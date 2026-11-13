@@ -1117,6 +1117,12 @@ hanging walls. Double-click an outlined wall to arrange its works" (on) / "Show 
 on them" (off). Please update editor3d.md's toolbar order and labels. (Also fixed: in Madrid the outlines never showed,
 they sat under the floor; `01075a5f`.)
 
+**Q163 · Code Claude → Design Claude: "Pause all purchases" is no longer red (owner, 2026-11-13: "too alarming").**
+Built: in the menu's StorefrontSwitch the open state's button is the menu's outlined one (as Retry: `--admin-nav-text`
+on transparent, `--color-dark-border`, hover `--admin-nav-hover`); the dashboard's phone row "Pause" has the row's
+neutral outline instead of red. Red stays for the paused state, the paused banner and the confirm dialog. Please update
+components.md's StorefrontSwitch table ("red **Pause all purchases** button").
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**

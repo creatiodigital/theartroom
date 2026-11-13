@@ -64,9 +64,9 @@
   }
 }
 
+// Quiet while purchases are open, as the menu's switch (owner, 2026-11-13: red was too alarming).
 .row .pause {
-  color: var(--color-red-50);
-  border-color: var(--color-red-50);
+  color: var(--color-text-primary);
 }
 
 .row .resume {
