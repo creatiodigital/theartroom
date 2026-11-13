@@ -104,34 +104,21 @@
   }
 
   // Phones, as the live site: a band of its own between two hairlines (the one under it is the
-  // legal row's). One network a line, on the left (owner, 2026-11-13); every icon in an 18 px box
-  // so the names line up.
+  // legal row's). The three networks on one line from the left, 16 px apart (owner, 2026-11-13: no
+  // spreading); they fit from a 375 px phone up.
   @include media-down(md) {
-    flex-direction: column;
-    align-items: flex-start;
     justify-content: flex-start;
-    gap: var(--space-4);
+    gap: var(--space-3) var(--space-4);
     align-self: stretch;
     padding: var(--space-6) 0;
     border-top: 1px solid var(--color-gray-30);
-
-    svg {
-      flex: 0 0 18px;
-    }
   }
 }
 
-// The brand logos are solid glyphs, which read heavier than the thin envelope at the same size,
-// so they sit a touch smaller (16 / 18 px, as the live site).
+// The brand logos, 16 px (as the live site).
 .brandIcon {
   width: 16px;
   height: 16px;
-}
-
-// A rounded outline with a V flap, as the live site's (owner, 2026-11-12: not Phosphor's).
-.envelopeIcon {
-  width: 18px;
-  height: 18px;
 }
 
 .bottom {
@@ -160,11 +147,13 @@
   line-height: 1.5;
   color: var(--color-text-secondary);
 
-  // Phones: two aligned columns, not a ragged wrap (owner, 2026-11-12).
+  // Phones: two aligned columns, not a ragged wrap (owner, 2026-11-12), side by side from the left
+  // with a 32 px gap, not spread across the width (owner, 2026-11-13).
   @include media-down(md) {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4) var(--space-6);
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    justify-content: start;
+    gap: var(--space-4) var(--space-8);
     justify-items: start;
   }
 }

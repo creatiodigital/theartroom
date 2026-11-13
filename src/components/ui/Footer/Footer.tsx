@@ -4,7 +4,6 @@ import Link from 'next/link'
 
 // The brand logos are the official glyphs from Simple Icons (CC0), kept as local
 // SVGs (README "Footer network icons": these, not Phosphor versions).
-import EnvelopeIcon from '@/icons/envelope.svg'
 import FacebookIcon from '@/icons/facebook.svg'
 import InstagramIcon from '@/icons/instagram.svg'
 import Logo from '@/icons/logo.svg'
@@ -51,12 +50,6 @@ export const Footer = () => {
                 </a>
               </li>
             ))}
-            <li>
-              <a href={`mailto:${CONTACT_EMAIL}`}>
-                <EnvelopeIcon className={styles.envelopeIcon} aria-hidden />
-                Email
-              </a>
-            </li>
           </ul>
         </div>
         <div className={styles.bottom}>
