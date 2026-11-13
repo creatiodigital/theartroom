@@ -46,20 +46,21 @@
   }
 }
 
+// The artwork page's own column (PageLayout): as wide, the same side margins, so the grey box and
+// the details sit exactly where they do on the page (owner, 2026-11-13).
 .content {
-  max-width: 1440px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  width: 100%;
-  // Top gap ≈ site header height (space-7 padding + ~32px logo), so the artwork
-  // isn't flush against the window top — mirrors the standalone page's header
-  // space.
-  padding: 88px var(--space-10) var(--space-10);
+  width: calc(100% - var(--site-padding) * 2);
+  // The grey box as high as on the page: the site header (83 px), PageLayout's 16 px and the
+  // artwork page's own 32 px (standaloneContent) above it.
+  padding: calc(83px + var(--space-4) + 32px) 0 var(--space-10);
 
-  // On a phone the desktop inset eats a tenth of the width on each side, and the
-  // header stand-in is taller than the header it stands in for. PageLayout gives
-  // the standalone page 24px a side at this width; this matches it.
+  // As PageLayout below lg: 24 px a side. The header stand-in is taller than the header it stands
+  // in for on a phone.
   @include media-down(lg) {
-    padding: var(--space-14) var(--space-6) var(--space-6);
+    width: calc(100% - var(--space-6) * 2);
+    padding: var(--space-14) 0 var(--space-6);
   }
 }
 
