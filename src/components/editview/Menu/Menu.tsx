@@ -9,10 +9,10 @@ import {
   Camera,
   Columns,
   Cube,
+  FrameCorners,
   GridFour,
   Lightbulb,
   PaintRoller,
-  Rectangle,
   Rows,
   type Icon,
 } from '@phosphor-icons/react'
@@ -250,10 +250,16 @@ export const Menu = () => {
           when it overflows (Q138) instead of walking the room, and a drag from it doesn't turn it. */}
       <nav aria-label="Editor tools" className={styles.toolbar} data-panel-overlay>
         <Tool label="Exit" tooltip="Back to dashboard" icon={ArrowLeft} onClick={handleClose} />
+        {/* Was "Spots" (owner, 2026-11-13: not clear). The dashed outlines of the walls where works
+            hang; double-clicking one opens that wall to arrange it. */}
         <Tool
-          label="Spots"
-          tooltip={isPlaceholdersShown ? 'Hide wall placeholders' : 'Show wall placeholders'}
-          icon={Rectangle}
+          label="Hanging"
+          tooltip={
+            isPlaceholdersShown
+              ? 'Hide the hanging walls. Double-click an outlined wall to arrange its works'
+              : 'Show the hanging walls, to arrange the works on them'
+          }
+          icon={FrameCorners}
           pressed={isPlaceholdersShown}
           onClick={() => togglePlaceholders()}
         />

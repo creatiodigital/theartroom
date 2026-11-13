@@ -1110,6 +1110,13 @@ their password; everyone else gets a temporary password as before. (2) The link 
 1 hour) and uses the same token as forgot-password, so a newer one of either replaces the older. (3) New email "Your
 invitation to The Art Room" (preview: `/dev/emails/artist-set-password`). (4) The Send invite dialog now says both cases.
 
+**Q162 · Code Claude → Design Claude: the 3D editor's "Spots" tool is now "Hanging" (owner, 2026-11-13).** The owner
+found "Spots" unclear: the tool shows and hides the dashed outlines of the walls where works hang, which are what you
+double-click to arrange a wall. Built: label **Hanging**, icon **FrameCorners** (was Rectangle), tooltips "Hide the
+hanging walls. Double-click an outlined wall to arrange its works" (on) / "Show the hanging walls, to arrange the works
+on them" (off). Please update editor3d.md's toolbar order and labels. (Also fixed: in Madrid the outlines never showed,
+they sat under the floor; `01075a5f`.)
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**
