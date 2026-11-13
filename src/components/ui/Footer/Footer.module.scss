@@ -1,7 +1,7 @@
 @use '@/styles/mixins' as *;
 
-// docs/public-redesign/home.md §8 and designs/home-desktop.dc.html (footer): a top border, then
-// two rows in the header's column: brand + icons, then the legal links and © under a hairline.
+// docs/public-redesign/home.md §8 (footer), the same on every screen (owner, 2026-11-13): the brand,
+// the networks, the legal links and the ©, a hairline between each, all on the left.
 .footer {
   margin-top: auto;
   flex-shrink: 0;
@@ -20,19 +20,17 @@
   }
 }
 
+// The brand, then the networks' band under it, on the left: on every screen as on phones (owner,
+// 2026-11-13: they sat on the right on desktop).
 .top {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: var(--space-10);
-  padding: 56px 0 var(--space-10);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: 56px 0 0;
 
-  // Phones: the network band ends it, closed by the legal row's hairline. 24 px either side of
-  // every hairline (owner, 2026-11-12: the same vertical spacing throughout).
+  // Phones: less air above the brand.
   @include media-down(md) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-6);
     padding: var(--space-10) 0 0;
   }
 }
@@ -73,21 +71,20 @@
 // Plain icons, no circles or labels, about 22px apart (README "Footer network icons"): the 44px
 // touch targets alone leave that between the glyphs.
 // The networks, as today's live site (owner, 2026-11-12: "follow legacy"): the icon, then the name
-// in caps, 12 px with 1 px letter spacing; 8 px between icon and name, 20 px between networks (48 px
-// from 1024 px); centred, wrapping only where the four don't fit.
+// in caps, 12 px with 1 px letter spacing; 8 px between icon and name. A band of its own between two
+// hairlines (the one under it is the legal row's), the three networks on one line from the left,
+// 16 px apart: on every screen as on phones (owner, 2026-11-13). They fit from a 375 px phone up.
 .social {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: var(--space-3) var(--space-5);
+  align-self: stretch;
+  gap: var(--space-3) var(--space-4);
   margin: 0;
-  padding: 0;
+  padding: var(--space-6) 0;
+  border-top: 1px solid var(--color-gray-30);
   list-style: none;
-
-  @include breakpoint(lg) {
-    gap: var(--space-12);
-  }
 
   a {
     display: inline-flex;
@@ -102,17 +99,6 @@
       opacity: 0.8;
     }
   }
-
-  // Phones, as the live site: a band of its own between two hairlines (the one under it is the
-  // legal row's). The three networks on one line from the left, 16 px apart (owner, 2026-11-13: no
-  // spreading); they fit from a 375 px phone up.
-  @include media-down(md) {
-    justify-content: flex-start;
-    gap: var(--space-3) var(--space-4);
-    align-self: stretch;
-    padding: var(--space-6) 0;
-    border-top: 1px solid var(--color-gray-30);
-  }
 }
 
 // The brand logos, 16 px (as the live site).
@@ -121,21 +107,15 @@
   height: 16px;
 }
 
+// The legal links, then the © under a hairline of its own; 24 px either side of every hairline. On
+// every screen as on phones (owner, 2026-11-12: more air; 2026-11-13: every view the same).
 .bottom {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--space-6);
-  padding: 20px 0 28px;
+  padding: var(--space-6) 0 var(--space-8);
   border-top: 1px solid var(--color-gray-20);
-
-  // Phones: more air (owner, 2026-11-12: it was cluttered), the © under a hairline of its own.
-  @include media-down(md) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-6);
-    padding: var(--space-6) 0 var(--space-8);
-  }
 }
 
 .legal {
@@ -172,10 +152,7 @@
   line-height: 1.5;
   white-space: nowrap;
   color: var(--public-muted);
-
-  // Phones: set apart from the legal links by a grey hairline (owner, 2026-11-12).
-  @include media-down(md) {
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--color-gray-30);
-  }
+  // Set apart from the legal links by a grey hairline, on every screen (owner, 2026-11-12/13).
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-gray-30);
 }

@@ -23,9 +23,9 @@ const SOCIAL = [
 ] as const
 
 /**
- * The site footer (docs/public-redesign/home.md §8, owner 2026-11-11): the wordmark, one line and
- * the email on the left, the network icons on the right (plain, no circles or labels); under a
- * hairline, the legal links (Cookie settings among them) and the ©. No repeated page links.
+ * The site footer (docs/public-redesign/home.md §8, owner 2026-11-11/13), the same on every screen,
+ * all on the left with a hairline between each part: the wordmark, one line and the email; the
+ * networks; the legal links (Cookie settings among them); the ©. No repeated page links.
  */
 export const Footer = () => {
   return (
