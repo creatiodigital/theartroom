@@ -93,9 +93,18 @@
   line-height: 1;
   white-space: nowrap;
 
+  // Phones (either way up): the back arrow alone, a 44px square like the menu button (owner,
+  // 2026-11-13: the labelled button was too invasive there; tablets and desktop keep the label).
   @media #{$phone-room} {
-    gap: var(--space-2);
-    padding: 0 var(--space-4) 0 var(--space-3);
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+}
+
+.exitLabel {
+  @media #{$phone-room} {
+    display: none;
   }
 }
 
