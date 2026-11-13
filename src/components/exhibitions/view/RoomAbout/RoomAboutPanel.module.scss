@@ -192,13 +192,13 @@
 .artistText {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   min-width: 0;
 }
 
 // Under the exhibition title's 30 px (owner, 2026-11-13: bigger than the 19 px drawn).
 .artistName {
   font-family: var(--font-serif), var(--font-serif-fallback);
+  margin-bottom: 12px;
   font-size: 24px;
   line-height: 1.15;
   color: var(--public-text);
