@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Order detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<sc-for list="{{nav}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-if value="{{g.label}}" hint-placeholder-val="{{true}}"><span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">{{g.label}}</span></sc-if>
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="4">
+<a href="{{i.href}}" aria-current="{{i.current}}" style="{{i.style}}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{i.d}}"></path></svg><span style="flex: 1 1 auto">{{i.label}}</span><sc-if value="{{i.badge}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 700; min-width: 20px; text-align: center; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000000; box-sizing: border-box">{{i.badge}}</span></sc-if></a>
+</sc-for>
+</div>
+</sc-for>
+<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid #333333">
+<span style="padding: 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Storefront</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #4cc38a"></span><span style="font-size: 13px; color: #e0e0e0">Purchases open</span></div>
+<button type="button" style="margin: 0 12px; font: inherit; font-size: 13px; font-weight: 600; color: #ffffff; background: #bd1622; border: 1px solid #bd1622; border-radius: 4px; padding: 10px 14px; min-height: 44px; text-align: left">Pause all purchases</button>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 28px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<!-- Breadcrumb + header -->
+<nav aria-label="Breadcrumb"><ol style="list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; font-size: 13px; color: #666666"><li><a href="Orders.dc.html" style="color: #666666">Orders</a></li><li aria-hidden="true" style="color: #a3a3a3">/</li><li aria-current="page" style="color: #333333; font-family: 'Geist Mono', ui-monospace, monospace">A6977CB4</li></ol></nav>
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px">
+<div aria-hidden="true" style="width: 96px; height: 72px; flex: 0 0 auto; border-radius: 4px; background: #d9d6d0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06)"></div>
+<div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Order <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 500; letter-spacing: 0">A6977CB4</span></h1>
+<span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 9999px; background: #1a1a1a; color: #ffffff">To place at TPS</span>
+</div>
+<span style="color: #666666">Placed 22 Aug 2026, 23:04 · 1 print · <strong style="color: #000000; font-weight: 600">€189.43</strong> · Anna Keller</span>
+</div>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Copy reference</button>
+</header>
+
+<!-- Progress + next step -->
+<section aria-labelledby="prog" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 22px">
+<h2 id="prog" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Fulfillment</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="7">
+<li aria-current="{{s.current}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; text-align: center">
+<span aria-hidden="true" style="{{s.lineL}}"></span><span aria-hidden="true" style="{{s.lineR}}"></span>
+<span style="{{s.dot}}"><sc-if value="{{s.done}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"></path></svg></sc-if><sc-if value="{{s.notDone}}" hint-placeholder-val="{{true}}">{{s.n}}</sc-if></span>
+<span style="{{s.labelStyle}}">{{s.label}}</span>
+<span style="font-size: 12px; color: #666666; min-height: 18px">{{s.when}}</span>
+</li>
+</sc-for>
+</ol>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 18px; background: #f6f6f6; border-radius: 8px">
+<div style="flex: 1 1 380px; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #666666">Next step</span>
+<span style="color: #000000">Place and pay this order at theprintspace using the details below, then mark it placed.</span>
+</div>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px 16px; min-height: 40px; background: #ffffff; color: #333333; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Cancel order</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; min-height: 40px; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px; cursor: pointer">Mark placed at TPS</button>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 16px; align-items: start">
+
+<!-- Main column -->
+<div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+
+<section aria-labelledby="items" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 2px"><h2 id="items" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Items · 1 print</h2><span style="font-size: 13px; color: #666666">Each artist is paid separately, per line.</span></div>
+<div style="display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 16px; padding-top: 4px">
+<div aria-hidden="true" style="width: 72px; height: 54px; border-radius: 4px; background: #d9d6d0"></div>
+<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0">
+<div><div style="font-weight: 600; color: #000000">Passeur</div><div style="font-size: 13px; color: #666666">John Doe · Limited edition · Small Edition Variant · <span style="font-family: 'Geist Mono', ui-monospace, monospace">#2/2</span> · Qty 1</div></div>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; font-size: 13px">
+<div><dt style="color: #666666">Print type</dt><dd style="margin: 0; color: #000000">Giclée</dd></div>
+<div><dt style="color: #666666">Paper</dt><dd style="margin: 0; color: #000000">Hahnemühle German Etching</dd></div>
+<div><dt style="color: #666666">Mounting / framing</dt><dd style="margin: 0; color: #000000">Print only</dd></div>
+<div><dt style="color: #666666">Sheet size</dt><dd style="margin: 0; color: #000000">40.8 × 55.0 cm</dd></div>
+<div><dt style="color: #666666">Print size</dt><dd style="margin: 0; color: #000000">28.8 × 43.0 cm</dd></div>
+<div><dt style="color: #666666">Paper border</dt><dd style="margin: 0; color: #000000">6.0 cm</dd></div>
+</dl>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: auto auto; gap: 6px 16px; align-content: start; font-size: 13px; text-align: right">
+<dt style="color: #666666">TPS</dt><dd style="margin: 0; font-variant-numeric: tabular-nums; color: #000000">€26.63</dd>
+<dt style="color: #666666">Artist</dt><dd style="margin: 0; font-variant-numeric: tabular-nums; color: #000000">€100.00</dd>
+<dt style="color: #666666">Gallery</dt><dd style="margin: 0; font-variant-numeric: tabular-nums; color: #000000">€40.00</dd>
+<dt style="color: #666666">Payout</dt><dd style="margin: 0"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #cccccc"></span>Not paid</span></dd>
+</dl>
+</div>
+</section>
+
+<section aria-labelledby="tps" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px"><h2 id="tps" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">For TPS placement</h2><span style="font-size: 13px; color: #666666">Paste these into theprintspace’s “Order Prints” form.</span></div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; text-decoration: none; padding: 6px 12px; border: 1px solid #dcdcdc; border-radius: 4px; min-height: 32px; box-sizing: border-box">Open theprintspace ↗</a>
+</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #f0f0f0; border-radius: 8px">
+<span style="padding: 10px 14px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #666666; background: #f6f6f6; border-radius: 8px 8px 0 0">Passeur · John Doe</span>
+<sc-for list="{{tps}}" as="f" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 6px 8px 6px 14px; border-top: 1px solid #f0f0f0">
+<span style="font-size: 13px; color: #666666">{{f.k}}</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #000000">{{f.v}}</span>
+<button type="button" aria-label="{{f.aria}}" style="font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; min-height: 28px; background: #ffffff; border: 1px solid #e2e2e2; border-radius: 4px; color: #333333; cursor: pointer">Copy</button>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 8px 12px 14px; border: 1px solid #f0f0f0; border-radius: 8px">
+<span style="font-size: 13px; color: #666666">Recipient</span>
+<address style="font-style: normal; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #000000; line-height: 1.6">Anna Keller<br>Calle de Ejemplo 4, Bajo B<br>28220 Madrid<br>Spain</address>
+<button type="button" aria-label="Copy recipient address" style="font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; min-height: 28px; background: #ffffff; border: 1px solid #e2e2e2; border-radius: 4px; color: #333333; cursor: pointer">Copy address</button>
+</div>
+</section>
+
+<section aria-labelledby="tl" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="tl" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Timeline</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{events}}" as="e" hint-placeholder-count="4">
+<li style="display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 14px; padding: 10px 0; border-top: 1px solid #f0f0f0">
+<span aria-hidden="true" style="{{e.dot}}"></span>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="color: #000000">{{e.msg}}</span><span style="font-size: 12px; color: #666666">{{e.kind}} · {{e.actor}}</span></div>
+<span style="font-size: 12px; color: #666666; white-space: nowrap">{{e.when}}</span>
+</li>
+</sc-for>
+</ol>
+<details style="font-size: 13px"><summary style="cursor: pointer; color: #666666">Show raw event data</summary><p style="margin: 8px 0 0; color: #666666">Payloads stay available here for debugging, collapsed by default.</p></details>
+</section>
+
+</div>
+
+<!-- Side column -->
+<aside style="display: flex; flex-direction: column; gap: 16px">
+
+<section aria-labelledby="buyer" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="buyer" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Buyer</h2>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 600; color: #000000">Anna Keller</span><a href="#" style="font-size: 13px">anna.k@example.com</a></div>
+<dl style="margin: 0; display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 6px 10px; font-size: 13px">
+<dt style="color: #666666">Country</dt><dd style="margin: 0">Spain</dd>
+<dt style="color: #666666">Ships to</dt><dd style="margin: 0">Calle de Ejemplo 4, Bajo B, 28220 Madrid</dd>
+</dl>
+</section>
+
+<section aria-labelledby="money" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="money" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Money</h2>
+<div style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #666666">Paid by buyer</span><span style="font-size: 28px; font-weight: 700; line-height: 1.1; color: #000000; font-variant-numeric: tabular-nums">€189.43</span><span style="font-size: 12px; color: #666666">EUR · card on hold until captured</span></div>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; font-size: 13px; font-variant-numeric: tabular-nums">
+<dt style="color: #666666">Artist cut</dt><dd style="margin: 0; text-align: right">€100.00</dd>
+<dt style="color: #666666">Gallery cut</dt><dd style="margin: 0; text-align: right">€40.00</dd>
+<dt style="color: #666666">Production</dt><dd style="margin: 0; text-align: right">€19.73</dd>
+<dt style="color: #666666">Production shipping</dt><dd style="margin: 0; text-align: right">€6.90</dd>
+<dt style="color: #666666">Customer VAT</dt><dd style="margin: 0; text-align: right">€22.80</dd>
+</dl>
+</section>
+
+<section aria-labelledby="inv" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="inv" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Invoice</h2>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #000000">TAR-2026-0042</span><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #d4edda; color: #155724">Sent</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a href="#" style="font-size: 13px; font-weight: 600; text-decoration: none; padding: 6px 12px; border: 1px solid #dcdcdc; border-radius: 4px">See invoice</a>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Send again</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Issue credit note</button>
+</div>
+</section>
+
+<section aria-labelledby="more" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="more" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">If something goes wrong</h2>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px 14px; min-height: 40px; text-align: left; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Reprint as a replacement…</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px 14px; min-height: 40px; text-align: left; background: #ffffff; color: #bd1622; border: 1px solid #dcdcdc; border-radius: 4px; cursor: pointer">Refund the buyer…</button>
+</section>
+
+<section aria-labelledby="dz" style="background: #ffffff; border: 1px dashed #d0d0d0; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 8px"><h2 id="dz" style="margin: 0; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #000000">Test data</h2><span style="font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: #fff3cd; color: #856404">Staging only</span></div>
+<p style="margin: 0; font-size: 13px; color: #666666">Permanently deletes this order, its history and invoices, and returns its edition numbers to the pool.</p>
+<button type="button" style="align-self: flex-start; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; background: #ffffff; color: #bd1622; border: 1px solid #bd1622; border-radius: 4px; cursor: pointer">Delete order</button>
+</section>
+
+</aside>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const labels = ['New', 'To place at TPS', 'At TPS', 'In production', 'Shipped', 'Delivered', 'Artist paid'];
+    const when = ['22 Aug, 23:04', '23 Aug, 09:12', '', '', '', '', ''];
+    const cur = 1;
+    const steps = labels.map((label, i) => {
+      const done = i < cur, on = i === cur;
+      return {
+        label, n: i + 1, done, notDone: !done, when: when[i], current: on ? 'step' : 'false',
+        dot: { position: 'relative', zIndex: 1, width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, boxSizing: 'border-box', background: done ? '#1a1a1a' : (on ? '#ffffff' : '#ffffff'), color: done ? '#ffffff' : (on ? '#000000' : '#999999'), border: on ? '2px solid #1a1a1a' : (done ? '0' : '1px solid #d0d0d0'), boxShadow: on ? '0 0 0 4px #f0f0f0' : 'none' },
+        labelStyle: { fontSize: '13px', fontWeight: on ? 700 : (done ? 600 : 400), color: on || done ? '#000000' : '#666666' },
+        lineL: { position: 'absolute', top: '13px', left: 0, right: '50%', height: '2px', background: i === 0 ? 'transparent' : (i <= cur ? '#1a1a1a' : '#e2e2e2') },
+        lineR: { position: 'absolute', top: '13px', left: '50%', right: 0, height: '2px', background: i === labels.length - 1 ? 'transparent' : (i < cur ? '#1a1a1a' : '#e2e2e2') }
+      };
+    });
+    const tps = [['Edition', '2/2'], ['Variant', 'Small Edition Variant'], ['Print type', 'Giclée'], ['Paper', 'Hahnemühle German Etching'], ['Sheet size', '40.8 × 55.0 cm'], ['Print size', '28.8 × 43.0 cm'], ['Paper border', '6.0 cm'], ['Mounting / framing', 'Print only']].map(([k, v]) => ({ k, v, aria: 'Copy ' + k }));
+    const ev = (msg, kind, actor, w, c) => ({ msg, kind, actor, when: w, dot: { width: '10px', height: '10px', marginTop: '6px', borderRadius: '50%', background: c } });
+    return {
+      steps, tps,
+      events: [
+        ev('Payment captured · €189.43', 'payment', 'Eduardo Plaza', '23 Aug, 09:12', '#1a1a1a'),
+        ev('Invoice TAR-2026-0042 sent to the buyer', 'invoice', 'system', '23 Aug, 09:12', '#a3a3a3'),
+        ev('Card authorized at checkout', 'payment', 'Stripe', '22 Aug, 23:04', '#a3a3a3'),
+        ev('Order placed', 'order', 'buyer', '22 Aug, 23:04', '#a3a3a3')
+      ],
+      nav: this.nav('/admin/orders', 9)
+    };
+  }
+  nav(active, badge) {
+    const P = {
+      dash: 'M104,42H56A14,14,0,0,0,42,56v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,104,42Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm-98,34H56a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,104,138Zm2,62a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Zm94-62H152a14,14,0,0,0-14,14v48a14,14,0,0,0,14,14h48a14,14,0,0,0,14-14V152A14,14,0,0,0,200,138Zm2,62a2,2,0,0,1-2,2H152a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2h48a2,2,0,0,1,2,2Z',
+      orders: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z',
+      ordersFill: 'M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm-88,96A48.05,48.05,0,0,1,80,88a8,8,0,0,1,16,0,32,32,0,0,0,64,0,8,8,0,0,1,16,0A48.05,48.05,0,0,1,128,136Z',
+      editions: 'M222,128a6,6,0,0,1-6,6H104a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM104,70H216a6,6,0,0,0,0-12H104a6,6,0,0,0,0,12ZM216,186H104a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12ZM42.68,53.37,50,49.71V104a6,6,0,0,0,12,0V40a6,6,0,0,0-8.68-5.37l-16,8a6,6,0,0,0,5.36,10.74ZM72,202H52l21.48-28.74A21.5,21.5,0,0,0,77.79,157,21.75,21.75,0,0,0,69,142.38a22.86,22.86,0,0,0-31.35,4.31,22.18,22.18,0,0,0-3.28,5.92,6,6,0,0,0,11.28,4.11,9.87,9.87,0,0,1,1.48-2.67,10.78,10.78,0,0,1,14.78-2,9.89,9.89,0,0,1,4,6.61,9.64,9.64,0,0,1-2,7.28l-.06.09L35.2,204.41A6,6,0,0,0,40,214H72a6,6,0,0,0,0-12Z',
+      gift: 'M216,74H174.74a46.41,46.41,0,0,0,6-4.48,27.56,27.56,0,0,0,9.22-20A30.63,30.63,0,0,0,158.5,18a27.56,27.56,0,0,0-20,9.22A57.1,57.1,0,0,0,128,45.76a57.1,57.1,0,0,0-10.48-18.53A27.56,27.56,0,0,0,97.5,18,30.63,30.63,0,0,0,66,49.51a27.56,27.56,0,0,0,9.22,20,45.74,45.74,0,0,0,6,4.48H40A14,14,0,0,0,26,88v32a14,14,0,0,0,14,14h2v66a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V134h2a14,14,0,0,0,14-14V88A14,14,0,0,0,216,74ZM135.77,63c2.25-12.12,6.29-21.75,11.69-27.85A15.68,15.68,0,0,1,158.86,30h.55A18.6,18.6,0,0,1,178,49.14a15.68,15.68,0,0,1-5.18,11.4C162.1,70,143.92,72.83,134.34,73.65,134.59,70.76,135,67.08,135.77,63ZM83.45,35.45A18.69,18.69,0,0,1,96.59,30h.55a15.68,15.68,0,0,1,11.4,5.18C118,45.9,120.83,64.08,121.65,73.66c-2.89-.25-6.57-.68-10.61-1.43C98.92,70,89.29,65.94,83.19,60.53A15.64,15.64,0,0,1,78,49.14,18.65,18.65,0,0,1,83.45,35.45ZM38,120V88a2,2,0,0,1,2-2h82v36H40A2,2,0,0,1,38,120Zm16,80V134h68v68H56A2,2,0,0,1,54,200Zm148,0a2,2,0,0,1-2,2H134V134h68Zm16-80a2,2,0,0,1-2,2H134V86h82a2,2,0,0,1,2,2Z',
+      invoice: 'M28,126a6,6,0,0,1,0-12H56a10,10,0,0,0,0-20H40a22,22,0,0,1,0-44h2V48a6,6,0,0,1,12,0v2H64a6,6,0,0,1,0,12H40a10,10,0,0,0,0,20H56a22,22,0,0,1,0,44H54v2a6,6,0,0,1-12,0v-2ZM230,56V192a14,14,0,0,1-14,14H40a14,14,0,0,1-14-14V152a6,6,0,0,1,12,0v40a2,2,0,0,0,2,2H162V158H80a6,6,0,0,1,0-12h82V110H104a6,6,0,0,1,0-12H218V62H96a6,6,0,0,1,0-12H224A6,6,0,0,1,230,56Zm-56,90h44V110H174Zm44,46V158H174v36h42A2,2,0,0,0,218,192Z',
+      wallet: 'M216,66H56a10,10,0,0,1,0-20H192a6,6,0,0,0,0-12H56A22,22,0,0,0,34,56V184a22,22,0,0,0,22,22H216a14,14,0,0,0,14-14V80A14,14,0,0,0,216,66Zm2,126a2,2,0,0,1-2,2H56a10,10,0,0,1-10-10V75.59A21.84,21.84,0,0,0,56,78H216a2,2,0,0,1,2,2Zm-28-60a10,10,0,1,1-10-10A10,10,0,0,1,190,132Z',
+      door: 'M232,218H206V40a14,14,0,0,0-14-14H64A14,14,0,0,0,50,40V218H24a6,6,0,0,0,0,12H232a6,6,0,0,0,0-12ZM62,40a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2V218H62Zm104,92a10,10,0,1,1-10-10A10,10,0,0,1,166,132Z',
+      image: 'M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34ZM46,208V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2v82.2l-28.1-28.1a14,14,0,0,0-19.8,0L54.2,210H48A2,2,0,0,1,46,208Zm162,2H71.17l99.41-99.41a2,2,0,0,1,2.83,0L210,147.17V208A2,2,0,0,1,208,210ZM96,118A22,22,0,1,0,74,96,22,22,0,0,0,96,118Zm0-32A10,10,0,1,1,86,96,10,10,0,0,1,96,86Z',
+      article: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM182,96a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,96Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,128Zm0,32a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,160Z',
+      users: 'M112.6,158.43a58,58,0,1,0-57.2,0A93.83,93.83,0,0,0,5.21,196.72a6,6,0,0,0,10.05,6.56,82,82,0,0,1,137.48,0,6,6,0,0,0,10-6.56A93.83,93.83,0,0,0,112.6,158.43ZM38,108a46,46,0,1,1,46,46A46.06,46.06,0,0,1,38,108Zm211,97a6,6,0,0,1-8.3-1.74A81.8,81.8,0,0,0,172,166a6,6,0,0,1,0-12,46,46,0,1,0-17.08-88.73,6,6,0,1,1-4.46-11.14,58,58,0,0,1,50.14,104.3,93.83,93.83,0,0,1,50.19,38.29A6,6,0,0,1,249,205Z'
+    };
+    const item = (label, href, d, dFill, b) => {
+      const on = active === href;
+      return { label, href: href === '/admin/dashboard' ? 'Main.dc.html' : (href === '/admin/orders' ? 'Orders.dc.html' : '#'), current: on ? 'page' : 'false', d: on && dFill ? dFill : d, badge: b || 0,
+        style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', textDecoration: 'none', background: on ? '#2a2a2a' : 'transparent', color: on ? '#ffffff' : '#e0e0e0', fontWeight: on ? 600 : 400 } };
+    };
+    return [
+      { label: '', items: [item('Dashboard', '/admin/dashboard', P.dash)] },
+      { label: 'Sales', items: [item('Orders', '/admin/orders', P.orders, P.ordersFill, badge), item('Edition sales', '/admin/edition-sales', P.editions), item('Gift orders', '/admin/gift-orders', P.gift), item('Invoices', '/admin/invoices', P.invoice), item('Payouts', '/admin/payouts', P.wallet)] },
+      { label: 'Gallery', items: [item('Exhibitions', '/admin/exhibitions', P.door), item('Print presentations', '/admin/print-presentations', P.image), item('Content', '/admin/content', P.article), item('Users', '/admin/users', P.users)] }
+    ];
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+// On grey, the rows' value chips are white and their tracks a shade darker (as drawn).
+.card {
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) 14px;
+  background: var(--editor-card);
+  border-radius: 10px;
+  --editor-row-chip: var(--color-white);
+  --editor-row-track: var(--color-gray-35);
+}
+
+.group {
+  gap: 14px;
+  padding: 14px;
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  --editor-row-chip: var(--editor-chip);
+  --editor-row-track: var(--editor-track);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+// Set here: globals.scss makes every heading serif and large.
+.title {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  line-height: 1.4;
+}
+
+.card .title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.group .title {
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.aside {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}

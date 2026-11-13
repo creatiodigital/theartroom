@@ -3,7 +3,10 @@
 import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
+import { PageLayout } from '@/components/ui/PageLayout'
+import { StatusPage, statusPageStyles } from '@/components/ui/StatusPage'
 
 export default function GlobalError({
   error,
@@ -16,37 +19,25 @@ export default function GlobalError({
     Sentry.captureException(error)
   }, [error])
 
+  // other-screens.md "Error": the normal header and footer, the same look as the 404.
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        backgroundColor: 'var(--color-text-primary)',
-        color: 'var(--color-white)',
-        fontFamily: 'Inter, system-ui, sans-serif',
-        padding: '2rem',
-        textAlign: 'center',
-      }}
-    >
-      <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: 500 }}>
-        Something went wrong
-      </h2>
-      <p
-        style={{
-          color: 'var(--color-text-secondary)',
-          fontSize: '0.875rem',
-          maxWidth: '420px',
-          lineHeight: 1.6,
-        }}
-      >
-        We encountered an unexpected error. This has been reported and we&apos;re looking into it.
-      </p>
-      <div style={{ marginTop: '1.5rem' }}>
-        <Button variant="secondary" onClick={reset} label="Try again" />
-      </div>
-    </div>
+    <PageLayout>
+      <StatusPage
+        label="Error"
+        title="Something went wrong."
+        line="Please try again in a moment."
+        actions={
+          <>
+            <Button
+              variant="primary"
+              onClick={reset}
+              label="Try again"
+              className={statusPageStyles.primary}
+            />
+            <ArrowLink href="/">Back to the home page</ArrowLink>
+          </>
+        }
+      />
+    </PageLayout>
   )
 }

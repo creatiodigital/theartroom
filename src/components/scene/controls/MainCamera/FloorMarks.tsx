@@ -2,7 +2,7 @@
 
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { Mouse, MousePointer2 } from 'lucide-react'
+import { Cursor, MouseSimple } from '@phosphor-icons/react'
 import { useEffect, useMemo, useRef } from 'react'
 import { Color, DoubleSide, MeshBasicMaterial, RingGeometry, type Mesh, type Vector3 } from 'three'
 
@@ -49,7 +49,11 @@ const GestureMark = ({ gesture }: { gesture: HintGesture }) => {
   if (gesture === 'tap' || gesture === 'click')
     return (
       <span className={`${styles.gesture} ${styles.press}`} aria-hidden>
-        {gesture === 'tap' ? <Tap focusable="false" /> : <MousePointer2 strokeWidth={1.5} />}
+        {gesture === 'tap' ? (
+          <Tap focusable="false" />
+        ) : (
+          <Cursor size={20} weight="regular" aria-hidden />
+        )}
         <span className={`${styles.ripple} ${gesture === 'tap' ? styles.fingertip : styles.tip}`} />
       </span>
     )
@@ -58,7 +62,7 @@ const GestureMark = ({ gesture }: { gesture: HintGesture }) => {
       {gesture === 'drag-finger' ? (
         <SlideHorizontal focusable="false" />
       ) : (
-        <Mouse strokeWidth={1.5} />
+        <MouseSimple size={20} weight="regular" aria-hidden />
       )}
     </span>
   )

@@ -4,64 +4,75 @@
   width: 100%;
 }
 
-// Heading and the "Where we ship" link share one baseline-aligned row, so the
-// link reads as an answer about the whole address section rather than about
-// the Country field alone.
-.sectionHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin: 0 0 var(--space-6) 0;
-}
-
+// docs/public-redesign/order-flow.md "Checkout"; designs/checkout-1-shipping.dc.html: the serif
+// heading, fields in the checkout style (13 px label above a 48 px box, #dcdcdc), the notice on the
+// off-white, the black button, then "Not sure we ship to you? Where we ship".
 .formSectionTitle {
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.fieldGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 30px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--public-text);
 
   @include media-down(sm) {
-    grid-template-columns: 1fr;
+    font-size: 26px;
   }
 }
 
-// Visual section break: when the standalone Country field is followed by the
-// .fieldGrid, push the grid down so the country choice reads as its own
-// decision before the buyer fills in name/address details below. (The country
-// field is the only top-level .fieldFull immediately preceding the grid.)
-.fieldFull + .fieldGrid {
-  margin-top: var(--space-6);
+// Checkout v2 (owner, 2026-11-13): full rows span all; Email / Phone and State / Postal code side by
+// side; City a line of its own. One column on phones.
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 18px 14px;
+
+  @include media-down(sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.whereWeShipLine + .fieldGrid {
+  margin-top: 18px;
 }
 
 .fieldFull {
   grid-column: 1 / -1;
 }
 
+.fieldHalf {
+  grid-column: span 3;
+
+  @include media-down(sm) {
+    grid-column: 1 / -1;
+  }
+}
+
 .fieldLabel {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--public-secondary);
+}
+
+// The country menu's closed control at the fields' height and size.
+.countrySelect > button {
+  min-height: 48px;
+  padding: 0 14px;
+  font-size: 15px;
 }
 
 .fieldInput {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
+  height: 48px;
+  padding: 0 14px;
   background: var(--color-white);
   border: 1px solid var(--color-border-strong);
   // Client-facing UI is squared per the gallery design rule.
   border-radius: 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  color: var(--public-text);
   transition: border-color 0.15s ease;
 
   &:hover {
@@ -84,21 +95,26 @@
 }
 
 .submitRow {
-  margin-top: var(--space-8);
+  margin-top: 18px;
 }
 
-// ── "Where we ship" (sits on the section heading line) ───────────────────
-.whereWeShip {
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 0;
+// ── "Not sure we ship to you? Where we ship" (right under Country) ───────
+.whereWeShipLine {
+  margin: 10px 0 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--public-secondary);
+}
 
-  &:hover {
-    color: var(--color-text-primary);
-  }
+// Through .form: outranks Button's bare reset whatever the stylesheet order.
+.form .whereWeShip {
+  display: inline;
+  padding: 0;
+  font-size: 13px;
+  font-weight: var(--font-bold);
+  color: var(--public-text);
+  cursor: pointer;
 }
 
 // ── Address autocomplete ─────────────────────────────────────────────────
@@ -161,22 +177,19 @@
   color: var(--color-text-secondary);
 }
 
-.manualEntryLink {
-  // The field column stretches its children, so without this the link sits
-  // under the left edge of the input; pinned right it tucks under the field's
-  // trailing edge and stops competing with the label for the same starting
-  // line.
+// Pinned right, under the field's trailing edge; bold, no underline (the design).
+.form .manualEntryLink {
   align-self: flex-end;
   margin-top: var(--space-2);
   padding: 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  font-weight: var(--font-bold);
+  color: #333333;
+  cursor: pointer;
 
   &:hover {
-    color: var(--color-text-primary);
+    color: var(--public-text);
   }
 }
 
@@ -187,102 +200,24 @@
 .addressCheckNotice {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
-  margin: var(--space-6) 0 0 0;
-  padding: var(--space-4);
-  background: var(--color-surface-subtle);
-  border-left: 2px solid var(--color-text-primary);
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 16px 18px;
+  background: var(--public-off-white);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 14px;
   line-height: 1.6;
-  color: var(--color-text-secondary);
+  color: var(--public-secondary);
 
   strong {
-    color: var(--color-text-primary);
+    color: var(--public-text);
   }
 
   svg {
     flex-shrink: 0;
-    margin-top: 1px;
+    margin-top: 2px;
+    color: var(--public-text);
   }
-}
-
-// ── Shipping-countries modal ─────────────────────────────────────────────
-.modalIntro {
-  margin: var(--space-2) 0 var(--space-5) 0;
-  color: var(--color-text-secondary);
-}
-
-.countryList {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  max-height: 340px;
-  overflow-y: auto;
-
-  @include media-down(sm) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.countryItem {
-  justify-content: flex-start;
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-}
-
-// The fade lives on a frame around the list, not on the list itself: the list
-// is the scroller, so anything drawn inside it scrolls away with the rows.
-.countryListFrame {
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: var(--space-12);
-    background: linear-gradient(to bottom, transparent, var(--color-white));
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  &.moreBelow::after {
-    opacity: 1;
-  }
-}
-
-// Hidden with `visibility` rather than unmounted, so it keeps its line and the
-// sign-off below does not jump up the moment the buyer reaches the end.
-.scrollHint {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0 0;
-  color: var(--color-text-secondary);
-  visibility: hidden;
-  opacity: 0;
-  transition:
-    opacity 0.2s ease,
-    visibility 0.2s ease;
-
-  &.moreBelow {
-    visibility: visible;
-    opacity: 1;
-  }
-}
-
-.modalOutro {
-  margin: var(--space-5) 0 0 0;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border-light);
-  color: var(--color-text-secondary);
 }
 
 // Shown when suggestions stop working on their own — throttled, switched off,

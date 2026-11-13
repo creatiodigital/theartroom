@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>3D Editor Panels</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e6e4e0}</style>
+</helmet>
+<div style="min-height: 100vh; padding: 32px; box-sizing: border-box; background: #e6e4e0; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; color: #333333; display: grid; grid-template-columns: repeat(3, 384px); justify-content: center; gap: 28px; align-items: start">
+
+<!-- Benches -->
+<aside style="background: #ffffff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden; display: flex; flex-direction: column">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef"><span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #efe7dc; color: #6b4e2e; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.chair}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Benches</h2><span style="font-size: 13px; color: #666666">Switch a bench on, pick a model, then move or turn it.</span></span><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 256 256" fill="#333333"><path d="{{ic.x}}"></path></svg></span></header>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="background: #f7f7f7; border-radius: 10px; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-weight: 600; color: #000000">Bench 1</span><span role="switch" aria-checked="true" style="width: 36px; height: 22px; border-radius: 11px; background: #1a1a1a; position: relative"><span style="position: absolute; top: 3px; left: 17px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff"></span></span></div>
+<div role="radiogroup" aria-label="Model" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px"><span style="padding: 8px 10px; background: #ffffff; border: 1.5px solid #1a1a1a; border-radius: 8px; font-size: 13px; font-weight: 600">Eaton</span><span style="padding: 8px 10px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 13px; color: #555555">Other models…</span></div>
+<sc-for list="{{bench}}" as="s" hint-placeholder-count="3">
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="display: flex; justify-content: space-between"><span style="font-size: 13px">{{s.label}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 1px 7px; border-radius: 4px; background: #ffffff">{{s.value}}</span></span><span style="position: relative; height: 16px; display: block"><span style="position: absolute; left: 0; right: 0; top: 6px; height: 4px; border-radius: 2px; background: #e0e0e0"></span><span style="{{s.fill}}"></span><span style="{{s.thumb}}"></span></span></label>
+</sc-for>
+</div>
+<sc-for list="{{offBenches}}" as="b" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f7f7f7; border-radius: 10px"><span style="display: flex; flex-direction: column"><span style="font-weight: 600; color: #000000">{{b}}</span><span style="font-size: 12px; color: #999999">Off</span></span><span role="switch" aria-checked="false" style="width: 36px; height: 22px; border-radius: 11px; background: #d6d6d6; position: relative"><span style="position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff"></span></span></div>
+</sc-for>
+<p style="margin: 4px 4px 0; display: flex; gap: 8px; font-size: 12px; color: #666666"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="flex: 0 0 auto; margin-top: 2px"><path d="{{ic.info}}"></path></svg>Benches are baked with the room: bake again after a change to see their shadows.</p>
+</div>
+<footer style="display: flex; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid #efefef"><button type="button" style="font: inherit; font-size: 14px; font-weight: 600; padding: 10px 22px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Save</button></footer>
+</aside>
+
+<!-- Floor -->
+<aside style="background: #ffffff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden; display: flex; flex-direction: column">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef"><span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #f1e6d6; color: #7a5a30; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.floor}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Floor</h2><span style="font-size: 13px; color: #666666">The wood and how its boards are laid.</span></span><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 256 256" fill="#333333"><path d="{{ic.x}}"></path></svg></span></header>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="background: #f7f7f7; border-radius: 10px; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600; color: #000000">Wood</span>
+<div role="radiogroup" aria-label="Wood type" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px">
+<sc-for list="{{woods}}" as="w" hint-placeholder-count="3"><span style="{{w.style}}"><span style="{{w.swatch}}"></span>{{w.name}}</span></sc-for>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="display: flex; justify-content: space-between"><span style="font-size: 13px">Tone</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 1px 7px; border-radius: 4px; background: #ffffff">0%</span></span><span style="position: relative; height: 16px; display: block"><span style="position: absolute; left: 0; right: 0; top: 5px; height: 6px; border-radius: 3px; background: linear-gradient(90deg,#e7dccb,#c8924f)"></span><span style="position: absolute; left: -2px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 0 1.5px #1a1a1a"></span></span><span style="display: flex; justify-content: space-between; font-size: 11px; color: #666666"><span>Natural</span><span>Honey</span></span></label>
+</div>
+<div style="background: #f7f7f7; border-radius: 10px; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-weight: 600; color: #000000">Boards</span>
+<sc-for list="{{boards}}" as="s" hint-placeholder-count="4">
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="display: flex; justify-content: space-between"><span style="font-size: 13px">{{s.label}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 1px 7px; border-radius: 4px; background: #ffffff">{{s.value}}</span></span><span style="position: relative; height: 16px; display: block"><span style="position: absolute; left: 0; right: 0; top: 6px; height: 4px; border-radius: 2px; background: #e0e0e0"></span><span style="{{s.fill}}"></span><span style="{{s.thumb}}"></span></span></label>
+</sc-for>
+</div>
+</div>
+<footer style="display: flex; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid #efefef"><button type="button" style="font: inherit; font-size: 14px; font-weight: 600; padding: 10px 22px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Save</button></footer>
+</aside>
+
+<!-- Bake -->
+<aside style="background: #ffffff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden; display: flex; flex-direction: column">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef"><span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #e8eef7; color: #2c4a73; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.cube}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Bake the room</h2><span style="font-size: 13px; color: #666666">Lights the room once, so visitors see it instantly.</span></span><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 256 256" fill="#333333"><path d="{{ic.x}}"></path></svg></span></header>
+<div style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div role="status" style="display: flex; gap: 10px; padding: 12px 14px; background: #d4edda; border-radius: 10px; color: #155724"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><path d="{{ic.check}}"></path></svg><span style="display: flex; flex-direction: column"><strong>Bake is current</strong><span style="font-size: 13px">Baked Nov 02, 2026 · reviewed</span></span></div>
+<span style="font-size: 13px; color: #555555">Review the result before publishing.</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 600; padding: 12px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Bake</button>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px">Quick bake</button><button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 10px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px">View baked room</button></div>
+<p style="margin: 0; display: flex; gap: 8px; font-size: 12px; color: #666666"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="flex: 0 0 auto; margin-top: 2px"><path d="{{ic.info}}"></path></svg>Quick bake: a fast, rougher preview on this computer only. Never saved, never shown to visitors.</p>
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999999; padding-top: 6px">Other states use the same box</span>
+<div style="display: flex; gap: 10px; padding: 12px 14px; background: #fff3cd; border-radius: 10px; color: #856404; font-size: 13px"><span><strong>Out of date.</strong> Today's text for a stale bake.</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: #f2f2f2; border-radius: 10px; font-size: 13px"><span><strong>Baking…</strong> today's progress text</span><span style="height: 6px; border-radius: 3px; background: #e0e0e0; overflow: hidden"><span style="display: block; width: 45%; height: 100%; background: #1a1a1a"></span></span></div>
+</div>
+</aside>
+
+<!-- Walls & ceiling -->
+<aside style="background: #ffffff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef"><span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #eceae6; color: #333333; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.roller}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Walls &amp; ceiling</h2><span style="font-size: 13px; color: #666666">The paint colours of the room.</span></span><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 256 256" fill="#333333"><path d="{{ic.x}}"></path></svg></span></header>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{wallColors}}" as="c" hint-placeholder-count="2">
+<button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; font: inherit; text-align: left; background: #f7f7f7; border: 0; border-radius: 10px"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 8px; background: #fbf9f4; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12)"></span><span style="flex: 1 1 auto; display: flex; flex-direction: column"><span style="font-weight: 600; color: #000000">{{c}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #666666">#fbf9f4</span></span><span style="font-size: 13px; font-weight: 600; color: #333333">Change</span></button>
+</sc-for>
+</div>
+</aside>
+
+<!-- Windows -->
+<aside style="background: #ffffff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef"><span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #e6f0f5; color: #2c5a73; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.grid}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Windows</h2><span style="font-size: 13px; color: #666666">Window frames and radiators.</span></span><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 256 256" fill="#333333"><path d="{{ic.x}}"></path></svg></span></header>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{winColors}}" as="c" hint-placeholder-count="2">
+<button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; font: inherit; text-align: left; background: #f7f7f7; border: 0; border-radius: 10px"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 8px; background: #fbf9f4; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12)"></span><span style="flex: 1 1 auto; display: flex; flex-direction: column"><span style="font-weight: 600; color: #000000">{{c}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #666666">#fbf9f4</span></span><span style="font-size: 13px; font-weight: 600; color: #333333">Change</span></button>
+</sc-for>
+</div>
+</aside>
+
+<!-- Camera -->
+<aside style="background: #ffffff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef"><span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #ece8f4; color: #4a3a73; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.camera}}"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">View</h2><span style="font-size: 13px; color: #666666">How visitors see the room as they walk.</span></span><span style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 256 256" fill="#333333"><path d="{{ic.x}}"></path></svg></span></header>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+<div style="background: #f7f7f7; border-radius: 10px; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{cam}}" as="s" hint-placeholder-count="2">
+<label style="display: flex; flex-direction: column; gap: 6px"><span style="display: flex; justify-content: space-between"><span style="font-size: 13px">{{s.label}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 1px 7px; border-radius: 4px; background: #ffffff">{{s.value}}</span></span><span style="position: relative; height: 16px; display: block"><span style="position: absolute; left: 0; right: 0; top: 6px; height: 4px; border-radius: 2px; background: #e0e0e0"></span><span style="{{s.fill}}"></span><span style="{{s.thumb}}"></span></span><span style="display: flex; justify-content: space-between; font-size: 11px; color: #666666"><span>{{s.min}}</span><span>{{s.max}}</span></span></label>
+</sc-for>
+</div>
+</div>
+<footer style="display: flex; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid #efefef"><button type="button" style="font: inherit; font-size: 14px; font-weight: 600; padding: 10px 22px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Save</button></footer>
+</aside>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ic = {
+      chair: 'M214,90.48V72a38,38,0,0,0-38-38H80A38,38,0,0,0,42,72V90.48a38,38,0,0,0,0,75.05V200a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V165.53a38,38,0,0,0,0-75ZM80,46h96a26,26,0,0,1,26,26V90.48A38.05,38.05,0,0,0,170,128v2H86v-2A38.05,38.05,0,0,0,54,90.48V72A26,26,0,0,1,80,46ZM208.35,154H208a6,6,0,0,0-6,6v40a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V160h0a6,6,0,0,0-6-6h-.35A26,26,0,1,1,74,128v40a6,6,0,0,0,12,0V142h84v26a6,6,0,0,0,12,0V128a26,26,0,1,1,26.35,26Z',
+      floor: 'M208,138H48a14,14,0,0,0-14,14v40a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V152A14,14,0,0,0,208,138Zm2,54a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2ZM208,50H48A14,14,0,0,0,34,64v40a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V64A14,14,0,0,0,208,50Zm2,54a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      cube: 'M222.72,67.9l-88-48.17a13.9,13.9,0,0,0-13.44,0l-88,48.18A14,14,0,0,0,26,80.18v95.64a14,14,0,0,0,7.28,12.27l88,48.18a13.92,13.92,0,0,0,13.44,0l88-48.18A14,14,0,0,0,230,175.82V80.18A14,14,0,0,0,222.72,67.9ZM127,30.25a2,2,0,0,1,1.92,0L212.51,76,128,122.24,43.49,76ZM39,177.57a2,2,0,0,1-1-1.75V86.66l84,46V223Zm177.92,0L134,223V132.64l84-46v89.16A2,2,0,0,1,217,177.57Z',
+      roller: 'M232,90H214V64a14,14,0,0,0-14-14H48A14,14,0,0,0,34,64V90H16a6,6,0,0,0,0,12H34v26a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V102h18a2,2,0,0,1,2,2v50a2,2,0,0,1-1.45,1.92l-100.4,28.68A14.06,14.06,0,0,0,122,198v34a6,6,0,0,0,12,0V198a2,2,0,0,1,1.45-1.92l100.4-28.68A14.06,14.06,0,0,0,246,154V104A14,14,0,0,0,232,90Zm-30,38a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H200a2,2,0,0,1,2,2Z',
+      grid: 'M200,42H56A14,14,0,0,0,42,56V200a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,14v66H134V54h66A2,2,0,0,1,202,56ZM56,54h66v68H54V56A2,2,0,0,1,56,54ZM54,200V134h68v68H56A2,2,0,0,1,54,200Zm146,2H134V134h68v66A2,2,0,0,1,200,202Z',
+      camera: 'M208,58H179.21L165,36.67A6,6,0,0,0,160,34H96a6,6,0,0,0-5,2.67L76.78,58H48A22,22,0,0,0,26,80V192a22,22,0,0,0,22,22H208a22,22,0,0,0,22-22V80A22,22,0,0,0,208,58Zm10,134a10,10,0,0,1-10,10H48a10,10,0,0,1-10-10V80A10,10,0,0,1,48,70H80a6,6,0,0,0,5-2.67L99.21,46h57.57L171,67.33A6,6,0,0,0,176,70h32a10,10,0,0,1,10,10ZM128,90a42,42,0,1,0,42,42A42,42,0,0,0,128,90Zm0,72a30,30,0,1,1,30-30A30,30,0,0,1,128,162Z',
+      x: 'M204.24,195.76a6,6,0,1,1-8.48,8.48L128,136.49,60.24,204.24a6,6,0,0,1-8.48-8.48L119.51,128,51.76,60.24a6,6,0,0,1,8.48-8.48L128,119.51l67.76-67.75a6,6,0,0,1,8.48,8.48L136.49,128Z',
+      check: 'M228.24,76.24l-128,128a6,6,0,0,1-8.48,0l-56-56a6,6,0,0,1,8.48-8.48L96,191.51,219.76,67.76a6,6,0,0,1,8.48,8.48Z',
+      info: 'M142,176a6,6,0,0,1-6,6,14,14,0,0,1-14-14V128a2,2,0,0,0-2-2,6,6,0,0,1,0-12,14,14,0,0,1,14,14v40a2,2,0,0,0,2,2A6,6,0,0,1,142,176ZM124,94a10,10,0,1,0-10-10A10,10,0,0,0,124,94Zm106,34A102,102,0,1,1,128,26,102.12,102.12,0,0,1,230,128Zm-12,0a90,90,0,1,0-90,90A90.1,90.1,0,0,0,218,128Z'
+    };
+    const sl = (label, value, pct, min, max) => ({ label, value, min: min || '', max: max || '',
+      fill: { position: 'absolute', left: 0, width: pct + '%', top: '6px', height: '4px', borderRadius: '2px', background: '#1a1a1a' },
+      thumb: { position: 'absolute', left: 'calc(' + pct + '% - 8px)', top: 0, width: '16px', height: '16px', borderRadius: '50%', background: '#ffffff', boxShadow: '0 0 0 1.5px #1a1a1a, 0 1px 3px rgba(0,0,0,0.2)' } });
+    const wood = (name, c, on) => ({ name,
+      style: { display: 'flex', flexDirection: 'column', gap: '6px', padding: '6px', background: '#ffffff', border: on ? '1.5px solid #1a1a1a' : '1px solid #dcdcdc', borderRadius: '8px', fontSize: '12px', fontWeight: on ? 600 : 400 },
+      swatch: { height: '34px', borderRadius: '4px', background: c } });
+    return {
+      ic,
+      bench: [sl('Across', '0.00 m', 50), sl('Depth', '0.00 m', 50), sl('Turn', '0°', 50)],
+      offBenches: ['Bench 2', 'Bench 3', 'Bench 4'],
+      woods: [wood('White oak', 'repeating-linear-gradient(90deg,#ddd2c0 0 18px,#d3c6b2 18px 19px)', true), wood('Oak', 'repeating-linear-gradient(90deg,#c9a77c 0 18px,#bb9a6e 18px 19px)'), wood('Walnut', 'repeating-linear-gradient(90deg,#7a5a40 0 18px,#6c4f37 18px 19px)')],
+      boards: [sl('Board width', '19 cm', 30), sl('Shift across', '0.00', 0), sl('Shift along', '0.00', 0), sl('Rotation', '0°', 0)],
+      wallColors: ['Walls', 'Ceiling'],
+      winColors: ['Window frames', 'Radiators'],
+      cam: [sl('Field of view', '50°', 50, 'Narrow', 'Wide'), sl('Eye level', '1.60 m', 50, 'Lower', 'Higher')]
+    };
+  }
+}
+</script>
+</body>
+</html>

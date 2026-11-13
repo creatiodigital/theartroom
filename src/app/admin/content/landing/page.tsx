@@ -1,55 +1,26 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { arrayMove } from '@dnd-kit/sortable'
+import { ArrowSquareOut, PencilSimple, Plus, Trash } from '@phosphor-icons/react'
 
+import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/SortableList'
 import { Button } from '@/components/ui/Button'
-import { ColorPicker } from '@/components/ui/ColorPicker'
-import { ImageUploader } from '@/components/ui/ImageUploader'
-import { Input } from '@/components/ui/Input'
-import { Modal } from '@/components/ui/Modal'
-import { Text } from '@/components/ui/Typography'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
+import { EDITABLE_SLIDE_FIELDS, type Slide, type SlideImageVariant } from './slide'
+import { SlideDialog } from './SlideDialog'
 import styles from './page.module.scss'
-
-type Slide = {
-  id: string
-  order: number
-  imageUrl: string
-  mobileImageUrl: string | null
-  title: string
-  subtitle: string
-  meta: string
-  exhibitionUrl: string
-  isActive: boolean
-  textColor: string
-  ctaBackgroundColor: string
-  ctaTextColor: string
-}
-
-// `desktop` is the main image; `mobile` is the optional portrait one used on
-// phones and tablets (falls back to the desktop image when absent).
-type SlideImageVariant = 'desktop' | 'mobile'
 
 const IMAGE_FIELD = {
   desktop: 'imageUrl',
@@ -59,56 +30,13 @@ const IMAGE_FIELD = {
 const slideImageEndpoint = (slideId: string, variant: SlideImageVariant) =>
   `/api/slides/${slideId}/image${variant === 'mobile' ? '?variant=mobile' : ''}`
 
-type SortableSlideItemProps = {
-  slide: Slide
-  onEdit: (slide: Slide) => void
-  onDelete: (slide: Slide) => void
-}
+/** A slide's name in the list, the handle and the delete dialog (questions.md Q71). */
+const slideTitle = (slide: Slide) => slide.title.trim() || 'Untitled'
 
-function SortableSlideItem({ slide, onEdit, onDelete }: SortableSlideItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: slide.id,
-  })
+const slidesCount = (n: number) => (n === 1 ? '1 slide' : `${n} slides`)
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} className={styles.slideItem}>
-      <div className={styles.dragHandle} {...attributes} {...listeners}>
-        <span className={styles.dragIcon}>⠿</span>
-      </div>
-      <div className={styles.slidePreview}>
-        {slide.imageUrl && (
-          <img src={slide.imageUrl} alt={slide.title} className={styles.slideImage} />
-        )}
-      </div>
-      <div className={styles.slideInfo}>
-        <Text font="dashboard" as="h3">
-          {slide.title}
-        </Text>
-        <Text font="dashboard" as="p" className={styles.subtitle}>
-          {slide.subtitle}
-        </Text>
-        <Text font="dashboard" as="p" className={styles.meta}>
-          {slide.meta}
-        </Text>
-      </div>
-      <div className={styles.slideActions}>
-        <Button font="dashboard" variant="secondary" label="Edit" onClick={() => onEdit(slide)} />
-        <Button
-          font="dashboard"
-          variant="secondary"
-          label="Delete"
-          onClick={() => onDelete(slide)}
-        />
-      </div>
-    </div>
-  )
-}
+const TITLE = 'Homepage slideshow'
+const DESCRIPTION = 'The slides at the top of the homepage, in this order. Drag to reorder.'
 
 export default function LandingContentPage() {
   const router = useRouter()
@@ -117,11 +45,18 @@ export default function LandingContentPage() {
   const [slides, setSlides] = useState<Slide[]>([])
   const [loading, setLoading] = useState(true)
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null)
+  // The slide as the window opened it: "Unsaved changes" and Save follow any difference.
+  const [openedSlide, setOpenedSlide] = useState<Slide | null>(null)
   const [isNewSlide, setIsNewSlide] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<SlideImageVariant | null>(null)
   const [uploadErrors, setUploadErrors] = useState<Partial<Record<SlideImageVariant, string>>>({})
   const [deleteTarget, setDeleteTarget] = useState<Slide | null>(null)
+  // questions.md Q74: a failed list load, a refused Save (in its dialog, as the save bar says it) and
+  // a refused delete or reorder (a red bar) are said on screen; they used to be console only.
+  const [loadError, setLoadError] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   // Redirect non-admins
   useEffect(() => {
@@ -138,10 +73,15 @@ export default function LandingContentPage() {
   const fetchSlides = useCallback(async () => {
     try {
       const response = await fetch('/api/slides')
-      const data = await response.json()
+      const data = await response.json().catch(() => null)
+      // Q74: a refused or malformed reply is no list of slides (it used to become one, and the
+      // page crashed on `slides.map`).
+      if (!response.ok || !Array.isArray(data)) throw new Error(`Slides: ${response.status}`)
       setSlides(data)
+      setLoadError(false)
     } catch (error) {
       console.error('Error fetching slides:', error)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -152,7 +92,7 @@ export default function LandingContentPage() {
   }, [fetchSlides])
 
   const handleAddSlide = () => {
-    setEditingSlide({
+    const blank: Slide = {
       id: '',
       order: slides.length,
       imageUrl: '',
@@ -165,15 +105,20 @@ export default function LandingContentPage() {
       textColor: '#ffffff',
       ctaBackgroundColor: '#ffffff',
       ctaTextColor: '#000000',
-    })
+    }
+    setEditingSlide(blank)
+    setOpenedSlide(blank)
     setIsNewSlide(true)
     setUploadErrors({})
+    setSaveFailed(false)
   }
 
   const handleEditSlide = (slide: Slide) => {
     setEditingSlide(slide)
+    setOpenedSlide(slide)
     setIsNewSlide(false)
     setUploadErrors({})
+    setSaveFailed(false)
   }
 
   const setUploadError = (variant: SlideImageVariant, message: string | null) =>
@@ -216,10 +161,12 @@ export default function LandingContentPage() {
         setSaving(true)
         setUploadError(variant, null)
         try {
+          // Q74: created hidden, so an image alone never puts an unsaved slide on the homepage;
+          // Save shows it (below). Closed without Save, it stays in the list, marked, off the homepage.
           const response = await fetch('/api/slides', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(editingSlide),
+            body: JSON.stringify({ ...editingSlide, isActive: false }),
           })
           const savedSlide = await response.json()
           if (!response.ok) {
@@ -274,20 +221,29 @@ export default function LandingContentPage() {
     if (!editingSlide) return
 
     setSaving(true)
+    setSaveFailed(false)
     try {
       const url = isNewSlide ? '/api/slides' : `/api/slides/${editingSlide.id}`
       const method = isNewSlide ? 'POST' : 'PUT'
 
-      await fetch(url, {
+      // Q74: Save is what puts a slide on the homepage, one first created by an image upload
+      // (hidden until now) included. This screen has no way to hide a slide.
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingSlide),
+        body: JSON.stringify({ ...editingSlide, isActive: true }),
       })
+      // Q74: a refused save keeps the dialog open and says so (it used to close as if saved).
+      if (!response.ok) {
+        setSaveFailed(true)
+        return
+      }
 
       await fetchSlides()
       setEditingSlide(null)
     } catch (error) {
       console.error('Error saving slide:', error)
+      setSaveFailed(true)
     } finally {
       setSaving(false)
     }
@@ -295,27 +251,43 @@ export default function LandingContentPage() {
 
   const handleDeleteSlide = async () => {
     if (!deleteTarget) return
+    const target = deleteTarget
 
     try {
-      await fetch(`/api/slides/${deleteTarget.id}`, { method: 'DELETE' })
-      await fetchSlides()
-      setDeleteTarget(null)
+      const response = await fetch(`/api/slides/${target.id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error(`Delete: ${response.status}`)
     } catch (error) {
+      // Q74: said on screen, not only in the console.
       console.error('Error deleting slide:', error)
+      setActionError(`Couldn't delete ${slideTitle(target)}. Please try again.`)
     }
+    setDeleteTarget(null)
+    await fetchSlides()
   }
+
+  // The Edit slide window's footer: what changed since it opened, and whether Save is offered.
+  const slideDirty =
+    !!editingSlide &&
+    !!openedSlide &&
+    EDITABLE_SLIDE_FIELDS.some(
+      (field) => (editingSlide[field] ?? '') !== (openedSlide[field] ?? ''),
+    )
+  // A slide created by an upload and never saved is off the homepage; Save is what shows it (Q74),
+  // so it is offered unchanged too.
+  const slideCanSave = slideDirty || (!!editingSlide?.id && !editingSlide.isActive)
+  const slidePosition = (() => {
+    if (!editingSlide) return ''
+    const index = slides.findIndex((s) => s.id === editingSlide.id)
+    return index >= 0
+      ? `Slide ${index + 1} of ${slides.length}`
+      : `Slide ${slides.length + 1} of ${slides.length + 1}`
+  })()
 
   const updateField = (field: keyof Slide, value: string | number | boolean) => {
     if (!editingSlide) return
     setEditingSlide({ ...editingSlide, [field]: value })
+    setSaveFailed(false)
   }
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  )
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -328,205 +300,185 @@ export default function LandingContentPage() {
 
       // Persist new order to the API
       try {
-        await fetch('/api/slides/reorder', {
+        const response = await fetch('/api/slides/reorder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             slideIds: newSlides.map((s) => s.id),
           }),
         })
+        if (!response.ok) throw new Error(`Reorder: ${response.status}`)
       } catch (error) {
         console.error('Error reordering slides:', error)
-        // Refetch to restore server state on error
-        fetchSlides()
+        setActionError("Couldn't save the new order. Please try again.")
       }
+      // Q74: the server's order either way. On a refusal it puts the list back; on success each
+      // slide gets its new `order` (it kept the old one, and an edit saved after a drag undid it).
+      fetchSlides()
     }
   }
 
+  // gallery.md §2 (Q4): Content / Landing page, in place of an eyebrow.
+  const breadcrumb = (
+    <AdminBreadcrumb
+      items={[{ label: 'Content', href: '/admin/content' }, { label: 'Landing page' }]}
+    />
+  )
+
+  // Add slide waits for the list (it numbers the new slide after the last).
   if (status === 'loading' || loading) {
-    return <div className={styles.page}>Loading...</div>
+    return (
+      <div className={styles.page}>
+        {breadcrumb}
+        <AdminPageHeader title={TITLE} description={DESCRIPTION} />
+        <p className={styles.status}>Loading slides…</p>
+      </div>
+    )
   }
 
   return (
-    <DashboardLayout backLink="/admin/dashboard">
-      <h1 className={dashboardStyles.pageTitle}>Landing Page - Slideshow</h1>
+    <div className={styles.page}>
+      {breadcrumb}
+      <AdminPageHeader
+        title={TITLE}
+        description={DESCRIPTION}
+        actions={
+          <>
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              prefetch={false}
+              className={styles.view}
+            >
+              View homepage
+              <ArrowSquareOut size={16} weight="light" aria-hidden />
+              <span className="sr-only">(opens in a new tab)</span>
+            </Link>
+            {/* Add numbers the new slide after the last: not without the list (Q74). */}
+            {!loadError && (
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.add}
+                onClick={handleAddSlide}
+              >
+                <Plus size={16} weight="light" aria-hidden />
+                Add slide
+              </Button>
+            )}
+          </>
+        }
+      />
 
-      <div className={dashboardStyles.sectionHeader}>
-        <div></div>
-        <Button font="dashboard" variant="primary" label="Add Slide" onClick={handleAddSlide} />
-      </div>
+      {/* No ×: a dismissed load error would leave an empty page (as Q75). */}
+      {loadError && (
+        <Callout tone="red" role="alert">
+          The slides could not be loaded.
+        </Callout>
+      )}
+      {actionError && (
+        <FeedbackBar tone="error" onDismiss={() => setActionError('')}>
+          {actionError}
+        </FeedbackBar>
+      )}
 
-      {slides.length === 0 ? (
-        <Text font="dashboard" as="p" className={styles.empty}>
-          No slides yet. Click &quot;Add Slide&quot; to create one.
-        </Text>
+      {loadError ? null : slides.length === 0 ? (
+        <ListPanel label="Slides">
+          <EmptyState
+            title="No slides yet."
+            text={
+              <>
+                Click <strong>Add slide</strong> to create one.
+              </>
+            }
+          />
+        </ListPanel>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            <div className={styles.slideList}>
-              {slides.map((slide) => (
-                <SortableSlideItem
-                  key={slide.id}
-                  slide={slide}
-                  onEdit={handleEditSlide}
-                  onDelete={setDeleteTarget}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <ListPanel
+          label="Slides"
+          count={slidesCount(slides.length)}
+          footnote={SORTABLE_KEYBOARD_HINT}
+        >
+          <SortableList
+            onDragEnd={handleDragEnd}
+            rows={slides.map((slide) => {
+              const title = slideTitle(slide)
+              return {
+                id: slide.id,
+                title,
+                sub:
+                  // A slide created by an image upload and never saved is off the homepage (Q74).
+                  [
+                    slide.isActive ? '' : 'Not on the homepage until saved',
+                    slide.subtitle,
+                    slide.meta,
+                  ]
+                    .map((part) => part.trim())
+                    .filter(Boolean)
+                    .join(' · ') || undefined,
+                thumb: slide.imageUrl ? (
+                  <img src={slide.imageUrl} alt="" className={styles.thumb} />
+                ) : (
+                  <span className={styles.thumb} />
+                ),
+                actions: (
+                  <>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.edit}
+                      onClick={() => handleEditSlide(slide)}
+                    >
+                      <PencilSimple size={16} weight="light" aria-hidden />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="bare"
+                      font="dashboard"
+                      className={styles.trash}
+                      aria-label={`Delete slide ${title}`}
+                      onClick={() => setDeleteTarget(slide)}
+                    >
+                      <Trash size={16} weight="light" aria-hidden />
+                    </Button>
+                  </>
+                ),
+              }
+            })}
+          />
+        </ListPanel>
       )}
 
-      {/* Edit/Add Modal */}
       {editingSlide && (
-        <Modal onClose={() => setEditingSlide(null)} maxWidth="720px">
-          <div className={styles.slideModal}>
-            <Text font="dashboard" as="h2" className={styles.slideModalTitle}>
-              {isNewSlide ? 'Add Slide' : 'Edit Slide'}
-            </Text>
-
-            {/* Only this middle part scrolls: the title and Save stay in view
-                on short laptop screens. */}
-            <div className={styles.slideModalBody}>
-              <div className={styles.section}>
-                <label className={styles.label}>Desktop image</label>
-                <ImageUploader
-                  imageUrl={editingSlide.imageUrl || null}
-                  onUpload={(file) => handleSlideUpload(file, 'desktop')}
-                  onRemove={editingSlide.id ? () => handleSlideImageRemove('desktop') : undefined}
-                  uploading={uploading === 'desktop'}
-                  error={uploadErrors.desktop}
-                  aspectRatio="16 / 9"
-                  objectFit="contain"
-                />
-
-                <label className={styles.label}>Mobile &amp; tablet image (optional)</label>
-                <Text font="dashboard" as="p" size="sm" className={styles.hint}>
-                  Shown on screens narrower than 1024px, cropped from the center. Pick a portrait
-                  image with a calm area behind the text. Without one, the desktop image is used
-                  everywhere.
-                </Text>
-                <div className={styles.mobileUploader}>
-                  <ImageUploader
-                    imageUrl={editingSlide.mobileImageUrl || null}
-                    onUpload={(file) => handleSlideUpload(file, 'mobile')}
-                    onRemove={editingSlide.id ? () => handleSlideImageRemove('mobile') : undefined}
-                    uploading={uploading === 'mobile'}
-                    error={uploadErrors.mobile}
-                    aspectRatio="3 / 4"
-                    objectFit="contain"
-                  />
-                </div>
-
-                <label className={styles.label} htmlFor="title">
-                  Title
-                </label>
-                <Input
-                  id="title"
-                  size="medium"
-                  value={editingSlide.title}
-                  onChange={(e) => updateField('title', e.target.value)}
-                />
-
-                <label className={styles.label} htmlFor="subtitle">
-                  Subtitle
-                </label>
-                <Input
-                  id="subtitle"
-                  size="medium"
-                  value={editingSlide.subtitle}
-                  onChange={(e) => updateField('subtitle', e.target.value)}
-                />
-
-                <label className={styles.label} htmlFor="meta">
-                  Meta
-                </label>
-                <Input
-                  id="meta"
-                  size="medium"
-                  value={editingSlide.meta}
-                  onChange={(e) => updateField('meta', e.target.value)}
-                />
-
-                <label className={styles.label} htmlFor="exhibitionUrl">
-                  Exhibition URL
-                </label>
-                <Input
-                  id="exhibitionUrl"
-                  size="medium"
-                  value={editingSlide.exhibitionUrl}
-                  onChange={(e) => updateField('exhibitionUrl', e.target.value)}
-                />
-
-                <label className={styles.label}>Text color</label>
-                <ColorPicker
-                  textColor={editingSlide.textColor || '#ffffff'}
-                  onColorSelect={(color) => updateField('textColor', color)}
-                />
-
-                <label className={styles.label}>Enter button background</label>
-                <ColorPicker
-                  textColor={editingSlide.ctaBackgroundColor || '#ffffff'}
-                  onColorSelect={(color) => updateField('ctaBackgroundColor', color)}
-                />
-
-                <label className={styles.label}>Enter button text</label>
-                <ColorPicker
-                  textColor={editingSlide.ctaTextColor || '#000000'}
-                  onColorSelect={(color) => updateField('ctaTextColor', color)}
-                />
-                <Text font="dashboard" as="p" size="sm" className={styles.hint}>
-                  The &ldquo;Enter Virtual Exhibition&rdquo; button shows on laptops and desktops
-                  when the exhibition&apos;s 3D space is published, and opens it directly.
-                </Text>
-              </div>
-            </div>
-
-            <div className={styles.slideModalActions}>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setEditingSlide(null)}
-              />
-              <Button
-                font="dashboard"
-                variant="primary"
-                label={saving ? 'Saving...' : 'Save'}
-                onClick={handleSaveSlide}
-              />
-            </div>
-          </div>
-        </Modal>
+        <SlideDialog
+          slide={editingSlide}
+          isNew={isNewSlide}
+          position={slidePosition}
+          dirty={slideDirty}
+          canSave={slideCanSave}
+          saving={saving}
+          saveFailed={saveFailed}
+          uploading={uploading}
+          uploadErrors={uploadErrors}
+          onUpload={handleSlideUpload}
+          onRemove={editingSlide.id ? handleSlideImageRemove : undefined}
+          onField={updateField}
+          onSave={handleSaveSlide}
+          onCancel={() => setEditingSlide(null)}
+        />
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <Modal onClose={() => setDeleteTarget(null)}>
-          <div className={styles.modal}>
-            <Text font="dashboard" as="h2">
-              Delete Slide?
-            </Text>
-            <Text font="dashboard" as="p">
-              Are you sure you want to delete the slide "{deleteTarget.title}"?
-            </Text>
-            <div className={styles.modalActions}>
-              <Button
-                font="dashboard"
-                variant="primary"
-                label="Yes, Delete"
-                onClick={handleDeleteSlide}
-              />
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label="Cancel"
-                onClick={() => setDeleteTarget(null)}
-              />
-            </div>
-          </div>
-        </Modal>
+        <AdminConfirmModal
+          title="Delete slide?"
+          message={`Are you sure you want to delete the slide "${slideTitle(deleteTarget)}"?`}
+          confirmLabel="Yes, delete"
+          destructive
+          onConfirm={handleDeleteSlide}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
-    </DashboardLayout>
+    </div>
   )
 }

@@ -4,6 +4,14 @@ import { useGLTF } from '@react-three/drei'
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { Mesh } from 'three'
+import {
+  FolderSimplePlus,
+  Image as ImageIcon,
+  Shapes,
+  SpeakerHigh,
+  TextT,
+  VideoCamera,
+} from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -16,6 +24,45 @@ import type { RootState } from '@/redux/store'
 
 import styles from './CreatePanel.module.scss'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
+
+// The five things to add, in today's order, with today's tooltips (wallview.md §2: the name
+// under each icon is new).
+const ADD_ITEMS = [
+  {
+    type: 'image',
+    label: 'Image',
+    icon: ImageIcon,
+    tooltip:
+      'Click to create image in the middle of the wall, or drag and drop anywhere on the wall',
+  },
+  {
+    type: 'text',
+    label: 'Text',
+    icon: TextT,
+    tooltip:
+      'Click to create text in the middle of the wall, or drag and drop anywhere on the wall',
+  },
+  {
+    type: 'shape',
+    label: 'Shape',
+    icon: Shapes,
+    tooltip: 'Click to create a decorative shape, or drag and drop anywhere on the wall',
+  },
+  {
+    type: 'video',
+    label: 'Video',
+    icon: VideoCamera,
+    tooltip:
+      'Click to create video in the middle of the wall, or drag and drop anywhere on the wall',
+  },
+  {
+    type: 'sound',
+    label: 'Sound',
+    icon: SpeakerHigh,
+    tooltip:
+      'Click to create sound in the middle of the wall, or drag and drop anywhere on the wall',
+  },
+] as const
 
 export const CreatePanel = () => {
   const [showMediaLibrary, setShowMediaLibrary] = useState(false)
@@ -58,87 +105,41 @@ export const CreatePanel = () => {
           duplicateError={duplicateError}
         />
       )}
-      <div className={styles.panel}>
-        <div className={styles.options}>
+      {/* Like the panels: a click here doesn't deselect (Wall.tsx), so an item it adds stays
+          selected (questions.md Q146 c). A drag onto the wall is no click. */}
+      <div className={styles.panel} data-no-deselect="true">
+        <nav aria-label="Add to the wall" className={styles.bar}>
           <Tooltip label="Add artwork from your library" placement="top" offset={16}>
             <Button
-              size="big"
-              icon="gallery"
-              variant="secondary"
+              variant="bare"
+              font="dashboard"
+              className={styles.library}
               onClick={() => setShowMediaLibrary(!showMediaLibrary)}
-            />
+            >
+              <FolderSimplePlus size={20} weight="light" aria-hidden />
+              From library
+            </Button>
           </Tooltip>
-          <Tooltip
-            label="Click to create image in the middle of the wall, or drag and drop anywhere on the wall"
-            placement="top"
-            offset={16}
-          >
-            <Button
-              size="big"
-              icon="image"
-              variant="secondary"
-              onClick={() => handleCreateArtwork('image')}
-              draggable
-              onDragStart={(e) => handleArtworkDragStart(e, 'image')}
-            />
-          </Tooltip>
-          <Tooltip
-            label="Click to create text in the middle of the wall, or drag and drop anywhere on the wall"
-            placement="top"
-            offset={16}
-          >
-            <Button
-              size="big"
-              icon="type"
-              variant="secondary"
-              onClick={() => handleCreateArtwork('text')}
-              draggable
-              onDragStart={(e) => handleArtworkDragStart(e, 'text')}
-            />
-          </Tooltip>
-          <Tooltip
-            label="Click to create a decorative shape, or drag and drop anywhere on the wall"
-            placement="top"
-            offset={16}
-          >
-            <Button
-              size="big"
-              icon="shapes"
-              variant="secondary"
-              onClick={() => handleCreateArtwork('shape')}
-              draggable
-              onDragStart={(e) => handleArtworkDragStart(e, 'shape')}
-            />
-          </Tooltip>
-          <Tooltip
-            label="Click to create video in the middle of the wall, or drag and drop anywhere on the wall"
-            placement="top"
-            offset={16}
-          >
-            <Button
-              size="big"
-              icon="video"
-              variant="secondary"
-              onClick={() => handleCreateArtwork('video')}
-              draggable
-              onDragStart={(e) => handleArtworkDragStart(e, 'video')}
-            />
-          </Tooltip>
-          <Tooltip
-            label="Click to create sound in the middle of the wall, or drag and drop anywhere on the wall"
-            placement="top"
-            offset={16}
-          >
-            <Button
-              size="big"
-              icon="volume-2"
-              variant="secondary"
-              onClick={() => handleCreateArtwork('sound')}
-              draggable
-              onDragStart={(e) => handleArtworkDragStart(e, 'sound')}
-            />
-          </Tooltip>
-        </div>
+          <span aria-hidden className={styles.divider} />
+          {ADD_ITEMS.map(({ type, label, icon: AddIcon, tooltip }) => (
+            <Tooltip key={type} label={tooltip} placement="top" offset={16}>
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.add}
+                onClick={() => handleCreateArtwork(type)}
+                draggable
+                onDragStart={(e) => handleArtworkDragStart(e, type)}
+              >
+                <AddIcon size={20} weight="light" aria-hidden />
+                <span className={styles.addLabel}>{label}</span>
+              </Button>
+            </Tooltip>
+          ))}
+        </nav>
+        <p className={styles.hint}>
+          Click to add in the middle of the wall, or drag onto the wall.
+        </p>
       </div>
     </>
   )

@@ -14,8 +14,7 @@ import { renderEmailLayout } from './layout'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export type InquiryAdminNotificationArgs = {
-  firstName: string
-  lastName: string
+  fullName: string
   email: string
   phone: string
   message: string
@@ -32,8 +31,7 @@ export function renderInquiryAdminNotificationEmail(args: InquiryAdminNotificati
   subject: string
   html: string
 } {
-  const safeFirstName = escapeHtml(args.firstName)
-  const safeLastName = escapeHtml(args.lastName)
+  const safeFullName = escapeHtml(args.fullName)
   const safeEmail = escapeHtml(args.email)
   const safePhone = escapeHtml(args.phone)
   const safeArtworkTitle = escapeHtml(args.artworkTitle)
@@ -50,7 +48,7 @@ export function renderInquiryAdminNotificationEmail(args: InquiryAdminNotificati
   ]
 
   const contactRows = [
-    { label: 'Name', value: `${safeFirstName} ${safeLastName}` },
+    { label: 'Name', value: safeFullName },
     {
       label: 'Email',
       value: `<a href="mailto:${safeEmail}" style="color:inherit">${safeEmail}</a>`,

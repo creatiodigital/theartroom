@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>3D Editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#d9d9d9}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100vh; min-height: 900px; overflow: hidden; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; color: #333333; background: #d9d9d9 url('/_blob/af8bb466d8db5933e06adf268afa7d26') center / cover no-repeat">
+
+<!-- toolbar -->
+<nav aria-label="Editor tools" style="position: absolute; left: 16px; top: 16px; width: 76px; padding: 8px 6px; box-sizing: border-box; background: rgba(255,255,255,0.96); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{tools}}" as="t" hint-placeholder-count="10">
+<sc-if value="{{t.divider}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="height: 1px; background: #ececec; margin: 6px 8px"></span></sc-if>
+<sc-if value="{{t.caption}}" hint-placeholder-val="{{false}}"><span style="font-size: 9.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999; text-align: center; padding: 2px 0 2px">{{t.caption}}</span></sc-if>
+<sc-if value="{{t.label}}" hint-placeholder-val="{{true}}">
+<button type="button" aria-pressed="{{t.pressed}}" style="{{t.style}}">
+<span style="position: relative; display: flex"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{t.icon}}"></path></svg><sc-if value="{{t.dot}}" hint-placeholder-val="{{false}}"><span style="{{t.dot}}"></span></sc-if></span>
+<span style="font-size: 11px; font-weight: 500; line-height: 1.1">{{t.label}}</span>
+</button>
+</sc-if>
+</sc-for>
+</nav>
+
+<!-- title pill -->
+<div style="position: absolute; left: 108px; top: 16px; display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: rgba(255,255,255,0.96); border-radius: 999px; box-shadow: 0 4px 16px rgba(0,0,0,0.1)">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: #e0a800"></span>
+<span style="font-size: 13px; color: #666666">Editing</span>
+<span style="font-size: 13px; font-weight: 600; color: #000000">Quimigramas</span>
+</div>
+
+<!-- panel -->
+<aside aria-labelledby="p-title" style="position: absolute; right: 16px; top: 16px; bottom: 16px; width: 384px; display: flex; flex-direction: column; background: rgba(255,255,255,0.97); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04); overflow: hidden">
+<header style="display: flex; align-items: flex-start; gap: 12px; padding: 18px 16px 16px 20px; border-bottom: 1px solid #efefef">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; background: #fff4d6; color: #8a5a00; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.bulbFill}}"></path></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><h2 id="p-title" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Lighting</h2><span style="font-size: 13px; color: #666666">How light falls on the walls and the works.</span></span>
+<button type="button" aria-label="Close panel" style="width: 36px; height: 36px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 8px; color: #333333"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.x}}"></path></svg></button>
+</header>
+
+<div style="flex: 1 1 auto; overflow-y: auto; padding: 12px 12px 16px; display: flex; flex-direction: column; gap: 8px">
+
+<sc-for list="{{closed}}" as="c" hint-placeholder-count="2">
+<button type="button" aria-expanded="false" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; font: inherit; text-align: left; background: #f7f7f7; border: 0; border-radius: 10px; cursor: pointer">
+<span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 8px; background: #ffffff; display: flex; align-items: center; justify-content: center; color: #333333"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="{{c.icon}}"></path></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column"><span style="font-weight: 600; color: #000000">{{c.title}}</span><span style="font-size: 12px; color: #666666">{{c.sub}}</span></span>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #555555">{{c.value}}</span>
+<svg width="14" height="14" viewBox="0 0 256 256" fill="#666666" aria-hidden="true"><path d="{{ic.right}}"></path></svg>
+</button>
+</sc-for>
+
+<section aria-labelledby="s-track" style="background: #f7f7f7; border-radius: 10px; padding: 0 0 12px">
+<button type="button" aria-expanded="true" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; font: inherit; text-align: left; background: none; border: 0; cursor: pointer">
+<span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 8px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; color: #ffffff"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.lamp}}"></path></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column"><span id="s-track" style="font-weight: 600; color: #000000">Track lamps</span><span style="font-size: 12px; color: #666666">Spotlights on the ceiling tracks</span></span>
+<svg width="14" height="14" viewBox="0 0 256 256" fill="#666666" aria-hidden="true"><path d="{{ic.down}}"></path></svg>
+</button>
+
+<div style="margin: 0 12px; padding: 14px; background: #ffffff; border-radius: 8px; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">All lamps</span>
+<sc-for list="{{sliders}}" as="s" hint-placeholder-count="3">
+<label style="display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; color: #333333">{{s.label}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 2px 8px; border-radius: 4px; background: #f2f2f2; color: #000000">{{s.value}}</span></span>
+<span style="position: relative; height: 16px; display: block"><span style="position: absolute; left: 0; right: 0; top: 6px; height: 4px; border-radius: 2px; background: #e3e3e3"></span><span style="{{s.fill}}"></span><span style="{{s.thumb}}"></span></span>
+</label>
+</sc-for>
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px">Lamp colour</span><span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 24px; height: 24px; border-radius: 6px; background: #fbf9f4; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15)"></span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #555555">#fbf9f4</span></span></div>
+</div>
+
+<div style="margin: 10px 12px 0; padding: 14px; background: #ffffff; border-radius: 8px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #666666">Each lamp</span><span style="font-size: 12px; color: #666666">10 on · pick one to adjust</span></div>
+<div role="radiogroup" aria-label="Lamp" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px">
+<sc-for list="{{lamps}}" as="l" hint-placeholder-count="10"><button type="button" role="radio" aria-checked="{{l.sel}}" aria-label="{{l.aria}}" style="{{l.style}}">{{l.n}}<span style="{{l.dot}}"></span></button></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-weight: 600; color: #000000">Lamp 3</span><span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555555">On<span role="switch" aria-checked="true" aria-label="Lamp 3 on" style="width: 36px; height: 22px; border-radius: 11px; background: #1a1a1a; position: relative"><span style="position: absolute; top: 3px; left: 17px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff"></span></span></span></div>
+<sc-for list="{{lampSliders}}" as="s" hint-placeholder-count="2">
+<label style="display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; color: #333333">{{s.label}}</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; padding: 2px 8px; border-radius: 4px; background: #f2f2f2; color: #000000">{{s.value}}</span></span>
+<span style="position: relative; height: 16px; display: block"><span style="position: absolute; left: 0; right: 0; top: 6px; height: 4px; border-radius: 2px; background: #e3e3e3"></span><span style="{{s.fill}}"></span><span style="{{s.thumb}}"></span></span>
+</label>
+</sc-for>
+</div>
+</div>
+</section>
+
+</div>
+
+<footer style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid #efefef; background: #ffffff">
+<span style="flex: 1 1 auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #555555"><span style="width: 8px; height: 8px; border-radius: 50%; background: #e0a800"></span>Unsaved changes</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 600; padding: 10px 22px; min-height: 42px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Save</button>
+</footer>
+</aside>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ic = {
+      back: 'M222,128a6,6,0,0,1-6,6H54.49l61.75,61.76a6,6,0,1,1-8.48,8.48l-72-72a6,6,0,0,1,0-8.48l72-72a6,6,0,0,1,8.48,8.48L54.49,122H216A6,6,0,0,1,222,128Z',
+      spots: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2Z',
+      bulb: 'M174,232a6,6,0,0,1-6,6H88a6,6,0,0,1,0-12h80A6,6,0,0,1,174,232Zm40-128a85.56,85.56,0,0,1-32.88,67.64A18.23,18.23,0,0,0,174,186v6a14,14,0,0,1-14,14H96a14,14,0,0,1-14-14v-6a18,18,0,0,0-7-14.23h0a85.59,85.59,0,0,1-33-67.24C41.740,57.91,79.39,19.12,125.93,18A86,86,0,0,1,214,104Zm-12,0a74,74,0,0,0-75.79-74C86.170,31,53.78,64.34,54,104.42a73.67,73.67,0,0,0,28.4,57.87A29.92,29.92,0,0,1,94,186v6a2,2,0,0,0,2,2h64a2,2,0,0,0,2-2v-6a30.18,30.18,0,0,1,11.7-23.78A73.59,73.59,0,0,0,202,104Zm-20.08-9A55.58,55.58,0,0,0,137,50.08a6,6,0,1,0-2,11.84C152.38,64.84,167.13,79.6,170.08,97a6,6,0,0,0,5.91,5,6.87,6.87,0,0,0,1-.08A6,6,0,0,0,181.92,95Z',
+      bulbFill: 'M176,232a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,232Zm40-128a87.55,87.55,0,0,1-33.64,69.21A16.24,16.24,0,0,0,176,186v6a16,16,0,0,1-16,16H96a16,16,0,0,1-16-16v-6a16,16,0,0,0-6.23-12.66A87.59,87.59,0,0,1,40,104.49C39.74,56.83,78.26,17.14,125.88,16A88,88,0,0,1,216,104Zm-32.11-9.34a57.6,57.6,0,0,0-46.56-46.55,8,8,0,0,0-2.66,15.780c16.57,2.79,30.63,16.85,33.44,33.45A8,8,0,0,0,176,104a9,9,0,0,0,1.35-.11A8,8,0,0,0,183.89,94.66Z',
+      sun: 'M122,40V16a6,6,0,0,1,12,0V40a6,6,0,0,1-12,0Zm68,88a62,62,0,1,1-62-62A62.07,62.07,0,0,1,190,128Zm-12,0a50,50,0,1,0-50,50A50.06,50.06,0,0,0,178,128ZM59.76,68.24a6,6,0,1,0,8.48-8.48l-16-16a6,6,0,0,0-8.48,8.48Zm0,119.52-16,16a6,6,0,1,0,8.48,8.48l16-16a6,6,0,1,0-8.48-8.48ZM192,70a6,6,0,0,0,4.24-1.76l16-16a6,6,0,0,0-8.48-8.48l-16,16A6,6,0,0,0,192,70Zm4.24,117.76a6,6,0,0,0-8.48,8.48l16,16a6,6,0,0,0,8.48-8.48ZM46,128a6,6,0,0,0-6-6H16a6,6,0,0,0,0,12H40A6,6,0,0,0,46,128Zm82,82a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V216A6,6,0,0,0,128,210Zm112-88H216a6,6,0,0,0,0,12h24a6,6,0,0,0,0-12Z',
+      lamp: 'M174,76.05V72a14,14,0,0,0-14-14H134V16a6,6,0,0,0-12,0V58H96A14,14,0,0,0,82,72v4A109.76,109.76,0,0,0,18,176a6,6,0,0,0,6,6H90v2a38,38,0,0,0,76,0v-2h66a6,6,0,0,0,6-6A109.76,109.76,0,0,0,174,76.050ZM154,184a26,26,0,0,1-52,0v-2h52ZM30.18,170A97.76,97.76,0,0,1,90.31,85.51,6,6,0,0,0,94,80V72a2,2,0,0,1,2-2h64a2,2,0,0,1,2,2v8a6,6,0,0,0,3.69,5.54A97.76,97.76,0,0,1,225.82,170Z',
+      panels: 'M208,138H48a14,14,0,0,0-14,14v40a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V152A14,14,0,0,0,208,138Zm2,54a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2ZM208,50H48A14,14,0,0,0,34,64v40a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V64A14,14,0,0,0,208,50Zm2,54a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      chair: 'M214,90.48V72a38,38,0,0,0-38-38H80A38,38,0,0,0,42,72V90.48a38,38,0,0,0,0,75.05V200a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V165.53a38,38,0,0,0,0-75ZM80,46h96a26,26,0,0,1,26,26V90.48A38.050,38.050,0,0,0,170,128v2H86v-2A38.05,38.05,0,0,0,54,90.48V72A26,26,0,0,1,80,46ZM208.35,154H208a6,6,0,0,0-6,6v40a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V160h0a6,6,0,0,0-6-6h-.35A26,26,0,1,1,74,128v40a6,6,0,0,0,12,0V142h84v26a6,6,0,0,0,12,0V128a26,26,0,1,1,26.35,26Z',
+      roller: 'M232,90H214V64a14,14,0,0,0-14-14H48A14,14,0,0,0,34,64V90H16a6,6,0,0,0,0,12H34v26a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V102h18a2,2,0,0,1,2,2v50a2,2,0,0,1-1.45,1.92l-100.4,28.68A14.060,14.060,0,0,0,122,198v34a6,6,0,0,0,12,0V198a2,2,0,0,1,1.45-1.92l100.4-28.68A14.06,14.06,0,0,0,246,154V104A14,14,0,0,0,232,90Zm-30,38a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H200a2,2,0,0,1,2,2Z',
+      grid: 'M200,42H56A14,14,0,0,0,42,56V200a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V56A14,14,0,0,0,200,42Zm2,14v66H134V54h66A2,2,0,0,1,202,56ZM56,54h66v68H54V56A2,2,0,0,1,56,54ZM54,200V134h68v68H56A2,2,0,0,1,54,200Zm146,2H134V134h68v66A2,2,0,0,1,200,202Z',
+      floor: 'M208,138H48a14,14,0,0,0-14,14v40a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V152A14,14,0,0,0,208,138Zm2,54a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V152a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2ZM208,50H48A14,14,0,0,0,34,64v40a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V64A14,14,0,0,0,208,50Zm2,54a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      camera: 'M208,58H179.21L165,36.67A6,6,0,0,0,160,34H96a6,6,0,0,0-5,2.67L76.78,58H48A22,22,0,0,0,26,80V192a22,22,0,0,0,22,22H208a22,22,0,0,0,22-22V80A22,22,0,0,0,208,58Zm10,134a10,10,0,0,1-10,10H48a10,10,0,0,1-10-10V80A10,10,0,0,1,48,70H80a6,6,0,0,0,5-2.67L99.21,46h57.57L171,67.33A6,6,0,0,0,176,70h32a10,10,0,0,1,10,10ZM128,90a42,42,0,1,0,42,42A42,42,0,0,0,128,90Zm0,72a30,30,0,1,1,30-30A30,30,0,0,1,128,162Z',
+      cube: 'M222.72,67.9l-88-48.17a13.9,13.9,0,0,0-13.44,0l-88,48.18A14,14,0,0,0,26,80.18v95.64a14,14,0,0,0,7.28,12.27l88,48.18a13.92,13.92,0,0,0,13.44,0l88-48.18A14,14,0,0,0,230,175.82V80.18A14,14,0,0,0,222.72,67.9ZM127,30.25a2,2,0,0,1,1.92,0L212.51,76,128,122.24,43.49,76ZM39,177.57a2,2,0,0,1-1-1.75V86.66l84,46V223Zm177.92,0L134,223V132.64l84-46v89.16A2,2,0,0,1,217,177.57Z',
+      x: 'M204.24,195.76a6,6,0,1,1-8.48,8.48L128,136.49,60.24,204.24a6,6,0,0,1-8.48-8.48L119.51,128,51.76,60.24a6,6,0,0,1,8.48-8.48L128,119.51l67.76-67.75a6,6,0,0,1,8.48,8.48L136.49,128Z',
+      down: 'M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z',
+      right: 'M180.24,132.24l-80,80a6,6,0,0,1-8.48-8.48L167.51,128,91.76,52.24a6,6,0,0,1,8.480-8.48l80,80A6,6,0,0,1,180.24,132.24Z'
+    };
+    const btn = (on) => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', width: '100%', padding: '8px 2px 7px', font: 'inherit', background: on ? '#1a1a1a' : 'transparent', color: on ? '#ffffff' : '#333333', border: 0, borderRadius: '10px', cursor: 'pointer' });
+    const dotSt = (c) => ({ position: 'absolute', right: '-3px', top: '-2px', width: '8px', height: '8px', borderRadius: '50%', background: c, boxShadow: '0 0 0 2px #ffffff' });
+    const T = [
+      { label: 'Exit', icon: ic.back },
+      { label: 'Spots', icon: ic.spots },
+      { divider: true }, { caption: 'Room' },
+      { label: 'Lighting', icon: ic.bulbFill, on: true },
+      { label: 'Walls', icon: ic.roller },
+      { label: 'Windows', icon: ic.grid },
+      { label: 'Floor', icon: ic.floor },
+      { label: 'Benches', icon: ic.chair },
+      { label: 'Panels', icon: ic.panels },
+      { divider: true },
+      { label: 'View', icon: ic.camera },
+      { label: 'Bake', icon: ic.cube, dot: '#e0a800' }
+    ];
+    const sl = (label, value, pct) => ({ label, value,
+      fill: { position: 'absolute', left: 0, width: pct + '%', top: '6px', height: '4px', borderRadius: '2px', background: '#1a1a1a' },
+      thumb: { position: 'absolute', left: 'calc(' + pct + '% - 8px)', top: 0, width: '16px', height: '16px', borderRadius: '50%', background: '#ffffff', boxShadow: '0 0 0 1.5px #1a1a1a, 0 1px 3px rgba(0,0,0,0.2)' } });
+    return {
+      ic,
+      tools: T.map((t) => ({ ...t, divider: !!t.divider, caption: t.caption || false, label: t.label || false, pressed: t.on ? 'true' : 'false', style: btn(!!t.on), dot: t.dot ? dotSt(t.dot) : false })),
+      closed: [
+        { title: 'Soft light', sub: 'Even light across the whole room', value: '40%', icon: ic.sun },
+        { title: 'Ceiling lights', sub: 'The round lights in the ceiling', value: '70%', icon: ic.bulb }
+      ],
+      sliders: [sl('Brightness', '60%', 60), sl('Angle', '46°', 66), sl('Distance from the wall', '4.5 m', 38)],
+      lampSliders: [sl('Turn', '0°', 50), sl('Position along the track', '−0.28 m', 44)],
+      lamps: Array.from({ length: 10 }, (_, i) => {
+        const n = i + 1, sel = n === 3, on = n !== 9;
+        return { n, sel: sel ? 'true' : 'false', aria: 'Lamp ' + n + (on ? ', on' : ', off'),
+          style: { position: 'relative', height: '40px', font: 'inherit', fontSize: '13px', fontWeight: 600, background: sel ? '#1a1a1a' : '#ffffff', color: sel ? '#ffffff' : (on ? '#000000' : '#999999'), border: '1px solid ' + (sel ? '#1a1a1a' : '#dcdcdc'), borderRadius: '8px', cursor: 'pointer' },
+          dot: { position: 'absolute', top: '5px', right: '5px', width: '6px', height: '6px', borderRadius: '50%', background: on ? '#2e8b57' : '#cccccc' } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

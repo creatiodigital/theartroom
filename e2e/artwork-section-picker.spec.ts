@@ -8,7 +8,7 @@ import { seedCookieConsent } from './consent-helpers'
 /**
  * The section dropdown under each ticked exhibition on the artwork form. It
  * appears only for ticked exhibitions that have sections, pre-selects the
- * saved section, and saves with the normal Save button.
+ * saved section, and saves with Save changes in the save bar.
  *
  * `SelectDropdown` is a button (named by the selected label) that opens a
  * listbox of `role="option"` items.
@@ -79,7 +79,7 @@ test('choose a section for a ticked exhibition and save', async ({ page }) => {
     await expect(page.getByRole('option')).toHaveText(['No section', 'E2E Magnolia', 'E2E Memory'])
     await page.getByRole('option', { name: 'E2E Magnolia' }).click()
 
-    await page.getByRole('button', { name: /^Save$/ }).click()
+    await page.getByRole('button', { name: /^Save changes$/ }).click()
     await page.waitForURL('**/dashboard/artworks', { timeout: 15000 })
 
     const member = await prisma.exhibitionArtwork.findUniqueOrThrow({
@@ -110,7 +110,7 @@ test('the saved section is pre-selected and survives an unrelated save', async (
     const withRow = page.locator(`[data-exhibition-row="${s.withSections.id}"]`)
     await expect(withRow.getByRole('button', { name: 'E2E Magnolia' })).toBeVisible()
 
-    await page.getByRole('button', { name: /^Save$/ }).click()
+    await page.getByRole('button', { name: /^Save changes$/ }).click()
     await page.waitForURL('**/dashboard/artworks', { timeout: 15000 })
 
     const member = await prisma.exhibitionArtwork.findUniqueOrThrow({
@@ -155,7 +155,7 @@ test('re-ticking a hung work saves the section shown, not a stale one', async ({
     const withRow = page.locator(`[data-exhibition-row="${s.withSections.id}"]`)
     await expect(withRow.getByRole('button', { name: 'No section' })).toBeVisible()
 
-    await page.getByRole('button', { name: /^Save$/ }).click()
+    await page.getByRole('button', { name: /^Save changes$/ }).click()
     await page.waitForURL('**/dashboard/artworks', { timeout: 15000 })
 
     const member = await prisma.exhibitionArtwork.findUniqueOrThrow({

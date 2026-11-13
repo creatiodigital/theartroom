@@ -299,4 +299,19 @@ test.describe('branded email layout (dev preview)', () => {
     // Never name the print provider
     await expect(page.locator('body')).not.toContainText(/printspace/i)
   })
+
+  test('artist-set-password email (step 21) links to set a new password, no temporary one', async ({
+    page,
+  }) => {
+    await page.goto('/dev/emails/artist-set-password')
+    await expect(page.getByRole('link', { name: 'Set a new password' })).toHaveAttribute(
+      'href',
+      /\/reset-password\?token=/,
+    )
+    await expect(page.getByText(/current password still works/i)).toBeVisible()
+    await expect(page.getByText(/expires in 3 days/i)).toBeVisible()
+    await expect(page.locator('body')).not.toContainText(/temporary password/i)
+    await expect(page.locator('img[alt="The Art Room"]')).toHaveCount(2)
+    await expect(page.locator('body')).not.toContainText(/printspace/i)
+  })
 })

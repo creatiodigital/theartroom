@@ -1,0 +1,47 @@
+@use '@/styles/mixins' as *;
+
+// wallview.md §3 (designs/wall-view-panels.dc.html `.tabs`).
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-gray-15);
+  border-radius: 9px;
+}
+
+// Two classes: Button's bare reset would win over one.
+.tabs .tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 32px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: var(--font-regular);
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover:not(.selected) {
+    background: var(--color-gray-30);
+  }
+
+  &.selected {
+    background: var(--color-white);
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+    box-shadow: var(--editor-segment-shadow);
+  }
+
+  &:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}

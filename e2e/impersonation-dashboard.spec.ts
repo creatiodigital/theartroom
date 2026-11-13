@@ -27,16 +27,21 @@ test.use({ storageState: 'e2e/.auth/admin.json' })
  * to the artist named in the banner.
  */
 
-/** Exhibition names currently rendered in the dashboard table. */
-const renderedExhibitions = (page: Page) =>
-  page.$$eval('table tbody tr td:first-child', (cells) =>
-    cells.map((c) => c.textContent?.trim() ?? '').filter(Boolean),
+/** Exhibition names currently rendered in Home's "My exhibitions" list (each links to its settings). */
+const renderedExhibitions = async (page: Page) =>
+  (
+    await page
+      .getByRole('region', { name: 'My exhibitions' })
+      .locator('a[href^="/dashboard/exhibitions/"]')
+      .allTextContents()
   )
+    .map((t) => t.trim())
+    .filter(Boolean)
 
 /** Two published artists who each own at least one exhibition. */
 function twoArtistsWithExhibitions() {
   return prisma.user.findMany({
-    where: { userType: { notIn: ['admin', 'superAdmin'] }, exhibitions: { some: {} } },
+    where: { userType: 'artist', exhibitions: { some: {} } },
     select: { id: true, name: true },
     orderBy: { id: 'asc' },
     take: 2,
@@ -53,12 +58,12 @@ function twoArtistsWithExhibitions() {
  */
 async function impersonate(page: Page, name: string) {
   const row = page.locator('tbody tr', { hasText: name }).first()
-  await row.locator('button[aria-label="Actions"]').click()
+  await row.getByRole('button', { name: `Actions for ${name}` }).click()
   const impersonateItem = page.locator('button:has-text("Impersonate")').first()
   await expect(impersonateItem).toBeEnabled()
   await impersonateItem.click()
   await page.waitForURL(/\/dashboard$/)
-  await expect(page.getByText(`Viewing as ${name}`)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Viewing as' })).toContainText(name)
 }
 
 test("an impersonated artist never sees another artist's exhibitions", async ({ page }) => {
@@ -93,7 +98,9 @@ test("an impersonated artist never sees another artist's exhibitions", async ({ 
   await page.route('**/api/exhibitions?userId=*', (route) => route.abort('failed'))
 
   await impersonate(page, second.name)
-  await expect(page.getByText(`Hello ${second.name.split(' ')[0]}`)).toBeVisible()
+  await expect(
+    page.getByRole('heading', { level: 1, name: `Hello, ${second.name.split(' ')[0]}` }),
+  ).toBeVisible()
 
   // The invariant. Before the fix this kept the FIRST artist's exhibitions on
   // screen indefinitely, while banner and greeting both named the second.

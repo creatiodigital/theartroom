@@ -10,8 +10,8 @@ import { seedCookieConsent } from './consent-helpers'
  * is NEVER mounted, so no R3F/Three.js WebGL runs in these tests.
  *
  * What this DOES cover (all cart-page logic): rendering, quantity stepper,
- * the qty-1 "minus becomes trash → confirm" remove flow, the Edit-item deep
- * link, the spec-list show-all toggle, distinct-config lines + totals, the
+ * the qty-1 "minus removes → confirm" flow, the Edit-item deep link, every
+ * chosen option listed (no show-all toggle), distinct-config lines + totals, the
  * site-header cart (units-based badge, present on every page, empty or not),
  * and the limited-edition "nothing is reserved" notice.
  *
@@ -32,7 +32,7 @@ test.describe('shopping cart — /cart page', () => {
     await page.goto('/cart')
 
     await expect(page.getByText('Your cart is empty')).toBeVisible()
-    await expect(page.getByRole('link', { name: /browse prints/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /browse the prints/i })).toBeVisible()
   })
 
   test('renders a seeded line with its specs, edition tag and price', async ({ page }) => {
@@ -104,7 +104,9 @@ test.describe('shopping cart — /cart page', () => {
     expect(href).toContain('paper=german-etching')
   })
 
-  test('the spec list hides extra options behind a show-all toggle', async ({ page }) => {
+  // order-flow.md "Cart": the choices are a few short lines (specLines), never hidden behind a
+  // toggle. Seven rows used to put the seventh behind "Show all selected options".
+  test('every chosen option is listed, with no show-all toggle', async ({ page }) => {
     await seedCart(page, [
       makeCartItem({
         lineId: 'line-1',
@@ -121,16 +123,10 @@ test.describe('shopping cart — /cart page', () => {
     ])
     await page.goto('/cart')
 
-    const toggle = page.getByRole('button', { name: /show all selected options/i })
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    // The 6th spec is hidden until expanded.
-    await expect(page.getByText('Museum glass')).toHaveCount(0)
-
-    await toggle.click()
-    await expect(page.getByRole('button', { name: /show less/i })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    )
+    await expect(page.getByRole('button', { name: /show all selected options/i })).toHaveCount(0)
+    await expect(page.getByText('Giclée on Hahnemühle German Etching')).toBeVisible()
+    await expect(page.getByText('Print size: 30 × 20 cm')).toBeVisible()
+    await expect(page.getByText('Border: 3 cm')).toBeVisible()
     await expect(page.getByText('Museum glass')).toBeVisible()
   })
 

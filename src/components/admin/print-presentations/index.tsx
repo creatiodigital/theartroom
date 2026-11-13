@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import c from 'classnames'
 
 import {
   listPrintPresentations,
@@ -10,11 +11,17 @@ import {
   type PresentationRow,
   type PresentationStatus,
 } from '@/app/admin/print-presentations/actions'
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
+import { Bar } from '@/components/admin/ui/Bar'
+import { Callout } from '@/components/admin/ui/Callout'
+import { DataTable } from '@/components/admin/ui/DataTable'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
-import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
 import { Toggle } from '@/components/ui/Toggle'
 import {
   FRAME_LABEL,
@@ -38,10 +45,46 @@ const STATUS_LABEL: Record<PresentationStatus, string> = {
 const STATUS_ORDER: PresentationStatus[] = ['missing', 'stale', 'current', 'ineligible']
 
 const FRAME_CHOICES: FrameChoice[] = [...PRESENTATION_FRAMES, NO_FRAME]
-const FRAME_OPTIONS: SelectOption<FrameChoice>[] = FRAME_CHOICES.map((frame) => ({
-  value: frame,
-  label: FRAME_LABEL[frame],
-}))
+
+/** The status tag's tone (gallery.md §1). */
+const STATUS_TONE: Record<PresentationStatus, 'redSoft' | 'amber' | 'green' | 'gray'> = {
+  missing: 'redSoft',
+  stale: 'amber',
+  current: 'green',
+  ineligible: 'gray',
+}
+
+/**
+ * The list holds image works only, and an image work gets no presentation for one reason: its
+ * shape is unknown (`presentationInputs`). Why a work is out of date, the page isn't told (Q60).
+ */
+const NOT_ELIGIBLE_REASON = 'Its shape is unknown.'
+
+// The site switch: its input, its visible name and its line.
+const SWITCH_ID = 'print-presentations-switch'
+const SWITCH_NAME_ID = 'print-presentations-switch-name'
+const SWITCH_LINE_ID = 'print-presentations-switch-line'
+
+/**
+ * The site switch asks first (Q59). Off: public pages get no presentations at all
+ * (`getPrintPresentations` returns none). On: each work with a render shows its latest
+ * one, up to date or not (`shownRecord`).
+ */
+const SWITCH_CONFIRM = {
+  hide: {
+    title: 'Hide print presentations on the site?',
+    message: 'Grids and artwork pages go back to the plain images until you switch this on again.',
+    confirmLabel: 'Hide them',
+    busyLabel: 'Hiding…',
+  },
+  show: {
+    title: 'Show print presentations on the site?',
+    message:
+      'Grids and artwork pages use the presentations, where a work has one: its latest render, up to date or not.',
+    confirmLabel: 'Show them',
+    busyLabel: 'Showing…',
+  },
+} as const
 
 type RowOutcome = { result: 'saved' | 'failed'; error?: string }
 
@@ -59,6 +102,8 @@ export const AdminPrintPresentations = () => {
   const [stopping, setStopping] = useState(false)
   const [outcomes, setOutcomes] = useState<Record<string, RowOutcome>>({})
   const [switching, setSwitching] = useState(false)
+  // The switch's confirm dialog, by the way it would turn (fixed while it's open).
+  const [switchConfirm, setSwitchConfirm] = useState<keyof typeof SWITCH_CONFIRM | null>(null)
   const [savingSetting, setSavingSetting] = useState(false)
   const [artist, setArtist] = useState<string | null>(null)
 
@@ -159,185 +204,299 @@ export const AdminPrintPresentations = () => {
     else setError(res.error)
   }
 
+  // Q59: the switch only opens the dialog; the controlled input stays as it was.
+  const askSwitch = () => {
+    if (enabled === null) return
+    setSwitchConfirm(enabled ? 'hide' : 'show')
+  }
+
+  // As Pause: the dialog stays open, busy, until the switch has answered.
+  const confirmSwitch = async () => {
+    try {
+      await toggleSwitch()
+    } finally {
+      setSwitchConfirm(null)
+    }
+  }
+
   const running = queue !== null
   const done = Object.keys(outcomes).length
 
-  return (
-    <DashboardLayout backLink="/admin/dashboard">
-      <section className={dashboardStyles.section}>
-        <div className={dashboardStyles.sectionHeader}>
-          <h1 className={dashboardStyles.sectionTitle}>Print presentations</h1>
-        </div>
-        <p className={dashboardStyles.sectionDescription}>
-          Every work shown as a photo of its print: in the frame picked for it, with or without a
-          passepartout (or as the bare sheet), a limited edition with its pencilled number. The
-          artwork itself is never in the render — it sits, untouched, in the render&apos;s window.
-          Renders run here, in this browser, one work at a time. A work that&apos;s out of date
-          keeps its last render on the site until it&apos;s re-rendered.
-        </p>
+  // Display only: the chips read "–" until the list is in, never a count of nothing (Q62).
+  const chipCount = (status: PresentationStatus) => (shown === null ? '–' : counts[status])
 
-        <div className={styles.switchRow}>
+  return (
+    <div className={styles.page}>
+      <div className={styles.intro}>
+        <AdminPageHeader
+          eyebrow="Gallery"
+          title="Print presentations"
+          description="Every work shown as a photo of its print, in the frame picked for it."
+        />
+        <details className={styles.howItWorks}>
+          <summary className={styles.summary}>How it works</summary>
+          <p className={styles.explanation}>
+            With or without a passepartout (or as the bare sheet), a limited edition with its
+            pencilled number. The artwork itself is never in the render — it sits, untouched, in the
+            render&apos;s window. Renders run here, in this browser, one work at a time. A work
+            that&apos;s out of date keeps its last render on the site until it&apos;s re-rendered.
+          </p>
+        </details>
+      </div>
+
+      <section aria-label="Settings" className={styles.settings}>
+        <div className={styles.siteSwitch}>
           <Toggle
+            tone="admin"
+            id={SWITCH_ID}
             checked={enabled ?? false}
-            onChange={() => void toggleSwitch()}
+            onChange={askSwitch}
             disabled={enabled === null || switching}
-            aria-label="Show print presentations on the site"
+            aria-labelledby={SWITCH_NAME_ID}
+            aria-describedby={SWITCH_LINE_ID}
           />
-          <span>
-            {enabled
-              ? 'Shown on the site: grids and artwork pages use the presentations.'
-              : 'Not shown on the site yet: grids and artwork pages show the plain images.'}
+          <span className={styles.siteSwitchText}>
+            <label htmlFor={SWITCH_ID} id={SWITCH_NAME_ID} className={styles.siteSwitchName}>
+              Shown on the site
+            </label>
+            <span id={SWITCH_LINE_ID} className={styles.siteSwitchLine}>
+              {enabled
+                ? 'Grids and artwork pages use the presentations.'
+                : 'Not shown on the site yet: grids and artwork pages show the plain images.'}
+            </span>
           </span>
         </div>
 
-        {selected && (
-          <SelectDropdown
-            label="Artist"
-            className={styles.artistFilter}
-            options={artistOptions}
-            value={selected}
-            onChange={setArtist}
-          />
-        )}
-
-        <p className={styles.counts}>
-          {STATUS_ORDER.map((s) => `${STATUS_LABEL[s]}: ${counts[s]}`).join(' · ')}
-        </p>
-
-        <div className={styles.actions}>
-          {running ? (
-            <>
-              <span className={styles.progress}>
-                Rendering {Math.min(done + 1, queue.length)} of {queue.length}…
-              </span>
-              <Button
-                font="dashboard"
-                variant="secondary"
-                label={stopping ? 'Stopping after this work…' : 'Stop'}
-                disabled={stopping}
-                onClick={() => setStopping(true)}
-              />
-            </>
-          ) : (
-            <Button
-              font="dashboard"
-              variant="primary"
-              label={`Render missing and out of date (${toRender.length})`}
-              disabled={!canRender || savingSetting || toRender.length === 0}
-              onClick={() => start(toRender)}
-            />
+        <div className={styles.controls}>
+          {selected && (
+            <AdminSelect label="Artist" minWidth={260} value={selected} onChange={setArtist}>
+              {artistOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </AdminSelect>
           )}
-        </div>
-        {canRender === false && <p className={styles.error}>Rendering needs Chrome.</p>}
-        {error && <p className={styles.error}>{error}</p>}
-      </section>
 
-      <section className={dashboardStyles.section}>
-        {shown === null ? (
-          <p className={dashboardStyles.sectionDescription}>Loading…</p>
-        ) : (
-          <table className={`${dashboardStyles.table} ${styles.rows}`}>
-            <thead>
-              <tr>
-                <th>Preview</th>
-                <th>Work</th>
-                <th>Presentation</th>
-                <th>Frame color</th>
-                <th>Passepartout</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((row) => {
-                const outcome = outcomes[row.artworkId]
-                return (
-                  <tr key={row.artworkId} data-artwork-id={row.artworkId}>
-                    <td className={styles.previewCell}>
-                      {row.imageUrl && (
-                        <PrintPresentation
-                          view={row.view}
-                          size="small"
-                          renderClassName={styles.previewRender}
-                        >
-                          {(placement) => (
-                            <img
-                              src={row.imageUrl!}
-                              alt={row.title}
-                              className={placement === 'window' ? undefined : styles.previewImage}
-                            />
-                          )}
-                        </PrintPresentation>
-                      )}
-                    </td>
-                    <td>
-                      <div>{row.title}</div>
-                      <div className={styles.muted}>{row.artistName}</div>
-                    </td>
-                    <td>
-                      {row.inputs
-                        ? row.inputs.mode === 'limited'
-                          ? `Numbered, edition of ${row.inputs.edition}`
-                          : 'Not numbered'
-                        : '—'}
-                    </td>
-                    <td>
-                      {row.inputs ? (
-                        <SelectDropdown<FrameChoice>
-                          className={styles.frameSelect}
-                          options={FRAME_OPTIONS}
-                          value={row.inputs.frame ?? NO_FRAME}
-                          onChange={(frame) =>
-                            void saveSetting(() => setPresentationFrame(row.artworkId, frame))
-                          }
-                          disabled={running || savingSetting}
-                        />
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td>
-                      {/* A passepartout needs a frame to hold it: off with "No frame". */}
-                      {row.inputs ? (
-                        <Toggle
-                          checked={row.inputs.passepartout}
-                          onChange={(e) => {
-                            const on = e.target.checked
-                            void saveSetting(() => setPresentationPassepartout(row.artworkId, on))
-                          }}
-                          disabled={!row.inputs.frame || running || savingSetting}
-                          aria-label={`Passepartout for ${row.title}`}
-                        />
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td>
-                      <span data-status="">{STATUS_LABEL[row.status]}</span>
-                      {outcome && (
-                        <div className={outcome.result === 'failed' ? styles.error : styles.muted}>
-                          {outcome.result === 'saved' ? 'Rendered' : outcome.error}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      {row.inputs && (
-                        <Button
-                          font="dashboard"
-                          variant="secondary"
-                          label="Re-render"
-                          disabled={!canRender || running || savingSetting}
-                          onClick={() => start([{ artworkId: row.artworkId, inputs: row.inputs! }])}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <div role="group" aria-label="Status of this artist's works" className={styles.chips}>
+            {STATUS_ORDER.map((status) => {
+              const tinted = shown !== null && counts[status] > 0
+              return (
+                <span
+                  key={status}
+                  className={c(
+                    styles.chip,
+                    tinted && status === 'missing' && styles.chipMissing,
+                    tinted && status === 'stale' && styles.chipStale,
+                  )}
+                >
+                  <strong>{chipCount(status)}</strong> {STATUS_LABEL[status]}
+                </span>
+              )
+            })}
+          </div>
+
+          {/* Stays while rendering, as drawn; it can't start a second queue then. */}
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={c(styles.button, styles.dark, styles.renderAll)}
+            label={`Render missing and out of date (${toRender.length})`}
+            disabled={running || !canRender || savingSetting || toRender.length === 0}
+            onClick={() => start(toRender)}
+          />
+        </div>
+        {canRender === false && <p className={styles.chrome}>Rendering needs Chrome.</p>}
+
+        {running && (
+          <div role="status" className={styles.progress}>
+            <span className={styles.progressText}>
+              Rendering {Math.min(done + 1, queue.length)} of {queue.length}…
+            </span>
+            <span className={styles.progressBar}>
+              <Bar value={done} max={queue.length} size="thin" surface="gray" />
+            </span>
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.button}
+              label={stopping ? 'Stopping after this work…' : 'Stop'}
+              disabled={stopping}
+              onClick={() => setStopping(true)}
+            />
+          </div>
+        )}
+
+        {error && (
+          <Callout tone="red" role="alert">
+            {error}
+          </Callout>
         )}
       </section>
+
+      {/* A first load that failed has nothing to list: the red notice above says why. */}
+      {(shown !== null || !error) && (
+        <ListPanel label="Works">
+          {shown === null ? (
+            <p className={styles.loading}>Loading…</p>
+          ) : shown.length === 0 ? (
+            <EmptyState title="No image works yet." />
+          ) : (
+            <DataTable className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Work</th>
+                  <th scope="col">Frame</th>
+                  <th scope="col">Passepartout</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">
+                    <span className="sr-only">Render</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((row) => {
+                  const outcome = outcomes[row.artworkId]
+                  const reason = outcome
+                    ? outcome.result === 'saved'
+                      ? 'Rendered'
+                      : outcome.error
+                    : row.status === 'ineligible'
+                      ? NOT_ELIGIBLE_REASON
+                      : undefined
+                  const renderLabel = row.status === 'missing' ? 'Render' : 'Re-render'
+                  const needed = row.status === 'missing' || row.status === 'stale'
+                  return (
+                    <tr
+                      key={row.artworkId}
+                      data-artwork-id={row.artworkId}
+                      className={c(styles.row, !row.inputs && styles.rowIneligible)}
+                    >
+                      <td className={styles.cellWork}>
+                        <div className={styles.work}>
+                          <div className={styles.tile}>
+                            {row.imageUrl ? (
+                              <PrintPresentation
+                                view={row.view}
+                                size="small"
+                                renderClassName={styles.previewRender}
+                              >
+                                {(placement) =>
+                                  placement === 'window' ? (
+                                    <img src={row.imageUrl!} alt={row.title} />
+                                  ) : (
+                                    <span className={styles.tileText}>No render</span>
+                                  )
+                                }
+                              </PrintPresentation>
+                            ) : (
+                              <span className={styles.tileText}>No image</span>
+                            )}
+                          </div>
+                          <div className={styles.workText}>
+                            <span className={styles.title}>{row.title}</span>
+                            <span className={styles.meta}>{row.artistName}</span>
+                            <span className={styles.meta}>
+                              {row.inputs
+                                ? row.inputs.mode === 'limited'
+                                  ? `Numbered, edition of ${row.inputs.edition}`
+                                  : 'Not numbered'
+                                : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={c(styles.cellFrame, !row.inputs && styles.none)}>
+                        {row.inputs ? (
+                          <AdminSelect
+                            label={`Frame for ${row.title}`}
+                            hideLabel
+                            minWidth={160}
+                            value={row.inputs.frame ?? NO_FRAME}
+                            onChange={(frame) =>
+                              void saveSetting(() =>
+                                setPresentationFrame(row.artworkId, frame as FrameChoice),
+                              )
+                            }
+                            disabled={running || savingSetting}
+                          >
+                            {FRAME_CHOICES.map((frame) => (
+                              <option key={frame} value={frame}>
+                                {FRAME_LABEL[frame]}
+                              </option>
+                            ))}
+                          </AdminSelect>
+                        ) : (
+                          <span className={styles.dash}>—</span>
+                        )}
+                      </td>
+                      <td className={c(styles.cellPassepartout, !row.inputs && styles.none)}>
+                        {/* A passepartout needs a frame to hold it: off with "No frame". */}
+                        {row.inputs ? (
+                          <span className={styles.passepartout}>
+                            {/* The column name, on phones (Q65); the switch's own name has it. */}
+                            <span aria-hidden className={styles.phoneLabel}>
+                              Passepartout
+                            </span>
+                            <Toggle
+                              tone="admin"
+                              checked={row.inputs.passepartout}
+                              onChange={(e) => {
+                                const on = e.target.checked
+                                void saveSetting(() =>
+                                  setPresentationPassepartout(row.artworkId, on),
+                                )
+                              }}
+                              disabled={!row.inputs.frame || running || savingSetting}
+                              aria-label={`Passepartout for ${row.title}`}
+                            />
+                          </span>
+                        ) : (
+                          <span className={styles.dash}>—</span>
+                        )}
+                      </td>
+                      <td className={styles.cellStatus}>
+                        <span data-status="">
+                          <StatusPill
+                            shape="tag"
+                            tone={STATUS_TONE[row.status]}
+                            label={STATUS_LABEL[row.status]}
+                          />
+                        </span>
+                        {reason && (
+                          <span
+                            className={c(
+                              styles.reason,
+                              outcome?.result === 'failed' && styles.reasonFailed,
+                            )}
+                          >
+                            {reason}
+                          </span>
+                        )}
+                      </td>
+                      <td className={styles.cellRender}>
+                        {row.inputs && (
+                          <Button
+                            variant="bare"
+                            font="dashboard"
+                            className={c(styles.button, needed && styles.dark)}
+                            label={renderLabel}
+                            aria-label={`${renderLabel} ${row.title}`}
+                            disabled={!canRender || running || savingSetting}
+                            onClick={() =>
+                              start([{ artworkId: row.artworkId, inputs: row.inputs! }])
+                            }
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </DataTable>
+          )}
+        </ListPanel>
+      )}
 
       {queue && (
         <RenderQueue
@@ -347,6 +506,15 @@ export const AdminPrintPresentations = () => {
           onFinished={onFinished}
         />
       )}
-    </DashboardLayout>
+
+      {switchConfirm && (
+        <AdminConfirmModal
+          {...SWITCH_CONFIRM[switchConfirm]}
+          busy={switching}
+          onConfirm={() => void confirmSwitch()}
+          onCancel={() => setSwitchConfirm(null)}
+        />
+      )}
+    </div>
   )
 }

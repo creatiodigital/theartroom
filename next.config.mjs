@@ -31,6 +31,11 @@ const nextConfig = {
     // Off = Next's earlier bailout, as before 16.4. Revisit with the R3F
     // upgrade (its own ticket).
     reactBrowserBailout: false,
+    // The site's icon set. Phosphor is not on Next's built-in list, and its
+    // barrels re-export every icon (thousands), so name them here to get
+    // per-icon imports: the default entry (client components) and the SSR one
+    // (modules without 'use client': ui/Icon, ExhibitionActions).
+    optimizePackageImports: ['@phosphor-icons/react', '@phosphor-icons/react/dist/ssr'],
   },
   images: {
     // No `dangerouslyAllowSVG`: nothing optimizes an SVG (icons are inlined via

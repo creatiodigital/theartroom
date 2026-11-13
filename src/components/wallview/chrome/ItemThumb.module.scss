@@ -1,0 +1,38 @@
+.thumb {
+  flex: 0 0 auto;
+  display: block;
+  box-sizing: border-box;
+  object-fit: cover;
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--editor-chip);
+  color: var(--color-text-secondary);
+}
+
+.row {
+  width: 36px;
+  height: 27px;
+  border-radius: 3px;
+}
+
+.group {
+  width: 24px;
+  height: 18px;
+  border-radius: 2px;
+}
+
+.header {
+  width: 48px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+}
+
+.stack {
+  width: 40px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+}

@@ -37,50 +37,28 @@
   }
 }
 
+// The homepage's column (docs/public-redesign/home.md): the header's and the footer's width, the
+// site's padding each side; 24px each side below lg (owner, 2026-11-12: no narrower cap).
 .content {
-  width: 100%;
-  padding: var(--space-6);
-  // Phones hide the Intro tagline, so "Current Exhibitions" comes straight
-  // after the slideshow — give it room to breathe.
-  padding-top: var(--space-12);
+  max-width: var(--content-max-width);
+  width: calc(100% - var(--site-padding) * 2);
+  margin: 0 auto;
 
-  @include breakpoint(md) {
-    padding-top: var(--space-6);
-  }
-
-  // The same column as the Header and PageLayout (--site-padding each side), so the logo, the
-  // menu and the content line up. It was 32px each side here against the header's 48 (AR-174).
-  @include breakpoint(lg) {
-    width: calc(100% - var(--site-padding) * 2);
-    max-width: var(--content-max-width);
-    margin: 0 auto;
-    padding: var(--space-8) 0;
+  @include media-down(lg) {
+    width: calc(100% - var(--space-6) * 2);
   }
 }
 
-// Space above a section title = the space below it (NiceTitle): 48px below lg, 64px from lg (AR-174).
 .exhibitionsSection {
-  margin-bottom: var(--space-12);
+  padding-bottom: 130px;
 
-  @include breakpoint(lg) {
-    margin-bottom: var(--space-16);
-  }
-}
-
-.sectionHeading {
-  margin-bottom: var(--space-4);
-  text-transform: uppercase;
-  font-weight: var(--font-regular);
-  border-top: 1px solid var(--color-border-default);
-  padding-top: var(--space-6);
-  letter-spacing: var(--space-1);
-
-  @include breakpoint(lg) {
-    margin-bottom: var(--space-6);
-    padding-top: var(--space-8);
+  @include media-down(md) {
+    padding-bottom: 72px;
   }
 }
 
 .emptyText {
-  color: var(--color-text-primary);
+  margin: 0;
+  font-size: 16px;
+  color: var(--public-body);
 }

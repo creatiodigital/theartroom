@@ -116,10 +116,18 @@ $phone-room: '(max-width: 599.98px), #{$phone-sideways}';
 $touch-room: '#{$phone-room}, (pointer: coarse)';
 // A tablet in the room: a finger, on a screen past a phone's size either way up (AR-177).
 $tablet-room: '(pointer: coarse) and (min-width: 600px) and (min-height: 500.02px)';
-// The room's corner buttons (leave, help, sound): the room shows through them (AR-177).
-$room-button-bg: rgba(255, 255, 255, 0.6);
-// Under the room's overlays (the shared Modal, the details: 1000), so a veil covers all three.
-$room-button-z: 999;
+// The room's controls (the menu button, Exit wall view): near-solid white with a soft shadow and a
+// hairline, so they read over any wall (visitor-wallview.md, approved 2026-11-11).
+$room-control-bg: rgba(255, 255, 255, 0.96);
+$room-control-shadow:
+  0 4px 16px rgba(0, 0, 0, 0.12),
+  0 0 0 1px rgba(0, 0, 0, 0.05);
+$room-menu-shadow:
+  0 12px 36px rgba(0, 0, 0, 0.18),
+  0 0 0 1px rgba(0, 0, 0, 0.05);
+// Under the cookie banner (999) and the room's overlays (the shared Modal, the details: 1000), so a
+// veil covers the controls.
+$room-button-z: 998;
 
 @function bp($name) {
   @if not map.has-key($breakpoints, $name) {

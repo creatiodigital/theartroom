@@ -1,0 +1,124 @@
+@use '@/styles/mixins' as *;
+
+// Fixed to the bottom of the viewport, across the content area (the menu is
+// 248px wide from 900px, in the admin and the studio alike). Under the drawer
+// (100), the dialogs (1000) and the cookie banner (999). The shell's bottom
+// padding is 40 / 56px (questions.md Q69), so a page with the bar adds its own
+// room for it (the admin page editor's and the artwork editor's `.page`, the
+// studio's `.withSaveBar`).
+.bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border-default);
+  box-shadow: var(--admin-save-bar-shadow);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+
+  @include media-up(tablet) {
+    left: var(--admin-sidebar-width);
+    padding: var(--space-3) var(--space-10);
+  }
+}
+
+// Lines up with the page editor's 880px column. Phones: the status on its own
+// line, the buttons under it.
+.inner {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+// width="list": lines up with the studio's 1080px column (the artwork editor).
+.list .inner {
+  max-width: var(--studio-content-max-width);
+}
+
+.status {
+  flex: 1 1 100%;
+  font-weight: var(--font-semibold);
+
+  @include media-up(tablet) {
+    flex: 1 1 auto;
+  }
+}
+
+.unsaved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-yellow-70);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-amber-50);
+}
+
+.clean {
+  font-weight: var(--font-regular);
+  color: var(--color-text-secondary);
+}
+
+.failed {
+  color: var(--color-red-50);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+// Two classes: Button's bare reset would win over one. 44px under 900px (Q7).
+.actions .discard,
+.actions .save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px var(--space-4);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+
+  @include media-up(tablet) {
+    min-height: 40px;
+  }
+}
+
+.actions .discard:hover {
+  background: var(--color-gray-15);
+  color: var(--color-black);
+}
+
+.actions .save {
+  padding: 10px 18px;
+  background: var(--color-dark-surface);
+  border-color: var(--color-dark-surface);
+  color: var(--color-white);
+
+  &:hover {
+    background: var(--color-dark-surface-raised);
+    border-color: var(--color-dark-surface-raised);
+    color: var(--color-white);
+  }
+}

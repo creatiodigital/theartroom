@@ -5,9 +5,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useGLTF } from '@react-three/drei'
 import { Mesh } from 'three'
 
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
+import { Button } from '@/components/ui/Button'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
+import { SelectField } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState, AppDispatch } from '@/redux/store'
@@ -18,6 +18,7 @@ import {
   type PresetType,
 } from '../PresetSection/applyPresetToArtwork'
 import styles from '../PresetSection/PresetSection.module.scss'
+import panelStyles from '../RightPanel.module.scss'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
 type GroupPresetApplyProps = {
@@ -28,6 +29,8 @@ type GroupPresetApplyProps = {
 const GroupPresetApply = ({ artworkIds, uniformType }: GroupPresetApplyProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const [presets, setPresets] = useState<TPreset[]>([])
+  // Q146 (h): a refused load says so, until it is tried again.
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
@@ -42,14 +45,18 @@ const GroupPresetApply = ({ artworkIds, uniformType }: GroupPresetApplyProps) =>
 
   // Fetch presets from API, filtered by the uniform type
   const fetchPresets = useCallback(async () => {
+    setLoadFailed(false)
     try {
       const response = await fetch('/api/presets')
       if (response.ok) {
         const data = await response.json()
         setPresets(data.filter((p: TPreset) => p.presetType === uniformType))
+      } else {
+        setLoadFailed(true)
       }
     } catch (error) {
       console.error('Failed to fetch presets:', error)
+      setLoadFailed(true)
     }
   }, [uniformType])
 
@@ -81,28 +88,37 @@ const GroupPresetApply = ({ artworkIds, uniformType }: GroupPresetApplyProps) =>
   const presetOptions = presets.map((p) => ({ label: p.name, value: p.id }))
 
   return (
+    // The caption ("Preset for all") is the parent group's.
     <div className={styles.presetSection}>
-      <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-        Apply Preset to All
-      </Text>
-      <div className={styles.row}>
-        <div
-          className={styles.item}
-          style={presets.length === 0 ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
-        >
-          <Select<string>
-            options={
-              presets.length > 0
-                ? [{ label: '– Select –', value: '' }, ...presetOptions]
-                : [{ label: 'No presets yet', value: '' }]
-            }
-            value=""
-            onChange={(val) => {
-              if (val && presets.length > 0) handleApplyToAll(val)
-            }}
-          />
+      <SelectField<string>
+        label="Preset for all"
+        hideLabel
+        options={
+          presets.length > 0 || loadFailed
+            ? [{ label: 'Apply a preset to all…', value: '' }, ...presetOptions]
+            : [{ label: 'No presets yet', value: '' }]
+        }
+        value=""
+        onChange={(val) => {
+          if (val && presets.length > 0) handleApplyToAll(val)
+        }}
+        disabled={presets.length === 0}
+      />
+      {loadFailed && (
+        <div className={styles.loadFailed}>
+          <p role="alert" className={styles.failed}>
+            Presets could not be loaded.
+          </p>
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={panelStyles.link}
+            onClick={() => fetchPresets()}
+          >
+            Try again
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   )
 }

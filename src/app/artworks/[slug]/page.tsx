@@ -7,6 +7,7 @@ import type { ArtworkNeighbours } from '@/components/artwork/detail/ArtworkDetai
 import { getArtworkMedia } from '@/lib/artwork/artworkMedia'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
 import { getGallerySelection } from '@/lib/queries/getGallerySelection'
+import { getMoreByArtist } from '@/lib/queries/getMoreByArtist'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
 import { buildArtworkCommerce, COMMERCE_SELECT } from '@/lib/editions/artworkCommerce'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
@@ -209,32 +210,35 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
 
   // Everything below depends only on the artwork row, so it is read in
   // parallel rather than one query after another.
-  const [commerce, media, presentations, neighbours, availableNumberCount] = await Promise.all([
-    // The same resolved payload the exhibition modal receives, so the two
-    // surfaces describe a sale identically.
-    buildArtworkCommerce(artwork.id, {
-      ...artworkData,
-      printPriceCents,
-      limitedVariants,
-    }),
-    getArtworkMedia(artwork.id),
-    getPrintPresentations([artwork.id]),
-    // Narrowest set first, matching the order ArtworkGrid resolves its context
-    // in. Each walker returns null immediately when its own param is absent, so
-    // only the one that applies costs a query.
-    (async () =>
-      (await getExhibitionNeighbours(slug, exhibitionSlug)) ??
-      (await getArtistNeighbours(slug, artistHandler)) ??
-      (await getPrintsNeighbours(slug, from)))(),
-    // How many numbers are left across the live variants. Live variants can all
-    // exist while every copy is gone — that is sold out, not unpurchasable, and
-    // the page says so rather than offering a button the wizard would refuse.
-    limitedVariants.length > 0
-      ? prisma.editionNumber.count({
-          where: { variantId: { in: limitedVariants.map((v) => v.id) }, state: 'available' },
-        })
-      : 0,
-  ])
+  const [commerce, media, presentations, neighbours, availableNumberCount, more] =
+    await Promise.all([
+      // The same resolved payload the exhibition modal receives, so the two
+      // surfaces describe a sale identically.
+      buildArtworkCommerce(artwork.id, {
+        ...artworkData,
+        printPriceCents,
+        limitedVariants,
+      }),
+      getArtworkMedia(artwork.id),
+      getPrintPresentations([artwork.id]),
+      // Narrowest set first, matching the order ArtworkGrid resolves its context
+      // in. Each walker returns null immediately when its own param is absent, so
+      // only the one that applies costs a query.
+      (async () =>
+        (await getExhibitionNeighbours(slug, exhibitionSlug)) ??
+        (await getArtistNeighbours(slug, artistHandler)) ??
+        (await getPrintsNeighbours(slug, from)))(),
+      // How many numbers are left across the live variants. Live variants can all
+      // exist while every copy is gone — that is sold out, not unpurchasable, and
+      // the page says so rather than offering a button the wizard would refuse.
+      limitedVariants.length > 0
+        ? prisma.editionNumber.count({
+            where: { variantId: { in: limitedVariants.map((v) => v.id) }, state: 'available' },
+          })
+        : 0,
+      // "More by the artist": other works from the artist's page (read only).
+      getMoreByArtist(user.handler, slug),
+    ])
 
   return (
     <ArtworkDetailPage
@@ -244,6 +248,7 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
       commerce={commerce}
       neighbours={neighbours}
       presentation={presentations[artwork.id] ?? null}
+      more={more}
     />
   )
 }

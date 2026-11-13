@@ -1,19 +1,30 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { DownloadSimple } from '@phosphor-icons/react'
+import c from 'classnames'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { AdminCheckbox } from '@/components/admin/ui/AdminCheckbox'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
+import { Callout } from '@/components/admin/ui/Callout'
+import { DataTable } from '@/components/admin/ui/DataTable'
+import { EmptyState } from '@/components/admin/ui/EmptyState'
+import { ListPanel } from '@/components/admin/ui/ListPanel'
+import { SearchField } from '@/components/admin/ui/SearchField'
+import { StatCard } from '@/components/admin/ui/StatCard'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { Input } from '@/components/ui/Input'
+import { formatOrderRef } from '@/lib/orders/orderRef'
 import { formatEuro } from '@/lib/print-providers/format'
-
-import dashboardStyles from '@/components/dashboard/DashboardLayout/DashboardLayout.module.scss'
 
 import { listInvoices, exportInvoiceRegisterCsv } from '@/app/admin/invoices/actions'
 import type { InvoiceRow, InvoiceFilter } from '@/lib/invoices/queryInvoices'
+
+import styles from './Invoices.module.scss'
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -49,18 +60,31 @@ const MONTH_OPTIONS = [
   { value: 12, label: 'December' },
 ]
 
-// ── Shared select style — inline, consistent with admin rounded controls ──────
+// ── Totals (NEW: the cards and the tfoot row) ────────────────────────────────
 
-const SELECT_STYLE: React.CSSProperties = {
-  fontFamily: 'var(--font-dashboard), var(--font-dashboard-fallback)',
-  fontSize: 13,
-  padding: '6px 10px',
-  border: '1px solid var(--color-border-default)',
-  borderRadius: 6,
-  background: 'var(--color-white)',
-  color: 'var(--color-text-primary)',
-  cursor: 'pointer',
-  outline: 'none',
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+type Totals = { base: number; vat: number; total: number; invoices: number; creditNotes: number }
+
+/** Sums over rows the page already holds: no request. Credit notes are stored
+ *  negative, so the totals come out net of them. */
+const sumRows = (rows: InvoiceRow[]): Totals =>
+  rows.reduce<Totals>(
+    (t, inv) => ({
+      base: t.base + inv.baseCents,
+      vat: t.vat + inv.vatCents,
+      total: t.total + inv.totalCents,
+      invoices: t.invoices + (inv.type === 'invoice' ? 1 : 0),
+      creditNotes: t.creditNotes + (inv.type === 'credit_note' ? 1 : 0),
+    }),
+    { base: 0, vat: 0, total: 0, invoices: 0, creditNotes: 0 },
+  )
+
+/** "November 2026", "2026" or "all years" (plan, Decision 7). */
+const periodLabel = (year: number | undefined, month: number | undefined) => {
+  if (year == null) return 'all years'
+  const monthLabel = MONTH_OPTIONS.find((m) => m.value === month)?.label
+  return monthLabel ? `${monthLabel} ${year}` : String(year)
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -177,48 +201,116 @@ export const AdminInvoices = () => {
     ? invoices.filter((inv) => !inv.voided && inv.type !== 'credit_note')
     : invoices
 
+  // ── Render-only derivations ─────────────────────────────────────────────────
+  // Decision 9: "Loading…" only while there is nothing to show yet. A reload
+  // (every filter change, every keystroke in the search) keeps the rows, cards
+  // and totals on screen and marks the list aria-busy.
+  const firstLoading = loading && invoices.length === 0
+  const reloading = loading && invoices.length > 0
+  // Nothing was ever read: the list gives way to the error (a failed re-read
+  // keeps the rows it had, as today).
+  const loadFailed = !loading && error !== null && invoices.length === 0
+  const totalsKnown = !firstLoading && !loadFailed
+
+  const filtersActive = yearFilter != null || monthFilter != null || Boolean(clientFilter)
+  const search = clientFilter.trim()
+  // Q25 (a): the cards add up what the exports would export (year, month and
+  // the client search; never Hide voided), so a search says so in the label.
+  const scope = `${periodLabel(yearFilter, monthFilter)}${search ? ` · matching “${search}”` : ''}`
+  const totalsCaptionId = useId()
+  const exportTotals = sumRows(invoices)
+  const shownTotals = sumRows(visibleInvoices)
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <DashboardLayout backLink="/admin/dashboard" backLabel="← Back to Admin Dashboard">
-      <h1 className={dashboardStyles.pageTitle}>Invoice Register</h1>
-
-      {error && (
-        <div className={dashboardStyles.section}>
-          <p className={dashboardStyles.sectionDescription}>⚠️ {error}</p>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className={dashboardStyles.section}>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'flex-end',
-            gap: 12,
-          }}
-        >
-          {/* Year select */}
-          <div>
-            <label
-              htmlFor="invoice-year"
-              style={{
-                display: 'block',
-                fontFamily: 'var(--font-dashboard), var(--font-dashboard-fallback)',
-                fontSize: 12,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-                marginBottom: 4,
-              }}
+    <div className={styles.page}>
+      <AdminPageHeader
+        eyebrow="Sales"
+        title="Invoices"
+        description="Every invoice and credit note the gallery has issued, for the accountant."
+        actions={
+          <>
+            {/* CSV export */}
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.export}
+              disabled={exporting || loading || invoices.length === 0}
+              onClick={() => void handleExportCsv()}
             >
-              Year
-            </label>
-            <select
+              <DownloadSimple size={16} weight="light" aria-hidden />
+              {exporting ? 'Exporting…' : 'Export CSV'}
+            </Button>
+
+            {/* ZIP export — bundles the currently-filtered invoice PDFs. */}
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={c(styles.export, styles.exportDark)}
+              disabled={zipping || loading || invoices.length === 0}
+              onClick={() => void handleExportZip()}
+            >
+              <DownloadSimple size={16} weight="light" aria-hidden />
+              {zipping ? 'Zipping…' : 'Export PDFs (ZIP)'}
+            </Button>
+          </>
+        }
+      />
+
+      <section aria-labelledby={totalsCaptionId} className={styles.totals}>
+        <p id={totalsCaptionId} className={styles.caption}>
+          Totals for {scope}
+        </p>
+        <div className={styles.cards}>
+          <StatCard
+            label="Invoiced"
+            size="money"
+            value={totalsKnown ? formatEuro(exportTotals.total) : null}
+            hint="net of credit notes"
+          />
+          <StatCard
+            label="Base"
+            size="money"
+            value={totalsKnown ? formatEuro(exportTotals.base) : null}
+            hint="before VAT"
+          />
+          <StatCard
+            label="VAT"
+            size="money"
+            value={totalsKnown ? formatEuro(exportTotals.vat) : null}
+            hint="collected"
+          />
+          <StatCard
+            label="Documents"
+            // 28px like the money cards beside it (Q32).
+            size="money"
+            value={totalsKnown ? invoices.length : null}
+            hint={
+              totalsKnown
+                ? `${plural(exportTotals.invoices, 'invoice', 'invoices')} · ${plural(
+                    exportTotals.creditNotes,
+                    'credit note',
+                    'credit notes',
+                  )}`
+                : undefined
+            }
+          />
+        </div>
+      </section>
+
+      {error && <Callout tone="red">{error}</Callout>}
+
+      <ListPanel
+        label="Invoices"
+        toolbar={
+          <div className={styles.filters}>
+            <AdminSelect
+              label="Year"
+              hideLabel
               id="invoice-year"
-              style={SELECT_STYLE}
-              value={yearFilter ?? ''}
-              onChange={(e) => {
-                const next = e.target.value ? Number(e.target.value) : undefined
+              value={yearFilter != null ? String(yearFilter) : ''}
+              onChange={(value) => {
+                const next = value ? Number(value) : undefined
                 setYearFilter(next)
                 // Month depends on year: clearing the year must clear the
                 // month too, or a disabled-but-still-applied month silently
@@ -232,33 +324,16 @@ export const AdminInvoices = () => {
                   {y}
                 </option>
               ))}
-            </select>
-          </div>
+            </AdminSelect>
 
-          {/* Month select — only enabled when a year is selected */}
-          <div>
-            <label
-              htmlFor="invoice-month"
-              style={{
-                display: 'block',
-                fontFamily: 'var(--font-dashboard), var(--font-dashboard-fallback)',
-                fontSize: 12,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-                marginBottom: 4,
-              }}
-            >
-              Month
-            </label>
-            <select
+            {/* Month select — only enabled when a year is selected */}
+            <AdminSelect
+              label="Month"
+              hideLabel
               id="invoice-month"
-              style={{
-                ...SELECT_STYLE,
-                opacity: yearFilter == null ? 0.5 : 1,
-              }}
-              value={monthFilter ?? ''}
+              value={monthFilter != null ? String(monthFilter) : ''}
               disabled={yearFilter == null}
-              onChange={(e) => setMonthFilter(e.target.value ? Number(e.target.value) : undefined)}
+              onChange={(value) => setMonthFilter(value ? Number(value) : undefined)}
             >
               <option value="">All months</option>
               {MONTH_OPTIONS.map((m) => (
@@ -266,240 +341,180 @@ export const AdminInvoices = () => {
                   {m.label}
                 </option>
               ))}
-            </select>
-          </div>
+            </AdminSelect>
 
-          {/* Client search */}
-          <div>
-            <label
-              htmlFor="invoice-client"
-              style={{
-                display: 'block',
-                fontFamily: 'var(--font-dashboard), var(--font-dashboard-fallback)',
-                fontSize: 12,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-                marginBottom: 4,
-              }}
-            >
-              Client
-            </label>
-            <Input
-              id="invoice-client"
-              type="text"
-              placeholder="Search by name or email…"
+            <SearchField
+              label="Search clients"
+              placeholder="Client name or email"
               value={clientFilter}
-              onChange={(e) => setClientFilter(e.target.value)}
+              onChange={setClientFilter}
             />
-          </div>
 
-          {/* Clear filters */}
-          {(yearFilter != null || monthFilter != null || clientFilter) && (
-            <Button
-              variant="ghost"
-              size="small"
-              font="dashboard"
-              onClick={() => {
-                setYearFilter(undefined)
-                setMonthFilter(undefined)
-                setClientFilter('')
-              }}
-            >
-              Clear filters
-            </Button>
-          )}
-
-          {/* Hide-voided toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
-            <input
-              id="hide-voided"
-              type="checkbox"
-              checked={hideVoided}
-              onChange={(e) => setHideVoided(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            <label
-              htmlFor="hide-voided"
-              style={{
-                fontFamily: 'var(--font-dashboard), var(--font-dashboard-fallback)',
-                fontSize: 12,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                userSelect: 'none',
-              }}
-            >
-              Hide voided invoices
-            </label>
-          </div>
-        </div>
-        {hideVoided && (
-          <p
-            style={{
-              marginTop: 8,
-              fontSize: 11,
-              color: 'var(--color-text-secondary)',
-              fontFamily: 'var(--font-dashboard), var(--font-dashboard-fallback)',
-            }}
-          >
-            Exports always include voided invoices and their credit notes (they net to zero).
-          </p>
-        )}
-      </div>
-
-      {/* Register table */}
-      <div className={dashboardStyles.section}>
-        {/* Top bar: export actions */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 16,
-          }}
-        >
-          {/* CSV export */}
-          <Button
-            variant="secondary"
-            size="small"
-            font="dashboard"
-            disabled={exporting || loading || invoices.length === 0}
-            onClick={() => void handleExportCsv()}
-          >
-            {exporting ? 'Exporting…' : 'Export CSV'}
-          </Button>
-
-          {/* ZIP export — bundles the currently-filtered invoice PDFs. */}
-          <Button
-            variant="secondary"
-            size="small"
-            font="dashboard"
-            disabled={zipping || loading || invoices.length === 0}
-            onClick={() => void handleExportZip()}
-          >
-            {zipping ? 'Zipping…' : 'Export PDFs (ZIP)'}
-          </Button>
-        </div>
-
-        {(() => {
-          if (loading) {
-            return <p className={dashboardStyles.sectionDescription}>Loading…</p>
-          }
-          if (invoices.length === 0) {
-            return (
-              <EmptyState
-                message={
-                  yearFilter != null || monthFilter != null || clientFilter
-                    ? 'No invoices match the current filters.'
-                    : 'No invoices yet.'
-                }
+            {filtersActive && (
+              <Button
+                variant="bare"
+                font="dashboard"
+                className={styles.clear}
+                label="Clear filters"
+                onClick={() => {
+                  setYearFilter(undefined)
+                  setMonthFilter(undefined)
+                  setClientFilter('')
+                }}
               />
-            )
-          }
-          if (visibleInvoices.length === 0) {
+            )}
+
+            <AdminCheckbox
+              id="hide-voided"
+              label="Hide voided"
+              checked={hideVoided}
+              onChange={setHideVoided}
+            />
+          </div>
+        }
+        count={
+          invoices.length > 0 ? plural(visibleInvoices.length, 'document', 'documents') : undefined
+        }
+        footnote="Exports always include voided invoices and their credit notes, which cancel each other out."
+      >
+        <div aria-busy={reloading || undefined}>
+          {(() => {
+            if (firstLoading) {
+              return <p className={styles.loading}>Loading…</p>
+            }
+            if (loadFailed) return null
+            if (invoices.length === 0) {
+              return (
+                <EmptyState
+                  title={
+                    filtersActive ? 'No invoices match the current filters.' : 'No invoices yet.'
+                  }
+                />
+              )
+            }
+            if (visibleInvoices.length === 0) {
+              return (
+                <EmptyState title="All invoices are voided and hidden. Uncheck 'Hide voided' to see them." />
+              )
+            }
             return (
-              <EmptyState message="All invoices are voided and hidden. Uncheck 'Hide voided' to see them." />
-            )
-          }
-          return (
-            <table className={dashboardStyles.table}>
-              <thead>
-                <tr>
-                  <th>Number</th>
-                  <th>Type</th>
-                  <th>Date</th>
-                  <th>Client</th>
-                  <th style={{ textAlign: 'right' }}>Base</th>
-                  <th style={{ textAlign: 'right' }}>VAT</th>
-                  <th style={{ textAlign: 'right' }}>Total</th>
-                  <th>{/* action */}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleInvoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td style={{ whiteSpace: 'nowrap', fontWeight: 500 }}>{inv.number}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {inv.type === 'invoice' ? (
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          Invoice
-                          {inv.voided && inv.rectifiedByNumber && (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '1px 6px',
-                                fontSize: 11,
-                                fontWeight: 600,
-                                borderRadius: 4,
-                                background: 'var(--color-badge-danger-bg)',
-                                color: 'var(--color-badge-danger-text)',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              Voided → {inv.rectifiedByNumber}
-                            </span>
-                          )}
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--color-text-secondary)' }}>Credit note</span>
-                      )}
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(inv.issuedAt)}</td>
-                    <td>
-                      <div style={{ fontWeight: 500 }}>{inv.buyerName}</div>
-                      <div
-                        style={{
-                          fontSize: 'var(--text-xs)',
-                          opacity: 0.7,
-                          marginTop: 2,
-                        }}
-                      >
-                        {inv.buyerEmail}
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {formatEuro(inv.baseCents)}
-                    </td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {formatEuro(inv.vatCents)}
-                    </td>
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        whiteSpace: 'nowrap',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {formatEuro(inv.totalCents)}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      {/* No per-invoice delete, anywhere: the ORDER owns its
-                          documents. Dev cleanup = delete the order (cascades
-                          its invoices) or the dashboard's wipe-all button. */}
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        font="dashboard"
-                        href={`/admin/invoices/${inv.id}/download`}
-                      >
-                        View / download
-                      </Button>
-                    </td>
+              <DataTable className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">Number</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Client</th>
+                    <th scope="col">Order</th>
+                    <th scope="col" className={styles.alignRight}>
+                      Base
+                    </th>
+                    <th scope="col" className={styles.alignRight}>
+                      VAT
+                    </th>
+                    <th scope="col" className={styles.alignRight}>
+                      Total
+                    </th>
+                    <th scope="col">
+                      <span className="sr-only">PDF</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )
-        })()}
-      </div>
-    </DashboardLayout>
+                </thead>
+                <tbody>
+                  {visibleInvoices.map((inv) => {
+                    const creditNote = inv.type === 'credit_note'
+                    return (
+                      <tr key={inv.id} className={c(styles.row, inv.voided && styles.rowVoided)}>
+                        <td className={styles.cellNumber}>
+                          <div className={styles.numberLine}>
+                            {/* The number's only copy on the page (invoice-ui.spec
+                                finds it with a strict getByText). */}
+                            <span className={c(styles.number, inv.voided && styles.numberVoided)}>
+                              {inv.number}
+                            </span>
+                            <StatusPill
+                              label={creditNote ? 'Credit note' : 'Invoice'}
+                              tone={creditNote ? 'info' : 'gray'}
+                              shape="tag"
+                            />
+                          </div>
+                          {!creditNote && inv.voided && inv.rectifiedByNumber && (
+                            <div className={c(styles.note, styles.noteVoided)}>
+                              Voided by {inv.rectifiedByNumber}
+                            </div>
+                          )}
+                          {creditNote && inv.correctsNumber && (
+                            <div className={c(styles.note, styles.noteCancels)}>
+                              Cancels {inv.correctsNumber}
+                            </div>
+                          )}
+                        </td>
+                        <td className={styles.cellDate}>{formatDate(inv.issuedAt)}</td>
+                        <td className={styles.cellClient}>
+                          <div className={styles.client}>{inv.buyerName}</div>
+                          <div className={styles.email}>{inv.buyerEmail}</div>
+                        </td>
+                        <td className={styles.cellOrder}>
+                          <Link href={`/admin/orders/${inv.orderId}`} className={styles.ref}>
+                            <span className={styles.phoneOnly}>Order </span>
+                            {formatOrderRef(inv.orderId)}
+                          </Link>
+                        </td>
+                        <td className={c(styles.amount, styles.cellBase)}>
+                          <span className={styles.phoneOnly}>Base </span>
+                          {formatEuro(inv.baseCents)}
+                        </td>
+                        <td className={c(styles.amount, styles.cellVat)}>
+                          <span className={styles.phoneOnly}>VAT </span>
+                          {formatEuro(inv.vatCents)}
+                        </td>
+                        <td className={c(styles.amount, styles.cellTotal)}>
+                          {formatEuro(inv.totalCents)}
+                        </td>
+                        <td className={styles.cellPdf}>
+                          {/* No per-invoice delete, anywhere: the ORDER owns its
+                              documents. Dev cleanup = delete the order (cascades
+                              its invoices) or the dashboard's wipe-all button. */}
+                          <Button
+                            variant="bare"
+                            font="dashboard"
+                            className={styles.pdf}
+                            href={`/admin/invoices/${inv.id}/download`}
+                            // A file, not a page: never fetched before the click (Q33).
+                            prefetch={false}
+                            aria-label={`${inv.number} PDF`}
+                          >
+                            <DownloadSimple size={16} weight="light" aria-hidden />
+                            PDF
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className={styles.footRow}>
+                    <th scope="row" colSpan={4} className={styles.footLabel}>
+                      Total for {scope}
+                    </th>
+                    <td className={c(styles.amount, styles.cellBase)}>
+                      <span className={styles.phoneOnly}>Base </span>
+                      {formatEuro(shownTotals.base)}
+                    </td>
+                    <td className={c(styles.amount, styles.cellVat)}>
+                      <span className={styles.phoneOnly}>VAT </span>
+                      {formatEuro(shownTotals.vat)}
+                    </td>
+                    <td className={c(styles.amount, styles.cellTotal, styles.footTotal)}>
+                      {formatEuro(shownTotals.total)}
+                    </td>
+                    <td className={styles.footEmpty} />
+                  </tr>
+                </tfoot>
+              </DataTable>
+            )
+          })()}
+        </div>
+      </ListPanel>
+    </div>
   )
 }

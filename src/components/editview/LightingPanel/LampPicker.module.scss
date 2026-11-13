@@ -1,0 +1,77 @@
+@use '@/styles/mixins' as *;
+
+// designs/editor-3d.dc.html, "Each lamp".
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.room {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.caption {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+// Two classes: Button's bare reset would win over one.
+.grid .lamp {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+  // Picking switches at once: with Button's background fade, the new white number sat on a
+  // still-white tile for the length of the fade.
+  transition: none;
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  &[aria-checked='true'] {
+    border-color: var(--color-dark-surface);
+    background: var(--color-dark-surface);
+    color: var(--color-white);
+  }
+
+  @media #{$touch-room} {
+    height: 44px;
+  }
+}
+
+// An off lamp's number (the drawn #999 is 2.8:1 on white; as Q90).
+.grid .off {
+  color: var(--color-text-secondary);
+}
+
+.dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-gray-65);
+}
+
+.dotOn {
+  background: var(--admin-published-dot);
+}

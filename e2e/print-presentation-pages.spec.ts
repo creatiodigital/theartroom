@@ -285,7 +285,11 @@ test('the artist profile shows it among the featured works', async ({ page }) =>
   if (!featured) await prisma.artwork.update({ where: { id: artworkId }, data: { featured: true } })
   try {
     await page.goto(routes.artistProfile())
-    await expect(presentation(page)).toHaveCount(1)
+    // By the work's own card: the artist's page also hangs copies that share its image (the AR-161
+    // copies of the prod data), which may carry renders of their own.
+    await expect(
+      page.locator(`a[href^="/artworks/${artworkSlug}"] [data-print-presentation]`),
+    ).toHaveCount(1)
   } finally {
     if (!featured) {
       await prisma.artwork.update({ where: { id: artworkId }, data: { featured: false } })

@@ -1,0 +1,40 @@
+// docs/public-redesign/components.md "ArrowLink"; designs/exhibitions-desktop.dc.html (the action row).
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
+  }
+}
+
+.small {
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.icon {
+  flex: 0 0 auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) 18px;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-gray-55);
+}

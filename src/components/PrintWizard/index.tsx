@@ -11,7 +11,6 @@ import { Modal } from '@/components/ui/Modal'
 import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import { consumePrintReturnUrl } from '@/components/checkout/printReturnUrl'
 import Logo from '@/icons/logo.svg'
-import Monogram from '@/icons/monogram.svg'
 
 import { buildCartItem } from '@/lib/cart/buildCartItem'
 import { hasMatchingCartLine } from '@/lib/cart/cartMath'
@@ -33,11 +32,11 @@ import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { LimitedVariantView } from '@/lib/editions/types'
 
 import { LimitedWizard } from './LimitedWizard'
-import { CartAddedModal } from './CartAddedModal'
-import { EditionBadge } from './EditionBadge'
+import { CartAddedModal, type AddedLine } from './CartAddedModal'
 import { SchemaStage } from './SchemaStage'
 import { StepsPanel } from './StepsPanel'
 import { SummaryPanel } from './SummaryPanel'
+import { LearnMoreSheet } from './LearnMoreSheet'
 
 import styles from './PrintWizard.module.scss'
 
@@ -253,7 +252,8 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
   const quoteLoading = false
 
   const { addItem, removeItem, items } = useCart()
-  const [cartAddedOpen, setCartAddedOpen] = useState(false)
+  // The line just added, shown in the "Added to your cart" toast (other-screens.md, Q-P19 b).
+  const [cartAdded, setCartAdded] = useState<AddedLine | null>(null)
 
   // When the buyer arrived via the cart's "Edit item" link, the line's id rides
   // in the URL. Re-adding replaces that line (removed just before the add) so
@@ -278,7 +278,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
     // replaces it — merging into an identical line if one now matches.
     const quantity = editLineId ? (items.find((i) => i.lineId === editLineId)?.quantity ?? 1) : 1
     if (editLineId) await removeItem(editLineId)
-    await addItem({
+    const added = {
       ...buildCartItem({
         artwork: {
           id: artwork.id,
@@ -295,22 +295,27 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         specsSummary: summarizeConfig(catalog, config),
       }),
       quantity,
-    })
-    setCartAddedOpen(true)
+    }
+    await addItem(added)
+    setCartAdded(added)
   }
 
   return (
     <div className={styles.wizard}>
       <header className={styles.header}>
-        <Link href="/" aria-label="Go to home" className={styles.logoLink}>
-          <Logo className={styles.logo} />
+        <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
+          <Logo className={styles.logo} aria-hidden />
         </Link>
-        <span />
+        {/* order-flow.md: "Order a print · Title, Artist", the title in serif italics. */}
+        <p className={styles.headerTitle}>
+          Order a print · <em>{artwork.title}</em>, {artwork.artistName}
+        </p>
         <div className={styles.headerActions}>
           <CartIcon />
           <Button
             variant="ghost"
             onClick={close}
+            label="Close"
             iconRight={<Icon name="close" size={16} />}
             className={styles.closeButton}
             aria-label="Close wizard"
@@ -319,7 +324,6 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
       </header>
 
       <main className={styles.body}>
-        <EditionBadge editionType="open" onDetails={() => setIntroOpen(true)} />
         <StepsPanel
           catalog={catalog}
           config={config}
@@ -344,63 +348,49 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
           onContinueShopping={close}
           isEditing={editLineId !== null}
           isDuplicate={isDuplicate}
+          editionType="open"
+          onLearnMore={() => setIntroOpen(true)}
         />
       </main>
 
-      {cartAddedOpen && (
-        <CartAddedModal onClose={() => setCartAddedOpen(false)} edited={editLineId !== null} />
+      {cartAdded && (
+        <CartAddedModal
+          item={cartAdded}
+          onClose={() => setCartAdded(null)}
+          edited={editLineId !== null}
+        />
       )}
 
       {introOpen && (
-        <Modal onClose={dismissIntro} titleId="print-intro-title" maxWidth="640px" showClose>
-          <div className={styles.introModal}>
-            <Monogram className={styles.introMonogram} aria-hidden="true" />
-            <p id="print-intro-title" className={styles.detailLead}>
-              Your print of <strong>{artwork.title}</strong> by{' '}
-              <strong>{artwork.artistName}</strong> is an <strong>open edition</strong>.
-            </p>
-            <div className={styles.detailSections}>
-              <p className={styles.detailSubhead}>Terms of sale</p>
-              <ul className={styles.detailList}>
-                <li>
-                  Made to order on premium archival paper (giclée or C-Type), hand-inspected and
-                  finished by a specialist fine-art print lab.
-                </li>
-                <li>
-                  Fully configurable — choose your size, paper and framing (framed or print-only).
-                </li>
-                <li>Not numbered and not a limited run — available on an ongoing basis.</li>
-                <li>No purchase limits — order as many as you like.</li>
-                <li>Final VAT is calculated when you confirm your delivery address at checkout.</li>
-                <li>We reserve the right to cancel or refund an order if needed.</li>
-              </ul>
-              <p className={styles.detailSubhead}>Shipping</p>
-              <ul className={styles.detailList}>
-                <li>
-                  All prints are packaged to the highest standards, managed at our warehouse using
-                  archival materials.
-                </li>
-                <li>Shipping is calculated at checkout, based on your delivery address.</li>
-                <li>
-                  Most orders are dispatched within about two weeks; framed pieces can take a little
-                  longer.
-                </li>
-                <li>
-                  Sent with tracked delivery &mdash; we&rsquo;ll email you the tracking when
-                  it&rsquo;s on its way.
-                </li>
-                <li>Delivery is typically 1&ndash;2 weeks.</li>
-                <li>Orders may be subject to customs and local import duties.</li>
-              </ul>
-            </div>
-            <p className={styles.detailTerms}>
-              Please read our{' '}
-              <Link href="/terms-of-sale" target="_blank" rel="noopener noreferrer">
-                full terms of sale
-              </Link>
-              .
-            </p>
-          </div>
+        <Modal
+          onClose={dismissIntro}
+          titleId="print-intro-title"
+          maxWidth="640px"
+          showClose
+          tone="public"
+        >
+          {/* order-flow.md "Learn more window": the same points as before, dashes removed. */}
+          <LearnMoreSheet
+            editionType="open"
+            title={artwork.title}
+            artistName={artwork.artistName}
+            terms={[
+              'Made to order on premium archival paper (giclée or C-Type), hand-inspected and finished by a specialist fine-art print lab.',
+              'Fully configurable: choose your size, paper and framing (framed or print-only).',
+              'Not numbered and not a limited run: available on an ongoing basis.',
+              'No purchase limits: order as many as you like.',
+              'Final VAT is calculated when you confirm your delivery address at checkout.',
+              'We reserve the right to cancel or refund an order if needed.',
+            ]}
+            shipping={[
+              'All prints are packaged to the highest standards, managed at our warehouse using archival materials.',
+              'Shipping is calculated at checkout, based on your delivery address.',
+              'Most orders are dispatched within about two weeks; framed pieces can take a little longer.',
+              'Sent with tracked delivery: we’ll email you the tracking when it’s on its way.',
+              'Delivery is typically 1–2 weeks.',
+              'Orders may be subject to customs and local import duties.',
+            ]}
+          />
         </Modal>
       )}
     </div>

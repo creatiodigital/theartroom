@@ -6,10 +6,14 @@ import { Text } from '@/components/ui/Typography'
 import { Slideshow } from '@/components/landing/Slideshow'
 import { Announcement } from '@/components/landing/Announcement/Announcement'
 import { Intro } from '@/components/landing/Intro/Intro'
-import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 import { FeaturedArtists } from '@/components/landing/FeaturedArtists/FeaturedArtists'
+import { HomePrints } from '@/components/landing/HomePrints/HomePrints'
+import { HomeSectionHead, WideOnly } from '@/components/landing/HomeSectionHead/HomeSectionHead'
 import { ExhibitionGrid } from '@/components/exhibitions/ExhibitionGrid'
+import { FeedbackBand } from '@/components/feedback/FeedbackBand'
+import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
+import { getHomePrints } from '@/lib/queries/getGallerySelection'
 import { getHomepageAnnouncement } from '@/lib/queries/getHomepageAnnouncement'
 
 import styles from './page.module.scss'
@@ -68,6 +72,10 @@ const getExhibitions = () =>
     take: 6,
   })
 
+// The Featured artists section: hidden for now, on every screen size (owner, 2026-11-13). Set to
+// true to show it again; while false its read is skipped too.
+const SHOW_FEATURED_ARTISTS = false
+
 const getFeaturedArtists = async () => {
   return prisma.user.findMany({
     where: {
@@ -86,13 +94,22 @@ const getFeaturedArtists = async () => {
   })
 }
 
+// The Fine-art prints section's works (Home page prints, home.md §5). FAILS SOFT, as the
+// announcement: if the read fails, the homepage shows no prints section rather than an error.
+const getHomePrintSlides = () =>
+  getHomePrints().catch((err) => {
+    captureError(err, { flow: 'content', stage: 'homepage-prints', level: 'warning' })
+    return []
+  })
+
 export default async function Home() {
   // Independent reads, so in parallel rather than one after another.
-  const [slides, exhibitions, featuredArtists, announcement] = await Promise.all([
+  const [slides, exhibitions, featuredArtists, announcement, prints] = await Promise.all([
     getSlides(),
     getExhibitions(),
-    getFeaturedArtists(),
+    SHOW_FEATURED_ARTISTS ? getFeaturedArtists() : Promise.resolve([]),
     getHomepageAnnouncement(),
+    getHomePrintSlides(),
   ])
 
   return (
@@ -105,15 +122,24 @@ export default async function Home() {
 
       {slides.length > 0 && <Slideshow slides={slides} />}
 
+      {/* docs/public-redesign/home.md: introduction, current exhibitions, announcements, the
+          rotating prints, artists, the feedback band. */}
       <div className={styles.content}>
         <Intro />
 
-        {/* Hidden when there's no announcement to show (AR-174). */}
-        {announcement && <Announcement announcement={announcement} />}
-
-        <NiceTitle title="Current Exhibitions" />
-
         <section className={styles.exhibitionsSection}>
+          <HomeSectionHead
+            title="Current exhibitions"
+            rule
+            link={{
+              href: '/exhibitions',
+              label: (
+                <>
+                  All<WideOnly> exhibitions</WideOnly>
+                </>
+              ),
+            }}
+          />
           {exhibitions.length === 0 ? (
             <Text as="p" className={styles.emptyText}>
               No current exhibitions at the moment.
@@ -136,7 +162,14 @@ export default async function Home() {
           )}
         </section>
 
-        <FeaturedArtists artists={featuredArtists} />
+        {/* Hidden when there's no announcement to show (AR-174). */}
+        {announcement && <Announcement announcement={announcement} />}
+
+        <HomePrints slides={prints} />
+
+        {SHOW_FEATURED_ARTISTS && <FeaturedArtists artists={featuredArtists} />}
+
+        <FeedbackBand />
       </div>
 
       <Footer />

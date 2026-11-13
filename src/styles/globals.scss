@@ -167,13 +167,11 @@ small {
   }
 }
 
+// No underlines on links, ever (docs/public-redesign/README.md, components.md): links are told
+// by the arrow in front of them or by being a button.
 a {
   color: inherit;
   text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 input,

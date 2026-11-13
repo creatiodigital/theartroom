@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { List, X } from '@phosphor-icons/react'
 
 import { CartIcon } from '@/components/cart/CartIcon'
 import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import Logo from '@/icons/logo.svg'
 import styles from './Navigation.module.scss'
 
@@ -78,15 +77,20 @@ export const Navigation = () => {
           aria-label="Open menu"
           aria-expanded={isMenuOpen}
         >
-          <Menu size={24} strokeWidth={ICON_STROKE_WIDTH} />
+          <List size={24} weight="light" aria-hidden />
         </Button>
       </div>
 
       {/* Mobile Menu Overlay */}
       <div className={`${styles.mobileOverlay} ${isMenuOpen ? styles.open : ''}`}>
         <div className={styles.mobileHeader}>
-          <Link href="/" className={styles.mobileLogo} onClick={() => setIsMenuOpen(false)}>
-            <Logo />
+          <Link
+            href="/"
+            className={styles.mobileLogo}
+            aria-label="The Art Room"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <Logo aria-hidden />
           </Link>
           <Button
             variant="ghost"
@@ -94,7 +98,7 @@ export const Navigation = () => {
             className={styles.closeButton}
             aria-label="Close menu"
           >
-            <X size={24} strokeWidth={ICON_STROKE_WIDTH} />
+            <X size={24} weight="light" aria-hidden />
           </Button>
         </div>
         <nav className={styles.mobileNav}>

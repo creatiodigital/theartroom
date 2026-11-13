@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
 
 import { getConsent, setConsent, OPEN_COOKIE_SETTINGS_EVENT } from '@/lib/consent'
 
@@ -30,41 +29,37 @@ export const CookieBanner = () => {
 
   if (!visible) return null
 
+  // other-screens.md "Cookie banner" (designs/remaining-screens.dc.html): a white card bottom-left,
+  // a serif heading, one sentence, Accept and Decline with equal weight, → Privacy policy.
   return (
     <div className={styles.banner} role="region" aria-label="Cookie consent">
-      <Text as="p" size="sm" className={styles.text}>
-        <strong className={styles.brand}>The Art Room</strong> uses analytics cookies to understand
-        how the gallery is explored and improve your experience. Declining won&apos;t affect your
-        visit. {/* Opens in a new tab so the policy is readable without dismissing this notice. */}
-        <Link
-          href="/privacy-policy"
-          className={styles.link}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Privacy Policy
-        </Link>
-      </Text>
+      <p className={styles.heading}>Cookies</p>
+      <p className={styles.text}>
+        We use analytics cookies to understand how the gallery is explored and to improve it.
+        Declining won’t affect your visit.
+      </p>
       <div className={styles.actions}>
         <Button
-          variant="primary"
-          size="regularSquared"
-          fullWidth
+          variant="bare"
+          className={styles.choice}
           onClick={() => decide(true)}
           aria-label="Accept analytics cookies"
         >
           Accept
         </Button>
         <Button
-          variant="secondary"
-          size="regularSquared"
-          fullWidth
+          variant="bare"
+          className={styles.choice}
           onClick={() => decide(false)}
           aria-label="Decline analytics cookies"
         >
           Decline
         </Button>
       </div>
+      {/* Opens in a new tab so the policy is readable without dismissing this notice. */}
+      <ArrowLink href="/privacy-policy" newTab size="small" className={styles.link}>
+        Privacy policy
+      </ArrowLink>
     </div>
   )
 }

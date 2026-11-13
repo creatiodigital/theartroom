@@ -229,3 +229,51 @@
   display: block;
   width: 100%;
 }
+
+// 'field' (docs/public-redesign/prints.md "Filters"): a 46px field on the field grey, a hairline
+// (dark while open), a grey word before the value; the open list a white panel with a soft shadow,
+// a check on the current choice.
+.wrapperField {
+  min-width: 260px;
+}
+
+.wrapper .controlField {
+  min-height: 46px;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-gray-30);
+  background: var(--public-field);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  color: var(--public-text);
+
+  &.controlOpen {
+    border-color: var(--public-text);
+  }
+}
+
+// The value takes the free space: it sits left, the caret right.
+.controlField .controlLabel {
+  flex: 1 1 auto;
+}
+
+.wrapperField .menu {
+  border-color: var(--color-gray-30);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.wrapperField .option {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.wrapperField .optionLabel {
+  font-weight: var(--font-regular);
+}
+
+.optionCheck {
+  flex-shrink: 0;
+  color: var(--public-text);
+}

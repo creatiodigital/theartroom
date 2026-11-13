@@ -4,14 +4,21 @@ import { useGLTF } from '@react-three/drei'
 import { useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Mesh } from 'three'
+import {
+  AlignBottomSimple,
+  AlignCenterVerticalSimple,
+  AlignTopSimple,
+  TextAlignCenter,
+  TextAlignJustify,
+  TextAlignLeft,
+  TextAlignRight,
+} from '@phosphor-icons/react'
 
+import { SwitchRow } from '@/components/editorChrome'
 import { Button } from '@/components/ui/Button'
-import { Section } from '@/components/ui/Section/Section'
-import { Checkbox } from '@/components/ui/Checkbox'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
+import { DistanceBox, PanelGroup, SegmentStrip, SelectField } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
@@ -46,13 +53,52 @@ const fontFamilyMap: Record<string, string> = {
   'plus-jakarta-sans': 'var(--font-wall-plus-jakarta-sans)',
 }
 
-const ArtisticText = ({ disabled }: { disabled?: boolean }) => {
+// Today's text-align values, named and drawn as in designs/wall-view-panels.dc.html.
+const TEXT_ALIGNS = [
+  { value: 'left', label: 'Align left', icon: TextAlignLeft },
+  { value: 'center', label: 'Center', icon: TextAlignCenter },
+  { value: 'right', label: 'Align right', icon: TextAlignRight },
+  { value: 'justify', label: 'Justify', icon: TextAlignJustify },
+] as const
+
+const VERTICAL_ALIGNS = [
+  { value: 'top', label: 'Top', icon: AlignTopSimple },
+  { value: 'center', label: 'Middle', icon: AlignCenterVerticalSimple },
+  { value: 'bottom', label: 'Bottom', icon: AlignBottomSimple },
+] as const
+
+// The Style select's words in sentence case (constants.ts keeps its own; the value is what saves).
+const STYLE_LABELS: Record<string, string> = {
+  regular: 'Regular',
+  italic: 'Regular italic',
+  bold: 'Bold',
+  'bold-italic': 'Bold italic',
+}
+
+const ArtisticText = ({
+  disabled,
+  part = 'look',
+}: {
+  disabled?: boolean
+  /**
+   * look: the Look tab's groups; fit: only "Fit box to text", which the Layout tab shows under
+   * Size (wallview.md §3). Both read and handle exactly as before.
+   */
+  part?: 'look' | 'fit'
+}) => {
   const dispatch = useDispatch()
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const { handleEditArtworkText } = useArtworkTextHandlers(currentArtworkId || '')
 
   const exhibitionArtworksById = useSelector(
     (state: RootState) => state.exhibition.exhibitionArtworksById,
+  )
+  // Display only: the pressed alignment segments (the factory's defaults: 'left', 'top').
+  const textAlign = useSelector((state: RootState) =>
+    currentArtworkId ? state.artworks.byId[currentArtworkId]?.textAlign : undefined,
+  )
+  const textVerticalAlign = useSelector((state: RootState) =>
+    currentArtworkId ? state.artworks.byId[currentArtworkId]?.textVerticalAlign : undefined,
   )
 
   // Bounding data for 2D→3D coordinate conversion
@@ -195,249 +241,323 @@ const ArtisticText = ({ disabled }: { disabled?: boolean }) => {
     return null
   }
 
+  if (part === 'fit') {
+    return (
+      <Button
+        variant="bare"
+        font="dashboard"
+        className={styles.link}
+        onClick={handleWrapAroundText}
+      >
+        Fit box to text
+      </Button>
+    )
+  }
+
   return (
     <>
-      <Section title="Alignment" disabled={disabled}>
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Text Align
-        </Text>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textLeft"
-              onClick={() => handleEditArtworkText('textAlign', 'left')}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textCenter"
-              onClick={() => handleEditArtworkText('textAlign', 'center')}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textRight"
-              onClick={() => handleEditArtworkText('textAlign', 'right')}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textJustify"
-              onClick={() => handleEditArtworkText('textAlign', 'justify')}
-            />
-          </div>
-        </div>
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Vertical Align
-        </Text>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textVerticalTop"
-              onClick={() => handleEditArtworkText('textVerticalAlign', 'top')}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textVerticalCenter"
-              onClick={() => handleEditArtworkText('textVerticalAlign', 'center')}
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              size="small"
-              variant="secondary"
-              icon="textVerticalBottom"
-              onClick={() => handleEditArtworkText('textVerticalAlign', 'bottom')}
-            />
-          </div>
-        </div>
-        <div style={{ marginTop: 'var(--space-2)' }}>
-          <Button
-            font="dashboard"
-            fullWidth
-            variant="secondary"
-            label="Wrap around text"
-            onClick={handleWrapAroundText}
+      <PanelGroup title="Type" disabled={disabled}>
+        <SelectField<TFontFamily>
+          label="Font family"
+          options={fontFamilies}
+          value={fontFamily?.value}
+          onChange={(val) => handleEditArtworkText('fontFamily', { label: val, value: val })}
+        />
+        <div className={styles.grid2}>
+          <SelectField<number>
+            label="Size (cm)"
+            options={fontSizes}
+            value={fontSize?.value}
+            onChange={(val) =>
+              handleEditArtworkText('fontSize', { label: String(val), value: val })
+            }
+          />
+          <SelectField<number>
+            label="Line height"
+            options={lineHeights}
+            value={lineHeight?.value}
+            onChange={(val) =>
+              handleEditArtworkText('lineHeight', { label: String(val), value: val })
+            }
+          />
+          <SelectField<TFontWeight>
+            label="Style"
+            options={filteredWeights.map((w) => ({
+              value: w.value,
+              label: STYLE_LABELS[w.value] ?? w.label,
+            }))}
+            value={fontWeight?.value}
+            onChange={(val) => handleEditArtworkText('fontWeight', { label: val, value: val })}
+          />
+          <SelectField<number>
+            label="Letter spacing"
+            options={letterSpacings}
+            value={letterSpacing?.value}
+            onChange={(val) =>
+              handleEditArtworkText('letterSpacing', { label: String(val), value: val })
+            }
           />
         </div>
-      </Section>
+      </PanelGroup>
 
-      <Section title="Presets" disabled={disabled}>
-        <PresetSection presetType="text" />
-      </Section>
+      <PanelGroup title="Alignment" disabled={disabled}>
+        <div className={styles.alignRow}>
+          <SegmentStrip
+            label="Text align"
+            segments={TEXT_ALIGNS.map(({ value, label, icon }) => ({
+              key: value,
+              label,
+              icon,
+              pressed: (textAlign ?? 'left') === value,
+              onClick: () => handleEditArtworkText('textAlign', value),
+            }))}
+          />
+          <SegmentStrip
+            label="Vertical align"
+            segments={VERTICAL_ALIGNS.map(({ value, label, icon }) => ({
+              key: value,
+              label,
+              icon,
+              pressed: (textVerticalAlign ?? 'top') === value,
+              onClick: () => handleEditArtworkText('textVerticalAlign', value),
+            }))}
+          />
+        </div>
+      </PanelGroup>
 
-      <Section title="Style" disabled={disabled}>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Size (cm)
-            </Text>
-            <Select<number>
-              options={fontSizes}
-              value={fontSize?.value}
-              onChange={(val) =>
-                handleEditArtworkText('fontSize', { label: String(val), value: val })
-              }
+      <PanelGroup title="Colors" disabled={disabled}>
+        <div className={styles.grid2}>
+          <ColorPicker
+            variant="field"
+            name="Text"
+            textColor={textColor!}
+            onColorSelect={(value) => handleEditArtworkText('textColor', value)}
+          />
+          <div className={styles.colorWithNone}>
+            <ColorPicker
+              variant="field"
+              name="Background"
+              textColor={textBackgroundColor ?? '#ffffff'}
+              onColorSelect={(value) => handleEditArtworkText('textBackgroundColor', value)}
+              emptyLabel={textBackgroundColor === undefined ? 'None' : undefined}
             />
-          </div>
-
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Line height
-            </Text>
-
-            <Select<number>
-              options={lineHeights}
-              value={lineHeight?.value}
-              onChange={(val) =>
-                handleEditArtworkText('lineHeight', { label: String(val), value: val })
-              }
-            />
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.link}
+              aria-pressed={textBackgroundColor === undefined}
+              aria-label="Background: none"
+              onClick={() => {
+                handleEditArtworkText('textBackgroundColor', undefined)
+                handleEditArtworkText('textThickness', { label: '0', value: 0 })
+              }}
+            >
+              None
+            </Button>
           </div>
         </div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Font Style
-            </Text>
-            <Select<TFontWeight>
-              options={filteredWeights}
-              value={fontWeight?.value}
-              onChange={(val) => handleEditArtworkText('fontWeight', { label: val, value: val })}
-            />
-          </div>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Letter Spacing
-            </Text>
-            <Select<number>
-              options={letterSpacings}
-              value={letterSpacing?.value}
-              onChange={(val) =>
-                handleEditArtworkText('letterSpacing', { label: String(val), value: val })
-              }
-            />
-          </div>
-        </div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Font Family
-            </Text>
-            <Select<TFontFamily>
-              options={fontFamilies}
-              value={fontFamily?.value}
-              onChange={(val) => handleEditArtworkText('fontFamily', { label: val, value: val })}
-            />
-          </div>
-        </div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Padding Top
-            </Text>
-            <Select<number>
+        {textBackgroundColor !== undefined && (
+          <SelectField<number>
+            label="Thickness (cm)"
+            options={textThicknessOptions}
+            value={textThickness?.value}
+            onChange={(val) =>
+              handleEditArtworkText('textThickness', {
+                label: String(val),
+                value: val,
+              })
+            }
+          />
+        )}
+      </PanelGroup>
+
+      <PanelGroup title="Inner spacing" disabled={disabled}>
+        <DistanceBox
+          label="Inner spacing"
+          itemLabel="text"
+          top={
+            <SelectField<number>
+              label="Inner spacing, top"
+              hideLabel
               options={textPaddings}
               value={textPaddingTop?.value ?? 0}
               onChange={(val) =>
                 handleEditArtworkText('textPaddingTop', { label: String(val), value: val })
               }
             />
-          </div>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Padding Bottom
-            </Text>
-            <Select<number>
+          }
+          bottom={
+            <SelectField<number>
+              label="Inner spacing, bottom"
+              hideLabel
               options={textPaddings}
               value={textPaddingBottom?.value ?? 0}
               onChange={(val) =>
                 handleEditArtworkText('textPaddingBottom', { label: String(val), value: val })
               }
             />
-          </div>
-        </div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Padding Left
-            </Text>
-            <Select<number>
+          }
+          left={
+            <SelectField<number>
+              label="Inner spacing, left"
+              hideLabel
               options={textPaddings}
               value={textPaddingLeft?.value ?? 0}
               onChange={(val) =>
                 handleEditArtworkText('textPaddingLeft', { label: String(val), value: val })
               }
             />
-          </div>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Padding Right
-            </Text>
-            <Select<number>
+          }
+          right={
+            <SelectField<number>
+              label="Inner spacing, right"
+              hideLabel
               options={textPaddings}
               value={textPaddingRight?.value ?? 0}
               onChange={(val) =>
                 handleEditArtworkText('textPaddingRight', { label: String(val), value: val })
               }
             />
-          </div>
-        </div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Text Color
-            </Text>
-            <ColorPicker
-              textColor={textColor!}
-              onColorSelect={(value) => handleEditArtworkText('textColor', value)}
+          }
+        />
+      </PanelGroup>
+
+      <PanelGroup title="Extras" disabled={disabled}>
+        <SwitchRow
+          title="Paper texture"
+          checked={!!textBackgroundTexture}
+          onChange={(e) => {
+            handleEditArtworkText('textBackgroundTexture', e.target.checked ? 'paper' : undefined)
+          }}
+        />
+        {textBackgroundTexture && (
+          <div className={styles.extraOptions}>
+            <SelectField<string>
+              label="Texture"
+              options={[{ label: 'Plain paper', value: 'paper' }]}
+              value={textBackgroundTexture}
+              onChange={(val) => handleEditArtworkText('textBackgroundTexture', val)}
             />
           </div>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Background
-            </Text>
-            <div className={styles.backgroundColorRow}>
-              <ColorPicker
-                textColor={textBackgroundColor ?? '#ffffff'}
-                onColorSelect={(value) => handleEditArtworkText('textBackgroundColor', value)}
-              />
-              <Button
-                size="small"
-                variant={textBackgroundColor === undefined ? 'primary' : 'secondary'}
-                label="None"
-                onClick={() => {
-                  handleEditArtworkText('textBackgroundColor', undefined)
-                  handleEditArtworkText('textThickness', { label: '0', value: 0 })
-                }}
-              />
-            </div>
+        )}
+
+        <SwitchRow
+          title="Border"
+          checked={!!showTextBorder}
+          onChange={(e) => handleEditArtworkText('showTextBorder', e.target.checked)}
+        />
+        {showTextBorder && (
+          <div className={styles.extraOptions}>
+            <ColorPicker
+              variant="inline"
+              name="Border color"
+              textColor={textBorderColor ?? '#c9a96e'}
+              onColorSelect={(value) => handleEditArtworkText('textBorderColor', value)}
+            />
+            <SelectField<number>
+              label="Border offset (cm)"
+              options={Array.from({ length: 36 }, (_, i) => {
+                const val = Number((0.5 + i * 0.1).toFixed(1))
+                return { label: String(val), value: val }
+              })}
+              value={textBorderOffset?.value ?? 1.2}
+              onChange={(val) =>
+                handleEditArtworkText('textBorderOffset', {
+                  label: String(val),
+                  value: val,
+                })
+              }
+            />
           </div>
-        </div>
-        {textBackgroundColor !== undefined && (
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                Thickness (cm)
-              </Text>
-              <Select<number>
-                options={textThicknessOptions}
-                value={textThickness?.value}
+        )}
+
+        <SwitchRow
+          title="Monogram"
+          checked={!!showMonogram}
+          onChange={(e) => handleEditArtworkText('showMonogram', e.target.checked)}
+        />
+        {showMonogram && (
+          <div className={styles.extraOptions}>
+            <ColorPicker
+              variant="inline"
+              name="Color"
+              aria-label="Monogram color"
+              textColor={monogramColor ?? '#c0392b'}
+              onColorSelect={(value) => handleEditArtworkText('monogramColor', value)}
+            />
+            <div className={styles.grid2}>
+              <SelectField<number>
+                label="Opacity"
+                options={[
+                  { label: '10%', value: 0.1 },
+                  { label: '20%', value: 0.2 },
+                  { label: '30%', value: 0.3 },
+                  { label: '40%', value: 0.4 },
+                  { label: '50%', value: 0.5 },
+                  { label: '60%', value: 0.6 },
+                  { label: '70%', value: 0.7 },
+                  { label: '80%', value: 0.8 },
+                  { label: '90%', value: 0.9 },
+                  { label: '100%', value: 1.0 },
+                ]}
+                value={monogramOpacity?.value ?? 1.0}
                 onChange={(val) =>
-                  handleEditArtworkText('textThickness', {
+                  handleEditArtworkText('monogramOpacity', {
+                    label: String(val),
+                    value: val,
+                  })
+                }
+              />
+              <SelectField<string>
+                label="Position"
+                options={[
+                  { label: 'Top center', value: 'top' },
+                  { label: 'Bottom center', value: 'bottom' },
+                ]}
+                value={monogramPosition ?? 'bottom'}
+                onChange={(val) =>
+                  handleEditArtworkText('monogramPosition', val as 'top' | 'bottom')
+                }
+              />
+              <SelectField<number>
+                label="Offset (cm)"
+                options={[
+                  { label: '0', value: 0 },
+                  { label: '1', value: 1 },
+                  { label: '2', value: 2 },
+                  { label: '3', value: 3 },
+                  { label: '4', value: 4 },
+                ]}
+                value={monogramOffset?.value ?? 2}
+                onChange={(val) =>
+                  handleEditArtworkText('monogramOffset', {
+                    label: String(val),
+                    value: val,
+                  })
+                }
+              />
+              <SelectField<number>
+                label="Size (cm)"
+                ariaLabel="Monogram size (cm)"
+                options={[
+                  { label: '1', value: 1 },
+                  { label: '1.5', value: 1.5 },
+                  { label: '2', value: 2 },
+                  { label: '2.5', value: 2.5 },
+                  { label: '3', value: 3 },
+                  { label: '3.5', value: 3.5 },
+                  { label: '4', value: 4 },
+                  { label: '4.5', value: 4.5 },
+                  { label: '5', value: 5 },
+                  { label: '6', value: 6 },
+                  { label: '7', value: 7 },
+                  { label: '8', value: 8 },
+                  { label: '9', value: 9 },
+                  { label: '10', value: 10 },
+                ]}
+                value={monogramSize?.value ?? 4}
+                onChange={(val) =>
+                  handleEditArtworkText('monogramSize', {
                     label: String(val),
                     value: val,
                   })
@@ -446,199 +566,11 @@ const ArtisticText = ({ disabled }: { disabled?: boolean }) => {
             </div>
           </div>
         )}
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Checkbox
-              checked={!!textBackgroundTexture}
-              onChange={(e) => {
-                handleEditArtworkText(
-                  'textBackgroundTexture',
-                  e.target.checked ? 'paper' : undefined,
-                )
-              }}
-              label="Use Texture"
-            />
-          </div>
-        </div>
-        {textBackgroundTexture && (
-          <div className={styles.row}>
-            <div className={styles.item}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                Texture
-              </Text>
-              <Select<string>
-                options={[{ label: 'Plain Paper', value: 'paper' }]}
-                value={textBackgroundTexture}
-                onChange={(val) => handleEditArtworkText('textBackgroundTexture', val)}
-              />
-            </div>
-          </div>
-        )}
+      </PanelGroup>
 
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Checkbox
-              checked={!!showTextBorder}
-              onChange={(e) => handleEditArtworkText('showTextBorder', e.target.checked)}
-              label="Show Border"
-            />
-          </div>
-        </div>
-        {showTextBorder && (
-          <>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Border Color
-                </Text>
-                <ColorPicker
-                  textColor={textBorderColor ?? '#c9a96e'}
-                  onColorSelect={(value) => handleEditArtworkText('textBorderColor', value)}
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Border Offset (cm)
-                </Text>
-                <Select<number>
-                  options={Array.from({ length: 36 }, (_, i) => {
-                    const val = Number((0.5 + i * 0.1).toFixed(1))
-                    return { label: String(val), value: val }
-                  })}
-                  value={textBorderOffset?.value ?? 1.2}
-                  onChange={(val) =>
-                    handleEditArtworkText('textBorderOffset', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </>
-        )}
-
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Checkbox
-              checked={!!showMonogram}
-              onChange={(e) => handleEditArtworkText('showMonogram', e.target.checked)}
-              label="Show Monogram"
-            />
-          </div>
-        </div>
-        {showMonogram && (
-          <>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Color
-                </Text>
-                <ColorPicker
-                  textColor={monogramColor ?? '#c0392b'}
-                  onColorSelect={(value) => handleEditArtworkText('monogramColor', value)}
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Opacity
-                </Text>
-                <Select<number>
-                  options={[
-                    { label: '10%', value: 0.1 },
-                    { label: '20%', value: 0.2 },
-                    { label: '30%', value: 0.3 },
-                    { label: '40%', value: 0.4 },
-                    { label: '50%', value: 0.5 },
-                    { label: '60%', value: 0.6 },
-                    { label: '70%', value: 0.7 },
-                    { label: '80%', value: 0.8 },
-                    { label: '90%', value: 0.9 },
-                    { label: '100%', value: 1.0 },
-                  ]}
-                  value={monogramOpacity?.value ?? 1.0}
-                  onChange={(val) =>
-                    handleEditArtworkText('monogramOpacity', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Position
-                </Text>
-                <Select<string>
-                  options={[
-                    { label: 'Top Center', value: 'top' },
-                    { label: 'Bottom Center', value: 'bottom' },
-                  ]}
-                  value={monogramPosition ?? 'bottom'}
-                  onChange={(val) =>
-                    handleEditArtworkText('monogramPosition', val as 'top' | 'bottom')
-                  }
-                />
-              </div>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Offset (cm)
-                </Text>
-                <Select<number>
-                  options={[
-                    { label: '0', value: 0 },
-                    { label: '1', value: 1 },
-                    { label: '2', value: 2 },
-                    { label: '3', value: 3 },
-                    { label: '4', value: 4 },
-                  ]}
-                  value={monogramOffset?.value ?? 2}
-                  onChange={(val) =>
-                    handleEditArtworkText('monogramOffset', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <div className={styles.row}>
-              <div className={styles.item}>
-                <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                  Size (cm)
-                </Text>
-                <Select<number>
-                  options={[
-                    { label: '1', value: 1 },
-                    { label: '1.5', value: 1.5 },
-                    { label: '2', value: 2 },
-                    { label: '2.5', value: 2.5 },
-                    { label: '3', value: 3 },
-                    { label: '3.5', value: 3.5 },
-                    { label: '4', value: 4 },
-                    { label: '4.5', value: 4.5 },
-                    { label: '5', value: 5 },
-                    { label: '6', value: 6 },
-                    { label: '7', value: 7 },
-                    { label: '8', value: 8 },
-                    { label: '9', value: 9 },
-                    { label: '10', value: 10 },
-                  ]}
-                  value={monogramSize?.value ?? 4}
-                  onChange={(val) =>
-                    handleEditArtworkText('monogramSize', {
-                      label: String(val),
-                      value: val,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </>
-        )}
-      </Section>
+      <PanelGroup title="Preset" disabled={disabled}>
+        <PresetSection presetType="text" />
+      </PanelGroup>
     </>
   )
 }

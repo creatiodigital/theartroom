@@ -75,6 +75,12 @@ export type TWallView = {
   guides: TGuide[]
   selectedGuideId: string | null
   activeAutofocusGroupId: string | null
+  /** Saved-content edits counted since this wall opened (display only, never sent; Q142). */
+  wallEdits: number
+  /** `wallEdits` as it was when the last accepted save was sent. */
+  wallEditsSaved: number
+  /** A wall save is out (useSaveExhibition): one for both panels, so one at a time (Q146 b). */
+  wallSaving: boolean
 }
 
 export type TDirection =

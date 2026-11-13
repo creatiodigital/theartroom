@@ -1,0 +1,468 @@
+@use '@/styles/mixins' as *;
+
+// /admin/edition-sales — docs/admin-redesign/sales.md §1, designs/edition-sales.dc.html.
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+// ── Summary cards: 2-up on phones, as many 200px+ columns as fit above ──
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include media-up(tablet) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+// ── Toolbar ──
+// The whole row on phones (the count drops under it), what it needs above.
+.filters {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  @include media-up(tablet) {
+    flex: 1 1 auto;
+  }
+}
+
+// Two classes: Button's bare reset would win over one. Used in the toolbar and
+// in the "No copies match" empty state.
+.page .clear {
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  text-decoration: underline;
+
+  @include media-up(tablet) {
+    min-height: 32px;
+  }
+}
+
+.loading {
+  margin: 0;
+  padding: var(--space-6) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+// ── Header cells ──
+// Two classes beat DataTable's `th` rule (left-aligned, secondary).
+.table .alignRight {
+  text-align: right;
+}
+
+.table .sorted {
+  color: var(--color-black);
+}
+
+// "Sort by" / "·": only the phone's sort bar shows them.
+.sortLead {
+  display: none;
+}
+
+.table .sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+// ── Cells ──
+.cellDate {
+  white-space: nowrap;
+}
+
+.artwork {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+  text-decoration: none;
+}
+
+a.artwork:hover {
+  color: var(--color-black);
+  text-decoration: underline;
+}
+
+.sub {
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.cellNumber {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 13px;
+  color: var(--color-black);
+  white-space: nowrap;
+}
+
+.holder {
+  color: var(--color-black);
+}
+
+.kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-black);
+  white-space: nowrap;
+
+  svg {
+    flex: 0 0 auto;
+  }
+}
+
+.cellStatus {
+  white-space: nowrap;
+}
+
+.cellTps {
+  white-space: nowrap;
+}
+
+.mirrored {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-green-70);
+}
+
+.muted {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+// Words that only the phone cards need ("in TPS", "Order").
+.phoneOnly {
+  display: none;
+}
+
+.cellOrder {
+  text-align: right;
+  white-space: nowrap;
+}
+
+// The drawn 12px, so a 32px Release button sits level with the row's text.
+.table .cellOrder {
+  padding-top: var(--space-3);
+}
+
+.ref {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 13px;
+  font-weight: var(--font-medium);
+  color: var(--color-black);
+}
+
+// Outline with red text (sales.md §1): 32px from 900px, 44px under it (Q7).
+.page .release {
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 6px var(--space-3);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-red-50);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-red-30);
+    border-color: var(--color-red-40);
+  }
+
+  @include media-up(tablet) {
+    min-height: 32px;
+  }
+}
+
+// ── Desktop: a real table that scrolls sideways when the panel is narrow ──
+@include media-up(tablet) {
+  .table {
+    min-width: 900px;
+  }
+}
+
+// ── Phone: each row becomes a card (same <tr>, so one copy in the DOM) ──
+// number + status / artwork · variant / holder / date · In TPS / order or Release.
+// The header row becomes a "Sort by Date · Number" bar: only the two sort
+// buttons show, so no focusable control is ever visually hidden.
+@media (max-width: #{bp(tablet) - 0.02px}) {
+  .table {
+    display: block;
+
+    thead,
+    tbody {
+      display: block;
+    }
+
+    thead tr {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0 var(--space-4);
+      background: var(--color-gray-15);
+    }
+
+    thead th {
+      display: none;
+    }
+
+    thead th.sortable {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0;
+      background: none;
+    }
+
+    .sortButton {
+      min-height: 44px;
+      padding: 0 var(--space-1);
+    }
+
+    .row td,
+    .row td:first-child,
+    .row td:last-child {
+      padding: 0;
+      border-top: 0;
+    }
+  }
+
+  .sortLead {
+    display: inline;
+    font-weight: var(--font-regular);
+    color: var(--color-text-secondary);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'number status'
+      'artwork artwork'
+      'holder holder'
+      'date tps'
+      'order order';
+    column-gap: var(--space-3);
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-gray-20);
+  }
+
+  .cellNumber {
+    grid-area: number;
+    align-self: center;
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+  }
+
+  .cellStatus {
+    grid-area: status;
+    align-self: center;
+    justify-self: end;
+  }
+
+  .cellArtwork {
+    grid-area: artwork;
+    margin-top: var(--space-2);
+  }
+
+  .cellHolder {
+    grid-area: holder;
+    margin-top: var(--space-2);
+  }
+
+  .cellDate {
+    grid-area: date;
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .cellTps {
+    grid-area: tps;
+    margin-top: var(--space-2);
+    justify-self: end;
+  }
+
+  // Not mirrored: the card says nothing rather than a bare dash.
+  .cellTpsNone {
+    display: none;
+  }
+
+  .mirrored {
+    font-size: var(--text-xs);
+  }
+
+  .phoneOnly {
+    display: inline;
+  }
+
+  .cellOrder {
+    grid-area: order;
+    margin-top: var(--space-3);
+    text-align: left;
+  }
+
+  .ref {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .ref .phoneOnly {
+    margin-right: var(--space-1);
+    font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+    font-weight: var(--font-regular);
+    color: var(--color-text-secondary);
+  }
+
+  .page .release {
+    width: 100%;
+  }
+}
+
+// ── The "Add an off-platform copy" form (inside AdminConfirmModal size="wide") ──
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.intro {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+
+  strong {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}
+
+.formLoading {
+  margin: 0;
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.fixedVariant {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+}
+
+// Two fields side by side from 900px, stacked on phones.
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+
+  @include media-up(tablet) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+@include media-up(tablet) {
+  .pairPostal {
+    grid-template-columns: minmax(0, 1fr) 140px;
+  }
+}
+
+// The fee line belongs to Kind, right above it: half the field gap.
+.fee {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+
+  strong {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+
+  &:focus {
+    border-color: var(--color-dark-surface);
+    outline: none;
+  }
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.textarea {
+  resize: vertical;
+}
+
+// SelectDropdown in the admin look (Geist, 4px corners, 44px / 36px). Element
+// selectors under our class outrank its one-class rules.
+.dropdown button {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+}
+
+.dropdown > button {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+
+  @include media-up(tablet) {
+    min-height: 36px;
+  }
+}
+
+.dropdown ul {
+  border-radius: var(--radius-sm);
+}

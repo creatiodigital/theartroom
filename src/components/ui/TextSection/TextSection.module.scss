@@ -1,0 +1,57 @@
+@use '@/styles/mixins' as *;
+
+.section {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 56px;
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+// Small grey caps (the drawn #999 is 2.8:1 on white; the secondary grey, as elsewhere).
+.label {
+  margin: 0;
+  padding-top: 6px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  font-weight: var(--font-regular);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.text {
+  max-width: 760px;
+  min-width: 0;
+}
+
+// variant="columns": the artist page. The label in the left third, the text across the right two
+// thirds (the photo's width above it) in two columns; stacked below lg, full width; one column on
+// phones.
+.columns {
+  grid-template-columns: minmax(0, 1fr) 66.67%;
+  gap: var(--space-8);
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .text {
+    max-width: none;
+    column-count: 2;
+    column-gap: 56px;
+
+    @include media-down(md) {
+      column-count: 1;
+    }
+
+    // The first paragraph starts each column level (no top margin pushing the left one down).
+    > * > :first-child {
+      margin-top: 0;
+    }
+  }
+}

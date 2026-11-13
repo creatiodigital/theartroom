@@ -1,26 +1,142 @@
 @use '@/styles/mixins' as *;
 
-.menu {
+// editor3d.md "Toolbar" (designs/editor-3d.dc.html): a floating card on the left of the room,
+// each tool's label under its icon. Same layer as before (z 2). About 630px tall with Bake: on a
+// shorter window it scrolls inside the viewport (questions.md Q138).
+.toolbar {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 2;
+  width: 76px;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) 6px;
+  background: var(--editor-toolbar-surface);
+  border-radius: 14px;
+  box-shadow: var(--editor-toolbar-shadow);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+
+  @media #{$phone-room} {
+    top: var(--space-2);
+    left: var(--space-2);
+    max-height: calc(100dvh - 2 * var(--space-2));
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.caption {
+  padding: 2px 0;
+  font-size: 9.5px;
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+  // The drawn #999 is 2.8:1 on white (as Q90).
+  color: var(--color-text-secondary);
+}
+
+.divider {
+  flex: 0 0 auto;
+  height: 1px;
+  margin: 6px var(--space-2);
+  background: var(--color-gray-30);
+}
+
+// Two classes: Button's bare reset would win over one.
+.toolbar .tool {
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  position: fixed;
-  background-color: transparent;
-  left: var(--space-5);
-  top: var(--space-5);
-  width: var(--space-10);
-  z-index: 2;
   gap: var(--space-1);
-  padding: var(--space-1);
-  border-radius: var(--space-1);
+  padding: var(--space-2) 2px 7px;
+  border-radius: 10px;
+  color: var(--color-text-primary);
 
-  button {
-    background-color: var(--color-white);
-
-    &:hover {
-      background-color: var(--color-white);
-    }
+  &:hover {
+    background: var(--color-gray-15);
   }
+
+  &[aria-pressed='true'] {
+    background: var(--color-dark-surface);
+    color: var(--color-white);
+  }
+
+  // globals.scss removes every outline: keyboard focus gets a ring back, inside the card.
+  &:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: -2px;
+  }
+
+  &[aria-pressed='true']:focus-visible {
+    outline-color: var(--color-white);
+    outline-offset: -4px;
+  }
+}
+
+// Geist has no 500 here (README): the drawn 500 is 600.
+.toolLabel {
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  line-height: 1.1;
+}
+
+// NEW: the editing pill, beside the toolbar (left 16 + 76 + 16).
+.pill {
+  position: fixed;
+  top: var(--space-4);
+  left: 108px;
+  z-index: 2;
+  max-width: min(360px, calc(100vw - 140px));
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-2) 14px;
+  background: var(--editor-toolbar-surface);
+  border-radius: var(--radius-full);
+  box-shadow: var(--editor-pill-shadow);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+
+  @media #{$phone-room} {
+    top: var(--space-2);
+    left: 92px;
+    max-width: calc(100vw - 100px);
+  }
+}
+
+.pillDot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--editor-attention-dot);
+}
+
+.pillLabel {
+  flex: 0 0 auto;
+  color: var(--color-text-secondary);
+}
+
+.pillName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
 }

@@ -1,157 +1,186 @@
 @use '@/styles/mixins' as *;
 
+// docs/public-redesign/exhibition.md, designs/exhibition-desktop.dc.html / -phone.dc.html.
 .content {
-  padding: 0;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
+  margin: 0 auto;
+}
+
+// Hero: as the artist page (owner, 2026-11-12): the text on the left, the image 3:2 on the right at
+// two thirds of the width; the image first on phones.
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 66.67%;
+  gap: var(--space-8);
+  align-items: center;
+  padding-top: var(--space-12);
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    padding-top: var(--space-6);
+  }
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  @include media-down(lg) {
+    order: 2;
+  }
 }
 
 .artist {
-  font-size: var(--text-xl-mobile);
-  font-family: var(--font-serif);
-  display: block;
-  margin-bottom: var(--space-2);
+  align-self: flex-start;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--public-secondary);
 
-  @include breakpoint(lg) {
-    font-size: var(--text-xl);
-  }
-
-  &:hover {
-    text-decoration: none;
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
   }
 }
 
 .title {
-  margin-bottom: 0;
-}
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  // The artist page name's size (owner, 2026-11-12).
+  font-size: var(--text-huge);
+  font-weight: var(--font-regular);
+  line-height: 1.08;
+  color: var(--public-text);
 
-.heroSection {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-bottom: var(--space-6);
-
-  @include breakpoint(lg) {
-    flex-direction: row;
-    align-items: flex-start;
-    height: 600px;
-    margin-bottom: var(--space-10);
+  @include media-down(md) {
+    font-size: 44px;
   }
 }
 
-.heroCta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-
-  @include breakpoint(lg) {
-    flex: 1;
-    padding-top: 200px;
-    padding-right: var(--space-10);
-  }
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). The drawn #888 is
+// 3.5:1 on white; the secondary grey passes.
+.dates {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
 }
 
-.button {
-  width: auto;
-  display: inline-flex;
-  // The gap lives on the button, not under the title, so a show without a 3D
-  // room doesn't stack it on top of the hero's own bottom margin.
-  margin-top: var(--space-6);
+.enter {
+  margin-top: 14px;
 }
 
 .share {
-  margin-top: var(--space-8);
+  margin-top: var(--space-2);
 }
 
-// Stacked (mobile + tablet): the image leads, the artist and title follow.
-// Visual order only — the DOM keeps the h1 first for screen readers and SEO.
 .heroImageWrapper {
   position: relative;
-  overflow: hidden;
-  width: 100%;
   aspect-ratio: 3 / 2;
-  order: -1;
-  margin-bottom: var(--space-6);
+  overflow: hidden;
+  background: var(--public-render-wall);
 
-  @include breakpoint(lg) {
-    order: 0;
-    width: 66%;
-    height: 100%;
-    aspect-ratio: auto;
-    flex-shrink: 0;
-    margin-bottom: 0;
+  @include media-down(lg) {
+    order: 1;
   }
 }
 
 .heroImage {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
-  display: block;
 }
 
-.dates {
-  font-size: var(--text-md-mobile);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-6);
+.about {
+  padding: 72px 0 88px;
 
-  @include breakpoint(lg) {
-    font-size: var(--text-lg);
+  @include media-down(md) {
+    padding: var(--space-10) 0 var(--space-12);
   }
 }
 
-.description {
-  font-family: var(--font-serif);
-  width: 100%;
-  column-count: 1;
+.artworks {
+  padding-bottom: var(--space-6);
+}
 
-  @include breakpoint(lg) {
-    column-count: 2;
-    column-gap: var(--space-14);
+.group {
+  padding-bottom: 80px;
+
+  @include media-down(md) {
+    padding-bottom: var(--space-12);
   }
 }
 
-.error {
-  color: var(--color-error-text);
-  margin-bottom: var(--space-4);
-}
+// As TextSection's `columns` (About the exhibition): the label in the left third, the rest across
+// the right two thirds; one column on phones, the label first.
+.artistSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 66.67%;
+  gap: var(--space-8);
+  align-items: start;
+  padding: 72px 0 96px;
 
-.artworksSection {
-  margin-top: var(--space-10);
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
 
-  @include breakpoint(lg) {
-    margin-top: var(--space-16);
+  @include media-down(md) {
+    padding: var(--space-10) 0 var(--space-14);
   }
 }
 
-// Space above a section heading. The previous grid's own margin-bottom
-// (56px, 72px on lg) collapses with any margin here, so the extra room is
-// padding, which stacks on top of it instead of merging into it.
-.group + .group {
-  padding-top: var(--space-4);
+.artistBody {
+  min-width: 0;
+}
 
-  @include breakpoint(lg) {
-    padding-top: var(--space-8);
+.artistName {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 28px;
+  font-weight: var(--font-regular);
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 24px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: 3px;
   }
 }
 
-// Section title framed by a full-width double rule above and below — a
-// catalog-style divider. `double` at 3px draws two 1px lines with a 1px gap.
-.groupHeading {
-  margin: 0 0 var(--space-12);
-  padding: var(--space-4) 0;
-  border-top: 3px double var(--color-border-strong);
-  border-bottom: 3px double var(--color-border-strong);
-  font-size: var(--text-xl-mobile);
-  font-weight: 400;
-  color: var(--color-text-primary);
-  text-align: center;
-  // Spaced capitals read as a divider label rather than a second page title.
+// Two columns, as About the exhibition's text (TextSection `columns`); one on phones. The first
+// paragraph starts each column level.
+.artistBio {
+  column-count: 2;
+  column-gap: 56px;
+
+  @include media-down(md) {
+    column-count: 1;
+  }
+
+  > * > :first-child {
+    margin-top: 0;
+  }
+}
+
+.artistView {
+  margin-top: var(--space-8);
+}
+
+// Small grey caps (the drawn #999 is 2.8:1 on white; the secondary grey, as elsewhere).
+.artistLabel {
+  margin: 0;
+  padding-top: 6px;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 12px;
+  font-weight: var(--font-regular);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-
-  @include breakpoint(lg) {
-    padding: var(--space-5) 0;
-    font-size: var(--text-xl);
-    margin-bottom: var(--space-16);
-  }
+  color: var(--color-text-secondary);
 }

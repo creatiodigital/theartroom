@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 .modal {
   position: fixed;
   top: 0;
@@ -35,8 +37,13 @@
 
 // Corner close. Opt-in via `showClose`, because ESC does not exist on a phone
 // and a backdrop tap is not an affordance anyone can see.
+//
+// Above the content: it comes first in the panel, so any positioned element in the content (a
+// form with a hidden honeypot, a header) painted over it and only its outer ring took the pointer,
+// the ring where the hover shows (owner, 2026-11-12).
 .close {
   position: absolute;
+  z-index: 1;
   top: var(--space-3);
   right: var(--space-3);
   display: inline-flex;
@@ -53,5 +60,54 @@
 
   &:hover {
     background: var(--color-surface-subtle);
+  }
+}
+
+// tone="admin" (docs/admin-redesign, dashboard-states.dc.html §4).
+.admin {
+  background-color: var(--admin-backdrop);
+
+  .content {
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--admin-dialog-shadow);
+  }
+}
+
+// tone="public" (docs/public-redesign/order-flow.md, the Learn more and "Where we ship" windows):
+// square, a deep shadow, a dim backdrop.
+.public {
+  background-color: rgba(20, 20, 20, 0.45);
+
+  .content {
+    border: none;
+    border-radius: 0;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  }
+
+  // Square like every public control (no round hover).
+  .close {
+    border-radius: 0;
+  }
+}
+
+// layout="flush": the window lays out its own header, scrolling middle and footer.
+.content.flush {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+// phoneFullScreen: below 640px the panel fills the screen.
+.phoneFullScreen {
+  @include media-down(sm) {
+    padding: 0;
+
+    .content {
+      max-width: none;
+      height: 100%;
+      border: none;
+    }
   }
 }

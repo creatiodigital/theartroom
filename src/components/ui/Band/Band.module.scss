@@ -1,0 +1,86 @@
+@use '@/styles/mixins' as *;
+
+// Edge to edge inside the page's column; its content keeps the column's width.
+.band {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  background: var(--public-off-white);
+}
+
+// The heading, the line, then the action under them, on the left (owner, 2026-11-13: it sat on the
+// right).
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+  // The header's column (owner, 2026-11-12: no narrower cap).
+  max-width: var(--content-max-width);
+  width: calc(100% - var(--site-padding) * 2);
+  margin: 0 auto;
+  padding: 72px 0;
+
+  @include media-down(lg) {
+    width: calc(100% - var(--space-6) * 2);
+  }
+
+  // Phones, as before: the action across the column.
+  @include media-down(md) {
+    align-items: stretch;
+    gap: var(--space-6);
+    padding: var(--space-12) 0;
+  }
+}
+
+// Centred: the homepage's "We'd love to hear from you" (designs/home-desktop.dc.html).
+.center {
+  align-items: center;
+  gap: 26px;
+  text-align: center;
+
+  @include media-down(md) {
+    align-items: center;
+    gap: 20px;
+  }
+
+  .text {
+    align-items: center;
+    gap: 18px;
+  }
+
+  .line {
+    max-width: 560px;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 36px;
+  font-weight: var(--font-regular);
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 28px;
+  }
+}
+
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+.line {
+  margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--public-secondary);
+}
+
+.action {
+  flex-shrink: 0;
+}

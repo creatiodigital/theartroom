@@ -4,10 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
-import { DashboardLayout } from '../../DashboardLayout'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { ErrorText } from '@/components/ui/ErrorText'
+import { AdminBreadcrumb } from '@/components/admin/ui/AdminBreadcrumb'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
+import { SaveBar } from '@/components/admin/ui/SaveBar'
+import { StatusPill } from '@/components/admin/ui/StatusPill'
 import {
+  ARTWORK_EDIT_FORM_ID,
   ArtworkEditForm,
   getInitialFormData,
   populateFormData,
@@ -21,6 +25,8 @@ import type { LimitedVariantDraft } from '@/lib/editions/types'
 import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-providers'
 import { describeUploadFailure } from '@/lib/upload/describeUploadFailure'
 
+import styles from './ArtworkEditPage.module.scss'
+
 /** One of the artist's exhibitions as the Exhibitions picker needs it. */
 type ExhibitionOption = {
   id: string
@@ -32,6 +38,80 @@ type ExhibitionOption = {
 type ArtworkEditPageProps = {
   artworkId: string
 }
+
+/** The type under the title (the library's labels). */
+const TYPE_LABEL: Record<string, string> = {
+  image: 'Image',
+  text: 'Text',
+  sound: 'Sound',
+  video: 'Video',
+}
+
+/**
+ * Display only: the library's "Selling prints" rule (`api/artworks/route.ts`,
+ * `sellingNow`), on the loaded record. Print sales on, and a live priced variant
+ * (limited) or an artwork price (open); only images print.
+ */
+const isSellingNow = (artwork: Artwork): boolean =>
+  artwork.artworkType === 'image' &&
+  artwork.printEnabled === true &&
+  (artwork.editionType === 'limited'
+    ? (artwork.limitedVariants ?? []).some(
+        (v) => v.published === true && v.blocked === true && v.priceCents != null,
+      )
+    : Boolean(artwork.printPriceCents))
+
+/**
+ * Display only (the save bar's "Unsaved changes"; never sent): the artwork fields
+ * a Save sends, in a form that compares equal when nothing that would be saved
+ * changed. The price as the cents saveArtwork computes, the exhibitions as the
+ * ticked set with their sections (as saveArtwork sends them), id lists sorted.
+ * Left out: the variants (the variants editor counts its own unsaved ones),
+ * `editionLocked` (the server moves it: Ready to sell, Unblock, variant actions)
+ * and the two rich-text fields (compared on their own, see `richTextChanged`).
+ */
+const savedFieldsKey = (data: ArtworkFormData): string => {
+  const {
+    limitedVariants: _limitedVariants,
+    editionLocked: _editionLocked,
+    technique: _technique,
+    description: _description,
+    printPriceEuros,
+    exhibitionIds,
+    exhibitionSections,
+    printOptions,
+    printRecommendations,
+    ...rest
+  } = data
+  const parsed = Number(printPriceEuros)
+  const printPriceCents =
+    printPriceEuros.trim() === '' || !Number.isFinite(parsed) || parsed < 0
+      ? null
+      : Math.round(parsed * 100)
+  const ticked = [...exhibitionIds].sort()
+  return JSON.stringify({
+    ...rest,
+    printPriceCents,
+    exhibitionIds: ticked,
+    exhibitionSections: Object.fromEntries(
+      ticked.map((id) => [id, exhibitionSections[id] ?? null]),
+    ),
+    printOptions: printOptions?.allowed
+      ? Object.fromEntries(
+          Object.entries(printOptions.allowed)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([dimension, ids]) => [dimension, [...ids].sort()]),
+        )
+      : null,
+    printRecommendations: printRecommendations?.paper
+      ? [...printRecommendations.paper].sort()
+      : null,
+  })
+}
+
+/** Display only: what a refused save sent, to tell "nothing changed since" (SaveBar `failed`). */
+const comparableKey = (data: ArtworkFormData): string =>
+  JSON.stringify([savedFieldsKey(data), data.technique, data.description])
 
 export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const { data: session } = useSession()
@@ -81,6 +161,18 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoUploading, setVideoUploading] = useState(false)
 
+  // The save bar (artist.md §3), display only: nothing here is sent. `baseline` is
+  // the form as last loaded or reloaded; `editorForm` each rich-text editor's own
+  // HTML for the text it loaded with; `variantsDirty` the variants editor's unsaved
+  // count; `failedSave` what a refused save sent, and whether it had a new image.
+  const [baseline, setBaseline] = useState<ArtworkFormData | null>(null)
+  const [editorForm, setEditorForm] = useState<{
+    technique: string | null
+    description: string | null
+  }>({ technique: null, description: null })
+  const [variantsDirty, setVariantsDirty] = useState(0)
+  const [failedSave, setFailedSave] = useState<{ key: string; withFile: boolean } | null>(null)
+
   // Cleanup preview URL when component unmounts or file changes
   useEffect(() => {
     return () => {
@@ -122,6 +214,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         setSoundUrl(data.soundUrl || null)
         setVideoUrl(data.videoUrl || null)
         setFormData(populateFormData(data))
+        setBaseline(populateFormData(data))
 
         // The artwork's OWN artist's exhibitions, not necessarily the viewer's
         // — an admin editing someone else's work must see that artist's shows.
@@ -467,11 +560,13 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
+    const sent = { key: comparableKey(formData), withFile: pendingFile !== null }
     const ok = await saveArtwork()
     if (ok) {
       router.push(backLink)
     } else {
       setSaving(false)
+      setFailedSave(sent)
     }
   }
 
@@ -493,12 +588,15 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     setPublishing(true)
     setError('')
 
+    const sent = { key: comparableKey(formData), withFile: pendingFile !== null }
     const saved = await saveArtwork()
     if (!saved) {
       setPublishing(false)
       setReadyVariantIndex(null)
+      setFailedSave(sent)
       return
     }
+    setFailedSave(null)
 
     try {
       // Resolve the just-saved variant's id by position: saveLimitedVariants
@@ -530,6 +628,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         data.artwork ?? (await fetch(`/api/artworks/${artworkId}`).then((r) => r.json()))
       setArtwork(after)
       setFormData(populateFormData(after))
+      setBaseline(populateFormData(after))
     } catch {
       setError('Failed to put variant on sale.')
     } finally {
@@ -699,25 +798,91 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
     }
   }, [artworkId])
 
+  const handleRichTextReady = useCallback(
+    (field: 'technique' | 'description', html: string) =>
+      setEditorForm((prev) => ({ ...prev, [field]: html })),
+    [],
+  )
+
+  // The save bar's state (display only). A rich-text field counts as changed only
+  // when it differs from both the loaded text and the editor's own form of it:
+  // the editor rewrites loaded HTML on mount (an empty field becomes <p></p>).
+  const richTextChanged = (field: 'technique' | 'description') =>
+    baseline !== null &&
+    editorForm[field] !== null &&
+    formData[field] !== baseline[field] &&
+    formData[field] !== editorForm[field]
+  const dirty =
+    baseline !== null &&
+    (pendingFile !== null ||
+      Boolean(pendingImageRemoval && originalImageUrl) ||
+      savedFieldsKey(formData) !== savedFieldsKey(baseline) ||
+      richTextChanged('technique') ||
+      richTextChanged('description') ||
+      variantsDirty > 0)
+  const failed = failedSave !== null && failedSave.key === comparableKey(formData)
+  // saveArtwork clears the pending file only once its upload has completed, so a
+  // refused save that started with one and no longer has it stored the image only.
+  const halfSaved = failed && failedSave.withFile && pendingFile === null
+
+  // With unsaved changes, reloading, closing the tab or typing a URL asks the
+  // browser's own "Leave site?" (as the page editor, Q81). In-app links (the
+  // menu, the breadcrumb, Cancel) are not caught.
+  useEffect(() => {
+    if (!dirty) return
+    const askFirst = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      // Older Chrome asks only when returnValue is set.
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', askFirst)
+    return () => window.removeEventListener('beforeunload', askFirst)
+  }, [dirty])
+
+  // The saved title (it doesn't follow the Title field while typing), with the
+  // library's fallback.
+  const title = artwork?.title || 'Artwork'
+  const artworkType = artwork?.artworkType ?? formData.artworkType
+  const breadcrumb = (
+    <AdminBreadcrumb items={[{ label: 'Artworks', href: backLink }, { label: title }]} />
+  )
+
   if (loading) {
     return (
-      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
-        Loading...
-      </DashboardLayout>
+      <div className={styles.page}>
+        {breadcrumb}
+        <p className={styles.status}>Loading artwork…</p>
+      </div>
     )
   }
 
   if (error && !artwork) {
     return (
-      <DashboardLayout backLink={backLink} backLabel="← Back to Library">
-        <ErrorText>{error}</ErrorText>
-      </DashboardLayout>
+      <div className={styles.page}>
+        {breadcrumb}
+        <Callout tone="red" role="alert">
+          {error}
+        </Callout>
+      </div>
     )
   }
 
   return (
-    <DashboardLayout backLink={backLink} backLabel="← Back to Library">
+    <div className={styles.page}>
+      {breadcrumb}
+      <AdminPageHeader
+        title={title}
+        description={
+          <span className={styles.meta}>
+            <span>{TYPE_LABEL[artworkType] ?? artworkType}</span>
+            {artwork && isSellingNow(artwork) && (
+              <StatusPill tone="green" shape="tag" dot label="Selling prints" />
+            )}
+          </span>
+        }
+      />
       <ArtworkEditForm
+        variant="page"
         formData={formData}
         artworkId={artworkId}
         imageUrl={displayImageUrl}
@@ -731,7 +896,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         videoUrl={videoUrl}
         exhibitions={exhibitions}
         uploading={soundUploading || videoUploading}
-        loadingText={videoUploading ? 'Uploading video...' : 'Uploading sound...'}
+        loadingText={videoUploading ? 'Uploading video…' : 'Uploading sound…'}
         saving={saving}
         error={error}
         onFormChange={handleChange}
@@ -755,29 +920,48 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         onVideoRemove={handleVideoRemove}
         onSubmit={handleSubmit}
         onCancel={() => router.push(backLink)}
+        onRichTextReady={handleRichTextReady}
+        onVariantsDirtyChange={setVariantsDirty}
       />
+      {artwork && (
+        <SaveBar
+          form={ARTWORK_EDIT_FORM_ID}
+          width="list"
+          dirty={dirty}
+          failed={failed}
+          failedMessage={
+            halfSaved
+              ? 'Not saved: the new image was uploaded, the details were not. Please try again.'
+              : undefined
+          }
+          saving={saving}
+          onCancel={() => router.push(backLink)}
+        />
+      )}
       {showReadyModal && (
-        <ConfirmModal
+        <AdminConfirmModal
           title="Mark this artwork as ready to sell?"
           message="Once confirmed, the edition type and variants are locked and the artwork goes on sale. You can’t change the edition type unless an admin unblocks it. Save any pending changes first."
           confirmLabel="Yes, start selling"
+          busyLabel="Working…"
           busy={publishing}
           onConfirm={confirmReadyToSell}
           onCancel={() => setShowReadyModal(false)}
         />
       )}
       {readyVariantIndex !== null && (
-        <ConfirmModal
+        <AdminConfirmModal
           title="Put this variant on sale?"
           message={`This saves your changes and puts ${
             formData.limitedVariants[readyVariantIndex]?.name?.trim() || 'this variant'
           } on sale as a numbered edition. Its size and edition count are then frozen — only an admin can take it off sale to edit it again.`}
           confirmLabel="Yes, put on sale"
+          busyLabel="Working…"
           busy={publishing}
           onConfirm={confirmReadyToSellVariant}
           onCancel={() => setReadyVariantIndex(null)}
         />
       )}
-    </DashboardLayout>
+    </div>
   )
 }

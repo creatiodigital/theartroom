@@ -4,11 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
+import { PasswordFields } from '@/components/auth/PasswordFields'
 import { Button } from '@/components/ui/Button'
-import { ErrorText } from '@/components/ui/ErrorText'
-import { FormField } from '@/components/ui/FormField'
-import { Input } from '@/components/ui/Input'
-import { Text } from '@/components/ui/Typography'
+import Logo from '@/icons/logo.svg'
 import { validatePassword } from '@/lib/validation'
 
 import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
@@ -35,7 +33,7 @@ export const ChangePasswordPage = () => {
     const next: { newPassword?: string; confirmPassword?: string } = {}
     const result = validatePassword(pw)
     if (!result.valid) next.newPassword = `Password must include ${result.errors.join(', ')}.`
-    if (confirm !== pw) next.confirmPassword = 'Passwords do not match.'
+    if (confirm !== pw) next.confirmPassword = 'Passwords don’t match.'
     return next
   }
 
@@ -85,73 +83,45 @@ export const ChangePasswordPage = () => {
     }
   }
 
+  // other-screens.md "Set your password": the studio look (a white card on #fafaf9, no header), the
+  // real logo, the same fields, checklist and mismatch line as the public reset page.
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <Text font="dashboard" as="h1">
-          Set Your Password
-        </Text>
-        <Text font="dashboard" as="p" className={styles.subtitle}>
-          For security, please create a new password to replace the temporary one.
-        </Text>
-
-        <div className={styles.requirements}>
-          <Text font="dashboard" as="p" className={styles.requirementsTitle}>
-            Password requirements:
-          </Text>
-          <ul>
-            <li>At least 8 characters</li>
-            <li>At least one uppercase letter</li>
-            <li>At least one lowercase letter</li>
-            <li>At least one number</li>
-          </ul>
-        </div>
+        <Logo className={styles.logo} role="img" aria-label="The Art Room" />
+        <h1 className={styles.title}>Set your password</h1>
+        <p className={styles.subtitle}>
+          For security, replace the temporary password with one of your own.
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.form} noValidate>
-          <FormField label="New Password" htmlFor="newPassword" error={fieldErrors.newPassword}>
-            <Input
-              id="newPassword"
-              type="password"
-              size="medium"
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value)
-                revalidate(e.target.value, confirmPassword)
-              }}
-              invalid={!!fieldErrors.newPassword}
-              autoComplete="new-password"
-              showPasswordToggle
-            />
-          </FormField>
-
-          <FormField
-            label="Confirm Password"
-            htmlFor="confirmPassword"
-            error={fieldErrors.confirmPassword}
-          >
-            <Input
-              id="confirmPassword"
-              type="password"
-              size="medium"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value)
-                revalidate(newPassword, e.target.value)
-              }}
-              invalid={!!fieldErrors.confirmPassword}
-              autoComplete="new-password"
-              showPasswordToggle
-            />
-          </FormField>
-
-          <ErrorText>{error}</ErrorText>
+          <PasswordFields
+            ids={{ password: 'newPassword', confirm: 'confirmPassword' }}
+            password={newPassword}
+            confirm={confirmPassword}
+            onPasswordChange={(next) => {
+              setNewPassword(next)
+              revalidate(next, confirmPassword)
+            }}
+            onConfirmChange={(next) => {
+              setConfirmPassword(next)
+              revalidate(newPassword, next)
+            }}
+            passwordError={fieldErrors.newPassword}
+            confirmError={fieldErrors.confirmPassword}
+          />
 
           <Button
-            font="dashboard"
             variant="primary"
-            label={submitting ? 'Saving...' : 'Set Password'}
+            label={submitting ? 'Saving…' : 'Set password'}
             type="submit"
+            className={styles.submitButton}
           />
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
         </form>
       </div>
     </div>

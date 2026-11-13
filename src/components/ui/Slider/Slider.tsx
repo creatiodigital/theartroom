@@ -13,6 +13,8 @@ type SliderProps = {
   disabled?: boolean
   className?: string
   'aria-label'?: string
+  /** What a screen reader says for the value, e.g. "4.5 m" (the editor's value chip). */
+  'aria-valuetext'?: string
 }
 
 /**
@@ -30,6 +32,7 @@ export const Slider = ({
   disabled,
   className,
   'aria-label': ariaLabel,
+  'aria-valuetext': ariaValueText,
 }: SliderProps) => {
   return (
     <input
@@ -42,6 +45,7 @@ export const Slider = ({
       onChange={(e) => onChange(parseFloat(e.target.value))}
       disabled={disabled}
       aria-label={ariaLabel}
+      aria-valuetext={ariaValueText}
     />
   )
 }

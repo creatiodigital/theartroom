@@ -5,10 +5,11 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useGLTF } from '@react-three/drei'
 import { Mesh } from 'three'
 
+import c from 'classnames'
+
 import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
-import { Text } from '@/components/ui/Typography'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
+import { SelectField } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState, AppDispatch } from '@/redux/store'
@@ -17,6 +18,7 @@ import { applyPresetToArtwork, type TPreset, type PresetType } from './applyPres
 import DeletePresetsModal from './DeletePresetsModal'
 import SavePresetModal from './SavePresetModal'
 import UpdatePresetModal from './UpdatePresetModal'
+import panelStyles from '../RightPanel.module.scss'
 import styles from './PresetSection.module.scss'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
@@ -31,6 +33,12 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [presets, setPresets] = useState<TPreset[]>([])
   const [loading, setLoading] = useState(false)
+  // Q146 (h): a refused request says so. Each is cleared when it is tried again, and the three
+  // dialogs' when the dialog closes.
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [createFailed, setCreateFailed] = useState(false)
+  const [updateFailed, setUpdateFailed] = useState(false)
+  const [deleteFailed, setDeleteFailed] = useState(false)
 
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
@@ -50,14 +58,18 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
 
   // Fetch presets from API
   const fetchPresets = useCallback(async () => {
+    setLoadFailed(false)
     try {
       const response = await fetch('/api/presets')
       if (response.ok) {
         const data = await response.json()
         setPresets(data.filter((p: TPreset) => p.presetType === presetType))
+      } else {
+        setLoadFailed(true)
       }
     } catch (error) {
       console.error('Failed to fetch presets:', error)
+      setLoadFailed(true)
     }
   }, [presetType])
 
@@ -185,6 +197,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     if (!properties) return
 
     setLoading(true)
+    setCreateFailed(false)
     try {
       const response = await fetch('/api/presets', {
         method: 'POST',
@@ -195,9 +208,12 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       if (response.ok) {
         await fetchPresets()
         setShowModal(false)
+      } else {
+        setCreateFailed(true)
       }
     } catch (error) {
       console.error('Failed to save preset:', error)
+      setCreateFailed(true)
     } finally {
       setLoading(false)
     }
@@ -228,6 +244,7 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
     if (!properties) return
 
     setLoading(true)
+    setUpdateFailed(false)
     try {
       const response = await fetch(`/api/presets/${presetId}`, {
         method: 'PUT',
@@ -238,9 +255,12 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       if (response.ok) {
         await fetchPresets()
         setShowUpdateModal(false)
+      } else {
+        setUpdateFailed(true)
       }
     } catch (error) {
       console.error('Failed to update preset:', error)
+      setUpdateFailed(true)
     } finally {
       setLoading(false)
     }
@@ -248,13 +268,17 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
 
   // Delete preset
   const handleDeletePreset = async (presetId: string) => {
+    setDeleteFailed(false)
     try {
       const response = await fetch(`/api/presets/${presetId}`, { method: 'DELETE' })
       if (response.ok) {
         await fetchPresets()
+      } else {
+        setDeleteFailed(true)
       }
     } catch (error) {
       console.error('Failed to delete preset:', error)
+      setDeleteFailed(true)
     }
   }
 
@@ -263,73 +287,77 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
 
   return (
     <>
+      {/* wallview.md §3 "Preset": the caption is the parent group's. */}
       <div className={styles.presetSection}>
-        <Text font="dashboard" as="h4" size="xs" className={styles.subtitle}>
-          Presets
-        </Text>
-        <div className={styles.row}>
-          <div className={styles.item}>
+        <SelectField<string>
+          label="Preset"
+          hideLabel
+          options={
+            presets.length > 0 || loadFailed
+              ? [{ label: 'Apply a preset…', value: '' }, ...presetOptions]
+              : [{ label: 'No presets yet', value: '' }]
+          }
+          value=""
+          onChange={(val) => {
+            if (val && presets.length > 0) handleApplyPreset(val)
+          }}
+          disabled={presets.length === 0}
+        />
+        {loadFailed && (
+          <div className={styles.loadFailed}>
+            <p role="alert" className={styles.failed}>
+              Presets could not be loaded.
+            </p>
             <Button
+              variant="bare"
               font="dashboard"
-              size="small"
-              variant="secondary"
-              label="Add"
-              onClick={() => setShowModal(true)}
-              fullWidth
-            />
+              className={panelStyles.link}
+              onClick={() => fetchPresets()}
+            >
+              Try again
+            </Button>
           </div>
-          <div className={styles.item}>
-            <Button
-              font="dashboard"
-              size="small"
-              variant="secondary"
-              label="Update"
-              onClick={() => setShowUpdateModal(true)}
-              disabled={presets.length === 0}
-              fullWidth
-            />
-          </div>
-          <div className={styles.item}>
-            <Button
-              font="dashboard"
-              size="small"
-              variant="secondary"
-              label="Delete"
-              onClick={() => setShowDeleteModal(true)}
-              disabled={presets.length === 0}
-              fullWidth
-            />
-          </div>
-        </div>
-        <div className={styles.row}>
-          <div
-            className={styles.item}
-            style={presets.length === 0 ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+        )}
+        <div className={styles.actions}>
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={panelStyles.link}
+            onClick={() => setShowModal(true)}
           >
-            <Text font="dashboard" as="label" size="xs" className={styles.applyLabel}>
-              Apply Preset
-            </Text>
-            <Select<string>
-              options={
-                presets.length > 0
-                  ? [{ label: '– Select –', value: '' }, ...presetOptions]
-                  : [{ label: 'No presets yet', value: '' }]
-              }
-              value=""
-              onChange={(val) => {
-                if (val && presets.length > 0) handleApplyPreset(val)
-              }}
-            />
-          </div>
+            Save as new preset
+          </Button>
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={panelStyles.link}
+            onClick={() => setShowUpdateModal(true)}
+            disabled={presets.length === 0}
+          >
+            Update
+          </Button>
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={c(panelStyles.link, panelStyles.danger)}
+            onClick={() => setShowDeleteModal(true)}
+            disabled={presets.length === 0}
+          >
+            Delete
+          </Button>
         </div>
       </div>
 
       {showModal && (
         <SavePresetModal
           onSave={handleSavePreset}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false)
+            setCreateFailed(false)
+          }}
           loading={loading}
           existingNames={presets.map((p) => p.name)}
+          failed={createFailed}
         />
       )}
 
@@ -339,7 +367,11 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
           onDelete={async (presetId) => {
             await handleDeletePreset(presetId)
           }}
-          onClose={() => setShowDeleteModal(false)}
+          onClose={() => {
+            setShowDeleteModal(false)
+            setDeleteFailed(false)
+          }}
+          failed={deleteFailed}
         />
       )}
 
@@ -347,8 +379,12 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
         <UpdatePresetModal
           presets={presets}
           onUpdate={handleUpdatePreset}
-          onClose={() => setShowUpdateModal(false)}
+          onClose={() => {
+            setShowUpdateModal(false)
+            setUpdateFailed(false)
+          }}
           loading={loading}
+          failed={updateFailed}
         />
       )}
     </>

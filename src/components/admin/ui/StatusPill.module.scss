@@ -1,0 +1,91 @@
+// designs/order-detail.dc.html (the pill after the h1).
+.pill {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-normal);
+  white-space: nowrap;
+}
+
+.dark {
+  background: var(--color-dark-surface);
+  border-color: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+.red {
+  background: var(--color-red-50);
+  border-color: var(--color-red-50);
+  color: var(--color-white);
+}
+
+.outline {
+  background: var(--color-white);
+  border-color: var(--color-gray-60);
+  color: var(--color-text-primary);
+}
+
+// List statuses (sales.md §1: Sold, Reserved, off-platform; §2: the other gift stages;
+// gallery.md §1: Missing is redSoft).
+.redSoft {
+  background: var(--color-red-30);
+  border-color: var(--color-red-30);
+  color: var(--color-red-70);
+}
+
+.green {
+  background: var(--color-green-30);
+  border-color: var(--color-green-30);
+  color: var(--color-green-70);
+}
+
+.amber {
+  background: var(--color-yellow-30);
+  border-color: var(--color-yellow-30);
+  color: var(--color-yellow-70);
+}
+
+.info {
+  background: var(--color-badge-info-bg);
+  border-color: var(--color-badge-info-bg);
+  color: var(--color-badge-info-text);
+}
+
+.gray {
+  background: var(--color-gray-20);
+  border-color: var(--color-gray-20);
+  color: var(--color-text-primary);
+}
+
+// The optional mark before the label (`icon`).
+.icon {
+  flex: 0 0 auto;
+  margin-right: var(--space-1);
+}
+
+// The optional dot before the label (`dot`, artist-artworks.dc.html "Selling prints").
+.dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.green .dot {
+  background: var(--admin-published-dot);
+}
+
+// Inside a list row (edition-sales.dc.html, gift-orders.dc.html): 4px corners, the
+// drawn 2px 8px less the 1px border.
+.tag {
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+}

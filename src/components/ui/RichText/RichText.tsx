@@ -1,6 +1,8 @@
 import c from 'classnames'
 import sanitizeHtml from 'sanitize-html'
 
+import { withHeadingAnchors } from '@/lib/richText/headingAnchors'
+
 import styles from './RichText.module.scss'
 
 type RichTextProps = {
@@ -13,6 +15,11 @@ type RichTextProps = {
    * - 'page': Long-form static pages (About, legal) — more air above section headings
    */
   variant?: 'default' | 'compact' | 'page'
+  /**
+   * Content pages (docs/public-redesign/legal.md): each H2 gets an id from its text, for the page's
+   * "On this page" list (built from the same HTML by `sanitizeRichText` + `withHeadingAnchors`).
+   */
+  anchorHeadings?: boolean
 }
 
 // Server-safe sanitizer. `sanitize-html` is pure JS (no jsdom), unlike the
@@ -52,11 +59,20 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   disallowedTagsMode: 'discard',
 }
 
-export const RichText = ({ content, className, variant = 'default' }: RichTextProps) => {
+/** The HTML RichText renders, sanitized (XSS): for a page that reads it too (its H2 list). */
+export const sanitizeRichText = (content: string) => sanitizeHtml(content, SANITIZE_OPTIONS)
+
+export const RichText = ({
+  content,
+  className,
+  variant = 'default',
+  anchorHeadings = false,
+}: RichTextProps) => {
   if (!content) return null
 
-  // Sanitize HTML to prevent XSS attacks.
-  const sanitizedContent = sanitizeHtml(content, SANITIZE_OPTIONS)
+  // Sanitize HTML to prevent XSS attacks; the anchors are added to the sanitized HTML (ids only).
+  const sanitized = sanitizeRichText(content)
+  const sanitizedContent = anchorHeadings ? withHeadingAnchors(sanitized).html : sanitized
 
   return (
     <div

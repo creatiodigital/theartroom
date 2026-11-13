@@ -30,7 +30,7 @@ test.describe('the availability card', () => {
       // Stated ONCE. A second commerce block below the image used to restate
       // all of this; it was removed because directly under the artwork it read
       // as a stutter rather than a convenience.
-      await expect(page.getByText('Available for purchase')).toHaveCount(1)
+      await expect(page.getByText('Available', { exact: true })).toHaveCount(1)
       await expect(page.getByText(/^€[\d.,]+$/).first()).toBeVisible()
       await expect(page.getByText('Limited Edition')).toHaveCount(1)
 
@@ -62,7 +62,7 @@ test.describe('the availability card', () => {
 
       await page.goto(`/artworks/${fx.slug}`)
 
-      await expect(page.getByText('Available for purchase')).toHaveCount(0)
+      await expect(page.getByText('Available', { exact: true })).toHaveCount(0)
       await expect(page.getByRole('button', { name: /order a print/i })).toHaveCount(0)
       await expect(page.getByText(/not reserved until you pay/i)).toHaveCount(0)
       // The work itself is still here, and still enquirable.

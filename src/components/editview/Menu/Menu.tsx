@@ -1,7 +1,21 @@
 'use client'
 
+import { useId } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
+import {
+  Armchair,
+  ArrowLeft,
+  Camera,
+  Columns,
+  Cube,
+  FrameCorners,
+  GridFour,
+  Lightbulb,
+  PaintRoller,
+  Rows,
+  type Icon,
+} from '@phosphor-icons/react'
 
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { Button } from '@/components/ui/Button'
@@ -29,7 +43,34 @@ import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
 
+import { EditingPill } from './EditingPill'
 import styles from './Menu.module.scss'
+
+type ToolProps = {
+  label: string
+  /** Today's tooltip: the longer description (editor3d.md: tooltips can stay). */
+  tooltip: string
+  icon: Icon
+  onClick: () => void
+  /** Its panel is open (or, for Spots, the placeholders are shown). Omitted: not a toggle. */
+  pressed?: boolean
+}
+
+/** One toolbar tool: the icon with its label under it (editor3d.md "Toolbar"). */
+const Tool = ({ label, tooltip, icon: ToolIcon, onClick, pressed }: ToolProps) => (
+  <Tooltip label={tooltip} placement="right" fullWidth>
+    <Button
+      variant="bare"
+      font="dashboard"
+      className={styles.tool}
+      aria-pressed={pressed}
+      onClick={onClick}
+    >
+      <ToolIcon size={22} weight={pressed ? 'fill' : 'light'} aria-hidden />
+      <span className={styles.toolLabel}>{label}</span>
+    </Button>
+  </Tooltip>
+)
 
 export const Menu = () => {
   const dispatch = useDispatch()
@@ -200,65 +241,100 @@ export const Menu = () => {
     window.location.href = '/dashboard'
   }
 
+  const roomCaptionId = useId()
+
   return (
-    <div className={styles.menu}>
-      <Tooltip label="Back to Dashboard" placement="right">
-        <Button size="regular" variant="secondary" icon="close" onClick={handleClose} />
-      </Tooltip>
-      <Tooltip
-        label={isPlaceholdersShown ? 'Hide Wall Placeholders' : 'Show WallPlaceholders'}
-        placement="right"
-      >
-        <Button
-          size="regular"
-          variant="secondary"
-          icon={isPlaceholdersShown ? 'preview' : 'placeholder'}
+    <>
+      {/* Q139 (d): the room's camera skips a wheel or a press inside `[data-panel-overlay]`
+          (MainCamera), as on the panels and the visitor's RoomMenu: the wheel scrolls the toolbar
+          when it overflows (Q138) instead of walking the room, and a drag from it doesn't turn it. */}
+      <nav aria-label="Editor tools" className={styles.toolbar} data-panel-overlay>
+        <Tool label="Exit" tooltip="Back to dashboard" icon={ArrowLeft} onClick={handleClose} />
+        {/* Was "Spots" (owner, 2026-11-13: not clear). The dashed outlines of the walls where works
+            hang; double-clicking one opens that wall to arrange it. */}
+        <Tool
+          label="Hanging"
+          tooltip={
+            isPlaceholdersShown
+              ? 'Hide the hanging walls. Double-click an outlined wall to arrange its works'
+              : 'Show the hanging walls, to arrange the works on them'
+          }
+          icon={FrameCorners}
+          pressed={isPlaceholdersShown}
           onClick={() => togglePlaceholders()}
         />
-      </Tooltip>
-      <Tooltip label="Lighting controls" placement="right">
-        <Button size="regular" variant="secondary" icon="light" onClick={toggleLightingPanel} />
-      </Tooltip>
-
-      <Tooltip label="Display panels" placement="right">
-        <Button size="regular" variant="secondary" icon="panel-top" onClick={togglePanelsPanel} />
-      </Tooltip>
-      {FURNITURE_PANEL_ENABLED && (
-        <Tooltip label="Furniture" placement="right">
-          <Button
-            size="regular"
-            variant="secondary"
-            icon="armchair"
-            onClick={toggleFurniturePanel}
+        <span aria-hidden className={styles.divider} />
+        <div role="group" aria-labelledby={roomCaptionId} className={styles.group}>
+          <span id={roomCaptionId} className={styles.caption}>
+            Room
+          </span>
+          <Tool
+            label="Lighting"
+            tooltip="Lighting controls"
+            icon={Lightbulb}
+            pressed={isLightingPanelOpen}
+            onClick={toggleLightingPanel}
           />
-        </Tooltip>
-      )}
-      <Tooltip label="Walls and Ceiling" placement="right">
-        <Button size="regular" variant="secondary" icon="house" onClick={toggleWallCeilingPanel} />
-      </Tooltip>
-      <Tooltip label="Windows and Radiators" placement="right">
-        <Button size="regular" variant="secondary" icon="grid-2x2" onClick={toggleWindowsPanel} />
-      </Tooltip>
-      {/* AR-161 (spec rule 3): a baked space has one floor — there, the panel sets only the
-          boards' size and placement (AR-163). */}
-      <Tooltip label="Floor controls" placement="right">
-        <Button size="regular" variant="secondary" icon="brick-wall" onClick={toggleFloorPanel} />
-      </Tooltip>
-      <Tooltip label="Camera controls" placement="right">
-        <Button size="regular" variant="secondary" icon="camera" onClick={toggleCameraPanel} />
-      </Tooltip>
-      {showBake && (
-        <Tooltip label="Baked lighting" placement="right">
-          <Button
-            size="regular"
-            variant="secondary"
-            icon="box"
-            aria-label="Baked lighting"
+          <Tool
+            label="Walls"
+            tooltip="Walls and ceiling"
+            icon={PaintRoller}
+            pressed={isWallCeilingPanelOpen}
+            onClick={toggleWallCeilingPanel}
+          />
+          <Tool
+            label="Windows"
+            tooltip="Windows and radiators"
+            icon={GridFour}
+            pressed={isWindowsPanelOpen}
+            onClick={toggleWindowsPanel}
+          />
+          {/* AR-161 (spec rule 3): a baked space has one floor — there, the panel sets only the
+              boards' size and placement (AR-163). */}
+          <Tool
+            label="Floor"
+            tooltip="Floor controls"
+            icon={Rows}
+            pressed={isFloorPanelOpen}
+            onClick={toggleFloorPanel}
+          />
+          {FURNITURE_PANEL_ENABLED && (
+            <Tool
+              label="Benches"
+              tooltip="Furniture"
+              icon={Armchair}
+              pressed={isFurniturePanelOpen}
+              onClick={toggleFurniturePanel}
+            />
+          )}
+          <Tool
+            label="Panels"
+            tooltip="Display panels"
+            icon={Columns}
+            pressed={isPanelsPanelOpen}
+            onClick={togglePanelsPanel}
+          />
+        </div>
+        <span aria-hidden className={styles.divider} />
+        <Tool
+          label="View"
+          tooltip="Camera controls"
+          icon={Camera}
+          pressed={isCameraPanelOpen}
+          onClick={toggleCameraPanel}
+        />
+        {showBake && (
+          <Tool
+            label="Bake"
+            tooltip="Baked lighting"
+            icon={Cube}
+            pressed={isBakePanelOpen}
             onClick={toggleBakePanel}
           />
-        </Tooltip>
-      )}
-    </div>
+        )}
+      </nav>
+      <EditingPill />
+    </>
   )
 }
 

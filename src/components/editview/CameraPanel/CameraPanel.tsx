@@ -2,17 +2,20 @@
 
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Camera } from '@phosphor-icons/react'
 
-import { Button } from '@/components/ui/Button'
-import { Slider } from '@/components/ui/Slider'
-import { Text } from '@/components/ui/Typography'
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import {
+  PanelCard,
+  SliderRow,
+  ToolPanel,
+  metres,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { hideCameraPanel } from '@/redux/slices/dashboardSlice'
 import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
-
-import styles from './CameraPanel.module.scss'
 
 const DEFAULT_CAMERA_FOV = 50
 const DEFAULT_CAMERA_ELEVATION = 1.6
@@ -20,14 +23,17 @@ const DEFAULT_CAMERA_ELEVATION = 1.6
 const CameraPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
+
+  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
+  const saveTrack = useSaveTracking(exhibitionId ? `${exhibitionId}:view` : null)
 
   const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
     dispatch(setExhibitionField({ field, value }))
     setSaved(false)
+    saveTrack.edited()
   }
-
-  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
 
   const cameraFOV = useSelector(
     (state: RootState) => state.exhibition.cameraFOV ?? DEFAULT_CAMERA_FOV,
@@ -41,6 +47,7 @@ const CameraPanel = () => {
     if (!exhibitionId) return
 
     setSaving(true)
+    const sentAt = saveTrack.started()
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
@@ -54,8 +61,10 @@ const CameraPanel = () => {
       if (response.ok) {
         setSaved(true)
       }
+      saveTrack.finished(sentAt, response.ok)
     } catch (error) {
       console.error('Failed to save camera settings:', error)
+      saveTrack.finished(sentAt, false)
     } finally {
       setSaving(false)
     }
@@ -66,54 +75,37 @@ const CameraPanel = () => {
   }
 
   return (
-    <SettingsPanel title="Camera" onClose={handleClose}>
-      <div className={styles.section}>
-        <Text as="h3" size="sm" weight="medium" className={styles.sectionTitle}>
-          View
-        </Text>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Field of View</label>
-            <span className={styles.sliderValue}>{cameraFOV.toFixed(0)}°</span>
-          </div>
-          <Slider
-            min={40}
-            max={60}
-            step={1}
-            value={cameraFOV}
-            onChange={(v) => set('cameraFOV', v)}
-            aria-label="Field of View"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Eye Level</label>
-            <span className={styles.sliderValue}>{cameraElevation.toFixed(2)}m</span>
-          </div>
-          <Slider
-            min={1.5}
-            max={1.7}
-            step={0.01}
-            value={cameraElevation}
-            onChange={(v) => set('cameraElevation', v)}
-            aria-label="Eye Level"
-          />
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          onClick={handleSave}
-          disabled={saving}
-          className={styles.saveButton}
+    <ToolPanel
+      title="View"
+      description="How visitors see the room as they walk."
+      icon={Camera}
+      tint="view"
+      onClose={handleClose}
+      save={{ saving, saved, onSave: handleSave, status: saveTrack.status }}
+    >
+      <PanelCard level="card">
+        <SliderRow
+          label="Field of view"
+          value={`${cameraFOV.toFixed(0)}°`}
+          sliderValue={cameraFOV}
+          min={40}
+          max={60}
+          step={1}
+          onChange={(v) => set('cameraFOV', v)}
+          ends={['Narrow', 'Wide']}
         />
-      </div>
-    </SettingsPanel>
+        <SliderRow
+          label="Eye level"
+          value={metres(cameraElevation, 2)}
+          sliderValue={cameraElevation}
+          min={1.5}
+          max={1.7}
+          step={0.01}
+          onChange={(v) => set('cameraElevation', v)}
+          ends={['Lower', 'Higher']}
+        />
+      </PanelCard>
+    </ToolPanel>
   )
 }
 

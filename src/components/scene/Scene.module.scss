@@ -1,5 +1,3 @@
-@use '@/styles/mixins' as *;
-
 .scene {
   width: 100vw;
   // The visible height. On a phone 100vh is the height with Safari's bars
@@ -23,56 +21,4 @@
   left: auto !important;
   bottom: 16px !important;
   right: 16px !important;
-}
-
-.stopButton {
-  position: fixed;
-  bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
-  right: calc(var(--space-6) + 36px + var(--space-3) + env(safe-area-inset-right));
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: 6px;
-  background-color: $room-button-bg;
-  border: none;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  z-index: $room-button-z;
-  transition: background-color 0.15s ease;
-  display: flex;
-
-  svg {
-    color: var(--color-black);
-  }
-
-  // Only where a pointer can hover: a phone keeps a tapped button "hovered" until the next tap, and
-  // this one stayed solid white, unlike the room's other corner buttons (AR-177, owner, 2026-11-05).
-  @media (hover: hover) {
-    &:hover {
-      background-color: var(--color-white);
-    }
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  // Beside the help button wherever it goes: under a finger it moves to 8px from the corner
-  // (ExhibitionView `.infoButton`), so the pair keeps one bottom line and an 8px gap; both keep
-  // clear of the notch and the home indicator (the visit page is edge to edge, AR-176).
-  @media #{$touch-room} {
-    bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
-    right: calc(var(--space-2) + 36px + var(--space-2) + env(safe-area-inset-right));
-  }
-
-  // Level with the help button on a tablet (`.infoButton`, AR-177).
-  @media #{$tablet-room} {
-    bottom: var(--space-2);
-  }
-
-  // On its side, beside the help button at the edge (`.infoButton`, AR-176).
-  @media #{$phone-sideways} {
-    right: calc(var(--space-2) + 36px + var(--space-2));
-  }
 }

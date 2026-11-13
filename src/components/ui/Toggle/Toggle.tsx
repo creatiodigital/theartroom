@@ -11,6 +11,20 @@ type ToggleProps = {
   disabled?: boolean
   className?: string
   'aria-label'?: string
+  /**
+   * default: the 32×18 switch of the editor panels and announcements.
+   * admin: the admin look (docs/admin-redesign/gallery.md §1): 40×24 with an
+   * 18px knob, `role="switch"`, a keyboard focus ring and a 44px hit area
+   * under 900px.
+   * editor: the 3D editor's switch (editor3d.md): 36×22 with a 16px knob,
+   * `role="switch"`, a keyboard focus ring and a 44px hit area on touch.
+   */
+  tone?: 'default' | 'admin' | 'editor'
+  /** The input's id, for a visible `<label htmlFor>`. */
+  id?: string
+  /** The visible name and line, when there is one (instead of `aria-label`). */
+  'aria-labelledby'?: string
+  'aria-describedby'?: string
 }
 
 /**
@@ -24,15 +38,30 @@ export const Toggle = ({
   disabled,
   className,
   'aria-label': ariaLabel,
+  tone = 'default',
+  id,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
 }: ToggleProps) => {
   return (
-    <label className={c(styles.toggle, className)}>
+    <label
+      className={c(
+        styles.toggle,
+        tone === 'admin' && styles.admin,
+        tone === 'editor' && styles.editor,
+        className,
+      )}
+    >
       <input
         type="checkbox"
+        id={id}
+        role={tone === 'default' ? undefined : 'switch'}
         checked={checked}
         onChange={onChange}
         disabled={disabled}
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
       />
       <span className={styles.slider} />
     </label>

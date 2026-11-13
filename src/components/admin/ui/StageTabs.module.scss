@@ -1,0 +1,114 @@
+@use '@/styles/mixins' as *;
+
+// orders.md §1 StageTabs; designs/orders.dc.html (tabStyle / countStyle).
+.nav {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--space-4);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border-default);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  scrollbar-width: thin;
+
+  @include media-up(tablet) {
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-6);
+    overflow-x: visible;
+  }
+}
+
+.group {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.groupAfter {
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--color-border-default);
+
+  @include media-up(tablet) {
+    margin-left: auto;
+  }
+}
+
+.tabWrap {
+  display: flex;
+}
+
+// Two classes, so these beat Button's own one-class `bare` / size rules.
+.nav .tab {
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  box-sizing: border-box;
+  margin-bottom: -1px;
+  padding: 10px var(--space-3) var(--space-3);
+  border-bottom: 2px solid transparent;
+  font-size: var(--text-sm);
+  color: var(--color-gray-80);
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--color-black);
+  }
+}
+
+.nav .selected {
+  border-bottom-color: var(--color-dark-surface);
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.step {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-gray-55);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+
+  .selected & {
+    border-color: var(--color-dark-surface);
+    color: var(--color-black);
+  }
+}
+
+.count {
+  min-width: 20px;
+  box-sizing: border-box;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-gray-20);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.countSome {
+  background: var(--color-gray-25);
+  color: var(--color-black);
+}
+
+.countSelected {
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+// Tones win over selected: Needs attention stays red, Refunded (> 1) stays amber.
+.count.count_red {
+  background: var(--color-red-50);
+  color: var(--color-white);
+}
+
+.count.count_amber {
+  background: var(--color-yellow-30);
+  color: var(--color-yellow-70);
+}

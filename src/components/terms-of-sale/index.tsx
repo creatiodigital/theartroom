@@ -1,19 +1,14 @@
-import { PageHeader } from '@/components/ui/PageHeader'
-import { PageLayout } from '@/components/ui/PageLayout'
-import { StaticPageContent } from '@/components/ui/StaticPageContent'
+import { ContentPage } from '@/components/ui/ContentPage'
 
 interface TermsOfSalePageProps {
   content: string | null
 }
 
-export const TermsOfSalePage = ({ content }: TermsOfSalePageProps) => {
-  return (
-    <PageLayout>
-      <PageHeader
-        pageTitle="Online Terms of Sale"
-        pageSubtitle="The terms that apply when you buy a printed artwork from us."
-      />
-      <StaticPageContent content={content} />
-    </PageLayout>
-  )
-}
+// The content-page template (docs/public-redesign/legal.md); title in sentence case.
+export const TermsOfSalePage = ({ content }: TermsOfSalePageProps) => (
+  <ContentPage
+    title="Online terms of sale"
+    subtitle="The terms that apply when you buy a printed artwork from us."
+    content={content}
+  />
+)

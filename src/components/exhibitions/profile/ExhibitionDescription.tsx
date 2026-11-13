@@ -1,7 +1,5 @@
 import { RichText } from '@/components/ui/RichText'
 
-import styles from './ExhibitionProfile.module.scss'
-
 /**
  * The exhibition description (rich text), rendered by the page on the server
  * and handed to the client profile as a ready node — rendered inside the client
@@ -9,5 +7,5 @@ import styles from './ExhibitionProfile.module.scss'
  * visitor of the page.
  */
 export const ExhibitionDescription = ({ description }: { description: string }) => (
-  <RichText content={description} className={styles.description} />
+  <RichText content={description} variant="page" />
 )

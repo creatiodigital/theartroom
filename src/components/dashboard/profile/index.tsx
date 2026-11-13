@@ -1,19 +1,25 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { ArrowSquareOut } from '@phosphor-icons/react'
+import c from 'classnames'
 
-import { Button } from '@/components/ui/Button'
+import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
+import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
+import { Callout } from '@/components/admin/ui/Callout'
+import { FeedbackBar } from '@/components/admin/ui/FeedbackBar'
+import { SaveBar } from '@/components/admin/ui/SaveBar'
 import { ErrorText } from '@/components/ui/ErrorText'
 import { ImageUploader } from '@/components/ui/ImageUploader'
 import { Input } from '@/components/ui/Input'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
-import { Text } from '@/components/ui/Typography'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import { useFormValidation } from '@/hooks/useFormValidation'
 import { isEmail, required } from '@/lib/validation'
 
-import { DashboardLayout } from '../DashboardLayout'
-import dashboardStyles from '../DashboardLayout/DashboardLayout.module.scss'
+import { StudioPanel } from '../StudioPanel'
+import page from '../StudioPanel/studioPage.module.scss'
 import styles from './profile.module.scss'
 
 type User = {
@@ -26,6 +32,18 @@ type User = {
   profileImageUrl: string | null
   signatureUrl: string | null
 }
+
+/** What the form sends; also its last loaded or saved values (the save bar's baseline). */
+type ProfileForm = {
+  name: string
+  lastName: string
+  handler: string
+  biography: string
+  email: string
+}
+
+/** The bar's Save changes submits this form (Enter in its fields too). */
+const PROFILE_FORM_ID = 'profile-form'
 
 const profileValidators = {
   name: required('Please enter your first name.'),
@@ -41,7 +59,7 @@ const profileValidators = {
 }
 
 export const DashboardProfilePage = () => {
-  const { effectiveUser } = useEffectiveUser()
+  const { effectiveUser, status: sessionStatus } = useEffectiveUser()
 
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -61,6 +79,17 @@ export const DashboardProfilePage = () => {
     email: '',
   })
 
+  // The save bar's state (display only: nothing here is sent). The baseline is
+  // the last loaded or saved form; the biography editor's own rewrite of the
+  // loaded text (reported once through onReady) is not a change.
+  const [baseline, setBaseline] = useState<ProfileForm | null>(null)
+  const [editorBio, setEditorBio] = useState<string | null>(null)
+  // The form a refused save sent, while nothing has changed since (questions.md Q80).
+  const [failedKey, setFailedKey] = useState<string | null>(null)
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false)
+  // questions.md Q128 (d): Remove takes effect at once, so it asks first.
+  const [confirmingRemove, setConfirmingRemove] = useState<'image' | 'signature' | null>(null)
+
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
@@ -74,13 +103,15 @@ export const DashboardProfilePage = () => {
         }
         const data = await response.json()
         setUser(data)
-        setFormData({
+        const loaded = {
           name: data.name || '',
           lastName: data.lastName || '',
           handler: data.handler || '',
           biography: data.biography || '',
           email: data.email || '',
-        })
+        }
+        setFormData(loaded)
+        setBaseline(loaded)
       } catch {
         setError('Failed to load profile')
       } finally {
@@ -97,6 +128,7 @@ export const DashboardProfilePage = () => {
     validateAll,
     handleChange: validateField,
     fieldError,
+    reset: resetValidation,
   } = useFormValidation(profileValidators)
 
   const handleChange = (field: string, value: string) => {
@@ -133,6 +165,7 @@ export const DashboardProfilePage = () => {
       })
 
       if (!response.ok) {
+        setFailedKey(JSON.stringify(formData))
         const data = await response.json()
         setError(data.error || 'Failed to update profile')
         setSaving(false)
@@ -140,8 +173,11 @@ export const DashboardProfilePage = () => {
       }
 
       setSuccess('Profile updated successfully!')
+      setBaseline(formData)
+      setFailedKey(null)
     } catch {
       setError('Something went wrong')
+      setFailedKey(JSON.stringify(formData))
     } finally {
       setSaving(false)
     }
@@ -268,174 +304,303 @@ export const DashboardProfilePage = () => {
     }
   }, [user?.profileImageUrl, effectiveUser?.id])
 
-  if (loading) {
-    return <DashboardLayout backLink="/dashboard">Loading...</DashboardLayout>
+  const onBioReady = useCallback((html: string) => setEditorBio(html), [])
+
+  const bioChanged =
+    baseline !== null &&
+    editorBio !== null &&
+    formData.biography !== baseline.biography &&
+    formData.biography !== editorBio
+  const dirty =
+    baseline !== null &&
+    (formData.name !== baseline.name ||
+      formData.lastName !== baseline.lastName ||
+      formData.handler !== baseline.handler ||
+      formData.email !== baseline.email ||
+      bioChanged)
+  const failed = failedKey !== null && failedKey === JSON.stringify(formData)
+
+  // Discard (asked first) puts back the last loaded or saved form, with no
+  // request; the restored fields lose any validation red. The picture and the
+  // signature save on their own and are left as they are.
+  const confirmDiscard = () => {
+    if (baseline) setFormData(baseline)
+    resetValidation()
+    setFailedKey(null)
+    setConfirmingDiscard(false)
+  }
+
+  // With unsaved changes, reloading, closing the tab or typing a URL asks the
+  // browser's own "Leave site?" (as the page editor, Q81 / Q118). In-app links
+  // (the menu) are not caught.
+  useEffect(() => {
+    if (!dirty) return
+    const askFirst = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      // Older Chrome asks only when returnValue is set.
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', askFirst)
+    return () => window.removeEventListener('beforeunload', askFirst)
+  }, [dirty])
+
+  // The saved handler's public page, in a new tab (it follows a saved URL change).
+  const publicHref = baseline?.handler ? `/artists/${baseline.handler}` : null
+
+  const header = (
+    <AdminPageHeader
+      title="Profile"
+      description="How you appear to visitors on your public artist page."
+      actions={
+        publicHref ? (
+          <Link
+            href={publicHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            prefetch={false}
+            className={page.outline}
+          >
+            View my public page
+            <ArrowSquareOut size={14} weight="light" aria-hidden />
+            <span className="sr-only"> (opens in a new tab)</span>
+          </Link>
+        ) : undefined
+      }
+    />
+  )
+
+  // Q128 (b): a session without a user id has no profile to load; it stayed on "Loading…" for good.
+  const noUserToLoad = sessionStatus !== 'loading' && !effectiveUser?.id
+  if (loading && !noUserToLoad) {
+    return (
+      <div className={page.page}>
+        {header}
+        <p className={page.status}>Loading profile…</p>
+      </div>
+    )
+  }
+
+  // The record is set only by a load that succeeded (questions.md Q128 a): after
+  // a refused or failed one, no form and no save bar, so an empty form can't be
+  // saved over the profile.
+  if (!user) {
+    return (
+      <div className={page.page}>
+        {header}
+        <Callout tone="red" role="alert">
+          The profile could not be loaded.
+        </Callout>
+      </div>
+    )
   }
 
   return (
-    <DashboardLayout backLink="/dashboard">
-      {/* Page Title */}
-      <h1 className={dashboardStyles.pageTitle}>Edit Profile</h1>
+    <div className={c(page.page, page.withSaveBar)}>
+      {header}
 
-      {/* Profile Image + Signature — side by side on desktop, stacked on mobile */}
-      <div className={styles.imageRow}>
-        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
-          <h3 className={dashboardStyles.sectionTitle}>Profile Picture</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Upload a photo to personalize your artist profile. This will be displayed on your public
-            page.
-          </p>
-          <ImageUploader
-            imageUrl={user?.profileImageUrl}
-            onUpload={handleImageUpload}
-            onRemove={handleRemoveImage}
-            uploading={uploading}
-            error={profileImageError}
-            fill
-          />
-          <span className={dashboardStyles.hint}>Recommended: JPG, PNG, or WebP. Max 1MB.</span>
-        </div>
+      <StudioPanel
+        title="Profile picture"
+        description="Upload a photo to personalize your artist profile. This will be displayed on your public page."
+      >
+        <ImageUploader
+          tone="admin"
+          adminPreview="avatar"
+          imageUrl={user.profileImageUrl}
+          onUpload={handleImageUpload}
+          onRemove={() => setConfirmingRemove('image')}
+          uploading={uploading}
+          error={profileImageError}
+          note="Recommended: JPG, PNG, or WebP. Max 1MB."
+        />
+      </StudioPanel>
 
-        <div className={`${dashboardStyles.section} ${styles.imageSection}`}>
-          <h3 className={dashboardStyles.sectionTitle}>Artist Signature</h3>
-          <p className={dashboardStyles.sectionDescription}>
+      <StudioPanel
+        title="Artist signature"
+        description={
+          <>
             Upload a scan or photo of your handwritten signature. It is supplied to the print lab
-            for your <strong>signed limited editions</strong> — it reassures the buyer the piece is
+            for your <strong>signed limited editions</strong>. It reassures the buyer the piece is
             genuine, and keeps your work traceable back to you.
-          </p>
-          <ImageUploader
-            imageUrl={user?.signatureUrl}
-            onUpload={handleSignatureUpload}
-            onRemove={handleRemoveSignature}
-            uploading={uploadingSignature}
-            error={signatureError}
-            fill
-          />
-          <span className={dashboardStyles.hint}>
-            Transparent PNG only. Minimum 600×200 pixels. Keep the background fully transparent —
-            your signature should float over the certificate, not sit in a white box.
-          </span>
-        </div>
-      </div>
+          </>
+        }
+      >
+        <ImageUploader
+          tone="admin"
+          adminPreview="signature"
+          aspectRatio="3 / 1"
+          objectFit="contain"
+          imageUrl={user.signatureUrl}
+          onUpload={handleSignatureUpload}
+          onRemove={() => setConfirmingRemove('signature')}
+          uploading={uploadingSignature}
+          error={signatureError}
+          note="Transparent PNG only. Minimum 600 × 200 pixels. Keep the background fully transparent: your signature should float over the certificate, not sit in a white box."
+        />
+      </StudioPanel>
 
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Name Row */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Display Name</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Your name as it will appear on your public artist profile.
-          </p>
-          <div className={styles.row}>
-            <div className={styles.fieldHalf}>
-              <Input
-                id="name"
-                type="text"
-                size="medium"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="First Name"
-                invalid={!!fieldError('name')}
-                required
-              />
-              <ErrorText>{fieldError('name')}</ErrorText>
+      <form id={PROFILE_FORM_ID} onSubmit={handleSubmit} noValidate className={styles.form}>
+        <StudioPanel title="About you" className={styles.about}>
+          <div className={styles.nameGroup}>
+            <div className={styles.names}>
+              <div className={page.field}>
+                <label htmlFor="name" className={page.label}>
+                  First name
+                </label>
+                <Input
+                  id="name"
+                  type="text"
+                  size="bare"
+                  inputClassName={page.input}
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  invalid={!!fieldError('name')}
+                  required
+                  aria-describedby="profile-name-help"
+                />
+                <ErrorText className={page.fieldError}>{fieldError('name')}</ErrorText>
+              </div>
+              <div className={page.field}>
+                <label htmlFor="lastName" className={page.label}>
+                  Last name
+                </label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  size="bare"
+                  inputClassName={page.input}
+                  value={formData.lastName}
+                  onChange={(e) => handleChange('lastName', e.target.value)}
+                  invalid={!!fieldError('lastName')}
+                  required
+                  aria-describedby="profile-name-help"
+                />
+                <ErrorText className={page.fieldError}>{fieldError('lastName')}</ErrorText>
+              </div>
             </div>
-            <div className={styles.fieldHalf}>
-              <Input
-                id="lastName"
-                type="text"
-                size="medium"
-                value={formData.lastName}
-                onChange={(e) => handleChange('lastName', e.target.value)}
-                placeholder="Last Name"
-                invalid={!!fieldError('lastName')}
-                required
-              />
-              <ErrorText>{fieldError('lastName')}</ErrorText>
-            </div>
+            <p id="profile-name-help" className={page.help}>
+              Your name as it will appear on your public artist profile.
+            </p>
           </div>
-          <span className={dashboardStyles.hint}>
-            This is how your name will appear throughout the site.
-          </span>
-        </div>
 
-        {/* Handler */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Profile URL</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            A unique identifier for your profile URL. Use lowercase letters, numbers, and hyphens
-            only.
-          </p>
-          <Input
-            id="handler"
-            type="text"
-            size="medium"
-            value={formData.handler}
-            onChange={(e) => handleChange('handler', e.target.value)}
-            invalid={!!fieldError('handler')}
-            required
-          />
-          <ErrorText>{fieldError('handler')}</ErrorText>
-          <span className={dashboardStyles.hint}>
-            Your profile will be available at: theartroom.gallery/artists/
-            {formData.handler || 'your-handle'}
-          </span>
-        </div>
+          <div className={page.field}>
+            <label htmlFor="handler" className={page.label}>
+              Profile URL
+            </label>
+            <div className={page.prefixBox}>
+              <span id="profile-url-prefix" className={page.prefix}>
+                theartroom.gallery/artists/
+              </span>
+              <Input
+                id="handler"
+                type="text"
+                size="bare"
+                className={page.prefixField}
+                inputClassName={page.prefixInput}
+                value={formData.handler}
+                onChange={(e) => handleChange('handler', e.target.value)}
+                placeholder="your-handle"
+                invalid={!!fieldError('handler')}
+                required
+                aria-describedby="profile-url-prefix profile-url-help"
+              />
+            </div>
+            <ErrorText className={page.fieldError}>{fieldError('handler')}</ErrorText>
+            <p id="profile-url-help" className={page.help}>
+              Lowercase letters, numbers and hyphens only.
+            </p>
+          </div>
 
-        {/* Email */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Email Address</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Your contact email. This may be displayed on your public profile.
-          </p>
-          <Input
-            id="email"
-            type="email"
-            size="medium"
-            value={formData.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            placeholder="email@example.com"
-            invalid={!!fieldError('email')}
-            required
-          />
-          <ErrorText>{fieldError('email')}</ErrorText>
-          <span className={dashboardStyles.hint}>
-            Required so the gallery can reach you about your work.
-          </span>
-        </div>
+          <div className={page.field}>
+            <label htmlFor="email" className={page.label}>
+              Email address
+            </label>
+            <Input
+              id="email"
+              type="email"
+              size="bare"
+              inputClassName={page.input}
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              placeholder="email@example.com"
+              invalid={!!fieldError('email')}
+              required
+              aria-describedby="profile-email-help"
+            />
+            <ErrorText className={page.fieldError}>{fieldError('email')}</ErrorText>
+            <p id="profile-email-help" className={page.help}>
+              Your contact email. This may be displayed on your public profile. Required so the
+              gallery can reach you about your work.
+            </p>
+          </div>
+        </StudioPanel>
 
-        {/* Biography */}
-        <div className={dashboardStyles.section}>
-          <h3 className={dashboardStyles.sectionTitle}>Biography</h3>
-          <p className={dashboardStyles.sectionDescription}>
-            Tell visitors about yourself, your artistic journey, and your work. Supports rich text
-            formatting.
-          </p>
+        <StudioPanel
+          id="profile-biography"
+          title="Biography"
+          description="Tell visitors about yourself, your artistic journey, and your work. Supports rich text formatting."
+        >
           <RichTextEditor
+            tone="admin"
+            labelledBy="profile-biography-title"
+            describedBy="profile-biography-description profile-biography-help"
             content={formData.biography}
             onChange={(content) => handleChange('biography', content)}
-            placeholder="Tell visitors about yourself..."
+            onReady={onBioReady}
+            placeholder="Tell visitors about yourself…"
           />
-          <span className={dashboardStyles.hint}>
+          <p id="profile-biography-help" className={page.help}>
             A well-written biography helps visitors connect with your work.
-          </span>
-        </div>
+          </p>
+        </StudioPanel>
 
-        <ErrorText>{error}</ErrorText>
-        {success && (
-          <Text font="dashboard" as="p" className={styles.success}>
-            {success}
-          </Text>
+        {error && (
+          <Callout tone="red" role="alert">
+            {error}
+          </Callout>
         )}
-
-        <div className={dashboardStyles.actions}>
-          <Button
-            font="dashboard"
-            variant="primary"
-            label={saving ? 'Saving...' : 'Save'}
-            type="submit"
-          />
-        </div>
+        {success && (
+          <FeedbackBar tone="success" onDismiss={() => setSuccess('')}>
+            {success}
+          </FeedbackBar>
+        )}
       </form>
-    </DashboardLayout>
+
+      <SaveBar
+        form={PROFILE_FORM_ID}
+        dirty={dirty}
+        saving={saving}
+        saved={success !== ''}
+        failed={failed}
+        onDiscard={() => setConfirmingDiscard(true)}
+      />
+
+      {confirmingRemove && (
+        <AdminConfirmModal
+          title={
+            confirmingRemove === 'image' ? 'Remove the profile picture?' : 'Remove the signature?'
+          }
+          message="This takes effect at once."
+          confirmLabel="Remove"
+          destructive
+          onConfirm={() => {
+            const target = confirmingRemove
+            setConfirmingRemove(null)
+            void (target === 'image' ? handleRemoveImage() : handleRemoveSignature())
+          }}
+          onCancel={() => setConfirmingRemove(null)}
+        />
+      )}
+
+      {confirmingDiscard && (
+        <AdminConfirmModal
+          title="Discard changes?"
+          message="Your changes since the last save will be lost."
+          confirmLabel="Discard"
+          destructive
+          onConfirm={confirmDiscard}
+          onCancel={() => setConfirmingDiscard(false)}
+        />
+      )}
+    </div>
   )
 }

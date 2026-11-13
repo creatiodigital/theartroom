@@ -1,0 +1,27 @@
+// designs/artist-artwork-edit.dc.html, the series-type lock row.
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: var(--space-3) 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-15);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+.icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.text {
+  min-width: 0;
+
+  strong {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}

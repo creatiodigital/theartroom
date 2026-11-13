@@ -1,16 +1,30 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import {
+  CircleHalf,
+  LampPendant,
+  Lightbulb,
+  Mountains,
+  Sun,
+  SunHorizon,
+} from '@phosphor-icons/react'
 
-import { Button } from '@/components/ui/Button'
-import { CollapsibleSection } from '@/components/ui/CollapsibleSection/CollapsibleSection'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
+import {
+  InfoLine,
+  PanelCard,
+  PanelSection,
+  SliderRow,
+  SwitchRow,
+  ToolPanel,
+  metres,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { Section } from '@/components/ui/Section/Section'
-import { Slider } from '@/components/ui/Slider'
-import { Toggle } from '@/components/ui/Toggle'
 import { isTrackLampVisible } from '@/components/scene/spaces/objects/TrackLamp/trackLampVisibility'
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
 import { getSpaceFeatures } from '@/config/spaceConfig'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import {
@@ -42,6 +56,7 @@ import {
 import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
 
+import { LampPicker, roomNumberOf } from './LampPicker'
 import styles from './LightingPanel.module.scss'
 
 // Default values
@@ -78,22 +93,35 @@ const DEFAULT_SHADOW_DIRECTION = 0.2
 const HDRI_OPTIONS = [{ value: 'soil', label: 'Soil' }] as const
 
 const CEILING_LIGHT_OPTIONS = [
-  { value: 'track', label: 'Track Lamps' },
-  { value: 'plafond', label: 'Plafond Lamps' },
-  { value: 'track-plafond', label: 'Track Lamps + Plafond Lamps' },
+  { value: 'track', label: 'Track lamps' },
+  { value: 'plafond', label: 'Plafond lamps' },
+  { value: 'track-plafond', label: 'Track lamps + plafond lamps' },
 ] as const
+
+/**
+ * The throw's chip: `throwLabel`'s words with a space before the unit ("4.5 m", editor3d.md);
+ * "No limit" as it is. Display only: `throwLabel` itself stays (e2e bake-dimmer pins it).
+ */
+const throwChip = (stored: number) => throwLabel(stored).replace(/(\d)m$/, '$1 m')
 
 const LightingPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
+  // NEW lamp picker (editor3d.md): which lamp's controls show. UI state only: never dispatched
+  // or saved, and nothing in the room follows it. Null: the first lamp.
+  const [pickedLamp, setPickedLamp] = useState<number | null>(null)
+
+  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
+  const saveTrack = useSaveTracking(exhibitionId ? `${exhibitionId}:lighting` : null)
 
   const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
     dispatch(setExhibitionField({ field, value }))
     setSaved(false)
+    saveTrack.edited()
   }
 
-  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const storedSpaceId = useSelector((state: RootState) => state.exhibition.spaceId)
   const spaceId = storedSpaceId || 'paris'
   // AR-161 (spec rule 7): in a baked space the space owns the look. Artists keep what physically
@@ -229,6 +257,7 @@ const LightingPanel = () => {
     if (!exhibitionId) return
 
     setSaving(true)
+    const sentAt = saveTrack.started()
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
@@ -281,8 +310,10 @@ const LightingPanel = () => {
       if (response.ok) {
         setSaved(true)
       }
+      saveTrack.finished(sentAt, response.ok)
     } catch (error) {
       console.error('Failed to save lighting settings:', error)
+      saveTrack.finished(sentAt, false)
     } finally {
       setSaving(false)
     }
@@ -292,592 +323,517 @@ const LightingPanel = () => {
     dispatch(hideLightingPanel())
   }
 
-  // Individual lamp controls, one collapsible section per room.
-  // `groupNodesByRoom` normalises the Blender naming, so `room0`
-  // becomes "Room 1" here and the authoring convention never reaches
-  // the artist. An ungrouped space yields a single anonymous group
-  // and renders inline, exactly as before.
-  const trackLampControls = trackLampGroups.map((group) => {
-    const lamps = group.indices.map((i: number, position: number) => {
-      const settings = trackLampSettings?.[String(i)]
-      // A hidden lamp is gone from the scene, so there is nothing for
-      // its rotation and offset to aim — the sliders go with it.
-      const isEnabled = isTrackLampVisible(settings)
-      const rotation = settings?.rotation ?? 0
-      const offset = settings?.offset ?? 0
-      // Numbering restarts inside each room, because the section
-      // header already says which room these belong to. Every label
-      // below uses this same number: the sliders used to announce the
-      // raw GLB node index, so a screen reader named a different lamp
-      // than the one on screen.
-      const label = `Lamp ${position + 1}`
+  // Each lamp (NEW lamp picker, editor3d.md): the space's track lamps as one grid per room
+  // (`groupNodesByRoom` normalises the Blender naming, so `room0` becomes "Room 1"; a space with
+  // no room grouping is a single grid), then only the picked lamp's switch and sliders. How many
+  // lamps exist comes from the loaded GLB, not a constant. Default: the first lamp.
+  const allLamps = trackLampGroups.flatMap((group) => group.indices)
+  const lampIsOn = (index: number) => isTrackLampVisible(trackLampSettings?.[String(index)])
+  const pickedIndex =
+    pickedLamp !== null && allLamps.includes(pickedLamp) ? pickedLamp : allLamps[0]
 
-      return (
-        <div key={`lamp-${i}`} className={styles.lampRow}>
-          <div className={styles.lampHeader}>
-            <span className={styles.lampLabel}>{label}</span>
-            <Toggle
-              checked={isEnabled}
-              onChange={() => {
-                dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
-                setSaved(false)
-              }}
-              aria-label={`${label} enabled`}
-            />
-          </div>
-          <div className={styles.lampSlider}>
-            <Slider
-              min={-180}
-              max={180}
-              step={1}
-              value={rotation}
-              onChange={(v) => {
-                dispatch(setTrackLampRotation({ index: i, rotation: v }))
-                setSaved(false)
-              }}
-              disabled={!isEnabled}
-              aria-label={`${label} rotation`}
-            />
-            <span className={styles.sliderValue}>{rotation}°</span>
-          </div>
-          <div className={styles.lampSlider}>
-            <Slider
-              min={-2}
-              max={2}
-              step={0.01}
-              value={offset}
-              onChange={(v) => {
-                dispatch(setTrackLampOffset({ index: i, offset: v }))
-                setSaved(false)
-              }}
-              disabled={!isEnabled}
-              aria-label={`${label} offset`}
-            />
-            <span className={styles.sliderValue}>{offset.toFixed(2)}m</span>
-          </div>
-        </div>
-      )
-    })
+  let eachLamp: ReactNode = null
+  if (pickedIndex !== undefined) {
+    const i = pickedIndex
+    const group =
+      trackLampGroups.find((candidate) => candidate.indices.includes(i)) ?? trackLampGroups[0]
+    const position = group.indices.indexOf(i)
+    const settings = trackLampSettings?.[String(i)]
+    // A hidden lamp is gone from the scene, so there is nothing for
+    // its rotation and offset to aim — the sliders go with it.
+    const isEnabled = isTrackLampVisible(settings)
+    const rotation = settings?.rotation ?? 0
+    const offset = settings?.offset ?? 0
+    // Numbering restarts inside each room, because the room's caption
+    // already says which room these belong to. Every label
+    // below uses this same number: the sliders used to announce the
+    // raw GLB node index, so a screen reader named a different lamp
+    // than the one on screen.
+    const label = `Lamp ${position + 1}`
+    const title = group.room ? `Room ${roomNumberOf(group.room)} · ${label}` : label
 
-    if (!group.room) return <Fragment key="track-lamps">{lamps}</Fragment>
-
-    const roomNumber = Number(group.room.replace('room', '')) + 1
-    return (
-      <CollapsibleSection
-        key={group.room}
-        title={`Room ${roomNumber} · ${group.indices.length} lamps`}
-        persistKey={`track-lamps-${group.room}`}
+    eachLamp = (
+      <PanelCard
+        level="group"
+        title="Each lamp"
+        aside={`${allLamps.filter(lampIsOn).length} on · pick one to adjust`}
       >
-        {lamps}
-      </CollapsibleSection>
+        <LampPicker
+          groups={trackLampGroups}
+          isOn={lampIsOn}
+          selected={i}
+          onSelect={setPickedLamp}
+        />
+        <div className={styles.lamp}>
+          <SwitchRow
+            title={title}
+            stateText
+            checked={isEnabled}
+            onChange={() => {
+              dispatch(setTrackLampEnabled({ index: i, enabled: !isEnabled }))
+              setSaved(false)
+              saveTrack.edited()
+            }}
+          />
+          <SliderRow
+            label="Turn"
+            aria-label={`${title} turn`}
+            value={`${rotation}°`}
+            sliderValue={rotation}
+            min={-180}
+            max={180}
+            step={1}
+            onChange={(v) => {
+              dispatch(setTrackLampRotation({ index: i, rotation: v }))
+              setSaved(false)
+              saveTrack.edited()
+            }}
+            disabled={!isEnabled}
+          />
+          <SliderRow
+            label="Position along the track"
+            aria-label={`${title} position along the track`}
+            value={metres(offset, 2)}
+            sliderValue={offset}
+            min={-2}
+            max={2}
+            step={0.01}
+            onChange={(v) => {
+              dispatch(setTrackLampOffset({ index: i, offset: v }))
+              setSaved(false)
+              saveTrack.edited()
+            }}
+            disabled={!isEnabled}
+          />
+        </div>
+      </PanelCard>
     )
-  })
+  }
 
   // Beam angle and throw, in every space. The throw's top position is no cut-off (stored 0): the
   // light falls off by the inverse square alone, as every approved baked look was made.
   const trackBeamControls = (
     <>
-      <div className={styles.field}>
-        <div className={styles.sliderHeader}>
-          <label className={styles.label}>Angle</label>
-          <span className={styles.sliderValue}>
-            {(trackLampAngle * (180 / Math.PI)).toFixed(0)}°
-          </span>
-        </div>
-        <Slider
-          min={0.1}
-          max={1.2}
-          step={0.05}
-          value={trackLampAngle}
-          onChange={(v) => set('trackLampAngle', v)}
-          aria-label="Track Lamp Angle"
-        />
-      </div>
-
-      <div className={styles.field}>
-        <div className={styles.sliderHeader}>
-          <label className={styles.label}>Distance</label>
-          <span className={styles.sliderValue}>{throwLabel(trackLampDistance)}</span>
-        </div>
-        <Slider
-          min={TRACK_THROW_MIN}
-          max={TRACK_THROW_SLIDER_MAX}
-          step={TRACK_THROW_STEP}
-          value={throwToSlider(trackLampDistance)}
-          onChange={(v) => set('trackLampDistance', sliderToThrow(v))}
-          aria-label="Track Lamp Distance"
-        />
-      </div>
+      <SliderRow
+        label="Angle"
+        aria-label="Track lamps angle"
+        value={`${(trackLampAngle * (180 / Math.PI)).toFixed(0)}°`}
+        sliderValue={trackLampAngle}
+        min={0.1}
+        max={1.2}
+        step={0.05}
+        onChange={(v) => set('trackLampAngle', v)}
+      />
+      {/* The light's reach (three's SpotLight distance): it fades toward it and reaches nothing
+          beyond; the top is "No limit" (questions.md Q134). */}
+      <SliderRow
+        label="Light reach"
+        value={throwChip(trackLampDistance)}
+        sliderValue={throwToSlider(trackLampDistance)}
+        min={TRACK_THROW_MIN}
+        max={TRACK_THROW_SLIDER_MAX}
+        step={TRACK_THROW_STEP}
+        onChange={(v) => set('trackLampDistance', sliderToThrow(v))}
+      />
     </>
   )
 
-  const saveButton = (
-    <div className={styles.actions}>
-      <Button
-        variant="primary"
-        label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-        onClick={handleSave}
-        disabled={saving}
-        className={styles.saveButton}
-      />
-    </div>
-  )
+  const panel = {
+    title: 'Lighting',
+    description: 'How light falls on the walls and the works.',
+    icon: Lightbulb,
+    tint: 'lighting',
+    onClose: handleClose,
+    save: { saving, saved, onSave: handleSave, status: saveTrack.status },
+  } as const
 
   if (bakedSpace) {
     // Dimmers: 10–100% of the space's calibrated lamps (slider 0.4–4, 4 = 100%, never above).
     // A level stored before the rollout outside that range shows, and bakes, clamped.
     // AR-169: the soft light (on screen at once) 0–200%, the daylight (blinds, baked) 0–100%.
+    const softLight = `${Math.round(fillLightLevel * 100)}%`
+    const ceilingLights = `${dimmerPercent(recessedLampIntensity)}%`
+    const trackLamps = `${dimmerPercent(trackLampIntensity)}%`
+    const daylight = `${Math.round(daylightLevel * 100)}%`
+
     return (
-      <SettingsPanel title="Lighting" onClose={handleClose}>
+      <ToolPanel {...panel}>
         {/* AR-169: the room's soft light (the even environment, `softFill.ts`) — first, and up to
             twice the space's own (Eduardo 2026-10-31: "add a knob… the sphere we created"). On
             screen at once, never baked. */}
-        <Section title="Soft Light">
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Intensity</label>
-              <span className={styles.sliderValue}>{Math.round(fillLightLevel * 100)}%</span>
-            </div>
-            <Slider
-              min={0}
-              max={FILL_MAX}
-              step={0.01}
-              value={fillLightLevel}
-              onChange={(v) => set('fillLightLevel', wholePercentStep(v))}
-              aria-label="Soft Light Intensity"
-            />
-          </div>
-        </Section>
+        <PanelSection
+          title="Soft light"
+          sub="Even light across the whole room"
+          icon={Sun}
+          summary={softLight}
+          storageKey="section-soft-light"
+        >
+          <SliderRow
+            label="Brightness"
+            aria-label="Soft light brightness"
+            value={softLight}
+            sliderValue={fillLightLevel}
+            min={0}
+            max={FILL_MAX}
+            step={0.01}
+            onChange={(v) => set('fillLightLevel', wholePercentStep(v))}
+          />
+        </PanelSection>
 
         {showPlafond && (
-          <Section title="Ceiling">
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Plafond Intensity</label>
-                <span className={styles.sliderValue}>{dimmerPercent(recessedLampIntensity)}%</span>
-              </div>
-              <Slider
-                min={DIMMER_MIN}
-                max={DIMMER_STANDARD}
-                step={DIMMER_STEP}
-                value={dimmerLevel(recessedLampIntensity)}
-                onChange={(v) => set('recessedLampIntensity', wholePercentStep(v))}
-                aria-label="Plafond Intensity"
-              />
-            </div>
-          </Section>
+          <PanelSection
+            title="Ceiling lights"
+            sub="The round lights in the ceiling"
+            icon={Lightbulb}
+            summary={ceilingLights}
+            storageKey="section-ceiling"
+          >
+            <SliderRow
+              label="Brightness"
+              aria-label="Ceiling lights brightness"
+              value={ceilingLights}
+              sliderValue={dimmerLevel(recessedLampIntensity)}
+              min={DIMMER_MIN}
+              max={DIMMER_STANDARD}
+              step={DIMMER_STEP}
+              onChange={(v) => set('recessedLampIntensity', wholePercentStep(v))}
+            />
+          </PanelSection>
         )}
 
         {showTrackLamps && (
-          <Section title="Track Lamps">
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Intensity</label>
-                <span className={styles.sliderValue}>{dimmerPercent(trackLampIntensity)}%</span>
-              </div>
-              <Slider
+          <PanelSection
+            title="Track lamps"
+            sub="Spotlights on the ceiling tracks"
+            icon={LampPendant}
+            summary={trackLamps}
+            storageKey="section-track-lamps"
+          >
+            <PanelCard level="group" title="All lamps">
+              <SliderRow
+                label="Brightness"
+                aria-label="Track lamps brightness"
+                value={trackLamps}
+                sliderValue={dimmerLevel(trackLampIntensity)}
                 min={DIMMER_MIN}
                 max={DIMMER_STANDARD}
                 step={DIMMER_STEP}
-                value={dimmerLevel(trackLampIntensity)}
                 onChange={(v) => set('trackLampIntensity', wholePercentStep(v))}
-                aria-label="Track Lamp Intensity"
               />
-            </div>
 
-            {trackBeamControls}
+              {trackBeamControls}
 
-            {/* AR-169: the fixture's body color is the artist's again (it is not in the bake). */}
-            <div className={styles.field}>
-              <label className={styles.label}>Material Color</label>
+              {/* AR-169: the fixture's body color is the artist's again (it is not in the bake). */}
               <ColorPicker
+                variant="inline"
+                name="Lamp color"
                 textColor={trackLampMaterialColor}
                 onColorSelect={(color) => set('trackLampMaterialColor', color)}
               />
-            </div>
+            </PanelCard>
 
-            {trackLampControls}
-          </Section>
+            {eachLamp}
+          </PanelSection>
         )}
 
         {/* AR-169: the glass color is the artist's — the daylight's color in the bake too. AR-170:
             hidden while every window shows the street behind clear glass (`SHOW_GLASS_COLOR`). */}
         {hasWindows && (
-          <Section title="Window">
+          <PanelSection
+            title="Window"
+            sub="Daylight through the windows"
+            icon={SunHorizon}
+            summary={daylight}
+            storageKey="section-window"
+          >
             {SHOW_GLASS_COLOR && (
-              <div className={styles.field}>
-                <label className={styles.label}>Glass Color</label>
-                <ColorPicker
-                  textColor={windowColor}
-                  onColorSelect={(color) => set('windowLightColor', color)}
-                />
-              </div>
-            )}
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Daylight</label>
-                <span className={styles.sliderValue}>{Math.round(daylightLevel * 100)}%</span>
-              </div>
-              <Slider
-                min={0}
-                max={1}
-                step={0.01}
-                value={daylightLevel}
-                onChange={(v) => set('daylightLevel', wholePercentStep(v))}
-                aria-label="Daylight"
+              <ColorPicker
+                variant="inline"
+                name="Glass color"
+                textColor={windowColor}
+                onColorSelect={(color) => set('windowLightColor', color)}
               />
-            </div>
-          </Section>
+            )}
+            <SliderRow
+              label="Daylight"
+              value={daylight}
+              sliderValue={daylightLevel}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={(v) => set('daylightLevel', wholePercentStep(v))}
+            />
+          </PanelSection>
         )}
-
-        {saveButton}
-      </SettingsPanel>
+      </ToolPanel>
     )
   }
 
   return (
-    <SettingsPanel title="Lighting" onClose={handleClose}>
-      <Section title="Environment">
-        <div className={styles.field}>
-          <label className={styles.label}>Sky Type</label>
-          <select
-            value={hdriEnvironment}
-            onChange={(e) => set('hdriEnvironment', e.target.value)}
-            className={styles.select}
-          >
-            {HDRI_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+    <ToolPanel {...panel}>
+      <PanelSection title="Environment" icon={Mountains} storageKey="section-environment">
+        <AdminSelect
+          label="Sky type"
+          size="form"
+          value={hdriEnvironment}
+          onChange={(value) => set('hdriEnvironment', value)}
+        >
+          {HDRI_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </AdminSelect>
 
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Sky Rotation</label>
-            <span className={styles.sliderValue}>{hdriRotation.toFixed(0)}°</span>
-          </div>
-          <Slider
-            min={0}
-            max={360}
-            step={1}
-            value={hdriRotation}
-            onChange={(v) => set('hdriRotation', v)}
-            aria-label="Sky Rotation"
-          />
-        </div>
+        <SliderRow
+          label="Sky rotation"
+          value={`${hdriRotation.toFixed(0)}°`}
+          sliderValue={hdriRotation}
+          min={0}
+          max={360}
+          step={1}
+          onChange={(v) => set('hdriRotation', v)}
+        />
 
-        <div className={styles.field}>
-          <label className={styles.label}>Ambient Color</label>
-          <ColorPicker
-            textColor={ambientColor}
-            onColorSelect={(color) => set('ambientLightColor', color)}
-          />
-        </div>
+        <ColorPicker
+          variant="inline"
+          name="Ambient color"
+          textColor={ambientColor}
+          onColorSelect={(color) => set('ambientLightColor', color)}
+        />
 
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Ambient Intensity</label>
-            <span className={styles.sliderValue}>{ambientIntensity.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0}
-            max={1}
-            step={0.01}
-            value={ambientIntensity}
-            onChange={(v) => set('ambientLightIntensity', v)}
-            aria-label="Ambient Intensity"
-          />
-        </div>
-      </Section>
+        <SliderRow
+          label="Ambient intensity"
+          value={ambientIntensity.toFixed(2)}
+          sliderValue={ambientIntensity}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(v) => set('ambientLightIntensity', v)}
+        />
+      </PanelSection>
 
       {(hasSkylight || hasLamps || hasTrackLamps || hasRecessedLamps) && (
-        <Section title="Ceiling">
+        <PanelSection title="Ceiling" icon={Lightbulb} storageKey="section-ceiling">
           {hasSkylight && (
             <>
-              <div className={styles.field}>
-                <label className={styles.label}>Ceiling Light Color</label>
-                <ColorPicker
-                  textColor={skylightColor}
-                  onColorSelect={(color) => set('skylightColor', color)}
-                />
-              </div>
+              <ColorPicker
+                variant="inline"
+                name="Ceiling light color"
+                textColor={skylightColor}
+                onColorSelect={(color) => set('skylightColor', color)}
+              />
 
-              <div className={styles.field}>
-                <div className={styles.sliderHeader}>
-                  <label className={styles.label}>Ceiling Light Intensity</label>
-                  <span className={styles.sliderValue}>{skylightIntensity.toFixed(2)}</span>
-                </div>
-                <Slider
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={skylightIntensity}
-                  onChange={(v) => set('skylightIntensity', v)}
-                  aria-label="Ceiling Light Intensity"
-                />
-              </div>
+              <SliderRow
+                label="Ceiling light intensity"
+                value={skylightIntensity.toFixed(2)}
+                sliderValue={skylightIntensity}
+                min={0}
+                max={10}
+                step={0.1}
+                onChange={(v) => set('skylightIntensity', v)}
+              />
             </>
           )}
 
           {hasLamps && (
             <>
-              <div className={styles.field}>
-                <label className={styles.label}>Lamp Color</label>
-                <ColorPicker
-                  textColor={lampColor}
-                  onColorSelect={(color) => set('ceilingLampColor', color)}
-                />
-              </div>
+              <ColorPicker
+                variant="inline"
+                name="Lamp color"
+                textColor={lampColor}
+                onColorSelect={(color) => set('ceilingLampColor', color)}
+              />
 
-              <div className={styles.field}>
-                <div className={styles.sliderHeader}>
-                  <label className={styles.label}>Lamp Intensity</label>
-                  <span className={styles.sliderValue}>{lampIntensity.toFixed(2)}</span>
-                </div>
-                <Slider
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={lampIntensity}
-                  onChange={(v) => set('ceilingLampIntensity', v)}
-                  aria-label="Lamp Intensity"
-                />
-              </div>
+              <SliderRow
+                label="Lamp intensity"
+                value={lampIntensity.toFixed(2)}
+                sliderValue={lampIntensity}
+                min={0}
+                max={10}
+                step={0.1}
+                onChange={(v) => set('ceilingLampIntensity', v)}
+              />
             </>
           )}
 
           {availableCeilingLightOptions.length > 0 && (
-            <div className={styles.field}>
-              <label className={styles.label}>Ceiling Light Type</label>
-              <select
-                value={effectiveCeilingLightMode}
-                onChange={(e) => set('ceilingLightMode', e.target.value)}
-                className={styles.select}
-              >
-                {availableCeilingLightOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AdminSelect
+              label="Ceiling light type"
+              size="form"
+              value={effectiveCeilingLightMode}
+              onChange={(value) => set('ceilingLightMode', value)}
+            >
+              {availableCeilingLightOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </AdminSelect>
           )}
 
           {hasRecessedLamps &&
             (effectiveCeilingLightMode === 'plafond' ||
               effectiveCeilingLightMode === 'track-plafond') && (
               <>
-                <div className={styles.field}>
-                  <label className={styles.label}>Plafond Color</label>
-                  <ColorPicker
-                    textColor={recessedLampColor}
-                    onColorSelect={(color) => set('recessedLampColor', color)}
-                  />
-                </div>
+                <ColorPicker
+                  variant="inline"
+                  name="Plafond color"
+                  textColor={recessedLampColor}
+                  onColorSelect={(color) => set('recessedLampColor', color)}
+                />
 
-                <div className={styles.field}>
-                  <div className={styles.sliderHeader}>
-                    <label className={styles.label}>Plafond Intensity</label>
-                    <span className={styles.sliderValue}>{recessedLampIntensity.toFixed(2)}</span>
-                  </div>
-                  <Slider
-                    min={0}
-                    max={10}
-                    step={0.1}
-                    value={recessedLampIntensity}
-                    onChange={(v) => set('recessedLampIntensity', v)}
-                    aria-label="Plafond Intensity"
-                  />
-                </div>
+                <SliderRow
+                  label="Plafond intensity"
+                  value={recessedLampIntensity.toFixed(2)}
+                  sliderValue={recessedLampIntensity}
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  onChange={(v) => set('recessedLampIntensity', v)}
+                />
 
-                <div className={styles.field}>
-                  <div className={styles.sliderHeader}>
-                    <label className={styles.label}>Plafond Angle</label>
-                    <span className={styles.sliderValue}>
-                      {(recessedLampAngle * (180 / Math.PI)).toFixed(0)}°
-                    </span>
-                  </div>
-                  <Slider
-                    min={0.1}
-                    max={1.2}
-                    step={0.05}
-                    value={recessedLampAngle}
-                    onChange={(v) => set('recessedLampAngle', v)}
-                    aria-label="Plafond Angle"
-                  />
-                </div>
+                <SliderRow
+                  label="Plafond angle"
+                  value={`${(recessedLampAngle * (180 / Math.PI)).toFixed(0)}°`}
+                  sliderValue={recessedLampAngle}
+                  min={0.1}
+                  max={1.2}
+                  step={0.05}
+                  onChange={(v) => set('recessedLampAngle', v)}
+                />
 
-                <div className={styles.field}>
-                  <div className={styles.sliderHeader}>
-                    <label className={styles.label}>Plafond Distance</label>
-                    <span className={styles.sliderValue}>{recessedLampDistance.toFixed(1)}m</span>
-                  </div>
-                  <Slider
-                    min={1}
-                    max={20}
-                    step={0.5}
-                    value={recessedLampDistance}
-                    onChange={(v) => set('recessedLampDistance', v)}
-                    aria-label="Plafond Distance"
-                  />
-                </div>
+                <SliderRow
+                  label="Plafond distance"
+                  value={metres(recessedLampDistance, 1)}
+                  sliderValue={recessedLampDistance}
+                  min={1}
+                  max={20}
+                  step={0.5}
+                  onChange={(v) => set('recessedLampDistance', v)}
+                />
               </>
             )}
-        </Section>
+        </PanelSection>
       )}
 
       {hasTrackLamps &&
         (effectiveCeilingLightMode === 'track' ||
           effectiveCeilingLightMode === 'track-plafond') && (
-          <Section title="Track Lamps">
-            <div className={styles.field}>
-              <label className={styles.label}>Color</label>
+          <PanelSection title="Track lamps" icon={LampPendant} storageKey="section-track-lamps">
+            <PanelCard level="group" title="All lamps">
               <ColorPicker
+                variant="inline"
+                name="Light color"
                 textColor={trackLampColor}
                 onColorSelect={(color) => set('trackLampColor', color)}
               />
-            </div>
 
-            <div className={styles.field}>
-              <div className={styles.sliderHeader}>
-                <label className={styles.label}>Intensity</label>
-                <span className={styles.sliderValue}>{trackLampIntensity.toFixed(2)}</span>
-              </div>
-              <Slider
+              <SliderRow
+                label="Intensity"
+                aria-label="Track lamps intensity"
+                value={trackLampIntensity.toFixed(2)}
+                sliderValue={trackLampIntensity}
                 min={0}
                 max={10}
                 step={0.1}
-                value={trackLampIntensity}
                 onChange={(v) => set('trackLampIntensity', v)}
-                aria-label="Track Lamp Intensity"
               />
-            </div>
 
-            {trackBeamControls}
+              {trackBeamControls}
 
-            <div className={styles.field}>
-              <label className={styles.label}>Material Color</label>
               <ColorPicker
+                variant="inline"
+                name="Lamp color"
                 textColor={trackLampMaterialColor}
                 onColorSelect={(color) => set('trackLampMaterialColor', color)}
               />
-            </div>
+            </PanelCard>
 
-            {trackLampControls}
-          </Section>
+            {eachLamp}
+          </PanelSection>
         )}
 
       {hasWindows && (
-        <Section title="Window">
-          <div className={styles.sectionHeader}>
-            <label className={styles.label}>Transparent</label>
-            <Toggle
-              checked={windowTransparency}
-              onChange={() => set('windowTransparency', !windowTransparency)}
-              aria-label="Window transparency"
-            />
-          </div>
+        <PanelSection title="Window" icon={SunHorizon} storageKey="section-window">
+          <SwitchRow
+            title="Transparent"
+            checked={windowTransparency}
+            onChange={() => set('windowTransparency', !windowTransparency)}
+          />
 
           {windowTransparency ? (
-            <div className={styles.field}>
-              <label className={styles.label}>Window is transparent — HDRI visible</label>
-            </div>
+            <InfoLine>Window is transparent — HDRI visible</InfoLine>
           ) : (
             <>
-              <div className={styles.field}>
-                <label className={styles.label}>Color</label>
-                <ColorPicker
-                  textColor={windowColor}
-                  onColorSelect={(color) => set('windowLightColor', color)}
-                />
-              </div>
+              <ColorPicker
+                variant="inline"
+                name="Color"
+                textColor={windowColor}
+                onColorSelect={(color) => set('windowLightColor', color)}
+              />
 
-              <div className={styles.field}>
-                <div className={styles.sliderHeader}>
-                  <label className={styles.label}>Intensity</label>
-                  <span className={styles.sliderValue}>{windowIntensity.toFixed(2)}</span>
-                </div>
-                <Slider
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={windowIntensity}
-                  onChange={(v) => set('windowLightIntensity', v)}
-                  aria-label="Window Intensity"
-                />
-              </div>
+              <SliderRow
+                label="Intensity"
+                aria-label="Window intensity"
+                value={windowIntensity.toFixed(2)}
+                sliderValue={windowIntensity}
+                min={0}
+                max={10}
+                step={0.1}
+                onChange={(v) => set('windowLightIntensity', v)}
+              />
             </>
           )}
-        </Section>
+        </PanelSection>
       )}
 
-      <Section title="Shadows">
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Blur</label>
-            <span className={styles.sliderValue}>{shadowBlur.toFixed(3)}</span>
-          </div>
-          <Slider
-            min={0.01}
-            max={0.08}
-            step={0.005}
-            value={shadowBlur}
-            onChange={(v) => set('shadowBlur', v)}
-            aria-label="Shadow Blur"
-          />
-        </div>
+      <PanelSection title="Shadows" icon={CircleHalf} storageKey="section-shadows">
+        <SliderRow
+          label="Blur"
+          aria-label="Shadow blur"
+          value={shadowBlur.toFixed(3)}
+          sliderValue={shadowBlur}
+          min={0.01}
+          max={0.08}
+          step={0.005}
+          onChange={(v) => set('shadowBlur', v)}
+        />
 
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Spread</label>
-            <span className={styles.sliderValue}>{shadowSpread.toFixed(1)}</span>
-          </div>
-          <Slider
-            min={0.5}
-            max={3.0}
-            step={0.1}
-            value={shadowSpread}
-            onChange={(v) => set('shadowSpread', v)}
-            aria-label="Shadow Spread"
-          />
-        </div>
+        <SliderRow
+          label="Spread"
+          aria-label="Shadow spread"
+          value={shadowSpread.toFixed(1)}
+          sliderValue={shadowSpread}
+          min={0.5}
+          max={3.0}
+          step={0.1}
+          onChange={(v) => set('shadowSpread', v)}
+        />
 
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Tightness</label>
-            <span className={styles.sliderValue}>{shadowOpacity.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0.05}
-            max={0.8}
-            step={0.01}
-            value={shadowOpacity}
-            onChange={(v) => set('shadowOpacity', v)}
-            aria-label="Shadow Tightness"
-          />
-        </div>
+        <SliderRow
+          label="Tightness"
+          aria-label="Shadow tightness"
+          value={shadowOpacity.toFixed(2)}
+          sliderValue={shadowOpacity}
+          min={0.05}
+          max={0.8}
+          step={0.01}
+          onChange={(v) => set('shadowOpacity', v)}
+        />
 
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Direction</label>
-            <span className={styles.sliderValue}>{shadowDirection.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0.0}
-            max={1.0}
-            step={0.05}
-            value={shadowDirection}
-            onChange={(v) => set('shadowDirection', v)}
-            aria-label="Shadow Direction"
-          />
-        </div>
-      </Section>
-
-      {/* Actions */}
-      {saveButton}
-    </SettingsPanel>
+        <SliderRow
+          label="Direction"
+          aria-label="Shadow direction"
+          value={shadowDirection.toFixed(2)}
+          sliderValue={shadowDirection}
+          min={0.0}
+          max={1.0}
+          step={0.05}
+          onChange={(v) => set('shadowDirection', v)}
+        />
+      </PanelSection>
+    </ToolPanel>
   )
 }
 

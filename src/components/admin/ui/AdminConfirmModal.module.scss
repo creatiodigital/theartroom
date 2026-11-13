@@ -1,0 +1,133 @@
+// dashboard-states.dc.html §4. Buttons styled through `.actions .button` so they
+// outrank Button's one-class size rules.
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.iconCircle {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.iconDanger {
+  background: var(--color-red-30);
+  color: var(--color-red-50);
+}
+
+.iconNeutral {
+  background: var(--color-gray-20);
+  color: var(--color-black);
+}
+
+.text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-black);
+}
+
+.message {
+  color: var(--color-text-secondary);
+
+  p {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+  }
+
+  p + p {
+    margin-top: var(--space-2);
+  }
+
+  // Order references and invoice numbers inside the message.
+  code {
+    font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+    font-size: 13px;
+    color: var(--color-black);
+  }
+}
+
+// The optional amber box under the message (ConfirmModal's `warning`).
+.warning {
+  margin-top: var(--space-1);
+  padding: var(--space-3) 14px;
+  background: var(--admin-amber-bg);
+  border: 1px solid var(--admin-amber-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--admin-amber-text);
+}
+
+// size="wide": a form. Capped at the viewport less the Modal's backdrop inset and
+// panel padding, so the title and buttons stay on screen and only the body scrolls.
+.wide {
+  max-height: calc(100dvh - 2 * (var(--space-4) + var(--space-6)));
+
+  > .head,
+  > .warning,
+  > .actions {
+    flex: 0 0 auto;
+  }
+
+  > .warning {
+    margin-top: 0;
+  }
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  // Room for the scrollbar, taken from the panel's own padding.
+  margin-right: calc(-1 * var(--space-2));
+  padding-right: var(--space-2);
+  color: var(--color-text-primary);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.actions .button {
+  min-height: 44px;
+  padding: 10px var(--space-4);
+  font-weight: var(--font-semibold);
+}
+
+// Busy: the confirm button carries the progress label, so keep it readable.
+.actions .button:disabled {
+  opacity: 0.7;
+}
+
+// `confirmDisabled` (not busy): plainly off until the condition is met.
+.actions .off:disabled {
+  opacity: 0.4;
+}

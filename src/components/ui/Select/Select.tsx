@@ -18,6 +18,15 @@ export type SelectProps<T extends string | number = string | number> = {
   onChange: (value: T) => void
   size?: 'small' | 'medium'
   disabled?: boolean
+  /**
+   * editor: the wall view's selects (wallview.md, designs/wall-view-panels.dc.html): 36px
+   * (44px on touch), the editor's border and radius, Geist 13px. Default: unchanged.
+   */
+  tone?: 'default' | 'editor'
+  /** The combobox's name, when no visible label names it (questions.md Q135). */
+  'aria-label'?: string
+  /** The id of the visible label that names the combobox. */
+  'aria-labelledby'?: string
 }
 
 const Select = <T extends string | number = string | number>({
@@ -26,6 +35,9 @@ const Select = <T extends string | number = string | number>({
   onChange,
   size = 'small',
   disabled,
+  tone = 'default',
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }: SelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false)
   const selectRef = useRef<HTMLDivElement>(null)
@@ -68,7 +80,7 @@ const Select = <T extends string | number = string | number>({
 
   return (
     <div
-      className={c(styles.select, size && styles[size])}
+      className={c(styles.select, size && styles[size], tone === 'editor' && styles.editor)}
       ref={selectRef}
       style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
     >
@@ -78,6 +90,8 @@ const Select = <T extends string | number = string | number>({
         tabIndex={disabled ? -1 : 0}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
       >

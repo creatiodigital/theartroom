@@ -68,6 +68,8 @@ const getExhibition = (url: string) =>
           lastName: true,
           handler: true,
           biography: true,
+          // The page's "About the artist" row (docs/public-redesign/exhibition.md §5).
+          profileImageUrl: true,
         },
       },
       sections: {
@@ -128,6 +130,7 @@ export type PublicExhibition = {
     lastName: string
     handler: string
     biography: string | null
+    profileImageUrl: string | null
   }
   artworks: PublicExhibitionArtwork[]
   /** The grid's layout: works with no section first (title null), then one

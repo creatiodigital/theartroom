@@ -4,11 +4,11 @@ import { seedCookieConsent } from './consent-helpers'
 
 /**
  * Destructive deletes are gated by an in-app confirm dialog — never a native
- * `window.confirm()`. Verified on the artist's artwork list (the dashboard
- * "Delete" → "Delete Artwork?" flow).
+ * `window.confirm()`. Verified on the artist's artwork list (the library's
+ * trash button "Delete {title}" → "Delete artwork?" flow).
  *
  * Non-destructive by construction: the test only ever clicks Cancel, never
- * "Yes, Delete", so no artwork is removed. It also asserts that NO native
+ * "Yes, delete", so no artwork is removed. It also asserts that NO native
  * dialog event fires — the whole point of the alert()/confirm() cleanup.
  *
  * Assumes the e2e artist account has at least one artwork (it does — the
@@ -30,7 +30,7 @@ test('a destructive delete is gated by an in-app dialog, not a native confirm', 
     d.dismiss().catch(() => {})
   })
 
-  const deleteButton = page.getByRole('button', { name: /^delete$/i }).first()
+  const deleteButton = page.getByRole('button', { name: /^delete /i }).first()
   await expect(deleteButton, 'artist should have at least one deletable artwork').toBeVisible()
   await deleteButton.click()
 
@@ -38,7 +38,7 @@ test('a destructive delete is gated by an in-app dialog, not a native confirm', 
   await expect(page.getByText('Delete Artwork?')).toBeVisible()
   expect(nativeDialogFired, 'no native confirm()/alert() should be used').toBe(false)
 
-  // Cancel dismisses it without deleting anything (we never click "Yes, Delete").
+  // Cancel dismisses it without deleting anything (we never click "Yes, delete").
   await page.getByRole('button', { name: /^cancel$/i }).click()
   await expect(page.getByText('Delete Artwork?')).toHaveCount(0)
 })

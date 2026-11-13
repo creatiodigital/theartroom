@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { CaretDown } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 
 import styles from './CollapsibleSection.module.scss'
 
@@ -83,9 +82,9 @@ export const CollapsibleSection = ({
         aria-expanded={isOpen}
       >
         <span className={styles.title}>{title}</span>
-        <ChevronDown
+        <CaretDown
           size={16}
-          strokeWidth={ICON_STROKE_WIDTH}
+          weight="light"
           className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
           aria-hidden
         />

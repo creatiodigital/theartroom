@@ -1,17 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { Check, X } from '@phosphor-icons/react'
 
+import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
-import { Icon } from '@/components/ui/Icon'
-import { Text } from '@/components/ui/Typography'
-import { Modal } from '@/components/ui/Modal'
 import { useFormValidation } from '@/hooks/useFormValidation'
-import { email, minLength, phone, type Validator } from '@/lib/validation'
+import type { PresentationView } from '@/lib/printPresentation/record'
+import { email, minLength, name, phone, type Validator } from '@/lib/validation'
 
 import styles from './InquireSidebar.module.scss'
 
@@ -24,12 +24,13 @@ type InquireSidebarProps = {
     year?: number
     artistName: string
     imageUrl: string
+    /** The photo of the print, as the artwork page shows it; without one, the plain image. */
+    presentation?: PresentationView | null
   }
 }
 
 type FormErrors = {
-  firstName?: string
-  lastName?: string
+  fullName?: string
   email?: string
   phone?: string
   message?: string
@@ -42,22 +43,20 @@ type FieldName = keyof FormErrors
 // Built from the shared validator factories so the messages + rules live in
 // one place. Module-level (stable identity) for `useFormValidation`.
 const inquireValidators: Record<FieldName, Validator> = {
-  firstName: minLength(2, 'Please enter your first name.'),
-  lastName: minLength(2, 'Please enter your last name.'),
+  // One "Full name" field, as checkout's (owner, 2026-11-13).
+  fullName: name(),
   email: email(),
   phone: phone(),
   message: minLength(10, 'Please enter a message of at least 10 characters.'),
 }
 
 export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps) => {
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [fullName, setFullName] = useState('')
   const [emailField, setEmailField] = useState('')
   const [phoneField, setPhoneField] = useState('')
   const [message, setMessage] = useState('')
   const [honeypot, setHoneypot] = useState('')
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle')
-  const [showModal, setShowModal] = useState(false)
 
   // Shared house validation flow (silent → all errors on submit → clear live).
   const {
@@ -68,8 +67,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
   } = useFormValidation(inquireValidators)
 
   const resetForm = () => {
-    setFirstName('')
-    setLastName('')
+    setFullName('')
     setEmailField('')
     setPhoneField('')
     setMessage('')
@@ -81,14 +79,11 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
 
     if (honeypot) {
       setSubmitStatus('success')
-      setShowModal(true)
-      onClose()
       return
     }
 
     const valid = validateAll({
-      firstName,
-      lastName,
+      fullName,
       email: emailField,
       phone: phoneField,
       message,
@@ -102,8 +97,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          firstName,
-          lastName,
+          fullName,
           email: emailField,
           phone: phoneField,
           message,
@@ -123,214 +117,177 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
 
       setSubmitStatus('success')
       resetForm()
-      onClose()
-      setShowModal(true)
     } catch (error) {
       console.error('Error submitting inquiry:', error)
       setSubmitStatus('error')
-      onClose()
-      setShowModal(true)
     }
   }
 
-  const closeModal = () => {
-    setShowModal(false)
-    setSubmitStatus('idle')
+  // Closing after a result starts the next inquiry from the form again.
+  const handleClose = () => {
+    onClose()
+    if (submitStatus === 'success' || submitStatus === 'error') setSubmitStatus('idle')
   }
 
+  const field = (
+    id: 'fullName' | 'email' | 'phone',
+    label: string,
+    value: string,
+    set: (next: string) => void,
+    maxLength: number,
+    type: 'text' | 'email' = 'text',
+  ) => (
+    <FormField error={fieldError(id)}>
+      <label htmlFor={id} className={styles.label}>
+        {label}
+      </label>
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => {
+          set(e.target.value)
+          handleChange(id, e.target.value)
+        }}
+        size="bare"
+        inputClassName={styles.input}
+        maxLength={maxLength}
+        invalid={!!fieldError(id)}
+      />
+    </FormField>
+  )
+
+  // other-screens.md "Inquire": a right-hand panel (440 px; full screen on phones) with the work,
+  // the fields in the checkout style, black Send inquiry, and the result in the same panel.
+  if (!isOpen) return null
+
   return (
-    <>
-      {/* Success/Error Modal */}
-      {showModal && (
-        <Modal onClose={closeModal}>
-          <div className={styles.modalContent}>
-            {submitStatus === 'success' ? (
-              <>
-                <Text as="p" size="sm">
-                  → Inquiry successfully sent
-                </Text>
-                <Text as="p" size="xs" className={styles.modalSubtext}>
-                  We will respond to your inquiry shortly.
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text as="p" size="sm">
-                  → Something went wrong
-                </Text>
-                <Text as="p" size="xs" className={styles.modalSubtext}>
-                  Please try again later.
-                </Text>
-              </>
-            )}
+    <div className={styles.backdrop}>
+      <aside
+        className={styles.sidebar}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="inquire-title"
+      >
+        <div className={styles.header}>
+          <h2 id="inquire-title" className={styles.title}>
+            Inquire about this work
+          </h2>
+          <Button
+            variant="bare"
+            onClick={handleClose}
+            className={styles.closeButton}
+            aria-label="Close inquiry"
+          >
+            <X size={20} weight="light" aria-hidden />
+          </Button>
+        </div>
+
+        <div className={styles.work}>
+          {/* The rendered print, cropped to the piece and a thin border of wall as on the artwork
+              page; the plain image where there is no render, or it fails to load. */}
+          <div className={styles.workThumb}>
+            <PrintPresentation
+              view={artwork.presentation}
+              size="small"
+              crop
+              className={styles.workPiece}
+              renderClassName={styles.workRender}
+            >
+              {(placement) =>
+                placement === 'window' ? (
+                  <ProtectedImage src={artwork.imageUrl} alt={artwork.title} fill sizes="96px" />
+                ) : (
+                  <ProtectedImage
+                    src={artwork.imageUrl}
+                    alt={artwork.title}
+                    width={0}
+                    height={0}
+                    wrapperClassName={styles.workPlain}
+                    className={styles.workThumbImage}
+                  />
+                )
+              }
+            </PrintPresentation>
           </div>
-        </Modal>
-      )}
-
-      {/* Sidebar */}
-      {isOpen && (
-        <div className={`${styles.backdrop} ${styles.open}`}>
-          <div className={`${styles.sidebar} ${styles.open}`}>
-            <div className={styles.header}>
-              <Text as="h2" size="2xl" font="serif" className={styles.title}>
-                Send an inquiry
-              </Text>
-              <Button
-                variant="ghost"
-                onClick={onClose}
-                iconRight={<Icon name="close" size={16} />}
-                className={styles.closeButton}
-                aria-label="Close inquiry"
-              />
-            </div>
-
-            <div className={styles.content}>
-              <form onSubmit={handleSubmit} className={styles.form} noValidate>
-                {/* Honeypot field */}
-                <input
-                  type="text"
-                  name="website"
-                  value={honeypot}
-                  onChange={(e) => setHoneypot(e.target.value)}
-                  className={styles.honeypot}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-
-                <FormField error={fieldError('firstName')}>
-                  <label htmlFor="firstName" className={styles.label}>
-                    First name
-                  </label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => {
-                      setFirstName(e.target.value)
-                      handleChange('firstName', e.target.value)
-                    }}
-                    variant="underline"
-                    maxLength={100}
-                    invalid={!!fieldError('firstName')}
-                    className={styles.input}
-                  />
-                </FormField>
-
-                <FormField error={fieldError('lastName')}>
-                  <label htmlFor="lastName" className={styles.label}>
-                    Last name
-                  </label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => {
-                      setLastName(e.target.value)
-                      handleChange('lastName', e.target.value)
-                    }}
-                    variant="underline"
-                    maxLength={100}
-                    invalid={!!fieldError('lastName')}
-                    className={styles.input}
-                  />
-                </FormField>
-
-                <FormField error={fieldError('email')}>
-                  <label htmlFor="email" className={styles.label}>
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={emailField}
-                    onChange={(e) => {
-                      setEmailField(e.target.value)
-                      handleChange('email', e.target.value)
-                    }}
-                    variant="underline"
-                    maxLength={200}
-                    invalid={!!fieldError('email')}
-                    className={styles.input}
-                  />
-                </FormField>
-
-                <FormField error={fieldError('phone')}>
-                  <label htmlFor="phone" className={styles.label}>
-                    Phone
-                  </label>
-                  <Input
-                    id="phone"
-                    value={phoneField}
-                    onChange={(e) => {
-                      setPhoneField(e.target.value)
-                      handleChange('phone', e.target.value)
-                    }}
-                    variant="underline"
-                    maxLength={32}
-                    invalid={!!fieldError('phone')}
-                    className={styles.input}
-                  />
-                </FormField>
-
-                <FormField error={fieldError('message')}>
-                  <label htmlFor="message" className={styles.label}>
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    value={message}
-                    onChange={(e) => {
-                      setMessage(e.target.value)
-                      handleChange('message', e.target.value)
-                    }}
-                    className={styles.textarea}
-                    rows={4}
-                    maxLength={4000}
-                    aria-invalid={!!fieldError('message') || undefined}
-                  />
-                </FormField>
-
-                <div className={styles.artworkPreview}>
-                  <div className={styles.artworkImage}>
-                    <ProtectedImage
-                      src={artwork.imageUrl}
-                      alt={artwork.title}
-                      width={80}
-                      height={80}
-                      style={{ height: 80, width: 'auto' }}
-                    />
-                  </div>
-                  <div className={styles.artworkInfo}>
-                    <Text as="p" size="sm" weight="medium" font="serif">
-                      {artwork.artistName}
-                    </Text>
-                    <Text as="p" size="sm" font="serif">
-                      <em>{artwork.title}</em>
-                      {artwork.year && `, ${artwork.year}`}
-                    </Text>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="bigSquared"
-                  label={submitStatus === 'submitting' ? 'Sending...' : 'Send inquiry'}
-                  disabled={submitStatus === 'submitting'}
-                  className={styles.submitButton}
-                />
-
-                <Text as="p" size="xs" className={styles.disclaimer}>
-                  In order to respond to your inquiry, we will process the personal data you have
-                  supplied in accordance with our{' '}
-                  <a href="/privacy-policy" className={styles.link}>
-                    privacy policy
-                  </a>
-                  .
-                </Text>
-              </form>
-            </div>
+          <div className={styles.workText}>
+            <span className={styles.workTitle}>
+              <em>{artwork.title}</em>
+              {artwork.year && `, ${artwork.year}`}
+            </span>
+            <span className={styles.workArtist}>{artwork.artistName}</span>
           </div>
         </div>
-      )}
-    </>
+
+        <div className={styles.content}>
+          {submitStatus === 'success' ? (
+            <div className={styles.done} role="status">
+              <span className={styles.doneMark} aria-hidden>
+                <Check size={20} weight="light" />
+              </span>
+              <p className={styles.doneTitle}>Inquiry successfully sent</p>
+              <p className={styles.doneLine}>We will respond to your inquiry shortly.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className={styles.form} noValidate>
+              {/* Honeypot field */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                className={styles.honeypot}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+
+              {field('fullName', 'Full name', fullName, setFullName, 200)}
+              {field('email', 'Email', emailField, setEmailField, 200, 'email')}
+              {field('phone', 'Phone', phoneField, setPhoneField, 32)}
+
+              <FormField error={fieldError('message')}>
+                <label htmlFor="message" className={styles.label}>
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  value={message}
+                  onChange={(e) => {
+                    setMessage(e.target.value)
+                    handleChange('message', e.target.value)
+                  }}
+                  className={styles.textarea}
+                  rows={5}
+                  maxLength={4000}
+                  aria-invalid={!!fieldError('message') || undefined}
+                />
+              </FormField>
+
+              <Button
+                type="submit"
+                variant="primary"
+                label={submitStatus === 'submitting' ? 'Sending…' : 'Send inquiry'}
+                disabled={submitStatus === 'submitting'}
+                className={styles.submitButton}
+              />
+              {submitStatus === 'error' && (
+                <p className={styles.submitError} role="alert">
+                  Something went wrong. Please try again later.
+                </p>
+              )}
+
+              <p className={styles.disclaimer}>
+                In order to respond to your inquiry, we will process the personal data you have
+                supplied in accordance with our{' '}
+                <a href="/privacy-policy" className={styles.link}>
+                  privacy policy
+                </a>
+                .
+              </p>
+            </form>
+          )}
+        </div>
+      </aside>
+    </div>
   )
 }

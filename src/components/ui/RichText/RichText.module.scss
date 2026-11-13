@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 .richText {
   line-height: var(--leading-relaxed);
   color: var(--color-text-primary);
@@ -178,13 +180,72 @@
   // Page variant - long-form static pages (About, legal). Section headings sit
   // close to the paragraph above by default, so the sections read as one block;
   // a larger top margin separates them while the heading stays tight to its body.
+  // Long-form pages: the content pages and About (docs/public-redesign/legal.md "Text styles",
+  // about-contact.md: Lato 17 / 1.75, #444). The admin page editor mirrors these.
   &.page {
+    color: var(--public-body);
+
     h2 {
-      margin-top: var(--space-12);
+      margin: 48px 0 16px;
+      font-size: 28px;
+      font-weight: var(--font-regular);
+      line-height: 1.2;
+      color: var(--public-text);
+      // The "On this page" list scrolls to it: clear of the sticky site header (83px from 1024px,
+      // 73px below, Header.module.scss) with 24px of air.
+      scroll-margin-top: calc(83px + var(--space-6));
+
+      @include media-down(lg) {
+        scroll-margin-top: calc(73px + var(--space-6));
+      }
+
+      @include media-down(md) {
+        margin-top: 36px;
+        font-size: 24px;
+      }
     }
 
     h3 {
-      margin-top: var(--space-8);
+      margin: 28px 0 var(--space-2);
+      font-family: var(--font-sans), var(--font-sans-fallback);
+      font-size: 17px;
+      font-weight: var(--font-bold);
+      line-height: 1.5;
+      color: var(--public-text);
+    }
+
+    p,
+    li {
+      font-size: 17px;
+      line-height: 1.75;
+      color: var(--public-body);
+
+      @include media-down(md) {
+        font-size: 16px;
+        line-height: 1.7;
+      }
+    }
+
+    p {
+      margin: 0 0 var(--space-4);
+    }
+
+    ul,
+    ol {
+      margin: 0 0 var(--space-4);
+      padding-left: 22px;
+    }
+
+    li {
+      margin-bottom: var(--space-1);
+    }
+
+    // Links inside the text: dark and bold, no underline (no underlines, ever).
+    a,
+    a:hover {
+      color: var(--public-text);
+      font-weight: var(--font-bold);
+      text-decoration: none;
     }
 
     // Re-assert the reset below, which the heading rules above outrank
@@ -214,4 +275,11 @@
       }
     }
   }
+}
+
+// A list item's text: the editor wraps each item in a <p>. No paragraph gap inside an item, whatever
+// the variant or a page's own paragraph margins: the items sit at the list's own spacing (owner,
+// 2026-11-13). The doubled class outranks a page's `.x .text p`.
+.richText.richText li > p {
+  margin: 0;
 }

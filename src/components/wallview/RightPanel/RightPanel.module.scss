@@ -1,257 +1,467 @@
 @use '@/styles/mixins' as *;
 
+// wallview.md §3–4 (designs/wall-view-panels.dc.html): the wall view's right column. The item's
+// header (and tabs) stay fixed over a body that scrolls. Shared by every right-panel part.
 .panel {
-  width: 300px;
-  max-width: 300px;
+  flex: 0 0 320px;
+  width: 320px;
   height: 100vh;
-  background-color: var(--color-surface-elevated);
-  padding: var(--space-5) 0;
-  overflow-y: auto;
-  overflow-x: visible;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-white);
+  border-left: 1px solid var(--color-border-default);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-text-primary);
+
+  // The value chip and track of the slider rows straight on white (a card sets its own).
+  --editor-row-chip: var(--editor-chip);
+  --editor-row-track: var(--editor-track);
 }
+
+// globals.scss removes every outline: inside the panel, keyboard focus gets a ring back
+// (README, Accessibility). Switches, selects, color and number fields draw their own.
+.panel :is(a, button, input[type='range']):focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+// ---- Header ----
 
 .header {
-  padding: 0 var(--space-5);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border-default);
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-gray-20);
 }
 
-.headerTitle {
+.identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.identityText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+// Set here: globals.scss makes every heading serif and large.
+.name {
   margin: 0;
-  text-transform: uppercase;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  overflow: hidden;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 15px;
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-black);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.divider {
-  width: 100%;
-  height: 1px;
-  background-color: var(--color-border-default);
-  margin: var(--space-4) 0;
-}
-
-.section {
-  width: 100%;
+// "Image · 98 × 130 cm": the type may give way, the size never does. Paragraphs pin their size.
+.meta {
+  margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-5);
-  border-top: 1px solid var(--color-border-default);
+  min-width: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+  white-space: pre;
+}
 
-  // First section doesn't need another divider (header has border-bottom)
-  &:first-of-type {
-    border-top: none;
+.metaType {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaSize {
+  flex: none;
+}
+
+// The names of two or more selected works: one line, cut at its end.
+.names {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The group's works, overlapping, each ringed in white.
+.stack {
+  flex: 0 0 auto;
+  display: flex;
+
+  > * {
+    box-shadow: 0 0 0 2px var(--color-white);
+  }
+
+  > * + * {
+    margin-left: -14px;
   }
 }
 
-.sectionTitle {
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-black);
-  margin-bottom: 0;
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.title {
-  font-weight: 500;
-  margin-bottom: var(--space-5);
+// View details (in its tooltip) on the right.
+.actionsEnd {
+  margin-left: auto;
+  display: flex;
 }
 
-.subtitle {
+// Two classes: Button's bare reset would win over one.
+.header .iconButton {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-35);
+  border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
-}
-
-.label {
-  color: var(--color-text-primary);
-  font-weight: 400;
-  margin-bottom: var(--space-1);
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.item {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.cta {
-  margin-bottom: var(--space-10);
-}
-
-.panelTitle {
-  margin-bottom: var(--space-4);
-  padding: 0 var(--space-5);
-}
-
-.editButtonWrapper {
-  display: flex;
-  margin-top: var(--space-4);
-  padding: var(--space-4) var(--space-5) 0;
-  border-top: 1px solid var(--color-border-light);
-
-  button,
-  a {
-    flex: 1;
-    width: 100%;
-  }
-}
-
-.backgroundColorRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.fullWidth {
-  width: 100%;
-}
-
-// Grouped controls container (for Frame/Passepartout children)
-.controlGroup {
-  margin-top: var(--space-3);
-  margin-bottom: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-// Range slider header (label + value)
-.sliderHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sliderValue {
-  font-family: monospace;
-  font-size: var(--text-xs);
-  color: var(--color-black);
-}
-
-// Editable value: an inline input + unit text, styled to read like
-// the static .sliderValue when not focused.
-.sliderValueField {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.sliderValueInput {
-  font-family: monospace;
-  font-size: var(--text-xs);
-  color: var(--color-black);
-  text-align: right;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  padding: 2px 4px;
-  width: 56px;
-  outline: none;
-
-  &:hover:not(:disabled) {
-    border-color: var(--color-border-light);
-  }
-
-  &:focus {
-    border-color: var(--color-border-default);
-    background: var(--color-white);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-}
-
-.sliderUnit {
-  font-family: monospace;
-  font-size: var(--text-xs);
-  color: var(--color-black);
-}
-
-// Labeled input above each slider (wizard-style stack).
-.sizeField {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-bottom: var(--space-2);
-}
-
-// Wraps a Slider so an overlay marker can be absolutely positioned
-// over the track (e.g. the print-max indicator on Width/Height).
-.sliderWithMarker {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 16px;
-}
-
-// Spans the thumb's center-travel range exactly: the native range
-// thumb's center moves from thumb_radius to width - thumb_radius, so
-// inset by 6px on each side (half the 12px thumb). Markers using
-// `left: X%` inside this overlay align 1:1 with the thumb position.
-.markerTrack {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 0;
-  bottom: 0;
-  pointer-events: none;
-}
-
-.maxPrintMarker {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--color-red-50);
-  // Empirical nudge: native thumb's visual center sits ~3px right
-  // of where pure left:% math puts the marker. Adjust here if your
-  // browser renders it differently.
-  transform: translateX(calc(-50% + 2px));
-  pointer-events: none;
-  z-index: 2;
-}
-
-// Range slider (matches LightingPanel style)
-.slider {
-  width: 100%;
-  height: 2px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--color-slider-track);
-  border-radius: 2px;
-  outline: none;
   cursor: pointer;
-  margin-top: var(--space-2);
 
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    background: var(--color-text-primary);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
+  &:hover {
+    background: var(--color-gray-15);
   }
 
-  &::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    background: var(--color-text-primary);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
+  &.pressed,
+  &.pressed:hover {
+    background: var(--color-dark-surface);
+    border-color: var(--color-dark-surface);
+    color: var(--color-white);
+  }
+
+  @media #{$touch-room} {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.actions .detailsButton {
+  min-height: 34px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--color-black);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}
+
+// A refused save (questions.md Q139 b), as the left panel's.
+.failed {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-red-50);
+}
+
+// ---- Body ----
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px var(--space-4) 18px;
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  // `display: flex` would otherwise show the hidden tab.
+  &[hidden] {
+    display: none;
+  }
+}
+
+// The two-up rows of fields (Material and Corner, the text's Type grid, the Colors pair).
+.grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+// A label in 12px secondary over its field (designs `.lbl`).
+.fieldLabel {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+// Notes under a group (the print-size line, the distance box's note).
+.note {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+// Text buttons (Use image proportions, Fit box to text, None, the preset actions).
+.body .link {
+  align-self: flex-start;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-black);
+  }
+
+  &[aria-pressed='true'] {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}
+
+.body .danger {
+  color: var(--color-red-50);
+
+  &:hover {
+    color: var(--color-red-50);
+  }
+}
+
+// ---- Layout: Size ----
+
+.sizeRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.sizeField {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  cursor: text;
+}
+
+.numberBox {
+  min-height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+
+  &:hover {
+    border-color: var(--color-text-secondary);
+  }
+
+  // globals.scss removes every outline: the box carries the keyboard ring for its input.
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
+  }
+}
+
+.numberInputWrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.numberInput {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--color-black);
+}
+
+.unit {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+// The chain between Width and Height: a checkbox drawn as a 30px tile, dark while on.
+.chain {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-35);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  @media #{$touch-room} {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.chainOn,
+.chainOn:hover {
+  background: var(--color-dark-surface);
+  border-color: var(--color-dark-surface);
+  color: var(--color-white);
+}
+
+// Visually hidden, still the control (the label around it takes the click).
+.chainInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// ---- Look ----
+
+// An image's "Not shown on the exhibition page" line (warning toned, as before).
+.offPage {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-badge-warning-text);
+}
+
+// A Background field with its None button under it.
+.colorWithNone {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+// The text's two alignment strips on one row (4 : 3).
+.alignRow {
+  display: flex;
+  gap: 6px;
+
+  > :first-child {
+    flex: 4 1 0;
+    min-width: 0;
+  }
+
+  > :last-child {
+    flex: 3 1 0;
+    min-width: 0;
+  }
+
+  // 44px-wide segments don't fit seven to a row: each strip takes a full row of its own.
+  @media #{$touch-room} {
+    flex-direction: column;
+  }
+}
+
+// An extra's options, indented under its switch while it is on.
+.extraOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 var(--space-1) var(--space-3);
+  border-left: 2px solid var(--color-gray-20);
+}
+
+// ---- Two or more selected ----
+
+.body .evenGaps {
+  min-height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: 1.2;
+  color: var(--color-black);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-gray-15);
+  }
+
+  @media #{$touch-room} {
+    min-height: 44px;
   }
 }

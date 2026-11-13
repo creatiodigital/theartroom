@@ -23,6 +23,7 @@ import { REORDER_REASONS, type ReorderReason } from '@/lib/orders/reorderReasons
 import { computeOrderPayout } from '@/lib/orders/orderPayout'
 import { devCleanupAllowed } from '@/lib/admin/resetTestData'
 import { releaseEditionNumberForPaymentIntent } from '@/lib/editions/releaseEditionNumber'
+import { editionReleaseRefusal } from '@/lib/editions/releaseRefusal'
 import { captureError } from '@/lib/observability/captureError'
 import { EMAIL_BRAND } from '@/lib/emails/brand'
 import { logOrderEvent, type OrderEventActor } from '@/lib/orders/logOrderEvent'
@@ -38,7 +39,6 @@ import { renderInvoicePdf } from '@/lib/invoices/renderInvoicePdf'
 import { buildInvoiceKey, deletePrivateR2Key, uploadPrivateToR2, r2ObjectExists } from '@/lib/r2'
 import prisma from '@/lib/prisma'
 import { stripe } from '@/lib/stripe/client'
-import { formatOrderRef } from '@/lib/orders/orderRef'
 
 export type AdminOrderRow = {
   id: string
@@ -771,7 +771,7 @@ export async function markOffPlatformArtistPaid(
   if (order.artistCents <= 0) return { ok: false, error: 'This order carries no artist fee.' }
   if (order.artistPaidAt) return { ok: false, error: 'Already marked paid.' }
   if (order.fulfillmentStatus === STAGE_CANCELLED) {
-    return { ok: false, error: 'This order is cancelled — nothing to pay.' }
+    return { ok: false, error: 'This order is canceled — nothing to pay.' }
   }
 
   await prisma.offPlatformOrder.update({ where: { id }, data: { artistPaidAt: new Date() } })
@@ -780,8 +780,11 @@ export async function markOffPlatformArtistPaid(
 
 /**
  * Hard-delete a CANCELLED gift order so failed experiments don't clutter the
- * list. Only cancelled rows qualify (their numbers were already released on
- * cancel, and no money ever touched an off-platform order).
+ * list. Only cancelled rows whose number went back to the pool qualify (no
+ * money ever touched an off-platform order). A gift canceled after production
+ * keeps its number bound to it; deleting the order would leave that copy
+ * order-less in the ledger, where Release could put the number back on sale
+ * while a printed copy carrying it exists (questions.md Q24) — so refuse.
  */
 export async function deleteCancelledOffPlatformOrder(
   id: string,
@@ -795,7 +798,15 @@ export async function deleteCancelledOffPlatformOrder(
   })
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus !== STAGE_CANCELLED) {
-    return { ok: false, error: 'Only cancelled gift orders can be deleted — cancel it first.' }
+    return { ok: false, error: 'Only canceled gift orders can be deleted — cancel it first.' }
+  }
+  const keptNumbers = await prisma.editionNumber.count({ where: { offPlatformOrderId: id } })
+  if (keptNumbers > 0) {
+    return {
+      ok: false,
+      error:
+        'This gift was canceled after production, so its edition number stays used. It can’t be deleted.',
+    }
   }
 
   await prisma.offPlatformOrder.delete({ where: { id } })
@@ -827,7 +838,7 @@ export async function advanceOffPlatformOrder(
   })
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus === STAGE_CANCELLED) {
-    return { ok: false, error: 'This order is cancelled — no further actions.' }
+    return { ok: false, error: 'This order is canceled — no further actions.' }
   }
 
   const trackingUrl = (opts.trackingUrl ?? '').trim() || null
@@ -839,6 +850,36 @@ export async function advanceOffPlatformOrder(
       ...(newStage === STAGE_SHIPPED ? { shippedAt: new Date() } : {}),
     },
   })
+  return { ok: true }
+}
+
+/**
+ * Set, correct or clear the tracking link of a shipped or delivered
+ * off-platform order without touching its stage or `shippedAt` (Gift orders'
+ * "Edit tracking link", questions.md Q21 (a)). The link is read the same way
+ * the Shipped step reads it: trimmed, and an empty field stores no link.
+ */
+export async function updateOffPlatformTrackingUrl(
+  id: string,
+  url: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireAdminSession()
+  if (!guard.ok) return guard
+
+  const order = await prisma.offPlatformOrder.findUnique({
+    where: { id },
+    select: { id: true, fulfillmentStatus: true },
+  })
+  if (!order) return { ok: false, error: 'Off-platform order not found.' }
+  if (order.fulfillmentStatus === STAGE_CANCELLED) {
+    return { ok: false, error: 'This order is canceled — no further actions.' }
+  }
+  if (order.fulfillmentStatus !== STAGE_SHIPPED && order.fulfillmentStatus !== STAGE_COMPLETE) {
+    return { ok: false, error: 'Only a shipped or delivered parcel has a tracking link.' }
+  }
+
+  const trackingUrl = (url ?? '').trim() || null
+  await prisma.offPlatformOrder.update({ where: { id }, data: { trackingUrl } })
   return { ok: true }
 }
 
@@ -860,7 +901,7 @@ export async function cancelOffPlatformOrder(
   })
   if (!order) return { ok: false, error: 'Off-platform order not found.' }
   if (order.fulfillmentStatus === STAGE_CANCELLED) {
-    return { ok: false, error: 'Already cancelled.' }
+    return { ok: false, error: 'Already canceled.' }
   }
 
   // Cancelling is always allowed — the row must be able to record that the gift
@@ -935,24 +976,14 @@ export async function releaseOrphanedEditionNumber(
     },
   })
   if (!row) return { ok: false, error: 'Edition number not found.' }
-  if (row.state === 'available') {
-    return { ok: false, error: 'This number is already available — nothing to release.' }
-  }
 
-  const boundOrderId = row.order?.id ?? row.orderItem?.order?.id ?? null
-  if (boundOrderId) {
-    return {
-      ok: false,
-      error: `This copy is attached to order ${formatOrderRef(boundOrderId)}. Cancel or refund that order instead.`,
-    }
-  }
-  if (row.offPlatformOrderId) {
-    return {
-      ok: false,
-      error:
-        'This copy belongs to a gift / artist-copy order. Cancel it from the Gift orders page instead — that releases the number.',
-    }
-  }
+  // Same checks and messages as before, in the same order; shared with e2e.
+  const refusal = editionReleaseRefusal({
+    state: row.state,
+    boundOrderId: row.order?.id ?? row.orderItem?.order?.id ?? null,
+    offPlatformOrderId: row.offPlatformOrderId,
+  })
+  if (refusal) return { ok: false, error: refusal }
 
   try {
     // Reserved OR sold orphan → back to available, all bindings cleared. The

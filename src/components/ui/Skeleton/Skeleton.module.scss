@@ -1,0 +1,131 @@
+@use '@/styles/mixins' as *;
+
+// other-screens.md "Loading states": #f2f2f2, square corners, at most a very slow pulse.
+.block {
+  display: block;
+  max-width: 100%;
+  background: var(--public-render-wall);
+  animation: pulse 1.6s ease-in-out infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.6;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.page {
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
+  margin: 0 auto;
+  padding-bottom: var(--space-16);
+}
+
+// ExhibitionRow's shape: a 3:2 image at half the width, the text beside it.
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-10);
+  padding: 28px 0;
+  border-top: 1px solid var(--color-gray-30);
+
+  @include media-down(md) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    padding: 0 0 44px;
+    border-top: none;
+  }
+}
+
+.rowImage {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.rowLink {
+  margin-top: 8px;
+}
+
+// ArtworkGrid's shape: square works, three across, two below 1024 px, one on phones.
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8) var(--space-4);
+
+  @include media-down(md) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-12);
+  }
+
+  @include breakpoint(lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 56px var(--space-10);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardImage {
+  width: 100%;
+  aspect-ratio: 1;
+  margin-bottom: 6px;
+}
+
+// The artwork page's two columns (ArtworkDetail.module.scss).
+.artwork {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 56px;
+  align-items: start;
+  // As wide as the header and footer (PageLayout's column): no cap of its own (owner, 2026-11-12).
+  margin: 0 auto;
+  padding: 32px 0 var(--space-16);
+
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    padding-top: var(--space-4);
+  }
+}
+
+.artworkImage {
+  width: 100%;
+  height: min(760px, calc(100svh - 83px - 64px));
+
+  @include media-down(lg) {
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+
+.artworkInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.rule {
+  display: block;
+  height: 1px;
+  margin: 8px 0;
+  background: var(--color-gray-30);
+}

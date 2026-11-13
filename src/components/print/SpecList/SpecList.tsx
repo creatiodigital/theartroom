@@ -24,8 +24,8 @@ import styles from './SpecList.module.scss'
  * rows, which is what the toggle is for.
  *
  * Surfaces that have the room opt out with `collapsible={false}` and always
- * show every row. The cart and checkout do NOT — they render the same line
- * as each other and must agree row for row (see CartItemDetails).
+ * show every row. (The cart and the cart checkout no longer use this list:
+ * CartItemDetails shows the same rows as short lines, see lib/cart/specLines.)
  */
 /** Fewest rows worth hiding behind the toggle. */
 const MIN_HIDDEN_ROWS = 2

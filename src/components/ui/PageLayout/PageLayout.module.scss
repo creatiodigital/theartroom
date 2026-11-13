@@ -12,4 +12,10 @@
   @include media-down(lg) {
     width: calc(100% - var(--space-6) * 2);
   }
+
+  // A page that ends on a full-width band (Prints, About) meets the footer with no white strip
+  // (owner, 2026-11-12).
+  &:has(> [data-band]:last-child, > :last-child > [data-band]:last-child) {
+    padding-bottom: 0;
+  }
 }

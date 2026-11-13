@@ -3,18 +3,14 @@
 import { useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
+import { SliderRow } from '@/components/editorChrome'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { Section } from '@/components/ui/Section/Section'
-import { Select } from '@/components/ui/Select'
-import { Slider } from '@/components/ui/Slider'
-import { Text } from '@/components/ui/Typography'
+import { PanelGroup, SelectField } from '@/components/wallview/chrome'
 import { editArtwork } from '@/redux/slices/artworkSlice'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
 import PresetSection from '../PresetSection/PresetSection'
-
-import styles from '../RightPanel.module.scss'
 
 const shapeTypes = [
   { value: 'rectangle', label: 'Rectangle' },
@@ -45,55 +41,33 @@ const ShapePanel = ({ disabled }: { disabled?: boolean }) => {
 
   return (
     <>
-      <Section title="Properties" disabled={disabled}>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Shape Type
-            </Text>
-            <Select<string>
-              options={shapeTypes}
-              value={shapeType}
-              onChange={(val) => handleChange('shapeType', val)}
-            />
-          </div>
-        </div>
+      <PanelGroup title="Shape" disabled={disabled}>
+        <SelectField<string>
+          label="Shape type"
+          options={shapeTypes}
+          value={shapeType}
+          onChange={(val) => handleChange('shapeType', val)}
+        />
+        <ColorPicker
+          variant="inline"
+          name="Color"
+          textColor={shapeColor}
+          onColorSelect={(color) => handleChange('shapeColor', color)}
+        />
+        <SliderRow
+          label="Opacity"
+          value={`${Math.round(shapeOpacity * 100)}%`}
+          sliderValue={shapeOpacity}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => handleChange('shapeOpacity', v)}
+        />
+      </PanelGroup>
 
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <Text font="dashboard" as="span" size="xs" className={styles.label}>
-              Color
-            </Text>
-            <ColorPicker
-              textColor={shapeColor}
-              onColorSelect={(color) => handleChange('shapeColor', color)}
-            />
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <div className={styles.sliderHeader}>
-              <Text font="dashboard" as="span" size="xs" className={styles.label}>
-                Opacity
-              </Text>
-              <span className={styles.sliderValue}>{Math.round(shapeOpacity * 100)}%</span>
-            </div>
-            <Slider
-              min={0}
-              max={1}
-              step={0.05}
-              value={shapeOpacity}
-              onChange={(v) => handleChange('shapeOpacity', v)}
-              aria-label="Shape opacity"
-            />
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Presets" disabled={disabled}>
+      <PanelGroup title="Preset" disabled={disabled}>
         <PresetSection presetType="shape" />
-      </Section>
+      </PanelGroup>
     </>
   )
 }

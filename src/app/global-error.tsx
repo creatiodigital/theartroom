@@ -19,44 +19,77 @@ export default function RootError({
     Sentry.captureException(error)
   }, [error])
 
+  // other-screens.md "Error": the error page's words and look, but without the layout (this replaces
+  // it), so no header or footer and no site stylesheet: inline styles, the fonts' own fallbacks.
   return (
     <html lang="en">
       <body
         style={{
           margin: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
           minHeight: '100vh',
-          backgroundColor: '#111',
-          color: '#fff',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          padding: '2rem',
-          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          background: '#ffffff',
+          color: '#1a1a1a',
+          fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
       >
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: 500 }}>
-          Something went wrong
-        </h2>
-        <p style={{ color: '#999', fontSize: '0.875rem', maxWidth: '420px', lineHeight: 1.6 }}>
-          We encountered an unexpected error. This has been reported and we&apos;re looking into it.
-        </p>
-        <button
-          onClick={reset}
+        <main
           style={{
-            marginTop: '1.5rem',
-            padding: '0.625rem 1.5rem',
-            backgroundColor: '#333',
-            color: '#fff',
-            border: '1px solid #555',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: 18,
+            width: 'calc(100% - 48px)',
+            maxWidth: 1160,
+            margin: '0 auto',
           }}
         >
-          Try again
-        </button>
+          <span
+            style={{
+              fontSize: 11.5,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: '#666666',
+            }}
+          >
+            Error
+          </span>
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: '"EB Garamond", Georgia, serif',
+              fontSize: 'clamp(36px, 6vw, 52px)',
+              fontWeight: 400,
+              lineHeight: 1.1,
+            }}
+          >
+            Something went wrong.
+          </h1>
+          <p style={{ margin: 0, fontSize: 18, lineHeight: 1.6, color: '#555555' }}>
+            Please try again in a moment.
+          </p>
+          <button
+            type="button"
+            onClick={reset}
+            style={{
+              marginTop: 10,
+              minHeight: 50,
+              padding: '0 32px',
+              border: 'none',
+              borderRadius: 0,
+              background: '#1a1a1a',
+              color: '#ffffff',
+              fontFamily: 'inherit',
+              fontSize: 13,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}
+          >
+            Try again
+          </button>
+        </main>
       </body>
     </html>
   )

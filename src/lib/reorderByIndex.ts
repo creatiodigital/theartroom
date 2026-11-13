@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 // Tables whose 0-based `order` column is rewritten wholesale by a
 // drag-and-drop reorder. Identifiers can't be bound as query parameters, so
 // the table and scope column are restricted to these literals.
-type OrderedTable = 'Artwork' | 'Slide' | 'SelectedPrint' | 'ExhibitionSection'
+type OrderedTable = 'Artwork' | 'Slide' | 'SelectedPrint' | 'HomePrint' | 'ExhibitionSection'
 type ScopeColumn = 'userId' | 'exhibitionId'
 
 /**

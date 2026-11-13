@@ -1,9 +1,7 @@
 import Link from 'next/link'
 
+import { HomeSectionHead } from '@/components/landing/HomeSectionHead/HomeSectionHead'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
-
-import { Text } from '@/components/ui/Typography'
-import { NiceTitle } from '@/components/landing/NiceTitle/NiceTitle'
 
 import styles from './FeaturedArtists.module.scss'
 
@@ -20,32 +18,47 @@ interface FeaturedArtistsProps {
   artists: FeaturedArtist[]
 }
 
+/**
+ * The homepage's Featured artists (docs/public-redesign/home.md §6): today's featured artists as
+ * portrait photos (4:5, cropped from the sides; owner, 2026-11-12), four in a row (two on phones),
+ * the name in serif only, each a link to the artist's page; "All artists" on the heading row.
+ */
 export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {
   if (artists.length === 0) return null
 
   return (
     <section className={styles.section}>
-      <NiceTitle title="Featured Artists" />
+      {/* Owner, 2026-11-12: "Featured artists" (home.md §6 drew "Artists"); sentence case, as the
+          page's other headings. */}
+      {/* The hairline above, as Current exhibitions and Announcements (owner, 2026-11-12). */}
+      <HomeSectionHead
+        title="Featured artists"
+        rule
+        link={{ href: '/artists', label: 'All artists' }}
+      />
 
-      <div className={styles.grid}>
+      <ul className={styles.grid}>
         {artists.map((artist) => (
-          <Link key={artist.id} href={`/artists/${artist.handler}`} className={styles.artistRow}>
-            {artist.profileImageUrl && (
-              <ProtectedImage
-                src={artist.profileImageUrl}
-                alt={`${artist.name} ${artist.lastName}`}
-                width={200}
-                height={140}
-                wrapperClassName={styles.imageContainer}
-                className={styles.profileImage}
-              />
-            )}
-            <Text as="span" font="serif" size="2xl">
-              {artist.name} {artist.lastName}
-            </Text>
-          </Link>
+          <li key={artist.id}>
+            <Link href={`/artists/${artist.handler}`} className={styles.artist}>
+              <span className={styles.imageBox}>
+                {artist.profileImageUrl && (
+                  <ProtectedImage
+                    src={artist.profileImageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 420px"
+                    className={styles.image}
+                  />
+                )}
+              </span>
+              <span className={styles.name}>
+                {artist.name} {artist.lastName}
+              </span>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   )
 }

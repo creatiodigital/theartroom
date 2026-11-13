@@ -3,11 +3,19 @@
 import { useMemo, useState } from 'react'
 
 import { ArtworkGrid } from '@/components/artwork/ArtworkGrid'
+import { ArrowLink } from '@/components/ui/ArrowLink'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { SelectOption } from '@/components/ui/SelectDropdown'
 import type { GallerySelectionCard } from '@/lib/queries/getGallerySelection'
 
 import { PrintsToolbar } from './PrintsToolbar'
+
+/**
+ * The Artist menu and the Editions switch, off for now (owner, 2026-11-12: "hide these filters in
+ * desktop and mobile for now"). The page then shows the whole selection. Set to true to bring
+ * them back as they were.
+ */
+const SHOW_FILTERS = false
 import styles from './prints.module.scss'
 import type { EditionFilter } from './types'
 
@@ -26,15 +34,26 @@ export const PrintsSelection = ({ selection }: Props) => {
   // with nothing on the page. Keyed by display name — the selection carries no
   // user id, and two artists sharing a display name would already be
   // indistinguishable to a buyer reading the grid.
+  // By last name (prints.md), then the display name.
   const artistOptions = useMemo<SelectOption<string>[]>(() => {
-    const names = [...new Set(selection.map((c) => c.artistName).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b),
+    const byName = new Map<string, string>()
+    for (const card of selection) {
+      if (card.artistName && !byName.has(card.artistName))
+        byName.set(card.artistName, card.artistLastName || card.artistName)
+    }
+    const names = [...byName.keys()].sort(
+      (a, b) => byName.get(a)!.localeCompare(byName.get(b)!) || a.localeCompare(b),
     )
     return [
       { value: '', label: 'All artists' },
       ...names.map((name) => ({ value: name, label: name })),
     ]
   }, [selection])
+
+  // "See all prints by {artist}" (prints.md): their page, where every print of theirs is.
+  const chosenHandler = artistName
+    ? selection.find((c) => c.artistName === artistName)?.artistHandler
+    : undefined
 
   const visible = useMemo(
     () =>
@@ -59,13 +78,21 @@ export const PrintsSelection = ({ selection }: Props) => {
 
   return (
     <>
-      <PrintsToolbar
-        artistOptions={artistOptions}
-        artistId={artistName}
-        onArtistChange={setArtistName}
-        editionId={edition}
-        onEditionChange={(value) => setEdition(value as EditionFilter)}
-      />
+      {SHOW_FILTERS && (
+        <PrintsToolbar
+          artistOptions={artistOptions}
+          artistId={artistName}
+          onArtistChange={setArtistName}
+          editionId={edition}
+          onEditionChange={setEdition}
+          count={visible.length}
+        />
+      )}
+      {artistName && chosenHandler && (
+        <ArrowLink href={`/artists/${chosenHandler}`} className={styles.artistLink}>
+          See all prints by {artistName}
+        </ArrowLink>
+      )}
 
       <div className={styles.results}>
         {visible.length === 0 ? (
@@ -75,7 +102,7 @@ export const PrintsSelection = ({ selection }: Props) => {
              page walk the whole curated selection, so a work opened from a
              filtered grid still steps through every print rather than dead-
              ending at the edge of a filter the next page knows nothing about. */
-          <ArtworkGrid artworks={visible} fromPrints />
+          <ArtworkGrid artworks={visible} fromPrints showArtist showEdition />
         )}
       </div>
     </>

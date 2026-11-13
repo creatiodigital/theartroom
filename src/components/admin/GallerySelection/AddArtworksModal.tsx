@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { Check, ChevronLeft, ChevronRight, ImageOff } from 'lucide-react'
+import { CaretLeft, CaretRight, Check, ImageBroken } from '@phosphor-icons/react'
 
 import { getPrintArtistOptions, getPrintsCatalogPage } from '@/app/prints/actions'
 import { Badge } from '@/components/ui/Badge'
@@ -11,7 +11,6 @@ import { ButtonGroup } from '@/components/ui/ButtonGroup'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Typography'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
 import {
   PRINTS_PAGE_SIZE,
   type PrintArtistOption,
@@ -23,6 +22,10 @@ import styles from './GallerySelection.module.scss'
 type Mode = 'artist' | 'name'
 
 type Props = {
+  /** The list's API: '/api/selected-prints' (Gallery selection) or '/api/home-prints'. */
+  endpoint: string
+  /** The line under "Add artworks": what the picked prints are for. */
+  sub: string
   /** Already selected — never offered again. */
   excludeIds: string[]
   onClose: () => void
@@ -60,7 +63,7 @@ const fetchAllPrints = async (query: CatalogQuery): Promise<PrintArtwork[]> => {
  * filtered in the browser, so typing is instant. Searching titles across every
  * artist is unbounded, so that one goes to the server.
  */
-export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
+export const AddArtworksModal = ({ endpoint, sub, excludeIds, onClose, onAdded }: Props) => {
   const [mode, setMode] = useState<Mode>('artist')
   const [query, setQuery] = useState('')
   const [artists, setArtists] = useState<PrintArtistOption[]>([])
@@ -70,6 +73,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
   const [loadingWorks, setLoadingWorks] = useState(false)
   const [ticked, setTicked] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
+  const [addError, setAddError] = useState('')
 
   useEffect(() => {
     void getPrintArtistOptions().then(setArtists)
@@ -148,20 +152,31 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
 
   const handleAdd = async () => {
     setSaving(true)
-    const res = await fetch('/api/selected-prints', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ artworkIds: [...ticked] }),
-    })
-    setSaving(false)
-    if (res.ok) {
-      onAdded()
-      onClose()
-    } else {
-      // Stays open on failure — most likely a work sold out or was selected
-      // elsewhere while this modal sat open — so the curator can drop it and
-      // retry rather than lose the rest of an otherwise-good batch.
-      console.error('Add artworks failed:', res.status)
+    setAddError('')
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artworkIds: [...ticked] }),
+      })
+      if (res.ok) {
+        onAdded()
+        onClose()
+      } else {
+        // Stays open on failure — most likely a work sold out or was selected
+        // elsewhere while this modal sat open — so the curator can drop it and
+        // retry rather than lose the rest of an otherwise-good batch. Said in
+        // the footer (questions.md Q74), with the server's reason when it gives one.
+        console.error('Add artworks failed:', res.status)
+        const data = await res.json().catch(() => null)
+        setAddError(data?.error || "Couldn't add these works. Please try again.")
+      }
+    } catch (error) {
+      // A thrown request left "Adding…" on for good.
+      console.error('Error adding artworks:', error)
+      setAddError("Couldn't add these works. Please try again.")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -184,16 +199,16 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
             {w.imageUrl ? (
               <img src={w.imageUrl} alt="" className={styles.pickerThumbImg} />
             ) : (
-              <ImageOff
+              <ImageBroken
                 size={20}
-                strokeWidth={ICON_STROKE_WIDTH}
+                weight="light"
                 aria-hidden
                 className={styles.pickerThumbEmpty}
               />
             )}
             {on && (
               <span className={styles.pickerCheck}>
-                <Check size={14} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+                <Check size={14} weight="bold" aria-hidden />
               </span>
             )}
           </span>
@@ -241,7 +256,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
               <span>{a.label}</span>
               <span className={styles.pickerArtistMeta}>
                 <Badge label={`${a.count} prints`} variant="neutral" />
-                <ChevronRight size={16} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+                <CaretRight size={16} weight="light" aria-hidden />
               </span>
             </Button>
           ))}
@@ -270,7 +285,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
                 Add artworks
               </h2>
               <Text font="dashboard" as="p" className={styles.pickerSub}>
-                Pick the prints to show on the Prints page. Order them once they are in.
+                {sub}
               </Text>
             </div>
             <Button variant="ghost" icon="close" aria-label="Close" onClick={onClose} />
@@ -286,7 +301,7 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
                   variant="secondary"
                   size="small"
                   label="All artists"
-                  iconLeft={<ChevronLeft size={14} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />}
+                  iconLeft={<CaretLeft size={14} weight="light" aria-hidden />}
                   onClick={() => {
                     setArtistId(null)
                     setQuery('')
@@ -357,6 +372,11 @@ export const AddArtworksModal = ({ excludeIds, onClose, onAdded }: Props) => {
               />
             )}
           </div>
+          {addError && (
+            <p role="alert" className={styles.pickerError}>
+              {addError}
+            </p>
+          )}
           <ButtonGroup align="right">
             <Button font="dashboard" variant="secondary" label="Cancel" onClick={onClose} />
             <Button

@@ -2,11 +2,16 @@
 
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Rows } from '@phosphor-icons/react'
 
-import { Button } from '@/components/ui/Button'
-import { Section } from '@/components/ui/Section/Section'
-import { Slider } from '@/components/ui/Slider'
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import { AdminSelect } from '@/components/admin/ui/AdminSelect'
+import {
+  PanelCard,
+  SliderRow,
+  ToolPanel,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import {
   BAKED_FLOORS,
@@ -23,24 +28,22 @@ import { setExhibitionField } from '@/redux/slices/exhibitionSlice'
 import type { TExhibition } from '@/types/exhibition'
 import type { RootState } from '@/redux/store'
 
-import styles from './FloorPanel.module.scss'
-
 const DEFAULT_FLOOR_REFLECTIVENESS = 0.3
 const DEFAULT_FLOOR_TEXTURE_SCALE = 2.0
 
 const FLOOR_MATERIALS = [
   { value: 'concrete', label: 'Concrete' },
-  { value: 'patterned-concrete', label: 'Patterned Concrete' },
-  { value: 'worn-concrete', label: 'Worn Concrete' },
-  { value: 'concrete-tiles', label: 'Concrete Tiles' },
-  { value: 'dark-concrete', label: 'Dark Concrete' },
+  { value: 'patterned-concrete', label: 'Patterned concrete' },
+  { value: 'worn-concrete', label: 'Worn concrete' },
+  { value: 'concrete-tiles', label: 'Concrete tiles' },
+  { value: 'dark-concrete', label: 'Dark concrete' },
   { value: 'marble', label: 'Marble' },
   { value: 'parquet', label: 'Parquet' },
-  { value: 'parquet-light', label: 'Parquet Light' },
-  { value: 'parquet-soft', label: 'Parquet Soft' },
-  { value: 'parquet-white', label: 'Parquet White' },
-  { value: 'wood-planks', label: 'Wood Planks' },
-  { value: 'clear-wood', label: 'Clear Wood' },
+  { value: 'parquet-light', label: 'Parquet light' },
+  { value: 'parquet-soft', label: 'Parquet soft' },
+  { value: 'parquet-white', label: 'Parquet white' },
+  { value: 'wood-planks', label: 'Wood planks' },
+  { value: 'clear-wood', label: 'Clear wood' },
 ] as const
 
 /**
@@ -48,22 +51,26 @@ const FLOOR_MATERIALS = [
  * space's look hashes its floor object (`spaceLookVersion`), so a new field there stales every bake.
  */
 const BAKED_FLOOR_LABELS: Record<string, string> = {
-  'white-oak': 'White Oak',
-  'parquet-medium': 'Parquet Medium',
-  'parquet-ash': 'Parquet Ash',
+  'white-oak': 'White oak',
+  'parquet-medium': 'Parquet medium',
+  'parquet-ash': 'Parquet ash',
 }
 
 const FloorPanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
+
+  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
+  // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
+  const saveTrack = useSaveTracking(exhibitionId ? `${exhibitionId}:floor` : null)
 
   const set = (field: keyof TExhibition, value: TExhibition[keyof TExhibition]) => {
     dispatch(setExhibitionField({ field, value }))
     setSaved(false)
+    saveTrack.edited()
   }
 
-  const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
 
   const floorReflectiveness = useSelector(
@@ -148,6 +155,7 @@ const FloorPanel = () => {
     if (!exhibitionId) return
 
     setSaving(true)
+    const sentAt = saveTrack.started()
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
@@ -167,8 +175,10 @@ const FloorPanel = () => {
       if (response.ok) {
         setSaved(true)
       }
+      saveTrack.finished(sentAt, response.ok)
     } catch (error) {
       console.error('Failed to save floor settings:', error)
+      saveTrack.finished(sentAt, false)
     } finally {
       setSaving(false)
     }
@@ -179,226 +189,161 @@ const FloorPanel = () => {
   }
 
   const tileScaleControl = (
-    <div className={styles.field}>
-      <div className={styles.sliderHeader}>
-        <label className={styles.label}>Tile Scale</label>
-        <span className={styles.sliderValue}>{(8.5 - tileScale).toFixed(2)}</span>
-      </div>
-      <Slider
-        min={0.5}
-        max={8}
-        step={0.01}
-        value={8.5 - tileScale}
-        onChange={(v) => setTiling({ textureScale: 8.5 - v })}
-        aria-label="Tile Scale"
-      />
-    </div>
+    <SliderRow
+      label="Tile scale"
+      value={(8.5 - tileScale).toFixed(2)}
+      sliderValue={8.5 - tileScale}
+      min={0.5}
+      max={8}
+      step={0.01}
+      onChange={(v) => setTiling({ textureScale: 8.5 - v })}
+    />
   )
 
   const tilePlacementControls = (
     <>
-      <div className={styles.field}>
-        <div className={styles.sliderHeader}>
-          <label className={styles.label}>Tile Position X</label>
-          <span className={styles.sliderValue}>{tiling.offsetX.toFixed(2)}</span>
-        </div>
-        <Slider
-          min={0}
-          max={1}
-          step={0.01}
-          value={tiling.offsetX}
-          onChange={(v) => setTiling({ offsetX: v })}
-          aria-label="Tile Position X"
-        />
-      </div>
+      <SliderRow
+        label="Shift across"
+        value={tiling.offsetX.toFixed(2)}
+        sliderValue={tiling.offsetX}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={(v) => setTiling({ offsetX: v })}
+      />
 
-      <div className={styles.field}>
-        <div className={styles.sliderHeader}>
-          <label className={styles.label}>Tile Position Y</label>
-          <span className={styles.sliderValue}>{tiling.offsetY.toFixed(2)}</span>
-        </div>
-        <Slider
-          min={0}
-          max={1}
-          step={0.01}
-          value={tiling.offsetY}
-          onChange={(v) => setTiling({ offsetY: v })}
-          aria-label="Tile Position Y"
-        />
-      </div>
+      <SliderRow
+        label="Shift along"
+        value={tiling.offsetY.toFixed(2)}
+        sliderValue={tiling.offsetY}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={(v) => setTiling({ offsetY: v })}
+      />
 
-      <div className={styles.field}>
-        <div className={styles.sliderHeader}>
-          <label className={styles.label}>Floor Rotation</label>
-          <span className={styles.sliderValue}>{tiling.rotation.toFixed(0)}°</span>
-        </div>
-        <Slider
-          min={0}
-          max={360}
-          step={1}
-          value={tiling.rotation}
-          onChange={(v) => setTiling({ rotation: v })}
-          aria-label="Floor Rotation"
-        />
-      </div>
+      <SliderRow
+        label="Rotation"
+        value={`${tiling.rotation.toFixed(0)}°`}
+        sliderValue={tiling.rotation}
+        min={0}
+        max={360}
+        step={1}
+        onChange={(v) => setTiling({ rotation: v })}
+      />
     </>
   )
+
+  const panel = {
+    title: 'Floor',
+    icon: Rows,
+    tint: 'floor',
+    onClose: handleClose,
+    save: { saving, saved, onSave: handleSave, status: saveTrack.status },
+  } as const
 
   // A baked space: one of the baked floors, the wood's tone and the boards — its surface is the
   // floor's own.
   if (bakedFloor) {
     const boardWidth = boardWidthCm(bakedFloor, tiling.textureScale)
     return (
-      <SettingsPanel title="Floor" onClose={handleClose}>
-        <Section title="Wood">
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="baked-floor-type">
-              Type
-            </label>
-            <select
-              id="baked-floor-type"
-              value={bakedFloor.material}
-              onChange={(e) => chooseFloor(e.target.value)}
-              className={styles.select}
-            >
-              {BAKED_FLOORS.map((floor) => (
-                <option key={floor.material} value={floor.material}>
-                  {BAKED_FLOOR_LABELS[floor.material] ?? floor.material}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Tone</label>
-              <span className={styles.sliderValue}>{Math.round(tone * 100)}%</span>
-            </div>
-            <Slider
-              min={0}
-              max={1}
-              step={0.01}
-              value={tone}
-              onChange={(v) => setTiling({ tone: v })}
-              aria-label="Tone"
-            />
-            <div className={styles.sliderLabels}>
-              <span>Natural</span>
-              <span>Honey</span>
-            </div>
-          </div>
-        </Section>
-        <Section title="Boards">
-          <div className={styles.field}>
-            <div className={styles.sliderHeader}>
-              <label className={styles.label}>Board Width</label>
-              <span className={styles.sliderValue}>{Math.round(boardWidth)} cm</span>
-            </div>
-            <Slider
-              min={bakedFloor.boardWidth.min}
-              max={bakedFloor.boardWidth.max}
-              step={1}
-              value={boardWidth}
-              onChange={(v) =>
-                setTiling({ textureScale: textureScaleForBoardWidth(bakedFloor, v) })
-              }
-              aria-label="Board Width"
-            />
-          </div>
-          {tilePlacementControls}
-        </Section>
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-            onClick={handleSave}
-            disabled={saving}
-            className={styles.saveButton}
+      <ToolPanel {...panel} description="The wood and how its boards are laid.">
+        <PanelCard level="card" title="Wood">
+          {/* No floor has a color or a small thumbnail for the drawn tiles: the select, restyled
+              (questions.md Q136). */}
+          <AdminSelect
+            label="Type"
+            id="baked-floor-type"
+            size="form"
+            value={bakedFloor.material}
+            onChange={(value) => chooseFloor(value)}
+          >
+            {BAKED_FLOORS.map((floor) => (
+              <option key={floor.material} value={floor.material}>
+                {BAKED_FLOOR_LABELS[floor.material] ?? floor.material}
+              </option>
+            ))}
+          </AdminSelect>
+          <SliderRow
+            label="Tone"
+            value={`${Math.round(tone * 100)}%`}
+            sliderValue={tone}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => setTiling({ tone: v })}
+            ends={['Natural', 'Honey']}
+            track="tone"
           />
-        </div>
-      </SettingsPanel>
+        </PanelCard>
+        <PanelCard level="card" title="Boards">
+          <SliderRow
+            label="Board width"
+            value={`${Math.round(boardWidth)} cm`}
+            sliderValue={boardWidth}
+            min={bakedFloor.boardWidth.min}
+            max={bakedFloor.boardWidth.max}
+            step={1}
+            onChange={(v) => setTiling({ textureScale: textureScaleForBoardWidth(bakedFloor, v) })}
+          />
+          {tilePlacementControls}
+        </PanelCard>
+      </ToolPanel>
     )
   }
 
   return (
-    <SettingsPanel title="Floor" onClose={handleClose}>
-      <Section title="Material">
-        <div className={styles.field}>
-          <label className={styles.label}>Type</label>
-          <select
-            value={floorMaterial}
-            onChange={(e) => set('floorMaterial', e.target.value)}
-            className={styles.select}
-          >
-            {FLOOR_MATERIALS.map((material) => (
-              <option key={material.value} value={material.value}>
-                {material.label}
-              </option>
-            ))}
-          </select>
-        </div>
+    <ToolPanel {...panel} description="The floor's material and how it is laid.">
+      <PanelCard level="card" title="Material">
+        <AdminSelect
+          label="Type"
+          size="form"
+          value={floorMaterial}
+          onChange={(value) => set('floorMaterial', value)}
+        >
+          {FLOOR_MATERIALS.map((material) => (
+            <option key={material.value} value={material.value}>
+              {material.label}
+            </option>
+          ))}
+        </AdminSelect>
 
         {tileScaleControl}
         {tilePlacementControls}
-      </Section>
+      </PanelCard>
 
-      <Section title="Surface">
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Reflectiveness</label>
-            <span className={styles.sliderValue}>{floorReflectiveness.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0}
-            max={1}
-            step={0.01}
-            value={floorReflectiveness}
-            onChange={(v) => set('floorReflectiveness', v)}
-            aria-label="Reflectiveness"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Floor Details</label>
-            <span className={styles.sliderValue}>{floorNormalScale.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={0}
-            max={5}
-            step={0.1}
-            value={floorNormalScale}
-            onChange={(v) => set('floorNormalScale', v)}
-            aria-label="Floor Details"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <div className={styles.sliderHeader}>
-            <label className={styles.label}>Color Temperature</label>
-            <span className={styles.sliderValue}>{floorTemperature.toFixed(2)}</span>
-          </div>
-          <Slider
-            min={-1}
-            max={1}
-            step={0.05}
-            value={floorTemperature}
-            onChange={(v) => set('floorTemperature', v)}
-            aria-label="Color Temperature"
-          />
-        </div>
-      </Section>
-
-      {/* Actions */}
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          onClick={handleSave}
-          disabled={saving}
-          className={styles.saveButton}
+      <PanelCard level="card" title="Surface">
+        <SliderRow
+          label="Reflectiveness"
+          value={floorReflectiveness.toFixed(2)}
+          sliderValue={floorReflectiveness}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(v) => set('floorReflectiveness', v)}
         />
-      </div>
-    </SettingsPanel>
+
+        <SliderRow
+          label="Floor details"
+          value={floorNormalScale.toFixed(2)}
+          sliderValue={floorNormalScale}
+          min={0}
+          max={5}
+          step={0.1}
+          onChange={(v) => set('floorNormalScale', v)}
+        />
+
+        <SliderRow
+          label="Color temperature"
+          value={floorTemperature.toFixed(2)}
+          sliderValue={floorTemperature}
+          min={-1}
+          max={1}
+          step={0.05}
+          onChange={(v) => set('floorTemperature', v)}
+        />
+      </PanelCard>
+    </ToolPanel>
   )
 }
 

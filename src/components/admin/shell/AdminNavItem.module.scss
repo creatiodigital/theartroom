@@ -1,0 +1,93 @@
+// States: docs/admin-redesign/designs/dashboard-states.dc.html §2.
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--admin-nav-text);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--admin-nav-hover);
+    color: var(--color-white);
+    text-decoration: none;
+  }
+
+  svg {
+    flex: 0 0 auto;
+  }
+}
+
+// A compact item (the Developer group, api-reference.dc.html): 13 px, 8 px top and
+// bottom. Before `.drawer`, so the drawer keeps its own padding and 48 px rows.
+.compact {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  font-size: 13px;
+}
+
+.drawer {
+  gap: 14px;
+  padding: var(--space-3);
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.active,
+.active:hover {
+  background: var(--color-dark-surface-raised);
+  color: var(--color-white);
+  font-weight: var(--font-semibold);
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.badge {
+  flex: 0 0 auto;
+  min-width: 20px;
+  box-sizing: border-box;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge_amber {
+  background: var(--color-amber-50);
+  color: var(--color-black);
+}
+
+.badge_red {
+  background: var(--color-red-50);
+  color: var(--color-white);
+}
+
+// The artist studio's light menu (artist.md §0, artist-home.dc.html). Last in the
+// file so these win over the dark rules above at the same specificity.
+.light {
+  color: var(--color-text-primary);
+}
+
+// The quieter foot rows (Change password, Log out).
+.light.compact {
+  color: var(--studio-foot-text);
+}
+
+// Not drawn (questions.md Q95).
+.light:hover {
+  background: var(--color-gray-15);
+  color: var(--color-black);
+}
+
+.light.active,
+.light.active:hover {
+  background: var(--studio-nav-active);
+  color: var(--color-black);
+}

@@ -1,0 +1,74 @@
+@use '@/styles/mixins' as *;
+
+// questions.md Q4; designs/order-detail.dc.html (Breadcrumb).
+.nav {
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.separator {
+  margin: 0 6px;
+  color: var(--color-gray-65);
+}
+
+.item {
+  min-width: 0;
+  color: var(--color-text-secondary);
+}
+
+.current {
+  color: var(--color-text-primary);
+}
+
+.mono {
+  font-family: var(--font-admin-mono), var(--font-admin-mono-fallback);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-text-primary);
+    text-decoration: underline;
+  }
+}
+
+.back {
+  display: none;
+}
+
+// Phone: only the parent, as "← Orders", with a 44px touch target (Q7).
+@media (max-width: #{bp(tablet) - 0.02px}) {
+  .separator,
+  .item {
+    display: none;
+  }
+
+  .parent {
+    display: block;
+  }
+
+  .link {
+    min-height: 44px;
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+  }
+
+  .back {
+    display: block;
+  }
+}

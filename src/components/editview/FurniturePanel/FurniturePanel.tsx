@@ -1,9 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Armchair } from '@phosphor-icons/react'
 
-import { SettingsPanel } from '@/components/editview/SettingsPanel'
+import {
+  ChoiceTiles,
+  InfoLine,
+  PanelCard,
+  PanelSection,
+  SliderRow,
+  SwitchRow,
+  ToolPanel,
+  metres,
+  useSaveTracking,
+  useSavedMoment,
+} from '@/components/editorChrome'
 import {
   BENCH_MODELS,
   BENCHES_PER_ROOM,
@@ -14,16 +26,9 @@ import {
   type BenchModel,
   type BenchSettings,
 } from '@/components/scene/spaces/objects/Bench/benchSettings'
-import { Button } from '@/components/ui/Button'
-import { CollapsibleSection } from '@/components/ui/CollapsibleSection/CollapsibleSection'
-import { Slider } from '@/components/ui/Slider'
-import { Text } from '@/components/ui/Typography'
-import { Toggle } from '@/components/ui/Toggle'
 import { hideFurniturePanel } from '@/redux/slices/dashboardSlice'
 import { setBenchSettings } from '@/redux/slices/exhibitionSlice'
 import type { RootState } from '@/redux/store'
-
-import styles from './FurniturePanel.module.scss'
 
 /** How far a bench may be moved from the middle of its room, in metres. */
 const MOVE_RANGE = 15
@@ -31,20 +36,24 @@ const MOVE_RANGE = 15
 const FurniturePanel = () => {
   const dispatch = useDispatch()
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useSavedMoment()
 
   const exhibitionId = useSelector((state: RootState) => state.exhibition.id)
   const benchSettings = useSelector((state: RootState) => state.exhibition.benchSettings)
   const { rooms } = useBenchRooms()
+  // Display only (questions.md Q131, Q139 b): the Save area's "Unsaved changes" / "Not saved".
+  const saveTrack = useSaveTracking(exhibitionId ? `${exhibitionId}:benches` : null)
 
   const patch = (index: number, next: Partial<BenchSettings>) => {
     dispatch(setBenchSettings({ index, patch: next }))
     setSaved(false)
+    saveTrack.edited()
   }
 
   const handleSave = async () => {
     if (!exhibitionId) return
     setSaving(true)
+    const sentAt = saveTrack.started()
     try {
       const response = await fetch(`/api/exhibitions/${exhibitionId}`, {
         method: 'PUT',
@@ -53,135 +62,126 @@ const FurniturePanel = () => {
       })
       if (response.ok) {
         setSaved(true)
-        setTimeout(() => setSaved(false), 2000)
       }
+      saveTrack.finished(sentAt, response.ok)
     } catch (error) {
       // As the other panels do: a network failure must not surface as an
       // unhandled rejection.
       console.error('Failed to save furniture settings:', error)
+      saveTrack.finished(sentAt, false)
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <SettingsPanel title="Furniture" onClose={() => dispatch(hideFurniturePanel())}>
-      <Text font="dashboard" as="p" size="xs" className={styles.hint}>
-        Switch a bench on, pick a model, then move or turn it. Benches are baked with the room: bake
-        again after a change to see their shadows.
-      </Text>
-
+    <ToolPanel
+      title="Benches"
+      description="Switch a bench on, pick a model, then move or turn it."
+      icon={Armchair}
+      tint="benches"
+      onClose={() => dispatch(hideFurniturePanel())}
+      save={{ saving, saved, onSave: handleSave, status: saveTrack.status }}
+    >
       {rooms.map(({ room }) => {
         const rows = Array.from({ length: BENCHES_PER_ROOM }, (_, slot) => {
           const index = benchIndex(room, slot)
           const settings = benchSettings?.[String(index)]
           const enabled = isBenchEnabled(settings)
           const label = `Bench ${slot + 1}`
+          // Accessible names (questions.md Q135): the visible words, with the room where two
+          // rooms each have a "Bench 1".
+          const who = rooms.length < 2 ? label : `Room ${room + 1} · ${label}`
 
+          // NEW (editor3d.md): an off bench folds to its name, "Off" and the switch. The switch
+          // stays the card's first child either way, so focus stays on it as the card folds.
           return (
-            <div key={index} className={styles.benchRow}>
-              <div className={styles.benchHeader}>
-                <span className={styles.benchLabel}>{label}</span>
-                <Toggle
-                  checked={enabled}
-                  onChange={() => patch(index, { enabled: !enabled })}
-                  aria-label={`${label} visible`}
-                />
-              </div>
+            <PanelCard key={index} level={rooms.length < 2 ? 'card' : 'group'}>
+              <SwitchRow
+                title={label}
+                line={enabled ? undefined : 'Off'}
+                checked={enabled}
+                onChange={() => patch(index, { enabled: !enabled })}
+                aria-label={rooms.length < 2 ? undefined : who}
+              />
 
-              <div className={styles.benchSlider}>
-                <span className={styles.sliderLabel}>Model</span>
-                <select
-                  value={benchModelOf(settings)}
-                  onChange={(e) => patch(index, { model: e.target.value as BenchModel })}
-                  disabled={!enabled}
-                  className={styles.select}
-                  aria-label={`${label} model`}
-                >
-                  {BENCH_MODELS.map((model) => (
-                    <option key={model.value} value={model.value}>
-                      {model.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {enabled && (
+                <>
+                  <ChoiceTiles
+                    label={`${who} model`}
+                    options={BENCH_MODELS}
+                    value={benchModelOf(settings)}
+                    onChange={(m) => patch(index, { model: m as BenchModel })}
+                  />
 
-              <div className={styles.benchSlider}>
-                <span className={styles.sliderLabel}>Across</span>
-                <Slider
-                  min={-MOVE_RANGE}
-                  max={MOVE_RANGE}
-                  step={0.05}
-                  value={settings?.x ?? 0}
-                  onChange={(v) => patch(index, { x: v })}
-                  disabled={!enabled}
-                  aria-label={`${label} position across the room`}
-                />
-                <span className={styles.sliderValue}>{(settings?.x ?? 0).toFixed(2)}m</span>
-              </div>
+                  <SliderRow
+                    label="Across"
+                    aria-label={`${who} across`}
+                    value={metres(settings?.x ?? 0, 2)}
+                    sliderValue={settings?.x ?? 0}
+                    min={-MOVE_RANGE}
+                    max={MOVE_RANGE}
+                    step={0.05}
+                    onChange={(v) => patch(index, { x: v })}
+                    disabled={!enabled}
+                  />
 
-              <div className={styles.benchSlider}>
-                <span className={styles.sliderLabel}>Depth</span>
-                <Slider
-                  min={-MOVE_RANGE}
-                  max={MOVE_RANGE}
-                  step={0.05}
-                  value={settings?.z ?? 0}
-                  onChange={(v) => patch(index, { z: v })}
-                  disabled={!enabled}
-                  aria-label={`${label} position into the room`}
-                />
-                <span className={styles.sliderValue}>{(settings?.z ?? 0).toFixed(2)}m</span>
-              </div>
+                  <SliderRow
+                    label="Depth"
+                    aria-label={`${who} depth`}
+                    value={metres(settings?.z ?? 0, 2)}
+                    sliderValue={settings?.z ?? 0}
+                    min={-MOVE_RANGE}
+                    max={MOVE_RANGE}
+                    step={0.05}
+                    onChange={(v) => patch(index, { z: v })}
+                    disabled={!enabled}
+                  />
 
-              <div className={styles.benchSlider}>
-                <span className={styles.sliderLabel}>Turn</span>
-                <Slider
-                  min={-180}
-                  max={180}
-                  step={1}
-                  value={settings?.rotationY ?? 0}
-                  onChange={(v) => patch(index, { rotationY: v })}
-                  disabled={!enabled}
-                  aria-label={`${label} rotation`}
-                />
-                <span className={styles.sliderValue}>{settings?.rotationY ?? 0}°</span>
-              </div>
-            </div>
+                  <SliderRow
+                    label="Turn"
+                    aria-label={`${who} turn`}
+                    value={`${settings?.rotationY ?? 0}°`}
+                    sliderValue={settings?.rotationY ?? 0}
+                    min={-180}
+                    max={180}
+                    step={1}
+                    onChange={(v) => patch(index, { rotationY: v })}
+                    disabled={!enabled}
+                  />
+                </>
+              )}
+            </PanelCard>
           )
         })
 
-        // One room: no room section around the benches, so they take its insets themselves.
+        // One room: no room section around the benches, so they sit straight in the body.
         if (rooms.length < 2) {
-          return (
-            <div key={room} className={styles.singleRoom}>
-              {rows}
-            </div>
-          )
+          return <Fragment key={room}>{rows}</Fragment>
         }
 
+        const on = Array.from({ length: BENCHES_PER_ROOM }, (_, slot) =>
+          benchIndex(room, slot),
+        ).filter((index) => isBenchEnabled(benchSettings?.[String(index)])).length
+
+        // Each bench a white card on the room's grey (Lighting's "All lamps" / "Each lamp").
         return (
-          <CollapsibleSection
+          <PanelSection
             key={room}
             title={`Room ${room + 1} · ${BENCHES_PER_ROOM} benches`}
-            persistKey={`furniture-room${room}`}
+            summary={`${on} on`}
+            storageKey={`collapsible-furniture-room${room}`}
             defaultOpen
           >
             {rows}
-          </CollapsibleSection>
+          </PanelSection>
         )
       })}
 
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          label={saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
-          onClick={handleSave}
-          disabled={saving}
-          className={styles.saveButton}
-        />
-      </div>
-    </SettingsPanel>
+      <InfoLine>
+        Benches are baked with the room: bake again after a change to see their shadows.
+      </InfoLine>
+    </ToolPanel>
   )
 }
 

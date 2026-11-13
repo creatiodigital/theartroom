@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 
-import { monogramCard } from '@/lib/og/monogramCard'
+import { avatarCard } from '@/lib/og/avatarCard'
 
 export const SHARE_PREVIEW_SIZE = { width: 1200, height: 630 }
 
@@ -47,13 +47,13 @@ export async function renderSharePreview(imageUrl: string | null | undefined) {
         return new Response(new Uint8Array(jpeg), { headers: CACHE_HEADERS })
       }
     } catch (error) {
-      console.error('[share-preview] falling back to the monogram card:', imageUrl, error)
+      console.error('[share-preview] falling back to the avatar card:', imageUrl, error)
     }
   }
 
   // Same JPEG type as the success path, so the route's declared contentType
   // holds either way.
-  const card = await monogramCard(SHARE_PREVIEW_SIZE).arrayBuffer()
+  const card = await avatarCard(SHARE_PREVIEW_SIZE).arrayBuffer()
   const jpeg = await sharp(Buffer.from(card)).jpeg({ quality: 90 }).toBuffer()
   return new Response(new Uint8Array(jpeg), { headers: CACHE_HEADERS })
 }

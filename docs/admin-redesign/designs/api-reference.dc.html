@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>API Reference</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #ffffff; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<span style="padding: 0 12px; font-size: 12px; color: #777777">(Sales and Gallery sections as on the other boards)</span>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid #2e2e2e; padding-top: 14px">
+<span style="padding: 0 12px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Developer</span>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; background: #2a2a2a; color: #ffffff; font-weight: 600; font-size: 13px; text-decoration: none"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM92.8,145.6a8,8,0,1,1-9.6,12.8l-32-24a8,8,0,0,1,0-12.8l32-24a8,8,0,0,1,9.6,12.8L69.33,128Zm58.89-71.4-32,112a8,8,0,1,1-15.38-4.4l32-112a8,8,0,0,1,15.38,4.4Zm53.11,60.2-32,24a8,8,0,0,1-9.6-12.8L186.67,128,163.2,110.4a8,8,0,1,1,9.6-12.8l32,24a8,8,0,0,1,0,12.8Z"></path></svg>API reference</a>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 36px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">Developer</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">API &amp; database reference</h1>
+<span style="color: #666666">Auto-generated from route handlers and the Prisma schema.</span>
+</header>
+
+<div style="position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; background: #f9f9f9">
+<label style="position: relative; flex: 1 1 320px; max-width: 460px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search</span><svg width="16" height="16" viewBox="0 0 256 256" fill="#666666" aria-hidden="true" style="position: absolute; left: 12px; top: 12px"><path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z"></path></svg><input type="search" placeholder="Search routes, models, fields…" style="width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; padding: 10px 12px 10px 36px; min-height: 40px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff"></label>
+<nav aria-label="Jump to" style="display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto">
+<a href="#endpoints" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 34px; box-sizing: border-box; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; text-decoration: none; font-size: 13px"><strong style="color: #000000">86</strong> endpoints</a>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 34px; box-sizing: border-box; color: #666666; font-size: 13px"><strong style="color: #000000">19</strong> resources</span>
+<a href="#models" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 34px; box-sizing: border-box; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; text-decoration: none; font-size: 13px"><strong style="color: #000000">31</strong> models</a>
+<a href="#enums" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 34px; box-sizing: border-box; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; text-decoration: none; font-size: 13px"><strong style="color: #000000">14</strong> enums</a>
+</nav>
+</div>
+
+<section id="endpoints" aria-labelledby="h-ep" style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-ep" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">API endpoints</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 16px; align-items: start">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eaeaea"><span style="font-weight: 700; color: #000000">{{g.name}}</span><span style="font-size: 12px; color: #666666">{{g.count}}</span></div>
+<ul style="list-style: none; margin: 0; padding: 4px 0">
+<sc-for list="{{g.routes}}" as="r" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 12px; padding: 7px 16px">
+<span style="display: flex; gap: 4px; flex: 0 0 132px; flex-wrap: wrap"><sc-for list="{{r.methods}}" as="m" hint-placeholder-count="1"><span style="{{m.style}}">{{m.label}}</span></sc-for></span>
+<code style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; color: #333333; word-break: break-all">{{r.pre}}<span style="color: #9a5b00">{{r.param}}</span>{{r.post}}</code>
+</li>
+</sc-for>
+</ul>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="models" aria-labelledby="h-md" style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-md" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Database models</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start">
+<sc-for list="{{models}}" as="md" hint-placeholder-count="3">
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eaeaea"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 500; color: #000000">{{md.name}}</span><span style="font-size: 12px; color: #666666">{{md.meta}}</span></div>
+<div style="padding: 4px 0">
+<sc-for list="{{md.fields}}" as="f" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 8px; padding: 5px 16px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12.5px">
+<span style="color: #000000">{{f.name}}</span>
+<sc-if value="{{f.pk}}" hint-placeholder-val="{{false}}"><span style="font-family: Geist, sans-serif; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; background: #fff3cd; color: #856404">PK</span></sc-if>
+<sc-if value="{{f.uq}}" hint-placeholder-val="{{false}}"><span style="font-family: Geist, sans-serif; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; background: #e7f1fa; color: #1f3b57">UQ</span></sc-if>
+<span style="margin-left: auto; color: #2e6b8a">{{f.type}}</span>
+<span style="color: #999999; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{f.def}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="enums" aria-labelledby="h-en" style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-en" style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Enums</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; align-items: start">
+<sc-for list="{{enums}}" as="e" hint-placeholder-count="3">
+<div style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 500; color: #000000">{{e.name}}</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{e.values}}" as="v" hint-placeholder-count="3"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; padding: 2px 8px; border-radius: 4px; background: #f2f2f2">{{v}}</span></sc-for></div>
+</div>
+</sc-for>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const C = { GET: ['#e7f1fa', '#1f3b57'], POST: ['#d4edda', '#155724'], PUT: ['#fff3cd', '#856404'], PATCH: ['#fff3cd', '#856404'], DELETE: ['#f8d7da', '#721c24'] };
+    const m = (label) => ({ label, style: { fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: '11px', fontWeight: 500, padding: '2px 6px', borderRadius: '3px', background: C[label][0], color: C[label][1] } });
+    const r = (methods, path) => {
+      const mm = path.match(/^(.*?)(:\w+)(.*)$/);
+      return { methods: methods.map(m), pre: mm ? mm[1] : path, param: mm ? mm[2] : '', post: mm ? mm[3] : '' };
+    };
+    const G = [
+      ['artworks', [[['GET', 'POST'], '/api/artworks'], [['GET', 'PATCH', 'DELETE'], '/api/artworks/:id'], [['POST'], '/api/artworks/:id/reorder']]],
+      ['exhibitions', [[['GET', 'POST'], '/api/exhibitions'], [['GET', 'PUT', 'DELETE'], '/api/exhibitions/:id'], [['POST'], '/api/exhibitions/:id/publish']]],
+      ['checkout', [[['POST'], '/api/checkout/session'], [['GET'], '/api/checkout/:sessionId']]],
+      ['users', [[['GET', 'POST'], '/api/users'], [['PATCH', 'DELETE'], '/api/users/:id'], [['POST'], '/api/users/:id/invite']]]
+    ];
+    return {
+      groups: G.map(([name, routes]) => ({ name, count: routes.length + ' routes', routes: routes.map(([ms, p]) => r(ms, p)) })),
+      models: [
+        { name: 'Artwork', meta: '14 fields', fields: [['id', 'String', 'cuid()', 1], ['title', 'String', ''], ['slug', 'String', '', 0, 1], ['artworkType', 'ArtworkType', 'image'], ['printEnabled', 'Boolean', 'false'], ['createdAt', 'DateTime', 'now()']] },
+        { name: 'Exhibition', meta: '11 fields', fields: [['id', 'String', 'cuid()', 1], ['name', 'String', ''], ['slug', 'String', '', 0, 1], ['published', 'Boolean', 'false'], ['userId', 'String', '']] },
+        { name: 'User', meta: '18 fields', fields: [['id', 'String', 'cuid()', 1], ['email', 'String', '', 0, 1], ['handler', 'String', '', 0, 1], ['userType', 'UserType', 'artist'], ['featured', 'Boolean', 'false']] }
+      ].map((x) => ({ ...x, fields: x.fields.map(([name, type, def, pk, uq]) => ({ name, type, def, pk: !!pk, uq: !!uq })) })),
+      enums: [
+        { name: 'UserType', values: ['artist', 'admin', 'superAdmin', 'curator'] },
+        { name: 'ArtworkType', values: ['image', 'text', 'sound', 'video'] },
+        { name: 'EditionType', values: ['open', 'limited'] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

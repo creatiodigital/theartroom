@@ -1,0 +1,83 @@
+// The wordmark of every menu. Admin: dashboard.dc.html (side menu), dashboard-phone.dc.html
+// (top bar), dashboard-phone-menu.dc.html (drawer). Studio: artist-home.dc.html.
+.wordmark {
+  display: flex;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.dark,
+.dark:hover {
+  color: var(--color-white);
+}
+
+.light,
+.light:hover {
+  color: var(--color-black);
+}
+
+.stacked {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inline {
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.menu {
+  padding: 0 10px;
+}
+
+// In a bar it takes the free room, so whatever follows sits on the right.
+.bar {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// The studio's stacked bar wordmark never shrinks: the "Viewing as" pill does.
+.bar.stacked {
+  flex-shrink: 0;
+}
+
+.name {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-weight: var(--font-medium);
+}
+
+.menu .name {
+  font-size: var(--text-xl);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.bar .name {
+  font-size: 20px;
+  line-height: var(--leading-tight);
+}
+
+.tag {
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.menu .tag {
+  font-size: 11px;
+}
+
+.bar .tag {
+  font-size: 10px;
+}
+
+.dark .tag {
+  color: var(--color-dark-text-muted);
+}
+
+.light .tag {
+  color: var(--color-red-50);
+}

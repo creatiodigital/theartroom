@@ -1,16 +1,16 @@
 'use client'
 
-import { useRef, useMemo, useEffect } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { X } from 'lucide-react'
+import { ArrowSquareOut, Image as ImageIcon } from '@phosphor-icons/react'
 
+import { ToolPanel } from '@/components/editorChrome'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
-import { Text } from '@/components/ui/Typography'
 import { RichText } from '@/components/ui/RichText'
-import { ICON_STROKE_WIDTH } from '@/lib/iconConfig'
-import { hideArtworkPanel, openArtworkModal } from '@/redux/slices/dashboardSlice'
+import { rereadWhenBack } from '@/hooks/artworkReread'
+import { hideArtworkPanel } from '@/redux/slices/dashboardSlice'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import type { RootState } from '@/redux/store'
 import type { TArtwork } from '@/types/artwork'
@@ -27,7 +27,6 @@ interface ArtworkPanelProps {
 
 const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
   const dispatch = useDispatch()
-  const panelRef = useRef(null)
   const selectedSceneArtworkId = useSelector((state: RootState) => state.scene.currentArtworkId)
   const byId = useSelector((state: RootState) => state.artworks.byId)
 
@@ -48,30 +47,39 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
   // Use original URLs - Next.js image optimization has issues with R2 URLs in production
   const thumbnailUrl = imageUrl || null
 
-  const handleViewDetails = () => {
+  // Q139 (a), owner option 3: the work's own editor in the studio, in a new tab. The panel stays;
+  // the editor re-reads this work's details when its tab is back in front (Q153).
+  const handleEditArtwork = () => {
     if (!selectedArtwork?.id) return
-    // Open the in-exhibition modal over the live scene and close the sidebar beneath it,
-    // so dismissing the modal returns to a clean scene with no sidebar lingering.
-    dispatch(hideArtworkPanel())
-    dispatch(openArtworkModal())
+    rereadWhenBack(selectedArtwork.id)
+    window.open(`/dashboard/artworks/${selectedArtwork.id}/edit`, '_blank', 'noopener')
   }
 
+  // Not drawn (questions.md Q137): the tool panels' shell, the work's title as the heading and the
+  // artist as its line; the image, technique and dimensions in the body; Edit artwork below.
   return (
-    <div
-      ref={panelRef}
-      className={styles.panel}
-      data-panel-overlay
-      onPointerDown={(e) => e.stopPropagation()}
+    <ToolPanel
+      title={artworkTitle || name || 'Artwork'}
+      description={selectedArtwork?.author}
+      icon={ImageIcon}
+      tint="walls"
+      onClose={() => dispatch(hideArtworkPanel())}
+      footer={
+        <div className={styles.actions}>
+          <Button
+            variant="bare"
+            font="dashboard"
+            className={styles.editArtwork}
+            onClick={handleEditArtwork}
+          >
+            Edit artwork
+            <span className="sr-only"> (opens in a new tab)</span>
+            <ArrowSquareOut size={16} weight="light" aria-hidden />
+          </Button>
+        </div>
+      }
     >
-      <Button
-        variant="ghost"
-        onClick={() => dispatch(hideArtworkPanel())}
-        className={styles.closeButton}
-        aria-label="Close"
-      >
-        CLOSE <X size={14} strokeWidth={ICON_STROKE_WIDTH} />
-      </Button>
-      <div className={styles.header}>
+      <div className={styles.content}>
         {thumbnailUrl && (
           <div className={styles.imageWrapper}>
             {/* Cropped to the piece and a thin border of wall, as the artwork page does, so it
@@ -94,45 +102,16 @@ const ArtworkPanel = ({ presentation }: ArtworkPanelProps) => {
             </PrintPresentation>
           </div>
         )}
-        <div className={styles.info}>
-          {selectedArtwork && (
-            <div>
-              {selectedArtwork.author && (
-                <Text font="serif" as="h1" size="2xl" className={styles.author}>
-                  {selectedArtwork.author}
-                </Text>
-              )}
-              {(artworkTitle || name) && (
-                <div className={styles.titleWrapper}>
-                  <Text font="serif" as="span" size="xl" className={styles.title}>
-                    {artworkTitle || name}
-                  </Text>
-                </div>
-              )}
-              {selectedArtwork.technique && (
-                <RichText
-                  content={selectedArtwork.technique}
-                  variant="compact"
-                  className={styles.technique}
-                />
-              )}
-              {artworkDimensions && (
-                <Text font="dashboard" as="p" size="sm" className={styles.dimensions}>
-                  {artworkDimensions}
-                </Text>
-              )}
-            </div>
-          )}
-        </div>
-        <Button
-          variant="primary"
-          size="regularSquared"
-          label="View Details"
-          icon="arrowRight"
-          onClick={handleViewDetails}
-        />
+        {selectedArtwork && (selectedArtwork.technique || artworkDimensions) && (
+          <div className={styles.info}>
+            {selectedArtwork.technique && (
+              <RichText content={selectedArtwork.technique} variant="compact" />
+            )}
+            {artworkDimensions && <p className={styles.dimensions}>{artworkDimensions}</p>}
+          </div>
+        )}
       </div>
-    </div>
+    </ToolPanel>
   )
 }
 
