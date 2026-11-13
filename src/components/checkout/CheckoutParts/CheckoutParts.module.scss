@@ -301,6 +301,8 @@
 .orderThumb {
   width: 96px;
   height: 96px;
+  // As the cart's: the work never touches the grey, a margin all round (owner, 2026-11-12).
+  padding: 10%;
   background: var(--public-render-wall);
 
   @include media-down(sm) {
@@ -347,11 +349,17 @@
   color: var(--color-text-secondary);
 }
 
-// #666, not the drawn #999 (Q-P12).
-.orderSpec {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-text-secondary);
+// The cart's spec lines (CartItemDetails .specs): one subject per line, 14 px (owner, 2026-11-13:
+// the same as the cart).
+.orderSpecs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--public-secondary);
+  overflow-wrap: anywhere;
 }
 
 .orderPrice {

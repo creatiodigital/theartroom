@@ -9,7 +9,7 @@ import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { cartCount, cartSubtotal, lineTotal } from '@/lib/cart/cartMath'
-import { specShortLine } from '@/lib/cart/specLines'
+import { specLines, specShortLine } from '@/lib/cart/specLines'
 import type { CartItem } from '@/lib/cart/types'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { vatLabel } from '@/lib/checkout/vatLabel'
@@ -138,7 +138,7 @@ function editionLabel(item: Pick<CartItem, 'editionType' | 'editionName'>): stri
 /**
  * Checkout v2's order (order-flow.md "Checkout v2", designs/checkout-v2.dc.html): on the left of
  * every step, as the cart's items are (owner, 2026-11-13: the order never changes sides). "Your
- * order" with → Edit cart, the item rows, then the figures: the items' sum and "Calculated after the
+ * order" with → Edit cart, the item rows with the cart's spec lines (`specLines`), then the figures: the items' sum and "Calculated after the
  * address" until the address is known (`totals` absent), then shipping, VAT and the total. Sticky
  * beside the step from 1024 px. On phones it folds into a bar under the title (the prints and the
  * current amount) that opens it.
@@ -198,7 +198,9 @@ export const OrderColumn = ({
 
         <ul className={styles.orderRows}>
           {items.map((item) => {
-            const short = specShortLine(item.specsSummary)
+            // The cart's lines, one subject each (owner, 2026-11-13: the same as the cart shows).
+            const lines = specLines(item.specsSummary)
+            if (item.quantity > 1) lines.push(`Quantity ${item.quantity}`)
             const error = errors?.[item.lineId]
             return (
               <li key={item.lineId} className={styles.orderRow}>
@@ -214,13 +216,11 @@ export const OrderColumn = ({
                   <em className={styles.orderItemTitle}>{item.title}</em>
                   <span className={styles.orderArtist}>{item.artistName}</span>
                   <span className={styles.orderEdition}>{editionLabel(item)}</span>
-                  {(short || item.quantity > 1) && (
-                    <span className={styles.orderSpec}>
-                      {short}
-                      {short && item.quantity > 1 && ' · '}
-                      {item.quantity > 1 && (
-                        <span className={styles.nowrap}>Quantity {item.quantity}</span>
-                      )}
+                  {lines.length > 0 && (
+                    <span className={styles.orderSpecs}>
+                      {lines.map((line, index) => (
+                        <span key={index}>{line}</span>
+                      ))}
                     </span>
                   )}
                   {error && <span className={styles.itemError}>{error}</span>}
