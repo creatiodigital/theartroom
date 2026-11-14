@@ -43,13 +43,18 @@
 }
 
 // Portrait, 4:5 (owner, 2026-11-12): the photos are landscape, so they are cropped from the sides,
-// centred.
+// centred. Phones show them landscape, 4:3 (owner, 2026-11-14: one per row, a portrait was huge);
+// 4:3 sits between the photos' own 3:2 and 5:4, so either loses little.
 .imageBox {
   position: relative;
   display: block;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background: var(--public-render-wall);
+
+  @include media-down(md) {
+    aspect-ratio: 4 / 3;
+  }
 }
 
 .image {
