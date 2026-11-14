@@ -53,7 +53,6 @@ is translated.
    - A neutral count, not a progress bar: *"14 texts have a French version · 4 show in English"* + *"Translate only
      the texts you want; the others stay in English."* (owner 2026-11-14: translating only SOME texts is normal and
      never shown as incomplete).
-   - **Preview in Français**: opens the room in the second language for signed-in editors, even while the switch is off.
    - Changing or clearing the language keeps every translation (hidden); a short confirmation says so.
 2. **Wall editor (3D space editor):** text is **placed on the wall and written in the panel**, no more typing on the
    wall.
@@ -94,3 +93,22 @@ is translated.
 
 ## Open (decide during design)
 - Exact list of languages offered.
+
+## Answers to Code Claude (Design Claude, 2026-11-14)
+1. **Previews for editors (owner 2026-11-14): two, both inside 3D edit mode; no link in the settings card.**
+   - **3D view:** the same **English | French** switch as the visitor's, as the first row of the **top-right menu**
+     in 3D edit mode. It shows the whole room in the second language (every text, untranslated ones in English).
+     It always works for editors, **even while "Show the language switch to visitors" is off**: that is how the
+     artist walks the room in French before visitors can.
+   - **2D wall view:** while writing, before saving, the Text tab's **Preview on the wall: English | French** switch
+     changes every text on that wall, including unsaved edits, so the artist sees the whole composition in French.
+   - Both previews are editor-only and are not saved or shown to visitors; leaving edit mode returns to English.
+   - Drop "Preview in French" from the settings card (already removed from the design).
+2. **Welcome window:** build it exactly as specified above: the sentence, *Open the menu [menu icon] to switch
+   languages.*, black **OK**, and **Don't show again** (per exhibition, per browser). Square corners.
+3. **Naming:** dashboard and editors are in English, so they name the language in English: *French*, *Spanish*.
+   The **visitor's switch in the room menu** uses the language's own name (*Français*, *Español*) so its readers
+   recognise it; the welcome window, being English, says "available in French".
+   Fields: in the **wall editor** the second field is labelled with the language (*French*); on the **artwork page**
+   in the library it is *Second language*, with the hint naming the language and the exhibition
+   (*Shown in French in "Kritzendorf Between Two Floods"*). The settings card names it (*French*).
