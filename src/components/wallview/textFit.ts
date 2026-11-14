@@ -38,6 +38,8 @@ export type WallTextStyle = {
   padBottom: number
   padLeft: number
   padRight: number
+  /** Where the text sits in its box (ArtisticText's `justify-content`); unset: top. */
+  verticalAlign?: 'top' | 'center' | 'bottom'
 }
 
 export type WallTextFit = {
@@ -95,12 +97,29 @@ export const wallTextFit = (
   return fitOf(height, style, boxHeight)
 }
 
-/** The verdict for a measured height (pure: the rounding the Text tab reports). */
-export const fitOf = (height: number, style: WallTextStyle, boxHeight: number): WallTextFit => {
-  const available = boxHeight - style.padTop - style.padBottom
-  // Half a pixel of slack: the browser rounds line boxes.
-  if (height <= available + 0.5) return { fits: true, linesOver: 0, height }
-  const line = style.fontSize * style.lineHeight
-  const linesOver = Math.max(1, Math.ceil((height - available) / line - 0.05))
-  return { fits: false, linesOver, height }
+/**
+ * How much of the box a text needs so it doesn't leave it, by where it sits (pure): the spacing
+ * is room inside the box, and a text may run into it. Top: the top spacing, then the text. Bottom:
+ * the text, then the bottom spacing. Middle: the text and its spacing centred (ArtisticText), so
+ * the difference between the two spacings.
+ */
+export const neededHeight = (height: number, style: WallTextStyle) => {
+  if (style.verticalAlign === 'bottom') return style.padBottom + height
+  if (style.verticalAlign === 'center') return height + Math.abs(style.padTop - style.padBottom)
+  return style.padTop + height
 }
+
+/**
+ * The verdict for a measured height (pure). A text doesn't fit when it leaves its box (owner,
+ * 2026-11-14: running into its spacing is fine, the wall shows that it fits), and only when at
+ * least half a line is outside: the artist adjusts anything finer by eye.
+ */
+export const fitOf = (height: number, style: WallTextStyle, boxHeight: number): WallTextFit => {
+  const line = style.fontSize * style.lineHeight
+  const linesOver = line > 0 ? Math.round((neededHeight(height, style) - boxHeight) / line) : 0
+  return linesOver >= 1 ? { fits: false, linesOver, height } : { fits: true, linesOver: 0, height }
+}
+
+/** The box height that gives the text all its top and bottom spacing (Make the box taller). */
+export const comfortableHeight = (height: number, style: WallTextStyle) =>
+  height + style.padTop + style.padBottom

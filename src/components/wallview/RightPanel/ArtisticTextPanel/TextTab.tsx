@@ -13,7 +13,13 @@ import { PanelGroup } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
-import { wallTextFit, type WallTextFit, type WallTextStyle } from '@/components/wallview/textFit'
+import {
+  comfortableHeight,
+  wallTextFit,
+  type WallTextFit,
+  type WallTextStyle,
+} from '@/components/wallview/textFit'
+import { useWallFontsVersion } from '@/components/wallview/hooks/useWallFontsVersion'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { secondLanguageOf } from '@/lib/roomLanguage'
 import { editArtisticText } from '@/redux/slices/artworkSlice'
@@ -46,6 +52,8 @@ export function TextTab({ active }: TextTabProps) {
   const englishId = useId()
   const secondId = useId()
   const englishRef = useRef<HTMLTextAreaElement>(null)
+  // Measured again once a wall typeface has loaded.
+  useWallFontsVersion()
 
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const focusRequest = useSelector((state: RootState) => state.wallView.textFocusRequest)
@@ -106,6 +114,7 @@ export function TextTab({ active }: TextTabProps) {
     padBottom: textPaddingBottom?.value ?? 0,
     padLeft: textPaddingLeft?.value ?? 0,
     padRight: textPaddingRight?.value ?? 0,
+    verticalAlign: artwork.textVerticalAlign ?? 'top',
   }
   const fitOf = (text: string, size = style.fontSize) =>
     box ? wallTextFit(text, { ...style, fontSize: size }, box.width2d, box.height2d) : null
@@ -125,11 +134,10 @@ export function TextTab({ active }: TextTabProps) {
   // Taller: the longer text fits, the box's top edge stays where it is.
   const makeTaller = () => {
     if (!box) return
-    const needed = Math.max(
-      ...texts.map((text) => fitOf(text)?.height ?? 0),
-      box.height2d - style.padTop - style.padBottom,
+    // Every text with all its top and bottom spacing.
+    const height2d = Math.ceil(
+      Math.max(...texts.map((text) => comfortableHeight(fitOf(text)?.height ?? 0, style))),
     )
-    const height2d = Math.ceil(needed + style.padTop + style.padBottom)
     if (height2d <= box.height2d) return
     dispatch(pushToHistory())
     dispatch(

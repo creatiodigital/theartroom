@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Icon } from '@/components/ui/Icon'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useArtisticText } from '@/components/wallview/hooks/useArtisticText'
+import { useWallFontsVersion } from '@/components/wallview/hooks/useWallFontsVersion'
 import { WALL_FONT_FAMILIES, WALL_FONT_STYLES, wallTextFit } from '@/components/wallview/textFit'
 import Monogram from '@/icons/monogram.svg'
 import { roomTextOf } from '@/lib/roomLanguage'
@@ -28,6 +29,8 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
   const dispatch = useDispatch()
   const roomLanguage = useSelector((state: RootState) => state.scene.roomLanguage)
   const box = useSelector((state: RootState) => state.exhibition.exhibitionArtworksById[artworkId])
+  // Measured again once a wall typeface has loaded (the fit below).
+  useWallFontsVersion()
 
   const artisticText = useArtisticText(artworkId)
 
@@ -91,6 +94,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
             padBottom: textPaddingBottom,
             padLeft: textPaddingLeft,
             padRight: textPaddingRight,
+            verticalAlign: textVerticalAlign,
           },
           box.width2d,
           box.height2d,

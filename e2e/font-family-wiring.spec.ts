@@ -22,8 +22,8 @@ const SOURCES = {
   appFonts: 'src/app/fonts.ts',
   layout: 'src/app/layout.tsx',
   options: 'src/components/wallview/RightPanel/ArtisticTextPanel/constants.ts',
-  panelMap: 'src/components/wallview/RightPanel/ArtisticTextPanel/ArtisticTextPanel.tsx',
-  canvasMap: 'src/components/wallview/ArtisticText/ArtisticText.tsx',
+  // AR-182: the wall canvas's map lives with the text-fit measure, which lays text out the same way.
+  canvasMap: 'src/components/wallview/textFit.ts',
   stencilMap: 'src/components/scene/spaces/objects/Stencil/Stencil.tsx',
 }
 
@@ -61,13 +61,11 @@ test('every font family is offered in the sidebar dropdown', () => {
   }
 })
 
-test('every font family maps to a CSS variable in both 2D renderers', () => {
-  // The dropdown preview and the wall canvas keep separate copies of this map.
-  // Either one drifting shows the artist the wrong typeface.
-  for (const [label, file] of [
-    ['dropdown preview', SOURCES.panelMap],
-    ['wall canvas', SOURCES.canvasMap],
-  ] as const) {
+test('every font family maps to a CSS variable in the 2D wall view', () => {
+  // AR-182: one map (textFit.ts) serves the wall canvas and the panel's measures (Fit box to
+  // text, the Text tab's fit), so they can't drift apart. A family missing from it shows the
+  // artist the wrong typeface.
+  for (const [label, file] of [['wall canvas', SOURCES.canvasMap]] as const) {
     const src = read(file)
     for (const family of FONT_FAMILIES) {
       expect(src, `${family} missing from the ${label} CSS-var map`).toMatch(
