@@ -58,8 +58,12 @@ export function RoomLanguageSwitch({ tone, className }: RoomLanguageSwitchProps)
           <Button
             key={option.name}
             variant="bare"
-            font="dashboard"
-            aria-pressed={pressed}
+            font={tone === 'room' ? undefined : 'dashboard'}
+            // In the room menu: two of its items (its arrow keys reach them), and a press leaves
+            // the menu open. Elsewhere: two toggle buttons.
+            {...(tone === 'room'
+              ? { role: 'menuitemradio', 'aria-checked': pressed, tabIndex: -1 }
+              : { 'aria-pressed': pressed })}
             className={c(styles.option, pressed && styles.pressed)}
             onClick={() => choose(option.code)}
           >
